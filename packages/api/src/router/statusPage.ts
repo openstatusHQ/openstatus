@@ -5,6 +5,7 @@ import {
   page,
   pageComponent,
   pageConfigurationSchema,
+  privateLocationToMonitors,
   selectMaintenancePageSchema,
   selectPageComponentWithMonitorRelation,
   selectPageSchema,
@@ -272,7 +273,7 @@ export const statusPageRouter = createTRPCRouter({
 
         // Add count to each monitor
         for (const monitor of monitors) {
-          (monitor as any).privateLocationCount = privateLocationCounts.get(monitor.id) ?? 0;
+          (monitor as Record<string, unknown>).privateLocationCount = privateLocationCounts.get(monitor.id) ?? 0;
         }
       }
 
