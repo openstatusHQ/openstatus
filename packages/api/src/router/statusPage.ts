@@ -27,6 +27,7 @@ import { TRPCError } from "@trpc/server";
 import { endOfDay, startOfDay, subDays } from "date-fns";
 import { z } from "zod";
 
+import { tb } from "../tb";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
@@ -47,7 +48,6 @@ import {
   getStatusProcedure,
   getUptimeProcedure,
 } from "./tinybird";
-import { tb } from "../tb";
 
 // NOTE: publicProcedure is used to get the status page
 // TODO: improve performance of SQL query (make a single query with joins)
@@ -116,19 +116,25 @@ async function getRecentProbeStatus(
     }
 
     // Group by region and keep only the most recent check from each region
-    const mostRecentByRegion = new Map<string, {
-      status: "success" | "degraded" | "error";
-      timestamp: number;
-    }>();
+    const mostRecentByRegion = new Map<
+      string,
+      {
+        status: "success" | "degraded" | "error";
+        timestamp: number;
+      }
+    >();
 
     for (const check of result.data) {
       // Determine the region/location identifier
       // Cloud monitors use 'region', private locations might use 'locationId' or 'region'
-      const regionId = check.region || ("locationId" in check ? check.locationId : null) || "default";
-      
+      const regionId =
+        check.region ||
+        ("locationId" in check ? check.locationId : null) ||
+        "default";
+
       // Determine status from the check
       let status: "success" | "degraded" | "error" | null = null;
-      
+
       // v1 endpoint with requestStatus field
       if ("requestStatus" in check && check.requestStatus) {
         status = check.requestStatus;
@@ -156,14 +162,14 @@ async function getRecentProbeStatus(
     // Apply >50% majority logic
     const total = mostRecentByRegion.size;
     const counts = { error: 0, degraded: 0, success: 0 };
-    
+
     for (const { status } of mostRecentByRegion.values()) {
       counts[status]++;
     }
 
     // >50% means strictly greater than half
     const threshold = total / 2;
-    
+
     // Priority: error > degraded > success (check in order)
     // This ensures if >50% are error, we return error (most severe)
     if (counts.error > threshold) {
@@ -172,7 +178,7 @@ async function getRecentProbeStatus(
     if (counts.degraded > threshold) {
       return "degraded";
     }
-    
+
     // Default to success if no majority (bias towards up)
     // This handles cases like: 1 error, 1 success (tie) → success
     return "success";
@@ -255,20 +261,24 @@ export const statusPageRouter = createTRPCRouter({
 
       const monitorComponents = pageComponents.filter(isMonitorComponent);
 
-
       // Query recent probe status for all monitors (unless in manual mode)
-      const probeStatusMap = new Map<string, "success" | "degraded" | "error">();
+      const probeStatusMap = new Map<
+        string,
+        "success" | "degraded" | "error"
+      >();
       if (barType !== "manual") {
         const probeStatusPromises = monitorComponents.map(async (c) => {
           const monitorId = c.monitor.id.toString();
-          const probeStatus = await getRecentProbeStatus(monitorId, c.monitor.jobType);
+          const probeStatus = await getRecentProbeStatus(
+            monitorId,
+            c.monitor.jobType,
+          );
           if (probeStatus) {
             probeStatusMap.set(monitorId, probeStatus);
           }
         });
         await Promise.all(probeStatusPromises);
       }
-
 
       // Transform all page components (both monitor and static types)
       const components = pageComponents.map((c) => {
@@ -319,10 +329,15 @@ export const statusPageRouter = createTRPCRouter({
                   : "success"));
 
           // Merge probe-based status with event-based status (worst wins)
-          const probeStatus = c.monitor ? probeStatusMap.get(c.monitor.id.toString()) : undefined;
+          const probeStatus = c.monitor
+            ? probeStatusMap.get(c.monitor.id.toString())
+            : undefined;
           if (probeStatus === "error" || eventBasedStatus === "error") {
             status = "error";
-          } else if (probeStatus === "degraded" || eventBasedStatus === "degraded") {
+          } else if (
+            probeStatus === "degraded" ||
+            eventBasedStatus === "degraded"
+          ) {
             status = "degraded";
           } else {
             status = eventBasedStatus;
@@ -336,19 +351,19 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
 
-
       // Calculate page-wide status from all monitor components
       // no barType gate: incident-driven error is already suppressed per
       // monitor in manual mode; report-driven error (major_outage) must show
       const monitorComponentsWithStatus = components.filter((c) => c.monitor);
-      const status = monitorComponentsWithStatus.some((m) => m.status === "error")
+      const status = monitorComponentsWithStatus.some(
+        (m) => m.status === "error",
+      )
         ? "error"
         : monitorComponentsWithStatus.some((m) => m.status === "degraded")
           ? "degraded"
           : monitorComponentsWithStatus.some((m) => m.status === "info")
             ? "info"
             : "success";
-
 
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
@@ -522,7 +537,10 @@ export const statusPageRouter = createTRPCRouter({
 
       // Build monitors array for backward compatibility
       const monitors = components
-        .filter((c): c is typeof c & { monitor: NonNullable<typeof c.monitor> } => c.monitor !== null && c.monitor !== undefined)
+        .filter(
+          (c): c is typeof c & { monitor: NonNullable<typeof c.monitor> } =>
+            c.monitor !== null && c.monitor !== undefined,
+        )
         .map((c) => ({
           ...c.monitor,
           status: c.status,
