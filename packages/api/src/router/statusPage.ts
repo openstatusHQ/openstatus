@@ -254,8 +254,7 @@ export const statusPageRouter = createTRPCRouter({
 
       const monitorComponents = pageComponents.filter(isMonitorComponent);
 
-<<<<<<< HEAD
-=======
+
       // Query recent probe status for all monitors (unless in manual mode)
       const probeStatusMap = new Map<string, "success" | "degraded" | "error">();
       if (barType !== "manual") {
@@ -269,7 +268,7 @@ export const statusPageRouter = createTRPCRouter({
         await Promise.all(probeStatusPromises);
       }
 
->>>>>>> 53aedbf3 (feat: implement >50% region consensus for probe status)
+
       // Transform all page components (both monitor and static types)
       const components = pageComponents.map((c) => {
         const events = getEvents({
