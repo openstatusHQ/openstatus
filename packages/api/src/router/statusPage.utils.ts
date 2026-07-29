@@ -532,10 +532,7 @@ export function setDataByType({
           cardData = entries
             .map((entry) => {
               // Map each entry status to its corresponding events
-              const eventByStatus: Record<
-                string,
-                Event[]
-              > = {
+              const eventByStatus: Record<string, Event[]> = {
                 error: incidents,
                 degraded: reports,
                 info: maintenances,
@@ -574,9 +571,7 @@ export function setDataByType({
                 maintenances,
               );
             })
-            .filter(
-              (item): item is NonNullable<typeof item> => item !== null,
-            );
+            .filter((item): item is NonNullable<typeof item> => item !== null);
         }
         break;
 
