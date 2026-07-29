@@ -98,10 +98,10 @@ const gateFieldsSchema = selectPageSchema.pick({
 async function getRecentProbeStatus(
   monitorId: string,
   jobType: "http" | "tcp" | "icmp" | "udp" | "dns" | "ssl",
-  regions: string,
+  regions: readonly string[],
 ): Promise<"success" | "degraded" | "error" | null> {
   // Only use probe status for private-only monitors (no cloud regions)
-  const hasCloudRegions = regions && regions.trim().length > 0;
+  const hasCloudRegions = regions && regions.length > 0;
   if (hasCloudRegions) {
     return null; // Skip probe status for hybrid monitors
   }
