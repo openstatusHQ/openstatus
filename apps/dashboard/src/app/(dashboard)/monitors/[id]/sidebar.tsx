@@ -48,7 +48,8 @@ export function Sidebar() {
                         : "text-success"
                   }
                 >
-                  {monitor.status.charAt(0).toUpperCase() + monitor.status.slice(1)}
+                  {monitor.status.charAt(0).toUpperCase() +
+                    monitor.status.slice(1)}
                 </span>
               ),
             },
