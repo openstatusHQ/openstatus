@@ -7,6 +7,7 @@ type Step = {
   icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
+  iconClassName: string;
 };
 
 const steps: Step[] = [
@@ -15,18 +16,24 @@ const steps: Step[] = [
     title: "Add your monitors",
     description:
       "Connect your websites and APIs in seconds. Set your check frequency and regions.",
+    iconClassName:
+      "border-green-600/40 bg-green-100 text-green-700 dark:border-green-400/30 dark:bg-green-950 dark:text-green-400",
   },
   {
     icon: Bell,
     title: "Get notified instantly",
     description:
       "Receive alerts via email, Slack, or SMS the moment downtime is detected.",
+    iconClassName:
+      "border-yellow-600/40 bg-yellow-100 text-yellow-700 dark:border-yellow-400/30 dark:bg-yellow-950 dark:text-yellow-400",
   },
   {
     icon: Globe,
     title: "Share your status",
     description:
       "Publish a beautiful public status page to keep your users informed.",
+    iconClassName:
+      "border-green-600/40 bg-green-100 text-green-700 dark:border-green-400/30 dark:bg-green-950 dark:text-green-400",
   },
 ];
 
@@ -64,7 +71,12 @@ export function HowItWorks({ className }: { className?: string }) {
                   {index + 1}
                 </span>
 
-                <span className="border-border bg-muted text-foreground flex h-11 w-11 items-center justify-center border">
+                <span
+                  className={cn(
+                    "flex h-11 w-11 items-center justify-center border",
+                    step.iconClassName,
+                  )}
+                >
                   <Icon className="h-5 w-5" />
                 </span>
 
