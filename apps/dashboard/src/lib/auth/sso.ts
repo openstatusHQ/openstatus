@@ -1,8 +1,8 @@
 import { db } from "@openstatus/db";
-import { usersToWorkspaces } from "@openstatus/db/src/schema";
 import {
   getWorkspaceByWorkosOrganization,
   isEmailAllowedForWorkspace,
+  joinSsoWorkspace,
 } from "@openstatus/services/sso";
 
 export type WorkOSSsoProfile = {
@@ -48,8 +48,9 @@ export async function authorizeSsoSignIn(
  * where `user.id` is a real row id.
  *
  * The organization is re-resolved here rather than carried over from the
- * authorize step, and `onConflictDoNothing` keeps repeat logins idempotent —
- * which also means SSO never demotes an existing owner.
+ * authorize step. The membership write itself lives in `joinSsoWorkspace` so it
+ * lands in the audit log; the actor is the signing-in user, matching how
+ * invitation acceptance attributes its own membership row.
  */
 export async function joinWorkspaceViaSso(args: {
   organizationId: string;
@@ -60,14 +61,10 @@ export async function joinWorkspaceViaSso(args: {
     args.organizationId,
   ).catch(() => null);
 
-  if (!workspace || !workspace.ssoEnabled) return;
+  if (!workspace) return;
 
-  await db
-    .insert(usersToWorkspaces)
-    .values({
-      userId: args.userId,
-      workspaceId: workspace.id,
-      role: "member",
-    })
-    .onConflictDoNothing();
+  await joinSsoWorkspace({
+    ctx: { workspace, actor: { type: "user", userId: args.userId } },
+    input: { userId: args.userId },
+  });
 }

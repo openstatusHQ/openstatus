@@ -102,11 +102,15 @@ export type WorkspaceFixture = {
  * that share workspace 1 race each other over `audit_log`, plan quotas and
  * row counts once test files run in parallel — a private workspace makes those
  * assertions deterministic.
+ *
+ * `overrides` reaches the workspace row directly — pass `limits` to model a
+ * purchased add-on, which is stored as an override on top of the plan defaults.
  */
 export async function createWorkspaceFixture(
   plan: "team" | "free" | "scale" = "team",
+  overrides: { limits?: string; ssoEnabled?: boolean } = {},
 ): Promise<WorkspaceFixture> {
-  const { workspace, user } = await createTestWorkspace({ plan });
+  const { workspace, user } = await createTestWorkspace({ plan, ...overrides });
   return {
     workspace: selectWorkspaceSchema.parse(workspace),
     userId: user.id,

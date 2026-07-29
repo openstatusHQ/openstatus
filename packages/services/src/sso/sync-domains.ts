@@ -180,11 +180,10 @@ export async function removeSsoDomain(args: {
       .where(eq(workspaceSsoDomain.id, existing.id));
 
     await emitAudit(tx, scopedCtx, {
-      action: "workspace_sso.update",
+      action: "workspace_sso.delete",
       entityType: "workspace_sso",
       entityId: ws.id,
       before: existing,
-      after: { ...existing, deleted: true },
       metadata: { domain: input.domain },
     });
   });

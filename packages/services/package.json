@@ -149,7 +149,7 @@
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@workos-inc/node": "^10.8.0",
+    "@workos-inc/node": "catalog:",
     "effect": "catalog:",
     "zod": "catalog:"
   },

@@ -16,6 +16,8 @@ allowBuilds:
   protobufjs: true
   sharp: true
 autoInstallPeers: true
+overrides:
+  next: 16.2.11
 catalog:
   "@ai-sdk/anthropic": 1.2.12
   "@ai-sdk/openai-compatible": 2.0.54
@@ -121,6 +123,7 @@ catalog:
   "@upstash/qstash": 2.11.0
   "@upstash/redis": 1.38.0
   "@vercel/blob": 0.23.4
+  "@workos-inc/node": 10.8.0
   ai: 6.0.188
   astro: 5.18.1
   bcryptjs: 3.0.3
@@ -199,6 +202,7 @@ catalog:
   tailwindcss: 4.3.0
   tailwindcss-animate: 1.0.7
   tsup: 7.2.0
+  turbo: 2.9.14
   tw-animate-css: 1.4.0
   typescript: 5.9.3
   unified: 11.0.5
@@ -206,8 +210,3 @@ catalog:
   validator: 13.15.35
   vaul: 1.1.2
   zod: 4.1.13
-
-# next 16.2.6 has critical CVEs; force transitive copies (react-email preview)
-# onto the patched release too
-overrides:
-  next: 16.2.11

@@ -59,7 +59,7 @@ export const limitsSchema = z.object({
    */
   members: z.literal("Unlimited").or(z.number()).prefault(1),
   "audit-log": z.boolean().prefault(false),
-  sso: z.boolean().prefault(false),
+  sso: z.boolean().prefault(false), // add-on but required in limits
 
   /**
    * Other limits
@@ -94,6 +94,7 @@ export const addons = [
   "white-label",
   "custom-theme",
   "status-pages",
+  "sso",
 ] as const satisfies Partial<keyof Limits>[];
 
 export const addonsSchema = z.partialRecord(

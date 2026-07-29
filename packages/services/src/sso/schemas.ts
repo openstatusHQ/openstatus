@@ -35,3 +35,8 @@ export const RemoveSsoDomainInput = z.object({
   domain: domainSchema,
 });
 export type RemoveSsoDomainInput = z.infer<typeof RemoveSsoDomainInput>;
+
+export const JoinSsoWorkspaceInput = z.object({
+  userId: z.number().int(),
+});
+export type JoinSsoWorkspaceInput = z.infer<typeof JoinSsoWorkspaceInput>;

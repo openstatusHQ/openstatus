@@ -1,5 +1,9 @@
-import { eq } from "@openstatus/db";
-import { workspace, workspaceSsoDomain } from "@openstatus/db/src/schema";
+import { and, eq } from "@openstatus/db";
+import {
+  usersToWorkspaces,
+  workspace,
+  workspaceSsoDomain,
+} from "@openstatus/db/src/schema";
 import {
   addUserToWorkspace,
   createUser,
@@ -13,13 +17,16 @@ import {
   makeApiKeyCtx,
   makeSystemCtx,
   makeUserCtx,
+  readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, PreconditionFailedError } from "../../errors";
+import type { Workspace } from "../../types";
 import type { WorkOSClient } from "../client";
 import { disableSso } from "../disable";
 import { enableSso } from "../enable";
+import { joinSsoWorkspace } from "../join";
 import {
   getWorkspaceByVerifiedSsoDomain,
   isEmailAllowedForWorkspace,
@@ -34,6 +41,7 @@ import {
 
 let scaleCtx: ServiceContext;
 let freeCtx: ServiceContext;
+let unpurchasedScale: { workspace: Workspace; userId: number };
 let SCALE_OWNER_ID: number;
 let SCALE_MEMBER_ID: number;
 
@@ -63,7 +71,11 @@ function fakeWorkOS(
 }
 
 beforeAll(async () => {
-  const scale = await createWorkspaceFixture("scale");
+  // SSO is an add-on on every paid plan, not a bundled plan feature — the
+  // purchased flag lives as a workspace-level override on top of the plan.
+  const scale = await createWorkspaceFixture("scale", {
+    limits: JSON.stringify({ sso: true }),
+  });
   SCALE_OWNER_ID = scale.userId;
   scaleCtx = makeUserCtx(scale.workspace, { userId: SCALE_OWNER_ID });
 
@@ -74,7 +86,18 @@ beforeAll(async () => {
   freeCtx = makeUserCtx((await createWorkspaceFixture("free")).workspace, {
     userId: (await createUser()).id,
   });
+
+  unpurchasedScale = await createWorkspaceFixture("scale");
 });
+
+/** An owner-linked api key that only holds `read` — every write verb must refuse it. */
+function readOnlyCtx(): ServiceContext {
+  return makeApiKeyCtx(scaleCtx.workspace, {
+    keyId: "k",
+    userId: SCALE_OWNER_ID,
+    scopes: ["read"],
+  });
+}
 
 describe("enableSso", () => {
   test("owner enables SSO on scale, org persisted, audit row written", async () => {
@@ -103,10 +126,21 @@ describe("enableSso", () => {
     });
   });
 
-  test("rejects a plan without the sso limit", async () => {
+  test("rejects a workspace without the sso add-on", async () => {
     await withTestTransaction(async (tx) => {
       await expect(
         enableSso({ ctx: { ...freeCtx, db: tx, workos: fakeWorkOS() } }),
+      ).rejects.toBeInstanceOf(PreconditionFailedError);
+    });
+  });
+
+  test("rejects a paid plan that has not purchased the add-on", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeUserCtx(unpurchasedScale.workspace, {
+        userId: unpurchasedScale.userId,
+      });
+      await expect(
+        enableSso({ ctx: { ...ctx, db: tx, workos: fakeWorkOS() } }),
       ).rejects.toBeInstanceOf(PreconditionFailedError);
     });
   });
@@ -124,13 +158,8 @@ describe("enableSso", () => {
 
   test("rejects read-only actor", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = makeApiKeyCtx(scaleCtx.workspace, {
-        keyId: "k",
-        userId: SCALE_OWNER_ID,
-        scopes: ["read"],
-      });
       await expect(
-        enableSso({ ctx: { ...ctx, db: tx, workos: fakeWorkOS() } }),
+        enableSso({ ctx: { ...readOnlyCtx(), db: tx, workos: fakeWorkOS() } }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
@@ -187,6 +216,23 @@ describe("disableSso", () => {
       expect(row?.ssoEnabled).toBe(false);
     });
   });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      await enableSso({ ctx: { ...scaleCtx, db: tx, workos: fakeWorkOS() } });
+
+      await expect(
+        disableSso({ ctx: { ...readOnlyCtx(), db: tx } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+
+      const row = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, scaleCtx.workspace.id))
+        .get();
+      expect(row?.ssoEnabled).toBe(true);
+    });
+  });
 });
 
 describe("createSsoPortalLink", () => {
@@ -198,6 +244,19 @@ describe("createSsoPortalLink", () => {
           input: { intent: "sso", returnUrl: "https://app.test/settings/sso" },
         }),
       ).rejects.toBeInstanceOf(PreconditionFailedError);
+    });
+  });
+
+  // A portal link is a capability to reconfigure the IdP, so it counts as a
+  // write even though the verb itself touches no row.
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        createSsoPortalLink({
+          ctx: { ...readOnlyCtx(), db: tx, workos: fakeWorkOS() },
+          input: { intent: "sso", returnUrl: "https://app.test/settings/sso" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });
@@ -265,6 +324,71 @@ describe("syncSsoDomain", () => {
         .where(eq(workspaceSsoDomain.workspaceId, scaleCtx.workspace.id))
         .all();
       expect(rows.length).toBe(0);
+
+      const [audited] = await readAuditLog({
+        workspaceId: scaleCtx.workspace.id,
+        entityType: "workspace_sso",
+        entityId: scaleCtx.workspace.id,
+        db: tx,
+      });
+      expect(audited?.action).toBe("workspace_sso.delete");
+      expect(audited?.metadata).toEqual({ domain: "acme.test" });
+      expect(audited?.after).toBe(null);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      await enableSso({ ctx: { ...scaleCtx, db: tx, workos: fakeWorkOS() } });
+
+      await expect(
+        syncSsoDomain({
+          ctx: { ...readOnlyCtx(), db: tx },
+          input: {
+            organizationId: "org_test_1",
+            domain: "acme.test",
+            verifiedAt: new Date(),
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+
+      const rows = await tx
+        .select()
+        .from(workspaceSsoDomain)
+        .where(eq(workspaceSsoDomain.workspaceId, scaleCtx.workspace.id))
+        .all();
+      expect(rows.length).toBe(0);
+    });
+  });
+
+  test("removeSsoDomain rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      await enableSso({ ctx: { ...scaleCtx, db: tx, workos: fakeWorkOS() } });
+      const systemCtx = makeSystemCtx(scaleCtx.workspace, {
+        job: "workos-webhook",
+      });
+      await syncSsoDomain({
+        ctx: { ...systemCtx, db: tx },
+        input: {
+          organizationId: "org_test_1",
+          domain: "acme.test",
+          verifiedAt: new Date(),
+        },
+      });
+
+      await expect(
+        removeSsoDomain({
+          ctx: { ...readOnlyCtx(), db: tx },
+          input: { organizationId: "org_test_1", domain: "acme.test" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+
+      const rows = await tx
+        .select()
+        .from(workspaceSsoDomain)
+        .where(eq(workspaceSsoDomain.workspaceId, scaleCtx.workspace.id))
+        .all();
+      expect(rows.length).toBe(1);
     });
   });
 });
@@ -430,6 +554,96 @@ describe("domain lookup", () => {
 
       const found = await getWorkspaceByVerifiedSsoDomain("jane@acme.test", tx);
       expect(found).toBe(null);
+    });
+  });
+});
+
+describe("joinSsoWorkspace", () => {
+  function enabledCtx(base: ServiceContext): ServiceContext {
+    return { ...base, workspace: { ...base.workspace, ssoEnabled: true } };
+  }
+
+  test("provisions the member and audits the join", async () => {
+    await withTestTransaction(async (tx) => {
+      const newcomer = await createUser();
+      const ctx = enabledCtx(
+        makeUserCtx(scaleCtx.workspace, { userId: newcomer.id }),
+      );
+
+      await joinSsoWorkspace({
+        ctx: { ...ctx, db: tx },
+        input: { userId: newcomer.id },
+      });
+
+      const membership = await tx.query.usersToWorkspaces.findFirst({
+        where: and(
+          eq(usersToWorkspaces.userId, newcomer.id),
+          eq(usersToWorkspaces.workspaceId, scaleCtx.workspace.id),
+        ),
+      });
+      expect(membership?.role).toBe("member");
+
+      await expectAuditRow({
+        workspaceId: scaleCtx.workspace.id,
+        action: "member.create",
+        entityType: "member",
+        entityId: newcomer.id,
+        actorType: "user",
+        db: tx,
+      });
+    });
+  });
+
+  test("a repeat login keeps the existing role and emits no second row", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = enabledCtx(
+        makeUserCtx(scaleCtx.workspace, { userId: SCALE_OWNER_ID }),
+      );
+
+      await joinSsoWorkspace({
+        ctx: { ...ctx, db: tx },
+        input: { userId: SCALE_OWNER_ID },
+      });
+
+      const membership = await tx.query.usersToWorkspaces.findFirst({
+        where: and(
+          eq(usersToWorkspaces.userId, SCALE_OWNER_ID),
+          eq(usersToWorkspaces.workspaceId, scaleCtx.workspace.id),
+        ),
+      });
+      expect(membership?.role).toBe("owner");
+
+      const rows = await readAuditLog({
+        workspaceId: scaleCtx.workspace.id,
+        entityType: "member",
+        entityId: SCALE_OWNER_ID,
+        db: tx,
+      });
+      expect(rows.length).toBe(0);
+    });
+  });
+
+  test("rejects a workspace with sso switched off", async () => {
+    await withTestTransaction(async (tx) => {
+      const newcomer = await createUser();
+      await expect(
+        joinSsoWorkspace({
+          ctx: { ...scaleCtx, db: tx },
+          input: { userId: newcomer.id },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = enabledCtx(readOnlyCtx());
+      await expect(
+        joinSsoWorkspace({
+          ctx: { ...ctx, db: tx },
+          input: { userId: SCALE_MEMBER_ID },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

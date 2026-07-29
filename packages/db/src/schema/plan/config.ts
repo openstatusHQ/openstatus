@@ -122,6 +122,15 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
           EUR: 20,
         },
       },
+      sso: {
+        title: "SAML Single Sign-On",
+        description:
+          "Let your team sign in through your identity provider with SAML SSO.",
+        price: {
+          USD: 250,
+          EUR: 250,
+        },
+      },
     },
     limits: {
       version: undefined,
@@ -208,6 +217,15 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
           EUR: 20,
         },
       },
+      sso: {
+        title: "SAML Single Sign-On",
+        description:
+          "Let your team sign in through your identity provider with SAML SSO.",
+        price: {
+          USD: 250,
+          EUR: 250,
+        },
+      },
     },
     limits: {
       version: undefined,
@@ -267,6 +285,15 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
           EUR: 20,
         },
       },
+      sso: {
+        title: "SAML Single Sign-On",
+        description:
+          "Let your team sign in through your identity provider with SAML SSO.",
+        price: {
+          USD: 250,
+          EUR: 250,
+        },
+      },
     },
     limits: {
       version: undefined,
@@ -303,7 +330,7 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       "notification-channels": 20,
       members: "Unlimited",
       "audit-log": true,
-      sso: true,
+      sso: false,
       regions: [...AVAILABLE_REGIONS],
       "private-locations": true,
       "slack-agent": true,

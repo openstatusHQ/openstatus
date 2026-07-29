@@ -201,6 +201,18 @@ export const FEATURES = [
       },
     },
   },
+  {
+    // TODO: replace with the real Stripe price ids once the $250/mo SSO price exists
+    feature: "sso",
+    price: {
+      monthly: {
+        priceIds: {
+          test: "price_1TySGYBXJcTfzsyJQFVFJi6N",
+          production: "price_1TySGYBXJcTfzsyJQFVFJi6N",
+        },
+      },
+    },
+  },
 ] satisfies Array<{
   feature: keyof Addons;
   price: {

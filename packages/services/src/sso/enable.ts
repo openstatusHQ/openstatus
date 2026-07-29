@@ -16,7 +16,7 @@ export async function enableSso(args: {
 
   if (!ctx.workspace.limits.sso) {
     throw new PreconditionFailedError(
-      "SSO is not available on your current plan",
+      "SSO has not been added to this workspace",
     );
   }
 

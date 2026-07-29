@@ -7,6 +7,7 @@ export { enableSso } from "./enable";
 export { getSsoConfig } from "./get";
 export type { SsoConfig, SsoConnectionState } from "./get";
 export { getWorkspaceByWorkosOrganization } from "./internal";
+export { joinSsoWorkspace } from "./join";
 export {
   getWorkspaceByVerifiedSsoDomain,
   isEmailAllowedForWorkspace,
@@ -21,6 +22,7 @@ export {
 export {
   CreateSsoPortalLinkInput,
   DisableSsoInput,
+  JoinSsoWorkspaceInput,
   PortalIntent,
   RemoveSsoDomainInput,
   SyncSsoDomainInput,
