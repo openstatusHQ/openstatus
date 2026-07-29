@@ -123,7 +123,7 @@ async function getRecentProbeStatus(
     for (const check of result.data) {
       // Determine the region/location identifier
       // Cloud monitors use 'region', private locations might use 'locationId' or 'region'
-      const regionId = check.region || check.locationId || "default";
+      const regionId = check.region || (check as any).locationId || "default";
       
       // Determine status from the check
       let status: "success" | "degraded" | "error" | null = null;
