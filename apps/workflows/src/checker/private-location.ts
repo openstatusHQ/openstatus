@@ -27,6 +27,44 @@ async function findOpenIncident(monitorId: number) {
     .get();
 }
 
+/**
+ * Resolves an open incident by setting resolvedAt and autoResolved flag.
+ */
+async function resolveIncident(params: {
+  monitorId: string;
+  cronTimestamp: number;
+}) {
+  const { monitorId, cronTimestamp } = params;
+  const incident = await findOpenIncident(Number(monitorId));
+
+  if (!incident || incident.resolvedAt) {
+    return null;
+  }
+
+  logger.info("Recovering incident", {
+    incident_id: incident.id,
+    monitor_id: monitorId,
+  });
+
+  await db
+    .update(schema.incidentTable)
+    .set({
+      resolvedAt: new Date(cronTimestamp),
+      autoResolved: true,
+    })
+    .where(eq(schema.incidentTable.id, incident.id))
+    .run();
+
+  await checkerAudit.publishAuditLog({
+    id: `monitor:${monitorId}`,
+    action: "incident.resolved",
+    targets: [{ id: monitorId, type: "monitor" }],
+    metadata: { cronTimestamp, incidentId: incident.id },
+  });
+
+  return incident;
+}
+
 const payloadSchema = z.object({
   monitorId: z.string(),
   privateLocationId: z.string(),
@@ -219,6 +257,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
     switch (status) {
       case "error":
         // Create incident only if private-only monitor AND threshold met
+        let incident = null;
         if (shouldTriggerIncident) {
           try {
             const existingIncident = await findOpenIncident(monitorIdNumber);
@@ -233,6 +272,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
                 .returning();
 
               if (newIncident?.id) {
+                incident = newIncident;
                 await checkerAudit.publishAuditLog({
                   id: `monitor:${monitorId}`,
                   action: "incident.created",
@@ -247,6 +287,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
                 });
               }
             } else {
+              incident = existingIncident;
               logger.info("Already in incident", {
                 incident_id: existingIncident.id,
               });
@@ -280,9 +321,16 @@ export async function updateStatusPrivate(c: Context<Env>) {
           cronTimestamp,
           regions,
           latency,
+          incidentId: incident?.id,
         });
         break;
       case "degraded":
+        // Resolve incident if transitioning from error
+        let incident = null;
+        if (shouldTriggerIncident && monitor.status === "error") {
+          incident = await resolveIncident({ monitorId, cronTimestamp });
+        }
+
         await checkerAudit.publishAuditLog({
           id: `monitor:${monitorId}`,
           action: "monitor.degraded",
@@ -302,10 +350,12 @@ export async function updateStatusPrivate(c: Context<Env>) {
           cronTimestamp,
           regions,
           latency,
+          incidentId: incident?.id,
         });
         break;
       case "active":
         // Resolve incident only if private-only monitor AND threshold met
+        let incident = null;
         if (shouldTriggerIncident) {
           try {
             const existingIncident = await findOpenIncident(monitorIdNumber);
@@ -319,6 +369,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
                 .where(eq(schema.incidentTable.id, existingIncident.id))
                 .run();
 
+              incident = existingIncident;
               await checkerAudit.publishAuditLog({
                 id: `monitor:${monitorId}`,
                 action: "incident.resolved",
@@ -364,6 +415,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
           cronTimestamp,
           regions,
           latency,
+          incidentId: incident?.id,
         });
         break;
     }
