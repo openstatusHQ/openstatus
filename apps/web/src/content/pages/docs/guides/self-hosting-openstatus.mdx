@@ -312,8 +312,8 @@ Self-hosted deployments need external cron scheduling for background tasks. With
       cron:
         build: ./cron
         container_name: openstatus-cron
-        environment:
-          - CRON_SECRET=${CRON_SECRET}
+        env_file:
+          - .env.docker
         networks:
           - openstatus
         restart: unless-stopped
