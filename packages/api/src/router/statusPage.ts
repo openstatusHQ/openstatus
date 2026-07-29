@@ -522,9 +522,9 @@ export const statusPageRouter = createTRPCRouter({
 
       // Build monitors array for backward compatibility
       const monitors = components
-        .filter((c) => c.monitor)
+        .filter((c): c is typeof c & { monitor: NonNullable<typeof c.monitor> } => c.monitor !== null && c.monitor !== undefined)
         .map((c) => ({
-          ...c.monitor!,
+          ...c.monitor,
           status: c.status,
           events: c.events,
           monitorGroupId: c.groupId,
