@@ -301,8 +301,8 @@ export const statusPageRouter = createTRPCRouter({
               ? "info"
               : "success");
         } else {
-          // Monitor: incidents, reports, and maintenances affect status
-          status =
+          // Monitor: incidents, reports, maintenances, AND probe data affect status
+          const eventBasedStatus =
             events.some((e) => e.type === "incident" && !e.to) &&
             barType !== "manual"
               ? "error"
@@ -316,6 +316,16 @@ export const statusPageRouter = createTRPCRouter({
                 )
                   ? "info"
                   : "success"));
+
+          // Merge probe-based status with event-based status (worst wins)
+          const probeStatus = c.monitor ? probeStatusMap.get(c.monitor.id.toString()) : undefined;
+          if (probeStatus === "error" || eventBasedStatus === "error") {
+            status = "error";
+          } else if (probeStatus === "degraded" || eventBasedStatus === "degraded") {
+            status = "degraded";
+          } else {
+            status = eventBasedStatus;
+          }
         }
 
         return {
