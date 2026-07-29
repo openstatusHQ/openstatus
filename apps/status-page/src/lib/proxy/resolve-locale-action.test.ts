@@ -128,4 +128,3 @@ describe("resolveLocaleAction", () => {
     expect(action).toBeNull();
   });
 });
-
