@@ -47,6 +47,7 @@ import {
   getStatusProcedure,
   getUptimeProcedure,
 } from "./tinybird";
+import { tb } from "../tb";
 
 // NOTE: publicProcedure is used to get the status page
 // TODO: improve performance of SQL query (make a single query with joins)
@@ -123,7 +124,7 @@ async function getRecentProbeStatus(
     for (const check of result.data) {
       // Determine the region/location identifier
       // Cloud monitors use 'region', private locations might use 'locationId' or 'region'
-      const regionId = check.region || (check as any).locationId || "default";
+      const regionId = check.region || ("locationId" in check ? check.locationId : null) || "default";
       
       // Determine status from the check
       let status: "success" | "degraded" | "error" | null = null;
@@ -518,6 +519,18 @@ export const statusPageRouter = createTRPCRouter({
                 : c,
             )
           : pageComponents;
+
+      // Build monitors array for backward compatibility
+      const monitors = components
+        .filter((c) => c.monitor)
+        .map((c) => ({
+          ...c.monitor!,
+          status: c.status,
+          events: c.events,
+          monitorGroupId: c.groupId,
+          order: c.order,
+          groupOrder: c.groupOrder,
+        }));
 
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
