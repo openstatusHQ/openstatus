@@ -50,6 +50,7 @@ function buildInput(overrides: Partial<ComposeInput> = {}): ComposeInput {
     pathname: "/acme/en",
     search: "",
     isSelfHosted: false,
+    requestUrl: "http://localhost:3000/acme/en",
     redirectBaseUrl: "http://localhost:3000/acme/en",
     origin: "http://localhost:3000",
     cookiePassword: undefined,

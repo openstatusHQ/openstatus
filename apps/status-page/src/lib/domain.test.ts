@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, test } from "@std/testing/bdd";
+import { expect } from "@std/expect";
 
 import { isSaasSubdomain } from "./domain";
 
