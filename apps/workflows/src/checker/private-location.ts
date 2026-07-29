@@ -165,7 +165,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
     const regions = [attachment.name];
 
     // Check if monitor has cloud regions - only update status for private-only monitors
-    const hasCloudRegions = monitor.regions && monitor.regions.trim().length > 0;
+    const hasCloudRegions =
+      monitor.regions && monitor.regions.trim().length > 0;
 
     switch (status) {
       case "error":
