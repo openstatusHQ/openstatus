@@ -293,11 +293,23 @@ export async function updateStatusPrivate(c: Context<Env>) {
               });
             }
           } catch (error) {
-            logger.error("Failed to create incident", {
-              monitor_id: monitorId,
-              error_message:
-                error instanceof Error ? error.message : String(error),
-            });
+            // Check if this is a constraint violation (race condition)
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (errorMessage.includes("UNIQUE constraint") || errorMessage.includes("unique")) {
+              // Another request created the incident concurrently, fetch it
+              logger.info("Concurrent incident creation detected, fetching existing", {
+                monitor_id: monitorId,
+              });
+              const existingIncident = await findOpenIncident(monitorIdNumber);
+              if (existingIncident) {
+                incident = existingIncident;
+              }
+            } else {
+              logger.error("Failed to create incident", {
+                monitor_id: monitorId,
+                error_message: errorMessage,
+              });
+            }
           }
         }
 
