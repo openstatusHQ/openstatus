@@ -1,5 +1,6 @@
 "use client";
 
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { Check, Shield } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -101,6 +102,9 @@ export default function Page() {
   }
 
   const allowed = workspace.limits.sso;
+  // SSO is a paid add-on on every plan, never bundled — the free plan carries no
+  // addons at all, so those workspaces have to move up a plan before buying it.
+  const ssoAddon = allPlans[workspace.plan].addons.sso;
 
   async function openPortal(intent: "sso" | "domain_verification") {
     const result = await portalLinkMutation.mutateAsync({
@@ -131,17 +135,21 @@ export default function Page() {
           <FormCardGroup>
             <FormCard>
               <FormCardHeader>
-                <FormCardTitle>Available on Scale</FormCardTitle>
+                <FormCardTitle>Available as an add-on</FormCardTitle>
                 <FormCardDescription>
-                  SAML single sign-on is included with the Scale plan.
+                  {ssoAddon
+                    ? "SAML single sign-on is a paid add-on for your plan."
+                    : "SAML single sign-on is a paid add-on, available on any paid plan."}
                 </FormCardDescription>
               </FormCardHeader>
               <FormCardFooter>
                 <FormCardFooterInfo>
-                  Upgrade to connect Okta, Entra ID, or any SAML provider.
+                  {ssoAddon
+                    ? "Add it to connect Okta, Entra ID, or any SAML provider."
+                    : "Upgrade to connect Okta, Entra ID, or any SAML provider."}
                 </FormCardFooterInfo>
                 <Button size="sm" onClick={() => setUpgradeOpen(true)}>
-                  Upgrade
+                  {ssoAddon ? "Add SSO" : "Upgrade"}
                 </Button>
               </FormCardFooter>
             </FormCard>

@@ -50,6 +50,11 @@
     }
   },
   "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:turbo@2.9.14"
+      ]
+    },
     "members": {
       "apps/server": {
         "packageJson": {

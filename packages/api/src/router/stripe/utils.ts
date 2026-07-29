@@ -202,7 +202,6 @@ export const FEATURES = [
     },
   },
   {
-    // TODO: replace with the real Stripe price ids once the $250/mo SSO price exists
     feature: "sso",
     price: {
       monthly: {

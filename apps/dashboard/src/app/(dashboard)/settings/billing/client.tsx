@@ -228,6 +228,14 @@ export function Client() {
                     workspace={workspace}
                   />
                 ) : null}
+                {planAddons.sso ? (
+                  <BillingAddons
+                    label={planAddons.sso.title}
+                    description={planAddons.sso.description}
+                    addon="sso"
+                    workspace={workspace}
+                  />
+                ) : null}
                 {Object.keys(planAddons).length === 0 ? (
                   <EmptyStateContainer>
                     <EmptyStateTitle>No add-ons available</EmptyStateTitle>

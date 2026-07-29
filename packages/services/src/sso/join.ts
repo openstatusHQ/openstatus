@@ -1,9 +1,10 @@
-import { usersToWorkspaces } from "@openstatus/db/src/schema";
+import { eq } from "@openstatus/db";
+import { usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { ForbiddenError } from "../errors";
+import { ForbiddenError, NotFoundError } from "../errors";
 import { memberRowSnapshot } from "../member/internal";
 import { JoinSsoWorkspaceInput } from "./schemas";
 
@@ -28,11 +29,20 @@ export async function joinSsoWorkspace(args: {
   requireScope(ctx, "write");
   const input = JoinSsoWorkspaceInput.parse(args.input);
 
-  if (!ctx.workspace.ssoEnabled) {
-    throw new ForbiddenError("SSO is not enabled for this workspace");
-  }
-
   await withTransaction(ctx, async (tx) => {
+    // Read the switch in the same transaction as the write: `ctx.workspace` is
+    // a snapshot taken before the IdP round-trip, so a sign-in overlapping a
+    // `disableSso` would otherwise join on stale configuration.
+    const current = await tx
+      .select({ ssoEnabled: workspace.ssoEnabled })
+      .from(workspace)
+      .where(eq(workspace.id, ctx.workspace.id))
+      .get();
+    if (!current) throw new NotFoundError("workspace", ctx.workspace.id);
+    if (!current.ssoEnabled) {
+      throw new ForbiddenError("SSO is not enabled for this workspace");
+    }
+
     const [created] = await tx
       .insert(usersToWorkspaces)
       .values({

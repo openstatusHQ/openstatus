@@ -20,7 +20,7 @@ import {
   readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { ServiceContext } from "../../context";
+import type { DB, ServiceContext } from "../../context";
 import { ForbiddenError, PreconditionFailedError } from "../../errors";
 import type { Workspace } from "../../types";
 import type { WorkOSClient } from "../client";
@@ -559,16 +559,22 @@ describe("domain lookup", () => {
 });
 
 describe("joinSsoWorkspace", () => {
-  function enabledCtx(base: ServiceContext): ServiceContext {
+  /** Flip the switch on the row itself — the verb reads the DB, not the ctx snapshot. */
+  function enableSsoOn(tx: DB) {
+    return enableSso({ ctx: { ...scaleCtx, db: tx, workos: fakeWorkOS() } });
+  }
+
+  function staleEnabledCtx(base: ServiceContext): ServiceContext {
     return { ...base, workspace: { ...base.workspace, ssoEnabled: true } };
   }
 
   test("provisions the member and audits the join", async () => {
     await withTestTransaction(async (tx) => {
+      // `createUser` writes on the default db — do it before the test tx takes
+      // a write lock, or the two deadlock.
       const newcomer = await createUser();
-      const ctx = enabledCtx(
-        makeUserCtx(scaleCtx.workspace, { userId: newcomer.id }),
-      );
+      await enableSsoOn(tx);
+      const ctx = makeUserCtx(scaleCtx.workspace, { userId: newcomer.id });
 
       await joinSsoWorkspace({
         ctx: { ...ctx, db: tx },
@@ -596,12 +602,10 @@ describe("joinSsoWorkspace", () => {
 
   test("a repeat login keeps the existing role and emits no second row", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = enabledCtx(
-        makeUserCtx(scaleCtx.workspace, { userId: SCALE_OWNER_ID }),
-      );
+      await enableSsoOn(tx);
 
       await joinSsoWorkspace({
-        ctx: { ...ctx, db: tx },
+        ctx: { ...scaleCtx, db: tx },
         input: { userId: SCALE_OWNER_ID },
       });
 
@@ -635,12 +639,40 @@ describe("joinSsoWorkspace", () => {
     });
   });
 
-  test("rejects read-only actor", async () => {
+  test("a sign-in that overlaps disableSso does not provision", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = enabledCtx(readOnlyCtx());
+      const newcomer = await createUser();
+      await enableSsoOn(tx);
+      // The ctx snapshot was taken while SSO was on; the owner turns it off
+      // before the callback lands.
+      const ctx = staleEnabledCtx(
+        makeUserCtx(scaleCtx.workspace, { userId: newcomer.id }),
+      );
+      await disableSso({ ctx: { ...scaleCtx, db: tx } });
+
       await expect(
         joinSsoWorkspace({
           ctx: { ...ctx, db: tx },
+          input: { userId: newcomer.id },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+
+      const membership = await tx.query.usersToWorkspaces.findFirst({
+        where: and(
+          eq(usersToWorkspaces.userId, newcomer.id),
+          eq(usersToWorkspaces.workspaceId, scaleCtx.workspace.id),
+        ),
+      });
+      expect(membership).toBe(undefined);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      await enableSsoOn(tx);
+      await expect(
+        joinSsoWorkspace({
+          ctx: { ...readOnlyCtx(), db: tx },
           input: { userId: SCALE_MEMBER_ID },
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
