@@ -68,7 +68,7 @@ func (h *privateLocationHandler) sendEventAndUpdateLastSeen(ctx context.Context,
 		}
 	}
 
-	_, dbErr := h.db.NamedExec("UPDATE private_location SET last_seen_at = :last_seen_at WHERE id = :id", map[string]any{
+	_, dbErr := h.db.NamedExec("UPDATE private_location SET last_seen_at = :last_seen_at, status = 'active' WHERE id = :id", map[string]any{
 		"last_seen_at": time.Now().Unix(),
 		"id":           regionID,
 	})
