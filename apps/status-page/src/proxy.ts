@@ -10,9 +10,8 @@ import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override"
 import { composePageAction } from "./lib/proxy/compose-page-action";
 import { detectMarkdown } from "./lib/proxy/detect-markdown";
 import { sanitizeRedirectParam } from "./lib/proxy/sanitize-redirect-param";
+import { isSelfHosted } from "./lib/domain";
 import { resolveRoute } from "./lib/resolve-route";
-
-const isSelfHosted = process.env.SELF_HOST === "true";
 
 export default async function middleware(req: NextRequest) {
   // Get auth session for access control checks
@@ -77,7 +76,7 @@ export default async function middleware(req: NextRequest) {
   // When accessing via custom domain, route.prefix is set to the custom domain
   // instead of the slug, breaking all downstream rewrite logic
   if (
-    isSelfHosted &&
+    isSelfHosted() &&
     _page.customDomain &&
     route.prefix === _page.customDomain
   ) {
@@ -92,13 +91,7 @@ export default async function middleware(req: NextRequest) {
         slugPrefix + correctedPath.slice(customDomainPrefix.length);
     }
 
-    console.log("[proxy] self-hosted custom domain correction", {
-      originalPrefix: route.prefix,
-      correctedPrefix: _page.slug,
-      originalPath: route.rewritePath,
-      correctedPath,
-      customDomain: _page.customDomain,
-    });
+
 
     route = {
       ...route,
@@ -115,7 +108,7 @@ export default async function middleware(req: NextRequest) {
   // - Rewrites (internal): Use the internal origin so Next.js doesn't make external requests
   let redirectBaseUrl = req.url;
   let redirectOrigin = req.nextUrl.origin;
-  if (isSelfHosted && _page.customDomain && host) {
+  if (isSelfHosted() && _page.customDomain && host) {
     const protocol = req.nextUrl.protocol || "https:";
     const parsedUrl = new URL(req.url);
     redirectBaseUrl = `${protocol}//${host}${parsedUrl.pathname}${parsedUrl.search}`;
@@ -129,7 +122,7 @@ export default async function middleware(req: NextRequest) {
     urlHost: url.host,
     pathname: url.pathname,
     search: url.search,
-    isSelfHosted,
+    isSelfHosted: isSelfHosted(),
     requestUrl: req.url, // Keep internal origin for rewrites
     redirectBaseUrl, // Use custom domain for redirects
     origin: redirectOrigin, // Use custom domain for redirects
