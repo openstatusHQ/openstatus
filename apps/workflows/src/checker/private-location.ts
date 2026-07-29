@@ -156,6 +156,18 @@ export async function updateStatusPrivate(c: Context<Env>) {
 
     switch (status) {
       case "error":
+        // Update monitor status if transitioning to error
+        if (monitor.status !== "error") {
+          logger.info("Monitor status changed to error", {
+            monitor_id: monitor.id,
+            workspace_id: monitor.workspaceId,
+          });
+          await db
+            .update(schema.monitor)
+            .set({ status: "error" })
+            .where(eq(schema.monitor.id, monitorIdNumber));
+        }
+
         await checkerAudit.publishAuditLog({
           id: `monitor:${monitorId}`,
           action: "monitor.failed",
@@ -179,6 +191,18 @@ export async function updateStatusPrivate(c: Context<Env>) {
         });
         break;
       case "degraded":
+        // Update monitor status if transitioning to degraded
+        if (monitor.status !== "degraded") {
+          logger.info("Monitor status changed to degraded", {
+            monitor_id: monitor.id,
+            workspace_id: monitor.workspaceId,
+          });
+          await db
+            .update(schema.monitor)
+            .set({ status: "degraded" })
+            .where(eq(schema.monitor.id, monitorIdNumber));
+        }
+
         await checkerAudit.publishAuditLog({
           id: `monitor:${monitorId}`,
           action: "monitor.degraded",
@@ -201,6 +225,18 @@ export async function updateStatusPrivate(c: Context<Env>) {
         });
         break;
       case "active":
+        // Update monitor status if transitioning to active
+        if (monitor.status !== "active") {
+          logger.info("Monitor status changed to active", {
+            monitor_id: monitor.id,
+            workspace_id: monitor.workspaceId,
+          });
+          await db
+            .update(schema.monitor)
+            .set({ status: "active" })
+            .where(eq(schema.monitor.id, monitorIdNumber));
+        }
+
         await checkerAudit.publishAuditLog({
           id: `monitor:${monitorId}`,
           action: "monitor.recovered",
