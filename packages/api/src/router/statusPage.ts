@@ -91,11 +91,20 @@ const gateFieldsSchema = selectPageSchema.pick({
  * Check recent probe status for a monitor using >50% region consensus.
  * A monitor is down/degraded/up if >50% of regions share that status.
  * Bias towards "success" - requires majority to change to error/degraded.
+ * 
+ * For hybrid monitors (with cloud regions), returns null to prevent private
+ * location probe data from overriding cloud-based status.
  */
 async function getRecentProbeStatus(
   monitorId: string,
   jobType: "http" | "tcp" | "icmp" | "udp" | "dns" | "ssl",
+  regions: string,
 ): Promise<"success" | "degraded" | "error" | null> {
+  // Only use probe status for private-only monitors (no cloud regions)
+  const hasCloudRegions = regions && regions.trim().length > 0;
+  if (hasCloudRegions) {
+    return null; // Skip probe status for hybrid monitors
+  }
   try {
     // Query the appropriate Tinybird endpoint
     let procedure;
@@ -274,6 +283,7 @@ export const statusPageRouter = createTRPCRouter({
           const probeStatus = await getRecentProbeStatus(
             monitorId,
             c.monitor.jobType,
+            c.monitor.regions,
           );
           if (probeStatus) {
             probeStatusMap.set(monitorId, probeStatus);
