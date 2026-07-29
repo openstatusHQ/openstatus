@@ -21,6 +21,22 @@ import { triggerNotifications } from "./alerting";
 
 const logger = getLogger(["workflow"]);
 
+/**
+ * Finds an open incident (not resolved) for the given monitor.
+ */
+async function findOpenIncident(monitorId: number) {
+  return db
+    .select()
+    .from(schema.incidentTable)
+    .where(
+      and(
+        eq(schema.incidentTable.monitorId, monitorId),
+        isNull(schema.incidentTable.resolvedAt),
+      ),
+    )
+    .get();
+}
+
 const payloadSchema = z.object({
   monitorId: z.string(),
   privateLocationId: z.string(),
@@ -182,6 +198,43 @@ export async function updateStatusPrivate(c: Context<Env>) {
             .where(eq(schema.monitor.id, monitorIdNumber));
         }
 
+        // Create incident if one doesn't exist (for all monitor types)
+        try {
+          const existingIncident = await findOpenIncident(monitorIdNumber);
+          if (!existingIncident) {
+            const [newIncident] = await db
+              .insert(schema.incidentTable)
+              .values({
+                monitorId: monitorIdNumber,
+                workspaceId: monitor.workspaceId,
+                startedAt: new Date(cronTimestamp),
+              })
+              .returning();
+
+            if (newIncident?.id) {
+              await checkerAudit.publishAuditLog({
+                id: `monitor:${monitorId}`,
+                action: "incident.created",
+                targets: [{ id: monitorId, type: "monitor" }],
+                metadata: { cronTimestamp, incidentId: newIncident.id },
+              });
+              logger.info("Created incident", {
+                incident_id: newIncident.id,
+                monitor_id: monitorId,
+              });
+            }
+          } else {
+            logger.info("Already in incident", {
+              incident_id: existingIncident.id,
+            });
+          }
+        } catch (error) {
+          logger.error("Failed to create incident", {
+            monitor_id: monitorId,
+            error_message: error instanceof Error ? error.message : String(error),
+          });
+        }
+
         await checkerAudit.publishAuditLog({
           id: `monitor:${monitorId}`,
           action: "monitor.failed",
@@ -249,6 +302,41 @@ export async function updateStatusPrivate(c: Context<Env>) {
             .update(schema.monitor)
             .set({ status: "active" })
             .where(eq(schema.monitor.id, monitorIdNumber));
+        }
+
+        // Resolve incident if one exists (for all monitor types)
+        try {
+          const existingIncident = await findOpenIncident(monitorIdNumber);
+          if (existingIncident && !existingIncident.resolvedAt) {
+            await db
+              .update(schema.incidentTable)
+              .set({
+                resolvedAt: new Date(cronTimestamp),
+                autoResolved: true,
+              })
+              .where(eq(schema.incidentTable.id, existingIncident.id))
+              .run();
+
+            await checkerAudit.publishAuditLog({
+              id: `monitor:${monitorId}`,
+              action: "incident.resolved",
+              targets: [{ id: monitorId, type: "monitor" }],
+              metadata: { 
+                cronTimestamp, 
+                incidentId: existingIncident.id,
+                autoResolved: true,
+              },
+            });
+            logger.info("Resolved incident", {
+              incident_id: existingIncident.id,
+              monitor_id: monitorId,
+            });
+          }
+        } catch (error) {
+          logger.error("Failed to resolve incident", {
+            monitor_id: monitorId,
+            error_message: error instanceof Error ? error.message : String(error),
+          });
         }
 
         await checkerAudit.publishAuditLog({
