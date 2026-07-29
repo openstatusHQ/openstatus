@@ -43,7 +43,7 @@ function getChartConfig(
 ): ChartConfig {
   const regions =
     data.length > 0
-      ? Object.keys(data[0]).filter((item) => item !== "timestamp")
+      ? Array.from(new Set(data.flatMap((item) => Object.keys(item)).filter((key) => key !== "timestamp")))
       : [];
 
   return regions
