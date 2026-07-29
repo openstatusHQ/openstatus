@@ -171,7 +171,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
     const regions = [attachment.name];
 
     // Check if monitor has cloud regions
-    const hasCloudRegions = monitor.regions && monitor.regions.trim().length > 0;
+    const hasCloudRegions =
+      monitor.regions && monitor.regions.trim().length > 0;
 
     // Query all private locations for threshold check
     const allLocations = await db
@@ -212,7 +213,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
     // Apply ≥50% threshold (matching cloud checker logic)
     const shouldTriggerIncident =
       !hasCloudRegions &&
-      (affectedLocationCount >= numberOfLocations / 2 || numberOfLocations === 1);
+      (affectedLocationCount >= numberOfLocations / 2 ||
+        numberOfLocations === 1);
 
     switch (status) {
       case "error":
@@ -252,7 +254,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
           } catch (error) {
             logger.error("Failed to create incident", {
               monitor_id: monitorId,
-              error_message: error instanceof Error ? error.message : String(error),
+              error_message:
+                error instanceof Error ? error.message : String(error),
             });
           }
         }
@@ -320,8 +323,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
                 id: `monitor:${monitorId}`,
                 action: "incident.resolved",
                 targets: [{ id: monitorId, type: "monitor" }],
-                metadata: { 
-                  cronTimestamp, 
+                metadata: {
+                  cronTimestamp,
                   incidentId: existingIncident.id,
                   autoResolved: true,
                 },
@@ -336,7 +339,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
           } catch (error) {
             logger.error("Failed to resolve incident", {
               monitor_id: monitorId,
-              error_message: error instanceof Error ? error.message : String(error),
+              error_message:
+                error instanceof Error ? error.message : String(error),
             });
           }
         }
