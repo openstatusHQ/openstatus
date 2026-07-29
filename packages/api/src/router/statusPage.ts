@@ -163,22 +163,17 @@ async function getRecentProbeStatus(
     // >50% means strictly greater than half
     const threshold = total / 2;
     
-    console.log(`[status-page] Monitor ${monitorId}: ${total} regions - error:${counts.error} degraded:${counts.degraded} success:${counts.success} (threshold:${threshold})`);
-    
     // Priority: error > degraded > success (check in order)
     // This ensures if >50% are error, we return error (most severe)
     if (counts.error > threshold) {
-      console.log(`[status-page] Monitor ${monitorId}: Majority ERROR (${counts.error}/${total} > ${threshold})`);
       return "error";
     }
     if (counts.degraded > threshold) {
-      console.log(`[status-page] Monitor ${monitorId}: Majority DEGRADED (${counts.degraded}/${total} > ${threshold})`);
       return "degraded";
     }
     
     // Default to success if no majority (bias towards up)
     // This handles cases like: 1 error, 1 success (tie) → success
-    console.log(`[status-page] Monitor ${monitorId}: No majority or tie - defaulting to SUCCESS (bias towards up)`);
     return "success";
   } catch (err) {
     // Tinybird errors should not block status page rendering
