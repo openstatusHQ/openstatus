@@ -12,6 +12,19 @@ export function isSelfHosted(): boolean {
   return process.env.SELF_HOST === "true";
 }
 
+/**
+ * Returns true when the host matches the expected SaaS subdomain pattern
+ * ({slug}.stpg.dev) and the instance is NOT in self-hosted mode.
+ */
+export function isSaasSubdomain(
+  host: string | null,
+  slug: string,
+): boolean {
+  if (isSelfHosted()) return false;
+  if (!host) return false;
+  return host === `${slug}.stpg.dev`;
+}
+
 export const getValidSubdomain = (host?: string | null) => {
   let subdomain: string | null = null;
   if (!host && typeof window !== "undefined") {
