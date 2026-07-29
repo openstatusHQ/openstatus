@@ -279,7 +279,7 @@ Self-hosted deployments need external cron scheduling for background tasks. With
     Add this to your crontab (`crontab -e`):
     ```bash
     # Run private location health check every 5 minutes
-    */5 * * * * curl -sS -H "Authorization: YOUR_CRON_SECRET" http://localhost:3000/private-location-health
+    */5 * * * * curl -sS -H "Authorization: YOUR_CRON_SECRET" http://localhost:3000/cron/private-location-health
     ```
 
     Replace `YOUR_CRON_SECRET` with the value you set in `.env.docker` (step 2), and adjust the URL if your workflows service runs on a different host or port.
@@ -301,7 +301,7 @@ Self-hosted deployments need external cron scheduling for background tasks. With
 
     Create `cron/crontab`:
     ```
-    */5 * * * * curl -sS -H "Authorization: ${CRON_SECRET}" http://workflows:3000/private-location-health
+    */5 * * * * curl -sS -H "Authorization: ${CRON_SECRET}" http://workflows:3000/cron/private-location-health
     ```
 
     Add to your `docker-compose.yaml`:
