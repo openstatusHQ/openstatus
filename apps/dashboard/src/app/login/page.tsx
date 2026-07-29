@@ -9,7 +9,12 @@ import { signIn } from "@/lib/auth";
 
 import { LoginButton } from "./_components/login-button";
 import MagicLinkForm from "./_components/magic-link-form";
+import { SsoForm } from "./_components/sso-form";
 import { searchParamsCache } from "./search-params";
+
+const hasWorkOS = Boolean(
+  process.env.AUTH_WORKOS_ID && process.env.AUTH_WORKOS_SECRET,
+);
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -28,7 +33,7 @@ export default async function Page(props: {
   searchParams: Promise<SearchParams>;
 }) {
   const searchParams = await props.searchParams;
-  const { redirectTo } = searchParamsCache.parse(searchParams);
+  const { redirectTo, error } = searchParamsCache.parse(searchParams);
 
   return (
     <div className="my-16 grid w-full max-w-lg gap-6">
@@ -38,6 +43,12 @@ export default async function Page(props: {
           Get started now. No credit card required.
         </p>
       </div>
+      {error === "AccessDenied" ? (
+        <p className="text-destructive mx-auto max-w-md px-8 text-center text-sm text-pretty">
+          Your SSO login isn&apos;t linked to a workspace yet. Contact your
+          workspace admin.
+        </p>
+      ) : null}
       <div className="grid gap-4 p-4">
         {process.env.NODE_ENV === "development" ||
         process.env.SELF_HOST === "true" ? (
@@ -81,6 +92,7 @@ export default async function Page(props: {
             </LoginButton>
           </form>
         ) : null}
+        {hasWorkOS ? <SsoForm redirectTo={redirectTo ?? undefined} /> : null}
       </div>
       <p className="text-muted-foreground mx-auto max-w-md px-8 text-center text-xs text-pretty">
         By clicking continue, you agree to our{" "}

@@ -19,6 +19,7 @@ import {
   updatePageCustomDomain,
   updatePagePasswordProtection,
 } from "../page";
+import { disableSso } from "../sso";
 import { updateWorkspacePlan } from "./update";
 
 /**
@@ -44,7 +45,7 @@ import { updateWorkspacePlan } from "./update";
  */
 export async function downgradeWorkspaceToFree(args: {
   ctx: ServiceContext;
-}): Promise<{ customDomains: string[] }> {
+}): Promise<{ customDomains: string[]; ssoDisabled: boolean }> {
   const { ctx } = args;
   requireScope(ctx, "write");
   const workspaceId = ctx.workspace.id;
@@ -63,6 +64,16 @@ export async function downgradeWorkspaceToFree(args: {
         reason: "subscription_deleted",
       },
     });
+
+    // Must happen here, not via the WorkOS webhook: JIT provisioning would
+    // otherwise re-add the members this downgrade is about to trim.
+    const ssoWasEnabled = ctx.workspace.ssoEnabled;
+    if (ssoWasEnabled) {
+      await disableSso({
+        ctx: txCtx,
+        input: { reason: "subscription_deleted" },
+      });
+    }
 
     const activeMonitors = await tx
       .select({ id: monitor.id })
@@ -167,6 +178,6 @@ export async function downgradeWorkspaceToFree(args: {
       await deleteInvitation({ ctx: txCtx, input: { id: inv.id } });
     }
 
-    return { customDomains };
+    return { customDomains, ssoDisabled: ssoWasEnabled };
   });
 }

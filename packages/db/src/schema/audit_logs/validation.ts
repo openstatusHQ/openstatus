@@ -143,15 +143,19 @@ const invitationActions = [
 
 // Several entities below carry only a subset of the create/update/delete
 // triplet. This is intentional, not an oversight:
-//   - `member`: rows are created via `invitation.accept`, not directly.
+//   - `member`: invitation-driven joins are recorded as `invitation.update`
+//     (the acceptance stamp), so `member.create` covers only the paths that
+//     mint a membership with no invitation behind it — today, SSO JIT
+//     provisioning.
 //   - `incident`: rows originate from the checker pipeline, not user
 //     mutations.
 // When those write paths migrate to the service layer, add the missing
 // verbs alongside.
 const memberActions = [
-  // `entityId` is the removed user's id. Member rows have no surrogate key —
+  // `entityId` is the affected user's id. Member rows have no surrogate key —
   // they're (userId, workspaceId) composite — so the user id is the most
   // useful identifier to fix on in the audit log.
+  action("member.create", "member", intId, { optionalMetadata: true }),
   action("member.delete", "member", intId),
 ] as const;
 
@@ -179,6 +183,22 @@ const privateLocationActions = [
   action("private_location.delete", "private_location", intId),
 ] as const;
 
+// `entityId` is the workspace id — SSO config has no surrogate key of its own.
+// Verified-domain rows fold into the same entity, distinguished by
+// `metadata.domain`; `delete` therefore means "a domain was dropped", never
+// "SSO was turned off" (that's an `update` on the `ssoEnabled` switch).
+const ssoActions = [
+  action("workspace_sso.create", "workspace_sso", intId, {
+    optionalMetadata: true,
+  }),
+  action("workspace_sso.update", "workspace_sso", intId, {
+    optionalMetadata: true,
+  }),
+  action("workspace_sso.delete", "workspace_sso", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
 export const auditActionSchema = z.discriminatedUnion("action", [
   ...monitorActions,
   ...pageActions,
@@ -198,6 +218,7 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...integrationActions,
   ...monitorTagActions,
   ...privateLocationActions,
+  ...ssoActions,
 ]);
 
 /**

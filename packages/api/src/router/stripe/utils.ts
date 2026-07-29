@@ -201,6 +201,17 @@ export const FEATURES = [
       },
     },
   },
+  {
+    feature: "sso",
+    price: {
+      monthly: {
+        priceIds: {
+          test: "price_1TySGYBXJcTfzsyJQFVFJi6N",
+          production: "price_1TySGYBXJcTfzsyJQFVFJi6N",
+        },
+      },
+    },
+  },
 ] satisfies Array<{
   feature: keyof Addons;
   price: {

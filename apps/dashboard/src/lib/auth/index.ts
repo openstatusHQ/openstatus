@@ -12,7 +12,17 @@ import {
   GoogleProvider,
   OIDCProvider,
   ResendProvider,
+  WorkOSProvider,
 } from "./providers";
+import {
+  authorizeSsoSignIn,
+  joinWorkspaceViaSso,
+  readWorkOSProfile,
+} from "./sso";
+
+const hasWorkOS = Boolean(
+  process.env.AUTH_WORKOS_ID && process.env.AUTH_WORKOS_SECRET,
+);
 
 export type { DefaultSession };
 
@@ -39,6 +49,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     GitHubProvider,
     GoogleProvider,
     ...(process.env.AUTH_OIDC_ISSUER ? [OIDCProvider] : []),
+    ...(hasWorkOS ? [WorkOSProvider] : []),
     ...(process.env.NODE_ENV === "development" ||
     process.env.SELF_HOST === "true"
       ? [ResendProvider]
@@ -107,6 +118,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
       }
 
+      if (params.account?.provider === "workos") {
+        return authorizeSsoSignIn(readWorkOSProfile(params.profile));
+      }
+
       // REMINDER: only used in dev mode
       if (params.account?.provider === "resend") {
         if (Number.isNaN(Number(params.user.id))) return true;
@@ -151,6 +166,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
 
     async signIn(params) {
+      if (params.account?.provider === "workos") {
+        const { organization_id: organizationId } = readWorkOSProfile(
+          params.profile,
+        );
+        const userId = Number(params.user.id);
+        if (organizationId && !Number.isNaN(userId)) {
+          await joinWorkspaceViaSso({ organizationId, userId });
+        }
+      }
+
       if (params.isNewUser) return;
       if (!params.user.id || !params.user.email) return;
 
