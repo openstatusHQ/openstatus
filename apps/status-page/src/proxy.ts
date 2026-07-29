@@ -4,13 +4,13 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { auth } from "./lib/auth";
+import { isSelfHosted } from "./lib/domain";
 import { resolveClientIp } from "./lib/http/client-ip";
 import { createProtectedCookieKey } from "./lib/protected";
 import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override";
 import { composePageAction } from "./lib/proxy/compose-page-action";
 import { detectMarkdown } from "./lib/proxy/detect-markdown";
 import { sanitizeRedirectParam } from "./lib/proxy/sanitize-redirect-param";
-import { isSelfHosted } from "./lib/domain";
 import { resolveRoute } from "./lib/resolve-route";
 
 export default async function middleware(req: NextRequest) {
@@ -90,8 +90,6 @@ export default async function middleware(req: NextRequest) {
       correctedPath =
         slugPrefix + correctedPath.slice(customDomainPrefix.length);
     }
-
-
 
     route = {
       ...route,
