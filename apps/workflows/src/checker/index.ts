@@ -32,8 +32,6 @@ const payloadSchema = z.object({
 
 const logger = getLogger(["workflow"]);
 
-
-
 checkerRoute.post("/updateStatus", async (c) => {
   const auth = c.req.header("Authorization");
   if (auth !== `Basic ${env().CRON_SECRET}`) {

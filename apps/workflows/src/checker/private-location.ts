@@ -12,8 +12,6 @@ import { findOpenIncident, resolveIncident } from "./incident-utils";
 
 const logger = getLogger(["workflow"]);
 
-
-
 const payloadSchema = z.object({
   monitorId: z.string(),
   privateLocationId: z.string(),
@@ -244,12 +242,19 @@ export async function updateStatusPrivate(c: Context<Env>) {
             }
           } catch (error) {
             // Check if this is a constraint violation (race condition)
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            if (errorMessage.includes("UNIQUE constraint") || errorMessage.includes("unique")) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            if (
+              errorMessage.includes("UNIQUE constraint") ||
+              errorMessage.includes("unique")
+            ) {
               // Another request created the incident concurrently, fetch it
-              logger.info("Concurrent incident creation detected, fetching existing", {
-                monitor_id: monitorId,
-              });
+              logger.info(
+                "Concurrent incident creation detected, fetching existing",
+                {
+                  monitor_id: monitorId,
+                },
+              );
               const existingIncident = await findOpenIncident(monitorIdNumber);
               if (existingIncident) {
                 incident = existingIncident;
