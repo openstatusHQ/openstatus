@@ -335,7 +335,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
               "Failed to resolve incident on degraded transition",
               {
                 monitor_id: monitorId,
-                error,
+                error_message:
+                  error instanceof Error ? error.message : String(error),
               },
             );
             // Continue with notifications even if resolution fails
@@ -376,7 +377,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
           } catch (error) {
             logger.warning("Failed to resolve incident on active transition", {
               monitor_id: monitorId,
-              error,
+              error_message:
+                error instanceof Error ? error.message : String(error),
             });
             // Continue with notifications even if resolution fails
           }
