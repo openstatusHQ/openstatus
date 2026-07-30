@@ -180,7 +180,20 @@ export async function updateStatusPrivate(c: Context<Env>) {
 
     const regions = [attachment.name];
 
-    // Query all private location statuses for threshold check
+    // Query total attached private locations for this monitor (not just reported ones)
+    const attachedLocations = await db
+      .select()
+      .from(schema.privateLocationToMonitors)
+      .where(
+        and(
+          eq(schema.privateLocationToMonitors.monitorId, monitorIdNumber),
+          isNull(schema.privateLocationToMonitors.deletedAt),
+        ),
+      );
+
+    const numberOfLocations = attachedLocations.length;
+
+    // Query how many locations report this status
     const allLocationStatuses = await db
       .select()
       .from(schema.privateLocationMonitorStatus)
@@ -188,7 +201,6 @@ export async function updateStatusPrivate(c: Context<Env>) {
         eq(schema.privateLocationMonitorStatus.monitorId, monitorIdNumber),
       );
 
-    const numberOfLocations = allLocationStatuses.length;
     const affectedLocationCount = allLocationStatuses.filter(
       (s) => s.status === status,
     ).length;
@@ -353,7 +365,6 @@ export async function updateStatusPrivate(c: Context<Env>) {
               metadata: {
                 cronTimestamp,
                 incidentId: existingIncident.id,
-                autoResolved: true,
               },
             });
             logger.info("Resolved incident", {
