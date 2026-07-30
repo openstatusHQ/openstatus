@@ -32,8 +32,15 @@ export async function resolveIncident(params: {
 }): Promise<typeof schema.incidentTable.$inferSelect | null> {
   const { monitorId, cronTimestamp } = params;
 
-  // Conditional update: only update if resolvedAt IS NULL
-  // This prevents concurrent recoveries from both succeeding
+  // First, find the single open incident for this monitor
+  const incident = await findOpenIncident(Number(monitorId));
+
+  if (!incident) {
+    return null; // No open incident
+  }
+
+  // Atomic conditional update scoped to this specific incident
+  // Only succeeds if resolvedAt is still NULL (prevents race conditions)
   const [updated] = await db
     .update(schema.incidentTable)
     .set({
@@ -42,7 +49,7 @@ export async function resolveIncident(params: {
     })
     .where(
       and(
-        eq(schema.incidentTable.monitorId, Number(monitorId)),
+        eq(schema.incidentTable.id, incident.id),
         isNull(schema.incidentTable.resolvedAt),
       ),
     )
