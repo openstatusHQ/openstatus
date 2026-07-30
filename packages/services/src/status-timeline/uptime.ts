@@ -4,7 +4,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { type WeightedInterval, mergedDowntimeMs } from "./downtime";
-import type { Event } from "./events";
+import type { Event, StatusData } from "./events";
 
 export const MS_PER_DAY = 86_400_000;
 
@@ -42,7 +42,7 @@ export function dayCoverage(
 // downtime during a coverage gap (paused monitor, missing data days) would
 // exceed a days-with-checks denominator and fake 0% for a healthy monitor —
 // clip every interval to the covered segments before merging
-function clipToCoverage(
+export function clipToCoverage(
   intervals: WeightedInterval[],
   coverage: CoverageSegment[],
 ): WeightedInterval[] {
@@ -73,7 +73,7 @@ export function requestsTally(counts: CheckCounts[]): {
   return { up, total };
 }
 
-function clampInterval(
+export function clampInterval(
   from: Date,
   to: Date | null,
   weight: number,
@@ -85,7 +85,7 @@ function clampInterval(
   return { from: start, to: end, weight };
 }
 
-function downtimeIntervals(
+export function downtimeIntervals(
   events: Event[],
   window: UptimeWindow,
   reportsOnly: boolean,
@@ -147,4 +147,42 @@ export function reportsOnlyDowntimeMs(
   return mergedDowntimeMs(
     coverage ? clipToCoverage(intervals, coverage) : intervals,
   );
+}
+
+/**
+ * Probe-based downtime intervals: converts probe failure data into weighted
+ * downtime intervals. Each day's error ratio becomes the weight for that day's
+ * interval, allowing it to be merged with event-based downtime.
+ */
+export function probeDowntimeIntervals(
+  data: StatusData[],
+  window: UptimeWindow,
+): WeightedInterval[] {
+  const intervals: WeightedInterval[] = [];
+
+  for (const item of data) {
+    const dayStart = new Date(item.day).getTime();
+    const dayEnd = dayStart + MS_PER_DAY;
+
+    // Clamp to window
+    const start = Math.max(dayStart, window.start);
+    const end = Math.min(dayEnd, window.end);
+    if (end <= start) continue;
+
+    const totalChecks = item.ok + item.degraded + item.error;
+    if (totalChecks === 0) continue;
+
+    // Calculate error ratio as the weight
+    // degraded counts as "up" (like in requestsTally), only errors count as down
+    const errorRatio = item.error / totalChecks;
+    if (errorRatio === 0) continue;
+
+    intervals.push({
+      from: start,
+      to: end,
+      weight: errorRatio,
+    });
+  }
+
+  return intervals;
 }

@@ -1,16 +1,27 @@
 import type { PageComponentImpact } from "@openstatus/db/src/schema";
-import { impactToStatusType, worstImpact } from "@openstatus/db/src/schema";
 import {
+  impactToStatusType,
+  impactUptimeWeight,
+  LEGACY_IMPACT_WEIGHT,
+  worstImpact,
+} from "@openstatus/db/src/schema";
+import {
+  clipToCoverage,
+  type CoverageSegment,
+  downtimeIntervals,
   type Event,
   MS_PER_DAY,
+  probeDowntimeIntervals,
   type StatusData,
   type UptimeWindow,
+  type WeightedInterval,
   dayCoverage,
   durationDowntimeMs,
   floorPct,
   getHighestPriorityStatus,
   getWorstVariant,
   isDateWithinEvent,
+  mergedDowntimeMs,
   reportEventDayImpact,
   reportEventDayStatus,
   reportsOnlyDowntimeMs,
@@ -662,10 +673,22 @@ export function getUptime({
       end: windowEndDate.getTime(),
       now: Date.now(),
     };
-    const duration =
-      barType === "manual"
-        ? reportsOnlyDowntimeMs(events, window, coverage)
-        : durationDowntimeMs(events, window, coverage);
+
+    let duration: number;
+    if (barType === "manual") {
+      // Manual mode: only count manually created reports
+      duration = reportsOnlyDowntimeMs(events, window, coverage);
+    } else {
+      // Duration mode: merge both event-based and probe-based downtime
+      // to capture both manual incidents/reports AND automated probe failures
+      const eventIntervals = downtimeIntervals(events, window, false);
+      const probeIntervals = probeDowntimeIntervals(data, window);
+      const allIntervals = [...eventIntervals, ...probeIntervals];
+      duration = mergedDowntimeMs(
+        coverage ? clipToCoverage(allIntervals, coverage) : allIntervals,
+      );
+    }
+
     return `${floorPct((total - duration) / total)}%`;
   }
 
