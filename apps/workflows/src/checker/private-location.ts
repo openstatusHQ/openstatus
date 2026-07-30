@@ -322,8 +322,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
         });
         break;
       case "degraded":
-        // Resolve incident if transitioning from error
-        if (shouldTriggerIncident && monitor.status === "error") {
+        // Resolve incident if private-only monitor AND threshold met
+        if (shouldTriggerIncident) {
           const incidents = await resolveIncident({ monitorId, cronTimestamp });
           incident = incidents[0] ?? null;
         }
@@ -351,44 +351,10 @@ export async function updateStatusPrivate(c: Context<Env>) {
         });
         break;
       case "active":
-        // Resolve incident only if private-only monitor AND threshold met
+        // Resolve incident if private-only monitor AND threshold met
         if (shouldTriggerIncident) {
-          try {
-            const existingIncident = await findOpenIncident(monitorIdNumber);
-            if (existingIncident && !existingIncident.resolvedAt) {
-              await db
-                .update(schema.incidentTable)
-                .set({
-                  resolvedAt: new Date(cronTimestamp),
-                  autoResolved: true,
-                })
-                .where(eq(schema.incidentTable.id, existingIncident.id))
-                .run();
-
-              incident = existingIncident;
-              await checkerAudit.publishAuditLog({
-                id: `monitor:${monitorId}`,
-                action: "incident.resolved",
-                targets: [{ id: monitorId, type: "monitor" }],
-                metadata: {
-                  cronTimestamp,
-                  incidentId: existingIncident.id,
-                },
-              });
-              logger.info("Resolved incident", {
-                incident_id: existingIncident.id,
-                monitor_id: monitorId,
-                affected_location_count: affectedLocationCount,
-                total_locations: numberOfLocations,
-              });
-            }
-          } catch (error) {
-            logger.error("Failed to resolve incident", {
-              monitor_id: monitorId,
-              error_message:
-                error instanceof Error ? error.message : String(error),
-            });
-          }
+          const incidents = await resolveIncident({ monitorId, cronTimestamp });
+          incident = incidents[0] ?? null;
         }
 
         await checkerAudit.publishAuditLog({
