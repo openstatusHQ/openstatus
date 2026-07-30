@@ -1,11 +1,11 @@
 import { db, sql } from "@openstatus/db";
 import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
 import { auth } from "./lib/auth";
 import { isSelfHosted } from "./lib/domain";
 import { resolveClientIp } from "./lib/http/client-ip";
+import { PAGE_SLUG_HEADER } from "./lib/page-slug";
 import { createProtectedCookieKey } from "./lib/protected";
 import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override";
 import { composePageAction } from "./lib/proxy/compose-page-action";
@@ -13,9 +13,8 @@ import { detectMarkdown } from "./lib/proxy/detect-markdown";
 import { sanitizeRedirectParam } from "./lib/proxy/sanitize-redirect-param";
 import { resolveRoute } from "./lib/resolve-route";
 
-export default async function middleware(req: NextRequest) {
-  // Get auth session for access control checks
-  const session = await auth();
+export default auth(async (req) => {
+  const session = req.auth;
 
   const url = req.nextUrl.clone();
   const passthroughResponse = NextResponse.next();
@@ -132,20 +131,30 @@ export default async function middleware(req: NextRequest) {
     clientIp,
   });
 
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set(PAGE_SLUG_HEADER, _page.slug);
+
   switch (action.type) {
     case "redirect":
       return NextResponse.redirect(action.url);
     case "rewrite": {
       // HTML served via internal rewrite shares its URL with the markdown
       // variant — carry the same Vary so caches don't cross them.
-      const rewriteResponse = NextResponse.rewrite(action.url);
+      const rewriteResponse = NextResponse.rewrite(action.url, {
+        request: { headers: requestHeaders },
+      });
       rewriteResponse.headers.set("Vary", "Accept");
       return rewriteResponse;
     }
-    case "passthrough":
-      return passthroughResponse;
+    case "passthrough": {
+      const response = NextResponse.next({
+        request: { headers: requestHeaders },
+      });
+      response.headers.set("Vary", "Accept");
+      return response;
+    }
   }
-}
+});
 
 export const config = {
   matcher: [

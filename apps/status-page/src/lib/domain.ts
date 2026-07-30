@@ -1,5 +1,3 @@
-import type { NextRequest } from "next/server";
-
 // Custom-domain lookups exact-match page.customDomain, which is stored without a
 // port; an inbound host like "status.acme.com:8080" must be normalized first.
 export const stripHostPort = (host?: string | null) =>
@@ -61,36 +59,4 @@ export const getValidSubdomain = (host?: string | null) => {
     subdomain = host;
   }
   return subdomain;
-};
-
-export const getValidCustomDomain = (req: NextRequest | Request) => {
-  const url = "nextUrl" in req ? req.nextUrl.clone() : new URL(req.url);
-  const headers = req.headers;
-  const host = headers.get("x-forwarded-host");
-
-  let prefix = "";
-  let type: "hostname" | "pathname";
-
-  const hostnames = host?.split(/[.:]/) ?? url.host.split(/[.:]/);
-  const pathnames = url.pathname.split("/");
-
-  const subdomain = getValidSubdomain(url.host);
-
-  if (
-    hostnames.length > 2 &&
-    hostnames[0] !== "www" &&
-    !url.host.endsWith(".vercel.app")
-  ) {
-    prefix = hostnames[0].toLowerCase();
-    type = "hostname";
-  } else {
-    prefix = pathnames[1].toLowerCase();
-    type = "pathname";
-  }
-
-  if (subdomain !== null) {
-    prefix = subdomain.toLowerCase();
-  }
-
-  return { type, prefix };
 };

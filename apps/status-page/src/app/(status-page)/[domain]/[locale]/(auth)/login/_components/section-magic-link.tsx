@@ -22,6 +22,7 @@ import {
   FormEmail,
   type FormValues,
 } from "../../../../../../../components/forms/form-email";
+import { buildPageBaseUrl } from "../../../../../../../lib/page-slug";
 import { generateServerActionPromise } from "../../../../../../../lib/server-actions";
 import { signInWithResendAction } from "../actions";
 
@@ -31,13 +32,12 @@ export function SectionMagicLink() {
   const [state, setState] = useState<"idle" | "pending" | "success">("idle");
 
   async function submitAction(values: FormValues) {
-    // NOTE: we can improve a bit if we use pathname instead of subdomain/hostname
-    // like http://localhost:3000/hello, the redirectTo should be http://localhost:3000/hello
-    // this only affects local development if not using chrome and subdomain
-    const redirectTo =
-      process.env.NODE_ENV === "development"
-        ? `http://${window.location.hostname}:${window.location.port}`
-        : `https://${window.location.hostname}`;
+    // The magic-link callback hits /api/auth/*, which the proxy never tags with
+    // a slug — this URL is where it recovers the page from.
+    const redirectTo = buildPageBaseUrl({
+      origin: window.location.origin,
+      slug: domain,
+    });
 
     const formData = new FormData();
     formData.append("redirectTo", redirectTo);

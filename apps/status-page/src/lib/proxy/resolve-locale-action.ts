@@ -3,7 +3,7 @@ import type { Page } from "@openstatus/db/src/schema";
 import { stripPrefixForExternal } from "./strip-prefix-for-external";
 import type { Action, ComposeInput } from "./types";
 
-type Input = Pick<ComposeInput, "route" | "page" | "redirectBaseUrl"> & {
+type Input = Pick<ComposeInput, "route" | "redirectBaseUrl"> & {
   page: Pick<Page, "locales" | "defaultLocale">;
 };
 

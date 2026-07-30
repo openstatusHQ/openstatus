@@ -1,10 +1,10 @@
 import { db, eq } from "@openstatus/db";
 import { viewer } from "@openstatus/db/src/schema";
 import type { DefaultSession } from "next-auth";
-import NextAuth, { AuthError } from "next-auth";
+import NextAuth from "next-auth";
 import { headers } from "next/headers";
 
-import { getValidCustomDomain } from "../domain";
+import { getPageSlugHeader } from "../page-slug";
 import { getQueryClient, trpc } from "../trpc/server";
 import { adapter } from "./adapter";
 import { ResendProvider } from "./providers";
@@ -17,29 +17,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [ResendProvider],
   callbacks: {
     async signIn(params) {
-      const _headers = await headers();
-      const host = _headers.get("host");
+      if (!params.user.email) return false;
 
-      if (!host) throw new AuthError("No host found");
+      // Absent on the /api/auth/callback leg, which the proxy matcher excludes.
+      // Skipping the check there is safe: the token was only issued once it
+      // passed, and the proxy re-gates every page view against its own domains.
+      const slug = getPageSlugHeader(await headers());
 
-      const protocol = _headers.get("x-forwarded-proto") || "https";
-      const req = new Request(`${protocol}://${host}`, {
-        headers: new Headers(_headers),
-      });
-      const { prefix } = getValidCustomDomain(req);
+      if (slug) {
+        const queryClient = getQueryClient();
+        // NOTE: throws an error if the email domain is not allowed
+        const query = await queryClient.fetchQuery(
+          trpc.statusPage.validateEmailDomain.queryOptions({
+            slug,
+            email: params.user.email,
+          }),
+        );
 
-      if (!prefix || !params.user.email) return false;
-
-      const queryClient = getQueryClient();
-      // NOTE: throws an error if the email domain is not allowed
-      const query = await queryClient.fetchQuery(
-        trpc.statusPage.validateEmailDomain.queryOptions({
-          slug: prefix,
-          email: params.user.email,
-        }),
-      );
-
-      if (!query) return false;
+        if (!query) return false;
+      }
 
       if (params.account?.provider === "resend") {
         // if the user is new, the id is the verification_token and not the viewer id, so we cannot update the viewer

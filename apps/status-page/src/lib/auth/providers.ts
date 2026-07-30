@@ -1,7 +1,7 @@
 import { EmailClient } from "@openstatus/emails";
 import Resend from "next-auth/providers/resend";
 
-import { getValidCustomDomain } from "../domain";
+import { getPageSlugHeader } from "../page-slug";
 import { getQueryClient, trpc } from "../trpc/server";
 
 export const ResendProvider = Resend({
@@ -14,13 +14,15 @@ export const ResendProvider = Resend({
       apiKey: process.env.RESEND_API_KEY ?? "",
     });
 
-    const { prefix } = getValidCustomDomain(params.request);
+    // next-auth forwards the originating request's headers, so the proxy's
+    // header survives into the internal signin request.
+    const slug = getPageSlugHeader(params.request.headers);
 
-    if (!prefix) return;
+    if (!slug) return;
 
     const queryClient = getQueryClient();
     const query = await queryClient.fetchQuery(
-      trpc.statusPage.validateEmailDomain.queryOptions({ slug: prefix, email }),
+      trpc.statusPage.validateEmailDomain.queryOptions({ slug, email }),
     );
 
     if (!query) return;
