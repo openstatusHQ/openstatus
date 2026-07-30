@@ -70,10 +70,17 @@ export function Sidebar() {
             },
             {
               label: "Regions",
-              value:
-                monitor.regions.length > 6
-                  ? `${monitor.regions.length} regions`
-                  : monitor.regions.join(", "),
+              value: (() => {
+                const allRegions = [
+                  ...monitor.regions,
+                  ...(monitor.privateLocations?.map((location) =>
+                    location.id.toString(),
+                  ) ?? []),
+                ];
+                return allRegions.length > 6
+                  ? `${allRegions.length} regions`
+                  : allRegions.join(", ");
+              })(),
             },
             {
               label: "Tags",
