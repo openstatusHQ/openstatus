@@ -180,7 +180,8 @@ checkerRoute.post("/updateStatus", async (c) => {
 
         let incident = null;
         if (monitor.status === "error") {
-          incident = await resolveIncident({ monitorId, cronTimestamp });
+          const incidents = await resolveIncident({ monitorId, cronTimestamp });
+          incident = incidents[0] ?? null;
         }
 
         triggeredNotifications = await triggerNotifications({
@@ -213,10 +214,11 @@ checkerRoute.post("/updateStatus", async (c) => {
 
         let incident = null;
         if (monitor.status === "error") {
-          incident = await resolveIncident({
+          const incidents = await resolveIncident({
             monitorId,
             cronTimestamp,
           });
+          incident = incidents[0] ?? null;
         }
 
         triggeredNotifications = await triggerNotifications({

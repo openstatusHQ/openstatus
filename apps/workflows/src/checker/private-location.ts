@@ -306,7 +306,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
       case "degraded":
         // Resolve incident if transitioning from error
         if (shouldTriggerIncident && monitor.status === "error") {
-          incident = await resolveIncident({ monitorId, cronTimestamp });
+          const incidents = await resolveIncident({ monitorId, cronTimestamp });
+          incident = incidents[0] ?? null;
         }
 
         await checkerAudit.publishAuditLog({
