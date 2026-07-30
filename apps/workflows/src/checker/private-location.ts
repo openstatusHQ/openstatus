@@ -324,8 +324,16 @@ export async function updateStatusPrivate(c: Context<Env>) {
       case "degraded":
         // Resolve incident if private-only monitor AND threshold met
         if (shouldTriggerIncident) {
-          const incidents = await resolveIncident({ monitorId, cronTimestamp });
-          incident = incidents[0] ?? null;
+          try {
+            const incidents = await resolveIncident({ monitorId, cronTimestamp });
+            incident = incidents[0] ?? null;
+          } catch (error) {
+            logger.warning("Failed to resolve incident on degraded transition", {
+              monitor_id: monitorId,
+              error,
+            });
+            // Continue with notifications even if resolution fails
+          }
         }
 
         await checkerAudit.publishAuditLog({
@@ -353,8 +361,16 @@ export async function updateStatusPrivate(c: Context<Env>) {
       case "active":
         // Resolve incident if private-only monitor AND threshold met
         if (shouldTriggerIncident) {
-          const incidents = await resolveIncident({ monitorId, cronTimestamp });
-          incident = incidents[0] ?? null;
+          try {
+            const incidents = await resolveIncident({ monitorId, cronTimestamp });
+            incident = incidents[0] ?? null;
+          } catch (error) {
+            logger.warning("Failed to resolve incident on active transition", {
+              monitor_id: monitorId,
+              error,
+            });
+            // Continue with notifications even if resolution fails
+          }
         }
 
         await checkerAudit.publishAuditLog({
