@@ -1,6 +1,7 @@
 
 SCHEMA >
     `assertions` String `json:$.assertions`,
+    `timing` String `json:$.timing`,
     `cronTimestamp` Int64 `json:$.cronTimestamp`,
     `error` Int16 `json:$.error`,
     `errorMessage` String `json:$.errorMessage`,

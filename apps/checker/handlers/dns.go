@@ -26,6 +26,7 @@ type DNSResponse struct {
 	URI           string `json:"uri"`
 	RequestStatus string `json:"requestStatus,omitempty"`
 	Assertions    string `json:"assertions"`
+	Timing        string `json:"timing"`
 
 	Records map[string][]string `json:"records"`
 
