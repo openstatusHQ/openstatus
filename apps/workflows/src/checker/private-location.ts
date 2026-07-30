@@ -280,15 +280,18 @@ export async function updateStatusPrivate(c: Context<Env>) {
             latency,
           },
         });
-        await triggerNotifications({
-          monitorId,
-          statusCode,
-          message,
-          notifType: "alert",
-          cronTimestamp,
-          regions,
-          latency,
-        });
+        // Only trigger notifications when threshold is met
+        if (!hasCloudRegions && shouldUpdateMonitorStatus) {
+          await triggerNotifications({
+            monitorId,
+            statusCode,
+            message,
+            notifType: "alert",
+            cronTimestamp,
+            regions,
+            latency,
+          });
+        }
         break;
       case "degraded":
         // Only update monitor status for private-only monitors (no cloud regions)
@@ -318,15 +321,18 @@ export async function updateStatusPrivate(c: Context<Env>) {
             latency,
           },
         });
-        await triggerNotifications({
-          monitorId,
-          statusCode,
-          message,
-          notifType: "degraded",
-          cronTimestamp,
-          regions,
-          latency,
-        });
+        // Only trigger notifications when threshold is met
+        if (!hasCloudRegions && shouldUpdateMonitorStatus) {
+          await triggerNotifications({
+            monitorId,
+            statusCode,
+            message,
+            notifType: "degraded",
+            cronTimestamp,
+            regions,
+            latency,
+          });
+        }
         break;
       case "active":
         // Only update monitor status for private-only monitors (no cloud regions)
@@ -391,15 +397,18 @@ export async function updateStatusPrivate(c: Context<Env>) {
             latency,
           },
         });
-        await triggerNotifications({
-          monitorId,
-          statusCode,
-          message,
-          notifType: "recovery",
-          cronTimestamp,
-          regions,
-          latency,
-        });
+        // Only trigger notifications when threshold is met
+        if (!hasCloudRegions && shouldUpdateMonitorStatus) {
+          await triggerNotifications({
+            monitorId,
+            statusCode,
+            message,
+            notifType: "recovery",
+            cronTimestamp,
+            regions,
+            latency,
+          });
+        }
         break;
     }
 
