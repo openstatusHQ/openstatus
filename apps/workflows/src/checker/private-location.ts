@@ -244,7 +244,6 @@ export async function updateStatusPrivate(c: Context<Env>) {
 
     switch (status) {
       case "error":
-
         // Only update monitor status for private-only monitors (no cloud regions)
         if (
           !hasCloudRegions &&
@@ -371,7 +370,6 @@ export async function updateStatusPrivate(c: Context<Env>) {
         }
         break;
       case "active":
-
         // Only update monitor status for private-only monitors (no cloud regions)
         if (
           !hasCloudRegions &&

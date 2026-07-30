@@ -321,7 +321,9 @@ describe("updateStatusPrivate", () => {
       .run();
     await db
       .delete(privateLocationMonitorStatus)
-      .where(eq(privateLocationMonitorStatus.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .where(
+        eq(privateLocationMonitorStatus.monitorId, PRIVATE_ONLY_MONITOR_ID),
+      )
       .run();
     await db
       .delete(notificationTrigger)
