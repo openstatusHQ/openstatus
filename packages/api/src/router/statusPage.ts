@@ -248,7 +248,6 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
 
-
       // Add privateLocationCount to each monitor
       if (monitors.length > 0) {
         const monitorIds = monitors.map((m) => m.id);
@@ -279,7 +278,6 @@ export const statusPageRouter = createTRPCRouter({
             privateLocationCounts.get(monitor.id) ?? 0;
         }
       }
-
 
       // no barType gate: incident-driven error is already suppressed per
       // monitor in manual mode; report-driven error (major_outage) must show
