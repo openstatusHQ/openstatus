@@ -180,14 +180,29 @@ export async function updateStatusPrivate(c: Context<Env>) {
 
     const regions = [attachment.name];
 
+    // Query all private location statuses for threshold check
+    const allLocationStatuses = await db
+      .select()
+      .from(schema.privateLocationMonitorStatus)
+      .where(eq(schema.privateLocationMonitorStatus.monitorId, monitorIdNumber));
+
+    const numberOfLocations = allLocationStatuses.length;
+    const affectedLocationCount = allLocationStatuses.filter(
+      (s) => s.status === status,
+    ).length;
+
+    // Check threshold: ≥50% agreement OR single location
+    const shouldUpdateMonitorStatus =
+      affectedLocationCount >= numberOfLocations / 2 || numberOfLocations === 1;
+
     // Check if monitor has cloud regions - only update status for private-only monitors
-    const hasCloudRegions =
-      monitor.regions && monitor.regions.trim().length > 0;
+    const hasCloudRegions = monitor.regions.trim().length > 0;
+
 
     switch (status) {
       case "error":
         // Only update monitor status for private-only monitors (no cloud regions)
-        if (!hasCloudRegions && monitor.status !== "error") {
+        if (!hasCloudRegions && shouldUpdateMonitorStatus && monitor.status !== "error") {
           logger.info("Monitor status changed to error", {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
@@ -259,7 +274,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
         break;
       case "degraded":
         // Only update monitor status for private-only monitors (no cloud regions)
-        if (!hasCloudRegions && monitor.status !== "degraded") {
+        if (!hasCloudRegions && shouldUpdateMonitorStatus && monitor.status !== "degraded") {
           logger.info("Monitor status changed to degraded", {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
@@ -293,7 +308,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
         break;
       case "active":
         // Only update monitor status for private-only monitors (no cloud regions)
-        if (!hasCloudRegions && monitor.status !== "active") {
+        if (!hasCloudRegions && shouldUpdateMonitorStatus && monitor.status !== "active") {
           logger.info("Monitor status changed to active", {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
