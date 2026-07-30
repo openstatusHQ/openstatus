@@ -1,5 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq, inArray, isNull, schema } from "@openstatus/db";
+import { and, db, eq, inArray, schema } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import {
