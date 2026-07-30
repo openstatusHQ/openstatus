@@ -4,6 +4,7 @@ import { describe, test } from "@std/testing/bdd";
 import {
   PAGE_SLUG_HEADER,
   buildPageBaseUrl,
+  getPagePrefixFromHost,
   getPageSlugHeader,
 } from "./page-slug";
 
@@ -34,6 +35,71 @@ describe("getPageSlugHeader", () => {
     expect(getPageSlugHeader(new Headers({ host: "acme.stpg.dev" }))).toBe(
       null,
     );
+  });
+});
+
+describe("getPagePrefixFromHost", () => {
+  const AUTH_URL = "/api/auth/signin/resend";
+
+  test("subdomain", () => {
+    expect(
+      getPagePrefixFromHost(
+        new Headers(),
+        `http://acme.localhost:3000${AUTH_URL}`,
+      ),
+    ).toBe("acme");
+  });
+
+  test("stpg.dev subdomain", () => {
+    expect(
+      getPagePrefixFromHost(new Headers(), `https://acme.stpg.dev${AUTH_URL}`),
+    ).toBe("acme");
+  });
+
+  test("custom domain resolves to the domain, which the page lookup accepts", () => {
+    expect(
+      getPagePrefixFromHost(
+        new Headers(),
+        `https://status.acme.com${AUTH_URL}`,
+      ),
+    ).toBe("status.acme.com");
+  });
+
+  test("apex custom domain", () => {
+    expect(
+      getPagePrefixFromHost(new Headers(), `https://acme.com${AUTH_URL}`),
+    ).toBe("acme.com");
+  });
+
+  test("x-forwarded-host wins over the url host", () => {
+    expect(
+      getPagePrefixFromHost(
+        new Headers({ "x-forwarded-host": "status.acme.com" }),
+        `https://internal.vercel.app${AUTH_URL}`,
+      ),
+    ).toBe("status.acme.com");
+  });
+
+  test("lowercases", () => {
+    expect(
+      getPagePrefixFromHost(new Headers(), `https://ACME.stpg.dev${AUTH_URL}`),
+    ).toBe("acme");
+  });
+
+  test("pathname-routed hosts carry no page", () => {
+    expect(
+      getPagePrefixFromHost(new Headers(), `http://localhost:3000${AUTH_URL}`),
+    ).toBe(null);
+    expect(
+      getPagePrefixFromHost(
+        new Headers(),
+        `https://status-page-git-fix.vercel.app${AUTH_URL}`,
+      ),
+    ).toBe(null);
+  });
+
+  test("unparseable url returns null", () => {
+    expect(getPagePrefixFromHost(new Headers(), "not a url")).toBe(null);
   });
 });
 

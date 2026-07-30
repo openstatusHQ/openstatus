@@ -1,7 +1,7 @@
 import { EmailClient } from "@openstatus/emails";
 import Resend from "next-auth/providers/resend";
 
-import { getPageSlugHeader } from "../page-slug";
+import { getPagePrefixFromHost, getPageSlugHeader } from "../page-slug";
 import { getQueryClient, trpc } from "../trpc/server";
 
 export const ResendProvider = Resend({
@@ -15,8 +15,12 @@ export const ResendProvider = Resend({
     });
 
     // next-auth forwards the originating request's headers, so the proxy's
-    // header survives into the internal signin request.
-    const slug = getPageSlugHeader(params.request.headers);
+    // header survives into the internal signin request. A direct POST to
+    // /api/auth/signin/resend never passes the proxy — there only the host
+    // identifies the page.
+    const slug =
+      getPageSlugHeader(params.request.headers) ??
+      getPagePrefixFromHost(params.request.headers, params.request.url);
 
     if (!slug) return;
 

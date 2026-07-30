@@ -13,6 +13,23 @@ export function getPageSlugHeader(headers: Headers): string | null {
 }
 
 /**
+ * Page prefix (slug or custom domain) carried by the request host, for requests
+ * the proxy never tagged — `/api/auth/*` sits outside its matcher. Null on
+ * pathname-routed deployments, where the host identifies no page.
+ */
+export function getPagePrefixFromHost(
+  headers: Headers,
+  url: string,
+): string | null {
+  const route = resolveRoute({
+    host: headers.get("x-forwarded-host"),
+    urlHost: parseUrl(url)?.host ?? "",
+    pathname: "/",
+  });
+  return route?.prefix.toLowerCase() || null;
+}
+
+/**
  * Base URL of a page. Only the origin when the host identifies the page;
  * pathname-routed deployments (previews, bare localhost) need the slug too.
  */
