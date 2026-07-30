@@ -1,5 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq, isNull, schema } from "@openstatus/db";
+import { and, db, eq, inArray, isNull, schema } from "@openstatus/db";
 
 import { checkerAudit } from "../utils/audit-log";
 
@@ -39,7 +39,7 @@ export async function findAllOpenIncidents(monitorId: number) {
 
 /**
  * Resolves all open incidents by setting resolvedAt and autoResolved flag.
- * Uses atomic conditional updates to prevent race conditions from concurrent recoveries.
+ * Uses a single atomic bulk update to prevent partial state on failures.
  * Returns array of successfully resolved incidents.
  */
 export async function resolveIncident(params: {
@@ -55,40 +55,49 @@ export async function resolveIncident(params: {
     return []; // No open incidents
   }
 
-  const resolved: (typeof schema.incidentTable.$inferSelect)[] = [];
+  // Extract all incident IDs for bulk update
+  const incidentIds = incidents.map((i) => i.id);
 
-  // Resolve each incident atomically with proper logging
-  for (const incident of incidents) {
-    const [updated] = await db
-      .update(schema.incidentTable)
-      .set({
-        resolvedAt: new Date(cronTimestamp),
-        autoResolved: true,
-      })
-      .where(
-        and(
-          eq(schema.incidentTable.id, incident.id),
-          isNull(schema.incidentTable.resolvedAt), // Still atomic
-        ),
-      )
-      .returning();
+  // ATOMIC BULK UPDATE: Resolve all incidents in a single query
+  // This prevents partial state if operation fails midway
+  const resolvedIncidents = await db
+    .update(schema.incidentTable)
+    .set({
+      resolvedAt: new Date(cronTimestamp),
+      autoResolved: true,
+    })
+    .where(
+      and(
+        inArray(schema.incidentTable.id, incidentIds),
+        isNull(schema.incidentTable.resolvedAt), // Still prevents race conditions
+      ),
+    )
+    .returning();
 
-    if (updated) {
-      logger.info("Recovered incident", {
-        incident_id: updated.id,
-        monitor_id: monitorId,
-      });
+  // Emit audit logs for each resolved incident
+  // These are best-effort; failure here doesn't affect data integrity
+  for (const incident of resolvedIncidents) {
+    logger.info("Recovered incident", {
+      incident_id: incident.id,
+      monitor_id: monitorId,
+    });
 
+    try {
       await checkerAudit.publishAuditLog({
         id: `monitor:${monitorId}`,
         action: "incident.resolved",
         targets: [{ id: monitorId, type: "monitor" }],
-        metadata: { cronTimestamp, incidentId: updated.id },
+        metadata: { cronTimestamp, incidentId: incident.id },
       });
-
-      resolved.push(updated);
+    } catch (error) {
+      logger.error("Failed to publish audit log for incident resolution", {
+        incident_id: incident.id,
+        monitor_id: monitorId,
+        error,
+      });
+      // Don't throw - incident is already resolved
     }
   }
 
-  return resolved;
+  return resolvedIncidents;
 }
