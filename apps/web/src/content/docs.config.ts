@@ -169,6 +169,10 @@ export const docsNav: DocsNavSection[] = [
         label: "How to Deploy a Private Probe on Cloudflare Containers",
       },
       {
+        slug: "guides/how-to-set-up-saml-sso",
+        label: "How to Set Up SAML Single Sign-On",
+      },
+      {
         slug: "guides/self-hosting-openstatus",
         label: "How to Self-Host openstatus",
       },

@@ -128,7 +128,9 @@ A scattered `as never` is usually a missing helper.
 
 ## Services & Audit Log Pattern
 
-All workspace-scoped business logic lives in `packages/services` — **not** in tRPC routers. Routers stay thin: validate input, call a service verb, map errors. This keeps logic reusable across tRPC, Hono, and background jobs, and keeps it Edge-safe (the dashboard runs tRPC on Next.js Edge, so service code must avoid `node:*` imports).
+All workspace-scoped business logic lives in `packages/services` — **not** in tRPC routers. Routers stay thin: validate input, call a service verb, map errors. This keeps logic reusable across tRPC, Hono, and background jobs.
+
+Note on runtimes: the dashboard's tRPC handler runs on the **Node.js** runtime (see the comment in `apps/dashboard/src/app/api/trpc/lambda/[trpc]/route.ts` — several routers pull Node-only deps), and no Edge route imports `@openstatus/services`. Node-only dependencies in services are therefore acceptable. What *is* enforced: `apps/workflows` runs on Deno and imports services, so `pnpm check` (`deno check --sloppy-imports`) must pass in both packages.
 
 Conventions for any new mutation:
 
@@ -144,7 +146,7 @@ Conventions for any new mutation:
     -   Action names follow `{entity}.{verb}` (`monitor.update`, `integration.delete`). Add new variants to the discriminated union in `@openstatus/db/src/schema/audit_logs/validation.ts`.
 -   **Tests live in `packages/services/src/<entity>/__tests__/`** and use `expectAuditRow({ workspaceId, action, entityId, ... })` from `packages/services/test/helpers.ts` to assert the audit side-effect. Each suite scopes to its own workspace and clears `audit_log` between cases.
 
-When adding a router endpoint, the default answer is "write the service verb first, then call it from the router." Inline DB access in routers is a smell — it bypasses the audit log and the Edge-safety guarantee.
+When adding a router endpoint, the default answer is "write the service verb first, then call it from the router." Inline DB access in routers is a smell — it bypasses the audit log.
 
 ## Scope Enforcement (API key RBAC)
 

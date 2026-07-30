@@ -69,8 +69,24 @@ export async function updateStatusPrivate(c: Context<Env>) {
     latency,
   } = result.data;
 
+  const event = c.get("event");
   const monitorIdNumber = Number(monitorId);
   const privateLocationIdNumber = Number(privateLocationId);
+
+  // Set event data for OTel/Axiom structured logging (matches cloud checker pattern)
+  // Note: Private location pings are ingested to Tinybird separately via Go code in
+  // apps/private-location/internal/tinybird/client.go, not through this event object
+  if (event) {
+    event.status_update = {
+      status: status,
+      message: message,
+      region: privateLocationId, // Private location ID as region string
+      status_code: statusCode,
+      cron_timestamp: cronTimestamp,
+      latency_ms: latency,
+      monitorId: monitorIdNumber,
+    };
+  }
 
   try {
     const monitor = await db
@@ -223,6 +239,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
 
     // Track incident ID for notifications
     let incidentId: number | undefined;
+    let triggeredNotifications: { notificationId: number; provider: string }[] =
+      [];
 
     switch (status) {
       case "error":
@@ -299,7 +317,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
         });
         // Trigger notifications for cloud monitors always, private-only when threshold met
         if (hasCloudRegions || shouldUpdateMonitorStatus) {
-          await triggerNotifications({
+          triggeredNotifications = await triggerNotifications({
             monitorId,
             statusCode,
             message,
@@ -341,7 +359,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
         });
         // Trigger notifications for cloud monitors always, private-only when threshold met
         if (hasCloudRegions || shouldUpdateMonitorStatus) {
-          await triggerNotifications({
+          triggeredNotifications = await triggerNotifications({
             monitorId,
             statusCode,
             message,
@@ -425,7 +443,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
         });
         // Trigger notifications for cloud monitors always, private-only when threshold met
         if (hasCloudRegions || shouldUpdateMonitorStatus) {
-          await triggerNotifications({
+          triggeredNotifications = await triggerNotifications({
             monitorId,
             statusCode,
             message,
@@ -437,6 +455,14 @@ export async function updateStatusPrivate(c: Context<Env>) {
           });
         }
         break;
+    }
+
+    // Add notification outcome to event for OTel logging
+    if (event?.status_update) {
+      (event.status_update as Record<string, unknown>).notificationTriggered =
+        triggeredNotifications.length > 0;
+      (event.status_update as Record<string, unknown>).notifications =
+        triggeredNotifications;
     }
 
     return c.json({ success: true }, 200);

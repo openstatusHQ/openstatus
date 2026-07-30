@@ -13,7 +13,7 @@ SQL >
         round(quantile(0.90)(latency)) as p90Latency,
         round(quantile(0.95)(latency)) as p95Latency,
         round(quantile(0.99)(latency)) as p99Latency
-    FROM mv__http_7d__v0
+    FROM mv__http_7d__v1
     WHERE
         monitorId = {{ String(monitorId, '1', required=True) }}
         {% if regions %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}

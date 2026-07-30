@@ -3,6 +3,7 @@ import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 
 import { withBusyRetry } from "./retry";
+import type { WorkOSClient } from "./sso/client";
 
 // `@openstatus/db` does not export named DrizzleClient / DrizzleTx types today,
 // so we derive them from the db export and re-export from here.
@@ -28,6 +29,7 @@ export type ServiceContext = {
   span?: unknown;
   db?: DB;
   tb?: OSTinybird;
+  workos?: WorkOSClient;
 };
 
 // Fallback for callers with no app env to read from (scripts, tests). Request

@@ -96,9 +96,10 @@ export function getPlansForLimit(
   return availablePlans.filter((plan) => {
     const planLimitValue = allPlans[plan].limits[limit];
 
-    // For boolean limits, only show plans where the feature is enabled
+    // For boolean limits, only show plans where the feature is enabled — either
+    // bundled or purchasable as an addon (e.g. SSO on every paid plan).
     if (typeof currentLimitValue === "boolean") {
-      return planLimitValue === true;
+      return planLimitValue === true || limit in allPlans[plan].addons;
     }
 
     // For numeric limits, show plans with higher values

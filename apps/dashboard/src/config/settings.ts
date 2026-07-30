@@ -6,6 +6,7 @@ import {
   type IconType,
   Integrations,
   Settings,
+  Shield,
 } from "@openstatus/icons";
 
 export type SettingsTab = {
@@ -52,6 +53,13 @@ export const SETTINGS_TABS = [
     icon: Globe,
     href: "/settings/private-locations",
     keywords: ["probes", "regions"],
+  },
+  {
+    value: "sso",
+    label: "SSO",
+    icon: Shield,
+    href: "/settings/sso",
+    keywords: ["saml", "single sign-on", "okta", "identity"],
   },
   {
     value: "audit-logs",
