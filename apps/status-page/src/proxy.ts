@@ -1,6 +1,6 @@
 import { db, sql } from "@openstatus/db";
 import { page, selectPageSchema } from "@openstatus/db/src/schema";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "./lib/auth";
 import { isSelfHosted } from "./lib/domain";
@@ -13,8 +13,14 @@ import { detectMarkdown } from "./lib/proxy/detect-markdown";
 import { sanitizeRedirectParam } from "./lib/proxy/sanitize-redirect-param";
 import { resolveRoute } from "./lib/resolve-route";
 
-export default auth(async (req) => {
-  const session = req.auth;
+// This middleware is NOT wrapped with auth() to avoid enforcing authentication
+// on all requests. The auth() wrapper would require authentication for ALL matched
+// routes, preventing public status pages from being accessible. This is especially
+// critical for self-hosted deployments where everything runs on the same domain/IP.
+// Instead, we fetch the session optionally and let composePageAction() decide based
+// on the page's accessType (public/password/email-domain) whether auth is required.
+export default async function middleware(req: NextRequest) {
+  const session = await auth();
 
   const url = req.nextUrl.clone();
   const passthroughResponse = NextResponse.next();
@@ -154,7 +160,7 @@ export default auth(async (req) => {
       return response;
     }
   }
-});
+}
 
 export const config = {
   matcher: [
