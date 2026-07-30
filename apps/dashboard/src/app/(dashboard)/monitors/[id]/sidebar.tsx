@@ -38,8 +38,20 @@ export function Sidebar() {
             },
             {
               label: "Status",
-              // FIXME: dynamic
-              value: <span className="text-success">Normal</span>,
+              value: (
+                <span
+                  className={
+                    monitor.status === "error"
+                      ? "text-destructive"
+                      : monitor.status === "degraded"
+                        ? "text-warning"
+                        : "text-success"
+                  }
+                >
+                  {monitor.status.charAt(0).toUpperCase() +
+                    monitor.status.slice(1)}
+                </span>
+              ),
             },
             {
               label: "Type",
