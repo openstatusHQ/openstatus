@@ -235,6 +235,22 @@ export async function updateStatusPrivate(c: Context<Env>) {
 
     switch (status) {
       case "error":
+        // Update monitor status for private-only monitors
+        if (
+          !hasCloudRegions &&
+          shouldTriggerIncident &&
+          monitor.status !== "error"
+        ) {
+          logger.info("Monitor status changed to error", {
+            monitor_id: monitor.id,
+            workspace_id: monitor.workspaceId,
+          });
+          await db
+            .update(schema.monitor)
+            .set({ status: "error" })
+            .where(eq(schema.monitor.id, monitorIdNumber));
+        }
+
         // Create incident only if private-only monitor AND threshold met
         if (shouldTriggerIncident) {
           try {
@@ -310,18 +326,37 @@ export async function updateStatusPrivate(c: Context<Env>) {
             latency,
           },
         });
-        triggeredNotifications = await triggerNotifications({
-          monitorId,
-          statusCode,
-          message,
-          notifType: "alert",
-          cronTimestamp,
-          regions,
-          latency,
-          incidentId: incident?.id,
-        });
+        // Trigger notifications for cloud monitors always, private-only when threshold met
+        if (hasCloudRegions || shouldTriggerIncident) {
+          triggeredNotifications = await triggerNotifications({
+            monitorId,
+            statusCode,
+            message,
+            notifType: "alert",
+            cronTimestamp,
+            regions,
+            latency,
+            incidentId: incident?.id,
+          });
+        }
         break;
       case "degraded":
+        // Update monitor status for private-only monitors
+        if (
+          !hasCloudRegions &&
+          shouldTriggerIncident &&
+          monitor.status !== "degraded"
+        ) {
+          logger.info("Monitor status changed to degraded", {
+            monitor_id: monitor.id,
+            workspace_id: monitor.workspaceId,
+          });
+          await db
+            .update(schema.monitor)
+            .set({ status: "degraded" })
+            .where(eq(schema.monitor.id, monitorIdNumber));
+        }
+
         // Resolve incident if private-only monitor AND threshold met
         if (shouldTriggerIncident) {
           try {
@@ -354,18 +389,37 @@ export async function updateStatusPrivate(c: Context<Env>) {
             latency,
           },
         });
-        triggeredNotifications = await triggerNotifications({
-          monitorId,
-          statusCode,
-          message,
-          notifType: "degraded",
-          cronTimestamp,
-          regions,
-          latency,
-          incidentId: incident?.id,
-        });
+        // Trigger notifications for cloud monitors always, private-only when threshold met
+        if (hasCloudRegions || shouldTriggerIncident) {
+          triggeredNotifications = await triggerNotifications({
+            monitorId,
+            statusCode,
+            message,
+            notifType: "degraded",
+            cronTimestamp,
+            regions,
+            latency,
+            incidentId: incident?.id,
+          });
+        }
         break;
       case "active":
+        // Update monitor status for private-only monitors
+        if (
+          !hasCloudRegions &&
+          shouldTriggerIncident &&
+          monitor.status !== "active"
+        ) {
+          logger.info("Monitor status changed to active", {
+            monitor_id: monitor.id,
+            workspace_id: monitor.workspaceId,
+          });
+          await db
+            .update(schema.monitor)
+            .set({ status: "active" })
+            .where(eq(schema.monitor.id, monitorIdNumber));
+        }
+
         // Resolve incident if private-only monitor AND threshold met
         if (shouldTriggerIncident) {
           try {
@@ -395,16 +449,19 @@ export async function updateStatusPrivate(c: Context<Env>) {
             latency,
           },
         });
-        triggeredNotifications = await triggerNotifications({
-          monitorId,
-          statusCode,
-          message,
-          notifType: "recovery",
-          cronTimestamp,
-          regions,
-          latency,
-          incidentId: incident?.id,
-        });
+        // Trigger notifications for cloud monitors always, private-only when threshold met
+        if (hasCloudRegions || shouldTriggerIncident) {
+          triggeredNotifications = await triggerNotifications({
+            monitorId,
+            statusCode,
+            message,
+            notifType: "recovery",
+            cronTimestamp,
+            regions,
+            latency,
+            incidentId: incident?.id,
+          });
+        }
         break;
     }
 
