@@ -182,7 +182,9 @@ export async function updateStatusPrivate(c: Context<Env>) {
       .all();
 
     const numberOfLocations = allLocations.length;
-    const locationIds = allLocations.map((loc) => loc.id);
+    const locationIds = allLocations
+      .map((loc) => loc.id)
+      .filter((id): id is number => id !== null);
 
     // Count how many locations report this status
     const locationsWithStatus = await db
