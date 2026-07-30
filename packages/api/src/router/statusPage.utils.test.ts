@@ -59,7 +59,7 @@ function createStatusData(
 function createIncident(id: number, daysAgo: number, durationHours = 1): Event {
   const from = new Date();
   from.setDate(from.getDate() - daysAgo);
-  from.setUTCHours(12, 0, 0, 0); // Set to noon UTC for reliable overlap
+  from.setUTCHours(0, 0, 0, 0); // Set to midnight UTC for full-day coverage
 
   const to = new Date(from);
   to.setUTCHours(from.getUTCHours() + durationHours);
@@ -77,7 +77,7 @@ function createIncident(id: number, daysAgo: number, durationHours = 1): Event {
 function createReport(id: number, daysAgo: number, durationHours = 2): Event {
   const from = new Date();
   from.setDate(from.getDate() - daysAgo);
-  from.setUTCHours(12, 0, 0, 0); // Set to noon UTC for reliable overlap
+  from.setUTCHours(0, 0, 0, 0); // Set to midnight UTC for full-day coverage
 
   const to = new Date(from);
   to.setUTCHours(from.getUTCHours() + durationHours);
@@ -99,7 +99,7 @@ function createMaintenance(
 ): Event {
   const from = new Date();
   from.setDate(from.getDate() - daysAgo);
-  from.setUTCHours(12, 0, 0, 0); // Set to noon UTC for reliable overlap
+  from.setUTCHours(0, 0, 0, 0); // Set to midnight UTC for full-day coverage
 
   const to = new Date(from);
   to.setUTCHours(from.getUTCHours() + durationHours);
