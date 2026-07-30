@@ -194,9 +194,9 @@ export async function updateStatusPrivate(c: Context<Env>) {
     const numberOfLocations = attachedLocations.length;
 
     // Query how many ATTACHED locations report this status
-    const attachedLocationIds = attachedLocations.map(
-      (l) => l.privateLocationId,
-    );
+    const attachedLocationIds = attachedLocations
+      .map((l) => l.privateLocationId)
+      .filter((id): id is number => id !== null);
     const allLocationStatuses = await db
       .select()
       .from(schema.privateLocationMonitorStatus)
@@ -221,9 +221,11 @@ export async function updateStatusPrivate(c: Context<Env>) {
     // Check if monitor has cloud regions - only update status for private-only monitors
     const hasCloudRegions = monitor.regions.trim().length > 0;
 
+    // Track incident ID for notifications
+    let incidentId: number | undefined;
+
     switch (status) {
       case "error":
-        let incidentId: number | undefined;
 
         // Only update monitor status for private-only monitors (no cloud regions)
         if (
@@ -351,7 +353,6 @@ export async function updateStatusPrivate(c: Context<Env>) {
         }
         break;
       case "active":
-        let incidentId: number | undefined;
 
         // Only update monitor status for private-only monitors (no cloud regions)
         if (
