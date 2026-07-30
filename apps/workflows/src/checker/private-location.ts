@@ -47,7 +47,9 @@ export async function updateStatusPrivate(c: Context<Env>) {
   const monitorIdNumber = Number(monitorId);
   const privateLocationIdNumber = Number(privateLocationId);
 
-  // Set event data for Tinybird ingestion (matches cloud checker pattern)
+  // Set event data for OTel/Axiom structured logging (matches cloud checker pattern)
+  // Note: Private location pings are ingested to Tinybird separately via Go code in
+  // apps/private-location/internal/tinybird/client.go, not through this event object
   if (event) {
     event.status_update = {
       status: status,
