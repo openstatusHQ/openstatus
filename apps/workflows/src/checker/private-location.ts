@@ -18,24 +18,9 @@ import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
+import { findOpenIncident, resolveIncident } from "./incident-utils";
 
 const logger = getLogger(["workflow"]);
-
-/**
- * Finds an open incident (not resolved) for the given monitor.
- */
-async function findOpenIncident(monitorId: number) {
-  return db
-    .select()
-    .from(schema.incidentTable)
-    .where(
-      and(
-        eq(schema.incidentTable.monitorId, monitorId),
-        isNull(schema.incidentTable.resolvedAt),
-      ),
-    )
-    .get();
-}
 
 const payloadSchema = z.object({
   monitorId: z.string(),
@@ -196,58 +181,64 @@ export async function updateStatusPrivate(c: Context<Env>) {
 
     const regions = [attachment.name];
 
-    // Query total attached private locations for this monitor (not just reported ones)
-    const attachedLocations = await db
-      .select()
+    // Check if monitor has cloud regions
+    const hasCloudRegions =
+      monitor.regions && monitor.regions.trim().length > 0;
+
+    // Query all private locations for threshold check
+    const allLocations = await db
+      .select({ id: schema.privateLocationToMonitors.privateLocationId })
       .from(schema.privateLocationToMonitors)
       .where(
         and(
           eq(schema.privateLocationToMonitors.monitorId, monitorIdNumber),
           isNull(schema.privateLocationToMonitors.deletedAt),
         ),
-      );
+      )
+      .all();
 
-    const numberOfLocations = attachedLocations.length;
-
-    // Query how many ATTACHED locations report this status
-    const attachedLocationIds = attachedLocations
-      .map((l) => l.privateLocationId)
+    const numberOfLocations = allLocations.length;
+    const locationIds = allLocations
+      .map((loc) => loc.id)
       .filter((id): id is number => id !== null);
-    const allLocationStatuses = await db
-      .select()
+
+    // Count how many locations report this status
+    const locationsWithStatus = await db
+      .select({
+        privateLocationId:
+          schema.privateLocationMonitorStatus.privateLocationId,
+      })
       .from(schema.privateLocationMonitorStatus)
       .where(
         and(
           eq(schema.privateLocationMonitorStatus.monitorId, monitorIdNumber),
+          eq(schema.privateLocationMonitorStatus.status, status),
           inArray(
             schema.privateLocationMonitorStatus.privateLocationId,
-            attachedLocationIds,
+            locationIds,
           ),
         ),
-      );
+      )
+      .all();
 
-    const affectedLocationCount = allLocationStatuses.filter(
-      (s) => s.status === status,
-    ).length;
+    const affectedLocationCount = locationsWithStatus.length;
 
-    // Check threshold: ≥50% agreement OR single location
-    const shouldUpdateMonitorStatus =
-      affectedLocationCount >= numberOfLocations / 2 || numberOfLocations === 1;
+    // Apply ≥50% threshold (matching cloud checker logic)
+    const shouldTriggerIncident =
+      !hasCloudRegions &&
+      (affectedLocationCount >= numberOfLocations / 2 ||
+        numberOfLocations === 1);
 
-    // Check if monitor has cloud regions - only update status for private-only monitors
-    const hasCloudRegions = monitor.regions.trim().length > 0;
-
-    // Track incident ID for notifications
-    let incidentId: number | undefined;
+    let incident = null;
     let triggeredNotifications: { notificationId: number; provider: string }[] =
       [];
 
     switch (status) {
       case "error":
-        // Only update monitor status for private-only monitors (no cloud regions)
+        // Update monitor status for private-only monitors
         if (
           !hasCloudRegions &&
-          shouldUpdateMonitorStatus &&
+          shouldTriggerIncident &&
           monitor.status !== "error"
         ) {
           logger.info("Monitor status changed to error", {
@@ -260,8 +251,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
             .where(eq(schema.monitor.id, monitorIdNumber));
         }
 
-        // Create incident only when threshold met for private-only monitors
-        if (!hasCloudRegions && shouldUpdateMonitorStatus) {
+        // Create incident only if private-only monitor AND threshold met
+        if (shouldTriggerIncident) {
           try {
             const existingIncident = await findOpenIncident(monitorIdNumber);
             if (!existingIncident) {
@@ -275,7 +266,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
                 .returning();
 
               if (newIncident?.id) {
-                incidentId = newIncident.id;
+                incident = newIncident;
                 await checkerAudit.publishAuditLog({
                   id: `monitor:${monitorId}`,
                   action: "incident.created",
@@ -285,20 +276,41 @@ export async function updateStatusPrivate(c: Context<Env>) {
                 logger.info("Created incident", {
                   incident_id: newIncident.id,
                   monitor_id: monitorId,
+                  affected_location_count: affectedLocationCount,
+                  total_locations: numberOfLocations,
                 });
               }
             } else {
-              incidentId = existingIncident.id;
+              incident = existingIncident;
               logger.info("Already in incident", {
                 incident_id: existingIncident.id,
               });
             }
           } catch (error) {
-            logger.error("Failed to create incident", {
-              monitor_id: monitorId,
-              error_message:
-                error instanceof Error ? error.message : String(error),
-            });
+            // Check if this is a constraint violation (race condition)
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            if (
+              errorMessage.includes("UNIQUE constraint") ||
+              errorMessage.includes("unique")
+            ) {
+              // Another request created the incident concurrently, fetch it
+              logger.info(
+                "Concurrent incident creation detected, fetching existing",
+                {
+                  monitor_id: monitorId,
+                },
+              );
+              const existingIncident = await findOpenIncident(monitorIdNumber);
+              if (existingIncident) {
+                incident = existingIncident;
+              }
+            } else {
+              logger.error("Failed to create incident", {
+                monitor_id: monitorId,
+                error_message: errorMessage,
+              });
+            }
           }
         }
 
@@ -315,7 +327,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
           },
         });
         // Trigger notifications for cloud monitors always, private-only when threshold met
-        if (hasCloudRegions || shouldUpdateMonitorStatus) {
+        if (hasCloudRegions || shouldTriggerIncident) {
           triggeredNotifications = await triggerNotifications({
             monitorId,
             statusCode,
@@ -324,15 +336,15 @@ export async function updateStatusPrivate(c: Context<Env>) {
             cronTimestamp,
             regions,
             latency,
-            incidentId,
+            incidentId: incident?.id,
           });
         }
         break;
       case "degraded":
-        // Only update monitor status for private-only monitors (no cloud regions)
+        // Update monitor status for private-only monitors
         if (
           !hasCloudRegions &&
-          shouldUpdateMonitorStatus &&
+          shouldTriggerIncident &&
           monitor.status !== "degraded"
         ) {
           logger.info("Monitor status changed to degraded", {
@@ -343,6 +355,27 @@ export async function updateStatusPrivate(c: Context<Env>) {
             .update(schema.monitor)
             .set({ status: "degraded" })
             .where(eq(schema.monitor.id, monitorIdNumber));
+        }
+
+        // Resolve incident if private-only monitor AND threshold met
+        if (shouldTriggerIncident) {
+          try {
+            const incidents = await resolveIncident({
+              monitorId,
+              cronTimestamp,
+            });
+            incident = incidents[0] ?? null;
+          } catch (error) {
+            logger.warning(
+              "Failed to resolve incident on degraded transition",
+              {
+                monitor_id: monitorId,
+                error_message:
+                  error instanceof Error ? error.message : String(error),
+              },
+            );
+            // Continue with notifications even if resolution fails
+          }
         }
 
         await checkerAudit.publishAuditLog({
@@ -357,7 +390,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
           },
         });
         // Trigger notifications for cloud monitors always, private-only when threshold met
-        if (hasCloudRegions || shouldUpdateMonitorStatus) {
+        if (hasCloudRegions || shouldTriggerIncident) {
           triggeredNotifications = await triggerNotifications({
             monitorId,
             statusCode,
@@ -366,14 +399,15 @@ export async function updateStatusPrivate(c: Context<Env>) {
             cronTimestamp,
             regions,
             latency,
+            incidentId: incident?.id,
           });
         }
         break;
       case "active":
-        // Only update monitor status for private-only monitors (no cloud regions)
+        // Update monitor status for private-only monitors
         if (
           !hasCloudRegions &&
-          shouldUpdateMonitorStatus &&
+          shouldTriggerIncident &&
           monitor.status !== "active"
         ) {
           logger.info("Monitor status changed to active", {
@@ -386,45 +420,21 @@ export async function updateStatusPrivate(c: Context<Env>) {
             .where(eq(schema.monitor.id, monitorIdNumber));
         }
 
-        // Resolve incident only when threshold met and monitor recovered
-        if (
-          !hasCloudRegions &&
-          shouldUpdateMonitorStatus &&
-          monitor.status !== "active"
-        ) {
+        // Resolve incident if private-only monitor AND threshold met
+        if (shouldTriggerIncident) {
           try {
-            const existingIncident = await findOpenIncident(monitorIdNumber);
-            if (existingIncident && !existingIncident.resolvedAt) {
-              incidentId = existingIncident.id;
-              await db
-                .update(schema.incidentTable)
-                .set({
-                  resolvedAt: new Date(cronTimestamp),
-                  autoResolved: true,
-                })
-                .where(eq(schema.incidentTable.id, existingIncident.id))
-                .run();
-
-              await checkerAudit.publishAuditLog({
-                id: `monitor:${monitorId}`,
-                action: "incident.resolved",
-                targets: [{ id: monitorId, type: "monitor" }],
-                metadata: {
-                  cronTimestamp,
-                  incidentId: existingIncident.id,
-                },
-              });
-              logger.info("Resolved incident", {
-                incident_id: existingIncident.id,
-                monitor_id: monitorId,
-              });
-            }
+            const incidents = await resolveIncident({
+              monitorId,
+              cronTimestamp,
+            });
+            incident = incidents[0] ?? null;
           } catch (error) {
-            logger.error("Failed to resolve incident", {
+            logger.warning("Failed to resolve incident on active transition", {
               monitor_id: monitorId,
               error_message:
                 error instanceof Error ? error.message : String(error),
             });
+            // Continue with notifications even if resolution fails
           }
         }
 
@@ -440,7 +450,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
           },
         });
         // Trigger notifications for cloud monitors always, private-only when threshold met
-        if (hasCloudRegions || shouldUpdateMonitorStatus) {
+        if (hasCloudRegions || shouldTriggerIncident) {
           triggeredNotifications = await triggerNotifications({
             monitorId,
             statusCode,
@@ -449,7 +459,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             cronTimestamp,
             regions,
             latency,
-            incidentId,
+            incidentId: incident?.id,
           });
         }
         break;
