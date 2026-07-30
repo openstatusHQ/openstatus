@@ -52,7 +52,7 @@ export function resolvePasswordAction({
   });
   const isOnLogin = pathname.endsWith("/login");
   const needsCustomDomainRedirect =
-    !isSaasSubdomain(host, page.slug) && !!page.customDomain;
+    !isSelfHosted && !isSaasSubdomain(host, page.slug) && !!page.customDomain;
 
   // Gate-in: wrong password and not already on /login → send to login
   if (!authorized && !isOnLogin) {
