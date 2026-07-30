@@ -203,10 +203,11 @@ export async function updateStatusPrivate(c: Context<Env>) {
       (affectedLocationCount >= numberOfLocations / 2 ||
         numberOfLocations === 1);
 
+    let incident = null;
+
     switch (status) {
       case "error":
         // Create incident only if private-only monitor AND threshold met
-        let incident = null;
         if (shouldTriggerIncident) {
           try {
             const existingIncident = await findOpenIncident(monitorIdNumber);
@@ -287,7 +288,6 @@ export async function updateStatusPrivate(c: Context<Env>) {
         break;
       case "degraded":
         // Resolve incident if transitioning from error
-        let incident = null;
         if (shouldTriggerIncident && monitor.status === "error") {
           incident = await resolveIncident({ monitorId, cronTimestamp });
         }
@@ -316,7 +316,6 @@ export async function updateStatusPrivate(c: Context<Env>) {
         break;
       case "active":
         // Resolve incident only if private-only monitor AND threshold met
-        let incident = null;
         if (shouldTriggerIncident) {
           try {
             const existingIncident = await findOpenIncident(monitorIdNumber);
