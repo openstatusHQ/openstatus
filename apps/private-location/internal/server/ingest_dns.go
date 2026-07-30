@@ -12,7 +12,7 @@ import (
 
 type DNSResponse struct {
 	ID            string `json:"id"`
-	Timing        string `json:"assertions"`
+	Timing        string `json:"timing"`
 	ErrorMessage  string `json:"errorMessage"`
 	Region        string `json:"region"`
 	Trigger       string `json:"trigger"`
