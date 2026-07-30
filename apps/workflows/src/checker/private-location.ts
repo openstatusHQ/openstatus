@@ -166,6 +166,9 @@ export async function updateStatusPrivate(c: Context<Env>) {
 
     const regions = [attachment.name];
 
+    let triggeredNotifications: { notificationId: number; provider: string }[] =
+      [];
+
     switch (status) {
       case "error":
         await checkerAudit.publishAuditLog({
@@ -180,7 +183,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             latency,
           },
         });
-        await triggerNotifications({
+        triggeredNotifications = await triggerNotifications({
           monitorId,
           statusCode,
           message,
@@ -202,7 +205,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             latency,
           },
         });
-        await triggerNotifications({
+        triggeredNotifications = await triggerNotifications({
           monitorId,
           statusCode,
           message,
@@ -224,7 +227,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             latency,
           },
         });
-        await triggerNotifications({
+        triggeredNotifications = await triggerNotifications({
           monitorId,
           statusCode,
           message,
@@ -235,6 +238,12 @@ export async function updateStatusPrivate(c: Context<Env>) {
         });
         break;
     }
+
+    // Add notification outcome to event for OTel logging
+    (event.status_update as Record<string, unknown>).notificationTriggered =
+      triggeredNotifications.length > 0;
+    (event.status_update as Record<string, unknown>).notifications =
+      triggeredNotifications;
 
     return c.json({ success: true }, 200);
   } catch (error) {
