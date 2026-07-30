@@ -255,8 +255,7 @@ export default function Page() {
               ) : (
                 <StatusMonitorTabsTriggerValue>
                   {(tempMonitor?.regions.length ?? 0) +
-                    (((tempMonitor as Record<string, unknown>)
-                      ?.privateLocationCount as number | undefined) ?? 0)}{" "}
+                    (tempMonitor?.privateLocationCount ?? 0)}{" "}
                   {t("regions")}{" "}
                   <Badge
                     variant="outline"
