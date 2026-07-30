@@ -8,62 +8,11 @@ import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
+import { findOpenIncident, resolveIncident } from "./incident-utils";
 
 const logger = getLogger(["workflow"]);
 
-/**
- * Finds an open incident (not resolved) for the given monitor.
- */
-async function findOpenIncident(monitorId: number) {
-  return db
-    .select()
-    .from(schema.incidentTable)
-    .where(
-      and(
-        eq(schema.incidentTable.monitorId, monitorId),
-        isNull(schema.incidentTable.resolvedAt),
-      ),
-    )
-    .get();
-}
 
-/**
- * Resolves an open incident by setting resolvedAt and autoResolved flag.
- */
-async function resolveIncident(params: {
-  monitorId: string;
-  cronTimestamp: number;
-}) {
-  const { monitorId, cronTimestamp } = params;
-  const incident = await findOpenIncident(Number(monitorId));
-
-  if (!incident || incident.resolvedAt) {
-    return null;
-  }
-
-  logger.info("Recovering incident", {
-    incident_id: incident.id,
-    monitor_id: monitorId,
-  });
-
-  await db
-    .update(schema.incidentTable)
-    .set({
-      resolvedAt: new Date(cronTimestamp),
-      autoResolved: true,
-    })
-    .where(eq(schema.incidentTable.id, incident.id))
-    .run();
-
-  await checkerAudit.publishAuditLog({
-    id: `monitor:${monitorId}`,
-    action: "incident.resolved",
-    targets: [{ id: monitorId, type: "monitor" }],
-    metadata: { cronTimestamp, incidentId: incident.id },
-  });
-
-  return incident;
-}
 
 const payloadSchema = z.object({
   monitorId: z.string(),
