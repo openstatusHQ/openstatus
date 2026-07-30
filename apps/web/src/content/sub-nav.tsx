@@ -6,6 +6,7 @@ import { Fragment } from "react";
 
 import { cn } from "../lib/utils";
 import { CopyDropdownButton } from "./copy-button";
+import { ThemeToggleCompact } from "./theme-toggle-compact";
 
 export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
   const pathname = usePathname();
@@ -31,7 +32,10 @@ export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
           </Fragment>
         ))}
       </div>
-      <CopyDropdownButton />
+      <div className="flex shrink-0 items-center gap-2 pr-4">
+        <CopyDropdownButton />
+        <ThemeToggleCompact />
+      </div>
     </div>
   );
 }

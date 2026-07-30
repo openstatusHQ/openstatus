@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { HowItWorks } from "../../components/marketing/how-it-works";
 import { CustomMDX } from "../../content/mdx";
 import { getHomePage } from "../../content/utils";
 import { JsonLd } from "../../lib/metadata/json-ld";
@@ -33,6 +34,7 @@ export default function Page() {
       <JsonLd graph={jsonLDGraph} />
       <h1>{homePage.metadata.hero ?? homePage.metadata.title}</h1>
       <p className="text-lg">{homePage.metadata.description}</p>
+      <HowItWorks className="my-8" />
       <CustomMDX source={homePage.content} />
     </div>
   );
