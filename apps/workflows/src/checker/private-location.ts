@@ -184,7 +184,9 @@ export async function updateStatusPrivate(c: Context<Env>) {
     const allLocationStatuses = await db
       .select()
       .from(schema.privateLocationMonitorStatus)
-      .where(eq(schema.privateLocationMonitorStatus.monitorId, monitorIdNumber));
+      .where(
+        eq(schema.privateLocationMonitorStatus.monitorId, monitorIdNumber),
+      );
 
     const numberOfLocations = allLocationStatuses.length;
     const affectedLocationCount = allLocationStatuses.filter(
@@ -198,11 +200,14 @@ export async function updateStatusPrivate(c: Context<Env>) {
     // Check if monitor has cloud regions - only update status for private-only monitors
     const hasCloudRegions = monitor.regions.trim().length > 0;
 
-
     switch (status) {
       case "error":
         // Only update monitor status for private-only monitors (no cloud regions)
-        if (!hasCloudRegions && shouldUpdateMonitorStatus && monitor.status !== "error") {
+        if (
+          !hasCloudRegions &&
+          shouldUpdateMonitorStatus &&
+          monitor.status !== "error"
+        ) {
           logger.info("Monitor status changed to error", {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
@@ -246,7 +251,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
         } catch (error) {
           logger.error("Failed to create incident", {
             monitor_id: monitorId,
-            error_message: error instanceof Error ? error.message : String(error),
+            error_message:
+              error instanceof Error ? error.message : String(error),
           });
         }
 
@@ -274,7 +280,11 @@ export async function updateStatusPrivate(c: Context<Env>) {
         break;
       case "degraded":
         // Only update monitor status for private-only monitors (no cloud regions)
-        if (!hasCloudRegions && shouldUpdateMonitorStatus && monitor.status !== "degraded") {
+        if (
+          !hasCloudRegions &&
+          shouldUpdateMonitorStatus &&
+          monitor.status !== "degraded"
+        ) {
           logger.info("Monitor status changed to degraded", {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
@@ -308,7 +318,11 @@ export async function updateStatusPrivate(c: Context<Env>) {
         break;
       case "active":
         // Only update monitor status for private-only monitors (no cloud regions)
-        if (!hasCloudRegions && shouldUpdateMonitorStatus && monitor.status !== "active") {
+        if (
+          !hasCloudRegions &&
+          shouldUpdateMonitorStatus &&
+          monitor.status !== "active"
+        ) {
           logger.info("Monitor status changed to active", {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
@@ -336,8 +350,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
               id: `monitor:${monitorId}`,
               action: "incident.resolved",
               targets: [{ id: monitorId, type: "monitor" }],
-              metadata: { 
-                cronTimestamp, 
+              metadata: {
+                cronTimestamp,
                 incidentId: existingIncident.id,
                 autoResolved: true,
               },
@@ -350,7 +364,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
         } catch (error) {
           logger.error("Failed to resolve incident", {
             monitor_id: monitorId,
-            error_message: error instanceof Error ? error.message : String(error),
+            error_message:
+              error instanceof Error ? error.message : String(error),
           });
         }
 

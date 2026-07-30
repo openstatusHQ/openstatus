@@ -43,7 +43,6 @@ const PRIVATE_ONLY_MONITOR_ID = 9103;
 const PRIVATE_LOCATION_2_ID = 9003;
 const PRIVATE_LOCATION_3_ID = 9004;
 
-
 const cronSecret = env().CRON_SECRET;
 
 type PrivatePayload = {
@@ -245,7 +244,9 @@ describe("updateStatusPrivate", () => {
     // Cleanup private-only monitor fixtures
     await db
       .delete(privateLocationMonitorStatus)
-      .where(eq(privateLocationMonitorStatus.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .where(
+        eq(privateLocationMonitorStatus.monitorId, PRIVATE_ONLY_MONITOR_ID),
+      )
       .run();
     await db
       .delete(notificationTrigger)
@@ -260,8 +261,14 @@ describe("updateStatusPrivate", () => {
       .where(
         or(
           eq(privateLocationToMonitors.privateLocationId, TEST_LOCATION_ID),
-          eq(privateLocationToMonitors.privateLocationId, PRIVATE_LOCATION_2_ID),
-          eq(privateLocationToMonitors.privateLocationId, PRIVATE_LOCATION_3_ID),
+          eq(
+            privateLocationToMonitors.privateLocationId,
+            PRIVATE_LOCATION_2_ID,
+          ),
+          eq(
+            privateLocationToMonitors.privateLocationId,
+            PRIVATE_LOCATION_3_ID,
+          ),
         ),
       )
       .run();
@@ -276,7 +283,10 @@ describe("updateStatusPrivate", () => {
       .run();
     await db.delete(monitor).where(eq(monitor.id, TEST_MONITOR_ID)).run();
     await db.delete(monitor).where(eq(monitor.id, INACTIVE_MONITOR_ID)).run();
-    await db.delete(monitor).where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID)).run();
+    await db
+      .delete(monitor)
+      .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
+      .run();
   });
 
   beforeEach(() => {
