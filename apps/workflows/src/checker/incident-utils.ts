@@ -58,7 +58,7 @@ export async function resolveIncident(params: {
   });
 
   await checkerAudit.publishAuditLog({
-    id: monitor:,
+    id: `monitor:${monitorId}`,
     action: "incident.resolved",
     targets: [{ id: monitorId, type: "monitor" }],
     metadata: { cronTimestamp, incidentId: updated.id },
