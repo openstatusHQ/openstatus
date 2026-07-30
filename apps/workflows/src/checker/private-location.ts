@@ -48,15 +48,17 @@ export async function updateStatusPrivate(c: Context<Env>) {
   const privateLocationIdNumber = Number(privateLocationId);
 
   // Set event data for Tinybird ingestion (matches cloud checker pattern)
-  event.status_update = {
-    status: status,
-    message: message,
-    region: privateLocationId, // Private location ID as region string
-    status_code: statusCode,
-    cron_timestamp: cronTimestamp,
-    latency_ms: latency,
-    monitorId: monitorIdNumber,
-  };
+  if (event) {
+    event.status_update = {
+      status: status,
+      message: message,
+      region: privateLocationId, // Private location ID as region string
+      status_code: statusCode,
+      cron_timestamp: cronTimestamp,
+      latency_ms: latency,
+      monitorId: monitorIdNumber,
+    };
+  }
 
   try {
     const monitor = await db
@@ -240,10 +242,12 @@ export async function updateStatusPrivate(c: Context<Env>) {
     }
 
     // Add notification outcome to event for OTel logging
-    (event.status_update as Record<string, unknown>).notificationTriggered =
-      triggeredNotifications.length > 0;
-    (event.status_update as Record<string, unknown>).notifications =
-      triggeredNotifications;
+    if (event?.status_update) {
+      (event.status_update as Record<string, unknown>).notificationTriggered =
+        triggeredNotifications.length > 0;
+      (event.status_update as Record<string, unknown>).notifications =
+        triggeredNotifications;
+    }
 
     return c.json({ success: true }, 200);
   } catch (error) {
