@@ -43,8 +43,20 @@ export async function updateStatusPrivate(c: Context<Env>) {
     latency,
   } = result.data;
 
+  const event = c.get("event");
   const monitorIdNumber = Number(monitorId);
   const privateLocationIdNumber = Number(privateLocationId);
+
+  // Set event data for Tinybird ingestion (matches cloud checker pattern)
+  event.status_update = {
+    status: status,
+    message: message,
+    region: privateLocationId, // Private location ID as region string
+    status_code: statusCode,
+    cron_timestamp: cronTimestamp,
+    latency_ms: latency,
+    monitorId: monitorIdNumber,
+  };
 
   try {
     const monitor = await db
