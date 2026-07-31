@@ -26,13 +26,8 @@ type DNSResponse struct {
 	WorkspaceID   int64 `json:"workspaceId"`
 	MonitorID     int64 `json:"monitorId"`
 	Timestamp     int64 `json:"timestamp"`
-<<<<<<< Updated upstream
 	Latency       int64 `json:"latency"`
 	CronTimestamp int64 `json:"cronTimestamp"`
-=======
-	Latency       int64  `json:"latency"`
-	CronTimestamp int64  `json:"cronTimestamp"`
->>>>>>> Stashed changes
 
 	Error uint8 `json:"error"`
 }
@@ -81,10 +76,6 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		Error:         uint8(req.Msg.Error),
 		Region:        strconv.Itoa(ic.Region.ID),
 		MonitorID:     int64(ic.Monitor.ID),
-<<<<<<< Updated upstream
-=======
-		Assertions:    ic.Monitor.Assertions.String,
->>>>>>> Stashed changes
 		Timing:        req.Msg.Timing,
 		Latency:       req.Msg.Latency,
 		CronTimestamp: req.Msg.CronTimestamp,
