@@ -1390,6 +1390,28 @@ export class OSTinybird {
     });
   }
 
+  public get dnsGlobalMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_global_1d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: z.object({
+        minLatency: z.int(),
+        maxLatency: z.int(),
+        p50Latency: z.int(),
+        p75Latency: z.int(),
+        p90Latency: z.int(),
+        p95Latency: z.int(),
+        p99Latency: z.int(),
+        lastTimestamp: z.int(),
+        count: z.int(),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get httpTimingPhases14d() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_timing_phases_14d__v1",

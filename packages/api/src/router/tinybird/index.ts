@@ -164,7 +164,10 @@ export function getGetProcedure(period: "14d", type: Type) {
 }
 
 export function getGlobalMetricsProcedure(type: Type) {
-  return type === "http" ? tb.httpGlobalMetricsDaily : tb.tcpGlobalMetricsDaily;
+  if (type === "http") return tb.httpGlobalMetricsDaily;
+  if (type === "tcp") return tb.tcpGlobalMetricsDaily;
+  if (type === "dns") return tb.dnsGlobalMetricsDaily;
+  throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 
 export function getUptimeProcedure(period: "7d" | "30d" | "90d", type: Type) {
