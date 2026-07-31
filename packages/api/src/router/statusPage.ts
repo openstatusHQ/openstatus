@@ -249,6 +249,7 @@ export const statusPageRouter = createTRPCRouter({
       });
 
       // Add privateLocationCount to each monitor
+      const privateLocationCounts = new Map<number, number>();
       if (monitors.length > 0) {
         const monitorIds = monitors.map((m) => m.id);
         const privateLocations =
@@ -263,7 +264,6 @@ export const statusPageRouter = createTRPCRouter({
           });
 
         // Count private locations per monitor
-        const privateLocationCounts = new Map<number, number>();
         for (const pl of privateLocations) {
           if (pl.monitorId === null) continue;
           privateLocationCounts.set(
@@ -271,21 +271,21 @@ export const statusPageRouter = createTRPCRouter({
             (privateLocationCounts.get(pl.monitorId) ?? 0) + 1,
           );
         }
-
-        // Add count to each monitor
-        for (const monitor of monitors) {
-          (monitor as Record<string, unknown>).privateLocationCount =
-            privateLocationCounts.get(monitor.id) ?? 0;
-        }
       }
+
+      // Create new array with privateLocationCount included (no mutation/cast)
+      const monitorsWithPrivateLocationCount = monitors.map((m) => ({
+        ...m,
+        privateLocationCount: privateLocationCounts.get(m.id) ?? 0,
+      }));
 
       // no barType gate: incident-driven error is already suppressed per
       // monitor in manual mode; report-driven error (major_outage) must show
-      const status = monitors.some((m) => m.status === "error")
+      const status = monitorsWithPrivateLocationCount.some((m) => m.status === "error")
         ? "error"
-        : monitors.some((m) => m.status === "degraded")
+        : monitorsWithPrivateLocationCount.some((m) => m.status === "degraded")
           ? "degraded"
-          : monitors.some((m) => m.status === "info")
+          : monitorsWithPrivateLocationCount.some((m) => m.status === "info")
             ? "info"
             : "success";
 
@@ -462,10 +462,10 @@ export const statusPageRouter = createTRPCRouter({
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
         customTheme,
-        monitors,
+        monitors: monitorsWithPrivateLocationCount,
         monitorGroups,
         trackers,
-        incidents: monitors.flatMap((m) => m.incidents) ?? [],
+        incidents: monitorsWithPrivateLocationCount.flatMap((m) => m.incidents) ?? [],
         statusReports,
         maintenances,
         workspacePlan: _page.workspace.plan,
