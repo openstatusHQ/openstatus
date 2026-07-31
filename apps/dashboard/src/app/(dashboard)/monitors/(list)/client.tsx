@@ -64,7 +64,11 @@ export function Client() {
         ?.filter((m) => m.jobType === "dns")
         .map((m) => m.id.toString()) ?? [],
   };
-  const { http: httpMonitors, tcp: tcpMonitors, dns: dnsMonitors } = monitorsByType;
+  const {
+    http: httpMonitors,
+    tcp: tcpMonitors,
+    dns: dnsMonitors,
+  } = monitorsByType;
 
   const [
     { data: globalHttpMetrics, isLoading: isLoadingHttp },
@@ -170,7 +174,8 @@ export function Client() {
                   </MetricCardTitle>
                   <Icon className="size-4" />
                 </MetricCardHeader>
-                {metric.key === "p95" && (isLoadingHttp || isLoadingTcp || isLoadingDns) ? (
+                {metric.key === "p95" &&
+                (isLoadingHttp || isLoadingTcp || isLoadingDns) ? (
                   <MetricCardSkeleton className="h-6 w-12" />
                 ) : (
                   <MetricCardValue>{metric.value}</MetricCardValue>
