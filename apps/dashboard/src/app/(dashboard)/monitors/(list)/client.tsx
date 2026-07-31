@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDown, Success, ListFilter } from "@openstatus/icons";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
 import { useEffect, useState } from "react";
@@ -59,24 +59,45 @@ export function Client() {
       monitors
         ?.filter((m) => m.jobType === "tcp")
         .map((m) => m.id.toString()) ?? [],
+    dns:
+      monitors
+        ?.filter((m) => m.jobType === "dns")
+        .map((m) => m.id.toString()) ?? [],
   };
-  const { http: httpMonitors, tcp: tcpMonitors } = monitorsByType;
+  const {
+    http: httpMonitors,
+    tcp: tcpMonitors,
+    dns: dnsMonitors,
+  } = monitorsByType;
 
-  // HMM: why do we need two queries?
-  const { data: globalHttpMetrics, isLoading: isLoadingHttp } = useQuery({
-    ...trpc.tinybird.globalMetrics.queryOptions({
-      monitorIds: httpMonitors,
-      type: "http",
-    }),
-    enabled: httpMonitors.length > 0,
-  });
-
-  const { data: globalTcpMetrics, isLoading: isLoadingTcp } = useQuery({
-    ...trpc.tinybird.globalMetrics.queryOptions({
-      monitorIds: tcpMonitors,
-      type: "tcp",
-    }),
-    enabled: tcpMonitors.length > 0,
+  const [
+    { data: globalHttpMetrics, isLoading: isLoadingHttp },
+    { data: globalTcpMetrics, isLoading: isLoadingTcp },
+    { data: globalDnsMetrics, isLoading: isLoadingDns },
+  ] = useQueries({
+    queries: [
+      {
+        ...trpc.tinybird.globalMetrics.queryOptions({
+          monitorIds: httpMonitors,
+          type: "http",
+        }),
+        enabled: httpMonitors.length > 0,
+      },
+      {
+        ...trpc.tinybird.globalMetrics.queryOptions({
+          monitorIds: tcpMonitors,
+          type: "tcp",
+        }),
+        enabled: tcpMonitors.length > 0,
+      },
+      {
+        ...trpc.tinybird.globalMetrics.queryOptions({
+          monitorIds: dnsMonitors,
+          type: "dns",
+        }),
+        enabled: dnsMonitors.length > 0,
+      },
+    ],
   });
 
   // TODO: ideally we read from the searchParamsCache and there is no layout shift
@@ -95,6 +116,7 @@ export function Client() {
   const metrics = getMonitorListMetrics(monitors, [
     ...(globalHttpMetrics?.data ?? []),
     ...(globalTcpMetrics?.data ?? []),
+    ...(globalDnsMetrics?.data ?? []),
   ]);
 
   return (
@@ -152,7 +174,8 @@ export function Client() {
                   </MetricCardTitle>
                   <Icon className="size-4" />
                 </MetricCardHeader>
-                {metric.key === "p95" && (isLoadingHttp || isLoadingTcp) ? (
+                {metric.key === "p95" &&
+                (isLoadingHttp || isLoadingTcp || isLoadingDns) ? (
                   <MetricCardSkeleton className="h-6 w-12" />
                 ) : (
                   <MetricCardValue>{metric.value}</MetricCardValue>
@@ -168,15 +191,19 @@ export function Client() {
           data={monitors.map((monitor) => ({
             ...monitor,
             globalMetrics:
-              isLoadingHttp || isLoadingTcp
+              isLoadingHttp || isLoadingTcp || isLoadingDns
                 ? undefined
                 : monitor.jobType === "http"
                   ? (globalHttpMetrics?.data?.find(
                       (m) => m.monitorId === monitor.id.toString(),
                     ) ?? false)
-                  : (globalTcpMetrics?.data?.find(
-                      (m) => m.monitorId === monitor.id.toString(),
-                    ) ?? false),
+                  : monitor.jobType === "tcp"
+                    ? (globalTcpMetrics?.data?.find(
+                        (m) => m.monitorId === monitor.id.toString(),
+                      ) ?? false)
+                    : (globalDnsMetrics?.data?.find(
+                        (m) => m.monitorId === monitor.id.toString(),
+                      ) ?? false),
           }))}
           actionBar={MonitorDataTableActionBar}
           toolbarComponent={(props) => (
