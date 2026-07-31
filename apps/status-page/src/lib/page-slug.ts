@@ -1,3 +1,4 @@
+import { stripHostPort } from "./domain";
 import { resolveRoute } from "./resolve-route";
 
 /**
@@ -22,7 +23,7 @@ export function getPagePrefixFromHost(
   url: string,
 ): string | null {
   const route = resolveRoute({
-    host: headers.get("x-forwarded-host"),
+    host: stripHostPort(headers.get("x-forwarded-host")),
     urlHost: parseUrl(url)?.host ?? "",
     pathname: "/",
   });
