@@ -281,7 +281,9 @@ export const statusPageRouter = createTRPCRouter({
 
       // no barType gate: incident-driven error is already suppressed per
       // monitor in manual mode; report-driven error (major_outage) must show
-      const status = monitorsWithPrivateLocationCount.some((m) => m.status === "error")
+      const status = monitorsWithPrivateLocationCount.some(
+        (m) => m.status === "error",
+      )
         ? "error"
         : monitorsWithPrivateLocationCount.some((m) => m.status === "degraded")
           ? "degraded"
@@ -465,7 +467,8 @@ export const statusPageRouter = createTRPCRouter({
         monitors: monitorsWithPrivateLocationCount,
         monitorGroups,
         trackers,
-        incidents: monitorsWithPrivateLocationCount.flatMap((m) => m.incidents) ?? [],
+        incidents:
+          monitorsWithPrivateLocationCount.flatMap((m) => m.incidents) ?? [],
         statusReports,
         maintenances,
         workspacePlan: _page.workspace.plan,
