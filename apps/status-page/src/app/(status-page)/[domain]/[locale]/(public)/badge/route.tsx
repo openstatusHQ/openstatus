@@ -1,5 +1,5 @@
 import type { Status } from "@openstatus/react";
-import { getStatus } from "@openstatus/react";
+import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 
@@ -47,7 +47,11 @@ export async function GET(
   props: { params: Promise<{ domain: string }> },
 ) {
   const params = await props.params;
-  const { status } = await getStatus(params.domain);
+  const queryClient = getQueryClient();
+  const data = await queryClient.fetchQuery(
+    trpc.statusPage.get.queryOptions({ slug: params.domain }),
+  );
+  const status = (data?.status ?? "unknown") as Status;
   const theme = req.nextUrl.searchParams.get("theme");
   const size = req.nextUrl.searchParams.get("size");
   const s = SIZE[size ?? "sm"] ?? SIZE.sm;

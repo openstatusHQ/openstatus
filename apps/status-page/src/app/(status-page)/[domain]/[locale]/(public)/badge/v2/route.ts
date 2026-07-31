@@ -1,5 +1,5 @@
 import type { Status } from "@openstatus/react";
-import { getStatus } from "@openstatus/react";
+import { getQueryClient, trpc } from "@/lib/trpc/server";
 import type { NextRequest } from "next/server";
 
 const statusDictionary: Record<Status, { label: string; hexColor: string }> = {
@@ -59,7 +59,11 @@ export async function GET(
   props: { params: Promise<{ domain: string }> },
 ) {
   const params = await props.params;
-  const { status } = await getStatus(params.domain);
+  const queryClient = getQueryClient();
+  const data = await queryClient.fetchQuery(
+    trpc.statusPage.get.queryOptions({ slug: params.domain }),
+  );
+  const status = (data?.status ?? "unknown") as Status;
   const theme = req.nextUrl.searchParams.get("theme") ?? "light";
   const variant = req.nextUrl.searchParams.get("variant") ?? "default";
   const size = req.nextUrl.searchParams.get("size") ?? "sm";
