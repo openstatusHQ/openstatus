@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDown, Success, ListFilter } from "@openstatus/icons";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
 import { useEffect, useState } from "react";
