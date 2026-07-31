@@ -66,29 +66,34 @@ export function Client() {
   };
   const { http: httpMonitors, tcp: tcpMonitors, dns: dnsMonitors } = monitorsByType;
 
-  // HMM: why do we need two queries?
-  const { data: globalHttpMetrics, isLoading: isLoadingHttp } = useQuery({
-    ...trpc.tinybird.globalMetrics.queryOptions({
-      monitorIds: httpMonitors,
-      type: "http",
-    }),
-    enabled: httpMonitors.length > 0,
-  });
-
-  const { data: globalTcpMetrics, isLoading: isLoadingTcp } = useQuery({
-    ...trpc.tinybird.globalMetrics.queryOptions({
-      monitorIds: tcpMonitors,
-      type: "tcp",
-    }),
-    enabled: tcpMonitors.length > 0,
-  });
-
-  const { data: globalDnsMetrics, isLoading: isLoadingDns } = useQuery({
-    ...trpc.tinybird.globalMetrics.queryOptions({
-      monitorIds: dnsMonitors,
-      type: "dns",
-    }),
-    enabled: dnsMonitors.length > 0,
+  const [
+    { data: globalHttpMetrics, isLoading: isLoadingHttp },
+    { data: globalTcpMetrics, isLoading: isLoadingTcp },
+    { data: globalDnsMetrics, isLoading: isLoadingDns },
+  ] = useQueries({
+    queries: [
+      {
+        ...trpc.tinybird.globalMetrics.queryOptions({
+          monitorIds: httpMonitors,
+          type: "http",
+        }),
+        enabled: httpMonitors.length > 0,
+      },
+      {
+        ...trpc.tinybird.globalMetrics.queryOptions({
+          monitorIds: tcpMonitors,
+          type: "tcp",
+        }),
+        enabled: tcpMonitors.length > 0,
+      },
+      {
+        ...trpc.tinybird.globalMetrics.queryOptions({
+          monitorIds: dnsMonitors,
+          type: "dns",
+        }),
+        enabled: dnsMonitors.length > 0,
+      },
+    ],
   });
 
   // TODO: ideally we read from the searchParamsCache and there is no layout shift
