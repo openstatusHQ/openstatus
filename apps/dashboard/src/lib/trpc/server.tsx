@@ -1,54 +1,48 @@
 import "server-only";
-import type { AppRouter } from "@openstatus/api";
+import { type AppRouter, appRouter, createTRPCContext } from "@openstatus/api";
 import { HydrationBoundary } from "@tanstack/react-query";
 import { dehydrate } from "@tanstack/react-query";
-import { TRPCClientError, createTRPCClient } from "@trpc/client";
+import { TRPCClientError } from "@trpc/client";
 import {
   type ResolverDef,
   type TRPCQueryOptions,
   createTRPCOptionsProxy,
 } from "@trpc/tanstack-react-query";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { NextRequest } from "next/server";
 import { cache } from "react";
 
+import { auth } from "@/lib/auth";
+
 import { makeQueryClient } from "./query-client";
-import { endingLink, sentryLoggerLink } from "./shared";
 
 // IMPORTANT: Create a stable getter for the query client that
 //            will return the same client during the same request.
 export const getQueryClient = cache(makeQueryClient);
 
+/**
+ * RSC has no `NextRequest`, so synthesize one from the incoming headers —
+ * `NextRequest` derives `.cookies` from the `cookie` header, which is all
+ * the tRPC context reads (workspace-slug) besides UA / forwarded-for.
+ * The URL is a placeholder; nothing in the context inspects it.
+ */
+const createRSCContext = cache(async () => {
+  const headerList = await headers();
+  const req = new NextRequest("https://dashboard.internal/rsc", {
+    headers: headerList,
+  });
+  return createTRPCContext({ req, auth });
+});
+
+// Calls procedures in-process. This used to be an httpBatchLink pointed back
+// at our own /api/trpc/lambda, which meant every RSC render paid a real HTTPS
+// round-trip, a second lambda invocation and a second `auth()` before any
+// query ran. Both run on Node, so there is nothing to bridge.
 export const trpc = createTRPCOptionsProxy<AppRouter>({
+  router: appRouter,
+  ctx: createRSCContext,
   queryClient: getQueryClient,
-  client: createTRPCClient({
-    links: [
-      sentryLoggerLink(),
-      endingLink({
-        headers: {
-          "x-trpc-source": "server",
-        },
-        // `typeof fetch` carries a `preconnect` static (React 19 typings) that
-        // tRPC's link will never invoke — cast the call-signature wrapper.
-        fetch: (async (url, options) => {
-          const cookieStore = await cookies();
-          console.log("[dashboard trpc server] fetch", {
-            hasSessionToken:
-              !!cookieStore.get("__Secure-authjs.session-token")?.value ||
-              !!cookieStore.get("authjs.session-token")?.value,
-          });
-          return fetch(url, {
-            ...options,
-            credentials: "include",
-            headers: {
-              ...options?.headers,
-              cookie: cookieStore.toString(),
-            },
-          });
-        }) as typeof fetch,
-      }),
-    ],
-  }),
 });
 
 export function HydrateClient(props: { children: React.ReactNode }) {
@@ -104,9 +98,23 @@ export async function fetchQueryOrNotFound<
       ReturnType<Extract<T["queryFn"], (...args: never[]) => unknown>>
     >;
   } catch (error) {
-    if (error instanceof TRPCClientError && error.data?.code === "NOT_FOUND") {
-      notFound();
-    }
+    if (isNotFound(error)) notFound();
     throw error;
   }
+}
+
+/**
+ * The in-process caller throws `TRPCError`; `TRPCClientError` only appears if
+ * a caller still goes over the wire. Matched on `name` rather than
+ * `instanceof` — a duplicated `@trpc/server` copy in the RSC bundle would
+ * break identity and silently turn every `notFound()` gate into a 500. tRPC
+ * duck-types the same way internally (`getTRPCErrorFromUnknown`).
+ */
+function isNotFound(error: unknown): boolean {
+  if (error instanceof TRPCClientError) return error.data?.code === "NOT_FOUND";
+  return (
+    error instanceof Error &&
+    error.name === "TRPCError" &&
+    (error as { code?: string }).code === "NOT_FOUND"
+  );
 }
