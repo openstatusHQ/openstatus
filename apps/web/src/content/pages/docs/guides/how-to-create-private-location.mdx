@@ -13,7 +13,7 @@ description: "Set up monitoring from your own infrastructure using Docker-based 
 
 In this guide, you'll set up a **private location** — a monitoring probe running on your own infrastructure. This lets you monitor internal applications, private APIs, and network resources behind your firewall without exposing them to the public internet.
 
-<Aside type="caution">Private locations are currently in **beta**. Some features like incident creation and public status page support are not yet available for private locations.</Aside>
+<Aside type="caution">Private locations are currently in **beta**.</Aside>
 
 For background on when to use a private location and how the connection works, see [Understanding private locations](/docs/concept/private-locations).
 
@@ -69,10 +69,6 @@ abc123         ghcr.io/openstatushq/private-location:latest   Up 2 minutes   ope
 - Deployed a monitoring probe on your own infrastructure
 - Assigned monitors to check from your private location
 
-## Current limitations
-
-- Incidents are **not yet created** for monitors running via private locations. Continue using openstatus public regions if you need alerting.
-- Public monitors on status pages **do not yet support** private locations.
 
 ## Troubleshooting
 
