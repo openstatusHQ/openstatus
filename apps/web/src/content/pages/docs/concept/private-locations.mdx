@@ -39,8 +39,8 @@ The consequence is that you only need **outbound** network access from the probe
 | Network reach | Public internet only | Whatever the probe host can reach |
 | IPs to allowlist | [Documented per region](/docs/reference/location) | Yours |
 | Cost model | Included with monitor checks | You pay for the host/container |
-| Auto-incident & alerts | Yes | Not yet (see limitations below) |
-| Use on public status pages | Yes | Not yet (see limitations below) |
+| Auto-incident & alerts | Yes | Yes |
+| Use on public status pages | Yes | Yes |
 
 A monitor can be assigned to public locations, private locations, or both. Public-and-private hybrids are useful when you want a public probe for SLA reporting and a private probe for in-network diagnostics on the same endpoint.
 
@@ -52,12 +52,12 @@ Running a private location moves operational responsibility to you. Plan for:
 - **Token handling.** The probe's token authenticates it as your workspace. Inject it as an environment variable, store it the same way you store other secrets, and rotate it if a host is decommissioned.
 - **Egress only.** Because the connection is outbound, an egress firewall that blocks `api.openstatus.dev:443` will silently stop the probe from running checks. The probe will appear "connected" briefly and then go quiet.
 
-## Current limitations
+## Recent improvements
 
-- **No automatic incidents.** A failing check from a private location does not currently open an incident or fire notifications. If you need alerting today, keep at least one public location on the monitor.
-- **Not displayed on public status pages.** Monitors assigned only to private locations won't appear on a public status page as a monitor-linked component.
+As of July 2026, private locations now support:
 
-Both are tracked and expected to land — when they do, the [private location reference](/docs/reference/private-location) will reflect the change.
+- **Automatic incidents and notifications.** Failed checks from private locations now trigger incidents and fire notifications, with intelligent threshold logic when multiple private locations are attached to a monitor.
+- **Status page display.** Monitors assigned to private locations now appear on public status pages with proper status tracking and uptime graphs.
 
 ## Next steps
 
