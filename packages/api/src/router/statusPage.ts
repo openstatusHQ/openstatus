@@ -500,7 +500,6 @@ export const statusPageRouter = createTRPCRouter({
           c.monitor.deletedAt === null,
       );
 
-
       // Compute status for each monitor using shared helper (guarantees consistency with page rendering)
       const statuses = monitorComponents.map((c) => {
         const events = getEvents({
