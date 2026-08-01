@@ -67,6 +67,63 @@ export async function withTinybirdFallback<T>(
   }
 }
 
+/**
+ * Computes status for a single monitor component based on its events.
+ * Shared by both the full page query and the lightweight badge query.
+ *
+ * @param events - Array of events (incidents, maintenances, reports) for the monitor
+ * @param barType - Configuration type ("manual" suppresses incident-driven errors)
+ * @returns Status of the monitor: "error" | "degraded" | "info" | "success"
+ */
+export function computeMonitorStatus(
+  events: Event[],
+  barType: "absolute" | "dominant" | "manual",
+): "success" | "degraded" | "error" | "info" {
+  // Check for active incident (no end date) - suppressed in manual mode
+  const hasActiveIncident = events.some((e) => e.type === "incident" && !e.to);
+  if (hasActiveIncident && barType !== "manual") {
+    return "error";
+  }
+
+  // Check for report-driven status (can be error or degraded from impact)
+  const reportStatus = activeReportStatus(events);
+  if (reportStatus) {
+    return reportStatus;
+  }
+
+  // Check for active maintenance
+  const now = new Date().getTime();
+  const hasActiveMaintenance = events.some(
+    (e) =>
+      e.type === "maintenance" &&
+      e.to &&
+      e.from.getTime() <= now &&
+      e.to.getTime() >= now,
+  );
+  if (hasActiveMaintenance) {
+    return "info";
+  }
+
+  // Default to success
+  return "success";
+}
+
+/**
+ * Aggregates monitor statuses to a single page-level status.
+ * Priority: error > degraded > info > success
+ *
+ * @param statuses - Array of monitor statuses
+ * @returns Aggregated page status
+ */
+export function aggregatePageStatus(
+  statuses: Array<"success" | "degraded" | "error" | "info">,
+): "success" | "degraded" | "error" | "info" {
+  if (statuses.some((s) => s === "error")) return "error";
+  if (statuses.some((s) => s === "degraded")) return "degraded";
+  if (statuses.some((s) => s === "info")) return "info";
+  return "success";
+}
+
 type UptimeData = {
   day: string;
   events: Event[];

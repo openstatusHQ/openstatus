@@ -31,6 +31,8 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
   activeReportStatus,
+  aggregatePageStatus,
+  computeMonitorStatus,
   fillStatusDataFor45Days,
   fillStatusDataFor45DaysNoop,
   getEvents,
@@ -223,20 +225,8 @@ export const statusPageRouter = createTRPCRouter({
           reports: _page.statusReports,
           monitorId: c.monitor.id,
         });
-        const status =
-          events.some((e) => e.type === "incident" && !e.to) &&
-          barType !== "manual"
-            ? "error"
-            : (activeReportStatus(events) ??
-              (events.some(
-                (e) =>
-                  e.type === "maintenance" &&
-                  e.to &&
-                  e.from.getTime() <= new Date().getTime() &&
-                  e.to.getTime() >= new Date().getTime(),
-              )
-                ? "info"
-                : "success"));
+        // Use shared helper to compute monitor status (same logic as getBadgeStatus)
+        const status = computeMonitorStatus(events, barType);
         return {
           ...c.monitor,
           status,
@@ -249,13 +239,8 @@ export const statusPageRouter = createTRPCRouter({
 
       // no barType gate: incident-driven error is already suppressed per
       // monitor in manual mode; report-driven error (major_outage) must show
-      const status = monitors.some((m) => m.status === "error")
-        ? "error"
-        : monitors.some((m) => m.status === "degraded")
-          ? "degraded"
-          : monitors.some((m) => m.status === "info")
-            ? "info"
-            : "success";
+      // Use shared helper to aggregate page-level status (same logic as getBadgeStatus)
+      const status = aggregatePageStatus(monitors.map((m) => m.status));
 
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
@@ -499,49 +484,23 @@ export const statusPageRouter = createTRPCRouter({
       const config = pageConfigurationSchema.safeParse(_page.configuration);
       const barType = config.data?.type ?? "absolute";
 
-      // Compute status for each monitor component using same logic as get procedure
-      // Filter to only monitor components (not static components)
-      const monitorComponents = _page.pageComponents.filter(
-        (c) => c.type === "monitor" && c.monitor !== null,
-      );
-      const monitors = monitorComponents.map((c) => {
-        // Explicit null check instead of non-null assertion
-        if (!c.monitor) {
-          // This shouldn't happen due to the filter above, but TypeScript doesn't narrow through filter
-          return { status: "success" as const };
-        }
-        const monitor = c.monitor;
+      // Filter to only active, non-deleted monitor components (same eligibility as get procedure)
+      // isMonitorComponent checks: type === "monitor", monitor !== null, active === true, deletedAt === null
+      const monitorComponents = _page.pageComponents.filter(isMonitorComponent);
+
+      // Compute status for each monitor using shared helper (guarantees consistency with page rendering)
+      const statuses = monitorComponents.map((c) => {
         const events = getEvents({
           maintenances: _page.maintenances,
-          incidents: monitor.incidents ?? [],
+          incidents: c.monitor.incidents ?? [],
           reports: _page.statusReports,
-          monitorId: monitor.id,
+          monitorId: c.monitor.id,
         });
-        const status =
-          events.some((e) => e.type === "incident" && !e.to) &&
-          barType !== "manual"
-            ? "error"
-            : (activeReportStatus(events) ??
-              (events.some(
-                (e) =>
-                  e.type === "maintenance" &&
-                  e.to &&
-                  e.from.getTime() <= new Date().getTime() &&
-                  e.to.getTime() >= new Date().getTime(),
-              )
-                ? "info"
-                : "success"));
-        return { status };
+        return computeMonitorStatus(events, barType);
       });
 
-      // Aggregate to page-level status
-      const status = monitors.some((m) => m.status === "error")
-        ? "error"
-        : monitors.some((m) => m.status === "degraded")
-          ? "degraded"
-          : monitors.some((m) => m.status === "info")
-            ? "info"
-            : "success";
+      // Aggregate to page-level status using shared helper
+      const status = aggregatePageStatus(statuses);
 
       return { status };
     }),
