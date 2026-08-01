@@ -3,6 +3,11 @@ import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 
+// trpc httpBatchLink needs Node, matching the API status route
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+
 // Keep the `label` size within a maximum of 'Operational' to stay within the `SIZE` restriction
 const statusDictionary: Record<Status, { label: string; color: string }> = {
   operational: {

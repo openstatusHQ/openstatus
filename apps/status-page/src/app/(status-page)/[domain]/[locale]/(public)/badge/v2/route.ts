@@ -2,6 +2,11 @@ import type { Status } from "@openstatus/react";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 import type { NextRequest } from "next/server";
 
+// trpc httpBatchLink needs Node, matching the API status route
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+
 const statusDictionary: Record<Status, { label: string; hexColor: string }> = {
   operational: {
     label: "All Systems Operational",
