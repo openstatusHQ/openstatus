@@ -59,13 +59,6 @@ services:
             retries: 5
             start_period: 20s
         restart: unless-stopped
-        memswap_limit: 1G
-        deploy:
-            resources:
-                limits:
-                    memory: 1G
-                reservations:
-                    memory: 512M
 
     # Internal Services - Using GitHub Packages
     # Idempotent: drizzle skips already-applied migrations on every up.
