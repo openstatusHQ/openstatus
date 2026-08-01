@@ -70,8 +70,10 @@ export async function GET(
     trpc.statusPage.get.queryOptions({ slug: params.domain }),
   );
   // Convert internal status format (success/degraded/error/info) to external format (operational/degraded_performance/etc)
-  const internalStatus = data?.status ?? "success";
-  const status = componentStatus(internalStatus) as Status;
+  // If page doesn't exist, show unknown status instead of defaulting to success/operational
+  const status = !data
+    ? "unknown"
+    : (componentStatus(data.status) as Status);
   const theme = req.nextUrl.searchParams.get("theme") ?? "light";
   const variant = req.nextUrl.searchParams.get("variant") ?? "default";
   const size = req.nextUrl.searchParams.get("size") ?? "sm";
