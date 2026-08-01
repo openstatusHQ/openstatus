@@ -238,7 +238,6 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
 
-
       // Page-level status: aggregate only monitor statuses (preserves original behavior)
       // Badge includes non-monitor events separately in getBadgeStatus
       const status = aggregatePageStatus(monitors.map((m) => m.status));
