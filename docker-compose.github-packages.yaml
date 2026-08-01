@@ -34,6 +34,7 @@ services:
             retries: 5
             start_period: 10s
         restart: unless-stopped
+        memswap_limit: 512M
         deploy:
             resources:
                 limits:
@@ -58,6 +59,7 @@ services:
             retries: 5
             start_period: 20s
         restart: unless-stopped
+        memswap_limit: 1G
         deploy:
             resources:
                 limits:
@@ -116,6 +118,7 @@ services:
             retries: 3
             start_period: 30s
         restart: unless-stopped
+        memswap_limit: 512M
         deploy:
             resources:
                 limits:
@@ -149,6 +152,7 @@ services:
             retries: 3
             start_period: 30s
         restart: unless-stopped
+        memswap_limit: 512M
         deploy:
             resources:
                 limits:
@@ -188,6 +192,7 @@ services:
             retries: 3
             start_period: 30s
         restart: unless-stopped
+        memswap_limit: 256M
         deploy:
             resources:
                 limits:
@@ -217,6 +222,7 @@ services:
             retries: 3
             start_period: 30s
         restart: unless-stopped
+        memswap_limit: 256M
         deploy:
             resources:
                 limits:
@@ -254,6 +260,7 @@ services:
             retries: 3
             start_period: 45s
         restart: unless-stopped
+        memswap_limit: 512M
         deploy:
             resources:
                 limits:
@@ -291,6 +298,7 @@ services:
             retries: 3
             start_period: 45s
         restart: unless-stopped
+        memswap_limit: 512M
         deploy:
             resources:
                 limits:
