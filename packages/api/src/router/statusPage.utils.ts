@@ -122,10 +122,8 @@ export function computeMonitorStatus(
 export function aggregatePageStatus(
   statuses: Array<"success" | "degraded" | "error" | "info">,
 ): "success" | "degraded" | "error" | "info" {
-  if (statuses.some((s) => s === "error")) return "error";
-  if (statuses.some((s) => s === "degraded")) return "degraded";
-  if (statuses.some((s) => s === "info")) return "info";
-  return "success";
+  // Delegate to shared getWorstVariant to ensure priority rules stay consistent
+  return getWorstVariant(statuses);
 }
 
 type UptimeData = {

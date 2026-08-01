@@ -240,23 +240,34 @@ export const statusPageRouter = createTRPCRouter({
 
       // no barType gate: incident-driven error is already suppressed per
       // monitor in manual mode; report-driven error (major_outage) must show
-      // Compute page-wide status from unscoped reports/maintenances (same as getBadgeStatus)
-      const pageWideMaintenances = _page.maintenances.filter(
-        (m) => m.maintenancesToPageComponents.length === 0,
+      // Compute non-monitor status from page-wide + static-component events (same as getBadgeStatus)
+      // Get IDs of all monitor components to exclude monitor-scoped events
+      const monitorComponentIds = new Set(
+        pageComponents.filter((c) => c.type === "monitor").map((c) => c.id),
       );
-      const pageWideReports = _page.statusReports.filter(
-        (r) => r.statusReportsToPageComponents.length === 0,
+      
+      // Filter to events that don't affect any monitor component
+      // This includes both page-wide events AND static-component-only events
+      const nonMonitorMaintenances = _page.maintenances.filter((m) =>
+        m.maintenancesToPageComponents.every(
+          (rel) => !monitorComponentIds.has(rel.pageComponentId),
+        ),
       );
-      const pageWideEvents = getEvents({
-        maintenances: pageWideMaintenances,
+      const nonMonitorReports = _page.statusReports.filter((r) =>
+        r.statusReportsToPageComponents.every(
+          (rel) => !monitorComponentIds.has(rel.pageComponentId),
+        ),
+      );
+      const nonMonitorEvents = getEvents({
+        maintenances: nonMonitorMaintenances,
         incidents: [],
-        reports: pageWideReports,
+        reports: nonMonitorReports,
       });
-      const pageWideStatus = computeMonitorStatus(pageWideEvents, barType);
-      // Use shared helper to aggregate page-level status including page-wide events
+      const nonMonitorStatus = computeMonitorStatus(nonMonitorEvents, barType);
+      // Use shared helper to aggregate page-level status including non-monitor events
       const status = aggregatePageStatus([
         ...monitors.map((m) => m.status),
-        pageWideStatus,
+        nonMonitorStatus,
       ]);
 
       // Get page-wide events (not tied to specific monitors)
