@@ -54,12 +54,21 @@ export async function GET(
 ) {
   const params = await props.params;
   const queryClient = getQueryClient();
-  const data = await queryClient.fetchQuery(
-    trpc.statusPage.get.queryOptions({ slug: params.domain }),
-  );
+  // Use lightweight badge-specific procedure and handle errors gracefully
+  let data;
+  try {
+    data = await queryClient.fetchQuery(
+      trpc.statusPage.getBadgeStatus.queryOptions({ slug: params.domain }),
+    );
+  } catch {
+    // Map query errors to null so non-existent/error cases show Unknown badge
+    data = null;
+  }
   // Convert internal status format (success/degraded/error/info) to external format (operational/degraded_performance/etc)
-  // If page doesn't exist, show unknown status instead of defaulting to success/operational
-  const status = !data ? "unknown" : (componentStatus(data.status) as Status);
+  // If page doesn't exist or query failed, show unknown status instead of defaulting to success/operational
+  const status = !data
+    ? "unknown"
+    : (componentStatus(data.status) as Status);
   const theme = req.nextUrl.searchParams.get("theme");
   const size = req.nextUrl.searchParams.get("size");
   const s = SIZE[size ?? "sm"] ?? SIZE.sm;

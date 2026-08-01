@@ -446,6 +446,89 @@ export const statusPageRouter = createTRPCRouter({
       });
     }),
 
+  // Lightweight procedure for badge rendering - only returns status without full page payload
+  getBadgeStatus: publicProcedure
+    .input(z.object({ slug: z.string().toLowerCase() }))
+    .output(
+      z
+        .object({
+          status: z.enum(["success", "degraded", "error", "info"]),
+        })
+        .nullish(),
+    )
+    .query(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      // Minimal query - only fetch data needed for status computation
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        with: {
+          maintenances: true,
+          statusReports: {
+            with: {
+              statusReportUpdates: {
+                orderBy: (reports, { desc }) => desc(reports.date),
+                with: { statusReportUpdateToPageComponents: true },
+              },
+              statusReportsToPageComponents: { with: { pageComponent: true } },
+            },
+          },
+          pageComponents: {
+            with: {
+              monitor: {
+                with: {
+                  incidents: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!_page) return null;
+
+      // Parse configuration to get barType
+      const config = pageConfigurationSchema.safeParse(_page.configuration);
+      const barType = config.data?.barType ?? "absolute";
+
+      // Compute status for each monitor component using same logic as get procedure
+      const monitorComponents = _page.pageComponents.filter(isMonitorComponent);
+      const monitors = monitorComponents.map((c) => {
+        const events = getEvents({
+          maintenances: _page.maintenances,
+          incidents: c.monitor.incidents ?? [],
+          reports: _page.statusReports,
+          monitorId: c.monitor.id,
+        });
+        const status =
+          events.some((e) => e.type === "incident" && !e.to) &&
+          barType !== "manual"
+            ? "error"
+            : (activeReportStatus(events) ??
+              (events.some(
+                (e) =>
+                  e.type === "maintenance" &&
+                  e.to &&
+                  e.from.getTime() <= new Date().getTime() &&
+                  e.to.getTime() >= new Date().getTime(),
+              )
+                ? "info"
+                : "success"));
+        return { status };
+      });
+
+      // Aggregate to page-level status
+      const status = monitors.some((m) => m.status === "error")
+        ? "error"
+        : monitors.some((m) => m.status === "degraded")
+          ? "degraded"
+          : monitors.some((m) => m.status === "info")
+            ? "info"
+            : "success";
+
+      return { status };
+    }),
+
   getLight: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase() }))
     .query(async (opts) => {
