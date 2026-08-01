@@ -34,6 +34,12 @@ services:
             retries: 5
             start_period: 10s
         restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 256M
 
     tinybird-local:
         container_name: openstatus-tinybird
@@ -52,6 +58,12 @@ services:
             retries: 5
             start_period: 20s
         restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 1G
+                reservations:
+                    memory: 512M
 
     # Internal Services - Using GitHub Packages
     # Idempotent: drizzle skips already-applied migrations on every up.
@@ -104,6 +116,12 @@ services:
             retries: 3
             start_period: 30s
         restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 256M
 
     server:
         container_name: openstatus-server
@@ -131,6 +149,12 @@ services:
             retries: 3
             start_period: 30s
         restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 256M
 
     private-location:
         container_name: openstatus-private-location
@@ -164,6 +188,12 @@ services:
             retries: 3
             start_period: 30s
         restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 256M
+                reservations:
+                    memory: 128M
 
     checker:
         container_name: openstatus-checker
@@ -187,6 +217,12 @@ services:
             retries: 3
             start_period: 30s
         restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 256M
+                reservations:
+                    memory: 128M
 
     dashboard:
         container_name: openstatus-dashboard
@@ -218,6 +254,12 @@ services:
             retries: 3
             start_period: 45s
         restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 256M
 
     status-page:
         container_name: openstatus-status-page
@@ -249,3 +291,9 @@ services:
             retries: 3
             start_period: 45s
         restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 256M
