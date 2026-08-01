@@ -524,25 +524,37 @@ export const statusPageRouter = createTRPCRouter({
         return computeMonitorStatus(events, barType);
       });
 
-      // Also compute status from page-wide events (reports/maintenances not linked to any specific monitor)
-      // This ensures page-wide status reports affect the badge correctly
-      // Filter to only truly unscoped events (no pageComponent relations)
-      const pageWideMaintenances = _page.maintenances.filter(
-        (m) => m.maintenancesToPageComponents.length === 0,
+      // Also compute status from non-monitor events (page-wide + static-component-only)
+      // This ensures page-wide status reports AND static-component events affect the badge
+      // Get IDs of all monitor components (to exclude monitor-scoped events)
+      const monitorComponentIds = new Set(
+        _page.pageComponents
+          .filter((c) => c.type === "monitor")
+          .map((c) => c.id),
       );
-      const pageWideReports = _page.statusReports.filter(
-        (r) => r.statusReportsToPageComponents.length === 0,
+      
+      // Filter to events that don't affect any monitor component
+      // This includes both page-wide events (length === 0) and static-component-only events
+      const nonMonitorMaintenances = _page.maintenances.filter((m) =>
+        m.maintenancesToPageComponents.every(
+          (rel) => !monitorComponentIds.has(rel.pageComponentId),
+        ),
       );
-      const pageWideEvents = getEvents({
-        maintenances: pageWideMaintenances,
-        incidents: [], // Page-wide context has no incidents (incidents are always monitor-specific)
-        reports: pageWideReports,
+      const nonMonitorReports = _page.statusReports.filter((r) =>
+        r.statusReportsToPageComponents.every(
+          (rel) => !monitorComponentIds.has(rel.pageComponentId),
+        ),
+      );
+      const nonMonitorEvents = getEvents({
+        maintenances: nonMonitorMaintenances,
+        incidents: [], // Non-monitor context has no incidents (incidents are always monitor-specific)
+        reports: nonMonitorReports,
         // No monitorId or pageComponentId - gets unscoped reports and maintenances
       });
-      const pageWideStatus = computeMonitorStatus(pageWideEvents, barType);
+      const nonMonitorStatus = computeMonitorStatus(nonMonitorEvents, barType);
 
-      // Aggregate monitor statuses + page-wide status
-      const allStatuses = [...statuses, pageWideStatus];
+      // Aggregate monitor statuses + non-monitor status (page-wide + static components)
+      const allStatuses = [...statuses, nonMonitorStatus];
       const status = aggregatePageStatus(allStatuses);
 
       return { status };
