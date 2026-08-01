@@ -52,13 +52,6 @@ Running a private location moves operational responsibility to you. Plan for:
 - **Token handling.** The probe's token authenticates it as your workspace. Inject it as an environment variable, store it the same way you store other secrets, and rotate it if a host is decommissioned.
 - **Egress only.** Because the connection is outbound, an egress firewall that blocks `api.openstatus.dev:443` will silently stop the probe from running checks. The probe will appear "connected" briefly and then go quiet.
 
-## Recent improvements
-
-As of July 2026, private locations now support:
-
-- **Automatic incidents and notifications.** Failed checks from private locations now trigger incidents and fire notifications, with intelligent threshold logic when multiple private locations are attached to a monitor.
-- **Status page display.** Monitors assigned to private locations now appear on public status pages with proper status tracking and uptime graphs.
-
 ## Next steps
 
 - **[Set up a private location](/docs/guides/how-to-create-private-location)** — step-by-step deployment of the Docker probe.
