@@ -15,6 +15,7 @@ import {
   type StatusData,
   type UptimeWindow,
   type WeightedInterval,
+  activeReportStatus,
   dayCoverage,
   durationDowntimeMs,
   floorPct,
@@ -79,8 +80,12 @@ export function computeMonitorStatus(
   events: Event[],
   barType: "absolute" | "dominant" | "manual",
 ): "success" | "degraded" | "error" | "info" {
-  // Check for active incident (no end date) - suppressed in manual mode
-  const hasActiveIncident = events.some((e) => e.type === "incident" && !e.to);
+  const now = new Date().getTime();
+
+  // Check for active incident (started and no end date) - suppressed in manual mode
+  const hasActiveIncident = events.some(
+    (e) => e.type === "incident" && !e.to && e.from.getTime() <= now,
+  );
   if (hasActiveIncident && barType !== "manual") {
     return "error";
   }

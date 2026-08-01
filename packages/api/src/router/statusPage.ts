@@ -485,8 +485,14 @@ export const statusPageRouter = createTRPCRouter({
       const barType = config.data?.type ?? "absolute";
 
       // Filter to only active, non-deleted monitor components (same eligibility as get procedure)
-      // isMonitorComponent checks: type === "monitor", monitor !== null, active === true, deletedAt === null
-      const monitorComponents = _page.pageComponents.filter(isMonitorComponent);
+      // Inline filter with type predicate for proper TypeScript narrowing with query result types
+      const monitorComponents = _page.pageComponents.filter(
+        (c): c is typeof c & { monitor: NonNullable<typeof c.monitor> } =>
+          c.type === "monitor" &&
+          c.monitor !== null &&
+          c.monitor.active === true &&
+          c.monitor.deletedAt === null,
+      );
 
       // Compute status for each monitor using shared helper (guarantees consistency with page rendering)
       const statuses = monitorComponents.map((c) => {
