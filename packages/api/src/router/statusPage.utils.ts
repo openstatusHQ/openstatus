@@ -97,7 +97,6 @@ export function computeMonitorStatus(
   }
 
   // Check for active maintenance
-  const now = new Date().getTime();
   const hasActiveMaintenance = events.some(
     (e) =>
       e.type === "maintenance" &&
