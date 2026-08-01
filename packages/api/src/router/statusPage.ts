@@ -1,6 +1,7 @@
 import { Events } from "@openstatus/analytics";
-import { and, eq, inArray, sql } from "@openstatus/db";
+import { and, eq, gte, inArray, isNull, or, sql } from "@openstatus/db";
 import {
+  incident,
   maintenance,
   page,
   pageComponent,
@@ -466,7 +467,12 @@ export const statusPageRouter = createTRPCRouter({
             with: {
               monitor: {
                 with: {
-                  incidents: true,
+                  incidents: {
+                    where: or(
+                      isNull(incident.resolvedAt),
+                      gte(incident.createdAt, sql`NOW() - INTERVAL '45 days'`),
+                    ),
+                  },
                 },
               },
             },
@@ -494,6 +500,7 @@ export const statusPageRouter = createTRPCRouter({
           c.monitor.deletedAt === null,
       );
 
+
       // Compute status for each monitor using shared helper (guarantees consistency with page rendering)
       const statuses = monitorComponents.map((c) => {
         const events = getEvents({
@@ -505,8 +512,19 @@ export const statusPageRouter = createTRPCRouter({
         return computeMonitorStatus(events, barType);
       });
 
-      // Aggregate to page-level status using shared helper
-      const status = aggregatePageStatus(statuses);
+      // Also compute status from page-wide events (reports/maintenances not linked to any specific monitor)
+      // This ensures page-wide status reports affect the badge correctly
+      const pageWideEvents = getEvents({
+        maintenances: _page.maintenances,
+        incidents: [], // Page-wide context has no incidents (incidents are always monitor-specific)
+        reports: _page.statusReports,
+        // No monitorId or pageComponentId - gets unscoped reports and maintenances
+      });
+      const pageWideStatus = computeMonitorStatus(pageWideEvents, barType);
+
+      // Aggregate monitor statuses + page-wide status
+      const allStatuses = [...statuses, pageWideStatus];
+      const status = aggregatePageStatus(allStatuses);
 
       return { status };
     }),
