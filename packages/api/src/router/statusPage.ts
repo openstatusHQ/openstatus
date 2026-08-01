@@ -463,7 +463,11 @@ export const statusPageRouter = createTRPCRouter({
       const _page = await opts.ctx.db.query.page.findFirst({
         where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
         with: {
-          maintenances: true,
+          maintenances: {
+            with: {
+              maintenancesToPageComponents: { with: { pageComponent: true } },
+            },
+          },
           statusReports: {
             with: {
               statusReportUpdates: {
@@ -487,18 +491,27 @@ export const statusPageRouter = createTRPCRouter({
 
       if (!_page) return null;
 
-      // Parse configuration to get barType
+      // Access control: only expose status for public pages
+      // Restricted pages (password, email-domain, ip-restriction) should not expose status to unauthenticated badge requests
+      if (_page.accessType !== "public") return null;
+
+      // Parse configuration to get bar type
       const config = pageConfigurationSchema.safeParse(_page.configuration);
-      const barType = config.data?.barType ?? "absolute";
+      const barType = config.data?.type ?? "absolute";
 
       // Compute status for each monitor component using same logic as get procedure
-      const monitorComponents = _page.pageComponents.filter(isMonitorComponent);
+      // Filter to only monitor components (not static components)
+      const monitorComponents = _page.pageComponents.filter(
+        (c) => c.type === "monitor" && c.monitor !== null,
+      );
       const monitors = monitorComponents.map((c) => {
+        // c.monitor is guaranteed to be non-null by the filter above
+        const monitor = c.monitor!;
         const events = getEvents({
           maintenances: _page.maintenances,
-          incidents: c.monitor.incidents ?? [],
+          incidents: monitor.incidents ?? [],
           reports: _page.statusReports,
-          monitorId: c.monitor.id,
+          monitorId: monitor.id,
         });
         const status =
           events.some((e) => e.type === "incident" && !e.to) &&
