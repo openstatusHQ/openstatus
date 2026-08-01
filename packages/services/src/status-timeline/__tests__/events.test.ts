@@ -152,12 +152,22 @@ describe("activeReportStatus", () => {
   test("ignores future-dated reports that haven't started yet", () => {
     expect(
       activeReportStatus([
-        makeEvent({ type: "report", from: day("2027-01-01"), to: null, status: "error" }),
+        makeEvent({
+          type: "report",
+          from: day("2027-01-01"),
+          to: null,
+          status: "error",
+        }),
       ]),
     ).toBeUndefined();
     expect(
       activeReportStatus([
-        makeEvent({ type: "report", from: day("2026-09-01"), to: null, status: "degraded" }),
+        makeEvent({
+          type: "report",
+          from: day("2026-09-01"),
+          to: null,
+          status: "degraded",
+        }),
       ]),
     ).toBeUndefined();
   });

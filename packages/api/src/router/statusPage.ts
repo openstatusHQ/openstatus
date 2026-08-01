@@ -532,7 +532,7 @@ export const statusPageRouter = createTRPCRouter({
           .filter((c) => c.type === "monitor")
           .map((c) => c.id),
       );
-      
+
       // Filter to events that don't affect any monitor component
       // This includes both page-wide events (length === 0) and static-component-only events
       const nonMonitorMaintenances = _page.maintenances.filter((m) =>
