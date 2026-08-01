@@ -238,37 +238,10 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
 
-      // no barType gate: incident-driven error is already suppressed per
-      // monitor in manual mode; report-driven error (major_outage) must show
-      // Compute non-monitor status from page-wide + static-component events (same as getBadgeStatus)
-      // Get IDs of all monitor components to exclude monitor-scoped events
-      const monitorComponentIds = new Set(
-        pageComponents.filter((c) => c.type === "monitor").map((c) => c.id),
-      );
 
-      // Filter to events that don't affect any monitor component
-      // This includes both page-wide events AND static-component-only events
-      const nonMonitorMaintenances = _page.maintenances.filter((m) =>
-        m.maintenancesToPageComponents.every(
-          (rel) => !monitorComponentIds.has(rel.pageComponentId),
-        ),
-      );
-      const nonMonitorReports = _page.statusReports.filter((r) =>
-        r.statusReportsToPageComponents.every(
-          (rel) => !monitorComponentIds.has(rel.pageComponentId),
-        ),
-      );
-      const nonMonitorEvents = getEvents({
-        maintenances: nonMonitorMaintenances,
-        incidents: [],
-        reports: nonMonitorReports,
-      });
-      const nonMonitorStatus = computeMonitorStatus(nonMonitorEvents, barType);
-      // Use shared helper to aggregate page-level status including non-monitor events
-      const status = aggregatePageStatus([
-        ...monitors.map((m) => m.status),
-        nonMonitorStatus,
-      ]);
+      // Page-level status: aggregate only monitor statuses (preserves original behavior)
+      // Badge includes non-monitor events separately in getBadgeStatus
+      const status = aggregatePageStatus(monitors.map((m) => m.status));
 
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
@@ -477,11 +450,15 @@ export const statusPageRouter = createTRPCRouter({
         where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
         with: {
           maintenances: {
+            // Only load active or recently ended maintenances (past 24h) for status computation
+            where: gte(maintenance.to, sql`datetime('now', '-1 day')`),
             with: {
               maintenancesToPageComponents: { with: { pageComponent: true } },
             },
           },
           statusReports: {
+            // Only load active reports (not resolved) for status computation
+            where: sql`${statusReport.status} != 'resolved'`,
             with: {
               statusReportUpdates: {
                 orderBy: (reports, { desc }) => desc(reports.date),
