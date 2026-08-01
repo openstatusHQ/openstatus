@@ -1,5 +1,6 @@
 import type { Status } from "@openstatus/react";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
+import { componentStatus } from "@/content/status-vocab";
 import type { NextRequest } from "next/server";
 
 // trpc httpBatchLink needs Node, matching the API status route
@@ -68,13 +69,16 @@ export async function GET(
   const data = await queryClient.fetchQuery(
     trpc.statusPage.get.queryOptions({ slug: params.domain }),
   );
-  const status = (data?.status ?? "unknown") as Status;
+  // Convert internal status format (success/degraded/error/info) to external format (operational/degraded_performance/etc)
+  const internalStatus = data?.status ?? "success";
+  const status = componentStatus(internalStatus) as Status;
   const theme = req.nextUrl.searchParams.get("theme") ?? "light";
   const variant = req.nextUrl.searchParams.get("variant") ?? "default";
   const size = req.nextUrl.searchParams.get("size") ?? "sm";
 
   const { height, padding, gap, radius, fontSize } = SIZE[size] ?? SIZE.sm;
-  const { label, hexColor } = statusDictionary[status];
+  const statusInfo = statusDictionary[status] ?? statusDictionary.unknown;
+  const { label, hexColor } = statusInfo;
   const textWidth = getTextWidth(label, fontSize);
   const width = Math.ceil(padding + textWidth + gap + radius * 2 + padding);
 

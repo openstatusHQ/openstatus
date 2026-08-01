@@ -1,5 +1,6 @@
 import type { Status } from "@openstatus/react";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
+import { componentStatus } from "@/content/status-vocab";
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 
@@ -56,11 +57,14 @@ export async function GET(
   const data = await queryClient.fetchQuery(
     trpc.statusPage.get.queryOptions({ slug: params.domain }),
   );
-  const status = (data?.status ?? "unknown") as Status;
+  // Convert internal status format (success/degraded/error/info) to external format (operational/degraded_performance/etc)
+  const internalStatus = data?.status ?? "success";
+  const status = componentStatus(internalStatus) as Status;
   const theme = req.nextUrl.searchParams.get("theme");
   const size = req.nextUrl.searchParams.get("size");
   const s = SIZE[size ?? "sm"] ?? SIZE.sm;
-  const { label, color } = statusDictionary[status];
+  const statusInfo = statusDictionary[status] ?? statusDictionary.unknown;
+  const { label, color } = statusInfo;
   const light = "border-gray-200 text-gray-700 bg-white";
   const dark = "border-gray-800 text-gray-300 bg-gray-900";
 
