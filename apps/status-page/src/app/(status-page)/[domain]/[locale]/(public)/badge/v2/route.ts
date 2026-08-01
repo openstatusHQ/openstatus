@@ -78,9 +78,7 @@ export async function GET(
   }
   // Convert internal status format (success/degraded/error/info) to external format (operational/degraded_performance/etc)
   // If page doesn't exist or query failed, show unknown status instead of defaulting to success/operational
-  const status = !data
-    ? "unknown"
-    : (componentStatus(data.status) as Status);
+  const status = !data ? "unknown" : (componentStatus(data.status) as Status);
   const theme = req.nextUrl.searchParams.get("theme") ?? "light";
   const variant = req.nextUrl.searchParams.get("variant") ?? "default";
   const size = req.nextUrl.searchParams.get("size") ?? "sm";
