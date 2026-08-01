@@ -1,7 +1,7 @@
 import { Events } from "@openstatus/analytics";
 import { and, eq, gte, inArray, isNull, or, sql } from "@openstatus/db";
 import {
-  incident,
+  incidentTable,
   maintenance,
   page,
   pageComponent,
@@ -240,8 +240,24 @@ export const statusPageRouter = createTRPCRouter({
 
       // no barType gate: incident-driven error is already suppressed per
       // monitor in manual mode; report-driven error (major_outage) must show
-      // Use shared helper to aggregate page-level status (same logic as getBadgeStatus)
-      const status = aggregatePageStatus(monitors.map((m) => m.status));
+      // Compute page-wide status from unscoped reports/maintenances (same as getBadgeStatus)
+      const pageWideMaintenances = _page.maintenances.filter(
+        (m) => m.maintenancesToPageComponents.length === 0,
+      );
+      const pageWideReports = _page.statusReports.filter(
+        (r) => r.statusReportsToPageComponents.length === 0,
+      );
+      const pageWideEvents = getEvents({
+        maintenances: pageWideMaintenances,
+        incidents: [],
+        reports: pageWideReports,
+      });
+      const pageWideStatus = computeMonitorStatus(pageWideEvents, barType);
+      // Use shared helper to aggregate page-level status including page-wide events
+      const status = aggregatePageStatus([
+        ...monitors.map((m) => m.status),
+        pageWideStatus,
+      ]);
 
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
@@ -468,10 +484,7 @@ export const statusPageRouter = createTRPCRouter({
               monitor: {
                 with: {
                   incidents: {
-                    where: or(
-                      isNull(incident.resolvedAt),
-                      gte(incident.createdAt, sql`NOW() - INTERVAL '45 days'`),
-                    ),
+                    where: isNull(incidentTable.resolvedAt),
                   },
                 },
               },
@@ -513,10 +526,17 @@ export const statusPageRouter = createTRPCRouter({
 
       // Also compute status from page-wide events (reports/maintenances not linked to any specific monitor)
       // This ensures page-wide status reports affect the badge correctly
+      // Filter to only truly unscoped events (no pageComponent relations)
+      const pageWideMaintenances = _page.maintenances.filter(
+        (m) => m.maintenancesToPageComponents.length === 0,
+      );
+      const pageWideReports = _page.statusReports.filter(
+        (r) => r.statusReportsToPageComponents.length === 0,
+      );
       const pageWideEvents = getEvents({
-        maintenances: _page.maintenances,
+        maintenances: pageWideMaintenances,
         incidents: [], // Page-wide context has no incidents (incidents are always monitor-specific)
-        reports: _page.statusReports,
+        reports: pageWideReports,
         // No monitorId or pageComponentId - gets unscoped reports and maintenances
       });
       const pageWideStatus = computeMonitorStatus(pageWideEvents, barType);

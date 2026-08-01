@@ -237,9 +237,12 @@ export function currentImpactByComponent(report: {
 export function activeReportStatus(
   events: Event[],
 ): "error" | "degraded" | undefined {
+  const now = new Date().getTime();
   let worst: "error" | "degraded" | undefined;
   for (const e of events) {
     if (e.type !== "report" || e.to) continue;
+    // Skip future-dated reports that haven't started yet
+    if (e.from.getTime() > now) continue;
     if (e.status === "error") return "error";
     if (e.status !== "success") worst = "degraded";
   }
