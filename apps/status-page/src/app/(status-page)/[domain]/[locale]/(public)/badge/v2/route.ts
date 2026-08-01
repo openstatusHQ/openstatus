@@ -1,12 +1,12 @@
 import type { Status } from "@openstatus/react";
-import { getQueryClient, trpc } from "@/lib/trpc/server";
-import { componentStatus } from "@/content/status-vocab";
 import type { NextRequest } from "next/server";
+
+import { componentStatus } from "@/content/status-vocab";
+import { getQueryClient, trpc } from "@/lib/trpc/server";
 
 // trpc httpBatchLink needs Node, matching the API status route
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
 
 const statusDictionary: Record<Status, { label: string; hexColor: string }> = {
   operational: {
