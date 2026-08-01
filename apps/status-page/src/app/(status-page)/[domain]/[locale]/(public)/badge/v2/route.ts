@@ -1,8 +1,6 @@
-import type { Status } from "@openstatus/react";
 import type { NextRequest } from "next/server";
 
-import { componentStatus } from "@/content/status-vocab";
-import { getQueryClient, trpc } from "@/lib/trpc/server";
+import { getBadgeStatus } from "@/lib/badge-status";
 
 // trpc httpBatchLink needs Node, matching the API status route
 export const runtime = "nodejs";
@@ -65,20 +63,8 @@ export async function GET(
   props: { params: Promise<{ domain: string }> },
 ) {
   const params = await props.params;
-  const queryClient = getQueryClient();
-  // Use lightweight badge-specific procedure and handle errors gracefully
-  let data;
-  try {
-    data = await queryClient.fetchQuery(
-      trpc.statusPage.getBadgeStatus.queryOptions({ slug: params.domain }),
-    );
-  } catch {
-    // Map query errors to null so non-existent/error cases show Unknown badge
-    data = null;
-  }
-  // Convert internal status format (success/degraded/error/info) to external format (operational/degraded_performance/etc)
-  // If page doesn't exist or query failed, show unknown status instead of defaulting to success/operational
-  const status = !data ? "unknown" : (componentStatus(data.status) as Status);
+  // Use shared helper that handles query, error handling, and status conversion
+  const status = await getBadgeStatus(params.domain);
   const theme = req.nextUrl.searchParams.get("theme") ?? "light";
   const variant = req.nextUrl.searchParams.get("variant") ?? "default";
   const size = req.nextUrl.searchParams.get("size") ?? "sm";

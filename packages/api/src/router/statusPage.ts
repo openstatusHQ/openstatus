@@ -505,8 +505,12 @@ export const statusPageRouter = createTRPCRouter({
         (c) => c.type === "monitor" && c.monitor !== null,
       );
       const monitors = monitorComponents.map((c) => {
-        // c.monitor is guaranteed to be non-null by the filter above
-        const monitor = c.monitor!;
+        // Explicit null check instead of non-null assertion
+        if (!c.monitor) {
+          // This shouldn't happen due to the filter above, but TypeScript doesn't narrow through filter
+          return { status: "success" as const };
+        }
+        const monitor = c.monitor;
         const events = getEvents({
           maintenances: _page.maintenances,
           incidents: monitor.incidents ?? [],
