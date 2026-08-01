@@ -450,7 +450,8 @@ export const statusPageRouter = createTRPCRouter({
         with: {
           maintenances: {
             // Only load active or recently ended maintenances (past 24h) for status computation
-            where: gte(maintenance.to, sql`datetime('now', '-1 day')`),
+            // Use Unix epoch comparison (maintenance.to is integer timestamp)
+            where: gte(maintenance.to, sql`strftime('%s', 'now') - 86400`),
             with: {
               maintenancesToPageComponents: { with: { pageComponent: true } },
             },

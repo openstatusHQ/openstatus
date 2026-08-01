@@ -164,7 +164,7 @@ describe("activeReportStatus", () => {
       activeReportStatus([
         makeEvent({
           type: "report",
-          from: day("2026-09-01"),
+          from: day("2030-01-01"),
           to: null,
           status: "degraded",
         }),
