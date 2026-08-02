@@ -348,7 +348,6 @@ describe("resolveRoute", () => {
       });
     });
 
-
     test("status.acme.com/monitors/1 → defaults to en", () => {
       const result = resolveRoute({
         host: "status.acme.com",
