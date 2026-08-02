@@ -362,7 +362,6 @@ describe("resolveRoute", () => {
         rewritePath: "/status.acme.com/en/monitors/1",
       });
     });
-
   });
 
   describe("edge cases", () => {
