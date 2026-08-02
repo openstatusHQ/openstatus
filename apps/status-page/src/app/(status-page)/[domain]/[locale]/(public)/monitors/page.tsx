@@ -34,6 +34,17 @@ export default function Page() {
 
   if (!page) return null;
 
+  // Precompute group minimum order map for O(n log n) sorting performance
+  const groupMinOrderMap = new Map<number, number>();
+  for (const monitor of page.monitors) {
+    const groupId = monitor.monitorGroupId;
+    if (groupId !== null) {
+      const order = monitor.order ?? 0;
+      const currentMin = groupMinOrderMap.get(groupId) ?? Number.MAX_SAFE_INTEGER;
+      groupMinOrderMap.set(groupId, Math.min(currentMin, order));
+    }
+  }
+
   const publicMonitors = page.monitors
     .filter((monitor) => monitor.public)
     .sort((a, b) => {
@@ -43,33 +54,26 @@ export default function Page() {
 
       // If both monitors are in the same group (or both ungrouped with null)
       if (aGroupId === bGroupId) {
-        // Sort by groupOrder within the group
+        if (aGroupId === null) {
+          // Both ungrouped - sort by order to match trackers behavior
+          return (a.order ?? 0) - (b.order ?? 0);
+        }
+        // Both in same group - sort by groupOrder within the group
         return (a.groupOrder ?? 0) - (b.groupOrder ?? 0);
       }
 
       // Different groups or one is ungrouped - sort by group position
-      // For grouped monitors, use the minimum order of all monitors in that group
+      // For grouped monitors, use precomputed minimum order of the group
       // For ungrouped monitors, use their own order
       const aGroupMinOrder =
-        aGroupId !== null
-          ? Math.min(
-              ...page.monitors
-                .filter((m) => m.monitorGroupId === aGroupId)
-                .map((m) => m.order ?? 0),
-            )
-          : (a.order ?? 0);
+        aGroupId !== null ? groupMinOrderMap.get(aGroupId) ?? 0 : (a.order ?? 0);
 
       const bGroupMinOrder =
-        bGroupId !== null
-          ? Math.min(
-              ...page.monitors
-                .filter((m) => m.monitorGroupId === bGroupId)
-                .map((m) => m.order ?? 0),
-            )
-          : (b.order ?? 0);
+        bGroupId !== null ? groupMinOrderMap.get(bGroupId) ?? 0 : (b.order ?? 0);
 
       return aGroupMinOrder - bGroupMinOrder;
     });
+
 
 
   return (
