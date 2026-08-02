@@ -34,7 +34,43 @@ export default function Page() {
 
   if (!page) return null;
 
-  const publicMonitors = page.monitors.filter((monitor) => monitor.public);
+  const publicMonitors = page.monitors
+    .filter((monitor) => monitor.public)
+    .sort((a, b) => {
+      // Sort by group position first, then by groupOrder within each group
+      const aGroupId = a.monitorGroupId ?? null;
+      const bGroupId = b.monitorGroupId ?? null;
+
+      // If both monitors are in the same group (or both ungrouped with null)
+      if (aGroupId === bGroupId) {
+        // Sort by groupOrder within the group
+        return (a.groupOrder ?? 0) - (b.groupOrder ?? 0);
+      }
+
+      // Different groups or one is ungrouped - sort by group position
+      // For grouped monitors, use the minimum order of all monitors in that group
+      // For ungrouped monitors, use their own order
+      const aGroupMinOrder =
+        aGroupId !== null
+          ? Math.min(
+              ...page.monitors
+                .filter((m) => m.monitorGroupId === aGroupId)
+                .map((m) => m.order ?? 0),
+            )
+          : (a.order ?? 0);
+
+      const bGroupMinOrder =
+        bGroupId !== null
+          ? Math.min(
+              ...page.monitors
+                .filter((m) => m.monitorGroupId === bGroupId)
+                .map((m) => m.order ?? 0),
+            )
+          : (b.order ?? 0);
+
+      return aGroupMinOrder - bGroupMinOrder;
+    });
+
 
   return (
     <Status>
