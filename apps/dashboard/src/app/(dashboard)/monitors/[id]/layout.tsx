@@ -6,8 +6,8 @@ import {
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
 import {
   HydrateClient,
+  batchPrefetch,
   fetchQueryOrNotFound,
-  getQueryClient,
   trpc,
 } from "@/lib/trpc/server";
 
@@ -23,15 +23,14 @@ export default async function Layout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const queryClient = getQueryClient();
 
+  batchPrefetch([
+    trpc.notification.list.queryOptions(),
+    trpc.privateLocation.list.queryOptions(),
+  ]);
   await fetchQueryOrNotFound(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
-  await Promise.all([
-    queryClient.prefetchQuery(trpc.notification.list.queryOptions()),
-    queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions()),
-  ]);
 
   return (
     <HydrateClient>

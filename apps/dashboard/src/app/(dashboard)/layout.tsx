@@ -12,7 +12,7 @@ import {
   LEFT_SIDEBAR_COOKIE,
   getSidebarDefaultOpen,
 } from "@/lib/sidebar-cookie";
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import { HydrateClient, batchPrefetch, trpc } from "@/lib/trpc/server";
 
 export default async function Layout({
   children,
@@ -44,14 +44,13 @@ export default async function Layout({
   );
 }
 
-async function HydrateSidebar({ children }: { children: React.ReactNode }) {
-  const queryClient = getQueryClient();
-  await Promise.all([
-    queryClient.prefetchQuery(trpc.page.list.queryOptions()),
-    queryClient.prefetchQuery(trpc.monitor.list.queryOptions()),
-    queryClient.prefetchQuery(trpc.workspace.get.queryOptions()),
-    queryClient.prefetchQuery(trpc.workspace.list.queryOptions()),
-    queryClient.prefetchQuery(trpc.user.get.queryOptions()),
+function HydrateSidebar({ children }: { children: React.ReactNode }) {
+  batchPrefetch([
+    trpc.page.list.queryOptions(),
+    trpc.monitor.list.queryOptions(),
+    trpc.workspace.get.queryOptions(),
+    trpc.workspace.list.queryOptions(),
+    trpc.user.get.queryOptions(),
   ]);
 
   return <HydrateClient>{children}</HydrateClient>;

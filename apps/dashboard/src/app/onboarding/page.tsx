@@ -2,7 +2,12 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { SearchParams } from "nuqs";
 
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import {
+  HydrateClient,
+  getQueryClient,
+  prefetch,
+  trpc,
+} from "@/lib/trpc/server";
 
 import { Client } from "./client";
 import { searchParamsCache } from "./search-params";
@@ -52,10 +57,12 @@ export default async function Page({
   }
 
   const queryClient = getQueryClient();
+  // only monitors/pages gate the step redirect below — the key list just needs
+  // to be in the dehydrated cache for the client
+  prefetch(trpc.apiKey.list.queryOptions());
   const [monitors, pages] = await Promise.all([
     queryClient.fetchQuery(trpc.monitor.list.queryOptions()),
     queryClient.fetchQuery(trpc.page.list.queryOptions()),
-    queryClient.fetchQuery(trpc.apiKey.list.queryOptions()),
   ]);
 
   const updates: {

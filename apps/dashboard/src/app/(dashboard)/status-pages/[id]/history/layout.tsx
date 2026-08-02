@@ -4,7 +4,7 @@ import {
   RIGHT_SIDEBAR_COOKIE,
   getSidebarDefaultOpen,
 } from "@/lib/sidebar-cookie";
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import { HydrateClient, batchPrefetch, trpc } from "@/lib/trpc/server";
 
 import { Sidebar } from "../sidebar";
 
@@ -16,16 +16,11 @@ export default async function Layout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const queryClient = getQueryClient();
 
-  await Promise.all([
-    queryClient.prefetchQuery(
-      trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
-    ),
-    queryClient.prefetchQuery(trpc.monitor.list.queryOptions()),
-    queryClient.prefetchQuery(
-      trpc.pageComponent.list.queryOptions({ pageId: Number.parseInt(id) }),
-    ),
+  batchPrefetch([
+    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
+    trpc.monitor.list.queryOptions(),
+    trpc.pageComponent.list.queryOptions({ pageId: Number.parseInt(id) }),
   ]);
   const defaultOpen = await getSidebarDefaultOpen(RIGHT_SIDEBAR_COOKIE, false);
 
