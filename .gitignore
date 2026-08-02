@@ -71,9 +71,6 @@ apps/alerting-engine/tmp/
 
 .env.docker
 
-# Docker volume data (Tinybird ClickHouse, Redis, etc.)
-data/
-
 # UI Registry build output
 apps/web/public/r
 packages/ui/public/r
