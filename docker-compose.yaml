@@ -8,6 +8,10 @@ volumes:
         name: openstatus-libsql-data
     workflows-data:
         name: openstatus-workflows-data
+    tinybird-clickhouse-data:
+        name: openstatus-tinybird-clickhouse-data
+    tinybird-redis-data:
+        name: openstatus-tinybird-redis-data
 
 services:
     # External services
@@ -45,6 +49,9 @@ services:
             - "7181:7181"
         environment:
             - COMPATIBILITY_MODE=1
+        volumes:
+            - tinybird-clickhouse-data:/var/lib/clickhouse
+            - tinybird-redis-data:/redis-data
         healthcheck:
             test: ["CMD", "curl", "-f", "http://localhost:7181/"]
             interval: 15s
