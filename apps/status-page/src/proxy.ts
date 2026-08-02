@@ -3,7 +3,7 @@ import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "./lib/auth";
-import { isSelfHosted } from "./lib/domain";
+import { isSelfHosted, stripHostPort } from "./lib/domain";
 import { resolveClientIp } from "./lib/http/client-ip";
 import { PAGE_SLUG_HEADER } from "./lib/page-slug";
 import { createProtectedCookieKey } from "./lib/protected";
@@ -27,7 +27,7 @@ export default async function middleware(req: NextRequest) {
   // HTML and markdown share the same URL (negotiated by Accept) — tell shared
   // caches to key on it so a markdown variant is never served to a browser.
   passthroughResponse.headers.set("Vary", "Accept");
-  const host = req.headers.get("x-forwarded-host");
+  const host = stripHostPort(req.headers.get("x-forwarded-host"));
 
   // Strip a `.md` suffix before route resolution so path-based markdown
   // (`/foo/en/monitors/123.md`) parses slug/locale correctly.
