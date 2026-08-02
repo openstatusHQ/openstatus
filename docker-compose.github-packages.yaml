@@ -45,6 +45,9 @@ services:
             - "7181:7181"
         environment:
             - COMPATIBILITY_MODE=1
+        volumes:
+            - ./data/tinybird/clickhouse:/var/lib/clickhouse
+            - ./data/tinybird/redis:/redis-data
         healthcheck:
             test: ["CMD", "curl", "-f", "http://localhost:7181/"]
             interval: 15s
