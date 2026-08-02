@@ -327,7 +327,10 @@ export async function updateStatusPrivate(c: Context<Env>) {
           },
         });
         // Trigger notifications for cloud monitors always, private-only when threshold met AND status changed
-        if (hasCloudRegions || (shouldTriggerIncident && monitor.status !== "error")) {
+        if (
+          hasCloudRegions ||
+          (shouldTriggerIncident && monitor.status !== "error")
+        ) {
           triggeredNotifications = await triggerNotifications({
             monitorId,
             statusCode,
@@ -390,7 +393,10 @@ export async function updateStatusPrivate(c: Context<Env>) {
           },
         });
         // Trigger notifications for cloud monitors always, private-only when threshold met AND status changed
-        if (hasCloudRegions || (shouldTriggerIncident && monitor.status !== "degraded")) {
+        if (
+          hasCloudRegions ||
+          (shouldTriggerIncident && monitor.status !== "degraded")
+        ) {
           triggeredNotifications = await triggerNotifications({
             monitorId,
             statusCode,
@@ -450,7 +456,10 @@ export async function updateStatusPrivate(c: Context<Env>) {
           },
         });
         // Trigger notifications for cloud monitors always, private-only when threshold met AND status changed
-        if (hasCloudRegions || (shouldTriggerIncident && monitor.status !== "active")) {
+        if (
+          hasCloudRegions ||
+          (shouldTriggerIncident && monitor.status !== "active")
+        ) {
           triggeredNotifications = await triggerNotifications({
             monitorId,
             statusCode,
