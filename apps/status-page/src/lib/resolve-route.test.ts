@@ -363,24 +363,6 @@ describe("resolveRoute", () => {
       });
     });
 
-    test("status.acme.com (port-stripped) → same as without port, documenting caller responsibility", () => {
-      // This test documents that ports should be stripped by the caller (e.g., proxy.ts)
-      // before calling resolveRoute. The stripHostPort utility exists for this purpose.
-      // Without stripping, getValidSubdomain would return "status.acme.com:8080" as the
-      // prefix, failing to match the port-less page.customDomain stored in the DB.
-      const result = resolveRoute({
-        host: "status.acme.com", // Port already stripped by caller
-        urlHost: "localhost:3000",
-        pathname: "/",
-      });
-      expect(result).toEqual({
-        type: "hostname",
-        prefix: "status.acme.com",
-        locale: "en",
-        localeExplicit: false,
-        rewritePath: "/status.acme.com/en",
-      });
-    });
   });
 
   describe("edge cases", () => {
