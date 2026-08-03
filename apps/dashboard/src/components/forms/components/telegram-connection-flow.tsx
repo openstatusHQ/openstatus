@@ -37,10 +37,15 @@ export function TelegramConnectionFlow({
     confirmPrivateChat,
   } = useTelegramConnection({ form, mode });
 
-
+  const isSelfHosted = process.env.NEXT_PUBLIC_SELF_HOSTED === "true";
   const redisAvailable = tokenData?.redisAvailable === true;
 
-  // If Redis is not available, only show manual input without tabs
+  // If self-hosted, hide QR tab during loading to prevent flash
+  // If Redis is confirmed unavailable, always hide QR tab
+  if (isSelfHosted && isTokenLoading) {
+    return <TelegramManualInput form={form} />;
+  }
+
   if (!isTokenLoading && !redisAvailable) {
     return <TelegramManualInput form={form} />;
   }
