@@ -323,11 +323,17 @@ export const notificationRouter = createTRPCRouter({
     const randomId = nanoid(12);
     const EXPIRY = 1800; // 30 minutes
 
-    await redis.set(`telegram:workspace_token:${workspaceId}`, randomId, {
-      ex: EXPIRY,
-    });
-
-    return { token: randomId };
+    try {
+      await redis.set(`telegram:workspace_token:${workspaceId}`, randomId, {
+        ex: EXPIRY,
+      });
+      return { token: randomId, redisAvailable: true };
+    } catch (error) {
+      // Redis unavailable (e.g., self-hosted without Redis)
+      // Return null token to signal frontend to use manual setup only
+      console.warn("Redis unavailable for Telegram token storage:", error);
+      return { token: null, redisAvailable: false };
+    }
   }),
 
   getTelegramUpdates: protectedProcedure
