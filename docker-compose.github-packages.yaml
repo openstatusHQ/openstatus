@@ -23,6 +23,9 @@ services:
             - libsql-data:/var/lib/sqld
         environment:
             - SQLD_NODE=primary
+            # Increase limits to handle multiple services without connection pooling
+            - SQLD_MAX_CONCURRENT_CONNECTIONS=512
+            - SQLD_MAX_CONCURRENT_REQUESTS=1024
         healthcheck:
             test:
                 [
