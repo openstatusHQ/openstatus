@@ -37,12 +37,14 @@ export function TelegramConnectionFlow({
     confirmPrivateChat,
   } = useTelegramConnection({ form, mode });
 
-  const redisAvailable = tokenData?.redisAvailable ?? true;
+
+  const redisAvailable = tokenData?.redisAvailable === true;
 
   // If Redis is not available, only show manual input without tabs
   if (!isTokenLoading && !redisAvailable) {
     return <TelegramManualInput form={form} />;
   }
+
 
   return (
     <Tabs
