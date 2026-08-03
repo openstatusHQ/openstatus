@@ -77,9 +77,20 @@ export function Sidebar() {
                     location.id.toString(),
                   ) ?? []),
                 ];
-                return allRegions.length > 6
-                  ? `${allRegions.length} regions`
-                  : allRegions.join(", ");
+                // Sort regions: numeric sort for private location IDs, alphabetic for region codes
+                const sortedRegions = allRegions.sort((a, b) => {
+                  const aNum = Number(a);
+                  const bNum = Number(b);
+                  // If both are numeric, sort numerically
+                  if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return aNum - bNum;
+                  }
+                  // Otherwise, sort alphabetically
+                  return a.localeCompare(b);
+                });
+                return sortedRegions.length > 6
+                  ? `${sortedRegions.length} regions`
+                  : sortedRegions.join(", ");
               })(),
             },
             {
