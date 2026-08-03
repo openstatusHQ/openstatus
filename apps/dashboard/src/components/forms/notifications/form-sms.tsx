@@ -108,7 +108,7 @@ export function FormSms({
             name="data"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>SMS</FormLabel>
+                <FormLabel>Phone Number</FormLabel>
                 <FormControl>
                   <Input placeholder="+1234567890" type="tel" {...field} />
                 </FormControl>

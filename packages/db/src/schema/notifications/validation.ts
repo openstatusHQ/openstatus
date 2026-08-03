@@ -61,7 +61,9 @@ export const pagerdutyDataSchema = z.object({ pagerduty: z.string() });
 export const opsgenieDataSchema = z.object({
   opsgenie: z.object({
     apiKey: z.string(),
-    region: z.enum(["us", "eu"]),
+    region: z.enum(["us", "eu"], {
+      errorMap: () => ({ message: "Please select a region" }),
+    }),
   }),
 });
 export const telegramDataSchema = z.object({
