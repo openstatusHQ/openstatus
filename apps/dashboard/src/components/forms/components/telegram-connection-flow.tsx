@@ -60,7 +60,7 @@ export function TelegramConnectionFlow({
       <TabsContent value="qr">
         <TelegramQRConnection
           form={form}
-          token={tokenData?.token}
+          token={tokenData?.token ?? undefined}
           isLoading={isTokenLoading}
           isPolling={isPolling}
           flowStep={flowStep}
