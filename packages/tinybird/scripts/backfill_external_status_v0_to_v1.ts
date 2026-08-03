@@ -115,7 +115,7 @@ async function loadNameToSlugMap(): Promise<Map<string, string>> {
     authToken: env.DATABASE_AUTH_TOKEN,
   });
   const db = drizzle(client);
-  
+
   try {
     const rows = await db
       .select({ name: externalService.name, slug: externalService.slug })
