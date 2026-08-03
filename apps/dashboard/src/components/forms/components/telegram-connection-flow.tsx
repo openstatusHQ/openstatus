@@ -47,7 +47,10 @@ export function TelegramConnectionFlow({
   // - Self-hosted: Hide QR during loading (conservative, prevents flash)
   // - Cloud: Show QR during loading (optimistic, better UX)
   // After loading: always check actual redisAvailable value
-  if ((isSelfHosted && isTokenLoading) || (!isTokenLoading && !redisAvailable)) {
+  if (
+    (isSelfHosted && isTokenLoading) ||
+    (!isTokenLoading && !redisAvailable)
+  ) {
     return <TelegramManualInput form={form} />;
   }
 
