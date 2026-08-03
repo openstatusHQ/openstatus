@@ -30,10 +30,10 @@ import { TelegramFormActions } from "../components/telegram-form-actions";
 import { TelegramManualInput } from "../components/telegram-manual-input";
 
 const schema = z.object({
-  name: z.string(),
+  name: z.string().min(1, "Name is required"),
   provider: z.literal("telegram"),
   data: z.object({
-    chatId: z.string(),
+    chatId: z.string().min(1, "Chat ID is required"),
   }),
   monitors: z.array(z.number()),
 });

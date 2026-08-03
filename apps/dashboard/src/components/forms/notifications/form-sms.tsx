@@ -25,9 +25,9 @@ import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { CheckboxTree } from "@/components/ui/checkbox-tree";
 
 const schema = z.object({
-  name: z.string(),
+  name: z.string().min(1, "Name is required"),
   provider: z.literal("sms"),
-  data: z.string(),
+  data: z.string().min(1, "Phone number is required"),
   monitors: z.array(z.number()),
 });
 

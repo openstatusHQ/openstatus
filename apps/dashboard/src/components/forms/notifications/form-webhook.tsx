@@ -116,7 +116,7 @@ export function FormWebhook({
     // Validate webhook endpoint before sending test
     const endpoint = form.getValues("data.endpoint");
     if (!endpoint || endpoint.trim() === "") {
-      toast.error("Please enter a webhook endpoint before sending test");
+      toast.error("Please enter a webhook URL before sending test");
       return;
     }
 

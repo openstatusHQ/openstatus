@@ -37,7 +37,10 @@ import { useTRPC } from "@/lib/trpc/client";
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   provider: z.literal("opsgenie"),
-  data: z.record(z.string(), z.string()),
+  data: z.object({
+    apiKey: z.string().min(1, "API key is required"),
+    region: z.string().min(1, "Please select a region"),
+  }),
   monitors: z.array(z.number()),
 });
 
