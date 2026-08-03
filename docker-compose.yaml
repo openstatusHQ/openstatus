@@ -23,12 +23,9 @@ services:
             - libsql-data:/var/lib/sqld
         environment:
             - SQLD_NODE=primary
-            # Limit concurrent connections to prevent exhaustion
-            - SQLD_MAX_CONCURRENT_CONNECTIONS=100
-            # Limit concurrent requests per connection
-            - SQLD_MAX_CONCURRENT_REQUESTS=10
-            # Close idle connections after 5 minutes
-            - SQLD_IDLE_SHUTDOWN_TIMEOUT=300
+            # Increase limits to handle multiple services without connection pooling
+            - SQLD_MAX_CONCURRENT_CONNECTIONS=512
+            - SQLD_MAX_CONCURRENT_REQUESTS=1024
         healthcheck:
             test:
                 [
@@ -45,10 +42,10 @@ services:
             resources:
                 limits:
                     memory: 512M
-                    cpus: '2.0'
+                    cpus: '4.0'
                 reservations:
                     memory: 256M
-                    cpus: '1.0'
+                    cpus: '2.0'
 
     tinybird-local:
         container_name: openstatus-tinybird
