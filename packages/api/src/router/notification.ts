@@ -49,13 +49,6 @@ import {
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const notificationRouter = createTRPCRouter({
-  // Fast endpoint to get server configuration (e.g., deployment type)
-  getServerConfig: protectedProcedure.query(() => {
-    return {
-      isSelfHosted: process.env.SELF_HOST === "true",
-    };
-  }),
-
   list: protectedProcedure.query(async ({ ctx }) => {
     try {
       const { items } = await listNotifications({
@@ -329,18 +322,17 @@ export const notificationRouter = createTRPCRouter({
     const workspaceId = opts.ctx.workspace.id;
     const randomId = nanoid(12);
     const EXPIRY = 1800; // 30 minutes
-    const isSelfHosted = process.env.SELF_HOST === "true";
 
     try {
       await redis.set(`telegram:workspace_token:${workspaceId}`, randomId, {
         ex: EXPIRY,
       });
-      return { token: randomId, redisAvailable: true, isSelfHosted };
+      return { token: randomId, redisAvailable: true };
     } catch (error) {
       // Redis unavailable (e.g., self-hosted without Redis)
       // Return null token to signal frontend to use manual setup only
       console.warn("Redis unavailable for Telegram token storage:", error);
-      return { token: null, redisAvailable: false, isSelfHosted };
+      return { token: null, redisAvailable: false };
     }
   }),
 
