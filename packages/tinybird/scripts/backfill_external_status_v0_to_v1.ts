@@ -115,17 +115,22 @@ async function loadNameToSlugMap(): Promise<Map<string, string>> {
     authToken: env.DATABASE_AUTH_TOKEN,
   });
   const db = drizzle(client);
-  const rows = await db
-    .select({ name: externalService.name, slug: externalService.slug })
-    .from(externalService)
-    .where(isNotNull(externalService.slug))
-    .all();
-  const map = new Map<string, string>();
-  for (const r of rows) {
-    map.set(r.name, r.slug);
+
+  try {
+    const rows = await db
+      .select({ name: externalService.name, slug: externalService.slug })
+      .from(externalService)
+      .where(isNotNull(externalService.slug))
+      .all();
+    const map = new Map<string, string>();
+    for (const r of rows) {
+      map.set(r.name, r.slug);
+    }
+    console.log(`[backfill] loaded ${map.size} name→slug mappings from libSQL`);
+    return map;
+  } finally {
+    client.close();
   }
-  console.log(`[backfill] loaded ${map.size} name→slug mappings from libSQL`);
-  return map;
 }
 
 function rowsToSnapshots(args: {
