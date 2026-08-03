@@ -13,6 +13,7 @@ import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
+import { useQuery } from "@tanstack/react-query";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -82,7 +83,9 @@ export function FormTelegram({
 
   // Fetch server config to determine deployment type for biased loading
   const trpc = useTRPC();
-  const { data: serverConfig } = trpc.notification.getServerConfig.useQuery();
+  const { data: serverConfig } = useQuery({
+    ...trpc.notification.getServerConfig.queryOptions(),
+  });
 
   function submitAction(values: FormValues) {
     if (isPending) return;
