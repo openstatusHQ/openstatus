@@ -116,7 +116,9 @@ export function FormPagerDuty({
         const provider = form.getValues("provider");
         const data = form.getValues("data");
         if (!data || data.trim() === "") {
-          toast.error("Please enter PagerDuty configuration before sending test");
+          toast.error(
+            "Please enter PagerDuty configuration before sending test",
+          );
           return;
         }
         const promise = sendTestMutation.mutateAsync({
