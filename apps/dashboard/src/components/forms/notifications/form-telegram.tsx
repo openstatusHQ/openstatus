@@ -13,7 +13,6 @@ import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { useQuery } from "@tanstack/react-query";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -25,7 +24,6 @@ import {
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { CheckboxTree } from "@/components/ui/checkbox-tree";
-import { useTRPC } from "@/lib/trpc/client";
 
 import { TelegramConnectionFlow } from "../components/telegram-connection-flow";
 import { TelegramFormActions } from "../components/telegram-form-actions";
@@ -81,11 +79,8 @@ export function FormTelegram({
     isEditMode ? null : "qr",
   );
 
-  // Fetch server config to determine deployment type for biased loading
-  const trpc = useTRPC();
-  const { data: serverConfig } = useQuery({
-    ...trpc.notification.getServerConfig.queryOptions(),
-  });
+  // Check build-time env var for deployment type (immediate, no loading delay)
+  const isSelfHosted = process.env.NEXT_PUBLIC_SELF_HOST === "true";
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -149,7 +144,7 @@ export function FormTelegram({
                 form={form}
                 mode={mode}
                 onModeChange={setMode}
-                isSelfHosted={serverConfig?.isSelfHosted}
+                isSelfHosted={isSelfHosted}
               />
             )}
           </div>
