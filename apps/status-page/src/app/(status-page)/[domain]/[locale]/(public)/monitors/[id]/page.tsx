@@ -254,7 +254,9 @@ export default function Page() {
                 <StatusMonitorTabsTriggerValueSkeleton />
               ) : (
                 <StatusMonitorTabsTriggerValue>
-                  {tempMonitor?.regions.length} {t("regions")}{" "}
+                  {(tempMonitor?.regions.length ?? 0) +
+                    (tempMonitor?.privateLocationCount ?? 0)}{" "}
+                  {t("regions")}{" "}
                   <Badge
                     variant="outline"
                     className="py-px font-mono text-[10px]"
