@@ -75,6 +75,10 @@ export const AggregatedResponseSchema = z
     description: "The aggregated data of the check",
   });
 
+const RegionSchema = z
+  .string()
+  .openapi({ description: "The region where the check ran" });
+
 export const ResponseSchema = z.object({
   timestamp: z
     .number()
@@ -119,7 +123,7 @@ export const ResponseSchema = z.object({
     .openapi({
       description: "The aggregated data dns timing of the check",
     }),
-  region: z.string().openapi({ description: "The region where the check ran" }),
+  region: RegionSchema,
 });
 
 export const AggregatedResult = z.object({
@@ -131,9 +135,13 @@ export const AggregatedResult = z.object({
   latency: AggregatedResponseSchema,
 });
 
+export const RawTimingSchema = TimingSchema.extend({
+  region: RegionSchema,
+});
+
 export const CheckPostResponseSchema = z.object({
   id: z.int().openapi({ description: "The id of the check" }),
-  raw: z.array(TimingSchema).openapi({
+  raw: z.array(RawTimingSchema).openapi({
     description: "The raw data of the check",
   }),
   response: ResponseSchema.openapi({

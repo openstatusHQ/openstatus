@@ -52,6 +52,7 @@ test("Create a single check  ", async () => {
         tlsHandshakeStart: 5,
         transferDone: 10,
         transferStart: 9,
+        region: "ams",
       },
     ],
     response: {
@@ -169,6 +170,7 @@ test("Create a multiple check", async () => {
         tlsHandshakeStart: 5,
         transferDone: 10,
         transferStart: 9,
+        region: "ams",
       },
       {
         connectDone: 14,
@@ -181,6 +183,7 @@ test("Create a multiple check", async () => {
         tlsHandshakeStart: 15,
         transferDone: 20,
         transferStart: 19,
+        region: "gru",
       },
     ],
     response: {

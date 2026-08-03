@@ -139,12 +139,15 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
       });
     }
 
-    const allTimings = fulfilledRequest.map((r) => r.timing);
+    const allTimings = fulfilledRequest.map((r) => ({
+      ...r.timing,
+      region: r.region,
+    }));
 
     const lastResponse = fulfilledRequest[fulfilledRequest.length - 1];
     const responseResult = CheckPostResponseSchema.parse({
       id: newCheck.id,
-      raw: allTimings, // TODO: we should return the region here as well!
+      raw: allTimings,
       response: lastResponse,
       aggregated: aggregatedResponse ? aggregatedResponse : undefined,
     });
