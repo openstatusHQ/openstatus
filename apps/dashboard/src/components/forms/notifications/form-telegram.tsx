@@ -24,7 +24,7 @@ import {
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { CheckboxTree } from "@/components/ui/checkbox-tree";
-import { trpc } from "@/lib/trpc";
+import { useTRPC } from "@/lib/trpc/client";
 
 import { TelegramConnectionFlow } from "../components/telegram-connection-flow";
 import { TelegramFormActions } from "../components/telegram-form-actions";
@@ -81,6 +81,7 @@ export function FormTelegram({
   );
 
   // Fetch server config to determine deployment type for biased loading
+  const trpc = useTRPC();
   const { data: serverConfig } = trpc.notification.getServerConfig.useQuery();
 
   function submitAction(values: FormValues) {
