@@ -30,7 +30,7 @@ import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
-  name: z.string(),
+  name: z.string().min(1, "Name is required"),
   provider: z.literal("discord"),
   data: z.url("Please enter a valid URL"),
   monitors: z.array(z.number()),
@@ -97,10 +97,16 @@ export function FormDiscord({
   function testAction() {
     if (isPending) return;
 
+    // Validate webhook URL field before sending test
+    const data = form.getValues("data");
+    if (!data || data.trim() === "") {
+      toast.error("Please enter a webhook URL before sending test");
+      return;
+    }
+
     startTransition(async () => {
       try {
         const provider = form.getValues("provider");
-        const data = form.getValues("data");
         const promise = sendTestMutation.mutateAsync({
           provider,
           data: {

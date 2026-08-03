@@ -31,7 +31,7 @@ import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
-  name: z.string(),
+  name: z.string().min(1, "Name is required"),
   provider: z.literal("webhook"),
   data: z.object({
     endpoint: z.string().url(),
@@ -113,10 +113,16 @@ export function FormWebhook({
   function testAction() {
     if (isPending) return;
 
+    // Validate webhook endpoint before sending test
+    const endpoint = form.getValues("data.endpoint");
+    if (!endpoint || endpoint.trim() === "") {
+      toast.error("Please enter a webhook endpoint before sending test");
+      return;
+    }
+
     startTransition(async () => {
       try {
         const provider = form.getValues("provider");
-        const endpoint = form.getValues("data.endpoint");
         const headers = form.getValues("data.headers");
         const promise = sendTestMutation.mutateAsync({
           provider,

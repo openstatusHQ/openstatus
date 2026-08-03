@@ -29,7 +29,7 @@ import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
-  name: z.string(),
+  name: z.string().min(1, "Name is required"),
   provider: z.literal("ntfy"),
   data: z.record(z.string(), z.string()),
   monitors: z.array(z.number()),
@@ -100,10 +100,16 @@ export function FormNtfy({
   function testAction() {
     if (isPending) return;
 
+    // Validate topic field before sending test
+    const data = form.getValues("data");
+    if (!data.topic || data.topic.trim() === "") {
+      toast.error("Please enter a topic before sending test");
+      return;
+    }
+
     startTransition(async () => {
       try {
         const provider = form.getValues("provider");
-        const data = form.getValues("data");
         const promise = sendTestMutation.mutateAsync({
           provider,
           data: {

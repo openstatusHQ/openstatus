@@ -31,7 +31,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useFormSheetDirty } from "../form-sheet";
 
 const schema = z.object({
-  name: z.string(),
+  name: z.string().min(1, "Name is required"),
   provider: z.literal("ms-teams"),
   data: z.object({
     webhookUrl: safeUrlSchema,
@@ -101,10 +101,16 @@ export function FormMsTeams({
   function testAction() {
     if (isPending) return;
 
+    // Validate webhook URL field before sending test
+    const data = form.getValues("data");
+    if (!data.webhookUrl || data.webhookUrl.trim() === "") {
+      toast.error("Please enter a webhook URL before sending test");
+      return;
+    }
+
     startTransition(async () => {
       try {
         const provider = form.getValues("provider");
-        const data = form.getValues("data");
         const promise = sendTestMutation.mutateAsync({
           provider,
           data: {
