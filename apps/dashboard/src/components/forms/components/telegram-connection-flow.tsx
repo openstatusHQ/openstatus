@@ -37,8 +37,9 @@ export function TelegramConnectionFlow({
     confirmPrivateChat,
   } = useTelegramConnection({ form, mode });
 
-  const isSelfHosted = process.env.NEXT_PUBLIC_SELF_HOSTED === "true";
+  const isSelfHosted = process.env.NEXT_PUBLIC_SELF_HOST === "true";
   const redisAvailable = tokenData?.redisAvailable === true;
+
 
   // If self-hosted, hide QR tab during loading to prevent flash
   // If Redis is confirmed unavailable, always hide QR tab
