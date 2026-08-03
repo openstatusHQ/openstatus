@@ -18,12 +18,14 @@ interface TelegramConnectionFlowProps {
   form: UseFormReturn<FormValues>;
   mode: "qr" | "manual" | null;
   onModeChange: (mode: "qr" | "manual" | null) => void;
+  isSelfHosted?: boolean; // Optional: if not provided, assumes cloud (optimistic)
 }
 
 export function TelegramConnectionFlow({
   form,
   mode,
   onModeChange,
+  isSelfHosted: isSelfHostedProp,
 }: TelegramConnectionFlowProps) {
   const {
     tokenData,
@@ -37,13 +39,18 @@ export function TelegramConnectionFlow({
     confirmPrivateChat,
   } = useTelegramConnection({ form, mode });
 
+  // Use prop if provided, otherwise use value from backend, default to false (cloud)
+  const isSelfHosted = isSelfHostedProp ?? tokenData?.isSelfHosted ?? false;
   const redisAvailable = tokenData?.redisAvailable === true;
 
-  // Hide QR tab during loading (prevents flash on self-hosted)
-  // Show QR tab only after confirming Redis is available
-  if (isTokenLoading || !redisAvailable) {
+  // Biased loading behavior:
+  // - Self-hosted: Hide QR during loading (conservative, prevents flash)
+  // - Cloud: Show QR during loading (optimistic, better UX)
+  // After loading: always check actual redisAvailable value
+  if ((isSelfHosted && isTokenLoading) || (!isTokenLoading && !redisAvailable)) {
     return <TelegramManualInput form={form} />;
   }
+
 
 
 

@@ -24,6 +24,7 @@ import {
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { CheckboxTree } from "@/components/ui/checkbox-tree";
+import { trpc } from "@/lib/trpc";
 
 import { TelegramConnectionFlow } from "../components/telegram-connection-flow";
 import { TelegramFormActions } from "../components/telegram-form-actions";
@@ -78,6 +79,9 @@ export function FormTelegram({
   const [mode, setMode] = React.useState<"qr" | "manual" | null>(
     isEditMode ? null : "qr",
   );
+
+  // Fetch server config to determine deployment type for biased loading
+  const { data: serverConfig } = trpc.notification.getServerConfig.useQuery();
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -141,6 +145,7 @@ export function FormTelegram({
                 form={form}
                 mode={mode}
                 onModeChange={setMode}
+                isSelfHosted={serverConfig?.isSelfHosted}
               />
             )}
           </div>

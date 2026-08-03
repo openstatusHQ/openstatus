@@ -49,6 +49,13 @@ import {
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const notificationRouter = createTRPCRouter({
+  // Fast endpoint to get server configuration (e.g., deployment type)
+  getServerConfig: protectedProcedure.query(() => {
+    return {
+      isSelfHosted: process.env.SELF_HOST === "true",
+    };
+  }),
+
   list: protectedProcedure.query(async ({ ctx }) => {
     try {
       const { items } = await listNotifications({
