@@ -51,10 +51,6 @@ export function TelegramConnectionFlow({
     return <TelegramManualInput form={form} />;
   }
 
-
-
-
-
   return (
     <Tabs
       value={mode ?? "qr"}
