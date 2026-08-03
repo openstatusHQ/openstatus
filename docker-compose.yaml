@@ -42,10 +42,8 @@ services:
             resources:
                 limits:
                     memory: 512M
-                    cpus: '4.0'
                 reservations:
                     memory: 256M
-                    cpus: '2.0'
 
     tinybird-local:
         container_name: openstatus-tinybird
