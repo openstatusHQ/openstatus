@@ -5,6 +5,7 @@ import { WelcomeEmail, sendEmail } from "@openstatus/emails";
 import type { DefaultSession } from "next-auth";
 import NextAuth from "next-auth";
 import { headers } from "next/headers";
+import { cache } from "react";
 
 import { adapter } from "./adapter";
 import {
@@ -42,7 +43,12 @@ async function syncUser(
     .run();
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+const {
+  handlers,
+  signIn,
+  signOut,
+  auth: nextAuth,
+} = NextAuth({
   // debug: true,
   adapter,
   providers: [
@@ -197,3 +203,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // secret: process.env.AUTH_SECRET, // default is `AUTH_SECRET`
   debug: process.env.NODE_ENV === "development",
 });
+
+// The root layout and the tRPC RSC context both need the session; `cache`
+// collapses them into a single lookup per render. Outside a React render
+// (the proxy's `auth(handler)` form, route handlers) it is a pass-through.
+export const auth = cache(nextAuth);
+export { handlers, signIn, signOut };
