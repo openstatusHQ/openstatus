@@ -1,19 +1,29 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
+// Helper to make env vars optional when self-hosting
+const isSelfHost = process.env.SELF_HOST === "true";
+
 export const env = createEnv({
   server: {
-    STRIPE_SECRET_KEY: z.string(),
-    PROJECT_ID_VERCEL: z.string(),
-    TEAM_ID_VERCEL: z.string(),
-    VERCEL_AUTH_BEARER_TOKEN: z.string(),
+    // Payment processing - only required for SaaS
+    STRIPE_SECRET_KEY: isSelfHost ? z.string().optional() : z.string(),
+    // Vercel integration - only required for SaaS
+    PROJECT_ID_VERCEL: isSelfHost ? z.string().optional() : z.string(),
+    TEAM_ID_VERCEL: isSelfHost ? z.string().optional() : z.string(),
+    VERCEL_AUTH_BEARER_TOKEN: isSelfHost ? z.string().optional() : z.string(),
+    // Analytics - required for both SaaS and self-hosted
     TINY_BIRD_API_KEY: z.string(),
     TINYBIRD_URL: z.string().default("https://api.tinybird.co"),
     TINYBIRD_NOOP: z.stringbool().catch(false),
+    // Email - required for both SaaS and self-hosted
     RESEND_API_KEY: z.string(),
+    // Cron jobs - required for both SaaS and self-hosted
     CRON_SECRET: z.string(),
-    UNKEY_TOKEN: z.string(),
-    UNKEY_API_ID: z.string(),
+    // API key management - only required for SaaS
+    UNKEY_TOKEN: isSelfHost ? z.string().optional() : z.string(),
+    UNKEY_API_ID: isSelfHost ? z.string().optional() : z.string(),
+    // Optional features
     SLACK_FEEDBACK_WEBHOOK_URL: z.string().optional(),
     EXTERNAL_REPORT_SALT: z.string().optional(),
     SELF_HOST: z.stringbool().prefault("false"),
@@ -37,3 +47,4 @@ export const env = createEnv({
   },
   skipValidation: process.env.NODE_ENV === "test",
 });
+
