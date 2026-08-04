@@ -54,5 +54,7 @@ async function HydrateSidebar({ children }: { children: React.ReactNode }) {
     queryClient.prefetchQuery(trpc.user.get.queryOptions()),
   ]);
 
+  await new Promise((resolve) => setTimeout(resolve, 1000)); // Ensure hydration happens after prefetching
+
   return <HydrateClient>{children}</HydrateClient>;
 }
