@@ -221,9 +221,6 @@ async function workflowInit({
     );
     return;
   }
-<<<<<<< HEAD
-
-=======
   
   await CreateTask({
     parent,
@@ -233,7 +230,6 @@ async function workflowInit({
     initialRun,
   });
   
->>>>>>> 27de170c (fix: improve self-hosted deployment validation and GCP checks)
   await redis.set(`workflow:user:${user.userId}`, initialRun, {
     ex: 30 * 86400,
   });
