@@ -1,10 +1,8 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
-// Parse SELF_HOST using the same logic as z.stringbool() to support truthy values like "1", "yes", "on"
-const isSelfHost = ["true", "1", "yes", "on"].includes(
-  (process.env.SELF_HOST || "").toLowerCase(),
-);
+// Parse SELF_HOST using z.stringbool() to ensure consistency with the schema
+const isSelfHost = z.stringbool().catch(false).parse(process.env.SELF_HOST);
 
 export const env = createEnv({
   server: {

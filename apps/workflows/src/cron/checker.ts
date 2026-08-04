@@ -57,13 +57,9 @@ const logger = getLogger("workflow");
 function isGcpConfigured(): boolean {
   const projectId = env().GCP_PROJECT_ID;
   const location = env().GCP_LOCATION;
-<<<<<<< HEAD
-
-=======
   const clientEmail = env().GCP_CLIENT_EMAIL;
   const privateKey = env().GCP_PRIVATE_KEY;
   
->>>>>>> 27de170c (fix: improve self-hosted deployment validation and GCP checks)
   return (
     projectId !== "" &&
     projectId !== "your-value" &&
