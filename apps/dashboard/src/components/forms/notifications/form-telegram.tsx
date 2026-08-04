@@ -79,8 +79,7 @@ export function FormTelegram({
     isEditMode ? null : "qr",
   );
 
-  // Check build-time env var for deployment type (immediate, no loading delay)
-  const isSelfHosted = process.env.NEXT_PUBLIC_SELF_HOST === "true";
+
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -144,7 +143,6 @@ export function FormTelegram({
                 form={form}
                 mode={mode}
                 onModeChange={setMode}
-                isSelfHosted={isSelfHosted}
               />
             )}
           </div>

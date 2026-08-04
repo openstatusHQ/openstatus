@@ -18,14 +18,12 @@ interface TelegramConnectionFlowProps {
   form: UseFormReturn<FormValues>;
   mode: "qr" | "manual" | null;
   onModeChange: (mode: "qr" | "manual" | null) => void;
-  isSelfHosted?: boolean; // Optional: if not provided, assumes cloud (optimistic)
 }
 
 export function TelegramConnectionFlow({
   form,
   mode,
   onModeChange,
-  isSelfHosted: isSelfHostedProp,
 }: TelegramConnectionFlowProps) {
   const {
     tokenData,
@@ -39,8 +37,8 @@ export function TelegramConnectionFlow({
     confirmPrivateChat,
   } = useTelegramConnection({ form, mode });
 
-  // Use prop if provided, otherwise use value from backend, default to false (cloud)
-  const isSelfHosted = isSelfHostedProp ?? tokenData?.isSelfHosted ?? false;
+  // Check build-time env var for deployment type, with backend fallback
+  const isSelfHosted = process.env.NEXT_PUBLIC_SELF_HOST === "true" || tokenData?.isSelfHosted === true;
   const redisAvailable = tokenData?.redisAvailable === true;
 
   // Biased loading behavior:
