@@ -62,7 +62,7 @@ export const opsgenieDataSchema = z.object({
   opsgenie: z.object({
     apiKey: z.string(),
     region: z.enum(["us", "eu"], {
-      errorMap: () => ({ message: "Please select a region" }),
+      message: "Please select a region",
     }),
   }),
 });
