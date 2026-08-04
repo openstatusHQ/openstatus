@@ -89,8 +89,14 @@ export function QuickActions({
     });
   };
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    // Reset the input value when dialog state changes
+    setValue("");
+  };
+
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           {children ?? (

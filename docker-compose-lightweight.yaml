@@ -32,6 +32,13 @@ services:
             retries: 5
             start_period: 10s
         restart: unless-stopped
+        memswap_limit: 512M
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 256M
 
     # Idempotent: drizzle skips already-applied migrations on every up
     db-migrate:
@@ -83,6 +90,13 @@ services:
             retries: 3
             start_period: 45s
         restart: unless-stopped
+        memswap_limit: 512M
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 256M
 
     status-page:
         container_name: openstatus-status-page
@@ -113,3 +127,10 @@ services:
             retries: 3
             start_period: 45s
         restart: unless-stopped
+        memswap_limit: 512M
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 256M

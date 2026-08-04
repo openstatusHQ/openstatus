@@ -6,6 +6,7 @@ import {
   page,
   pageComponent,
   pageConfigurationSchema,
+  privateLocationToMonitors,
   selectMaintenancePageSchema,
   selectPageComponentWithMonitorRelation,
   selectPageSchema,
@@ -238,9 +239,43 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
 
+
+      // Add privateLocationCount to each monitor
+      const privateLocationCounts = new Map<number, number>();
+      if (monitors.length > 0) {
+        const monitorIds = monitors.map((m) => m.id);
+        const privateLocations =
+          await opts.ctx.db.query.privateLocationToMonitors.findMany({
+            where: and(
+              inArray(privateLocationToMonitors.monitorId, monitorIds),
+              isNull(privateLocationToMonitors.deletedAt),
+            ),
+            columns: {
+              monitorId: true,
+            },
+          });
+
+        // Count private locations per monitor
+        for (const pl of privateLocations) {
+          if (pl.monitorId === null) continue;
+          privateLocationCounts.set(
+            pl.monitorId,
+            (privateLocationCounts.get(pl.monitorId) ?? 0) + 1,
+          );
+        }
+      }
+
+      // Create new array with privateLocationCount included (no mutation/cast)
+      const monitorsWithPrivateLocationCount = monitors.map((m) => ({
+        ...m,
+        privateLocationCount: privateLocationCounts.get(m.id) ?? 0,
+      }));
+
       // Page-level status: aggregate only monitor statuses (preserves original behavior)
       // Badge includes non-monitor events separately in getBadgeStatus
-      const status = aggregatePageStatus(monitors.map((m) => m.status));
+      const status = aggregatePageStatus(
+        monitorsWithPrivateLocationCount.map((m) => m.status),
+      );
 
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
@@ -415,10 +450,11 @@ export const statusPageRouter = createTRPCRouter({
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
         customTheme,
-        monitors,
+        monitors: monitorsWithPrivateLocationCount,
         monitorGroups,
         trackers,
-        incidents: monitors.flatMap((m) => m.incidents) ?? [],
+        incidents:
+          monitorsWithPrivateLocationCount.flatMap((m) => m.incidents) ?? [],
         statusReports,
         maintenances,
         workspacePlan: _page.workspace.plan,

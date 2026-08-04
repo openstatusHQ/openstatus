@@ -7,6 +7,7 @@ on:
       - "packages/proto/**"
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
       - "packages/proto/**"
 
@@ -21,6 +22,9 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v6
+        with:
+          # breaking check resolves --against against the PR base commit
+          fetch-depth: 0
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -50,6 +54,11 @@ jobs:
       - name: 🧹 Lint api protos
         working-directory: ./packages/proto
         run: pnpm buf:lint:api
+
+      - name: 🔍 Breaking change check
+        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'buf skip breaking')
+        working-directory: ./packages/proto
+        run: pnpm exec buf breaking api --against "../../.git#ref=${{ github.event.pull_request.base.sha }},subdir=packages/proto/api"
 
       - name: 🔄 Regenerate proto files
         working-directory: ./packages/proto

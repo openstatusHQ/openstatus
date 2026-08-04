@@ -26,7 +26,9 @@ export function Sidebar() {
 
   if (!statusPage) return null;
 
-  const BADGE_URL = `https://${statusPage.slug}.openstatus.dev/badge/v2`;
+  const BADGE_URL = `https://${
+    statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
+  }/badge/v2`;
 
   return (
     <SidebarRight
