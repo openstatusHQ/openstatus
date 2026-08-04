@@ -5,6 +5,7 @@ import {
   consume,
   findByThread,
   get,
+  newActionId,
   replace,
   store,
 } from "./confirmation-store";
@@ -13,8 +14,9 @@ import type { PendingAction } from "./confirmation-store";
 const redisStore = (globalThis as Record<string, unknown>)
   .__testRedisStore as Map<string, string>;
 
-function makePendingInput(): Omit<PendingAction, "id" | "createdAt"> {
+function makePendingInput(): Omit<PendingAction, "createdAt"> {
   return {
+    id: newActionId(),
     workspaceId: 1,
     botToken: "xoxb-test-token",
     channelId: "C123",
@@ -39,10 +41,10 @@ describe("confirmation-store", () => {
   });
 
   describe("store", () => {
-    test("returns an action id", async () => {
-      const id = await store(makePendingInput());
-      expect(typeof id).toBe("string");
-      expect(id.length).toBeGreaterThan(0);
+    test("returns the caller-supplied action id", async () => {
+      const input = makePendingInput();
+      const id = await store(input);
+      expect(id).toBe(input.id);
     });
 
     test("saves action and thread index to redis", async () => {
@@ -143,29 +145,38 @@ describe("confirmation-store", () => {
   });
 
   describe("replace", () => {
-    test("replaces the payload on an existing pending", async () => {
+    test("replaces the payload and message ts on an existing pending", async () => {
       const input = makePendingInput();
       const id = await store(input);
 
-      await replace(id, {
-        toolName: "add_status_report_update",
-        input: {
-          statusReportId: 42,
-          status: "identified",
-          message: "Root cause found",
+      await replace(
+        id,
+        {
+          toolName: "add_status_report_update",
+          input: {
+            statusReportId: 42,
+            status: "identified",
+            message: "Root cause found",
+          },
         },
-      });
+        "9999999999.000001",
+      );
 
       const result = await consume(id);
       expect(result).toBeDefined();
       expect(result?.payload.toolName).toBe("add_status_report_update");
+      expect(result?.messageTs).toBe("9999999999.000001");
     });
 
     test("does nothing for unknown id", async () => {
-      await replace("nonexistent", {
-        toolName: "resolve_status_report",
-        input: { statusReportId: 1, message: "fixed" },
-      });
+      await replace(
+        "nonexistent",
+        {
+          toolName: "resolve_status_report",
+          input: { statusReportId: 1, message: "fixed" },
+        },
+        "1.1",
+      );
       expect(redisStore.size).toBe(0);
     });
   });

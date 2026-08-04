@@ -10,6 +10,7 @@ export interface SlackTestState {
   postMessageOverride: Override;
   updateOverride: Override;
   postEphemeralOverride: Override;
+  setStatusOverride: Override;
   runAgentOverride: (() => Promise<unknown>) | null;
   repliesImpl: () => Promise<unknown>;
 }
@@ -22,6 +23,7 @@ if (!g.__slackTestState) {
     postMessageOverride: null,
     updateOverride: null,
     postEphemeralOverride: null,
+    setStatusOverride: null,
     runAgentOverride: null,
     repliesImpl: () =>
       Promise.resolve({

@@ -51,6 +51,7 @@ describe("handleSlackEvent", () => {
     slackTestState.calls = [];
     slackTestState.postMessageOverride = null;
     slackTestState.updateOverride = null;
+    slackTestState.setStatusOverride = null;
     slackTestState.runAgentOverride = null;
     slackTestState.resolveWorkspace = (teamId: string) => {
       if (teamId === "T_KNOWN") {
@@ -177,10 +178,16 @@ describe("handleSlackEvent", () => {
     });
     await new Promise((r) => setTimeout(r, 100));
 
-    const thinking = slackTestState.calls.filter(
+    const replies = slackTestState.calls.filter(
       (m) => m.method === "postMessage",
     );
-    expect(thinking.length).toBe(1);
+    expect(replies.length).toBe(1);
+
+    // The loading indicator is set once and cleared once.
+    const statuses = slackTestState.calls.filter(
+      (m) => m.method === "setStatus",
+    );
+    expect(statuses.length).toBe(2);
   });
 
   test("handles app_uninstalled event", async () => {
@@ -471,7 +478,7 @@ describe("handleSlackEvent", () => {
     expect(fallbackPost).toBeDefined();
   });
 
-  test("returns early on non-recoverable postMessage error", async () => {
+  test("does not throw on a non-recoverable postMessage error", async () => {
     slackTestState.postMessageOverride = () => {
       const err = new Error("An API error occurred: channel_not_found");
       Object.assign(err, {
@@ -497,10 +504,89 @@ describe("handleSlackEvent", () => {
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 100));
 
-    const updateMessages = slackTestState.calls.filter(
-      (m) => m.method === "update",
+    // channel_not_found isn't cannot_reply_to_message, so no top-level retry.
+    const posts = slackTestState.calls.filter(
+      (m) => m.method === "postMessage",
     );
-    expect(updateMessages.length).toBe(0);
+    expect(posts.length).toBe(0);
+  });
+
+  test("sets and clears the thinking status around the agent run", async () => {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_status_${Date.now()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hello",
+        user: "U1",
+        channel: "C1",
+        ts: "500.10",
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 100));
+
+    const statuses = slackTestState.calls.filter(
+      (m) => m.method === "setStatus",
+    );
+    expect(statuses.length).toBe(2);
+    expect(statuses[0].args.channel_id).toBe("C1");
+    expect(statuses[0].args.thread_ts).toBe("500.10");
+    expect(statuses[0].args.status).toBe("is thinking...");
+    expect(
+      (statuses[0].args.loading_messages as string[]).length,
+    ).toBeGreaterThan(0);
+    expect(statuses[1].args.status).toBe("");
+
+    // Cleared before the reply lands, so a refresh tick can't resurrect it.
+    const clearIndex = slackTestState.calls.findIndex(
+      (m) => m.method === "setStatus" && m.args.status === "",
+    );
+    const postIndex = slackTestState.calls.findIndex(
+      (m) => m.method === "postMessage",
+    );
+    expect(clearIndex).toBeLessThan(postIndex);
+
+    // No placeholder message — one post, carrying the answer.
+    const posts = slackTestState.calls.filter(
+      (m) => m.method === "postMessage",
+    );
+    expect(posts.length).toBe(1);
+    expect(posts[0].args.thread_ts).toBe("500.10");
+  });
+
+  test("still replies when setStatus fails", async () => {
+    slackTestState.setStatusOverride = () => {
+      const err = new Error("An API error occurred: channel_not_found");
+      Object.assign(err, {
+        code: "slack_webapi_platform_error",
+        data: { ok: false, error: "channel_not_found" },
+      });
+      return Promise.reject(err);
+    };
+
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_statusfail_${Date.now()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hello",
+        user: "U1",
+        channel: "C1",
+        ts: `${Date.now()}.22`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 100));
+
+    const posts = slackTestState.calls.filter(
+      (m) => m.method === "postMessage",
+    );
+    expect(posts.length).toBe(1);
   });
 
   test("shows error message when runAgent throws", async () => {
@@ -523,19 +609,19 @@ describe("handleSlackEvent", () => {
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 100));
 
-    const errorUpdate = slackTestState.calls.find(
+    const errorPost = slackTestState.calls.find(
       (m) =>
-        m.method === "update" &&
+        m.method === "postMessage" &&
         typeof m.args.text === "string" &&
         m.args.text.includes("Something went wrong"),
     );
-    expect(errorUpdate).toBeDefined();
+    expect(errorPost).toBeDefined();
   });
 
-  test("does not throw when both runAgent and error update fail", async () => {
+  test("does not throw when both runAgent and the error post fail", async () => {
     slackTestState.runAgentOverride = () =>
       Promise.reject(new Error("agent exploded"));
-    slackTestState.updateOverride = () => {
+    slackTestState.postMessageOverride = () => {
       const err = new Error("An API error occurred: channel_not_found");
       Object.assign(err, {
         code: "slack_webapi_platform_error",

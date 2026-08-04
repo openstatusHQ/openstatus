@@ -31,12 +31,21 @@ export type PendingAction = z.infer<typeof pendingActionSchema>;
  * adapter can be exercised without `@/libs/clients`.
  */
 export interface CarrierStore {
-  put(action: Omit<PendingAction, "id" | "createdAt">): Promise<string>;
+  /** `id` is caller-supplied so the card's blocks can be built before it exists. */
+  put(action: Omit<PendingAction, "createdAt">): Promise<string>;
   get(id: string): Promise<PendingAction | undefined>;
   /** Atomic getdel — defends against double-click double-execution. */
   consume(id: string): Promise<PendingAction | undefined>;
   findByThread(threadTs: string): Promise<PendingAction | undefined>;
-  replace(id: string, payload: PendingPayload): Promise<void>;
+  replace(
+    id: string,
+    payload: PendingPayload,
+    messageTs: string,
+  ): Promise<void>;
+}
+
+export function newActionId(): string {
+  return nanoid();
 }
 
 const TTL_SECONDS = 5 * 60;
@@ -56,19 +65,18 @@ function parse(raw: unknown): PendingAction | undefined {
 export function createRedisCarrierStore(): CarrierStore {
   return {
     async put(action) {
-      const id = nanoid();
-      const pending: PendingAction = { ...action, id, createdAt: Date.now() };
+      const pending: PendingAction = { ...action, createdAt: Date.now() };
 
       await Promise.all([
-        redis.set(`${ACTION_PREFIX}${id}`, JSON.stringify(pending), {
+        redis.set(`${ACTION_PREFIX}${action.id}`, JSON.stringify(pending), {
           ex: TTL_SECONDS,
         }),
-        redis.set(`${THREAD_PREFIX}${action.threadTs}`, id, {
+        redis.set(`${THREAD_PREFIX}${action.threadTs}`, action.id, {
           ex: TTL_SECONDS,
         }),
       ]);
 
-      return id;
+      return action.id;
     },
 
     async get(id) {
@@ -103,7 +111,7 @@ export function createRedisCarrierStore(): CarrierStore {
       return parse(raw);
     },
 
-    async replace(id, payload) {
+    async replace(id, payload, messageTs) {
       const raw = await redis.get<string>(`${ACTION_PREFIX}${id}`);
       if (!raw) return;
 
@@ -111,6 +119,7 @@ export function createRedisCarrierStore(): CarrierStore {
       if (!existing) return;
 
       existing.payload = payload;
+      existing.messageTs = messageTs;
       existing.createdAt = Date.now();
 
       await Promise.all([
@@ -133,11 +142,10 @@ export function createMemoryCarrierStore(): CarrierStore {
 
   return {
     async put(action) {
-      const id = nanoid();
-      const pending: PendingAction = { ...action, id, createdAt: Date.now() };
-      actions.set(id, pending);
-      threads.set(action.threadTs, id);
-      return id;
+      const pending: PendingAction = { ...action, createdAt: Date.now() };
+      actions.set(action.id, pending);
+      threads.set(action.threadTs, action.id);
+      return action.id;
     },
 
     async get(id) {
@@ -163,12 +171,13 @@ export function createMemoryCarrierStore(): CarrierStore {
       return action;
     },
 
-    async replace(id, payload) {
+    async replace(id, payload, messageTs) {
       const existing = actions.get(id);
       if (!existing) return;
       actions.set(id, {
         ...existing,
         payload,
+        messageTs,
         createdAt: Date.now(),
       });
     },
@@ -180,7 +189,7 @@ export function createMemoryCarrierStore(): CarrierStore {
 const defaultStore = createRedisCarrierStore();
 
 export const store = (
-  action: Omit<PendingAction, "id" | "createdAt">,
+  action: Omit<PendingAction, "createdAt">,
 ): Promise<string> => defaultStore.put(action);
 export const get = (id: string): Promise<PendingAction | undefined> =>
   defaultStore.get(id);
@@ -189,5 +198,8 @@ export const consume = (id: string): Promise<PendingAction | undefined> =>
 export const findByThread = (
   threadTs: string,
 ): Promise<PendingAction | undefined> => defaultStore.findByThread(threadTs);
-export const replace = (id: string, payload: PendingPayload): Promise<void> =>
-  defaultStore.replace(id, payload);
+export const replace = (
+  id: string,
+  payload: PendingPayload,
+  messageTs: string,
+): Promise<void> => defaultStore.replace(id, payload, messageTs);
