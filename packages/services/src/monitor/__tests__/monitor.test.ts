@@ -1,4 +1,4 @@
-import { db, eq, inArray } from "@openstatus/db";
+import { and, db, eq, inArray, isNull } from "@openstatus/db";
 import {
   monitor,
   monitorTag,
@@ -20,7 +20,7 @@ import {
   readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { ServiceContext } from "../../context";
+import type { DrizzleTx, ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
 import { cloneMonitor } from "../clone";
 import { createMonitor } from "../create";
@@ -541,6 +541,112 @@ describe("list / get", () => {
         input: { limit: 1000, offset: 0, order: "desc" },
       });
       expect(teamItems.find((m) => m.id === row.id)).toBeUndefined();
+    });
+  });
+});
+
+// `totalSize` is derived from the page length whenever that is unambiguous,
+// and only falls back to `count(*)` when it isn't. The derivation must agree
+// with the count in every case, including past the end of the result set.
+describe("listMonitors totalSize", () => {
+  /** Seed `n` monitors and return the workspace's true monitor count. */
+  const seed = async (tx: DrizzleTx, ctx: ServiceContext, n: number) => {
+    for (let i = 0; i < n; i++) {
+      await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-total-${i}`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: true,
+        },
+      });
+    }
+    const rows = await tx
+      .select({ id: monitor.id })
+      .from(monitor)
+      .where(
+        and(
+          eq(monitor.workspaceId, ctx.workspace.id),
+          isNull(monitor.deletedAt),
+        ),
+      )
+      .all();
+    return rows.length;
+  };
+
+  test("a short page derives the total from offset + rows", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const total = await seed(tx, ctx, 3);
+
+      const { items, totalSize } = await listMonitors({
+        ctx,
+        input: { limit: total + 10, offset: 0, order: "desc" },
+      });
+      expect(items).toHaveLength(total);
+      expect(totalSize).toBe(total);
+    });
+  });
+
+  test("a full page falls back to count(*)", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const total = await seed(tx, ctx, 3);
+
+      const { items, totalSize } = await listMonitors({
+        ctx,
+        input: { limit: 1, offset: 0, order: "desc" },
+      });
+      expect(items).toHaveLength(1);
+      // Derivation alone would say 1; only the count knows the real total.
+      expect(totalSize).toBe(total);
+    });
+  });
+
+  test("a mid-list page reports the full total, not the page end", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const total = await seed(tx, ctx, 3);
+
+      const { totalSize } = await listMonitors({
+        ctx,
+        input: { limit: 2, offset: 1, order: "desc" },
+      });
+      expect(totalSize).toBe(total);
+    });
+  });
+
+  test("an offset past the end still reports the true total", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const total = await seed(tx, ctx, 3);
+
+      const { items, totalSize } = await listMonitors({
+        ctx,
+        input: { limit: 10, offset: total + 50, order: "desc" },
+      });
+      expect(items).toHaveLength(0);
+      // Regression: deriving `offset + rows.length` here would report the
+      // offset itself as the total.
+      expect(totalSize).toBe(total);
+    });
+  });
+
+  test("an empty result at offset 0 reports zero", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const total = await seed(tx, ctx, 0);
+
+      const { items, totalSize } = await listMonitors({
+        ctx,
+        input: { limit: 100, offset: 0, order: "desc" },
+      });
+      expect(items).toHaveLength(total);
+      expect(totalSize).toBe(total);
     });
   });
 });

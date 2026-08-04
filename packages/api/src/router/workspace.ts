@@ -1,7 +1,6 @@
 import { Events } from "@openstatus/analytics";
 import {
   getWorkspaceWithUsage,
-  listWorkspaces,
   updateWorkspaceName,
 } from "@openstatus/services/workspace";
 import { z } from "zod";
@@ -18,16 +17,9 @@ export const workspaceRouter = createTRPCRouter({
     }
   }),
 
-  list: protectedProcedure.query(async ({ ctx }) => {
-    try {
-      return await listWorkspaces({
-        ctx: toServiceCtx(ctx),
-        input: { userId: ctx.user.id },
-      });
-    } catch (err) {
-      toTRPCError(err);
-    }
-  }),
+  // `resolveActiveWorkspace` already joined the user's workspaces to pick the
+  // active one, so this is the same rows the service would re-query.
+  list: protectedProcedure.query(({ ctx }) => ctx.workspaces),
 
   updateName: protectedProcedure
     .meta({ track: Events.UpdateWorkspace })

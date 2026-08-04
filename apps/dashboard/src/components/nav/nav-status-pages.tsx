@@ -119,10 +119,6 @@ export function NavStatusPages() {
                 toast.success("Status Page ID copied to clipboard");
               },
             });
-            const hasActiveStatusReport = item.statusReports.some(
-              (report) => report.status !== "resolved",
-            );
-
             return (
               <SidebarMenuItem key={item.id}>
                 <SidebarMenuButton
@@ -150,7 +146,9 @@ export function NavStatusPages() {
                       className={cn(
                         "absolute top-1/2 left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
                         STATUS[
-                          hasActiveStatusReport ? "degraded" : "operational"
+                          item.hasActiveStatusReport
+                            ? "degraded"
+                            : "operational"
                         ],
                       )}
                     />

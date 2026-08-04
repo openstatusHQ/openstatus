@@ -1,12 +1,4 @@
-import {
-  and,
-  asc,
-  db as defaultDb,
-  desc,
-  eq,
-  inArray,
-  sql,
-} from "@openstatus/db";
+import { and, asc, db as defaultDb, desc, eq, ne, sql } from "@openstatus/db";
 import {
   maintenance,
   page,
@@ -16,21 +8,26 @@ import {
   selectPageComponentGroupSchema,
   selectPageComponentSchema,
   selectPageSchema,
-  selectStatusReportSchema,
   statusReport,
 } from "@openstatus/db/src/schema";
 import { subdomainSafeList } from "@openstatus/db/src/schema/pages/constants";
 
-import { type DB, type ServiceContext, getReadDb } from "../context";
+import {
+  type DB,
+  type ServiceContext,
+  batchReads,
+  getReadDb,
+} from "../context";
 import { NotFoundError } from "../errors";
-import type { Maintenance, Page, PageComponent, StatusReport } from "../types";
+import type { Maintenance, Page, PageComponent } from "../types";
 import { getPageInWorkspace } from "./internal";
 import { GetPageInput, GetSlugAvailableInput, ListPagesInput } from "./schemas";
 
 type PageComponentGroupRow = typeof pageComponentGroup.$inferSelect;
 
 export type PageListItem = Page & {
-  statusReports: StatusReport[];
+  /** Any non-resolved status report on this page — drives the sidebar dot. */
+  hasActiveStatusReport: boolean;
 };
 
 export type PageWithRelations = Page & {
@@ -48,40 +45,37 @@ export async function listPages(args: {
   const db = getReadDb(ctx);
 
   const dir = input.order === "asc" ? asc : desc;
-  const pageRows = await db
-    .select()
-    .from(page)
-    .where(eq(page.workspaceId, ctx.workspace.id))
-    // id tiebreaker: createdAt ties would make offset pagination unstable
-    .orderBy(dir(page.createdAt), dir(page.id))
-    .all();
-  if (pageRows.length === 0) return [];
 
-  const pageIds = pageRows.map((p) => p.id);
-
-  const reportRows = await db
-    .select()
-    .from(statusReport)
-    .where(
-      and(
-        eq(statusReport.workspaceId, ctx.workspace.id),
-        inArray(statusReport.pageId, pageIds),
+  // The probe is workspace-scoped, so it doesn't depend on the page ids and
+  // both statements go out together. Distinct page ids of unresolved reports
+  // rather than the reports themselves — the list view only needs the flag,
+  // and the full history is unbounded.
+  const [pageRows, unresolvedRows] = await batchReads(db, [
+    db
+      .select()
+      .from(page)
+      .where(eq(page.workspaceId, ctx.workspace.id))
+      // id tiebreaker: createdAt ties would make offset pagination unstable
+      .orderBy(dir(page.createdAt), dir(page.id)),
+    db
+      .selectDistinct({ pageId: statusReport.pageId })
+      .from(statusReport)
+      .where(
+        and(
+          eq(statusReport.workspaceId, ctx.workspace.id),
+          ne(statusReport.status, "resolved"),
+        ),
       ),
-    )
-    .all();
+  ]);
 
-  const reportsByPage = new Map<number, StatusReport[]>();
-  for (const r of reportRows) {
-    if (r.pageId == null) continue;
-    const arr = reportsByPage.get(r.pageId);
-    const parsed = selectStatusReportSchema.parse(r);
-    if (arr) arr.push(parsed);
-    else reportsByPage.set(r.pageId, [parsed]);
+  const pagesWithActiveReport = new Set<number>();
+  for (const r of unresolvedRows) {
+    if (r.pageId != null) pagesWithActiveReport.add(r.pageId);
   }
 
   return pageRows.map((p) => ({
     ...selectPageSchema.parse(p),
-    statusReports: reportsByPage.get(p.id) ?? [],
+    hasActiveStatusReport: pagesWithActiveReport.has(p.id),
   }));
 }
 
