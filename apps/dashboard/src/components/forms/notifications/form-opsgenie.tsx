@@ -35,11 +35,13 @@ import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required"),
   provider: z.literal("opsgenie"),
   data: z.object({
-    apiKey: z.string().min(1, "API key is required"),
-    region: z.string().min(1, "Please select a region"),
+    apiKey: z.string().trim().min(1, "API key is required"),
+    region: z.enum(["us", "eu"], {
+      errorMap: () => ({ message: "Please select a region" }),
+    }),
   }),
   monitors: z.array(z.number()),
 });
@@ -106,6 +108,12 @@ export function FormOpsGenie({
     const data = form.getValues("data");
     if (!data.apiKey || data.apiKey.trim() === "") {
       toast.error("Please enter an API key before sending test");
+      return;
+    }
+
+    // Validate region field before sending test
+    if (!data.region) {
+      toast.error("Please select a region before sending test");
       return;
     }
 

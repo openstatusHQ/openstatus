@@ -33,7 +33,7 @@ import { useTRPC } from "@/lib/trpc/client";
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   provider: z.literal("pagerduty"),
-  data: z.string().min(1, "Integration key is required"),
+  data: z.string().min(1, "Config is required"),
   monitors: z.array(z.number()),
 });
 

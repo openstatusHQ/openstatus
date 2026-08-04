@@ -30,7 +30,7 @@ import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required"),
   provider: z.literal("slack"),
   data: z.url("Please enter a valid URL"),
   monitors: z.array(z.number()),
