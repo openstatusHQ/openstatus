@@ -35,7 +35,7 @@ const isGcpConfigured = () => {
   const gcpLocation = env().GCP_LOCATION;
   const gcpClientEmail = env().GCP_CLIENT_EMAIL;
   const gcpPrivateKey = env().GCP_PRIVATE_KEY;
-  
+
   return (
     gcpProjectId &&
     gcpLocation &&
@@ -221,7 +221,7 @@ async function workflowInit({
     );
     return;
   }
-  
+
   await CreateTask({
     parent,
     client: client,
@@ -229,7 +229,7 @@ async function workflowInit({
     userId: user.userId,
     initialRun,
   });
-  
+
   await redis.set(`workflow:user:${user.userId}`, initialRun, {
     ex: 30 * 86400,
   });

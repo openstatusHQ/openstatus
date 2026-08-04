@@ -59,7 +59,7 @@ function isGcpConfigured(): boolean {
   const location = env().GCP_LOCATION;
   const clientEmail = env().GCP_CLIENT_EMAIL;
   const privateKey = env().GCP_PRIVATE_KEY;
-  
+
   return (
     projectId !== "" &&
     projectId !== "your-value" &&
