@@ -33,13 +33,22 @@ const redis = Redis.fromEnv();
 const isGcpConfigured = () => {
   const gcpProjectId = env().GCP_PROJECT_ID;
   const gcpLocation = env().GCP_LOCATION;
+  const gcpClientEmail = env().GCP_CLIENT_EMAIL;
+  const gcpPrivateKey = env().GCP_PRIVATE_KEY;
+  
   return (
     gcpProjectId &&
     gcpLocation &&
+    gcpClientEmail &&
+    gcpPrivateKey &&
     gcpProjectId !== "" &&
     gcpLocation !== "" &&
+    gcpClientEmail !== "" &&
+    gcpPrivateKey !== "" &&
     gcpProjectId !== "your-value" &&
-    gcpLocation !== "your-value"
+    gcpLocation !== "your-value" &&
+    gcpClientEmail !== "your-value" &&
+    gcpPrivateKey !== "your-value"
   );
 };
 
@@ -206,20 +215,25 @@ async function workflowInit({
   const initialRun = new Date().getTime();
 
   // Only create GCP Cloud Tasks if GCP is configured
-  if (client && parent) {
-    await CreateTask({
-      parent,
-      client: client,
-      step: "14days",
-      userId: user.userId,
-      initialRun,
-    });
-  } else {
+  if (!client || !parent) {
     console.log(
-      `Skipping Cloud Tasks creation for user ${user.userId} - GCP not configured`,
+      `Skipping workflow for user ${user.userId} - GCP not configured`,
     );
+    return;
   }
+<<<<<<< HEAD
 
+=======
+  
+  await CreateTask({
+    parent,
+    client: client,
+    step: "14days",
+    userId: user.userId,
+    initialRun,
+  });
+  
+>>>>>>> 27de170c (fix: improve self-hosted deployment validation and GCP checks)
   await redis.set(`workflow:user:${user.userId}`, initialRun, {
     ex: 30 * 86400,
   });
