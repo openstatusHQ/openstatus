@@ -511,6 +511,68 @@ describe("handleSlackEvent", () => {
     expect(posts.length).toBe(0);
   });
 
+  test("clears the status only after the last concurrent run in a thread", async () => {
+    // Slack keeps one status per (channel, thread); the first run to finish
+    // must not pull the indicator out from under the second.
+    let release: (() => void) | undefined;
+    const gate = new Promise<void>((r) => {
+      release = r;
+    });
+    let call = 0;
+    slackTestState.runAgentOverride = () => {
+      call += 1;
+      const answer = { text: "Here is my response", toolResults: [] };
+      // The first run holds the lease until the second has come and gone.
+      return call === 1 ? gate.then(() => answer) : Promise.resolve(answer);
+    };
+
+    const threadTs = "700.10";
+    const post = (ts: string) =>
+      signAndPost(app, {
+        type: "event_callback",
+        team_id: "T_KNOWN",
+        event_id: `evt_concurrent_${ts}`,
+        event: {
+          type: "app_mention",
+          text: "<@UBOT> hello",
+          user: "U1",
+          channel: "C1",
+          ts,
+          thread_ts: threadTs,
+        },
+      });
+
+    await post("700.11");
+    await new Promise((r) => setTimeout(r, 50));
+    await post("700.12");
+    await new Promise((r) => setTimeout(r, 100));
+
+    // Run two has replied and released its hold; run one is still going, so
+    // the indicator must survive.
+    expect(
+      slackTestState.calls.filter((m) => m.method === "postMessage").length,
+    ).toBe(1);
+    expect(
+      slackTestState.calls.filter(
+        (m) => m.method === "setStatus" && m.args.status === "",
+      ).length,
+    ).toBe(0);
+
+    release?.();
+    await new Promise((r) => setTimeout(r, 100));
+
+    // Set once for the thread, cleared once, after both runs finished.
+    const statuses = slackTestState.calls.filter(
+      (m) => m.method === "setStatus",
+    );
+    expect(statuses.length).toBe(2);
+    expect(statuses[0].args.status).toBe("is thinking...");
+    expect(statuses[1].args.status).toBe("");
+    expect(
+      slackTestState.calls.filter((m) => m.method === "postMessage").length,
+    ).toBe(2);
+  });
+
   test("sets and clears the thinking status around the agent run", async () => {
     const res = await signAndPost(app, {
       type: "event_callback",
@@ -558,7 +620,8 @@ describe("handleSlackEvent", () => {
   });
 
   test("still replies when setStatus fails", async () => {
-    slackTestState.setStatusOverride = () => {
+    slackTestState.setStatusOverride = (args: Record<string, unknown>) => {
+      slackTestState.calls.push({ method: "setStatus", args });
       const err = new Error("An API error occurred: channel_not_found");
       Object.assign(err, {
         code: "slack_webapi_platform_error",
@@ -567,26 +630,37 @@ describe("handleSlackEvent", () => {
       return Promise.reject(err);
     };
 
+    const ts = `${Date.now()}.22`;
     const res = await signAndPost(app, {
       type: "event_callback",
       team_id: "T_KNOWN",
-      event_id: `evt_statusfail_${Date.now()}`,
+      event_id: `evt_statusfail_${ts}`,
       event: {
         type: "app_mention",
         text: "<@UBOT> hello",
         user: "U1",
         channel: "C1",
-        ts: `${Date.now()}.22`,
+        ts,
       },
     });
 
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 100));
 
+    // The agent's answer, not the error branch's message.
     const posts = slackTestState.calls.filter(
       (m) => m.method === "postMessage",
     );
     expect(posts.length).toBe(1);
+    expect(posts[0].args.text).toBe("Here is my response");
+    expect(posts[0].args.thread_ts).toBe(ts);
+
+    // A failing set must not skip the clear.
+    const statuses = slackTestState.calls.filter(
+      (m) => m.method === "setStatus",
+    );
+    expect(statuses.length).toBe(2);
+    expect(statuses[1].args.status).toBe("");
   });
 
   test("shows error message when runAgent throws", async () => {

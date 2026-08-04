@@ -311,9 +311,19 @@ async function processEvent(body: SlackEvent) {
         confirmationResult,
       );
     } else {
-      await postThreadReply(slack, event.channel, threadTs, {
+      const posted = await postThreadReply(slack, event.channel, threadTs, {
         text: result.text || "Done!",
       });
+      if (!posted) {
+        // postThreadReply already exhausted the top-level fallback, so the
+        // answer is lost; don't claim it was delivered.
+        logger.error("slack response not delivered", {
+          teamId,
+          channel: event.channel,
+          threadTs,
+        });
+        return;
+      }
       logger.info("slack response sent", {
         teamId,
         channel: event.channel,
@@ -393,7 +403,16 @@ async function handleConfirmation(
     text,
     blocks,
   });
-  if (!messageTs) return;
+  if (!messageTs) {
+    // Without a card there is nothing to approve, so leave the pending record
+    // alone and let its TTL expire rather than pointing it at a dead message.
+    logger.error("slack confirmation card not delivered", {
+      channel,
+      threadTs,
+      toolName: draft.toolName,
+    });
+    return;
+  }
 
   if (existing) {
     await replace(existing.id, payload, messageTs);

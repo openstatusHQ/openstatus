@@ -15,8 +15,19 @@ const LOADING_MESSAGES = [
   "Drafting an update...",
 ];
 
+interface Lease {
+  refs: number;
+  timer?: ReturnType<typeof setInterval>;
+  /** Serializes setStatus calls so the clear can't overtake a live refresh. */
+  queue: Promise<void>;
+}
+
+// Slack stores one status per (channel, thread), so concurrent runs on the
+// same thread share a lease and only the last one to finish clears it.
+const leases = new Map<string, Lease>();
+
 export interface ThinkingStatus {
-  /** Idempotent — clears the refresh timer and removes the indicator. */
+  /** Idempotent — releases this run's hold on the thread's indicator. */
   stop(): Promise<void>;
 }
 
@@ -30,38 +41,59 @@ export async function startThinkingStatus(
   channelId: string,
   threadTs: string,
 ): Promise<ThinkingStatus> {
-  const setStatus = (status: string, loadingMessages?: string[]) =>
-    slack.assistant.threads
-      .setStatus({
-        channel_id: channelId,
-        thread_ts: threadTs,
-        status,
-        ...(loadingMessages ? { loading_messages: loadingMessages } : {}),
-      })
-      .then(() => undefined)
-      .catch((error: unknown) => {
-        logger.warn("slack failed to set thinking status", {
-          error,
-          channel: channelId,
-          threadTs,
-        });
-      });
+  const key = `${channelId}:${threadTs}`;
 
-  await setStatus(STATUS, LOADING_MESSAGES);
+  const send = (lease: Lease, status: string, loadingMessages?: string[]) => {
+    lease.queue = lease.queue.then(() =>
+      slack.assistant.threads
+        .setStatus({
+          channel_id: channelId,
+          thread_ts: threadTs,
+          status,
+          ...(loadingMessages ? { loading_messages: loadingMessages } : {}),
+        })
+        .then(() => undefined)
+        .catch((error: unknown) => {
+          logger.warn("slack failed to set thinking status", {
+            error,
+            channel: channelId,
+            threadTs,
+          });
+        }),
+    );
+    return lease.queue;
+  };
 
+  let lease = leases.get(key);
+  if (lease) {
+    lease.refs += 1;
+  } else {
+    lease = { refs: 1, queue: Promise.resolve() };
+    leases.set(key, lease);
+    const held = lease;
+    held.timer = setInterval(() => {
+      void send(held, STATUS, LOADING_MESSAGES);
+    }, REFRESH_MS);
+    await send(held, STATUS, LOADING_MESSAGES);
+  }
+
+  const held = lease;
   let stopped = false;
-  const timer = setInterval(() => {
-    void setStatus(STATUS, LOADING_MESSAGES);
-  }, REFRESH_MS);
 
   return {
     async stop() {
       if (stopped) return;
       stopped = true;
-      clearInterval(timer);
-      // Posting in-thread clears the indicator on its own, but the
-      // top-level fallback in the handler posts outside the thread.
-      await setStatus("");
+
+      held.refs -= 1;
+      if (held.refs > 0) return;
+
+      clearInterval(held.timer);
+      leases.delete(key);
+      // Posting in-thread clears the indicator on its own, but the top-level
+      // fallback in the handler posts outside the thread. Queued last, so any
+      // refresh already in flight resolves before the clear is sent.
+      await send(held, "");
     },
   };
 }
