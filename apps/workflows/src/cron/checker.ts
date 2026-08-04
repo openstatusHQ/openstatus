@@ -276,6 +276,11 @@ const createCronTask = async (
   { row, timestamp, status, region }: TaskInput,
   parent: string,
 ) => {
+  // This should never happen due to the guard in sendCheckerTasks, but TypeScript needs this
+  if (!client) {
+    throw new Error("GCP Cloud Tasks client is not initialized");
+  }
+  
   let payload:
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
