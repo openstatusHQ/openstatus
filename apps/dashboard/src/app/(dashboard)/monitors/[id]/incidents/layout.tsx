@@ -16,9 +16,7 @@ export default async function Layout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  prefetch(
-    trpc.incident.list.queryOptions({ monitorId: Number.parseInt(id) }),
-  );
+  prefetch(trpc.incident.list.queryOptions({ monitorId: Number.parseInt(id) }));
   const defaultOpen = await getSidebarDefaultOpen(RIGHT_SIDEBAR_COOKIE, false);
 
   return (

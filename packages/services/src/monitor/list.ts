@@ -66,9 +66,10 @@ function recentIncidents(db: DB, monitorIds: number[], workspaceId: number) {
     .select({
       ...getTableColumns(incidentTable),
       // Alias avoids `rank` / `row_number`, which name SQLite window functions.
-      recencyRank: sql<number>`row_number() over (partition by ${incidentTable.monitorId} order by ${incidentTable.startedAt} desc)`.as(
-        "recency_rank",
-      ),
+      recencyRank:
+        sql<number>`row_number() over (partition by ${incidentTable.monitorId} order by ${incidentTable.startedAt} desc)`.as(
+          "recency_rank",
+        ),
     })
     .from(incidentTable)
     .where(

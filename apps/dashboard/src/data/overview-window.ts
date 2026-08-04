@@ -12,7 +12,5 @@ export const OVERVIEW_WINDOW_DAYS = 7;
 export function overviewActiveOrClosedSince(now = new Date()): Date {
   const hour = new Date(now);
   hour.setUTCMinutes(0, 0, 0);
-  return new Date(
-    hour.getTime() - OVERVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000,
-  );
+  return new Date(hour.getTime() - OVERVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 }
