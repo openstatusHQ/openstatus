@@ -1,10 +1,11 @@
 import { Events } from "@openstatus/analytics";
-import { and, eq, inArray, sql } from "@openstatus/db";
+import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
   maintenance,
   page,
   pageComponent,
   pageConfigurationSchema,
+  privateLocationToMonitors,
   selectMaintenancePageSchema,
   selectPageComponentWithMonitorRelation,
   selectPageSchema,
@@ -247,11 +248,42 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
 
+      // Add privateLocationCount to each monitor
+      const privateLocationCounts = new Map<number, number>();
+      if (monitors.length > 0) {
+        const monitorIds = monitors.map((m) => m.id);
+        const privateLocations =
+          await opts.ctx.db.query.privateLocationToMonitors.findMany({
+            where: and(
+              inArray(privateLocationToMonitors.monitorId, monitorIds),
+              isNull(privateLocationToMonitors.deletedAt),
+            ),
+            columns: {
+              monitorId: true,
+            },
+          });
+
+        // Count private locations per monitor
+        for (const pl of privateLocations) {
+          if (pl.monitorId === null) continue;
+          privateLocationCounts.set(
+            pl.monitorId,
+            (privateLocationCounts.get(pl.monitorId) ?? 0) + 1,
+          );
+        }
+      }
+
+      // Create new array with privateLocationCount included (no mutation/cast)
+      const monitorsWithPrivateLocationCount = monitors.map((m) => ({
+        ...m,
+        privateLocationCount: privateLocationCounts.get(m.id) ?? 0,
+      }));
+
       // Sort monitors to match trackers behavior: group by monitorGroupId, order
       // groups by minimum order, sort within groups by groupOrder, and sort
       // ungrouped monitors by order
       const groupMinOrderMap = new Map<number, number>();
-      for (const monitor of monitors) {
+      for (const monitor of monitorsWithPrivateLocationCount) {
         const groupId = monitor.monitorGroupId;
         if (groupId !== null) {
           const order = monitor.order ?? 0;
@@ -260,7 +292,7 @@ export const statusPageRouter = createTRPCRouter({
         }
       }
 
-      monitors.sort((a, b) => {
+      monitorsWithPrivateLocationCount.sort((a, b) => {
         const aGroupId = a.monitorGroupId ?? null;
         const bGroupId = b.monitorGroupId ?? null;
 
@@ -276,7 +308,7 @@ export const statusPageRouter = createTRPCRouter({
 
         // Different groups or one is ungrouped - sort by group position
         // For grouped monitors, use precomputed minimum order of the group
-        // For ungrouped monitors, use their own order
+        // For ungrouped monsters, use their own order
         const aGroupMinOrder =
           aGroupId !== null ? groupMinOrderMap.get(aGroupId) ?? 0 : (a.order ?? 0);
         const bGroupMinOrder =
@@ -287,11 +319,13 @@ export const statusPageRouter = createTRPCRouter({
 
       // no barType gate: incident-driven error is already suppressed per
       // monitor in manual mode; report-driven error (major_outage) must show
-      const status = monitors.some((m) => m.status === "error")
+      const status = monitorsWithPrivateLocationCount.some(
+        (m) => m.status === "error",
+      )
         ? "error"
-        : monitors.some((m) => m.status === "degraded")
+        : monitorsWithPrivateLocationCount.some((m) => m.status === "degraded")
           ? "degraded"
-          : monitors.some((m) => m.status === "info")
+          : monitorsWithPrivateLocationCount.some((m) => m.status === "info")
             ? "info"
             : "success";
 
@@ -468,10 +502,11 @@ export const statusPageRouter = createTRPCRouter({
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
         customTheme,
-        monitors,
+        monitors: monitorsWithPrivateLocationCount,
         monitorGroups,
         trackers,
-        incidents: monitors.flatMap((m) => m.incidents) ?? [],
+        incidents:
+          monitorsWithPrivateLocationCount.flatMap((m) => m.incidents) ?? [],
         statusReports,
         maintenances,
         workspacePlan: _page.workspace.plan,
