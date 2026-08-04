@@ -287,7 +287,8 @@ export const statusPageRouter = createTRPCRouter({
         const groupId = monitor.monitorGroupId;
         if (groupId !== null) {
           const order = monitor.order ?? 0;
-          const currentMin = groupMinOrderMap.get(groupId) ?? Number.MAX_SAFE_INTEGER;
+          const currentMin =
+            groupMinOrderMap.get(groupId) ?? Number.MAX_SAFE_INTEGER;
           groupMinOrderMap.set(groupId, Math.min(currentMin, order));
         }
       }
@@ -310,9 +311,13 @@ export const statusPageRouter = createTRPCRouter({
         // For grouped monitors, use precomputed minimum order of the group
         // For ungrouped monsters, use their own order
         const aGroupMinOrder =
-          aGroupId !== null ? groupMinOrderMap.get(aGroupId) ?? 0 : (a.order ?? 0);
+          aGroupId !== null
+            ? (groupMinOrderMap.get(aGroupId) ?? 0)
+            : (a.order ?? 0);
         const bGroupMinOrder =
-          bGroupId !== null ? groupMinOrderMap.get(bGroupId) ?? 0 : (b.order ?? 0);
+          bGroupId !== null
+            ? (groupMinOrderMap.get(bGroupId) ?? 0)
+            : (b.order ?? 0);
 
         return aGroupMinOrder - bGroupMinOrder;
       });
