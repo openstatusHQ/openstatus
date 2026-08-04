@@ -204,7 +204,7 @@ async function workflowInit({
     return;
   }
   const initialRun = new Date().getTime();
-  
+
   // Only create GCP Cloud Tasks if GCP is configured
   if (client && parent) {
     await CreateTask({
@@ -219,7 +219,7 @@ async function workflowInit({
       `Skipping Cloud Tasks creation for user ${user.userId} - GCP not configured`,
     );
   }
-  
+
   await redis.set(`workflow:user:${user.userId}`, initialRun, {
     ex: 30 * 86400,
   });

@@ -57,7 +57,7 @@ const logger = getLogger("workflow");
 function isGcpConfigured(): boolean {
   const projectId = env().GCP_PROJECT_ID;
   const location = env().GCP_LOCATION;
-  
+
   return (
     projectId !== "" &&
     projectId !== "your-value" &&
