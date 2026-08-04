@@ -50,9 +50,6 @@ async function HydrateSidebar({ children }: { children: React.ReactNode }) {
     queryClient.prefetchQuery(trpc.page.list.queryOptions()),
     queryClient.prefetchQuery(trpc.monitor.list.queryOptions()),
     queryClient.prefetchQuery(trpc.workspace.get.queryOptions()),
-    // The sidebar's getting-started banner reads these. Awaited only because
-    // nothing streams yet — it moves to `batchPrefetch` with step 2b.
-    queryClient.prefetchQuery(trpc.workspace.usage.queryOptions()),
     queryClient.prefetchQuery(trpc.workspace.list.queryOptions()),
     queryClient.prefetchQuery(trpc.user.get.queryOptions()),
   ]);
