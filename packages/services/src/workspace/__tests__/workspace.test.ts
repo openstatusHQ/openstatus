@@ -26,7 +26,7 @@ import { ForbiddenError } from "../../errors";
 import {
   getWorkspace,
   getWorkspaceByStripeId,
-  getWorkspaceWithUsage,
+  getWorkspaceUsage,
   listWorkspaces,
   updateWorkspaceName,
   updateWorkspacePlan,
@@ -51,19 +51,18 @@ describe("getWorkspace", () => {
   });
 });
 
-describe("getWorkspaceWithUsage", () => {
-  test("attaches a zero-or-positive usage block", async () => {
+describe("getWorkspaceUsage", () => {
+  test("returns a zero-or-positive count for every key", async () => {
     await withTestTransaction(async (tx) => {
-      const result = await getWorkspaceWithUsage({
+      const result = await getWorkspaceUsage({
         ctx: { ...teamCtx, db: tx },
       });
-      expect(result.id).toBe(teamCtx.workspace.id);
 
       // Iterate the usage object *before* any `toMatchObject` call —
       // the `toMatchObject` implementation mutates the received
       // object in place, replacing number fields with the
       // `expect.any(Number)` asymmetric-matcher stub on the expected
-      // side. Subsequent reads of `result.usage.<key>` then return the
+      // side. Subsequent reads of `result.<key>` then return the
       // matcher object (typeof "object"), not the original count. Do
       // the value-shape + non-negative check first.
       for (const key of [
@@ -74,13 +73,13 @@ describe("getWorkspaceWithUsage", () => {
         "statusReports",
         "checks",
       ] as const) {
-        const value = result.usage[key];
+        const value = result[key];
         expect(typeof value).toBe("number");
         if (typeof value === "number") {
           expect(value).toBeGreaterThanOrEqual(0);
         }
       }
-      expect(result.usage.checks).toBe(0);
+      expect(result.checks).toBe(0);
     });
   });
 
@@ -91,10 +90,10 @@ describe("getWorkspaceWithUsage", () => {
         status: "investigating",
         title: "svc-ws-test-status-report",
       });
-      const result = await getWorkspaceWithUsage({
+      const result = await getWorkspaceUsage({
         ctx: { ...teamCtx, db: tx },
       });
-      expect(result.usage.statusReports).toBeGreaterThanOrEqual(1);
+      expect(result.statusReports).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -104,7 +103,7 @@ describe("getWorkspaceWithUsage", () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const workspaceId = teamCtx.workspace.id;
-      const before = (await getWorkspaceWithUsage({ ctx })).usage;
+      const before = await getWorkspaceUsage({ ctx });
 
       await tx.insert(monitor).values([
         { workspaceId, url: "https://a.example.dev", name: "svc-ws-usage-1" },
@@ -149,7 +148,7 @@ describe("getWorkspaceWithUsage", () => {
         title: "svc-ws-usage-report",
       });
 
-      const after = (await getWorkspaceWithUsage({ ctx })).usage;
+      const after = await getWorkspaceUsage({ ctx });
       expect(after.monitors).toBe(before.monitors + 2);
       expect(after.notifications).toBe(before.notifications + 1);
       expect(after.pages).toBe(before.pages + 1);
@@ -163,7 +162,7 @@ describe("getWorkspaceWithUsage", () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const workspaceId = teamCtx.workspace.id;
-      const before = (await getWorkspaceWithUsage({ ctx })).usage.monitors;
+      const before = (await getWorkspaceUsage({ ctx })).monitors;
 
       await tx.insert(monitor).values({
         workspaceId,
@@ -172,7 +171,7 @@ describe("getWorkspaceWithUsage", () => {
         deletedAt: new Date(),
       });
 
-      const after = (await getWorkspaceWithUsage({ ctx })).usage.monitors;
+      const after = (await getWorkspaceUsage({ ctx })).monitors;
       expect(after).toBe(before);
     });
   });
@@ -180,7 +179,7 @@ describe("getWorkspaceWithUsage", () => {
   test("does not count another workspace's rows", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const before = (await getWorkspaceWithUsage({ ctx })).usage;
+      const before = await getWorkspaceUsage({ ctx });
 
       const [foreign] = await tx
         .insert(workspace)
@@ -203,7 +202,7 @@ describe("getWorkspaceWithUsage", () => {
         title: "svc-ws-usage-foreign-report",
       });
 
-      const after = (await getWorkspaceWithUsage({ ctx })).usage;
+      const after = await getWorkspaceUsage({ ctx });
       expect(after.monitors).toBe(before.monitors);
       expect(after.statusReports).toBe(before.statusReports);
     });

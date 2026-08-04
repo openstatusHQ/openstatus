@@ -81,6 +81,7 @@ export function Client() {
   const [isPending, startTransition] = useTransition();
   const [{ success }, setSearchParams] = useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: usage } = useQuery(trpc.workspace.usage.queryOptions());
   const customerPortalMutation = useMutation(
     trpc.stripeRouter.getUserCustomerPortal.mutationOptions({
       onSuccess: (url) => {
@@ -152,22 +153,22 @@ export function Client() {
               <div className="flex flex-col gap-2">
                 <BillingProgress
                   label="Monitors"
-                  value={workspace.usage?.monitors ?? 0}
+                  value={usage?.monitors ?? 0}
                   max={workspace.limits.monitors}
                 />
                 <BillingProgress
                   label="Status Pages"
-                  value={workspace.usage?.pages ?? 0}
+                  value={usage?.pages ?? 0}
                   max={workspace.limits["status-pages"]}
                 />
                 <BillingProgress
                   label="Page Components"
-                  value={workspace.usage?.pageComponents ?? 0}
+                  value={usage?.pageComponents ?? 0}
                   max={workspace.limits["page-components"]}
                 />
                 <BillingProgress
                   label="Notifications"
-                  value={workspace.usage?.notifications ?? 0}
+                  value={usage?.notifications ?? 0}
                   max={workspace.limits["notification-channels"]}
                 />
                 <BillingProgress

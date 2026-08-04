@@ -83,14 +83,14 @@ export function Client() {
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
 
-  // Invalidate so workspace counts (sidebar quota, plan gates) stay fresh.
+  // Invalidate so the getting-started counts stay fresh.
   const createMonitorMutation = useMutation(
     trpc.monitor.new.mutationOptions({
       onSuccess: async () => {
         await setSearchParams({ monitor: "completed" });
         await Promise.all([
           queryClient.invalidateQueries({
-            queryKey: trpc.workspace.get.queryKey(),
+            queryKey: trpc.workspace.usage.queryKey(),
           }),
           queryClient.invalidateQueries({
             queryKey: trpc.monitor.list.queryKey(),
@@ -105,7 +105,7 @@ export function Client() {
         await setSearchParams({ page: "completed" });
         await Promise.all([
           queryClient.invalidateQueries({
-            queryKey: trpc.workspace.get.queryKey(),
+            queryKey: trpc.workspace.usage.queryKey(),
           }),
           queryClient.invalidateQueries({
             queryKey: trpc.page.list.queryKey(),

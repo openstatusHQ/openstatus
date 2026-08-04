@@ -58,7 +58,7 @@ export function NavMonitors() {
       onSuccess: () => {
         refetch();
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
       },
     }),
@@ -68,7 +68,7 @@ export function NavMonitors() {
       onSuccess: (newMonitor) => {
         refetch();
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
         router.push(`/monitors/${newMonitor.id}`);
       },
