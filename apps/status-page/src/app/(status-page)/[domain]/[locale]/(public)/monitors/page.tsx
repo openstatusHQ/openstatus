@@ -34,50 +34,8 @@ export default function Page() {
 
   if (!page) return null;
 
-  // Precompute group minimum order map for O(n log n) sorting performance
-  const groupMinOrderMap = new Map<number, number>();
-  for (const monitor of page.monitors) {
-    const groupId = monitor.monitorGroupId;
-    if (groupId !== null) {
-      const order = monitor.order ?? 0;
-      const currentMin =
-        groupMinOrderMap.get(groupId) ?? Number.MAX_SAFE_INTEGER;
-      groupMinOrderMap.set(groupId, Math.min(currentMin, order));
-    }
-  }
-
-  const publicMonitors = page.monitors
-    .filter((monitor) => monitor.public)
-    .sort((a, b) => {
-      // Sort by group position first, then by groupOrder within each group
-      const aGroupId = a.monitorGroupId ?? null;
-      const bGroupId = b.monitorGroupId ?? null;
-
-      // If both monitors are in the same group (or both ungrouped with null)
-      if (aGroupId === bGroupId) {
-        if (aGroupId === null) {
-          // Both ungrouped - sort by order to match trackers behavior
-          return (a.order ?? 0) - (b.order ?? 0);
-        }
-        // Both in same group - sort by groupOrder within the group
-        return (a.groupOrder ?? 0) - (b.groupOrder ?? 0);
-      }
-
-      // Different groups or one is ungrouped - sort by group position
-      // For grouped monitors, use precomputed minimum order of the group
-      // For ungrouped monitors, use their own order
-      const aGroupMinOrder =
-        aGroupId !== null
-          ? (groupMinOrderMap.get(aGroupId) ?? 0)
-          : (a.order ?? 0);
-
-      const bGroupMinOrder =
-        bGroupId !== null
-          ? (groupMinOrderMap.get(bGroupId) ?? 0)
-          : (b.order ?? 0);
-
-      return aGroupMinOrder - bGroupMinOrder;
-    });
+  // Filter for public monitors only (sorting is handled server-side)
+  const publicMonitors = page.monitors.filter((monitor) => monitor.public);
 
   return (
     <Status>
