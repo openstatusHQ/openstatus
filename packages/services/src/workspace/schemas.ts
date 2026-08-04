@@ -5,10 +5,8 @@ import { z } from "zod";
 export const GetWorkspaceInput = z.object({}).strict();
 export type GetWorkspaceInput = z.infer<typeof GetWorkspaceInput>;
 
-export const GetWorkspaceWithUsageInput = z.object({}).strict();
-export type GetWorkspaceWithUsageInput = z.infer<
-  typeof GetWorkspaceWithUsageInput
->;
+export const GetWorkspaceUsageInput = z.object({}).strict();
+export type GetWorkspaceUsageInput = z.infer<typeof GetWorkspaceUsageInput>;
 
 export const ListWorkspacesInput = z.object({ userId: z.number().int() });
 export type ListWorkspacesInput = z.infer<typeof ListWorkspacesInput>;
