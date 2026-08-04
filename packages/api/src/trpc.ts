@@ -36,6 +36,7 @@ type Session = {
 type CreateContextOptions = {
   session: Session | null;
   workspace?: Workspace | null;
+  workspaces?: Workspace[] | null;
   user?: User | null;
   req?: NextRequest;
   metadata?: {
@@ -79,6 +80,7 @@ export const createTRPCContext = async (opts: {
   // Use provided auth function or return null session
   const session = opts.auth ? await opts.auth() : null;
   const workspace = null;
+  const workspaces = null;
   const user = null;
 
   // Context is per HTTP request while middleware runs per procedure — a
@@ -95,6 +97,7 @@ export const createTRPCContext = async (opts: {
   return createInnerTRPCContext({
     session,
     workspace,
+    workspaces,
     user,
     resolveWorkspace,
     req: opts.req,
@@ -198,7 +201,12 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
     ctx.user != null
   ) {
     return opts.next({
-      ctx: { ...ctx, user: ctx.user, workspace: ctx.workspace },
+      ctx: {
+        ...ctx,
+        user: ctx.user,
+        workspace: ctx.workspace,
+        workspaces: ctx.workspaces ?? [ctx.workspace],
+      },
     });
   }
 
@@ -226,14 +234,16 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
     });
   }
 
-  const { user, workspace } = resolved.value;
+  const { user, workspace, workspaces } = resolved.value;
 
   if (workspace.slug !== workspaceSlug) {
     // properly set the workspace slug cookie
     ctx.req?.cookies.set("workspace-slug", workspace.slug);
   }
 
-  const result = await opts.next({ ctx: { ...ctx, user, workspace } });
+  const result = await opts.next({
+    ctx: { ...ctx, user, workspace, workspaces },
+  });
 
   if (process.env.NODE_ENV === "test") {
     return result;

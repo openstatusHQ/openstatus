@@ -1,5 +1,9 @@
 import { eq } from "@openstatus/db";
 import {
+  monitor,
+  notification,
+  page,
+  pageComponent,
   selectWorkspaceSchema,
   statusReport,
   workspace,
@@ -91,6 +95,117 @@ describe("getWorkspaceWithUsage", () => {
         ctx: { ...teamCtx, db: tx },
       });
       expect(result.usage.statusReports).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  // The usage block is six independent counts rather than a relational read;
+  // each one must move by exactly the number of rows inserted.
+  test("each count moves by exactly the rows added", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const workspaceId = teamCtx.workspace.id;
+      const before = (await getWorkspaceWithUsage({ ctx })).usage;
+
+      await tx.insert(monitor).values([
+        { workspaceId, url: "https://a.example.dev", name: "svc-ws-usage-1" },
+        { workspaceId, url: "https://b.example.dev", name: "svc-ws-usage-2" },
+      ]);
+      await tx.insert(notification).values({
+        workspaceId,
+        name: "svc-ws-usage-notif",
+        provider: "email",
+        data: JSON.stringify({ email: "usage@openstatus.dev" }),
+      });
+      const [pageRow] = await tx
+        .insert(page)
+        .values({
+          workspaceId,
+          title: "svc-ws-usage-page",
+          description: "",
+          slug: `svc-ws-usage-${workspaceId}`,
+          customDomain: "",
+        })
+        .returning();
+      if (!pageRow) throw new Error("page insert returned no row");
+      await tx.insert(pageComponent).values([
+        {
+          workspaceId,
+          pageId: pageRow.id,
+          type: "static",
+          name: "svc-ws-usage-c1",
+          order: 0,
+        },
+        {
+          workspaceId,
+          pageId: pageRow.id,
+          type: "static",
+          name: "svc-ws-usage-c2",
+          order: 1,
+        },
+      ]);
+      await tx.insert(statusReport).values({
+        workspaceId,
+        status: "investigating",
+        title: "svc-ws-usage-report",
+      });
+
+      const after = (await getWorkspaceWithUsage({ ctx })).usage;
+      expect(after.monitors).toBe(before.monitors + 2);
+      expect(after.notifications).toBe(before.notifications + 1);
+      expect(after.pages).toBe(before.pages + 1);
+      expect(after.pageComponents).toBe(before.pageComponents + 2);
+      expect(after.statusReports).toBe(before.statusReports + 1);
+      expect(after.checks).toBe(0);
+    });
+  });
+
+  test("excludes soft-deleted monitors from the monitor count", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const workspaceId = teamCtx.workspace.id;
+      const before = (await getWorkspaceWithUsage({ ctx })).usage.monitors;
+
+      await tx.insert(monitor).values({
+        workspaceId,
+        url: "https://deleted.example.dev",
+        name: "svc-ws-usage-deleted",
+        deletedAt: new Date(),
+      });
+
+      const after = (await getWorkspaceWithUsage({ ctx })).usage.monitors;
+      expect(after).toBe(before);
+    });
+  });
+
+  test("does not count another workspace's rows", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const before = (await getWorkspaceWithUsage({ ctx })).usage;
+
+      const [foreign] = await tx
+        .insert(workspace)
+        .values({
+          slug: `svc-ws-usage-foreign-${teamCtx.workspace.id}`,
+          name: "Foreign",
+          stripeId: `svc-ws-usage-stripe-${teamCtx.workspace.id}`,
+          plan: "team",
+        })
+        .returning();
+      if (!foreign) throw new Error("workspace insert returned no row");
+      await tx.insert(monitor).values({
+        workspaceId: foreign.id,
+        url: "https://foreign.example.dev",
+        name: "svc-ws-usage-foreign-monitor",
+      });
+      await tx.insert(statusReport).values({
+        workspaceId: foreign.id,
+        status: "investigating",
+        title: "svc-ws-usage-foreign-report",
+      });
+
+      const after = (await getWorkspaceWithUsage({ ctx })).usage;
+      expect(after.monitors).toBe(before.monitors);
+      expect(after.statusReports).toBe(before.statusReports);
     });
   });
 });

@@ -1,12 +1,16 @@
-import { db as defaultDb, eq, isNull } from "@openstatus/db";
+import { and, db as defaultDb, eq, isNull, sql } from "@openstatus/db";
 import {
   monitor,
+  notification,
+  page,
+  pageComponent,
   selectWorkspaceSchema,
+  statusReport,
   usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
 
-import type { DB, ServiceContext } from "../context";
+import { type DB, type ServiceContext, batchReads } from "../context";
 import { NotFoundError } from "../errors";
 import type { Workspace } from "../types";
 import {
@@ -62,34 +66,59 @@ export async function getWorkspaceWithUsage(args: {
 }): Promise<WorkspaceWithUsage> {
   const { ctx } = args;
   const db = ctx.db ?? defaultDb;
+  const workspaceId = ctx.workspace.id;
+  const total = sql<number>`count(*)`;
 
-  const result = await db.query.workspace.findFirst({
-    where: eq(workspace.id, ctx.workspace.id),
-    with: {
-      pages: {
-        with: { pageComponents: true },
-      },
-      monitors: {
-        where: isNull(monitor.deletedAt),
-      },
-      notifications: true,
-      statusReports: { columns: { id: true } },
-    },
-  });
+  // Counts, not rows: the previous relational read materialized every page,
+  // component, monitor (with its config blobs) and notification just to call
+  // `.length` on them.
+  const [
+    workspaceRows,
+    monitorRows,
+    notificationRows,
+    pageRows,
+    pageComponentRows,
+    statusReportRows,
+  ] = await batchReads(db, [
+    db.select().from(workspace).where(eq(workspace.id, workspaceId)),
+    db
+      .select({ count: total })
+      .from(monitor)
+      .where(
+        and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)),
+      ),
+    db
+      .select({ count: total })
+      .from(notification)
+      .where(eq(notification.workspaceId, workspaceId)),
+    db
+      .select({ count: total })
+      .from(page)
+      .where(eq(page.workspaceId, workspaceId)),
+    db
+      .select({ count: total })
+      .from(pageComponent)
+      .where(eq(pageComponent.workspaceId, workspaceId)),
+    db
+      .select({ count: total })
+      .from(statusReport)
+      .where(eq(statusReport.workspaceId, workspaceId)),
+  ]);
+
+  const result = workspaceRows[0];
 
   // Same guard as `getWorkspace` — unreachable in practice (workspace
   // resolved upstream) but keeps the error shape consistent with every
   // other service, rather than letting `parse(undefined)` surface as
   // a `ZodError`.
-  if (!result) throw new NotFoundError("workspace", ctx.workspace.id);
+  if (!result) throw new NotFoundError("workspace", workspaceId);
 
   const usage: WorkspaceUsage = {
-    monitors: result.monitors?.length ?? 0,
-    notifications: result.notifications?.length ?? 0,
-    pages: result.pages?.length ?? 0,
-    pageComponents:
-      result.pages?.flatMap((page) => page.pageComponents)?.length ?? 0,
-    statusReports: result.statusReports?.length ?? 0,
+    monitors: monitorRows[0]?.count ?? 0,
+    notifications: notificationRows[0]?.count ?? 0,
+    pages: pageRows[0]?.count ?? 0,
+    pageComponents: pageComponentRows[0]?.count ?? 0,
+    statusReports: statusReportRows[0]?.count ?? 0,
     // Parity with the legacy router — checks usage was previously commented
     // out pending a real source and left as 0. Preserved here.
     checks: 0,

@@ -4,6 +4,7 @@ import {
   page as pageTable,
   pageComponent,
   selectWorkspaceSchema,
+  statusReport,
   workspace,
 } from "@openstatus/db/src/schema";
 import { getLimits } from "@openstatus/db/src/schema/plan/utils";
@@ -17,7 +18,7 @@ import {
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { ServiceContext } from "../../context";
+import type { DrizzleTx, ServiceContext } from "../../context";
 import {
   ConflictError,
   ForbiddenError,
@@ -462,6 +463,100 @@ describe("list / get / getSlugAvailable", () => {
           input: { slug: uniqueSlug("free-slug") },
         }),
       ).toBe(true);
+    });
+  });
+});
+
+describe("listPages hasActiveStatusReport", () => {
+  const addReport = async (
+    tx: DrizzleTx,
+    pageId: number,
+    workspaceId: number,
+    status: "investigating" | "resolved",
+  ) =>
+    tx.insert(statusReport).values({
+      workspaceId,
+      pageId,
+      status,
+      title: `${TEST_PREFIX}-report-${status}`,
+    });
+
+  const flagFor = async (ctx: ServiceContext, pageId: number) => {
+    const items = await listPages({ ctx, input: { order: "desc" } });
+    return items.find((p) => p.id === pageId)?.hasActiveStatusReport;
+  };
+
+  test("false when the page has no status reports", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "No reports", slug: uniqueSlug("flag-none") },
+      });
+      expect(await flagFor(ctx, p.id)).toBe(false);
+    });
+  });
+
+  test("true when the page has a non-resolved report", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Active", slug: uniqueSlug("flag-active") },
+      });
+      await addReport(tx, p.id, teamCtx.workspace.id, "investigating");
+      expect(await flagFor(ctx, p.id)).toBe(true);
+    });
+  });
+
+  test("false once every report on the page is resolved", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Resolved", slug: uniqueSlug("flag-resolved") },
+      });
+      await addReport(tx, p.id, teamCtx.workspace.id, "resolved");
+      await addReport(tx, p.id, teamCtx.workspace.id, "resolved");
+      expect(await flagFor(ctx, p.id)).toBe(false);
+    });
+  });
+
+  test("an active report on one page does not flag its siblings", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const noisy = await newPage({
+        ctx,
+        input: { title: "Noisy", slug: uniqueSlug("flag-noisy") },
+      });
+      const quiet = await newPage({
+        ctx,
+        input: { title: "Quiet", slug: uniqueSlug("flag-quiet") },
+      });
+      await addReport(tx, noisy.id, teamCtx.workspace.id, "investigating");
+
+      expect(await flagFor(ctx, noisy.id)).toBe(true);
+      expect(await flagFor(ctx, quiet.id)).toBe(false);
+    });
+  });
+
+  test("the probe is workspace-scoped", async () => {
+    await withTestTransaction(async (tx) => {
+      const teamCtxTx = { ...teamCtx, db: tx };
+      const freeCtxTx = { ...freeCtx, db: tx };
+      const foreign = await newPage({
+        ctx: freeCtxTx,
+        input: { title: "Foreign", slug: uniqueSlug("flag-foreign") },
+      });
+      // Active report owned by the *other* workspace, pointing at its page.
+      await addReport(tx, foreign.id, freeCtx.workspace.id, "investigating");
+
+      const teamItems = await listPages({
+        ctx: teamCtxTx,
+        input: { order: "desc" },
+      });
+      expect(teamItems.some((p) => p.hasActiveStatusReport)).toBe(false);
+      expect(await flagFor(freeCtxTx, foreign.id)).toBe(true);
     });
   });
 });
