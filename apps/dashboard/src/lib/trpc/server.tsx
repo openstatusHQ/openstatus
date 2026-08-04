@@ -1,54 +1,45 @@
 import "server-only";
-import type { AppRouter } from "@openstatus/api";
+import { appRouter, createTRPCContext } from "@openstatus/api";
 import { HydrationBoundary } from "@tanstack/react-query";
 import { dehydrate } from "@tanstack/react-query";
-import { createTRPCClient } from "@trpc/client";
+import { TRPCClientError } from "@trpc/client";
+import { TRPCError } from "@trpc/server";
 import {
   type ResolverDef,
   type TRPCQueryOptions,
   createTRPCOptionsProxy,
 } from "@trpc/tanstack-react-query";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { NextRequest } from "next/server";
 import { cache } from "react";
 
+import { auth } from "@/lib/auth";
+
 import { makeQueryClient } from "./query-client";
-import { endingLink, sentryLoggerLink } from "./shared";
 
 // IMPORTANT: Create a stable getter for the query client that
 //            will return the same client during the same request.
 export const getQueryClient = cache(makeQueryClient);
 
-export const trpc = createTRPCOptionsProxy<AppRouter>({
+// `cache` is load-bearing: the options proxy unwraps this factory on every
+// procedure call, so without it each prefetch would re-run `auth()`.
+const getContext = cache(async () => {
+  const incoming = await headers();
+  return createTRPCContext({
+    // NextRequest derives `cookies` from the cookie header, and `ctx.req` is
+    // only ever read for cookies and headers.
+    req: new NextRequest("http://rsc.internal", {
+      headers: new Headers(incoming),
+    }),
+    auth,
+  });
+});
+
+export const trpc = createTRPCOptionsProxy({
+  router: appRouter,
+  ctx: getContext,
   queryClient: getQueryClient,
-  client: createTRPCClient({
-    links: [
-      sentryLoggerLink(),
-      endingLink({
-        headers: {
-          "x-trpc-source": "server",
-        },
-        // `typeof fetch` carries a `preconnect` static (React 19 typings) that
-        // tRPC's link will never invoke — cast the call-signature wrapper.
-        fetch: (async (url, options) => {
-          const cookieStore = await cookies();
-          console.log("[dashboard trpc server] fetch", {
-            hasSessionToken:
-              !!cookieStore.get("__Secure-authjs.session-token")?.value ||
-              !!cookieStore.get("authjs.session-token")?.value,
-          });
-          return fetch(url, {
-            ...options,
-            credentials: "include",
-            headers: {
-              ...options?.headers,
-              cookie: cookieStore.toString(),
-            },
-          });
-        }) as typeof fetch,
-      }),
-    ],
-  }),
 });
 
 export function HydrateClient(props: { children: React.ReactNode }) {
@@ -91,18 +82,6 @@ export function batchPrefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
   }
 }
 
-// Duck-typed rather than `instanceof TRPCClientError`: that check fails across
-// bundle boundaries, and an in-process caller throws `TRPCError` (bare `code`,
-// no `data`). tRPC matches on the same fields internally for this reason.
-function isNotFoundError(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  const { code, data } = error as {
-    code?: unknown;
-    data?: { code?: unknown } | null;
-  };
-  return code === "NOT_FOUND" || data?.code === "NOT_FOUND";
-}
-
 /**
  * Fetches a query and calls `notFound()` if the server returns NOT_FOUND.
  * Use this for gating queries in layouts where the resource must exist.
@@ -116,7 +95,17 @@ export async function fetchQueryOrNotFound<
       ReturnType<Extract<T["queryFn"], (...args: never[]) => unknown>>
     >;
   } catch (error) {
-    if (isNotFoundError(error)) notFound();
+    // Direct router calls throw `TRPCError`; the browser client throws
+    // `TRPCClientError`. Both reach here depending on the caller.
+    const code =
+      error instanceof TRPCError
+        ? error.code
+        : error instanceof TRPCClientError
+          ? error.data?.code
+          : undefined;
+    if (code === "NOT_FOUND") {
+      notFound();
+    }
     throw error;
   }
 }
