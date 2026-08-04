@@ -110,6 +110,11 @@ export async function listMaintenances(args: {
   if (input.period !== undefined) {
     conditions.push(gte(maintenance.createdAt, periodToSince(input.period)));
   }
+  if (input.activeOrClosedSince !== undefined) {
+    // A window is in-progress or upcoming exactly while `to >= now`, so this
+    // one predicate covers both "still active" and "ended recently".
+    conditions.push(gte(maintenance.to, input.activeOrClosedSince));
+  }
   const whereClause = and(...conditions);
 
   // Count and page queries run in parallel outside a transaction — a

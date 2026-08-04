@@ -7,7 +7,7 @@ import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
 import {
   HydrateClient,
   fetchQueryOrNotFound,
-  getQueryClient,
+  prefetch,
   trpc,
 } from "@/lib/trpc/server";
 
@@ -23,12 +23,13 @@ export default async function Layout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const queryClient = getQueryClient();
 
+  // Started before the gate is awaited so the 404 check costs one round trip
+  // rather than serialising ahead of it.
+  prefetch(trpc.monitor.list.queryOptions());
   await fetchQueryOrNotFound(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
-  await queryClient.prefetchQuery(trpc.monitor.list.queryOptions());
 
   return (
     <HydrateClient>

@@ -109,6 +109,13 @@ export const ListStatusReportsInput = z.object({
   pageId: z.number().int().optional(),
   period: statusReportListPeriodSchema.optional(),
   order: z.enum(["asc", "desc"]).default("desc"),
+  /**
+   * Keep every unresolved report, plus those touched at or after this date.
+   * `updatedAt` is a safe proxy for the resolution time here: resolving writes
+   * the row, so it is always >= the resolving update's date. Lets a caller
+   * that only renders current state skip the full history.
+   */
+  activeOrClosedSince: z.coerce.date().optional(),
 });
 export type ListStatusReportsInput = z.infer<typeof ListStatusReportsInput>;
 

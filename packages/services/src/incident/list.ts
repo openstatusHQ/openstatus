@@ -7,6 +7,8 @@ import {
   eq,
   gte,
   inArray,
+  isNull,
+  or,
   sql,
 } from "@openstatus/db";
 import {
@@ -97,12 +99,23 @@ export async function listIncidents(args: {
   const input = ListIncidentsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
-  const conditions: SQL[] = [eq(incidentTable.workspaceId, ctx.workspace.id)];
+  // `or(...)` is typed `SQL | undefined`, and `and()` drops undefined entries.
+  const conditions: (SQL | undefined)[] = [
+    eq(incidentTable.workspaceId, ctx.workspace.id),
+  ];
   if (input.monitorId !== undefined) {
     conditions.push(eq(incidentTable.monitorId, input.monitorId));
   }
   if (input.period !== undefined) {
     conditions.push(gte(incidentTable.startedAt, periodToSince(input.period)));
+  }
+  if (input.activeOrClosedSince !== undefined) {
+    conditions.push(
+      or(
+        isNull(incidentTable.resolvedAt),
+        gte(incidentTable.resolvedAt, input.activeOrClosedSince),
+      ),
+    );
   }
   const whereClause = and(...conditions);
 

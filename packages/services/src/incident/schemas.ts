@@ -26,5 +26,10 @@ export const ListIncidentsInput = z.object({
   period: incidentListPeriodSchema.optional(),
   monitorId: z.number().int().optional(),
   order: z.enum(["asc", "desc"]).default("desc"),
+  /**
+   * Keep every unresolved incident, plus those resolved at or after this date.
+   * Lets a caller that only renders current state skip the full history.
+   */
+  activeOrClosedSince: z.coerce.date().optional(),
 });
 export type ListIncidentsInput = z.infer<typeof ListIncidentsInput>;

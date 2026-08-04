@@ -37,6 +37,7 @@ export const incidentRouter = createTRPCRouter({
           period: z.enum(periods).optional(),
           monitorId: z.number().nullish(),
           order: z.enum(["asc", "desc"]).optional(),
+          activeOrClosedSince: z.coerce.date().optional(),
         })
         .optional(),
     )
@@ -48,6 +49,7 @@ export const incidentRouter = createTRPCRouter({
             monitorId: input?.monitorId ?? undefined,
             period: input?.period,
             order: input?.order ?? "desc",
+            activeOrClosedSince: input?.activeOrClosedSince,
             // Same sentinel as status-report / maintenance — dashboard has
             // no paging UI; Connect-equivalent would cap externally.
             limit: 10_000,

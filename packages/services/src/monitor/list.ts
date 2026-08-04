@@ -5,8 +5,10 @@ import {
   db as defaultDb,
   desc,
   eq,
+  getTableColumns,
   inArray,
   isNull,
+  or,
   sql,
 } from "@openstatus/db";
 import {
@@ -54,6 +56,42 @@ export type ListMonitorsResult = {
 };
 
 /**
+ * Every open incident for these monitors, plus each monitor's most recent one.
+ * Consumers read only the open count and the latest incident's date, so
+ * selecting the full history made `monitor.list` — prefetched by the sidebar on
+ * every dashboard route — scale with the workspace's lifetime incident count.
+ */
+function recentIncidents(db: DB, monitorIds: number[], workspaceId: number) {
+  const ranked = db
+    .select({
+      ...getTableColumns(incidentTable),
+      // Alias avoids `rank` / `row_number`, which name SQLite window functions.
+      recencyRank: sql<number>`row_number() over (partition by ${incidentTable.monitorId} order by ${incidentTable.startedAt} desc)`.as(
+        "recency_rank",
+      ),
+    })
+    .from(incidentTable)
+    .where(
+      and(
+        inArray(incidentTable.monitorId, monitorIds),
+        // Scope to caller's workspace — defence-in-depth in case an
+        // incident.monitorId somehow points cross-workspace. The
+        // `incident.monitorId` FK doesn't enforce workspace ownership.
+        eq(incidentTable.workspaceId, workspaceId),
+      ),
+    )
+    .as("ranked");
+
+  // Newest first so consumers reading `incidents[0]` get the latest incident;
+  // the unordered select this replaced left that row arbitrary.
+  return db
+    .select()
+    .from(ranked)
+    .where(or(eq(ranked.recencyRank, 1), isNull(ranked.resolvedAt)))
+    .orderBy(desc(ranked.startedAt));
+}
+
+/**
  * Batched enrichment for a list of monitors — loads tags + incidents in
  * two IN queries (three if notifications / privateLocations are also
  * requested). Avoids the per-row pattern that pairs badly with dashboards
@@ -90,19 +128,7 @@ async function enrichMonitorsBatch(
         ),
       )
       .all(),
-    db
-      .select()
-      .from(incidentTable)
-      .where(
-        and(
-          inArray(incidentTable.monitorId, ids),
-          // Scope to caller's workspace — defence-in-depth in case an
-          // incident.monitorId somehow points cross-workspace. The
-          // `incident.monitorId` FK doesn't enforce workspace ownership.
-          eq(incidentTable.workspaceId, workspaceId),
-        ),
-      )
-      .all(),
+    recentIncidents(db, ids, workspaceId).all(),
     include.notifications
       ? db
           .select({

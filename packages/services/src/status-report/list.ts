@@ -7,6 +7,8 @@ import {
   eq,
   gte,
   inArray,
+  ne,
+  or,
   sql,
 } from "@openstatus/db";
 import {
@@ -211,7 +213,10 @@ export async function listStatusReports(args: {
   const input = ListStatusReportsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
-  const conditions: SQL[] = [eq(statusReport.workspaceId, ctx.workspace.id)];
+  // `or(...)` is typed `SQL | undefined`, and `and()` drops undefined entries.
+  const conditions: (SQL | undefined)[] = [
+    eq(statusReport.workspaceId, ctx.workspace.id),
+  ];
   if (input.statuses.length > 0) {
     conditions.push(inArray(statusReport.status, input.statuses));
   }
@@ -220,6 +225,14 @@ export async function listStatusReports(args: {
   }
   if (input.period !== undefined) {
     conditions.push(gte(statusReport.createdAt, periodToSince(input.period)));
+  }
+  if (input.activeOrClosedSince !== undefined) {
+    conditions.push(
+      or(
+        ne(statusReport.status, "resolved"),
+        gte(statusReport.updatedAt, input.activeOrClosedSince),
+      ),
+    );
   }
   const whereClause = and(...conditions);
 

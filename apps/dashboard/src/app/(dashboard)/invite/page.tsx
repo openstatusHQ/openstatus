@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { SearchParams } from "nuqs";
 
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import { HydrateClient, prefetch, trpc } from "@/lib/trpc/server";
 
 import { Client } from "./client";
 import { searchParamsCache } from "./search-params";
@@ -15,8 +15,7 @@ export default async function InvitePage(props: {
     return redirect("/overview");
   }
 
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(trpc.invitation.get.queryOptions({ token }));
+  prefetch(trpc.invitation.get.queryOptions({ token }));
 
   return (
     <HydrateClient>

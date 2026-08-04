@@ -11,7 +11,6 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
-import { auth } from "@/lib/auth";
 import { TRPCReactProvider } from "@/lib/trpc/client";
 
 import { ogMetadata, twitterMetadata } from "./metadata";
@@ -75,13 +74,11 @@ export const metadata: Metadata = {
 
 // export const dynamic = "error";
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -94,7 +91,7 @@ export default async function RootLayout({
           "font-sans antialiased",
         )}
       >
-        <SessionProvider session={session}>
+        <SessionProvider>
           <TRPCReactProvider>
             <NuqsAdapter>
               <ThemeProvider

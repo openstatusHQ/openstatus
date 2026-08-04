@@ -42,6 +42,7 @@ export const maintenanceRouter = createTRPCRouter({
           period: z.enum(periods).optional(),
           pageId: z.number().optional(),
           order: z.enum(["asc", "desc"]).optional(),
+          activeOrClosedSince: z.coerce.date().optional(),
         })
         .optional(),
     )
@@ -53,6 +54,7 @@ export const maintenanceRouter = createTRPCRouter({
             pageId: input?.pageId,
             period: input?.period,
             order: input?.order ?? "desc",
+            activeOrClosedSince: input?.activeOrClosedSince,
             // tRPC callers (dashboard) want the full set — see
             // statusReport.list for the same reasoning.
             limit: 10_000,

@@ -1,5 +1,6 @@
 import { eq } from "@openstatus/db";
 import {
+  incidentTable,
   monitor,
   monitorStatusTable,
   privateLocation,
@@ -13,9 +14,10 @@ import {
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { ServiceContext } from "../../context";
+import type { DrizzleTx, ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
 import { createMonitor } from "../create";
+import { listMonitors } from "../list";
 import { fetchMonitorDailyStats } from "../get-daily-summary";
 import { getMonitorStatus } from "../get-monitor-status";
 import { getMonitorSummary } from "../get-monitor-summary";
@@ -33,6 +35,88 @@ beforeAll(async () => {
   const free = (await createWorkspaceFixture("free")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
   freeCtx = makeUserCtx(free, { userId: 2 });
+});
+
+function insertIncidentRow(
+  tx: DrizzleTx,
+  opts: {
+    monitorId: number;
+    workspaceId: number;
+    startedAt: Date;
+    resolvedAt: Date | null;
+  },
+) {
+  return tx
+    .insert(incidentTable)
+    .values({
+      monitorId: opts.monitorId,
+      workspaceId: opts.workspaceId,
+      startedAt: opts.startedAt,
+      resolvedAt: opts.resolvedAt,
+    })
+    .returning()
+    .get();
+}
+
+describe("listMonitors incident enrichment", () => {
+  test("returns open incidents plus the latest, newest first", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-incident-window`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          regions: ["ams"],
+        },
+      });
+
+      const minute = 60 * 1000;
+      const at = (agoMinutes: number) =>
+        new Date(Date.now() - agoMinutes * minute);
+      // Unique (monitor_id, started_at) — each row needs a distinct start.
+      // The newest row is resolved and the open one is older, so the two
+      // branches of the filter are exercised independently.
+      const oldResolved = await insertIncidentRow(tx, {
+        monitorId: row.id,
+        workspaceId: teamCtx.workspace.id,
+        startedAt: at(50),
+        resolvedAt: at(45),
+      });
+      const open = await insertIncidentRow(tx, {
+        monitorId: row.id,
+        workspaceId: teamCtx.workspace.id,
+        startedAt: at(40),
+        resolvedAt: null,
+      });
+      const newestResolved = await insertIncidentRow(tx, {
+        monitorId: row.id,
+        workspaceId: teamCtx.workspace.id,
+        startedAt: at(20),
+        resolvedAt: at(15),
+      });
+
+      const { items } = await listMonitors({
+        ctx,
+        input: { limit: 100, offset: 0, order: "desc" },
+      });
+      const mine = items.find((m) => m.id === row.id);
+      const ids = (mine?.incidents ?? []).map((i) => i.id);
+
+      // Latest by startedAt, plus everything unresolved. The older resolved
+      // row is dropped rather than pulling the monitor's whole history.
+      expect(ids).toContain(newestResolved.id);
+      expect(ids).toContain(open.id);
+      expect(ids).not.toContain(oldResolved.id);
+      // `incidents[0]` drives the "Last Incident" column, so ordering matters.
+      expect(ids[0]).toBe(newestResolved.id);
+    });
+  });
 });
 
 describe("getMonitorStatus", () => {

@@ -315,4 +315,44 @@ describe("list / get", () => {
       expect(ours[1]?.monitor?.id).toBe(testMonitorId);
     });
   });
+
+  test("activeOrClosedSince keeps every open incident regardless of age", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const day = 24 * 60 * 60 * 1000;
+
+      const open = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+      });
+      const recentlyResolved = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+        resolvedAt: new Date(Date.now() - 2 * day),
+      });
+      const longResolved = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+        resolvedAt: new Date(Date.now() - 30 * day),
+      });
+
+      const { items } = await listIncidents({
+        ctx,
+        input: {
+          limit: 100,
+          offset: 0,
+          order: "desc",
+          monitorId: testMonitorId,
+          activeOrClosedSince: new Date(Date.now() - 7 * day),
+        },
+      });
+
+      const ids = items.map((i) => i.id);
+      // Open incidents are never windowed out — an incident open for weeks
+      // must still surface on /overview.
+      expect(ids).toContain(open.id);
+      expect(ids).toContain(recentlyResolved.id);
+      expect(ids).not.toContain(longResolved.id);
+    });
+  });
 });

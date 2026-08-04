@@ -203,6 +203,7 @@ export const statusReportRouter = createTRPCRouter({
         period: z.enum(periods).optional(),
         order: z.enum(["asc", "desc"]).optional(),
         pageId: z.number().optional(),
+        activeOrClosedSince: z.coerce.date().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -213,6 +214,7 @@ export const statusReportRouter = createTRPCRouter({
             pageId: input.pageId,
             period: input.period,
             order: input.order ?? "desc",
+            activeOrClosedSince: input.activeOrClosedSince,
             // tRPC consumers (dashboard) want the full set — no paging UI
             // today. Pass a sentinel ceiling rather than silently truncating;
             // Connect's separate handler imposes its own max=100.

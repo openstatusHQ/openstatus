@@ -29,24 +29,34 @@ import {
 } from "@/components/metric/metric-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { buildOverviewData } from "@/data/overview-events.client";
+import { overviewActiveOrClosedSince } from "@/data/overview-window";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { CreateEventButtonGroup } from "./create-event-button-group";
+import { OverviewSkeleton } from "./skeleton";
 
 export default function Page() {
   const trpc = useTRPC();
 
+  // Not a period filter: everything still open is returned regardless of age,
+  // so an incident open for weeks still surfaces. Only *closed* rows are
+  // windowed, and those are all this page renders under "Recent Activity".
+  const activeOrClosedSince = overviewActiveOrClosedSince();
+
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
-  // no period — an incident open for weeks must still surface here
-  const { data: incidents } = useQuery(trpc.incident.list.queryOptions());
-  const { data: statusReports } = useQuery(
-    trpc.statusReport.list.queryOptions({}),
+  const { data: incidents } = useQuery(
+    trpc.incident.list.queryOptions({ activeOrClosedSince }),
   );
-  const { data: maintenances } = useQuery(trpc.maintenance.list.queryOptions());
+  const { data: statusReports } = useQuery(
+    trpc.statusReport.list.queryOptions({ activeOrClosedSince }),
+  );
+  const { data: maintenances } = useQuery(
+    trpc.maintenance.list.queryOptions({ activeOrClosedSince }),
+  );
 
   if (!monitors || !pages || !incidents || !statusReports || !maintenances)
-    return null;
+    return <OverviewSkeleton />;
 
   const { needsAttention, upcomingMaintenances, recentlyResolved, metrics } =
     buildOverviewData({

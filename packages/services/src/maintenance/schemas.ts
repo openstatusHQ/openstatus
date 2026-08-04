@@ -50,6 +50,12 @@ export const ListMaintenancesInput = z.object({
   pageId: z.number().int().optional(),
   period: maintenanceListPeriodSchema.optional(),
   order: z.enum(["asc", "desc"]).default("desc"),
+  /**
+   * Keep every in-progress or upcoming window, plus those that ended at or
+   * after this date. Lets a caller that only renders current state skip the
+   * full history.
+   */
+  activeOrClosedSince: z.coerce.date().optional(),
 });
 export type ListMaintenancesInput = z.infer<typeof ListMaintenancesInput>;
 
