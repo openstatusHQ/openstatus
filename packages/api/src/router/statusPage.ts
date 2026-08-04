@@ -239,7 +239,6 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
 
-
       // Add privateLocationCount to each monitor
       const privateLocationCounts = new Map<number, number>();
       if (monitors.length > 0) {
