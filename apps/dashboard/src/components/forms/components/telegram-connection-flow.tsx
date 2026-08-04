@@ -38,7 +38,9 @@ export function TelegramConnectionFlow({
   } = useTelegramConnection({ form, mode });
 
   // Check build-time env var for deployment type, with backend fallback
-  const isSelfHosted = process.env.NEXT_PUBLIC_SELF_HOST === "true" || tokenData?.isSelfHosted === true;
+  const isSelfHosted =
+    process.env.NEXT_PUBLIC_SELF_HOST === "true" ||
+    tokenData?.isSelfHosted === true;
   const redisAvailable = tokenData?.redisAvailable === true;
 
   // Biased loading behavior:

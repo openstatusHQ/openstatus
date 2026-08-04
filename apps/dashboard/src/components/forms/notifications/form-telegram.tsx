@@ -79,8 +79,6 @@ export function FormTelegram({
     isEditMode ? null : "qr",
   );
 
-
-
   function submitAction(values: FormValues) {
     if (isPending) return;
 
