@@ -15,7 +15,7 @@ import { NotFoundError } from "../errors";
 import type { Workspace } from "../types";
 import {
   GetWorkspaceByStripeIdInput,
-  type GetWorkspaceWithUsageInput,
+  type GetWorkspaceUsageInput,
   ListWorkspacesInput,
 } from "./schemas";
 
@@ -32,8 +32,6 @@ export type WorkspaceUsage = {
   statusReports: number;
   checks: number;
 };
-
-export type WorkspaceWithUsage = Workspace & { usage: WorkspaceUsage };
 
 /** Load the workspace the caller is scoped to. */
 export async function getWorkspace(args: {
@@ -55,32 +53,12 @@ export async function getWorkspace(args: {
   return selectWorkspaceSchema.parse(result);
 }
 
-/**
- * Workspace plus the four usage counts the dashboard surfaces alongside plan
- * limits. Active monitors only (`deletedAt IS NULL`); notifications / pages /
- * page-components are unconditional counts scoped to the workspace.
- */
-export async function getWorkspaceWithUsage(args: {
-  ctx: ServiceContext;
-  input?: GetWorkspaceWithUsageInput;
-}): Promise<WorkspaceWithUsage> {
-  const { ctx } = args;
-  const db = ctx.db ?? defaultDb;
-  const workspaceId = ctx.workspace.id;
+// Counts, not rows: the previous relational read materialized every page,
+// component, monitor (with its config blobs) and notification just to call
+// `.length` on them. All five are single-table and index-covered.
+function usageCountQueries(db: DB, workspaceId: number) {
   const total = sql<number>`count(*)`;
-
-  // Counts, not rows: the previous relational read materialized every page,
-  // component, monitor (with its config blobs) and notification just to call
-  // `.length` on them.
-  const [
-    workspaceRows,
-    monitorRows,
-    notificationRows,
-    pageRows,
-    pageComponentRows,
-    statusReportRows,
-  ] = await batchReads(db, [
-    db.select().from(workspace).where(eq(workspace.id, workspaceId)),
+  return [
     db
       .select({ count: total })
       .from(monitor)
@@ -103,28 +81,36 @@ export async function getWorkspaceWithUsage(args: {
       .select({ count: total })
       .from(statusReport)
       .where(eq(statusReport.workspaceId, workspaceId)),
-  ]);
+  ] as const;
+}
 
-  const result = workspaceRows[0];
-
-  // Same guard as `getWorkspace` — unreachable in practice (workspace
-  // resolved upstream) but keeps the error shape consistent with every
-  // other service, rather than letting `parse(undefined)` surface as
-  // a `ZodError`.
-  if (!result) throw new NotFoundError("workspace", workspaceId);
-
-  const usage: WorkspaceUsage = {
-    monitors: monitorRows[0]?.count ?? 0,
-    notifications: notificationRows[0]?.count ?? 0,
-    pages: pageRows[0]?.count ?? 0,
-    pageComponents: pageComponentRows[0]?.count ?? 0,
-    statusReports: statusReportRows[0]?.count ?? 0,
+function toUsage(rows: { count: number }[][]): WorkspaceUsage {
+  const [monitors, notifications, pages, pageComponents, statusReports] = rows;
+  return {
+    monitors: monitors?.[0]?.count ?? 0,
+    notifications: notifications?.[0]?.count ?? 0,
+    pages: pages?.[0]?.count ?? 0,
+    pageComponents: pageComponents?.[0]?.count ?? 0,
+    statusReports: statusReports?.[0]?.count ?? 0,
     // Parity with the legacy router — checks usage was previously commented
     // out pending a real source and left as 0. Preserved here.
     checks: 0,
   };
+}
 
-  return { ...selectWorkspaceSchema.parse(result), usage };
+/**
+ * The usage counts the dashboard surfaces alongside plan limits. Active
+ * monitors only (`deletedAt IS NULL`); notifications / pages / page-components
+ * are unconditional counts scoped to the workspace.
+ */
+export async function getWorkspaceUsage(args: {
+  ctx: ServiceContext;
+  input?: GetWorkspaceUsageInput;
+}): Promise<WorkspaceUsage> {
+  const { ctx } = args;
+  const db = ctx.db ?? defaultDb;
+
+  return toUsage(await batchReads(db, usageCountQueries(db, ctx.workspace.id)));
 }
 
 /**

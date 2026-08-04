@@ -2,7 +2,7 @@ import "server-only";
 import type { AppRouter } from "@openstatus/api";
 import { HydrationBoundary } from "@tanstack/react-query";
 import { dehydrate } from "@tanstack/react-query";
-import { TRPCClientError, createTRPCClient } from "@trpc/client";
+import { createTRPCClient } from "@trpc/client";
 import {
   type ResolverDef,
   type TRPCQueryOptions,
@@ -91,6 +91,18 @@ export function batchPrefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
   }
 }
 
+// Duck-typed rather than `instanceof TRPCClientError`: that check fails across
+// bundle boundaries, and an in-process caller throws `TRPCError` (bare `code`,
+// no `data`). tRPC matches on the same fields internally for this reason.
+function isNotFoundError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const { code, data } = error as {
+    code?: unknown;
+    data?: { code?: unknown } | null;
+  };
+  return code === "NOT_FOUND" || data?.code === "NOT_FOUND";
+}
+
 /**
  * Fetches a query and calls `notFound()` if the server returns NOT_FOUND.
  * Use this for gating queries in layouts where the resource must exist.
@@ -104,9 +116,7 @@ export async function fetchQueryOrNotFound<
       ReturnType<Extract<T["queryFn"], (...args: never[]) => unknown>>
     >;
   } catch (error) {
-    if (error instanceof TRPCClientError && error.data?.code === "NOT_FOUND") {
-      notFound();
-    }
+    if (isNotFoundError(error)) notFound();
     throw error;
   }
 }

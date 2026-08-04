@@ -54,7 +54,7 @@ export function NavStatusPages() {
       onSuccess: () => {
         refetch();
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
       },
     }),
