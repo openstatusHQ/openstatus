@@ -280,7 +280,7 @@ const createCronTask = async (
   if (!client) {
     throw new Error("GCP Cloud Tasks client is not initialized");
   }
-  
+
   let payload:
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
