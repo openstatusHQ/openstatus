@@ -17,9 +17,8 @@ export default async function Layout({
   const queryClient = getQueryClient();
 
   // inputs must match page.tsx's queries exactly — a differing input misses the cache
+  // `monitor.list` / `page.list` come from the root layout's sidebar prefetch.
   await Promise.all([
-    queryClient.prefetchQuery(trpc.monitor.list.queryOptions()),
-    queryClient.prefetchQuery(trpc.page.list.queryOptions()),
     queryClient.prefetchQuery(trpc.incident.list.queryOptions()),
     queryClient.prefetchQuery(trpc.statusReport.list.queryOptions({})),
     queryClient.prefetchQuery(trpc.maintenance.list.queryOptions()),

@@ -9,6 +9,7 @@ export default async function Layout({
   await Promise.all([
     queryClient.prefetchQuery(trpc.monitorTag.list.queryOptions()),
     queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions()),
+    queryClient.prefetchQuery(trpc.notification.list.queryOptions()),
   ]);
 
   return <HydrateClient>{children}</HydrateClient>;
