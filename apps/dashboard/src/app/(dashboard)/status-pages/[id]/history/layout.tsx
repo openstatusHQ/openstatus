@@ -22,7 +22,6 @@ export default async function Layout({
     queryClient.prefetchQuery(
       trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
     ),
-    queryClient.prefetchQuery(trpc.monitor.list.queryOptions()),
     queryClient.prefetchQuery(
       trpc.pageComponent.list.queryOptions({ pageId: Number.parseInt(id) }),
     ),
