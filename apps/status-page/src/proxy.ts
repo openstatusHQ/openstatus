@@ -6,6 +6,7 @@ import { auth } from "./lib/auth";
 import { resolveClientIp } from "./lib/http/client-ip";
 import { createProtectedCookieKey } from "./lib/protected";
 import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override";
+import { applyPageSlugPrefix } from "./lib/proxy/apply-page-slug-prefix";
 import { composePageAction } from "./lib/proxy/compose-page-action";
 import { detectMarkdown } from "./lib/proxy/detect-markdown";
 import { sanitizeRedirectParam } from "./lib/proxy/sanitize-redirect-param";
@@ -67,7 +68,10 @@ export default auth(async (req) => {
   }
 
   const _page = validation.data;
-  const route = applyPageLocaleOverride(initialRoute, _page);
+  const route = applyPageSlugPrefix(
+    applyPageLocaleOverride(initialRoute, _page),
+    _page,
+  );
 
   const clientIp = resolveClientIp(req.headers);
 
