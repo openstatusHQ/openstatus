@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
   experimental: {
     // barrel-optimize only when unaliased — the rewrite would bypass the nucleo alias
     optimizePackageImports: useNucleoIcons ? [] : ["@openstatus/icons"],
+    // dashboard routes are dynamic (auth/cookies); default dynamic staleTime of 0
+    // discards prefetched entries on navigation, so keep them 30s to make prefetch pay off
+    staleTimes: {
+      dynamic: 30,
+    },
   },
   turbopack: useNucleoIcons
     ? { resolveAlias: { "@openstatus/icons": "@openstatus/icons/nucleo" } }
