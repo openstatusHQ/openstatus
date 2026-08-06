@@ -1,0 +1,79 @@
+---
+title: "Self-hosting openstatus: The Hurdles Then, the Experience Now"
+description: "Self-hosting openstatus used to be a massive hurdle. That's no longer the case — let's see what's changed."
+author: "Max Lim"
+publishedAt: "2026-08-05"
+image: "/assets/posts/self-hosting-openstatus/self-hosting.png"
+category: "engineering"
+---
+
+Hi! I'm [Max](https://www.linkedin.com/in/max-lim/)
+
+I'm a student and aspiring software engineer who loves tinkering with self-hosted infrastructure. Over the past few weeks, I've been working to make the open-source self-hosting experience for openstatus smoother. What started as me trying to run openstatus on my own setup turned into digging through the repo and submitting a series of fixes. The team eventually invited me to write about the journey here on the official blog! 
+
+If you tried deploying openstatus yourself a few months ago and hit a wall, good news: things look very different now.
+
+## The Initial Friction
+
+First, huge credit to the openstatus core team. Their commitment to open source is real and their community responsiveness is excellent. But just a few weeks ago, getting a self-hosted instance running end-to-end was still a bumpy ride.
+
+The self-hosting docs had enough outdated instructions to derail most setups:
+
+* **Tinybird & Auth Quirks:** Environment variables and API setups for telemetry were finicky out of the box.
+* **Broken Statuses:** Private locations stuck on permanent "Error" states.
+* **Documentation Gaps:** Key steps for local database migrations and background jobs were missing.
+
+When I brought these issues to the team, the response was immediate. Thibault [pushed an initial docs fix](https://github.com/openstatusHQ/openstatus/pull/2440) that same day, which kicked off a series of updates focused on making self-hosting a first-class experience.
+
+## Private Locations: Reaching Feature Parity
+
+The biggest hurdle wasn't just getting openstatus to boot — it was making it useful.
+
+Previously, private locations came with major compromises. openstatus's managed SaaS has both global edge checkers and private locations, but self-hosted instances rely entirely on private locations for monitoring. That meant any feature gaps in private locations hit self-hosters especially hard, turning what should have been full status pages into stripped-down health checkers.
+
+Since private locations are the backbone of any self-hosted setup, that limitation had to go.
+
+I set out to close the gap. Today, **private locations have full feature parity with global checkers**. This upgrade improves self-hosted deployments a lot and also makes private locations significantly better on the managed SaaS. That means:
+
+* **Real-time Latency & Uptime Graphs** directly on your dashboard for all monitor types.
+* **Automated Incident Triggering** when a probe detects a failure.
+* **Multi-Channel Alerting** via Webhooks, Slack, and Discord.
+* **Public Status Page Integration** driven by your private locations.
+* **Fixed TCP and DNS monitors** for Private Locations.
+
+## Status Pages & Monitor Experience: Then vs. Now
+
+Fixing the underlying telemetry was only half the battle — the frontend experience needed serious care too. 
+
+Before these updates, using private locations felt incomplete:
+* **Empty Graphs:** The monitors page for private locations showed no response time graphs or operational data, making it impossible to spot latency spikes or historical trends.
+* **Inaccurate Downtime Reporting:** Private locations failed to reflect actual outage states accurately, leaving status pages in a perpetual "Operational" state even during active failures.
+* **No Threshold Logic:** A single transient network hiccup could misrepresent a service status without any multi-probe verification.
+
+Now, private locations integrate seamlessly across the board:
+* **Full Data Visibility:** Private locations display identical latency graphs, uptime percentages, and status history as cloud monitors.
+* **Smart Downtime Thresholds:** Status calculations now evaluate probe consensus. The service properly reflects status based on the majority status of the probes. This mirrors the behaviour of cloud monitors!
+
+## Why Self-Host openstatus?
+
+With these fixes in place, self-hosting openstatus is a solid option for teams with specific infrastructure needs:
+
+* **Complete Air-Gapped Environments:** The managed SaaS supports private locations for internal network monitoring, but a full self-hosted deployment lets you run the entire monitoring control plane inside strictly isolated, air-gapped networks without sending telemetry to external cloud APIs.
+* **Data Sovereignty & Strict Compliance:** Certain industries (healthcare, finance, government) require all operational data, status dashboards, and system logs to stay entirely within self-managed infrastructure.
+* **Custom Retention & Zero Rate Limits:** Self-hosting gives you full control over your database, data retention policies, and check intervals without plan restrictions or tier limits.
+
+## Why openstatus's Managed SaaS Might Still Be Better for You
+
+Self-hosting is powerful, but it isn't a silver bullet. Monitoring your own monitoring system comes with trade-offs, and for many teams the **managed SaaS** is still the smarter choice:
+
+* **"Who Monitors the Monitor?":** If your self-hosted openstatus instance runs on the same infrastructure or cloud provider as your main apps, an outage in your primary region can take down your status page too. The managed SaaS provides true out-of-band monitoring.
+* **Global Edge Network:** Checking availability from a single self-hosted network won't tell you if users in Tokyo, London, or São Paulo are hitting localized routing issues. The managed SaaS gives you instant access to global checking locations.
+* **Zero Maintenance Overhead:** Running self-hosted infrastructure means managing PostgreSQL databases, maintaining location runtimes, applying security patches, and scaling telemetry pipelines. The managed SaaS handles all of that for you.
+
+## The Verdict
+
+Whether you prefer the simplicity of openstatus's managed SaaS or the control of a self-hosted instance, the barrier to entry has never been lower. Self-hosting is no longer an afterthought — it's a fully featured, reliable way to keep tabs on your stack.
+
+Give the updated self-hosting guide a spin and let the team know how it works for your setup!
+
+Don't forget to join the [community](https://www.openstatus.dev/discord) if you run into issues! And you can check out my work at [GitHub](https://github.com/zapteryx) :)
