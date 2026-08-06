@@ -9,6 +9,7 @@ import {
   buildSlackTools,
   buildTool,
   deriveDraftSchema,
+  draftToolDescription,
   executeRegistryAction,
   getRegistryTool,
   isSlackToolDraft,
@@ -146,6 +147,34 @@ describe("buildSlackTools", () => {
   test("deriveDraftSchema is a no-op for tools without extraFlags", () => {
     const t = agentTools.update_status_report;
     expect(deriveDraftSchema(t)).toBe(t.inputSchema);
+  });
+
+  test("destructive tools are described as drafting, not executing", () => {
+    for (const name of Object.keys(agentTools)) {
+      const t = agentTools[name as keyof typeof agentTools] as AnyAgentTool;
+      if (!t.destructive) continue;
+      const description = tools[name].description ?? "";
+      expect(description, name).toContain("DOES NOT EXECUTE");
+      expect(description, name).toContain("Approve");
+      // The registry's own wording must survive — it carries the id-resolution
+      // rules the model needs to build a valid call.
+      expect(description, name).toContain(t.description);
+    }
+  });
+
+  test("read tools keep the registry description verbatim", () => {
+    expect(tools.list_status_pages.description).toBe(
+      agentTools.list_status_pages.description,
+    );
+  });
+
+  test("draftToolDescription names extraFlags so the model won't ask about them", () => {
+    const withFlag = draftToolDescription(agentTools.create_status_report);
+    expect(withFlag).toContain("`notify`");
+    expect(withFlag).toContain("never ask about it");
+    // update_status_report has no notify path, so no flag sentence.
+    const withoutFlag = draftToolDescription(agentTools.update_status_report);
+    expect(withoutFlag).not.toContain("never ask about it");
   });
 
   test("read tools expose the full registry schema", () => {
