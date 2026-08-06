@@ -7,15 +7,22 @@ import { z } from "zod";
 
 import { runAgent } from "./agent";
 import {
+  type Block,
   buildConfirmationBlocks,
   getConfirmationText,
   type RefResolvers,
 } from "./blocks";
-import { findByThread, replace, store } from "./confirmation-store";
+import {
+  findByThread,
+  newActionId,
+  replace,
+  store,
+} from "./confirmation-store";
 import type { PendingPayload } from "./confirmation-store";
 import { publishHomeView } from "./home";
 import { getComponentNames, getPageDashboardLink } from "./page-urls";
 import { getRegistryTool, isSlackToolDraft } from "./registry-runner";
+import { startThinkingStatus } from "./status";
 import { resolveWorkspace } from "./workspace-resolver";
 
 function makeRefResolvers(workspaceId: number): RefResolvers {
@@ -81,6 +88,46 @@ const slackPlatformErrorSchema = z.object({
 function isSlackPlatformError(err: unknown, errorCode: string): boolean {
   const parsed = slackPlatformErrorSchema.safeParse(err);
   return parsed.success && parsed.data.data.error === errorCode;
+}
+
+/**
+ * Posts into the thread, falling back to a top-level message when Slack
+ * refuses the reply. Returns the new message ts, or undefined if both
+ * attempts failed.
+ */
+async function postThreadReply(
+  slack: WebClient,
+  channel: string,
+  threadTs: string,
+  message: { text: string; blocks?: Block[] },
+): Promise<string | undefined> {
+  try {
+    const posted = await slack.chat.postMessage({
+      channel,
+      thread_ts: threadTs,
+      ...message,
+    });
+    return posted.ts;
+  } catch (err) {
+    if (!isSlackPlatformError(err, "cannot_reply_to_message")) {
+      logger.error("slack failed to post reply", { error: err, channel });
+      return undefined;
+    }
+    logger.warn("slack cannot reply to message, falling back to top-level", {
+      channel,
+      threadTs,
+    });
+    try {
+      const fallback = await slack.chat.postMessage({ channel, ...message });
+      return fallback.ts;
+    } catch (fallbackErr) {
+      logger.error("slack failed to post fallback reply", {
+        error: fallbackErr,
+        channel,
+      });
+      return undefined;
+    }
+  }
 }
 
 export async function handleSlackEvent(c: Context) {
@@ -198,53 +245,7 @@ async function processEvent(body: SlackEvent) {
     user: event.user,
   });
 
-  let thinkingTs: string | undefined;
-  try {
-    const thinkingMsg = await slack.chat.postMessage({
-      channel: event.channel,
-      thread_ts: threadTs,
-      text: ":hourglass_flowing_sand: Thinking...",
-    });
-    thinkingTs = thinkingMsg.ts;
-  } catch (err) {
-    if (isSlackPlatformError(err, "cannot_reply_to_message")) {
-      logger.warn("slack cannot reply to message, falling back to top-level", {
-        channel: event.channel,
-        teamId,
-        threadTs,
-      });
-      try {
-        const fallbackMsg = await slack.chat.postMessage({
-          channel: event.channel,
-          text: ":hourglass_flowing_sand: Thinking...",
-        });
-        thinkingTs = fallbackMsg.ts;
-      } catch (fallbackErr) {
-        logger.error("slack failed to post fallback thinking message", {
-          error: fallbackErr,
-          channel: event.channel,
-          teamId,
-        });
-        return;
-      }
-    } else {
-      logger.error("slack failed to post thinking message", {
-        error: err,
-        channel: event.channel,
-        teamId,
-        threadTs,
-      });
-      return;
-    }
-  }
-
-  if (!thinkingTs) {
-    logger.error("slack thinking message returned no ts", {
-      channel: event.channel,
-      teamId,
-    });
-    return;
-  }
+  const status = await startThinkingStatus(slack, event.channel, threadTs);
 
   try {
     let thread: ThreadMessage[] = [];
@@ -254,9 +255,7 @@ async function processEvent(body: SlackEvent) {
         ts: event.thread_ts,
         limit: 100,
       });
-      thread = ((replies.messages ?? []) as ThreadMessage[]).filter(
-        (msg) => msg.ts !== thinkingTs,
-      );
+      thread = (replies.messages ?? []) as ThreadMessage[];
     } else {
       thread = [{ user: event.user, text: event.text, ts: event.ts }];
     }
@@ -292,6 +291,9 @@ async function processEvent(body: SlackEvent) {
       isSlackToolDraft(tr.result),
     );
 
+    // Clear the indicator before posting so a refresh tick can't resurrect it.
+    await status.stop();
+
     if (confirmationResult) {
       logger.info("slack confirmation requested", {
         teamId,
@@ -303,18 +305,25 @@ async function processEvent(body: SlackEvent) {
         slack,
         event.channel,
         threadTs,
-        thinkingTs,
         event.user ?? "",
         resolved.workspace.id,
         resolved.botToken,
         confirmationResult,
       );
     } else {
-      await slack.chat.update({
-        channel: event.channel,
-        ts: thinkingTs,
+      const posted = await postThreadReply(slack, event.channel, threadTs, {
         text: result.text || "Done!",
       });
+      if (!posted) {
+        // postThreadReply already exhausted the top-level fallback, so the
+        // answer is lost; don't claim it was delivered.
+        logger.error("slack response not delivered", {
+          teamId,
+          channel: event.channel,
+          threadTs,
+        });
+        return;
+      }
       logger.info("slack response sent", {
         teamId,
         channel: event.channel,
@@ -328,21 +337,10 @@ async function processEvent(body: SlackEvent) {
       teamId,
       threadTs,
     });
-    if (thinkingTs) {
-      await slack.chat
-        .update({
-          channel: event.channel,
-          ts: thinkingTs,
-          text: ":x: Something went wrong. Please try again.",
-        })
-        .catch((updateErr: unknown) => {
-          logger.error("slack failed to update error message", {
-            error: updateErr,
-            channel: event.channel,
-            thinkingTs,
-          });
-        });
-    }
+    await status.stop();
+    await postThreadReply(slack, event.channel, threadTs, {
+      text: ":x: Something went wrong. Please try again.",
+    });
   }
 }
 
@@ -350,7 +348,6 @@ async function handleConfirmation(
   slack: WebClient,
   channel: string,
   threadTs: string,
-  thinkingTs: string,
   userId: string,
   workspaceId: number,
   botToken: string,
@@ -363,9 +360,7 @@ async function handleConfirmation(
     logger.error("slack: registry tool not found", {
       toolName: draft.toolName,
     });
-    await slack.chat.update({
-      channel,
-      ts: thinkingTs,
+    await postThreadReply(slack, channel, threadTs, {
       text: ":x: Something went wrong. Please try again.",
     });
     return;
@@ -384,39 +379,53 @@ async function handleConfirmation(
   // event throttling. Cross-process dedup is *not* covered; see note in
   // processedEvents.
   const existing = await findByThread(threadTs);
-  if (existing) {
-    await replace(existing.id, payload);
+  const actionId = existing?.id ?? newActionId();
 
-    const blocks = await buildConfirmationBlocks({
-      actionId: existing.id,
-      tool,
-      input: draft.displayInput,
-      resolvers: makeRefResolvers(workspaceId),
-    });
-    await slack.chat.update({ channel, ts: thinkingTs, text, blocks });
+  const blocks = await buildConfirmationBlocks({
+    actionId,
+    tool,
+    input: draft.displayInput,
+    resolvers: makeRefResolvers(workspaceId),
+  });
+
+  // Strip the old card's buttons first: both cards carry the same actionId,
+  // so leaving it live would let one click consume the other's action.
+  if (existing) {
     await slack.chat.update({
       channel,
       ts: existing.messageTs,
-      text,
-      blocks,
+      text: ":no_entry_sign: Superseded by a newer request.",
+      blocks: [],
     });
+  }
+
+  const messageTs = await postThreadReply(slack, channel, threadTs, {
+    text,
+    blocks,
+  });
+  if (!messageTs) {
+    // Without a card there is nothing to approve, so leave the pending record
+    // alone and let its TTL expire rather than pointing it at a dead message.
+    logger.error("slack confirmation card not delivered", {
+      channel,
+      threadTs,
+      toolName: draft.toolName,
+    });
+    return;
+  }
+
+  if (existing) {
+    await replace(existing.id, payload, messageTs);
   } else {
-    const actionId = await store({
+    await store({
+      id: actionId,
       workspaceId,
       botToken,
       channelId: channel,
       threadTs,
-      messageTs: thinkingTs,
+      messageTs,
       userId,
       payload,
     });
-
-    const blocks = await buildConfirmationBlocks({
-      actionId,
-      tool,
-      input: draft.displayInput,
-      resolvers: makeRefResolvers(workspaceId),
-    });
-    await slack.chat.update({ channel, ts: thinkingTs, text, blocks });
   }
 }

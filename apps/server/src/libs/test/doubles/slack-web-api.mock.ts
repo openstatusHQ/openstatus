@@ -20,6 +20,15 @@ export class WebClient {
       return Promise.resolve();
     },
   };
+  assistant = {
+    threads: {
+      setStatus: (args: Record<string, unknown>) => {
+        if (s.setStatusOverride) return s.setStatusOverride(args);
+        s.calls.push({ method: "setStatus", args });
+        return Promise.resolve({ ok: true });
+      },
+    },
+  };
   conversations = {
     replies: () => s.repliesImpl(),
   };
