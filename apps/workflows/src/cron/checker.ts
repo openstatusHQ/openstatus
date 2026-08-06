@@ -50,18 +50,54 @@ export const isAuthorizedDomain = (url: string) => {
 
 const logger = getLogger("workflow");
 
-const client = new CloudTasksClient({
-  // fallback: true,
-  projectId: env().GCP_PROJECT_ID,
-  credentials: {
-    client_email: env().GCP_CLIENT_EMAIL,
-    private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
-  },
-});
+/**
+ * Check if GCP Cloud Tasks is properly configured.
+ * Returns false if credentials are missing or set to placeholder values.
+ */
+function isGcpConfigured(): boolean {
+  const projectId = env().GCP_PROJECT_ID;
+  const location = env().GCP_LOCATION;
+  const clientEmail = env().GCP_CLIENT_EMAIL;
+  const privateKey = env().GCP_PRIVATE_KEY;
+
+  return (
+    projectId !== "" &&
+    projectId !== "your-value" &&
+    location !== "" &&
+    location !== "your-value" &&
+    clientEmail !== "" &&
+    clientEmail !== "your-value" &&
+    privateKey !== "" &&
+    privateKey !== "your-value"
+  );
+}
+
+// Only initialize CloudTasksClient if GCP credentials are properly configured
+// This allows self-hosted deployments to run without GCP Cloud Tasks
+let client: CloudTasksClient | null = null;
+
+if (isGcpConfigured()) {
+  client = new CloudTasksClient({
+    // fallback: true,
+    projectId: env().GCP_PROJECT_ID,
+    credentials: {
+      client_email: env().GCP_CLIENT_EMAIL,
+      private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+    },
+  });
+}
 
 export async function sendCheckerTasks(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
 ): Promise<{ success: number; failed: number }> {
+  // If GCP Cloud Tasks is not configured, skip task creation
+  if (!client) {
+    logger.warn("GCP Cloud Tasks not configured - skipping checker tasks", {
+      periodicity,
+    });
+    return { success: 0, failed: 0 };
+  }
+
   const parent = client.queuePath(
     env().GCP_PROJECT_ID,
     env().GCP_LOCATION,
@@ -240,6 +276,11 @@ const createCronTask = async (
   { row, timestamp, status, region }: TaskInput,
   parent: string,
 ) => {
+  // This should never happen due to the guard in sendCheckerTasks, but TypeScript needs this
+  if (!client) {
+    throw new Error("GCP Cloud Tasks client is not initialized");
+  }
+
   let payload:
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
