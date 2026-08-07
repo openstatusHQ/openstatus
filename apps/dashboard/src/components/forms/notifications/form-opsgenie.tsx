@@ -35,9 +35,14 @@ import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
-  name: z.string(),
+  name: z.string().trim().min(1, "Name is required"),
   provider: z.literal("opsgenie"),
-  data: z.record(z.string(), z.string()),
+  data: z.object({
+    apiKey: z.string().trim().min(1, "API key is required"),
+    region: z.enum(["us", "eu"], {
+      errorMap: () => ({ message: "Please select a region" }),
+    }),
+  }),
   monitors: z.array(z.number()),
 });
 
@@ -99,10 +104,22 @@ export function FormOpsGenie({
   function testAction() {
     if (isPending) return;
 
+    // Validate API key field before sending test
+    const data = form.getValues("data");
+    if (!data.apiKey || data.apiKey.trim() === "") {
+      toast.error("Please enter an API key before sending test");
+      return;
+    }
+
+    // Validate region field before sending test
+    if (!data.region) {
+      toast.error("Please select a region before sending test");
+      return;
+    }
+
     startTransition(async () => {
       try {
         const provider = form.getValues("provider");
-        const data = form.getValues("data");
         const promise = sendTestMutation.mutateAsync({
           provider,
           data: {
