@@ -14,6 +14,7 @@ import {
 import { findByThread, replace, store } from "./confirmation-store";
 import type { PendingPayload } from "./confirmation-store";
 import { publishHomeView } from "./home";
+import { toMrkdwn } from "./mrkdwn";
 import { getComponentNames, getPageDashboardLink } from "./page-urls";
 import { getRegistryTool, isSlackToolDraft } from "./registry-runner";
 import { resolveWorkspace } from "./workspace-resolver";
@@ -349,7 +350,7 @@ async function processEvent(body: SlackEvent) {
       await slack.chat.update({
         channel: event.channel,
         ts: thinkingTs,
-        text: result.text || "Done!",
+        text: result.text ? toMrkdwn(result.text) : "Done!",
       });
       logger.info("slack response sent", {
         teamId,
