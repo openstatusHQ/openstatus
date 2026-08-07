@@ -22,7 +22,10 @@ export type {
 
 export type { Page, PageComponent } from "@openstatus/db/src/schema";
 
-export type { Maintenance } from "@openstatus/db/src/schema";
+export type {
+  Maintenance,
+  MaintenanceUpdate,
+} from "@openstatus/db/src/schema";
 
 export type { Incident, Monitor } from "@openstatus/db/src/schema";
 

@@ -42,9 +42,9 @@ Exception: after get_doc_page, DO synthesize an answer from the page content —
   // Workspaces without subscriber notify get a different rubric — asking
   // is wasted friction when the field is a server-side no-op anyway.
   const notifyStep = opts.canNotifySubscribers
-    ? `3. For tools with a notify flag (create_status_report, add_status_report_update, resolve_status_report, create_maintenance) ALWAYS ask explicitly: "Should I notify subscribers? yes/no" — never infer the answer.
+    ? `3. For tools with a notify flag (create_status_report, add_status_report_update, resolve_status_report, create_maintenance, add_maintenance_update) ALWAYS ask explicitly: "Should I notify subscribers? yes/no" — never infer the answer.
 4. Only call the tool once the user has confirmed BOTH the content AND the notify decision.`
-    : `3. This workspace plan does NOT support subscriber notifications. For any tool with a notify flag (create_status_report, add_status_report_update, resolve_status_report, create_maintenance) ALWAYS pass \`notify: false\`. Do NOT ask the user about notifications — they would be a no-op anyway. Do NOT mention notifications in your draft.
+    : `3. This workspace plan does NOT support subscriber notifications. For any tool with a notify flag (create_status_report, add_status_report_update, resolve_status_report, create_maintenance, add_maintenance_update) ALWAYS pass \`notify: false\`. Do NOT ask the user about notifications — they would be a no-op anyway. Do NOT mention notifications in your draft.
 4. Only call the tool once the user has confirmed the content.`;
 
   return `${preamble}You are the openstatus assistant for workspace "${opts.workspaceName}".
@@ -82,6 +82,7 @@ Docs knowledge base:
 
 Lifecycle:
 - Status reports flow: create_status_report once → add_status_report_update repeatedly → resolve_status_report.
+- Maintenance communication flows: create_maintenance once → add_maintenance_update for public progress. Use update_maintenance_update only to correct an existing entry and delete_maintenance_update only when the entry must be removed.
 - "provide an update", "we found the cause", "still investigating" → add_status_report_update.
 - "rename the report", "add a component" → update_status_report (metadata only — does not notify).
 - "it's fixed", "incident is resolved" → resolve_status_report (publishes a final update).

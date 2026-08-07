@@ -4,6 +4,27 @@ package openstatus.maintenance.v1;
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/maintenance/v1;maintenancev1";
 
+// MaintenanceUpdate represents a timeline entry for a maintenance window.
+message MaintenanceUpdate {
+  // Unique identifier for the update.
+  string id = 1;
+
+  // Public update message.
+  string message = 2;
+
+  // Date of the update (RFC 3339 format).
+  string date = 3;
+
+  // ID of the maintenance this update belongs to.
+  string maintenance_id = 4;
+
+  // Timestamp when the update was created (RFC 3339 format).
+  string created_at = 5;
+
+  // Timestamp when the update was last updated (RFC 3339 format).
+  string updated_at = 6;
+}
+
 // MaintenanceSummary represents metadata for a maintenance window (used in list responses).
 message MaintenanceSummary {
   // Unique identifier for the maintenance.
@@ -32,6 +53,7 @@ message MaintenanceSummary {
 
   // Timestamp when the maintenance was last updated (RFC 3339 format).
   string updated_at = 9;
+
 }
 
 // Maintenance represents a maintenance window with full details.
@@ -62,4 +84,7 @@ message Maintenance {
 
   // Timestamp when the maintenance was last updated (RFC 3339 format).
   string updated_at = 9;
+
+  // Full maintenance update timeline, newest first.
+  repeated MaintenanceUpdate updates = 10;
 }

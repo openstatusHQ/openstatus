@@ -10,6 +10,7 @@ import { authMiddleware, requireWriteScope } from "@/libs/middlewares";
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
 import { maintenancesApi } from "./maintenances";
+import { maintenanceUpdatesApi } from "./maintenanceUpdates";
 import { monitorsApi } from "./monitors";
 import { notificationsApi } from "./notifications";
 import { pagesApi } from "./pages";
@@ -85,6 +86,11 @@ if (process.env.NODE_ENV === "production") {
         "x-displayName": "Maintenance",
       },
       {
+        name: "maintenance_update",
+        description: "Maintenance update related endpoints",
+        "x-displayName": "Maintenance Update",
+      },
+      {
         name: "notification",
         description: "Notification related endpoints",
         "x-displayName": "Notification",
@@ -156,6 +162,7 @@ api.route("/status_report", statusReportsApi);
 api.route("/status_report_update", statusReportUpdatesApi);
 api.route("/incident", incidentsApi);
 api.route("/maintenance", maintenancesApi);
+api.route("/maintenanceUpdates", maintenanceUpdatesApi);
 api.route("/notification", notificationsApi);
 api.route("/page_subscriber", pageSubscribersApi);
 api.route("/check", checkApi);

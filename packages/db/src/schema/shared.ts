@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 import { selectIncidentSchema } from "./incidents/validation";
-import { selectMaintenanceSchema } from "./maintenances";
+import {
+  selectMaintenanceSchema,
+  selectMaintenanceUpdateSchema,
+} from "./maintenances";
 import { selectMonitorGroupSchema } from "./monitor_groups";
 import { selectMonitorSchema } from "./monitors";
 import { selectPageComponentGroupSchema } from "./page_component_groups";
@@ -55,6 +58,7 @@ export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
 });
 
 export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
+  maintenanceUpdates: z.array(selectMaintenanceUpdateSchema).prefault([]),
   maintenancesToPageComponents: z
     .array(
       z.object({

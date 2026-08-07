@@ -36,6 +36,38 @@ export const UpdateMaintenanceInput = z.object({
 });
 export type UpdateMaintenanceInput = z.infer<typeof UpdateMaintenanceInput>;
 
+export const AddMaintenanceUpdateInput = z.object({
+  maintenanceId: z.number().int(),
+  message: z.string().min(1),
+  date: z.coerce.date().optional(),
+});
+export type AddMaintenanceUpdateInput = z.infer<
+  typeof AddMaintenanceUpdateInput
+>;
+
+export const UpdateMaintenanceUpdateInput = z.object({
+  id: z.number().int(),
+  message: z.string().min(1).optional(),
+  date: z.coerce.date().optional(),
+});
+export type UpdateMaintenanceUpdateInput = z.infer<
+  typeof UpdateMaintenanceUpdateInput
+>;
+
+export const DeleteMaintenanceUpdateInput = z.object({
+  id: z.number().int(),
+});
+export type DeleteMaintenanceUpdateInput = z.infer<
+  typeof DeleteMaintenanceUpdateInput
+>;
+
+export const GetMaintenanceUpdateInput = z.object({
+  id: z.number().int(),
+});
+export type GetMaintenanceUpdateInput = z.infer<
+  typeof GetMaintenanceUpdateInput
+>;
+
 export const DeleteMaintenanceInput = z.object({ id: z.number().int() });
 export type DeleteMaintenanceInput = z.infer<typeof DeleteMaintenanceInput>;
 
@@ -54,6 +86,6 @@ export const ListMaintenancesInput = z.object({
 export type ListMaintenancesInput = z.infer<typeof ListMaintenancesInput>;
 
 export const NotifyMaintenanceInput = z.object({
-  maintenanceId: z.number().int(),
+  maintenanceUpdateId: z.number().int(),
 });
 export type NotifyMaintenanceInput = z.infer<typeof NotifyMaintenanceInput>;

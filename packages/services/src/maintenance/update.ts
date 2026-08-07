@@ -7,11 +7,13 @@ import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError, InternalServiceError } from "../errors";
 import type { Maintenance } from "../types";
 import {
+  getLatestMaintenanceUpdate,
   getMaintenanceInWorkspace,
   updatePageComponentAssociations,
   validatePageComponentIds,
 } from "./internal";
 import { UpdateMaintenanceInput } from "./schemas";
+import { updateMaintenanceUpdate } from "./update-update";
 
 export async function updateMaintenance(args: {
   ctx: ServiceContext;
@@ -38,9 +40,21 @@ export async function updateMaintenance(args: {
 
     const updateValues: Record<string, unknown> = { updatedAt: new Date() };
     if (input.title !== undefined) updateValues.title = input.title;
-    if (input.message !== undefined) updateValues.message = input.message;
     if (input.from !== undefined) updateValues.from = input.from;
     if (input.to !== undefined) updateValues.to = input.to;
+
+    if (input.message !== undefined) {
+      const latest = await getLatestMaintenanceUpdate(tx, existing.id);
+      if (!latest) {
+        throw new InternalServiceError(
+          `maintenance ${existing.id} has no updates`,
+        );
+      }
+      await updateMaintenanceUpdate({
+        ctx: { ...ctx, db: tx },
+        input: { id: latest.id, message: input.message },
+      });
+    }
 
     if (input.pageComponentIds !== undefined) {
       const validated = await validatePageComponentIds({
