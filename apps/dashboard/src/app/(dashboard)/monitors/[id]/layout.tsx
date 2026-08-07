@@ -29,7 +29,6 @@ export default async function Layout({
     fetchQueryOrNotFound(
       trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
     ),
-    queryClient.prefetchQuery(trpc.notification.list.queryOptions()),
     queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions()),
   ]);
 

@@ -29,20 +29,49 @@ import { env } from "../env";
 
 const redis = Redis.fromEnv();
 
-const client = new CloudTasksClient({
-  projectId: env().GCP_PROJECT_ID,
-  fallback: "rest",
-  credentials: {
-    client_email: env().GCP_CLIENT_EMAIL,
-    private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
-  },
-});
+// Check if GCP is properly configured (not empty and not placeholder values)
+const isGcpConfigured = () => {
+  const gcpProjectId = env().GCP_PROJECT_ID;
+  const gcpLocation = env().GCP_LOCATION;
+  const gcpClientEmail = env().GCP_CLIENT_EMAIL;
+  const gcpPrivateKey = env().GCP_PRIVATE_KEY;
 
-const parent = client.queuePath(
-  env().GCP_PROJECT_ID,
-  env().GCP_LOCATION,
-  "workflow",
-);
+  return (
+    gcpProjectId &&
+    gcpLocation &&
+    gcpClientEmail &&
+    gcpPrivateKey &&
+    gcpProjectId !== "" &&
+    gcpLocation !== "" &&
+    gcpClientEmail !== "" &&
+    gcpPrivateKey !== "" &&
+    gcpProjectId !== "your-value" &&
+    gcpLocation !== "your-value" &&
+    gcpClientEmail !== "your-value" &&
+    gcpPrivateKey !== "your-value"
+  );
+};
+
+// Only initialize Cloud Tasks client if GCP is properly configured
+let client: CloudTasksClient | null = null;
+let parent: string | null = null;
+
+if (isGcpConfigured()) {
+  client = new CloudTasksClient({
+    projectId: env().GCP_PROJECT_ID,
+    fallback: "rest",
+    credentials: {
+      client_email: env().GCP_CLIENT_EMAIL,
+      private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+    },
+  });
+
+  parent = client.queuePath(
+    env().GCP_PROJECT_ID,
+    env().GCP_LOCATION,
+    "workflow",
+  );
+}
 
 const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "second" });
 
@@ -184,6 +213,15 @@ async function workflowInit({
     return;
   }
   const initialRun = new Date().getTime();
+
+  // Only create GCP Cloud Tasks if GCP is configured
+  if (!client || !parent) {
+    console.log(
+      `Skipping workflow for user ${user.userId} - GCP not configured`,
+    );
+    return;
+  }
+
   await CreateTask({
     parent,
     client: client,
@@ -191,6 +229,7 @@ async function workflowInit({
     userId: user.userId,
     initialRun,
   });
+
   await redis.set(`workflow:user:${user.userId}`, initialRun, {
     ex: 30 * 86400,
   });
@@ -229,13 +268,20 @@ export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
     });
   }
 
-  await CreateTask({
-    parent,
-    client: client,
-    step: "3days",
-    userId: user.id,
-    initialRun: workFlowRunTimestamp,
-  });
+  // Only create GCP Cloud Tasks if GCP is configured
+  if (client && parent) {
+    await CreateTask({
+      parent,
+      client: client,
+      step: "3days",
+      userId: user.id,
+      initialRun: workFlowRunTimestamp,
+    });
+  } else {
+    console.log(
+      `Skipping Cloud Tasks creation for user ${user.id} - GCP not configured`,
+    );
+  }
 }
 
 export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
@@ -270,13 +316,20 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
     });
   }
 
-  await CreateTask({
-    client,
-    parent,
-    step: "paused",
-    userId,
-    initialRun: workFlowRunTimestamp,
-  });
+  // Only create GCP Cloud Tasks if GCP is configured
+  if (client && parent) {
+    await CreateTask({
+      client,
+      parent,
+      step: "paused",
+      userId,
+      initialRun: workFlowRunTimestamp,
+    });
+  } else {
+    console.log(
+      `Skipping Cloud Tasks creation for user ${userId} - GCP not configured`,
+    );
+  }
 }
 
 export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
