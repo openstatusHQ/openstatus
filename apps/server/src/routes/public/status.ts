@@ -2,16 +2,35 @@ import { getLogger } from "@logtape/logtape";
 import { db, eq } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 import { Hono } from "hono";
+import { rateLimiter } from "hono-rate-limiter";
 import { endTime, setMetric, startTime } from "hono/timing";
 
 const logger = getLogger("api-server");
 import { Status, Tracker } from "@openstatus/tracker";
 
 import { redis } from "../../libs/clients";
+import {
+  createStatusRateLimitStore,
+  parseRateLimitKey,
+} from "../../utils/rate-limit";
 
-// TODO: include ratelimiting
+export const STATUS_RATE_LIMIT = 100;
+const STATUS_RATE_LIMIT_WINDOW_MS = 60_000;
+
+// Coarse per-IP abuse guard across the whole public surface; deliberately not
+// scoped per-slug, so a shared egress IP can't blow its budget on page flips.
+const limiter = rateLimiter({
+  windowMs: STATUS_RATE_LIMIT_WINDOW_MS,
+  limit: STATUS_RATE_LIMIT,
+  standardHeaders: "draft-7",
+  keyGenerator: parseRateLimitKey,
+  handler: (c) => c.json({ status: "too_many_requests" }, 429),
+  store: createStatusRateLimitStore(redis, STATUS_RATE_LIMIT_WINDOW_MS),
+});
 
 export const status = new Hono();
+
+status.use("*", limiter);
 
 status.get("/:slug", async (c) => {
   try {
