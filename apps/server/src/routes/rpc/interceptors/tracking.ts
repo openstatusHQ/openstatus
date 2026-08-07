@@ -87,6 +87,15 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
   "openstatus.maintenance.v1.MaintenanceService/DeleteMaintenance": {
     event: Events.DeleteMaintenance,
   },
+  "openstatus.maintenance.v1.MaintenanceService/AddMaintenanceUpdate": {
+    event: Events.CreateMaintenanceUpdate,
+  },
+  "openstatus.maintenance.v1.MaintenanceService/UpdateMaintenanceUpdate": {
+    event: Events.UpdateMaintenanceUpdate,
+  },
+  "openstatus.maintenance.v1.MaintenanceService/DeleteMaintenanceUpdate": {
+    event: Events.DeleteMaintenanceUpdate,
+  },
 
   // NotificationService
   "openstatus.notification.v1.NotificationService/CreateNotification": {

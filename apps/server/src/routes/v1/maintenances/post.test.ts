@@ -1,5 +1,5 @@
 import { db, eq } from "@openstatus/db";
-import { maintenance } from "@openstatus/db/src/schema";
+import { maintenance, maintenanceUpdate } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { beforeEach, test } from "@std/testing/bdd";
 
@@ -245,11 +245,16 @@ test("create a maintenance calls dispatchMaintenanceUpdate", async () => {
   const result = MaintenanceSchema.safeParse(await res.json());
   expect(result.success).toBe(true);
   expect(spies.dispatchMaintenanceUpdate.mock.calls.length).toBe(1);
-  expect(typeof spies.dispatchMaintenanceUpdate.mock.calls[0][0]).toBe(
-    "number",
-  );
 
   if (result.success) {
+    const initialUpdate = await db
+      .select({ id: maintenanceUpdate.id })
+      .from(maintenanceUpdate)
+      .where(eq(maintenanceUpdate.maintenanceId, result.data.id))
+      .get();
+    expect(spies.dispatchMaintenanceUpdate.mock.calls[0][0]).toBe(
+      initialUpdate?.id,
+    );
     await db.delete(maintenance).where(eq(maintenance.id, result.data.id));
   }
 });

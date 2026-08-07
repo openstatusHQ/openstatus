@@ -277,6 +277,7 @@ export function StatusFeed({
                   maintenance={{
                     title: maintenance.title,
                     message: maintenance.message,
+                    maintenanceUpdates: maintenance.maintenanceUpdates,
                     from: maintenance.from,
                     to: maintenance.to,
                   }}

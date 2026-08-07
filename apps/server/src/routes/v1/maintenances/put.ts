@@ -1,13 +1,18 @@
 import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
-import { and, db, eq, inArray, isNull } from "@openstatus/db";
+import { and, db, desc, eq, inArray, isNull } from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
-import { maintenance } from "@openstatus/db/src/schema/maintenances";
+import {
+  maintenance,
+  maintenanceUpdate,
+} from "@openstatus/db/src/schema/maintenances";
 import {
   maintenancesToPageComponents,
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
+import { updateMaintenanceUpdate } from "@openstatus/services/maintenance";
 
+import { tb } from "@/libs/clients";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 
@@ -53,9 +58,22 @@ const putRoute = createRoute({
 
 export function registerPutMaintenance(api: typeof maintenancesApi) {
   return api.openapi(putRoute, async (c) => {
-    const workspaceId = c.get("workspace").id;
+    const workspace = c.get("workspace");
+    const workspaceId = workspace.id;
+    const apiKey = c.get("apiKey");
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
+    const serviceCtx = {
+      workspace,
+      actor: {
+        type: "apiKey" as const,
+        keyId: apiKey.id,
+        userId: apiKey.createdById,
+        scopes: apiKey.scopes,
+      },
+      requestId: c.get("requestId"),
+      tb,
+    };
 
     const { monitorIds, pageId } = input;
 
@@ -127,6 +145,27 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
     }
 
     const updatedMaintenance = await db.transaction(async (tx) => {
+      if (input.message !== undefined) {
+        const latestUpdate = await tx
+          .select({ id: maintenanceUpdate.id })
+          .from(maintenanceUpdate)
+          .where(eq(maintenanceUpdate.maintenanceId, Number(id)))
+          .orderBy(desc(maintenanceUpdate.date), desc(maintenanceUpdate.id))
+          .get();
+
+        if (!latestUpdate) {
+          throw new OpenStatusApiError({
+            code: "CONFLICT",
+            message: "A maintenance must have at least one update.",
+          });
+        }
+
+        await updateMaintenanceUpdate({
+          ctx: { ...serviceCtx, db: tx },
+          input: { id: latestUpdate.id, message: input.message },
+        });
+      }
+
       const updated = await tx
         .update(maintenance)
         .set({

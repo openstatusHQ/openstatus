@@ -10,7 +10,63 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/maintenance/v1/maintenance.proto.
  */
 export const file_openstatus_maintenance_v1_maintenance: GenFile = /*@__PURE__*/
-  fileDesc("CitvcGVuc3RhdHVzL21haW50ZW5hbmNlL3YxL21haW50ZW5hbmNlLnByb3RvEhlvcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxIq8BChJNYWludGVuYW5jZVN1bW1hcnkSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSDwoHbWVzc2FnZRgDIAEoCRIMCgRmcm9tGAQgASgJEgoKAnRvGAUgASgJEg8KB3BhZ2VfaWQYBiABKAkSGgoScGFnZV9jb21wb25lbnRfaWRzGAcgAygJEhIKCmNyZWF0ZWRfYXQYCCABKAkSEgoKdXBkYXRlZF9hdBgJIAEoCSKoAQoLTWFpbnRlbmFuY2USCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSDwoHbWVzc2FnZRgDIAEoCRIMCgRmcm9tGAQgASgJEgoKAnRvGAUgASgJEg8KB3BhZ2VfaWQYBiABKAkSGgoScGFnZV9jb21wb25lbnRfaWRzGAcgAygJEhIKCmNyZWF0ZWRfYXQYCCABKAkSEgoKdXBkYXRlZF9hdBgJIAEoCUJbWllnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbWFpbnRlbmFuY2UvdjE7bWFpbnRlbmFuY2V2MWIGcHJvdG8z");
+  fileDesc("CitvcGVuc3RhdHVzL21haW50ZW5hbmNlL3YxL21haW50ZW5hbmNlLnByb3RvEhlvcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxIn4KEU1haW50ZW5hbmNlVXBkYXRlEgoKAmlkGAEgASgJEg8KB21lc3NhZ2UYAiABKAkSDAoEZGF0ZRgDIAEoCRIWCg5tYWludGVuYW5jZV9pZBgEIAEoCRISCgpjcmVhdGVkX2F0GAUgASgJEhIKCnVwZGF0ZWRfYXQYBiABKAkirwEKEk1haW50ZW5hbmNlU3VtbWFyeRIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIPCgdtZXNzYWdlGAMgASgJEgwKBGZyb20YBCABKAkSCgoCdG8YBSABKAkSDwoHcGFnZV9pZBgGIAEoCRIaChJwYWdlX2NvbXBvbmVudF9pZHMYByADKAkSEgoKY3JlYXRlZF9hdBgIIAEoCRISCgp1cGRhdGVkX2F0GAkgASgJIucBCgtNYWludGVuYW5jZRIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIPCgdtZXNzYWdlGAMgASgJEgwKBGZyb20YBCABKAkSCgoCdG8YBSABKAkSDwoHcGFnZV9pZBgGIAEoCRIaChJwYWdlX2NvbXBvbmVudF9pZHMYByADKAkSEgoKY3JlYXRlZF9hdBgIIAEoCRISCgp1cGRhdGVkX2F0GAkgASgJEj0KB3VwZGF0ZXMYCiADKAsyLC5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLk1haW50ZW5hbmNlVXBkYXRlQltaWWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tYWludGVuYW5jZS92MTttYWludGVuYW5jZXYxYgZwcm90bzM");
+
+/**
+ * MaintenanceUpdate represents a timeline entry for a maintenance window.
+ *
+ * @generated from message openstatus.maintenance.v1.MaintenanceUpdate
+ */
+export type MaintenanceUpdate = Message<"openstatus.maintenance.v1.MaintenanceUpdate"> & {
+  /**
+   * Unique identifier for the update.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Public update message.
+   *
+   * @generated from field: string message = 2;
+   */
+  message: string;
+
+  /**
+   * Date of the update (RFC 3339 format).
+   *
+   * @generated from field: string date = 3;
+   */
+  date: string;
+
+  /**
+   * ID of the maintenance this update belongs to.
+   *
+   * @generated from field: string maintenance_id = 4;
+   */
+  maintenanceId: string;
+
+  /**
+   * Timestamp when the update was created (RFC 3339 format).
+   *
+   * @generated from field: string created_at = 5;
+   */
+  createdAt: string;
+
+  /**
+   * Timestamp when the update was last updated (RFC 3339 format).
+   *
+   * @generated from field: string updated_at = 6;
+   */
+  updatedAt: string;
+};
+
+/**
+ * Describes the message openstatus.maintenance.v1.MaintenanceUpdate.
+ * Use `create(MaintenanceUpdateSchema)` to create a new message.
+ */
+export const MaintenanceUpdateSchema: GenMessage<MaintenanceUpdate> = /*@__PURE__*/
+  messageDesc(file_openstatus_maintenance_v1_maintenance, 0);
 
 /**
  * MaintenanceSummary represents metadata for a maintenance window (used in list responses).
@@ -87,7 +143,7 @@ export type MaintenanceSummary = Message<"openstatus.maintenance.v1.MaintenanceS
  * Use `create(MaintenanceSummarySchema)` to create a new message.
  */
 export const MaintenanceSummarySchema: GenMessage<MaintenanceSummary> = /*@__PURE__*/
-  messageDesc(file_openstatus_maintenance_v1_maintenance, 0);
+  messageDesc(file_openstatus_maintenance_v1_maintenance, 1);
 
 /**
  * Maintenance represents a maintenance window with full details.
@@ -157,6 +213,13 @@ export type Maintenance = Message<"openstatus.maintenance.v1.Maintenance"> & {
    * @generated from field: string updated_at = 9;
    */
   updatedAt: string;
+
+  /**
+   * Full maintenance update timeline, newest first.
+   *
+   * @generated from field: repeated openstatus.maintenance.v1.MaintenanceUpdate updates = 10;
+   */
+  updates: MaintenanceUpdate[];
 };
 
 /**
@@ -164,5 +227,5 @@ export type Maintenance = Message<"openstatus.maintenance.v1.Maintenance"> & {
  * Use `create(MaintenanceSchema)` to create a new message.
  */
 export const MaintenanceSchema: GenMessage<Maintenance> = /*@__PURE__*/
-  messageDesc(file_openstatus_maintenance_v1_maintenance, 1);
+  messageDesc(file_openstatus_maintenance_v1_maintenance, 2);
 

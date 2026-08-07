@@ -110,6 +110,18 @@ const maintenanceActions = [
   action("maintenance.delete", "maintenance", intId),
 ] as const;
 
+const maintenanceUpdateActions = [
+  action("maintenance_update.create", "maintenance_update", intId, {
+    optionalMetadata: true,
+  }),
+  action("maintenance_update.update", "maintenance_update", intId, {
+    optionalMetadata: true,
+  }),
+  action("maintenance_update.delete", "maintenance_update", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
 const incidentActions = [
   action("incident.update", "incident", intId),
   action("incident.delete", "incident", intId),
@@ -210,6 +222,7 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...userActions,
   ...workspaceActions,
   ...maintenanceActions,
+  ...maintenanceUpdateActions,
   ...incidentActions,
   ...statusReportActions,
   ...statusReportUpdateActions,

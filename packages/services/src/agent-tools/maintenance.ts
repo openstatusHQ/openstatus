@@ -1,9 +1,12 @@
 import { z } from "zod";
 
 import {
+  addMaintenanceUpdate,
   createMaintenance,
+  deleteMaintenanceUpdate,
   listMaintenances,
   notifyMaintenance,
+  updateMaintenanceUpdate,
 } from "../maintenance";
 import type { AgentTool } from "./types";
 
@@ -57,6 +60,13 @@ const ListMaintenancesOutput = z.object({
       to: z.string(),
       pageId: z.number().int().nullable(),
       pageComponentIds: z.array(z.number().int()),
+      updates: z.array(
+        z.object({
+          id: z.number().int(),
+          message: z.string(),
+          date: z.string(),
+        }),
+      ),
     }),
   ),
   pagination: z.object({
@@ -73,7 +83,7 @@ export const listMaintenancesTool: AgentTool<
 > = {
   name: "list_maintenances",
   description:
-    "List maintenance windows in this workspace, newest first. Paginated via `page` (1-indexed) and `perPage`.",
+    "List maintenance windows in this workspace, newest first. Returns timeline update ids so edit/delete can target a specific entry. Paginated via `page` (1-indexed) and `perPage`.",
   scope: "read",
   destructive: false,
   inputSchema: ListMaintenancesInputShape,
@@ -98,6 +108,11 @@ export const listMaintenancesTool: AgentTool<
         to: m.to.toISOString(),
         pageId: m.pageId,
         pageComponentIds: m.pageComponentIds,
+        updates: m.updates.map((u) => ({
+          id: u.id,
+          message: u.message,
+          date: u.date.toISOString(),
+        })),
       })),
       pagination: {
         page,
@@ -146,6 +161,7 @@ const CreateMaintenanceOutput = z.object({
   from: z.string(),
   to: z.string(),
   pageId: z.number().int().nullable(),
+  initialUpdateId: z.number().int(),
   notified: z.boolean(),
 });
 
@@ -192,7 +208,7 @@ export const createMaintenanceTool: AgentTool<
     verb: "scheduled",
   },
   async run({ ctx, input }) {
-    const record = await createMaintenance({
+    const result = await createMaintenance({
       ctx,
       input: {
         title: input.title,
@@ -206,22 +222,201 @@ export const createMaintenanceTool: AgentTool<
     let notified = false;
     if (input.notify) {
       try {
-        await notifyMaintenance({
+        notified = await notifyMaintenance({
           ctx,
-          input: { maintenanceId: record.id },
+          input: { maintenanceUpdateId: result.initialUpdate.id },
         });
-        notified = true;
       } catch (err) {
         console.warn("notifyMaintenance failed after create_maintenance", err);
       }
     }
     return {
-      id: record.id,
-      title: record.title,
-      from: record.from.toISOString(),
-      to: record.to.toISOString(),
-      pageId: record.pageId,
+      id: result.maintenance.id,
+      title: result.maintenance.title,
+      from: result.maintenance.from.toISOString(),
+      to: result.maintenance.to.toISOString(),
+      pageId: result.maintenance.pageId,
+      initialUpdateId: result.initialUpdate.id,
       notified,
     };
+  },
+};
+
+const AddMaintenanceUpdateInputShape = z.object({
+  maintenanceId: z
+    .number()
+    .int()
+    .describe("Maintenance id from list_maintenances — never guess."),
+  message: z.string().min(1).describe("Public update message."),
+  date: z.iso
+    .datetime()
+    .optional()
+    .describe("Update time in ISO 8601. Defaults to now."),
+  notify: z
+    .boolean()
+    .describe("Whether to dispatch subscriber notifications for this update."),
+});
+
+const MaintenanceUpdateOutput = z.object({
+  id: z.number().int(),
+  maintenanceId: z.number().int(),
+  message: z.string(),
+  date: z.string(),
+  notified: z.boolean().optional(),
+});
+
+export const addMaintenanceUpdateTool: AgentTool<
+  z.infer<typeof AddMaintenanceUpdateInputShape>,
+  z.infer<typeof MaintenanceUpdateOutput>
+> = {
+  name: "add_maintenance_update",
+  description:
+    "Append a public update to an existing maintenance. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS. The maintenanceId MUST come from list_maintenances. Subscriber notification is only available during this call.",
+  scope: "write",
+  destructive: true,
+  inputSchema: AddMaintenanceUpdateInputShape,
+  outputSchema: MaintenanceUpdateOutput,
+  approval: {
+    extraFlags: [{ id: "notify", label: "Notify subscribers" }],
+    applyFlags: (input, flags) => ({ ...input, notify: flags.notify ?? false }),
+    summarize: (input) => ({
+      title: `Publish Maintenance Update #${input.maintenanceId}`,
+      lines: [
+        { label: "Maintenance ID", value: String(input.maintenanceId) },
+        ...(input.date
+          ? [{ label: "Date", value: formatMaintenanceDate(input.date) }]
+          : []),
+        { label: "Message", value: input.message },
+      ],
+    }),
+    verb: "published",
+  },
+  async run({ ctx, input }) {
+    const result = await addMaintenanceUpdate({
+      ctx,
+      input: {
+        maintenanceId: input.maintenanceId,
+        message: input.message,
+        date: input.date ? new Date(input.date) : undefined,
+      },
+    });
+    let notified = false;
+    if (input.notify) {
+      try {
+        notified = await notifyMaintenance({
+          ctx,
+          input: { maintenanceUpdateId: result.maintenanceUpdate.id },
+        });
+      } catch (err) {
+        console.warn(
+          "notifyMaintenance failed after add_maintenance_update",
+          err,
+        );
+      }
+    }
+    return {
+      id: result.maintenanceUpdate.id,
+      maintenanceId: result.maintenanceUpdate.maintenanceId,
+      message: result.maintenanceUpdate.message,
+      date: result.maintenanceUpdate.date.toISOString(),
+      notified,
+    };
+  },
+};
+
+const UpdateMaintenanceUpdateInputShape = z
+  .object({
+    id: z
+      .number()
+      .int()
+      .describe(
+        "Maintenance update id from list_maintenances (or create/add result) — never guess.",
+      ),
+    message: z
+      .string()
+      .min(1)
+      .optional()
+      .describe("Replacement public message."),
+    date: z.iso.datetime().optional().describe("Replacement ISO 8601 date."),
+  })
+  .refine((input) => input.message !== undefined || input.date !== undefined, {
+    message: "At least one field must be provided.",
+  });
+
+export const updateMaintenanceUpdateTool: AgentTool<
+  z.infer<typeof UpdateMaintenanceUpdateInputShape>,
+  z.infer<typeof MaintenanceUpdateOutput>
+> = {
+  name: "update_maintenance_update",
+  description:
+    "Edit an existing maintenance timeline entry. PUBLIC and AUDIT-LOGGED. Does not notify subscribers. The update id MUST come from list_maintenances (or a prior create/add result).",
+  scope: "write",
+  destructive: true,
+  inputSchema: UpdateMaintenanceUpdateInputShape,
+  outputSchema: MaintenanceUpdateOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Edit Maintenance Update #${input.id}`,
+      lines: [
+        ...(input.date
+          ? [{ label: "Date", value: formatMaintenanceDate(input.date) }]
+          : []),
+        ...(input.message ? [{ label: "Message", value: input.message }] : []),
+      ],
+    }),
+    verb: "updated",
+  },
+  async run({ ctx, input }) {
+    const update = await updateMaintenanceUpdate({
+      ctx,
+      input: {
+        id: input.id,
+        message: input.message,
+        date: input.date ? new Date(input.date) : undefined,
+      },
+    });
+    return {
+      id: update.id,
+      maintenanceId: update.maintenanceId,
+      message: update.message,
+      date: update.date.toISOString(),
+    };
+  },
+};
+
+const DeleteMaintenanceUpdateInputShape = z.object({
+  id: z
+    .number()
+    .int()
+    .describe(
+      "Maintenance update id from list_maintenances (or create/add result) — never guess.",
+    ),
+});
+const DeleteMaintenanceUpdateOutput = z.object({
+  id: z.number().int(),
+  success: z.boolean(),
+});
+
+export const deleteMaintenanceUpdateTool: AgentTool<
+  z.infer<typeof DeleteMaintenanceUpdateInputShape>,
+  z.infer<typeof DeleteMaintenanceUpdateOutput>
+> = {
+  name: "delete_maintenance_update",
+  description:
+    "Delete a maintenance timeline entry. PUBLIC, AUDIT-LOGGED, AND IRREVERSIBLE. A maintenance must retain at least one update. The update id MUST come from list_maintenances (or a prior create/add result).",
+  scope: "write",
+  destructive: true,
+  inputSchema: DeleteMaintenanceUpdateInputShape,
+  outputSchema: DeleteMaintenanceUpdateOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Delete Maintenance Update #${input.id}`,
+      lines: [{ label: "Update ID", value: String(input.id) }],
+    }),
+    verb: "deleted",
+  },
+  async run({ ctx, input }) {
+    await deleteMaintenanceUpdate({ ctx, input });
+    return { id: input.id, success: true };
   },
 };

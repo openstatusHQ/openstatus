@@ -2,8 +2,8 @@
 
 import { Add } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams, useRouter } from "next/navigation";
 
 import { Link } from "@/components/common/link";
 import {
@@ -22,7 +22,9 @@ import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const { data: statusPage } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
@@ -38,9 +40,12 @@ export default function Page() {
     trpc.maintenance.new.mutationOptions({
       onSuccess: (maintenance) => {
         refetch();
+        queryClient.invalidateQueries({
+          queryKey: trpc.page.list.queryKey(),
+        });
         if (maintenance.notifySubscribers) {
           sendMaintenanceUpdateMutation.mutate({
-            id: maintenance.id,
+            id: maintenance.initialUpdateId,
           });
         }
       },
@@ -88,7 +93,13 @@ export default function Page() {
             </FormSheetMaintenance>
           </div>
         </SectionHeaderRow>
-        <DataTable columns={columns} data={maintenances} />
+        <DataTable
+          columns={columns}
+          data={maintenances}
+          onRowClick={(row) =>
+            router.push(`/status-pages/${id}/maintenances/${row.original.id}`)
+          }
+        />
       </Section>
     </SectionGroup>
   );

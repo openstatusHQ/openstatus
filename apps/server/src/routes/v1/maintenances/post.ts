@@ -2,13 +2,18 @@ import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, inArray, isNull } from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
-import { maintenance } from "@openstatus/db/src/schema/maintenances";
+import {
+  maintenance,
+  maintenanceUpdate,
+} from "@openstatus/db/src/schema/maintenances";
 import {
   maintenancesToPageComponents,
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
+import { emitAudit } from "@openstatus/services";
 import { dispatchMaintenanceUpdate } from "@openstatus/subscriptions";
 
+import { tb } from "@/libs/clients";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 
@@ -53,11 +58,25 @@ const postRoute = createRoute({
 
 export function registerPostMaintenance(api: typeof maintenancesApi) {
   return api.openapi(postRoute, async (c) => {
-    const workspaceId = c.get("workspace").id;
+    const workspace = c.get("workspace");
+    const workspaceId = workspace.id;
+    const apiKey = c.get("apiKey");
     const input = c.req.valid("json");
-    const limits = c.get("workspace").limits;
+    const limits = workspace.limits;
 
     const { monitorIds, pageId } = input;
+
+    const serviceCtx = {
+      workspace,
+      actor: {
+        type: "apiKey" as const,
+        keyId: apiKey.id,
+        userId: apiKey.createdById,
+        scopes: apiKey.scopes,
+      },
+      requestId: c.get("requestId"),
+      tb,
+    };
 
     if (input.from > input.to) {
       throw new OpenStatusApiError({
@@ -108,6 +127,24 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
         .returning()
         .get();
 
+      const initialUpdate = await tx
+        .insert(maintenanceUpdate)
+        .values({
+          maintenanceId: newMaintenance.id,
+          message: newMaintenance.message,
+          date: newMaintenance.createdAt ?? newMaintenance.from,
+        })
+        .returning()
+        .get();
+
+      await emitAudit(tx, serviceCtx, {
+        action: "maintenance_update.create",
+        entityType: "maintenance_update",
+        entityId: initialUpdate.id,
+        after: initialUpdate,
+        metadata: { maintenanceId: newMaintenance.id },
+      });
+
       if (monitorIds?.length && newMaintenance.pageId) {
         // Get page components for the given monitors and page
         const pageComponents = await tx
@@ -135,15 +172,15 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
         }
       }
 
-      return newMaintenance;
+      return { maintenance: newMaintenance, initialUpdate };
     });
 
-    if (limits["status-subscribers"] && _newMaintenance.pageId) {
-      await dispatchMaintenanceUpdate(_newMaintenance.id);
+    if (limits["status-subscribers"] && _newMaintenance.maintenance.pageId) {
+      await dispatchMaintenanceUpdate(_newMaintenance.initialUpdate.id);
     }
 
     const data = MaintenanceSchema.parse({
-      ..._newMaintenance,
+      ..._newMaintenance.maintenance,
       monitorIds: input.monitorIds,
     });
 

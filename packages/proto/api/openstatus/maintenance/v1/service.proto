@@ -28,6 +28,15 @@ service MaintenanceService {
 
   // DeleteMaintenance removes a maintenance window.
   rpc DeleteMaintenance(DeleteMaintenanceRequest) returns (DeleteMaintenanceResponse);
+
+  // AddMaintenanceUpdate appends a public update to a maintenance timeline.
+  rpc AddMaintenanceUpdate(AddMaintenanceUpdateRequest) returns (AddMaintenanceUpdateResponse);
+
+  // UpdateMaintenanceUpdate edits an existing maintenance update.
+  rpc UpdateMaintenanceUpdate(UpdateMaintenanceUpdateRequest) returns (UpdateMaintenanceUpdateResponse);
+
+  // DeleteMaintenanceUpdate removes an existing maintenance update.
+  rpc DeleteMaintenanceUpdate(DeleteMaintenanceUpdateRequest) returns (DeleteMaintenanceUpdateResponse);
 }
 
 // CreateMaintenanceRequest is the request to create a new maintenance window.
@@ -154,6 +163,57 @@ message DeleteMaintenanceRequest {
 
 // DeleteMaintenanceResponse is the response after deleting a maintenance window.
 message DeleteMaintenanceResponse {
+  // Whether the deletion was successful.
+  bool success = 1;
+}
+
+// AddMaintenanceUpdateRequest is the request to append a maintenance update.
+message AddMaintenanceUpdateRequest {
+  // ID of the maintenance to update (required).
+  string maintenance_id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Public update message (required).
+  string message = 2 [(buf.validate.field).string.min_len = 1];
+
+  // Optional date for the update (RFC 3339 format). Defaults to current time.
+  optional string date = 3 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
+
+  // Whether to notify subscribers about this update.
+  optional bool notify = 4;
+}
+
+// AddMaintenanceUpdateResponse is the response after appending an update.
+message AddMaintenanceUpdateResponse {
+  // The created update.
+  MaintenanceUpdate maintenance_update = 1;
+}
+
+// UpdateMaintenanceUpdateRequest is the request to edit an update.
+message UpdateMaintenanceUpdateRequest {
+  // ID of the update to edit (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // New public message.
+  optional string message = 2 [(buf.validate.field).string.min_len = 1];
+
+  // New update date (RFC 3339 format).
+  optional string date = 3 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
+}
+
+// UpdateMaintenanceUpdateResponse is the response after editing an update.
+message UpdateMaintenanceUpdateResponse {
+  // The updated timeline entry.
+  MaintenanceUpdate maintenance_update = 1;
+}
+
+// DeleteMaintenanceUpdateRequest is the request to remove an update.
+message DeleteMaintenanceUpdateRequest {
+  // ID of the update to remove (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// DeleteMaintenanceUpdateResponse is the response after removing an update.
+message DeleteMaintenanceUpdateResponse {
   // Whether the deletion was successful.
   bool success = 1;
 }

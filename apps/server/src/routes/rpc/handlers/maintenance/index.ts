@@ -1,12 +1,15 @@
 import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import type { MaintenanceService } from "@openstatus/proto/maintenance/v1";
 import {
+  addMaintenanceUpdate,
   createMaintenance,
   deleteMaintenance,
+  deleteMaintenanceUpdate,
   getMaintenance,
   listMaintenances,
   notifyMaintenance,
   updateMaintenance,
+  updateMaintenanceUpdate,
 } from "@openstatus/services/maintenance";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
@@ -14,8 +17,13 @@ import { getRpcContext } from "../../interceptors";
 import {
   dbMaintenanceToProto,
   dbMaintenanceToProtoSummary,
+  dbMaintenanceUpdateToProto,
 } from "./converters";
-import { invalidDateFormatError, maintenanceIdRequiredError } from "./errors";
+import {
+  invalidDateFormatError,
+  maintenanceIdRequiredError,
+  maintenanceUpdateIdRequiredError,
+} from "./errors";
 
 function parseDate(dateString: string): Date {
   const date = new Date(dateString);
@@ -27,14 +35,8 @@ function parseDate(dateString: string): Date {
 
 function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
   return ids.map((id) => {
-    // `Number.parseInt(id, 10)` rather than `Number(id)` — `Number("")`
-    // is `0` (finite!), so the previous guard silently coerced an
-    // empty-string id into component 0 and the service's
-    // `NotFoundError` ended up as a misleading 404 on the wire.
-    // `parseInt` returns NaN for `""`, which fails the finite check
-    // and surfaces the correct `InvalidArgument` here.
-    const n = Number.parseInt(id, 10);
-    if (!Number.isFinite(n)) {
+    const n = Number(id);
+    if (id.trim() === "" || !Number.isSafeInteger(n)) {
       throw new ConnectError(
         `Invalid page component id: "${id}"`,
         Code.InvalidArgument,
@@ -50,7 +52,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
       const rpcCtx = getRpcContext(ctx);
       const sCtx = toServiceCtx(rpcCtx);
 
-      const record = await createMaintenance({
+      const result = await createMaintenance({
         ctx: sCtx,
         input: {
           title: req.title,
@@ -76,7 +78,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
         // that affordance.
         await notifyMaintenance({
           ctx: sCtx,
-          input: { maintenanceId: record.id },
+          input: { maintenanceUpdateId: result.initialUpdate.id },
         });
       }
 
@@ -85,12 +87,13 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
       // createNotification.
       const full = await getMaintenance({
         ctx: sCtx,
-        input: { id: record.id },
+        input: { id: result.maintenance.id },
       });
       return {
         maintenance: dbMaintenanceToProto(
           full,
           full.pageComponentIds.map(String),
+          full.updates,
         ),
       };
     } catch (err) {
@@ -112,6 +115,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
         maintenance: dbMaintenanceToProto(
           full,
           full.pageComponentIds.map(String),
+          full.updates,
         ),
       };
     } catch (err) {
@@ -179,6 +183,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
         maintenance: dbMaintenanceToProto(
           full,
           full.pageComponentIds.map(String),
+          full.updates,
         ),
       };
     } catch (err) {
@@ -193,6 +198,71 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
         throw maintenanceIdRequiredError();
       }
       await deleteMaintenance({
+        ctx: toServiceCtx(rpcCtx),
+        input: { id: Number(req.id) },
+      });
+      return { success: true };
+    } catch (err) {
+      toConnectError(err);
+    }
+  },
+
+  async addMaintenanceUpdate(req, ctx) {
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      const sCtx = toServiceCtx(rpcCtx);
+      if (!req.maintenanceId?.trim()) {
+        throw maintenanceIdRequiredError();
+      }
+      const result = await addMaintenanceUpdate({
+        ctx: sCtx,
+        input: {
+          maintenanceId: Number(req.maintenanceId),
+          message: req.message,
+          date: req.date ? parseDate(req.date) : undefined,
+        },
+      });
+      if (req.notify) {
+        await notifyMaintenance({
+          ctx: sCtx,
+          input: { maintenanceUpdateId: result.maintenanceUpdate.id },
+        });
+      }
+      return {
+        maintenanceUpdate: dbMaintenanceUpdateToProto(result.maintenanceUpdate),
+      };
+    } catch (err) {
+      toConnectError(err);
+    }
+  },
+
+  async updateMaintenanceUpdate(req, ctx) {
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      if (!req.id?.trim()) {
+        throw maintenanceUpdateIdRequiredError();
+      }
+      const update = await updateMaintenanceUpdate({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          id: Number(req.id),
+          message: req.message,
+          date: req.date ? parseDate(req.date) : undefined,
+        },
+      });
+      return { maintenanceUpdate: dbMaintenanceUpdateToProto(update) };
+    } catch (err) {
+      toConnectError(err);
+    }
+  },
+
+  async deleteMaintenanceUpdate(req, ctx) {
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      if (!req.id?.trim()) {
+        throw maintenanceUpdateIdRequiredError();
+      }
+      await deleteMaintenanceUpdate({
         ctx: toServiceCtx(rpcCtx),
         input: { id: Number(req.id) },
       });

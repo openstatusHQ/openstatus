@@ -1,10 +1,10 @@
-import { maintenance } from "@openstatus/db/src/schema";
+import { maintenance, maintenanceUpdate } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError } from "../errors";
-import type { Maintenance } from "../types";
+import type { Maintenance, MaintenanceUpdate } from "../types";
 import {
   assertPageInWorkspace,
   updatePageComponentAssociations,
@@ -12,10 +12,15 @@ import {
 } from "./internal";
 import { CreateMaintenanceInput } from "./schemas";
 
+export type CreateMaintenanceResult = {
+  maintenance: Maintenance;
+  initialUpdate: MaintenanceUpdate;
+};
+
 export async function createMaintenance(args: {
   ctx: ServiceContext;
   input: CreateMaintenanceInput;
-}): Promise<Maintenance> {
+}): Promise<CreateMaintenanceResult> {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = CreateMaintenanceInput.parse(args.input);
@@ -52,6 +57,16 @@ export async function createMaintenance(args: {
       .returning()
       .get();
 
+    const initialUpdate = await tx
+      .insert(maintenanceUpdate)
+      .values({
+        maintenanceId: record.id,
+        message: input.message,
+        date: record.createdAt ?? input.from,
+      })
+      .returning()
+      .get();
+
     await updatePageComponentAssociations({
       tx,
       maintenanceId: record.id,
@@ -65,6 +80,14 @@ export async function createMaintenance(args: {
       after: record,
     });
 
-    return record;
+    await emitAudit(tx, ctx, {
+      action: "maintenance_update.create",
+      entityType: "maintenance_update",
+      entityId: initialUpdate.id,
+      after: initialUpdate,
+      metadata: { maintenanceId: record.id },
+    });
+
+    return { maintenance: record, initialUpdate };
   });
 }
