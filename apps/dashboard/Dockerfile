@@ -22,6 +22,7 @@ ENV \
     UPSTASH_REDIS_REST_URL="https://test.upstash.io" \
     UNKEY_TOKEN="test" \
     SELF_HOST="true" \
+    NEXT_PUBLIC_SELF_HOST="true" \
     UNKEY_API_ID="test" \
     STRIPE_SECRET_KEY="test" \
     NEXT_PUBLIC_OPENPANEL_CLIENT_ID="test" \
