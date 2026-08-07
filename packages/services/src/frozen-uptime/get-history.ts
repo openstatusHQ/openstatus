@@ -386,8 +386,8 @@ export async function getUptimeHistory(args: {
       uptime:
         uptimes.length > 0
           ? Math.floor(
-              (uptimes.reduce((a, b) => a + b, 0) / uptimes.length) * 100,
-            ) / 100
+              (uptimes.reduce((a, b) => a + b, 0) / uptimes.length) * 1_000,
+            ) / 1_000
           : null,
       reports: seen.size,
     };

@@ -143,7 +143,7 @@ export function formatMs(value: number | null | undefined): string {
 }
 
 export function formatPercent(ratio: number): string {
-  return `${(ratio * 100).toFixed(2)}%`;
+  return `${(ratio * 100).toFixed(3)}%`;
 }
 
 /** Build the public-facing canonical (HTML) URL for a path under a page. */
