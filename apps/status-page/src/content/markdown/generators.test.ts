@@ -596,7 +596,7 @@ describe("generateMonitor", () => {
     expect(md).toContain("| Global latency (p75) | 200ms – 300ms |");
     expect(md).toContain("| Region latency | 2 regions · fastest: iad |");
     expect(md).toMatch(
-      /\| Uptime \(last 7 days\) \| 97\.50+% · 200 checks \|/,
+      /\| Uptime \(last 7 days\) \| 97\.500?% · 200 checks \|/,
     );
   });
 
