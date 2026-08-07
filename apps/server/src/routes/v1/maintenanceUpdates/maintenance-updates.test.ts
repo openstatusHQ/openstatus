@@ -9,7 +9,7 @@ const headers = {
 };
 
 test("maintenance update REST CRUD", async () => {
-  const created = await app.request("/v1/maintenanceUpdates", {
+  const created = await app.request("/v1/maintenance_update", {
     method: "POST",
     headers,
     body: JSON.stringify({
@@ -21,12 +21,12 @@ test("maintenance update REST CRUD", async () => {
   expect(created.status).toBe(200);
   const update = await created.json();
 
-  const fetched = await app.request(`/v1/maintenanceUpdates/${update.id}`, {
+  const fetched = await app.request(`/v1/maintenance_update/${update.id}`, {
     headers,
   });
   expect(fetched.status).toBe(200);
 
-  const edited = await app.request(`/v1/maintenanceUpdates/${update.id}`, {
+  const edited = await app.request(`/v1/maintenance_update/${update.id}`, {
     method: "PUT",
     headers,
     body: JSON.stringify({ message: "Edited REST maintenance update" }),
@@ -34,7 +34,7 @@ test("maintenance update REST CRUD", async () => {
   expect(edited.status).toBe(200);
   expect((await edited.json()).message).toBe("Edited REST maintenance update");
 
-  const deleted = await app.request(`/v1/maintenanceUpdates/${update.id}`, {
+  const deleted = await app.request(`/v1/maintenance_update/${update.id}`, {
     method: "DELETE",
     headers,
   });
@@ -43,6 +43,6 @@ test("maintenance update REST CRUD", async () => {
 });
 
 test("maintenance update REST requires authentication", async () => {
-  const response = await app.request("/v1/maintenanceUpdates/1");
+  const response = await app.request("/v1/maintenance_update/1");
   expect(response.status).toBe(401);
 });

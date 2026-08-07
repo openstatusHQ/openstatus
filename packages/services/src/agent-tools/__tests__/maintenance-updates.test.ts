@@ -10,6 +10,20 @@ describe("maintenance update agent tools", () => {
     expect(agentTools.delete_maintenance_update.scope).toBe("write");
   });
 
+  test("rejects id-only update payloads", () => {
+    expect(
+      agentTools.update_maintenance_update.inputSchema.safeParse({
+        id: 1,
+      }).success,
+    ).toBe(false);
+    expect(
+      agentTools.update_maintenance_update.inputSchema.safeParse({
+        id: 1,
+        message: "corrected",
+      }).success,
+    ).toBe(true);
+  });
+
   test("requires an explicit notify decision when adding an update", () => {
     expect(
       agentTools.add_maintenance_update.inputSchema.safeParse({

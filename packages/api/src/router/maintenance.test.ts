@@ -246,6 +246,8 @@ test("maintenance update procedures provide full CRUD", async () => {
   });
   createdMaintenanceIds.push(created.id);
 
+  createdMaintenanceUpdateIds.push(created.initialUpdateId);
+
   const added = await caller.maintenance.createUpdate({
     maintenanceId: created.id,
     message: "Second update",

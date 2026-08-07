@@ -97,11 +97,7 @@ export async function GET(
         title: `${statusLabel("maintenance")} - ${maintenance.title}`,
         link: maintenanceUrl,
         description,
-        date:
-          updates[0]?.date ??
-          maintenance.updatedAt ??
-          maintenance.createdAt ??
-          new Date(),
+        date: maintenance.updatedAt ?? maintenance.createdAt ?? new Date(),
       });
     }
 

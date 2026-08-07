@@ -10,8 +10,10 @@ import {
   maintenancesToPageComponents,
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
+import { emitAudit } from "@openstatus/services";
 import { dispatchMaintenanceUpdate } from "@openstatus/subscriptions";
 
+import { tb } from "@/libs/clients";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 
@@ -56,11 +58,25 @@ const postRoute = createRoute({
 
 export function registerPostMaintenance(api: typeof maintenancesApi) {
   return api.openapi(postRoute, async (c) => {
-    const workspaceId = c.get("workspace").id;
+    const workspace = c.get("workspace");
+    const workspaceId = workspace.id;
+    const apiKey = c.get("apiKey");
     const input = c.req.valid("json");
-    const limits = c.get("workspace").limits;
+    const limits = workspace.limits;
 
     const { monitorIds, pageId } = input;
+
+    const serviceCtx = {
+      workspace,
+      actor: {
+        type: "apiKey" as const,
+        keyId: apiKey.id,
+        userId: apiKey.createdById,
+        scopes: apiKey.scopes,
+      },
+      requestId: c.get("requestId"),
+      tb,
+    };
 
     if (input.from > input.to) {
       throw new OpenStatusApiError({
@@ -120,6 +136,14 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
         })
         .returning()
         .get();
+
+      await emitAudit(tx, serviceCtx, {
+        action: "maintenance_update.create",
+        entityType: "maintenance_update",
+        entityId: initialUpdate.id,
+        after: initialUpdate,
+        metadata: { maintenanceId: newMaintenance.id },
+      });
 
       if (monitorIds?.length && newMaintenance.pageId) {
         // Get page components for the given monitors and page

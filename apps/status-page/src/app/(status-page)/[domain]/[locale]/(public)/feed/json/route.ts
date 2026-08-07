@@ -78,7 +78,7 @@ export async function GET(
         return {
           id: maintenance.id,
           name: maintenance.title,
-          message: updates.length === 0 ? maintenance.message : undefined,
+          message: maintenance.message,
           maintenanceUpdates: updates.map((update) => ({
             id: update.id,
             message: update.message,

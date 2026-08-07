@@ -162,7 +162,7 @@ api.route("/status_report", statusReportsApi);
 api.route("/status_report_update", statusReportUpdatesApi);
 api.route("/incident", incidentsApi);
 api.route("/maintenance", maintenancesApi);
-api.route("/maintenanceUpdates", maintenanceUpdatesApi);
+api.route("/maintenance_update", maintenanceUpdatesApi);
 api.route("/notification", notificationsApi);
 api.route("/page_subscriber", pageSubscribersApi);
 api.route("/check", checkApi);

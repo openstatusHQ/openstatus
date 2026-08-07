@@ -15,12 +15,14 @@ import { NotifyMaintenanceInput } from "./schemas";
  *
  * Enforces:
  *   - Workspace owns the target update (via its parent maintenance).
- *   - Plan has `status-subscribers` enabled — otherwise no-op.
+ *   - Plan has `status-subscribers` enabled — otherwise returns false.
+ *
+ * Returns true only when a dispatch actually ran.
  */
 export async function notifyMaintenance(args: {
   ctx: ServiceContext;
   input: NotifyMaintenanceInput;
-}): Promise<void> {
+}): Promise<boolean> {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = NotifyMaintenanceInput.parse(args.input);
@@ -46,8 +48,9 @@ export async function notifyMaintenance(args: {
   }
 
   if (!ctx.workspace.limits["status-subscribers"]) {
-    return;
+    return false;
   }
 
   await dispatchMaintenanceUpdate(input.maintenanceUpdateId);
+  return true;
 }

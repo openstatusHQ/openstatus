@@ -19,7 +19,11 @@ import {
   dbMaintenanceToProtoSummary,
   dbMaintenanceUpdateToProto,
 } from "./converters";
-import { invalidDateFormatError, maintenanceIdRequiredError } from "./errors";
+import {
+  invalidDateFormatError,
+  maintenanceIdRequiredError,
+  maintenanceUpdateIdRequiredError,
+} from "./errors";
 
 function parseDate(dateString: string): Date {
   const date = new Date(dateString);
@@ -31,14 +35,8 @@ function parseDate(dateString: string): Date {
 
 function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
   return ids.map((id) => {
-    // `Number.parseInt(id, 10)` rather than `Number(id)` — `Number("")`
-    // is `0` (finite!), so the previous guard silently coerced an
-    // empty-string id into component 0 and the service's
-    // `NotFoundError` ended up as a misleading 404 on the wire.
-    // `parseInt` returns NaN for `""`, which fails the finite check
-    // and surfaces the correct `InvalidArgument` here.
-    const n = Number.parseInt(id, 10);
-    if (!Number.isFinite(n)) {
+    const n = Number(id);
+    if (id.trim() === "" || !Number.isSafeInteger(n)) {
       throw new ConnectError(
         `Invalid page component id: "${id}"`,
         Code.InvalidArgument,
@@ -242,7 +240,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
     try {
       const rpcCtx = getRpcContext(ctx);
       if (!req.id?.trim()) {
-        throw maintenanceIdRequiredError();
+        throw maintenanceUpdateIdRequiredError();
       }
       const update = await updateMaintenanceUpdate({
         ctx: toServiceCtx(rpcCtx),
@@ -262,7 +260,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
     try {
       const rpcCtx = getRpcContext(ctx);
       if (!req.id?.trim()) {
-        throw maintenanceIdRequiredError();
+        throw maintenanceUpdateIdRequiredError();
       }
       await deleteMaintenanceUpdate({
         ctx: toServiceCtx(rpcCtx),

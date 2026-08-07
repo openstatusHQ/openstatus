@@ -194,11 +194,16 @@ export const maintenanceRouter = createTRPCRouter({
   updateUpdate: protectedProcedure
     .meta({ track: Events.UpdateMaintenanceUpdate })
     .input(
-      z.object({
-        id: z.number(),
-        message: z.string().optional(),
-        date: z.coerce.date().optional(),
-      }),
+      z
+        .object({
+          id: z.number(),
+          message: z.string().min(1).optional(),
+          date: z.coerce.date().optional(),
+        })
+        .refine(
+          (input) => input.message !== undefined || input.date !== undefined,
+          { message: "At least one field must be provided." },
+        ),
     )
     .mutation(async ({ ctx, input }) => {
       try {

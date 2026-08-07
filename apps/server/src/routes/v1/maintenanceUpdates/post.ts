@@ -46,10 +46,17 @@ export function registerPostMaintenanceUpdate(
       const ctx = toServiceContext(c);
       const result = await addMaintenanceUpdate({ ctx, input });
       if (input.notify) {
-        await notifyMaintenance({
-          ctx,
-          input: { maintenanceUpdateId: result.maintenanceUpdate.id },
-        });
+        try {
+          await notifyMaintenance({
+            ctx,
+            input: { maintenanceUpdateId: result.maintenanceUpdate.id },
+          });
+        } catch (err) {
+          console.warn(
+            "notifyMaintenance failed after create maintenance update",
+            err,
+          );
+        }
       }
       return c.json(
         MaintenanceUpdateSchema.parse(result.maintenanceUpdate),

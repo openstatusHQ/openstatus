@@ -10,7 +10,7 @@ export function addMaintenanceUpdateChanges(
     ...(applied ? [{ field: "id", after: applied.id }] : []),
     { field: "maintenanceId", after: input.maintenanceId },
     { field: "message", after: input.message },
-    { field: "date", after: input.date },
+    ...(input.date ? [{ field: "date", after: input.date }] : []),
     { field: "notify", after: applied?.notified ?? input.notify },
   ];
 }
@@ -28,5 +28,5 @@ export function updateMaintenanceUpdateChanges(
 export function deleteMaintenanceUpdateChanges(
   input: AgentToolInput<"delete_maintenance_update">,
 ): ChangeRow[] {
-  return [{ field: "id", before: input.id, after: undefined }];
+  return [{ field: "id", before: input.id }];
 }

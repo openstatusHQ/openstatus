@@ -60,6 +60,13 @@ const ListMaintenancesOutput = z.object({
       to: z.string(),
       pageId: z.number().int().nullable(),
       pageComponentIds: z.array(z.number().int()),
+      updates: z.array(
+        z.object({
+          id: z.number().int(),
+          message: z.string(),
+          date: z.string(),
+        }),
+      ),
     }),
   ),
   pagination: z.object({
@@ -76,7 +83,7 @@ export const listMaintenancesTool: AgentTool<
 > = {
   name: "list_maintenances",
   description:
-    "List maintenance windows in this workspace, newest first. Paginated via `page` (1-indexed) and `perPage`.",
+    "List maintenance windows in this workspace, newest first. Returns timeline update ids so edit/delete can target a specific entry. Paginated via `page` (1-indexed) and `perPage`.",
   scope: "read",
   destructive: false,
   inputSchema: ListMaintenancesInputShape,
@@ -101,6 +108,11 @@ export const listMaintenancesTool: AgentTool<
         to: m.to.toISOString(),
         pageId: m.pageId,
         pageComponentIds: m.pageComponentIds,
+        updates: m.updates.map((u) => ({
+          id: u.id,
+          message: u.message,
+          date: u.date.toISOString(),
+        })),
       })),
       pagination: {
         page,
@@ -149,6 +161,7 @@ const CreateMaintenanceOutput = z.object({
   from: z.string(),
   to: z.string(),
   pageId: z.number().int().nullable(),
+  initialUpdateId: z.number().int(),
   notified: z.boolean(),
 });
 
@@ -209,11 +222,10 @@ export const createMaintenanceTool: AgentTool<
     let notified = false;
     if (input.notify) {
       try {
-        await notifyMaintenance({
+        notified = await notifyMaintenance({
           ctx,
           input: { maintenanceUpdateId: result.initialUpdate.id },
         });
-        notified = true;
       } catch (err) {
         console.warn("notifyMaintenance failed after create_maintenance", err);
       }
@@ -224,6 +236,7 @@ export const createMaintenanceTool: AgentTool<
       from: result.maintenance.from.toISOString(),
       to: result.maintenance.to.toISOString(),
       pageId: result.maintenance.pageId,
+      initialUpdateId: result.initialUpdate.id,
       notified,
     };
   },
@@ -290,11 +303,10 @@ export const addMaintenanceUpdateTool: AgentTool<
     let notified = false;
     if (input.notify) {
       try {
-        await notifyMaintenance({
+        notified = await notifyMaintenance({
           ctx,
           input: { maintenanceUpdateId: result.maintenanceUpdate.id },
         });
-        notified = true;
       } catch (err) {
         console.warn(
           "notifyMaintenance failed after add_maintenance_update",
@@ -314,7 +326,12 @@ export const addMaintenanceUpdateTool: AgentTool<
 
 const UpdateMaintenanceUpdateInputShape = z
   .object({
-    id: z.number().int().describe("Maintenance update id."),
+    id: z
+      .number()
+      .int()
+      .describe(
+        "Maintenance update id from list_maintenances (or create/add result) — never guess.",
+      ),
     message: z
       .string()
       .min(1)
@@ -332,7 +349,7 @@ export const updateMaintenanceUpdateTool: AgentTool<
 > = {
   name: "update_maintenance_update",
   description:
-    "Edit an existing maintenance timeline entry. PUBLIC and AUDIT-LOGGED. Does not notify subscribers.",
+    "Edit an existing maintenance timeline entry. PUBLIC and AUDIT-LOGGED. Does not notify subscribers. The update id MUST come from list_maintenances (or a prior create/add result).",
   scope: "write",
   destructive: true,
   inputSchema: UpdateMaintenanceUpdateInputShape,
@@ -368,7 +385,12 @@ export const updateMaintenanceUpdateTool: AgentTool<
 };
 
 const DeleteMaintenanceUpdateInputShape = z.object({
-  id: z.number().int().describe("Maintenance update id."),
+  id: z
+    .number()
+    .int()
+    .describe(
+      "Maintenance update id from list_maintenances (or create/add result) — never guess.",
+    ),
 });
 const DeleteMaintenanceUpdateOutput = z.object({
   id: z.number().int(),
@@ -381,7 +403,7 @@ export const deleteMaintenanceUpdateTool: AgentTool<
 > = {
   name: "delete_maintenance_update",
   description:
-    "Delete a maintenance timeline entry. PUBLIC, AUDIT-LOGGED, AND IRREVERSIBLE. A maintenance must retain at least one update.",
+    "Delete a maintenance timeline entry. PUBLIC, AUDIT-LOGGED, AND IRREVERSIBLE. A maintenance must retain at least one update. The update id MUST come from list_maintenances (or a prior create/add result).",
   scope: "write",
   destructive: true,
   inputSchema: DeleteMaintenanceUpdateInputShape,

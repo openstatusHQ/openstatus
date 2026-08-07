@@ -390,6 +390,50 @@ describe("updateMaintenance", () => {
       ).rejects.toBeInstanceOf(ConflictError);
     });
   });
+
+  test("syncs message onto the latest update child and audits", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { maintenance: record, initialUpdate } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-message-sync`,
+          message: "initial",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+
+      const updated = await updateMaintenance({
+        ctx,
+        input: { id: record.id, message: "synced message" },
+      });
+      expect(updated.message).toBe("synced message");
+
+      const child = await tx
+        .select()
+        .from(maintenanceUpdate)
+        .where(eq(maintenanceUpdate.id, initialUpdate.id))
+        .get();
+      expect(child?.message).toBe("synced message");
+
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "maintenance.update",
+        entityType: "maintenance",
+        entityId: record.id,
+        db: tx,
+      });
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "maintenance_update.update",
+        entityType: "maintenance_update",
+        entityId: initialUpdate.id,
+        db: tx,
+      });
+    });
+  });
 });
 
 describe("deleteMaintenance", () => {
@@ -696,14 +740,51 @@ describe("notifyMaintenance", () => {
         },
       });
 
-      await notifyMaintenance({
+      const dispatched = await notifyMaintenance({
         ctx: { ...teamCtx, db: tx },
         input: { maintenanceUpdateId: initialUpdate.id },
       });
+      expect(dispatched).toBe(true);
 
       expect(subscriptionSpies?.dispatchMaintenanceUpdate.mock.calls).toEqual([
         [initialUpdate.id],
       ]);
+    });
+  });
+
+  test("returns false when the plan disables status-subscribers", async () => {
+    await withTestTransaction(async (tx) => {
+      const { initialUpdate } = await createMaintenance({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          title: `${TEST_PREFIX}-notify-gated`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+
+      const gatedCtx: ServiceContext = {
+        ...teamCtx,
+        db: tx,
+        workspace: {
+          ...teamCtx.workspace,
+          limits: {
+            ...teamCtx.workspace.limits,
+            "status-subscribers": false,
+          },
+        },
+      };
+
+      const dispatched = await notifyMaintenance({
+        ctx: gatedCtx,
+        input: { maintenanceUpdateId: initialUpdate.id },
+      });
+      expect(dispatched).toBe(false);
+      expect(subscriptionSpies?.dispatchMaintenanceUpdate.mock.calls).toEqual(
+        [],
+      );
     });
   });
 });

@@ -31,12 +31,11 @@ export function throwApiError(error: unknown): never {
           ? "FORBIDDEN"
           : error.code === "UNAUTHORIZED"
             ? "UNAUTHORIZED"
-            : error.code === "CONFLICT" ||
-                error.code === "VALIDATION" ||
-                error.code === "PRECONDITION_FAILED"
-              ? "BAD_REQUEST"
-              : error.code === "LIMIT_EXCEEDED"
-                ? "CONFLICT"
+            : error.code === "CONFLICT" || error.code === "LIMIT_EXCEEDED"
+              ? "CONFLICT"
+              : error.code === "VALIDATION" ||
+                  error.code === "PRECONDITION_FAILED"
+                ? "BAD_REQUEST"
                 : "INTERNAL_SERVER_ERROR";
     throw new OpenStatusApiError({ code, message: error.message });
   }

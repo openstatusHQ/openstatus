@@ -45,11 +45,15 @@ export type AddMaintenanceUpdateInput = z.infer<
   typeof AddMaintenanceUpdateInput
 >;
 
-export const UpdateMaintenanceUpdateInput = z.object({
-  id: z.number().int(),
-  message: z.string().min(1).optional(),
-  date: z.coerce.date().optional(),
-});
+export const UpdateMaintenanceUpdateInput = z
+  .object({
+    id: z.number().int(),
+    message: z.string().min(1).optional(),
+    date: z.coerce.date().optional(),
+  })
+  .refine((input) => input.message !== undefined || input.date !== undefined, {
+    message: "At least one field must be provided.",
+  });
 export type UpdateMaintenanceUpdateInput = z.infer<
   typeof UpdateMaintenanceUpdateInput
 >;
