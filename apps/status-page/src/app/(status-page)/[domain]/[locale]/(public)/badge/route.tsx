@@ -1,7 +1,6 @@
+import type { Status } from "@openstatus/tracker";
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
-
-import type { Status } from "@openstatus/tracker";
 
 import { getBadgeStatus } from "@/lib/badge-status";
 
