@@ -9,6 +9,7 @@ import {
 } from "@std/testing/bdd";
 
 import { app } from "../../index";
+import { STATUS_RATE_LIMIT } from "./status";
 
 const testRedisStore = (globalThis as Record<string, unknown>)
   .__testRedisStore as Map<string, string> | undefined;
@@ -471,6 +472,76 @@ describe("Status Route: Maintenance detection", () => {
 
     // Clean up
     await db.delete(maintenance).where(eq(maintenance.id, futureMaint.id));
+  });
+});
+
+describe("Status Route: Rate limiting", () => {
+  test("returns 429 once the per-IP limit is exceeded", async () => {
+    const headers = { "x-forwarded-for": "203.0.113.10" };
+    for (let i = 0; i < STATUS_RATE_LIMIT; i++) {
+      const res = await app.request(
+        `/public/status/${TEST_PREFIX}-page`,
+        { headers },
+      );
+      expect(res.status).toBe(200);
+    }
+
+    const res = await app.request(`/public/status/${TEST_PREFIX}-page`, {
+      headers,
+    });
+    expect(res.status).toBe(429);
+
+    const data = await res.json();
+    expect(data.status).toBe("too_many_requests");
+  });
+
+  test("keys per-IP, so a different IP is not limited", async () => {
+    const exhaustedIp = { "x-forwarded-for": "198.51.100.7" };
+    for (let i = 0; i < STATUS_RATE_LIMIT; i++) {
+      await app.request(`/public/status/${TEST_PREFIX}-page`, {
+        headers: exhaustedIp,
+      });
+    }
+
+    expect(
+      (await app.request(`/public/status/${TEST_PREFIX}-page`, {
+        headers: exhaustedIp,
+      })).status,
+    ).toBe(429);
+
+    const other = await app.request(`/public/status/${TEST_PREFIX}-page`, {
+      headers: { "x-forwarded-for": "198.51.100.8" },
+    });
+    expect(other.status).toBe(200);
+    expect(await other.json()).toEqual({ status: "operational" });
+  });
+
+  test("keeps limiter counters out of the slug cache namespace", async () => {
+    const slug = "203.0.113.9";
+    const collisionPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: "Slug/IP Collision Page",
+        description: "Page whose slug equals a client IP string",
+        slug,
+        customDomain: "",
+        accessType: "public",
+      })
+      .returning()
+      .get();
+
+    const headers = { "x-forwarded-for": slug };
+    for (let i = 0; i < 5; i++) {
+      const res = await app.request(`/public/status/${slug}`, { headers });
+      expect(res.status).toBe(200);
+    }
+
+    expect(testRedisStore?.get(`rl:${slug}`)).toBe("5");
+    // The raw-slug key holds the cached status, not a limiter counter.
+    expect(testRedisStore?.get(slug)).toBe("operational");
+
+    await db.delete(page).where(eq(page.id, collisionPage.id));
   });
 });
 

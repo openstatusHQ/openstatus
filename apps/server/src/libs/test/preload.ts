@@ -145,6 +145,18 @@ mock.module("@/libs/clients", () => ({
       return Promise.resolve(value);
     },
     expire: (_key: string, _seconds: number) => Promise.resolve(1),
+    incr: (key: string) => {
+      const current = Number(testRedisStore.get(key));
+      const next = (Number.isNaN(current) ? 0 : current) + 1;
+      testRedisStore.set(key, String(next));
+      return Promise.resolve(next);
+    },
+    decr: (key: string) => {
+      const current = Number(testRedisStore.get(key));
+      const next = (Number.isNaN(current) ? 0 : current) - 1;
+      testRedisStore.set(key, String(next));
+      return Promise.resolve(next);
+    },
   },
 }));
 
