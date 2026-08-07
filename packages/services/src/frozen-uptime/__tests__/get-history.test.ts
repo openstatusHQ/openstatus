@@ -673,7 +673,8 @@ describe("getUptimeHistory", () => {
       // denominator = elapsed 36h (not 48h): 2h down → ~94.44, not 95.83
       const lastDayEnd = Date.parse(`${key(0)}-02T23:59:59.999Z`);
       const total = 2 * MS_PER_DAY - (lastDayEnd - injectedNow.getTime());
-      const expected = Math.floor(((total - twoHours) / total) * 100_000) / 1_000;
+      const expected =
+        Math.floor(((total - twoHours) / total) * 100_000) / 1_000;
       expect(res.rows[0].months[key(0)]).toBe(expected);
       expect(expected).toBeLessThan(95);
     });
