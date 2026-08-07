@@ -1,5 +1,6 @@
 import type { Page } from "@openstatus/db/src/schema";
 
+import { isSaasSubdomain } from "../domain";
 import { isPasswordAuthorized } from "./access-predicates";
 import { buildExternalPath } from "./build-external-path";
 import type { Action, ComposeInput } from "./types";
@@ -51,7 +52,7 @@ export function resolvePasswordAction({
   });
   const isOnLogin = pathname.endsWith("/login");
   const needsCustomDomainRedirect =
-    !isSelfHosted && !!page.customDomain && host !== `${page.slug}.stpg.dev`;
+    !isSelfHosted && !isSaasSubdomain(host, page.slug) && !!page.customDomain;
 
   // Gate-in: wrong password and not already on /login → send to login
   if (!authorized && !isOnLogin) {

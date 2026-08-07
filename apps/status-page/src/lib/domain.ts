@@ -1,9 +1,24 @@
-import type { NextRequest } from "next/server";
-
 // Custom-domain lookups exact-match page.customDomain, which is stored without a
 // port; an inbound host like "status.acme.com:8080" must be normalized first.
 export const stripHostPort = (host?: string | null) =>
   host ? host.replace(/:\d+$/, "") : (host ?? null);
+
+/**
+ * Returns true when the instance is running in self-hosted mode.
+ */
+export function isSelfHosted(): boolean {
+  return process.env.SELF_HOST === "true";
+}
+
+/**
+ * Returns true when the host matches the expected SaaS subdomain pattern
+ * ({slug}.stpg.dev) and the instance is NOT in self-hosted mode.
+ */
+export function isSaasSubdomain(host: string | null, slug: string): boolean {
+  if (isSelfHosted()) return false;
+  if (!host) return false;
+  return host === `${slug}.stpg.dev`;
+}
 
 export const getValidSubdomain = (host?: string | null) => {
   let subdomain: string | null = null;
@@ -13,9 +28,7 @@ export const getValidSubdomain = (host?: string | null) => {
   }
 
   // Exclude localhost and IP addresses from being treated as subdomains
-  if (
-    host?.match(/^(localhost|127\\.0\\.0\\.1|::1|\\d+\\.\\d+\\.\\d+\\.\\d+)/)
-  ) {
+  if (host?.match(/^(localhost|127\.0\.0\.1|::1|\d+\.\d+\.\d+\.\d+)/)) {
     return null;
   }
 
@@ -46,45 +59,4 @@ export const getValidSubdomain = (host?: string | null) => {
     subdomain = host;
   }
   return subdomain;
-};
-
-export const getValidCustomDomain = (req: NextRequest | Request) => {
-  const url = "nextUrl" in req ? req.nextUrl.clone() : new URL(req.url);
-  const headers = req.headers;
-  const host = headers.get("x-forwarded-host");
-
-  let prefix = "";
-  let type: "hostname" | "pathname";
-
-  const hostnames = host?.split(/[.:]/) ?? url.host.split(/[.:]/);
-  const pathnames = url.pathname.split("/");
-
-  const subdomain = getValidSubdomain(url.host);
-  console.log({
-    hostnames,
-    pathnames,
-    host,
-    urlHost: url.host,
-    subdomain,
-  });
-
-  if (
-    hostnames.length > 2 &&
-    hostnames[0] !== "www" &&
-    !url.host.endsWith(".vercel.app")
-  ) {
-    prefix = hostnames[0].toLowerCase();
-    type = "hostname";
-  } else {
-    prefix = pathnames[1].toLowerCase();
-    type = "pathname";
-  }
-
-  if (subdomain !== null) {
-    prefix = subdomain.toLowerCase();
-  }
-
-  console.log({ type, prefix });
-
-  return { type, prefix };
 };

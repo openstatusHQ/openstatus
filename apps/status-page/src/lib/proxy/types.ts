@@ -50,6 +50,12 @@ export interface ComposeInput {
   search: string;
   isSelfHosted: boolean;
   requestUrl: string;
+  /**
+   * Base URL for constructing redirects. In self-hosted mode with custom domains,
+   * this should be the custom domain URL so redirects preserve the custom domain.
+   * For rewrites, use requestUrl instead.
+   */
+  redirectBaseUrl: string;
   origin: string;
   cookiePassword: string | undefined;
   queryPassword: string | null;
