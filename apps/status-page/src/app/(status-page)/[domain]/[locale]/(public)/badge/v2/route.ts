@@ -1,6 +1,11 @@
-import type { Status } from "@openstatus/react";
-import { getStatus } from "@openstatus/react";
+import type { Status } from "@openstatus/tracker";
 import type { NextRequest } from "next/server";
+
+import { getBadgeStatus } from "@/lib/badge-status";
+
+// trpc httpBatchLink needs Node, matching the API status route
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const statusDictionary: Record<Status, { label: string; hexColor: string }> = {
   operational: {
@@ -59,13 +64,15 @@ export async function GET(
   props: { params: Promise<{ domain: string }> },
 ) {
   const params = await props.params;
-  const { status } = await getStatus(params.domain);
+  // Use shared helper that handles query, error handling, and status conversion
+  const status = await getBadgeStatus(params.domain);
   const theme = req.nextUrl.searchParams.get("theme") ?? "light";
   const variant = req.nextUrl.searchParams.get("variant") ?? "default";
   const size = req.nextUrl.searchParams.get("size") ?? "sm";
 
   const { height, padding, gap, radius, fontSize } = SIZE[size] ?? SIZE.sm;
-  const { label, hexColor } = statusDictionary[status];
+  const statusInfo = statusDictionary[status] ?? statusDictionary.unknown;
+  const { label, hexColor } = statusInfo;
   const textWidth = getTextWidth(label, fontSize);
   const width = Math.ceil(padding + textWidth + gap + radius * 2 + padding);
 
