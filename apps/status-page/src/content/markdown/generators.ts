@@ -12,7 +12,6 @@ import {
   formatDay,
   formatDayTime,
   formatMs,
-  formatPercent,
   formatStamp,
   frontmatter,
   humanDuration,
@@ -609,9 +608,10 @@ export function generateMonitor(
     { success: 0, degraded: 0, error: 0 },
   );
   const totalChecks = totals.success + totals.degraded + totals.error;
+  const successfulChecks = totals.success + totals.degraded;
   const uptime =
     totalChecks > 0
-      ? formatPercent((totals.success + totals.degraded) / totalChecks)
+      ? `${((successfulChecks / totalChecks) * 100).toFixed(2)}%`
       : "N/A";
 
   // Per-region p75 (mean across the window).
