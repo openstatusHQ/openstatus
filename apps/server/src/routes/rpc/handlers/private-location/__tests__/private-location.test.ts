@@ -135,6 +135,10 @@ beforeAll(async () => {
     `${TEST_PREFIX}-to-delete`,
     entitledWorkspaceId,
   );
+  await db.insert(privateLocationToMonitors).values({
+    privateLocationId: locationToDeleteId,
+    monitorId: testMonitorId,
+  });
 });
 
 afterAll(async () => {
