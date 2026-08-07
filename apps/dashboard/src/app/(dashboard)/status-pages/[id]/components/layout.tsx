@@ -18,15 +18,9 @@ export default async function Layout({
   const { id } = await params;
   const queryClient = getQueryClient();
 
-  await Promise.all([
-    queryClient.prefetchQuery(
-      trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
-    ),
-    queryClient.prefetchQuery(trpc.monitor.list.queryOptions()),
-    queryClient.prefetchQuery(
-      trpc.pageComponent.list.queryOptions({ pageId: Number.parseInt(id) }),
-    ),
-  ]);
+  await queryClient.prefetchQuery(
+    trpc.pageComponent.list.queryOptions({ pageId: Number.parseInt(id) }),
+  );
   const defaultOpen = await getSidebarDefaultOpen(RIGHT_SIDEBAR_COOKIE, false);
 
   return (

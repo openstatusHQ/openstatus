@@ -49,6 +49,7 @@ async function HydrateSidebar({ children }: { children: React.ReactNode }) {
   await Promise.all([
     queryClient.prefetchQuery(trpc.page.list.queryOptions()),
     queryClient.prefetchQuery(trpc.monitor.list.queryOptions()),
+    queryClient.prefetchQuery(trpc.notification.list.queryOptions()),
     queryClient.prefetchQuery(trpc.workspace.get.queryOptions()),
     queryClient.prefetchQuery(trpc.workspace.list.queryOptions()),
     queryClient.prefetchQuery(trpc.user.get.queryOptions()),

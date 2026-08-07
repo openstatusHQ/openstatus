@@ -16,10 +16,7 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const queryClient = getQueryClient();
-  await Promise.all([
-    queryClient.prefetchQuery(trpc.notification.list.queryOptions()),
-    queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions()),
-  ]);
+  await queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions());
   return (
     <HydrateClient>
       <div>

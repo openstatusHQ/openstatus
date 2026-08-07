@@ -14,7 +14,6 @@ export default async function Page({
 
   await Promise.all([
     searchParamsCache.parse(searchParams),
-    queryClient.prefetchQuery(trpc.monitor.list.queryOptions()),
     queryClient.prefetchQuery(trpc.monitorTag.list.queryOptions()),
   ]);
 

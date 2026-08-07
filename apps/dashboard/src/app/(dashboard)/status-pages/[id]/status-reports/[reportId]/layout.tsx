@@ -7,14 +7,9 @@ export default async function Layout({
   children: React.ReactNode;
   params: Promise<{ id: string; reportId: string }>;
 }) {
-  const { id, reportId } = await params;
-  await Promise.all([
-    fetchQueryOrNotFound(
-      trpc.statusReport.get.queryOptions({ id: Number.parseInt(reportId) }),
-    ),
-    fetchQueryOrNotFound(
-      trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
-    ),
-  ]);
+  const { reportId } = await params;
+  await fetchQueryOrNotFound(
+    trpc.statusReport.get.queryOptions({ id: Number.parseInt(reportId) }),
+  );
   return <HydrateClient>{children}</HydrateClient>;
 }
