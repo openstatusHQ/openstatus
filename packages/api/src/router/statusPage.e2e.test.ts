@@ -934,6 +934,298 @@ describe("statusPage.get endpoint validation", () => {
   });
 });
 
+describe("statusPage.get monitors sorting", () => {
+  const sortingTestSlug = "monitors-sorting-test-page";
+  let sortingTestPageId: number;
+  let sortingTestWorkspaceId: number;
+  let group1Id: number;
+  let group2Id: number;
+
+  beforeAll(async () => {
+    // Clean up any existing test data
+    await db.delete(page).where(eq(page.slug, sortingTestSlug));
+
+    // Use workspace id 1 from seed data
+    const existingWorkspace = await db.query.workspace.findFirst({
+      where: eq(workspace.id, 1),
+    });
+
+    if (!existingWorkspace) {
+      throw new Error("Test workspace not found");
+    }
+
+    sortingTestWorkspaceId = existingWorkspace.id;
+
+    // Create test page
+    const testPage = await db
+      .insert(page)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        title: "Monitors Sorting Test Page",
+        description: "Test page for monitors sorting",
+        slug: sortingTestSlug,
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    sortingTestPageId = testPage.id;
+
+    // Import pageComponentGroup schema
+    const { pageComponentGroup } = await import("@openstatus/db/src/schema");
+
+    // Create two monitor groups
+    const group1 = await db
+      .insert(pageComponentGroup)
+      .values({
+        pageId: sortingTestPageId,
+        name: "Group 1",
+        defaultOpen: true,
+      })
+      .returning()
+      .get();
+    group1Id = group1.id;
+
+    const group2 = await db
+      .insert(pageComponentGroup)
+      .values({
+        pageId: sortingTestPageId,
+        name: "Group 2",
+        defaultOpen: true,
+      })
+      .returning()
+      .get();
+    group2Id = group2.id;
+
+    // Create monitors with specific order/groupOrder values for testing sorting
+    // Group 1 should appear first (min order = 1)
+    // Group 2 should appear second (min order = 5)
+    // Ungrouped monitors interspersed based on their order values
+
+    // Monitor 1: Ungrouped, order = 0 (should be first)
+    const monitor1 = await db
+      .insert(monitor)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        url: "https://monitor1.test",
+        name: "Monitor 1 Ungrouped",
+        periodicity: "30s",
+        active: true,
+      })
+      .returning()
+      .get();
+
+    await db.insert(pageComponent).values({
+      pageId: sortingTestPageId,
+      monitorId: monitor1.id,
+      type: "monitor",
+      order: 0,
+      groupId: null,
+      groupOrder: null,
+    });
+
+    // Monitor 2: Group 1, order = 1, groupOrder = 1 (group should be second)
+    const monitor2 = await db
+      .insert(monitor)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        url: "https://monitor2.test",
+        name: "Monitor 2 Group 1 First",
+        periodicity: "30s",
+        active: true,
+      })
+      .returning()
+      .get();
+
+    await db.insert(pageComponent).values({
+      pageId: sortingTestPageId,
+      monitorId: monitor2.id,
+      type: "monitor",
+      order: 1,
+      groupId: group1Id,
+      groupOrder: 1,
+    });
+
+    // Monitor 3: Group 1, order = 3, groupOrder = 2 (should be second in group 1)
+    const monitor3 = await db
+      .insert(monitor)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        url: "https://monitor3.test",
+        name: "Monitor 3 Group 1 Second",
+        periodicity: "30s",
+        active: true,
+      })
+      .returning()
+      .get();
+
+    await db.insert(pageComponent).values({
+      pageId: sortingTestPageId,
+      monitorId: monitor3.id,
+      type: "monitor",
+      order: 3,
+      groupId: group1Id,
+      groupOrder: 2,
+    });
+
+    // Monitor 4: Ungrouped, order = 4 (should come after Group 1, before Group 2)
+    const monitor4 = await db
+      .insert(monitor)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        url: "https://monitor4.test",
+        name: "Monitor 4 Ungrouped",
+        periodicity: "30s",
+        active: true,
+      })
+      .returning()
+      .get();
+
+    await db.insert(pageComponent).values({
+      pageId: sortingTestPageId,
+      monitorId: monitor4.id,
+      type: "monitor",
+      order: 4,
+      groupId: null,
+      groupOrder: null,
+    });
+
+    // Monitor 5: Group 2, order = 5, groupOrder = 1 (group should be fourth)
+    const monitor5 = await db
+      .insert(monitor)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        url: "https://monitor5.test",
+        name: "Monitor 5 Group 2 First",
+        periodicity: "30s",
+        active: true,
+      })
+      .returning()
+      .get();
+
+    await db.insert(pageComponent).values({
+      pageId: sortingTestPageId,
+      monitorId: monitor5.id,
+      type: "monitor",
+      order: 5,
+      groupId: group2Id,
+      groupOrder: 1,
+    });
+
+    // Monitor 6: Group 2, order = 6, groupOrder = 0 (should be first in group 2)
+    const monitor6 = await db
+      .insert(monitor)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        url: "https://monitor6.test",
+        name: "Monitor 6 Group 2 Zero",
+        periodicity: "30s",
+        active: true,
+      })
+      .returning()
+      .get();
+
+    await db.insert(pageComponent).values({
+      pageId: sortingTestPageId,
+      monitorId: monitor6.id,
+      type: "monitor",
+      order: 6,
+      groupId: group2Id,
+      groupOrder: 0,
+    });
+  });
+
+  afterAll(async () => {
+    // Clean up test data
+    await db.delete(page).where(eq(page.slug, sortingTestSlug));
+  });
+
+  test("Monitors are sorted correctly by group and order", async () => {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+
+    const caller = edgeRouter.createCaller(ctx);
+    const result = await caller.statusPage.get({ slug: sortingTestSlug });
+
+    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
+
+    if (!result) {
+      throw new Error("Result should not be null");
+    }
+
+    expect(result.monitors.length).toBe(6);
+
+    // Expected order based on sorting logic:
+    // 1. Monitor 1 (ungrouped, order=0)
+    // 2. Monitor 2 (group1, order=1, groupOrder=1) - group1 min order = 1
+    // 3. Monitor 3 (group1, order=3, groupOrder=2)
+    // 4. Monitor 4 (ungrouped, order=4)
+    // 5. Monitor 6 (group2, order=6, groupOrder=0) - group2 min order = 5
+    // 6. Monitor 5 (group2, order=5, groupOrder=1)
+
+    expect(result.monitors[0].name).toBe("Monitor 1 Ungrouped");
+    expect(result.monitors[0].monitorGroupId).toBeNull();
+
+    expect(result.monitors[1].name).toBe("Monitor 2 Group 1 First");
+    expect(result.monitors[1].monitorGroupId).toBe(group1Id);
+
+    expect(result.monitors[2].name).toBe("Monitor 3 Group 1 Second");
+    expect(result.monitors[2].monitorGroupId).toBe(group1Id);
+
+    expect(result.monitors[3].name).toBe("Monitor 4 Ungrouped");
+    expect(result.monitors[3].monitorGroupId).toBeNull();
+
+    expect(result.monitors[4].name).toBe("Monitor 6 Group 2 Zero");
+    expect(result.monitors[4].monitorGroupId).toBe(group2Id);
+
+    expect(result.monitors[5].name).toBe("Monitor 5 Group 2 First");
+    expect(result.monitors[5].monitorGroupId).toBe(group2Id);
+  });
+
+  test("Grouped monitors are sorted by groupOrder within their group", async () => {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+
+    const caller = edgeRouter.createCaller(ctx);
+    const result = await caller.statusPage.get({ slug: sortingTestSlug });
+
+    if (!result) {
+      throw new Error("Result should not be null");
+    }
+
+    // Find all monitors in group 1
+    const group1Monitors = result.monitors.filter(
+      (m) => m.monitorGroupId === group1Id,
+    );
+
+    expect(group1Monitors.length).toBe(2);
+    expect(group1Monitors[0].groupOrder).toBe(1);
+    expect(group1Monitors[1].groupOrder).toBe(2);
+
+    // Find all monitors in group 2
+    const group2Monitors = result.monitors.filter(
+      (m) => m.monitorGroupId === group2Id,
+    );
+
+    expect(group2Monitors.length).toBe(2);
+    expect(group2Monitors[0].groupOrder).toBe(0);
+    expect(group2Monitors[1].groupOrder).toBe(1);
+  });
+});
+
 describe("statusPage.get gates incidents by barType (calendar manual mode)", () => {
   const barTypeSlug = "bar-type-incident-gating-test-page";
   let barTypePageId: number;
