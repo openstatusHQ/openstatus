@@ -76,7 +76,7 @@ export function GlobalUptimeSection({
                 });
               }
               if (k === "uptime") {
-                return formatPercentage(value ?? 0);
+                return formatPercentage(value ?? 0, 3);
               }
               if (k.startsWith("p")) {
                 return formatMilliseconds(value ?? 0);

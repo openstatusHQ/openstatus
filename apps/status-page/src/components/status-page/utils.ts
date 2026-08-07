@@ -129,7 +129,7 @@ export function getTotalUptime(item: ChartData[]) {
   );
 
   if (total === 0) return 100;
-  return Math.round((ok / total) * 10000) / 100;
+  return Math.round((ok / total) * 100_000) / 1_000;
 }
 
 export function getManualUptime(
@@ -143,5 +143,5 @@ export function getManualUptime(
 
   const total = days * 24 * 60 * 60 * 1000;
 
-  return Math.round(((total - duration) / total) * 10000) / 100;
+  return Math.round(((total - duration) / total) * 100_000) / 1_000;
 }

@@ -15,12 +15,12 @@ export function formatMilliseconds(ms: number) {
   }).format(ms)}`;
 }
 
-export function formatPercentage(value: number) {
+export function formatPercentage(value: number, fractionDigits = 2) {
   if (Number.isNaN(value)) return "100%";
   return `${Intl.NumberFormat("en-US", {
     style: "percent",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(value)}`;
 }
 

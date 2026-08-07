@@ -55,9 +55,9 @@ export function clipToCoverage(
   );
 }
 
-// floor so a single failed check never rounds up to 100.00
+// floor so a single failed check never rounds up to 100.000
 export function floorPct(ratio: number): number {
-  return Math.floor(ratio * 10_000) / 100;
+  return Math.floor(ratio * 100_000) / 1_000;
 }
 
 export function requestsTally(counts: CheckCounts[]): {

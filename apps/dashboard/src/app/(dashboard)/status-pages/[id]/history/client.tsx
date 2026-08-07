@@ -130,7 +130,7 @@ export function Client() {
               </MetricCardTitle>
             </MetricCardHeader>
             <MetricCardValue>
-              {summary.uptime === null ? "—" : `${summary.uptime.toFixed(2)}%`}
+              {summary.uptime === null ? "—" : `${summary.uptime.toFixed(3)}%`}
             </MetricCardValue>
           </MetricCard>
           <MetricCard>
