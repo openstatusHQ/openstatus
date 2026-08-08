@@ -7,6 +7,7 @@
 - [Node.js](https://nodejs.org/en/) >= 20.0.0 — runtime
 - [pnpm](https://pnpm.io/) >= 8 — monorepo package manager (see root `package.json` for pinned version)
 - [Deno](https://deno.com/) — runs the db env/migrate/seed scripts in `packages/db`
+- [Bun](https://bun.sh/) — optional, used by the utility scripts in `src/scripts`
 - [Turso CLI](https://docs.turso.tech/quickstart) — starts the local libSQL server via `pnpm --filter '@openstatus/db' dev`
 
 ### Environment
