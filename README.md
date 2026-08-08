@@ -106,6 +106,7 @@ ghcr.io/openstatushq/openstatus-checker:latest
 - [Node.js](https://nodejs.org/en/) >= 20.0.0
 - [pnpm](https://pnpm.io/) >= 10.26.0
 - [Bun](https://bun.sh/)
+- [Deno](https://deno.com/)
 - [Turso CLI](https://docs.turso.tech/quickstart).
 
 #### Dashboard
