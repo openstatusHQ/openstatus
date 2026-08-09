@@ -4,7 +4,8 @@ import { monitor, pageComponent } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { ForbiddenError } from "../errors";
+import { ConflictError, ForbiddenError } from "../errors";
+import { assertWithinLimit } from "../limits";
 import { assertGroupOnPage, assertPageInWorkspace } from "./internal";
 import { CreatePageComponentInput } from "./schemas";
 
@@ -27,6 +28,12 @@ export async function createPageComponent(args: {
       workspaceId: ctx.workspace.id,
     });
 
+    await assertWithinLimit({
+      tx,
+      workspaceId: ctx.workspace.id,
+      limit: "page-components",
+    });
+
     let name = input.name;
     if (input.type === "monitor") {
       // Soft-deleted monitors are excluded — a tombstoned monitor's id
@@ -45,6 +52,24 @@ export async function createPageComponent(args: {
         .get();
       if (!row) throw new ForbiddenError("Invalid monitor IDs.");
       name = name ?? row.name;
+
+      // `(pageId, monitorId)` is UNIQUE — pre-check so a duplicate reads as a
+      // conflict rather than a raw driver constraint failure.
+      const duplicate = await tx
+        .select({ id: pageComponent.id })
+        .from(pageComponent)
+        .where(
+          and(
+            eq(pageComponent.pageId, input.pageId),
+            eq(pageComponent.monitorId, row.id),
+          ),
+        )
+        .get();
+      if (duplicate) {
+        throw new ConflictError(
+          "This monitor is already a component on this page.",
+        );
+      }
     }
 
     if (input.groupId != null) {
@@ -76,7 +101,6 @@ export async function createPageComponent(args: {
       entityType: "page_component",
       entityId: created.id,
       after: created,
-      metadata: { pageId: input.pageId, type: input.type },
     });
 
     return created;

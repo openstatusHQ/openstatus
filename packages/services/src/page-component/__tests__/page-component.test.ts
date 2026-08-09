@@ -4,6 +4,7 @@ import {
   page,
   pageComponent,
   pageComponentGroup,
+  workspace,
 } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
@@ -16,7 +17,12 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DrizzleTx, ServiceContext } from "../../context";
-import { ForbiddenError, NotFoundError } from "../../errors";
+import {
+  ConflictError,
+  ForbiddenError,
+  LimitExceededError,
+  NotFoundError,
+} from "../../errors";
 import { createPageComponent } from "../create";
 import { deletePageComponent } from "../delete";
 import { listPageComponents } from "../list";
@@ -463,6 +469,72 @@ describe("createPageComponent", () => {
           },
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("rejects a monitor already attached to the page", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const input = {
+        pageId: testPageId,
+        type: "monitor" as const,
+        monitorId: teamMonitorId,
+        order: 0,
+      };
+
+      await createPageComponent({ ctx, input });
+      await expect(createPageComponent({ ctx, input })).rejects.toBeInstanceOf(
+        ConflictError,
+      );
+    });
+  });
+
+  test("enforces the workspace-wide page-components limit", async () => {
+    await withTestTransaction(async (tx) => {
+      // The cap counts every page in the workspace, so seed the quota on a
+      // second page and prove the create on `testPageId` still trips it.
+      const otherPage = await tx
+        .insert(page)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          title: `${TEST_PREFIX}-limit-page`,
+          description: "test",
+          slug: `${TEST_PREFIX}-limit-slug`,
+          customDomain: "",
+        })
+        .returning()
+        .get();
+
+      // `assertWithinLimit` re-reads the workspace row, so the override has
+      // to land in the DB rather than only on the in-memory ctx.
+      await tx
+        .update(workspace)
+        .set({ limits: JSON.stringify({ "page-components": 1 }) })
+        .where(eq(workspace.id, teamCtx.workspace.id));
+
+      const ctx = { ...teamCtx, db: tx };
+
+      await createPageComponent({
+        ctx,
+        input: {
+          pageId: otherPage.id,
+          type: "static",
+          name: `${TEST_PREFIX}-limit-1`,
+          order: 0,
+        },
+      });
+
+      await expect(
+        createPageComponent({
+          ctx,
+          input: {
+            pageId: testPageId,
+            type: "static",
+            name: `${TEST_PREFIX}-limit-2`,
+            order: 0,
+          },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
     });
   });
 });

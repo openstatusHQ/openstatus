@@ -4,6 +4,8 @@ import {
   monitorStatusTable,
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
+import { selectMonitorStatusSchema } from "@openstatus/db/src/schema/monitor_status/validation";
+import { z } from "zod";
 
 import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
@@ -41,20 +43,26 @@ export async function triggerMonitorRun(args: {
   const limit = ctx.workspace.limits["synthetic-checks"];
   const since = new Date();
   since.setMonth(since.getMonth() - 1);
+  // `monitor_run.created_at` is stored in seconds.
+  const sinceSeconds = Math.floor(since.getTime() / 1000);
 
-  const used = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(monitorRun)
-    .where(
-      and(
-        eq(monitorRun.workspaceId, ctx.workspace.id),
-        gte(monitorRun.createdAt, since),
-      ),
-    )
-    .get();
+  const countUsed = async () => {
+    const row = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(monitorRun)
+      .where(
+        and(
+          eq(monitorRun.workspaceId, ctx.workspace.id),
+          gte(monitorRun.createdAt, since),
+        ),
+      )
+      .get();
+    return row?.count ?? 0;
+  };
 
-  if ((used?.count ?? 0) >= limit) {
-    throw new LimitExceededError("synthetic-checks", limit);
+  const used = await countUsed();
+  if (used >= limit) {
+    throw new LimitExceededError("synthetic-checks", limit, used);
   }
 
   const row = await getMonitorInWorkspace({
@@ -68,25 +76,40 @@ export async function triggerMonitorRun(args: {
     throw new ValidationError(`Monitor ${input.id} has invalid data`);
   }
 
-  const statuses = await db
+  const statusRows = await db
     .select()
     .from(monitorStatusTable)
     .where(eq(monitorStatusTable.monitorId, row.id))
     .all();
 
-  const run = await db
-    .insert(monitorRun)
-    .values({
-      monitorId: row.id,
-      workspaceId: row.workspaceId,
-      runnedAt: new Date(),
-    })
-    .returning()
-    .get();
+  // Same guard the v1 trigger endpoint applies: a region/status outside the
+  // enum must not reach the checker payload.
+  const statuses = z.array(selectMonitorStatusSchema).safeParse(statusRows);
+  if (!statuses.success) {
+    throw new ValidationError(`Monitor ${input.id} has invalid region status`);
+  }
+
+  // The count above only produces a good error message — it can't hold the
+  // ceiling, since concurrent triggers all read it before any insert lands.
+  // The reservation below re-counts inside the INSERT, which SQLite executes
+  // under the write lock, so exactly `limit` rows can ever be created.
+  const reserved = await db.get<{ id: number }>(sql`
+    INSERT INTO monitor_run (monitor_id, workspace_id, runned_at)
+    SELECT ${row.id}, ${row.workspaceId}, ${Date.now()}
+    WHERE (
+      SELECT count(*) FROM monitor_run
+      WHERE workspace_id = ${ctx.workspace.id} AND created_at >= ${sinceSeconds}
+    ) < ${limit}
+    RETURNING id
+  `);
+
+  if (!reserved) {
+    throw new LimitExceededError("synthetic-checks", limit, await countUsed());
+  }
 
   return {
     monitor: parsed.data,
-    regionStatus: new Map(statuses.map((s) => [s.region, s.status])),
-    runId: run.id,
+    regionStatus: new Map(statuses.data.map((s) => [s.region, s.status])),
+    runId: reserved.id,
   };
 }

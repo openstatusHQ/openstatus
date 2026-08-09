@@ -5,7 +5,9 @@ export const CreatePageComponentGroupInput = z.object({
   name: z.string().min(1),
   defaultOpen: z.boolean().default(false),
 });
-export type CreatePageComponentGroupInput = z.infer<
+// `z.input`, not `z.infer` — the output type marks defaulted fields required,
+// which would force callers to pass what the schema already defaults.
+export type CreatePageComponentGroupInput = z.input<
   typeof CreatePageComponentGroupInput
 >;
 

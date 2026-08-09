@@ -467,7 +467,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       if (err instanceof LimitExceededError) {
         throw rateLimitExceededError(
           limits["synthetic-checks"],
-          limits["synthetic-checks"],
+          err.current ?? limits["synthetic-checks"],
         );
       }
       toConnectError(err);

@@ -37,7 +37,6 @@ export async function createPageComponentGroup(args: {
       entityType: "page_component_group",
       entityId: created.id,
       after: created,
-      metadata: { pageId: input.pageId },
     });
 
     return created;

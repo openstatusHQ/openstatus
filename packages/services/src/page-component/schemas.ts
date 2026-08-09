@@ -77,7 +77,9 @@ export const CreatePageComponentInput = z
     path: ["name"],
     message: "Static components require a name.",
   });
-export type CreatePageComponentInput = z.infer<typeof CreatePageComponentInput>;
+// `z.input`, not `z.infer` — the output type marks defaulted fields required,
+// which would force callers to pass what the schema already defaults.
+export type CreatePageComponentInput = z.input<typeof CreatePageComponentInput>;
 
 /** Partial patch — `undefined` leaves a field as-is, `null` clears it. */
 export const UpdatePageComponentInput = z.object({

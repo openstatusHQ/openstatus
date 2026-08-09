@@ -927,14 +927,57 @@ describe("unsubscribePageSubscriber by id", () => {
   test("an already-unsubscribed email is not found again", async () => {
     // The email lookup filters on `unsubscribedAt IS NULL`, so a repeat
     // call must not silently succeed against a stale row.
+    const email = "svc-unsub-ws-stale-test@example.com";
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+    await upsertSelfSignupSubscriber({ input: { email, pageId: PAGE_ID } });
+    const ctx = makeApiKeyCtx(WORKSPACE, { keyId: "k-write", userId: 1 });
+    const input = {
+      pageId: PAGE_ID,
+      identifier: { type: "email" as const, value: email },
+    };
+
     await expect(
-      unsubscribePageSubscriber({
-        ctx: makeApiKeyCtx(WORKSPACE, { keyId: "k-write", userId: 1 }),
-        input: {
-          pageId: PAGE_ID,
-          identifier: { type: "email", value: EMAILS.unsubWorkspaceEmail },
-        },
-      }),
-    ).rejects.toThrow();
+      unsubscribePageSubscriber({ ctx, input }),
+    ).resolves.toBeUndefined();
+    await expect(unsubscribePageSubscriber({ ctx, input })).rejects.toThrow();
+
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+  });
+
+  test("a repeat unsubscribe by id is a no-op", async () => {
+    const email = "svc-unsub-ws-byid-repeat-test@example.com";
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+    const sub = await upsertSelfSignupSubscriber({
+      input: { email, pageId: PAGE_ID },
+    });
+    const ctx = makeApiKeyCtx(WORKSPACE, { keyId: "k-write", userId: 1 });
+    const input = {
+      pageId: PAGE_ID,
+      identifier: { type: "id" as const, value: sub.id },
+    };
+
+    await unsubscribePageSubscriber({ ctx, input });
+    const first = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, sub.id),
+    });
+    await clearAuditLog(WORKSPACE_ID);
+
+    await expect(
+      unsubscribePageSubscriber({ ctx, input }),
+    ).resolves.toBeUndefined();
+
+    const second = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, sub.id),
+    });
+    expect(second?.unsubscribedAt).toEqual(first?.unsubscribedAt);
+
+    const rows = await readAuditLog({
+      workspaceId: WORKSPACE_ID,
+      entityType: "page_subscriber",
+      entityId: String(sub.id),
+    });
+    expect(rows).toHaveLength(0);
+
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
   });
 });

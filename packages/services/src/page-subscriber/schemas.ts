@@ -151,10 +151,13 @@ export type UnsubscribeSubscriberInput = z.infer<
  * email within one page.
  */
 export const UnsubscribePageSubscriberInput = z.object({
-  pageId: z.number().int(),
+  pageId: z.number().int().positive(),
   identifier: z.discriminatedUnion("type", [
-    z.object({ type: z.literal("id"), value: z.number().int() }),
-    z.object({ type: z.literal("email"), value: z.string().toLowerCase() }),
+    z.object({ type: z.literal("id"), value: z.number().int().positive() }),
+    z.object({
+      type: z.literal("email"),
+      value: z.email().toLowerCase(),
+    }),
   ]),
 });
 export type UnsubscribePageSubscriberInput = z.infer<

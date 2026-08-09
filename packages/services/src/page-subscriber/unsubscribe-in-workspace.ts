@@ -53,6 +53,11 @@ export async function unsubscribePageSubscriber(args: {
       throw new NotFoundError("page_subscriber", input.identifier.value);
     }
 
+    // Already unsubscribed (only reachable on the id path — the email filter
+    // excludes these). Returning here keeps the repeat call a true no-op
+    // instead of moving `unsubscribedAt` and emitting a second audit row.
+    if (existing.unsubscribedAt) return;
+
     const updated = await tx
       .update(pageSubscriber)
       .set({ unsubscribedAt: new Date(), updatedAt: new Date() })
