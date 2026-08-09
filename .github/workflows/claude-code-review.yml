@@ -12,13 +12,10 @@ on:
 
 jobs:
   claude-review:
-    # `pull_request` from a fork gets no secrets — not even for a MEMBER author —
-    # so without the head-repo check the job fails unfixably on fork PRs.
+    # Optional: Filter by PR author
     if: |
-      github.event.pull_request.head.repo.full_name == github.repository && (
-        github.event.pull_request.author_association == 'MEMBER' ||
-        github.event.pull_request.author_association == 'OWNER'
-      )
+      github.event.pull_request.author_association == 'MEMBER' ||
+      github.event.pull_request.author_association == 'OWNER'
 
     runs-on: ubuntu-latest
     permissions:
@@ -33,30 +30,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Without a toolchain the reviewer can only read the diff; every review
-      # then opens with "I couldn't run anything in this sandbox".
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24.12.0
-          cache: "pnpm"
-
-      - name: 🦕 Setup Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: 2.9.4
-
-      # Remote-cache secrets stay on this step. The review step below runs an LLM
-      # with Bash tools, and job-level env would hand them straight to it.
-      - name: 📥 Download deps
-        run: pnpm install
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
@@ -65,10 +38,5 @@ jobs:
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          # `pnpm verify` is the no-database tier: format, lint, deno check.
-          # DB-backed tests need an sqld service container and are out of reach here.
-          claude_args: >-
-            --allowed-tools
-            "Bash(pnpm verify),Bash(pnpm lint),Bash(pnpm check),Bash(pnpm check:docs),Bash(pnpm format:check),Bash(pnpm turbo run check:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*)"
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options

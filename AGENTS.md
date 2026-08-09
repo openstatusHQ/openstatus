@@ -78,6 +78,7 @@ boundaries with external SDKs or at registry-style dispatch. When you need one:
 ## Package context
 
 - `packages/services/AGENTS.md` — service verbs, audit log, scope enforcement
+- `packages/ui/AGENTS.md` — stock shadcn vs. the published blocks registry
 - `apps/dashboard/AGENTS.md` — Next.js runtimes, client boundary, UI verification
 - `apps/server/AGENTS.md` — Hono API, API-key scopes
 - `apps/status-page/AGENTS.md` — public surfaces and gated content
