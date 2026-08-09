@@ -20,6 +20,15 @@ New endpoints should call a service verb rather than query Drizzle directly;
 `oxlint.config.ts` already bans `@openstatus/db` and `drizzle-orm` imports in
 the handlers that have migrated, and that list grows one domain per PR.
 
+## Route config
+
+Resolve config once and pass it in;
+`createSlackRoute(config)` in `apps/server/src/routes/slack/index.ts` is the
+pattern — production calls `slackConfigFromEnv()` at module scope, tests build a
+route with explicit config. Reading `env` at request time is what made the slack
+route untestable under `deno test --parallel`, since the workers share one
+process environment.
+
 ## MCP
 
 MCP tools declare `scope: 'read' | 'write'` and register via

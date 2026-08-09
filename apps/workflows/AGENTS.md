@@ -11,5 +11,7 @@ Constraints that follow from the runtime:
   build here — run `pnpm check` in both packages after touching services.
 - Sentry comes from `@sentry/deno`, not `@sentry/node`.
 - Tests run `deno test --parallel`, so test files share one process
-  environment. Never drive a branch by assigning to `process.env` mid-test;
-  resolve config once and pass it in (`createSlackRoute(config)` is the pattern).
+  environment. Never drive a branch by assigning to `process.env` mid-test —
+  the assignment leaks into whatever else is running. Resolve config once at
+  module scope and pass it in, so "credential missing" is a value a test hands
+  you rather than a global it mutates.

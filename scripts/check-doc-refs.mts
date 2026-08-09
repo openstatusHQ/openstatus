@@ -45,7 +45,8 @@ const REPO_PATH_PREFIXES = [
   ".claude/",
 ];
 
-const DOCS_REFERENCE = /(?<![\w./@-])docs\/[\w./-]+/g;
+// Brackets are in the class so Next.js route segments (`docs/[slug].md`) match.
+const DOCS_REFERENCE = /(?<![\w./@-])docs\/[\w./[\]-]+/g;
 const BACKTICKED = /`([^`\n]+)`/g;
 // Extension required, so docs-site slugs (`docs/concept/page-1`) are not read
 // as repo paths.

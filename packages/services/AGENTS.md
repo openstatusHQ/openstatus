@@ -47,9 +47,10 @@ write tools.
 
 ## Runtime constraints
 
-- This package is reachable from the Next.js Edge runtime and from Deno
-  (`apps/workflows`). **No `node:*` imports** — that is why `deepEqual` is
-  hand-rolled instead of pulled from `node:util`.
+- **No `node:*` imports.** `apps/workflows` runs this code on Deno, and the
+  package is written to stay Edge-safe so a Next.js route can adopt it without a
+  rewrite — no Edge route imports it today. That is why `deepEqual` is
+  hand-rolled rather than pulled from `node:util`.
 - **No logtape here.** It breaks Edge builds; use `console.warn`.
 
 ## Query plans

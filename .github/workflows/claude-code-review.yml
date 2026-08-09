@@ -12,9 +12,10 @@ on:
 
 jobs:
   claude-review:
-    # Forks have no CLAUDE_CODE_OAUTH_TOKEN, so the job would fail unfixably there.
+    # `pull_request` from a fork gets no secrets — not even for a MEMBER author —
+    # so without the head-repo check the job fails unfixably on fork PRs.
     if: |
-      github.repository_owner == 'openstatusHQ' && (
+      github.event.pull_request.head.repo.full_name == github.repository && (
         github.event.pull_request.author_association == 'MEMBER' ||
         github.event.pull_request.author_association == 'OWNER'
       )
@@ -25,10 +26,6 @@ jobs:
       pull-requests: write
       issues: read
       id-token: write
-
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
     steps:
       - name: Checkout repository
@@ -52,8 +49,13 @@ jobs:
         with:
           deno-version: 2.9.4
 
+      # Remote-cache secrets stay on this step. The review step below runs an LLM
+      # with Bash tools, and job-level env would hand them straight to it.
       - name: 📥 Download deps
         run: pnpm install
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
       - name: Run Claude Code Review
         id: claude-review

@@ -119,7 +119,7 @@ export default defineConfig({
       excludeFiles: ["**/__tests__/**", "**/*.test.ts"],
       rules: {
         "openstatus/services-mutation-guards": "error",
-        // Reachable from the Next.js Edge runtime and from Deno.
+        // apps/workflows runs this on Deno, and it stays Edge-safe by design.
         "no-restricted-imports": [
           "error",
           {
@@ -127,7 +127,7 @@ export default defineConfig({
               {
                 group: ["node:*"],
                 message:
-                  "@openstatus/services runs on Edge — no node built-ins. Hand-roll the helper (see deepEqual) or move the code to a Node-only package.",
+                  "@openstatus/services must stay runtime-agnostic — no node built-ins. Hand-roll the helper (see deepEqual) or move the code to a Node-only package.",
               },
             ],
           },

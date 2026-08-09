@@ -4,6 +4,12 @@
  * `services-mutation-guards` keys off behaviour, not filename: a top-level
  * function that opens a transaction is a mutation, and every mutation must
  * check the actor's scope and leave an audit row.
+ *
+ * It matches call names, not the call graph. `emitAudit` therefore counts from
+ * anywhere in the verb (it belongs inside the `withTransaction` callback), which
+ * a nested helper that never runs could satisfy. `requireScope` must appear in
+ * the verb body itself, which is where the convention puts it. A guard, not a
+ * proof — the audit tests are what actually pin the behaviour.
  */
 
 const FUNCTION_TYPES = [
@@ -26,8 +32,10 @@ function calleeName(node) {
   return null;
 }
 
-function functionName(node) {
-  return node.id?.type === "Identifier" ? node.id.name : "<anonymous>";
+/** Arrows and function expressions have no `id`; fall back to the const they're assigned to. */
+function functionName(node, assignedName) {
+  if (node.id?.type === "Identifier") return node.id.name;
+  return assignedName ?? "<anonymous>";
 }
 
 const servicesMutationGuards = {
@@ -43,16 +51,21 @@ const servicesMutationGuards = {
     },
   },
   create(context) {
-    // Calls are recorded against the outermost function, so a `withTransaction`
-    // callback's `emitAudit` still counts for the verb that owns it.
     let depth = 0;
     let outermost = null;
+    let outermostName = null;
+    let pendingName = null;
+    // Anywhere in the verb, so a `withTransaction` callback's `emitAudit` counts.
     const calls = new Set();
+    // The verb's own body, where `requireScope` belongs.
+    const bodyCalls = new Set();
 
     function enter(node) {
       if (depth === 0) {
         outermost = node;
+        outermostName = functionName(node, pendingName);
         calls.clear();
+        bodyCalls.clear();
       }
       depth += 1;
     }
@@ -62,27 +75,37 @@ const servicesMutationGuards = {
       if (depth !== 0 || outermost === null) return;
 
       if (calls.has("withTransaction")) {
-        const missing = ["requireScope", "emitAudit"].filter(
-          (name) => !calls.has(name),
-        );
+        const missing = [];
+        if (!bodyCalls.has("requireScope")) missing.push("requireScope");
+        if (!calls.has("emitAudit")) missing.push("emitAudit");
+
         if (missing.length > 0) {
           context.report({
             node: outermost,
             messageId: "missing",
             data: {
-              name: functionName(outermost),
+              name: outermostName,
               missing: missing.map((name) => `\`${name}\``).join(" or "),
             },
           });
         }
       }
       outermost = null;
+      outermostName = null;
+      pendingName = null;
     }
 
     const visitor = {
+      VariableDeclarator(node) {
+        if (depth === 0 && node.id?.type === "Identifier") {
+          pendingName = node.id.name;
+        }
+      },
       CallExpression(node) {
         const name = calleeName(node);
-        if (name) calls.add(name);
+        if (!name) return;
+        calls.add(name);
+        if (depth === 1) bodyCalls.add(name);
       },
     };
     for (const type of FUNCTION_TYPES) {

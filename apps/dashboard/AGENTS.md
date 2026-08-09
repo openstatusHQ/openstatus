@@ -13,7 +13,7 @@ The whole tRPC surface is served from
 `apps/dashboard/src/app/api/trpc/lambda/[trpc]/route.ts` on the **Node.js**
 runtime — several routers pull Node-only SDKs (`@slack/web-api`, email and
 notification clients). Node-only dependencies inside `@openstatus/services` are
-still forbidden, because Edge routes and `apps/workflows` reach the same code.
+still forbidden, because `apps/workflows` runs the same code on Deno.
 
 ## Client boundary
 
