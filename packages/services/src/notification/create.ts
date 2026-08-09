@@ -1,4 +1,3 @@
-import { count, eq } from "@openstatus/db";
 import {
   notification,
   notificationsToMonitors,
@@ -8,7 +7,7 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { LimitExceededError } from "../errors";
+import { assertWithinLimit } from "../limits";
 import type { Notification } from "../types";
 import {
   assertProviderAllowed,
@@ -35,20 +34,11 @@ export async function createNotification(args: {
     });
 
     // Plan gate on notification count.
-    const existing = await tx
-      .select({ count: count() })
-      .from(notification)
-      .where(eq(notification.workspaceId, ctx.workspace.id))
-      .get();
-    if (
-      existing &&
-      existing.count >= ctx.workspace.limits["notification-channels"]
-    ) {
-      throw new LimitExceededError(
-        "notification-channels",
-        ctx.workspace.limits["notification-channels"],
-      );
-    }
+    await assertWithinLimit({
+      tx,
+      workspaceId: ctx.workspace.id,
+      limit: "notification-channels",
+    });
 
     // Plan gate on provider (sms / pagerduty / opsgenie / …).
     assertProviderAllowed(ctx.workspace, input.provider);

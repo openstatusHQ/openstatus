@@ -3,10 +3,9 @@ import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { LimitExceededError } from "../errors";
+import { assertWithinLimit } from "../limits";
 import type { Monitor } from "../types";
 import {
-  countMonitorsInWorkspace,
   headersToDbJson,
   pickDefaultRegions,
   serialiseAssertions,
@@ -22,10 +21,11 @@ export async function createMonitor(args: {
   const input = CreateMonitorInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
-    const existing = await countMonitorsInWorkspace(tx, ctx.workspace.id);
-    if (existing >= ctx.workspace.limits.monitors) {
-      throw new LimitExceededError("monitors", ctx.workspace.limits.monitors);
-    }
+    await assertWithinLimit({
+      tx,
+      workspaceId: ctx.workspace.id,
+      limit: "monitors",
+    });
 
     const defaults = pickDefaultRegions(ctx.workspace);
     const regions = input.regions ?? defaults.regions;

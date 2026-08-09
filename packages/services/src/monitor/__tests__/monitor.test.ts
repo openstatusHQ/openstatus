@@ -1298,3 +1298,65 @@ describe("triggerMonitorRun quota", () => {
     });
   });
 });
+
+describe("monitor count quota", () => {
+  const input = (name: string) => ({
+    name,
+    jobType: "http" as const,
+    url: "https://example.com",
+    method: "GET" as const,
+    headers: [],
+    assertions: [],
+    active: true,
+  });
+
+  // Both suite workspaces are team-plan, so pin the cap on the row —
+  // `assertWithinLimit` re-reads it, and the tx rolls the override back.
+  const capAtOne = async (tx: DrizzleTx) => {
+    await tx
+      .update(workspace)
+      .set({ limits: JSON.stringify({ monitors: 1 }) })
+      .where(eq(workspace.id, freeWorkspaceId));
+    return { ...freeCtx, db: tx };
+  };
+
+  test("createMonitor rejects once the plan's monitor cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = await capAtOne(tx);
+      await createMonitor({ ctx, input: input(`${TEST_PREFIX}-cap-1`) });
+
+      await expect(
+        createMonitor({ ctx, input: input(`${TEST_PREFIX}-cap-2`) }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("a soft-deleted monitor frees its slot", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = await capAtOne(tx);
+      const first = await createMonitor({
+        ctx,
+        input: input(`${TEST_PREFIX}-cap-reuse-1`),
+      });
+      await deleteMonitor({ ctx, input: { id: first.id } });
+
+      await expect(
+        createMonitor({ ctx, input: input(`${TEST_PREFIX}-cap-reuse-2`) }),
+      ).resolves.toBeDefined();
+    });
+  });
+
+  test("cloneMonitor rejects once the cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = await capAtOne(tx);
+      const source = await createMonitor({
+        ctx,
+        input: input(`${TEST_PREFIX}-clone-cap`),
+      });
+
+      await expect(
+        cloneMonitor({ ctx, input: { id: source.id } }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});

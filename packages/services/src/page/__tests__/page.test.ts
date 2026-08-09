@@ -633,3 +633,47 @@ describe("deletePage", () => {
     });
   });
 });
+
+describe("status-page count quota", () => {
+  test("createPage rejects once the plan's page cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      // Free plan caps status pages at 1.
+      const ctx = { ...freeCtx, db: tx };
+      await newPage({
+        ctx,
+        input: { title: "Quota 1", slug: uniqueSlug("quota-1") },
+      });
+
+      await expect(
+        createPage({
+          ctx,
+          input: {
+            title: "Quota 2",
+            description: "",
+            slug: uniqueSlug("quota-2"),
+            customDomain: "",
+            workspaceId: ctx.workspace.id,
+            monitors: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("newPage rejects once the cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      await newPage({
+        ctx,
+        input: { title: "Quota 3", slug: uniqueSlug("quota-3") },
+      });
+
+      await expect(
+        newPage({
+          ctx,
+          input: { title: "Quota 4", slug: uniqueSlug("quota-4") },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});
