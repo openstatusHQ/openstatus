@@ -83,7 +83,7 @@ function createMockVercelClient(opts: {
 
 describe("pruneUnverifiedDomains", () => {
   test("preserves verified domains", async () => {
-    await withTestTransaction(testWs, async (tx: DrizzleTx) => {
+    await withTestTransaction(async (tx: DrizzleTx) => {
       const customDomain = `${TEST_PREFIX}-verified.example.com`;
       const page = await tx
         .insert(pageTable)
@@ -127,7 +127,7 @@ describe("pruneUnverifiedDomains", () => {
   });
 
   test("skips unverified domains within the grace period", async () => {
-    await withTestTransaction(testWs, async (tx: DrizzleTx) => {
+    await withTestTransaction(async (tx: DrizzleTx) => {
       const customDomain = `${TEST_PREFIX}-recent.example.com`;
       const page = await tx
         .insert(pageTable)
@@ -172,7 +172,7 @@ describe("pruneUnverifiedDomains", () => {
   });
 
   test("preserves unverified domains that verify on live check", async () => {
-    await withTestTransaction(testWs, async (tx: DrizzleTx) => {
+    await withTestTransaction(async (tx: DrizzleTx) => {
       const customDomain = `${TEST_PREFIX}-live-verify.example.com`;
       const page = await tx
         .insert(pageTable)
@@ -220,7 +220,7 @@ describe("pruneUnverifiedDomains", () => {
   });
 
   test("removes stale unverified domain from Vercel, clears DB entry, and logs audit", async () => {
-    await withTestTransaction(testWs, async (tx: DrizzleTx) => {
+    await withTestTransaction(async (tx: DrizzleTx) => {
       const customDomain = `${TEST_PREFIX}-stale-unverified.example.com`;
       const page = await tx
         .insert(pageTable)
@@ -264,18 +264,19 @@ describe("pruneUnverifiedDomains", () => {
         .get();
       expect(dbPage?.customDomain).toBe("");
 
-      await expectAuditRow(tx, {
+      await expectAuditRow({
         workspaceId: testWs.id,
         action: "page.update",
         entityId: page.id,
         entityType: "page",
         actorType: "system",
+        db: tx,
       });
     });
   });
 
   test("dryRun mode reports candidates without deleting or clearing", async () => {
-    await withTestTransaction(testWs, async (tx: DrizzleTx) => {
+    await withTestTransaction(async (tx: DrizzleTx) => {
       const customDomain = `${TEST_PREFIX}-dryrun.example.com`;
       const page = await tx
         .insert(pageTable)
@@ -323,7 +324,7 @@ describe("pruneUnverifiedDomains", () => {
   });
 
   test("reconciles orphaned domain in DB that does not exist on Vercel", async () => {
-    await withTestTransaction(testWs, async (tx: DrizzleTx) => {
+    await withTestTransaction(async (tx: DrizzleTx) => {
       const customDomain = `${TEST_PREFIX}-orphaned.example.com`;
       const page = await tx
         .insert(pageTable)
@@ -357,12 +358,13 @@ describe("pruneUnverifiedDomains", () => {
         .get();
       expect(dbPage?.customDomain).toBe("");
 
-      await expectAuditRow(tx, {
+      await expectAuditRow({
         workspaceId: testWs.id,
         action: "page.update",
         entityId: page.id,
         entityType: "page",
         actorType: "system",
+        db: tx,
       });
     });
   });
