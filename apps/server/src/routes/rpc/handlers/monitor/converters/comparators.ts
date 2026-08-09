@@ -1,8 +1,18 @@
+import type {
+  numberCompare,
+  recordCompare,
+  stringCompare,
+} from "@openstatus/assertions";
 import {
   NumberComparator,
   RecordComparator,
   StringComparator,
 } from "@openstatus/proto/monitor/v1";
+import type { z } from "zod";
+
+type NumberCompare = z.infer<typeof numberCompare>;
+type StringCompare = z.infer<typeof stringCompare>;
+type RecordCompare = z.infer<typeof recordCompare>;
 
 // ============================================================
 // DB to Proto (for reads)
@@ -53,7 +63,7 @@ export function compareToRecordComparator(compare: string): RecordComparator {
 // Proto to DB (for writes)
 // ============================================================
 
-const NUMBER_COMPARATOR_TO_DB: Record<NumberComparator, string> = {
+const NUMBER_COMPARATOR_TO_DB: Record<NumberComparator, NumberCompare> = {
   [NumberComparator.EQUAL]: "eq",
   [NumberComparator.NOT_EQUAL]: "not_eq",
   [NumberComparator.GREATER_THAN]: "gt",
@@ -63,7 +73,7 @@ const NUMBER_COMPARATOR_TO_DB: Record<NumberComparator, string> = {
   [NumberComparator.UNSPECIFIED]: "eq",
 };
 
-const STRING_COMPARATOR_TO_DB: Record<StringComparator, string> = {
+const STRING_COMPARATOR_TO_DB: Record<StringComparator, StringCompare> = {
   [StringComparator.EQUAL]: "eq",
   [StringComparator.NOT_EQUAL]: "not_eq",
   [StringComparator.CONTAINS]: "contains",
@@ -77,7 +87,7 @@ const STRING_COMPARATOR_TO_DB: Record<StringComparator, string> = {
   [StringComparator.UNSPECIFIED]: "eq",
 };
 
-const RECORD_COMPARATOR_TO_DB: Record<RecordComparator, string> = {
+const RECORD_COMPARATOR_TO_DB: Record<RecordComparator, RecordCompare> = {
   [RecordComparator.EQUAL]: "eq",
   [RecordComparator.NOT_EQUAL]: "not_eq",
   [RecordComparator.CONTAINS]: "contains",
@@ -85,14 +95,20 @@ const RECORD_COMPARATOR_TO_DB: Record<RecordComparator, string> = {
   [RecordComparator.UNSPECIFIED]: "eq",
 };
 
-export function numberComparatorToString(comp: NumberComparator): string {
+export function numberComparatorToString(
+  comp: NumberComparator,
+): NumberCompare {
   return NUMBER_COMPARATOR_TO_DB[comp] ?? "eq";
 }
 
-export function stringComparatorToString(comp: StringComparator): string {
+export function stringComparatorToString(
+  comp: StringComparator,
+): StringCompare {
   return STRING_COMPARATOR_TO_DB[comp] ?? "eq";
 }
 
-export function recordComparatorToString(comp: RecordComparator): string {
+export function recordComparatorToString(
+  comp: RecordComparator,
+): RecordCompare {
   return RECORD_COMPARATOR_TO_DB[comp] ?? "eq";
 }

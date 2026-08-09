@@ -38,8 +38,10 @@ export {
   StreamMonitorPreviewInput,
   streamMonitorPreview,
 } from "./stream-monitor-preview";
+export { triggerMonitorRun, type TriggerMonitorResult } from "./trigger";
 export {
   bulkUpdateMonitors,
+  updateMonitorConfig,
   updateMonitorFollowRedirects,
   updateMonitorGeneral,
   updateMonitorOtel,
@@ -66,6 +68,8 @@ export {
   monitorPeriodicity,
   type MonitorTimeRange,
   monitorTimeRange,
+  TriggerMonitorInput,
+  UpdateMonitorConfigInput,
   UpdateMonitorFollowRedirectsInput,
   UpdateMonitorGeneralInput,
   UpdateMonitorNotifiersInput,

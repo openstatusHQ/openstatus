@@ -435,3 +435,24 @@ describe("list / get", () => {
     });
   });
 });
+
+describe("notification-channel count quota", () => {
+  const input = (name: string) => ({
+    name,
+    provider: "email" as const,
+    data: { email: `${name}@openstatus.dev` },
+    monitors: [],
+  });
+
+  test("createNotification rejects once the plan's channel cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      // Free plan caps notification channels at 1.
+      const ctx = { ...freeCtx, db: tx };
+      await createNotification({ ctx, input: input(`${TEST_PREFIX}-cap-1`) });
+
+      await expect(
+        createNotification({ ctx, input: input(`${TEST_PREFIX}-cap-2`) }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});

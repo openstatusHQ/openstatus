@@ -3,9 +3,10 @@ import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { InternalServiceError, LimitExceededError } from "../errors";
+import { InternalServiceError } from "../errors";
+import { assertWithinLimit } from "../limits";
 import type { Monitor } from "../types";
-import { countMonitorsInWorkspace, getMonitorInWorkspace } from "./internal";
+import { getMonitorInWorkspace } from "./internal";
 import { CloneMonitorInput } from "./schemas";
 
 /**
@@ -21,10 +22,11 @@ export async function cloneMonitor(args: {
   const input = CloneMonitorInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
-    const current = await countMonitorsInWorkspace(tx, ctx.workspace.id);
-    if (current >= ctx.workspace.limits.monitors) {
-      throw new LimitExceededError("monitors", ctx.workspace.limits.monitors);
-    }
+    await assertWithinLimit({
+      tx,
+      workspaceId: ctx.workspace.id,
+      limit: "monitors",
+    });
 
     const source = await getMonitorInWorkspace({
       tx,

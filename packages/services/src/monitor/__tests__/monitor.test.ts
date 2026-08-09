@@ -1,6 +1,7 @@
 import { and, db, eq, inArray, isNull } from "@openstatus/db";
 import {
   monitor,
+  monitorRun,
   monitorTag,
   monitorTagsToMonitors,
   notification,
@@ -13,6 +14,7 @@ import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
+  clearAuditLog,
   expectAuditRow,
   makeApiKeyCtx,
   makeSystemCtx,
@@ -21,13 +23,22 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DrizzleTx, ServiceContext } from "../../context";
-import { ForbiddenError, NotFoundError } from "../../errors";
+import {
+  ForbiddenError,
+  LimitExceededError,
+  NotFoundError,
+} from "../../errors";
 import { cloneMonitor } from "../clone";
 import { createMonitor } from "../create";
 import { deleteMonitor, deleteMonitors } from "../delete";
 import { getMonitor, listMonitors } from "../list";
 import { updateMonitorNotifiers, updateMonitorTags } from "../relations";
-import { bulkUpdateMonitors, updateMonitorGeneral } from "../update";
+import { triggerMonitorRun } from "../trigger";
+import {
+  bulkUpdateMonitors,
+  updateMonitorConfig,
+  updateMonitorGeneral,
+} from "../update";
 
 const TEST_PREFIX = "svc-monitor-test";
 
@@ -813,6 +824,539 @@ describe("bulkUpdateMonitors", () => {
       await expect(
         bulkUpdateMonitors({ ctx, input: { ids: [1], active: false } }),
       ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+});
+
+describe("updateMonitorConfig", () => {
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        updateMonitorConfig({
+          ctx: readOnlyCtx,
+          input: { id: 999_999_999, name: "nope" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("patches only supplied fields and leaves the rest intact", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-cfg`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          periodicity: "10m",
+          regions: ["ams"],
+          timeout: 30_000,
+          retry: 2,
+          description: "keep me",
+        },
+      });
+
+      const updated = await updateMonitorConfig({
+        ctx,
+        input: { id: row.id, name: `${TEST_PREFIX}-cfg-renamed`, retry: 5 },
+      });
+
+      expect(updated.name).toBe(`${TEST_PREFIX}-cfg-renamed`);
+      expect(updated.retry).toBe(5);
+      // Untouched fields survive the patch.
+      expect(updated.url).toBe("https://example.com");
+      expect(updated.periodicity).toBe("10m");
+      expect(updated.timeout).toBe(30_000);
+      expect(updated.description).toBe("keep me");
+      expect(updated.regions).toEqual(["ams"]);
+    });
+  });
+
+  test("emits a single monitor.update audit row per call", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-cfg-audit`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+
+      await updateMonitorConfig({
+        ctx,
+        input: {
+          id: row.id,
+          name: `${TEST_PREFIX}-cfg-audit-2`,
+          public: true,
+          timeout: 20_000,
+          followRedirects: false,
+        },
+      });
+
+      const rows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: String(row.id),
+        db: tx,
+      });
+      const updates = rows.filter((r) => r.action === "monitor.update");
+      expect(updates).toHaveLength(1);
+    });
+  });
+
+  test("throws NotFoundError for cross-workspace id", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-cfg-cross`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+
+      await expect(
+        updateMonitorConfig({
+          ctx: { ...freeCtx, db: tx },
+          input: { id: row.id, name: "nope" },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+});
+
+describe("triggerMonitorRun", () => {
+  test("rejects read-only actor before touching the DB", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        triggerMonitorRun({
+          ctx: readOnlyCtx,
+          input: { id: 999_999_999 },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("records a run and returns the monitor with region status", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-trigger`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: true,
+          regions: ["ams"],
+        },
+      });
+
+      const result = await triggerMonitorRun({ ctx, input: { id: row.id } });
+
+      expect(result.monitor.id).toBe(row.id);
+      expect(result.monitor.regions).toEqual(["ams"]);
+      expect(typeof result.runId).toBe("number");
+
+      const runs = await tx
+        .select()
+        .from(monitorRun)
+        .where(eq(monitorRun.monitorId, row.id))
+        .all();
+      expect(runs).toHaveLength(1);
+    });
+  });
+
+  test("throws NotFoundError for cross-workspace id", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-trigger-cross`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: true,
+        },
+      });
+
+      await expect(
+        triggerMonitorRun({
+          ctx: { ...freeCtx, db: tx },
+          input: { id: row.id },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+});
+
+describe("createMonitor config fields", () => {
+  test("persists every field the public API can set", async () => {
+    await withTestTransaction(async (tx) => {
+      // These columns are only reachable through the API's create path;
+      // if the service silently drops one, the monitor runs with a
+      // default the caller never asked for.
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-full`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "POST",
+          headers: [{ key: "X-Api", value: "1" }],
+          assertions: [],
+          active: true,
+          periodicity: "5m",
+          regions: ["ams", "iad"],
+          description: "full config",
+          public: true,
+          timeout: 12_000,
+          degradedAfter: 3_000,
+          retry: 4,
+          followRedirects: false,
+          otelEndpoint: "https://otel.example.com",
+          otelHeaders: [{ key: "authorization", value: "Bearer x" }],
+        },
+      });
+
+      expect(row.description).toBe("full config");
+      expect(row.public).toBe(true);
+      expect(row.timeout).toBe(12_000);
+      expect(row.degradedAfter).toBe(3_000);
+      expect(row.retry).toBe(4);
+      expect(row.followRedirects).toBe(false);
+      expect(row.otelEndpoint).toBe("https://otel.example.com");
+      expect(row.regions).toEqual(["ams", "iad"]);
+      expect(row.periodicity).toBe("5m");
+    });
+  });
+
+  test("omitted config fields fall through to the column defaults", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-defaults`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+
+      expect(row.timeout).toBe(45_000);
+      expect(row.retry).toBe(3);
+      expect(row.followRedirects).toBe(true);
+      expect(row.public).toBe(false);
+      expect(row.description).toBe("");
+      expect(row.degradedAfter).toBe(null);
+    });
+  });
+
+  test("an empty regions array is honoured, not replaced by plan defaults", async () => {
+    await withTestTransaction(async (tx) => {
+      // The API has never auto-assigned regions; `[]` must stay `[]`.
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-no-regions`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          regions: [],
+        },
+      });
+
+      expect(row.regions).toEqual([]);
+    });
+  });
+});
+
+describe("updateMonitorConfig clearing + replacement", () => {
+  async function seed(tx: DrizzleTx, name: string) {
+    return createMonitor({
+      ctx: { ...teamCtx, db: tx },
+      input: {
+        name,
+        jobType: "http",
+        url: "https://example.com",
+        method: "GET",
+        headers: [],
+        assertions: [
+          { version: "v1", type: "status", compare: "eq", target: 200 },
+        ],
+        active: false,
+        degradedAfter: 5_000,
+      },
+    });
+  }
+
+  test("degradedAfter: null clears the column", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await seed(tx, `${TEST_PREFIX}-clear-degraded`);
+      expect(row.degradedAfter).toBe(5_000);
+
+      const updated = await updateMonitorConfig({
+        ctx,
+        input: { id: row.id, degradedAfter: null },
+      });
+      expect(updated.degradedAfter).toBe(null);
+    });
+  });
+
+  test("degradedAfter omitted leaves the column untouched", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await seed(tx, `${TEST_PREFIX}-keep-degraded`);
+
+      const updated = await updateMonitorConfig({
+        ctx,
+        input: { id: row.id, name: `${TEST_PREFIX}-keep-degraded-2` },
+      });
+      expect(updated.degradedAfter).toBe(5_000);
+    });
+  });
+
+  // The proto declares 0–120_000 ms for `timeout`/`degraded_at`; the RPC API
+  // accepted that range before these verbs existed, so they must too.
+  test("accepts the proto's full 0–120_000 ms timeout range", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await seed(tx, `${TEST_PREFIX}-wide-timeout`);
+
+      const updated = await updateMonitorConfig({
+        ctx,
+        input: { id: row.id, timeout: 120_000, degradedAfter: 90_000 },
+      });
+      expect(updated.timeout).toBe(120_000);
+      expect(updated.degradedAfter).toBe(90_000);
+
+      const created = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-wide-timeout-create`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          timeout: 120_000,
+          degradedAfter: 90_000,
+        },
+      });
+      expect(created.timeout).toBe(120_000);
+      expect(created.degradedAfter).toBe(90_000);
+    });
+  });
+
+  test("rejects a timeout above the proto's ceiling", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await seed(tx, `${TEST_PREFIX}-over-timeout`);
+
+      await expect(
+        updateMonitorConfig({ ctx, input: { id: row.id, timeout: 120_001 } }),
+      ).rejects.toThrow();
+    });
+  });
+
+  test("assertions replace wholesale rather than merging", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await seed(tx, `${TEST_PREFIX}-replace-assertions`);
+
+      const updated = await updateMonitorConfig({
+        ctx,
+        input: {
+          id: row.id,
+          assertions: [
+            { version: "v1", type: "status", compare: "eq", target: 204 },
+          ],
+        },
+      });
+
+      const stored = JSON.parse(updated.assertions ?? "[]");
+      expect(stored).toHaveLength(1);
+      expect(stored[0]).toMatchObject({ target: 204 });
+    });
+  });
+
+  // Matches the pre-service RPC path, where an empty converter result was
+  // `undefined` and Drizzle skipped the column. Omission never clears.
+  test("assertions omitted leaves the stored list untouched", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await seed(tx, `${TEST_PREFIX}-keep-assertions`);
+
+      const updated = await updateMonitorConfig({
+        ctx,
+        input: { id: row.id, name: `${TEST_PREFIX}-keep-assertions-2` },
+      });
+
+      const stored = JSON.parse(updated.assertions ?? "[]");
+      expect(stored).toHaveLength(1);
+      expect(stored[0]).toMatchObject({ target: 200 });
+    });
+  });
+
+  test("no-op update emits no audit row", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await seed(tx, `${TEST_PREFIX}-noop`);
+      await clearAuditLog(teamCtx.workspace.id, { db: tx });
+
+      await updateMonitorConfig({
+        ctx,
+        input: { id: row.id, name: `${TEST_PREFIX}-noop` },
+      });
+
+      const rows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: String(row.id),
+        db: tx,
+      });
+      expect(rows.filter((r) => r.action === "monitor.update")).toHaveLength(0);
+    });
+  });
+});
+
+describe("triggerMonitorRun quota", () => {
+  test("throws LimitExceededError once the monthly quota is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      // Quota is the only thing standing between an API key and unbounded
+      // outbound probes, so prove the ceiling actually stops the run.
+      const limit = teamCtx.workspace.limits["synthetic-checks"];
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-quota`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: true,
+          regions: ["ams"],
+        },
+      });
+
+      for (let i = 0; i < limit; i++) {
+        await tx.insert(monitorRun).values({
+          monitorId: row.id,
+          workspaceId: teamCtx.workspace.id,
+          runnedAt: new Date(),
+        });
+      }
+
+      await expect(
+        triggerMonitorRun({ ctx, input: { id: row.id } }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});
+
+describe("monitor count quota", () => {
+  const input = (name: string) => ({
+    name,
+    jobType: "http" as const,
+    url: "https://example.com",
+    method: "GET" as const,
+    headers: [],
+    assertions: [],
+    active: true,
+  });
+
+  // Both suite workspaces are team-plan, so pin the cap on the row —
+  // `assertWithinLimit` re-reads it, and the tx rolls the override back.
+  const capAtOne = async (tx: DrizzleTx) => {
+    await tx
+      .update(workspace)
+      .set({ limits: JSON.stringify({ monitors: 1 }) })
+      .where(eq(workspace.id, freeWorkspaceId));
+    return { ...freeCtx, db: tx };
+  };
+
+  test("createMonitor rejects once the plan's monitor cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = await capAtOne(tx);
+      await createMonitor({ ctx, input: input(`${TEST_PREFIX}-cap-1`) });
+
+      await expect(
+        createMonitor({ ctx, input: input(`${TEST_PREFIX}-cap-2`) }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("a soft-deleted monitor frees its slot", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = await capAtOne(tx);
+      const first = await createMonitor({
+        ctx,
+        input: input(`${TEST_PREFIX}-cap-reuse-1`),
+      });
+      await deleteMonitor({ ctx, input: { id: first.id } });
+
+      await expect(
+        createMonitor({ ctx, input: input(`${TEST_PREFIX}-cap-reuse-2`) }),
+      ).resolves.toBeDefined();
+    });
+  });
+
+  test("cloneMonitor rejects once the cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = await capAtOne(tx);
+      const source = await createMonitor({
+        ctx,
+        input: input(`${TEST_PREFIX}-clone-cap`),
+      });
+
+      await expect(
+        cloneMonitor({ ctx, input: { id: source.id } }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
     });
   });
 });

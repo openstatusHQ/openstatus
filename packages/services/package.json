@@ -37,6 +37,10 @@
       "import": "./src/page-component/index.ts",
       "types": "./src/page-component/index.ts"
     },
+    "./page-component-group": {
+      "import": "./src/page-component-group/index.ts",
+      "types": "./src/page-component-group/index.ts"
+    },
     "./page": {
       "import": "./src/page/index.ts",
       "types": "./src/page/index.ts"
