@@ -101,12 +101,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
     }
 
     if (input.url !== undefined) {
-      await assertSafeMonitorUrl({
-        workspaceId,
-        monitorId: _monitor.id,
-        jobType: _monitor.jobType,
-        url: input.url,
-      });
+      assertSafeMonitorUrl({ jobType: _monitor.jobType, url: input.url });
     }
 
     const { headers, regions, assertions, ...rest } = input;

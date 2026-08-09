@@ -94,11 +94,7 @@ export function registerPostMonitor(api: typeof monitorsApi) {
     }
 
     // `jobType` is nullable on the wire; the column defaults to "http".
-    await assertSafeMonitorUrl({
-      workspaceId,
-      jobType: input.jobType ?? "http",
-      url: input.url,
-    });
+    assertSafeMonitorUrl({ jobType: input.jobType ?? "http", url: input.url });
 
     const { headers, regions, assertions, ...rest } = input;
 

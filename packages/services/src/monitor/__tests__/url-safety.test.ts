@@ -1,8 +1,4 @@
-import {
-  privateLocation,
-  privateLocationToMonitors,
-  selectWorkspaceSchema,
-} from "@openstatus/db/src/schema";
+import { selectWorkspaceSchema } from "@openstatus/db/src/schema";
 import { createWorkspace } from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
@@ -124,34 +120,19 @@ describe("monitor url SSRF guard", () => {
     });
   });
 
-  test("a monitor attached to a private location may target an internal host", async () => {
+  test("updateMonitorConfig leaves tcp urls alone", async () => {
     await withTestTransaction(async (tx) => {
       const created = await createMonitor({
         ctx: { ...ctx, db: tx },
-        input: httpInput("https://example.com"),
-      });
-
-      const location = await tx
-        .insert(privateLocation)
-        .values({
-          name: `${TEST_PREFIX}-location`,
-          token: `${TEST_PREFIX}-token`,
-          workspaceId: ctx.workspace.id,
-        })
-        .returning()
-        .get();
-
-      await tx.insert(privateLocationToMonitors).values({
-        privateLocationId: location.id,
-        monitorId: created.id,
+        input: { ...httpInput("example.com:443"), jobType: "tcp" },
       });
 
       const updated = await updateMonitorConfig({
         ctx: { ...ctx, db: tx },
-        input: { id: created.id, url: "http://10.0.0.5:8080/health" },
+        input: { id: created.id, url: "10.0.0.5:8080" },
       });
 
-      expect(updated.url).toBe("http://10.0.0.5:8080/health");
+      expect(updated.url).toBe("10.0.0.5:8080");
     });
   });
 });

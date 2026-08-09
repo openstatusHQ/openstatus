@@ -43,13 +43,7 @@ export async function updateMonitorConfig(args: {
 
     if (input.url !== undefined) {
       // `jobType` is absent from this patch, so the stored type decides.
-      await assertMonitorUrlSafe({
-        tx,
-        workspaceId: ctx.workspace.id,
-        monitorId: existing.id,
-        jobType: existing.jobType,
-        url: input.url,
-      });
+      assertMonitorUrlSafe({ jobType: existing.jobType, url: input.url });
     }
 
     const values: Record<string, unknown> = { updatedAt: new Date() };
@@ -115,20 +109,13 @@ export async function updateMonitorGeneral(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = UpdateMonitorGeneralInput.parse(args.input);
+  assertMonitorUrlSafe({ jobType: input.jobType, url: input.url });
 
   return withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
       tx,
       id: input.id,
       workspaceId: ctx.workspace.id,
-    });
-
-    await assertMonitorUrlSafe({
-      tx,
-      workspaceId: ctx.workspace.id,
-      monitorId: existing.id,
-      jobType: input.jobType,
-      url: input.url,
     });
 
     const updated = await tx

@@ -4,7 +4,6 @@ import {
   StatusAssertion,
   TextBodyAssertion,
 } from "@openstatus/assertions";
-import { db } from "@openstatus/db";
 import { ServiceError } from "@openstatus/services";
 import { assertMonitorUrlSafe } from "@openstatus/services/monitor";
 import type { z } from "zod";
@@ -17,14 +16,12 @@ import type { assertion, assertionsSchema } from "./schema";
  * These routes write to the DB directly instead of going through
  * `@openstatus/services`, so the SSRF guard has to be invoked by hand.
  */
-export async function assertSafeMonitorUrl(args: {
-  workspaceId: number;
+export function assertSafeMonitorUrl(args: {
   jobType: string;
   url: string;
-  monitorId?: number;
-}): Promise<void> {
+}): void {
   try {
-    await assertMonitorUrlSafe({ tx: db, ...args });
+    assertMonitorUrlSafe(args);
   } catch (err) {
     if (err instanceof ServiceError) {
       throw new OpenStatusApiError({

@@ -92,12 +92,7 @@ export function registerPutHTTPMonitor(api: typeof monitorsApi) {
       });
     }
 
-    await assertSafeMonitorUrl({
-      workspaceId,
-      monitorId: _monitor.id,
-      jobType: "http",
-      url: input.request.url,
-    });
+    assertSafeMonitorUrl({ jobType: "http", url: input.request.url });
 
     const { request, regions, assertions, openTelemetry, ...rest } = input;
 

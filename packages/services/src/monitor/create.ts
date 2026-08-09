@@ -21,16 +21,9 @@ export async function createMonitor(args: {
   requireScope(ctx, "write");
   const input = CreateMonitorInput.parse(args.input);
 
-  return withTransaction(ctx, async (tx) => {
-    // No monitor id yet, so no private-location exemption is possible here —
-    // attach the location first, then point the monitor at the internal host.
-    await assertMonitorUrlSafe({
-      tx,
-      workspaceId: ctx.workspace.id,
-      jobType: input.jobType,
-      url: input.url,
-    });
+  assertMonitorUrlSafe({ jobType: input.jobType, url: input.url });
 
+  return withTransaction(ctx, async (tx) => {
     await assertWithinLimit({
       tx,
       workspaceId: ctx.workspace.id,

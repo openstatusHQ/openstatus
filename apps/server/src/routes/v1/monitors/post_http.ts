@@ -85,11 +85,7 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
       }
     }
 
-    await assertSafeMonitorUrl({
-      workspaceId,
-      jobType: "http",
-      url: input.request.url,
-    });
+    assertSafeMonitorUrl({ jobType: "http", url: input.request.url });
 
     const { request, regions, assertions, openTelemetry, ...rest } = input;
 
