@@ -12,7 +12,7 @@ import {
   stringCompareDictionary,
   textBodyAssertion,
 } from "@openstatus/assertions";
-import { monitorMethods } from "@openstatus/db/src/schema";
+import { monitorMethods } from "@openstatus/db/src/schema/monitors/constants";
 import { Globe, Network, Add, Server, Close } from "@openstatus/icons";
 import {
   AlertDialog,

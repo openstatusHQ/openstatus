@@ -1,11 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  type StatusReportUpdate,
-  statusReportStatus,
-} from "@openstatus/db/src/schema";
+import type { StatusReportUpdate } from "@openstatus/db/src/schema";
 import { pageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
+import { statusReportStatus } from "@openstatus/db/src/schema/status_reports/constants";
 import { Calendar as CalendarIcon, Clock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";

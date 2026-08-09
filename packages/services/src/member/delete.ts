@@ -26,6 +26,9 @@ import { DeleteMemberInput } from "./schemas";
  * Only fires when the actor is an openstatus user: removing another user is
  * not something a system / apiKey / webhook actor should do today.
  */
+// The delete and its `member.delete` audit row live in
+// `removeMemberInWorkspace`; this verb only adds the owner / self-removal guards.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function deleteMember(args: {
   ctx: ServiceContext;
   input: DeleteMemberInput;

@@ -29,10 +29,13 @@ To contribute code changes, follow these steps:
 
 1. Fork the repository and create a new branch for your changes.
 2. Ensure that your code follows the project's coding conventions and style guide.
-3. Make commits with clear and descriptive messages. Each commit should have a single logical purpose.
-4. Push your branch to your forked repository.
-5. Open a pull request (PR) from your branch to the original repository's `main` branch.
-6. Provide a detailed description of your changes in the PR, including any related issues or feature requests.
+3. Run `pnpm verify` — formatting, lint, doc references and type checks. It needs
+   no database and takes seconds. `pnpm verify:test` runs the tests for the
+   packages your diff touches; those do need a local libSQL server.
+4. Make commits with clear and descriptive messages. Each commit should have a single logical purpose.
+5. Push your branch to your forked repository.
+6. Open a pull request (PR) from your branch to the original repository's `main` branch.
+7. Provide a detailed description of your changes in the PR, including any related issues or feature requests.
 
 A project maintainer will review your PR, provide feedback if necessary, and merge it once it meets the project's standards.
 

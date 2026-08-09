@@ -2,6 +2,7 @@ import { and, count, db as defaultDb, eq } from "@openstatus/db";
 import { page, pageComponent } from "@openstatus/db/src/schema";
 import type { ImportSummary } from "@openstatus/importers";
 
+import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { NotFoundError, ValidationError } from "../errors";
 import { addLimitWarnings } from "./limits";
@@ -40,6 +41,7 @@ export async function runImport(args: {
   input: RunImportInput;
 }): Promise<ImportSummary> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = RunImportInput.parse(args.input);
   const tx = ctx.db ?? defaultDb;
 
