@@ -50,7 +50,9 @@ export type CreateVercelClientOptions = {
   fetchFn?: typeof fetch;
 };
 
-export function isVercelConfigured(options?: CreateVercelClientOptions): boolean {
+export function isVercelConfigured(
+  options?: CreateVercelClientOptions,
+): boolean {
   const projectId = options?.projectId ?? process.env.PROJECT_ID_VERCEL;
   const bearerToken =
     options?.bearerToken ?? process.env.VERCEL_AUTH_BEARER_TOKEN;
@@ -75,10 +77,15 @@ export function createVercelClient(
     }
   }
 
-  async function vercelFetch(path: string, init?: RequestInit): Promise<Response> {
+  async function vercelFetch(
+    path: string,
+    init?: RequestInit,
+  ): Promise<Response> {
     ensureConfigured();
     const separator = path.includes("?") ? "&" : "?";
-    const teamParam = teamId ? `${separator}teamId=${encodeURIComponent(teamId)}` : "";
+    const teamParam = teamId
+      ? `${separator}teamId=${encodeURIComponent(teamId)}`
+      : "";
     const url = `${baseUrl}${path}${teamParam}`;
 
     return customFetch(url, {
@@ -116,7 +123,11 @@ export function createVercelClient(
       const json = await res.json();
       return {
         domains: (json.domains ?? []) as VercelDomain[],
-        pagination: (json.pagination ?? { count: 0, next: null, prev: null }) as VercelPagination,
+        pagination: (json.pagination ?? {
+          count: 0,
+          next: null,
+          prev: null,
+        }) as VercelPagination,
       };
     },
 

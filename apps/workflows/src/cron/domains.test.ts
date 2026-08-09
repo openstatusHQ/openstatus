@@ -1,6 +1,11 @@
 import { db, eq } from "@openstatus/db";
-import { page as pageTable, selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
+import {
+  page as pageTable,
+  selectWorkspaceSchema,
+  workspace,
+} from "@openstatus/db/src/schema";
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
+import type { VercelClient, VercelDomain } from "@openstatus/services/page";
 import {
   afterAll,
   beforeAll,
@@ -8,7 +13,6 @@ import {
   expect,
   test,
 } from "@openstatus/test-utils";
-import type { VercelClient, VercelDomain } from "@openstatus/services/page";
 
 import { runDomainsPruneTick } from "./domains";
 

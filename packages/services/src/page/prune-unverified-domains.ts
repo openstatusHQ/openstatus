@@ -1,5 +1,9 @@
 import { and, db as defaultDb, eq, ne, sql } from "@openstatus/db";
-import { page, selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
+import {
+  page,
+  selectWorkspaceSchema,
+  workspace,
+} from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { type DB, type ServiceContext, withTransaction } from "../context";
@@ -169,7 +173,9 @@ export async function pruneUnverifiedDomains(
       createdAt: page.createdAt,
     })
     .from(page)
-    .where(and(ne(page.customDomain, ""), sql`${page.customDomain} IS NOT NULL`))
+    .where(
+      and(ne(page.customDomain, ""), sql`${page.customDomain} IS NOT NULL`),
+    )
     .all();
 
   for (const pageRow of dbPages) {
