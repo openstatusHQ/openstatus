@@ -43,3 +43,22 @@ export {
   UpdatePageLocalesInput,
   UpdatePagePasswordProtectionInput,
 } from "./schemas";
+
+export {
+  type ClearedPageRecord,
+  DEFAULT_UNVERIFIED_DOMAINS_GRACE_PERIOD_MS,
+  type PruneUnverifiedDomainsOptions,
+  type PruneUnverifiedDomainsResult,
+  pruneUnverifiedDomains,
+} from "./prune-unverified-domains";
+export {
+  type CreateVercelClientOptions,
+  createVercelClient,
+  isVercelConfigured,
+  type ListDomainsResult,
+  type VercelClient,
+  type VercelDomain,
+  type VercelDomainVerification,
+  type VercelPagination,
+} from "./vercel";
+

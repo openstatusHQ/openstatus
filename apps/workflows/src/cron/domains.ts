@@ -1,0 +1,92 @@
+import { getLogger } from "@logtape/logtape";
+import { db } from "@openstatus/db";
+import {
+  createVercelClient,
+  DEFAULT_UNVERIFIED_DOMAINS_GRACE_PERIOD_MS,
+  pruneUnverifiedDomains,
+  type PruneUnverifiedDomainsOptions,
+  type PruneUnverifiedDomainsResult,
+} from "@openstatus/services/page";
+import { Effect } from "effect";
+import type { Context } from "hono";
+
+import { env } from "../env";
+import { reportBackgroundError, runSentryCron } from "../lib/sentry";
+
+const logger = getLogger(["workflow", "domains-prune"]);
+
+export async function runDomainsPruneTick(
+  opts?: Partial<PruneUnverifiedDomainsOptions>,
+): Promise<PruneUnverifiedDomainsResult> {
+  const e = env();
+  const vercel =
+    opts?.vercel ??
+    createVercelClient({
+      projectId: e.PROJECT_ID_VERCEL,
+      teamId: e.TEAM_ID_VERCEL,
+      bearerToken: e.VERCEL_AUTH_BEARER_TOKEN,
+    });
+
+  return pruneUnverifiedDomains({
+    db,
+    vercel,
+    olderThanMs: opts?.olderThanMs,
+    dryRun: opts?.dryRun,
+    now: opts?.now,
+  });
+}
+
+export async function handleDomainsPruneCron(c: Context) {
+  const { cronCompleted, cronFailed } = runSentryCron("domains-prune");
+
+  const olderThanDaysQuery = c.req.query("olderThanDays");
+  const dryRunQuery = c.req.query("dryRun");
+
+  const olderThanMs = olderThanDaysQuery
+    ? Number(olderThanDaysQuery) * 24 * 60 * 60 * 1000
+    : DEFAULT_UNVERIFIED_DOMAINS_GRACE_PERIOD_MS;
+  const dryRun = dryRunQuery === "true" || dryRunQuery === "1";
+
+  void Effect.runPromise(
+    Effect.tryPromise({
+      try: () => runDomainsPruneTick({ olderThanMs, dryRun }),
+      catch: (e) =>
+        new Error(
+          `domains-prune tick failed: ${e instanceof Error ? e.message : String(e)}`,
+        ),
+    }).pipe(
+      Effect.tap((res) =>
+        Effect.sync(() => {
+          logger.info(
+            "domains-prune tick complete: checked={totalChecked} verified={verifiedCount} unverified={unverifiedCount} removedFromVercel={removedFromVercelCount} clearedFromDb={clearedFromDbCount} errors={errorsCount}",
+            {
+              totalChecked: res.totalChecked,
+              verifiedCount: res.verifiedCount,
+              unverifiedCount: res.unverifiedCount,
+              removedFromVercelCount: res.removedFromVercel.length,
+              clearedFromDbCount: res.clearedFromDb.length,
+              errorsCount: res.errors.length,
+            },
+          );
+          if (res.errors.length > 0) {
+            void reportBackgroundError(
+              `domains-prune encountered ${res.errors.length} errors: ${res.errors.map((err) => `${err.domain}: ${err.error}`).join("; ")}`,
+            );
+          }
+          void cronCompleted();
+        }),
+      ),
+      Effect.catchAll((e) =>
+        Effect.sync(() => {
+          logger.error("domains-prune tick errored: {message}", {
+            message: e.message,
+          });
+          void reportBackgroundError(e.message);
+          void cronFailed();
+        }),
+      ),
+    ),
+  );
+
+  return c.json({ success: true }, 200);
+}
