@@ -1343,6 +1343,97 @@ describe("MonitorService.UpdateDNSMonitor", () => {
   });
 });
 
+describe("MonitorService - private and internal URLs", () => {
+  // Valid URIs, so protovalidate passes them through to the service guard.
+  const BLOCKED = [
+    "http://localhost:3000",
+    "http://127.0.0.1/health",
+    "http://192.168.1.10/",
+    "http://169.254.169.254/latest/meta-data/",
+  ];
+
+  for (const url of BLOCKED) {
+    test(`CreateHTTPMonitor rejects ${url}`, async () => {
+      const res = await connectRequest(
+        "CreateHTTPMonitor",
+        {
+          monitor: {
+            name: `${TEST_PREFIX}-ssrf`,
+            url,
+            periodicity: "PERIODICITY_5M",
+            method: "HTTP_METHOD_GET",
+          },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(400);
+
+      const data = await res.json();
+      expect(data.message).toContain("private or internal");
+
+      const leaked = await db
+        .select()
+        .from(monitor)
+        .where(and(eq(monitor.workspaceId, 1), eq(monitor.url, url)))
+        .get();
+      expect(leaked).toBeUndefined();
+    });
+  }
+
+  test("UpdateHTTPMonitor rejects a private URL and leaves the stored one intact", async () => {
+    const before = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testHttpMonitorId))
+      .get();
+
+    const res = await connectRequest(
+      "UpdateHTTPMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: { url: "http://127.0.0.1:8080" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+
+    const data = await res.json();
+    expect(data.message).toContain("private or internal");
+
+    const after = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testHttpMonitorId))
+      .get();
+    expect(after?.url).toBe(before?.url);
+  });
+
+  test("CreateTCPMonitor accepts a private target", async () => {
+    const res = await connectRequest(
+      "CreateTCPMonitor",
+      {
+        monitor: {
+          name: `${TEST_PREFIX}-ssrf-tcp`,
+          uri: "192.168.1.10:8080",
+          periodicity: "PERIODICITY_10M",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.uri).toBe("192.168.1.10:8080");
+
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+});
+
 describe("MonitorService.TriggerMonitor", () => {
   test("returns 404 for non-existent monitor", async () => {
     const res = await connectRequest(

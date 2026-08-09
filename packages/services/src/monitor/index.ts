@@ -39,6 +39,7 @@ export {
   streamMonitorPreview,
 } from "./stream-monitor-preview";
 export { triggerMonitorRun, type TriggerMonitorResult } from "./trigger";
+export { assertMonitorUrlSafe } from "./url-safety";
 export {
   bulkUpdateMonitors,
   updateMonitorConfig,

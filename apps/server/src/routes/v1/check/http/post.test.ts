@@ -79,6 +79,30 @@ test("Create a single check  ", async () => {
   });
 });
 
+for (const url of [
+  "http://localhost:3000",
+  "http://127.0.0.1/health",
+  "http://192.168.1.10/",
+  "http://169.254.169.254/latest/meta-data/",
+]) {
+  test(`rejects a check against ${url} without probing it`, async () => {
+    const res = await app.request("/v1/check/http", {
+      method: "POST",
+      headers: {
+        "x-openstatus-key": "1",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ url, regions: ["ams"], method: "GET" }),
+    });
+
+    expect(res.status).toBe(400);
+    // Pin the reason so a schema change can't turn this into a passing
+    // test that never reaches the guard.
+    expect((await res.json()).message).toContain("private or internal");
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+}
+
 test("Create a multiple check", async () => {
   const data = {
     url: "https://www.openstatus.dev",

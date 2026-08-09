@@ -11,6 +11,7 @@ import {
   serialiseAssertions,
 } from "./internal";
 import { CreateMonitorInput } from "./schemas";
+import { assertMonitorUrlSafe } from "./url-safety";
 
 export async function createMonitor(args: {
   ctx: ServiceContext;
@@ -19,6 +20,8 @@ export async function createMonitor(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = CreateMonitorInput.parse(args.input);
+
+  assertMonitorUrlSafe({ jobType: input.jobType, url: input.url });
 
   return withTransaction(ctx, async (tx) => {
     await assertWithinLimit({
