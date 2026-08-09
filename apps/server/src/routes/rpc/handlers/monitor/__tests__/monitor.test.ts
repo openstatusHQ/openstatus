@@ -1361,6 +1361,7 @@ describe("MonitorService - private and internal URLs", () => {
             name: `${TEST_PREFIX}-ssrf`,
             url,
             periodicity: "PERIODICITY_5M",
+            method: "HTTP_METHOD_GET",
           },
         },
         { "x-openstatus-key": "1" },
