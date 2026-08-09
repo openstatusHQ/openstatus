@@ -40,6 +40,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/",
+        destination: "/overview",
+        permanent: false,
+      },
+      {
         source: "/private-locations",
         destination: "/settings/private-locations",
         permanent: false,
