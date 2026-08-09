@@ -537,6 +537,36 @@ describe("createPageComponent", () => {
       ).rejects.toBeInstanceOf(LimitExceededError);
     });
   });
+
+  test("at quota, a bad request still reports what's actually wrong", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const input = {
+        pageId: testPageId,
+        type: "monitor" as const,
+        monitorId: teamMonitorId,
+        order: 0,
+      };
+      await createPageComponent({ ctx, input });
+
+      // Quota is now spent, but neither of these would consume a slot —
+      // "limit reached" would send the caller chasing the wrong problem.
+      await tx
+        .update(workspace)
+        .set({ limits: JSON.stringify({ "page-components": 1 }) })
+        .where(eq(workspace.id, teamCtx.workspace.id));
+
+      await expect(createPageComponent({ ctx, input })).rejects.toBeInstanceOf(
+        ConflictError,
+      );
+      await expect(
+        createPageComponent({
+          ctx,
+          input: { ...input, monitorId: freeMonitorId },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
 });
 
 describe("updatePageComponent", () => {

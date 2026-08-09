@@ -28,12 +28,6 @@ export async function createPageComponent(args: {
       workspaceId: ctx.workspace.id,
     });
 
-    await assertWithinLimit({
-      tx,
-      workspaceId: ctx.workspace.id,
-      limit: "page-components",
-    });
-
     let name = input.name;
     if (input.type === "monitor") {
       // Soft-deleted monitors are excluded — a tombstoned monitor's id
@@ -80,6 +74,15 @@ export async function createPageComponent(args: {
         workspaceId: ctx.workspace.id,
       });
     }
+
+    // Validation before quota, as in `notification/create`: a bad monitor id
+    // or a re-added component must report what's actually wrong rather than
+    // "limit reached", and neither one would consume a slot anyway.
+    await assertWithinLimit({
+      tx,
+      workspaceId: ctx.workspace.id,
+      limit: "page-components",
+    });
 
     const created = await tx
       .insert(pageComponent)

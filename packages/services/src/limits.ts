@@ -32,11 +32,60 @@ export const LIMIT_KEYS = [
 
 export type LimitKey = (typeof LIMIT_KEYS)[number];
 
-/** Start of the rolling window `synthetic-checks` is metered over. */
-function syntheticChecksWindowStart(): Date {
-  const since = new Date();
-  since.setMonth(since.getMonth() - 1);
-  return since;
+/**
+ * Start of the rolling window `synthetic-checks` is metered over. Returns
+ * both forms from one call so they can't drift by the milliseconds between
+ * two `new Date()`s: drizzle converts the `Date` for `monitor_run.created_at`
+ * (a seconds-mode column), while raw SQL has to pass the epoch seconds itself.
+ */
+export function syntheticChecksWindowStart(): { date: Date; seconds: number } {
+  const date = new Date();
+  date.setMonth(date.getMonth() - 1);
+  return { date, seconds: Math.floor(date.getTime() / 1000) };
+}
+
+/** Runs a workspace has spent since `since`. */
+export async function countSyntheticChecksSince(
+  tx: DB,
+  workspaceId: number,
+  since: Date,
+): Promise<number> {
+  const row = await tx
+    .select({ count: count() })
+    .from(monitorRun)
+    .where(
+      and(
+        eq(monitorRun.workspaceId, workspaceId),
+        gte(monitorRun.createdAt, since),
+      ),
+    )
+    .get();
+  return row?.count ?? 0;
+}
+
+/**
+ * Read one numeric cap straight from the workspace row, so a plan change or
+ * purchased add-on committed mid-request wins over the caller's snapshot.
+ */
+export async function getWorkspaceLimit(
+  tx: DB,
+  workspaceId: number,
+  limit: LimitKey,
+): Promise<number> {
+  const row = await tx
+    .select()
+    .from(workspaceTable)
+    .where(eq(workspaceTable.id, workspaceId))
+    .get();
+  if (!row) throw new NotFoundError("workspace", workspaceId);
+
+  const max = selectWorkspaceSchema.parse(row).limits[limit];
+  if (typeof max !== "number") {
+    throw new Error(
+      `assertWithinLimit: limit "${limit}" resolved to non-numeric value`,
+    );
+  }
+  return max;
 }
 
 /**
@@ -90,19 +139,12 @@ async function countCurrent(
     }
     // Usage over a rolling month, not a row count: `monitor_run` is
     // append-only, so runs of since-deleted monitors still count.
-    case "synthetic-checks": {
-      const row = await tx
-        .select({ count: count() })
-        .from(monitorRun)
-        .where(
-          and(
-            eq(monitorRun.workspaceId, workspaceId),
-            gte(monitorRun.createdAt, syntheticChecksWindowStart()),
-          ),
-        )
-        .get();
-      return row?.count ?? 0;
-    }
+    case "synthetic-checks":
+      return countSyntheticChecksSince(
+        tx,
+        workspaceId,
+        syntheticChecksWindowStart().date,
+      );
     default: {
       const unhandled: never = limit;
       throw new Error(
@@ -120,21 +162,7 @@ export async function assertWithinLimit(args: {
 }): Promise<void> {
   const { tx, workspaceId, limit, delta = 1 } = args;
 
-  const row = await tx
-    .select()
-    .from(workspaceTable)
-    .where(eq(workspaceTable.id, workspaceId))
-    .get();
-  if (!row) throw new NotFoundError("workspace", workspaceId);
-
-  const fresh = selectWorkspaceSchema.parse(row);
-  const max = fresh.limits[limit];
-  if (typeof max !== "number") {
-    throw new Error(
-      `assertWithinLimit: limit "${limit}" resolved to non-numeric value`,
-    );
-  }
-
+  const max = await getWorkspaceLimit(tx, workspaceId, limit);
   const current = await countCurrent(tx, workspaceId, limit);
   if (current + delta > max) {
     throw new LimitExceededError(limit, max, current);

@@ -1,6 +1,5 @@
-import { and, eq, gte, sql } from "@openstatus/db";
+import { eq, sql } from "@openstatus/db";
 import {
-  monitorRun,
   monitorStatusTable,
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
@@ -10,6 +9,11 @@ import { z } from "zod";
 import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import { LimitExceededError, ValidationError } from "../errors";
+import {
+  countSyntheticChecksSince,
+  getWorkspaceLimit,
+  syntheticChecksWindowStart,
+} from "../limits";
 import type { Monitor } from "../types";
 import { getMonitorInWorkspace } from "./internal";
 import { TriggerMonitorInput } from "./schemas";
@@ -40,25 +44,16 @@ export async function triggerMonitorRun(args: {
   const input = TriggerMonitorInput.parse(args.input);
   const db = getReadDb(ctx);
 
-  const limit = ctx.workspace.limits["synthetic-checks"];
-  const since = new Date();
-  since.setMonth(since.getMonth() - 1);
-  // `monitor_run.created_at` is stored in seconds.
-  const sinceSeconds = Math.floor(since.getTime() / 1000);
-
-  const countUsed = async () => {
-    const row = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(monitorRun)
-      .where(
-        and(
-          eq(monitorRun.workspaceId, ctx.workspace.id),
-          gte(monitorRun.createdAt, since),
-        ),
-      )
-      .get();
-    return row?.count ?? 0;
-  };
+  // One read of the cap for both the friendly pre-check and the reservation
+  // below — reading it twice could let them disagree mid-request.
+  const limit = await getWorkspaceLimit(
+    db,
+    ctx.workspace.id,
+    "synthetic-checks",
+  );
+  const window = syntheticChecksWindowStart();
+  const countUsed = () =>
+    countSyntheticChecksSince(db, ctx.workspace.id, window.date);
 
   const used = await countUsed();
   if (used >= limit) {
@@ -98,7 +93,7 @@ export async function triggerMonitorRun(args: {
     SELECT ${row.id}, ${row.workspaceId}, ${Date.now()}
     WHERE (
       SELECT count(*) FROM monitor_run
-      WHERE workspace_id = ${ctx.workspace.id} AND created_at >= ${sinceSeconds}
+      WHERE workspace_id = ${ctx.workspace.id} AND created_at >= ${window.seconds}
     ) < ${limit}
     RETURNING id
   `);
