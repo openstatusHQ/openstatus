@@ -4,9 +4,37 @@ import {
   StatusAssertion,
   TextBodyAssertion,
 } from "@openstatus/assertions";
+import { db } from "@openstatus/db";
+import { ServiceError } from "@openstatus/services";
+import { assertMonitorUrlSafe } from "@openstatus/services/monitor";
 import type { z } from "zod";
 
+import { OpenStatusApiError } from "@/libs/errors";
+
 import type { assertion, assertionsSchema } from "./schema";
+
+/**
+ * These routes write to the DB directly instead of going through
+ * `@openstatus/services`, so the SSRF guard has to be invoked by hand.
+ */
+export async function assertSafeMonitorUrl(args: {
+  workspaceId: number;
+  jobType: string;
+  url: string;
+  monitorId?: number;
+}): Promise<void> {
+  try {
+    await assertMonitorUrlSafe({ tx: db, ...args });
+  } catch (err) {
+    if (err instanceof ServiceError) {
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
+        message: err.message,
+      });
+    }
+    throw err;
+  }
+}
 
 export const getAssertions = (
   assertions: z.infer<typeof assertion>[],

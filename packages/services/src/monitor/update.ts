@@ -20,6 +20,7 @@ import {
   UpdateMonitorResponseTimeInput,
   UpdateMonitorRetryInput,
 } from "./schemas";
+import { assertMonitorUrlSafe } from "./url-safety";
 
 /**
  * Apply a whole-object patch in a single UPDATE. `undefined` fields are
@@ -39,6 +40,17 @@ export async function updateMonitorConfig(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+
+    if (input.url !== undefined) {
+      // `jobType` is absent from this patch, so the stored type decides.
+      await assertMonitorUrlSafe({
+        tx,
+        workspaceId: ctx.workspace.id,
+        monitorId: existing.id,
+        jobType: existing.jobType,
+        url: input.url,
+      });
+    }
 
     const values: Record<string, unknown> = { updatedAt: new Date() };
     if (input.name !== undefined) values.name = input.name;
@@ -109,6 +121,14 @@ export async function updateMonitorGeneral(args: {
       tx,
       id: input.id,
       workspaceId: ctx.workspace.id,
+    });
+
+    await assertMonitorUrlSafe({
+      tx,
+      workspaceId: ctx.workspace.id,
+      monitorId: existing.id,
+      jobType: input.jobType,
+      url: input.url,
     });
 
     const updated = await tx
