@@ -7,6 +7,7 @@ import percentile from "percentile";
 import { env } from "@/env";
 import { openApiErrorResponses } from "@/libs/errors";
 
+import { assertSafeMonitorUrl } from "../../monitors/utils";
 import type { checkApi } from "../index";
 
 const logger = getLogger("api-server");
@@ -53,6 +54,9 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
     const input = c.req.valid("json");
 
     const { headers, regions, runCount, aggregated, ...rest } = data;
+
+    // Guard before the insert so a rejected target leaves no `check` row.
+    assertSafeMonitorUrl({ jobType: "http", url: data.url });
 
     const newCheck = await db
       .insert(check)
