@@ -2,7 +2,7 @@
 
 ## Tech
 
-- Bun
+- Deno
 - HonoJS
 
 ## Deploy
