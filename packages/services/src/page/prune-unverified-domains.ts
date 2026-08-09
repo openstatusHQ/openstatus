@@ -71,6 +71,10 @@ export async function pruneUnverifiedDomains(
     errors: [],
   };
 
+  // Safely skip if Vercel is unconfigured (e.g. self-hosted instance without Vercel secrets)
+  if (vercel.isConfigured && !vercel.isConfigured()) {
+    return result;
+  }
   if (!opts.vercel && !isVercelConfigured()) {
     return result;
   }
@@ -107,25 +111,34 @@ export async function pruneUnverifiedDomains(
 
     result.unverifiedCount++;
 
-    const createdAt = vDomain.createdAt ?? 0;
+    // If createdAt is missing or invalid, treat age as unknown and skip to preserve grace-period safety
+    if (
+      vDomain.createdAt === undefined ||
+      vDomain.createdAt === null ||
+      typeof vDomain.createdAt !== "number" ||
+      !Number.isFinite(vDomain.createdAt)
+    ) {
+      continue;
+    }
+
     // Skip unverified domains that are still within the grace period
-    if (createdAt > thresholdTime) {
+    if (vDomain.createdAt > thresholdTime) {
       continue;
     }
 
     // Attempt live re-verification check
-    let isStillUnverified = true;
     try {
       const verifyRes = await vercel.verifyDomain(vDomain.name);
       if (verifyRes.verified) {
-        isStillUnverified = false;
         result.verifiedCount++;
+        continue;
       }
-    } catch {
-      isStillUnverified = true;
-    }
-
-    if (!isStillUnverified) {
+    } catch (err) {
+      // Transient or network error during verification check - do NOT assume unverified and do not delete
+      result.errors.push({
+        domain: vDomain.name,
+        error: `Verification check failed: ${err instanceof Error ? err.message : String(err)}`,
+      });
       continue;
     }
 
@@ -134,14 +147,14 @@ export async function pruneUnverifiedDomains(
       try {
         await vercel.removeDomain(vDomain.name);
         result.removedFromVercel.push(vDomain.name);
+        // Gate DB cleanup on successful Vercel removal to prevent desynchronization
+        await clearDbPagesForDomain(database, vDomain.name, result.clearedFromDb);
       } catch (err) {
         result.errors.push({
           domain: vDomain.name,
           error: err instanceof Error ? err.message : String(err),
         });
       }
-
-      await clearDbPagesForDomain(database, vDomain.name, result.clearedFromDb);
     } else {
       result.removedFromVercel.push(vDomain.name);
       const matchingPages = await database
@@ -173,9 +186,7 @@ export async function pruneUnverifiedDomains(
       createdAt: page.createdAt,
     })
     .from(page)
-    .where(
-      and(ne(page.customDomain, ""), sql`${page.customDomain} IS NOT NULL`),
-    )
+    .where(and(ne(page.customDomain, ""), sql`${page.customDomain} IS NOT NULL`))
     .all();
 
   for (const pageRow of dbPages) {
@@ -183,7 +194,8 @@ export async function pruneUnverifiedDomains(
     const domainLower = pageRow.customDomain.toLowerCase();
     if (vercelDomainNames.has(domainLower)) continue;
 
-    const pageCreatedAt = pageRow.createdAt?.getTime() ?? 0;
+    const pageCreatedAt = pageRow.createdAt?.getTime();
+    if (!pageCreatedAt || !Number.isFinite(pageCreatedAt)) continue;
     if (pageCreatedAt > thresholdTime) continue;
 
     try {

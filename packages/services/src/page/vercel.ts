@@ -32,6 +32,7 @@ export type ListDomainsResult = {
 };
 
 export type VercelClient = {
+  isConfigured?(): boolean;
   listDomains(options?: {
     limit?: number;
     since?: number;
@@ -99,6 +100,10 @@ export function createVercelClient(
   }
 
   return {
+    isConfigured() {
+      return Boolean(projectId && bearerToken);
+    },
+
     async listDomains(opts?: {
       limit?: number;
       since?: number;

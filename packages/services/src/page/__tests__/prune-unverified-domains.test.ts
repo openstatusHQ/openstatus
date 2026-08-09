@@ -40,13 +40,18 @@ function createMockVercelClient(opts: {
   domains?: VercelDomain[];
   verifyResult?: (domain: string) => VercelDomain;
   removeCalls?: string[];
+  removeError?: (domain: string) => Error | null;
   getDomainResult?: (domain: string) => VercelDomain | null;
+  configured?: boolean;
 }): { client: VercelClient; removed: string[]; verifiedCalled: string[] } {
   const removed: string[] = opts.removeCalls ?? [];
   const verifiedCalled: string[] = [];
   const domains = [...(opts.domains ?? [])];
 
   const client: VercelClient = {
+    isConfigured() {
+      return opts.configured ?? true;
+    },
     async listDomains() {
       return {
         domains,
@@ -67,6 +72,10 @@ function createMockVercelClient(opts: {
       );
     },
     async removeDomain(domain: string) {
+      if (opts.removeError) {
+        const err = opts.removeError(domain);
+        if (err) throw err;
+      }
       removed.push(domain);
     },
     async getDomain(domain: string) {
@@ -171,6 +180,50 @@ describe("pruneUnverifiedDomains", () => {
     });
   });
 
+  test("skips unverified domains with missing createdAt to preserve grace period", async () => {
+    await withTestTransaction(async (tx: DrizzleTx) => {
+      const customDomain = `${TEST_PREFIX}-no-created-at.example.com`;
+      const page = await tx
+        .insert(pageTable)
+        .values({
+          workspaceId: testWs.id,
+          title: "Missing CreatedAt Page",
+          slug: `${TEST_PREFIX}-slug-missing-created`,
+          description: "Testing missing createdAt",
+          customDomain,
+        })
+        .returning()
+        .get();
+
+      const { client, removed } = createMockVercelClient({
+        domains: [
+          {
+            name: customDomain,
+            verified: false,
+            // createdAt is undefined
+          },
+        ],
+      });
+
+      const res = await pruneUnverifiedDomains({
+        db: tx,
+        vercel: client,
+      });
+
+      expect(res.totalChecked).toBe(1);
+      expect(res.unverifiedCount).toBe(1);
+      expect(removed.length).toBe(0);
+      expect(res.removedFromVercel.length).toBe(0);
+
+      const dbPage = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, page.id))
+        .get();
+      expect(dbPage?.customDomain).toBe(customDomain);
+    });
+  });
+
   test("preserves unverified domains that verify on live check", async () => {
     await withTestTransaction(async (tx: DrizzleTx) => {
       const customDomain = `${TEST_PREFIX}-live-verify.example.com`;
@@ -209,6 +262,52 @@ describe("pruneUnverifiedDomains", () => {
       expect(res.verifiedCount).toBe(1);
       expect(removed.length).toBe(0);
       expect(res.removedFromVercel.length).toBe(0);
+
+      const dbPage = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, page.id))
+        .get();
+      expect(dbPage?.customDomain).toBe(customDomain);
+    });
+  });
+
+  test("preserves domain and logs error when live verification throws a network error", async () => {
+    await withTestTransaction(async (tx: DrizzleTx) => {
+      const customDomain = `${TEST_PREFIX}-verify-error.example.com`;
+      const page = await tx
+        .insert(pageTable)
+        .values({
+          workspaceId: testWs.id,
+          title: "Verify Error Page",
+          slug: `${TEST_PREFIX}-slug-verify-err`,
+          description: "Testing verify error handling",
+          customDomain,
+        })
+        .returning()
+        .get();
+
+      const { client, removed } = createMockVercelClient({
+        domains: [
+          {
+            name: customDomain,
+            verified: false,
+            createdAt: Date.now() - 14 * 24 * 60 * 60 * 1000,
+          },
+        ],
+        verifyResult: () => {
+          throw new Error("Vercel 500 Internal Server Error");
+        },
+      });
+
+      const res = await pruneUnverifiedDomains({
+        db: tx,
+        vercel: client,
+      });
+
+      expect(removed.length).toBe(0);
+      expect(res.removedFromVercel.length).toBe(0);
+      expect(res.errors.some((e) => e.domain === customDomain)).toBe(true);
 
       const dbPage = await tx
         .select()
@@ -272,6 +371,55 @@ describe("pruneUnverifiedDomains", () => {
         actorType: "system",
         db: tx,
       });
+    });
+  });
+
+  test("does not clear DB when removeDomain fails to prevent desynchronization", async () => {
+    await withTestTransaction(async (tx: DrizzleTx) => {
+      const customDomain = `${TEST_PREFIX}-failed-remove.example.com`;
+      const page = await tx
+        .insert(pageTable)
+        .values({
+          workspaceId: testWs.id,
+          title: "Failed Remove Page",
+          slug: `${TEST_PREFIX}-slug-failed-remove`,
+          description: "Testing failed remove",
+          customDomain,
+        })
+        .returning()
+        .get();
+
+      const { client, removed } = createMockVercelClient({
+        domains: [
+          {
+            name: customDomain,
+            verified: false,
+            createdAt: Date.now() - 20 * 24 * 60 * 60 * 1000,
+          },
+        ],
+        verifyResult: (domain) => ({
+          name: domain,
+          verified: false,
+        }),
+        removeError: () => new Error("Failed to delete from Vercel API"),
+      });
+
+      const res = await pruneUnverifiedDomains({
+        db: tx,
+        vercel: client,
+      });
+
+      expect(removed.length).toBe(0);
+      expect(res.removedFromVercel.length).toBe(0);
+      expect(res.clearedFromDb.length).toBe(0);
+      expect(res.errors.some((e) => e.domain === customDomain)).toBe(true);
+
+      const dbPage = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, page.id))
+        .get();
+      expect(dbPage?.customDomain).toBe(customDomain);
     });
   });
 
@@ -367,5 +515,11 @@ describe("pruneUnverifiedDomains", () => {
         db: tx,
       });
     });
+  });
+
+  test("skips safely when Vercel is unconfigured", async () => {
+    const { client } = createMockVercelClient({ configured: false });
+    const res = await pruneUnverifiedDomains({ vercel: client });
+    expect(res.totalChecked).toBe(0);
   });
 });

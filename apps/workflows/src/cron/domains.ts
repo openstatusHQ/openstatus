@@ -3,6 +3,7 @@ import { db } from "@openstatus/db";
 import {
   createVercelClient,
   DEFAULT_UNVERIFIED_DOMAINS_GRACE_PERIOD_MS,
+  isVercelConfigured,
   pruneUnverifiedDomains,
   type PruneUnverifiedDomainsOptions,
   type PruneUnverifiedDomainsResult,
@@ -19,13 +20,25 @@ export async function runDomainsPruneTick(
   opts?: Partial<PruneUnverifiedDomainsOptions>,
 ): Promise<PruneUnverifiedDomainsResult> {
   const e = env();
-  const vercel =
-    opts?.vercel ??
-    createVercelClient({
-      projectId: e.PROJECT_ID_VERCEL,
-      teamId: e.TEAM_ID_VERCEL,
-      bearerToken: e.VERCEL_AUTH_BEARER_TOKEN,
-    });
+  const vercelOpts = {
+    projectId: e.PROJECT_ID_VERCEL,
+    teamId: e.TEAM_ID_VERCEL,
+    bearerToken: e.VERCEL_AUTH_BEARER_TOKEN,
+  };
+
+  if (!opts?.vercel && !isVercelConfigured(vercelOpts)) {
+    logger.info("Vercel is not configured on this instance, skipping domains prune tick");
+    return {
+      totalChecked: 0,
+      verifiedCount: 0,
+      unverifiedCount: 0,
+      removedFromVercel: [],
+      clearedFromDb: [],
+      errors: [],
+    };
+  }
+
+  const vercel = opts?.vercel ?? createVercelClient(vercelOpts);
 
   return pruneUnverifiedDomains({
     db,
@@ -37,15 +50,24 @@ export async function runDomainsPruneTick(
 }
 
 export async function handleDomainsPruneCron(c: Context) {
-  const { cronCompleted, cronFailed } = runSentryCron("domains-prune");
-
   const olderThanDaysQuery = c.req.query("olderThanDays");
   const dryRunQuery = c.req.query("dryRun");
 
-  const olderThanMs = olderThanDaysQuery
-    ? Number(olderThanDaysQuery) * 24 * 60 * 60 * 1000
-    : DEFAULT_UNVERIFIED_DOMAINS_GRACE_PERIOD_MS;
+  let olderThanMs = DEFAULT_UNVERIFIED_DOMAINS_GRACE_PERIOD_MS;
+  if (olderThanDaysQuery !== undefined) {
+    const parsedDays = Number(olderThanDaysQuery);
+    if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
+      return c.json(
+        { error: "Invalid olderThanDays parameter: must be a positive number" },
+        400,
+      );
+    }
+    olderThanMs = parsedDays * 24 * 60 * 60 * 1000;
+  }
+
   const dryRun = dryRunQuery === "true" || dryRunQuery === "1";
+
+  const { cronCompleted, cronFailed } = runSentryCron("domains-prune");
 
   void Effect.runPromise(
     Effect.tryPromise({
