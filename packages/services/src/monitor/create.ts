@@ -45,6 +45,14 @@ export async function createMonitor(args: {
         periodicity,
         regions: regions.join(","),
         assertions: serialiseAssertions(input.assertions),
+        description: input.description,
+        public: input.public,
+        timeout: input.timeout,
+        degradedAfter: input.degradedAfter,
+        retry: input.retry,
+        followRedirects: input.followRedirects,
+        otelEndpoint: input.otelEndpoint,
+        otelHeaders: headersToDbJson(input.otelHeaders),
         updatedAt: new Date(),
       })
       .returning()

@@ -32,6 +32,7 @@ import {
   createPageSubscriber,
   getSubscriberByToken,
   hasPendingSubscriber,
+  unsubscribePageSubscriber,
   unsubscribeSubscriber,
   updateSubscriberScope,
   upsertSelfSignupSubscriber,
@@ -41,6 +42,7 @@ import {
 // Built in `beforeAll` — this suite owns its workspace, page and components so
 // its committed rows and audit trail can't be observed or wiped by siblings.
 let WORKSPACE_ID: number;
+let WORKSPACE: Awaited<ReturnType<typeof createWorkspaceFixture>>["workspace"];
 let FREE_WORKSPACE_ID: number;
 let PAGE_ID: number;
 let PAGE_SLUG: string;
@@ -61,6 +63,9 @@ const EMAILS = {
   scopeUnverified: "svc-scope-unverified@example.com",
   scopeUnsubbed: "svc-scope-unsubbed@example.com",
   unsub: "svc-unsub-test@example.com",
+  unsubWorkspaceEmail: "svc-unsub-ws-email-test@example.com",
+  unsubWorkspaceId: "svc-unsub-ws-id-test@example.com",
+  unsubWorkspaceDenied: "svc-unsub-ws-denied-test@example.com",
   hasPending: "svc-has-pending-test@example.com",
 };
 
@@ -73,6 +78,7 @@ async function cleanAll() {
 
 beforeAll(async () => {
   const team = await createWorkspaceFixture("team");
+  WORKSPACE = team.workspace;
   WORKSPACE_ID = team.workspace.id;
   FREE_WORKSPACE_ID = (await createWorkspaceFixture("free")).workspace.id;
 
@@ -788,5 +794,147 @@ describe("createPageSubscriber", () => {
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
+  });
+});
+
+// ─── unsubscribePageSubscriber ───────────────────────────────────────────────
+
+describe("unsubscribePageSubscriber", () => {
+  function writeCtx() {
+    return makeApiKeyCtx(WORKSPACE, { keyId: "k-write", userId: 1 });
+  }
+
+  function readCtx() {
+    return makeApiKeyCtx(WORKSPACE, {
+      keyId: "k-read",
+      userId: 1,
+      scopes: ["read"],
+    });
+  }
+
+  async function seed(email: string) {
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+    return upsertSelfSignupSubscriber({ input: { email, pageId: PAGE_ID } });
+  }
+
+  test("rejects read-only actor", async () => {
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: readCtx(),
+        input: {
+          pageId: PAGE_ID,
+          identifier: { type: "email", value: EMAILS.unsubWorkspaceDenied },
+        },
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  test("unsubscribes by email and emits an apiKey-actor audit row", async () => {
+    const email = EMAILS.unsubWorkspaceEmail;
+    const sub = await seed(email);
+    await clearAuditLog(WORKSPACE_ID);
+
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: writeCtx(),
+        input: { pageId: PAGE_ID, identifier: { type: "email", value: email } },
+      }),
+    ).resolves.toBeUndefined();
+
+    const row = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, sub.id),
+    });
+    expect(row?.unsubscribedAt).toBeDefined();
+
+    await expectAuditRow({
+      workspaceId: WORKSPACE_ID,
+      action: "page_subscriber.update",
+      entityType: "page_subscriber",
+      entityId: sub.id,
+      actorType: "apiKey",
+    });
+  });
+
+  test("matches email case-insensitively", async () => {
+    const email = EMAILS.unsubWorkspaceId;
+    const sub = await seed(email);
+
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: writeCtx(),
+        input: {
+          pageId: PAGE_ID,
+          identifier: { type: "email", value: email.toUpperCase() },
+        },
+      }),
+    ).resolves.toBeUndefined();
+
+    const row = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, sub.id),
+    });
+    expect(row?.unsubscribedAt).toBeDefined();
+  });
+
+  test("throws when the page belongs to another workspace", async () => {
+    const freeWorkspace = { ...WORKSPACE, id: FREE_WORKSPACE_ID };
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: makeApiKeyCtx(freeWorkspace, { keyId: "k-other", userId: 2 }),
+        input: {
+          pageId: PAGE_ID,
+          identifier: { type: "email", value: EMAILS.unsubWorkspaceEmail },
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("throws for an unknown subscriber", async () => {
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: writeCtx(),
+        input: { pageId: PAGE_ID, identifier: { type: "id", value: 999_999 } },
+      }),
+    ).rejects.toThrow();
+  });
+});
+
+describe("unsubscribePageSubscriber by id", () => {
+  test("unsubscribes an existing row addressed by id", async () => {
+    const email = "svc-unsub-ws-byid-test@example.com";
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+    const sub = await upsertSelfSignupSubscriber({
+      input: { email, pageId: PAGE_ID },
+    });
+
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: makeApiKeyCtx(WORKSPACE, { keyId: "k-write", userId: 1 }),
+        input: {
+          pageId: PAGE_ID,
+          identifier: { type: "id", value: sub.id },
+        },
+      }),
+    ).resolves.toBeUndefined();
+
+    const row = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, sub.id),
+    });
+    expect(row?.unsubscribedAt).toBeDefined();
+
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+  });
+
+  test("an already-unsubscribed email is not found again", async () => {
+    // The email lookup filters on `unsubscribedAt IS NULL`, so a repeat
+    // call must not silently succeed against a stale row.
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: makeApiKeyCtx(WORKSPACE, { keyId: "k-write", userId: 1 }),
+        input: {
+          pageId: PAGE_ID,
+          identifier: { type: "email", value: EMAILS.unsubWorkspaceEmail },
+        },
+      }),
+    ).rejects.toThrow();
   });
 });

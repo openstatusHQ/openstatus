@@ -15,10 +15,12 @@ import {
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { ServiceContext } from "../../context";
+import type { DrizzleTx, ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
+import { createPageComponent } from "../create";
 import { deletePageComponent } from "../delete";
 import { listPageComponents } from "../list";
+import { updatePageComponent } from "../update";
 import { updatePageComponentOrder } from "../update-order";
 
 const TEST_PREFIX = "svc-page-component-test";
@@ -361,6 +363,299 @@ describe("deletePageComponent", () => {
           input: { id: anyComponent.id },
         }),
       ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+});
+
+describe("createPageComponent", () => {
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createPageComponent({
+          ctx: readOnlyCtx,
+          input: {
+            pageId: testPageId,
+            type: "static",
+            name: `${TEST_PREFIX}-denied`,
+            order: 0,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("creates a static component and emits an audit row", async () => {
+    await withTestTransaction(async (tx) => {
+      const created = await createPageComponent({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          pageId: testPageId,
+          type: "static",
+          name: `${TEST_PREFIX}-static`,
+          description: "hello",
+          order: 3,
+        },
+      });
+
+      expect(created.type).toBe("static");
+      expect(created.monitorId).toBe(null);
+      expect(created.name).toBe(`${TEST_PREFIX}-static`);
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page_component.create",
+        entityType: "page_component",
+        entityId: created.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("inherits the monitor name when none is supplied", async () => {
+    await withTestTransaction(async (tx) => {
+      const created = await createPageComponent({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          pageId: testPageId,
+          type: "monitor",
+          monitorId: teamMonitorId,
+          order: 0,
+        },
+      });
+
+      expect(created.name).toBe(`${TEST_PREFIX}-team-monitor`);
+    });
+  });
+
+  test("rejects a monitor from another workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        createPageComponent({
+          ctx: { ...teamCtx, db: tx },
+          input: {
+            pageId: testPageId,
+            type: "monitor",
+            monitorId: freeMonitorId,
+            order: 0,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("rejects a page from another workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        createPageComponent({
+          ctx: { ...freeCtx, db: tx },
+          input: {
+            pageId: testPageId,
+            type: "static",
+            name: `${TEST_PREFIX}-cross`,
+            order: 0,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+});
+
+describe("updatePageComponent", () => {
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        updatePageComponent({
+          ctx: readOnlyCtx,
+          input: { id: 999_999_999, name: "nope" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("patches only the supplied fields and emits an audit row", async () => {
+    await withTestTransaction(async (tx) => {
+      const teamCtxTx = { ...teamCtx, db: tx };
+      const created = await createPageComponent({
+        ctx: teamCtxTx,
+        input: {
+          pageId: testPageId,
+          type: "static",
+          name: `${TEST_PREFIX}-before`,
+          description: "keep me",
+          order: 1,
+        },
+      });
+
+      const updated = await updatePageComponent({
+        ctx: teamCtxTx,
+        input: { id: created.id, name: `${TEST_PREFIX}-after` },
+      });
+
+      expect(updated.name).toBe(`${TEST_PREFIX}-after`);
+      expect(updated.description).toBe("keep me");
+      expect(updated.order).toBe(1);
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page_component.update",
+        entityType: "page_component",
+        entityId: created.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("throws NotFoundError for cross-workspace id", async () => {
+    await withTestTransaction(async (tx) => {
+      const created = await createPageComponent({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          pageId: testPageId,
+          type: "static",
+          name: `${TEST_PREFIX}-cross-update`,
+          order: 0,
+        },
+      });
+
+      await expect(
+        updatePageComponent({
+          ctx: { ...freeCtx, db: tx },
+          input: { id: created.id, name: "nope" },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+});
+
+describe("page component group scoping", () => {
+  async function makeGroup(tx: DrizzleTx, pageId: number, name: string) {
+    return tx
+      .insert(pageComponentGroup)
+      .values({ workspaceId: teamCtx.workspace.id, pageId, name })
+      .returning()
+      .get();
+  }
+
+  async function makeSecondPage(tx: DrizzleTx) {
+    return tx
+      .insert(page)
+      .values({
+        workspaceId: teamCtx.workspace.id,
+        title: `${TEST_PREFIX}-page-2`,
+        description: "test",
+        slug: `${TEST_PREFIX}-slug-2`,
+        customDomain: "",
+      })
+      .returning()
+      .get();
+  }
+
+  test("createPageComponent accepts a group on the same page", async () => {
+    await withTestTransaction(async (tx) => {
+      const group = await makeGroup(tx, testPageId, `${TEST_PREFIX}-grp-ok`);
+      const created = await createPageComponent({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          pageId: testPageId,
+          type: "static",
+          name: `${TEST_PREFIX}-grouped`,
+          order: 0,
+          groupId: group.id,
+        },
+      });
+      expect(created.groupId).toBe(group.id);
+    });
+  });
+
+  test("createPageComponent rejects a group from a sibling page", async () => {
+    await withTestTransaction(async (tx) => {
+      // Workspace scope alone isn't enough — a sibling page's group would
+      // render the component under a group it isn't on.
+      const otherPage = await makeSecondPage(tx);
+      const foreignGroup = await makeGroup(
+        tx,
+        otherPage.id,
+        `${TEST_PREFIX}-grp-foreign`,
+      );
+
+      await expect(
+        createPageComponent({
+          ctx: { ...teamCtx, db: tx },
+          input: {
+            pageId: testPageId,
+            type: "static",
+            name: `${TEST_PREFIX}-bad-group`,
+            order: 0,
+            groupId: foreignGroup.id,
+          },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  test("updatePageComponent rejects a group from a sibling page", async () => {
+    await withTestTransaction(async (tx) => {
+      const teamCtxTx = { ...teamCtx, db: tx };
+      const otherPage = await makeSecondPage(tx);
+      const foreignGroup = await makeGroup(
+        tx,
+        otherPage.id,
+        `${TEST_PREFIX}-grp-foreign-2`,
+      );
+      const created = await createPageComponent({
+        ctx: teamCtxTx,
+        input: {
+          pageId: testPageId,
+          type: "static",
+          name: `${TEST_PREFIX}-regroup`,
+          order: 0,
+        },
+      });
+
+      await expect(
+        updatePageComponent({
+          ctx: teamCtxTx,
+          input: { id: created.id, groupId: foreignGroup.id },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  test("updatePageComponent clears the group with null", async () => {
+    await withTestTransaction(async (tx) => {
+      const teamCtxTx = { ...teamCtx, db: tx };
+      const group = await makeGroup(tx, testPageId, `${TEST_PREFIX}-grp-clear`);
+      const created = await createPageComponent({
+        ctx: teamCtxTx,
+        input: {
+          pageId: testPageId,
+          type: "static",
+          name: `${TEST_PREFIX}-ungroup`,
+          order: 0,
+          groupId: group.id,
+        },
+      });
+      expect(created.groupId).toBe(group.id);
+
+      const updated = await updatePageComponent({
+        ctx: teamCtxTx,
+        input: { id: created.id, groupId: null },
+      });
+      expect(updated.groupId).toBe(null);
     });
   });
 });

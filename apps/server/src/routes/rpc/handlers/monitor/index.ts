@@ -1,7 +1,6 @@
 import type { ServiceImpl } from "@connectrpc/connect";
-import { and, db, eq, gte, isNull, sql } from "@openstatus/db";
-import { monitor, monitorRun } from "@openstatus/db/src/schema";
-import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
+import { and, db, eq, isNull, sql } from "@openstatus/db";
+import { monitor } from "@openstatus/db/src/schema";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
@@ -18,17 +17,22 @@ import type {
 import { TimeRange } from "@openstatus/proto/monitor/v1";
 import {
   ForbiddenError,
+  LimitExceededError,
   NotFoundError,
   ValidationError,
 } from "@openstatus/services";
 import {
   type MonitorTimeRange,
+  type UpdateMonitorConfigInput,
+  createMonitor,
   deleteMonitor,
   getMonitorStatus,
   getMonitorSummary,
   getPrivateLocationIdsByMonitor,
   getResponseLog,
   listResponseLogs,
+  triggerMonitorRun,
+  updateMonitorConfig,
 } from "@openstatus/services/monitor";
 
 import { env } from "../../../../env";
@@ -38,15 +42,15 @@ import {
   getCheckerUrl,
 } from "../../../../libs/checker";
 import { toConnectError, toServiceCtx } from "../../adapter";
-import { getRpcContext } from "../../interceptors";
+import { type RpcContext, getRpcContext } from "../../interceptors";
 import {
   MONITOR_DEFAULTS,
   dbMonitorToDnsProto,
   dbMonitorToHttpProto,
   dbMonitorToTcpProto,
-  dnsAssertionsToDbJson,
-  headersToDbJson,
-  httpAssertionsToDbJson,
+  protoDnsAssertionsToService,
+  protoHeadersToService,
+  protoHttpAssertionsToService,
   httpMethodToString,
   regionsToStrings,
   stringToMonitorStatus,
@@ -55,15 +59,12 @@ import {
   timeRangeToKey,
 } from "./converters";
 import {
-  monitorCreateFailedError,
   monitorIdRequiredError,
   monitorInvalidDataError,
   monitorNotFoundError,
   monitorParseFailedError,
   monitorRequiredError,
-  monitorRunCreateFailedError,
   monitorTypeMismatchError,
-  monitorUpdateFailedError,
   rateLimitExceededError,
   responseLogNotFoundError,
   responseLogsNotEnabledError,
@@ -74,8 +75,8 @@ import {
   toHTTPResponseLogListItem,
 } from "./response-logs";
 import {
-  getCommonDbValues,
-  getCommonDbValuesForUpdate,
+  getCommonCreateInput,
+  getCommonUpdateInput,
   toValidMethod,
   validateCommonMonitorFields,
 } from "./validators";
@@ -126,32 +127,22 @@ async function validateAndGetMonitor(
 
 type ParsedMonitor = ReturnType<typeof selectMonitorSchema.parse>;
 
-/**
- * Helper to perform update and return the updated monitor.
- */
-async function performUpdateAndReturn<T>(
+/** Apply a built patch through the service and shape the proto response. */
+async function applyUpdate<T>(
+  rpcCtx: RpcContext,
   monitorId: number,
-  requestId: string,
-  updateValues: Record<string, unknown>,
+  updateValues: Omit<UpdateMonitorConfigInput, "id">,
   converter: (data: ParsedMonitor) => T,
 ): Promise<{ monitor: T }> {
-  const updatedMonitor = await db
-    .update(monitor)
-    .set(updateValues)
-    .where(eq(monitor.id, monitorId))
-    .returning()
-    .get();
-
-  if (!updatedMonitor) {
-    throw monitorUpdateFailedError(requestId);
+  try {
+    const updated = await updateMonitorConfig({
+      ctx: toServiceCtx(rpcCtx),
+      input: { ...updateValues, id: monitorId },
+    });
+    return { monitor: converter(updated) };
+  } catch (err) {
+    toConnectError(err);
   }
-
-  const parsed = selectMonitorSchema.safeParse(updatedMonitor);
-  if (!parsed.success) {
-    throw monitorParseFailedError(requestId);
-  }
-
-  return { monitor: converter(parsed.data) };
 }
 
 /**
@@ -175,48 +166,30 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     // Check workspace limits
     await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
 
-    // Get common DB values
-    const commonValues = getCommonDbValues(mon);
+    try {
+      const created = await createMonitor({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          ...getCommonCreateInput(mon),
+          jobType: "http",
+          url: mon.url,
+          method: toValidMethod(httpMethodToString(mon.method)),
+          body: mon.body || undefined,
+          headers: protoHeadersToService(mon.headers) ?? [],
+          assertions: protoHttpAssertionsToService(
+            mon.statusCodeAssertions,
+            mon.bodyAssertions,
+            mon.headerAssertions,
+          ),
+          followRedirects:
+            mon.followRedirects ?? MONITOR_DEFAULTS.followRedirects,
+        },
+      });
 
-    // Convert headers and assertions to DB format
-    const headers = headersToDbJson(mon.headers);
-    const assertions = httpAssertionsToDbJson(
-      mon.statusCodeAssertions,
-      mon.bodyAssertions,
-      mon.headerAssertions,
-    );
-
-    // Insert into database
-    const newMonitor = await db
-      .insert(monitor)
-      .values({
-        workspaceId,
-        jobType: "http",
-        url: mon.url,
-        method: toValidMethod(httpMethodToString(mon.method)),
-        body: mon.body || undefined,
-        headers,
-        assertions,
-        followRedirects:
-          mon.followRedirects ?? MONITOR_DEFAULTS.followRedirects,
-        ...commonValues,
-      })
-      .returning()
-      .get();
-
-    if (!newMonitor) {
-      throw monitorCreateFailedError();
+      return { monitor: dbMonitorToHttpProto(created) };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    // Parse through schema to transform fields
-    const parsed = selectMonitorSchema.safeParse(newMonitor);
-    if (!parsed.success) {
-      throw monitorParseFailedError();
-    }
-
-    return {
-      monitor: dbMonitorToHttpProto(parsed.data),
-    };
   },
 
   async createTCPMonitor(req, ctx) {
@@ -236,34 +209,23 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     // Check workspace limits
     await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
 
-    // Get common DB values
-    const commonValues = getCommonDbValues(mon);
+    try {
+      const created = await createMonitor({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          ...getCommonCreateInput(mon),
+          jobType: "tcp",
+          url: mon.uri,
+          method: "GET",
+          headers: [],
+          assertions: [],
+        },
+      });
 
-    // Insert into database
-    const newMonitor = await db
-      .insert(monitor)
-      .values({
-        workspaceId,
-        jobType: "tcp",
-        url: mon.uri,
-        ...commonValues,
-      })
-      .returning()
-      .get();
-
-    if (!newMonitor) {
-      throw monitorCreateFailedError();
+      return { monitor: dbMonitorToTcpProto(created) };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    // Parse through schema to transform fields
-    const parsed = selectMonitorSchema.safeParse(newMonitor);
-    if (!parsed.success) {
-      throw monitorParseFailedError();
-    }
-
-    return {
-      monitor: dbMonitorToTcpProto(parsed.data),
-    };
   },
 
   async createDNSMonitor(req, ctx) {
@@ -283,38 +245,23 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     // Check workspace limits
     await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
 
-    // Get common DB values
-    const commonValues = getCommonDbValues(mon);
+    try {
+      const created = await createMonitor({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          ...getCommonCreateInput(mon),
+          jobType: "dns",
+          url: mon.uri,
+          method: "GET",
+          headers: [],
+          assertions: protoDnsAssertionsToService(mon.recordAssertions),
+        },
+      });
 
-    // Convert assertions to DB format
-    const assertions = dnsAssertionsToDbJson(mon.recordAssertions);
-
-    // Insert into database
-    const newMonitor = await db
-      .insert(monitor)
-      .values({
-        workspaceId,
-        jobType: "dns",
-        url: mon.uri,
-        assertions,
-        ...commonValues,
-      })
-      .returning()
-      .get();
-
-    if (!newMonitor) {
-      throw monitorCreateFailedError();
+      return { monitor: dbMonitorToDnsProto(created) };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    // Parse through schema to transform fields
-    const parsed = selectMonitorSchema.safeParse(newMonitor);
-    if (!parsed.success) {
-      throw monitorParseFailedError();
-    }
-
-    return {
-      monitor: dbMonitorToDnsProto(parsed.data),
-    };
   },
 
   async updateHTTPMonitor(req, ctx) {
@@ -354,8 +301,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     );
 
     // Build update values - only include fields that are provided
-    const updateValues: Record<string, unknown> =
-      getCommonDbValuesForUpdate(mon);
+    const updateValues = getCommonUpdateInput(mon);
 
     // Handle HTTP-specific fields
     if (mon.url !== undefined && mon.url !== "") {
@@ -375,23 +321,22 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     }
 
     if (mon.headers !== undefined) {
-      updateValues.headers = headersToDbJson(mon.headers);
+      updateValues.headers = protoHeadersToService(mon.headers);
     }
 
-    // Handle assertions - update if any assertion type is provided
-    if (
-      mon.statusCodeAssertions !== undefined ||
-      mon.bodyAssertions !== undefined ||
-      mon.headerAssertions !== undefined
-    ) {
-      updateValues.assertions = httpAssertionsToDbJson(
-        mon.statusCodeAssertions ?? [],
-        mon.bodyAssertions ?? [],
-        mon.headerAssertions ?? [],
-      );
+    // Repeated proto fields have no presence — they arrive as `[]` whether
+    // the caller omitted them or sent none. An empty result must therefore
+    // stay `undefined` (leave stored assertions alone) rather than clear it.
+    const assertions = protoHttpAssertionsToService(
+      mon.statusCodeAssertions ?? [],
+      mon.bodyAssertions ?? [],
+      mon.headerAssertions ?? [],
+    );
+    if (assertions.length > 0) {
+      updateValues.assertions = assertions;
     }
 
-    return performUpdateAndReturn(dbMon.id, req.id, updateValues, (data) =>
+    return applyUpdate(rpcCtx, dbMon.id, updateValues, (data) =>
       dbMonitorToHttpProto(data, privateLocationIds),
     );
   },
@@ -433,15 +378,14 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     );
 
     // Build update values - only include fields that are provided
-    const updateValues: Record<string, unknown> =
-      getCommonDbValuesForUpdate(mon);
+    const updateValues = getCommonUpdateInput(mon);
 
     // Handle TCP-specific fields
     if (mon.uri !== undefined && mon.uri !== "") {
       updateValues.url = mon.uri;
     }
 
-    return performUpdateAndReturn(dbMon.id, req.id, updateValues, (data) =>
+    return applyUpdate(rpcCtx, dbMon.id, updateValues, (data) =>
       dbMonitorToTcpProto(data, privateLocationIds),
     );
   },
@@ -483,91 +427,61 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     );
 
     // Build update values - only include fields that are provided
-    const updateValues: Record<string, unknown> =
-      getCommonDbValuesForUpdate(mon);
+    const updateValues = getCommonUpdateInput(mon);
 
     // Handle DNS-specific fields
     if (mon.uri !== undefined && mon.uri !== "") {
       updateValues.url = mon.uri;
     }
 
-    // Handle DNS assertions
-    if (mon.recordAssertions !== undefined) {
-      updateValues.assertions = dnsAssertionsToDbJson(mon.recordAssertions);
+    // Empty means "not supplied" — see the note in `updateHTTPMonitor`.
+    const assertions = protoDnsAssertionsToService(mon.recordAssertions ?? []);
+    if (assertions.length > 0) {
+      updateValues.assertions = assertions;
     }
 
-    return performUpdateAndReturn(dbMon.id, req.id, updateValues, (data) =>
+    return applyUpdate(rpcCtx, dbMon.id, updateValues, (data) =>
       dbMonitorToDnsProto(data, privateLocationIds),
     );
   },
 
   async triggerMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
     const limits = rpcCtx.workspace.limits;
 
-    // Check rate limits
-    const lastMonth = new Date().setMonth(new Date().getMonth() - 1);
-    const countResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(monitorRun)
-      .where(
-        and(
-          eq(monitorRun.workspaceId, workspaceId),
-          gte(monitorRun.createdAt, new Date(lastMonth)),
-        ),
-      )
-      .get();
-
-    const count = countResult?.count ?? 0;
-    if (count >= limits["synthetic-checks"]) {
-      throw rateLimitExceededError(limits["synthetic-checks"], count);
+    // The run is recorded first so a caller without write scope — or one
+    // over its quota — is rejected before any probe leaves the network.
+    let run: Awaited<ReturnType<typeof triggerMonitorRun>>;
+    try {
+      run = await triggerMonitorRun({
+        ctx: toServiceCtx(rpcCtx),
+        input: { id: Number(req.id) },
+      });
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw monitorNotFoundError(req.id);
+      }
+      if (err instanceof ValidationError) {
+        throw monitorInvalidDataError(req.id);
+      }
+      if (err instanceof LimitExceededError) {
+        throw rateLimitExceededError(
+          limits["synthetic-checks"],
+          limits["synthetic-checks"],
+        );
+      }
+      toConnectError(err);
     }
 
-    // Get the monitor
-    const dbMon = await getMonitorById(Number(req.id), workspaceId);
-    if (!dbMon) {
-      throw monitorNotFoundError(req.id);
-    }
-
-    // Validate monitor data
-    const validateMonitor = selectMonitorSchema.safeParse(dbMon);
-    if (!validateMonitor.success) {
-      throw monitorInvalidDataError(req.id);
-    }
-
-    const row = validateMonitor.data;
-
-    // Get monitor status for each region
-    const monitorStatuses = await db
-      .select()
-      .from(monitorStatusTable)
-      .where(eq(monitorStatusTable.monitorId, dbMon.id))
-      .all();
-
-    // Create a monitor run record
-    const timestamp = Date.now();
-    const newRun = await db
-      .insert(monitorRun)
-      .values({
-        monitorId: row.id,
-        workspaceId: row.workspaceId,
-        runnedAt: new Date(timestamp),
-      })
-      .returning()
-      .get();
-
-    if (!newRun) {
-      throw monitorRunCreateFailedError(req.id);
-    }
+    const row = run.monitor;
+    const url = getCheckerUrl(row);
+    const timeout = getCheckerTimeout(row);
 
     // Trigger checks for each region in parallel
     await Promise.all(
-      validateMonitor.data.regions.map((region) => {
-        const statusEntry = monitorStatuses.find((m) => region === m.region);
-        const status = statusEntry?.status || "active";
+      row.regions.map((region) => {
+        const status = run.regionStatus.get(region) || "active";
         const payload = getCheckerPayload(row, status);
-        const url = getCheckerUrl(row);
 
         return fetch(url, {
           headers: {
@@ -577,7 +491,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
           },
           method: "POST",
           body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(getCheckerTimeout(row)),
+          signal: AbortSignal.timeout(timeout),
         });
       }),
     );
