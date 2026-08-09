@@ -27,7 +27,9 @@ export async function runDomainsPruneTick(
   };
 
   if (!opts?.vercel && !isVercelConfigured(vercelOpts)) {
-    logger.info("Vercel is not configured on this instance, skipping domains prune tick");
+    logger.info(
+      "Vercel is not configured on this instance, skipping domains prune tick",
+    );
     return {
       totalChecked: 0,
       verifiedCount: 0,

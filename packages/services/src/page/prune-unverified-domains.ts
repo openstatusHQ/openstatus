@@ -148,7 +148,11 @@ export async function pruneUnverifiedDomains(
         await vercel.removeDomain(vDomain.name);
         result.removedFromVercel.push(vDomain.name);
         // Gate DB cleanup on successful Vercel removal to prevent desynchronization
-        await clearDbPagesForDomain(database, vDomain.name, result.clearedFromDb);
+        await clearDbPagesForDomain(
+          database,
+          vDomain.name,
+          result.clearedFromDb,
+        );
       } catch (err) {
         result.errors.push({
           domain: vDomain.name,
@@ -186,7 +190,9 @@ export async function pruneUnverifiedDomains(
       createdAt: page.createdAt,
     })
     .from(page)
-    .where(and(ne(page.customDomain, ""), sql`${page.customDomain} IS NOT NULL`))
+    .where(
+      and(ne(page.customDomain, ""), sql`${page.customDomain} IS NOT NULL`),
+    )
     .all();
 
   for (const pageRow of dbPages) {
