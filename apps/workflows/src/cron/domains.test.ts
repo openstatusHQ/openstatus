@@ -20,7 +20,7 @@ const TEST_PREFIX = "wf-domains-test";
 let testWorkspaceId: number;
 
 beforeAll(async () => {
-  const ws = await createTestWorkspace({ name: `${TEST_PREFIX}-ws` });
+  const { workspace: ws } = await createTestWorkspace({ name: `${TEST_PREFIX}-ws` });
   testWorkspaceId = ws.id;
 });
 
