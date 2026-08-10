@@ -161,11 +161,10 @@ export async function pruneUnverifiedDomains(
       }
     } else {
       result.removedFromVercel.push(vDomain.name);
-      const matchingPages = await database
-        .select({ id: page.id, workspaceId: page.workspaceId })
-        .from(page)
-        .where(sql`lower(${page.customDomain}) = ${vDomain.name.toLowerCase()}`)
-        .all();
+      const matchingPages = await getMatchingPagesByDomain(
+        database,
+        vDomain.name,
+      );
 
       for (const p of matchingPages) {
         result.clearedFromDb.push({
@@ -231,12 +230,8 @@ export async function pruneUnverifiedDomains(
   return result;
 }
 
-async function clearDbPagesForDomain(
-  database: DB,
-  domain: string,
-  clearedList: ClearedPageRecord[],
-) {
-  const matchingPages = await database
+async function getMatchingPagesByDomain(database: DB, domain: string) {
+  return database
     .select({
       id: page.id,
       workspaceId: page.workspaceId,
@@ -244,6 +239,14 @@ async function clearDbPagesForDomain(
     .from(page)
     .where(sql`lower(${page.customDomain}) = ${domain.toLowerCase()}`)
     .all();
+}
+
+async function clearDbPagesForDomain(
+  database: DB,
+  domain: string,
+  clearedList: ClearedPageRecord[],
+) {
+  const matchingPages = await getMatchingPagesByDomain(database, domain);
 
   for (const pageRow of matchingPages) {
     await clearDbPageById(

@@ -58,13 +58,19 @@ export async function handleDomainsPruneCron(c: Context) {
   let olderThanMs = DEFAULT_UNVERIFIED_DOMAINS_GRACE_PERIOD_MS;
   if (olderThanDaysQuery !== undefined) {
     const parsedDays = Number(olderThanDaysQuery);
-    if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
+    const computedMs = parsedDays * 24 * 60 * 60 * 1000;
+    if (
+      !Number.isFinite(parsedDays) ||
+      parsedDays <= 0 ||
+      !Number.isFinite(computedMs) ||
+      computedMs <= 0
+    ) {
       return c.json(
         { error: "Invalid olderThanDays parameter: must be a positive number" },
         400,
       );
     }
-    olderThanMs = parsedDays * 24 * 60 * 60 * 1000;
+    olderThanMs = computedMs;
   }
 
   const dryRun = dryRunQuery === "true" || dryRunQuery === "1";
