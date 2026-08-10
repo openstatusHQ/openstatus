@@ -60,4 +60,9 @@ export {
   type VercelDomain,
   type VercelDomainVerification,
   type VercelPagination,
+  addDomainToVercel,
+  removeDomainFromVercel,
+  removeDomainFromVercelIfUnused,
+  toDomainError,
+  vercelFetch,
 } from "./vercel";

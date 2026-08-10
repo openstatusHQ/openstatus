@@ -1,4 +1,15 @@
-import { InternalServiceError, PreconditionFailedError } from "../errors";
+import { and, db as defaultDb, ne, sql } from "@openstatus/db";
+import { page } from "@openstatus/db/src/schema";
+
+import type { DB } from "../context";
+import {
+  ConflictError,
+  ForbiddenError,
+  InternalServiceError,
+  PreconditionFailedError,
+  ServiceError,
+  ValidationError,
+} from "../errors";
 
 export type VercelDomainVerification = {
   type: string;
@@ -33,14 +44,22 @@ export type ListDomainsResult = {
 
 export type VercelClient = {
   isConfigured?(): boolean;
+  fetch(path: string, init?: RequestInit): Promise<Response>;
   listDomains(options?: {
     limit?: number;
     since?: number;
     until?: number;
   }): Promise<ListDomainsResult>;
   verifyDomain(domain: string): Promise<VercelDomain>;
+  addDomain(domain: string): Promise<VercelDomain>;
   removeDomain(domain: string): Promise<void>;
+  removeDomainIfUnused(
+    db?: DB,
+    domain?: string,
+    opts?: { excludePageId?: number },
+  ): Promise<void | null>;
   getDomain(domain: string): Promise<VercelDomain | null>;
+  getConfig(domain: string): Promise<unknown>;
 };
 
 export type CreateVercelClientOptions = {
@@ -58,6 +77,28 @@ export function isVercelConfigured(
   const bearerToken =
     options?.bearerToken ?? process.env.VERCEL_AUTH_BEARER_TOKEN;
   return Boolean(projectId && bearerToken);
+}
+
+// Vercel messages leak internal project details, so map known codes to ServiceErrors.
+export function toDomainError(domain: string, code?: string): ServiceError {
+  switch (code) {
+    case "domain_already_in_use":
+      return new ConflictError(
+        `The domain '${domain}' is already in use by another status page. Remove it there first or contact support.`,
+      );
+    case "invalid_domain":
+    case "not_found":
+      return new ValidationError(`The domain '${domain}' is invalid.`);
+    case "forbidden":
+    case "domain_taken":
+      return new ForbiddenError(
+        `The domain '${domain}' belongs to another team on our hosting provider. Contact support if you own it.`,
+      );
+    default:
+      return new InternalServiceError(
+        "Failed to add custom domain. Please try again. If it continues, contact support.",
+      );
+  }
 }
 
 export function createVercelClient(
@@ -78,16 +119,23 @@ export function createVercelClient(
     }
   }
 
-  async function vercelFetch(
+  async function rawVercelFetch(
     path: string,
     init?: RequestInit,
   ): Promise<Response> {
     ensureConfigured();
-    const separator = path.includes("?") ? "&" : "?";
-    const teamParam = teamId
-      ? `${separator}teamId=${encodeURIComponent(teamId)}`
-      : "";
-    const url = `${baseUrl}${path}${teamParam}`;
+    // If path already has teamId query param or baseUrl is full, handle cleanly
+    let url: string;
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      url = path;
+    } else {
+      const separator = path.includes("?") ? "&" : "?";
+      const teamParam =
+        teamId && !path.includes("teamId=")
+          ? `${separator}teamId=${encodeURIComponent(teamId)}`
+          : "";
+      url = `${baseUrl}${path}${teamParam}`;
+    }
 
     return customFetch(url, {
       ...init,
@@ -99,9 +147,13 @@ export function createVercelClient(
     });
   }
 
-  return {
+  const client: VercelClient = {
     isConfigured() {
       return Boolean(projectId && bearerToken);
+    },
+
+    async fetch(path: string, init?: RequestInit): Promise<Response> {
+      return rawVercelFetch(path, init);
     },
 
     async listDomains(opts?: {
@@ -117,7 +169,7 @@ export function createVercelClient(
       const query = params.toString();
       const path = `/v9/projects/${encodeURIComponent(projectId)}/domains${query ? `?${query}` : ""}`;
 
-      const res = await vercelFetch(path);
+      const res = await rawVercelFetch(path);
       if (!res.ok) {
         const error = await res.json().catch(() => ({}));
         throw new InternalServiceError(
@@ -136,9 +188,26 @@ export function createVercelClient(
       };
     },
 
+    async addDomain(domain: string): Promise<VercelDomain> {
+      const path = `/v9/projects/${encodeURIComponent(projectId)}/domains`;
+      const res = await rawVercelFetch(path, {
+        method: "POST",
+        body: JSON.stringify({ name: domain }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        const code = error?.error?.code;
+        console.error("Failed to add domain to Vercel:", { domain, error });
+        throw toDomainError(domain, code);
+      }
+
+      return (await res.json()) as VercelDomain;
+    },
+
     async verifyDomain(domain: string): Promise<VercelDomain> {
       const path = `/v9/projects/${encodeURIComponent(projectId)}/domains/${encodeURIComponent(domain)}/verify`;
-      const res = await vercelFetch(path, { method: "POST" });
+      const res = await rawVercelFetch(path, { method: "POST" });
       if (!res.ok) {
         const error = await res.json().catch(() => ({}));
         throw new InternalServiceError(
@@ -150,18 +219,51 @@ export function createVercelClient(
 
     async removeDomain(domain: string): Promise<void> {
       const path = `/v9/projects/${encodeURIComponent(projectId)}/domains/${encodeURIComponent(domain)}`;
-      const res = await vercelFetch(path, { method: "DELETE" });
+      const res = await rawVercelFetch(path, { method: "DELETE" });
       if (!res.ok && res.status !== 404) {
         const error = await res.json().catch(() => ({}));
+        console.error("Failed to remove domain from Vercel:", { domain, error });
         throw new InternalServiceError(
-          `Failed to remove domain ${domain} from Vercel: ${JSON.stringify(error)}`,
+          "Failed to remove custom domain. Please try again. If it continues, contact support.",
+          error,
         );
       }
     },
 
+    async removeDomainIfUnused(
+      database?: DB,
+      domain?: string,
+      opts?: { excludePageId?: number },
+    ): Promise<void | null> {
+      if (!domain) return null;
+      const targetDb = database ?? defaultDb;
+      const holder = await targetDb
+        .select({ id: page.id })
+        .from(page)
+        .where(
+          and(
+            sql`lower(${page.customDomain}) = ${domain.toLowerCase()}`,
+            opts?.excludePageId !== undefined
+              ? ne(page.id, opts.excludePageId)
+              : undefined,
+          ),
+        )
+        .get();
+
+      if (holder) {
+        console.warn("Skipping Vercel domain removal, still in use:", {
+          domain,
+          pageId: holder.id,
+        });
+        return null;
+      }
+
+      return client.removeDomain(domain);
+    },
+
     async getDomain(domain: string): Promise<VercelDomain | null> {
       const path = `/v9/projects/${encodeURIComponent(projectId)}/domains/${encodeURIComponent(domain)}`;
-      const res = await vercelFetch(path);
+      const res = await rawVercelFetch(path);
       if (res.status === 404) {
         return null;
       }
@@ -173,5 +275,55 @@ export function createVercelClient(
       }
       return (await res.json()) as VercelDomain;
     },
+
+    async getConfig(domain: string): Promise<unknown> {
+      const path = `/v6/domains/${encodeURIComponent(domain)}/config`;
+      const res = await rawVercelFetch(path);
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new InternalServiceError(
+          `Failed to get domain config for ${domain} from Vercel: ${JSON.stringify(error)}`,
+        );
+      }
+      return await res.json();
+    },
   };
+
+  return client;
+}
+
+// Standalone convenience helpers matching the unified interface
+export async function vercelFetch(
+  path: string,
+  init?: RequestInit,
+  client?: VercelClient,
+): Promise<Response> {
+  const c = client ?? createVercelClient();
+  return c.fetch(path, init);
+}
+
+export async function addDomainToVercel(
+  domain: string,
+  client?: VercelClient,
+): Promise<VercelDomain> {
+  const c = client ?? createVercelClient();
+  return c.addDomain(domain);
+}
+
+export async function removeDomainFromVercel(
+  domain: string,
+  client?: VercelClient,
+): Promise<void> {
+  const c = client ?? createVercelClient();
+  return c.removeDomain(domain);
+}
+
+export async function removeDomainFromVercelIfUnused(
+  db: DB,
+  domain: string,
+  opts?: { excludePageId?: number },
+  client?: VercelClient,
+): Promise<void | null> {
+  const c = client ?? createVercelClient();
+  return c.removeDomainIfUnused(db, domain, opts);
 }
