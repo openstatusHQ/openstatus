@@ -66,13 +66,13 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 24.12.0
           cache: "pnpm"
 
       - name: 🦕 Setup Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: 2.9.4
 
       - name: 📥 Download deps
         run: pnpm install

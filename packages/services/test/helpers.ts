@@ -66,7 +66,7 @@ export async function clearAuditLog(
  * the audit row outlives the entity, and because SQLite recycles
  * INTEGER PRIMARY KEY ids after deletes, a later test's freshly-inserted
  * entity can land on the orphan's id and inherit its actor attribution.
- * See docs/adr/test-audit-cleanup.md.
+ * See packages/services/AGENTS.md.
  */
 export async function clearAuditLogFor(args: {
   entityType: string;

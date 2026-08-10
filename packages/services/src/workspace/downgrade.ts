@@ -43,6 +43,9 @@ import { updateWorkspacePlan } from "./update";
  * caller can release them on Vercel *after* the transaction commits —
  * that cleanup is best-effort and must not roll the downgrade back.
  */
+// Every trim step routes through an audited entity verb, so the cascade is
+// fully attributable; the plan flip itself is audited by `updateWorkspacePlan`.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function downgradeWorkspaceToFree(args: {
   ctx: ServiceContext;
 }): Promise<{ customDomains: string[]; ssoDisabled: boolean }> {

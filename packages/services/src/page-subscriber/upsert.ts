@@ -49,6 +49,9 @@ export type UpsertSelfSignupResult = {
  *                                  components-only change)
  *   - already verified row      → no audit (no-op return)
  */
+// Token-addressed self-service by an anonymous visitor: the audit actor is
+// `subscriber`, for which `requireScope` is a documented no-op.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function upsertSelfSignupSubscriber(args: {
   input: UpsertSelfSignupSubscriberInput;
   db?: DB;
