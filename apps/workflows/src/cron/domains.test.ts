@@ -13,7 +13,6 @@ import {
   expect,
   test,
 } from "@openstatus/test-utils";
-
 import { Hono } from "hono";
 
 import { handleDomainsPruneCron, runDomainsPruneTick } from "./domains";
@@ -120,38 +119,55 @@ describe("handleDomainsPruneCron", () => {
   app.get("/cron/domains/prune-unverified", handleDomainsPruneCron);
 
   test("rejects invalid non-numeric olderThanDays with 400", async () => {
-    const res = await app.request("/cron/domains/prune-unverified?olderThanDays=abc");
+    const res = await app.request(
+      "/cron/domains/prune-unverified?olderThanDays=abc",
+    );
     expect(res.status).toBe(400);
     const json = (await res.json()) as { error: string };
-    expect(json.error).toBe("Invalid olderThanDays parameter: must be a positive number");
+    expect(json.error).toBe(
+      "Invalid olderThanDays parameter: must be a positive number",
+    );
   });
 
   test("rejects negative olderThanDays with 400", async () => {
-    const res = await app.request("/cron/domains/prune-unverified?olderThanDays=-5");
+    const res = await app.request(
+      "/cron/domains/prune-unverified?olderThanDays=-5",
+    );
     expect(res.status).toBe(400);
     const json = (await res.json()) as { error: string };
-    expect(json.error).toBe("Invalid olderThanDays parameter: must be a positive number");
+    expect(json.error).toBe(
+      "Invalid olderThanDays parameter: must be a positive number",
+    );
   });
 
   test("rejects zero olderThanDays with 400", async () => {
-    const res = await app.request("/cron/domains/prune-unverified?olderThanDays=0");
+    const res = await app.request(
+      "/cron/domains/prune-unverified?olderThanDays=0",
+    );
     expect(res.status).toBe(400);
     const json = (await res.json()) as { error: string };
-    expect(json.error).toBe("Invalid olderThanDays parameter: must be a positive number");
+    expect(json.error).toBe(
+      "Invalid olderThanDays parameter: must be a positive number",
+    );
   });
 
   test("rejects olderThanDays that overflows to Infinity with 400", async () => {
-    const res = await app.request("/cron/domains/prune-unverified?olderThanDays=1e302");
+    const res = await app.request(
+      "/cron/domains/prune-unverified?olderThanDays=1e302",
+    );
     expect(res.status).toBe(400);
     const json = (await res.json()) as { error: string };
-    expect(json.error).toBe("Invalid olderThanDays parameter: must be a positive number");
+    expect(json.error).toBe(
+      "Invalid olderThanDays parameter: must be a positive number",
+    );
   });
 
   test("accepts valid olderThanDays and dryRun parameters", async () => {
-    const res = await app.request("/cron/domains/prune-unverified?olderThanDays=14&dryRun=true");
+    const res = await app.request(
+      "/cron/domains/prune-unverified?olderThanDays=14&dryRun=true",
+    );
     expect(res.status).toBe(200);
     const json = (await res.json()) as { success: boolean };
     expect(json.success).toBe(true);
   });
 });
-
