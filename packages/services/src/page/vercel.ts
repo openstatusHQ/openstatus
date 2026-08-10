@@ -222,7 +222,10 @@ export function createVercelClient(
       const res = await rawVercelFetch(path, { method: "DELETE" });
       if (!res.ok && res.status !== 404) {
         const error = await res.json().catch(() => ({}));
-        console.error("Failed to remove domain from Vercel:", { domain, error });
+        console.error("Failed to remove domain from Vercel:", {
+          domain,
+          error,
+        });
         throw new InternalServiceError(
           "Failed to remove custom domain. Please try again. If it continues, contact support.",
           error,

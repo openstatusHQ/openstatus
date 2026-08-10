@@ -103,7 +103,9 @@ describe("createVercelClient", () => {
 
   test("addDomain successfully returns domain response", async () => {
     const mockFetch: typeof fetch = async (url, init) => {
-      expect(String(url)).toContain("/v9/projects/prj_test/domains?teamId=team_test");
+      expect(String(url)).toContain(
+        "/v9/projects/prj_test/domains?teamId=team_test",
+      );
       expect(init?.method).toBe("POST");
       expect(JSON.parse(String(init?.body))).toEqual({
         name: "status.example.com",
@@ -158,7 +160,9 @@ describe("createVercelClient", () => {
 
   test("getConfig fetches domain configuration", async () => {
     const mockFetch: typeof fetch = async (url) => {
-      expect(String(url)).toContain("/v6/domains/status.example.com/config?teamId=team_test");
+      expect(String(url)).toContain(
+        "/v6/domains/status.example.com/config?teamId=team_test",
+      );
       return new Response(
         JSON.stringify({
           configuredBy: "CNAME",
