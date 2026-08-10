@@ -52,6 +52,18 @@ function createMockVercelClient(opts: {
     isConfigured() {
       return opts.configured ?? true;
     },
+    async fetch() {
+      return new Response(JSON.stringify({}), { status: 200 });
+    },
+    async addDomain(domain: string) {
+      return { name: domain, verified: false };
+    },
+    async removeDomainIfUnused() {
+      return null;
+    },
+    async getConfig() {
+      return {};
+    },
     async listDomains() {
       return {
         domains,
