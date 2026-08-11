@@ -6,6 +6,7 @@ import {
   sanitizeCustomTheme,
 } from "./custom-theme";
 import { DRACULA_THEME } from "./dracula";
+import { FURTHER_THEME } from "./further";
 import { GITHUB_HIGH_CONTRAST_THEME } from "./github";
 import { OPENSTATUS_ROUNDED_THEME, OPENSTATUS_THEME } from "./openstatus";
 import { SUPABASE_THEME } from "./supabase";
@@ -18,6 +19,7 @@ const THEMES_LIST = [
   SUPABASE_THEME,
   GITHUB_HIGH_CONTRAST_THEME,
   DRACULA_THEME,
+  FURTHER_THEME,
 ] satisfies Theme[];
 
 // NOTE: runtime validation to ensure that the theme IDs are unique
