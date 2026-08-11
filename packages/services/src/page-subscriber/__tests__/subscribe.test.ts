@@ -1,0 +1,159 @@
+import { eq } from "@openstatus/db";
+import { page, pageSubscriber } from "@openstatus/db/src/schema";
+import type {
+  PageUpdate,
+  Subscription,
+  SubscriptionChannel,
+} from "@openstatus/subscriptions";
+import { expect } from "@std/expect";
+import { beforeAll, describe, test } from "@std/testing/bdd";
+
+import {
+  createWorkspaceFixture,
+  withTestTransaction,
+} from "../../../test/helpers";
+import type { DB } from "../../context";
+import {
+  subscribeSelfSignupSubscriber,
+  upsertSelfSignupSubscriber,
+} from "../index.ts";
+
+let workspaceId: number;
+
+beforeAll(async () => {
+  workspaceId = (await createWorkspaceFixture("team")).workspace.id;
+});
+
+async function createStatusPage(
+  tx: DB,
+  overrides: { customDomain?: string } = {},
+) {
+  return tx
+    .insert(page)
+    .values({
+      workspaceId,
+      title: "Subscriber Test Page",
+      description: "Subscriber email verification test",
+      slug: `subscriber-test-${crypto.randomUUID()}`,
+      customDomain: overrides.customDomain ?? "",
+      published: true,
+    })
+    .returning()
+    .get();
+}
+
+function verificationChannel(
+  onSend: (subscription: Subscription, verifyUrl: string) => void,
+): SubscriptionChannel {
+  return {
+    id: "email",
+    validateConfig: () => Promise.resolve({ valid: true }),
+    sendNotifications: (_subscriptions: Subscription[], _update: PageUpdate) =>
+      Promise.resolve(),
+    sendVerification: (subscription, verifyUrl) => {
+      onSend(subscription, verifyUrl);
+      return Promise.resolve();
+    },
+  };
+}
+
+describe("subscribeSelfSignupSubscriber", () => {
+  test("creates a pending subscriber and sends its verification email", async () => {
+    await withTestTransaction(async (tx) => {
+      const statusPage = await createStatusPage(tx, {
+        customDomain: "status.example.com",
+      });
+      const deliveries: { subscription: Subscription; verifyUrl: string }[] =
+        [];
+
+      const result = await subscribeSelfSignupSubscriber({
+        input: {
+          email: "subscriber@example.com",
+          pageId: statusPage.id,
+        },
+        db: tx,
+        channel: verificationChannel((subscription, verifyUrl) => {
+          deliveries.push({ subscription, verifyUrl });
+        }),
+      });
+
+      expect(result.success).toBe(true);
+      expect(deliveries).toHaveLength(1);
+      expect(deliveries[0]?.subscription.email).toBe("subscriber@example.com");
+      expect(deliveries[0]?.verifyUrl).toBe(
+        `https://status.example.com/verify/${deliveries[0]?.subscription.token}`,
+      );
+    });
+  });
+
+  test("uses the hosted page URL when no custom domain is configured", async () => {
+    await withTestTransaction(async (tx) => {
+      const statusPage = await createStatusPage(tx);
+      let verifyUrl = "";
+      let verificationToken: string | undefined;
+
+      await subscribeSelfSignupSubscriber({
+        input: {
+          email: "hosted-subscriber@example.com",
+          pageId: statusPage.id,
+        },
+        db: tx,
+        channel: verificationChannel((subscription, url) => {
+          verificationToken = subscription.token;
+          verifyUrl = url;
+        }),
+      });
+
+      expect(verifyUrl).toBe(
+        `https://${statusPage.slug}.openstatus.dev/verify/${verificationToken}`,
+      );
+    });
+  });
+
+  test("does not send another email for an existing pending subscription", async () => {
+    await withTestTransaction(async (tx) => {
+      const statusPage = await createStatusPage(tx);
+      let deliveries = 0;
+      const channel = verificationChannel(() => {
+        deliveries += 1;
+      });
+      const input = {
+        email: "pending-subscriber@example.com",
+        pageId: statusPage.id,
+      };
+
+      await subscribeSelfSignupSubscriber({ input, db: tx, channel });
+      await expect(
+        subscribeSelfSignupSubscriber({ input, db: tx, channel }),
+      ).rejects.toThrow("A confirmation link was already sent");
+      expect(deliveries).toBe(1);
+    });
+  });
+
+  test("does not send another email for a verified subscription", async () => {
+    await withTestTransaction(async (tx) => {
+      const statusPage = await createStatusPage(tx);
+      const input = {
+        email: "verified-subscriber@example.com",
+        pageId: statusPage.id,
+      };
+      const subscriber = await upsertSelfSignupSubscriber({ input, db: tx });
+      await tx
+        .update(pageSubscriber)
+        .set({ acceptedAt: new Date() })
+        .where(eq(pageSubscriber.id, subscriber.id));
+      let deliveries = 0;
+
+      await expect(
+        subscribeSelfSignupSubscriber({
+          input,
+          db: tx,
+          channel: verificationChannel(() => {
+            deliveries += 1;
+          }),
+        }),
+      ).rejects.toThrow("Email already subscribed");
+      expect(deliveries).toBe(0);
+    });
+  });
+});

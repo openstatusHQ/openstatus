@@ -18,16 +18,16 @@ import {
 } from "@openstatus/db/src/schema";
 import {
   getSubscriberByToken,
-  hasPendingSubscriber,
+  subscribeSelfSignupSubscriber,
   unsubscribeSubscriber,
   updateSubscriberScope,
-  upsertSelfSignupSubscriber,
   verifySelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
 import { TRPCError } from "@trpc/server";
 import { endOfDay, startOfDay, subDays } from "date-fns";
 import { z } from "zod";
 
+import { toTRPCError } from "../service-adapter";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
@@ -1194,9 +1194,7 @@ export const statusPageRouter = createTRPCRouter({
 
       const _page = await opts.ctx.db.query.page.findFirst({
         where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
-        with: {
-          workspace: true,
-        },
+        columns: { id: true },
       });
 
       if (!_page) {
@@ -1206,53 +1204,20 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      const workspace = selectWorkspaceSchema.safeParse(_page.workspace);
-
-      if (!workspace.success) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Workspace data is invalid",
+      try {
+        return await subscribeSelfSignupSubscriber({
+          input: {
+            email: opts.input.email,
+            pageId: _page.id,
+            componentIds: opts.input.subscribeComponents
+              ? opts.input.pageComponents
+              : [],
+          },
+          db: opts.ctx.db,
         });
+      } catch (error) {
+        toTRPCError(error);
       }
-
-      if (!workspace.data.limits["status-subscribers"]) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Upgrade to use status subscribers",
-        });
-      }
-
-      // Guard against email spam: reject if a pending (unverified, unexpired) subscription exists
-      const isPending = await hasPendingSubscriber({
-        input: { email: opts.input.email, pageId: _page.id },
-      });
-      if (isPending) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message:
-            "A confirmation link was already sent. Please check your email or wait until it expires to request a new one.",
-        });
-      }
-
-      const subscription = await upsertSelfSignupSubscriber({
-        input: {
-          email: opts.input.email,
-          pageId: _page.id,
-          componentIds: opts.input.subscribeComponents
-            ? opts.input.pageComponents
-            : [],
-        },
-      });
-
-      // Already verified — no need to send another verification email
-      if (subscription.acceptedAt) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Email already subscribed",
-        });
-      }
-
-      return { id: subscription.id, token: subscription.token };
     }),
 
   getSubscriptionByToken: publicProcedure
