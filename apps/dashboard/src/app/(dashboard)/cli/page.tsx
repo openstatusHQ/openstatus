@@ -208,23 +208,6 @@ jobs:
   },
 ];
 
-function TemplateList({
-  items,
-}: {
-  items: { description: string; template: string }[];
-}) {
-  return (
-    <div className="flex flex-col gap-6">
-      {items.map((item, i) => (
-        <div key={i} className="flex flex-col gap-0.5">
-          <p className="text-muted-foreground text-xs">{item.description}</p>
-          <Code>{item.template}</Code>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function Page() {
   return (
     <SectionGroup>
@@ -351,7 +334,16 @@ export default function Page() {
             to to run synthetic tests in a GitHub action.
           </SectionDescription>
         </SectionHeader>
-        <TemplateList items={githubActions} />
+        <div className="flex flex-col gap-6">
+          {githubActions.map((action, i) => (
+            <div key={i} className="flex flex-col gap-0.5">
+              <p className="text-muted-foreground text-xs">
+                {action.description}
+              </p>
+              <Code>{action.template}</Code>
+            </div>
+          ))}
+        </div>
       </Section>
       <Section>
         <SectionHeader>
@@ -368,7 +360,16 @@ export default function Page() {
             repository for more.
           </SectionDescription>
         </SectionHeader>
-        <TemplateList items={templates} />
+        <div className="flex flex-col gap-6">
+          {templates.map((template, i) => (
+            <div key={i} className="flex flex-col gap-0.5">
+              <p className="text-muted-foreground text-xs">
+                {template.description}
+              </p>
+              <Code>{template.template}</Code>
+            </div>
+          ))}
+        </div>
       </Section>
     </SectionGroup>
   );
