@@ -113,6 +113,7 @@ describe("upsertSelfSignupSubscriber", () => {
     expect(result.token).toBeDefined();
     expect(result.acceptedAt).toBeNull();
     expect(result.componentIds).toEqual([]);
+    expect(result.shouldSendVerification).toBe(true);
 
     // Audit row written, attributed to the subscriber (not a workspace user).
     await expectAuditRow({
@@ -148,7 +149,10 @@ describe("upsertSelfSignupSubscriber", () => {
   });
 
   test("does not create a duplicate row when called again", async () => {
-    await upsertSelfSignupSubscriber({ input: { email, pageId: PAGE_ID } });
+    const result = await upsertSelfSignupSubscriber({
+      input: { email, pageId: PAGE_ID },
+    });
+    expect(result.shouldSendVerification).toBe(false);
     const rows = await db.query.pageSubscriber.findMany({
       where: eq(pageSubscriber.email, email),
     });
@@ -282,6 +286,7 @@ describe("upsertSelfSignupSubscriber", () => {
     });
     expect(result.id).toBe(initial.id);
     expect(result.acceptedAt).not.toBeNull();
+    expect(result.shouldSendVerification).toBe(false);
 
     const rows = await readAuditLog({
       workspaceId: WORKSPACE_ID,

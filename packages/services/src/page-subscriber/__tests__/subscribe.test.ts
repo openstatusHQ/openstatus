@@ -123,9 +123,58 @@ describe("subscribeSelfSignupSubscriber", () => {
       };
 
       await subscribeSelfSignupSubscriber({ input, db: tx, channel });
+      const initialPending = await tx.query.pageSubscriber.findFirst({
+        where: eq(pageSubscriber.email, input.email),
+      });
       await expect(
         subscribeSelfSignupSubscriber({ input, db: tx, channel }),
       ).rejects.toThrow("A confirmation link was already sent");
+      const pendingAfterRetry = await tx.query.pageSubscriber.findFirst({
+        where: eq(pageSubscriber.email, input.email),
+      });
+      expect(deliveries).toBe(1);
+      expect(pendingAfterRetry?.expiresAt).toEqual(initialPending?.expiresAt);
+    });
+  });
+
+  test("allows an immediate retry when verification delivery fails", async () => {
+    await withTestTransaction(async (tx) => {
+      const statusPage = await createStatusPage(tx);
+      const input = {
+        email: "failed-delivery@example.com",
+        pageId: statusPage.id,
+      };
+      const deliveryError = new Error("Email provider unavailable");
+      const failedChannel: SubscriptionChannel = {
+        id: "email",
+        validateConfig: () => Promise.resolve({ valid: true }),
+        sendNotifications: () => Promise.resolve(),
+        sendVerification: () => Promise.reject(deliveryError),
+      };
+
+      await expect(
+        subscribeSelfSignupSubscriber({
+          input,
+          db: tx,
+          channel: failedChannel,
+        }),
+      ).rejects.toThrow("Email provider unavailable");
+
+      const pending = await tx.query.pageSubscriber.findFirst({
+        where: eq(pageSubscriber.email, input.email),
+      });
+      expect(pending?.expiresAt?.getTime()).toBeLessThanOrEqual(Date.now());
+
+      let deliveries = 0;
+      await expect(
+        subscribeSelfSignupSubscriber({
+          input,
+          db: tx,
+          channel: verificationChannel(() => {
+            deliveries += 1;
+          }),
+        }),
+      ).resolves.toEqual({ success: true });
       expect(deliveries).toBe(1);
     });
   });

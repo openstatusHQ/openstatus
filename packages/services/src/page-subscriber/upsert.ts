@@ -32,6 +32,7 @@ export type UpsertSelfSignupResult = {
   acceptedAt: Date | null;
   unsubscribedAt?: Date | null;
   componentIds: number[];
+  shouldSendVerification: boolean;
 };
 
 /**
@@ -55,6 +56,7 @@ export type UpsertSelfSignupResult = {
 export async function upsertSelfSignupSubscriber(args: {
   input: UpsertSelfSignupSubscriberInput;
   db?: DB;
+  claimVerification?: boolean;
 }): Promise<UpsertSelfSignupResult> {
   const input = UpsertSelfSignupSubscriberInput.parse(args.input);
   const componentIds = input.componentIds ?? [];
@@ -116,12 +118,31 @@ export async function upsertSelfSignupSubscriber(args: {
         token: existing.token,
         acceptedAt: existing.acceptedAt,
         componentIds: existing.components.map((c) => c.pageComponentId),
+        shouldSendVerification: false,
       };
     }
 
     if (existing) {
       // Pending row — merge components, refresh expiry.
+      const shouldSendVerification =
+        !existing.expiresAt || existing.expiresAt <= new Date();
       const currentIds = existing.components.map((c) => c.pageComponentId);
+      if (args.claimVerification && !shouldSendVerification) {
+        return {
+          id: existing.id,
+          pageId: existing.pageId,
+          pageName: pageData.title,
+          pageSlug: pageData.slug,
+          customDomain: pageData.customDomain,
+          channelType: existing.channelType,
+          email: existing.email ?? emailLower,
+          token: existing.token,
+          acceptedAt: null,
+          componentIds: currentIds,
+          shouldSendVerification: false,
+        };
+      }
+
       const mergedIds = [...new Set([...currentIds, ...componentIds])];
       const newIds = mergedIds.filter((id) => !currentIds.includes(id));
 
@@ -179,6 +200,7 @@ export async function upsertSelfSignupSubscriber(args: {
         token: existing.token,
         acceptedAt: null,
         componentIds: mergedIds,
+        shouldSendVerification,
       };
     }
 
@@ -237,6 +259,7 @@ export async function upsertSelfSignupSubscriber(args: {
       acceptedAt: inserted.acceptedAt ?? null,
       unsubscribedAt: inserted.unsubscribedAt ?? null,
       componentIds,
+      shouldSendVerification: true,
     };
   });
 }
