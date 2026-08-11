@@ -187,10 +187,43 @@ jobs:
       - name: OpenStatus GitHub Action
         uses: openstatusHQ/openstatus-github-action@v1
         with:
-          token: \${{ secrets.OPENSTATUS_API_TOKEN }}
-          command: monitors apply`,
+          api_key: \${{ secrets.OPENSTATUS_API_KEY }}`,
+  },
+  {
+    description: "Apply monitors configuration",
+    template: `name: OpenStatus
+on: [push]
+
+jobs:
+  apply-monitors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: OpenStatus CLI Action
+        uses: openstatusHQ/cli-action@v1
+        with:
+          args: monitors apply
+        env:
+          OPENSTATUS_API_TOKEN: \${{ secrets.OPENSTATUS_API_TOKEN }}`,
   },
 ];
+
+function TemplateList({
+  items,
+}: {
+  items: { description: string; template: string }[];
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      {items.map((item, i) => (
+        <div key={i} className="flex flex-col gap-0.5">
+          <p className="text-muted-foreground text-xs">{item.description}</p>
+          <Code>{item.template}</Code>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Page() {
   return (
@@ -318,16 +351,7 @@ export default function Page() {
             to to run synthetic tests in a GitHub action.
           </SectionDescription>
         </SectionHeader>
-        <div className="flex flex-col gap-6">
-          {githubActions.map((action, i) => (
-            <div key={i} className="flex flex-col gap-0.5">
-              <p className="text-muted-foreground text-xs">
-                {action.description}
-              </p>
-              <Code>{action.template}</Code>
-            </div>
-          ))}
-        </div>
+        <TemplateList items={githubActions} />
       </Section>
       <Section>
         <SectionHeader>
@@ -344,16 +368,7 @@ export default function Page() {
             repository for more.
           </SectionDescription>
         </SectionHeader>
-        <div className="flex flex-col gap-6">
-          {templates.map((template, i) => (
-            <div key={i} className="flex flex-col gap-0.5">
-              <p className="text-muted-foreground text-xs">
-                {template.description}
-              </p>
-              <Code>{template.template}</Code>
-            </div>
-          ))}
-        </div>
+        <TemplateList items={templates} />
       </Section>
     </SectionGroup>
   );
