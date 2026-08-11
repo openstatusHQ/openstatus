@@ -28,6 +28,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import { ForbiddenError } from "../../errors";
+import { expireSelfSignupVerification } from "../expire-verification.ts";
 import {
   createPageSubscriber,
   getSubscriberByToken,
@@ -196,6 +197,63 @@ describe("upsertSelfSignupSubscriber", () => {
       where: eq(pageSubscriber.email, email),
     });
     expect(row?.expiresAt?.getTime()).toBeGreaterThan(before.getTime());
+  });
+
+  test("merges component scope without refreshing an active verification claim", async () => {
+    const fresh = "svc-upsert-active-claim@example.com";
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
+    const initial = await upsertSelfSignupSubscriber({
+      input: { email: fresh, pageId: PAGE_ID },
+    });
+    const before = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, initial.id),
+    });
+
+    const result = await upsertSelfSignupSubscriber({
+      input: {
+        email: fresh,
+        pageId: PAGE_ID,
+        componentIds: [COMPONENT_1],
+      },
+      claimVerification: true,
+    });
+    const after = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, initial.id),
+    });
+
+    expect(result.shouldSendVerification).toBe(false);
+    expect(result.componentIds).toEqual([COMPONENT_1]);
+    expect(after?.expiresAt).toEqual(before?.expiresAt);
+  });
+
+  test("rotates the token when reclaiming an expired verification", async () => {
+    const fresh = "svc-upsert-expired-claim@example.com";
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
+    const initial = await upsertSelfSignupSubscriber({
+      input: { email: fresh, pageId: PAGE_ID },
+    });
+    await db
+      .update(pageSubscriber)
+      .set({ expiresAt: new Date(0) })
+      .where(eq(pageSubscriber.id, initial.id));
+
+    const result = await upsertSelfSignupSubscriber({
+      input: { email: fresh, pageId: PAGE_ID },
+      claimVerification: true,
+    });
+
+    expect(result.shouldSendVerification).toBe(true);
+    expect(result.token).not.toBe(initial.token);
+
+    if (!initial.token) throw new Error("Initial token is undefined");
+    await expireSelfSignupVerification({
+      subscriberId: initial.id,
+      token: initial.token,
+    });
+    const current = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, initial.id),
+    });
+    expect(current?.expiresAt?.getTime()).toBeGreaterThan(Date.now());
   });
 
   test("stores email in lowercase regardless of input casing", async () => {

@@ -16,6 +16,7 @@ export async function subscribeSelfSignupSubscriber(args: {
   input: UpsertSelfSignupSubscriberInput;
   db?: DB;
   channel?: SubscriptionChannel;
+  expireVerification?: typeof expireSelfSignupVerification;
 }) {
   const input = UpsertSelfSignupSubscriberInput.parse(args.input);
   const channel = args.channel ?? getChannel("email");
@@ -61,11 +62,18 @@ export async function subscribeSelfSignupSubscriber(args: {
       verifyUrl,
     );
   } catch (error) {
-    await expireSelfSignupVerification({
-      subscriberId: subscription.id,
-      token: subscription.token,
-      db: args.db,
-    });
+    try {
+      await (args.expireVerification ?? expireSelfSignupVerification)({
+        subscriberId: subscription.id,
+        token: subscription.token,
+        db: args.db,
+      });
+    } catch (cleanupError) {
+      console.warn("Failed to expire undelivered subscriber verification", {
+        subscriberId: subscription.id,
+        cleanupError,
+      });
+    }
     throw error;
   }
 

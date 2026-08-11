@@ -179,6 +179,32 @@ describe("subscribeSelfSignupSubscriber", () => {
     });
   });
 
+  test("preserves the delivery error when verification cleanup fails", async () => {
+    await withTestTransaction(async (tx) => {
+      const statusPage = await createStatusPage(tx);
+      const deliveryError = new Error("Email provider unavailable");
+      const failedChannel: SubscriptionChannel = {
+        id: "email",
+        validateConfig: () => Promise.resolve({ valid: true }),
+        sendNotifications: () => Promise.resolve(),
+        sendVerification: () => Promise.reject(deliveryError),
+      };
+
+      await expect(
+        subscribeSelfSignupSubscriber({
+          input: {
+            email: "failed-cleanup@example.com",
+            pageId: statusPage.id,
+          },
+          db: tx,
+          channel: failedChannel,
+          expireVerification: () =>
+            Promise.reject(new Error("Database unavailable")),
+        }),
+      ).rejects.toBe(deliveryError);
+    });
+  });
+
   test("does not send another email for a verified subscription", async () => {
     await withTestTransaction(async (tx) => {
       const statusPage = await createStatusPage(tx);
