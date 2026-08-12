@@ -215,14 +215,12 @@ export async function upsertSelfSignupSubscriber(args: {
 
         if (newIds.length > 0) {
           const { token: _beforeToken, ...before } = beforeRow;
-          const { token: _afterToken, ...after } =
-            selectPageSubscriberSchema.parse(active);
           await emitAudit(tx, auditCtx, {
             action: "page_subscriber.update",
             entityType: "page_subscriber",
             entityId: existing.id,
             before,
-            after,
+            after: before,
             metadata: { componentIds: mergedIds },
           });
         }
