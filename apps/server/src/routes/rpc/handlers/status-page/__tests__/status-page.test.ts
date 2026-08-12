@@ -2339,7 +2339,7 @@ describe("StatusPageService.SubscribeToPage", () => {
     expect(res.status).toBe(403);
   });
 
-  test("returns subscriber even if email sending fails", async () => {
+  test("returns an error if email sending fails", async () => {
     subscriptionSpies.sendVerification.mockImplementationOnce(() => {
       throw new Error("Resend API failure");
     });
@@ -2353,19 +2353,15 @@ describe("StatusPageService.SubscribeToPage", () => {
       { "x-openstatus-key": "1" },
     );
 
-    expect(res.status).toBe(200);
-
-    const data = await res.json();
-    expect(data).toHaveProperty("subscriber");
-    expect(data.subscriber.email).toBe(`${TEST_PREFIX}-emailfail@example.com`);
+    expect(res.status).toBe(500);
 
     // Clean up
     await db
       .delete(pageSubscriber)
-      .where(eq(pageSubscriber.id, Number(data.subscriber.id)));
+      .where(eq(pageSubscriber.email, `${TEST_PREFIX}-emailfail@example.com`));
   });
 
-  test("re-subscribing a pending subscriber re-sends verification email", async () => {
+  test("re-subscribing a pending subscriber does not re-send verification", async () => {
     // First subscribe
     const res1 = await connectRequest(
       "SubscribeToPage",
@@ -2388,14 +2384,13 @@ describe("StatusPageService.SubscribeToPage", () => {
       },
       { "x-openstatus-key": "1" },
     );
-    expect(res2.status).toBe(200);
-    expect(subscriptionSpies.sendVerification).toHaveBeenCalledTimes(1);
+    expect(res2.status).toBe(400);
+    expect(subscriptionSpies.sendVerification).not.toHaveBeenCalled();
 
     // Clean up
-    const data = await res2.json();
     await db
       .delete(pageSubscriber)
-      .where(eq(pageSubscriber.id, Number(data.subscriber.id)));
+      .where(eq(pageSubscriber.email, `${TEST_PREFIX}-resend@example.com`));
   });
 });
 

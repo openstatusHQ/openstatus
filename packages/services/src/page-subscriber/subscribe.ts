@@ -18,6 +18,7 @@ export async function subscribeSelfSignupSubscriber(args: {
   db?: DB;
   channel?: SubscriptionChannel;
   expireVerification?: typeof expireSelfSignupVerification;
+  allowAccepted?: boolean;
 }) {
   const input = UpsertSelfSignupSubscriberInput.parse(args.input);
   const channel = args.channel ?? getChannel("email");
@@ -32,6 +33,7 @@ export async function subscribeSelfSignupSubscriber(args: {
   });
 
   if (subscription.acceptedAt) {
+    if (args.allowAccepted) return { success: true };
     throw new ValidationError("Email already subscribed");
   }
   if (!subscription.shouldSendVerification) {

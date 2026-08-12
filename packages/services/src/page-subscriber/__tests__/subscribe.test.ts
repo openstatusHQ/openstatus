@@ -271,4 +271,33 @@ describe("subscribeSelfSignupSubscriber", () => {
       expect(deliveries).toBe(0);
     });
   });
+
+  test("allows adapters to preserve an idempotent accepted response", async () => {
+    await withTestTransaction(async (tx) => {
+      const statusPage = await createStatusPage(tx);
+      const deliveries: Subscription[] = [];
+      const input = {
+        email: "subscribe-accepted-adapter@example.com",
+        pageId: statusPage.id,
+      };
+      const subscriber = await upsertSelfSignupSubscriber({ input, db: tx });
+      await tx
+        .update(pageSubscriber)
+        .set({ acceptedAt: new Date() })
+        .where(eq(pageSubscriber.id, subscriber.id))
+        .run();
+
+      const result = await subscribeSelfSignupSubscriber({
+        input,
+        db: tx,
+        channel: verificationChannel((subscription) => {
+          deliveries.push(subscription);
+        }),
+        allowAccepted: true,
+      });
+
+      expect(result).toEqual({ success: true });
+      expect(deliveries).toHaveLength(0);
+    });
+  });
 });

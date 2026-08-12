@@ -213,6 +213,20 @@ export async function upsertSelfSignupSubscriber(args: {
           throw new NotFoundError("page_subscriber", existing.id);
         }
 
+        if (newIds.length > 0) {
+          const { token: _beforeToken, ...before } = beforeRow;
+          const { token: _afterToken, ...after } =
+            selectPageSubscriberSchema.parse(active);
+          await emitAudit(tx, auditCtx, {
+            action: "page_subscriber.update",
+            entityType: "page_subscriber",
+            entityId: existing.id,
+            before,
+            after,
+            metadata: { componentIds: mergedIds },
+          });
+        }
+
         return {
           id: active.id,
           pageId: active.pageId,
