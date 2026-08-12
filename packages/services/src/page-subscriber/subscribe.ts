@@ -9,6 +9,7 @@ import { upsertSelfSignupSubscriber } from "./upsert";
 
 const PENDING_SUBSCRIPTION_MESSAGE =
   "A confirmation link was already sent. Please check your email or wait until it expires to request a new one.";
+const EXPIRY_CLEANUP_ATTEMPTS = 3;
 
 // Anonymous self-signup resolves workspace and audit actor in the upsert verb.
 // oxlint-disable-next-line openstatus/services-mutation-guards
@@ -62,17 +63,24 @@ export async function subscribeSelfSignupSubscriber(args: {
       verifyUrl,
     );
   } catch (error) {
-    try {
-      await (args.expireVerification ?? expireSelfSignupVerification)({
-        subscriberId: subscription.id,
-        token: subscription.token,
-        db: args.db,
-      });
-    } catch (cleanupError) {
-      console.warn("Failed to expire undelivered subscriber verification", {
-        subscriberId: subscription.id,
-        cleanupError,
-      });
+    const expireVerification =
+      args.expireVerification ?? expireSelfSignupVerification;
+    for (let attempt = 1; attempt <= EXPIRY_CLEANUP_ATTEMPTS; attempt++) {
+      try {
+        await expireVerification({
+          subscriberId: subscription.id,
+          token: subscription.token,
+          db: args.db,
+        });
+        break;
+      } catch (cleanupError) {
+        if (attempt === EXPIRY_CLEANUP_ATTEMPTS) {
+          console.warn("Failed to expire undelivered subscriber verification", {
+            subscriberId: subscription.id,
+            cleanupError,
+          });
+        }
+      }
     }
     throw error;
   }

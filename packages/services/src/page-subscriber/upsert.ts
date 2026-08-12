@@ -152,7 +152,7 @@ export async function upsertSelfSignupSubscriber(args: {
         db: tx,
       };
 
-      if (args.claimVerification && !shouldSendVerification) {
+      if (!args.claimVerification || !shouldSendVerification) {
         if (newIds.length > 0) {
           const { token: _beforeToken, ...before } = beforeRow;
           await emitAudit(tx, auditCtx, {
@@ -181,16 +181,54 @@ export async function upsertSelfSignupSubscriber(args: {
       }
 
       const newExpiresAt = new Date(Date.now() + VERIFICATION_EXPIRY_MS);
-      const token = shouldSendVerification
-        ? crypto.randomUUID()
-        : existing.token;
+      const token = crypto.randomUUID();
       const updatedRow = await tx
         .update(pageSubscriber)
         .set({ expiresAt: newExpiresAt, token, updatedAt: new Date() })
-        .where(eq(pageSubscriber.id, existing.id))
+        .where(
+          and(
+            eq(pageSubscriber.id, existing.id),
+            existing.token
+              ? eq(pageSubscriber.token, existing.token)
+              : isNull(pageSubscriber.token),
+            existing.expiresAt
+              ? eq(pageSubscriber.expiresAt, existing.expiresAt)
+              : isNull(pageSubscriber.expiresAt),
+            isNull(pageSubscriber.acceptedAt),
+            isNull(pageSubscriber.unsubscribedAt),
+          ),
+        )
         .returning()
         .get();
-      const afterRow = selectPageSubscriberSchema.parse(updatedRow ?? existing);
+
+      if (!updatedRow) {
+        const active = await tx.query.pageSubscriber.findFirst({
+          where: and(
+            eq(pageSubscriber.id, existing.id),
+            isNull(pageSubscriber.unsubscribedAt),
+          ),
+          with: { components: true },
+        });
+        if (!active) {
+          throw new NotFoundError("page_subscriber", existing.id);
+        }
+
+        return {
+          id: active.id,
+          pageId: active.pageId,
+          pageName: pageData.title,
+          pageSlug: pageData.slug,
+          customDomain: pageData.customDomain,
+          channelType: active.channelType,
+          email: active.email ?? emailLower,
+          token: active.token,
+          acceptedAt: active.acceptedAt,
+          componentIds: active.components.map((c) => c.pageComponentId),
+          shouldSendVerification: false,
+        };
+      }
+
+      const afterRow = selectPageSubscriberSchema.parse(updatedRow);
 
       // Strip token (capability for self-manage / unsubscribe URLs).
       // Component scope changes don't show in the row diff — surface

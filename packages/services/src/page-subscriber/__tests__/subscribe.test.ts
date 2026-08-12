@@ -13,6 +13,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DB } from "../../context";
+import { expireSelfSignupVerification } from "../expire-verification.ts";
 import {
   subscribeSelfSignupSubscriber,
   upsertSelfSignupSubscriber,
@@ -189,6 +190,7 @@ describe("subscribeSelfSignupSubscriber", () => {
         sendNotifications: () => Promise.resolve(),
         sendVerification: () => Promise.reject(deliveryError),
       };
+      let cleanupAttempts = 0;
 
       await expect(
         subscribeSelfSignupSubscriber({
@@ -198,10 +200,48 @@ describe("subscribeSelfSignupSubscriber", () => {
           },
           db: tx,
           channel: failedChannel,
-          expireVerification: () =>
-            Promise.reject(new Error("Database unavailable")),
+          expireVerification: () => {
+            cleanupAttempts += 1;
+            return Promise.reject(new Error("Database unavailable"));
+          },
         }),
       ).rejects.toBe(deliveryError);
+      expect(cleanupAttempts).toBe(3);
+    });
+  });
+
+  test("retries verification cleanup after transient failures", async () => {
+    await withTestTransaction(async (tx) => {
+      const statusPage = await createStatusPage(tx);
+      const email = "transient-cleanup@example.com";
+      const deliveryError = new Error("Email provider unavailable");
+      let cleanupAttempts = 0;
+
+      await expect(
+        subscribeSelfSignupSubscriber({
+          input: { email, pageId: statusPage.id },
+          db: tx,
+          channel: {
+            id: "email",
+            validateConfig: () => Promise.resolve({ valid: true }),
+            sendNotifications: () => Promise.resolve(),
+            sendVerification: () => Promise.reject(deliveryError),
+          },
+          expireVerification: (input) => {
+            cleanupAttempts += 1;
+            if (cleanupAttempts < 3) {
+              return Promise.reject(new Error("Database unavailable"));
+            }
+            return expireSelfSignupVerification(input);
+          },
+        }),
+      ).rejects.toBe(deliveryError);
+
+      const pending = await tx.query.pageSubscriber.findFirst({
+        where: eq(pageSubscriber.email, email),
+      });
+      expect(cleanupAttempts).toBe(3);
+      expect(pending?.expiresAt?.getTime()).toBeLessThanOrEqual(Date.now());
     });
   });
 

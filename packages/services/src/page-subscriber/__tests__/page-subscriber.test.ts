@@ -53,7 +53,9 @@ let COMPONENT_2: number;
 // Each describe block owns its own email so suites are independent.
 const EMAILS = {
   upsert: "svc-upsert-test@example.com",
+  upsertActiveClaim: "svc-upsert-active-claim@example.com",
   upsertCase: "svc-upsert-case-test@example.com",
+  upsertExpiredClaim: "svc-upsert-expired-claim@example.com",
   upsertReactivate: "svc-upsert-reactivate-test@example.com",
   upsertPendingThenUnsub: "svc-upsert-pending-unsub-test@example.com",
   planGate: "svc-plan-gate-test@example.com",
@@ -200,7 +202,7 @@ describe("upsertSelfSignupSubscriber", () => {
   });
 
   test("merges component scope without refreshing an active verification claim", async () => {
-    const fresh = "svc-upsert-active-claim@example.com";
+    const fresh = EMAILS.upsertActiveClaim;
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
     const initial = await upsertSelfSignupSubscriber({
       input: { email: fresh, pageId: PAGE_ID },
@@ -227,7 +229,7 @@ describe("upsertSelfSignupSubscriber", () => {
   });
 
   test("rotates the token when reclaiming an expired verification", async () => {
-    const fresh = "svc-upsert-expired-claim@example.com";
+    const fresh = EMAILS.upsertExpiredClaim;
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
     const initial = await upsertSelfSignupSubscriber({
       input: { email: fresh, pageId: PAGE_ID },
@@ -254,6 +256,30 @@ describe("upsertSelfSignupSubscriber", () => {
       where: eq(pageSubscriber.id, initial.id),
     });
     expect(current?.expiresAt?.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  test("does not reclaim an expired verification without a send claim", async () => {
+    const fresh = EMAILS.upsertExpiredClaim;
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
+    const initial = await upsertSelfSignupSubscriber({
+      input: { email: fresh, pageId: PAGE_ID },
+    });
+    const expiredAt = new Date(0);
+    await db
+      .update(pageSubscriber)
+      .set({ expiresAt: expiredAt })
+      .where(eq(pageSubscriber.id, initial.id));
+
+    const result = await upsertSelfSignupSubscriber({
+      input: { email: fresh, pageId: PAGE_ID },
+    });
+    const current = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, initial.id),
+    });
+
+    expect(result.shouldSendVerification).toBe(false);
+    expect(result.token).toBe(initial.token);
+    expect(current?.expiresAt).toEqual(expiredAt);
   });
 
   test("stores email in lowercase regardless of input casing", async () => {
