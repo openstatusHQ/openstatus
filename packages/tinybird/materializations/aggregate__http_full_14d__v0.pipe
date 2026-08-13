@@ -7,7 +7,23 @@ SQL >
 
     SELECT
         toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
-        *
+        latency,
+        monitorId,
+        region,
+        statusCode,
+        error,
+        timestamp,
+        url,
+        workspaceId,
+        cronTimestamp,
+        message,
+        timing,
+        headers,
+        assertions,
+        body,
+        trigger,
+        id,
+        requestStatus
     FROM ping_response__v8
 
 TYPE materialized
