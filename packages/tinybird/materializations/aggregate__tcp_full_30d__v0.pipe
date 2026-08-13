@@ -17,7 +17,9 @@ SQL >
         errorMessage,
         error,
         trigger,
-        uri
+        uri,
+        id,
+        requestStatus
     FROM tcp_response__v0
 
 TYPE materialized

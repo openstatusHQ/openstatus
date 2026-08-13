@@ -23,7 +23,8 @@ SQL >
         body,
         trigger,
         id,
-        requestStatus
+        requestStatus,
+        method
     FROM ping_response__v8
 
 TYPE materialized

@@ -21,7 +21,10 @@ SQL >
         headers,
         assertions,
         body,
-        trigger
+        trigger,
+        id,
+        requestStatus,
+        method
     FROM ping_response__v8
 
 TYPE materialized
