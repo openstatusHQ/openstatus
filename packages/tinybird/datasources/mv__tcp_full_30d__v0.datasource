@@ -12,9 +12,7 @@ SCHEMA >
     `errorMessage` Nullable(String),
     `error` Int16,
     `trigger` Nullable(String),
-    `uri` Nullable(String),
-    `id` Nullable(String),
-    `requestStatus` Nullable(String)
+    `uri` Nullable(String)
 
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(time)"

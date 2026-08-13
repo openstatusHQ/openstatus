@@ -1,4 +1,3 @@
-VERSION 0
 # Data Source created from Pipe 'aggregate__tcp_status_7d__v0'
 
 SCHEMA >
