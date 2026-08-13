@@ -1,3 +1,4 @@
+
 SCHEMA >
     `id` String `json:$.id`,
     `indicator` String `json:$.indicator`,
@@ -9,4 +10,4 @@ SCHEMA >
 
 ENGINE "MergeTree"
 ENGINE_SORTING_KEY "id, fetched_at"
-ENGINE_TTL "toDateTime(fromUnixTimestamp64Milli(fetched_at)) + INTERVAL 60 DAY"
+ENGINE_TTL "toDateTime(fromUnixTimestamp64Milli(fetched_at)) + toIntervalDay(60)"
