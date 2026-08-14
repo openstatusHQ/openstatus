@@ -5,10 +5,7 @@ import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { InternalServiceError } from "../errors";
 import type { Maintenance, MaintenanceUpdate } from "../types";
-import {
-  getMaintenanceInWorkspace,
-  syncMaintenanceMessage,
-} from "./internal";
+import { getMaintenanceInWorkspace, syncMaintenanceMessage } from "./internal";
 import { AddMaintenanceUpdateInput } from "./schemas";
 
 export type AddMaintenanceUpdateResult = {

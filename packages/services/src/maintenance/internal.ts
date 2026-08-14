@@ -126,10 +126,7 @@ export async function getMaintenanceUpdateInWorkspace(args: {
   const row = await tx
     .select({ update: maintenanceUpdate })
     .from(maintenanceUpdate)
-    .innerJoin(
-      maintenance,
-      eq(maintenance.id, maintenanceUpdate.maintenanceId),
-    )
+    .innerJoin(maintenance, eq(maintenance.id, maintenanceUpdate.maintenanceId))
     .where(
       and(
         eq(maintenanceUpdate.id, id),
@@ -141,10 +138,7 @@ export async function getMaintenanceUpdateInWorkspace(args: {
   return row.update;
 }
 
-export async function syncMaintenanceMessage(
-  tx: DB,
-  maintenanceId: number,
-) {
+export async function syncMaintenanceMessage(tx: DB, maintenanceId: number) {
   const latest = await getLatestMaintenanceUpdate(tx, maintenanceId);
 
   if (!latest) {

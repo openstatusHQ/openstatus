@@ -49,9 +49,7 @@ export const maintenanceUpdate = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
   },
-  (t) => [
-    index("maintenance_update_maintenance_id_idx").on(t.maintenanceId),
-  ],
+  (t) => [index("maintenance_update_maintenance_id_idx").on(t.maintenanceId)],
 );
 
 export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
