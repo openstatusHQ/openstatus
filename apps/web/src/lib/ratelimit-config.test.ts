@@ -3,39 +3,84 @@ import { describe, test } from "@std/testing/bdd";
 
 import {
   PLAY_RATE_LIMIT_TIERS,
-  blockedTierIndex,
+  parseTieredResult,
   rateLimitMessage,
   retryAfterHeader,
+  tieredRateLimitHeaders,
   tightestTierIndex,
 } from "./ratelimit-config";
 
 const [BURST, SUSTAINED] = PLAY_RATE_LIMIT_TIERS;
+const NOW = 1_760_000_000_000;
 
-describe("blockedTierIndex", () => {
-  test("allows a first request with no counters set", () => {
-    expect(blockedTierIndex(PLAY_RATE_LIMIT_TIERS, [null, null])).toBe(-1);
+/** Reply shape of RATELIMIT_TIERS_SCRIPT for the two play tiers. */
+function reply(
+  blocked: number,
+  counts: [number, number],
+  ttls: [number, number],
+) {
+  return [blocked, ...counts, ...ttls];
+}
+
+describe("parseTieredResult", () => {
+  test("admits a first request and reports the burst tier", () => {
+    const result = parseTieredResult(
+      PLAY_RATE_LIMIT_TIERS,
+      reply(0, [1, 1], [60, 3600]),
+      NOW,
+    );
+    expect(result.success).toBe(true);
+    expect(result.tier).toEqual(BURST);
+    expect(result.remaining).toBe(2);
+    expect(result.reset).toBe(NOW + 60_000);
   });
 
-  test("allows a request while every tier still has room", () => {
-    expect(blockedTierIndex(PLAY_RATE_LIMIT_TIERS, [2, 9])).toBe(-1);
+  test("reports the sustained tier once it has the least headroom", () => {
+    const result = parseTieredResult(
+      PLAY_RATE_LIMIT_TIERS,
+      reply(0, [1, 9], [58, 1200]),
+      NOW,
+    );
+    expect(result.success).toBe(true);
+    expect(result.tier).toEqual(SUSTAINED);
+    expect(result.remaining).toBe(1);
+    expect(result.reset).toBe(NOW + 1_200_000);
   });
 
-  test("blocks on the burst tier at 3 within the minute", () => {
-    expect(blockedTierIndex(PLAY_RATE_LIMIT_TIERS, [3, 3])).toBe(0);
+  test("surfaces the burst tier when it is what blocked", () => {
+    const result = parseTieredResult(
+      PLAY_RATE_LIMIT_TIERS,
+      reply(1, [3, 3], [42, 3400]),
+      NOW,
+    );
+    expect(result.success).toBe(false);
+    expect(result.tier).toEqual(BURST);
+    expect(result.limit).toBe(3);
+    expect(result.remaining).toBe(0);
+    expect(result.reset).toBe(NOW + 42_000);
   });
 
   // the case that motivated the tiers: paced automation never trips the burst
   // tier, so only the sustained tier can stop it
-  test("blocks paced automation on the sustained tier", () => {
-    expect(blockedTierIndex(PLAY_RATE_LIMIT_TIERS, [1, 10])).toBe(1);
+  test("surfaces the sustained tier when paced automation is blocked", () => {
+    const result = parseTieredResult(
+      PLAY_RATE_LIMIT_TIERS,
+      reply(2, [1, 10], [30, 2400]),
+      NOW,
+    );
+    expect(result.success).toBe(false);
+    expect(result.tier).toEqual(SUSTAINED);
+    expect(result.limit).toBe(10);
+    expect(result.reset).toBe(NOW + 2_400_000);
   });
 
-  test("one request per minute is blocked after ten requests", () => {
-    const allowed = Array.from({ length: 20 }, (_, i) => i).filter(
-      // a 1/min pace means the burst counter is never above 1
-      (i) => blockedTierIndex(PLAY_RATE_LIMIT_TIERS, [1, i]) === -1,
+  test("falls back to a full window when redis reports no ttl", () => {
+    const blocked = parseTieredResult(
+      PLAY_RATE_LIMIT_TIERS,
+      reply(1, [3, 3], [-1, -2]),
+      NOW,
     );
-    expect(allowed.length).toBe(SUSTAINED.limit);
+    expect(blocked.reset).toBe(NOW + BURST.window * 1000);
   });
 });
 
@@ -57,6 +102,17 @@ describe("rateLimitMessage", () => {
     expect(rateLimitMessage(SUSTAINED)).toBe(
       "You have exceeded the rate limit of 10 requests per hour",
     );
+  });
+});
+
+describe("tieredRateLimitHeaders", () => {
+  test("emits the reset as unix seconds, not the ms epoch", () => {
+    const headers = tieredRateLimitHeaders({
+      limit: 3,
+      remaining: 0,
+      reset: NOW,
+    });
+    expect(headers["X-RateLimit-Reset"]).toBe("1760000000");
   });
 });
 

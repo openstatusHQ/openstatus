@@ -24,14 +24,6 @@ export const PLAY_RATE_LIMIT_TIERS: RateLimitTier[] = [
   { name: "sustained", window: 3600, limit: 10 },
 ];
 
-/** Index of the first tier already at its limit, or -1 when all have room. */
-export function blockedTierIndex(
-  tiers: RateLimitTier[],
-  counts: (number | null)[],
-): number {
-  return tiers.findIndex((tier, i) => (counts[i] ?? 0) >= tier.limit);
-}
-
 /** Index of the tier with the least headroom left, so headers report the real cap. */
 export function tightestTierIndex(
   tiers: RateLimitTier[],
@@ -44,6 +36,44 @@ export function tightestTierIndex(
     }
   }
   return tightest;
+}
+
+/**
+ * Decode the flat reply of RATELIMIT_TIERS_SCRIPT:
+ * [blocked (1-based, 0 = admitted), ...counts, ...ttls]
+ */
+export function parseTieredResult(
+  tiers: RateLimitTier[],
+  reply: number[],
+  now: number,
+): TieredRateLimitResult {
+  const counts = reply.slice(1, 1 + tiers.length);
+  const ttls = reply.slice(1 + tiers.length, 1 + tiers.length * 2);
+
+  // TTL replies -1 (no expiry) and -2 (no key); fall back to a full window
+  const resetOf = (i: number) =>
+    now + (ttls[i] > 0 ? ttls[i] * 1000 : tiers[i].window * 1000);
+
+  const blocked = reply[0];
+  if (blocked > 0) {
+    const i = blocked - 1;
+    return {
+      success: false,
+      limit: tiers[i].limit,
+      remaining: 0,
+      reset: resetOf(i),
+      tier: tiers[i],
+    };
+  }
+
+  const i = tightestTierIndex(tiers, counts);
+  return {
+    success: true,
+    limit: tiers[i].limit,
+    remaining: Math.max(0, tiers[i].limit - counts[i]),
+    reset: resetOf(i),
+    tier: tiers[i],
+  };
 }
 
 function formatWindow(seconds: number): string {
@@ -60,12 +90,13 @@ export function rateLimitMessage(tier: RateLimitTier): string {
 export function tieredRateLimitHeaders(result: {
   limit: number;
   remaining: number;
-  reset: number;
+  reset: number; // ms epoch
 }): Record<string, string> {
   return {
     "X-RateLimit-Limit": result.limit.toString(),
     "X-RateLimit-Remaining": result.remaining.toString(),
-    "X-RateLimit-Reset": result.reset.toString(),
+    // the header convention is unix seconds, unlike the ms epoch we pass around
+    "X-RateLimit-Reset": Math.ceil(result.reset / 1000).toString(),
   };
 }
 
