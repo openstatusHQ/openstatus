@@ -3,7 +3,7 @@ import type { Page } from "@openstatus/db/src/schema";
 import { stripPrefixForExternal } from "./strip-prefix-for-external";
 import type { Action, ComposeInput } from "./types";
 
-type Input = Pick<ComposeInput, "route" | "requestUrl"> & {
+type Input = Pick<ComposeInput, "route" | "redirectBaseUrl"> & {
   page: Pick<Page, "locales" | "defaultLocale">;
 };
 
@@ -15,7 +15,7 @@ type Input = Pick<ComposeInput, "route" | "requestUrl"> & {
 export function resolveLocaleAction({
   route,
   page,
-  requestUrl,
+  redirectBaseUrl,
 }: Input): Action | null {
   if (!page.locales || page.locales.length === 0) return null;
   if (page.locales.includes(route.locale)) return null;
@@ -37,7 +37,7 @@ export function resolveLocaleAction({
   const externalPath = stripPrefixForExternal(route, redirectPath);
   return {
     type: "redirect",
-    url: new URL(externalPath || "/", requestUrl),
+    url: new URL(externalPath || "/", redirectBaseUrl),
     reason: "locale-mismatch-redirect",
   };
 }

@@ -18,7 +18,7 @@ describe("resolveLocaleAction", () => {
       resolveLocaleAction({
         route: baseRoute,
         page: { locales: null, defaultLocale: "en" },
-        requestUrl: "http://localhost:3000/acme/fr",
+        redirectBaseUrl: "http://localhost:3000/acme/fr",
       }),
     ).toBeNull();
   });
@@ -28,7 +28,7 @@ describe("resolveLocaleAction", () => {
       resolveLocaleAction({
         route: baseRoute,
         page: { locales: [], defaultLocale: "en" },
-        requestUrl: "http://localhost:3000/acme/fr",
+        redirectBaseUrl: "http://localhost:3000/acme/fr",
       }),
     ).toBeNull();
   });
@@ -38,7 +38,7 @@ describe("resolveLocaleAction", () => {
       resolveLocaleAction({
         route: baseRoute,
         page: { locales: ["en", "fr"], defaultLocale: "en" },
-        requestUrl: "http://localhost:3000/acme/fr",
+        redirectBaseUrl: "http://localhost:3000/acme/fr",
       }),
     ).toBeNull();
   });
@@ -47,7 +47,7 @@ describe("resolveLocaleAction", () => {
     const action = resolveLocaleAction({
       route: baseRoute,
       page: { locales: ["en", "de"], defaultLocale: "en" },
-      requestUrl: "http://localhost:3000/acme/fr",
+      redirectBaseUrl: "http://localhost:3000/acme/fr",
     });
     expect(action).toEqual({
       type: "redirect",
@@ -60,7 +60,7 @@ describe("resolveLocaleAction", () => {
     const action = resolveLocaleAction({
       route: { ...baseRoute, rewritePath: "/acme/fr/events" },
       page: { locales: ["en"], defaultLocale: "en" },
-      requestUrl: "http://localhost:3000/acme/fr/events",
+      redirectBaseUrl: "http://localhost:3000/acme/fr/events",
     });
     expect(action?.url?.pathname).toBe("/acme/en/events");
   });
@@ -76,7 +76,7 @@ describe("resolveLocaleAction", () => {
     const action = resolveLocaleAction({
       route,
       page: { locales: ["en"], defaultLocale: "en" },
-      requestUrl: "https://acme.localhost:3000/fr/events",
+      redirectBaseUrl: "https://acme.localhost:3000/fr/events",
     });
     expect(action?.type).toBe("redirect");
     expect(action?.url?.pathname).toBe("/en/events");
@@ -86,7 +86,7 @@ describe("resolveLocaleAction", () => {
     const action = resolveLocaleAction({
       route: baseRoute,
       page: { locales: ["en", "de"], defaultLocale: null as unknown as "en" },
-      requestUrl: "http://localhost:3000/acme/fr",
+      redirectBaseUrl: "http://localhost:3000/acme/fr",
     });
     expect(action?.url?.pathname).toBe("/acme/en");
   });
@@ -102,7 +102,7 @@ describe("resolveLocaleAction", () => {
     const action = resolveLocaleAction({
       route,
       page: { locales: ["en"], defaultLocale: "en" },
-      requestUrl: "https://acme.localhost:3000/fr",
+      redirectBaseUrl: "https://acme.localhost:3000/fr",
     });
     expect(action?.reason).toBe("locale-mismatch-redirect");
     expect(action?.url?.pathname).toBe("/en");
@@ -112,7 +112,7 @@ describe("resolveLocaleAction", () => {
     const action = resolveLocaleAction({
       route: baseRoute,
       page: { locales: ["en"], defaultLocale: "en" },
-      requestUrl: "http://localhost:3000/acme/fr",
+      redirectBaseUrl: "http://localhost:3000/acme/fr",
     });
     expect(action?.reason).toBe("locale-mismatch-redirect");
   });
@@ -123,7 +123,7 @@ describe("resolveLocaleAction", () => {
     const action = resolveLocaleAction({
       route: { ...baseRoute, rewritePath: "/some/other/shape" },
       page: { locales: ["en"], defaultLocale: "en" },
-      requestUrl: "http://localhost:3000/some/other/shape",
+      redirectBaseUrl: "http://localhost:3000/some/other/shape",
     });
     expect(action).toBeNull();
   });
