@@ -7,9 +7,8 @@ import { devProbeCdnRegion } from "@/lib/cdn-checker/dev-probe";
 import { validateCdnUrl } from "@/lib/cdn-checker/guards";
 import { probeCdnRegion } from "@/lib/cdn-checker/probe";
 import {
-  MAX_REQUESTS_PER_WINDOW,
-  RATE_LIMIT_WINDOW,
   rateLimitCdnRequest,
+  rateLimitExceeded,
   rateLimitHeaders,
 } from "@/lib/cdn-checker/ratelimit";
 import type { CdnRegionResponse } from "@/lib/cdn-checker/schema";
@@ -104,15 +103,13 @@ export async function POST(request: Request) {
     );
   }
   if (rl.status === "limited") {
+    const exceeded = rateLimitExceeded(rl);
     return errorResponse(
       "RATE_LIMIT_EXCEEDED",
-      `You have exceeded the rate limit of ${MAX_REQUESTS_PER_WINDOW} requests per ${RATE_LIMIT_WINDOW} seconds`,
+      exceeded.message,
       429,
       { limit: rl.limit, remaining: rl.remaining, reset: rl.reset },
-      {
-        ...rateLimitHeaders(rl),
-        "Retry-After": Math.ceil((rl.reset - Date.now()) / 1000).toString(),
-      },
+      exceeded.headers,
     );
   }
 
