@@ -11,14 +11,18 @@ import {
   storeBaseCheckerData,
   storeCheckerData,
 } from "../../../../../lib/checker/utils";
-import { getClientIP, ratelimit } from "../../../../../lib/ratelimit";
+import {
+  PLAY_RATE_LIMIT_TIERS,
+  getClientIP,
+  rateLimitMessage,
+  ratelimitTiers,
+  retryAfterHeader,
+  tieredRateLimitHeaders,
+} from "../../../../../lib/ratelimit";
 import { iteratorToStream, yieldMany } from "../../../../../lib/stream";
 import { wait } from "../../../../../lib/utils";
 
 export const runtime = "edge";
-
-const RATE_LIMIT_WINDOW = 60; // 60 seconds
-const MAX_REQUESTS_PER_WINDOW = 3;
 
 // Request schema validation
 const playCheckerRequestSchema = z.object({
@@ -218,15 +222,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const rateLimitResult = await ratelimit(`play-checker:${clientIP}`, {
-    window: RATE_LIMIT_WINDOW,
-    limit: MAX_REQUESTS_PER_WINDOW,
-  });
+  const rateLimitResult = await ratelimitTiers(
+    `play-checker:${clientIP}`,
+    PLAY_RATE_LIMIT_TIERS,
+  );
 
   if (!rateLimitResult.success) {
     return createErrorResponse(
       "RATE_LIMIT_EXCEEDED",
-      `You have exceeded the rate limit of ${MAX_REQUESTS_PER_WINDOW} requests per ${RATE_LIMIT_WINDOW} seconds`,
+      rateLimitMessage(rateLimitResult.tier),
       429,
       {
         limit: rateLimitResult.limit,
@@ -234,12 +238,8 @@ export async function POST(request: Request) {
         reset: rateLimitResult.reset,
       },
       {
-        "X-RateLimit-Limit": rateLimitResult.limit.toString(),
-        "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
-        "X-RateLimit-Reset": rateLimitResult.reset.toString(),
-        "Retry-After": Math.ceil(
-          (rateLimitResult.reset - Date.now()) / 1000,
-        ).toString(),
+        ...tieredRateLimitHeaders(rateLimitResult),
+        ...retryAfterHeader(rateLimitResult),
       },
     );
   }
@@ -261,10 +261,6 @@ export async function POST(request: Request) {
   });
   const stream = iteratorToStream(iterator);
   return new Response(stream, {
-    headers: {
-      "X-RateLimit-Limit": rateLimitResult.limit.toString(),
-      "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
-      "X-RateLimit-Reset": rateLimitResult.reset.toString(),
-    },
+    headers: tieredRateLimitHeaders(rateLimitResult),
   });
 }
