@@ -1,0 +1,181 @@
+---
+title: "Error Budgets Explained"
+seo:
+  title: "Error Budget: How to Calculate and Use One"
+description: "How to calculate an error budget from your SLO, what burn rate means, and what to actually do when the budget runs out. With a per-SLO downtime table."
+author: "openstatus"
+publishedAt: "2026-08-15"
+category: "fundamentals"
+faq:
+  - question: "What is an error budget?"
+    answer: "An error budget is the amount of unreliability you are allowed before you break your own target. If your SLO is 99.9% availability over a month, you are permitting 0.1% of that month to fail - about 43 minutes. That 43 minutes is the budget. It is not a forecast or a tolerance for sloppiness; it is a quantity you are expected to spend."
+  - question: "How do you calculate an error budget?"
+    answer: "Error budget = (100% − SLO) × the measurement window. For a 99.9% monthly SLO, that is 0.1% of 30 days, or roughly 43 minutes. For a 99.99% monthly SLO it is about 4 minutes 19 seconds. Calculate it against the window your agreement actually uses - a yearly window is ten times more forgiving than a monthly one for the same percentage."
+  - question: "What is error budget burn rate?"
+    answer: "Burn rate is how fast you are consuming the budget relative to the pace that would exactly exhaust it over the window. A burn rate of 1 means you will finish the period with exactly zero budget left. A burn rate of 14.4 means you are spending 2% of a 30-day budget every hour, and the entire month's allowance disappears in about two hours."
+  - question: "What happens when the error budget is spent?"
+    answer: "That is a policy decision you should make before it happens, not during the incident. The common policy is to freeze feature deploys and redirect engineering to reliability work until the budget recovers at the start of the next window. The point is that the budget converts an argument about whether to slow down into a number that already decided it."
+  - question: "What is the difference between an error budget and an SLA?"
+    answer: "An SLA is the promise you make to customers, with financial consequences. The error budget is the operating room between that promise and the stricter internal target you hold yourself to. The SLA says what happens if you fail; the error budget tells you how close you are to failing, while there is still time to act."
+---
+
+An error budget is the most useful number in reliability work, and the one most teams
+define once and then never look at again. It turns "should we ship this risky change
+on a Friday?" from an argument about temperament into a question with an answer.
+
+This guide assumes you already know how SLIs, SLOs, and SLAs relate. If not, start
+with [SLA vs SLO vs SLI](/guides/sla-vs-slo-vs-sli) — the error budget only makes
+sense once those three are distinct in your head.
+
+## What an Error Budget Actually Is
+
+Your SLO is a target for reliability. The error budget is its complement: the
+unreliability you have explicitly permitted.
+
+If your SLO is 99.9% availability measured monthly, you are saying 0.1% of the month
+is allowed to fail. That is roughly 43 minutes. Those 43 minutes are not a tolerance
+for carelessness — they are a resource you are expected to spend, on deploys,
+migrations, experiments, and the incidents that follow from them.
+
+A team that ends every month with a full budget is not winning. It is shipping too
+slowly.
+
+## How to Calculate It
+
+The formula is one line:
+
+```
+Error budget = (100% − SLO) × measurement window
+```
+
+The window matters as much as the percentage. Here is the same set of targets
+measured over 30 days and over a year:
+
+| SLO | Budget per 30-day month | Budget per year |
+| --- | --- | --- |
+| 99% | 7h 12m | 3d 15h 36m |
+| 99.5% | 3h 36m | 1d 19h 48m |
+| 99.9% | 43m 12s | 8h 45m 36s |
+| 99.95% | 21m 36s | 4h 22m 48s |
+| 99.99% | 4m 19s | 52m 34s |
+| 99.999% | 26s | 5m 15s |
+
+Two things fall out of that table. First, each additional nine cuts your room to
+manoeuvre by 10× — 99.99% is not "slightly better than" 99.9%, it is a different
+operating model requiring redundancy and automated failover. Second, a yearly window
+is enormously more forgiving than a monthly one. A four-hour outage is a rounding
+error against a 99.9% annual budget and a catastrophic overrun against the monthly
+one. Agree on the window before you agree on the number.
+
+You can work the same arithmetic for any target with the [SLA calculator](/play/uptime-sla).
+
+## Burn Rate: the Part That Makes It Operational
+
+A budget you check monthly is a postmortem tool. Burn rate is what makes it a
+warning system.
+
+Burn rate measures how fast you are consuming the budget relative to the pace that
+would exactly exhaust it over the window. A burn rate of 1 means you will end the
+period with precisely nothing left. A burn rate of 2 means you will run out halfway
+through.
+
+This is what you alert on, because it catches a problem while the budget still has
+something in it:
+
+| Burn rate | Budget consumed | Over | Meaning |
+| --- | --- | --- | --- |
+| 14.4× | 2% | 1 hour | The month's budget is gone in ~2 hours. Wake someone up. |
+| 6× | 5% | 6 hours | Serious, sustained degradation. Page during working hours. |
+| 1× | 10% | 3 days | Slow bleed. File a ticket, not an alert. |
+
+The fast burn rates catch outages. The slow ones catch the more insidious failure —
+a small regression that never trips a threshold but quietly eats the month.
+
+## What to Do When It Runs Out
+
+Decide this in advance, in writing, while nobody is stressed. A budget with no
+policy attached is just a metric.
+
+The conventional policy is a **feature freeze**: when the budget is exhausted,
+non-essential deploys stop and engineering effort redirects to reliability until the
+window resets. Variations that work:
+
+- **Graduated response.** At 50% consumed, review what spent it. At 75%, require
+  sign-off for risky changes. At 100%, freeze.
+- **Freeze the risky surface only.** Halt deploys to the service that missed its
+  SLO rather than the whole organisation.
+- **Borrow deliberately.** Sometimes a launch is worth overrunning for. That should
+  be an explicit, recorded decision by someone accountable — not something that
+  happens because nobody was watching.
+
+The value is not the freeze. It is that the decision was made when everyone was
+calm, so the conversation during the incident is about facts rather than about who
+is most senior in the room.
+
+## Common Mistakes
+
+**Setting the SLO equal to the SLA.** Then the budget is zero and the first bad
+deploy is a contractual breach. The internal target must be stricter than the public
+promise — that gap *is* the budget.
+
+**Measuring the budget against a window nobody agreed on.** Monthly and yearly
+windows differ by more than 10× in practice. Pick one and use it everywhere.
+
+**Counting only hard downtime.** If your SLI is availability but users experience a
+service that responds in eight seconds, the budget says you are fine while customers
+churn. Include latency in the SLI — and be precise about which measurement you mean,
+since [latency and response time](/docs/concept/latency-vs-response-time) are not
+the same number — or accept that the budget only describes part of the experience.
+See also [why uptime percentage alone is misleading](/guides/why-uptime-percentage-is-misleading).
+
+**Treating leftover budget as a scoreboard.** An unspent budget is unshipped work.
+
+## How openstatus Fits In
+
+An error budget is arithmetic on top of an SLI, so it is only as good as the
+measurement underneath it. openstatus does not compute the budget for you — it
+measures the number you compute it from.
+
+[Uptime monitoring](/uptime-monitoring) runs checks from up to 28 regions and keeps
+the history, which matters for two reasons. Regional failures are invisible to a
+single-probe check, and a budget calculated from one vantage point will understate
+what your users actually experienced. And a budget needs a continuous record over
+the whole window — you cannot reconstruct last month's consumption from a dashboard
+that only shows the present.
+
+From there the budget is a subtraction: allowed downtime for your target, minus what
+the history says you actually spent. Publishing the result on a
+[status page](/status-page) is what turns it from an internal number into the
+evidence behind your SLA.
+
+## Frequently asked questions
+
+<Details summary="What is an error budget?">
+
+An error budget is the amount of unreliability you are allowed before you break your own target. If your SLO is 99.9% availability over a month, you are permitting 0.1% of that month to fail — about 43 minutes. That 43 minutes is the budget. It is not a forecast or a tolerance for sloppiness; it is a quantity you are expected to spend.
+
+</Details>
+
+<Details summary="How do you calculate an error budget?">
+
+Error budget = (100% − SLO) × the measurement window. For a 99.9% monthly SLO, that is 0.1% of 30 days, or roughly 43 minutes. For a 99.99% monthly SLO it is about 4 minutes 19 seconds. Calculate it against the window your agreement actually uses — a yearly window is ten times more forgiving than a monthly one for the same percentage.
+
+</Details>
+
+<Details summary="What is error budget burn rate?">
+
+Burn rate is how fast you are consuming the budget relative to the pace that would exactly exhaust it over the window. A burn rate of 1 means you will finish the period with exactly zero budget left. A burn rate of 14.4 means you are spending 2% of a 30-day budget every hour, and the entire month's allowance disappears in about two hours.
+
+</Details>
+
+<Details summary="What happens when the error budget is spent?">
+
+That is a policy decision you should make before it happens, not during the incident. The common policy is to freeze feature deploys and redirect engineering to reliability work until the budget recovers at the start of the next window. The point is that the budget converts an argument about whether to slow down into a number that already decided it.
+
+</Details>
+
+<Details summary="What is the difference between an error budget and an SLA?">
+
+An SLA is the promise you make to customers, with financial consequences. The error budget is the operating room between that promise and the stricter internal target you hold yourself to. The SLA says what happens if you fail; the error budget tells you how close you are to failing, while there is still time to act.
+
+</Details>

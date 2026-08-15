@@ -128,3 +128,65 @@ The agent is **thread-aware**: when you follow up in the same thread (_"we found
 Already using Atlassian Statuspage, Better Stack, or Instatus? Import your entire setup -- components, component groups, incidents, maintenances, subscribers, and monitors -- in minutes. Open a status page, go to the **Components** tab, scroll down to the **Import** section, paste your API key, preview what will be imported, and confirm.
 
 Read the [migration guides](/blog/import-from-statuspage-betterstack-instatus) for details on each provider.
+
+## Frequently asked questions
+
+<Details summary="What is a status page?">
+
+A status page is a dedicated webpage where companies communicate the real-time health of their services to users. It shows which systems are operational, degraded, or experiencing outages, and provides timestamped incident updates. Status pages reduce support tickets during incidents, build user trust through transparency, and satisfy compliance requirements like SOC 2.
+
+</Details>
+
+<Details summary="When should I use a public vs private status page?">
+
+Use public status pages for customer-facing services where transparency builds trust. Use private status pages (password-protected, magic link, or IP-restricted) for internal tools, client-specific deployments, or when you need to control who receives status updates.
+
+</Details>
+
+<Details summary="What's the difference between monitors and external services in page components?">
+
+Monitors are automatically synced with your OpenStatus uptime monitoring data and update in real-time. External services are manually managed components for third-party dependencies or systems you don't directly monitor but want to report status for.
+
+</Details>
+
+<Details summary="Can I translate my status page into other languages?">
+
+Yes, status pages support multiple languages (currently English, French, and German). You can set a default locale and enable a locale switcher so visitors choose their preferred language. Translations are open source — you can contribute new languages by adding a locale to the shared registry and running the dev server to generate the translation file.
+
+</Details>
+
+<Details summary="Can I use my own domain for the status page?">
+
+Yes, you can configure custom domains to host your status page on your own domain (e.g., status.yourcompany.com) instead of the default OpenStatus subdomain. This keeps the experience consistent with your brand.
+
+</Details>
+
+<Details summary="How do status page subscriptions work?">
+
+Users can subscribe to receive updates when you post status reports or maintenance notices. We support email notifications, RSS/Atom feeds for feed readers, and JSON feeds for programmatic consumption. Subscribers are automatically notified when you publish updates.
+
+</Details>
+
+<Details summary="Can I customize the appearance of my status page?">
+
+Yes, use the Theme Store to apply community themes or create your own. Themes control colors, fonts, and layout. For private custom themes, contact us. You can also define which data to share (uptime percentages, response times, or manual reports only).
+
+</Details>
+
+<Details summary="What is the Slack agent and what can it do?">
+
+The Slack agent lets you manage your status page directly from Slack using natural language. @mention @openstatus in any channel or thread to create incidents, post updates, and resolve reports — without leaving Slack. No slash commands required.
+
+</Details>
+
+<Details summary="Does the Slack agent publish status reports automatically?">
+
+No. The agent always shows a confirmation card before publishing anything. You can review the drafted title, status, and message, then choose to Approve, Approve & Notify (sends notifications to all subscribers), or Cancel. Nothing goes public without your explicit approval.
+
+</Details>
+
+<Details summary="Which plan includes the Slack agent?">
+
+The Slack agent is available on paid plans. Install it from your dashboard under Settings > Integrations.
+
+</Details>

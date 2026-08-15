@@ -69,3 +69,29 @@ Every mutation lands in the audit log under `actor_type = 'mcp'`, so you can tra
 ## Reference
 
 Full tool schema, error codes, and per-client config in the [MCP reference](https://www.openstatus.dev/docs/reference/mcp-server/).
+
+## Frequently asked questions
+
+<Details summary="What does the MCP server let an assistant do?">
+
+The MCP server exposes 17 read and write tools scoped to your workspace: list status pages, monitors, response logs, notifications, and audit logs; inspect a single monitor or response log; create, update, and resolve status reports; schedule maintenance windows. Every mutation writes to the audit log, and publishing tools require an explicit notify decision.
+
+</Details>
+
+<Details summary="Are skills different from the MCP server?">
+
+Skills are prompt and command bundles installed into your local agent (Claude Code, etc.) that wrap the openstatus CLI. The MCP server is a remote endpoint that any MCP-compatible client can connect to. Skills are great for terminal-shaped workflows; MCP is great for chat-shaped workflows.
+
+</Details>
+
+<Details summary="Do I need a separate MCP credential?">
+
+No. We don't implement the MCP OAuth flow — there's no consent screen and no extra credential to manage. Authentication is the x-openstatus-key header, the same key the CLI, API, and Terraform use.
+
+</Details>
+
+<Details summary="Can the assistant accidentally notify subscribers?">
+
+No. Every publishing tool requires the assistant to set notify: true | false explicitly — there's no default. Metadata-only edits like update_status_report can't notify at all. Every call lands in the audit log under actor_type = 'mcp', so you can see exactly what happened.
+
+</Details>

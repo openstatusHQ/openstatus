@@ -69,6 +69,37 @@ The server processing time is the duration the server spends on tasks like:
 
 A high response time often indicates a problem with the server-side application itself. For example, slow database queries or inefficient application code can dramatically increase the response time, even if the network latency is low.
 
+## The request in phases: DNS, TCP, TLS, TTFB, transfer
+
+"Latency" and "response time" are summaries. A single request is really five
+consecutive phases, and knowing which one is slow is the difference between guessing
+and fixing. openstatus records each phase as its own duration:
+
+| Phase | What it measures | What a slow number means |
+| --- | --- | --- |
+| **DNS** | Resolving the hostname to an IP address | Slow or distant nameservers, or a TTL so short that nothing is ever cached |
+| **Connect** | The TCP handshake opening the socket | Mostly physical distance. This is the phase a CDN or edge deployment shortens |
+| **TLS** | Negotiating the encrypted connection | A long certificate chain, no session resumption, or an old TLS version |
+| **TTFB** | Request sent → first byte of the response returns | Your application's own work: database queries, rendering, upstream API calls |
+| **Transfer** | Streaming the rest of the response body | A large payload, no compression, or a slow link |
+
+Two clarifications that trip people up.
+
+**TTFB here is a phase duration, not a cumulative timer.** Many tools define "time
+to first byte" as everything from the start of the request — DNS, connect, and TLS
+included. In this breakdown those phases are already accounted for separately, so
+TTFB isolates the part your server is actually responsible for. A 40ms TTFB behind a
+300ms connect phase is a fast application sitting a long way from the probe.
+
+**Response time is the sum, not the first byte.** Latency is roughly DNS + connect +
+TLS — the cost of getting there and back before your application does anything. Add
+TTFB and transfer and you have total response time, which is what a user waits
+through.
+
+This is also why a single number hides the diagnosis. Two endpoints both answering
+in 600ms are not equivalent if one spends 500ms in TLS and the other spends 500ms in
+TTFB. The first is a connection problem you fix with infrastructure; the second is
+code.
 
 ##  Why the distinction matters for uptime monitoring
 
@@ -114,6 +145,26 @@ By monitoring both metrics, you can quickly pinpoint whether a performance slowd
 - Could be network saturation or a DDoS attack.
 - Check: network bandwidth, traffic patterns, security.
 
+## How to measure both
+
+You need two things: the phase breakdown, and more than one vantage point.
+
+**For a single check right now**, run the URL through the
+[global speed test](/play/checker). It requests from 28 regions in parallel and
+returns all five phases per region, which is enough to tell a distance problem from
+an application problem in one pass. No account required.
+
+**For anything you care about over time**, one sample is not evidence. Latency moves
+with traffic, deploys, and time of day, so a number from a single moment tells you
+almost nothing about the distribution your users actually see.
+[Uptime monitoring](/uptime-monitoring) re-runs the same check on a schedule, keeps
+the history, and alerts on degradation rather than only on failure — which is the
+difference between finding out from a graph and finding out from a customer.
+
+Whichever you use, measure from where your users are. A check that only runs from
+the same continent as your origin will report healthy numbers indefinitely while
+users on the other side of the world time out.
+
 ## What openstatus tracks
 
 openstatus monitors and displays:
@@ -123,8 +174,19 @@ openstatus monitors and displays:
 - **Regional differences** — compare performance across locations.
 - **Historical trends** — identify patterns over time.
 
+## Related reliability concepts
+
+Latency and response time are the raw measurements. These build on top of them:
+
+- **[What is a good response time?](/guides/what-is-a-good-response-time)** — target numbers for both the server and the browser half, judged at the right percentile.
+- **[SLA vs SLO vs SLI](/guides/sla-vs-slo-vs-sli)** — turning a measurement into an internal target and a customer promise.
+- **[Error budgets explained](/guides/error-budgets-explained)** — how much failure your target actually permits, and what to do when it is spent.
+- **[What is MTTR?](/guides/what-is-mttr)** — measuring recovery once something has gone wrong.
+- **[Why uptime percentage alone is misleading](/guides/why-uptime-percentage-is-misleading)** — why a single availability number hides the distribution.
+
 ## Next steps
 
+- **[Run a one-off speed test](/play/checker)** — see the timing breakdown for your own URL from 28 regions, no account needed.
 - **[Create your first monitor](/docs/tutorial/create-your-first-monitor)** — start tracking these metrics.
 - **[Understanding uptime monitoring](/docs/concept/uptime-monitoring)** — broader monitoring concepts.
 - **[HTTP monitor reference](/docs/reference/http-monitor)** — technical specifications.

@@ -179,3 +179,41 @@ Watch a full migration from Better Stack to openstatus in real time.
 - [Import from Statuspage, Better Stack, and Instatus](/blog/import-from-statuspage-betterstack-instatus) -- blog announcement covering all three supported providers.
 - [How to Import a Status Page](https://www.openstatus.dev/docs/guides/how-to-import-status-page) -- docs guide with detailed instructions and screenshots.
 - [Top Five Atlassian Statuspage Alternatives](/guides/top-five-atlassian-statuspage-alternatives) -- comparison of status page providers including Better Stack and openstatus.
+
+## Frequently asked questions
+
+<Details summary="Can I import my Better Stack monitors into openstatus?">
+
+Yes. openstatus is the only provider that imports monitors from Better Stack — including URL, check frequency, HTTP method, headers, and regions.
+
+</Details>
+
+<Details summary="Does openstatus import Better Stack subscribers?">
+
+No. Better Stack doesn't expose subscribers via their API, so subscriber import is not available. You'll need to re-invite subscribers manually.
+
+</Details>
+
+<Details summary="What if I don't have a Better Stack status page?">
+
+You can still import. Without a status page ID, the importer will import your monitors, monitor groups, and incidents from the Better Stack Uptime API.
+
+</Details>
+
+<Details summary="How are Better Stack regions mapped to openstatus?">
+
+Better Stack regions are mapped to the nearest openstatus probe location: US → iad (Virginia), EU → fra (Frankfurt), AS → sin (Singapore), AU → syd (Sydney).
+
+</Details>
+
+<Details summary="How are check frequencies mapped?">
+
+Better Stack intervals are snapped to the nearest supported openstatus frequency: 30s, 1m, 5m, 10m, 30m, or 1h.
+
+</Details>
+
+<Details summary="Can I run the import multiple times?">
+
+Monitors, components, and component groups are deduplicated — the importer checks for existing resources before creating new ones. However, incidents and maintenances are always created as new entries, so re-running will produce duplicates for those.
+
+</Details>

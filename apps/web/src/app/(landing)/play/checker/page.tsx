@@ -13,6 +13,7 @@ import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
   getJsonLDFAQPage,
+  getJsonLDHowTo,
   getJsonLDWebPage,
 } from "../../../../lib/metadata/structured-data";
 import {
@@ -52,6 +53,7 @@ export default async function Page(props: {
       { name: page.metadata.title, url: `${BASE_URL}/play/checker` },
     ]),
     getJsonLDFAQPage(page),
+    getJsonLDHowTo(page),
   ]);
 
   return (

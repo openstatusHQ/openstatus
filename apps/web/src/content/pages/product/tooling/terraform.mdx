@@ -75,3 +75,29 @@ Every mutation through the provider lands in the audit log under `actor_type = '
 ## Reference
 
 Full resource list and schema in the [Terraform reference](https://www.openstatus.dev/docs/reference/terraform/).
+
+## Frequently asked questions
+
+<Details summary="How does the Terraform provider compare to the CLI?">
+
+The Terraform provider is the right choice if monitoring is part of a larger HCL-managed infrastructure. The CLI's YAML config is lighter to adopt and ships with openstatus terraform generate to bootstrap an HCL file from your existing workspace if you want to migrate.
+
+</Details>
+
+<Details summary="What resources does the provider expose?">
+
+Monitors, notification channels, status pages, status page subscribers, and maintenance windows — every primary entity in the dashboard. See the Terraform reference for the full list and schema.
+
+</Details>
+
+<Details summary="How do I migrate an existing workspace into Terraform?">
+
+Run openstatus terraform generate from the CLI. It fetches your full configuration and produces valid HCL with cross-references and import blocks — no hand-writing required.
+
+</Details>
+
+<Details summary="Where do I get an API token?">
+
+Generate one from Settings → API Tokens, then set `OPENSTATUS_API_TOKEN` before running terraform plan. The same token works across the CLI, API, and MCP server.
+
+</Details>

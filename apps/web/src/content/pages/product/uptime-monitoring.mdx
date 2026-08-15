@@ -203,6 +203,56 @@ You can read more here:
 </div>
 </Grid>
 
+## Frequently asked questions
+
+<Details summary="How many regions should I monitor from?">
+
+Start with 3-5 regions covering your main user geographies. More regions provide better global coverage but use more check quota. For critical services, monitor from all major regions (North America, Europe, Asia) to catch regional issues quickly.
+
+</Details>
+
+<Details summary="Why monitor from multiple cloud providers instead of just one?">
+
+If your service runs on AWS and your monitoring also runs on AWS, you won't detect AWS-wide outages or network issues affecting AWS connectivity. Using Fly.io, Koyeb, and Railway ensures monitoring independence from your infrastructure provider.
+
+</Details>
+
+<Details summary="What's the difference between frequency settings?">
+
+Frequency determines how often we check your service (e.g., every 30 seconds, 1 minute, 5 minutes, 10 minutes). Higher frequency (30s) catches issues faster but uses more checks. Lower frequency (10m) is sufficient for non-critical services and conserves quota.
+
+</Details>
+
+<Details summary="Can uptime monitoring trigger my status page automatically?">
+
+Yes, you can configure monitors to automatically update your status page based on monitoring results. When assertions fail or thresholds are exceeded, the status page can reflect degraded or down status without manual intervention.
+
+</Details>
+
+<Details summary="How do thresholds and assertions work together?">
+
+Assertions validate response correctness (status code, headers, body content) while thresholds define performance boundaries (degraded latency, timeout). Both can trigger alerts - assertions catch functional failures, thresholds catch performance degradation.
+
+</Details>
+
+<Details summary="What types of API endpoints can I monitor?">
+
+You can monitor any HTTP/HTTPS endpoint including REST APIs, GraphQL APIs, webhooks, and third-party service endpoints. Openstatus supports all HTTP methods (GET, POST, PUT, DELETE, etc.) and custom headers for authentication.
+
+</Details>
+
+<Details summary="Should I use YAML with CLI or Terraform for monitoring as code?">
+
+Use YAML + CLI for simplicity and if you're not already using Terraform. It's lightweight and easy to get started. Choose Terraform if you're managing infrastructure as code and want to integrate monitoring into your existing Terraform workflows for unified state management.
+
+</Details>
+
+<Details summary="Can I run private monitoring locations in different networks?">
+
+Yes, you can deploy as many private location probes as needed across different networks, VPCs, or regions. Each gets its own API key and appears as a separate monitoring region in your dashboard. The Docker image is only 8.5MB and supports ARM64 and AMD64.
+
+</Details>
+
 ---
 
 Check your website's latency
