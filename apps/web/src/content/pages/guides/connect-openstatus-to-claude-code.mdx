@@ -27,9 +27,9 @@ faq:
   - question: "Do I need a separate MCP credential for Claude Code?"
     answer: "No. Authentication is the standard `x-openstatus-key` header — the same API key the openstatus CLI, REST API, and Terraform provider use. There is no MCP-specific OAuth flow."
   - question: "Can Claude Code accidentally notify subscribers when creating an incident?"
-    answer: "No. Every mutation tool requires an explicit `notify: true | false` field. Claude Code must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag."
+    answer: "No. Every publishing tool (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) requires an explicit `notify: true | false` field. Claude Code must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag. `update_status_report` is metadata-only and has no notify path at all."
   - question: "How do I give Claude Code read-only access to my workspace?"
-    answer: "Create an API key with `read` scope. The MCP server filters mutation tools out of the `tools/list` response for read-only keys, so Claude Code only sees `list_status_pages`, `list_status_reports`, and `list_maintenances`."
+    answer: "Create an API key with `read` scope. The MCP server filters write tools out of the `tools/list` response for read-only keys, so Claude Code sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session."
   - question: "Where do MCP-driven changes appear in the audit log?"
     answer: "Every mutation routed through the MCP server lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the API key id and `actor_user_id` set to the user who created the key. This separates AI-driven actions from CLI, dashboard, and direct API mutations."
   - question: "Can I commit the MCP configuration to my repository?"
@@ -149,6 +149,50 @@ Three properties make this safe enough for a real incident:
 - **[Connect to Claude Desktop](/guides/connect-openstatus-to-claude-desktop)** — chat-shaped variant of this guide.
 - **[Openstatus CLI](/tooling/cli)** — for terminal workflows that don't need an LLM in the loop.
 - **[Slack Agent](/status-page#slack-agent)** — for teams that live in Slack.
+
+## Frequently asked questions
+
+<Details summary="Does Claude Code support remote MCP servers like openstatus?">
+
+Yes. Claude Code supports stdio, HTTP, and SSE transports. The openstatus MCP server is a stateless Streamable HTTP endpoint, registered with `claude mcp add --transport http`.
+
+</Details>
+
+<Details summary="What can Claude Code do once the openstatus MCP server is connected?">
+
+Claude Code can list status pages, status reports, and maintenance windows; create new status reports; append updates to existing reports; resolve reports; edit metadata; and schedule maintenance windows — all scoped to the workspace tied to your API key.
+
+</Details>
+
+<Details summary="Do I need a separate MCP credential for Claude Code?">
+
+No. Authentication is the standard `x-openstatus-key` header — the same API key the openstatus CLI, REST API, and Terraform provider use. There is no MCP-specific OAuth flow.
+
+</Details>
+
+<Details summary="Can Claude Code accidentally notify subscribers when creating an incident?">
+
+No. Every publishing tool (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) requires an explicit `notify: true | false` field. Claude Code must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag. `update_status_report` is metadata-only and has no notify path at all.
+
+</Details>
+
+<Details summary="How do I give Claude Code read-only access to my workspace?">
+
+Create an API key with `read` scope. The MCP server filters write tools out of the `tools/list` response for read-only keys, so Claude Code sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session.
+
+</Details>
+
+<Details summary="Where do MCP-driven changes appear in the audit log?">
+
+Every mutation routed through the MCP server lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the API key id and `actor_user_id` set to the user who created the key. This separates AI-driven actions from CLI, dashboard, and direct API mutations.
+
+</Details>
+
+<Details summary="Can I commit the MCP configuration to my repository?">
+
+Yes. Create a project-scoped `.mcp.json` at the repo root with the MCP server definition, and use `${OPENSTATUS_API_KEY}` for the header value so the secret stays out of source control.
+
+</Details>
 
 ---
 

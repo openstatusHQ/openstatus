@@ -99,7 +99,7 @@ The MCP client gates every tool call behind your approval — the server does no
 
 ### Notifying subscribers
 
-Every mutation tool has a **required** `notify: boolean` field — there is no default. The tool's input schema rejects calls that omit it, which forces the LLM to make an explicit choice (and therefore ask the user) before firing.
+Every publishing tool — `create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance` — has a **required** `notify: boolean` field, with no default. The tool's input schema rejects calls that omit it, which forces the LLM to make an explicit choice (and therefore ask the user) before firing. `update_status_report` edits metadata only and carries no `notify` field at all.
 
 This required-field behaviour is specific to MCP. The dashboard AI assistant and the Slack agent wrap these same tools in an approval step that strips `notify` from the model-facing schema and injects it from a human toggle defaulting to `false`. MCP exposes the raw schema, so the caller must supply `notify` explicitly.
 

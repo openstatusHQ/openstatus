@@ -162,6 +162,38 @@ Read the criteria before taking any vendor's mapping — including this one — 
 - [Security incident response template](/guides/security-incident-response) — wording for the communication itself
 - [ISO 27001 incident communication](/guides/iso-27001-incident-communication) — if you are pursuing both
 
+## Frequently asked questions
+
+<Details summary="Does SOC 2 require a status page?">
+
+No. No Trust Services Criterion names a status page. CC2.3 requires you to communicate relevant information to external parties, including how they can report failures and how you inform them of incidents. A status page is one way to evidence that control — email distribution lists and support portals are others. What the auditor tests is whether the process exists, is followed, and produces records.
+
+</Details>
+
+<Details summary="Which SOC 2 criteria does a status page help with?">
+
+Primarily CC2.3 (communication with external parties) and CC7.4/CC7.5 (incident response and recovery), plus A1.1 if you carry the Availability category. It contributes evidence to those controls. It does not satisfy CC1 (control environment), CC3 (risk assessment), CC5 (control activities), CC6 (logical access), or CC8 (change management).
+
+</Details>
+
+<Details summary="What evidence will an auditor actually request?">
+
+A population of incidents for the audit period, and for a sample of those, timestamped proof of when each was detected, when customers were notified, what was said, and when it was resolved. They will compare your status page timeline against your internal ticket or alert record to confirm the two agree.
+
+</Details>
+
+<Details summary="How far back does a SOC 2 Type II audit look?">
+
+A Type II observation window is typically 3 to 12 months. Your evidence must cover the entire window, which means retention matters more than most teams expect — if your monitoring data expires after 14 days, you cannot produce availability evidence for a 12-month period.
+
+</Details>
+
+<Details summary="Can a status page replace Vanta or Drata?">
+
+No. Compliance automation platforms track your whole control set, collect evidence across dozens of systems, and manage the audit workflow. A status page produces evidence for one narrow slice of that — external incident communication. They are complementary, not alternatives.
+
+</Details>
+
 ---
 
 <ButtonLink href="https://app.openstatus.dev">Start your status page</ButtonLink>

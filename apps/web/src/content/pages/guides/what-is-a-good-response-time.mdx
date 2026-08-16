@@ -1,0 +1,165 @@
+---
+title: "What Is a Good Response Time?"
+seo:
+  title: "What Is a Good Response Time? Load Time Benchmarks"
+description: "Target numbers for server response time and browser load time, why you should judge them at the 75th percentile rather than the average, and which metric to fix first when a page feels slow."
+author: "openstatus"
+publishedAt: "2026-08-15"
+category: "fundamentals"
+faq:
+  - question: "What is a good server response time?"
+    answer: "Under 200ms is fast, 200-500ms is acceptable for a single-region origin answering a distant request, 500ms to 1s is slow enough that users notice, and over 1s needs attention. Judge it per region rather than on a global average - an endpoint answering in 80ms locally and 900ms from the other side of the world has a distribution problem, not a speed problem."
+  - question: "What is a good page load time?"
+    answer: "For the browser experience, Google's Core Web Vitals thresholds are the practical standard: Largest Contentful Paint at or under 2.5 seconds, Interaction to Next Paint at or under 200ms, and Cumulative Layout Shift at or under 0.1. All three are assessed at the 75th percentile of real visits, so hitting them on your own laptop is not the same as passing."
+  - question: "Should I measure average or percentile response time?"
+    answer: "Percentiles, essentially always. Averages hide the slow tail that users actually complain about: a page averaging 400ms can still be failing one visitor in twenty at four seconds, and the average will never show it. Track P75 to match how Core Web Vitals are assessed, and P95 or P99 to see the worst experiences you are shipping."
+  - question: "Is response time the same as page load time?"
+    answer: "No. Response time measures how long your server takes to answer a request - it ends when the response arrives. Page load time measures what the browser then does with it: parsing HTML, fetching CSS, JavaScript, fonts, and images, and rendering the result. A fast server does not guarantee a fast page, but a slow server makes every browser metric worse, because nothing can start until the response arrives."
+  - question: "Why is my site fast for me but slow for users?"
+    answer: "Usually distance, devices, and caching. You are likely testing from close to the origin, on a fast machine, with a warm cache and no third-party scripts blocked. Real users are distributed, often on mobile, and frequently arriving cold. This is why the numbers that matter come from multiple regions and from the 75th percentile of real visits rather than from one test on your own machine."
+---
+
+"Fast enough" is not a number, which is why this question keeps getting asked. The
+honest answer is that there are two different measurements involved and they have
+different targets — so the first thing to establish is which one you are actually
+looking at.
+
+## Two Different Numbers
+
+**Response time** is how long your server takes to answer. It ends the moment the
+response arrives at the client. This is what an uptime monitor or a
+[speed test](/play/checker) measures, and it is entirely your infrastructure's
+responsibility.
+
+**Page load time** is what the browser does next: parse HTML, fetch CSS, JavaScript,
+fonts and images, run scripts, and paint something a person can use. This is mostly
+your frontend's responsibility, plus whatever third-party tags you have accumulated.
+
+They are related in one direction only. A fast server does not give you a fast page —
+you can serve a 40ms response and still take six seconds to render. But a slow server
+makes every browser metric worse, because nothing can begin until the response
+arrives. If both are bad, fix the server first.
+
+The precise vocabulary matters more than it looks, and mixing the two up is the most
+common reason a performance target never gets met — see
+[latency vs response time](/docs/concept/latency-vs-response-time).
+
+## Good Server Response Times
+
+| Response time | Verdict | Typically means |
+| --- | --- | --- |
+| Under 200ms | Fast | Served from an edge, or an origin near the requester |
+| 200–500ms | Acceptable | Normal for a single-region origin answering a distant request |
+| 500ms–1s | Slow | Users perceive this. Origin round trip plus unoptimised per-request work |
+| Over 1s | Needs attention | Cold starts, N+1 queries, or no caching anywhere in the path |
+
+The number that matters is not your best region or your average — it is the spread.
+An API answering in 80ms from Frankfurt and 900ms from Sydney does not have a speed
+problem, it has a distribution problem, and the fix is a CDN or an edge deployment
+rather than a faster server. You cannot see that from one probe;
+[measuring from multiple regions](/uptime-monitoring) is what makes it visible.
+
+Within a single response, it is worth knowing which phase is slow. DNS, connection,
+and TLS are mostly distance and configuration; time to first byte is your application
+actually working. A 40ms TTFB behind a 300ms connection phase is a fast application a
+long way from the user.
+
+## Good Page Load Times
+
+For the browser half, Google's Core Web Vitals are the practical standard, because
+they are what search ranking and most performance tooling actually assess:
+
+| Metric | Good | Needs improvement | Poor |
+| --- | --- | --- | --- |
+| **LCP** — Largest Contentful Paint | ≤ 2.5s | 2.5–4.0s | > 4.0s |
+| **INP** — Interaction to Next Paint | ≤ 200ms | 200–500ms | > 500ms |
+| **CLS** — Cumulative Layout Shift | ≤ 0.1 | 0.1–0.25 | > 0.25 |
+
+Two things people miss.
+
+**INP replaced First Input Delay.** If you are still tracking FID, you are tracking a
+retired metric — INP measures the full latency of an interaction rather than just the
+delay before processing starts, and it is considerably harder to pass.
+
+**These are assessed at the 75th percentile of real visits**, not on your machine.
+Passing locally tells you almost nothing; a quarter of your users are allowed to be
+slower than the threshold and you still pass, but if the 75th percentile misses, you
+fail regardless of how good your median looks.
+
+## Judge Percentiles, Not Averages
+
+The average is the least useful summary of a latency distribution, because latency is
+heavy-tailed — a small number of very slow requests barely move the mean.
+
+Two endpoints both averaging 400ms:
+
+- **A:** almost every request lands between 350ms and 450ms.
+- **B:** most requests are 180ms, and one in twenty takes four seconds.
+
+Identical averages. B is generating your support tickets. Track **P75** to align with
+how Core Web Vitals are assessed, and **P95** or **P99** to see the worst experience
+you are actually shipping. This is the same reason
+[uptime percentage alone is misleading](/guides/why-uptime-percentage-is-misleading):
+one aggregate number hides the distribution that people experience.
+
+## What to Fix First
+
+1. **Measure from where users are.** A check from the same region as your origin will
+   report healthy numbers indefinitely while distant users time out.
+2. **Fix the server before the frontend.** Everything downstream waits on the
+   response.
+3. **Find the slow phase, not the slow page.** DNS, connect, TLS, TTFB, and transfer
+   fail for different reasons and have different fixes.
+4. **Set the target as a percentile at a threshold**, not a vague goal — "P95 under
+   500ms from every region we sell into" is testable. "The site should feel fast" is
+   not.
+5. **Then watch it over time.** A single measurement is a snapshot; response times
+   move with traffic, deploys, and time of day.
+
+Once you have a number worth defending, it becomes an [SLI, then an
+SLO](/guides/sla-vs-slo-vs-sli), and the room you have to miss it is your
+[error budget](/guides/error-budgets-explained).
+
+## Measure Yours
+
+Run your URL through the [global speed test](/play/checker) to see the server-side
+number and its phase breakdown from 28 regions, with no account required. For the
+browser metrics, use Chrome's built-in Lighthouse panel or the Chrome User Experience
+Report, which reports field data at the 75th percentile rather than lab conditions.
+
+To turn either into something you actually notice changing,
+[uptime monitoring](/uptime-monitoring) re-runs the check on a schedule and keeps the
+history — the difference between knowing your response time today and knowing it got
+worse last Thursday.
+
+## Frequently asked questions
+
+<Details summary="What is a good server response time?">
+
+Under 200ms is fast, 200–500ms is acceptable for a single-region origin answering a distant request, 500ms to 1s is slow enough that users notice, and over 1s needs attention. Judge it per region rather than on a global average — an endpoint answering in 80ms locally and 900ms from the other side of the world has a distribution problem, not a speed problem.
+
+</Details>
+
+<Details summary="What is a good page load time?">
+
+For the browser experience, Google's Core Web Vitals thresholds are the practical standard: Largest Contentful Paint at or under 2.5 seconds, Interaction to Next Paint at or under 200ms, and Cumulative Layout Shift at or under 0.1. All three are assessed at the 75th percentile of real visits, so hitting them on your own laptop is not the same as passing.
+
+</Details>
+
+<Details summary="Should I measure average or percentile response time?">
+
+Percentiles, essentially always. Averages hide the slow tail that users actually complain about: a page averaging 400ms can still be failing one visitor in twenty at four seconds, and the average will never show it. Track P75 to match how Core Web Vitals are assessed, and P95 or P99 to see the worst experiences you are shipping.
+
+</Details>
+
+<Details summary="Is response time the same as page load time?">
+
+No. Response time measures how long your server takes to answer a request — it ends when the response arrives. Page load time measures what the browser then does with it: parsing HTML, fetching CSS, JavaScript, fonts, and images, and rendering the result. A fast server does not guarantee a fast page, but a slow server makes every browser metric worse, because nothing can start until the response arrives.
+
+</Details>
+
+<Details summary="Why is my site fast for me but slow for users?">
+
+Usually distance, devices, and caching. You are likely testing from close to the origin, on a fast machine, with a warm cache and no third-party scripts blocked. Real users are distributed, often on mobile, and frequently arriving cold. This is why the numbers that matter come from multiple regions and from the 75th percentile of real visits rather than from one test on your own machine.
+
+</Details>

@@ -181,3 +181,41 @@ Once the import finishes, there are a few things to verify:
 - [Import from Statuspage, Better Stack, and Instatus](/blog/import-from-statuspage-betterstack-instatus) — blog announcement covering cross-provider import.
 - [How to Import a Status Page](https://www.openstatus.dev/docs/guides/how-to-import-status-page) — docs guide with detailed instructions and screenshots.
 - [What is Synthetic Monitoring](/guides/what-is-synthetic-monitoring) — background on the monitoring model openstatus and Checkly share.
+
+## Frequently asked questions
+
+<Details summary="Can I import my Checkly checks into openstatus?">
+
+Yes. openstatus imports your Checkly API and URL checks as HTTP monitors — including the request URL, method, headers, body, check frequency, and run locations. TCP, ICMP, DNS, and SSL checks are imported when a target can be derived.
+
+</Details>
+
+<Details summary="Which Checkly check types are supported?">
+
+API and URL checks import as HTTP monitors. TCP, ICMP, DNS, and SSL map to their openstatus job types. Browser, Playwright, multi-step, heartbeat, gRPC, traceroute, and AI checks have no HTTP-family equivalent and are skipped with a reason in the preview.
+
+</Details>
+
+<Details summary="What credentials do I need?">
+
+Two values: a Checkly API key (User Settings → API keys) and your Checkly account ID (Account Settings → General). Checkly requires the account ID on every API request, so both are mandatory.
+
+</Details>
+
+<Details summary="How are Checkly locations mapped to openstatus?">
+
+Checkly's AWS-region locations are mapped to the nearest openstatus probe: us-east-1 → iad, us-west-2 → sea, eu-west-1 → lhr, eu-central-1 → fra, ap-southeast-1 → sin, ap-southeast-2 → syd, and so on. Unmapped locations fall back to iad.
+
+</Details>
+
+<Details summary="Do Checkly status-page services become monitored components?">
+
+They import as static components. Checkly's status-page services are abstract entities that don't reference a specific check via the API, so openstatus can't auto-link them to imported monitors. You can link a monitor to any component after import.
+
+</Details>
+
+<Details summary="Can I run the import multiple times?">
+
+Monitors, components, and component groups are deduplicated — the importer checks for existing resources before creating new ones. Incidents and maintenances are always created as new entries, so re-running will produce duplicates for those.
+
+</Details>

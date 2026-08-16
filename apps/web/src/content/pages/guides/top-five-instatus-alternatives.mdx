@@ -215,3 +215,35 @@ For the other alternatives, migration is typically a manual rebuild of component
 ## Need Help or Have Questions?
 
 If you need help along the way, feel free to join our [Discord community](https://www.openstatus.dev/discord), check our [documentation](https://www.openstatus.dev/docs) for more information, or reach out to us via [email](mailto:ping@openstatus.dev).
+
+## Frequently asked questions
+
+<Details summary="How do I migrate from Instatus to an alternative?">
+
+openstatus offers a one-click importer that automatically transfers your components, component groups, incidents (with all updates), maintenances, and email subscribers. Paste your Instatus API key, preview what will be imported, and confirm. See our step-by-step migration guide for details.
+
+</Details>
+
+<Details summary="Which Instatus alternative is most cost-effective for small teams?">
+
+openstatus and Betterstack are the most cost-effective for small teams. openstatus includes monitoring and unlimited team members from $30/month, while Betterstack has a generous free tier that works well for solo developers. Both are typically cheaper than scaling on Instatus once you outgrow its free plan.
+
+</Details>
+
+<Details summary="Can I use these alternatives without built-in monitoring?">
+
+Yes. Status.io and Atlassian Statuspage focus purely on status communication. openstatus, Datadog, and Betterstack include monitoring but also accept manual incident updates and webhooks, so you can keep your existing monitoring tools if you prefer.
+
+</Details>
+
+<Details summary="Do any Instatus alternatives support self-hosting?">
+
+openstatus is the only open-source option on this list that supports self-hosting, giving you full control over your data and infrastructure. Instatus, Atlassian Statuspage, Status.io, Datadog, and Betterstack are cloud-hosted SaaS only.
+
+</Details>
+
+<Details summary="Why do teams switch away from Instatus?">
+
+The most common reasons are: needing built-in monitoring instead of stitching together third-party probes, wanting monitoring-as-code via Terraform, needing OpenTelemetry export, requiring private locations for internal services, or wanting an open-source solution for compliance and data residency.
+
+</Details>

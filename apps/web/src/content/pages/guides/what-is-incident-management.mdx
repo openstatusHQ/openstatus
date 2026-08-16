@@ -12,7 +12,7 @@ faq:
   - question: "What's an incident commander?"
     answer: "The incident commander is the single person responsible for coordinating the response - making decisions, assigning tasks, and keeping the team focused. They are not necessarily the most technical person on the call. Their job is leadership during the incident: who's doing what, what we know, when we'll update customers, when to escalate."
   - question: "How do you define incident severity?"
-    answer: "Most teams use a 4-tier scale: SEV1 (critical, customer-facing, all hands), SEV2 (major impact, urgent), SEV3 (partial impact, business hours), SEV4 (minor, planned work). The exact thresholds depend on your product, but the key is having clear criteria so the team doesn't argue about severity in the middle of an outage."
+    answer: "Most teams use a 4-tier scale: SEV0 (critical, customer-facing, all hands), SEV1 (major impact, urgent), SEV2 (partial impact, business hours), SEV3 (minor, planned work). The exact thresholds depend on your product, but the key is having clear criteria so the team doesn't argue about severity in the middle of an outage."
   - question: "What's the difference between an incident and an outage?"
     answer: "An outage is one type of incident - your service is fully unreachable. An incident is any unplanned disruption: outages, degraded performance, data correctness issues, security events, third-party failures. All outages are incidents; not all incidents are outages."
   - question: "What goes in an incident postmortem?"
@@ -97,14 +97,14 @@ A working severity model:
 
 | Severity | Criteria                                                                  | Response                          |
 |----------|---------------------------------------------------------------------------|-----------------------------------|
-| **SEV1** | Full outage or critical data loss affecting many customers                | All-hands, page on-call immediately, public status update within 15m |
-| **SEV2** | Major feature broken, significant customer impact, or revenue at risk     | Page on-call, public status update within 30m |
-| **SEV3** | Partial impact, workaround exists, no immediate revenue risk              | Business hours response, status update if customer-facing |
-| **SEV4** | Minor issue, internal-only, or planned/expected impact                    | Handle in normal work queue |
+| **SEV0** | Full outage or critical data loss affecting many customers                | All-hands, page on-call immediately, public status update within 15m |
+| **SEV1** | Major feature broken, significant customer impact, or revenue at risk     | Page on-call, public status update within 30m |
+| **SEV2** | Partial impact, workaround exists, no immediate revenue risk              | Business hours response, status update if customer-facing |
+| **SEV3** | Minor issue, internal-only, or planned/expected impact                    | Handle in normal work queue |
 
 The exact thresholds depend on your business. The important thing is that they're defined ahead of time so the team isn't arguing about severity in the middle of an outage.
 
-A common pitfall: severity inflation. If everything is SEV1, nothing is. Be honest. Reserve SEV1 for genuine "drop everything" events.
+A common pitfall: severity inflation. If everything is SEV0, nothing is. Be honest. Reserve SEV0 for genuine "drop everything" events.
 
 See our [incident severity matrix](/guides/incident-severity-matrix) for a more detailed framework.
 
@@ -137,7 +137,7 @@ A good postmortem has:
 
 **No formal declaration.** Engineers debug for an hour before someone says "wait, should we call this an incident?" By then, customers have been on Twitter for 45 minutes.
 
-**Severity inflation.** Everything is SEV1, so on-call burns out and nothing is actually prioritized.
+**Severity inflation.** Everything is SEV0, so on-call burns out and nothing is actually prioritized.
 
 **Fixing root cause during the incident.** Restore service first. The instinct to "really fix it" during an active incident usually extends the outage. Mitigate now, root-cause later.
 
@@ -162,6 +162,62 @@ The pipeline: monitor → detect → declare → respond → communicate → res
 Incident management isn't about preventing incidents - they happen to everyone. It's about handling them well when they do. Fast detection, organized response, honest communication, blameless learning.
 
 Teams that get this right preserve customer trust through outages. Teams that don't lose it during the second one.
+
+## Frequently asked questions
+
+<Details summary="What is incident management?">
+
+Incident management is the process a team uses to detect, respond to, resolve, and learn from unplanned service disruptions. It covers the technical work of fixing the problem, the communication work of keeping customers informed, and the organizational work of running a postmortem so the same problem doesn't recur.
+
+</Details>
+
+<Details summary="What are the stages of an incident lifecycle?">
+
+Detection (something is wrong), declaration (someone calls it an incident), response (assemble a team and start mitigating), communication (update customers via the status page), resolution (the immediate problem is fixed), and postmortem (learn what happened and prevent recurrence). Each stage has a different cadence and a different audience.
+
+</Details>
+
+<Details summary="What's an incident commander?">
+
+The incident commander is the single person responsible for coordinating the response - making decisions, assigning tasks, and keeping the team focused. They are not necessarily the most technical person on the call. Their job is leadership during the incident: who's doing what, what we know, when we'll update customers, when to escalate.
+
+</Details>
+
+<Details summary="How do you define incident severity?">
+
+Most teams use a 4-tier scale: SEV0 (critical, customer-facing, all hands), SEV1 (major impact, urgent), SEV2 (partial impact, business hours), SEV3 (minor, planned work). The exact thresholds depend on your product, but the key is having clear criteria so the team doesn't argue about severity in the middle of an outage.
+
+</Details>
+
+<Details summary="What's the difference between an incident and an outage?">
+
+An outage is one type of incident - your service is fully unreachable. An incident is any unplanned disruption: outages, degraded performance, data correctness issues, security events, third-party failures. All outages are incidents; not all incidents are outages.
+
+</Details>
+
+<Details summary="What goes in an incident postmortem?">
+
+A clear timeline of what happened, root cause analysis, customer impact (how many users, how long, what they experienced), what went well, what didn't, and action items with owners and due dates. The point is to learn - blameless framing, focus on systems and processes rather than individuals.
+
+</Details>
+
+<Details summary="How quickly should you update customers during an incident?">
+
+Initial acknowledgment within 5-15 minutes of detection. Updates every 15-30 minutes during active incidents, even if there's nothing new to report - silence is worse than 'still investigating, next update at 14:30'. Resolution message when the immediate problem is fixed. Follow-up postmortem within a week.
+
+</Details>
+
+<Details summary="What's MTTR and why does it matter?">
+
+MTTR (Mean Time To Recovery) is the average time from incident detection to resolution. It's the headline metric for incident response maturity. Lower MTTR means faster recovery, less customer impact, and usually better tooling and process. See our guide on MTTR for the full breakdown.
+
+</Details>
+
+<Details summary="What's a blameless postmortem?">
+
+A postmortem that focuses on systems, processes, and contributing factors rather than individual mistakes. The premise: people don't show up wanting to cause incidents - if a system allowed a human error to cause customer impact, the system is the problem. Blameless framing produces honest postmortems; blame-heavy framing produces defensive ones.
+
+</Details>
 
 ---
 

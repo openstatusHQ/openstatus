@@ -134,7 +134,7 @@ export const docsNav: DocsNavSection[] = [
       },
       {
         slug: "guides/how-to-monitor-mcp-server",
-        label: "How to Monitor Your Model Context Provider (MCP) Server",
+        label: "How to Monitor an MCP Server",
       },
       {
         slug: "guides/how-to-run-synthetic-test-github-action",
