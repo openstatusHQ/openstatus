@@ -1,4 +1,3 @@
-import { resolveCustomDomainRewrite } from "./resolve-custom-domain-rewrite";
 import { resolveDefaultRewrite } from "./resolve-default-rewrite";
 import { resolveEmailDomainAction } from "./resolve-email-domain-action";
 import { resolveIpRestrictionAction } from "./resolve-ip-restriction-action";
@@ -17,8 +16,7 @@ export type { ComposeInput };
  *   2. password gate (in/out)
  *   3. email-domain gate (in/out)
  *   4. ip-restriction gate (in/out)
- *   5. custom-domain rewrite (stpg.dev hosted)
- *   6. default rewrite (openstatus.dev OR rewritePath differs)
+ *   5. default rewrite (openstatus.dev OR rewritePath differs)
  *
  * Note on locale-first: a user on a mis-localed URL for a gated page gets
  * two redirects (locale → gate) instead of one. We accept the extra hop so
@@ -33,7 +31,6 @@ export function composePageAction(input: ComposeInput): Action {
     resolvePasswordAction(input) ??
     resolveEmailDomainAction(input) ??
     resolveIpRestrictionAction(input) ??
-    resolveCustomDomainRewrite(input) ??
     resolveDefaultRewrite(input) ??
     // Reached whenever resolveDefaultRewrite declines: host is not an
     // openstatus.dev host AND route.rewritePath === pathname. In hosted
