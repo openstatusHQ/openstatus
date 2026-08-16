@@ -57,9 +57,9 @@ To measure latency, you can monitor endpoints like `/ping` or `/healthcheck` wit
 ```
 
 
-Response time is the total time from the moment a user's request is sent until the moment the first byte of the server's response is received. It includes both the network latency and the server's processing time.
+Response time is the total time from the moment a user's request is sent until the server's response has been fully received. It includes the network latency, the server's processing time, and the time spent streaming the response body back.
 
-Response time = network latency + server processing time
+Response time = network latency + server processing time + transfer time
 
 The server processing time is the duration the server spends on tasks like:
 
@@ -91,10 +91,10 @@ included. In this breakdown those phases are already accounted for separately, s
 TTFB isolates the part your server is actually responsible for. A 40ms TTFB behind a
 300ms connect phase is a fast application sitting a long way from the probe.
 
-**Response time is the sum, not the first byte.** Latency is roughly DNS + connect +
-TLS — the cost of getting there and back before your application does anything. Add
-TTFB and transfer and you have total response time, which is what a user waits
-through.
+**Response time is the sum, not the first byte.** The connection phases — DNS,
+connect, and TLS — are the network cost of getting there before your application does
+any work. Add TTFB and transfer and you have total response time, which is what a
+user waits through.
 
 This is also why a single number hides the diagnosis. Two endpoints both answering
 in 600ms are not equivalent if one spends 500ms in TLS and the other spends 500ms in
@@ -170,7 +170,7 @@ users on the other side of the world time out.
 openstatus monitors and displays:
 
 - **Total response time** — the complete user experience.
-- **Detailed timing breakdown** — DNS, TCP, TLS, request, response.
+- **Detailed timing breakdown** — DNS, connect, TLS, TTFB, and transfer.
 - **Regional differences** — compare performance across locations.
 - **Historical trends** — identify patterns over time.
 

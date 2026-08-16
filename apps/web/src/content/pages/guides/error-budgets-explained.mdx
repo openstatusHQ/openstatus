@@ -12,7 +12,7 @@ faq:
   - question: "How do you calculate an error budget?"
     answer: "Error budget = (100% − SLO) × the measurement window. For a 99.9% monthly SLO, that is 0.1% of 30 days, or roughly 43 minutes. For a 99.99% monthly SLO it is about 4 minutes 19 seconds. Calculate it against the window your agreement actually uses - a yearly window is ten times more forgiving than a monthly one for the same percentage."
   - question: "What is error budget burn rate?"
-    answer: "Burn rate is how fast you are consuming the budget relative to the pace that would exactly exhaust it over the window. A burn rate of 1 means you will finish the period with exactly zero budget left. A burn rate of 14.4 means you are spending 2% of a 30-day budget every hour, and the entire month's allowance disappears in about two hours."
+    answer: "Burn rate is how fast you are consuming the budget relative to the pace that would exactly exhaust it over the window. A burn rate of 1 means you will finish the period with exactly zero budget left. A burn rate of 14.4 means you are spending 2% of a 30-day budget every hour, and the entire month's allowance disappears in about two days."
   - question: "What happens when the error budget is spent?"
     answer: "That is a policy decision you should make before it happens, not during the incident. The common policy is to freeze feature deploys and redirect engineering to reliability work until the budget recovers at the start of the next window. The point is that the budget converts an argument about whether to slow down into a number that already decided it."
   - question: "What is the difference between an error budget and an SLA?"
@@ -84,7 +84,7 @@ something in it:
 
 | Burn rate | Budget consumed | Over | Meaning |
 | --- | --- | --- | --- |
-| 14.4× | 2% | 1 hour | The month's budget is gone in ~2 hours. Wake someone up. |
+| 14.4× | 2% | 1 hour | The month's budget is gone in ~2 days. Wake someone up. |
 | 6× | 5% | 6 hours | Serious, sustained degradation. Page during working hours. |
 | 1× | 10% | 3 days | Slow bleed. File a ticket, not an alert. |
 
@@ -164,7 +164,7 @@ Error budget = (100% − SLO) × the measurement window. For a 99.9% monthly SLO
 
 <Details summary="What is error budget burn rate?">
 
-Burn rate is how fast you are consuming the budget relative to the pace that would exactly exhaust it over the window. A burn rate of 1 means you will finish the period with exactly zero budget left. A burn rate of 14.4 means you are spending 2% of a 30-day budget every hour, and the entire month's allowance disappears in about two hours.
+Burn rate is how fast you are consuming the budget relative to the pace that would exactly exhaust it over the window. A burn rate of 1 means you will finish the period with exactly zero budget left. A burn rate of 14.4 means you are spending 2% of a 30-day budget every hour, and the entire month's allowance disappears in about two days.
 
 </Details>
 

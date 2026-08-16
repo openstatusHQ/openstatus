@@ -171,8 +171,10 @@ mcp-tools:
       target: 200
     - kind: textBody
       compare: contains
-      target: '"name":"your_tool_name"'
+      target: "your_tool_name"
 ```
+
+Assert on the bare tool name, not on `"name":"your_tool_name"`. `contains` matches literally, and servers differ in whether they emit a space after the JSON key — an assertion written against the compact form fails the moment a server pretty-prints its response.
 
 `tools/list` is also the more honest latency signal. `ping` usually returns an empty result and measures little more than the network round trip, whereas `tools/list` exercises the server's actual request path — which is what an agent waits on. Run it at a lower frequency than `ping` if you want to keep request volume down.
 

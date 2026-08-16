@@ -29,9 +29,9 @@ faq:
   - question: "Why don't I see the openstatus tools after editing the config?"
     answer: "The two most common causes are not fully quitting Claude Desktop (it only loads MCP servers at launch — close the window is not enough, you have to Cmd+Q on macOS or File → Quit on Windows) and `npx` not being on the PATH that Claude Desktop sees. Install Node.js 18+ from nodejs.org if `node --version` is missing in your shell."
   - question: "Can Claude Desktop accidentally notify subscribers when posting an incident?"
-    answer: "No. Every mutation tool requires an explicit `notify: true | false` field. Claude must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag."
+    answer: "No. Every publishing tool (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) requires an explicit `notify: true | false` field. Claude must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag. `update_status_report` is metadata-only and has no notify path at all."
   - question: "How do I give Claude Desktop read-only access to my workspace?"
-    answer: "Create an API key with `read` scope. The MCP server filters mutation tools out of the `tools/list` response for read-only keys, so Claude Desktop only sees `list_status_pages`, `list_status_reports`, and `list_maintenances`."
+    answer: "Create an API key with `read` scope. The MCP server filters write tools out of the `tools/list` response for read-only keys, so Claude Desktop sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session."
   - question: "Where do MCP-driven changes appear in the audit log?"
     answer: "Every mutation routed through Claude Desktop lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the API key id and `actor_user_id` set to the user who created the key. This separates AI-driven actions from CLI, dashboard, and direct API mutations."
 ---
@@ -170,13 +170,13 @@ The two most common causes are not fully quitting Claude Desktop (it only loads 
 
 <Details summary="Can Claude Desktop accidentally notify subscribers when posting an incident?">
 
-No. Every mutation tool requires an explicit `notify: true | false` field. Claude must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag.
+No. Every publishing tool (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) requires an explicit `notify: true | false` field. Claude must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag. `update_status_report` is metadata-only and has no notify path at all.
 
 </Details>
 
 <Details summary="How do I give Claude Desktop read-only access to my workspace?">
 
-Create an API key with `read` scope. The MCP server filters mutation tools out of the `tools/list` response for read-only keys, so Claude Desktop only sees `list_status_pages`, `list_status_reports`, and `list_maintenances`.
+Create an API key with `read` scope. The MCP server filters write tools out of the `tools/list` response for read-only keys, so Claude Desktop sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session.
 
 </Details>
 

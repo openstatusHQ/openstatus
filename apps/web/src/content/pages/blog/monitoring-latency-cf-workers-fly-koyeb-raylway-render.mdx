@@ -7,7 +7,7 @@ image: "/assets/posts/monitoring-latency/all-hosting-providers.png"
 category: "education"
 faq:
   - question: "Which cloud provider has the lowest latency?"
-    answer: "In our benchmark, Cloudflare Workers had the lowest average latency at 182ms across 6 global regions, with a P75 of 138ms. Fly.io in production (with min_machines_running=1) averaged just 61ms, but with cold starts it averaged 1,471ms."
+    answer: "In our benchmark, Cloudflare Workers had the lowest average latency of the providers left on their default configuration: 182ms across 6 global regions, with a P75 of 138ms. Fly.io was faster still when kept warm — 61ms with min_machines_running=1 — but averaged 1,471ms once cold starts were allowed."
   - question: "Does Fly.io have cold start issues?"
     answer: "Yes. With auto_stop_machines enabled and min_machines_running=0, Fly.io averaged 1,471ms due to cold starts (~1.5s machine boot time). Setting min_machines_running=1 eliminates cold starts and brings the average down to 61ms."
   - question: "How does Cloudflare Workers latency compare to Railway and Render?"
@@ -25,7 +25,7 @@ You want to know which cloud providers offer the lowest latency?
 In this post, I compare the latency of
 [Cloudflare Workers](#cloudflare-workers), [Fly](#flyio), [Koyeb](#koyeb),
 [Railway](#railway) and [Render](#render) using
-[OpenStatus](https://www.openstatus.dev).
+[openstatus](https://www.openstatus.dev).
 
 I deployed the application on the cheapest or free tier offered by each
 provider.
@@ -49,7 +49,7 @@ app.get("/", (c) => {
 You can find the code in the [`status-code` repository](https://github.com/openstatusHQ/status-code), it’s
 open source 😉.
 
-OpenStatus monitored our endpoint every **10 minutes** from **6 locations**
+Openstatus monitored our endpoint every **10 minutes** from **6 locations**
 located in Amsterdam, Ashburn, Hong Kong, Johannesburg, Sao Paulo and Sydney.
 
 It's a good way to test our own product and improve it.
@@ -288,7 +288,7 @@ The machine starts slowly, as indicated by the logs showing a start time of
 2024-02-14T11:24:17.628 proxy[286560ea703108] ams [info] machine became reachable in 7.03669ms
 ```
 
-#### OpenStatus Prod metrics
+#### Openstatus Prod metrics
 
 If you update your fly.toml file to include the following, you can get the zero
 cold start and achieve a better latency.
@@ -667,8 +667,8 @@ We use Fly.io in production and are satisfied with it.
 I haven't included Vercel in this test. But we have a blog post comparing [Vercel Serverless vs Edge vs Serverless](/blog/monitoring-latency-vercel-edge-vs-serverless).
 
 Want the same measurement for your own endpoint? Run it through the
-[website speed test](/play/checker) — the same 28 regions used for this benchmark,
-with the per-phase timing breakdown, and no account needed.
+[website speed test](/play/checker) — 28 regions with the per-phase timing
+breakdown, and no account needed.
 
 If you want to monitor your API or website, create an account on
 [openstatus](/app/sign-up?ref=blog-monitoring).
@@ -677,7 +677,7 @@ If you want to monitor your API or website, create an account on
 
 <Details summary="Which cloud provider has the lowest latency?">
 
-In our benchmark, Cloudflare Workers had the lowest average latency at 182ms across 6 global regions, with a P75 of 138ms. Fly.io in production (with min_machines_running=1) averaged just 61ms, but with cold starts it averaged 1,471ms.
+In our benchmark, Cloudflare Workers had the lowest average latency of the providers left on their default configuration: 182ms across 6 global regions, with a P75 of 138ms. Fly.io was faster still when kept warm — 61ms with min_machines_running=1 — but averaged 1,471ms once cold starts were allowed.
 
 </Details>
 
