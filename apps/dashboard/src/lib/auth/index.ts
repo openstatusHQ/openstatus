@@ -145,7 +145,7 @@ const {
         ...session,
         user: {
           ...session.user,
-          id: user.id,
+          id: String(user.id),
         },
       };
     },
