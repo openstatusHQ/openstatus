@@ -112,7 +112,7 @@ export function TableCellUptime({
             statusStyles[cell.status],
           )}
         >
-          {cell.percentage === null ? "–" : `${cell.percentage.toFixed(2)}%`}
+          {cell.percentage === null ? "–" : `${cell.percentage.toFixed(3)}%`}
         </button>
       </HoverCardTrigger>
       <HoverCardContent
@@ -136,7 +136,7 @@ export function TableCellUptime({
             />
             <span>Uptime</span>
             <span className="text-foreground ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums">
-              {cell.percentage.toFixed(2)}
+              {cell.percentage.toFixed(3)}
               <span className="text-muted-foreground font-normal">%</span>
             </span>
           </div>
