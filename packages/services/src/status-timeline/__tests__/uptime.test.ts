@@ -65,6 +65,19 @@ describe("floorPct", () => {
     expect(floorPct(1)).toBe(100);
     expect(floorPct(0)).toBe(0);
   });
+
+  test("exact thousandths survive float error in the caller's division", () => {
+    expect(floorPct(29 / 100)).toBe(29);
+    expect(floorPct(57 / 100)).toBe(57);
+    expect(floorPct(23 / 40)).toBe(57.5);
+    expect(floorPct(29 / 50)).toBe(58);
+    expect(floorPct(23 / 80)).toBe(28.75);
+  });
+
+  test("the epsilon does not lift a value onto the next thousandth", () => {
+    expect(floorPct(28_9995 / 1_000_000)).toBe(28.999);
+    expect(floorPct(99_9999 / 1_000_000)).toBe(99.999);
+  });
 });
 
 describe("requestsTally", () => {
