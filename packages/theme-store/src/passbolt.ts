@@ -24,7 +24,7 @@ export const PASSBOLT_THEME = {
     "--warning": "#ffdca8",
     "--info": "#abd2f9",
 
-    "--radius": "0.5rem"
+    "--radius": "0.5rem",
   },
   dark: {
     "--background": "#171717",
@@ -46,6 +46,6 @@ export const PASSBOLT_THEME = {
     "--warning": "#f2ae55",
     "--info": "#4b92d9",
 
-    "--radius": "0.5rem"
+    "--radius": "0.5rem",
   },
 } as const satisfies Theme;
