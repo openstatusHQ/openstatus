@@ -3,6 +3,7 @@ import { HealthService } from "@openstatus/proto/health/v1";
 import { MaintenanceService } from "@openstatus/proto/maintenance/v1";
 import { MonitorService } from "@openstatus/proto/monitor/v1";
 import { NotificationService } from "@openstatus/proto/notification/v1";
+import { PrivateLocationService } from "@openstatus/proto/private_location/v1";
 import { StatusPageService } from "@openstatus/proto/status_page/v1";
 import { StatusReportService } from "@openstatus/proto/status_report/v1";
 
@@ -10,6 +11,7 @@ import { healthServiceImpl } from "./handlers/health";
 import { maintenanceServiceImpl } from "./handlers/maintenance";
 import { monitorServiceImpl } from "./handlers/monitor";
 import { notificationServiceImpl } from "./handlers/notification";
+import { privateLocationServiceImpl } from "./handlers/private-location";
 import { statusPageServiceImpl } from "./handlers/status-page";
 import { statusReportServiceImpl } from "./handlers/status-report";
 import {
@@ -43,4 +45,5 @@ export const routes = createConnectRouter({
   .service(StatusReportService, statusReportServiceImpl)
   .service(StatusPageService, statusPageServiceImpl)
   .service(MaintenanceService, maintenanceServiceImpl)
-  .service(NotificationService, notificationServiceImpl);
+  .service(NotificationService, notificationServiceImpl)
+  .service(PrivateLocationService, privateLocationServiceImpl);

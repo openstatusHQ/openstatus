@@ -4,9 +4,10 @@
 export {
   parseHttpAssertions,
   parseDnsAssertions,
-  httpAssertionsToDbJson,
-  dnsAssertionsToDbJson,
+  protoHttpAssertionsToService,
+  protoDnsAssertionsToService,
   type HttpAssertions,
+  type MonitorAssertionInput,
 } from "./assertions";
 
 // Comparators
@@ -37,8 +38,8 @@ export {
 export {
   toProtoHeaders,
   parseOpenTelemetry,
-  headersToDbJson,
-  openTelemetryToDb,
+  protoHeadersToService,
+  protoOpenTelemetryToService,
 } from "./headers";
 
 // Monitors

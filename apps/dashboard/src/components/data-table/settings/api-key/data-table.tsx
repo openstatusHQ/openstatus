@@ -14,7 +14,7 @@ import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
-type ApiKey = RouterOutputs["apiKeyRouter"]["getAll"][number];
+type ApiKey = RouterOutputs["apiKey"]["list"][number];
 
 /**
  * Map a key's `scopes` array to a single human label. v1 keys carry one
@@ -47,7 +47,7 @@ export function DataTable({
 }) {
   const trpc = useTRPC();
   const revokeApiKeyMutation = useMutation(
-    trpc.apiKeyRouter.revoke.mutationOptions({
+    trpc.apiKey.revoke.mutationOptions({
       onSuccess: () => refetch(),
     }),
   );

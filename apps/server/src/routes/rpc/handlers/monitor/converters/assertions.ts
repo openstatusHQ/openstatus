@@ -1,10 +1,15 @@
+import { Code, ConnectError } from "@connectrpc/connect";
 import { getLogger } from "@logtape/logtape";
 import {
   type Assertion,
   deserialize,
+  dnsRecords,
   headerAssertion,
+  type numberCompare,
   recordAssertion,
+  type recordCompare,
   statusAssertion,
+  type stringCompare,
   textBodyAssertion,
 } from "@openstatus/assertions";
 import type {
@@ -13,6 +18,7 @@ import type {
   RecordAssertion,
   StatusCodeAssertion,
 } from "@openstatus/proto/monitor/v1";
+import type { z } from "zod";
 
 import {
   compareToNumberComparator,
@@ -22,6 +28,11 @@ import {
   recordComparatorToString,
   stringComparatorToString,
 } from "./comparators";
+
+type NumberCompare = z.infer<typeof numberCompare>;
+type StringCompare = z.infer<typeof stringCompare>;
+type RecordCompare = z.infer<typeof recordCompare>;
+type DnsRecord = (typeof dnsRecords)[number];
 
 const logger = getLogger("api-server");
 
@@ -137,69 +148,92 @@ export function parseDnsAssertions(
 }
 
 // ============================================================
-// Proto to DB (for writes)
+// Proto to service input (for writes)
 // ============================================================
 
+/** The service layer's assertion input — serialising is its job, not ours. */
+export type MonitorAssertionInput =
+  | { version: "v1"; type: "status"; compare: NumberCompare; target: number }
+  | { version: "v1"; type: "textBody"; compare: StringCompare; target: string }
+  | {
+      version: "v1";
+      type: "header";
+      compare: StringCompare;
+      target: string;
+      key: string;
+    }
+  | {
+      version: "v1";
+      type: "dnsRecord";
+      compare: RecordCompare;
+      target: string;
+      key: DnsRecord;
+    };
+
 /**
- * Convert HTTP monitor proto assertions to database JSON string.
- * Uses @openstatus/assertions package format.
+ * Narrow the proto's free-string record type to the assertion enum.
+ * protovalidate already restricts the field, so a miss here means the
+ * validation interceptor was bypassed.
  */
-export function httpAssertionsToDbJson(
+function toDnsRecordKey(record: string): DnsRecord {
+  const match = dnsRecords.find((r) => r === record);
+  if (!match) {
+    throw new ConnectError(
+      `Invalid DNS record type: ${record}`,
+      Code.InvalidArgument,
+    );
+  }
+  return match;
+}
+
+export function protoHttpAssertionsToService(
   statusCodeAssertions: StatusCodeAssertion[],
   bodyAssertions: BodyAssertion[],
   headerAssertions: HeaderAssertion[],
-): string | undefined {
-  const schemas: Array<Record<string, unknown>> = [];
-
-  for (const s of statusCodeAssertions) {
-    schemas.push({
-      version: "v1",
-      type: "status",
-      compare: numberComparatorToString(s.comparator),
-      target: Number(s.target),
-    });
-  }
-
-  for (const b of bodyAssertions) {
-    schemas.push({
-      version: "v1",
-      type: "textBody",
-      compare: stringComparatorToString(b.comparator),
-      target: b.target,
-    });
-  }
-
-  for (const h of headerAssertions) {
-    schemas.push({
-      version: "v1",
-      type: "header",
-      compare: stringComparatorToString(h.comparator),
-      target: h.target,
-      key: h.key,
-    });
-  }
-
-  return schemas.length > 0 ? JSON.stringify(schemas) : undefined;
+): MonitorAssertionInput[] {
+  return [
+    ...statusCodeAssertions.map(
+      (s) =>
+        ({
+          version: "v1",
+          type: "status",
+          compare: numberComparatorToString(s.comparator),
+          target: Number(s.target),
+        }) as const,
+    ),
+    ...bodyAssertions.map(
+      (b) =>
+        ({
+          version: "v1",
+          type: "textBody",
+          compare: stringComparatorToString(b.comparator),
+          target: b.target,
+        }) as const,
+    ),
+    ...headerAssertions.map(
+      (h) =>
+        ({
+          version: "v1",
+          type: "header",
+          compare: stringComparatorToString(h.comparator),
+          target: h.target,
+          key: h.key,
+        }) as const,
+    ),
+  ];
 }
 
-/**
- * Convert DNS monitor proto assertions to database JSON string.
- * Uses @openstatus/assertions package format with dnsRecord type.
- */
-export function dnsAssertionsToDbJson(
+export function protoDnsAssertionsToService(
   recordAssertions: RecordAssertion[],
-): string | undefined {
-  if (recordAssertions.length === 0) {
-    return undefined;
-  }
-
-  const schemas = recordAssertions.map((a) => ({
-    version: "v1",
-    type: "dnsRecord",
-    compare: recordComparatorToString(a.comparator),
-    target: a.target,
-    key: a.record,
-  }));
-
-  return JSON.stringify(schemas);
+): MonitorAssertionInput[] {
+  return recordAssertions.map(
+    (a) =>
+      ({
+        version: "v1",
+        type: "dnsRecord",
+        compare: recordComparatorToString(a.comparator),
+        target: a.target,
+        key: toDnsRecordKey(a.record),
+      }) as const,
+  );
 }

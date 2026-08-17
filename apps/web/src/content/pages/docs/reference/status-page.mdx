@@ -67,9 +67,10 @@ Visitors from outside the allowed ranges are redirected to a static "Access Rest
 
 **Configuration:**
 
-- Set `access_type` to `ip-restriction` in the dashboard or API.
+- Set the access type to IP restriction in the dashboard, or `access_type` to `PAGE_ACCESS_TYPE_IP_RESTRICTED` via the ConnectRPC `StatusPageService`.
 - Provide `allowed_ip_ranges` as a comma-separated list of IPv4 CIDR ranges (we automatically append `/32` to single IPs).
 - IPv6 is not supported.
+- The deprecated v1 REST API does not expose this access type — its `accessType` field accepts only `public`, `password`, and `email-domain`.
 
 **Note:** this feature is available as a paid add-on for Starter and Pro plans.
 
@@ -87,7 +88,7 @@ Selects one of the community themes for your status page. Browse and preview the
 
 ### Custom theme
 
-**Type:** Per-mode CSS variable overrides (Pro and Scale plans)
+**Type:** Per-mode CSS variable overrides (included on Pro and Scale, available as a paid add-on on Starter)
 
 Overrides individual CSS variables of the selected theme, separately for light and dark mode. Custom values take precedence over the theme; every variable you leave unset falls back to the theme's value.
 
@@ -98,7 +99,7 @@ Overrides individual CSS variables of the selected theme, separately for light a
 --radius: 0.5rem;
 ```
 
-Values accept any valid CSS value (colors in `oklch`, `hsl`, hex, lengths, etc.). The characters `<`, `{`, `}` and `;` are not allowed inside a value.
+Values accept any valid CSS value (colors in `oklch`, `hsl`, hex, lengths, etc.). Each value is limited to 256 characters, and the characters `<`, `{`, `}`, `;` and ASCII control characters are not allowed inside a value.
 
 #### Supported CSS variables
 
@@ -187,7 +188,7 @@ ssh [slug]@ssh.openstatus.dev
 
 Enables multi-language support for your status page. You can set a default locale and optionally enable a locale switcher so visitors can choose their preferred language.
 
-**Supported locales:** `en` (English), `fr` (Français), `de` (Deutsch)
+**Supported locales:** `en` (English), `fr` (Français), `de` (Deutsch), `tr` (Türkçe), `hi` (हिंदी), `ko` (한국어)
 
 **Configuration:**
 

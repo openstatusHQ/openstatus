@@ -99,6 +99,38 @@ A monitor that cries wolf gets muted, and a muted monitor is worse than no monit
 - [HTTP Headers for Monitoring](/guides/http-headers)
 - [What Is Synthetic Monitoring?](/guides/what-is-synthetic-monitoring)
 
+## Frequently asked questions
+
+<Details summary="Why does my monitor say my site is down when it loads fine for me?">
+
+Almost always one of three things: the check is failing from a region you can't see from your browser, your firewall or bot-protection is blocking the probe's IP, or a single probe location had a transient network blip. Load the site from a different network and region, then check whether the failure is reported from one region or several — a single-region failure is usually a false positive.
+
+</Details>
+
+<Details summary="What is a false positive in uptime monitoring?">
+
+A false positive is an alert that fires when nothing was actually wrong — typically because a single probe location hit a transient network issue, a rate limit, or a bot-detection rule. The fix is to require multiple regions to fail before alerting, so isolated probe-side problems are ignored.
+
+</Details>
+
+<Details summary="How do I stop getting false alerts?">
+
+Require multi-region confirmation before alerting, set a realistic timeout (network round-trips from distant regions take longer than local requests), allowlist your monitor's probe IPs in your WAF and rate limiter, and make sure your assertions aren't too strict. openstatus retries a failing check before counting it as down, and only alerts once more than 50% of a monitor's regions agree the check has failed.
+
+</Details>
+
+<Details summary="Why is my monitor failing intermittently?">
+
+Intermittent failures usually point to rate limiting, an overloaded origin under certain traffic, bot-protection challenges that fire occasionally, DNS issues, or a timeout set too aggressively. Look at which regions fail and whether failures cluster at specific times or request volumes.
+
+</Details>
+
+<Details summary="Could my monitor be failing because of SSL?">
+
+Yes. An expired, misconfigured, or incomplete certificate chain causes checks to fail even when the server responds — browsers and probes both reject invalid certificates. If the failure started abruptly on a specific date, an expired certificate is a prime suspect.
+
+</Details>
+
 ---
 
 **openstatus checks from up to 28 regions and only alerts when they agree** — fewer false positives, real outages caught fast. Open-source, free to start.

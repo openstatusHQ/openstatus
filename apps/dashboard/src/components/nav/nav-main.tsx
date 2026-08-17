@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronRight, type IconType } from "@openstatus/icons";
 import {
   Collapsible,
   CollapsibleContent,
@@ -16,7 +17,6 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
-import { ChevronRight, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 export function NavMain({
   items,
@@ -24,7 +24,7 @@ export function NavMain({
   items: {
     title: string;
     url: string;
-    icon?: LucideIcon;
+    icon?: IconType;
     isActive?: boolean;
     items?: {
       title: string;

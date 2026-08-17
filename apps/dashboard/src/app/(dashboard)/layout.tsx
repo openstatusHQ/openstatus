@@ -4,6 +4,8 @@ import {
 } from "@openstatus/ui/components/ui/sidebar";
 import { cookies } from "next/headers";
 
+import { CommandMenu } from "@/components/command-menu/command-menu";
+import { CommandMenuProvider } from "@/components/command-menu/provider";
 import { DismissedNotesProvider } from "@/components/common/note-dismissible";
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import {
@@ -31,8 +33,11 @@ export default async function Layout({
           defaultOpen={defaultOpen}
           cookieName={LEFT_SIDEBAR_COOKIE}
         >
-          <AppSidebar />
-          <SidebarInset>{children}</SidebarInset>
+          <CommandMenuProvider>
+            <AppSidebar />
+            <CommandMenu />
+            <SidebarInset>{children}</SidebarInset>
+          </CommandMenuProvider>
         </SidebarProvider>
       </HydrateSidebar>
     </DismissedNotesProvider>
@@ -44,7 +49,9 @@ async function HydrateSidebar({ children }: { children: React.ReactNode }) {
   await Promise.all([
     queryClient.prefetchQuery(trpc.page.list.queryOptions()),
     queryClient.prefetchQuery(trpc.monitor.list.queryOptions()),
+    queryClient.prefetchQuery(trpc.notification.list.queryOptions()),
     queryClient.prefetchQuery(trpc.workspace.get.queryOptions()),
+    queryClient.prefetchQuery(trpc.workspace.list.queryOptions()),
     queryClient.prefetchQuery(trpc.user.get.queryOptions()),
   ]);
 

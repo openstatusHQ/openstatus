@@ -75,6 +75,7 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 | `EMAIL` | Email notification |
 | `GOOGLE_CHAT` | Google Chat webhook |
 | `GRAFANA_ONCALL` | Grafana OnCall |
+| `MS_TEAMS` | Microsoft Teams (Power Automate workflow) |
 | `NTFY` | Ntfy push service |
 | `PAGERDUTY` | PagerDuty |
 | `OPSGENIE` | Opsgenie |
@@ -98,6 +99,7 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 | `PUBLIC` | Publicly accessible |
 | `PASSWORD_PROTECTED` | Requires password |
 | `AUTHENTICATED` | Requires authentication |
+| `IP_RESTRICTED` | Restricted to the CIDR ranges in `allowed_ip_ranges` |
 
 ### PageTheme
 
@@ -374,7 +376,7 @@ All types and enums exported from `@openstatus/sdk-node`:
 
 - `Notification`, `NotificationSummary`
 - `NotificationData`
-- `DiscordData`, `EmailData`, `GoogleChatData`, `GrafanaOncallData`, `NtfyData`, `OpsgenieData`, `PagerDutyData`, `SlackData`, `SmsData`, `TelegramData`, `WebhookData`, `WebhookHeader`, `WhatsappData`
+- `DiscordData`, `EmailData`, `GoogleChatData`, `GrafanaOncallData`, `MsTeamsData`, `NtfyData`, `OpsgenieData`, `PagerDutyData`, `SlackData`, `SmsData`, `TelegramData`, `WebhookData`, `WebhookHeader`, `WhatsappData`
 - `CreateNotificationRequest`, `CreateNotificationResponse`
 - `GetNotificationRequest`, `GetNotificationResponse`
 - `ListNotificationsRequest`, `ListNotificationsResponse`

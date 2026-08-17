@@ -1,15 +1,12 @@
-import { db, eq } from "@openstatus/db";
-import { invitation, user, usersToWorkspaces } from "@openstatus/db/src/schema";
+import { eq } from "@openstatus/db";
+import { invitation, usersToWorkspaces } from "@openstatus/db/src/schema";
+import { createUser } from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
+  createWorkspaceFixture,
   expectAuditRow,
-  loadSeededWorkspace,
   makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
@@ -31,63 +28,23 @@ import {
 const TEST_PREFIX = "svc-inv-test";
 
 let teamCtx: ServiceContext;
+let teamUserId: number;
 let freeCtx: ServiceContext;
+let acceptingUserId: number;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
-  teamCtx = makeUserCtx(team, { userId: 1 });
-  freeCtx = makeUserCtx(free, { userId: 2 });
+  const team = await createWorkspaceFixture("team");
+  teamUserId = team.userId;
+  teamCtx = makeUserCtx(team.workspace, { userId: teamUserId });
 
-  // Seed membership for the free workspace so the `members: 1` cap
-  // can actually be reached by a subsequent `createInvitation` — the
-  // shared DB seed only adds a row for workspace 1 (team). Without
-  // this, the members-cap assertion below passes against `0 < 1` and
-  // never reaches the LimitExceededError branch.
-  //
-  // `userId: 1` instead of `2` — only user 1 is in the shared seed,
-  // and the `user_id` FK on `users_to_workspaces` rejects unknown
-  // ids. The cap check just counts rows by `workspace_id`, so which
-  // user occupies the slot doesn't matter.
-  await db
-    .insert(usersToWorkspaces)
-    .values({ workspaceId: SEEDED_WORKSPACE_FREE_ID, userId: 1 })
-    .onConflictDoNothing();
+  // The free workspace's owner membership already occupies its single
+  // `members: 1` slot, so `createInvitation` reaches the cap.
+  const free = await createWorkspaceFixture("free");
+  freeCtx = makeUserCtx(free.workspace, { userId: free.userId });
 
-  // Seed the accepting user for the `acceptInvitation` test below.
-  // The test accepts as `userId: 3` and the ensuing
-  // `users_to_workspaces` insert has an FK on `user.id` — without a
-  // seeded row the insert blows up with a `SQLITE_CONSTRAINT`
-  // surfacing as a hook-timeout in the suite. Tear it down in
-  // `afterAll` alongside the membership.
-  await db
-    .insert(user)
-    .values({
-      id: 3,
-      tenantId: "invitation-test-3",
-      firstName: "Accept",
-      lastName: "Tester",
-      email: "accept-tester@example.test",
-      photoUrl: "",
-    })
-    .onConflictDoNothing();
-});
-
-afterAll(async () => {
-  await db
-    .delete(usersToWorkspaces)
-    .where(eq(usersToWorkspaces.workspaceId, SEEDED_WORKSPACE_FREE_ID))
-    .catch(() => undefined);
-  // `acceptInvitation` test seeded user 3 as the accepting user —
-  // clean up membership and the user row itself.
-  await db
-    .delete(usersToWorkspaces)
-    .where(eq(usersToWorkspaces.userId, 3))
-    .catch(() => undefined);
-  await db
-    .delete(user)
-    .where(eq(user.id, 3))
-    .catch(() => undefined);
+  // `acceptInvitation` inserts a `users_to_workspaces` row, which has an FK
+  // on `user.id`.
+  acceptingUserId = (await createUser()).id;
 });
 
 describe("createInvitation", () => {
@@ -101,7 +58,7 @@ describe("createInvitation", () => {
       });
 
       expect(row.email).toBe(email);
-      expect(row.workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
+      expect(row.workspaceId).toBe(teamCtx.workspace.id);
       expect(row.token).toBeDefined();
       expect(row.expiresAt.getTime()).toBeGreaterThan(Date.now());
 
@@ -120,7 +77,7 @@ describe("createInvitation", () => {
       const readOnlyCtx = {
         ...makeApiKeyCtx(teamCtx.workspace, {
           keyId: "k-read",
-          userId: 1,
+          userId: teamUserId,
           scopes: ["read"],
         }),
         db: tx,
@@ -183,7 +140,7 @@ describe("getInvitationByToken", () => {
         input: { token: created.token, email },
       });
       expect(row.id).toBe(created.id);
-      expect(row.workspace.id).toBe(SEEDED_WORKSPACE_TEAM_ID);
+      expect(row.workspace.id).toBe(teamCtx.workspace.id);
     });
   });
 
@@ -236,7 +193,6 @@ describe("acceptInvitation", () => {
     await withTestTransaction(async (tx) => {
       // The user id comes from `ctx.actor`, not from input — so we build
       // a ctx scoped to the accepting user rather than passing an id.
-      const acceptingUserId = 3;
       const email = `${TEST_PREFIX}-accept-${acceptingUserId}-${Date.now()}@example.com`;
       const created = await createInvitation({
         ctx: { ...teamCtx, db: tx },
@@ -251,7 +207,7 @@ describe("acceptInvitation", () => {
         ctx: acceptingCtx,
         input: { id: created.id, email },
       });
-      expect(workspaceRow.id).toBe(SEEDED_WORKSPACE_TEAM_ID);
+      expect(workspaceRow.id).toBe(teamCtx.workspace.id);
 
       const updated = await tx
         .select()
@@ -265,7 +221,7 @@ describe("acceptInvitation", () => {
         .from(usersToWorkspaces)
         .where(eq(usersToWorkspaces.userId, acceptingUserId))
         .get();
-      expect(membership?.workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
+      expect(membership?.workspaceId).toBe(teamCtx.workspace.id);
     });
   });
 

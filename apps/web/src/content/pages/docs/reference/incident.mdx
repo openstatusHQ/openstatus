@@ -14,22 +14,25 @@ An incident in openstatus represents a detected problem or service disruption re
 
 ## Incident triggering
 
-An incident is triggered when a significant percentage of recent monitoring checks for a given monitor report a failed status. This mechanism prevents false positives from transient network issues.
+An incident is triggered when enough of a monitor's regions agree that the endpoint is down. Requiring agreement across regions prevents a single flaky probe from opening an incident.
 
 **Trigger condition:**
 
-- **Failure threshold** — an incident is initiated when at least 50% of the checks within a defined window (e.g., the last `N` checks or within a `T` duration) have reported a `failure` or `degraded` status.
+- **Failure threshold** — an incident is opened when at least half of the monitor's configured regions report an `error` status. A single-region monitor triggers on its one region.
+- Only `error` opens an incident. A `degraded` status triggers notifications but does not create an incident.
+- If an incident is already open for the monitor, no second incident is created.
 
 ## Incident lifecycle and states
 
-Incidents progress through several states reflecting their current resolution status. These states are managed through status reports (see [Status report reference](/docs/reference/status-report)).
+An incident's lifecycle is tracked with timestamps rather than a manual workflow:
 
-**Primary states:**
+- **Open** — created when the failure threshold is met. `resolvedAt` is null.
+- **Acknowledged** — a team member has taken ownership. `acknowledgedAt` and `acknowledgedBy` are set.
+- **Resolved** — either auto-resolved when the monitor recovers (`autoResolved: true`) or manually resolved, setting `resolvedAt` and `resolvedBy`.
 
-- `investigating` — the incident has been detected, and the team is actively looking into the root cause.
-- `identified` — the root cause of the incident has been identified.
-- `monitoring` — a fix has been deployed or a mitigation is in place, and the service is being monitored to confirm resolution.
-- `resolved` — the incident has been fully resolved, and the service is operating normally.
+The stored `status` field accepts `triage` (the default), `investigating`, `identified`, `monitoring`, `resolved`, and `duplicated`.
+
+Incidents are distinct from status reports. Status reports are the manual, public communication channel on your status page and are not linked to an incident record — see the [Status report reference](/docs/reference/status-report).
 
 ## Properties
 
@@ -37,9 +40,11 @@ While an incident is active, it collects and displays key information related to
 
 - **Monitor association** — each incident is directly linked to the monitor that triggered it, providing immediate context to the affected service.
 - **Start time** — timestamp indicating when the incident was first detected and created.
-- **Status reports** — a chronological log of all updates and state changes applied to the incident.
-- **Impacted locations** — the geographical regions from which the monitor reported failures.
+- **Title and summary** — free-text fields describing the incident.
+- **Acknowledgement** — who acknowledged the incident and when.
+- **Resolution** — who resolved it and when, plus whether it was auto-resolved.
+- **Screenshots** — captured at failure and at recovery, on plans where screenshots are enabled.
 
 ## Related resources
 
-- **[Status report reference](/docs/reference/status-report)** — details on how incident statuses are managed and reported.
+- **[Status report reference](/docs/reference/status-report)** — how to communicate an incident publicly on your status page.

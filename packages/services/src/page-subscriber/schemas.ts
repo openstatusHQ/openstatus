@@ -144,3 +144,22 @@ export const UnsubscribeSubscriberInput = z.object({
 export type UnsubscribeSubscriberInput = z.infer<
   typeof UnsubscribeSubscriberInput
 >;
+
+/**
+ * Workspace-scoped unsubscribe for the management API, where the caller
+ * holds a key rather than a subscriber's token. Addressed by row id or by
+ * email within one page.
+ */
+export const UnsubscribePageSubscriberInput = z.object({
+  pageId: z.number().int().positive(),
+  identifier: z.discriminatedUnion("type", [
+    z.object({ type: z.literal("id"), value: z.number().int().positive() }),
+    z.object({
+      type: z.literal("email"),
+      value: z.email().toLowerCase(),
+    }),
+  ]),
+});
+export type UnsubscribePageSubscriberInput = z.infer<
+  typeof UnsubscribePageSubscriberInput
+>;

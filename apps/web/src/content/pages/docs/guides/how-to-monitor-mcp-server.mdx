@@ -1,14 +1,22 @@
 ---
 category: Guides
-title: How to Monitor Your Model Context Provider (MCP) Server
-description: Learn how to monitor your MCP server with openstatus using JSON-RPC ping checks
+title: How to Monitor an MCP Server
+description: Monitor an MCP server with openstatus - JSON-RPC health checks, tools/list assertions, authenticated endpoints, and uptime alerts from 28 regions.
+seo:
+  title: "How to Monitor an MCP Server - Health Checks & Uptime"
 sidebar:
   label: Monitor your MCP Server
 ---
 
+> **Just want to test a server once?** Run it through the free
+> [MCP server health check](/play/mcp-health) — full JSON-RPC handshake from your
+> browser, no account. This guide is for monitoring it continuously.
+
 ## Problem
 
-Running a Model Context Provider (MCP) server is critical for your AI applications, but traditional HTTP monitoring often falls short. MCP servers communicate using the JSON-RPC 2.0 protocol, requiring specific request/response patterns that standard health checks don't cover. How can you confidently ensure your MCP server is healthy and responsive at all times, without custom scripts or complex setups?
+Running a Model Context Protocol (MCP) server is critical for your AI applications, but traditional HTTP monitoring often falls short. MCP servers communicate using the JSON-RPC 2.0 protocol, requiring specific request/response patterns that standard health checks don't cover. A server can return `200 OK` with an HTML error page, stop echoing the JSON-RPC `id`, or quietly return an empty `tools/list` — and every one of those looks healthy to a status-code pinger while breaking every AI client that connects.
+
+How can you confidently ensure your MCP server is healthy and responsive at all times, without custom scripts or complex setups?
 
 ## Solution
 
@@ -80,9 +88,11 @@ The key fields in this YAML configuration:
     - `statusCode` — ensures the HTTP response is `200 OK`.
     - `textBody` — verifies that the response payload exactly matches the expected JSON-RPC `ping` result.
 
-### 3. Test your MCP server (optional)
+### 3. Test your MCP server online first
 
-Before deploying your monitor, you can manually test your MCP server's `ping` endpoint with `curl` to confirm it responds as expected. This helps verify the `target` value for your `textBody` assertion.
+Before deploying a monitor, confirm the server actually speaks MCP. The quickest way is the [MCP server health check](/play/mcp-health) — paste your URL and it runs the full handshake (`initialize`, `ping`, `tools/list`) from the browser, shows the per-step latency, and tells you whether the endpoint is Healthy, Partial, Auth Required, or Unreachable. Use it to read off the exact response your assertion needs to match.
+
+You can also test the `ping` endpoint manually with `curl`. This helps verify the `target` value for your `textBody` assertion.
 
 ```bash
 curl -X POST \\
@@ -98,17 +108,96 @@ A healthy server should return a JSON response like `{"result":{},"jsonrpc":"2.0
 Once your `openstatus.yaml` file is ready, use the openstatus CLI to create the monitor:
 
 ```bash
-openstatus create openstatus.yaml
+openstatus monitors apply --config openstatus.yaml
 ```
 
 This command uploads your configuration, and monitoring will begin immediately.
+
+## Monitoring an MCP server that requires authentication
+
+Most production MCP servers are not public. An unauthenticated `ping` against one returns `401 Unauthorized`, usually with a `WWW-Authenticate: Bearer` header, so a monitor without credentials will report your healthy server as down.
+
+Add the same `Authorization` header your AI clients use:
+
+```yaml
+  request:
+    url: https://mcp.example.com/mcp
+    method: POST
+    headers:
+      Authorization: Bearer <your-token>
+      User-Agent: openstatus
+      Accept: application/json, text/event-stream
+      Content-Type: application/json
+```
+
+Two things to plan for:
+
+- **Token rotation is the most common false alarm.** When the token expires, the monitor goes down while the server is perfectly healthy. Assert on `statusCode` `eq` `200` so a `401` fails loudly and is easy to recognise, rather than debugging it as an outage.
+- **Keep the credential out of your repository.** This YAML is meant to be version-controlled, so use a token scoped to read-only health checks — not a production credential — and rotate it on a schedule you control.
+
+If you are unsure which authorization server issues your token, the [health check tool](/play/mcp-health) parses the `WWW-Authenticate` challenge and surfaces the OAuth resource metadata for you.
+
+## Monitoring tool availability and latency
+
+A `ping` proves the server is answering. It does not prove the server still exposes the tools your agents call — an empty `tools/list` is the failure mode that breaks AI clients while every uptime dashboard stays green.
+
+Add a second monitor that calls `tools/list` and asserts a known tool name is present:
+
+```yaml
+mcp-tools:
+  name: "MCP tools/list"
+  description: "Verify the MCP server still exposes its tools"
+  frequency: "5m"
+  active: true
+  regions: ["iad", "ams", "sin"]
+  retry: 3
+  kind: http
+  request:
+    url: https://hf.co/mcp
+    method: POST
+    body: >
+      {
+        "jsonrpc": "2.0",
+        "id": "openstatus",
+        "method": "tools/list"
+      }
+    headers:
+      User-Agent: openstatus
+      Accept: application/json, text/event-stream
+      Content-Type: application/json
+  assertions:
+    - kind: statusCode
+      compare: eq
+      target: 200
+    - kind: textBody
+      compare: contains
+      target: "your_tool_name"
+```
+
+Assert on the bare tool name, not on `"name":"your_tool_name"`. `contains` matches literally, and servers differ in whether they emit a space after the JSON key — an assertion written against the compact form fails the moment a server pretty-prints its response.
+
+`tools/list` is also the more honest latency signal. `ping` usually returns an empty result and measures little more than the network round trip, whereas `tools/list` exercises the server's actual request path — which is what an agent waits on. Run it at a lower frequency than `ping` if you want to keep request volume down.
+
+## What to alert on
+
+Not every MCP failure deserves the same response:
+
+- **`ping` failing across all regions** — the server is down. Alert immediately.
+- **`ping` failing in one region** — usually a network path problem rather than your server. Retries handle most of these, which is what `retry: 3` is for.
+- **`401` after a period of `200`s** — a rotated or expired token. This is a credentials problem, not an outage.
+- **`tools/list` succeeding but missing a tool** — a deploy removed or renamed a tool. Nothing is "down", but your agents are already broken.
+- **Latency climbing on `tools/list` while `ping` stays flat** — the server is under load in its application layer rather than its network layer.
 
 ## What you've accomplished
 
 - Configured a JSON-RPC based monitor for your MCP server
 - Implemented precise assertions to validate `ping` responses
+- Handled authenticated endpoints without turning token rotation into a false outage
+- Added a `tools/list` check so a missing tool is caught before your agents hit it
 - Set up global monitoring to detect localised or widespread issues
 - Automated monitor deployment using a version-controlled YAML configuration
+
+Both monitors run on [openstatus uptime monitoring](/uptime-monitoring) from up to 28 regions, with alerting and history — so a broken handshake reaches you before it reaches the agents depending on it.
 
 ## What's next
 

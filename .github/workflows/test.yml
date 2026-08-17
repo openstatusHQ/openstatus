@@ -7,18 +7,49 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
-  tests:
-    name: 🧪 Tests
+  # Every DB-touching package gets its own job, and therefore its own sqld
+  # container. Sharing one database across turbo tasks let suites clobber each
+  # other's rows (see docs/adr/0008-isolated-test-databases.md).
+  test:
+    name: 🧪 ${{ matrix.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: services
+            filter: "--filter=@openstatus/services"
+            database: true
+          - name: server
+            filter: "--filter=@openstatus/server"
+            database: true
+          - name: api
+            filter: "--filter=@openstatus/api"
+            database: true
+          - name: workflows
+            filter: "--filter=@openstatus/workflows"
+            database: true
+          - name: subscriptions
+            filter: "--filter=@openstatus/subscriptions"
+            database: true
+          - name: rest
+            filter: >-
+              --filter=!@openstatus/services
+              --filter=!@openstatus/server
+              --filter=!@openstatus/api
+              --filter=!@openstatus/workflows
+              --filter=!@openstatus/subscriptions
+            database: false
     services:
       sqld:
         image: ghcr.io/tursodatabase/libsql-server:e4beaca
         ports:
           - 8080:8080
-        # env:
-        #   SQLD_HTTP_AUTH: "basic:token"
 
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -35,24 +66,41 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 24.12.0
           cache: "pnpm"
 
       - name: 🦕 Setup Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: 2.9.4
 
       - name: 📥 Download deps
         run: pnpm install
 
       - name: 🗃️ Run migrations
+        if: matrix.database
         run: pnpm migrate
         working-directory: ./packages/db
 
-      - name: 💽  Seed database
+      - name: 💽 Seed database
+        if: matrix.database
         run: pnpm seed
         working-directory: ./packages/db
 
       - name: 🧪 Tests
-        run: pnpm test
+        run: pnpm turbo run test ${{ matrix.filter }}
+
+  # Single required status check, so branch protection does not need to list
+  # every matrix leg.
+  tests:
+    name: 🧪 Tests
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    steps:
+      - name: Check matrix result
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "One or more test jobs failed."
+            exit 1
+          fi

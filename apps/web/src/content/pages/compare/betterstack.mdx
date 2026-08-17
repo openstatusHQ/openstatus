@@ -57,7 +57,9 @@ BetterStack's base price looks competitive, but add-ons for private status pages
 
 ## Built for AI and Agentic Workflows
 
-Openstatus ships a CLI that integrates natively into AI-driven workflows. Whether you're using an AI agent or building your own agentic automation, the openstatus CLI lets you create monitors, trigger checks, and manage incidents programmatically, no browser required. BetterUptime has no CLI and no tooling designed for machine-to-machine interaction.
+Openstatus ships a CLI that integrates natively into AI-driven workflows. Whether you're using an AI agent or building your own agentic automation, the openstatus CLI lets you create monitors, trigger checks, and manage incidents programmatically, no browser required. BetterStack has no CLI and no tooling designed for machine-to-machine interaction.
+
+There is also an [MCP server](/docs/reference/mcp-server), so an AI client can query monitor state and manage incidents directly over the Model Context Protocol.
 
 
 ## When to Choose openstatus
@@ -89,6 +91,38 @@ Use our **[BetterStack import tool](/guides/migrate-from-betterstack)** to autom
 - [SLA vs SLO vs SLI](/guides/sla-vs-slo-vs-sli)
 - [Status Pages for Compliance](/use-case/compliance)
 - [Pricing](/pricing)
+
+## Frequently asked questions
+
+<Details summary="Is openstatus a good BetterStack alternative?">
+
+Yes. openstatus offers uptime monitoring from 28 regions (vs. BetterStack's 4), an open-source codebase, parallel check scheduling, and unlimited status page subscribers — all included in the base price. BetterStack charges extra for private status pages ($42/mo.) and subscriber tiers ($42/mo. per 1000). openstatus is also bootstrapped and self-hostable.
+
+</Details>
+
+<Details summary="How does openstatus pricing compare to BetterStack?">
+
+openstatus starts free (Hobby plan) and paid plans begin at $30/month (Starter) and $100/month (Pro). Private status pages and unlimited subscribers are included. BetterStack's equivalent features require paid add-ons on top of their base price.
+
+</Details>
+
+<Details summary="Does openstatus support more monitoring regions than BetterStack?">
+
+openstatus monitors from 28 regions worldwide across 3 cloud providers. BetterStack uses approximately 4 regions. openstatus also uses a parallel scheduling strategy — all selected regions fire simultaneously — whereas BetterStack uses round-robin scheduling, cycling through regions one at a time.
+
+</Details>
+
+<Details summary="Can I self-host openstatus instead of using the cloud service?">
+
+Yes. openstatus is open-source (AGPL-3.0 license) and fully self-hostable with Docker. BetterStack is a closed-source SaaS product with no self-hosting option.
+
+</Details>
+
+<Details summary="What is the difference between parallel and round-robin monitoring?">
+
+Parallel monitoring (openstatus) checks all selected regions simultaneously at each interval, giving you a true global snapshot of availability. Round-robin monitoring (BetterStack) cycles through regions one at a time, so each check only tests from a single location. Parallel monitoring detects regional outages faster.
+
+</Details>
 
 ---
 

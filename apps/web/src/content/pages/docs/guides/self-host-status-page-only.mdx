@@ -1,8 +1,44 @@
 ---
 category: Guides
 title: Self-Host the openstatus Status Page (Lightweight)
-description: Deploy only the openstatus status page and dashboard on your own infrastructure, without monitoring, analytics, or background services.
+seo:
+  title: "Self-Hosted Status Page: Options, Tradeoffs, and Setup"
+description: How to self-host a status page - what you actually take on by running it yourself, when hosting it is the wrong call, and a Docker Compose setup that runs the status page without any monitoring infrastructure.
+faq:
+  - question: "Should I self-host my status page?"
+    answer: "Self-host if you need the status page inside your own network, have compliance rules about where incident data lives, or want to run it at infrastructure cost rather than per-seat pricing. Do not self-host if the page is your primary outage communication channel and it would share infrastructure with the systems it reports on - a status page that goes down with your product is worse than no status page."
+  - question: "Can I self-host only the status page, without monitoring?"
+    answer: "Yes. The lightweight Docker Compose stack runs four services - database, one-shot migration runner, dashboard, and status page - and omits automated monitoring, analytics, the API server, and private location probes. It suits teams who already have monitoring elsewhere and manage incidents manually."
+  - question: "Is self-hosting a status page free?"
+    answer: "The software is free and open-source under AGPL-3.0, but running it is not. You pay for the host, the storage backing the database, TLS certificates and a domain, plus your own time for upgrades, backups, and keeping the thing online. For a status page specifically, that last item is the real cost, because it has to stay up precisely when the rest of your infrastructure does not."
+  - question: "Where should I host a self-hosted status page?"
+    answer: "Somewhere with no shared failure domain with your production systems - a different provider, or at minimum a different region and account. The entire purpose of the page is to be reachable during an outage, so hosting it next to the thing that breaks defeats it."
 ---
+
+## Should you self-host a status page?
+
+Worth answering before the Docker section, because self-hosting a status page has a
+trap that other self-hosted software does not.
+
+**Self-host when:** the page has to live inside your own network, compliance rules
+constrain where incident data is stored, you want infrastructure cost instead of
+per-seat pricing, or you intend to modify it.
+
+**Do not self-host when:** the status page is your main channel for telling customers
+about an outage, and it would run on the infrastructure that outage affects. A status
+page that goes down alongside your product is worse than no status page — customers
+lose the one place that was supposed to answer them. If you self-host anyway, put it
+in a different failure domain: another provider, or at minimum a different region and
+account.
+
+**The cost is not the licence.** The software is AGPL-3.0 and free. You pay in host,
+storage, TLS, domain, and your own time for upgrades and backups — and for this
+particular workload, in the obligation to keep it available exactly when everything
+else is not. If that trade sounds wrong, the [hosted status page](/status-page) exists
+so someone else carries it.
+
+For a first-hand account of what running it is actually like, a contributor wrote up
+[self-hosting openstatus: the hurdles then, the experience now](/blog/self-hosting-openstatus).
 
 ## Problem
 
@@ -140,7 +176,35 @@ docker compose -f docker-compose-lightweight.yaml ps
 
 **Port conflicts:** If ports 3000, 3001, or 8080 are already in use on your machine, update the host port mappings in `docker-compose-lightweight.yaml`. For example, change `"3000:3000"` to `"4000:3000"` to use port 4000 instead.
 
+## Frequently asked questions
+
+<Details summary="Should I self-host my status page?">
+
+Self-host if you need the status page inside your own network, have compliance rules about where incident data lives, or want to run it at infrastructure cost rather than per-seat pricing. Do not self-host if the page is your primary outage communication channel and it would share infrastructure with the systems it reports on — a status page that goes down with your product is worse than no status page.
+
+</Details>
+
+<Details summary="Can I self-host only the status page, without monitoring?">
+
+Yes. The lightweight Docker Compose stack runs four services — database, one-shot migration runner, dashboard, and status page — and omits automated monitoring, analytics, the API server, and private location probes. It suits teams who already have monitoring elsewhere and manage incidents manually.
+
+</Details>
+
+<Details summary="Is self-hosting a status page free?">
+
+The software is free and open-source under AGPL-3.0, but running it is not. You pay for the host, the storage backing the database, TLS certificates and a domain, plus your own time for upgrades, backups, and keeping the thing online. For a status page specifically, that last item is the real cost, because it has to stay up precisely when the rest of your infrastructure does not.
+
+</Details>
+
+<Details summary="Where should I host a self-hosted status page?">
+
+Somewhere with no shared failure domain with your production systems — a different provider, or at minimum a different region and account. The entire purpose of the page is to be reachable during an outage, so hosting it next to the thing that breaks defeats it.
+
+</Details>
+
 ## Next steps
 
 - **[Self-host openstatus (full)](/docs/guides/self-hosting-openstatus)** — add automated monitoring, analytics, and alerting.
+- **[Hosted status page](/status-page)** — the same status page without the upgrades, backups, and availability burden.
+- **[Self-hosting: the hurdles then, the experience now](/blog/self-hosting-openstatus)** — a contributor's account of running it.
 - **[Join our Discord](https://www.openstatus.dev/discord)** — get help from the community.

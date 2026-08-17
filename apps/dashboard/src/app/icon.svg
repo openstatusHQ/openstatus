@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 330">
+  <style>
+    :root { color: #000 }
+    @media (prefers-color-scheme: dark) { :root { color: #fff } }
+  </style>
+  <mask id="slits">
+    <circle cx="165" cy="165" r="165" fill="#fff" />
+    <path d="M122 96h208v15H122zM0 219h208v15H0z" fill="#000" />
+  </mask>
+  <circle cx="165" cy="165" r="165" fill="currentColor" mask="url(#slits)" />
+</svg>

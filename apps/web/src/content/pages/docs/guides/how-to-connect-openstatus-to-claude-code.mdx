@@ -15,7 +15,7 @@ In this guide, you'll connect the openstatus MCP server to Claude Code so the ag
 
 ## 1. Create an API key
 
-Open the openstatus dashboard, go to **Settings → API Tokens**, and click **Create Token**.
+Open the openstatus dashboard, go to **Settings → General**, find the **API Keys** card, and click **Create**.
 
 Pick a scope:
 
@@ -73,7 +73,7 @@ Open Claude Code and run:
 /mcp
 ```
 
-You should see `openstatus` listed as **connected**, with the registered read tools (`list_status_pages`, `list_monitors`, `get_monitor_status`, `search_docs`, …) and — if your key has write scope — the mutation tools (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`, …). See the [MCP server reference](/docs/reference/mcp-server) for the full list.
+You should see `openstatus` listed as **connected**, with the registered read tools (`list_status_pages`, `list_monitors`, `get_monitor_status`, `list_private_locations`, …) and — if your key has write scope — the mutation tools (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`, …). See the [MCP server reference](/docs/reference/mcp-server) for the full list.
 
 If the server shows as disconnected, see [Troubleshooting](#troubleshooting) below.
 
@@ -93,7 +93,7 @@ If you have a write-scoped key, try drafting an incident — Claude Code will sh
 > draft a status report on my "api" page: investigating elevated latency on the payment endpoint
 ```
 
-<Aside>Every mutation tool requires an explicit `notify: true | false`. Claude Code will ask whether to notify subscribers — answer before approving the tool call.</Aside>
+<Aside>Every publishing tool requires an explicit `notify: true | false`. Claude Code will ask whether to notify subscribers — answer before approving the tool call.</Aside>
 
 ## What you've accomplished
 
@@ -106,8 +106,14 @@ If you have a write-scoped key, try drafting an incident — Claude Code will sh
 
 ### `/mcp` shows openstatus as disconnected
 
-1. **Re-check the header** — run `claude mcp list` and confirm the `x-openstatus-key` value matches a key visible in **Settings → API Tokens**. Whitespace and trailing newlines are common copy-paste failures.
-2. **Reachability** — `curl -i -H "x-openstatus-key: os_..." https://api.openstatus.dev/mcp` should return a `200` with a `mcp-session-id` header. A `401` means the key is wrong or revoked; a network error means a proxy or firewall is blocking the connection.
+1. **Re-check the header** — run `claude mcp list` and confirm the `x-openstatus-key` value matches a key visible in **Settings → General → API Keys**. Whitespace and trailing newlines are common copy-paste failures.
+2. **Reachability** — the endpoint is stateless and speaks Streamable HTTP, so a plain `curl` GET returns `406 Not Acceptable` unless you ask for an event stream:
+
+   ```bash
+   curl -i -H "x-openstatus-key: os_..." -H "Accept: text/event-stream" https://api.openstatus.dev/mcp
+   ```
+
+   A `401` means the key is wrong or revoked; a network error means a proxy or firewall is blocking the connection. There is no `mcp-session-id` header — the server never issues one.
 3. **Re-add the server** — `claude mcp remove openstatus` then re-run the `claude mcp add` command from step 2.
 
 ### "Tool not available" when asking Claude Code to create an incident

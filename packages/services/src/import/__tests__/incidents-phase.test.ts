@@ -11,9 +11,8 @@ import type { PhaseResult } from "@openstatus/importers";
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
@@ -25,7 +24,7 @@ const TEST_PREFIX = "svc-import-incidents-test";
 let teamCtx: ServiceContext;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+  const team = (await createWorkspaceFixture("team")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
 });
 

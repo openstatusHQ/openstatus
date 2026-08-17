@@ -19,7 +19,10 @@ import { stringsToRegions } from "./regions";
 /**
  * Transform database HTTP monitor to proto HTTPMonitor.
  */
-export function dbMonitorToHttpProto(dbMon: Monitor): HTTPMonitor {
+export function dbMonitorToHttpProto(
+  dbMon: Monitor,
+  privateLocationIds: string[] = [],
+): HTTPMonitor {
   const assertions = parseHttpAssertions(dbMon.assertions);
 
   return {
@@ -44,13 +47,17 @@ export function dbMonitorToHttpProto(dbMon: Monitor): HTTPMonitor {
     regions: stringsToRegions(dbMon.regions),
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
     status: stringToMonitorStatus(dbMon.status),
+    privateLocationIds,
   };
 }
 
 /**
  * Transform database TCP monitor to proto TCPMonitor.
  */
-export function dbMonitorToTcpProto(dbMon: Monitor): TCPMonitor {
+export function dbMonitorToTcpProto(
+  dbMon: Monitor,
+  privateLocationIds: string[] = [],
+): TCPMonitor {
   return {
     $typeName: "openstatus.monitor.v1.TCPMonitor",
     id: String(dbMon.id),
@@ -66,6 +73,7 @@ export function dbMonitorToTcpProto(dbMon: Monitor): TCPMonitor {
     regions: stringsToRegions(dbMon.regions),
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
     status: stringToMonitorStatus(dbMon.status),
+    privateLocationIds,
   };
 }
 
@@ -94,7 +102,10 @@ export function dbMonitorToIcmpProto(dbMon: Monitor): ICMPMonitor {
 /**
  * Transform database DNS monitor to proto DNSMonitor.
  */
-export function dbMonitorToDnsProto(dbMon: Monitor): DNSMonitor {
+export function dbMonitorToDnsProto(
+  dbMon: Monitor,
+  privateLocationIds: string[] = [],
+): DNSMonitor {
   return {
     $typeName: "openstatus.monitor.v1.DNSMonitor",
     id: String(dbMon.id),
@@ -111,5 +122,6 @@ export function dbMonitorToDnsProto(dbMon: Monitor): DNSMonitor {
     regions: stringsToRegions(dbMon.regions),
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
     status: stringToMonitorStatus(dbMon.status),
+    privateLocationIds,
   };
 }

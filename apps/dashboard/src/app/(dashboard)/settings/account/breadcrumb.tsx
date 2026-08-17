@@ -1,6 +1,6 @@
 "use client";
 
-import { Cog, User } from "lucide-react";
+import { Settings, Account } from "@openstatus/icons";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 
@@ -11,10 +11,10 @@ export function Breadcrumb() {
         {
           type: "link",
           label: "Settings",
-          icon: Cog,
+          icon: Settings,
           href: "/settings/general",
         },
-        { type: "page", label: "Account", icon: User },
+        { type: "page", label: "Account", icon: Account },
       ]}
     />
   );

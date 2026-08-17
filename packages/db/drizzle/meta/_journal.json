@@ -568,6 +568,27 @@
       "when": 1784059243113,
       "tag": "0080_soft_norman_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "6",
+      "when": 1784808228044,
+      "tag": "0081_charming_unus",
+      "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "6",
+      "when": 1785225964591,
+      "tag": "0082_cooing_karma",
+      "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "6",
+      "when": 1785227235369,
+      "tag": "0083_wide_otto_octavius",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,201 @@
+---
+title: "SOC 2 Status Page Requirements"
+hero: "SOC 2 and Your Status Page: What Auditors Actually Ask For"
+description: "Which SOC 2 criteria a status page can evidence, which it cannot, and the artifacts an auditor requests during Type II fieldwork."
+author: "openstatus"
+publishedAt: "2026-07-26"
+category: "compliance"
+faq:
+  - question: "Does SOC 2 require a status page?"
+    answer: "No. No Trust Services Criterion names a status page. CC2.3 requires you to communicate relevant information to external parties, including how they can report failures and how you inform them of incidents. A status page is one way to evidence that control — email distribution lists and support portals are others. What the auditor tests is whether the process exists, is followed, and produces records."
+  - question: "Which SOC 2 criteria does a status page help with?"
+    answer: "Primarily CC2.3 (communication with external parties) and CC7.4/CC7.5 (incident response and recovery), plus A1.1 if you carry the Availability category. It contributes evidence to those controls. It does not satisfy CC1 (control environment), CC3 (risk assessment), CC5 (control activities), CC6 (logical access), or CC8 (change management)."
+  - question: "What evidence will an auditor actually request?"
+    answer: "A population of incidents for the audit period, and for a sample of those, timestamped proof of when each was detected, when customers were notified, what was said, and when it was resolved. They will compare your status page timeline against your internal ticket or alert record to confirm the two agree."
+  - question: "How far back does a SOC 2 Type II audit look?"
+    answer: "A Type II observation window is typically 3 to 12 months. Your evidence must cover the entire window, which means retention matters more than most teams expect — if your monitoring data expires after 14 days, you cannot produce availability evidence for a 12-month period."
+  - question: "Can a status page replace Vanta or Drata?"
+    answer: "No. Compliance automation platforms track your whole control set, collect evidence across dozens of systems, and manage the audit workflow. A status page produces evidence for one narrow slice of that — external incident communication. They are complementary, not alternatives."
+---
+
+Most SOC 2 content aimed at status pages stops at "auditors want incident communication, buy a status page." That is not wrong, but it is not enough to walk into fieldwork with.
+
+This guide covers what the [Trust Services Criteria](https://www.aicpa-cima.com/resources/download/2017-trust-services-criteria-with-revised-points-of-focus-2022) actually say, what an auditor requests when they test those controls, and — importantly — the large majority of SOC 2 that a status page has nothing to do with.
+
+Criteria are quoted from the AICPA's 2017 Trust Services Criteria with revised points of focus (2022), which is the current version and is free to download.
+
+## First, the scope boundary
+
+A status page is evidence for a handful of criteria. SOC 2 has around sixty criteria across five categories, with several hundred points of focus beneath them. Being precise about the boundary is what makes the rest of this guide useful.
+
+<Aside type="caution" title="What a status page does not do">
+It does not scope your system, define your control environment, assess risk, manage access, review vendors, or track changes. It does not generate policies. It does not make you compliant. If a vendor tells you a status page gets you "SOC 2 ready," they are describing one control out of many.
+</Aside>
+
+Here is the honest mapping.
+
+| Criterion | What it asks | Status page role |
+| --- | --- | --- |
+| CC2.3 | Communicate objectives and relevant information to external parties, including a channel to report failures and how incidents are communicated | **Primary evidence** |
+| CC7.2 | Monitor system components for anomalies indicating malicious acts or failures | Supporting — synthetic monitoring is one input |
+| CC7.3 | Evaluate security events to determine whether they constitute an incident | No — this is your triage process |
+| CC7.4 | Respond to identified incidents by executing a defined program | Supporting — external comms is one step in that program |
+| CC7.5 | Restore operations and communicate resolution | Supporting evidence |
+| A1.1 | Maintain, monitor, and evaluate current processing capacity and use of system components (Availability only) | Supporting — the uptime and latency record |
+| A1.2 | Backup, recovery infrastructure, and environmental protections (Availability only) | Minimal — recovery evidence at most |
+| CC1, CC3, CC5, CC6, CC8 | Control environment, risk assessment, control activities, logical access, change management | **None** |
+
+If you carry only the Security category, a status page touches CC2.3 and parts of CC7. If you carry Availability — most infrastructure vendors do, because customers ask for it — it also feeds A1.1.
+
+## What CC2.3 actually says
+
+The criterion is about communication with external parties. The points of focus that matter for incident work:
+
+- You communicate objectives and changes to external users.
+- You provide a channel for external parties to **report failures, incidents, concerns, and complaints**.
+- You communicate relevant information about incidents to affected external parties.
+- You have a process for considering and responding to what comes back through that channel.
+
+Read that list carefully — it is bidirectional. Most teams evidence the outbound half (we told customers) and forget the inbound half (customers can tell us). An auditor asking "how does a customer report that your service is broken?" is testing CC2.3, and "they email support" is a valid answer only if you can show the process exists and is monitored.
+
+## What the auditor requests during fieldwork
+
+For a Type II engagement, expect roughly this sequence.
+
+**1. The population.** "List every incident during the observation period." This is the request that catches teams out. If your incidents live partly in Slack threads, partly in a ticketing system, and partly in someone's memory, you cannot produce a defensible population — and an auditor who does not trust the population does not trust the sample drawn from it.
+
+**2. A sample.** They will pick a handful, usually weighted toward the severe ones.
+
+**3. Per-incident evidence.** For each sampled incident:
+
+- When was it detected, and by what?
+- When were external parties notified, and through which channel?
+- What was communicated at each stage?
+- When was it resolved, and was resolution communicated?
+
+**4. Corroboration.** They will compare your customer-facing timeline against your internal record — alerts, tickets, on-call pages. Two sources that disagree is a finding. A status page updated three days after the fact, with a backdated timestamp that contradicts your PagerDuty record, is worse than no status page.
+
+<Aside type="tip" title="The cheapest thing you can do this quarter">
+Make sure every incident that gets an internal ticket also gets a public entry, even a short one. Populations assembled retroactively at audit time are where findings come from.
+</Aside>
+
+## The retention trap
+
+A Type II observation window runs 3 to 12 months. Your evidence has to cover all of it.
+
+This is where teams get surprised: incident write-ups persist indefinitely, but the *monitoring data* behind availability claims usually does not. If you assert 99.9% availability for the period and your check history only goes back two weeks, you have an assertion without evidence.
+
+Openstatus retention by plan:
+
+| Plan | Data retention |
+| --- | --- |
+| Hobby | 14 days |
+| Starter | 3 months |
+| Pro | 12 months |
+| Scale | 24 months |
+
+Match the plan to your observation window, not to your monitor count. A 12-month Type II on 14-day retention does not work regardless of how many endpoints you are checking.
+
+## What openstatus provides, concretely
+
+<Grid>
+<div>
+
+**Timestamped incident history**
+
+Every status report, update, and resolution is stored with its timestamp. This is the artifact behind the CC2.3 sample — a durable record you did not have to assemble by hand at audit time.
+
+</div>
+<div>
+
+**Subscriber notification**
+
+Email, RSS, Atom, and JSON feeds. Evidences the proactive half of CC2.3: you pushed information out rather than waiting to be asked. Available from Starter up.
+
+</div>
+<div>
+
+**Maintenance windows**
+
+Scheduled maintenance shows advance communication of planned disruption, which is a distinct point of focus from incident response.
+
+</div>
+<div>
+
+**Audit log**
+
+Every mutation across your workspace is recorded in-transaction, including who or what made the change. Useful for CC7 evidence and for showing your own controls over the status page. Pro and Scale.
+
+</div>
+</Grid>
+
+## Where openstatus is not the answer
+
+- **Control tracking and evidence collection across your stack.** That is what compliance automation platforms like Vanta and Drata do. Reference your status page from within them as evidence for CC2.3; do not expect one to substitute for the other.
+- **Policies, risk register, vendor reviews, access reviews.** Entirely out of scope.
+- **The inbound half of CC2.3.** Openstatus gives you the outbound channel. You still need a documented, monitored route for customers to report problems to you.
+- **A formal availability SLA report.** You have the underlying uptime record within your retention window; producing a signed periodic SLA report against a contractual commitment is a separate exercise.
+
+## A workable sequence
+
+1. Decide which Trust Services categories you carry. Availability changes what evidence you need.
+2. Write down your incident communication process — severity thresholds, who publishes, how fast. An undocumented process cannot be tested for operating effectiveness.
+3. Make the public record and the internal record agree, every time.
+4. Set retention to cover your full observation window before the window starts, not after.
+5. Keep the inbound channel real and monitored.
+6. Reference the status page as evidence inside whatever platform tracks your control set.
+
+Steps 2, 3, and 5 are the ones auditors actually fail teams on. The tooling is the easy part.
+
+## Primary sources
+
+- [2017 Trust Services Criteria (with revised points of focus, 2022)](https://www.aicpa-cima.com/resources/download/2017-trust-services-criteria-with-revised-points-of-focus-2022) — AICPA & CIMA. The criteria themselves, free. CC2.3 and the CC7 series are what this guide draws on.
+- [2018 SOC 2 Description Criteria (with revised implementation guidance, 2022)](https://www.aicpa-cima.com/resources/download/get-description-criteria-for-your-organizations-soc-2-r-report) — AICPA & CIMA. Governs how you describe your system, which is a separate document from the criteria.
+
+Read the criteria before taking any vendor's mapping — including this one — at face value. They are shorter than their reputation suggests.
+
+## Related reading
+
+- [SLA vs SLO vs SLI](/guides/sla-vs-slo-vs-sli) — needed if you carry the Availability category
+- [Incident severity matrix](/guides/incident-severity-matrix) — the documented threshold that decides what gets communicated
+- [What is incident management](/guides/what-is-incident-management) — the process CC7.4 tests
+- [Security incident response template](/guides/security-incident-response) — wording for the communication itself
+- [ISO 27001 incident communication](/guides/iso-27001-incident-communication) — if you are pursuing both
+
+## Frequently asked questions
+
+<Details summary="Does SOC 2 require a status page?">
+
+No. No Trust Services Criterion names a status page. CC2.3 requires you to communicate relevant information to external parties, including how they can report failures and how you inform them of incidents. A status page is one way to evidence that control — email distribution lists and support portals are others. What the auditor tests is whether the process exists, is followed, and produces records.
+
+</Details>
+
+<Details summary="Which SOC 2 criteria does a status page help with?">
+
+Primarily CC2.3 (communication with external parties) and CC7.4/CC7.5 (incident response and recovery), plus A1.1 if you carry the Availability category. It contributes evidence to those controls. It does not satisfy CC1 (control environment), CC3 (risk assessment), CC5 (control activities), CC6 (logical access), or CC8 (change management).
+
+</Details>
+
+<Details summary="What evidence will an auditor actually request?">
+
+A population of incidents for the audit period, and for a sample of those, timestamped proof of when each was detected, when customers were notified, what was said, and when it was resolved. They will compare your status page timeline against your internal ticket or alert record to confirm the two agree.
+
+</Details>
+
+<Details summary="How far back does a SOC 2 Type II audit look?">
+
+A Type II observation window is typically 3 to 12 months. Your evidence must cover the entire window, which means retention matters more than most teams expect — if your monitoring data expires after 14 days, you cannot produce availability evidence for a 12-month period.
+
+</Details>
+
+<Details summary="Can a status page replace Vanta or Drata?">
+
+No. Compliance automation platforms track your whole control set, collect evidence across dozens of systems, and manage the audit workflow. A status page produces evidence for one narrow slice of that — external incident communication. They are complementary, not alternatives.
+
+</Details>
+
+---
+
+<ButtonLink href="https://app.openstatus.dev">Start your status page</ButtonLink>
+
+---

@@ -25,11 +25,10 @@ export default async function Layout({
   const { id } = await params;
   const queryClient = getQueryClient();
 
-  await fetchQueryOrNotFound(
-    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
-  );
   await Promise.all([
-    queryClient.prefetchQuery(trpc.notification.list.queryOptions()),
+    fetchQueryOrNotFound(
+      trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
+    ),
     queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions()),
   ]);
 

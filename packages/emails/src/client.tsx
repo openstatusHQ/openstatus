@@ -1,5 +1,6 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
+import { statusLabel } from "@openstatus/utils";
 import { type Duration, Effect, Schedule } from "effect";
 import { render } from "react-email";
 import { Resend } from "resend";
@@ -8,6 +9,8 @@ import FollowUpEmail from "../emails/followup";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
 import PageSubscriptionEmail from "../emails/page-subscription";
 import type { PageSubscriptionProps } from "../emails/page-subscription";
+import PrivateLocationAlertEmail from "../emails/private-location-alert";
+import type { PrivateLocationAlertProps } from "../emails/private-location-alert";
 import SlackFeedbackEmail from "../emails/slack-feedback";
 import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
 import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link";
@@ -21,9 +24,10 @@ export function statusReportSubject(req: {
   status: StatusReportProps["status"];
   reportTitle: string;
 }): string {
-  return req.status === "resolved"
-    ? `RESOLVED: ${req.reportTitle}`
-    : req.reportTitle;
+  if (req.status === "resolved") return `RESOLVED: ${req.reportTitle}`;
+  if (req.status === "maintenance")
+    return `${statusLabel("maintenance")}: ${req.reportTitle}`;
+  return req.reportTitle;
 }
 
 // Deterministic Resend rejections: retrying the identical request can never
@@ -444,5 +448,60 @@ export class EmailClient {
     console.log(
       `Sent maintenance notification email to ${req.subscribers.length} subscribers`,
     );
+  }
+
+  public async sendPrivateLocationAlert(
+    req: Omit<PrivateLocationAlertProps, "lastSeenAt"> & {
+      to: string[];
+      lastSeenAt: Date;
+    },
+  ) {
+    if (req.to.length === 0) return;
+
+    const subject =
+      req.status === "error"
+        ? `Your private location "${req.locationName}" is unhealthy`
+        : `Your private location "${req.locationName}" is healthy again`;
+
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `Sending private location ${req.status} email to ${req.to.join(", ")}`,
+      );
+      return;
+    }
+
+    try {
+      const html = await render(
+        <PrivateLocationAlertEmail
+          locationName={req.locationName}
+          status={req.status}
+          lastSeenAt={req.lastSeenAt.toISOString()}
+        />,
+      );
+      const result = await this.client.batch.send(
+        req.to.map((to) => ({
+          from: "OpenStatus <notifications@notifications.openstatus.dev>",
+          subject,
+          to,
+          html,
+        })),
+      );
+
+      if (result.error) {
+        if (result.error?.name === "rate_limit_exceeded") {
+          throw result.error;
+        }
+        console.error(
+          `Error sending private location alert to ${req.to}: ${result.error}`,
+        );
+        return;
+      }
+
+      console.log(`Sent private location ${req.status} email to ${req.to}`);
+    } catch (err) {
+      console.error(
+        `Error sending private location alert to ${req.to}: ${err}`,
+      );
+    }
   }
 }

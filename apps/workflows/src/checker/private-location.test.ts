@@ -1,4 +1,4 @@
-import { and, db, eq } from "@openstatus/db";
+import { and, db, eq, or } from "@openstatus/db";
 import {
   monitor,
   notification,
@@ -8,6 +8,7 @@ import {
   privateLocationMonitorStatus,
   privateLocationToMonitors,
 } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import {
   afterAll,
   afterEach,
@@ -32,11 +33,15 @@ type AnyStub = Stub<any>;
 // Dedicated fixtures, not seed monitor 1: other suites (api/server maintenance
 // tests) put seed monitor 1 under active maintenance on the shared CI database,
 // which makes updateStatusPrivate suppress notifications and drop the write.
+let workspaceId: number;
 const TEST_MONITOR_ID = 9101;
 const INACTIVE_MONITOR_ID = 9102;
 const TEST_NOTIFICATION_ID = 9101;
 const TEST_LOCATION_ID = 9001;
 const UNATTACHED_LOCATION_ID = 9002;
+const PRIVATE_ONLY_MONITOR_ID = 9103;
+const PRIVATE_LOCATION_2_ID = 9003;
+const PRIVATE_LOCATION_3_ID = 9004;
 
 const cronSecret = env().CRON_SECRET;
 
@@ -81,12 +86,13 @@ describe("updateStatusPrivate", () => {
   let mockEmailSendDegraded: AnyStub;
 
   beforeAll(async () => {
+    workspaceId = (await createTestWorkspace()).workspace.id;
     await db
       .insert(monitor)
       .values([
         {
           id: TEST_MONITOR_ID,
-          workspaceId: 1,
+          workspaceId,
           active: true,
           url: "https://private-location.test",
           name: "Private Location Test Monitor",
@@ -95,12 +101,21 @@ describe("updateStatusPrivate", () => {
         },
         {
           id: INACTIVE_MONITOR_ID,
-          workspaceId: 1,
+          workspaceId,
           active: false,
           url: "https://private-location-inactive.test",
           name: "Private Location Inactive Monitor",
           periodicity: "1m",
           regions: "ams",
+        },
+        {
+          id: PRIVATE_ONLY_MONITOR_ID,
+          workspaceId,
+          active: true,
+          url: "https://private-only.test",
+          name: "Private-Only Monitor (No Cloud Regions)",
+          periodicity: "1m",
+          regions: "",
         },
       ])
       .onConflictDoNothing()
@@ -112,7 +127,7 @@ describe("updateStatusPrivate", () => {
         provider: "email",
         name: "private location test notification",
         data: '{"email":"ping@openstatus.dev"}',
-        workspaceId: 1,
+        workspaceId,
       })
       .onConflictDoNothing()
       .run();
@@ -130,7 +145,7 @@ describe("updateStatusPrivate", () => {
         id: TEST_LOCATION_ID,
         name: "Test Office",
         token: "test-private-location-token",
-        workspaceId: 1,
+        workspaceId,
         createdAt: new Date(),
       })
       .onConflictDoNothing()
@@ -141,6 +156,61 @@ describe("updateStatusPrivate", () => {
         privateLocationId: TEST_LOCATION_ID,
         monitorId: TEST_MONITOR_ID,
         createdAt: new Date(),
+      })
+      .onConflictDoNothing()
+      .run();
+
+    // Additional private locations for multi-location tests
+    await db
+      .insert(privateLocation)
+      .values([
+        {
+          id: PRIVATE_LOCATION_2_ID,
+          name: "Test Office 2",
+          token: "test-private-location-token-2",
+          workspaceId,
+          createdAt: new Date(),
+        },
+        {
+          id: PRIVATE_LOCATION_3_ID,
+          name: "Test Office 3",
+          token: "test-private-location-token-3",
+          workspaceId,
+          createdAt: new Date(),
+        },
+      ])
+      .onConflictDoNothing()
+      .run();
+
+    // Link all three locations to private-only monitor
+    await db
+      .insert(privateLocationToMonitors)
+      .values([
+        {
+          privateLocationId: TEST_LOCATION_ID,
+          monitorId: PRIVATE_ONLY_MONITOR_ID,
+          createdAt: new Date(),
+        },
+        {
+          privateLocationId: PRIVATE_LOCATION_2_ID,
+          monitorId: PRIVATE_ONLY_MONITOR_ID,
+          createdAt: new Date(),
+        },
+        {
+          privateLocationId: PRIVATE_LOCATION_3_ID,
+          monitorId: PRIVATE_ONLY_MONITOR_ID,
+          createdAt: new Date(),
+        },
+      ])
+      .onConflictDoNothing()
+      .run();
+
+    // Link first location to private-only monitor for notifications
+    await db
+      .insert(notificationsToMonitors)
+      .values({
+        monitorId: PRIVATE_ONLY_MONITOR_ID,
+        notificationId: TEST_NOTIFICATION_ID,
       })
       .onConflictDoNothing()
       .run();
@@ -171,8 +241,52 @@ describe("updateStatusPrivate", () => {
       .delete(notification)
       .where(eq(notification.id, TEST_NOTIFICATION_ID))
       .run();
+    // Cleanup private-only monitor fixtures
+    await db
+      .delete(privateLocationMonitorStatus)
+      .where(
+        eq(privateLocationMonitorStatus.monitorId, PRIVATE_ONLY_MONITOR_ID),
+      )
+      .run();
+    await db
+      .delete(notificationTrigger)
+      .where(eq(notificationTrigger.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .run();
+    await db
+      .delete(notificationsToMonitors)
+      .where(eq(notificationsToMonitors.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .run();
+    await db
+      .delete(privateLocationToMonitors)
+      .where(
+        or(
+          eq(privateLocationToMonitors.privateLocationId, TEST_LOCATION_ID),
+          eq(
+            privateLocationToMonitors.privateLocationId,
+            PRIVATE_LOCATION_2_ID,
+          ),
+          eq(
+            privateLocationToMonitors.privateLocationId,
+            PRIVATE_LOCATION_3_ID,
+          ),
+        ),
+      )
+      .run();
+    await db
+      .delete(privateLocation)
+      .where(
+        or(
+          eq(privateLocation.id, PRIVATE_LOCATION_2_ID),
+          eq(privateLocation.id, PRIVATE_LOCATION_3_ID),
+        ),
+      )
+      .run();
     await db.delete(monitor).where(eq(monitor.id, TEST_MONITOR_ID)).run();
     await db.delete(monitor).where(eq(monitor.id, INACTIVE_MONITOR_ID)).run();
+    await db
+      .delete(monitor)
+      .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
+      .run();
   });
 
   beforeEach(() => {
@@ -206,8 +320,18 @@ describe("updateStatusPrivate", () => {
       .where(eq(privateLocationMonitorStatus.monitorId, TEST_MONITOR_ID))
       .run();
     await db
+      .delete(privateLocationMonitorStatus)
+      .where(
+        eq(privateLocationMonitorStatus.monitorId, PRIVATE_ONLY_MONITOR_ID),
+      )
+      .run();
+    await db
       .delete(notificationTrigger)
       .where(eq(notificationTrigger.monitorId, TEST_MONITOR_ID))
+      .run();
+    await db
+      .delete(notificationTrigger)
+      .where(eq(notificationTrigger.monitorId, PRIVATE_ONLY_MONITOR_ID))
       .run();
   });
 
@@ -358,5 +482,103 @@ describe("updateStatusPrivate", () => {
     });
     expect(res.status).toBe(200);
     assertSpyCalls(mockEmailSendAlert, 0);
+  });
+
+  test("private-only monitor: updates status when threshold met (2/3 locations agree)", async () => {
+    // First location reports error → 1/3 < 50% → should NOT update monitor status
+    const res1 = await post({
+      monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9310010,
+      statusCode: 500,
+      message: "down",
+    });
+    expect(res1.status).toBe(200);
+
+    const monitorAfter1 = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
+      .get();
+    expect(monitorAfter1?.status).toBe("active"); // Threshold not met
+
+    // Second location reports error → 2/3 >= 50% → SHOULD update monitor status
+    const res2 = await post({
+      monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+      privateLocationId: String(PRIVATE_LOCATION_2_ID),
+      status: "error",
+      cronTimestamp: 9310020,
+      statusCode: 500,
+      message: "down",
+    });
+    expect(res2.status).toBe(200);
+
+    const monitorAfter2 = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
+      .get();
+    expect(monitorAfter2?.status).toBe("error");
+    assertSpyCalls(mockEmailSendAlert, 1);
+  });
+
+  test("does not change monitor.status from error when 1/3 locations report degraded (threshold not met)", async () => {
+    // First seed the monitor to "error" state via 2/3 locations agreeing
+    await post({
+      monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9320000,
+      statusCode: 500,
+      message: "down",
+    });
+    await post({
+      monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+      privateLocationId: String(PRIVATE_LOCATION_2_ID),
+      status: "error",
+      cronTimestamp: 9320005,
+      statusCode: 500,
+      message: "down",
+    });
+
+    // Now try degraded with only 1/3 → should NOT change
+    const res = await post({
+      monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+      privateLocationId: String(PRIVATE_LOCATION_3_ID),
+      status: "degraded",
+      cronTimestamp: 9320010,
+      statusCode: 200,
+    });
+    expect(res.status).toBe(200);
+
+    const monitorAfter = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
+      .get();
+    // Monitor should remain "error" because 1/3 < 50% threshold
+    expect(monitorAfter?.status).toBe("error");
+  });
+
+  test("does not update monitor.status for monitors with cloud regions", async () => {
+    // TEST_MONITOR_ID has regions: "ams" (cloud region)
+    const res = await post({
+      monitorId: String(TEST_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9330010,
+      statusCode: 500,
+      message: "down",
+    });
+    expect(res.status).toBe(200);
+
+    const monitorAfter = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, TEST_MONITOR_ID))
+      .get();
+    // Monitor has cloud regions, so private status updates should not affect it
+    expect(monitorAfter?.status).toBe("active");
   });
 });

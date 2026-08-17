@@ -122,20 +122,25 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	latency := time.Since(start).Milliseconds()
 
 	if err != nil {
+		errorMsg := err.Error()
 
 		var urlErr *url.Error
 		if errors.As(err, &urlErr) && urlErr.Timeout() {
-			return Response{
-				Latency:   latency,
-				Timing:    timing,
-				Timestamp: start.UTC().UnixMilli(),
-				Error:     fmt.Sprintf("Timeout after %d ms", latency),
-			}, nil
+			errorMsg = fmt.Sprintf("Timeout after %d ms", latency)
 		}
 
 		logger.Error().Err(err).Msg("error while pinging")
 
-		return Response{}, err
+		// Return Response with error field instead of returning a Go error
+		// This ensures all failures (timeouts, connection refused, DNS failures, etc.)
+		// are properly ingested and displayed in the dashboard
+		return Response{
+			Latency:   latency,
+			Timing:    timing,
+			Timestamp: start.UTC().UnixMilli(),
+			Error:     errorMsg,
+			Status:    0,
+		}, nil
 	}
 
 	defer response.Body.Close()

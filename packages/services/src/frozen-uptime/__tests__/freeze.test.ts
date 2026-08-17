@@ -7,9 +7,8 @@ import {
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeApiKeyCtx,
   makeSystemCtx,
   readAuditLog,
@@ -22,13 +21,15 @@ import type { FreezeMonitorMonthInput } from "../schemas";
 
 let systemCtx: ServiceContext;
 let readOnlyCtx: ServiceContext;
+let teamWorkspaceId: number;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  systemCtx = makeSystemCtx(team, { job: "uptime-freeze" });
-  readOnlyCtx = makeApiKeyCtx(team, {
+  const team = await createWorkspaceFixture("team");
+  teamWorkspaceId = team.workspace.id;
+  systemCtx = makeSystemCtx(team.workspace, { job: "uptime-freeze" });
+  readOnlyCtx = makeApiKeyCtx(team.workspace, {
     keyId: "k",
-    userId: 1,
+    userId: team.userId,
     scopes: ["read"],
   });
 });
@@ -37,7 +38,7 @@ async function insertTestMonitor(tx: NonNullable<ServiceContext["db"]>) {
   return tx
     .insert(monitor)
     .values({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: teamWorkspaceId,
       active: true,
       url: "https://example.com",
       name: "svc-frozen-uptime-monitor",
@@ -72,7 +73,7 @@ describe("freezeMonitorMonth", () => {
       const row = await freezeMonitorMonth({ ctx, input });
 
       expect(row).not.toBeNull();
-      expect(row?.workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
+      expect(row?.workspaceId).toBe(teamWorkspaceId);
       expect(row?.month).toBe("2026-06-01");
       expect(row?.days).toEqual(input.days);
 
@@ -84,7 +85,7 @@ describe("freezeMonitorMonth", () => {
       expect(persisted.length).toBe(1);
 
       const auditRows = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: teamWorkspaceId,
         entityType: "frozen_monitor_uptime",
         db: tx,
       });
@@ -120,7 +121,7 @@ describe("freezeMonitorMonth", () => {
       expect(persisted[0].days[0].ok).toBe(42);
 
       const auditRows = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: teamWorkspaceId,
         entityType: "frozen_monitor_uptime",
         db: tx,
       });

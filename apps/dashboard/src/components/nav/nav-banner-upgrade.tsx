@@ -1,5 +1,6 @@
 "use client";
 
+import { Launch, Close } from "@openstatus/icons";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -9,7 +10,6 @@ import {
   SidebarMenuItem,
 } from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import { Rocket, X } from "lucide-react";
 import { useState } from "react";
 
 import { useTRPC } from "@/lib/trpc/client";
@@ -31,12 +31,12 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
           onClick={handleClose}
           className="relative top-0 right-0"
         >
-          <X className="text-muted-foreground" size={16} />
+          <Close className="text-muted-foreground" size={16} />
         </SidebarMenuAction>
       </SidebarGroupLabel>
       <SidebarMenu>
         <SidebarMenuItem className="flex items-center gap-2 text-sm">
-          <Rocket className="text-info shrink-0" size={12} />
+          <Launch className="text-info shrink-0" size={12} />
           <span>
             Unlock custom domains, teams, 1 min. checks, subscriptions and more.
           </span>

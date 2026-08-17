@@ -2,6 +2,7 @@ import { defineConfig } from "oxlint";
 
 export default defineConfig({
   plugins: ["eslint", "typescript", "react", "unicorn", "oxc"],
+  jsPlugins: ["./scripts/oxlint-plugin-openstatus.js"],
   categories: {
     correctness: "warn",
   },
@@ -109,6 +110,34 @@ export default defineConfig({
       files: ["**/*.test.ts", "**/__tests__/**"],
       rules: {
         "typescript/no-explicit-any": "off",
+      },
+    },
+    {
+      // Behaviour-triggered, not filename-triggered: anything opening a
+      // transaction in the services layer is a mutation.
+      files: ["packages/services/src/**/*.ts"],
+      excludeFiles: ["**/__tests__/**", "**/*.test.ts"],
+      rules: {
+        "openstatus/services-mutation-guards": "error",
+        // apps/workflows runs this on Deno, and it stays Edge-safe by design.
+        "no-restricted-imports": [
+          "error",
+          {
+            patterns: [
+              {
+                group: ["node:*"],
+                message:
+                  "@openstatus/services must stay runtime-agnostic — no node built-ins. Hand-roll the helper (see deepEqual) or move the code to a Node-only package.",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      files: ["apps/dashboard/src/**/*.tsx", "apps/dashboard/src/**/*.ts"],
+      rules: {
+        "openstatus/no-db-barrel-in-client": "error",
       },
     },
   ],

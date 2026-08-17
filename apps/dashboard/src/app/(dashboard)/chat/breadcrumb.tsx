@@ -1,7 +1,7 @@
 "use client";
 
+import { Chat } from "@openstatus/icons";
 import { skipToken, useQuery } from "@tanstack/react-query";
-import { MessageSquare } from "lucide-react";
 
 import { useChatSessionContext } from "@/components/chat/chat-session-context";
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
@@ -21,7 +21,7 @@ export function Breadcrumb() {
   if (sessionId === undefined) {
     return (
       <NavBreadcrumb
-        items={[{ type: "page", label: "Assistant", icon: MessageSquare }]}
+        items={[{ type: "page", label: "Assistant", icon: Chat }]}
       />
     );
   }
@@ -33,7 +33,7 @@ export function Breadcrumb() {
           type: "link",
           label: "Assistant",
           href: "/chat",
-          icon: MessageSquare,
+          icon: Chat,
         },
         { type: "page", label: session?.title ?? "New chat" },
       ]}

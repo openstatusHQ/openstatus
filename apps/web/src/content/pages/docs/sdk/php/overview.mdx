@@ -23,8 +23,8 @@ The SDK is open source and developed in its own repository, [openstatusHQ/sdk-ph
 Before using the SDK, you need an API key:
 
 1. Log in to the [openstatus dashboard](https://www.openstatus.dev/app/login)
-2. Go to **Settings** > **API Keys**
-3. Click **Create API Key** and copy it
+2. Go to **Settings** > **General** and find the **API Keys** card
+3. Click **Create** and copy the key
 
 <Aside type="tip">Store your API key as an environment variable (`OPENSTATUS_API_KEY`) — never commit it to source control.</Aside>
 
@@ -169,16 +169,13 @@ $header = new HeaderAssertion([
 ### Creating a status page
 
 ```php
-use Openstatus\Status_page\V1\CreateStatusPageRequest;
-use Openstatus\Status_page\V1\PageTheme;
-use Openstatus\Status_page\V1\StatusPage;
+use Openstatus\StatusPage\V1\CreateStatusPageRequest;
+use Openstatus\StatusPage\V1\PageTheme;
 
 $client->statusPage->v1->statusPageService->createStatusPage(new CreateStatusPageRequest([
-    'page' => new StatusPage([
-        'title' => 'Acme Status',
-        'slug' => 'acme',
-        'theme' => PageTheme::PAGE_THEME_LIGHT,
-    ]),
+    'title' => 'Acme Status',
+    'slug' => 'acme',
+    'theme' => PageTheme::PAGE_THEME_LIGHT,
 ]));
 ```
 

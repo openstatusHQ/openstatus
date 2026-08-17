@@ -172,14 +172,18 @@ You don't need perfection. You need *something*. **Ship a basic status page toda
 
 Start with:
 1. A simple page showing current status (operational, degraded, down)
-2. Automated monitoring that updates status in real-time
+2. [Automated monitoring](/uptime-monitoring) that updates status in real-time
 3. Subscriber notifications (email at minimum)
-4. A process for posting incident updates immediately - not after root cause analysis
+4. A process for posting incident updates immediately - not after root cause analysis. The [incident communication guide](/guides/incident-communication) covers cadence by severity and gives you copy-paste templates, so nobody is drafting prose mid-outage
 5. Historical uptime data
 
 That's it. You can add metrics, regional breakdowns, and advanced features later. The important part is having *a page* before you need it.
 
-**Open-source options exist** - OpenStatus, Uptime Kuma, Cachet. **Hosted platforms exist.** Pick one and ship it this week. Waiting for the "right" solution means you won't have one when it matters.
+Concretely: the [create your first status page](/docs/tutorial/create-your-first-status-page) tutorial takes about five minutes end to end, and [openstatus status pages](/status-page) include monitoring rather than selling it separately.
+
+**Open-source options exist** - openstatus, Uptime Kuma, Cachet. **Hosted platforms exist.** Pick one and ship it this week. Waiting for the "right" solution means you won't have one when it matters.
+
+If your situation is more specific than "a SaaS", there is probably a closer fit: [startups](/use-case/startups), [API infrastructure](/use-case/api-providers), [enterprise sales](/use-case/enterprise-sales), [reducing support tickets](/use-case/reduce-support-tickets), [compliance](/use-case/compliance), or [open-source projects](/use-case/open-source).
 
 ## The Bottom Line
 
@@ -199,6 +203,44 @@ Not having one is actively hurting your business. You're losing enterprise deals
 Use a dedicated service or open-source solution designed to stay up when your infrastructure fails—building your own status page on the same infrastructure as your product defeats the entire purpose.
 
 Start today. Not after your first major incident.
+
+## Frequently asked questions
+
+<Details summary="Do I really need a status page if my service rarely goes down?">
+
+Yes. Users expect transparency from every SaaS product now. Not having a status page signals you're either hiding problems or haven't thought about reliability. Both destroy trust with technical buyers and enterprise customers.
+
+</Details>
+
+<Details summary="Won't a status page make us look unreliable?">
+
+The opposite. Hiding incidents makes you look unreliable. A status page with honest incident history proves you take reliability seriously and communicate transparently. Companies like Stripe and Vercel publish detailed postmortems - it builds trust, not doubt.
+
+</Details>
+
+<Details summary="We're a small startup - shouldn't we wait until we're bigger?">
+
+No. Start simple now. A basic status page takes 5 minutes to set up and establishes good habits early. Waiting until after your first major incident means angry customers watching you scramble to set up infrastructure you should have had from day one.
+
+</Details>
+
+<Details summary="How does a status page reduce support load?">
+
+During incidents, hundreds of customers ask 'is it down?' Instead of flooding support with tickets, they check your status page and get an immediate answer. Your support team can focus on helping users affected by the incident rather than repeating the same status update.
+
+</Details>
+
+<Details summary="What's the ROI of a status page?">
+
+Direct ROI: massive reduction in support tickets during incidents, lower customer churn from bad experiences, faster enterprise sales cycles. Indirect ROI: SEO traffic from '[your-product] status' searches, trust building that leads to word-of-mouth, and competitive differentiation against companies that hide their incidents.
+
+</Details>
+
+<Details summary="Should we build our own status page?">
+
+No. When your main site goes down, your homegrown status page hosted on the same infrastructure goes down with it. Building reliable status infrastructure means separate hosting, static generation, minimal dependencies, and monitoring for the status page itself. Use a dedicated service or open-source solution designed to stay up when everything else is broken.
+
+</Details>
 
 ---
 

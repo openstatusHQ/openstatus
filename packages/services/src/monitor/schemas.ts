@@ -23,6 +23,14 @@ const assertion = z.discriminatedUnion("type", [
   recordAssertion,
 ]);
 
+// Bounds mirror `insertMonitorSchema` (0–60_000 ms) — what the dashboard
+// forms accept.
+const timeoutMs = z.coerce.number().gte(0).lte(60_000);
+
+// The RPC API's proto contract declares 0–120_000 ms and validates it there,
+// so the whole-object verbs must not reject a value the proto accepts.
+const apiTimeoutMs = z.coerce.number().gte(0).lte(120_000);
+
 /**
  * Create a new monitor. Regions and periodicity are optional — when unset,
  * the service picks sensible plan-based defaults (4 free regions / 6 paid
@@ -39,8 +47,50 @@ export const CreateMonitorInput = z.object({
   active: z.boolean().default(false),
   periodicity: z.enum(monitorPeriodicity).optional(),
   regions: z.array(z.string()).optional(),
+  // Config fields below are omitted by the dashboard create form and set
+  // by the public API. Each stays `undefined` when unset so the insert
+  // falls through to the column default rather than overwriting it.
+  description: z.string().optional(),
+  public: z.boolean().optional(),
+  timeout: apiTimeoutMs.optional(),
+  degradedAfter: apiTimeoutMs.nullish(),
+  retry: z.number().int().min(0).optional(),
+  followRedirects: z.boolean().optional(),
+  otelEndpoint: z.string().optional(),
+  otelHeaders: z.array(headerPair).optional(),
 });
 export type CreateMonitorInput = z.infer<typeof CreateMonitorInput>;
+
+/**
+ * Whole-object monitor patch backing the public API's update surface.
+ * Every field is optional and `undefined` means "leave as-is", so one
+ * request produces one UPDATE and one audit row — the granular verbs
+ * below stay for the dashboard's per-section forms.
+ *
+ * `jobType` is absent by design: callers address a monitor through a
+ * type-specific method that has already asserted the stored type.
+ */
+export const UpdateMonitorConfigInput = z.object({
+  id: z.number().int(),
+  name: z.string().min(1).optional(),
+  url: z.string().optional(),
+  method: z.enum(monitorMethods).optional(),
+  headers: z.array(headerPair).optional(),
+  body: z.string().optional(),
+  assertions: z.array(assertion).optional(),
+  active: z.boolean().optional(),
+  periodicity: z.enum(monitorPeriodicity).optional(),
+  regions: z.array(z.string()).optional(),
+  description: z.string().optional(),
+  public: z.boolean().optional(),
+  timeout: apiTimeoutMs.optional(),
+  degradedAfter: apiTimeoutMs.nullish(),
+  retry: z.number().int().min(0).optional(),
+  followRedirects: z.boolean().optional(),
+  otelEndpoint: z.string().optional(),
+  otelHeaders: z.array(headerPair).optional(),
+});
+export type UpdateMonitorConfigInput = z.infer<typeof UpdateMonitorConfigInput>;
 
 /** Update the "general" monitor payload — name / endpoint / headers / assertions. */
 export const UpdateMonitorGeneralInput = z.object({
@@ -85,12 +135,10 @@ export const UpdateMonitorPublicInput = z.object({
 });
 export type UpdateMonitorPublicInput = z.infer<typeof UpdateMonitorPublicInput>;
 
-// Bounds mirror `insertMonitorSchema` (0–60_000 ms) — the persisted checker
-// timeout is hard-capped at 60 s and rejects negatives.
 export const UpdateMonitorResponseTimeInput = z.object({
   id: z.number().int(),
-  timeout: z.coerce.number().gte(0).lte(60_000),
-  degradedAfter: z.coerce.number().gte(0).lte(60_000).nullish(),
+  timeout: timeoutMs,
+  degradedAfter: timeoutMs.nullish(),
 });
 export type UpdateMonitorResponseTimeInput = z.infer<
   typeof UpdateMonitorResponseTimeInput
@@ -136,6 +184,9 @@ export const DeleteMonitorsInput = z.object({
 });
 export type DeleteMonitorsInput = z.infer<typeof DeleteMonitorsInput>;
 
+export const TriggerMonitorInput = z.object({ id: z.number().int() });
+export type TriggerMonitorInput = z.infer<typeof TriggerMonitorInput>;
+
 export const CloneMonitorInput = z.object({ id: z.number().int() });
 export type CloneMonitorInput = z.infer<typeof CloneMonitorInput>;
 
@@ -178,3 +229,10 @@ export const GetResponseLogInput = z.object({
   logId: z.string().min(1),
 });
 export type GetResponseLogInput = z.infer<typeof GetResponseLogInput>;
+
+export const GetPrivateLocationIdsByMonitorInput = z.object({
+  monitorIds: z.array(z.number().int()),
+});
+export type GetPrivateLocationIdsByMonitorInput = z.infer<
+  typeof GetPrivateLocationIdsByMonitorInput
+>;

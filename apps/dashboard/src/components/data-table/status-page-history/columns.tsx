@@ -71,7 +71,7 @@ function rollingColumn(window: HistoryWindow): ColumnDef<HistoryRow> {
     header: "Total",
     cell: ({ row }) => {
       const value = row.original.rolling[windowKey(window)];
-      return value === null ? "–" : `${value.toFixed(2)}%`;
+      return value === null ? "–" : `${value.toFixed(3)}%`;
     },
     enableSorting: false,
     meta: {

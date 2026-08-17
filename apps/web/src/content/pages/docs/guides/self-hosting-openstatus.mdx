@@ -14,12 +14,30 @@ You want to run openstatus on your own infrastructure instead of using the hoste
 
 openstatus provides a Docker Compose setup that makes self-hosting straightforward. This guide walks you through deploying all necessary services and configuring your self-hosted instance.
 
+> **Only want the status page?** If you already have monitoring elsewhere and just need somewhere to publish incidents, the [lightweight status-page-only setup](/docs/guides/self-host-status-page-only) runs four services instead of the full stack — no Tinybird, no probes, no API server.
+
 ## Prerequisites
 
 - Docker and Docker Compose installed
 - Basic understanding of Docker and containerization
 - Command line experience
 - Git installed
+- The [Tinybird CLI](https://www.tinybird.co/docs/cli) (`tb`) — required for the analytics setup in Part 2
+
+## Two different things are called "private location"
+
+This trips up almost everyone, so read this before you start. There are **two** separate components, with two confusingly similar image names:
+
+| | Image | What it is | Where it runs |
+|---|---|---|---|
+| **Probe** | `ghcr.io/openstatushq/private-location:latest` | Runs the actual checks against your endpoints and ships results to the ingest server | Anywhere you want to monitor *from* — a VPS, a Raspberry Pi, inside your VPC. **Not** part of `docker-compose.yaml`. |
+| **Ingest server** | `ghcr.io/openstatushq/openstatus-private-location:latest` | Receives results from probes, writes them to Tinybird, and forwards status changes to the workflows app | On your openstatus host, as the `private-location` service in `docker-compose.yaml` (published on port **8081**) |
+
+The probe's `OPENSTATUS_INGEST_URL` points at the **ingest server** — that is port **8081**, not 3001. Port 3001 is the API server (`apps/server`) and has nothing to do with ingest.
+
+<Aside type="caution">
+We know the naming is bad. The prefixed image (`openstatus-private-location`) is the **server**; the unprefixed one (`private-location`) is the **probe**.
+</Aside>
 
 ## Known limitations
 
@@ -31,7 +49,7 @@ Self-hosting openstatus currently has these constraints:
 
 ## Step-by-step guide
 
-This guide is divided into three parts: launching the services, setting up the database and analytics, and configuring the application through the UI.
+This guide is divided into three parts: launching the services, setting up analytics, and configuring the application through the UI.
 
 ### Part 1: initial setup and service launch
 
@@ -49,7 +67,21 @@ This guide is divided into three parts: launching the services, setting up the d
     ```bash
     cp .env.docker.example .env.docker
     ```
-    Open `.env.docker` in a text editor. At a minimum, you **must** set a value for `AUTH_SECRET` for authentication to work. For a complete setup, review the file for other variables like OAuth providers or email services.
+    Open `.env.docker` in a text editor. Four values are marked `[REQUIRED]` and must be set: `AUTH_SECRET`, `RESEND_API_KEY` (magic-link login won't work without it), `SELF_HOST`, and `NEXT_PUBLIC_URL`. For a complete setup, review the file for other variables like OAuth providers or email services.
+
+    Two values matter for the rest of this guide — set them now:
+    ```env
+    # Point the apps at the local Tinybird container instead of Tinybird Cloud.
+    # If you leave this empty, the dashboard queries api.tinybird.co and every
+    # chart fails with "the pipe ... does not exist".
+    TINYBIRD_URL=http://tinybird-local:7181
+
+    # Shared secret the ingest server uses to authenticate to the workflows app.
+    # Any random string, but it must be set on both.
+    CRON_SECRET=some-random-string
+    ```
+
+    You'll fill in the Tinybird tokens in Part 2, once the container is running.
 
 3.  **Build and start services**
 
@@ -60,70 +92,96 @@ This guide is divided into three parts: launching the services, setting up the d
     ```
     You can check the status of the services with `docker compose ps`. It might take a few minutes for all services to be healthy.
 
-### Part 2: database and analytics setup
+    Database migrations run automatically: the `db-migrate` one-shot container applies them before the apps start, and every other service waits on it. It's idempotent, so it's safe to leave in place on each `docker compose up`. If it fails, see [Troubleshooting](#troubleshooting).
 
-4.  **Run database migrations**
+    <Aside type="tip">
+    Prefer prebuilt images over building from source? Use `docker compose -f docker-compose.github-packages.yaml up -d`, which pulls from `ghcr.io/openstatushq/*` instead.
+    </Aside>
 
-    The database container starts with an empty database. You must run migrations to set up the required schema.
+### Part 2: analytics setup
+
+openstatus stores every check result in Tinybird. Without a working Tinybird setup you can create monitors and probes, but the dashboard will show no data.
+
+This is the step most self-hosters get wrong, so follow it exactly.
+
+4.  **Deploy the Tinybird project**
+
+    Deploy the datasources, pipes, and endpoints into the local Tinybird container started by Compose:
     ```bash
-    # Make sure you are in the root of the openstatus project
-    cd packages/db
-    pnpm install
-    pnpm migrate
-    cd ../.. # Return to the project root
-    ```
-
-	If you do not have or want to avoid installing the necessary tools on the 	host, you can run this command to create a one-shot container that will remove itself after completion.
-	```
-	# Make sure you are in the root of the openstatus project
-	# For RHEL derivatives, make sure to end /work with :Z for SELinux, "$PWD":/work:Z
-	sudo docker run --rm -it \
-	  --network openstatus \
-	  --env-file .env.docker \
-	  -v "$PWD":/work \
-	  -w /work/packages/db \
-	  node:22-trixie \
-	  bash -lc '
-	    set -euo pipefail
-	    export DEBIAN_FRONTEND=noninteractive
-	    apt-get update -qq
-	    apt-get install -y -qq curl ca-certificates unzip
-	    curl -fsSL https://bun.sh/install -o /tmp/bun-install.sh
-	    bash /tmp/bun-install.sh
-	    export PATH="$HOME/.bun/bin:$PATH"
-	    npm i -g pnpm
-	    pnpm install
-	    bun src/migrate.mts
-	  '
-	```
-
-5.  **Deploy local Tinybird analytics**
-
-    Tinybird is used for analytics. Deploy the local datasources, pipes, and endpoints.
-    ```bash
-    # Make sure you are in the root of the openstatus project
     cd packages/tinybird
-    pnpm install
     tb --local deploy
-    cd ../.. # Return to the project root
     ```
 
-6.  **Configure Tinybird API key**
+5.  **Confirm the deployment is live**
 
-    You need to get your local Tinybird admin token and add it to your environment file.
+    A deployment that stays in `Staging` is not queryable — the pipes exist but every request 404s. Check it:
     ```bash
-    cd packages/tinybird
-    tb --local open # This opens the Tinybird UI in your browser
+    tb --local deployment ls
     ```
-    In the Tinybird UI, find and copy your admin token. Then, add it to your `.env.docker` file in the root of the project:
+    You want `Status` to read `Live`:
+    ```
+    -------------------------------------
+    | ID | Status | Created at          |
+    -------------------------------------
+    |  1 | Live   | 2026-07-25 18:20:52 |
+    -------------------------------------
+    ```
+    If it says `Staging`, promote it:
+    ```bash
+    tb --local deployment promote
+    ```
+
+6.  **Get the Tinybird token**
+
+    You do **not** need to log in to Tinybird Cloud. Against a local container the CLI runs in a temporary local workspace and prints its token:
+    ```bash
+    tb --local info
+    ```
+    Copy the value of `token` from the **Tinybird Local** section.
+
+    To grab it in one line:
+    ```bash
+    tb --local info | grep '^token:' | awk '{print $2}'
+    ```
+
+    <Aside type="caution" title="Don't use curl http://localhost:7181/tokens">
+    That endpoint works without auth and looks like the right answer, but it returns tokens for a *different* workspace than the one `tb --local deploy` deploys into. Ingest will appear to succeed — Tinybird silently auto-creates a datasource from the first event — while every dashboard query fails with `The pipe 'endpoint__http_metrics_1d__v1' does not exist`. Use `tb --local info`.
+    </Aside>
+
+    Likewise, `tb --local open` asks you to sign in to Tinybird Cloud and is not usable on a headless server. You don't need it.
+
+7.  **Add the token to your environment**
+
+    The Node apps and the Go ingest server read **different variable names** for the same token. Both are in `.env.docker` — fill them in with the same value:
     ```env
-    TINY_BIRD_API_KEY="your-tinybird-admin-token"
+    # Read by the dashboard, status page, server, and workflows apps
+    TINY_BIRD_API_KEY="your-tinybird-local-token"
+
+    # Read by the private-location ingest server (Go)
+    TINYBIRD_TOKEN="your-tinybird-local-token"
     ```
-    After adding the token, restart your services for the changes to take effect:
+
+    <Aside type="caution">
+    Setting only `TINY_BIRD_API_KEY` is the most common self-hosting mistake. The ingest server never reads it, so every check it receives is rejected by Tinybird with `unexpected status code: 403` and no data ever reaches your dashboard.
+    </Aside>
+
+    Restart so the new values are picked up:
     ```bash
-    # Make sure you are in the root of the openstatus project
-    docker compose restart
+    cd ../..
+    docker compose up -d
     ```
+
+8.  **Verify analytics end to end**
+
+    Confirm the token can query a deployed pipe:
+    ```bash
+    TOKEN=$(tb --local info | grep '^token:' | awk '{print $2}')
+
+    curl -s -o /dev/null -w '%{http_code}\n' \
+      -H "Authorization: Bearer $TOKEN" \
+      "http://localhost:7181/v0/pipes/endpoint__http_metrics_1d__v1.json?monitorId=1"
+    ```
+    A `200` means Part 2 is done. A `404` means the deployment isn't promoted or you're using the wrong token — go back to steps 5 and 6.
 
 ### Part 3: application configuration
 
@@ -132,7 +190,7 @@ Now that the services are running, you can access the dashboard and perform the 
 -   **Dashboard:** `http://localhost:3002`
 -   **Status Pages:** `http://localhost:3003`
 
-7.  **Create a workspace and set limits**
+9.  **Create a workspace and set limits**
 
     -   Navigate to the dashboard at `http://localhost:3002`.
     -   Sign up and create a new workspace.
@@ -155,18 +213,42 @@ Now that the services are running, you can access the dashboard and perform the 
 	  ]}"
     ```   
 
-8.  **Deploy a private location**
+10. **Deploy a probe**
 
-    The self-hosted version relies on private locations to perform checks.
-    -   In the dashboard, navigate to **Settings -> Private Locations** and create a new one.
-    -   Copy the generated `OPENSTATUS_KEY`.
-    -   Deploy the private location probe to your infrastructure using the Docker image `ghcr.io/openstatushq/private-location:latest`.
-    -   When deploying, you must provide two environment variables to the container:
-        -   `OPENSTATUS_KEY`: The key you just copied.
-        -   `OPENSTATUS_INGEST_URL`: The URL of your self-hosted server's API endpoint (e.g., `http://<your-server-ip-or-domain>:3001`).
+    The self-hosted version relies on private locations to perform checks. The ingest server is already running from Part 1 — what you deploy here is the **probe**.
+
+    -   In the dashboard, navigate to **Settings → Private Locations** and create a new one.
+    -   Copy the generated key.
+    -   Run the probe wherever you want to check from:
+
+    ```bash
+    docker run -d --name openstatus-probe \
+      -e OPENSTATUS_KEY=<your-key> \
+      -e OPENSTATUS_INGEST_URL=http://<your-server-ip-or-domain>:8081 \
+      ghcr.io/openstatushq/private-location:latest
+    ```
+
+    The two environment variables are:
+
+    -   `OPENSTATUS_KEY` — the key you copied from the dashboard. Some older docs call this `OPENSTATUS_TOKEN`; that name is not read by the probe.
+    -   `OPENSTATUS_INGEST_URL` — the URL of your **ingest server**, i.e. the `private-location` service on port **8081**. If you don't set it, the probe defaults to openstatus Cloud (`https://openstatus-private-location.fly.dev`) and your self-hosted instance will never see a check.
+
+    If you run the probe on the same Docker network as the rest of the stack, use the internal address instead — `http://private-location:8080`.
+
+    A healthy probe logs like this:
+    ```
+    Launching openstatus private location checker
+    2026/07/25 09:50:50 Starting job for monitor 1 (https://google.com)
+    2026/07/25 09:50:50 Monitor check for 1 (https://google.com) ingested with status "success" (code 200)
+    ```
+
+    <Aside type="tip">
+    The probe refreshes its monitor list every 10 minutes. After creating or editing a monitor, give it up to 10 minutes — or restart the probe — before assuming something is broken.
+    </Aside>
+
     -   For a detailed guide on deploying a private location, see **[Deploy Private Locations on Cloudflare Containers](/docs/guides/how-to-deploy-probes-cloudflare-containers)**.
 
-9.  **Create monitors**
+11. **Create monitors**
 
     You're all set! You can now create monitors in the dashboard. They will be checked by the private location you deployed.
 
@@ -177,13 +259,96 @@ Now that the services are running, you can access the dashboard and perform the 
   />
   
 
+### Part 4: scheduled tasks
+
+Self-hosted deployments need external cron scheduling for background tasks. Without these, critical features like private location health monitoring won't work.
+
+12. **Set up the private location health cron**
+
+    The `private-location-health` cron job monitors your private location probes and sends email notifications when they go offline or recover.
+
+    **What it does:**
+    - Checks if private location agents have reported recently (within the last 15 minutes)
+    - Transitions status from `active` → `error` when an agent stops reporting
+    - Transitions status from `error` → `active` when an agent resumes reporting  
+    - Sends email notifications to workspace members on status transitions
+    - Creates audit log entries for status changes
+
+    **Without this cron**, private location status will never update from "error" to "active", and recovery notifications will not be sent.
+
+    **Setup with system cron (Linux/Unix):**
+
+    Add this to your crontab (`crontab -e`):
+    ```bash
+    # Run private location health check every 5 minutes
+    */5 * * * * curl -sS -H "Authorization: YOUR_CRON_SECRET" http://localhost:3000/cron/private-location-health
+    ```
+
+    Replace `YOUR_CRON_SECRET` with the value you set in `.env.docker` (step 2), and adjust the URL if your workflows service runs on a different host or port.
+
+    **Setup with Docker cron container:**
+
+    Create a `cron/` directory in your openstatus folder:
+    ```bash
+    mkdir cron
+    ```
+
+    Create `cron/Dockerfile`:
+    ```dockerfile
+    FROM alpine:latest
+    RUN apk add --no-cache curl
+    COPY crontab /etc/crontabs/root
+    CMD ["crond", "-f", "-l", "2"]
+    ```
+
+    Create `cron/crontab`:
+    ```
+    */5 * * * * curl -sS -H "Authorization: ${CRON_SECRET}" http://workflows:3000/cron/private-location-health
+    ```
+
+    Add to your `docker-compose.yaml`:
+    ```yaml
+    services:
+      # ... existing services ...
+
+      cron:
+        build: ./cron
+        container_name: openstatus-cron
+        env_file:
+          - .env.docker
+        networks:
+          - openstatus
+        restart: unless-stopped
+    ```
+
+    Then restart your stack:
+    ```bash
+    docker compose up -d
+    ```
+
+    **Verification:**
+
+    Check the workflows logs to confirm the cron is running:
+    ```bash
+    docker compose logs workflows | grep "private-location-health"
+    ```
+
+    You should see entries every 5 minutes like:
+    ```
+    private-location-health complete: checked=2 toError=0 toActive=0
+    ```
+
+    <Aside type="caution">
+    If you skip this step, your private locations will show "error" status permanently even when actively reporting.
+    </Aside>
+
 ## Configuring the AI assistant (optional)
 
 openstatus ships an in-dashboard AI assistant. It is **off by default** when self-hosting — the chat endpoint returns `503 "Chat is not configured"` until you point it at a model provider. Configure **one** of the two options below in your `.env.docker` (root) — or `apps/dashboard/.env` for a manual setup — then restart the dashboard.
 
 ### Option 1: OpenAI-compatible endpoint (bring your own model)
 
-Use any OpenAI-compatible API — [NVIDIA NIM](https://build.nvidia.com/), vLLM, Ollama, OpenRouter, LM Studio, or a private gateway. This is the recommended path for self-hosting: the model and key stay on your own infrastructure.
+Use any OpenAI-compatible API — [NVIDIA NIM](https://build.nvidia.com/), vLLM, Ollama, OpenRouter, Neon AI Gateway, LM Studio, or a private gateway. This is the recommended path for self-hosting: the model and key stay on your own infrastructure.
 
 ```env
 AI_BASE_URL=https://integrate.api.nvidia.com/v1
@@ -202,6 +367,20 @@ AI_BASE_URL=http://localhost:11434/v1
 AI_MODEL=llama3.1
 ```
 
+#### Example: Neon AI Gateway
+
+[Neon AI Gateway](https://neon.com/docs/ai-gateway/overview) serves an OpenAI-compatible API, so it goes through the same three variables. Every Neon branch has its own gateway host, which the Neon console shows as `NEON_AI_GATEWAY_BASE_URL` next to a `NEON_AI_GATEWAY_TOKEN` credential. The host is bare, so add `/v1` when you copy it, and give the credential the `ai_gateway:invoke` scope.
+
+```env
+AI_BASE_URL=<NEON_AI_GATEWAY_BASE_URL>/v1
+AI_API_KEY=<NEON_AI_GATEWAY_TOKEN>
+AI_MODEL=gpt-5-mini
+```
+
+Any entry in the [Neon model catalog](https://neon.com/docs/ai-gateway/models) that lists `chat/completions` among its endpoints works as `AI_MODEL`, and the `gpt-5-mini` above is one example rather than a default. Pick a model that supports tool calling. Neon does not record that per model, so check the flag on [Models.dev](https://models.dev/providers/neon/) first. This path has not been validated through a complete assistant workflow, so exercise a real monitor or status-page change before you depend on it.
+
+<Aside type="note">AI Gateway is in beta, requires a paid Neon plan, and runs only in AWS US East (Ohio) (`aws-us-east-2`).</Aside>
+
 ### Option 2: Vercel AI Gateway
 
 If you use the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway), set a single key. The model is chosen automatically (a smaller model for free workspaces, a stronger one for paid).
@@ -218,14 +397,17 @@ openstatus consists of multiple services running together:
 
 | Service | Port | Purpose |
 |---------|------|---------|
+| db-migrate | — | One-shot database migrations; exits after applying |
 | workflows | 3000 | Background jobs and scheduled tasks |
-| server | 3001 | API backend (tRPC) |
+| server | 3001 | API backend (ConnectRPC + REST v1) |
 | dashboard | 3002 | Admin interface for configuration |
 | status-page | 3003 | Public status pages |
-| private-location | 8081 | Monitoring agent for checks |
+| private-location | 8081 | **Ingest server** — receives results from probes |
 | libsql | 8080 | Database (HTTP) |
 | libsql | 5001 | Database (gRPC) |
 | tinybird-local | 7181 | Analytics and metrics |
+
+The **probe** is not in this table — it runs outside the stack, wherever you want to check from, and talks to `private-location` on port 8081.
 
 ## What you've accomplished
 
@@ -238,11 +420,32 @@ openstatus consists of multiple services running together:
 
 **Containers won't start** — check Docker logs with `docker compose logs [service-name]`.
 
-**Database migrations fail** — ensure you're in the correct directory and have pnpm installed.
+**Database migrations fail** — inspect `docker compose logs db-migrate`. To re-run them by hand without installing anything on the host (the image's entrypoint is the migration itself):
+```bash
+docker run --rm -it \
+  --network openstatus \
+  --env-file .env.docker \
+  -e DATABASE_URL=http://libsql:8080 \
+  openstatus/db-migrate:latest
+```
+Or simply `docker compose up -d db-migrate`, since the step is idempotent.
 
-**Private location not connecting** — verify the `OPENSTATUS_KEY` and `OPENSTATUS_INGEST_URL` are correct.
+**Dashboard charts are empty and the log shows `The pipe 'endpoint__http_metrics_1d__v1' does not exist`** — the dashboard is querying the wrong Tinybird workspace. Three causes, in order of likelihood:
+1. `TINYBIRD_URL` is unset, so it's querying Tinybird Cloud. Set `TINYBIRD_URL=http://tinybird-local:7181`.
+2. The token came from `curl http://localhost:7181/tokens` instead of `tb --local info` — wrong workspace. See step 6.
+3. The deployment is still in `Staging`. Run `tb --local deployment promote`.
 
-**Tinybird issues** — make sure the Tinybird token is correctly set in `.env.docker`.
+**Ingest server logs `tinybird.success=false error.message="unexpected status code: 403"`** — `TINYBIRD_TOKEN` is missing or wrong. It is a *separate* variable from `TINY_BIRD_API_KEY`; both must be set to the same token. See step 7.
+
+**Ingest server logs `failed to forward status update to workflows ... 401`** — the `CRON_SECRET` the ingest server sends doesn't match the one the workflows app expects. Make sure `CRON_SECRET` is set in `.env.docker` and that both containers were restarted afterwards. If the ingest server runs outside the Compose network, also confirm `WORKFLOWS_URL` points at your own workflows app — unset, it defaults to openstatus Cloud, which will reject your secret.
+
+**Private location shows an error state in the dashboard but the probe logs look fine** — a cron in the workflows app marks a location unhealthy when it hasn't reported recently. Confirm `workflows` is running and healthy (`docker compose ps workflows`), and that the ingest server can reach it.
+
+**Probe runs but nothing appears in the dashboard** — check, in order:
+1. `OPENSTATUS_INGEST_URL` points at port **8081** (the ingest server), not 3001.
+2. `OPENSTATUS_KEY` matches the key shown in **Settings → Private Locations**.
+3. The ingest server logs show `IngestHTTP` requests arriving — `docker compose logs private-location`.
+4. Those log lines show `tinybird.success=true`. If not, revisit step 7.
 
 ## What's next
 

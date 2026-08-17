@@ -7,9 +7,8 @@ import {
   ValidationError,
 } from "@openstatus/services";
 import { createApiKey } from "@openstatus/services/api-key";
-import { SEEDED_WORKSPACE_TEAM_ID } from "@openstatus/services/test/fixtures";
 import {
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   withTestTransaction,
 } from "@openstatus/services/test/helpers";
 import { expect } from "@std/expect";
@@ -98,6 +97,16 @@ describe("toConnectError", () => {
     const err = captureThrow(() => toConnectError(original));
     expect(err).toBe(original);
   });
+
+  // Unclassified errors propagate raw so `errorInterceptor` — the only
+  // layer holding the request id — can log and redact them in one place.
+  // The redaction itself is covered in `interceptors/__tests__/error.test.ts`.
+  test("rethrows an unclassified error untouched", () => {
+    const drizzleish = new Error("Failed query: insert into ...");
+    const err = captureThrow(() => toConnectError(drizzleish));
+    expect(err).toBe(drizzleish);
+    expect(err).not.toBeInstanceOf(ConnectError);
+  });
 });
 
 /**
@@ -119,7 +128,7 @@ describe("RPC runtime — read-only key on a write service verb", () => {
   let teamWorkspace: Workspace;
 
   beforeAll(async () => {
-    teamWorkspace = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+    teamWorkspace = (await createWorkspaceFixture("team")).workspace;
   });
 
   test("throws ForbiddenError → ConnectError(PermissionDenied)", async () => {

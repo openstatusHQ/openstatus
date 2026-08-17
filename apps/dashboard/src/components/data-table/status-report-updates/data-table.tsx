@@ -2,6 +2,7 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
+import { Add } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Table,
@@ -18,7 +19,6 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 
 import { ProcessMessage } from "@/components/content/process-message";
@@ -116,7 +116,7 @@ export function DataTable({
                 >
                   <TooltipTrigger asChild>
                     <Button size="icon" className="ml-auto flex h-7 w-7 p-0">
-                      <Plus />
+                      <Add />
                       <span className="sr-only">Create Report Update</span>
                     </Button>
                   </TooltipTrigger>

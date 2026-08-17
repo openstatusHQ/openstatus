@@ -37,6 +37,10 @@
       "import": "./src/page-component/index.ts",
       "types": "./src/page-component/index.ts"
     },
+    "./page-component-group": {
+      "import": "./src/page-component-group/index.ts",
+      "types": "./src/page-component-group/index.ts"
+    },
     "./page": {
       "import": "./src/page/index.ts",
       "types": "./src/page/index.ts"
@@ -88,6 +92,10 @@
     "./member": {
       "import": "./src/member/index.ts",
       "types": "./src/member/index.ts"
+    },
+    "./sso": {
+      "import": "./src/sso/index.ts",
+      "types": "./src/sso/index.ts"
     },
     "./monitor-tag": {
       "import": "./src/monitor-tag/index.ts",
@@ -145,6 +153,7 @@
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@workos-inc/node": "catalog:",
     "effect": "catalog:",
     "zod": "catalog:"
   },

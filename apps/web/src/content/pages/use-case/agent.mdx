@@ -158,6 +158,38 @@ Every status-report mutation requires the agent to choose whether to notify subs
 5. **Review a week of proposed reports.** If they're good, upgrade the key to `write` and let it publish — starting with `notify_subscribers: false`
 6. **Graduate to subscriber notifications** once you trust the diagnosis quality
 
+## Frequently asked questions
+
+<Details summary="What is the openstatus MCP server?">
+
+Openstatus ships a remote MCP (Model Context Protocol) server at api.openstatus.dev/mcp. It exposes typed tools for every workspace entity — monitors, response logs, status pages, page components, status reports, maintenance windows, notification channels, and audit logs. Any MCP-compatible client (Claude Desktop, ChatGPT, Cursor) or any agent built with the MCP SDK can connect with an openstatus API key.
+
+</Details>
+
+<Details summary="How does an agent know a monitor failed?">
+
+Configure a webhook notification channel on the monitor. When openstatus detects a failure, it posts a payload to your endpoint. Your agent runtime receives it, opens an MCP session against api.openstatus.dev/mcp using your workspace API key, and starts investigating with the tools below.
+
+</Details>
+
+<Details summary="Which MCP tools matter for incident response?">
+
+The diagnostic loop uses get_monitor, get_monitor_status, get_monitor_summary, list_response_logs, and get_response_log. The communication loop uses list_status_pages, list_page_components, create_status_report, add_status_report_update, and resolve_status_report. The agent can also call list_audit_logs to see what humans or other agents already did.
+
+</Details>
+
+<Details summary="Can the agent post a status report without a human in the loop?">
+
+Yes — but every mutation tool requires the agent to explicitly decide whether to notify subscribers, and every call is recorded in the audit log with the agent's API key as the actor. Read-only keys can investigate but cannot publish. Most teams start with notify_subscribers set to false and a human approving the first version, then graduate to fully autonomous reports once the agent has a track record.
+
+</Details>
+
+<Details summary="How do I scope what the agent can do?">
+
+Openstatus API keys carry scopes — read for investigation-only, write for mutations. Issue a read-only key for an agent that only diagnoses, or a write-scoped key for an agent that also files status reports. Scope enforcement happens before any DB lookup, so a read-only key never sees the write tools.
+
+</Details>
+
 ---
 
 Stop writing status reports by hand. Let an agent run your status page.

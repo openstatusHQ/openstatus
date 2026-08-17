@@ -4,6 +4,11 @@ import {
   pageSubscriber,
   pageSubscriberToPageComponent,
 } from "@openstatus/db/src/schema";
+import {
+  createPage,
+  createPageComponent,
+  createTestWorkspace,
+} from "@openstatus/db/src/test/factories";
 import { EmailClient } from "@openstatus/emails";
 import { expect } from "@std/expect";
 import {
@@ -25,10 +30,11 @@ import type { PageUpdate } from "./types";
 let sendStatusReportUpdateMock: Stub<EmailClient>;
 let rejectNextSend: Error | null = null;
 
-// IDs present in the seeded database
-const PAGE_ID = 1; // slug: "status"
-const COMPONENT_1 = 1;
-const COMPONENT_2 = 2;
+// Built in `beforeAll` — a private page keeps the subscriber set this suite
+// dispatches to independent of anything else running against the database.
+let PAGE_ID: number;
+let COMPONENT_1: number;
+let COMPONENT_2: number;
 
 const EMAILS = {
   entirePage: "dispatcher-page-test@example.com",
@@ -62,6 +68,12 @@ async function cleanAll() {
 }
 
 beforeAll(async () => {
+  const { workspace } = await createTestWorkspace();
+  PAGE_ID = (await createPage(workspace.id)).id;
+  COMPONENT_1 = (await createPageComponent(workspace.id, PAGE_ID)).id;
+  COMPONENT_2 = (await createPageComponent(workspace.id, PAGE_ID, { order: 1 }))
+    .id;
+
   await cleanAll();
 
   const insertAccepted = async (email: string) => {

@@ -14,6 +14,10 @@ import { UnauthorizedError } from "../errors";
 import { enforceSessionCap } from "./internal";
 import { CreateChatSessionInput } from "./schemas";
 
+// Per-user UI state, not workspace configuration: only user actors get past
+// `tryGetActorUserId`, so `requireScope` could never fire, and the audit action
+// union has no `chat_session` verb.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function createChatSession(args: {
   ctx: ServiceContext;
   input: CreateChatSessionInput;

@@ -6,17 +6,17 @@ import { Hono } from "hono";
 // workspace-resolver / @slack/web-api / agent are swapped for doubles via the
 // test import map; behavior is driven through this shared mutable state.
 import { slackTestState } from "@/libs/test/doubles/slack-test-state";
+import {
+  TEST_SIGNING_SECRET as SIGNING_SECRET,
+  withSlackConfig,
+} from "@/libs/test/slack-config";
 
-import { handleSlackEvent } from "./handler";
+import type { SlackEnv } from "./config";
+import { handleSlackEvent, looksLikeUncardedDraft } from "./handler";
 import { verifySlackSignature } from "./verify";
 
-const SIGNING_SECRET = "test-signing-secret";
-
-process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;
-process.env.AI_GATEWAY_API_KEY = "test-key";
-
 function createTestApp() {
-  const app = new Hono<{ Variables: { slackBody: unknown } }>();
+  const app = withSlackConfig(new Hono<SlackEnv>());
   app.post("/slack/events", verifySlackSignature, handleSlackEvent);
   return app;
 }
@@ -560,5 +560,51 @@ describe("handleSlackEvent", () => {
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 100));
     // No unhandled rejection — the .catch() in the error handler swallows it
+  });
+});
+
+describe("looksLikeUncardedDraft", () => {
+  test("flags a prose draft that ends by asking permission", () => {
+    expect(
+      looksLikeUncardedDraft(
+        `There's one status page ("Inter.link"). Here's the draft incident report I'll create:
+
+**Title:** Traffic Forwarding Issue – POP FRA1-DE
+**Status:** Investigating
+**Message:** We are currently investigating a traffic forwarding issue.
+
+Shall I go ahead and publish this, or would you like to adjust anything?`,
+      ),
+    ).toBe(true);
+  });
+
+  test("flags the other permission phrasings", () => {
+    const draft = "*Title:* API outage\n*Message:* We're on it.\n";
+    expect(looksLikeUncardedDraft(`${draft}Want me to create this?`)).toBe(
+      true,
+    );
+    expect(
+      looksLikeUncardedDraft(`${draft}Would you like me to post it now?`),
+    ).toBe(true);
+  });
+
+  test("ignores a plain answer that happens to end in a question", () => {
+    expect(
+      looksLikeUncardedDraft(
+        "You have no active incidents. Want me to create one?",
+      ),
+    ).toBe(false);
+  });
+
+  test("ignores a listing with field labels but no permission question", () => {
+    expect(
+      looksLikeUncardedDraft(
+        "*Title:* API outage\n*Status:* investigating\n*Message:* We're on it.",
+      ),
+    ).toBe(false);
+  });
+
+  test("ignores empty text", () => {
+    expect(looksLikeUncardedDraft("")).toBe(false);
   });
 });

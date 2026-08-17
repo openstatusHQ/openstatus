@@ -21,11 +21,11 @@ Global flags:
 | `--quiet` (`-q`) | Suppress non-error output | bool |    `false`    |        *none*         |
 | `--debug`        | Enable debug output       | bool |    `false`    |        *none*         |
 
-### `check` command (aliases: `c`)
+## `check` command (aliases: `c`)
 
 Run an HTTP check against a URL from 28 global regions.
 
-> openstatus check \1
+> openstatus check `<URL>`
 >   openstatus check https://openstat.us
 >   openstatus check https://openstat.us -X POST -H 'Authorization: Bearer …' -d '\{"ping":true\}'
 >   openstatus check https://openstat.us -d @payload.json
@@ -49,7 +49,7 @@ The following flags are supported:
 | `--body="…"` (`-d`)   | Request body. Use @filename to read a file, @- for stdin | string |               |        *none*         |
 | `--timing`            | Show DNS/Connection/TLS/TTFB/Transfer phases             | bool   |    `false`    |        *none*         |
 
-### `monitors` command (aliases: `m`)
+## `monitors` command (aliases: `m`)
 
 Manage your monitors.
 
@@ -111,7 +111,7 @@ The following flags are supported:
 
 Delete a monitor.
 
-> openstatus monitors delete \1
+> openstatus monitors delete `<MonitorID>`
 >   openstatus monitors delete 12345 -y
 
 Usage:
@@ -153,7 +153,7 @@ The following flags are supported:
 
 Get a monitor information.
 
-> openstatus monitors info \1
+> openstatus monitors info `<MonitorID>`
 >   openstatus monitors info 12345
 >   openstatus monitors info 12345 --time-range 7d
 
@@ -198,7 +198,7 @@ The following flags are supported:
 
 List HTTP response logs for a monitor.
 
-> openstatus monitors logs \1
+> openstatus monitors logs `<MonitorID>`
 >   openstatus monitors logs 12345
 >   openstatus monitors logs 12345 --limit 10
 >   openstatus monitors logs 12345 --limit 5 --offset 5
@@ -226,7 +226,7 @@ The following flags are supported:
 
 Get detailed HTTP response log for a monitor.
 
-> openstatus monitors log-info \1 \1
+> openstatus monitors log-info `<MonitorID>` `<LogID>`
 >   openstatus monitors log-info 12345 abc-def-ghi
 
 Fetch a single HTTP response log with full details including timing phases, response headers, and assertion results.
@@ -247,7 +247,7 @@ The following flags are supported:
 
 Trigger a monitor execution.
 
-> openstatus monitors trigger \1
+> openstatus monitors trigger `<MonitorID>`
 >   openstatus monitors trigger 12345
 
 Trigger a monitor execution on demand. This command allows you to launch your tests on demand.
@@ -264,7 +264,7 @@ The following flags are supported:
 |-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | openstatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
-### `status-report` command (aliases: `sr`)
+## `status-report` command (aliases: `sr`)
 
 Manage status reports.
 
@@ -299,7 +299,7 @@ The following flags are supported:
 
 Get status report details.
 
-> openstatus status-report info \1
+> openstatus status-report info `<ReportID>`
 >   openstatus status-report info 12345
 
 Usage:
@@ -335,7 +335,8 @@ The following flags are supported:
 | `--status="…"`              | Initial status (investigating, identified, monitoring, resolved) | string |               |         *none*         |
 | `--message="…"`             | Initial message describing the incident                          | string |               |         *none*         |
 | `--page-id="…"`             | Status page ID to associate with this report                     | string |               |         *none*         |
-| `--component-ids="…"`       | Comma-separated page component IDs                               | string |               |         *none*         |
+| `--component-ids="…"`       | Comma-separated page component IDs (legacy; mutually exclusive with `--impact`) | string |               |         *none*         |
+| `--impact="…"`              | Per-component impact, repeatable: `--impact <component_id>=<level>` (level: operational, degraded, partial_outage, major_outage). Mutually exclusive with `--component-ids` | string |               |         *none*         |
 | `--notify`                  | Notify subscribers about this status report                      | bool   |    `false`    |         *none*         |
 | `--date="…"`                | Date when the event occurred (RFC 3339 format, defaults to now)  | string |               |         *none*         |
 
@@ -343,7 +344,7 @@ The following flags are supported:
 
 Update status report metadata.
 
-> openstatus status-report update \1 [--title "New title"] [--component-ids id1,id2]
+> openstatus status-report update `<ReportID>` [--title "New title"] [--component-ids id1,id2]
 
 Usage:
 
@@ -363,7 +364,7 @@ The following flags are supported:
 
 Delete a status report.
 
-> openstatus status-report delete \1
+> openstatus status-report delete `<ReportID>`
 >   openstatus status-report delete 12345 -y
 
 Usage:
@@ -383,7 +384,7 @@ The following flags are supported:
 
 Add an update to a status report.
 
-> openstatus status-report add-update \1 --status resolved --message "Issue has been resolved"
+> openstatus status-report add-update `<ReportID>` --status resolved --message "Issue has been resolved"
 
 Usage:
 
@@ -401,7 +402,7 @@ The following flags are supported:
 | `--date="…"`                | Date for the update (RFC 3339 format, defaults to now)       | string |               |         *none*         |
 | `--notify`                  | Notify subscribers about this update                         | bool   |    `false`    |         *none*         |
 
-### `maintenance` command (aliases: `mt`)
+## `maintenance` command (aliases: `mt`)
 
 Manage maintenance windows.
 
@@ -436,7 +437,7 @@ The following flags are supported:
 
 Get maintenance window details.
 
-> openstatus maintenance info \1
+> openstatus maintenance info `<MaintenanceID>`
 >   openstatus maintenance info 12345
 
 Usage:
@@ -480,7 +481,7 @@ The following flags are supported:
 
 Update a maintenance window.
 
-> openstatus maintenance update \1 [--title "New title"] [--message "New message"] [--from ...] [--to ...]
+> openstatus maintenance update `<MaintenanceID>` [--title "New title"] [--message "New message"] [--from ...] [--to ...]
 
 Usage:
 
@@ -503,7 +504,7 @@ The following flags are supported:
 
 Delete a maintenance window.
 
-> openstatus maintenance delete \1
+> openstatus maintenance delete `<MaintenanceID>`
 >   openstatus maintenance delete 12345 -y
 
 Usage:
@@ -519,7 +520,7 @@ The following flags are supported:
 | `--access-token="…"` (`-t`) | openstatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
 | `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
 
-### `status-page` command (aliases: `sp`)
+## `status-page` command (aliases: `sp`)
 
 Manage status pages.
 
@@ -553,7 +554,7 @@ The following flags are supported:
 
 Get status page details.
 
-> openstatus status-page info \1
+> openstatus status-page info `<PageID>`
 >   openstatus status-page info 12345
 
 Usage:
@@ -568,7 +569,7 @@ The following flags are supported:
 |-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | openstatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
-### `notification` command (aliases: `n`)
+## `notification` command (aliases: `n`)
 
 Manage notifications.
 
@@ -602,7 +603,7 @@ The following flags are supported:
 
 Get notification details.
 
-> openstatus notification info \1
+> openstatus notification info `<NotificationID>`
 >   openstatus notification info 12345
 
 Usage:
@@ -617,7 +618,90 @@ The following flags are supported:
 |-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | openstatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
-### `run` command (aliases: `r`)
+## `private-locations` command (aliases: `pl`)
+
+Manage private locations.
+
+Private locations are self-hosted checker agents that run monitors from inside your own network. This command lists them, shows their details, and creates new ones. Public regions (Fly.io, Koyeb, Railway) are not listed here; they appear in `openstatus monitors info` and `openstatus check`.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] private-locations [ARGUMENTS...]
+```
+
+### `private-locations list` subcommand
+
+List all private locations.
+
+> openstatus private-locations list
+>   openstatus pl list
+>   openstatus pl list --limit 10
+
+List the private locations in your workspace, with the health of each agent and the number of monitors it runs.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] private-locations list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                           | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | openstatus API Access Token                           | string |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of private locations to return (1-100) | int    |      `0`      |         *none*         |
+
+### `private-locations info` subcommand
+
+Get private location details.
+
+> openstatus private-locations info `<PrivateLocationID>`
+>   openstatus pl info pl_1a2b3c
+>   openstatus pl info pl_1a2b3c --show-token
+
+Fetch a private location including the monitors it runs and its agent token. The token is masked unless `--show-token` is passed.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] private-locations info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                  | Type   | Default value |  Environment variables |
+|-----------------------------|----------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | openstatus API Access Token                  | string |               | `OPENSTATUS_API_TOKEN` |
+| `--show-token`              | Reveal the agent token instead of masking it | bool   |    `false`    |         *none*         |
+
+### `private-locations create` subcommand
+
+Create a private location.
+
+> openstatus private-locations create --name office-paris
+>   openstatus pl create --name office-paris --monitor-ids 12345,12346
+>   openstatus pl create --name office-paris --metadata env=prod --metadata team=infra
+
+Create a private location and print its agent token. The token is shown in full because you need it to configure the agent; retrieve it later with `openstatus pl info --show-token`. Run without `--name` in an interactive terminal to be prompted, including a picker for the monitors to attach.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] private-locations create [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                           | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | openstatus API Access Token                           | string |               | `OPENSTATUS_API_TOKEN` |
+| `--name="…"`                | Name of the private location                          | string |               |         *none*         |
+| `--monitor-ids="…"`         | Monitor IDs to attach, comma-separated or repeated    | string |               |         *none*         |
+| `--metadata="…"`            | Key/value label, repeatable: --metadata `<key>=<value>` | string |             |         *none*         |
+
+## `run` command (aliases: `r`)
 
 Run your uptime tests.
 
@@ -639,7 +723,7 @@ The following flags are supported:
 | `--config="…"`              | The configuration file      | string | `"config.openstatus.yaml"` |         *none*         |
 | `--access-token="…"` (`-t`) | openstatus API Access Token | string |                            | `OPENSTATUS_API_TOKEN` |
 
-### `whoami` command (aliases: `w`)
+## `whoami` command (aliases: `w`)
 
 Get your workspace information.
 
@@ -659,7 +743,7 @@ The following flags are supported:
 |-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | openstatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
-### `login` command
+## `login` command
 
 Save your API token.
 
@@ -673,7 +757,7 @@ Usage:
 $ openstatus [GLOBAL FLAGS] login [ARGUMENTS...]
 ```
 
-### `logout` command
+## `logout` command
 
 Remove saved API token.
 
@@ -685,7 +769,7 @@ Usage:
 $ openstatus [GLOBAL FLAGS] logout [ARGUMENTS...]
 ```
 
-### `terraform` command (aliases: `tf`)
+## `terraform` command (aliases: `tf`)
 
 Generate Terraform configuration.
 

@@ -9,7 +9,6 @@ import {
   inArray,
   isNull,
   lte,
-  sql,
 } from "@openstatus/db";
 import {
   maintenance,
@@ -59,11 +58,19 @@ import {
   updatePagePasswordProtection,
 } from "@openstatus/services/page";
 import {
+  createPageComponent,
   deletePageComponent,
   getPageComponentDailySummary,
+  updatePageComponent,
 } from "@openstatus/services/page-component";
 import {
+  createPageComponentGroup,
+  deletePageComponentGroup,
+  updatePageComponentGroup,
+} from "@openstatus/services/page-component-group";
+import {
   createPageSubscriber,
+  unsubscribePageSubscriber,
   upsertSelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
 import { getChannel } from "@openstatus/subscriptions";
@@ -94,16 +101,12 @@ import {
 } from "./converters";
 import {
   authEmailDomainsRequiredError,
-  componentGroupCreateFailedError,
   componentGroupNotFoundError,
-  componentGroupUpdateFailedError,
   identifierRequiredError,
   invalidCustomDomainError,
   invalidIconUrlError,
   monitorNotFoundError,
-  pageComponentCreateFailedError,
   pageComponentNotFoundError,
-  pageComponentUpdateFailedError,
   passwordRequiredError,
   slugAlreadyExistsError,
   statusPageAccessDeniedError,
@@ -298,6 +301,24 @@ async function getGroupById(id: number, workspaceId: number) {
       ),
     )
     .get();
+}
+
+/**
+ * Resolve a component group and assert it belongs to `pageId`. Workspace scope
+ * alone isn't enough — a group from a sibling page would otherwise be accepted
+ * and the component would render under a group it isn't on. Reported as
+ * not-found so the check doesn't confirm the group exists on another page.
+ */
+async function getGroupForPage(
+  groupId: string,
+  workspaceId: number,
+  pageId: number,
+) {
+  const group = await getGroupById(Number(groupId), workspaceId);
+  if (!group || group.pageId !== pageId) {
+    throw componentGroupNotFoundError(groupId);
+  }
+  return group;
 }
 
 /**
@@ -786,30 +807,35 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       }
       if (req.icon !== undefined && req.icon) validateIconUrl(req.icon);
 
-      // Locale merge + cross-field validation.
+      // Locale merge + cross-field validation. `default_locale` is an enum and
+      // `locales` is `repeated`, so an omitted field decodes to UNSPECIFIED /
+      // `[]` — treat both as "not provided" and keep what is stored, or
+      // updating a title would silently reset the page's languages. Same
+      // presence test the theme / access-type fields below use. Trade-off:
+      // locales can't be cleared over this RPC until the proto carries
+      // explicit presence.
+      const reqDefaultLocale =
+        req.defaultLocale !== undefined && req.defaultLocale !== 0
+          ? req.defaultLocale
+          : undefined;
       const nextDefaultLocale =
-        req.defaultLocale !== undefined
-          ? protoLocaleToDb(req.defaultLocale)
+        reqDefaultLocale !== undefined
+          ? protoLocaleToDb(reqDefaultLocale)
           : existing.defaultLocale;
       const validLocales = req.locales.filter((l) => l !== 0);
       const nextLocales =
         validLocales.length > 0
           ? [...new Set(validLocales.map(protoLocaleToDb))]
-          : null;
+          : existing.locales;
       if (nextLocales && !nextLocales.includes(nextDefaultLocale)) {
         throw new ConnectError(
           "Default locale must be included in the locales list",
           Code.InvalidArgument,
         );
       }
-      // `UpdateStatusPage` syncs locales on every call when the
-      // workspace has i18n — proto can't distinguish "field omitted"
-      // from "field = []", so the wire contract is "empty locales
-      // means clear". Gating on `req.locales.length > 0` meant omit
-      // and empty both became no-ops, leaving stale locales on the
-      // page. Skip the call only on plans without i18n, where the
-      // service would throw `LimitExceededError` regardless.
-      const localesChanged = limits.i18n === true;
+      const localesChanged =
+        limits.i18n === true &&
+        (reqDefaultLocale !== undefined || validLocales.length > 0);
 
       const generalChanged =
         (req.title !== undefined && req.title !== "") ||
@@ -1024,35 +1050,27 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     // Validate group exists if provided
     if (req.groupId) {
-      const group = await getGroupById(Number(req.groupId), workspaceId);
-      if (!group) {
-        throw componentGroupNotFoundError(req.groupId);
-      }
+      await getGroupForPage(req.groupId, workspaceId, pageData.id);
     }
 
-    // Create the component
-    const newComponent = await db
-      .insert(pageComponent)
-      .values({
-        workspaceId,
-        pageId: pageData.id,
-        type: "monitor",
-        monitorId: monitorData.id,
-        name: req.name ?? monitorData.name,
-        description: req.description ?? null,
-        order: req.order ?? 0,
-        groupId: req.groupId ? Number(req.groupId) : null,
-      })
-      .returning()
-      .get();
+    try {
+      const created = await createPageComponent({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          pageId: pageData.id,
+          type: "monitor",
+          monitorId: monitorData.id,
+          name: req.name ?? monitorData.name,
+          description: req.description ?? null,
+          order: req.order ?? 0,
+          groupId: req.groupId ? Number(req.groupId) : null,
+        },
+      });
 
-    if (!newComponent) {
-      throw pageComponentCreateFailedError();
+      return { component: dbComponentToProto(created) };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    return {
-      component: dbComponentToProto(newComponent),
-    };
   },
 
   async addStaticComponent(req, ctx) {
@@ -1071,35 +1089,27 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     // Validate group exists if provided
     if (req.groupId) {
-      const group = await getGroupById(Number(req.groupId), workspaceId);
-      if (!group) {
-        throw componentGroupNotFoundError(req.groupId);
-      }
+      await getGroupForPage(req.groupId, workspaceId, pageData.id);
     }
 
-    // Create the component
-    const newComponent = await db
-      .insert(pageComponent)
-      .values({
-        workspaceId,
-        pageId: pageData.id,
-        type: "static",
-        monitorId: null,
-        name: req.name,
-        description: req.description ?? null,
-        order: req.order ?? 0,
-        groupId: req.groupId ? Number(req.groupId) : null,
-      })
-      .returning()
-      .get();
+    try {
+      const created = await createPageComponent({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          pageId: pageData.id,
+          type: "static",
+          monitorId: null,
+          name: req.name,
+          description: req.description ?? null,
+          order: req.order ?? 0,
+          groupId: req.groupId ? Number(req.groupId) : null,
+        },
+      });
 
-    if (!newComponent) {
-      throw pageComponentCreateFailedError();
+      return { component: dbComponentToProto(created) };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    return {
-      component: dbComponentToProto(newComponent),
-    };
   },
 
   async removeComponent(req, ctx) {
@@ -1139,48 +1149,34 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     // Validate group exists if provided
     if (req.groupId !== undefined && req.groupId !== "") {
-      const group = await getGroupById(Number(req.groupId), workspaceId);
-      if (!group) {
-        throw componentGroupNotFoundError(req.groupId);
-      }
+      await getGroupForPage(req.groupId, workspaceId, component.pageId);
     }
 
-    // Build update values
-    const updateValues: Record<string, unknown> = {
-      updatedAt: new Date(),
-    };
+    try {
+      const updated = await updatePageComponent({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          id: component.id,
+          name:
+            req.name !== undefined && req.name !== "" ? req.name : undefined,
+          description:
+            req.description !== undefined ? req.description || null : undefined,
+          order: req.order,
+          // Empty string means remove from group
+          groupId:
+            req.groupId !== undefined
+              ? req.groupId === ""
+                ? null
+                : Number(req.groupId)
+              : undefined,
+          groupOrder: req.groupOrder,
+        },
+      });
 
-    if (req.name !== undefined && req.name !== "") {
-      updateValues.name = req.name;
+      return { component: dbComponentToProto(updated) };
+    } catch (err) {
+      toConnectError(err);
     }
-    if (req.description !== undefined) {
-      updateValues.description = req.description || null;
-    }
-    if (req.order !== undefined) {
-      updateValues.order = req.order;
-    }
-    if (req.groupId !== undefined) {
-      // Empty string means remove from group
-      updateValues.groupId = req.groupId === "" ? null : Number(req.groupId);
-    }
-    if (req.groupOrder !== undefined) {
-      updateValues.groupOrder = req.groupOrder;
-    }
-
-    const updatedComponent = await db
-      .update(pageComponent)
-      .set(updateValues)
-      .where(eq(pageComponent.id, component.id))
-      .returning()
-      .get();
-
-    if (!updatedComponent) {
-      throw pageComponentUpdateFailedError(req.id);
-    }
-
-    return {
-      component: dbComponentToProto(updatedComponent),
-    };
   },
 
   async getPageComponent(req, ctx) {
@@ -1212,25 +1208,20 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw statusPageNotFoundError(req.pageId);
     }
 
-    // Create the group
-    const newGroup = await db
-      .insert(pageComponentGroup)
-      .values({
-        workspaceId,
-        pageId: pageData.id,
-        name: req.name,
-        defaultOpen: req.defaultOpen ?? false,
-      })
-      .returning()
-      .get();
+    try {
+      const created = await createPageComponentGroup({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          pageId: pageData.id,
+          name: req.name,
+          defaultOpen: req.defaultOpen ?? false,
+        },
+      });
 
-    if (!newGroup) {
-      throw componentGroupCreateFailedError();
+      return { group: dbGroupToProto(created) };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    return {
-      group: dbGroupToProto(newGroup),
-    };
   },
 
   async deleteComponentGroup(req, ctx) {
@@ -1247,10 +1238,14 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw componentGroupNotFoundError(id);
     }
 
-    // Delete the group (components will have groupId set to null due to FK constraint)
-    await db
-      .delete(pageComponentGroup)
-      .where(eq(pageComponentGroup.id, group.id));
+    try {
+      await deletePageComponentGroup({
+        ctx: toServiceCtx(rpcCtx),
+        input: { id: group.id },
+      });
+    } catch (err) {
+      toConnectError(err);
+    }
 
     return { success: true };
   },
@@ -1269,33 +1264,21 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw componentGroupNotFoundError(id);
     }
 
-    // Build update values
-    const updateValues: Record<string, unknown> = {
-      updatedAt: new Date(),
-    };
+    try {
+      const updated = await updatePageComponentGroup({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          id: group.id,
+          name:
+            req.name !== undefined && req.name !== "" ? req.name : undefined,
+          defaultOpen: req.defaultOpen,
+        },
+      });
 
-    if (req.name !== undefined && req.name !== "") {
-      updateValues.name = req.name;
+      return { group: dbGroupToProto(updated) };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    if (req.defaultOpen !== undefined) {
-      updateValues.defaultOpen = req.defaultOpen;
-    }
-
-    const updatedGroup = await db
-      .update(pageComponentGroup)
-      .set(updateValues)
-      .where(eq(pageComponentGroup.id, group.id))
-      .returning()
-      .get();
-
-    if (!updatedGroup) {
-      throw componentGroupUpdateFailedError(req.id);
-    }
-
-    return {
-      group: dbGroupToProto(updatedGroup),
-    };
   },
 
   // ==========================================================================
@@ -1439,58 +1422,28 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw statusPageNotFoundError(req.pageId);
     }
 
-    // Find subscriber based on identifier type
-    if (req.identifier.case === "email") {
-      const subscriber = await db
-        .select()
-        .from(pageSubscriber)
-        .where(
-          and(
-            eq(pageSubscriber.pageId, pageData.id),
-            sql`LOWER(${pageSubscriber.email}) = ${req.identifier.value.toLowerCase()}`,
-            eq(pageSubscriber.channelType, "email"),
-            isNull(pageSubscriber.unsubscribedAt),
-          ),
-        )
-        .get();
-
-      if (!subscriber) {
-        throw subscriberNotFoundError(req.identifier.value);
-      }
-
-      await db
-        .update(pageSubscriber)
-        .set({ unsubscribedAt: new Date(), updatedAt: new Date() })
-        .where(eq(pageSubscriber.id, subscriber.id));
-
-      return { success: true };
+    if (req.identifier.case !== "email" && req.identifier.case !== "id") {
+      throw identifierRequiredError();
     }
 
-    if (req.identifier.case === "id") {
-      const subscriber = await db
-        .select()
-        .from(pageSubscriber)
-        .where(
-          and(
-            eq(pageSubscriber.pageId, pageData.id),
-            eq(pageSubscriber.id, Number(req.identifier.value)),
-          ),
-        )
-        .get();
+    const identifier =
+      req.identifier.case === "email"
+        ? { type: "email" as const, value: req.identifier.value }
+        : { type: "id" as const, value: Number(req.identifier.value) };
 
-      if (!subscriber) {
+    try {
+      await unsubscribePageSubscriber({
+        ctx: toServiceCtx(rpcCtx),
+        input: { pageId: pageData.id, identifier },
+      });
+    } catch (err) {
+      if (err instanceof NotFoundError) {
         throw subscriberNotFoundError(req.identifier.value);
       }
-
-      await db
-        .update(pageSubscriber)
-        .set({ unsubscribedAt: new Date(), updatedAt: new Date() })
-        .where(eq(pageSubscriber.id, subscriber.id));
-
-      return { success: true };
+      toConnectError(err);
     }
 
-    throw identifierRequiredError();
+    return { success: true };
   },
 
   async listSubscribers(req, ctx) {

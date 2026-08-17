@@ -167,8 +167,10 @@ Component groups allow you to organize related page components into logical sect
 **Group configuration:**
 
 - **Name** — the group heading displayed on your status page.
-- **Order** — position of the group relative to other groups and ungrouped components.
-- **Components** — the page components contained within this group.
+- **Default open** — whether the group renders expanded on first load. Defaults to collapsed.
+- **Components** — the page components contained within this group, ordered independently.
+
+A group has no order field of its own. Its position among other groups and ungrouped components is derived from the lowest display order of the components inside it.
 
 ## Events and status
 

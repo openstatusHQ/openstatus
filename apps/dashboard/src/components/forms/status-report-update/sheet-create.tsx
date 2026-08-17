@@ -14,9 +14,13 @@ type StatusReport = RouterOutputs["statusReport"]["list"][number];
 export function FormSheetStatusReportUpdateCreate({
   report,
   children,
+  open,
+  onOpenChange,
 }: {
   report: StatusReport;
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -49,6 +53,8 @@ export function FormSheetStatusReportUpdateCreate({
 
   return (
     <FormSheetStatusReportUpdate
+      open={open}
+      onOpenChange={onOpenChange}
       defaultValues={{
         status: nextStatus,
         componentImpacts: reportComponents.map((c) => ({

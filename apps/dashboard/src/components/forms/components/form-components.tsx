@@ -4,6 +4,17 @@ import type { UniqueIdentifier } from "@dnd-kit/core";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { RouterOutputs } from "@openstatus/api";
 import {
+  Check,
+  Show,
+  Hide,
+  DragHandle,
+  Linked,
+  Unlinked,
+  Plug,
+  Add,
+  Delete,
+} from "@openstatus/icons";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -50,17 +61,6 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { isTRPCClientError } from "@trpc/client";
-import {
-  Check,
-  Eye,
-  EyeOff,
-  GripVertical,
-  Link2,
-  Link2Off,
-  Plug,
-  Plus,
-  Trash2,
-} from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -508,7 +508,7 @@ export function FormComponents({
             </FormCardHeader>
             <FormCardContent className="flex flex-row gap-2">
               <Button variant="outline" type="button" onClick={handleAddGroup}>
-                <Plus />
+                <Add />
                 Add Component Group
               </Button>
               <FormField
@@ -520,7 +520,7 @@ export function FormComponents({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="w-full">
-                          <Plus />
+                          <Add />
                           Add Component
                         </Button>
                       </DropdownMenuTrigger>
@@ -542,12 +542,12 @@ export function FormComponents({
                               ]);
                             }}
                           >
-                            <Link2Off className="text-muted-foreground" />
+                            <Unlinked className="text-muted-foreground" />
                             Add Static Component
                           </DropdownMenuItem>
                           <DropdownMenuSub>
                             <DropdownMenuSubTrigger className="[&_svg:not([class*='text-'])]:text-muted-foreground gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-                              <Link2 className="text-muted-foreground" />
+                              <Linked className="text-muted-foreground" />
                               Add Monitor Component
                             </DropdownMenuSubTrigger>
                             <DropdownMenuSubContent className="p-0">
@@ -741,7 +741,7 @@ function ComponentRow({
       <div className="grid h-9 grid-cols-4 gap-2">
         <div className="flex flex-row items-center gap-1 self-center">
           <SortableItemHandle>
-            <GripVertical
+            <DragHandle
               size={16}
               aria-hidden="true"
               className="text-muted-foreground"
@@ -809,12 +809,12 @@ function ComponentRow({
               onClick={(e) => e.stopPropagation()}
               className="flex w-full items-center gap-2 truncate py-1.5 text-sm"
             >
-              <Link2 className="size-4 shrink-0" />{" "}
+              <Linked className="size-4 shrink-0" />{" "}
               <span className="truncate">{component.monitor.name}</span>
             </Link>
           ) : (
             <span className="text-muted-foreground flex items-center gap-2 text-sm">
-              <Link2Off className="size-4 shrink-0" />{" "}
+              <Unlinked className="size-4 shrink-0" />{" "}
               <span className="truncate">Static Component</span>
             </span>
           )}
@@ -827,14 +827,14 @@ function ComponentRow({
                   {component.monitor.public ? (
                     <Tooltip>
                       <TooltipTrigger>
-                        <Eye className="text-muted-foreground size-4" />
+                        <Show className="text-muted-foreground size-4" />
                       </TooltipTrigger>
                       <TooltipContent>Public</TooltipContent>
                     </Tooltip>
                   ) : (
                     <Tooltip>
                       <TooltipTrigger>
-                        <EyeOff className="text-muted-foreground size-4" />
+                        <Hide className="text-muted-foreground size-4" />
                       </TooltipTrigger>
                       <TooltipContent>Private</TooltipContent>
                     </Tooltip>
@@ -863,7 +863,7 @@ function ComponentRow({
                 size="icon"
                 className="text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20 [&_svg]:text-destructive [&_svg]:size-4"
               >
-                <Trash2 />
+                <Delete />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -1001,7 +1001,7 @@ function ComponentGroupRow({
       <div className="grid grid-cols-4 gap-2 px-2 pt-2">
         <div className="flex flex-row items-center gap-1 self-center">
           <SortableItemHandle>
-            <GripVertical
+            <DragHandle
               size={16}
               aria-hidden="true"
               className="text-muted-foreground"
@@ -1036,7 +1036,7 @@ function ComponentGroupRow({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="w-full">
-                    <Plus />
+                    <Add />
                     Add Component
                   </Button>
                 </DropdownMenuTrigger>
@@ -1061,12 +1061,12 @@ function ComponentGroupRow({
                         ]);
                       }}
                     >
-                      <Link2Off className="text-muted-foreground" />
+                      <Unlinked className="text-muted-foreground" />
                       Add Static Component
                     </DropdownMenuItem>
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger className="[&_svg:not([class*='text-'])]:text-muted-foreground gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-                        <Link2 className="text-muted-foreground" />
+                        <Linked className="text-muted-foreground" />
                         Add Monitor Component
                       </DropdownMenuSubTrigger>
                       <DropdownMenuSubContent className="p-0">
@@ -1180,7 +1180,7 @@ function ComponentGroupRow({
                   ? { onClick: () => onDeleteGroup(group.id) }
                   : {})}
               >
-                <Trash2 />
+                <Delete />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, Globe, Lock } from "@openstatus/icons";
 import { formatRegionCode, groupByContinent } from "@openstatus/regions";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -18,7 +19,6 @@ import {
 } from "@openstatus/ui/components/ui/popover";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Globe, Lock } from "lucide-react";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 
 import { IconCloudProvider } from "@/components/common/icon-cloud-provider";

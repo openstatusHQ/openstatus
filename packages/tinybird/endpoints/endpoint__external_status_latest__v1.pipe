@@ -1,9 +1,9 @@
-TAGS "external_status"
+TOKEN "endpoint_external_status_latest__v1_endpoint_read_9973" READ
 
-NODE latest
+NODE endpoint
 SQL >
 
-    %
+%
     SELECT
         id,
         argMax(indicator, fetched_at) AS indicator,
@@ -18,4 +18,6 @@ SQL >
     {% end %}
     GROUP BY id
 
-TYPE ENDPOINT
+TYPE endpoint
+
+

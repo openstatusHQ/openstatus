@@ -7,6 +7,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { LimitExceededError } from "../errors";
 import {
@@ -31,6 +32,7 @@ export async function updateMonitorSchedulingRegions(args: {
   input: UpdateMonitorSchedulingRegionsInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdateMonitorSchedulingRegionsInput.parse(args.input);
   const limits = ctx.workspace.limits;
 
@@ -104,6 +106,7 @@ export async function updateMonitorTags(args: {
   input: UpdateMonitorTagsInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdateMonitorTagsInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -157,6 +160,7 @@ export async function updateMonitorNotifiers(args: {
   input: UpdateMonitorNotifiersInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdateMonitorNotifiersInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { System, Dark, Add, Light, Close } from "@openstatus/icons";
 import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -28,7 +29,6 @@ import {
 import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { Laptop, Moon, Plus, Sun, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -50,9 +50,9 @@ const SLUG_PATTERN_MESSAGE =
   "Only use digits (0-9), hyphen (-) or lowercase characters (a-z).";
 
 const FORCE_THEME_OPTIONS = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Laptop },
+  { value: "light", label: "Light", icon: Light },
+  { value: "dark", label: "Dark", icon: Dark },
+  { value: "system", label: "System", icon: System },
 ] as const;
 
 const schema = z.object({
@@ -268,7 +268,7 @@ export function CreatePageForm({
                             className="shrink-0"
                             onClick={() => remove(index)}
                           >
-                            <X className="size-4" />
+                            <Close className="size-4" />
                           </Button>
                         )}
                       </div>
@@ -285,7 +285,7 @@ export function CreatePageForm({
                 size="sm"
                 onClick={() => append({ name: "" })}
               >
-                <Plus className="mr-1 size-4" />
+                <Add className="mr-1 size-4" />
                 Add another
               </Button>
             )}

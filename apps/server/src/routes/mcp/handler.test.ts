@@ -97,6 +97,7 @@ describe("MCP transport", () => {
       "list_monitors",
       "list_notifications",
       "list_page_components",
+      "list_private_locations",
       "list_response_logs",
       "list_status_pages",
       "list_status_reports",

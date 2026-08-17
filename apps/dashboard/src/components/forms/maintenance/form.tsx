@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Calendar as CalendarIcon, Clock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
@@ -29,7 +30,6 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { addDays, format } from "date-fns";
-import { CalendarIcon, ClockIcon } from "lucide-react";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -246,7 +246,7 @@ export function FormMaintenance({
                             }}
                           />
                           <div className="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50">
-                            <ClockIcon size={16} aria-hidden="true" />
+                            <Clock size={16} aria-hidden="true" />
                           </div>
                         </div>
                       </div>
@@ -360,7 +360,7 @@ export function FormMaintenance({
                             }}
                           />
                           <div className="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50">
-                            <ClockIcon size={16} aria-hidden="true" />
+                            <Clock size={16} aria-hidden="true" />
                           </div>
                         </div>
                       </div>

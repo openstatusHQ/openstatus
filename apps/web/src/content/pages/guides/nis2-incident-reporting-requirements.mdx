@@ -1,0 +1,164 @@
+---
+title: "NIS2 Incident Reporting Requirements"
+hero: "NIS2 Incident Reporting: The 24/72/One-Month Cascade, and What You Owe Your Users"
+description: "NIS2 Article 23: the 24h/72h/one-month cascade to your CSIRT, and the separate duty to notify your own service recipients."
+author: "openstatus"
+publishedAt: "2026-07-26"
+category: "compliance"
+faq:
+  - question: "What are the NIS2 incident reporting deadlines?"
+    answer: "Three stages under Article 23(4). An early warning within 24 hours of becoming aware of a significant incident. A full incident notification within 72 hours of becoming aware, updating the early warning with an initial assessment of severity, impact, and any indicators of compromise. A final report within one month of the incident notification, covering root cause and remedial measures. If the incident is still ongoing when the final report is due, you submit a progress report instead and the final report follows within one month of the incident being handled."
+  - question: "Does NIS2 require me to tell my customers about incidents?"
+    answer: "Yes, separately from regulator reporting. Article 23(1) requires entities to notify the recipients of their services, without undue delay, of significant incidents likely to adversely affect the provision of that service. Article 23(2) adds that where a significant cyber threat exists, you inform recipients of measures or remedies they can take."
+  - question: "Can a status page satisfy NIS2 reporting obligations?"
+    answer: "It can serve the Article 23(1) obligation to notify service recipients. It cannot serve the 24-hour, 72-hour, or one-month reports — those go to your CSIRT or competent authority through a designated national channel, usually a specific portal or form. Publishing to a status page is not notifying a regulator."
+  - question: "What counts as a significant incident under NIS2?"
+    answer: "Article 23(3) sets the baseline: an incident is significant if it has caused or is capable of causing severe operational disruption of the services or financial loss for the entity concerned, or has affected or is capable of affecting other natural or legal persons by causing considerable material or non-material damage. Implementing acts add quantitative thresholds for certain digital infrastructure and digital provider sectors, and national transpositions may add detail."
+  - question: "When did NIS2 take effect?"
+    answer: "The directive entered into force in January 2023 with a member state transposition deadline of 17 October 2024. Because it is a directive rather than a regulation, the binding rules are in each member state's national law, and transposition ran late in a number of countries. Check the national implementation that applies to you rather than the directive text alone."
+---
+
+[NIS2](https://eur-lex.europa.eu/eli/dir/2022/2555/oj) — Directive (EU) 2022/2555 — gets discussed as though it were one obligation. It is at least two, they run on different clocks, and they go to different audiences. Conflating them is the most common mistake in vendor content on this topic.
+
+- **Reporting to the state.** A three-stage cascade to your CSIRT or competent authority. 24 hours, 72 hours, one month.
+- **Notifying your own users.** A separate duty under Article 23(1), owed to the recipients of your services, with no fixed clock — "without undue delay."
+
+A status page addresses the second. It has nothing to do with the first.
+
+## Are you in scope?
+
+NIS2 covers **essential** and **important** entities, generally medium-sized or larger (50+ staff, or turnover and balance sheet above €10M), operating in listed sectors. Annex I covers energy, transport, banking, financial market infrastructure, health, drinking and waste water, digital infrastructure, ICT service management, public administration, and space. Annex II adds postal services, waste management, chemicals, food, manufacturing, digital providers, and research.
+
+For software companies the relevant hooks are usually **digital infrastructure** (cloud computing service providers, data centre services, CDNs, DNS, trust services) and **ICT service management** (managed service and managed security service providers). Some entities are in scope regardless of size — DNS providers, TLD registries, and trust service providers among them.
+
+If you land in one of those sectors, [Commission Implementing Regulation (EU) 2024/2690](https://eur-lex.europa.eu/eli/reg_impl/2024/2690/oj) is the one to read next: it sets out the technical and methodological requirements for Article 21 measures **and** the quantitative thresholds that define a significant incident for digital infrastructure and digital providers. It is where the vague word "significant" becomes numbers.
+
+<Aside type="caution" title="Check the national law, not the directive">
+NIS2 is a directive. The obligations that bind you live in your member state's transposition, which can differ on sector interpretation, thresholds, and the reporting channel. Transposition ran past the 17 October 2024 deadline in several countries. The directive tells you the shape; national law tells you the rules.
+</Aside>
+
+## The cascade — Article 23(4)
+
+| Stage | Deadline | Content |
+| --- | --- | --- |
+| Early warning | 24 hours from becoming aware | Whether the incident is suspected to be caused by unlawful or malicious acts, and whether it could have cross-border impact |
+| Incident notification | 72 hours from becoming aware | Updates the early warning; initial assessment of severity and impact; indicators of compromise where available |
+| Intermediate report | On request from the CSIRT or authority | Status updates |
+| Final report | One month from the incident notification | Detailed description, type of threat and root cause, applied and ongoing mitigation, cross-border impact where applicable |
+
+Two details that matter operationally.
+
+**The clock starts at awareness, not at occurrence.** An incident that began on Friday and was recognised on Monday starts its 24-hour clock on Monday. This makes your detection timestamp a regulated artifact — you should be able to say precisely when you became aware, and back it up.
+
+**Ongoing incidents get a progress report.** If the incident is not handled by the one-month mark, you submit a progress report and the final report is due within one month of the incident actually being handled.
+
+## The obligation people miss — Article 23(1)
+
+Buried at the end of Article 23(1):
+
+> Where appropriate, entities shall notify, without undue delay, the recipients of their services of significant incidents that are likely to adversely affect the provision of that service.
+
+And Article 23(2): where a significant cyber threat exists, you inform recipients of any measures or remedies they can take in response, and where appropriate, of the threat itself.
+
+This is a customer-communication duty with regulatory force. It is the part a status page genuinely serves — and the part with no template, no portal, and no deadline other than "without undue delay," which is exactly the kind of standard you want a documented, timestamped process for.
+
+<Aside type="tip" title="Make 'without undue delay' testable">
+An undefined standard is one you will be judged against after the fact. Write a target into your incident procedure — for example, recipients notified within 60 minutes of severity classification — and keep the record that shows you met it. A defensible process you can evidence beats an argument about what "undue" meant.
+</Aside>
+
+## Where a status page fits, and where it does not
+
+**Serves:**
+
+- Article 23(1) notification of service recipients, with a timestamped record of what was said and when.
+- Article 23(2) communication of measures recipients can take, where a threat affects them.
+- Evidence that your Article 21 incident handling measures include a functioning external communication step.
+- The detection timestamp that anchors your 24-hour clock, if your monitoring is what surfaced the incident.
+
+**Does not serve:**
+
+- The 24-hour early warning, the 72-hour notification, or the one-month final report. These go through your national channel — typically a designated CSIRT portal or form. There is no scenario in which publishing to a status page discharges them.
+- Incident classification. Deciding an incident is "significant" under Article 23(3) is a judgement call your procedure must define.
+- The Article 21 risk-management measures more broadly — supply chain security, cryptography, access control, vulnerability handling, business continuity, and the rest.
+- Management-body accountability under Article 20, including the requirement that management bodies approve the measures and undergo training.
+
+## Article 21, briefly
+
+The reporting duties sit on top of Article 21's baseline measures: risk analysis and information system security policies, incident handling, business continuity and crisis management, supply chain security, security in acquisition and development, effectiveness assessment, cyber hygiene and training, cryptography, human resources security and access control, and multi-factor authentication.
+
+**Incident handling and business continuity** are where monitoring and status communication live. That is two items on a list of ten, and the other eight are unaffected by any status page.
+
+## Penalties, for calibration
+
+Essential entities: up to €10 million or 2% of total worldwide annual turnover, whichever is higher. Important entities: up to €7 million or 1.4%. Member states can also suspend certifications and impose temporary management bans on essential entities. National transpositions vary in how they apply this.
+
+The reason to note it is proportion: the enforcement risk sits with the risk-management measures and the regulator reporting, not with how attractive your status page is.
+
+## A practical setup
+
+1. Establish whether you are in scope under your national law, and as essential or important.
+2. Identify your reporting channel — the specific CSIRT portal or form — **before** you need it. Finding it at hour 20 of a 24-hour window is not a plan. ENISA maintains the [CSIRTs Network](https://www.enisa.europa.eu/topics/eu-incident-response-and-cyber-crisis-management/csirts-network) and a [map of national cybersecurity organisations](https://www.enisa.europa.eu/topics/national-cyber-security-strategies/ncss-map/national-cyber-security-strategies-interactive-map/national-cybersecurity-organisations) if you need to find yours.
+3. Define, in writing, what makes an incident significant for you, with someone named to make the call.
+4. Set a target for notifying service recipients and record against it.
+5. Retain evidence for both duties. Openstatus retention runs 3 months on Starter, 12 months on Pro, and 24 months on Scale; regulator correspondence should be kept alongside it.
+6. Run the whole path once as a drill. The 24-hour clock is short, and the first time should not be a real incident.
+
+Openstatus covers step 4 and the evidence half of step 5 — a branded status page with timestamped incident history, email and RSS/Atom/JSON subscriber notification, and monitoring across 28 regions to anchor detection. Steps 1, 2, 3, and 6 are yours, and they are where the regulatory risk actually sits.
+
+## Primary sources
+
+All EU legislation is free to read on EUR-Lex, in every official language. Given how much secondary commentary on NIS2 is imprecise, go to the text.
+
+- [Directive (EU) 2022/2555 (NIS2)](https://eur-lex.europa.eu/eli/dir/2022/2555/oj) — Article 21 for measures, Article 23 for reporting, Annexes I and II for sectors.
+- [Commission Implementing Regulation (EU) 2024/2690](https://eur-lex.europa.eu/eli/reg_impl/2024/2690/oj) — technical requirements and the quantitative significance thresholds for digital infrastructure and digital providers.
+- [ENISA CSIRTs Network](https://www.enisa.europa.eu/topics/eu-incident-response-and-cyber-crisis-management/csirts-network) and the [national cybersecurity organisations map](https://www.enisa.europa.eu/topics/national-cyber-security-strategies/ncss-map/national-cyber-security-strategies-interactive-map/national-cybersecurity-organisations) — for locating your competent authority and reporting channel.
+
+<Aside type="caution" title="The directive is not the law that binds you">
+Your obligations live in your member state's transposition, which may differ on sector interpretation, thresholds, and reporting mechanics. Use the directive to understand the shape, then read the national act. This guide is background, not legal advice.
+</Aside>
+
+## Related reading
+
+- [DORA incident reporting](/guides/dora-incident-reporting-requirements) — the financial-sector regime, with a tighter clock
+- [SOC 2 and your status page](/guides/soc-2-status-page-requirements) — voluntary attestation rather than regulation
+- [Incident severity matrix](/guides/incident-severity-matrix) — for defining "significant" in advance
+- [Security incident response template](/guides/security-incident-response) — wording for recipient notification
+- [What is incident management](/guides/what-is-incident-management) — the process underneath Article 21
+
+## Frequently asked questions
+
+<Details summary="What are the NIS2 incident reporting deadlines?">
+
+Three stages under Article 23(4). An early warning within 24 hours of becoming aware of a significant incident. A full incident notification within 72 hours of becoming aware, updating the early warning with an initial assessment of severity, impact, and any indicators of compromise. A final report within one month of the incident notification, covering root cause and remedial measures. If the incident is still ongoing when the final report is due, you submit a progress report instead and the final report follows within one month of the incident being handled.
+
+</Details>
+
+<Details summary="Does NIS2 require me to tell my customers about incidents?">
+
+Yes, separately from regulator reporting. Article 23(1) requires entities to notify the recipients of their services, without undue delay, of significant incidents likely to adversely affect the provision of that service. Article 23(2) adds that where a significant cyber threat exists, you inform recipients of measures or remedies they can take.
+
+</Details>
+
+<Details summary="Can a status page satisfy NIS2 reporting obligations?">
+
+It can serve the Article 23(1) obligation to notify service recipients. It cannot serve the 24-hour, 72-hour, or one-month reports — those go to your CSIRT or competent authority through a designated national channel, usually a specific portal or form. Publishing to a status page is not notifying a regulator.
+
+</Details>
+
+<Details summary="What counts as a significant incident under NIS2?">
+
+Article 23(3) sets the baseline: an incident is significant if it has caused or is capable of causing severe operational disruption of the services or financial loss for the entity concerned, or has affected or is capable of affecting other natural or legal persons by causing considerable material or non-material damage. Implementing acts add quantitative thresholds for certain digital infrastructure and digital provider sectors, and national transpositions may add detail.
+
+</Details>
+
+<Details summary="When did NIS2 take effect?">
+
+The directive entered into force in January 2023 with a member state transposition deadline of 17 October 2024. Because it is a directive rather than a regulation, the binding rules are in each member state's national law, and transposition ran late in a number of countries. Check the national implementation that applies to you rather than the directive text alone.
+
+</Details>
+
+---
+
+<ButtonLink href="https://app.openstatus.dev">Start your status page</ButtonLink>
+
+---

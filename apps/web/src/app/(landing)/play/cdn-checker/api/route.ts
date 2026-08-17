@@ -6,14 +6,16 @@ import { z } from "zod";
 import { devProbeCdnRegion } from "@/lib/cdn-checker/dev-probe";
 import { validateCdnUrl } from "@/lib/cdn-checker/guards";
 import { probeCdnRegion } from "@/lib/cdn-checker/probe";
-import {
-  MAX_REQUESTS_PER_WINDOW,
-  RATE_LIMIT_WINDOW,
-  rateLimitCdnRequest,
-  rateLimitHeaders,
-} from "@/lib/cdn-checker/ratelimit";
 import type { CdnRegionResponse } from "@/lib/cdn-checker/schema";
 import { computeCdnSummary } from "@/lib/cdn-checker/summary";
+import {
+  PLAY_RATE_LIMIT_TIERS,
+  getClientIP,
+  rateLimitMessage,
+  ratelimitTiers,
+  retryAfterHeader,
+  tieredRateLimitHeaders,
+} from "@/lib/ratelimit";
 import { iteratorToStream, yieldMany } from "@/lib/stream";
 
 export const runtime = "edge";
@@ -95,24 +97,26 @@ export async function POST(request: Request) {
     return errorResponse("INVALID_REQUEST", guard.error, guard.status);
   }
 
-  const rl = await rateLimitCdnRequest("play-cdn", request.headers);
-  if (rl.status === "no-client-ip") {
+  const clientIP = getClientIP(request.headers);
+  if (!clientIP) {
     return errorResponse(
       "NO_CLIENT_IP",
       "Unable to determine client IP address",
       400,
     );
   }
-  if (rl.status === "limited") {
+
+  const rl = await ratelimitTiers(
+    `play-cdn:${clientIP}`,
+    PLAY_RATE_LIMIT_TIERS,
+  );
+  if (!rl.success) {
     return errorResponse(
       "RATE_LIMIT_EXCEEDED",
-      `You have exceeded the rate limit of ${MAX_REQUESTS_PER_WINDOW} requests per ${RATE_LIMIT_WINDOW} seconds`,
+      rateLimitMessage(rl.tier),
       429,
       { limit: rl.limit, remaining: rl.remaining, reset: rl.reset },
-      {
-        ...rateLimitHeaders(rl),
-        "Retry-After": Math.ceil((rl.reset - Date.now()) / 1000).toString(),
-      },
+      { ...tieredRateLimitHeaders(rl), ...retryAfterHeader(rl) },
     );
   }
 
@@ -134,7 +138,7 @@ export async function POST(request: Request) {
     headers: {
       "Content-Type": "application/x-ndjson",
       "Cache-Control": "no-store",
-      ...rateLimitHeaders(rl),
+      ...tieredRateLimitHeaders(rl),
     },
   });
 }

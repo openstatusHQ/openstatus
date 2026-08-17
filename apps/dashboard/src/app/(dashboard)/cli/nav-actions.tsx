@@ -1,3 +1,4 @@
+import { Docs } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Tooltip,
@@ -5,7 +6,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import { Book } from "lucide-react";
 
 import { NavFeedback } from "@/components/nav/nav-feedback";
 
@@ -22,7 +22,7 @@ export function NavActions() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <Book className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
+                <Docs className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
               </a>
             </Button>
           </TooltipTrigger>

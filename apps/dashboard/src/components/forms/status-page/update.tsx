@@ -1,6 +1,6 @@
+import { Info } from "@openstatus/icons";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
 import { Link } from "@/components/common/link";
@@ -61,11 +61,9 @@ export function FormStatusPageUpdate() {
     trpc.page.delete.mutationOptions({
       onSuccess: () => {
         router.push("/status-pages");
-        // NOTE: invalidate workspace to update the usage
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
-        // NOTE: invalidate status page list to update the usage
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });

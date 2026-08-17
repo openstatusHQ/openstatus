@@ -16,6 +16,7 @@ import {
   StepPaused,
   workflowStepSchema,
 } from "./monitor";
+import { handlePrivateLocationHealthCron } from "./private-location-health";
 import { handleUptimeFreezeCron } from "./uptime-freeze";
 
 const app = new Hono({ strict: false });
@@ -96,6 +97,10 @@ app.get("/external-incidents-prune", async (c) => {
 
 app.get("/uptime-freeze", async (c) => {
   return handleUptimeFreezeCron(c);
+});
+
+app.get("/private-location-health", async (c) => {
+  return handlePrivateLocationHealthCron(c);
 });
 
 app.get("/emails/follow-up", async (c) => {

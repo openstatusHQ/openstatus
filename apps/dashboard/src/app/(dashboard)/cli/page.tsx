@@ -1,18 +1,18 @@
 import {
+  Download,
+  FileJson,
+  ApiKey as KeyIcon,
+  Login,
+  Report,
+  StatusPage,
+  Terminal,
+} from "@openstatus/icons";
+import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
-import {
-  FileDown,
-  FileJson,
-  Key,
-  LogIn,
-  Megaphone,
-  PanelTop,
-  Terminal,
-} from "lucide-react";
 import React from "react";
 
 import { Code } from "@/components/common/code";
@@ -48,13 +48,13 @@ const installs = [
   },
   {
     title: "Login",
-    icon: LogIn,
+    icon: Login,
     description: "Save your API token for use in subsequent commands.",
     command: "openstatus login",
   },
   {
     title: "Add API Key",
-    icon: Key,
+    icon: KeyIcon,
     description: (
       <>
         Or set it as an environment variable. Create an API key in your
@@ -69,19 +69,19 @@ const installs = [
   },
   {
     title: "List Status Pages",
-    icon: PanelTop,
+    icon: StatusPage,
     description: "List all status pages in your workspace.",
     command: "openstatus status-page list",
   },
   {
     title: "List Status Reports",
-    icon: Megaphone,
+    icon: Report,
     description: "List all status reports in your workspace.",
     command: "openstatus status-report list",
   },
   {
     title: "Import Monitors",
-    icon: FileDown,
+    icon: Download,
     description: "Import monitors from your workspace to a YAML file.",
     command: "openstatus monitors import",
   },
@@ -170,6 +170,41 @@ mcp-server:
       compare: eq
       target: '{"result":{},"jsonrpc":"2.0","id":"openstatus"}'
 `,
+  },
+];
+
+const githubActions = [
+  {
+    description: "Run synthetic tests",
+    template: `name: OpenStatus
+on: [push]
+
+jobs:
+  run-synthetic-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: OpenStatus GitHub Action
+        uses: openstatusHQ/openstatus-github-action@v1
+        with:
+          api_key: \${{ secrets.OPENSTATUS_API_KEY }}`,
+  },
+  {
+    description: "Apply monitors configuration",
+    template: `name: OpenStatus
+on: [push]
+
+jobs:
+  apply-monitors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: OpenStatus CLI Action
+        uses: openstatusHQ/cli-action@v1
+        with:
+          args: monitors apply
+        env:
+          OPENSTATUS_API_TOKEN: \${{ secrets.OPENSTATUS_API_TOKEN }}`,
   },
 ];
 
@@ -299,7 +334,16 @@ export default function Page() {
             to to run synthetic tests in a GitHub action.
           </SectionDescription>
         </SectionHeader>
-        {/* TODO: add code example */}
+        <div className="flex flex-col gap-6">
+          {githubActions.map((action, i) => (
+            <div key={i} className="flex flex-col gap-0.5">
+              <p className="text-muted-foreground text-xs">
+                {action.description}
+              </p>
+              <Code>{action.template}</Code>
+            </div>
+          ))}
+        </div>
       </Section>
       <Section>
         <SectionHeader>

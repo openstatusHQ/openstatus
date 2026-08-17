@@ -29,9 +29,9 @@ faq:
   - question: "Why don't I see the openstatus tools after editing the config?"
     answer: "The two most common causes are not fully quitting Claude Desktop (it only loads MCP servers at launch — close the window is not enough, you have to Cmd+Q on macOS or File → Quit on Windows) and `npx` not being on the PATH that Claude Desktop sees. Install Node.js 18+ from nodejs.org if `node --version` is missing in your shell."
   - question: "Can Claude Desktop accidentally notify subscribers when posting an incident?"
-    answer: "No. Every mutation tool requires an explicit `notify: true | false` field. Claude must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag."
+    answer: "No. Every publishing tool (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) requires an explicit `notify: true | false` field. Claude must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag. `update_status_report` is metadata-only and has no notify path at all."
   - question: "How do I give Claude Desktop read-only access to my workspace?"
-    answer: "Create an API key with `read` scope. The MCP server filters mutation tools out of the `tools/list` response for read-only keys, so Claude Desktop only sees `list_status_pages`, `list_status_reports`, and `list_maintenances`."
+    answer: "Create an API key with `read` scope. The MCP server filters write tools out of the `tools/list` response for read-only keys, so Claude Desktop sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session."
   - question: "Where do MCP-driven changes appear in the audit log?"
     answer: "Every mutation routed through Claude Desktop lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the API key id and `actor_user_id` set to the user who created the key. This separates AI-driven actions from CLI, dashboard, and direct API mutations."
 ---
@@ -141,6 +141,50 @@ Three properties make this safe enough for a real incident:
 - **[Connect to Claude Code](/guides/connect-openstatus-to-claude-code)** — terminal-shaped variant of this guide.
 - **[Openstatus CLI](/tooling/cli)** — for terminal workflows that don't need an LLM in the loop.
 - **[Slack Agent](/status-page#slack-agent)** — for teams that live in Slack.
+
+## Frequently asked questions
+
+<Details summary="Does Claude Desktop support remote MCP servers like openstatus?">
+
+Yes, but indirectly. Claude Desktop launches MCP servers as local stdio processes, so a remote HTTP server like openstatus has to be bridged through `npx mcp-remote` — a small open-source proxy that translates Claude Desktop's stdio calls into HTTP requests. You configure `mcp-remote` once in `claude_desktop_config.json` and Claude Desktop treats openstatus like any other local server.
+
+</Details>
+
+<Details summary="Where is claude_desktop_config.json on macOS and Windows?">
+
+On macOS, the file lives at `~/Library/Application Support/Claude/claude_desktop_config.json`. On Windows, it lives at `%APPDATA%\Claude\claude_desktop_config.json`. Create the file if it does not exist.
+
+</Details>
+
+<Details summary="Do I need a separate MCP credential for Claude Desktop?">
+
+No. Authentication is the standard `x-openstatus-key` header — the same API key the openstatus CLI, REST API, and Terraform provider use. There is no MCP-specific OAuth flow.
+
+</Details>
+
+<Details summary="Why don't I see the openstatus tools after editing the config?">
+
+The two most common causes are not fully quitting Claude Desktop (it only loads MCP servers at launch — close the window is not enough, you have to Cmd+Q on macOS or File → Quit on Windows) and `npx` not being on the PATH that Claude Desktop sees. Install Node.js 18+ from nodejs.org if `node --version` is missing in your shell.
+
+</Details>
+
+<Details summary="Can Claude Desktop accidentally notify subscribers when posting an incident?">
+
+No. Every publishing tool (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) requires an explicit `notify: true | false` field. Claude must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag. `update_status_report` is metadata-only and has no notify path at all.
+
+</Details>
+
+<Details summary="How do I give Claude Desktop read-only access to my workspace?">
+
+Create an API key with `read` scope. The MCP server filters write tools out of the `tools/list` response for read-only keys, so Claude Desktop sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session.
+
+</Details>
+
+<Details summary="Where do MCP-driven changes appear in the audit log?">
+
+Every mutation routed through Claude Desktop lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the API key id and `actor_user_id` set to the user who created the key. This separates AI-driven actions from CLI, dashboard, and direct API mutations.
+
+</Details>
 
 ---
 

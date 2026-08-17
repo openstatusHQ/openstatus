@@ -13,6 +13,7 @@ export function formatMilliseconds(ms: number) {
   return `${Intl.NumberFormat("en-US", {
     style: "unit",
     unit: "millisecond",
+    maximumFractionDigits: 0,
   }).format(ms)}`;
 }
 
@@ -31,12 +32,12 @@ export function formatMillisecondsRange(min: number, max: number) {
   return `${formatMilliseconds(min)} - ${formatMilliseconds(max)}`;
 }
 
-export function formatPercentage(value: number) {
+export function formatPercentage(value: number, fractionDigits = 3) {
   if (Number.isNaN(value)) return "100%";
   return `${Intl.NumberFormat("en-US", {
     style: "percent",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(value)}`;
 }
 

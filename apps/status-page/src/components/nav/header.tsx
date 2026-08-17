@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Menu, Chat } from "@openstatus/icons";
 import { StatusPageGetInTouchIcon } from "@openstatus/ui/components/blocks/status-page-get-in-touch";
 import {
   StatusPageHeader,
@@ -23,7 +24,6 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { Menu, MessageCircleMore } from "lucide-react";
 import { useExtracted } from "next-intl";
 import NextLink from "next/link";
 import { useParams, usePathname } from "next/navigation";
@@ -152,7 +152,7 @@ export function Header({
           {page?.contactUrl ? (
             <StatusPageGetInTouchIcon>
               <a href={page.contactUrl} target="_blank" rel="noreferrer">
-                <MessageCircleMore />
+                <Chat />
                 <span className="sr-only">{t("Get in touch")}</span>
               </a>
             </StatusPageGetInTouchIcon>

@@ -1,3 +1,5 @@
+import type { IconType } from "@openstatus/icons";
+import { ChevronRight, More } from "@openstatus/icons";
 import {
   Collapsible,
   CollapsibleContent,
@@ -28,8 +30,6 @@ import {
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import type { LucideIcon } from "lucide-react";
-import { ChevronRight, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 
@@ -48,7 +48,7 @@ export type SidebarMetadataListItem = {
   /** Trailing meta on the row (e.g. "2m ago"). */
   meta?: React.ReactNode;
   /** Optional small leading icon. */
-  icon?: LucideIcon;
+  icon?: IconType;
   /** Click target — renders as `next/link` when set. */
   href?: string;
   /** Marks this row as the current selection. */
@@ -57,7 +57,7 @@ export type SidebarMetadataListItem = {
   actions?: {
     id: string;
     label: string;
-    icon: LucideIcon;
+    icon: IconType;
     variant: "default" | "destructive";
     onClick?: () => Promise<void> | void;
   }[];
@@ -231,7 +231,7 @@ function SidebarMetadataList({
                     // so override the variant directly and re-anchor at 50%.
                     className="bg-sidebar-accent before:from-sidebar-accent -translate-y-1/2 peer-data-[size=default]/menu-button:top-1/2 before:absolute before:inset-y-0 before:right-full before:-left-6 before:bg-gradient-to-l before:to-transparent focus-visible:ring-inset"
                   >
-                    <MoreHorizontal />
+                    <More />
                     <span className="sr-only">More</span>
                   </SidebarMenuAction>
                 </QuickActions>

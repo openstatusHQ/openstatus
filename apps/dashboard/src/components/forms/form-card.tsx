@@ -10,9 +10,9 @@ import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 
-// py-0
+// py-0; scroll-mt keeps `#anchor` deep-links clear of the sticky header + tabs.
 const formCardVariants = cva(
-  "group relative w-full gap-4 overflow-hidden py-0 shadow-none",
+  "group relative w-full scroll-mt-28 gap-4 overflow-hidden py-0 shadow-none",
   {
     variants: {
       variant: {

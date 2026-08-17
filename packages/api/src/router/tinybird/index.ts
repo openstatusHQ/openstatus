@@ -1,15 +1,12 @@
 import { type SQL, and, db, eq, inArray } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
-import { OSTinybird } from "@openstatus/tinybird";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { env } from "../../env";
+import { tb } from "../../tb";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { calculatePeriod } from "./utils";
-
-const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 const periods = ["1d", "7d", "14d", "30d", "90d"] as const;
 const types = ["http", "tcp", "dns", "icmp"] as const;
@@ -189,8 +186,10 @@ export function getGetProcedure(period: "14d", type: Type) {
 
 export function getGlobalMetricsProcedure(type: Type) {
   if (type === "http") return tb.httpGlobalMetricsDaily;
+  if (type === "tcp") return tb.tcpGlobalMetricsDaily;
+  if (type === "dns") return tb.dnsGlobalMetricsDaily;
   if (type === "icmp") return tb.icmpGlobalMetricsDaily;
-  return tb.tcpGlobalMetricsDaily;
+  throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 
 export function getUptimeProcedure(period: "7d" | "30d" | "90d", type: Type) {

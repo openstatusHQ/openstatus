@@ -1,9 +1,9 @@
 "use client";
 
 import { deserialize } from "@openstatus/assertions";
+import { Logs } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { Logs } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
@@ -38,8 +38,20 @@ export function Sidebar() {
             },
             {
               label: "Status",
-              // FIXME: dynamic
-              value: <span className="text-success">Normal</span>,
+              value: (
+                <span
+                  className={
+                    monitor.status === "error"
+                      ? "text-destructive"
+                      : monitor.status === "degraded"
+                        ? "text-warning"
+                        : "text-success"
+                  }
+                >
+                  {monitor.status.charAt(0).toUpperCase() +
+                    monitor.status.slice(1)}
+                </span>
+              ),
             },
             {
               label: "Type",
@@ -58,10 +70,28 @@ export function Sidebar() {
             },
             {
               label: "Regions",
-              value:
-                monitor.regions.length > 6
-                  ? `${monitor.regions.length} regions`
-                  : monitor.regions.join(", "),
+              value: (() => {
+                const allRegions = [
+                  ...monitor.regions,
+                  ...(monitor.privateLocations?.map((location) =>
+                    location.id.toString(),
+                  ) ?? []),
+                ];
+                // Sort regions: numeric sort for private location IDs, alphabetic for region codes
+                const sortedRegions = allRegions.sort((a, b) => {
+                  const aNum = Number(a);
+                  const bNum = Number(b);
+                  // If both are numeric, sort numerically
+                  if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return aNum - bNum;
+                  }
+                  // Otherwise, sort alphabetically
+                  return a.localeCompare(b);
+                });
+                return sortedRegions.length > 6
+                  ? `${sortedRegions.length} regions`
+                  : sortedRegions.join(", ");
+              })(),
             },
             {
               label: "Tags",

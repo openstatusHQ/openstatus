@@ -108,3 +108,41 @@ Watch a full migration from Instatus to openstatus in real time.
 - [Blog: Importing from Statuspage, Betterstack, and Instatus](/blog/import-from-statuspage-betterstack-instatus)
 - [Docs: How to import a status page](https://www.openstatus.dev/docs/guides/how-to-import-status-page)
 - [Top five Atlassian Statuspage alternatives](/guides/top-five-atlassian-statuspage-alternatives)
+
+## Frequently asked questions
+
+<Details summary="How does the Instatus import handle component groups?">
+
+openstatus automatically detects which Instatus components are groups vs regular components based on the group references in your data, and creates the correct hierarchy.
+
+</Details>
+
+<Details summary="Are Instatus webhook and Slack subscribers imported?">
+
+No. Only email subscribers are imported. Webhook, Slack, Discord, Microsoft Teams, Google Chat, and phone subscribers are skipped — you'll see a warning showing how many were skipped.
+
+</Details>
+
+<Details summary="How are Instatus maintenance windows imported?">
+
+Instatus maintenances have a start time and duration. Openstatus calculates the end time as start + duration and imports them with the correct time range.
+
+</Details>
+
+<Details summary="Do incident statuses map correctly?">
+
+Yes. Instatus uses the same status names as openstatus (investigating, identified, monitoring, resolved), so the mapping is 1:1.
+
+</Details>
+
+<Details summary="Can I import from multiple Instatus pages?">
+
+You can specify a Page ID to import a specific page. Run the import once per page if you have multiple.
+
+</Details>
+
+<Details summary="Can I run the import multiple times?">
+
+Components, component groups, and subscribers are deduplicated — existing resources are skipped. However, incidents and maintenances are always inserted as new entries, so re-running will create duplicates for those.
+
+</Details>

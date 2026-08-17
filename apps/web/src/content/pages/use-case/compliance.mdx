@@ -14,12 +14,16 @@ faq:
   - question: "Can I use openstatus alongside Vanta or Drata?"
     answer: "Yes. openstatus handles the incident communication side of compliance while Vanta or Drata manage the broader audit automation. Your status page URL and incident history can be referenced in your compliance platform as evidence of your communication controls."
   - question: "How quickly can I be compliant?"
-    answer: "You can have a branded status page with custom domain, incident history, and subscriber notifications live in under 10 minutes. Every paid plan includes everything you need for SOC 2 incident communication compliance."
+    answer: "You can have a branded status page with custom domain, incident history, and subscriber notifications live in under 10 minutes. That covers the incident communication side — CC2.3 and parts of CC7 — not your whole SOC 2 scope. Check that your plan's data retention spans your audit period: a Type II observation window runs 3 to 12 months."
 ---
 
 ## Why SOC 2 auditors care about incident communication
 
 SOC 2's CC2.3 criteria (Communication with external parties) requires you to demonstrate incident communication processes — a mechanism for external users to report failures, open communication channels, and documentation of how incidents are communicated. Your auditor will ask: _"How do you notify stakeholders when something goes wrong?"_
+
+<Aside type="note" title="Looking for the detail rather than the pitch?">
+This page covers what openstatus does. If you want the requirements themselves — the criteria and articles, what evidence an auditor requests, and which parts a status page genuinely cannot help with — read the [compliance guides](/guides/category/compliance): [SOC 2](/guides/soc-2-status-page-requirements), [ISO 27001](/guides/iso-27001-incident-communication), [NIS2](/guides/nis2-incident-reporting-requirements), and [DORA](/guides/dora-incident-reporting-requirements).
+</Aside>
 
 SOC 2 doesn't prescribe a specific tool — you could use email, a support portal, or other channels. But a status page is the **fastest, most auditor-friendly** answer. It provides **timestamped, documented evidence** that you proactively inform users about outages, maintenance, and degraded performance.
 
@@ -32,7 +36,7 @@ When reviewing your incident communication controls, SOC 2 auditors typically ve
 - **Subscriber management**: Do affected parties have a way to receive updates?
 - **Consistent process**: Is your incident communication repeatable and reliable?
 
-Openstatus checks every box automatically.
+Openstatus covers all four. That is the incident communication control — the rest of your SOC 2 scope is a separate exercise.
 
 ## How openstatus helps
 
@@ -64,7 +68,88 @@ For internal services or client-specific deployments, protect your status page w
 4. Enable subscriber notifications
 5. You're audit-ready
 
-Every paid plan includes custom domain, incident history, subscriber notifications, and password protection — everything you need to satisfy SOC 2's incident communication requirements.
+Every paid plan includes custom domain, incident history, subscriber notifications, and password protection — the pieces SOC 2's incident communication criteria ask for. One thing to get right before you choose:
+
+<Aside type="caution" title="One thing to check before you pick a plan">
+Retention has to cover your audit period. A SOC 2 Type II observation window runs 3 to 12 months, and you cannot evidence availability for a period longer than your data goes back. Openstatus retains 14 days on Hobby, 3 months on Starter, 12 months on Pro, and 24 months on Scale. The [SOC 2 guide](/guides/soc-2-status-page-requirements) covers why this catches teams out.
+</Aside>
+
+## Not just SOC 2
+
+SOC 2 is the most common trigger, but it is not the only regime with an incident communication requirement — and the others are regulation rather than voluntary attestation.
+
+<Grid>
+<div>
+
+**SOC 2**
+
+CC2.3 for external communication, plus the CC7 incident response series and A1.1 if you carry Availability.
+
+[Read the guide](/guides/soc-2-status-page-requirements)
+
+</div>
+<div>
+
+**ISO 27001**
+
+Annex A controls A.5.24 through A.5.30 for incident management and ICT readiness, and A.8.16 for monitoring.
+
+[Read the guide](/guides/iso-27001-incident-communication)
+
+</div>
+<div>
+
+**NIS2**
+
+Article 23(1) requires notifying the recipients of your services of significant incidents — separately from the 24h/72h/one-month reports to your CSIRT.
+
+[Read the guide](/guides/nis2-incident-reporting-requirements)
+
+</div>
+<div>
+
+**DORA**
+
+Article 19(3) requires informing clients where a major incident affects their financial interests, and Article 14 requires a communication plan naming the channel.
+
+[Read the guide](/guides/dora-incident-reporting-requirements)
+
+</div>
+</Grid>
+
+Each guide maps the requirement to specific evidence, and is explicit about where a status page stops and your own process, procedures, and regulator filings begin.
+
+## Frequently asked questions
+
+<Details summary="What SOC 2 criteria relate to incident communication?">
+
+SOC 2's CC2.3 (Communication with external parties) requires you to demonstrate incident communication processes with external users — a mechanism to report failures, open communication channels, and documentation of how incidents are communicated. A status page with timestamped incident reports and subscriber notifications is the fastest way to satisfy this.
+
+</Details>
+
+<Details summary="Do I need a status page specifically for SOC 2?">
+
+No — SOC 2 CC2.3 requires you to demonstrate incident communication with external parties, but it doesn't prescribe a specific tool. You could use email notifications, a support portal, or other channels. That said, a status page is the fastest, most auditor-friendly way to satisfy the requirement and is increasingly considered standard practice.
+
+</Details>
+
+<Details summary="What evidence does openstatus provide for auditors?">
+
+Every status report, update, and resolution is timestamped and stored. You get a full incident history showing when issues were detected, communicated, and resolved. Subscriber notification logs show you proactively informed stakeholders. This creates an auditable trail without manual documentation.
+
+</Details>
+
+<Details summary="Can I use openstatus alongside Vanta or Drata?">
+
+Yes. openstatus handles the incident communication side of compliance while Vanta or Drata manage the broader audit automation. Your status page URL and incident history can be referenced in your compliance platform as evidence of your communication controls.
+
+</Details>
+
+<Details summary="How quickly can I be compliant?">
+
+You can have a branded status page with custom domain, incident history, and subscriber notifications live in under 10 minutes. That covers the incident communication side — CC2.3 and parts of CC7 — not your whole SOC 2 scope. Check that your plan's data retention spans your audit period: a Type II observation window runs 3 to 12 months.
+
+</Details>
 
 ---
 

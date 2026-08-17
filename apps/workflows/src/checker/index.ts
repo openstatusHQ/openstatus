@@ -1,5 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq, inArray, isNull, schema } from "@openstatus/db";
+import { and, db, eq, inArray, schema } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import {
@@ -13,6 +13,7 @@ import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications, upsertMonitorStatus } from "./alerting";
+import { findOpenIncident, resolveIncident } from "./incident-utils";
 import { updateStatusPrivate } from "./private-location";
 
 export const checkerRoute = new Hono<Env>();
@@ -30,60 +31,6 @@ const payloadSchema = z.object({
 });
 
 const logger = getLogger(["workflow"]);
-
-/**
- * Finds an open incident (not resolved and not acknowledged) for the given monitor.
- */
-async function findOpenIncident(monitorId: number) {
-  return db
-    .select()
-    .from(incidentTable)
-    .where(
-      and(
-        eq(incidentTable.monitorId, monitorId),
-        isNull(incidentTable.resolvedAt),
-      ),
-    )
-    .get();
-}
-
-/**
- * Resolves an open incident by setting resolvedAt and autoResolved flag.
- */
-async function resolveIncident(params: {
-  monitorId: string;
-  cronTimestamp: number;
-}) {
-  const { monitorId, cronTimestamp } = params;
-  const incident = await findOpenIncident(Number(monitorId));
-
-  if (!incident || incident.resolvedAt) {
-    return null;
-  }
-
-  logger.info("Recovering incident", {
-    incident_id: incident.id,
-    monitor_id: monitorId,
-  });
-
-  await db
-    .update(incidentTable)
-    .set({
-      resolvedAt: new Date(cronTimestamp),
-      autoResolved: true,
-    })
-    .where(eq(incidentTable.id, incident.id))
-    .run();
-
-  await checkerAudit.publishAuditLog({
-    id: `monitor:${monitorId}`,
-    action: "incident.resolved",
-    targets: [{ id: monitorId, type: "monitor" }],
-    metadata: { cronTimestamp, incidentId: incident.id },
-  });
-
-  return incident;
-}
 
 checkerRoute.post("/updateStatus", async (c) => {
   const auth = c.req.header("Authorization");
@@ -233,7 +180,8 @@ checkerRoute.post("/updateStatus", async (c) => {
 
         let incident = null;
         if (monitor.status === "error") {
-          incident = await resolveIncident({ monitorId, cronTimestamp });
+          const incidents = await resolveIncident({ monitorId, cronTimestamp });
+          incident = incidents[0] ?? null;
         }
 
         triggeredNotifications = await triggerNotifications({
@@ -266,10 +214,11 @@ checkerRoute.post("/updateStatus", async (c) => {
 
         let incident = null;
         if (monitor.status === "error") {
-          incident = await resolveIncident({
+          const incidents = await resolveIncident({
             monitorId,
             cronTimestamp,
           });
+          incident = incidents[0] ?? null;
         }
 
         triggeredNotifications = await triggerNotifications({

@@ -1,7 +1,7 @@
 "use client";
 
+import { StatusPage } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
-import { PanelTop } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
@@ -31,7 +31,7 @@ export function Breadcrumb() {
           type: "link",
           label: "Status Pages",
           href: "/status-pages",
-          icon: PanelTop,
+          icon: StatusPage,
         },
         {
           type: "link",

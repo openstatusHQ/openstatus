@@ -3,11 +3,17 @@ import type { User, Workspace } from "@openstatus/db/src/schema";
 
 /**
  * Result of resolving the active workspace for an authenticated user.
- * Both fields are guaranteed non-null on success.
+ * All fields are guaranteed non-null on success.
  */
 export type ActiveWorkspace = {
   user: User;
   workspace: Workspace;
+  /**
+   * Every workspace the user belongs to — the resolver already joins them
+   * to pick the active one, so `workspace.list` needs no query of its own.
+   * Always contains `workspace`.
+   */
+  workspaces: Workspace[];
 };
 
 export type ResolveActiveWorkspaceFailure =
@@ -54,5 +60,8 @@ export async function resolveActiveWorkspace(args: {
 
   const user = schema.selectUserSchema.parse(userProps);
   const workspace = schema.selectWorkspaceSchema.parse(activeWorkspace);
-  return { ok: true, value: { user, workspace } };
+  const workspaces = (usersToWorkspaces ?? []).map((row) =>
+    schema.selectWorkspaceSchema.parse(row.workspace),
+  );
+  return { ok: true, value: { user, workspace, workspaces } };
 }

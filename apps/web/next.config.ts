@@ -49,10 +49,22 @@ const agentDiscoveryHeaders = [
   },
 ];
 
+// ICON_SET=nucleo swaps the icon set at resolution time (see packages/icons)
+const useNucleoIcons = process.env.ICON_SET === "nucleo";
+
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@openstatus/ui", "@openstatus/api", "next-mdx-remote"],
+  turbopack: useNucleoIcons
+    ? { resolveAlias: { "@openstatus/icons": "@openstatus/icons/nucleo" } }
+    : undefined,
+  webpack: (config) => {
+    if (useNucleoIcons) {
+      config.resolve.alias["@openstatus/icons$"] = "@openstatus/icons/nucleo";
+    }
+    return config;
+  },
   env: {
     OPENSTATUS_MCP_SERVER_VERSION: readMcpServerVersion(),
   },
@@ -68,6 +80,8 @@ const nextConfig: NextConfig = {
   experimental: {
     turbopackScopeHoisting: false,
     // serverMinification:false,
+    // barrel-optimize only when unaliased — the rewrite would bypass the nucleo alias
+    optimizePackageImports: useNucleoIcons ? [] : ["@openstatus/icons"],
   },
   serverExternalPackages: ["@google-cloud/tasks"],
   expireTime: 180, // 3 minutes

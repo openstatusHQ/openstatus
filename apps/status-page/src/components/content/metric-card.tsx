@@ -1,8 +1,8 @@
+import { ChevronDown, ChevronUp } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { cn } from "@openstatus/ui/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
-import { ChevronDown, ChevronUp } from "lucide-react";
 
 const metricCardVariants = cva(
   "text-card-foreground flex flex-col gap-1 rounded-lg border px-3 py-2",

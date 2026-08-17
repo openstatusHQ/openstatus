@@ -1,6 +1,6 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import type { IconType } from "@openstatus/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,7 +10,7 @@ interface NavTabsProps {
   items: {
     value: string;
     label: string;
-    icon: LucideIcon;
+    icon: IconType;
     href: string;
   }[];
 }

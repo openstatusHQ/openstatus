@@ -12,6 +12,10 @@ import {
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import {
+  createPage,
+  createTestWorkspace,
+} from "@openstatus/db/src/test/factories";
+import {
   MOCK_COMPONENTS,
   MOCK_COMPONENT_GROUPS,
   MOCK_INCIDENTS,
@@ -69,7 +73,16 @@ function restoreFetch() {
   globalThis.fetch = originalFetch;
 }
 
-function makeCaller(limitsOverride?: Partial<Limits>, workspaceId = 1) {
+// Own workspace + page: the import assertions count page components, which
+// only holds if no sibling suite writes to the same page.
+let TEST_WORKSPACE_ID: number;
+let OTHER_WORKSPACE_ID: number;
+let TEST_PAGE_ID: number;
+
+function makeCaller(
+  limitsOverride?: Partial<Limits>,
+  workspaceId = TEST_WORKSPACE_ID,
+) {
   const limits = { ...allPlans.starter.limits, ...limitsOverride };
   const ctx = createInnerTRPCContext({
     req: undefined,
@@ -182,7 +195,7 @@ async function cleanup() {
   // entity. The entities are gone but the rows are not — and
   // INTEGER PRIMARY KEY ids recycle, so a later test inserting into the
   // same table can land on an id that already has an audit row,
-  // inheriting its actor attribution. See docs/adr/test-audit-cleanup.md.
+  // inheriting its actor attribution. See packages/services/AGENTS.md.
   await Promise.all([
     clearAuditLogFor({ entityType: "page", entityIds: createdIds.pages }),
     clearAuditLogFor({
@@ -251,16 +264,20 @@ function trackCreatedIds(summary: {
 // Tests
 // ---------------------------------------------------------------------------
 
-beforeAll(() => {
+let caller: ReturnType<typeof makeCaller>;
+
+beforeAll(async () => {
   mockStatuspageFetch();
+  TEST_WORKSPACE_ID = (await createTestWorkspace()).workspace.id;
+  OTHER_WORKSPACE_ID = (await createTestWorkspace()).workspace.id;
+  TEST_PAGE_ID = (await createPage(TEST_WORKSPACE_ID)).id;
+  caller = makeCaller();
 });
 
 afterAll(async () => {
   restoreFetch();
   await cleanup();
 });
-
-const caller = makeCaller();
 
 test("preview returns mapped data without DB writes", async () => {
   const result = await caller.import.preview({
@@ -317,7 +334,7 @@ test("run creates page, components, and groups in DB", async () => {
   if (!dbPage)
     throw new Error("Expected page to be created with slug 'acmecorp'");
   expect(dbPage.title).toBe("Acme Corp Status");
-  expect(dbPage.workspaceId).toBe(1);
+  expect(dbPage.workspaceId).toBe(TEST_WORKSPACE_ID);
 
   // Components should be created
   const dbComponents = await db
@@ -347,7 +364,7 @@ test("run with existing pageId imports into that page", async () => {
   const result = await caller.import.run({
     provider: "statuspage",
     apiKey: "test-key",
-    pageId: 1,
+    pageId: TEST_PAGE_ID,
     options: { includeStatusReports: false, includeSubscribers: false },
   });
 
@@ -358,13 +375,13 @@ test("run with existing pageId imports into that page", async () => {
   // Page phase should show "skipped" since we used an existing page
   const pagePhase = result.phases.find((p) => p.phase === "page");
   expect(pagePhase?.resources[0]?.status).toBe("skipped");
-  expect(pagePhase?.resources[0]?.openstatusId).toBe(1);
+  expect(pagePhase?.resources[0]?.openstatusId).toBe(TEST_PAGE_ID);
 
   // Components should be created under page 1
   const dbComponents = await db
     .select()
     .from(pageComponent)
-    .where(eq(pageComponent.pageId, 1))
+    .where(eq(pageComponent.pageId, TEST_PAGE_ID))
     .all();
   // At least the components we imported should exist
   const importedCompNames = MOCK_COMPONENTS.map((c) => c.name);
@@ -476,7 +493,10 @@ test("preview shows component limit warning on free plan", async () => {
   // starts at 0 — workspace 1 has 2 seeded page components from the
   // shared seed, which would make `remaining = 1` instead of 3 and
   // change the warning wording.
-  const c = makeCaller({ ...freeLimits, "page-components": 3 }, 2);
+  const c = makeCaller(
+    { ...freeLimits, "page-components": 3 },
+    OTHER_WORKSPACE_ID,
+  );
   const result = await c.import.preview({
     provider: "statuspage",
     apiKey: "test-key",
@@ -534,7 +554,7 @@ test("run enforces component limit by truncating", async () => {
   const [testPage] = await db
     .insert(page)
     .values({
-      workspaceId: 1,
+      workspaceId: TEST_WORKSPACE_ID,
       title: "Truncation Test Page",
       description: "",
       slug: "truncation-test",

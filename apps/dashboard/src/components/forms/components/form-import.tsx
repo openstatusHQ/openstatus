@@ -1,11 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Warning } from "@openstatus/icons";
 import {
   BetterstackIcon,
+  ChecklyIcon,
   InstatusIcon,
   StatuspageIcon,
-} from "@openstatus/icons";
+} from "@openstatus/icons/brand";
 import type { ImportSummary } from "@openstatus/importers/types";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -26,7 +28,6 @@ import {
 import { Switch } from "@openstatus/ui/components/ui/switch";
 import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { AlertTriangle } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -46,11 +47,13 @@ import {
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
-  provider: z.enum(["statuspage", "betterstack", "instatus"]),
+  provider: z.enum(["statuspage", "betterstack", "instatus", "checkly"]),
   apiKey: z.string().min(1, "API key is required"),
   statuspagePageId: z.string().optional(),
   betterstackStatusPageId: z.string().optional(),
   instatusPageId: z.string().optional(),
+  checklyAccountId: z.string().optional(),
+  checklyStatusPageId: z.string().optional(),
   includeMonitors: z.boolean(),
   includeStatusReports: z.boolean(),
   includeSubscribers: z.boolean(),
@@ -89,6 +92,8 @@ export function FormImport({
       statuspagePageId: "",
       betterstackStatusPageId: "",
       instatusPageId: "",
+      checklyAccountId: "",
+      checklyStatusPageId: "",
       includeMonitors: true,
       includeStatusReports: true,
       includeSubscribers: false,
@@ -102,6 +107,8 @@ export function FormImport({
   const watchStatuspagePageId = form.watch("statuspagePageId");
   const watchBetterstackStatusPageId = form.watch("betterstackStatusPageId");
   const watchInstatusPageId = form.watch("instatusPageId");
+  const watchChecklyAccountId = form.watch("checklyAccountId");
+  const watchChecklyStatusPageId = form.watch("checklyStatusPageId");
 
   const previewMutation = useMutation(
     trpc.import.preview.mutationOptions({
@@ -121,6 +128,10 @@ export function FormImport({
       form.setError("apiKey", { message: "API key is required" });
       return;
     }
+    if (watchProvider === "checkly" && !form.getValues("checklyAccountId")) {
+      form.setError("checklyAccountId", { message: "Account ID is required" });
+      return;
+    }
     previewMutation.mutate({
       provider: watchProvider,
       apiKey: watchApiKey,
@@ -135,6 +146,14 @@ export function FormImport({
       instatusPageId:
         watchProvider === "instatus"
           ? watchInstatusPageId || undefined
+          : undefined,
+      checklyAccountId:
+        watchProvider === "checkly"
+          ? watchChecklyAccountId || undefined
+          : undefined,
+      checklyStatusPageId:
+        watchProvider === "checkly"
+          ? watchChecklyStatusPageId || undefined
           : undefined,
       pageId,
     });
@@ -236,6 +255,18 @@ export function FormImport({
                           Instatus
                         </FormLabel>
                       </FormItem>
+                      <FormItem className="border-input has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-ring/50 relative flex cursor-pointer flex-row items-center gap-3 rounded-md border px-2 py-3 text-center shadow-xs transition-[color,box-shadow] outline-none has-focus-visible:ring-[3px]">
+                        <FormControl>
+                          <RadioGroupItem value="checkly" className="sr-only" />
+                        </FormControl>
+                        <ChecklyIcon
+                          className="text-foreground size-4 shrink-0"
+                          aria-hidden="true"
+                        />
+                        <FormLabel className="text-foreground cursor-pointer text-xs leading-none font-medium after:absolute after:inset-0">
+                          Checkly
+                        </FormLabel>
+                      </FormItem>
                       <div className="text-muted-foreground col-span-1 self-end text-xs sm:place-self-end">
                         Missing a provider?{" "}
                         <a href="mailto:ping@openstatus.dev">Contact us</a>
@@ -265,7 +296,9 @@ export function FormImport({
                               ? "Bearer token"
                               : watchProvider === "instatus"
                                 ? "Bearer API key"
-                                : "OAuth API key"
+                                : watchProvider === "checkly"
+                                  ? "cu_xxxxxxxxxxxx"
+                                  : "OAuth API key"
                           }
                           {...field}
                         />
@@ -276,14 +309,18 @@ export function FormImport({
                           ? "Your Better Stack API token. Found in Better Stack > API tokens."
                           : watchProvider === "instatus"
                             ? "Your Instatus API key. Found in your Instatus account under Settings > API."
-                            : "Your Statuspage API key. Found in your Statuspage account under Manage Account > API."}{" "}
+                            : watchProvider === "checkly"
+                              ? "Your Checkly API key. Found in Checkly > User Settings > API keys."
+                              : "Your Statuspage API key. Found in your Statuspage account under Manage Account > API."}{" "}
                         <Link
                           href={
                             watchProvider === "betterstack"
                               ? "https://openstatus.dev/guides/migrate-from-betterstack"
                               : watchProvider === "instatus"
                                 ? "https://openstatus.dev/guides/migrate-from-instatus"
-                                : "https://openstatus.dev/guides/migrate-from-atlassian-statuspage"
+                                : watchProvider === "checkly"
+                                  ? "https://openstatus.dev/guides/migrate-from-checkly"
+                                  : "https://openstatus.dev/guides/migrate-from-atlassian-statuspage"
                           }
                         >
                           Full migration guide.
@@ -346,6 +383,43 @@ export function FormImport({
                     )}
                   />
                 ) : null}
+                {watchProvider === "checkly" ? (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="checklyAccountId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Account ID</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. 1a2b3c4d-..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                          <FormDescription>
+                            Your Checkly account ID. Found in Checkly under
+                            Account Settings → General.
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="checklyStatusPageId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status Page ID (optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. 1a2b3c4d-..." {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Import a specific status page. Leave empty to use
+                            the first available.
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                ) : null}
                 <Button
                   type="button"
                   variant="secondary"
@@ -379,13 +453,14 @@ export function FormImport({
                 </div>
                 {previewMutation.data.errors.length > 0 ? (
                   <Note color="error" size="sm">
-                    <AlertTriangle />
+                    <Warning />
                     <p className="text-sm">
                       {previewMutation.data.errors.join(" ")}
                     </p>
                   </Note>
                 ) : null}
-                {watchProvider === "betterstack" ? (
+                {watchProvider === "betterstack" ||
+                watchProvider === "checkly" ? (
                   <FormField
                     control={form.control}
                     name="includeMonitors"
@@ -449,7 +524,8 @@ export function FormImport({
                     </FormItem>
                   )}
                 />
-                {watchProvider !== "betterstack" ? (
+                {watchProvider !== "betterstack" &&
+                watchProvider !== "checkly" ? (
                   <FormField
                     control={form.control}
                     name="includeSubscribers"

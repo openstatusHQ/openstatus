@@ -1,13 +1,15 @@
-import { monitorStatusTable } from "@openstatus/db/src/schema";
+import { eq } from "@openstatus/db";
+import {
+  monitor,
+  monitorStatusTable,
+  privateLocation,
+  privateLocationToMonitors,
+} from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
@@ -19,6 +21,7 @@ import { getMonitorStatus } from "../get-monitor-status";
 import { getMonitorSummary } from "../get-monitor-summary";
 import { getResponseLog } from "../get-response-log";
 import { listResponseLogs } from "../list-response-logs";
+import { getPrivateLocationIdsByMonitor } from "../private-locations";
 
 const TEST_PREFIX = "svc-monitor-reads-test";
 
@@ -26,8 +29,8 @@ let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
+  const team = (await createWorkspaceFixture("team")).workspace;
+  const free = (await createWorkspaceFixture("free")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
   freeCtx = makeUserCtx(free, { userId: 2 });
 });
@@ -473,6 +476,194 @@ describe("listResponseLogs", () => {
           input: { monitorId: 999_999_999, limit: 10, offset: 0 },
         }),
       ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+});
+
+describe("getPrivateLocationIdsByMonitor", () => {
+  async function createHttpMonitor(ctx: ServiceContext, name: string) {
+    return createMonitor({
+      ctx,
+      input: {
+        name: `${TEST_PREFIX}-${name}`,
+        jobType: "http",
+        url: "https://example.com",
+        method: "GET",
+        headers: [],
+        assertions: [],
+        active: false,
+        regions: ["ams"],
+      },
+    });
+  }
+
+  test("groups private location ids by monitor across the input", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx: ServiceContext = { ...teamCtx, db: tx };
+      const mon1 = await createHttpMonitor(ctx, "group-mon1");
+      const mon2 = await createHttpMonitor(ctx, "group-mon2");
+      const mon3 = await createHttpMonitor(ctx, "group-mon3");
+
+      const [pl1] = await tx
+        .insert(privateLocation)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          name: `${TEST_PREFIX}-group-pl1`,
+          token: `${TEST_PREFIX}-group-pl1-token`,
+        })
+        .returning();
+      const [pl2] = await tx
+        .insert(privateLocation)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          name: `${TEST_PREFIX}-group-pl2`,
+          token: `${TEST_PREFIX}-group-pl2-token`,
+        })
+        .returning();
+
+      await tx.insert(privateLocationToMonitors).values([
+        { privateLocationId: pl1.id, monitorId: mon1.id },
+        { privateLocationId: pl2.id, monitorId: mon1.id },
+        { privateLocationId: pl1.id, monitorId: mon2.id },
+      ]);
+
+      const map = await getPrivateLocationIdsByMonitor({
+        ctx,
+        input: { monitorIds: [mon1.id, mon2.id, mon3.id] },
+      });
+
+      expect(map.get(mon1.id)).toEqual(
+        [pl1.id, pl2.id].sort((a, b) => a - b).map(String),
+      );
+      expect(map.get(mon2.id)).toEqual([String(pl1.id)]);
+      // monitor with no associations is absent from the map
+      expect(map.has(mon3.id)).toBe(false);
+    });
+  });
+
+  test("excludes private locations from another workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const teamTxCtx: ServiceContext = { ...teamCtx, db: tx };
+      const mon = await createHttpMonitor(teamTxCtx, "cross-ws-mon");
+
+      // A private location owned by the free workspace, wired to a team
+      // monitor. The workspace-scoped join must not surface it.
+      const [foreignPl] = await tx
+        .insert(privateLocation)
+        .values({
+          workspaceId: freeCtx.workspace.id,
+          name: `${TEST_PREFIX}-cross-ws-pl`,
+          token: `${TEST_PREFIX}-cross-ws-pl-token`,
+        })
+        .returning();
+      await tx
+        .insert(privateLocationToMonitors)
+        .values({ privateLocationId: foreignPl.id, monitorId: mon.id });
+
+      const map = await getPrivateLocationIdsByMonitor({
+        ctx: teamTxCtx,
+        input: { monitorIds: [mon.id] },
+      });
+
+      expect(map.has(mon.id)).toBe(false);
+    });
+  });
+
+  test("excludes soft-deleted attachments", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx: ServiceContext = { ...teamCtx, db: tx };
+      const mon = await createHttpMonitor(ctx, "soft-deleted");
+
+      const [pl] = await tx
+        .insert(privateLocation)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          name: `${TEST_PREFIX}-soft-deleted-pl`,
+          token: `${TEST_PREFIX}-soft-deleted-pl-token`,
+        })
+        .returning();
+      // A soft-deleted join row: the location no longer runs the monitor.
+      await tx.insert(privateLocationToMonitors).values({
+        privateLocationId: pl.id,
+        monitorId: mon.id,
+        deletedAt: new Date(),
+      });
+
+      const map = await getPrivateLocationIdsByMonitor({
+        ctx,
+        input: { monitorIds: [mon.id] },
+      });
+
+      expect(map.has(mon.id)).toBe(false);
+    });
+  });
+
+  test("excludes attachments whose monitor was soft-deleted", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx: ServiceContext = { ...teamCtx, db: tx };
+      const mon = await createHttpMonitor(ctx, "deleted-monitor");
+
+      const [pl] = await tx
+        .insert(privateLocation)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          name: `${TEST_PREFIX}-deleted-monitor-pl`,
+          token: `${TEST_PREFIX}-deleted-monitor-pl-token`,
+        })
+        .returning();
+      await tx
+        .insert(privateLocationToMonitors)
+        .values({ privateLocationId: pl.id, monitorId: mon.id });
+      await tx
+        .update(monitor)
+        .set({ deletedAt: new Date() })
+        .where(eq(monitor.id, mon.id));
+
+      const map = await getPrivateLocationIdsByMonitor({
+        ctx,
+        input: { monitorIds: [mon.id] },
+      });
+
+      expect(map.has(mon.id)).toBe(false);
+    });
+  });
+
+  test("excludes attachments whose monitor belongs to another workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      // Legacy/corrupt pivot: a team private location wired to a free-workspace
+      // monitor. The workspace-scoped monitor join must drop it.
+      const foreignMon = await createHttpMonitor(
+        { ...freeCtx, db: tx },
+        "foreign-monitor",
+      );
+      const [pl] = await tx
+        .insert(privateLocation)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          name: `${TEST_PREFIX}-foreign-monitor-pl`,
+          token: `${TEST_PREFIX}-foreign-monitor-pl-token`,
+        })
+        .returning();
+      await tx
+        .insert(privateLocationToMonitors)
+        .values({ privateLocationId: pl.id, monitorId: foreignMon.id });
+
+      const map = await getPrivateLocationIdsByMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: { monitorIds: [foreignMon.id] },
+      });
+
+      expect(map.has(foreignMon.id)).toBe(false);
+    });
+  });
+
+  test("returns an empty map for empty input", async () => {
+    await withTestTransaction(async (tx) => {
+      const map = await getPrivateLocationIdsByMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: { monitorIds: [] },
+      });
+      expect(map.size).toBe(0);
     });
   });
 });

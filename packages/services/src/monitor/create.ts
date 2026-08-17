@@ -3,15 +3,15 @@ import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { LimitExceededError } from "../errors";
+import { assertWithinLimit } from "../limits";
 import type { Monitor } from "../types";
 import {
-  countMonitorsInWorkspace,
   headersToDbJson,
   pickDefaultRegions,
   serialiseAssertions,
 } from "./internal";
 import { CreateMonitorInput } from "./schemas";
+import { assertMonitorUrlSafe } from "./url-safety";
 
 export async function createMonitor(args: {
   ctx: ServiceContext;
@@ -21,11 +21,14 @@ export async function createMonitor(args: {
   requireScope(ctx, "write");
   const input = CreateMonitorInput.parse(args.input);
 
+  assertMonitorUrlSafe({ jobType: input.jobType, url: input.url });
+
   return withTransaction(ctx, async (tx) => {
-    const existing = await countMonitorsInWorkspace(tx, ctx.workspace.id);
-    if (existing >= ctx.workspace.limits.monitors) {
-      throw new LimitExceededError("monitors", ctx.workspace.limits.monitors);
-    }
+    await assertWithinLimit({
+      tx,
+      workspaceId: ctx.workspace.id,
+      limit: "monitors",
+    });
 
     const defaults = pickDefaultRegions(ctx.workspace);
     const regions = input.regions ?? defaults.regions;
@@ -45,6 +48,14 @@ export async function createMonitor(args: {
         periodicity,
         regions: regions.join(","),
         assertions: serialiseAssertions(input.assertions),
+        description: input.description,
+        public: input.public,
+        timeout: input.timeout,
+        degradedAfter: input.degradedAfter,
+        retry: input.retry,
+        followRedirects: input.followRedirects,
+        otelEndpoint: input.otelEndpoint,
+        otelHeaders: headersToDbJson(input.otelHeaders),
         updatedAt: new Date(),
       })
       .returning()

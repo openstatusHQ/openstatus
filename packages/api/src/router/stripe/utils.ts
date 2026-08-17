@@ -180,12 +180,34 @@ export const FEATURES = [
     },
   },
   {
+    feature: "custom-theme",
+    price: {
+      monthly: {
+        priceIds: {
+          test: "price_1TwKPqBXJcTfzsyJqAu4Wqwh",
+          production: "price_1Tvv0zBXJcTfzsyJseLIjNnz",
+        },
+      },
+    },
+  },
+  {
     feature: "status-pages",
     price: {
       monthly: {
         priceIds: {
           test: "price_1Slrk8BXJcTfzsyJXQxshFU4",
           production: "price_1SlrkHBXJcTfzsyJIxHeKUYe",
+        },
+      },
+    },
+  },
+  {
+    feature: "sso",
+    price: {
+      monthly: {
+        priceIds: {
+          test: "price_1TySGYBXJcTfzsyJQFVFJi6N",
+          production: "price_1TySGYBXJcTfzsyJQFVFJi6N",
         },
       },
     },

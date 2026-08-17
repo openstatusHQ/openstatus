@@ -1,0 +1,20 @@
+---
+title: "SAML single sign-on"
+description: "Let your team sign in to openstatus through Okta, Entra ID, or any SAML identity provider."
+publishedAt: "2026-07-29"
+category: "company"
+author: "openstatus"
+image: "/assets/changelog/sso.png"
+---
+
+Your team can now sign in to openstatus through your own identity provider. **Okta, Entra ID, Google Workspace, OneLogin**, and generic SAML are all supported.
+
+Head to **Settings → SSO**, enable it, and verify your domain with a DNS TXT record. Verification is not optional: openstatus only accepts an SSO sign-in when the email your identity provider asserts belongs to a domain you own. Then connect your provider and you're done.
+
+On the login page your team selects **Sign in with SSO** and enters their work email — they're redirected to your identity provider and added to the workspace as members on first login. Signing in from your provider's app tile works too. Anyone who already has an openstatus account with the same email keeps it, along with their role.
+
+GitHub and Google stay available — SSO is an additional way in, not a replacement.
+
+SSO is a paid add-on, available on the Starter, Team, and Scale plans. Self-hosting? Point the dashboard at any OIDC provider with `AUTH_OIDC_ISSUER`, `AUTH_OIDC_ID`, and `AUTH_OIDC_SECRET` instead.
+
+Follow the [guide](/docs/guides/how-to-set-up-saml-sso) to set it up.

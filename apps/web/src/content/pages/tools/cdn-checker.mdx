@@ -97,3 +97,29 @@ With OpenStatus, you can:
 - Monitor cache status continuously with header assertions and get alerted when caching breaks.
 
 If you'd like to request additional test regions or providers, feel free to contact us at [ping@openstatus.dev](mailto:ping@openstatus.dev).
+
+## Frequently asked questions
+
+<Details summary="What is a CDN cache checker?">
+
+A CDN cache checker tests whether your CDN is serving content from its edge cache instead of your origin server. OpenStatus requests your URL from 28 regions worldwide and reads the cache headers (cf-cache-status, x-cache, x-vercel-cache, age) to report HIT, MISS, EXPIRED, STALE, BYPASS or DYNAMIC per region.
+
+</Details>
+
+<Details summary="Why does my CDN return MISS in some regions?">
+
+CDN caches are regional: each edge location keeps its own copy. A MISS in a region usually means no user has requested the asset from that edge recently, the TTL expired, or your cache rules exclude it. The first request from a region is always a MISS — run the check again to confirm whether the edge cached the response.
+
+</Details>
+
+<Details summary="How do I know what CDN a website is using?">
+
+CDNs add identifying response headers. Cloudflare adds cf-ray and cf-cache-status, Amazon CloudFront adds x-amz-cf-id and x-amz-cf-pop, Fastly adds x-served-by, Vercel adds x-vercel-id. The CDN Cache Checker fingerprints these headers automatically and shows the detected provider.
+
+</Details>
+
+<Details summary="What is the difference between anycast and unicast CDNs?">
+
+With anycast, every edge location announces the same IP address and the network routes users to the nearest one. With unicast or GeoDNS, DNS hands out different IP addresses per region. Anycast typically fails over faster; GeoDNS gives the provider more routing control. The checker infers the topology from the responses.
+
+</Details>

@@ -69,3 +69,29 @@ Every mutation lands in the audit log under `actor_type = 'api'`, so you can tra
 ## Reference
 
 Full schema and methods in the [API reference](https://api.openstatus.dev/openapi). SDK docs at [jsr.io/@openstatus/sdk-node](https://jsr.io/@openstatus/sdk-node).
+
+## Frequently asked questions
+
+<Details summary="Should I use the SDK or call the API directly?">
+
+Use the Node SDK if you're writing TypeScript or JavaScript — it handles auth, retries, and types for every endpoint. Call the API directly via curl or your language's HTTP client if you're outside the JS ecosystem; ConnectRPC means responses are plain JSON over HTTP.
+
+</Details>
+
+<Details summary="Is the API REST or RPC?">
+
+It's ConnectRPC — JSON over HTTP, but with a typed RPC contract instead of REST conventions. Every method is a POST to `/rpc/openstatus.v1.<Service>/<Method>`. You can call it from curl exactly like you'd call a REST endpoint.
+
+</Details>
+
+<Details summary="How do I authenticate?">
+
+Pass the x-openstatus-key header on every request. Generate a key from Settings → API Tokens — the same key works for the CLI, Terraform provider, and MCP server.
+
+</Details>
+
+<Details summary="Do you publish an OpenAPI spec?">
+
+Yes. The full schema is browsable at api.openstatus.dev/openapi and is the source of truth for the Node SDK and any generated clients.
+
+</Details>

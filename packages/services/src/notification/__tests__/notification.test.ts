@@ -3,18 +3,16 @@ import {
   monitor,
   notification,
   notificationsToMonitors,
+  selectWorkspaceSchema,
+  workspace,
 } from "@openstatus/db/src/schema";
+import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
-  cleanQuotaGatedTables,
   expectAuditRow,
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
@@ -37,17 +35,34 @@ let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let teamMonitorId: number;
 
-beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
-  teamCtx = makeUserCtx(team, { userId: 1 });
-  freeCtx = makeUserCtx(free, { userId: 2 });
+// Dedicated, freshly-inserted free-plan workspace for the quota-sensitive
+// negative-path tests (`notification-channels: 1`). The shared seeded free
+// workspace (#2) is written concurrently by the apps/server RPC suites under
+// parallel test execution, which intermittently exhausts the quota and fails
+// the wrong assertion. An isolated workspace removes that cross-suite race;
+// every test writes inside a rolled-back transaction, so its committed
+// notification count stays at zero for the whole suite.
+const FREE_WS_SLUG = `${TEST_PREFIX}-free-ws`;
 
-  // Clear quota-gated rows on the free workspace so
-  // `notification-channels: 1` (free plan) can actually be exercised
-  // by negative-path tests — any leftover row from prior runs tripped
-  // `LimitExceededError` before the intended assertion fired.
-  await cleanQuotaGatedTables(SEEDED_WORKSPACE_FREE_ID);
+beforeAll(async () => {
+  const team = (await createWorkspaceFixture("team")).workspace;
+  teamCtx = makeUserCtx(team, { userId: 1 });
+
+  await db
+    .delete(workspace)
+    .where(eq(workspace.slug, FREE_WS_SLUG))
+    .catch(() => undefined);
+  const freeRow = await db
+    .insert(workspace)
+    .values({
+      slug: FREE_WS_SLUG,
+      name: `${TEST_PREFIX}-free`,
+      plan: "free",
+      limits: JSON.stringify(getLimits("free")),
+    })
+    .returning()
+    .get();
+  freeCtx = makeUserCtx(selectWorkspaceSchema.parse(freeRow), { userId: 2 });
 
   const monitorRow = await db
     .insert(monitor)
@@ -69,6 +84,10 @@ afterAll(async () => {
   await db
     .delete(monitor)
     .where(eq(monitor.id, teamMonitorId))
+    .catch(() => undefined);
+  await db
+    .delete(workspace)
+    .where(eq(workspace.slug, FREE_WS_SLUG))
     .catch(() => undefined);
 });
 
@@ -326,7 +345,7 @@ describe("updateNotification", () => {
       const [inserted] = await tx
         .insert(notification)
         .values({
-          workspaceId: SEEDED_WORKSPACE_FREE_ID,
+          workspaceId: freeCtx.workspace.id,
           name: `${TEST_PREFIX}-downgrade-gate`,
           provider: "pagerduty",
           data: JSON.stringify({
@@ -413,6 +432,27 @@ describe("list / get", () => {
         input: { limit: 100, offset: 0, order: "desc" },
       });
       expect(freeItems.find((n) => n.id === row.id)).toBeUndefined();
+    });
+  });
+});
+
+describe("notification-channel count quota", () => {
+  const input = (name: string) => ({
+    name,
+    provider: "email" as const,
+    data: { email: `${name}@openstatus.dev` },
+    monitors: [],
+  });
+
+  test("createNotification rejects once the plan's channel cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      // Free plan caps notification channels at 1.
+      const ctx = { ...freeCtx, db: tx };
+      await createNotification({ ctx, input: input(`${TEST_PREFIX}-cap-1`) });
+
+      await expect(
+        createNotification({ ctx, input: input(`${TEST_PREFIX}-cap-2`) }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
     });
   });
 });

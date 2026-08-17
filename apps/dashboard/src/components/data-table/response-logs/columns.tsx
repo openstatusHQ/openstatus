@@ -2,6 +2,7 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { Clock, ApiTrigger } from "@openstatus/icons";
 import {
   Tooltip,
   TooltipContent,
@@ -9,7 +10,6 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Clock, Workflow } from "lucide-react";
 
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { HoverCardTiming } from "@/components/common/hover-card-timing";
@@ -122,7 +122,7 @@ export function getColumns(
       cell: ({ row }) => {
         const value = row.getValue("trigger");
         if (value === "cron" || value === "api") {
-          const Icon = value === "cron" ? Clock : Workflow;
+          const Icon = value === "cron" ? Clock : ApiTrigger;
           const label = value === "cron" ? "Scheduled" : "API";
           return (
             <TooltipProvider>

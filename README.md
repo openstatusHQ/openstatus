@@ -55,6 +55,15 @@ Monitor your servers, websites and APIs from 28 regions across multiple cloud pr
 <a href="https://news.ycombinator.com/item?id=37740870"><img alt="Featured on Hacker News" src="https://hackerbadge.now.sh/api?id=37740870" style="width: 250px; height: 55px;" width="250" height="55" /></a>
 <a href="https://www.producthunt.com/posts/openstatus-2?utm_source=badge-top-post-badge&utm_medium=badge" target="_blank"><img alt="openstatus - #2 Product of the Day on Product Hunt" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=openstatus-2&theme=light&period=daily" style="width: 250px; height: 55px;" width="250" height="55" /></a>
 
+## Tooling
+
+Everything the dashboard does is reachable from your terminal, your infrastructure code, and your AI assistant — all sharing a single API key.
+
+- **[API](https://www.openstatus.dev/tooling/api)** — typed JSON-over-HTTP (ConnectRPC) with a [Node SDK](https://github.com/openstatusHQ/sdk-node)
+- **[CLI](https://www.openstatus.dev/tooling/cli)** — interactive for humans, `--json` for agents, YAML monitoring as code
+- **[Terraform](https://www.openstatus.dev/tooling/terraform)** — monitors, notifications, and status pages as HCL
+- **[MCP server](https://www.openstatus.dev/tooling/mcp-server)** — connect Claude, ChatGPT, Cursor, or any MCP client to your workspace
+
 ## Getting Started
 
 ### With Docker (Recommended)
@@ -97,6 +106,7 @@ ghcr.io/openstatushq/openstatus-checker:latest
 - [Node.js](https://nodejs.org/en/) >= 20.0.0
 - [pnpm](https://pnpm.io/) >= 10.26.0
 - [Bun](https://bun.sh/)
+- [Deno](https://deno.com/)
 - [Turso CLI](https://docs.turso.tech/quickstart).
 
 #### Dashboard

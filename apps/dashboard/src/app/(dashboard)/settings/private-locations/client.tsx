@@ -1,7 +1,7 @@
 "use client";
 import type { RouterOutputs } from "@openstatus/api";
+import { Lock } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Lock } from "lucide-react";
 import { useState } from "react";
 
 import { Link } from "@/components/common/link";
@@ -28,6 +28,8 @@ const EXAMPLES = [
     id: 1,
     name: "Private Location 1",
     token: "my-secret-token",
+    status: "active",
+    metadata: null,
     createdAt: new Date("2025-01-01"),
     updatedAt: new Date("2025-01-01"),
     workspaceId: 1,
@@ -39,6 +41,8 @@ const EXAMPLES = [
     id: 2,
     name: "Private Location 2",
     token: "my-secret-token",
+    status: "error",
+    metadata: null,
     createdAt: new Date("2025-01-01"),
     updatedAt: new Date("2025-01-01"),
     workspaceId: 1,

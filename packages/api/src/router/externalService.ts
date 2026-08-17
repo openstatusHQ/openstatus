@@ -19,21 +19,19 @@ import {
   getServiceReportWindows,
   recordExternalServiceReport,
 } from "@openstatus/services/external-service-report";
-import { OSTinybird } from "@openstatus/tinybird";
 import { redis } from "@openstatus/upstash";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { env } from "../env";
 import { toTRPCError } from "../service-adapter";
+import { tb } from "../tb";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   REPORT_THRESHOLD,
   REPORT_WINDOW_MS,
   computeEffectiveStatus,
 } from "./effective-status";
-
-const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 const DEFAULT_HISTORY_DAYS = 45;
 const INCIDENTS_LIMIT = 5;

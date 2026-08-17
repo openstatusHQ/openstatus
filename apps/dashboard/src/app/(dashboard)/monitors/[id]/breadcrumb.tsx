@@ -1,7 +1,7 @@
 "use client";
 
+import { Monitor } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Activity } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
@@ -25,7 +25,7 @@ export function Breadcrumb() {
   return (
     <NavBreadcrumb
       items={[
-        { type: "link", label: "Monitors", href: "/monitors", icon: Activity },
+        { type: "link", label: "Monitors", href: "/monitors", icon: Monitor },
         {
           type: "link",
           label: monitor.name,

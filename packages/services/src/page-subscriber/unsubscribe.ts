@@ -16,6 +16,9 @@ import { UnsubscribeSubscriberInput } from "./schemas";
  * second call on an already-unsubscribed row returns silently with no
  * audit emit.
  */
+// Token-addressed self-service by an anonymous visitor: the audit actor is
+// `subscriber`, for which `requireScope` is a documented no-op.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function unsubscribeSubscriber(args: {
   input: UnsubscribeSubscriberInput;
   db?: DB;

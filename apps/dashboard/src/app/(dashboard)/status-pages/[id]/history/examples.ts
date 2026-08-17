@@ -41,7 +41,7 @@ const COMPONENTS: { id: number; name: string; type: "monitor" | "static" }[] = [
   { id: 3, name: "Documentation", type: "static" },
 ];
 
-const round = (value: number) => Math.round(value * 100) / 100;
+const round = (value: number) => Math.round(value * 1_000) / 1_000;
 
 function average(values: (number | null)[]): number | null {
   const present = values.filter((v): v is number => v !== null);

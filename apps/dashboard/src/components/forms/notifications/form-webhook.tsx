@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Add, Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   FormControl,
@@ -15,7 +16,6 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { Plus, X } from "lucide-react";
 import React, { useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -226,7 +226,7 @@ export function FormWebhook({
                   aria-label="Remove header"
                   onClick={() => remove(index)}
                 >
-                  <X />
+                  <Close />
                 </Button>
               </div>
             ))}
@@ -237,7 +237,7 @@ export function FormWebhook({
                 type="button"
                 onClick={() => append({ key: "", value: "" })}
               >
-                <Plus />
+                <Add />
                 Add Header
               </Button>
             </div>

@@ -23,14 +23,22 @@ type mockJobRunner struct {
 	mu            sync.Mutex
 	httpRegion    string
 	tcpRegion     string
+	httpMonitor   *v1.HTTPMonitor
 }
 
 func (m *mockJobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region string) (*job.HttpPrivateRegionData, error) {
 	m.HTTPJobCalled.Store(true)
 	m.mu.Lock()
 	m.httpRegion = region
+	m.httpMonitor = monitor
 	m.mu.Unlock()
 	return &job.HttpPrivateRegionData{}, nil
+}
+
+func (m *mockJobRunner) HTTPMonitor() *v1.HTTPMonitor {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.httpMonitor
 }
 func (m *mockJobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region string) (*job.TCPPrivateRegionData, error) {
 
@@ -54,9 +62,16 @@ func (m *mockJobRunner) TCPRegion() string {
 }
 
 func (m *mockJobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*job.DNSPrivateRegionData, error) {
-
-	m.TCPJobCalled.Store(true)
-	return &job.DNSPrivateRegionData{}, nil
+	m.DNSJobCalled.Store(true)
+	return &job.DNSPrivateRegionData{
+		ID:            "dns-result-1",
+		URI:           monitor.Uri,
+		RequestStatus: "success",
+		Latency:       42,
+		Timestamp:     1700000000000,
+		CronTimestamp: 1700000000000,
+		Records:       map[string][]string{"A": {"192.168.1.1"}},
+	}, nil
 }
 
 func (m *mockJobRunner) ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region string) (*job.ICMPPrivateRegionData, error) {
@@ -165,4 +180,141 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 		t.Errorf("expected TCP job to be removed")
 	}
 
+}
+
+// runScheduledTask executes an already scheduled task synchronously, so a test
+// can observe the monitor config its closure captured without waiting for the
+// interval to elapse.
+func runScheduledTask(t *testing.T, s *tasks.Scheduler, id string) {
+	t.Helper()
+
+	task, err := s.Lookup(id)
+	if err != nil {
+		t.Fatalf("expected a task scheduled for %s: %v", id, err)
+	}
+	if err := task.FuncWithTaskContext(tasks.TaskContext{}); err != nil {
+		t.Fatalf("task %s returned an error: %v", id, err)
+	}
+}
+
+func TestMonitorManager_ReschedulesOnConfigChange(t *testing.T) {
+	ctx := t.Context()
+
+	// Long periodicity: the task only runs when the test invokes it.
+	withoutHeader := &v1.HTTPMonitor{Id: "http1", Url: "https://openstat.us", Periodicity: "1h"}
+	unchanged := &v1.HTTPMonitor{Id: "http1", Url: "https://openstat.us", Periodicity: "1h"}
+	withHeader := &v1.HTTPMonitor{
+		Id: "http1", Url: "https://openstat.us", Periodicity: "1h",
+		Headers: []*v1.Headers{{Key: "X-Auth-Token", Value: "secret"}},
+	}
+
+	current := withoutHeader
+	client := &mockClient{
+		MonitorsFunc: func(ctx context.Context, req *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error) {
+			return connect.NewResponse(&v1.MonitorsResponse{
+				HttpMonitors: []*v1.HTTPMonitor{current},
+				Region:       "frankfurt-dc1",
+			}), nil
+		},
+		IngestHTTPFunc: func(ctx context.Context, req *connect.Request[v1.IngestHTTPRequest]) (*connect.Response[v1.IngestHTTPResponse], error) {
+			return connect.NewResponse(&v1.IngestHTTPResponse{}), nil
+		},
+	}
+	jobRunner := &mockJobRunner{}
+
+	s := tasks.New()
+	defer s.Stop()
+
+	mm := &scheduler.MonitorManager{Client: client, JobRunner: jobRunner, Scheduler: s}
+
+	mm.UpdateMonitors(ctx)
+	runScheduledTask(t, mm.Scheduler, "http1")
+	if got := jobRunner.HTTPMonitor(); got != withoutHeader {
+		t.Fatalf("expected the job to run with the fetched monitor, got %v", got)
+	}
+
+	// Same config, fresh pointer: rescheduling here would reset the interval timer.
+	current = unchanged
+	mm.UpdateMonitors(ctx)
+	runScheduledTask(t, mm.Scheduler, "http1")
+	if got := jobRunner.HTTPMonitor(); got != withoutHeader {
+		t.Errorf("expected an unchanged monitor to keep its task, got a rescheduled one")
+	}
+
+	current = withHeader
+	mm.UpdateMonitors(ctx)
+	runScheduledTask(t, mm.Scheduler, "http1")
+
+	got := jobRunner.HTTPMonitor()
+	if got != withHeader {
+		t.Fatalf("expected the job to run with the updated monitor, got %v", got)
+	}
+	if len(got.Headers) != 1 || got.Headers[0].Key != "X-Auth-Token" || got.Headers[0].Value != "secret" {
+		t.Errorf("expected the added header to reach the job, got %v", got.Headers)
+	}
+}
+
+// TestMonitorManager_IngestsDNSResult guards against sending an ingest request
+// that carries only the monitor id: the check result was dropped on the floor
+// and the server rejected every DNS request for a zero timestamp.
+func TestMonitorManager_IngestsDNSResult(t *testing.T) {
+	ctx := t.Context()
+
+	// Long periodicity: the task only runs when the test invokes it.
+	dnsMonitor := &v1.DNSMonitor{Id: "dns1", Uri: "openstatus.dev", Periodicity: "1h"}
+
+	var ingested *v1.IngestDNSRequest
+	client := &mockClient{
+		MonitorsFunc: func(ctx context.Context, req *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error) {
+			return connect.NewResponse(&v1.MonitorsResponse{
+				DnsMonitors: []*v1.DNSMonitor{dnsMonitor},
+				Region:      "frankfurt-dc1",
+			}), nil
+		},
+		IngestDNSFunc: func(ctx context.Context, req *connect.Request[v1.IngestDNSRequest]) (*connect.Response[v1.IngestDNSResponse], error) {
+			ingested = req.Msg
+			return connect.NewResponse(&v1.IngestDNSResponse{}), nil
+		},
+	}
+	jobRunner := &mockJobRunner{}
+
+	s := tasks.New()
+	defer s.Stop()
+
+	mm := &scheduler.MonitorManager{Client: client, JobRunner: jobRunner, Scheduler: s}
+
+	mm.UpdateMonitors(ctx)
+	runScheduledTask(t, mm.Scheduler, "dns1")
+
+	if !jobRunner.DNSJobCalled.Load() {
+		t.Fatalf("expected DNSJob to be called")
+	}
+	if ingested == nil {
+		t.Fatalf("expected IngestDNS to be called")
+	}
+	if ingested.MonitorId != "dns1" {
+		t.Errorf("expected monitor id %q, got %q", "dns1", ingested.MonitorId)
+	}
+	if ingested.Id != "dns-result-1" {
+		t.Errorf("expected the check result id to be forwarded, got %q", ingested.Id)
+	}
+	if ingested.Uri != "openstatus.dev" {
+		t.Errorf("expected uri %q, got %q", "openstatus.dev", ingested.Uri)
+	}
+	if ingested.RequestStatus != "success" {
+		t.Errorf("expected request status %q, got %q", "success", ingested.RequestStatus)
+	}
+	if ingested.Latency != 42 {
+		t.Errorf("expected latency 42, got %d", ingested.Latency)
+	}
+	// The ingest server rejects a non-positive timestamp outright.
+	if ingested.Timestamp <= 0 {
+		t.Errorf("expected a positive timestamp, got %d", ingested.Timestamp)
+	}
+	if ingested.CronTimestamp <= 0 {
+		t.Errorf("expected a positive cron timestamp, got %d", ingested.CronTimestamp)
+	}
+	if got := ingested.Records["A"].GetRecord(); len(got) != 1 || got[0] != "192.168.1.1" {
+		t.Errorf("expected the A records to be forwarded, got %v", got)
+	}
 }

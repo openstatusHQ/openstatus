@@ -2,12 +2,12 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 import { monitorMethods } from "@openstatus/db/src/schema/monitors/constants";
 import type { Periodicity, Region } from "@openstatus/proto/monitor/v1";
+import type { UpdateMonitorConfigInput } from "@openstatus/services/monitor";
 
 import {
   MONITOR_DEFAULTS,
-  openTelemetryToDb,
+  protoOpenTelemetryToService,
   periodicityToString,
-  regionsToDbString,
   regionsToStrings,
   validateRegions,
 } from "./converters";
@@ -59,9 +59,11 @@ export function validateCommonMonitorFields(mon: { regions?: Region[] }): void {
 }
 
 /**
- * Extract common database values for all monitor types.
+ * Extract the fields every monitor type shares, in the shape
+ * `createMonitor` takes. Defaults are applied here rather than left to
+ * the column defaults so the API contract stays explicit.
  */
-export function getCommonDbValues(mon: {
+export function getCommonCreateInput(mon: {
   name: string;
   periodicity?: Periodicity;
   timeout?: bigint;
@@ -71,14 +73,13 @@ export function getCommonDbValues(mon: {
   public?: boolean;
   regions?: Region[];
   retry?: bigint;
-  openTelemetry?: Parameters<typeof openTelemetryToDb>[0];
+  openTelemetry?: Parameters<typeof protoOpenTelemetryToService>[0];
 }) {
-  const otelConfig = openTelemetryToDb(mon.openTelemetry);
+  const otelConfig = protoOpenTelemetryToService(mon.openTelemetry);
 
   const periodicityStr = mon.periodicity
     ? periodicityToString(mon.periodicity)
     : undefined;
-  const regionStrings = mon.regions ? regionsToStrings(mon.regions) : [];
 
   return {
     name: mon.name,
@@ -88,7 +89,10 @@ export function getCommonDbValues(mon: {
     active: mon.active ?? MONITOR_DEFAULTS.active,
     description: mon.description || MONITOR_DEFAULTS.description,
     public: mon.public ?? MONITOR_DEFAULTS.public,
-    regions: regionsToDbString(regionStrings),
+    // Always a concrete list (possibly empty) — passing `undefined` would
+    // hand the service its plan-based random-region fallback, which the
+    // API has never done.
+    regions: mon.regions ? regionsToStrings(mon.regions) : [],
     retry: mon.retry ? Number(mon.retry) : MONITOR_DEFAULTS.retry,
     otelEndpoint: otelConfig.otelEndpoint,
     otelHeaders: otelConfig.otelHeaders,
@@ -96,11 +100,10 @@ export function getCommonDbValues(mon: {
 }
 
 /**
- * Extract common database values for update operations.
- * Only includes fields that are explicitly provided (not undefined).
- * This enables partial updates where only specified fields are changed.
+ * Same, for partial updates: only fields the caller actually provided,
+ * so `updateMonitorConfig` leaves the rest untouched.
  */
-export function getCommonDbValuesForUpdate(mon: {
+export function getCommonUpdateInput(mon: {
   name?: string;
   periodicity?: Periodicity;
   timeout?: bigint;
@@ -110,9 +113,9 @@ export function getCommonDbValuesForUpdate(mon: {
   public?: boolean;
   regions?: Region[];
   retry?: bigint;
-  openTelemetry?: Parameters<typeof openTelemetryToDb>[0];
-}) {
-  const result: Record<string, unknown> = {};
+  openTelemetry?: Parameters<typeof protoOpenTelemetryToService>[0];
+}): Omit<UpdateMonitorConfigInput, "id"> {
+  const result: Omit<UpdateMonitorConfigInput, "id"> = {};
 
   if (mon.name !== undefined && mon.name !== "") {
     result.name = mon.name;
@@ -131,6 +134,8 @@ export function getCommonDbValuesForUpdate(mon: {
     result.degradedAfter = Number(mon.degradedAt);
   }
 
+  // `active`, `public` and `description` have explicit presence in the proto,
+  // so `undefined` means omitted and an explicit false/"" is applied.
   if (mon.active !== undefined) {
     result.active = mon.active;
   }
@@ -144,8 +149,7 @@ export function getCommonDbValuesForUpdate(mon: {
   }
 
   if (mon.regions !== undefined && mon.regions.length > 0) {
-    const regionStrings = regionsToStrings(mon.regions);
-    result.regions = regionsToDbString(regionStrings);
+    result.regions = regionsToStrings(mon.regions);
   }
 
   if (mon.retry !== undefined && mon.retry !== BigInt(0)) {
@@ -153,7 +157,7 @@ export function getCommonDbValuesForUpdate(mon: {
   }
 
   if (mon.openTelemetry !== undefined) {
-    const otelConfig = openTelemetryToDb(mon.openTelemetry);
+    const otelConfig = protoOpenTelemetryToService(mon.openTelemetry);
     result.otelEndpoint = otelConfig.otelEndpoint;
     result.otelHeaders = otelConfig.otelHeaders;
   }

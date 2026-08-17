@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/tcp_monitor.proto.
  */
 export const file_openstatus_monitor_v1_tcp_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvdGNwX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSK3BAoKVENQTW9uaXRvchIKCgJpZBgBIAEoCRI4CgRuYW1lGAIgASgJQiq6Rx06GxIZRGF0YWJhc2UgQ29ubmVjdGlvbiBDaGVja7pIB3IFEAEYgAISNwoDdXJpGAMgASgJQiq6Rx06GxIZdGNwOi8vZGIuZXhhbXBsZS5jb206NTQzMrpIB3IFEAEYgBASQQoLcGVyaW9kaWNpdHkYBCABKA4yIi5vcGVuc3RhdHVzLm1vbml0b3IudjEuUGVyaW9kaWNpdHlCCLpIBYIBAiAAEhwKB3RpbWVvdXQYBSABKANCC7pICCIGGMCpBygAEiUKC2RlZ3JhZGVkX2F0GAYgASgDQgu6SAgiBhjAqQcoAEgAiAEBEhgKBXJldHJ5GAcgASgDQgm6SAYiBBgKKAASHQoLZGVzY3JpcHRpb24YCCABKAlCCLpIBXIDGIAIEg4KBmFjdGl2ZRgJIAEoCBIOCgZwdWJsaWMYCiABKAgSPwoHcmVnaW9ucxgLIAMoDjIdLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZWdpb25CD7pIDJIBCRAcIgWCAQIgABJCCg5vcGVuX3RlbGVtZXRyeRgMIAEoCzIqLm9wZW5zdGF0dXMubW9uaXRvci52MS5PcGVuVGVsZW1ldHJ5Q29uZmlnEjQKBnN0YXR1cxgNIAEoDjIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yU3RhdHVzQg4KDF9kZWdyYWRlZF9hdEJTWlFnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbW9uaXRvci92MTttb25pdG9ydjFiBnByb3RvMw", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor]);
+  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvdGNwX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSKRBQoKVENQTW9uaXRvchIKCgJpZBgBIAEoCRI4CgRuYW1lGAIgASgJQiq6Rx06GxIZRGF0YWJhc2UgQ29ubmVjdGlvbiBDaGVja7pIB3IFEAEYgAISNwoDdXJpGAMgASgJQiq6Rx06GxIZdGNwOi8vZGIuZXhhbXBsZS5jb206NTQzMrpIB3IFEAEYgBASQQoLcGVyaW9kaWNpdHkYBCABKA4yIi5vcGVuc3RhdHVzLm1vbml0b3IudjEuUGVyaW9kaWNpdHlCCLpIBYIBAiAAEhwKB3RpbWVvdXQYBSABKANCC7pICCIGGMCpBygAEiUKC2RlZ3JhZGVkX2F0GAYgASgDQgu6SAgiBhjAqQcoAEgAiAEBEhgKBXJldHJ5GAcgASgDQgm6SAYiBBgKKAASIgoLZGVzY3JpcHRpb24YCCABKAlCCLpIBXIDGIAISAGIAQESEwoGYWN0aXZlGAkgASgISAKIAQESEwoGcHVibGljGAogASgISAOIAQESPwoHcmVnaW9ucxgLIAMoDjIdLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZWdpb25CD7pIDJIBCRAcIgWCAQIgABJCCg5vcGVuX3RlbGVtZXRyeRgMIAEoCzIqLm9wZW5zdGF0dXMubW9uaXRvci52MS5PcGVuVGVsZW1ldHJ5Q29uZmlnEjQKBnN0YXR1cxgNIAEoDjIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yU3RhdHVzEiMKFHByaXZhdGVfbG9jYXRpb25faWRzGA4gAygJQgW6RwIYAUIOCgxfZGVncmFkZWRfYXRCDgoMX2Rlc2NyaXB0aW9uQgkKB19hY3RpdmVCCQoHX3B1YmxpY0JTWlFnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbW9uaXRvci92MTttb25pdG9ydjFiBnByb3RvMw", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor]);
 
 /**
  * TCPMonitor defines the configuration for a TCP monitor.
@@ -76,23 +76,23 @@ export type TCPMonitor = Message<"openstatus.monitor.v1.TCPMonitor"> & {
   /**
    * Description of the monitor (optional).
    *
-   * @generated from field: string description = 8;
+   * @generated from field: optional string description = 8;
    */
-  description: string;
+  description?: string | undefined;
 
   /**
    * Whether the monitor is active (defaults to false).
    *
-   * @generated from field: bool active = 9;
+   * @generated from field: optional bool active = 9;
    */
-  active: boolean;
+  active?: boolean | undefined;
 
   /**
    * Whether the monitor is publicly visible (defaults to false).
    *
-   * @generated from field: bool public = 10;
+   * @generated from field: optional bool public = 10;
    */
-  public: boolean;
+  public?: boolean | undefined;
 
   /**
    * Geographic regions to run checks from.
@@ -114,6 +114,13 @@ export type TCPMonitor = Message<"openstatus.monitor.v1.TCPMonitor"> & {
    * @generated from field: openstatus.monitor.v1.MonitorStatus status = 13;
    */
   status: MonitorStatus;
+
+  /**
+   * IDs of private locations that run this monitor. Read-only.
+   *
+   * @generated from field: repeated string private_location_ids = 14;
+   */
+  privateLocationIds: string[];
 };
 
 /**

@@ -9,7 +9,7 @@ description: "Step-by-step tutorial to install and use the openstatus CLI for mo
 |---|---|
 | **Time** | ~10 minutes |
 | **Level** | Intermediate |
-| **Prerequisites** | openstatus account, command-line experience, API token from your workspace (Settings → API) |
+| **Prerequisites** | openstatus account, command-line experience, API key from your workspace (Settings → General → API Keys) |
 
 In this tutorial, you'll use the openstatus CLI to manage your monitors as code. This lets you version-control your monitoring configuration, automate deployments, and implement GitOps workflows.
 
@@ -64,8 +64,8 @@ openstatus version x.x.x
 
 ## Configure API authentication
 
-1. In your openstatus dashboard, go to **Settings → API Keys**.
-2. Click **Create API Key** and copy the value — you won't see it again after closing the dialog.
+1. In your openstatus dashboard, go to **Settings → General** and find the **API Keys** card.
+2. Click **Create** and copy the value — you won't see it again after closing the dialog.
 3. Make it available to the CLI as an environment variable:
 
 ```bash
@@ -139,7 +139,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 **Fix:**
 1. Verify the token is set: `echo $OPENSTATUS_API_TOKEN`
-2. Regenerate the token in your workspace settings (Settings → API)
+2. Regenerate the key in your workspace settings (Settings → General → API Keys)
 3. Make sure there are no extra spaces or newlines in the token value
 
 ### "no monitors found" on import

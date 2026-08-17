@@ -8,6 +8,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import {
   createMonitor,
   createWorkspace,
@@ -43,7 +44,7 @@ async function connectRequest(
 }
 
 const TEST_PREFIX = "rpc-monitor-test";
-const FREE_PLAN_KEY = "2";
+let FREE_PLAN_KEY: string;
 let testHttpMonitorId: number;
 let testTcpMonitorId: number;
 let testDnsMonitorId: number;
@@ -106,7 +107,15 @@ beforeEach(() => {
   calls.httpGetBiweekly = [];
 });
 
+// A second, free-plan workspace: used both for cross-workspace isolation
+// assertions and for the plan-limit rejections. Private to this suite because
+// sibling suites assert the seeded free workspace owns nothing.
+let OTHER_WORKSPACE_ID: number;
+
 beforeAll(async () => {
+  OTHER_WORKSPACE_ID = (await createTestWorkspace({ plan: "free" })).workspace
+    .id;
+  FREE_PLAN_KEY = String(OTHER_WORKSPACE_ID);
   // Clean up any existing test data
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-http`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
@@ -465,7 +474,7 @@ describe("MonitorService.ListMonitors", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-other-workspace`,
         url: "https://other-workspace.example.com",
         periodicity: "1m",
@@ -1021,6 +1030,88 @@ describe("MonitorService.UpdateHTTPMonitor", () => {
 
     expect(res.status).toBe(401);
   });
+
+  test("partial update preserves active, public and description", async () => {
+    const mon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-preserve`,
+        url: "https://preserve.example.com",
+        periodicity: "1m",
+        active: true,
+        public: true,
+        description: "keep me",
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { name: `${TEST_PREFIX}-preserve-renamed` },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.monitor.name).toBe(`${TEST_PREFIX}-preserve-renamed`);
+      expect(data.monitor.active).toBe(true);
+      expect(data.monitor.public).toBe(true);
+      expect(data.monitor.description).toBe("keep me");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("update applies explicit false for active and public", async () => {
+    const mon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-explicit-false`,
+        url: "https://explicit-false.example.com",
+        periodicity: "1m",
+        active: true,
+        public: true,
+        description: "clear me",
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { active: false, public: false, description: "" },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const updated = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, mon.id))
+        .get();
+
+      expect(updated?.active).toBe(false);
+      expect(updated?.public).toBe(false);
+      expect(updated?.description).toBe("");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
 });
 
 describe("MonitorService.UpdateTCPMonitor", () => {
@@ -1291,6 +1382,97 @@ describe("MonitorService.UpdateDNSMonitor", () => {
     });
 
     expect(res.status).toBe(401);
+  });
+});
+
+describe("MonitorService - private and internal URLs", () => {
+  // Valid URIs, so protovalidate passes them through to the service guard.
+  const BLOCKED = [
+    "http://localhost:3000",
+    "http://127.0.0.1/health",
+    "http://192.168.1.10/",
+    "http://169.254.169.254/latest/meta-data/",
+  ];
+
+  for (const url of BLOCKED) {
+    test(`CreateHTTPMonitor rejects ${url}`, async () => {
+      const res = await connectRequest(
+        "CreateHTTPMonitor",
+        {
+          monitor: {
+            name: `${TEST_PREFIX}-ssrf`,
+            url,
+            periodicity: "PERIODICITY_5M",
+            method: "HTTP_METHOD_GET",
+          },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(400);
+
+      const data = await res.json();
+      expect(data.message).toContain("private or internal");
+
+      const leaked = await db
+        .select()
+        .from(monitor)
+        .where(and(eq(monitor.workspaceId, 1), eq(monitor.url, url)))
+        .get();
+      expect(leaked).toBeUndefined();
+    });
+  }
+
+  test("UpdateHTTPMonitor rejects a private URL and leaves the stored one intact", async () => {
+    const before = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testHttpMonitorId))
+      .get();
+
+    const res = await connectRequest(
+      "UpdateHTTPMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: { url: "http://127.0.0.1:8080" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+
+    const data = await res.json();
+    expect(data.message).toContain("private or internal");
+
+    const after = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testHttpMonitorId))
+      .get();
+    expect(after?.url).toBe(before?.url);
+  });
+
+  test("CreateTCPMonitor accepts a private target", async () => {
+    const res = await connectRequest(
+      "CreateTCPMonitor",
+      {
+        monitor: {
+          name: `${TEST_PREFIX}-ssrf-tcp`,
+          uri: "192.168.1.10:8080",
+          periodicity: "PERIODICITY_10M",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.uri).toBe("192.168.1.10:8080");
+
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
   });
 });
 
@@ -1708,7 +1890,6 @@ describe("MonitorService - Default Values", () => {
 });
 
 describe("MonitorService - Limits", () => {
-  // Workspace 2 has free plan with limited periodicity (10m, 30m, 1h) and max 6 regions
   test("returns error when periodicity is not allowed by plan", async () => {
     // Free plan only allows 10m, 30m, 1h - PERIODICITY_30S is not allowed
     const res = await connectRequest(
@@ -1820,6 +2001,100 @@ describe("MonitorService - Limits", () => {
     expect(res.status).toBe(403);
     const data = await res.json();
     expect(data.message).toContain("periodicity");
+  });
+
+  // The free plan allows a single monitor, so one row puts workspace 2 at its
+  // cap — which is the normal state for any workspace on its plan limit.
+  async function seedFreePlanMonitorAtCap(suffix: string) {
+    return db
+      .insert(monitor)
+      .values({
+        workspaceId: OTHER_WORKSPACE_ID,
+        name: `${TEST_PREFIX}-at-cap-${suffix}`,
+        url: `https://at-cap-${suffix}.example.com`,
+        periodicity: "10m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+  }
+
+  // Regression: the row-count cap is a create-time check. A workspace sitting
+  // at its monitor limit must still be able to edit the monitors it has.
+  test("workspace at its monitor cap can still update an existing monitor", async () => {
+    const mon = await seedFreePlanMonitorAtCap("update");
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { periodicity: "PERIODICITY_30M" },
+        },
+        { "x-openstatus-key": FREE_PLAN_KEY },
+      );
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.monitor.periodicity).toBe("PERIODICITY_30M");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("update still enforces the plan's periodicity limit", async () => {
+    const mon = await seedFreePlanMonitorAtCap("periodicity");
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { periodicity: "PERIODICITY_30S" },
+        },
+        { "x-openstatus-key": FREE_PLAN_KEY },
+      );
+
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.message).toContain("periodicity");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("update still enforces the plan's max-regions limit", async () => {
+    const mon = await seedFreePlanMonitorAtCap("regions");
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: {
+            regions: [
+              "REGION_FLY_AMS",
+              "REGION_FLY_IAD",
+              "REGION_FLY_SIN",
+              "REGION_FLY_LHR",
+              "REGION_FLY_SYD",
+              "REGION_FLY_NRT",
+              "REGION_FLY_FRA",
+              "REGION_FLY_GRU",
+            ],
+          },
+        },
+        { "x-openstatus-key": FREE_PLAN_KEY },
+      );
+
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.message).toContain("region");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
   });
 });
 
@@ -2075,7 +2350,7 @@ describe("MonitorService.GetMonitorStatus", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-status-other-ws`,
         url: "https://other-ws-status.example.com",
         periodicity: "1m",
@@ -2221,7 +2496,7 @@ describe("MonitorService.GetMonitor", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-get-other-ws`,
         url: "https://other-ws-get.example.com",
         periodicity: "1m",
@@ -2284,6 +2559,126 @@ describe("MonitorService.GetMonitor", () => {
       expect(res.status).toBe(500);
     } finally {
       await db.delete(monitor).where(eq(monitor.id, corruptedMon.id));
+    }
+  });
+});
+
+describe("MonitorService - Private Locations", () => {
+  async function seedMonitorWithPrivateLocation(suffix: string) {
+    const mon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-pl-${suffix}`,
+        url: `https://pl-${suffix}.example.com`,
+        periodicity: "1m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+    const pl = await db
+      .insert(privateLocation)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-pl-loc-${suffix}`,
+        token: `${TEST_PREFIX}-pl-token-${suffix}-${mon.id}`,
+      })
+      .returning()
+      .get();
+    await db
+      .insert(privateLocationToMonitors)
+      .values({ privateLocationId: pl.id, monitorId: mon.id });
+    return { mon, pl };
+  }
+
+  async function cleanupMonitorWithPrivateLocation(
+    monitorId: number,
+    privateLocationId: number,
+  ) {
+    await db
+      .delete(privateLocationToMonitors)
+      .where(
+        eq(privateLocationToMonitors.privateLocationId, privateLocationId),
+      );
+    await db
+      .delete(privateLocation)
+      .where(eq(privateLocation.id, privateLocationId));
+    await db.delete(monitor).where(eq(monitor.id, monitorId));
+  }
+
+  test("GetMonitor returns the attached private location id", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation("get");
+    try {
+      const res = await connectRequest(
+        "GetMonitor",
+        { id: String(mon.id) },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.monitor.http.privateLocationIds).toEqual([String(pl.id)]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+
+  test("GetMonitor omits private_location_ids when none attached", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: String(testHttpMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    // proto3 JSON omits empty repeated fields
+    expect(data.monitor.http.privateLocationIds ?? []).toEqual([]);
+  });
+
+  test("ListMonitors returns private_location_ids per monitor", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation("list");
+    try {
+      const res = await connectRequest(
+        "ListMonitors",
+        { limit: 100 },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      const httpMonitors = (data.httpMonitors ?? []) as Array<{
+        id: string;
+        privateLocationIds?: string[];
+      }>;
+
+      const attached = httpMonitors.find((m) => m.id === String(mon.id));
+      expect(attached?.privateLocationIds).toEqual([String(pl.id)]);
+
+      const unattached = httpMonitors.find(
+        (m) => m.id === String(testHttpMonitorId),
+      );
+      expect(unattached?.privateLocationIds ?? []).toEqual([]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+
+  test("UpdateHTTPMonitor keeps the attached private location id", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation("update");
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { name: `${TEST_PREFIX}-pl-update-renamed` },
+        },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.monitor.privateLocationIds).toEqual([String(pl.id)]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
     }
   });
 });
@@ -2445,7 +2840,7 @@ describe("MonitorService.GetMonitorSummary", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-summary-other-ws`,
         url: "https://other-ws-summary.example.com",
         periodicity: "1m",
@@ -2558,7 +2953,7 @@ describe("MonitorService.ListMonitorHTTPResponseLogs", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-response-logs-other-ws`,
         url: "https://other-ws-response-logs.example.com",
         periodicity: "1m",
@@ -2667,7 +3062,7 @@ describe("MonitorService.GetMonitorHTTPResponseLog", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-response-log-detail-other-ws`,
         url: "https://other-ws-response-log-detail.example.com",
         periodicity: "1m",

@@ -1,5 +1,6 @@
 "use client";
 
+import { More, Add } from "@openstatus/icons";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -20,7 +21,6 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -58,7 +58,7 @@ export function NavMonitors() {
       onSuccess: () => {
         refetch();
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
       },
     }),
@@ -68,7 +68,7 @@ export function NavMonitors() {
       onSuccess: (newMonitor) => {
         refetch();
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
         router.push(`/monitors/${newMonitor.id}`);
       },
@@ -109,7 +109,7 @@ export function NavMonitors() {
                     setOpenMobile(false);
                   }}
                 >
-                  <Plus className="text-muted-foreground" />
+                  <Add className="text-muted-foreground" />
                   <span className="sr-only">Create Monitor</span>
                 </SidebarMenuAction>
               </TooltipTrigger>
@@ -201,7 +201,7 @@ export function NavMonitors() {
                   align={isMobile ? "end" : "start"}
                 >
                   <SidebarMenuAction showOnHover>
-                    <MoreHorizontal />
+                    <More />
                     <span className="sr-only">More</span>
                   </SidebarMenuAction>
                 </QuickActions>
