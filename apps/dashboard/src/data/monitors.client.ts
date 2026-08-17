@@ -5,6 +5,7 @@ import {
   Globe,
   Network,
   Server,
+  Terminal,
   Delete,
 } from "@openstatus/icons";
 
@@ -37,6 +38,12 @@ export const actions = [
     id: "copy-id",
     label: "Copy ID",
     icon: Copy,
+    variant: "default" as const,
+  },
+  {
+    id: "copy-curl",
+    label: "Copy cURL",
+    icon: Terminal,
     variant: "default" as const,
   },
   {
