@@ -364,6 +364,136 @@ describe("resolveRoute", () => {
     });
   });
 
+  // Custom domains with fewer than three labels, or a "www." first label, are
+  // still host-keyed: the path must not be read as `/{slug}/...`.
+  describe('custom domain routing — apex and "www." hosts', () => {
+    test("acme.com/events/report/1 → hostname routing, path preserved", () => {
+      const result = resolveRoute({
+        host: "acme.com",
+        urlHost: "acme.com",
+        pathname: "/events/report/1",
+      });
+      expect(result).toEqual({
+        type: "hostname",
+        prefix: "acme.com",
+        locale: "en",
+        localeExplicit: false,
+        rewritePath: "/acme.com/en/events/report/1",
+      });
+    });
+
+    test("acme.com/fr/events/maintenance/1 → explicit locale, path preserved", () => {
+      const result = resolveRoute({
+        host: "acme.com",
+        urlHost: "acme.com",
+        pathname: "/fr/events/maintenance/1",
+      });
+      expect(result).toEqual({
+        type: "hostname",
+        prefix: "acme.com",
+        locale: "fr",
+        localeExplicit: true,
+        rewritePath: "/acme.com/fr/events/maintenance/1",
+      });
+    });
+
+    test("www.acme.com/monitors/1 → hostname routing, path preserved", () => {
+      const result = resolveRoute({
+        host: "www.acme.com",
+        urlHost: "www.acme.com",
+        pathname: "/monitors/1",
+      });
+      expect(result).toEqual({
+        type: "hostname",
+        prefix: "www.acme.com",
+        locale: "en",
+        localeExplicit: false,
+        rewritePath: "/www.acme.com/en/monitors/1",
+      });
+    });
+  });
+
+  // apps/web proxies a custom domain as `https://www.stpg.dev/{host}/{rest}`
+  // while forwarding the original host, so the leading segment is redundant.
+  describe("custom domain routing — host also present as path prefix", () => {
+    test("status.acme.com + /status.acme.com/events/report/1 → segment not duplicated", () => {
+      const result = resolveRoute({
+        host: "status.acme.com",
+        urlHost: "www.stpg.dev",
+        pathname: "/status.acme.com/events/report/1",
+      });
+      expect(result).toEqual({
+        type: "hostname",
+        prefix: "status.acme.com",
+        locale: "en",
+        localeExplicit: false,
+        rewritePath: "/status.acme.com/en/events/report/1",
+      });
+    });
+
+    test("status.acme.com + /status.acme.com/fr/events → locale read after the prefix", () => {
+      const result = resolveRoute({
+        host: "status.acme.com",
+        urlHost: "www.stpg.dev",
+        pathname: "/status.acme.com/fr/events",
+      });
+      expect(result).toEqual({
+        type: "hostname",
+        prefix: "status.acme.com",
+        locale: "fr",
+        localeExplicit: true,
+        rewritePath: "/status.acme.com/fr/events",
+      });
+    });
+
+    test("status.acme.com + /status.acme.com → page root", () => {
+      const result = resolveRoute({
+        host: "status.acme.com",
+        urlHost: "www.stpg.dev",
+        pathname: "/status.acme.com",
+      });
+      expect(result).toEqual({
+        type: "hostname",
+        prefix: "status.acme.com",
+        locale: "en",
+        localeExplicit: false,
+        rewritePath: "/status.acme.com/en",
+      });
+    });
+
+    test("subdomain + /acme.openstatus.dev/events → forwarded host stripped", () => {
+      const result = resolveRoute({
+        host: "acme.openstatus.dev",
+        urlHost: "www.stpg.dev",
+        pathname: "/acme.openstatus.dev/events",
+      });
+      expect(result).toEqual({
+        type: "hostname",
+        prefix: "acme",
+        locale: "en",
+        localeExplicit: false,
+        rewritePath: "/acme/en/events",
+      });
+    });
+
+    // Only the host is stripped: a first segment that merely matches the slug is
+    // real path, e.g. a page whose slug is also a route name.
+    test('slug "monitors" + /monitors/1 → segment kept', () => {
+      const result = resolveRoute({
+        host: "monitors.stpg.dev",
+        urlHost: "monitors.stpg.dev",
+        pathname: "/monitors/1",
+      });
+      expect(result).toEqual({
+        type: "hostname",
+        prefix: "monitors",
+        locale: "en",
+        localeExplicit: false,
+        rewritePath: "/monitors/en/monitors/1",
+      });
+    });
+  });
+
   describe("edge cases", () => {
     test("root path on localhost returns null (no page)", () => {
       const result = resolveRoute({
