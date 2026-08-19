@@ -104,11 +104,16 @@ app.get("/private-location-health", async (c) => {
 });
 
 app.get("/emails/follow-up", async (c) => {
+  const { cronCompleted, cronFailed } = runSentryCron("emails-follow-up");
+
   try {
     await sendFollowUpEmails();
+    void cronCompleted();
     return c.json({ success: true }, 200);
   } catch (e) {
-    console.error(e);
+    const errorName = e instanceof Error ? e.name : typeof e;
+    void reportBackgroundError(`emails-follow-up failed: ${errorName}`);
+    void cronFailed();
     return c.text("Internal Server Error", 500);
   }
 });
