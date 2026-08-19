@@ -581,7 +581,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
           dnsMonitors.push(dbMonitorToDnsProto(data, privateLocationIds));
           break;
         case "icmp":
-          icmpMonitors.push(dbMonitorToIcmpProto(parsed.data));
+          icmpMonitors.push(dbMonitorToIcmpProto(data));
           break;
       }
     }
