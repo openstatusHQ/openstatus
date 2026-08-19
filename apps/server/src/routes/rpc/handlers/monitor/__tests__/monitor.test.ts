@@ -2564,17 +2564,20 @@ describe("MonitorService.GetMonitor", () => {
 });
 
 describe("MonitorService - Private Locations", () => {
-  async function seedMonitorWithPrivateLocation(suffix: string) {
+  async function seedMonitorWithPrivateLocation(
+    suffix: string,
+    jobType: "http" | "icmp" = "http",
+  ) {
     const mon = await db
       .insert(monitor)
       .values({
         workspaceId: 1,
         name: `${TEST_PREFIX}-pl-${suffix}`,
-        url: `https://pl-${suffix}.example.com`,
+        url: jobType === "icmp" ? "1.1.1.1" : `https://pl-${suffix}.example.com`,
         periodicity: "1m",
         active: true,
         regions: "ams",
-        jobType: "http",
+        jobType,
       })
       .returning()
       .get();
@@ -2658,6 +2661,47 @@ describe("MonitorService - Private Locations", () => {
         (m) => m.id === String(testHttpMonitorId),
       );
       expect(unattached?.privateLocationIds ?? []).toEqual([]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+
+  test("GetMonitor returns the attached private location id for ICMP", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation("get-icmp", "icmp");
+    try {
+      const res = await connectRequest(
+        "GetMonitor",
+        { id: String(mon.id) },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.monitor.icmp.privateLocationIds).toEqual([String(pl.id)]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+
+  test("ListMonitors returns private_location_ids for ICMP monitors", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation(
+      "list-icmp",
+      "icmp",
+    );
+    try {
+      const res = await connectRequest(
+        "ListMonitors",
+        { limit: 100 },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      const icmpMonitors = (data.icmpMonitors ?? []) as Array<{
+        id: string;
+        privateLocationIds?: string[];
+      }>;
+
+      const attached = icmpMonitors.find((m) => m.id === String(mon.id));
+      expect(attached?.privateLocationIds).toEqual([String(pl.id)]);
     } finally {
       await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
     }

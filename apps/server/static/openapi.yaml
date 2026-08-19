@@ -1275,6 +1275,14 @@ components:
           title: status
           description: Current operational status of the monitor.
           $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+        privateLocationIds:
+          type: array
+          items:
+            type: string
+            readOnly: true
+          title: private_location_ids
+          description: IDs of private locations that run this monitor. Read-only.
+          readOnly: true
       title: ICMPMonitor
       additionalProperties: false
       description: ICMPMonitor defines the configuration for a ICMP monitor.

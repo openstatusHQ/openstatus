@@ -79,4 +79,9 @@ message ICMPMonitor {
 
   // Current operational status of the monitor.
   MonitorStatus status = 13;
+
+  // IDs of private locations that run this monitor. Read-only.
+  repeated string private_location_ids = 14 [
+    (gnostic.openapi.v3.property) = {read_only: true}
+  ];
 }

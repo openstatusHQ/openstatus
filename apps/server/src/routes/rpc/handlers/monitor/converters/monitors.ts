@@ -80,7 +80,10 @@ export function dbMonitorToTcpProto(
 /**
  * Transform database ICMP monitor to proto ICMPMonitor.
  */
-export function dbMonitorToIcmpProto(dbMon: Monitor): ICMPMonitor {
+export function dbMonitorToIcmpProto(
+  dbMon: Monitor,
+  privateLocationIds: string[] = [],
+): ICMPMonitor {
   return {
     $typeName: "openstatus.monitor.v1.ICMPMonitor",
     id: String(dbMon.id),
@@ -96,6 +99,7 @@ export function dbMonitorToIcmpProto(dbMon: Monitor): ICMPMonitor {
     regions: stringsToRegions(dbMon.regions),
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
     status: stringToMonitorStatus(dbMon.status),
+    privateLocationIds,
   };
 }
 

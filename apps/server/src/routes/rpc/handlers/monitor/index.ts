@@ -581,7 +581,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
           dnsMonitors.push(dbMonitorToDnsProto(data, privateLocationIds));
           break;
         case "icmp":
-          icmpMonitors.push(dbMonitorToIcmpProto(data));
+          icmpMonitors.push(dbMonitorToIcmpProto(data, privateLocationIds));
           break;
       }
     }
@@ -674,7 +674,10 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       case "icmp":
         monitorConfig = {
           $typeName: "openstatus.monitor.v1.MonitorConfig",
-          config: { case: "icmp", value: dbMonitorToIcmpProto(monitorData) },
+          config: {
+            case: "icmp",
+            value: dbMonitorToIcmpProto(monitorData, privateLocationIds),
+          },
         };
         break;
       default:

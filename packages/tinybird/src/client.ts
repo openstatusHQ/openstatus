@@ -51,6 +51,22 @@ const icmpMetricsByIntervalShape = z.object({
   p99Latency: z.number().nullable().prefault(0),
 });
 
+const icmpMetricsByRegionParameters = z.object({
+  monitorId: z.string(),
+  regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+});
+
+const icmpMetricsByRegionShape = z.object({
+  region: z.enum(monitorRegions).or(z.string()),
+  count: z.int(),
+  ok: z.int(),
+  p50Latency: z.number().nullable().prefault(0),
+  p75Latency: z.number().nullable().prefault(0),
+  p90Latency: z.number().nullable().prefault(0),
+  p95Latency: z.number().nullable().prefault(0),
+  p99Latency: z.number().nullable().prefault(0),
+});
+
 const icmpMetricsLatencyShape = z.object({
   timestamp: z.int(),
   p50Latency: z.int(),
@@ -1601,6 +1617,83 @@ export class OSTinybird {
           .transform((val) => new Date(`${val} GMT`).toISOString()),
         count: z.int(),
       }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpGetMonthly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_get_30d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        region: z.enum(monitorRegions).or(z.string()).optional(),
+        cronTimestamp: z.int().optional(),
+      }),
+      data: z.object({
+        type: z.literal("icmp").prefault("icmp"),
+        id: z.string().nullable(),
+        uri: z.string(),
+        latency: z.int(),
+        latencyMin: z.int().prefault(0),
+        latencyMax: z.int().prefault(0),
+        packetsSent: z.int().prefault(0),
+        packetsReceived: z.int().prefault(0),
+        monitorId: z.coerce.string(),
+        error: z.coerce.boolean(),
+        region: z.enum(monitorRegions).or(z.string()),
+        cronTimestamp: z.int(),
+        trigger: z.enum(triggers).nullable().prefault("cron"),
+        timestamp: z.number(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        errorMessage: z.string().nullable(),
+        workspaceId: z.coerce.string(),
+      }),
+      // REMINDER: cache the result for accessing the data for a check as it won't change
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpStatusWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_status_7d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        day: z.string().transform((val) => {
+          // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+          return new Date(`${val} GMT`).toISOString();
+        }),
+        count: z.number().prefault(0),
+        ok: z.number().prefault(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsByRegionDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_by_region_1d__v0",
+      parameters: icmpMetricsByRegionParameters,
+      data: icmpMetricsByRegionShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsByRegionWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_by_region_7d__v0",
+      parameters: icmpMetricsByRegionParameters,
+      data: icmpMetricsByRegionShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsByRegionBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_by_region_14d__v0",
+      parameters: icmpMetricsByRegionParameters,
+      data: icmpMetricsByRegionShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
