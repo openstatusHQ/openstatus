@@ -193,7 +193,7 @@ export async function checkRegion(
   switch (regionInfo.provider) {
     case "fly":
       endpoint = `${FLY_CHECKER_URL}/${region}`;
-      regionHeader = { "fly-prefer-region": region };
+      regionHeader = { "fly-force-region": region };
       break;
     case "koyeb":
       endpoint = `${KOYEB_CHECKER_URL}/${region}`;

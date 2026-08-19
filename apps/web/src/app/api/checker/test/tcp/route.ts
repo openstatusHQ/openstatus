@@ -44,7 +44,7 @@ async function checkTCP(url: string, region: Region) {
     headers: {
       Authorization: `Basic ${process.env.CRON_SECRET}`,
       "Content-Type": "application/json",
-      "fly-prefer-region": region,
+      "fly-force-region": region,
     },
     method: "POST",
     body: JSON.stringify({

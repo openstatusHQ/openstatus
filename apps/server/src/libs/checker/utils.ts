@@ -1,5 +1,6 @@
 import type { z } from "@hono/zod-openapi";
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
@@ -76,16 +77,17 @@ export function getCheckerTimeout(
 
 export function getCheckerUrl(
   monitor: z.infer<typeof selectMonitorSchema>,
-  opts: { trigger?: "api" | "cron"; data?: boolean } = {
+  opts: { trigger?: "api" | "cron"; data?: boolean; region?: Region } = {
     trigger: "api",
     data: false,
   },
 ): string {
+  const region = opts.region ? `&region=${opts.region}` : "";
   switch (monitor.jobType) {
     case "http":
-      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${monitor.id}&trigger=${opts.trigger}&data=${opts.data}`;
+      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${monitor.id}&trigger=${opts.trigger}&data=${opts.data}${region}`;
     case "tcp":
-      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${monitor.id}&trigger=${opts.trigger}&data=${opts.data}`;
+      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${monitor.id}&trigger=${opts.trigger}&data=${opts.data}${region}`;
     default:
       throw new OpenStatusApiError({
         code: "BAD_REQUEST",

@@ -46,15 +46,8 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		return
 	}
 
-	if h.CloudProvider == "fly" {
-		// if the request has been routed to a wrong region, we forward it to the correct one.
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
-			return
-		}
+	if !h.serveRegion(c, requestedRegion(c)) {
+		return
 	}
 
 	var req request.TCPCheckerRequest
@@ -271,15 +264,8 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		return
 	}
 
-	if h.CloudProvider == "fly" {
-		// if the request has been routed to a wrong region, we forward it to the correct one.
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
-			return
-		}
+	if !h.serveRegion(c, region) {
+		return
 	}
 
 	var req request.TCPCheckerRequest

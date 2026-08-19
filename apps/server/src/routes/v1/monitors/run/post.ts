@@ -1,6 +1,7 @@
 import { createRoute } from "@hono/zod-openapi";
 import { getLogger } from "@logtape/logtape";
 import { and, eq, gte, isNull, sql } from "@openstatus/db";
+import { regionDict } from "@openstatus/regions";
 
 import { env } from "@/env";
 import {
@@ -136,15 +137,19 @@ export function registerRunMonitor(api: typeof monitorsApi) {
 
     const allResult = [];
     for (const region of parseMonitor.data.regions) {
+      // A deprecated region has no checker machine, and Fly serves the check
+      // from the nearest one instead, storing it under that region.
+      if (regionDict[region]?.deprecated) continue;
+
       const status =
         monitorStatus.data.find((m) => region === m.region)?.status || "active";
       const payload = getCheckerPayload(row, status);
-      const url = getCheckerUrl(row, { data: true });
+      const url = getCheckerUrl(row, { data: true, region });
 
       const result = fetch(url, {
         headers: {
           "Content-Type": "application/json",
-          "fly-prefer-region": region, // Specify the region you want the request to be sent to
+          "fly-force-region": region, // Specify the region you want the request to be sent to
           Authorization: `Basic ${env.CRON_SECRET}`,
         },
         method: "POST",
