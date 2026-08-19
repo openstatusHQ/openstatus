@@ -2573,7 +2573,8 @@ describe("MonitorService - Private Locations", () => {
       .values({
         workspaceId: 1,
         name: `${TEST_PREFIX}-pl-${suffix}`,
-        url: jobType === "icmp" ? "1.1.1.1" : `https://pl-${suffix}.example.com`,
+        url:
+          jobType === "icmp" ? "1.1.1.1" : `https://pl-${suffix}.example.com`,
         periodicity: "1m",
         active: true,
         regions: "ams",
@@ -2667,7 +2668,10 @@ describe("MonitorService - Private Locations", () => {
   });
 
   test("GetMonitor returns the attached private location id for ICMP", async () => {
-    const { mon, pl } = await seedMonitorWithPrivateLocation("get-icmp", "icmp");
+    const { mon, pl } = await seedMonitorWithPrivateLocation(
+      "get-icmp",
+      "icmp",
+    );
     try {
       const res = await connectRequest(
         "GetMonitor",
