@@ -1,6 +1,7 @@
 import { Events } from "@openstatus/analytics";
-import { and, eq, inArray, isNull, sql } from "@openstatus/db";
+import { and, eq, gte, inArray, isNull, or, sql } from "@openstatus/db";
 import {
+  incidentTable,
   maintenance,
   page,
   pageComponent,
@@ -32,6 +33,8 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
   activeReportStatus,
+  aggregatePageStatus,
+  computeMonitorStatus,
   fillStatusDataFor45Days,
   fillStatusDataFor45DaysNoop,
   getEvents,
@@ -224,20 +227,8 @@ export const statusPageRouter = createTRPCRouter({
           reports: _page.statusReports,
           monitorId: c.monitor.id,
         });
-        const status =
-          events.some((e) => e.type === "incident" && !e.to) &&
-          barType !== "manual"
-            ? "error"
-            : (activeReportStatus(events) ??
-              (events.some(
-                (e) =>
-                  e.type === "maintenance" &&
-                  e.to &&
-                  e.from.getTime() <= new Date().getTime() &&
-                  e.to.getTime() >= new Date().getTime(),
-              )
-                ? "info"
-                : "success"));
+        // Use shared helper to compute monitor status (same logic as getBadgeStatus)
+        const status = computeMonitorStatus(events, barType);
         return {
           ...c.monitor,
           status,
@@ -279,17 +270,11 @@ export const statusPageRouter = createTRPCRouter({
         privateLocationCount: privateLocationCounts.get(m.id) ?? 0,
       }));
 
-      // no barType gate: incident-driven error is already suppressed per
-      // monitor in manual mode; report-driven error (major_outage) must show
-      const status = monitorsWithPrivateLocationCount.some(
-        (m) => m.status === "error",
-      )
-        ? "error"
-        : monitorsWithPrivateLocationCount.some((m) => m.status === "degraded")
-          ? "degraded"
-          : monitorsWithPrivateLocationCount.some((m) => m.status === "info")
-            ? "info"
-            : "success";
+      // Page-level status: aggregate only monitor statuses (preserves original behavior)
+      // Badge includes non-monitor events separately in getBadgeStatus
+      const status = aggregatePageStatus(
+        monitorsWithPrivateLocationCount.map((m) => m.status),
+      );
 
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
@@ -479,6 +464,123 @@ export const statusPageRouter = createTRPCRouter({
         pageComponentGroups: _page.pageComponentGroups,
         whiteLabel,
       });
+    }),
+
+  // Lightweight procedure for badge rendering - only returns status without full page payload
+  getBadgeStatus: publicProcedure
+    .input(z.object({ slug: z.string().toLowerCase() }))
+    .output(
+      z
+        .object({
+          status: z.enum(["success", "degraded", "error", "info"]),
+        })
+        .nullish(),
+    )
+    .query(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      // Minimal query - only fetch data needed for status computation
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        with: {
+          maintenances: {
+            // Only load active or recently ended maintenances (past 24h) for status computation
+            // Use Unix epoch comparison (maintenance.to is integer timestamp)
+            where: gte(maintenance.to, sql`strftime('%s', 'now') - 86400`),
+            with: {
+              maintenancesToPageComponents: { with: { pageComponent: true } },
+            },
+          },
+          statusReports: {
+            // Only load active reports (not resolved) for status computation
+            where: sql`${statusReport.status} != 'resolved'`,
+            with: {
+              statusReportUpdates: {
+                orderBy: (reports, { desc }) => desc(reports.date),
+                with: { statusReportUpdateToPageComponents: true },
+              },
+              statusReportsToPageComponents: { with: { pageComponent: true } },
+            },
+          },
+          pageComponents: {
+            with: {
+              monitor: {
+                with: {
+                  incidents: {
+                    where: isNull(incidentTable.resolvedAt),
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!_page) return null;
+
+      // Access control: only expose status for public pages
+      // Restricted pages (password, email-domain, ip-restriction) should not expose status to unauthenticated badge requests
+      if (_page.accessType !== "public") return null;
+
+      // Parse configuration to get bar type
+      const config = pageConfigurationSchema.safeParse(_page.configuration);
+      const barType = config.data?.type ?? "absolute";
+
+      // Filter to only active, non-deleted monitor components (same eligibility as get procedure)
+      // Inline filter with type predicate for proper TypeScript narrowing with query result types
+      const monitorComponents = _page.pageComponents.filter(
+        (c): c is typeof c & { monitor: NonNullable<typeof c.monitor> } =>
+          c.type === "monitor" &&
+          c.monitor !== null &&
+          c.monitor.active === true &&
+          c.monitor.deletedAt === null,
+      );
+
+      // Compute status for each monitor using shared helper (guarantees consistency with page rendering)
+      const statuses = monitorComponents.map((c) => {
+        const events = getEvents({
+          maintenances: _page.maintenances,
+          incidents: c.monitor.incidents ?? [],
+          reports: _page.statusReports,
+          monitorId: c.monitor.id,
+        });
+        return computeMonitorStatus(events, barType);
+      });
+
+      // Also compute status from non-monitor events (page-wide + static-component-only)
+      // This ensures page-wide status reports AND static-component events affect the badge
+      // Get IDs of all monitor components (to exclude monitor-scoped events)
+      const monitorComponentIds = new Set(
+        _page.pageComponents
+          .filter((c) => c.type === "monitor")
+          .map((c) => c.id),
+      );
+
+      // Filter to events that don't affect any monitor component
+      // This includes both page-wide events (length === 0) and static-component-only events
+      const nonMonitorMaintenances = _page.maintenances.filter((m) =>
+        m.maintenancesToPageComponents.every(
+          (rel) => !monitorComponentIds.has(rel.pageComponentId),
+        ),
+      );
+      const nonMonitorReports = _page.statusReports.filter((r) =>
+        r.statusReportsToPageComponents.every(
+          (rel) => !monitorComponentIds.has(rel.pageComponentId),
+        ),
+      );
+      const nonMonitorEvents = getEvents({
+        maintenances: nonMonitorMaintenances,
+        incidents: [], // Non-monitor context has no incidents (incidents are always monitor-specific)
+        reports: nonMonitorReports,
+        // No monitorId or pageComponentId - gets unscoped reports and maintenances
+      });
+      const nonMonitorStatus = computeMonitorStatus(nonMonitorEvents, barType);
+
+      // Aggregate monitor statuses + non-monitor status (page-wide + static components)
+      const allStatuses = [...statuses, nonMonitorStatus];
+      const status = aggregatePageStatus(allStatuses);
+
+      return { status };
     }),
 
   getLight: publicProcedure

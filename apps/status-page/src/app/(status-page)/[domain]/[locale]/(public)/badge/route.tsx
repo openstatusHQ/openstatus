@@ -1,7 +1,12 @@
-import type { Status } from "@openstatus/react";
-import { getStatus } from "@openstatus/react";
+import type { Status } from "@openstatus/tracker";
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
+
+import { getBadgeStatus } from "@/lib/badge-status";
+
+// trpc httpBatchLink needs Node, matching the API status route
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // Keep the `label` size within a maximum of 'Operational' to stay within the `SIZE` restriction
 const statusDictionary: Record<Status, { label: string; color: string }> = {
@@ -47,11 +52,13 @@ export async function GET(
   props: { params: Promise<{ domain: string }> },
 ) {
   const params = await props.params;
-  const { status } = await getStatus(params.domain);
+  // Use shared helper that handles query, error handling, and status conversion
+  const status = await getBadgeStatus(params.domain);
   const theme = req.nextUrl.searchParams.get("theme");
   const size = req.nextUrl.searchParams.get("size");
   const s = SIZE[size ?? "sm"] ?? SIZE.sm;
-  const { label, color } = statusDictionary[status];
+  const statusInfo = statusDictionary[status] ?? statusDictionary.unknown;
+  const { label, color } = statusInfo;
   const light = "border-gray-200 text-gray-700 bg-white";
   const dark = "border-gray-800 text-gray-300 bg-gray-900";
 

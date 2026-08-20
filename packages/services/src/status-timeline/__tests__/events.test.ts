@@ -148,6 +148,29 @@ describe("activeReportStatus", () => {
       ]),
     ).toBeUndefined();
   });
+
+  test("ignores future-dated reports that haven't started yet", () => {
+    expect(
+      activeReportStatus([
+        makeEvent({
+          type: "report",
+          from: day("2027-01-01"),
+          to: null,
+          status: "error",
+        }),
+      ]),
+    ).toBeUndefined();
+    expect(
+      activeReportStatus([
+        makeEvent({
+          type: "report",
+          from: day("2030-01-01"),
+          to: null,
+          status: "degraded",
+        }),
+      ]),
+    ).toBeUndefined();
+  });
 });
 
 describe("eventWorstImpact", () => {
