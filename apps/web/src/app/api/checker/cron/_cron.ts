@@ -240,7 +240,7 @@ const createCronTask = async ({
   const regionInfo = regionDict[region];
   let regionHeader = {};
   if (regionInfo.provider === "fly") {
-    regionHeader = { "fly-prefer-region": region };
+    regionHeader = { "fly-force-region": region };
   }
   if (regionInfo.provider === "koyeb") {
     regionHeader = { "X-KOYEB-REGION-OVERRIDE": region.replace("koyeb_", "") };
@@ -279,7 +279,7 @@ function generateUrl({
 
   switch (regionInfo.provider) {
     case "fly":
-      return `https://openstatus-checker.fly.dev/checker/${row.jobType}?monitor_id=${row.id}`;
+      return `https://openstatus-checker.fly.dev/checker/${row.jobType}?monitor_id=${row.id}&region=${region}`;
     case "koyeb":
       return `https://openstatus-checker.koyeb.app/checker/${row.jobType}?monitor_id=${row.id}`;
     case "railway":

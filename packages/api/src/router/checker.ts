@@ -10,7 +10,11 @@ import {
 } from "@openstatus/assertions";
 import { and, db, eq } from "@openstatus/db";
 import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
-import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
+import {
+  type Region,
+  monitorRegionSchema,
+} from "@openstatus/db/src/schema/constants";
+import { regionDict } from "@openstatus/regions";
 import {
   type httpPayloadSchema,
   safeUrlSchema,
@@ -166,7 +170,7 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
         headers: {
           Authorization: `Basic ${env.CRON_SECRET}`,
           "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
+          "fly-force-region": input.region,
         },
         body: JSON.stringify({
           url: input.url,
@@ -258,7 +262,7 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
         headers: {
           Authorization: `Basic ${env.CRON_SECRET}`,
           "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
+          "fly-force-region": input.region,
         },
         body: JSON.stringify({ uri: input.url }),
         signal: AbortSignal.timeout(ABORT_TIMEOUT),
@@ -309,7 +313,7 @@ export async function testDns(input: z.infer<typeof dnsTestInput>) {
         headers: {
           Authorization: `Basic ${env.CRON_SECRET}`,
           "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
+          "fly-force-region": input.region,
         },
         body: JSON.stringify({
           uri: input.url,
@@ -453,12 +457,16 @@ export async function triggerChecker(
   const allResult = [];
 
   for (const region of input.regions) {
-    const res = fetch(generateUrl({ row: input }), {
+    // A deprecated region has no checker machine, and Fly serves the check from
+    // the nearest one instead, storing it under that region.
+    if (regionDict[region]?.deprecated) continue;
+
+    const res = fetch(generateUrl({ row: input, region }), {
       method: "POST",
       headers: {
         Authorization: `Basic ${env.CRON_SECRET}`,
         "Content-Type": "application/json",
-        "fly-prefer-region": region,
+        "fly-force-region": region,
       },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(ABORT_TIMEOUT),
@@ -469,14 +477,20 @@ export async function triggerChecker(
   await Promise.allSettled(allResult);
 }
 
-function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
+function generateUrl({
+  row,
+  region,
+}: {
+  row: z.infer<typeof selectMonitorSchema>;
+  region: Region;
+}) {
   switch (row.jobType) {
     case "http":
-      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}`;
+      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}&region=${region}`;
     case "tcp":
-      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}`;
+      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}&region=${region}`;
     case "dns":
-      return `https://openstatus-checker.fly.dev/checker/dns?monitor_id=${row.id}`;
+      return `https://openstatus-checker.fly.dev/checker/dns?monitor_id=${row.id}&region=${region}`;
     default:
       throw new Error("Invalid jobType");
   }

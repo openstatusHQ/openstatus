@@ -78,7 +78,7 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
           headers: {
             Authorization: `Basic ${env.CRON_SECRET}`,
             "Content-Type": "application/json",
-            "fly-prefer-region": region,
+            "fly-force-region": region,
           },
           method: "POST",
           body: JSON.stringify({
