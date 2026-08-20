@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { getBaseUrl } from "../lib/base-url";
 import { stripHostPort } from "../lib/domain";
 import { resolveRoute } from "../lib/resolve-route";
+import { isThemeExplorerHost } from "../lib/theme-explorer-host";
 
 // trpc/db lookup needs Node, matching the sitemap and other content routes.
 export const runtime = "nodejs";
@@ -49,6 +50,12 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         },
       ],
     };
+  }
+
+  // No page for this host: `/` falls through to the theme explorer, which only
+  // belongs in the index on its own host.
+  if (!row && !isThemeExplorerHost(host)) {
+    return { rules: [{ userAgent: "*", disallow: "/" }] };
   }
 
   const sitemap = row
