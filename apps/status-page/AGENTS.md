@@ -37,3 +37,21 @@ a theme in that package; do not hard-code colours in a component.
 Status-page impact labels are coloured text only — no dots, no chevrons. The
 hover affordance is a dashed muted underline, never one tinted with the impact
 colour.
+
+## Theme explorer
+
+`/` renders the theme explorer, and it is also where any request resolving to
+no `page` row ends up. The proxy rewrites those to a 404
+(`resolveUnresolvedHostAction`) so an unknown slug or a custom domain missing
+from the DB never answers with the explorer or its OG image. Only
+`themes.openstatus.dev` is indexable — see `lib/theme-explorer-host.ts`.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
