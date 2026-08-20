@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { buildCurlCommand } from "@openstatus/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
@@ -29,14 +30,22 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     }),
   );
   const router = useRouter();
+  // curl only speaks HTTP — the action is hidden for tcp/dns monitors
+  const isHttp = row.original.jobType === "http";
   const actions = getActions({
     edit: () => router.push(`/monitors/${row.original.id}/edit`),
     "copy-id": () => {
       navigator.clipboard.writeText(row.original.id.toString());
       toast.success("Monitor ID copied to clipboard");
     },
+    "copy-curl": isHttp
+      ? async () => {
+          await navigator.clipboard.writeText(buildCurlCommand(row.original));
+          toast.success("cURL command copied to clipboard");
+        }
+      : undefined,
     // export: () => setOpenDialog(true),
-  });
+  }).filter((action) => action.id !== "copy-curl" || isHttp);
 
   return (
     <>

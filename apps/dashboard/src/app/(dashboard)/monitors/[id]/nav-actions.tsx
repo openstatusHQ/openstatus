@@ -10,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
+import { buildCurlCommand } from "@openstatus/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useParams, usePathname, useRouter } from "next/navigation";
@@ -66,12 +67,22 @@ export function NavActions() {
   const testTcpMutation = useMutation(trpc.checker.testTcp.mutationOptions());
   const testDnsMutation = useMutation(trpc.checker.testDns.mutationOptions());
 
+  // curl only speaks HTTP — the action is hidden for tcp/dns monitors
+  const curlCommand =
+    monitor?.jobType === "http" ? buildCurlCommand(monitor) : null;
+
   const actions = getActions({
     edit: () => router.push(`/monitors/${id}/edit`),
     "copy-id": async () => {
       await navigator.clipboard.writeText(id);
       toast.success("Monitor ID copied to clipboard");
     },
+    "copy-curl": curlCommand
+      ? async () => {
+          await navigator.clipboard.writeText(curlCommand);
+          toast.success("cURL command copied to clipboard");
+        }
+      : undefined,
     clone: () => {
       const promise = cloneMonitorMutation.mutateAsync({
         id: Number.parseInt(id),
@@ -87,7 +98,7 @@ export function NavActions() {
         },
       });
     },
-  });
+  }).filter((action) => action.id !== "copy-curl" || Boolean(curlCommand));
 
   async function testAction() {
     if (monitor?.jobType === "http") {

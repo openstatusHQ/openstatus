@@ -12,6 +12,7 @@ export {
   MONITOR_STATUSES,
   MONITOR_JOB_TYPES,
 } from "./constants";
+export { buildCurlCommand, type CurlRequest } from "./curl";
 export { yieldMany, iteratorToStream } from "./stream";
 export { statusLabel, type PageUpdateStatus } from "./status";
 
