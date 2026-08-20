@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
+import { buildCurlCommand } from "@openstatus/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import Link from "next/link";
@@ -128,12 +129,20 @@ export function NavMonitors() {
         ) : monitors && monitors.length > 0 ? (
           monitors.map((item) => {
             const isActive = pathname.startsWith(`/monitors/${item.id}/`);
+            // curl only speaks HTTP — the action is hidden for tcp/dns monitors
+            const isHttp = item.jobType === "http";
             const actions = getActions({
               edit: () => router.push(`/monitors/${item.id}/edit`),
               "copy-id": () => {
                 navigator.clipboard.writeText(item.id.toString());
                 toast.success("Monitor ID copied to clipboard");
               },
+              "copy-curl": isHttp
+                ? async () => {
+                    await navigator.clipboard.writeText(buildCurlCommand(item));
+                    toast.success("cURL command copied to clipboard");
+                  }
+                : undefined,
               clone: () => {
                 const promise = cloneMonitorMutation.mutateAsync({
                   id: item.id,
@@ -150,7 +159,7 @@ export function NavMonitors() {
                 });
               },
               // export: () => setOpenDialog(true),
-            });
+            }).filter((action) => action.id !== "copy-curl" || isHttp);
             return (
               <SidebarMenuItem key={item.id}>
                 <SidebarMenuButton
