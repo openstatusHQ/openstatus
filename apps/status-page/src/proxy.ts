@@ -24,6 +24,14 @@ export default auth(async (req) => {
   passthroughResponse.headers.set("Vary", "Accept");
   const host = req.headers.get("x-forwarded-host");
 
+  // HTML served via internal rewrite shares its URL with the markdown variant —
+  // carry the same Vary as the passthrough so caches don't cross them.
+  const rewriteWithVary = (target: URL) => {
+    const response = NextResponse.rewrite(target);
+    response.headers.set("Vary", "Accept");
+    return response;
+  };
+
   // `/` is the theme explorer, so a host that resolves to no page must 404
   // rather than fall through to it.
   const unresolvedHostResponse = () => {
@@ -33,9 +41,7 @@ export default auth(async (req) => {
       requestUrl: req.url,
     });
     if (action.type !== "rewrite") return passthroughResponse;
-    const response = NextResponse.rewrite(action.url);
-    response.headers.set("Vary", "Accept");
-    return response;
+    return rewriteWithVary(action.url);
   };
 
   // Strip a `.md` suffix before route resolution so path-based markdown
@@ -131,13 +137,8 @@ export default auth(async (req) => {
   switch (action.type) {
     case "redirect":
       return NextResponse.redirect(action.url);
-    case "rewrite": {
-      // HTML served via internal rewrite shares its URL with the markdown
-      // variant — carry the same Vary so caches don't cross them.
-      const rewriteResponse = NextResponse.rewrite(action.url);
-      rewriteResponse.headers.set("Vary", "Accept");
-      return rewriteResponse;
-    }
+    case "rewrite":
+      return rewriteWithVary(action.url);
     case "passthrough":
       return passthroughResponse;
   }
