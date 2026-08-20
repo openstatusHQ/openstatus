@@ -18,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { buildCurlCommand } from "@openstatus/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -44,6 +45,7 @@ export function NavMonitors() {
   const [openDialog, setOpenDialog] = useState(false);
   const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
   const { isMobile, setOpenMobile } = useSidebar();
+  const { copy } = useCopyToClipboard();
   const trpc = useTRPC();
   const router = useRouter();
   const pathname = usePathname();
@@ -139,8 +141,10 @@ export function NavMonitors() {
               },
               "copy-curl": isHttp
                 ? async () => {
-                    await navigator.clipboard.writeText(buildCurlCommand(item));
-                    toast.success("cURL command copied to clipboard");
+                    const copied = await copy(buildCurlCommand(item), {
+                      withToast: "cURL command copied to clipboard",
+                    });
+                    if (!copied) toast.error("Failed to copy cURL command");
                   }
                 : undefined,
               clone: () => {
