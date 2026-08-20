@@ -189,7 +189,6 @@ export default function Page() {
             data={subscribers}
             toolbarComponent={SubscribersDataTableToolbar}
             paginationComponent={DataTablePaginationSimple}
-            defaultColumnFilters={[{ id: "status", value: ["active"] }]}
           />
         ) : (
           <EmptyStateContainer>
