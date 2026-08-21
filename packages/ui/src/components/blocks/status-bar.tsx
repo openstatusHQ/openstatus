@@ -509,12 +509,15 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
     ref,
   ) => {
     const labels = useStatusBlocksLabels();
+    const barRadius =
+      "var(--status-bar-radius, calc(var(--radius) * 99999999))";
     return (
       <HoverCard openDelay={0} closeDelay={0} open={isActive}>
         <HoverCardTrigger asChild>
           <div
             ref={ref}
-            className="group focus-visible:ring-ring/50 relative flex h-full flex-1 cursor-pointer flex-col rounded-full outline-none hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] aria-pressed:opacity-80"
+            className="group focus-visible:ring-ring/50 relative flex h-full flex-1 cursor-pointer flex-col outline-none hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] aria-pressed:opacity-80"
+            style={{ borderRadius: barRadius }}
             onClick={() => handlers.onClick(index)}
             onFocus={() => handlers.onFocus(index)}
             onBlur={handlers.onBlur}
@@ -528,7 +531,10 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
             aria-expanded={isActive}
             data-slot="status-bar-item"
           >
-            <div className="flex h-full w-full flex-col overflow-hidden rounded-full">
+            <div
+              className="flex h-full w-full flex-col overflow-hidden"
+              style={{ borderRadius: barRadius }}
+            >
               {/* Render bar segments */}
               {item.bar.map((segment, segmentIndex) => {
                 if (renderBar) {
@@ -537,10 +543,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
                 return (
                   <div
                     key={`${item.day}-${segment.status}-${segmentIndex}`}
-                    className={cn("w-full transition-all", {
-                      "rounded-t-full": segmentIndex === 0,
-                      "rounded-b-full": segmentIndex === item.bar.length - 1,
-                    })}
+                    className="w-full transition-all"
                     style={{
                       height: `${segment.height}%`,
                       backgroundColor: statusColors[segment.status],

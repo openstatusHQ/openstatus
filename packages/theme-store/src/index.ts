@@ -9,6 +9,7 @@ import { DRACULA_THEME } from "./dracula";
 import { GITHUB_HIGH_CONTRAST_THEME } from "./github";
 import { OPENSTATUS_ROUNDED_THEME, OPENSTATUS_THEME } from "./openstatus";
 import { PASSBOLT_THEME } from "./passbolt";
+import { PROBO_THEME } from "./probo";
 import { SUPABASE_THEME } from "./supabase";
 import type { Theme, ThemeDefinition, ThemeMap } from "./types";
 import { assertUniqueThemeIds } from "./utils";
@@ -20,6 +21,7 @@ const THEMES_LIST = [
   GITHUB_HIGH_CONTRAST_THEME,
   DRACULA_THEME,
   PASSBOLT_THEME,
+  PROBO_THEME,
 ] satisfies Theme[];
 
 // NOTE: runtime validation to ensure that the theme IDs are unique

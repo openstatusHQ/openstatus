@@ -30,6 +30,7 @@ export const THEME_VAR_NAMES = [
   "--success", // green, operational status
   "--warning", // yellow, degraded status
   "--info", // blue, monitoring status
+  "--status-bar-radius", // bar corner radius; unset = pill (radius * ∞)
 
   // NOTE: the following colors are used for the public monitors UI to differentiate the different regions
   // It is not required to add them to your custom theme, but you can if you want to.
