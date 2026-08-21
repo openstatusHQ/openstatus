@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/cenkalti/backoff/v5"
 	"github.com/google/uuid"
@@ -48,25 +49,25 @@ func (jobRunner) ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region st
 
 	op := func() (*ICMPPrivateRegionData, error) {
 		called++
+		start := time.Now().UTC().UnixMilli()
 		res, err := checker.PingICMP(monitor.Timeout, monitor.Uri)
 		if err != nil {
 			if called < int(retry) {
 				return nil, fmt.Errorf("ICMP check failed: %w", err)
 			}
-			id, uuidErr := uuid.NewV7()
-			if uuidErr != nil {
-				return nil, fmt.Errorf("failed to generate UUID: %w", uuidErr)
+
+			data, dataErr := newICMPData(monitor.Uri, start)
+			if dataErr != nil {
+				return nil, dataErr
 			}
 
 			lastResult = checker.ICMPResponse{Error: 1}
 
-			return &ICMPPrivateRegionData{
-				ID:            id.String(),
-				URI:           monitor.Uri,
-				RequestStatus: "error",
-				Error:         1,
-				Message:       err.Error(),
-			}, nil
+			data.RequestStatus = "error"
+			data.Error = 1
+			data.Message = err.Error()
+
+			return data, nil
 		}
 
 		lastResult = checker.ICMPResponse{
@@ -78,33 +79,35 @@ func (jobRunner) ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region st
 			Timing:          res.Timing,
 		}
 
-		var requestStatus = "active"
+		// "success", not "active": the Tinybird ICMP status and uptime pipes
+		// count `requestStatus = 'success'`, and the HTTP/TCP/DNS jobs all
+		// report it that way.
+		var requestStatus = "success"
 		if degradedAfter > 0 && res.Latency > degradedAfter {
 			requestStatus = "degraded"
 		}
 
-		id, err := uuid.NewV7()
+		data, err := newICMPData(monitor.Uri, start)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate UUID: %w", err)
+			return nil, err
 		}
+
 		timingAsString, err := json.Marshal(res.Timing)
 		if err != nil {
 			return nil, fmt.Errorf("error while parsing timing data %s: %w", monitor.Uri, err)
 		}
 
-		return &ICMPPrivateRegionData{
-			ID:              id.String(),
-			Latency:         res.Latency,
-			LatencyMin:      res.LatencyMin,
-			LatencyMax:      res.LatencyMax,
-			PacketsSent:     int64(res.PacketsSent),
-			PacketsReceived: int64(res.PacketsReceived),
-			URI:             monitor.Uri,
-			RequestStatus:   requestStatus,
-			Error:           0,
-			Message:         fmt.Sprintf("Successfully pinged %s", monitor.Uri),
-			Timing:          string(timingAsString),
-		}, nil
+		data.Latency = res.Latency
+		data.LatencyMin = res.LatencyMin
+		data.LatencyMax = res.LatencyMax
+		data.PacketsSent = int64(res.PacketsSent)
+		data.PacketsReceived = int64(res.PacketsReceived)
+		data.RequestStatus = requestStatus
+		data.Error = 0
+		data.Message = fmt.Sprintf("Successfully pinged %s", monitor.Uri)
+		data.Timing = string(timingAsString)
+
+		return data, nil
 	}
 
 	resp, err := backoff.Retry(ctx, op,
@@ -118,6 +121,23 @@ func (jobRunner) ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region st
 		return nil, fmt.Errorf("ICMP job failed after %d retries: %w", retry, err)
 	}
 	return resp, nil
+}
+
+// newICMPData stamps the fields every result must carry regardless of outcome.
+// `Timestamp`/`CronTimestamp` are required: ValidateIngestICMPRequest rejects a
+// non-positive timestamp, so a result missing them is dropped at ingest.
+func newICMPData(uri string, start int64) (*ICMPPrivateRegionData, error) {
+	id, err := uuid.NewV7()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate UUID: %w", err)
+	}
+
+	return &ICMPPrivateRegionData{
+		ID:            id.String(),
+		URI:           uri,
+		Timestamp:     start,
+		CronTimestamp: start,
+	}, nil
 }
 
 func icmpCheckerRequest(monitor *v1.ICMPMonitor) request.ICMPCheckerRequest {

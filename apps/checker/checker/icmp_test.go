@@ -51,3 +51,20 @@ func TestPingICMP_Timeout(t *testing.T) {
 		t.Fatalf("PingICMP() expected timeout error, got %+v", res)
 	}
 }
+
+// A zero timeout used to make the deadline land in the past, so the send loop
+// broke before the first packet and every check reported "no reply" without
+// probing. Callers that omit the field must still get a real check.
+func TestPingICMP_ZeroTimeoutStillProbes(t *testing.T) {
+	res, err := checker.PingICMP(0, "127.0.0.1")
+	skipIfNoICMP(t, err)
+	if err != nil {
+		t.Fatalf("PingICMP() with a zero timeout must still probe, got %v", err)
+	}
+	if res.PacketsSent == 0 {
+		t.Error("PingICMP() sent no packets with a zero timeout")
+	}
+	if res.PacketsReceived == 0 {
+		t.Errorf("PingICMP() received no replies from loopback: %+v", res)
+	}
+}

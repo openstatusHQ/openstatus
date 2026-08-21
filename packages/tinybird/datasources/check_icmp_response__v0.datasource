@@ -2,7 +2,7 @@ SCHEMA >
     `monitorId` Int32 `json:$.monitorId`,
     `region` String `json:$.region`,
     `timestamp` Int64 `json:$.timestamp`,
-    `cronTimestamp` Int64 `json:$.timestamp`,
+    `cronTimestamp` Int64 `json:$.cronTimestamp`,
     `timing` String `json:$.timing`,
     `latency` Int64 `json:$.latency`,
     `latencyMin` Int64 `json:$.latencyMin`,
