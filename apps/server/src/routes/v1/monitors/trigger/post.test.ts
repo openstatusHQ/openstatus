@@ -1,3 +1,4 @@
+import { createMonitor } from "@openstatus/db/src/test/factories";
 import { afterEach, expect, mock, test } from "@openstatus/test-utils";
 
 import { app } from "@/index";
@@ -183,4 +184,65 @@ test("trigger monitor with multiple regions should return result id", async () =
   const result = TriggerSchema.safeParse(json);
   expect(result.success).toBe(true);
   expect(json.resultId).toBeDefined();
+});
+
+test("trigger ICMP monitor dispatches to the icmp checker endpoint", async () => {
+  const icmpMonitor = await createMonitor(1, {
+    jobType: "icmp",
+    url: "1.1.1.1",
+    active: true,
+    regions: "ams",
+    periodicity: "10m",
+  });
+
+  mockFetch.mockReturnValue(
+    Promise.resolve(new Response(null, { status: 200 })),
+  );
+
+  const res = await app.request(`/v1/monitor/${icmpMonitor.id}/trigger`, {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+  });
+
+  expect(res.status).toBe(200);
+
+  const json = await res.json();
+  expect(TriggerSchema.safeParse(json).success).toBe(true);
+
+  const [url, init] = mockFetch.mock.calls[0];
+  expect(String(url)).toContain("/checker/icmp?");
+  expect(JSON.parse(String(init.body))).toMatchObject({
+    uri: "1.1.1.1",
+    monitorId: String(icmpMonitor.id),
+  });
+});
+
+test("trigger DNS monitor dispatches to the dns checker endpoint", async () => {
+  const dnsMonitor = await createMonitor(1, {
+    jobType: "dns",
+    url: "openstatus.dev",
+    active: true,
+    regions: "ams",
+    periodicity: "10m",
+  });
+
+  mockFetch.mockReturnValue(
+    Promise.resolve(new Response(null, { status: 200 })),
+  );
+
+  const res = await app.request(`/v1/monitor/${dnsMonitor.id}/trigger`, {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+  });
+
+  expect(res.status).toBe(200);
+
+  const [url] = mockFetch.mock.calls[0];
+  expect(String(url)).toContain("/checker/dns?");
 });

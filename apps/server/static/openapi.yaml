@@ -470,6 +470,28 @@ components:
       title: CreateHTTPMonitorResponse
       additionalProperties: false
       description: CreateHTTPMonitorResponse is the response after creating an HTTP monitor.
+    openstatus.monitor.v1.CreateICMPMonitorRequest:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: Monitor configuration (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+      title: CreateICMPMonitorRequest
+      required:
+        - monitor
+      additionalProperties: false
+      description: CreateICMPMonitorRequest is the request to create a new ICMP monitor.
+    openstatus.monitor.v1.CreateICMPMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The created monitor with assigned ID.
+          $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+      title: CreateICMPMonitorResponse
+      additionalProperties: false
+      description: CreateICMPMonitorResponse is the response after creating an ICMP monitor.
     openstatus.monitor.v1.CreateTCPMonitorRequest:
       type: object
       properties:
@@ -665,7 +687,7 @@ components:
       properties:
         monitor:
           title: monitor
-          description: The monitor configuration (one of HTTP, TCP, or DNS).
+          description: The monitor configuration (one of HTTP, TCP, DNS, or ICMP).
           $ref: '#/components/schemas/openstatus.monitor.v1.MonitorConfig'
       title: GetMonitorResponse
       additionalProperties: false
@@ -1189,6 +1211,109 @@ components:
       title: Headers
       additionalProperties: false
       description: Headers represents a key-value pair for HTTP headers.
+    openstatus.monitor.v1.ICMPMonitor:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the monitor (output only for create requests).
+        name:
+          type: string
+          examples:
+            - Ping Gateway
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Name of the monitor (required, max 256 characters).
+        uri:
+          type: string
+          examples:
+            - 1.1.1.1
+          title: uri
+          maxLength: 2048
+          minLength: 1
+          description: URI to monitor in format "host or IP" (required, max 2048 characters).
+        periodicity:
+          not:
+            enum:
+              - PERIODICITY_UNSPECIFIED
+          title: periodicity
+          description: Check periodicity (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+        timeout:
+          type:
+            - integer
+            - string
+          title: timeout
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Timeout in milliseconds (0-120000, defaults to 45000).
+        degradedAt:
+          type:
+            - integer
+            - string
+            - "null"
+          title: degraded_at
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+        retry:
+          type:
+            - integer
+            - string
+          title: retry
+          maximum: 10
+          minimum: 0
+          format: int64
+          description: Number of retry attempts (0-10, defaults to 3).
+        description:
+          type:
+            - string
+            - "null"
+          title: description
+          maxLength: 1024
+          description: Description of the monitor (optional).
+        active:
+          type:
+            - boolean
+            - "null"
+          title: active
+          description: Whether the monitor is active (defaults to false).
+        public:
+          type:
+            - boolean
+            - "null"
+          title: public
+          description: Whether the monitor is publicly visible (defaults to false).
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Geographic regions to run checks from.
+        openTelemetry:
+          title: open_telemetry
+          description: OpenTelemetry configuration for exporting metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+        status:
+          title: status
+          description: Current operational status of the monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+        privateLocationIds:
+          type: array
+          items:
+            type: string
+            readOnly: true
+          title: private_location_ids
+          description: IDs of private locations that run this monitor. Read-only.
+          readOnly: true
+      title: ICMPMonitor
+      additionalProperties: false
+      description: ICMPMonitor defines the configuration for a ICMP monitor.
     openstatus.monitor.v1.ListMonitorHTTPResponseLogsRequest:
       type: object
       properties:
@@ -1293,6 +1418,12 @@ components:
             $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
           title: dns_monitors
           description: DNS monitors in the workspace.
+        icmpMonitors:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+          title: icmp_monitors
+          description: ICMP monitors in the workspace.
         totalSize:
           type: integer
           title: total_size
@@ -1322,6 +1453,15 @@ components:
           title: http
           required:
             - http
+        - type: object
+          properties:
+            icmp:
+              title: icmp
+              description: ICMP monitor configuration.
+              $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+          title: icmp
+          required:
+            - icmp
         - type: object
           properties:
             tcp:
@@ -1695,6 +1835,33 @@ components:
       title: UpdateHTTPMonitorResponse
       additionalProperties: false
       description: UpdateHTTPMonitorResponse is the response after updating an HTTP monitor.
+    openstatus.monitor.v1.UpdateICMPMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to update (required).
+        monitor:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+            - type: "null"
+          title: monitor
+          description: Updated monitor configuration (all fields optional for partial updates).
+      title: UpdateICMPMonitorRequest
+      additionalProperties: false
+      description: UpdateICMPMonitorRequest is the request to update an existing ICMP monitor.
+    openstatus.monitor.v1.UpdateICMPMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The updated monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+      title: UpdateICMPMonitorResponse
+      additionalProperties: false
+      description: UpdateICMPMonitorResponse is the response after updating an ICMP monitor.
     openstatus.monitor.v1.UpdateTCPMonitorRequest:
       type: object
       properties:
@@ -5046,6 +5213,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.CreateHTTPMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/CreateICMPMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: CreateICMPMonitor
+      description: CreateICMPMonitor creates a new ICMP monitor.
+      operationId: MonitorService_CreateICMPMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.CreateICMPMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.CreateICMPMonitorResponse'
   /rpc/openstatus.monitor.v1.MonitorService/CreateTCPMonitor:
     post:
       tags:
@@ -5105,7 +5298,7 @@ paths:
       summary: GetMonitor
       description: |-
         GetMonitor returns a single monitor by ID within the authenticated workspace.
-         Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
+         Returns the monitor configuration (HTTP, TCP, DNS, or ICMP) using the MonitorConfig oneof type.
       operationId: MonitorService_GetMonitor.get
       parameters:
         - name: message
@@ -5133,7 +5326,7 @@ paths:
       summary: GetMonitor
       description: |-
         GetMonitor returns a single monitor by ID within the authenticated workspace.
-         Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
+         Returns the monitor configuration (HTTP, TCP, DNS, or ICMP) using the MonitorConfig oneof type.
       operationId: MonitorService_GetMonitor
       requestBody:
         content:
@@ -5492,6 +5685,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.UpdateHTTPMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/UpdateICMPMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: UpdateICMPMonitor
+      description: UpdateICMPMonitor updates an existing ICMP monitor.
+      operationId: MonitorService_UpdateICMPMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.UpdateICMPMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.UpdateICMPMonitorResponse'
   /rpc/openstatus.monitor.v1.MonitorService/UpdateTCPMonitor:
     post:
       tags:

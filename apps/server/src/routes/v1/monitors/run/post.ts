@@ -98,6 +98,16 @@ export function registerRunMonitor(api: typeof monitorsApi) {
 
     const row = parseMonitor.data;
 
+    // Unlike the fire-and-forget trigger route, this one parses and returns the
+    // checker's result. The DNS checker response carries no `jobType`, so it
+    // can't be discriminated by `TriggerResult` — reject it with a clear
+    // message rather than failing later on an opaque parse error.
+    if (row.jobType === "dns") {
+      throw new HTTPException(400, {
+        message: "Running a DNS monitor on demand is not supported yet",
+      });
+    }
+
     // Maybe later overwrite the region
 
     const monitorStatusData = await db

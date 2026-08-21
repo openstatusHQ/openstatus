@@ -7,6 +7,7 @@ import {
   privateLocationToMonitors,
   workspace,
 } from "@openstatus/db/src/schema";
+import { monitorRun } from "@openstatus/db/src/schema/monitor_run/monitor_run";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import {
@@ -48,6 +49,7 @@ let FREE_PLAN_KEY: string;
 let testHttpMonitorId: number;
 let testTcpMonitorId: number;
 let testDnsMonitorId: number;
+let testIcmpMonitorId: number;
 let testMonitorToDeleteId: number;
 let testMonitorWithStatusId: number;
 
@@ -119,6 +121,7 @@ beforeAll(async () => {
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-http`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-dns`));
+  await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-icmp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
   await db
     .delete(monitor)
@@ -190,6 +193,23 @@ beforeAll(async () => {
     .get();
   testDnsMonitorId = dnsMon.id;
 
+  // Create test ICMP monitor
+  const icmpMon = await db
+    .insert(monitor)
+    .values({
+      workspaceId: 1,
+      name: `${TEST_PREFIX}-icmp`,
+      url: "1.1.1.1",
+      periodicity: "10m",
+      active: true,
+      regions: "ams",
+      jobType: "icmp",
+      timeout: 5000,
+    })
+    .returning()
+    .get();
+  testIcmpMonitorId = icmpMon.id;
+
   // Create monitor to be deleted
   const deleteMon = await db
     .insert(monitor)
@@ -241,6 +261,7 @@ afterAll(async () => {
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-http`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-dns`));
+  await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-icmp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
   await db
     .delete(monitor)
@@ -343,6 +364,28 @@ describe("MonitorService.ListMonitors", () => {
     expect(dnsMon.recordAssertions).toBeDefined();
   });
 
+  test("returns ICMP monitors with correct structure", async () => {
+    const res = await connectRequest(
+      "ListMonitors",
+      { limit: 100 },
+      {
+        "x-openstatus-key": "1",
+      },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    const icmpMonitors = data.icmpMonitors || [];
+    const icmpMon = icmpMonitors.find(
+      (m: { id: string }) => m.id === String(testIcmpMonitorId),
+    );
+
+    expect(icmpMon).toBeDefined();
+    expect(icmpMon.uri).toBe("1.1.1.1");
+    expect(icmpMon.periodicity).toBe("PERIODICITY_10M");
+  });
+
   test("returns 401 when no auth key provided", async () => {
     const res = await connectRequest("ListMonitors", {});
 
@@ -363,7 +406,8 @@ describe("MonitorService.ListMonitors", () => {
     const totalMonitors =
       (data.httpMonitors?.length || 0) +
       (data.tcpMonitors?.length || 0) +
-      (data.dnsMonitors?.length || 0);
+      (data.dnsMonitors?.length || 0) +
+      (data.icmpMonitors?.length || 0);
 
     // Should return at most 2 monitors total
     expect(totalMonitors).toBeLessThanOrEqual(2);
@@ -834,6 +878,53 @@ describe("MonitorService.CreateDNSMonitor", () => {
   test("returns error when monitor is missing", async () => {
     const res = await connectRequest(
       "CreateDNSMonitor",
+      {},
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("MonitorService.CreateICMPMonitor", () => {
+  test("successfully creates ICMP monitor", async () => {
+    const res = await connectRequest(
+      "CreateICMPMonitor",
+      {
+        monitor: {
+          name: "test-create-icmp",
+          uri: "8.8.8.8",
+          periodicity: "PERIODICITY_5M",
+          timeout: "5000",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.uri).toBe("8.8.8.8");
+    expect(data.monitor.periodicity).toBe("PERIODICITY_5M");
+
+    // The row must carry the icmp job type so the cron dispatches a ping.
+    const row = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, Number(data.monitor.id)))
+      .get();
+    expect(row?.jobType).toBe("icmp");
+
+    // Clean up
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+
+  test("returns error when monitor is missing", async () => {
+    const res = await connectRequest(
+      "CreateICMPMonitor",
       {},
       { "x-openstatus-key": "1" },
     );
@@ -1343,6 +1434,140 @@ describe("MonitorService.UpdateDNSMonitor", () => {
   });
 });
 
+describe("MonitorService.UpdateICMPMonitor", () => {
+  test("successfully updates ICMP monitor with partial data", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: {
+          name: "updated-icmp-name",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.name).toBe("updated-icmp-name");
+    // Original URI should be preserved
+    expect(data.monitor.uri).toBe("1.1.1.1");
+
+    // Restore original name
+    await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: {
+          name: `${TEST_PREFIX}-icmp`,
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("successfully updates ICMP monitor URI", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: {
+          uri: "9.9.9.9",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.uri).toBe("9.9.9.9");
+
+    // Restore original URI
+    await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: {
+          uri: "1.1.1.1",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("leaves active untouched when the patch omits it", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: { name: `${TEST_PREFIX}-icmp` },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.active).toBe(true);
+  });
+
+  test("returns current monitor when no monitor data provided", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.id).toBe(String(testIcmpMonitorId));
+  });
+
+  test("returns 404 for non-existent monitor", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: "99999",
+        monitor: { name: "test" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns error when trying to update HTTP monitor as ICMP", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: { name: "test" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("type mismatch");
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("UpdateICMPMonitor", {
+      id: String(testIcmpMonitorId),
+      monitor: { name: "test" },
+    });
+
+    expect(res.status).toBe(401);
+  });
+});
+
 describe("MonitorService - private and internal URLs", () => {
   // Valid URIs, so protovalidate passes them through to the service guard.
   const BLOCKED = [
@@ -1449,6 +1674,47 @@ describe("MonitorService.TriggerMonitor", () => {
     const res = await connectRequest("TriggerMonitor", { id: "1" });
 
     expect(res.status).toBe(401);
+  });
+
+  test("dispatches an ICMP monitor to the icmp checker endpoint", async () => {
+    // A throwaway monitor: triggering records a monitorRun that references it,
+    // and the suite's afterAll deletes monitors without clearing runs.
+    const icmpMon = await createMonitor(1, {
+      name: `${TEST_PREFIX}-icmp-trigger`,
+      url: "1.1.1.1",
+      jobType: "icmp",
+      periodicity: "10m",
+      active: true,
+      regions: "ams",
+    });
+
+    // Scoped to this test so the surrounding suite keeps the real fetch.
+    const realFetch = globalThis.fetch;
+    const calls: { url: string; body: string }[] = [];
+    globalThis.fetch = ((url: string | URL | Request, init?: RequestInit) => {
+      calls.push({ url: String(url), body: String(init?.body ?? "") });
+      return Promise.resolve(new Response(null, { status: 200 }));
+    }) as typeof fetch;
+
+    try {
+      const res = await connectRequest(
+        "TriggerMonitor",
+        { id: String(icmpMon.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+      expect(calls.length).toBeGreaterThan(0);
+      expect(calls[0].url).toContain("/checker/icmp?");
+      expect(JSON.parse(calls[0].body)).toMatchObject({
+        uri: "1.1.1.1",
+        monitorId: String(icmpMon.id),
+      });
+    } finally {
+      globalThis.fetch = realFetch;
+      await db.delete(monitorRun).where(eq(monitorRun.monitorId, icmpMon.id));
+      await db.delete(monitor).where(eq(monitor.id, icmpMon.id));
+    }
   });
 });
 
@@ -2522,17 +2788,21 @@ describe("MonitorService.GetMonitor", () => {
 });
 
 describe("MonitorService - Private Locations", () => {
-  async function seedMonitorWithPrivateLocation(suffix: string) {
+  async function seedMonitorWithPrivateLocation(
+    suffix: string,
+    jobType: "http" | "icmp" = "http",
+  ) {
     const mon = await db
       .insert(monitor)
       .values({
         workspaceId: 1,
         name: `${TEST_PREFIX}-pl-${suffix}`,
-        url: `https://pl-${suffix}.example.com`,
+        url:
+          jobType === "icmp" ? "1.1.1.1" : `https://pl-${suffix}.example.com`,
         periodicity: "1m",
         active: true,
         regions: "ams",
-        jobType: "http",
+        jobType,
       })
       .returning()
       .get();
@@ -2616,6 +2886,50 @@ describe("MonitorService - Private Locations", () => {
         (m) => m.id === String(testHttpMonitorId),
       );
       expect(unattached?.privateLocationIds ?? []).toEqual([]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+
+  test("GetMonitor returns the attached private location id for ICMP", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation(
+      "get-icmp",
+      "icmp",
+    );
+    try {
+      const res = await connectRequest(
+        "GetMonitor",
+        { id: String(mon.id) },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.monitor.icmp.privateLocationIds).toEqual([String(pl.id)]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+
+  test("ListMonitors returns private_location_ids for ICMP monitors", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation(
+      "list-icmp",
+      "icmp",
+    );
+    try {
+      const res = await connectRequest(
+        "ListMonitors",
+        { limit: 100 },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      const icmpMonitors = (data.icmpMonitors ?? []) as Array<{
+        id: string;
+        privateLocationIds?: string[];
+      }>;
+
+      const attached = icmpMonitors.find((m) => m.id === String(mon.id));
+      expect(attached?.privateLocationIds).toEqual([String(pl.id)]);
     } finally {
       await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
     }

@@ -10,6 +10,7 @@ const (
 	JobTypeUDP  JobType = "udp"
 	JobTypeHTTP JobType = "http"
 	JobTypeDNS  JobType = "dns"
+	JobTypeICMP JobType = "icmp"
 )
 
 type Monitor struct {

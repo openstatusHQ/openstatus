@@ -159,6 +159,12 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// Best-effort: allow unprivileged ICMP datagram sockets across all GIDs so
+	// PingICMP can avoid the raw-socket fallback. Ignored if not writable.
+	if err := os.WriteFile("/proc/sys/net/ipv4/ping_group_range", []byte("0 2147483647"), 0644); err != nil {
+		log.Warn().Err(err).Msg("could not widen ping_group_range; icmp will use the raw-socket fallback")
+	}
+
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
@@ -243,9 +249,11 @@ func main() {
 	router.POST("/checker/http", h.HTTPCheckerHandler)
 	router.POST("/checker/tcp", h.TCPHandler)
 	router.POST("/checker/dns", h.DNSHandler)
+	router.POST("/checker/icmp", h.ICMPHandler)
 	router.POST("/ping/:region", h.PingRegionHandler)
 	router.POST("/tcp/:region", h.TCPHandlerRegion)
 	router.POST("/dns/:region", h.DNSHandlerRegion)
+	router.POST("/icmp/:region", h.ICMPHandlerRegion)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong", "region": region, "provider": cloudProvider})

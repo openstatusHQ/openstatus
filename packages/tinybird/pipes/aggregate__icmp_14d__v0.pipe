@@ -1,0 +1,24 @@
+TAGS "icmp"
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        latency,
+        latencyMin,
+        latencyMax,
+        packetsSent,
+        packetsReceived,
+        error,
+        region,
+        trigger,
+        timestamp,
+        cronTimestamp,
+        monitorId,
+        requestStatus,
+        id
+    FROM icmp_response__v0
+
+TYPE materialized
+DATASOURCE mv__icmp_14d__v0
