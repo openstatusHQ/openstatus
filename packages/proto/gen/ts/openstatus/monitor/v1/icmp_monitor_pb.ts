@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/icmp_monitor.proto.
  */
 export const file_openstatus_monitor_v1_icmp_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CihvcGVuc3RhdHVzL21vbml0b3IvdjEvaWNtcF9tb25pdG9yLnByb3RvEhVvcGVuc3RhdHVzLm1vbml0b3IudjEivgQKC0lDTVBNb25pdG9yEgoKAmlkGAEgASgJEisKBG5hbWUYAiABKAlCHbpHEDoOEgxQaW5nIEdhdGV3YXm6SAdyBRABGIACEiUKA3VyaRgDIAEoCUIYukcLOgkSBzEuMS4xLjG6SAdyBRABGIAQEkEKC3BlcmlvZGljaXR5GAQgASgOMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLlBlcmlvZGljaXR5Qgi6SAWCAQIgABIcCgd0aW1lb3V0GAUgASgDQgu6SAgiBhjAqQcoABIlCgtkZWdyYWRlZF9hdBgGIAEoA0ILukgIIgYYwKkHKABIAIgBARIYCgVyZXRyeRgHIAEoA0IJukgGIgQYCigAEh0KC2Rlc2NyaXB0aW9uGAggASgJQgi6SAVyAxiACBIOCgZhY3RpdmUYCSABKAgSDgoGcHVibGljGAogASgIEj8KB3JlZ2lvbnMYCyADKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uQg+6SAySAQkQHCIFggECIAASQgoOb3Blbl90ZWxlbWV0cnkYDCABKAsyKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuT3BlblRlbGVtZXRyeUNvbmZpZxI0CgZzdGF0dXMYDSABKA4yJC5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvclN0YXR1cxIjChRwcml2YXRlX2xvY2F0aW9uX2lkcxgOIAMoCUIFukcCGAFCDgoMX2RlZ3JhZGVkX2F0QlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor]);
+  fileDesc("CihvcGVuc3RhdHVzL21vbml0b3IvdjEvaWNtcF9tb25pdG9yLnByb3RvEhVvcGVuc3RhdHVzLm1vbml0b3IudjEi8wQKC0lDTVBNb25pdG9yEgoKAmlkGAEgASgJEisKBG5hbWUYAiABKAlCHbpHEDoOEgxQaW5nIEdhdGV3YXm6SAdyBRABGIACEiUKA3VyaRgDIAEoCUIYukcLOgkSBzEuMS4xLjG6SAdyBRABGIAQEkEKC3BlcmlvZGljaXR5GAQgASgOMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLlBlcmlvZGljaXR5Qgi6SAWCAQIgABIcCgd0aW1lb3V0GAUgASgDQgu6SAgiBhjAqQcoABIlCgtkZWdyYWRlZF9hdBgGIAEoA0ILukgIIgYYwKkHKABIAIgBARIYCgVyZXRyeRgHIAEoA0IJukgGIgQYCigAEiIKC2Rlc2NyaXB0aW9uGAggASgJQgi6SAVyAxiACEgBiAEBEhMKBmFjdGl2ZRgJIAEoCEgCiAEBEhMKBnB1YmxpYxgKIAEoCEgDiAEBEj8KB3JlZ2lvbnMYCyADKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uQg+6SAySAQkQHCIFggECIAASQgoOb3Blbl90ZWxlbWV0cnkYDCABKAsyKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuT3BlblRlbGVtZXRyeUNvbmZpZxI0CgZzdGF0dXMYDSABKA4yJC5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvclN0YXR1cxIjChRwcml2YXRlX2xvY2F0aW9uX2lkcxgOIAMoCUIFukcCGAFCDgoMX2RlZ3JhZGVkX2F0Qg4KDF9kZXNjcmlwdGlvbkIJCgdfYWN0aXZlQgkKB19wdWJsaWNCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor]);
 
 /**
  * ICMPMonitor defines the configuration for a ICMP monitor.
@@ -76,23 +76,23 @@ export type ICMPMonitor = Message<"openstatus.monitor.v1.ICMPMonitor"> & {
   /**
    * Description of the monitor (optional).
    *
-   * @generated from field: string description = 8;
+   * @generated from field: optional string description = 8;
    */
-  description: string;
+  description?: string | undefined;
 
   /**
    * Whether the monitor is active (defaults to false).
    *
-   * @generated from field: bool active = 9;
+   * @generated from field: optional bool active = 9;
    */
-  active: boolean;
+  active?: boolean | undefined;
 
   /**
    * Whether the monitor is publicly visible (defaults to false).
    *
-   * @generated from field: bool public = 10;
+   * @generated from field: optional bool public = 10;
    */
-  public: boolean;
+  public?: boolean | undefined;
 
   /**
    * Geographic regions to run checks from.

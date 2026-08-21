@@ -109,7 +109,7 @@ type DBMonitor = NonNullable<Awaited<ReturnType<typeof getMonitorById>>>;
 async function validateAndGetMonitor(
   id: string | undefined,
   workspaceId: number,
-  expectedJobType: "http" | "tcp" | "dns",
+  expectedJobType: "http" | "tcp" | "dns" | "icmp",
 ): Promise<DBMonitor> {
   if (!id || id.trim() === "") {
     throw monitorIdRequiredError();
@@ -261,6 +261,42 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       });
 
       return { monitor: dbMonitorToDnsProto(created) };
+    } catch (err) {
+      toConnectError(err);
+    }
+  },
+
+  async createICMPMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
+
+    if (!req.monitor) {
+      throw monitorRequiredError();
+    }
+
+    const mon = req.monitor;
+
+    // Validate required fields (proto validation handles name, uri, periodicity)
+    validateCommonMonitorFields(mon);
+
+    // Check workspace limits
+    await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
+
+    try {
+      const created = await createMonitor({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          ...getCommonCreateInput(mon),
+          jobType: "icmp",
+          url: mon.uri,
+          method: "GET",
+          headers: [],
+          assertions: [],
+        },
+      });
+
+      return { monitor: dbMonitorToIcmpProto(created) };
     } catch (err) {
       toConnectError(err);
     }
@@ -444,6 +480,55 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     return applyUpdate(rpcCtx, dbMon.id, updateValues, (data) =>
       dbMonitorToDnsProto(data, privateLocationIds),
+    );
+  },
+
+  async updateICMPMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
+
+    const dbMon = await validateAndGetMonitor(req.id, workspaceId, "icmp");
+
+    const plMap = await getPrivateLocationIdsByMonitor({
+      ctx: toServiceCtx(rpcCtx),
+      input: { monitorIds: [dbMon.id] },
+    });
+    const privateLocationIds = plMap.get(dbMon.id) ?? [];
+
+    // If no monitor data provided, return current monitor
+    if (!req.monitor) {
+      const parsed = selectMonitorSchema.safeParse(dbMon);
+      if (!parsed.success) {
+        throw monitorParseFailedError(req.id);
+      }
+      return {
+        monitor: dbMonitorToIcmpProto(parsed.data, privateLocationIds),
+      };
+    }
+
+    const mon = req.monitor;
+
+    // Validate regions if provided
+    validateCommonMonitorFields(mon);
+
+    // Check workspace limits if periodicity or regions are changing
+    checkMonitorConfigLimits(
+      limits,
+      mon.periodicity || undefined,
+      mon.regions && mon.regions.length > 0 ? mon.regions : undefined,
+    );
+
+    // Build update values - only include fields that are provided
+    const updateValues = getCommonUpdateInput(mon);
+
+    // Handle ICMP-specific fields
+    if (mon.uri !== undefined && mon.uri !== "") {
+      updateValues.url = mon.uri;
+    }
+
+    return applyUpdate(rpcCtx, dbMon.id, updateValues, (data) =>
+      dbMonitorToIcmpProto(data, privateLocationIds),
     );
   },
 

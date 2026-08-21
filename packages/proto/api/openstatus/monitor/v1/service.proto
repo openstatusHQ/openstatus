@@ -39,6 +39,9 @@ service MonitorService {
   // CreateDNSMonitor creates a new DNS monitor.
   rpc CreateDNSMonitor(CreateDNSMonitorRequest) returns (CreateDNSMonitorResponse);
 
+  // CreateICMPMonitor creates a new ICMP monitor.
+  rpc CreateICMPMonitor(CreateICMPMonitorRequest) returns (CreateICMPMonitorResponse);
+
   // UpdateHTTPMonitor updates an existing HTTP monitor.
   rpc UpdateHTTPMonitor(UpdateHTTPMonitorRequest) returns (UpdateHTTPMonitorResponse);
 
@@ -47,6 +50,9 @@ service MonitorService {
 
   // UpdateDNSMonitor updates an existing DNS monitor.
   rpc UpdateDNSMonitor(UpdateDNSMonitorRequest) returns (UpdateDNSMonitorResponse);
+
+  // UpdateICMPMonitor updates an existing ICMP monitor.
+  rpc UpdateICMPMonitor(UpdateICMPMonitorRequest) returns (UpdateICMPMonitorResponse);
 
   // TriggerMonitor initiates an immediate check for a monitor across all configured regions.
   rpc TriggerMonitor(TriggerMonitorRequest) returns (TriggerMonitorResponse) {
@@ -77,7 +83,7 @@ service MonitorService {
   }
 
   // GetMonitor returns a single monitor by ID within the authenticated workspace.
-  // Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
+  // Returns the monitor configuration (HTTP, TCP, DNS, or ICMP) using the MonitorConfig oneof type.
   rpc GetMonitor(GetMonitorRequest) returns (GetMonitorResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
@@ -129,6 +135,18 @@ message CreateDNSMonitorResponse {
   DNSMonitor monitor = 1;
 }
 
+// CreateICMPMonitorRequest is the request to create a new ICMP monitor.
+message CreateICMPMonitorRequest {
+  // Monitor configuration (required).
+  ICMPMonitor monitor = 1 [(buf.validate.field).required = true];
+}
+
+// CreateICMPMonitorResponse is the response after creating an ICMP monitor.
+message CreateICMPMonitorResponse {
+  // The created monitor with assigned ID.
+  ICMPMonitor monitor = 1;
+}
+
 // UpdateHTTPMonitorRequest is the request to update an existing HTTP monitor.
 message UpdateHTTPMonitorRequest {
   // Monitor ID to update (required).
@@ -172,6 +190,21 @@ message UpdateDNSMonitorRequest {
 message UpdateDNSMonitorResponse {
   // The updated monitor.
   DNSMonitor monitor = 1;
+}
+
+// UpdateICMPMonitorRequest is the request to update an existing ICMP monitor.
+message UpdateICMPMonitorRequest {
+  // Monitor ID to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Updated monitor configuration (all fields optional for partial updates).
+  optional ICMPMonitor monitor = 2;
+}
+
+// UpdateICMPMonitorResponse is the response after updating an ICMP monitor.
+message UpdateICMPMonitorResponse {
+  // The updated monitor.
+  ICMPMonitor monitor = 1;
 }
 
 // TriggerMonitorRequest is the request to trigger a monitor check.
@@ -325,7 +358,7 @@ message GetMonitorRequest {
 
 // GetMonitorResponse is the response containing the monitor.
 message GetMonitorResponse {
-  // The monitor configuration (one of HTTP, TCP, or DNS).
+  // The monitor configuration (one of HTTP, TCP, DNS, or ICMP).
   MonitorConfig monitor = 1;
 }
 
