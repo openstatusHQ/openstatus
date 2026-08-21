@@ -279,6 +279,49 @@ export const statusPageRouter = createTRPCRouter({
         privateLocationCount: privateLocationCounts.get(m.id) ?? 0,
       }));
 
+      // Sort monitors to match trackers behavior: group by monitorGroupId, order
+      // groups by minimum order, sort within groups by groupOrder, and sort
+      // ungrouped monitors by order
+      const groupMinOrderMap = new Map<number, number>();
+      for (const monitor of monitorsWithPrivateLocationCount) {
+        const groupId = monitor.monitorGroupId;
+        if (groupId !== null) {
+          const order = monitor.order ?? 0;
+          const currentMin =
+            groupMinOrderMap.get(groupId) ?? Number.MAX_SAFE_INTEGER;
+          groupMinOrderMap.set(groupId, Math.min(currentMin, order));
+        }
+      }
+
+      monitorsWithPrivateLocationCount.sort((a, b) => {
+        const aGroupId = a.monitorGroupId ?? null;
+        const bGroupId = b.monitorGroupId ?? null;
+
+        // If both monitors are in the same group (or both ungrouped with null)
+        if (aGroupId === bGroupId) {
+          if (aGroupId === null) {
+            // Both ungrouped - sort by order
+            return (a.order ?? 0) - (b.order ?? 0);
+          }
+          // Both in same group - sort by groupOrder within the group
+          return (a.groupOrder ?? 0) - (b.groupOrder ?? 0);
+        }
+
+        // Different groups or one is ungrouped - sort by group position
+        // For grouped monitors, use precomputed minimum order of the group
+        // For ungrouped monsters, use their own order
+        const aGroupMinOrder =
+          aGroupId !== null
+            ? (groupMinOrderMap.get(aGroupId) ?? 0)
+            : (a.order ?? 0);
+        const bGroupMinOrder =
+          bGroupId !== null
+            ? (groupMinOrderMap.get(bGroupId) ?? 0)
+            : (b.order ?? 0);
+
+        return aGroupMinOrder - bGroupMinOrder;
+      });
+
       // no barType gate: incident-driven error is already suppressed per
       // monitor in manual mode; report-driven error (major_outage) must show
       const status = monitorsWithPrivateLocationCount.some(
