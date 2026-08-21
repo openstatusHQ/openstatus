@@ -19,7 +19,7 @@ import {
   getJsonLDBreadcrumbList,
   getJsonLDWebPage,
 } from "../../../../../lib/metadata/structured-data";
-import { Table } from "./client";
+import { Results } from "./client";
 
 function formatDate(date: Date) {
   return date.toLocaleDateString("en-US", {
@@ -116,7 +116,7 @@ export default async function Page({
       <JsonLd graph={jsonLDGraph} />
       <h1>{data.url}</h1>
       <p className="text-lg">{formatDate(new Date(data.timestamp))}</p>
-      <Table data={data} />
+      <Results data={data} />
       <CustomMDX source={page.content} />
     </section>
   );
