@@ -510,7 +510,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
   ) => {
     const labels = useStatusBlocksLabels();
     const barRadius =
-      "var(--status-bar-radius, calc(var(--radius) * 99999999))";
+      "var(--status-bar-radius, calc(var(--radius, 1px) * 99999999))";
     return (
       <HoverCard openDelay={0} closeDelay={0} open={isActive}>
         <HoverCardTrigger asChild>
