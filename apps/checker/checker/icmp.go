@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/net/icmp"
@@ -11,9 +12,28 @@ import (
 	"golang.org/x/net/ipv6"
 )
 
+// icmpEchoCounter hands each probe its own echo identifier. A raw socket
+// receives every ICMP packet delivered to the host, so probes are told apart by
+// the echo id alone; a per-process value (the pid) makes two concurrent probes
+// to the same target indistinguishable. Seeded from the pid so a restart does
+// not immediately reuse the ids of packets still in flight.
+var icmpEchoCounter = func() *atomic.Uint32 {
+	var c atomic.Uint32
+	c.Store(uint32(os.Getpid()))
+	return &c
+}()
+
+func nextEchoID() int {
+	return int(icmpEchoCounter.Add(1) & 0xffff)
+}
+
 const (
 	icmpPacketCount    = 3
 	icmpPacketInterval = 100 * time.Millisecond
+	// Applied when a caller omits the timeout. Without it the deadline below
+	// lands in the past, the send loop breaks before the first packet, and the
+	// check reports "no reply" having probed nothing.
+	icmpDefaultTimeout = 45_000
 )
 
 type ICMPResponseTiming struct {
@@ -48,6 +68,10 @@ type ICMPResponse struct {
 }
 
 func PingICMP(timeoutMs int64, hostname string) (ICMPResult, error) {
+	if timeoutMs <= 0 {
+		timeoutMs = icmpDefaultTimeout
+	}
+
 	dst, err := net.ResolveIPAddr("ip", hostname)
 	if err != nil {
 		return ICMPResult{}, fmt.Errorf("resolve error: %w", err)
@@ -72,7 +96,7 @@ func PingICMP(timeoutMs int64, hostname string) (ICMPResult, error) {
 	defer conn.Close()
 
 	deadline := time.Now().Add(time.Duration(timeoutMs) * time.Millisecond)
-	id := os.Getpid() & 0xffff
+	id := nextEchoID()
 
 	timing := ICMPResponseTiming{RTTs: make([]int64, 0, icmpPacketCount)}
 	received := make([]int64, 0, icmpPacketCount)
@@ -176,7 +200,7 @@ func sendEcho(conn *icmp.PacketConn, isRaw bool, proto int, echoType icmp.Type, 
 
 	rb := make([]byte, 1500)
 	for {
-		n, _, err := conn.ReadFrom(rb)
+		n, peer, err := conn.ReadFrom(rb)
 		if err != nil {
 			if ne, ok := err.(net.Error); ok && ne.Timeout() {
 				return 0, fmt.Errorf("timeout")
@@ -191,6 +215,12 @@ func sendEcho(conn *icmp.PacketConn, isRaw bool, proto int, echoType icmp.Type, 
 
 		switch body := rm.Body.(type) {
 		case *icmp.Echo:
+			// A reply to our probe can only come from the target. A raw socket
+			// is not demultiplexed the way the datagram path is, so without
+			// this it also sees replies belonging to other probes.
+			if !addrIP(peer).Equal(dst.IP) {
+				continue
+			}
 			// The kernel rewrites the Echo ID on datagram sockets, so only raw
 			// sockets can trust it; datagram replies are matched on Seq alone.
 			if body.Seq != seq || (isRaw && body.ID != id) {
@@ -198,9 +228,64 @@ func sendEcho(conn *icmp.PacketConn, isRaw bool, proto int, echoType icmp.Type, 
 			}
 			return time.Since(start).Milliseconds(), nil
 		case *icmp.DstUnreach:
+			// Errors come from whichever hop rejected the packet, not from the
+			// target, so the peer says nothing about ownership — the quoted
+			// datagram does.
+			if !provokedByProbe(body.Data, proto, id, seq, isRaw) {
+				continue
+			}
 			return 0, fmt.Errorf("destination unreachable")
 		case *icmp.TimeExceeded:
+			if !provokedByProbe(body.Data, proto, id, seq, isRaw) {
+				continue
+			}
 			return 0, fmt.Errorf("time exceeded")
 		}
 	}
+}
+
+// addrIP pulls the IP out of the address shape each socket type reports:
+// *net.IPAddr for raw, *net.UDPAddr for the unprivileged datagram path.
+func addrIP(addr net.Addr) net.IP {
+	switch a := addr.(type) {
+	case *net.IPAddr:
+		return a.IP
+	case *net.UDPAddr:
+		return a.IP
+	}
+	return nil
+}
+
+// provokedByProbe reports whether an ICMP error quotes the packet we sent. The
+// error carries the original datagram — IP header plus at least its first eight
+// bytes, which is the whole echo header — so the quoted id and sequence
+// identify the sender. Without this a raw socket would treat an unrelated
+// flow's "destination unreachable" as its own probe failing.
+func provokedByProbe(data []byte, proto, id, seq int, isRaw bool) bool {
+	var quoted []byte
+	switch proto {
+	case ipv4.ICMPTypeEcho.Protocol():
+		h, err := icmp.ParseIPv4Header(data)
+		if err != nil || len(data) < h.Len {
+			return false
+		}
+		quoted = data[h.Len:]
+	default:
+		if len(data) < ipv6.HeaderLen {
+			return false
+		}
+		quoted = data[ipv6.HeaderLen:]
+	}
+
+	msg, err := icmp.ParseMessage(proto, quoted)
+	if err != nil {
+		return false
+	}
+	echo, ok := msg.Body.(*icmp.Echo)
+	if !ok {
+		return false
+	}
+	// Same asymmetry as the echo path: the kernel owns the id on datagram
+	// sockets, so only raw probes can match on it.
+	return echo.Seq == seq && (!isRaw || echo.ID == id)
 }

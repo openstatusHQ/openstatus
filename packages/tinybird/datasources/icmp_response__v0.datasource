@@ -2,7 +2,7 @@ SCHEMA >
     `monitorId` Int32 `json:$.monitorId`,
     `region` String `json:$.region`,
     `timestamp` Int64 `json:$.timestamp`,
-    `cronTimestamp` Int64 `json:$.timestamp`,
+    `cronTimestamp` Int64 `json:$.cronTimestamp`,
     `timing` String `json:$.timing`,
     `workspaceId` Int32 `json:$.workspaceId`,
     `latency` Int64 `json:$.latency`,
@@ -18,5 +18,5 @@ SCHEMA >
     `requestStatus` Nullable(String) `json:$.requestStatus`
 
 ENGINE "MergeTree"
-ENGINE_PARTITION_KEY "toYYYYMM(fromUnixTimestamp64Milli(timestamp))"
-ENGINE_SORTING_KEY "monitorId, workspaceId"
+ENGINE_PARTITION_KEY "toYYYYMM(fromUnixTimestamp64Milli(cronTimestamp))"
+ENGINE_SORTING_KEY "monitorId, cronTimestamp"

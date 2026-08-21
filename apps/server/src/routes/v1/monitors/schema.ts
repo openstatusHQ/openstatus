@@ -306,29 +306,10 @@ export const TCPTriggerResult = z.object({
   errorMessage: z.string().optional().nullable(),
 });
 
-const icmpTimingSchema = z.object({
-  // One entry per packet sent, in send order; -1 marks a lost packet.
-  rtts: z.array(z.number()),
-});
-
-export const ICMPTriggerResult = z.object({
-  jobType: z.literal("icmp"),
-  latency: z.number(),
-  latencyMin: z.number().optional().prefault(0),
-  latencyMax: z.number().optional().prefault(0),
-  packetsSent: z.number().optional().prefault(0),
-  packetsReceived: z.number().optional().prefault(0),
-  region: z.enum(monitorRegions),
-  timestamp: z.number(),
-  timing: icmpTimingSchema,
-  error: z.number().optional().nullable(),
-  errorMessage: z.string().optional().nullable(),
-});
-
+// Only the two types the v1 API can run — see `assertLegacyRunnableJobType`.
 export const TriggerResult = z.discriminatedUnion("jobType", [
   HTTPTriggerResult,
   TCPTriggerResult,
-  ICMPTriggerResult,
 ]);
 
 export const ResultRun = z.object({

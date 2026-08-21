@@ -245,8 +245,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 
 	for _, m := range res.Msg.IcmpMonitors {
 		currentIDs[m.Id] = struct{}{}
-		_, err := mm.Scheduler.Lookup(m.Id)
-		if err != nil {
+		if mm.shouldSchedule(m.Id, m) {
 
 			interval := time.Duration(intervalToSecond(m.Periodicity)) * time.Second
 			task := tasks.Task{
@@ -261,6 +260,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 					data, err := mm.JobRunner.ICMPJob(c, monitor, res.Msg.Region)
 					if err != nil {
 						log.Printf("ICMP monitor check failed for %s (%s): %v", monitor.Id, monitor.Uri, err)
+						return err
 					}
 					resp, ingestErr := mm.Client.IngestICMP(c, &connect.Request[v1.IngestICMPRequest]{
 						Msg: &v1.IngestICMPRequest{
@@ -290,7 +290,6 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 				},
 			}
 			err := mm.Scheduler.AddWithID(m.Id, &task)
-
 			if err != nil {
 				log.Printf("Failed to add ICMP monitor job for %s (%s): %v", m.Id, m.Uri, err)
 				continue

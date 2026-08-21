@@ -242,6 +242,11 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 			CronTimestamp: req.CronTimestamp,
 		})
 
+		// Only the success path inside op() fills these in, so a check that
+		// exhausted its retries would otherwise be returned under `?data=true`
+		// with an empty jobType and region — a shape no caller can parse.
+		response.JobType = "icmp"
+		response.Region = h.Region
 		response.Error = 1
 	}
 

@@ -186,7 +186,7 @@ test("trigger monitor with multiple regions should return result id", async () =
   expect(json.resultId).toBeDefined();
 });
 
-test("trigger ICMP monitor dispatches to the icmp checker endpoint", async () => {
+test("trigger ICMP monitor is rejected by the legacy v1 API", async () => {
   const icmpMonitor = await createMonitor(1, {
     jobType: "icmp",
     url: "1.1.1.1",
@@ -207,20 +207,16 @@ test("trigger ICMP monitor dispatches to the icmp checker endpoint", async () =>
     },
   });
 
-  expect(res.status).toBe(200);
+  expect(res.status).toBe(400);
 
   const json = await res.json();
-  expect(TriggerSchema.safeParse(json).success).toBe(true);
+  expect(json.message).toContain("not supported by the v1 API");
 
-  const [url, init] = mockFetch.mock.calls[0];
-  expect(String(url)).toContain("/checker/icmp?");
-  expect(JSON.parse(String(init.body))).toMatchObject({
-    uri: "1.1.1.1",
-    monitorId: String(icmpMonitor.id),
-  });
+  // Rejected before any probe leaves the process.
+  expect(mockFetch.mock.calls.length).toBe(0);
 });
 
-test("trigger DNS monitor dispatches to the dns checker endpoint", async () => {
+test("trigger DNS monitor is rejected by the legacy v1 API", async () => {
   const dnsMonitor = await createMonitor(1, {
     jobType: "dns",
     url: "openstatus.dev",
@@ -241,8 +237,6 @@ test("trigger DNS monitor dispatches to the dns checker endpoint", async () => {
     },
   });
 
-  expect(res.status).toBe(200);
-
-  const [url] = mockFetch.mock.calls[0];
-  expect(String(url)).toContain("/checker/dns?");
+  expect(res.status).toBe(400);
+  expect(mockFetch.mock.calls.length).toBe(0);
 });

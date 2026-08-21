@@ -26,6 +26,12 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 const ABORT_TIMEOUT = 10000;
 
+// PingICMP treats its timeout as the deadline for the whole check, so omitting
+// it means a deadline of "now": the send loop breaks before the first packet
+// and every test reports "no reply". Kept under ABORT_TIMEOUT so the checker
+// answers before the fetch above gives up.
+const ICMP_TEST_TIMEOUT = 5000;
+
 // Input schemas
 const httpTestInput = z.object({
   url: safeUrlSchema,
@@ -413,7 +419,10 @@ export async function testIcmp(input: z.infer<typeof icmpTestInput>) {
           "Content-Type": "application/json",
           "fly-prefer-region": input.region,
         },
-        body: JSON.stringify({ uri: input.url }),
+        body: JSON.stringify({
+          uri: input.url,
+          timeout: ICMP_TEST_TIMEOUT,
+        }),
         signal: AbortSignal.timeout(ABORT_TIMEOUT),
       },
     );
