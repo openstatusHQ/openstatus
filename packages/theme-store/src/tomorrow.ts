@@ -27,7 +27,10 @@ export const TOMORROW_THEME = {
     "--secondary": "oklch(95.21% 0 89.88)", // #efefef Current Line
     "--secondary-foreground": "var(--foreground)",
     "--muted": "var(--secondary)",
-    "--muted-foreground": "oklch(55.05% 0.0054 128.57)", // #8e908c Comment
+    // NOTE: Comment (#8e908c) reaches only 3.2:1 on the background, so it is
+    // darkened while keeping its hue. --muted-foreground carries body-adjacent
+    // text such as the page description.
+    "--muted-foreground": "oklch(55.05% 0.0054 128.57)", // darkened Comment
     "--accent": "var(--secondary)",
     "--accent-foreground": "var(--foreground)",
 

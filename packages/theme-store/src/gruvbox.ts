@@ -24,8 +24,8 @@ export const GRUVBOX_THEME = {
     "--secondary": "oklch(89.41% 0.0566 89.24)", // #ebdbb2 light1
     "--secondary-foreground": "var(--foreground)",
     "--muted": "var(--secondary)",
-    // NOTE: light4 (#a89984) misses 4.5:1 on light0, so light3's darker
-    // neighbour #665c54 is used for body-adjacent text instead.
+    // NOTE: light4 (#a89984) reaches only 4.3:1 on light0, so dark3 (#665c54)
+    // is used for body-adjacent text instead.
     "--muted-foreground": "oklch(48.18% 0.0181 61.04)", // #665c54 dark3
     "--accent": "var(--secondary)",
     "--accent-foreground": "var(--foreground)",
