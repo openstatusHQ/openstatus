@@ -20,7 +20,6 @@ const chartConfig = {
   connection: { label: "Connection", color: "var(--chart-2)" },
   tls: { label: "TLS", color: "var(--chart-3)" },
   ttfb: { label: "TTFB", color: "var(--chart-4)" },
-  transfer: { label: "Transfer", color: "var(--chart-5)" },
 } satisfies ChartConfig;
 
 const PHASES = Object.keys(chartConfig) as (keyof typeof chartConfig)[];
@@ -32,15 +31,20 @@ interface ChartProps {
 }
 
 export function Chart({ checks, desc, onToggleSort }: ChartProps) {
-  // sorts on the stacked total rather than `check.latency`: the two disagree
-  // whenever a checker reports phases that don't add up to its round-trip
+  // `transfer` is left out: the checker stops its latency clock when the
+  // response headers land, before the body is read. sorts on the stacked
+  // total rather than `check.latency` — the two disagree whenever a checker
+  // reports phases that don't add up to its round-trip
   const chartData = checks
     .map((check) => {
-      const phases = getTimingPhases(check.timing);
+      const { dns, connection, tls, ttfb } = getTimingPhases(check.timing);
       return {
         region: check.region,
-        total: PHASES.reduce((acc, key) => acc + phases[key], 0),
-        ...phases,
+        total: dns + connection + tls + ttfb,
+        dns,
+        connection,
+        tls,
+        ttfb,
       };
     })
     .sort((a, b) => (desc ? b.total - a.total : a.total - b.total));
