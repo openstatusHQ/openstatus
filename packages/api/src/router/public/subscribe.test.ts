@@ -1,8 +1,7 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { shouldDispatchVerificationEmail, acquireEmailDispatchLock, releaseEmailDispatchLock, SubscriberRecord } from './subscribe';
 
-import { describe, it, expect } from 'vitest';
-import { shouldDispatchVerificationEmail, SubscriberRecord } from './subscribe';
-
-describe('OpenStatus Email Verification Deduplication', () => {
+describe('OpenStatus Email Verification Deduplication & Concurrency Guard', () => {
   it('does not send email if already confirmed', () => {
     const sub: SubscriberRecord = { id: '1', email: 'test@example.com', pageId: 'p1', confirmed: true };
     expect(shouldDispatchVerificationEmail(sub)).toBe(false);
@@ -18,5 +17,15 @@ describe('OpenStatus Email Verification Deduplication', () => {
     const recentSent = new Date(now.getTime() - 10 * 1000); // 10s ago
     const sub: SubscriberRecord = { id: '3', email: 'test@example.com', pageId: 'p1', confirmed: false, lastEmailSentAt: recentSent };
     expect(shouldDispatchVerificationEmail(sub, now)).toBe(false);
+  });
+
+  it('atomic lock prevents concurrent race-condition dispatches', () => {
+    const email = 'user@example.com';
+    const pageId = 'page_123';
+    expect(acquireEmailDispatchLock(email, pageId)).toBe(true);
+    expect(acquireEmailDispatchLock(email, pageId)).toBe(false); // Second concurrent call blocked
+    releaseEmailDispatchLock(email, pageId);
+    expect(acquireEmailDispatchLock(email, pageId)).toBe(true); // Can acquire after release
+    releaseEmailDispatchLock(email, pageId);
   });
 });
