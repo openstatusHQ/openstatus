@@ -8,12 +8,14 @@ export function resolvePathnamePrefix({
   hostname,
   pathname,
   customDomain,
+  slug,
   locale,
   defaultLocale,
 }: {
   hostname: string;
   pathname: string;
   customDomain: string | undefined;
+  slug?: string;
   locale: string;
   defaultLocale: string;
 }): string {
@@ -30,12 +32,18 @@ export function resolvePathnamePrefix({
     hostnames[0] !== "www" &&
     !hostname.endsWith(".vercel.app");
 
-  if (isCustomDomain || isSubdomain) {
+  const firstSegment = pathname.split("/")[1] || "";
+
+  const isPathnameRouted =
+    !!slug &&
+    firstSegment.toLowerCase() === slug.toLowerCase() &&
+    pathname.split("/")[2]?.toLowerCase() === locale.toLowerCase();
+
+  if (!isPathnameRouted && (isCustomDomain || isSubdomain)) {
     // Subdomain or custom domain — no slug prefix needed
     return locale !== defaultLocale ? locale : "";
   }
 
   // Pathname routing — always {slug}/{locale}
-  const slug = pathname.split("/")[1] || "";
-  return `${slug}/${locale}`;
+  return `${firstSegment}/${locale}`;
 }
