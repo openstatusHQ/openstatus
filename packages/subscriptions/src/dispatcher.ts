@@ -1,6 +1,6 @@
 import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
 import {
-  maintenance,
+  maintenanceUpdate,
   page,
   pageSubscriber,
   statusReportUpdate,
@@ -81,42 +81,46 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
 /**
  * Dispatch notifications for a maintenance update
  */
-export async function dispatchMaintenanceUpdate(maintenanceId: number) {
-  const maintenanceWithComponents = await db.query.maintenance.findFirst({
-    where: eq(maintenance.id, maintenanceId),
+export async function dispatchMaintenanceUpdate(maintenanceUpdateId: number) {
+  const update = await db.query.maintenanceUpdate.findFirst({
+    where: eq(maintenanceUpdate.id, maintenanceUpdateId),
     with: {
-      maintenancesToPageComponents: {
-        with: { pageComponent: true },
+      maintenance: {
+        with: {
+          maintenancesToPageComponents: {
+            with: { pageComponent: true },
+          },
+        },
       },
     },
   });
 
-  if (!maintenanceWithComponents) {
-    console.error(`Maintenance ${maintenanceId} not found`);
+  if (!update?.maintenance) {
+    console.error(`Maintenance update ${maintenanceUpdateId} not found`);
     return;
   }
 
-  if (!maintenanceWithComponents.pageId) {
-    console.error(`Maintenance ${maintenanceId} has no page ID`);
+  if (!update.maintenance.pageId) {
+    console.error(`Maintenance ${update.maintenance.id} has no page ID`);
     return;
   }
 
-  const pageComponents =
-    maintenanceWithComponents.maintenancesToPageComponents.map(
-      (i) => i.pageComponent,
-    );
+  const pageComponents = update.maintenance.maintenancesToPageComponents.map(
+    (i) => i.pageComponent,
+  );
 
   await dispatchPageUpdate({
-    id: maintenanceWithComponents.id,
-    pageId: maintenanceWithComponents.pageId,
-    title: maintenanceWithComponents.title,
+    id: update.maintenance.id,
+    pageId: update.maintenance.pageId,
+    title: update.maintenance.title,
     status: "maintenance",
-    message: maintenanceWithComponents.message,
+    message: update.message,
     pageComponentIds: pageComponents.map((c) => c.id),
     pageComponents: pageComponents.map((c) => c.name),
-    date: `${maintenanceWithComponents.from.toISOString()} - ${maintenanceWithComponents.to.toISOString()}`,
-    startsAt: maintenanceWithComponents.from.toISOString(),
-    endsAt: maintenanceWithComponents.to.toISOString(),
+    date: update.date.toISOString(),
+    updateId: update.id,
+    startsAt: update.maintenance.from.toISOString(),
+    endsAt: update.maintenance.to.toISOString(),
     pageComponentsWithId: pageComponents.map((c) => ({
       id: c.id,
       name: c.name,

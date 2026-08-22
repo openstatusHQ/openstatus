@@ -2,6 +2,7 @@ import { and, db as defaultDb, desc, eq, inArray } from "@openstatus/db";
 import {
   type PageComponentImpact,
   maintenance,
+  maintenanceUpdate,
   maintenancesToPageComponents,
   pageComponent,
   pageComponentGroup,
@@ -18,6 +19,7 @@ type GroupRow = typeof pageComponentGroup.$inferSelect;
 type ReportRow = typeof statusReport.$inferSelect;
 type UpdateRow = typeof statusReportUpdate.$inferSelect;
 type MaintenanceRow = typeof maintenance.$inferSelect;
+type MaintenanceUpdateRow = typeof maintenanceUpdate.$inferSelect;
 
 export type StatusReportContent = ReportRow & {
   pageComponentIds: number[];
@@ -33,6 +35,7 @@ export type StatusReportContent = ReportRow & {
 
 export type MaintenanceContent = MaintenanceRow & {
   pageComponentIds: number[];
+  maintenanceUpdates: MaintenanceUpdateRow[];
 };
 
 export type StatusPageContent = {
@@ -155,22 +158,36 @@ export async function getStatusPageContent(args: {
   }));
 
   const maintenanceIds = pageMaintenances.map((m) => m.id);
-  const maintenanceComponents =
+  const [maintenanceComponents, maintenanceUpdates] = await Promise.all([
     maintenanceIds.length > 0
-      ? await db
+      ? db
           .select()
           .from(maintenancesToPageComponents)
           .where(
             inArray(maintenancesToPageComponents.maintenanceId, maintenanceIds),
           )
           .all()
-      : [];
+      : Promise.resolve(
+          [] as (typeof maintenancesToPageComponents.$inferSelect)[],
+        ),
+    maintenanceIds.length > 0
+      ? db
+          .select()
+          .from(maintenanceUpdate)
+          .where(inArray(maintenanceUpdate.maintenanceId, maintenanceIds))
+          .orderBy(desc(maintenanceUpdate.date), desc(maintenanceUpdate.id))
+          .all()
+      : Promise.resolve([] as MaintenanceUpdateRow[]),
+  ]);
 
   const maintenances: MaintenanceContent[] = pageMaintenances.map((m) => ({
     ...m,
     pageComponentIds: maintenanceComponents
       .filter((mc) => mc.maintenanceId === m.id)
       .map((mc) => mc.pageComponentId),
+    maintenanceUpdates: maintenanceUpdates.filter(
+      (u) => u.maintenanceId === m.id,
+    ),
   }));
 
   return { components, groups, statusReports, maintenances };

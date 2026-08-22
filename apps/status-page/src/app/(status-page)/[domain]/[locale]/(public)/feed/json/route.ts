@@ -71,22 +71,33 @@ export async function GET(
         id: group.id,
         name: group.name,
       })),
-      maintenances: page.maintenances.map((maintenance) => ({
-        id: maintenance.id,
-        name: maintenance.title,
-        message: maintenance.message,
-        from: maintenance.from,
-        to: maintenance.to,
-        updatedAt: maintenance.updatedAt,
-        // @deprecated Use components instead - returning monitor IDs for backwards compatibility
-        monitors: maintenance.maintenancesToPageComponents
-          .map((item) => item.pageComponent.monitorId)
-          .filter((id): id is number => id !== null),
-        // New field - references page component IDs
-        pageComponents: maintenance.maintenancesToPageComponents.map(
-          (item) => item.pageComponentId,
-        ),
-      })),
+      maintenances: page.maintenances.map((maintenance) => {
+        const updates = [...(maintenance.maintenanceUpdates ?? [])].sort(
+          (a, b) => b.date.getTime() - a.date.getTime(),
+        );
+        return {
+          id: maintenance.id,
+          name: maintenance.title,
+          message: maintenance.message,
+          maintenanceUpdates: updates.map((update) => ({
+            id: update.id,
+            message: update.message,
+            date: update.date,
+            updatedAt: update.updatedAt,
+          })),
+          from: maintenance.from,
+          to: maintenance.to,
+          updatedAt: maintenance.updatedAt,
+          // @deprecated Use components instead - returning monitor IDs for backwards compatibility
+          monitors: maintenance.maintenancesToPageComponents
+            .map((item) => item.pageComponent.monitorId)
+            .filter((id): id is number => id !== null),
+          // New field - references page component IDs
+          pageComponents: maintenance.maintenancesToPageComponents.map(
+            (item) => item.pageComponentId,
+          ),
+        };
+      }),
       statusReports: page.statusReports.map((report) => ({
         id: report.id,
         title: report.title,

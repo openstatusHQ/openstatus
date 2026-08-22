@@ -1,6 +1,7 @@
-import { and, eq, inArray } from "@openstatus/db";
+import { and, desc, eq, inArray } from "@openstatus/db";
 import {
   maintenance,
+  maintenanceUpdate,
   maintenancesToPageComponents,
   page,
   pageComponent,
@@ -114,4 +115,49 @@ export async function getMaintenanceInWorkspace(args: {
     .get();
   if (!row) throw new NotFoundError("maintenance", id);
   return row;
+}
+
+export async function getMaintenanceUpdateInWorkspace(args: {
+  tx: DB;
+  id: number;
+  workspaceId: number;
+}) {
+  const { tx, id, workspaceId } = args;
+  const row = await tx
+    .select({ update: maintenanceUpdate })
+    .from(maintenanceUpdate)
+    .innerJoin(maintenance, eq(maintenance.id, maintenanceUpdate.maintenanceId))
+    .where(
+      and(
+        eq(maintenanceUpdate.id, id),
+        eq(maintenance.workspaceId, workspaceId),
+      ),
+    )
+    .get();
+  if (!row) throw new NotFoundError("maintenance_update", id);
+  return row.update;
+}
+
+export async function syncMaintenanceMessage(tx: DB, maintenanceId: number) {
+  const latest = await getLatestMaintenanceUpdate(tx, maintenanceId);
+
+  if (!latest) {
+    throw new ConflictError("A maintenance must have at least one update.");
+  }
+
+  return tx
+    .update(maintenance)
+    .set({ message: latest.message, updatedAt: new Date() })
+    .where(eq(maintenance.id, maintenanceId))
+    .returning()
+    .get();
+}
+
+export function getLatestMaintenanceUpdate(tx: DB, maintenanceId: number) {
+  return tx
+    .select()
+    .from(maintenanceUpdate)
+    .where(eq(maintenanceUpdate.maintenanceId, maintenanceId))
+    .orderBy(desc(maintenanceUpdate.date), desc(maintenanceUpdate.id))
+    .get();
 }

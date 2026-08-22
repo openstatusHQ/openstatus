@@ -11,13 +11,14 @@ import {
 } from "@openstatus/db";
 import {
   maintenance,
+  maintenanceUpdate,
   maintenancesToPageComponents,
   pageComponent,
   selectPageComponentSchema,
 } from "@openstatus/db/src/schema";
 
 import type { DB, ServiceContext } from "../context";
-import type { Maintenance, PageComponent } from "../types";
+import type { Maintenance, MaintenanceUpdate, PageComponent } from "../types";
 import { getMaintenanceInWorkspace } from "./internal";
 import {
   GetMaintenanceInput,
@@ -39,6 +40,7 @@ function periodToSince(period: MaintenanceListPeriod): Date {
 }
 
 export type MaintenanceWithRelations = Maintenance & {
+  updates: MaintenanceUpdate[];
   pageComponents: PageComponent[];
   pageComponentIds: number[];
 };
@@ -59,6 +61,19 @@ async function enrichMaintenancesBatch(
 ): Promise<MaintenanceWithRelations[]> {
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
+
+  const allUpdates = await db
+    .select()
+    .from(maintenanceUpdate)
+    .where(inArray(maintenanceUpdate.maintenanceId, ids))
+    .orderBy(desc(maintenanceUpdate.date), desc(maintenanceUpdate.id))
+    .all();
+  const updatesByMaintenance = new Map<number, MaintenanceUpdate[]>();
+  for (const update of allUpdates) {
+    const existing = updatesByMaintenance.get(update.maintenanceId);
+    if (existing) existing.push(update);
+    else updatesByMaintenance.set(update.maintenanceId, [update]);
+  }
 
   // Explicit column selection (not `select()`) keeps the row shape in our
   // hands instead of relying on drizzle's auto-derived `row.<table_name>`
@@ -89,6 +104,7 @@ async function enrichMaintenancesBatch(
     const components = componentsByMaintenance.get(r.id) ?? [];
     return {
       ...r,
+      updates: updatesByMaintenance.get(r.id) ?? [],
       pageComponents: components,
       pageComponentIds: components.map((c) => c.id),
     };

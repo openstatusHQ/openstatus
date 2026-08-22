@@ -52,6 +52,14 @@ function avg(values: number[]): number | null {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
+function newestMaintenanceUpdates<T extends { date: Date | string | number }>(
+  updates: T[] | undefined,
+): T[] {
+  return [...(updates ?? [])].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+}
+
 export function generateOverview(
   page: OverviewPage,
   components: UptimeComponent[],
@@ -144,7 +152,14 @@ export function generateOverview(
         mdUrl(`events/maintenance/${m.id}`),
       ].filter(Boolean);
       out.push(head.join(" · "));
-      if (m.message) out.push(`  ${m.message}`);
+      const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
+      if (updates.length > 0) {
+        for (const update of updates) {
+          out.push(`  - ${formatDayTime(update.date)} — ${update.message}`);
+        }
+      } else if (m.message) {
+        out.push(`  ${m.message}`);
+      }
     }
     out.push("");
   }
@@ -332,13 +347,26 @@ export function generateEventsList(
     }
   }
   for (const m of page.maintenances) {
-    logRows.push({
-      timestamp: m.from,
-      label: "MAINTENANCE",
-      glyph: statusGlyph("info"),
-      ref: `maintenance/${m.id}`,
-      title: m.title,
-    });
+    const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
+    if (updates.length > 0) {
+      for (const update of updates) {
+        logRows.push({
+          timestamp: update.date,
+          label: "MAINTENANCE",
+          glyph: statusGlyph("info"),
+          ref: `maintenance/${m.id}`,
+          title: m.title,
+        });
+      }
+    } else {
+      logRows.push({
+        timestamp: m.from,
+        label: "MAINTENANCE",
+        glyph: statusGlyph("info"),
+        ref: `maintenance/${m.id}`,
+        title: m.title,
+      });
+    }
     // Only log a COMPLETED entry once the window has actually ended. (`m.to`
     // is non-null per schema; the truthy check is just defensive.)
     if (m.to && new Date(m.to).getTime() <= now) {
@@ -436,6 +464,14 @@ export function generateEventsList(
         `### [${escapeLinkLabel(m.title)}](${mdUrl(`events/maintenance/${m.id}`)})`,
       );
       out.push(meta.join(" · "));
+      const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
+      if (updates.length > 0) {
+        for (const update of updates) {
+          out.push(`- ${formatDayTime(update.date)} — ${update.message}`);
+        }
+      } else if (m.message) {
+        out.push(m.message);
+      }
       out.push("");
     }
   }
@@ -561,8 +597,17 @@ export function generateMaintenance(
     out.push(`**Affected components:** ${components.join(", ")}\n`);
   }
 
-  out.push("## Details\n");
-  out.push(`${maintenance.message}\n`);
+  const updates = newestMaintenanceUpdates(maintenance.maintenanceUpdates);
+  if (updates.length > 0) {
+    out.push("## Updates\n");
+    for (const update of updates) {
+      out.push(`### ${formatDayTime(update.date)}\n`);
+      out.push(`${update.message}\n`);
+    }
+  } else {
+    out.push("## Details\n");
+    out.push(`${maintenance.message}\n`);
+  }
 
   return `${out.join("\n").trimEnd()}\n`;
 }
