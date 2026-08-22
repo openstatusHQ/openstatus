@@ -27,14 +27,12 @@ import {
   updatePageLinks,
   updatePageLocales,
   updatePagePasswordProtection,
+  addDomainToVercel,
+  removeDomainFromVercelIfUnused,
 } from "@openstatus/services/page";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import {
-  addDomainToVercel,
-  removeDomainFromVercelIfUnused,
-} from "../lib/vercel";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 

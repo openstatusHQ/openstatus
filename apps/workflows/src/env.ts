@@ -24,5 +24,8 @@ export const env = () =>
       SENTRY_DSN: z.string().prefault(""),
       AXIOM_TOKEN: z.string().prefault(""),
       AXIOM_DATASET: z.string().prefault(""),
+      PROJECT_ID_VERCEL: z.string().prefault(""),
+      TEAM_ID_VERCEL: z.string().prefault(""),
+      VERCEL_AUTH_BEARER_TOKEN: z.string().prefault(""),
     })
     .parse(process.env);

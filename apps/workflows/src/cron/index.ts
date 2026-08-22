@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import { env } from "../env";
 import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 import { sendCheckerTasks } from "./checker";
+import { handleDomainsPruneCron } from "./domains";
 import { sendFollowUpEmails } from "./emails";
 import { handleExternalIncidentsPruneCron } from "./external-incidents-prune";
 import { handleExternalStatusCron } from "./external-status";
@@ -101,6 +102,14 @@ app.get("/uptime-freeze", async (c) => {
 
 app.get("/private-location-health", async (c) => {
   return handlePrivateLocationHealthCron(c);
+});
+
+app.get("/domains/prune-unverified", async (c) => {
+  return handleDomainsPruneCron(c);
+});
+
+app.get("/domains", async (c) => {
+  return handleDomainsPruneCron(c);
 });
 
 app.get("/emails/follow-up", async (c) => {

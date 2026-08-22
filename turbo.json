@@ -22,6 +22,7 @@
         "BLOB_READ_WRITE_TOKEN",
         "TEAM_ID_VERCEL",
         "PROJECT_ID_VERCEL",
+        "VERCEL_AUTH_BEARER_TOKEN",
         "STRIPE_SECRET_KEY",
         "UNKEY_TOKEN",
         "UNKEY_API_ID",

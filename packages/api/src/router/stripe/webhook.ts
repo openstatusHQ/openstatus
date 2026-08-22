@@ -3,6 +3,7 @@ import { and, eq } from "@openstatus/db";
 import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
 import { SsoDisabledEmail, sendEmail } from "@openstatus/emails";
 import type { ServiceContext } from "@openstatus/services";
+import { removeDomainFromVercelIfUnused } from "@openstatus/services/page";
 import {
   downgradeWorkspaceToFree,
   getWorkspaceByStripeId,
@@ -12,7 +13,6 @@ import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
 import { z } from "zod";
 
-import { removeDomainFromVercelIfUnused } from "../../lib/vercel";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { buildLimitsFromSubscription } from "./utils";
