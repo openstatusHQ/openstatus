@@ -123,6 +123,15 @@ export const getJsonLDOrganization = (): WithContext<Organization> => {
       "https://bsky.app/profile/openstatus.dev",
       "https://x.com/openstatushq",
     ],
+    // Same address the contact page and every email footer already carry —
+    // it is what lets an assistant tie the entity to the registered company.
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "122 Rue Amelot",
+      postalCode: "75011",
+      addressLocality: "Paris",
+      addressCountry: "FR",
+    },
     contactPoint: [
       {
         "@type": "ContactPoint",
