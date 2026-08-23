@@ -27,10 +27,11 @@ const card = {
     in: "header",
     name: "x-openstatus-key",
     description:
-      "Workspace API key. Generate one in Settings → API Tokens. Same credential used by the CLI, REST API, and Terraform provider.",
+      "Workspace API key. Generate one in Settings → API Tokens. Same credential used by the CLI, REST API, and Terraform provider. Required for tools; the resources below are readable without one.",
   },
   capabilities: {
     tools: { listChanged: false },
+    resources: { listChanged: true },
   },
   tools: [
     {
@@ -70,9 +71,31 @@ const card = {
       description: "Adjust a scheduled maintenance window.",
     },
   ],
+  resources: [
+    {
+      name: "openapi-specification",
+      uri: "https://api.openstatus.dev/openapi.json",
+      mimeType: "application/json",
+      description: "Machine-readable description of the openstatus HTTP API.",
+    },
+    {
+      name: "mcp-server-reference",
+      uri: "https://www.openstatus.dev/docs/reference/mcp-server",
+      mimeType: "text/markdown",
+      description:
+        "Transport, authentication, and the full tool list for this server.",
+    },
+    {
+      name: "site-index",
+      uri: "https://www.openstatus.dev/llms.txt",
+      mimeType: "text/plain",
+      description:
+        "llms.txt: product context, pricing, and an index of every page.",
+    },
+  ],
   links: {
     "service-doc": "https://www.openstatus.dev/docs/reference/mcp-server/",
-    "service-desc": "https://api.openstatus.dev/openapi",
+    "service-desc": "https://api.openstatus.dev/openapi.json",
     "terms-of-service": "https://www.openstatus.dev/terms",
     "privacy-policy": "https://www.openstatus.dev/privacy",
   },

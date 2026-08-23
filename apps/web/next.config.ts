@@ -35,7 +35,7 @@ const homepageLinkHeader = [
   '</.well-known/agent-skills/index.json>; rel="agent-skills"; type="application/json"',
   '</.well-known/mcp.json>; rel="mcp-server"; type="application/json"',
   '<https://www.openstatus.dev/docs>; rel="service-doc"; type="text/html"',
-  '<https://api.openstatus.dev/openapi>; rel="service-desc"; type="application/json"',
+  '<https://www.openstatus.dev/openapi.json>; rel="service-desc"; type="application/json"',
   '<https://www.openstatus.dev/llms.txt>; rel="describedby"; type="text/plain"',
   '<https://www.openstatus.dev/llms-full.txt>; rel="alternate"; type="text/plain"; title="llms-full"',
   '<https://www.openstatus.dev/terms>; rel="terms-of-service"',
@@ -209,6 +209,19 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return {
+      // `/openapi.json` is the path agents probe for an API description, and
+      // they probe it on the site they were pointed at. The spec is generated
+      // in apps/server, so proxy rather than keep a second copy in sync.
+      afterFiles: [
+        {
+          source: "/openapi.json",
+          destination: "https://api.openstatus.dev/openapi.json",
+        },
+        {
+          source: "/openapi.yaml",
+          destination: "https://api.openstatus.dev/openapi.yaml",
+        },
+      ],
       beforeFiles: [
         {
           source: "/status-page/themes/:path*",

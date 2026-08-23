@@ -8,6 +8,9 @@ info:
   contact:
     email: ping@openstatus.dev
     url: https://www.openstatus.dev
+servers:
+  - url: https://api.openstatus.dev
+    description: Production
 externalDocs:
   description: OpenStatus Documentation
   url: https://www.openstatus.dev/docs

@@ -70,10 +70,35 @@ async function readJsonRpc(
 }
 
 describe("MCP transport", () => {
-  test("rejects requests missing x-openstatus-key with 401", async () => {
+  test("serves the public documents without a key", async () => {
+    const app = makeApp();
+    const res = await app.fetch(jsonRpc({ method: "resources/list" }, false));
+    expect(res.status).toBe(200);
+    const body = await readJsonRpc(res);
+    const resources = (body.result as { resources: { uri: string }[] })
+      .resources;
+    expect(resources.length).toBeGreaterThan(0);
+  });
+
+  test("registers no tools without a key", async () => {
     const app = makeApp();
     const res = await app.fetch(jsonRpc({ method: "tools/list" }, false));
-    expect(res.status).toBe(401);
+    // No tool handler is registered on the anonymous server, so the method
+    // itself is absent — an empty tool list would still be a workspace-shaped
+    // response to an unauthenticated caller.
+    const body = await readJsonRpc(res);
+    expect(body.result).toBeUndefined();
+    expect(body.error?.code).toBe(-32601);
+  });
+
+  test("resources/list is also served to an authenticated key", async () => {
+    const app = makeApp();
+    const res = await app.fetch(jsonRpc({ method: "resources/list" }));
+    expect(res.status).toBe(200);
+    const body = await readJsonRpc(res);
+    const resources = (body.result as { resources: { uri: string }[] })
+      .resources;
+    expect(resources.length).toBeGreaterThan(0);
   });
 
   test("tools/list returns the expected registered tool set", async () => {

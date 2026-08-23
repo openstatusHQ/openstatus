@@ -1,11 +1,13 @@
 import { StreamableHTTPTransport } from "@hono/mcp";
+import type { Workspace } from "@openstatus/db/src/schema";
 import { Hono } from "hono";
+import type { Context, Next } from "hono";
 
 import { handleError } from "../../libs/errors";
 import { authMiddleware } from "../../libs/middlewares/auth";
 import type { Variables } from "../../types";
 import { toServiceCtx } from "./adapter";
-import { createMcpServer } from "./server";
+import { createMcpServer, createPublicMcpServer } from "./server";
 
 export const mcpRoute = new Hono<{ Variables: Variables }>({ strict: false });
 
@@ -16,7 +18,22 @@ export const mcpRoute = new Hono<{ Variables: Variables }>({ strict: false });
 // across mount points and self-contained for tests.
 mcpRoute.onError(handleError);
 
-mcpRoute.use("*", authMiddleware);
+/**
+ * An MCP client `initialize`s before it has a credential, and a handshake that
+ * 401s reads as an unreachable server rather than a protected one. A missing
+ * key drops the request to the public surface (documents only, no tools); a
+ * key that is present but invalid is still a 401, so a misconfigured client
+ * gets told so instead of silently losing its workspace.
+ */
+async function optionalAuthMiddleware(
+  c: Context<{ Variables: Variables }, "/*">,
+  next: Next,
+) {
+  if (!c.req.header("x-openstatus-key")) return next();
+  return authMiddleware(c, next);
+}
+
+mcpRoute.use("*", optionalAuthMiddleware);
 
 /**
  * The transport handler MUST return a JSON-RPC error envelope on
@@ -27,14 +44,10 @@ mcpRoute.use("*", authMiddleware);
  * surface as HTTP 401, which is correct.
  */
 mcpRoute.all("/", async (c) => {
-  const workspace = c.get("workspace");
+  // Anonymous requests reach here with `workspace` unset, which `Variables`
+  // (shared with the authenticated V1 surface) cannot express.
+  const workspace = c.get("workspace") as Workspace | undefined;
   const requestId = c.get("requestId");
-  const apiKey = c.get("apiKey");
-  const ctx = toServiceCtx({
-    workspace,
-    apiKey,
-    requestId,
-  });
 
   // Pre-parse the JSON-RPC body so we can mirror the request `id` on
   // any error envelope we synthesize below. Per JSON-RPC 2.0 the
@@ -63,7 +76,11 @@ mcpRoute.all("/", async (c) => {
   // NOT call `server.close()` in a `finally` — closing tears down the
   // SSE stream before Hono finishes writing the body, sending an
   // empty response to the client.
-  const server = createMcpServer(ctx);
+  const server = workspace
+    ? createMcpServer(
+        toServiceCtx({ workspace, apiKey: c.get("apiKey"), requestId }),
+      )
+    : createPublicMcpServer();
   const transport = new StreamableHTTPTransport();
   try {
     await server.connect(transport);
