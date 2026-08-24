@@ -81,6 +81,7 @@ import {
   getCommonUpdateInput,
   toValidMethod,
   validateCommonMonitorFields,
+  validateMonitorPatchBounds,
 } from "./validators";
 
 /**
@@ -511,6 +512,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     // Validate regions if provided
     validateCommonMonitorFields(mon);
+    // This method skips the protovalidate interceptor (see SKIP_VALIDATION_METHODS),
+    // so the message's own bounds have to be applied here.
+    validateMonitorPatchBounds(mon);
 
     // Check workspace limits if periodicity or regions are changing
     checkMonitorConfigLimits(

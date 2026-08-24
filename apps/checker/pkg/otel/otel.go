@@ -80,10 +80,25 @@ func withMeter(ctx context.Context, endpoint string, headers map[string]string, 
 	fn(otel.Meter("OpenStatus"))
 }
 
-// recordGauge creates a Float64Gauge and records a value.
+// UCUM unit codes, as OpenTelemetry expects them.
+const (
+	unitMilliseconds = "ms"
+	unitPercent      = "%"
+)
+
+// recordGauge creates a Float64Gauge for a duration in milliseconds and records
+// a value. Use recordGaugeWithUnit for anything that is not a duration —
+// backends render a gauge according to its unit, so a mislabelled one is read
+// as a time span.
 func recordGauge(ctx context.Context, meter metric.Meter, name, description string, value float64, att metric.MeasurementOption) error {
+	return recordGaugeWithUnit(ctx, meter, name, description, unitMilliseconds, value, att)
+}
+
+// recordGaugeWithUnit creates a Float64Gauge carrying an explicit unit and
+// records a value.
+func recordGaugeWithUnit(ctx context.Context, meter metric.Meter, name, description, unit string, value float64, att metric.MeasurementOption) error {
 	gauge, err := meter.Float64Gauge(name,
-		metric.WithDescription(description), metric.WithUnit("ms"))
+		metric.WithDescription(description), metric.WithUnit(unit))
 	if err != nil {
 		return err
 	}
@@ -175,23 +190,29 @@ func RecordICMPMetrics(ctx context.Context, req request.ICMPCheckerRequest, resu
 			attribute.String("openstatus.probes", region),
 			attribute.String("openstatus.target", req.URI),
 		)
-
-		if result.Error == 1 {
-			recordErrorCounter(ctx, meter, att)
-			return
-		}
-
-		recordStatusCounter(ctx, meter, att)
-
-		if err := recordGauge(ctx, meter, "openstatus.icmp.request.duration", "Duration of the check", float64(result.Latency), att); err != nil {
-			log.Ctx(ctx).Error().Err(err).Str("metric", "openstatus.icmp.request.duration").Msg("Error creating gauge")
-		}
-
-		packetLoss := float64(result.PacketsSent-result.PacketsReceived) / float64(result.PacketsSent) * 100
-		if err := recordGauge(ctx, meter, "openstatus.icmp.packet.loss", "Packet loss percentage", packetLoss, att); err != nil {
-			log.Ctx(ctx).Error().Err(err).Str("metric", "openstatus.icmp.packet.loss").Msg("Error creating gauge")
-		}
+		recordICMPInstruments(ctx, meter, result, att)
 	})
+}
+
+// recordICMPInstruments is split out of RecordICMPMetrics so tests can supply a
+// collectable meter: withMeter installs a real OTLP provider globally, which
+// leaves nothing to assert against.
+func recordICMPInstruments(ctx context.Context, meter metric.Meter, result checker.ICMPResponse, att metric.MeasurementOption) {
+	if result.Error == 1 {
+		recordErrorCounter(ctx, meter, att)
+		return
+	}
+
+	recordStatusCounter(ctx, meter, att)
+
+	if err := recordGauge(ctx, meter, "openstatus.icmp.request.duration", "Duration of the check", float64(result.Latency), att); err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("metric", "openstatus.icmp.request.duration").Msg("Error creating gauge")
+	}
+
+	packetLoss := float64(result.PacketsSent-result.PacketsReceived) / float64(result.PacketsSent) * 100
+	if err := recordGaugeWithUnit(ctx, meter, "openstatus.icmp.packet.loss", "Packet loss percentage", unitPercent, packetLoss, att); err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("metric", "openstatus.icmp.packet.loss").Msg("Error creating gauge")
+	}
 }
 
 func RecordTCPMetrics(ctx context.Context, req request.TCPCheckerRequest, result checker.TCPResponse, region string) {

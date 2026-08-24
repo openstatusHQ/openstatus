@@ -1566,6 +1566,78 @@ describe("MonitorService.UpdateICMPMonitor", () => {
 
     expect(res.status).toBe(401);
   });
+
+  // This method is in SKIP_VALIDATION_METHODS, so protovalidate never sees the
+  // patch — the bounds it would have applied are enforced in the handler, and
+  // nothing downstream re-checks them.
+  test("enforces the proto bounds the validation interceptor skips", async () => {
+    for (const [field, monitor] of [
+      ["retry above max", { retry: "11" }],
+      ["negative retry", { retry: "-1" }],
+      ["timeout above max", { timeout: "120001" }],
+      ["degradedAt above max", { degradedAt: "120001" }],
+      ["over-long description", { description: "d".repeat(1025) }],
+      ["over-long name", { name: "n".repeat(257) }],
+      ["over-long uri", { uri: "u".repeat(2049) }],
+    ] as const) {
+      const res = await connectRequest(
+        "UpdateICMPMonitor",
+        { id: String(testIcmpMonitorId), monitor },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(400);
+    }
+  });
+
+  test("leaves the stored monitor untouched when a patch is rejected", async () => {
+    const before = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testIcmpMonitorId))
+      .get();
+
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        // A valid name alongside an out-of-range retry: the whole patch must be
+        // refused, not partially applied.
+        monitor: { name: "should-not-be-written", retry: "99" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+
+    const after = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testIcmpMonitorId))
+      .get();
+    expect(after?.name).toBe(before?.name);
+    expect(after?.retry).toBe(before?.retry);
+  });
+
+  test("still accepts values at the documented limits", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: { retry: "10", timeout: "120000" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    // Restore
+    await connectRequest(
+      "UpdateICMPMonitor",
+      { id: String(testIcmpMonitorId), monitor: { timeout: "5000" } },
+      { "x-openstatus-key": "1" },
+    );
+  });
 });
 
 describe("MonitorService - private and internal URLs", () => {

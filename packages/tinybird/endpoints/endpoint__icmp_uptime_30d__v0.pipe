@@ -1,4 +1,4 @@
-TAGS "http"
+TAGS "icmp"
 
 NODE endpoint
 SQL >

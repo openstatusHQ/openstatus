@@ -35,6 +35,10 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     event: Events.CreateMonitor,
     eventProps: ["url", "jobType"],
   },
+  "openstatus.monitor.v1.MonitorService/CreateICMPMonitor": {
+    event: Events.CreateMonitor,
+    eventProps: ["url", "jobType"],
+  },
   "openstatus.monitor.v1.MonitorService/UpdateHTTPMonitor": {
     event: Events.UpdateMonitor,
   },
@@ -42,6 +46,9 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     event: Events.UpdateMonitor,
   },
   "openstatus.monitor.v1.MonitorService/UpdateDNSMonitor": {
+    event: Events.UpdateMonitor,
+  },
+  "openstatus.monitor.v1.MonitorService/UpdateICMPMonitor": {
     event: Events.UpdateMonitor,
   },
   "openstatus.monitor.v1.MonitorService/DeleteMonitor": {

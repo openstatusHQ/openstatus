@@ -74,6 +74,70 @@ func TestRecordGauge(t *testing.T) {
 	assert.Equal(t, "test-value", val.AsString())
 }
 
+func TestRecordGaugeWithUnit(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		unit string
+	}{
+		{name: "percentage", unit: unitPercent},
+		{name: "duration", unit: unitMilliseconds},
+		{name: "unitless", unit: ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			meter, reader := newTestMeter(t)
+			att := metric.WithAttributes(attribute.String("region", "ams"))
+
+			err := recordGaugeWithUnit(context.Background(), meter, "test.gauge", "A test gauge", tc.unit, 12.5, att)
+			require.NoError(t, err)
+
+			rm := collectMetrics(t, reader)
+			require.Len(t, rm.ScopeMetrics, 1)
+			require.Len(t, rm.ScopeMetrics[0].Metrics, 1)
+
+			m := rm.ScopeMetrics[0].Metrics[0]
+			assert.Equal(t, tc.unit, m.Unit)
+
+			gauge, ok := m.Data.(metricdata.Gauge[float64])
+			require.True(t, ok)
+			require.Len(t, gauge.DataPoints, 1)
+			assert.Equal(t, 12.5, gauge.DataPoints[0].Value)
+		})
+	}
+}
+
+// The two ICMP gauges carry different units, so they cannot share the
+// ms-defaulting helper: a percentage exported as "ms" is rendered as a duration
+// by the backend.
+func TestICMPGaugeUnits(t *testing.T) {
+	meter, reader := newTestMeter(t)
+	att := metric.WithAttributes(attribute.String("openstatus.probes", "ams"))
+
+	recordICMPInstruments(context.Background(), meter, checker.ICMPResponse{
+		Latency:         42,
+		PacketsSent:     3,
+		PacketsReceived: 2,
+	}, att)
+
+	units := map[string]string{}
+	values := map[string]float64{}
+	for _, sm := range collectMetrics(t, reader).ScopeMetrics {
+		for _, m := range sm.Metrics {
+			units[m.Name] = m.Unit
+			if gauge, ok := m.Data.(metricdata.Gauge[float64]); ok && len(gauge.DataPoints) == 1 {
+				values[m.Name] = gauge.DataPoints[0].Value
+			}
+		}
+	}
+
+	assert.Equal(t, "ms", units["openstatus.icmp.request.duration"])
+	assert.Equal(t, "%", units["openstatus.icmp.packet.loss"],
+		"packet loss is a percentage, not a duration")
+
+	assert.Equal(t, float64(42), values["openstatus.icmp.request.duration"])
+	assert.InDelta(t, 33.33, values["openstatus.icmp.packet.loss"], 0.01,
+		"1 of 3 packets lost is ~33%, confirming the value really is a percentage")
+}
+
 func TestRecordGauge_MultipleMetrics(t *testing.T) {
 	meter, reader := newTestMeter(t)
 	ctx := context.Background()
