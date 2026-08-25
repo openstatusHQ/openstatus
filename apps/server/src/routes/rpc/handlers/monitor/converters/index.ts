@@ -47,6 +47,7 @@ export {
   dbMonitorToHttpProto,
   dbMonitorToTcpProto,
   dbMonitorToDnsProto,
+  dbMonitorToIcmpProto,
 } from "./monitors";
 
 // Regions

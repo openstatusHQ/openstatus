@@ -1,0 +1,16 @@
+DESCRIPTION >
+	Stores all the data from the icmp_response table, mainly used for accessing the data details.
+
+
+TAGS "icmp, full"
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        *
+    FROM icmp_response__v0
+
+TYPE materialized
+DATASOURCE mv__icmp_full_14d__v0

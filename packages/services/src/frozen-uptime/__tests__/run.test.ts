@@ -32,6 +32,7 @@ function makePipes(
     http: overrides.http ?? fallback,
     tcp: overrides.tcp ?? fallback,
     dns: overrides.dns ?? fallback,
+    icmp: overrides.icmp ?? fallback,
   };
 }
 
@@ -157,7 +158,7 @@ describe("fetchFreezeCounts", () => {
     const http = okPipe();
     const { counts, failedMonitorIds } = await fetchFreezeCounts({
       monitorIdsByJobType: new Map([
-        ["icmp", new Set(["9"])],
+        ["udp", new Set(["9"])],
         ["ssl", new Set(["10"])],
       ]),
       pipes: makePipes({ http: http.pipe }),

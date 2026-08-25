@@ -131,7 +131,9 @@ export function Client() {
             setPagination={setPagination}
             paginationComponent={DataTablePagination}
             defaultColumnVisibility={
-              monitor.jobType === "tcp" || monitor.jobType === "dns"
+              monitor.jobType === "tcp" ||
+              monitor.jobType === "dns" ||
+              monitor.jobType === "icmp"
                 ? { timing: false, statusCode: false }
                 : {}
             }

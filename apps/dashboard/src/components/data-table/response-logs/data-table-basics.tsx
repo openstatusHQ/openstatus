@@ -50,6 +50,11 @@ export function DataTableBasics({
       <DataTableBasicsDNS data={data} privateLocations={privateLocations} />
     );
   }
+  if (data.type === "icmp") {
+    return (
+      <DataTableBasicsICMP data={data} privateLocations={privateLocations} />
+    );
+  }
   return null;
 }
 
@@ -411,6 +416,170 @@ export function DataTableBasicsTCP({
           </TableHead>
           <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
             <TableCellNumber value={data?.latency} unit="ms" />
+          </TableCell>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+            Region
+          </TableHead>
+          <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+            {regionConfig?.flag} {regionConfig?.code}{" "}
+            <span className="text-muted-foreground">
+              {regionConfig?.location}
+            </span>
+          </TableCell>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+            Cloud Provider
+          </TableHead>
+          <TableCell className="inline-flex max-w-full overflow-x-auto font-mono whitespace-normal">
+            <IconCloudProvider
+              provider={regionConfig?.provider}
+              className="mt-0.5"
+            />
+            <span className="text-muted-foreground ml-1">
+              {regionConfig?.provider}
+            </span>
+          </TableCell>
+        </TableRow>
+        {data.trigger ? (
+          <TableRow className="[&>:not(:last-child)]:border-r">
+            <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+              Trigger
+            </TableHead>
+            <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+              {data?.trigger}
+            </TableCell>
+          </TableRow>
+        ) : null}
+        {data?.errorMessage ? (
+          <>
+            <TableRow>
+              <TableHead colSpan={2}>Error Message</TableHead>
+            </TableRow>
+            <TableRow>
+              <TableCell colSpan={2} className="p-0">
+                <pre className="bg-muted/50 max-w-full overflow-x-auto rounded-none p-2 font-mono text-sm whitespace-pre-wrap">
+                  {data.errorMessage}
+                </pre>
+              </TableCell>
+            </TableRow>
+          </>
+        ) : null}
+      </TableBody>
+    </Table>
+  );
+}
+
+export function DataTableBasicsICMP({
+  data,
+  privateLocations,
+}: {
+  data: Extract<ResponseLog, { type: "icmp" }> & {
+    trigger?: "cron" | "api" | "test" | null;
+  };
+  privateLocations?: PrivateLocation[];
+}) {
+  const privateLocataion = privateLocations?.find(
+    (location) => String(location.id) === String(data.region),
+  );
+  const regionConfig = getRegionInfo(data.region, {
+    location: privateLocataion?.name,
+  });
+  const packetLoss =
+    data.packetsSent > 0
+      ? (data.packetsSent - data.packetsReceived) / data.packetsSent
+      : 0;
+  return (
+    <Table className="table-fixed">
+      <colgroup>
+        <col className="w-1/3" />
+        <col className="w-2/3" />
+      </colgroup>
+      <TableBody>
+        <TableRow>
+          <TableHead colSpan={2}>Request</TableHead>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+            Result
+          </TableHead>
+          <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+            <div className="flex items-center gap-2">
+              <div
+                className={cn("bg-muted h-2.5 w-2.5 rounded-[2px]", {
+                  "bg-destructive": data?.requestStatus === "error",
+                  "bg-warning": data?.requestStatus === "degraded",
+                  "bg-success": data?.requestStatus === "success",
+                })}
+              />
+              <div className="capitalize">
+                {data?.requestStatus ?? "unknown"}
+              </div>
+            </div>
+          </TableCell>
+        </TableRow>
+        {data.id ? (
+          <TableRow className="[&>:not(:last-child)]:border-r">
+            <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+              ID
+            </TableHead>
+            <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+              {data.id}
+            </TableCell>
+          </TableRow>
+        ) : null}
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+            Timestamp
+          </TableHead>
+          <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+            <TableCellDate
+              value={new Date(data.cronTimestamp)}
+              className="text-foreground"
+            />
+          </TableCell>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+            Host
+          </TableHead>
+          <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+            {data.uri}
+          </TableCell>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+            Latency (avg)
+          </TableHead>
+          <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+            <TableCellNumber value={data?.latency} unit="ms" />
+          </TableCell>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+            Latency (min / max)
+          </TableHead>
+          <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+            {formatMilliseconds(data.latencyMin)} /{" "}
+            {formatMilliseconds(data.latencyMax)}
+          </TableCell>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+            Packets
+          </TableHead>
+          <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+            {data.packetsReceived} / {data.packetsSent} received
+          </TableCell>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+            Packet Loss
+          </TableHead>
+          <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+            {formatPercentage(packetLoss)}
           </TableCell>
         </TableRow>
         <TableRow className="[&>:not(:last-child)]:border-r">

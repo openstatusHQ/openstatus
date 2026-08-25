@@ -306,6 +306,7 @@ export const TCPTriggerResult = z.object({
   errorMessage: z.string().optional().nullable(),
 });
 
+// Only the two types the v1 API can run — see `assertLegacyRunnableJobType`.
 export const TriggerResult = z.discriminatedUnion("jobType", [
   HTTPTriggerResult,
   TCPTriggerResult,

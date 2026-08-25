@@ -195,7 +195,7 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	httpMonitors, tcpMonitors, dnsMonitors, workspaceId := mapMonitors(ctx, monitors)
+	httpMonitors, tcpMonitors, dnsMonitors, icmpMonitors, workspaceId := mapMonitors(ctx, monitors)
 
 	// Enrich wide event with monitor counts
 	if holder := GetEvent(ctx); holder != nil {
@@ -204,6 +204,7 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 			"http_monitors":  len(httpMonitors),
 			"tcp_monitors":   len(tcpMonitors),
 			"dns_monitors":   len(dnsMonitors),
+			"icmp_monitors":  len(icmpMonitors),
 			"total_monitors": len(monitors),
 		}
 	}
@@ -212,6 +213,7 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 		HttpMonitors: httpMonitors,
 		TcpMonitors:  tcpMonitors,
 		DnsMonitors:  dnsMonitors,
+		IcmpMonitors: icmpMonitors,
 		Region:       location.Name,
 	}), nil
 }
@@ -220,12 +222,14 @@ func mapMonitors(ctx context.Context, monitors []database.Monitor) (
 	[]*private_locationv1.HTTPMonitor,
 	[]*private_locationv1.TCPMonitor,
 	[]*private_locationv1.DNSMonitor,
+	[]*private_locationv1.ICMPMonitor,
 	int,
 ) {
 	var workspaceId int
 	var httpMonitors []*private_locationv1.HTTPMonitor
 	var tcpMonitors []*private_locationv1.TCPMonitor
 	var dnsMonitors []*private_locationv1.DNSMonitor
+	var icmpMonitors []*private_locationv1.ICMPMonitor
 	for _, monitor := range monitors {
 		if workspaceId == 0 {
 			workspaceId = monitor.WorkspaceID
@@ -238,10 +242,12 @@ func mapMonitors(ctx context.Context, monitors []database.Monitor) (
 			tcpMonitors = append(tcpMonitors, toTCPMonitor(ctx, monitor))
 		case database.JobTypeDNS:
 			dnsMonitors = append(dnsMonitors, toDNSMonitor(ctx, monitor))
+		case database.JobTypeICMP:
+			icmpMonitors = append(icmpMonitors, toICMPMonitor(ctx, monitor))
 		}
 	}
 
-	return httpMonitors, tcpMonitors, dnsMonitors, workspaceId
+	return httpMonitors, tcpMonitors, dnsMonitors, icmpMonitors, workspaceId
 }
 
 func toHTTPMonitor(ctx context.Context, monitor database.Monitor) *private_locationv1.HTTPMonitor {
@@ -273,6 +279,18 @@ func toHTTPMonitor(ctx context.Context, monitor database.Monitor) *private_locat
 
 func toTCPMonitor(ctx context.Context, monitor database.Monitor) *private_locationv1.TCPMonitor {
 	return &private_locationv1.TCPMonitor{
+		Id:          strconv.Itoa(monitor.ID),
+		Uri:         monitor.URL,
+		Timeout:     monitor.Timeout,
+		DegradedAt:  &monitor.DegradedAfter.Int64,
+		Periodicity: monitor.Periodicity,
+		Retry:       int64(monitor.Retry),
+		OtelConfig:  buildOtelConfig(ctx, monitor),
+	}
+}
+
+func toICMPMonitor(ctx context.Context, monitor database.Monitor) *private_locationv1.ICMPMonitor {
+	return &private_locationv1.ICMPMonitor{
 		Id:          strconv.Itoa(monitor.ID),
 		Uri:         monitor.URL,
 		Timeout:     monitor.Timeout,

@@ -59,6 +59,109 @@ export function validateCommonMonitorFields(mon: { regions?: Region[] }): void {
 }
 
 /**
+ * The bounds protovalidate enforces on a complete monitor message. Update RPCs
+ * skip the interceptor — a partial patch cannot satisfy `min_len` on the fields
+ * it omits — so nothing else checks these on an update: `updateMonitorConfig`
+ * writes whatever it is handed straight to the column.
+ *
+ * Keep in sync with the `buf.validate` constraints in `*_monitor.proto`.
+ */
+const MONITOR_BOUNDS = {
+  nameMaxLen: 256,
+  uriMaxLen: 2048,
+  descriptionMaxLen: 1024,
+  timeoutMaxMs: 120_000,
+  degradedAtMaxMs: 120_000,
+  retryMax: 10,
+  regionsMaxItems: 28,
+} as const;
+
+function invalidArgument(message: string): never {
+  throw new ConnectError(message, Code.InvalidArgument);
+}
+
+/**
+ * Apply those bounds to whatever an update actually supplied. The "supplied"
+ * tests mirror `getCommonUpdateInput` exactly: a field this skips is a field
+ * that never reaches the database.
+ */
+export function validateMonitorPatchBounds(mon: {
+  name?: string;
+  uri?: string;
+  url?: string;
+  timeout?: bigint;
+  degradedAt?: bigint;
+  retry?: bigint;
+  description?: string;
+  regions?: Region[];
+}): void {
+  if (mon.name !== undefined && mon.name !== "") {
+    if (mon.name.length > MONITOR_BOUNDS.nameMaxLen) {
+      invalidArgument(
+        `monitor.name: must be at most ${MONITOR_BOUNDS.nameMaxLen} characters [string.max_len]`,
+      );
+    }
+  }
+
+  // HTTP calls it `url`, the other three call it `uri`.
+  const target = mon.uri ?? mon.url;
+  if (target !== undefined && target !== "") {
+    if (target.length > MONITOR_BOUNDS.uriMaxLen) {
+      invalidArgument(
+        `monitor.uri: must be at most ${MONITOR_BOUNDS.uriMaxLen} characters [string.max_len]`,
+      );
+    }
+  }
+
+  if (mon.description !== undefined) {
+    if (mon.description.length > MONITOR_BOUNDS.descriptionMaxLen) {
+      invalidArgument(
+        `monitor.description: must be at most ${MONITOR_BOUNDS.descriptionMaxLen} characters [string.max_len]`,
+      );
+    }
+  }
+
+  if (mon.timeout !== undefined && mon.timeout !== BigInt(0)) {
+    if (
+      mon.timeout < BigInt(0) ||
+      mon.timeout > BigInt(MONITOR_BOUNDS.timeoutMaxMs)
+    ) {
+      invalidArgument(
+        `monitor.timeout: must be between 0 and ${MONITOR_BOUNDS.timeoutMaxMs} [int64.gte_lte]`,
+      );
+    }
+  }
+
+  if (mon.degradedAt !== undefined) {
+    if (
+      mon.degradedAt < BigInt(0) ||
+      mon.degradedAt > BigInt(MONITOR_BOUNDS.degradedAtMaxMs)
+    ) {
+      invalidArgument(
+        `monitor.degraded_at: must be between 0 and ${MONITOR_BOUNDS.degradedAtMaxMs} [int64.gte_lte]`,
+      );
+    }
+  }
+
+  if (mon.retry !== undefined && mon.retry !== BigInt(0)) {
+    if (mon.retry < BigInt(0) || mon.retry > BigInt(MONITOR_BOUNDS.retryMax)) {
+      invalidArgument(
+        `monitor.retry: must be between 0 and ${MONITOR_BOUNDS.retryMax} [int64.gte_lte]`,
+      );
+    }
+  }
+
+  if (
+    mon.regions !== undefined &&
+    mon.regions.length > MONITOR_BOUNDS.regionsMaxItems
+  ) {
+    invalidArgument(
+      `monitor.regions: must contain at most ${MONITOR_BOUNDS.regionsMaxItems} items [repeated.max_items]`,
+    );
+  }
+}
+
+/**
  * Extract the fields every monitor type shares, in the shape
  * `createMonitor` takes. Defaults are applied here rather than left to
  * the column defaults so the API contract stays explicit.

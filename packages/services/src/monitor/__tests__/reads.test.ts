@@ -146,13 +146,13 @@ describe("getMonitorSummary", () => {
     });
   });
 
-  test("throws ValidationError for unsupported jobType (icmp)", async () => {
+  test("throws ValidationError for unsupported jobType (udp)", async () => {
     await withTestTransaction(async (tx) => {
       const row = await createMonitor({
         ctx: { ...teamCtx, db: tx },
         input: {
-          name: `${TEST_PREFIX}-icmp-summary`,
-          jobType: "icmp",
+          name: `${TEST_PREFIX}-udp-summary`,
+          jobType: "udp",
           url: "1.1.1.1",
           method: "GET",
           headers: [],
@@ -169,6 +169,29 @@ describe("getMonitorSummary", () => {
       ).rejects.toBeInstanceOf(ValidationError);
     });
   });
+
+  test("returns a summary for icmp jobType", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-icmp-summary`,
+          jobType: "icmp",
+          url: "1.1.1.1",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          regions: ["ams"],
+        },
+      });
+      const summary = await getMonitorSummary({
+        ctx: { ...teamCtx, db: tx },
+        input: { monitorId: row.id, timeRange: "1d" },
+      });
+      expect(summary.monitorId).toBe(row.id);
+    });
+  });
 });
 
 describe("fetchMonitorDailyStats", () => {
@@ -176,6 +199,7 @@ describe("fetchMonitorDailyStats", () => {
     httpStatus45d: () => Promise.resolve({ data: [] }),
     tcpStatus45d: () => Promise.resolve({ data: [] }),
     dnsStatus45d: () => Promise.resolve({ data: [] }),
+    icmpStatus45d: () => Promise.resolve({ data: [] }),
   } as unknown as NonNullable<ServiceContext["tb"]>;
 
   test("skips cross-workspace monitorId (returns empty, no throw)", async () => {
@@ -215,13 +239,13 @@ describe("fetchMonitorDailyStats", () => {
     });
   });
 
-  test("skips unsupported jobType (icmp)", async () => {
+  test("skips unsupported jobType (udp)", async () => {
     await withTestTransaction(async (tx) => {
       const row = await createMonitor({
         ctx: { ...teamCtx, db: tx },
         input: {
-          name: `${TEST_PREFIX}-icmp-daily`,
-          jobType: "icmp",
+          name: `${TEST_PREFIX}-udp-daily`,
+          jobType: "udp",
           url: "1.1.1.1",
           method: "GET",
           headers: [],
@@ -237,6 +261,48 @@ describe("fetchMonitorDailyStats", () => {
         workspaceId: teamCtx.workspace.id,
       });
       expect(stats).toEqual([]);
+    });
+  });
+
+  test("queries the icmp pipe for icmp jobType", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-icmp-daily`,
+          jobType: "icmp",
+          url: "1.1.1.1",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          regions: ["ams"],
+        },
+      });
+      const icmpTb = {
+        httpStatus45d: () => Promise.resolve({ data: [] }),
+        tcpStatus45d: () => Promise.resolve({ data: [] }),
+        dnsStatus45d: () => Promise.resolve({ data: [] }),
+        icmpStatus45d: ({ monitorIds }: { monitorIds: string[] }) =>
+          Promise.resolve({
+            data: monitorIds.map((monitorId) => ({
+              day: "2024-01-01T00:00:00.000Z",
+              count: 1,
+              ok: 1,
+              degraded: 0,
+              error: 0,
+              monitorId,
+            })),
+          }),
+      } as unknown as NonNullable<ServiceContext["tb"]>;
+      const stats = await fetchMonitorDailyStats({
+        db: tx,
+        tb: icmpTb,
+        monitorIds: [row.id],
+        workspaceId: teamCtx.workspace.id,
+      });
+      expect(stats).toHaveLength(1);
+      expect(stats[0]?.monitorId).toBe(String(row.id));
     });
   });
 

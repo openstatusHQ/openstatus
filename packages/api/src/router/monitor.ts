@@ -35,7 +35,7 @@ import { z } from "zod";
 import { env } from "../env";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { testDns, testHttp, testTcp } from "./checker";
+import { testDns, testHttp, testIcmp, testTcp } from "./checker";
 
 // self-host has no access to the openstatus checker fleet, so the pre-save
 // endpoint test can never succeed — skip it entirely.
@@ -342,6 +342,8 @@ export const monitorRouter = createTRPCRouter({
                 (a) => a.type === "dnsRecord",
               ),
             });
+          } else if (input.jobType === "icmp") {
+            await testIcmp({ url: input.url, region: "ams" });
           }
         }
 
@@ -406,6 +408,8 @@ export const monitorRouter = createTRPCRouter({
                 (a) => a.type === "dnsRecord",
               ),
             });
+          } else if (input.jobType === "icmp") {
+            await testIcmp({ url: input.url, region: "ams" });
           }
         }
 

@@ -21,6 +21,7 @@ const pipes: UptimeFreezePipes = {
   http: tb.httpStatus45d,
   tcp: tb.tcpStatus45d,
   dns: tb.dnsStatus45d,
+  icmp: tb.icmpStatus45d,
 };
 
 export async function handleUptimeFreezeCron(c: Context) {

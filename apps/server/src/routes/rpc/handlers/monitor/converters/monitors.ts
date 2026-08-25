@@ -2,6 +2,7 @@ import type { Monitor } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
   HTTPMonitor,
+  ICMPMonitor,
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 
@@ -59,6 +60,32 @@ export function dbMonitorToTcpProto(
 ): TCPMonitor {
   return {
     $typeName: "openstatus.monitor.v1.TCPMonitor",
+    id: String(dbMon.id),
+    name: dbMon.name,
+    uri: dbMon.url,
+    periodicity: stringToPeriodicity(dbMon.periodicity),
+    timeout: BigInt(dbMon.timeout),
+    degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
+    retry: BigInt(dbMon.retry ?? MONITOR_DEFAULTS.retry),
+    description: dbMon.description,
+    active: dbMon.active ?? MONITOR_DEFAULTS.active,
+    public: dbMon.public ?? MONITOR_DEFAULTS.public,
+    regions: stringsToRegions(dbMon.regions),
+    openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
+    status: stringToMonitorStatus(dbMon.status),
+    privateLocationIds,
+  };
+}
+
+/**
+ * Transform database ICMP monitor to proto ICMPMonitor.
+ */
+export function dbMonitorToIcmpProto(
+  dbMon: Monitor,
+  privateLocationIds: string[] = [],
+): ICMPMonitor {
+  return {
+    $typeName: "openstatus.monitor.v1.ICMPMonitor",
     id: String(dbMon.id),
     name: dbMon.name,
     uri: dbMon.url,

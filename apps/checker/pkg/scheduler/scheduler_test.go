@@ -74,12 +74,17 @@ func (m *mockJobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*jo
 	}, nil
 }
 
+func (m *mockJobRunner) ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region string) (*job.ICMPPrivateRegionData, error) {
+	return &job.ICMPPrivateRegionData{}, nil
+}
+
 // mockClient implements v1.PrivateLocationServiceClient for testing
 type mockClient struct {
 	MonitorsFunc   func(ctx context.Context, req *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error)
 	IngestHTTPFunc func(ctx context.Context, req *connect.Request[v1.IngestHTTPRequest]) (*connect.Response[v1.IngestHTTPResponse], error)
 	IngestTCPFunc  func(ctx context.Context, req *connect.Request[v1.IngestTCPRequest]) (*connect.Response[v1.IngestTCPResponse], error)
 	IngestDNSFunc  func(ctx context.Context, req *connect.Request[v1.IngestDNSRequest]) (*connect.Response[v1.IngestDNSResponse], error)
+	IngestICMPFunc func(ctx context.Context, req *connect.Request[v1.IngestICMPRequest]) (*connect.Response[v1.IngestICMPResponse], error)
 }
 
 func (m *mockClient) Monitors(ctx context.Context, req *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error) {
@@ -93,6 +98,9 @@ func (m *mockClient) IngestTCP(ctx context.Context, req *connect.Request[v1.Inge
 }
 func (m *mockClient) IngestDNS(ctx context.Context, req *connect.Request[v1.IngestDNSRequest]) (*connect.Response[v1.IngestDNSResponse], error) {
 	return m.IngestDNSFunc(ctx, req)
+}
+func (m *mockClient) IngestICMP(ctx context.Context, req *connect.Request[v1.IngestICMPRequest]) (*connect.Response[v1.IngestICMPResponse], error) {
+	return m.IngestICMPFunc(ctx, req)
 }
 
 func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {

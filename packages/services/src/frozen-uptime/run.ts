@@ -19,9 +19,12 @@ export type StatusPipeFn = (params: {
   monitorIds: string[];
 }) => Promise<{ data: ComputeCountRow[] }>;
 
-// only these job types have a 45d status pipe; others (icmp/udp/ssl) have no
+// only these job types have a 45d status pipe; others (udp/ssl) have no
 // counts on the live status page either and are skipped
-export type UptimeFreezePipes = Record<"http" | "tcp" | "dns", StatusPipeFn>;
+export type UptimeFreezePipes = Record<
+  "http" | "tcp" | "dns" | "icmp",
+  StatusPipeFn
+>;
 
 export type ChunkFailure = {
   jobType: string;
@@ -53,7 +56,12 @@ function chunk<T>(items: T[], size: number): T[][] {
 function hasStatusPipe(
   jobType: string | null | undefined,
 ): jobType is keyof UptimeFreezePipes {
-  return jobType === "http" || jobType === "tcp" || jobType === "dns";
+  return (
+    jobType === "http" ||
+    jobType === "tcp" ||
+    jobType === "dns" ||
+    jobType === "icmp"
+  );
 }
 
 /**
