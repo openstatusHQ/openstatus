@@ -63,7 +63,7 @@ function getCheckerEndpoint(region: Region): {
     case "fly":
       return {
         endpoint: `${FLY_CHECKER_URL}/${region}`,
-        regionHeader: { "fly-prefer-region": region },
+        regionHeader: { "fly-force-region": region },
       };
     case "koyeb":
       return {

@@ -15,6 +15,7 @@ import type {
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 import { TimeRange } from "@openstatus/proto/monitor/v1";
+import { regionDict } from "@openstatus/regions";
 import {
   ForbiddenError,
   LimitExceededError,
@@ -474,26 +475,29 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     }
 
     const row = run.monitor;
-    const url = getCheckerUrl(row);
     const timeout = getCheckerTimeout(row);
 
-    // Trigger checks for each region in parallel
+    // Trigger checks for each region in parallel. A deprecated region has no
+    // checker machine, and Fly serves the check from the nearest one instead,
+    // storing it under that region.
     await Promise.all(
-      row.regions.map((region) => {
-        const status = run.regionStatus.get(region) || "active";
-        const payload = getCheckerPayload(row, status);
+      row.regions
+        .filter((region) => !regionDict[region]?.deprecated)
+        .map((region) => {
+          const status = run.regionStatus.get(region) || "active";
+          const payload = getCheckerPayload(row, status);
 
-        return fetch(url, {
-          headers: {
-            "Content-Type": "application/json",
-            "fly-prefer-region": region,
-            Authorization: `Basic ${env.CRON_SECRET}`,
-          },
-          method: "POST",
-          body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(timeout),
-        });
-      }),
+          return fetch(getCheckerUrl(row, { region }), {
+            headers: {
+              "Content-Type": "application/json",
+              "fly-force-region": region,
+              Authorization: `Basic ${env.CRON_SECRET}`,
+            },
+            method: "POST",
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(timeout),
+          });
+        }),
     );
 
     return { success: true };

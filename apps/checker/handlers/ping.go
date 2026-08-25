@@ -59,13 +59,8 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 		return
 	}
 
-	if h.CloudProvider == "fly" {
-		if region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
-			return
-		}
+	if !h.serveRegion(c, region) {
+		return
 	}
 
 	//  We need a new client for each request to avoid connection reuse.

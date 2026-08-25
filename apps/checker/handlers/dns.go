@@ -68,14 +68,8 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		return
 	}
 
-	// Fly region forwarding
-	if h.CloudProvider == "fly" {
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-			return
-		}
+	if !h.serveRegion(c, requestedRegion(c)) {
+		return
 	}
 
 	// Parse request
@@ -249,20 +243,20 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 	dataSourceName := "check_response_dns__v0"
 	const defaultRetry = 3
 
+	region := c.Param("region")
+	if region == "" {
+		c.String(http.StatusBadRequest, "region is required")
+		return
+	}
+
 	// Authorization check
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	// Fly region forwarding
-	if h.CloudProvider == "fly" {
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-			return
-		}
+	if !h.serveRegion(c, region) {
+		return
 	}
 
 	// Parse request

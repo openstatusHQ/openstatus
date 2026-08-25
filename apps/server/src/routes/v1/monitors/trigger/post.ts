@@ -6,6 +6,7 @@ import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/mon
 import { selectMonitorStatusSchema } from "@openstatus/db/src/schema/monitor_status/validation";
 import { monitor } from "@openstatus/db/src/schema/monitors/monitor";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
+import { regionDict } from "@openstatus/regions";
 import { HTTPException } from "hono/http-exception";
 
 import { env } from "@/env";
@@ -137,15 +138,19 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
     const allResult = [];
 
     for (const region of validateMonitor.data.regions) {
+      // A deprecated region has no checker machine, and Fly serves the check
+      // from the nearest one instead, storing it under that region.
+      if (regionDict[region]?.deprecated) continue;
+
       const status =
         monitorStatus.data.find((m) => region === m.region)?.status || "active";
       const payload = getCheckerPayload(row, status);
-      const url = getCheckerUrl(row);
+      const url = getCheckerUrl(row, { region });
 
       const result = fetch(url, {
         headers: {
           "Content-Type": "application/json",
-          "fly-prefer-region": region, // Specify the region you want the request to be sent to
+          "fly-force-region": region, // Specify the region you want the request to be sent to
           Authorization: `Basic ${env.CRON_SECRET}`,
         },
         method: "POST",
