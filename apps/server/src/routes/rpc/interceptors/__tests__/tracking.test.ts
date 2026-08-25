@@ -116,12 +116,12 @@ describe("trackingInterceptor", () => {
     });
   });
 
-  test("extracts additional props from message", async () => {
+  test("extracts additional props from nested create message", async () => {
     const interceptor = trackingInterceptor();
     const req = createMockRequest(
       "openstatus.monitor.v1.MonitorService",
       "CreateHTTPMonitor",
-      { url: "https://example.com", jobType: "http", name: "my-monitor" },
+      { monitor: { url: "https://example.com", name: "my-monitor" } },
     );
     const next = mockNext({});
 
@@ -131,6 +131,24 @@ describe("trackingInterceptor", () => {
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.CreateMonitor,
       additionalProps: { url: "https://example.com", jobType: "http" },
+    });
+  });
+
+  test("maps icmp uri to url and stamps jobType", async () => {
+    const interceptor = trackingInterceptor();
+    const req = createMockRequest(
+      "openstatus.monitor.v1.MonitorService",
+      "CreateICMPMonitor",
+      { monitor: { name: "ping", uri: "example.com" } },
+    );
+    const next = mockNext({});
+
+    await interceptor(next)(req as never);
+    await Promise.resolve();
+
+    expect(mockTrack).toHaveBeenCalledWith({
+      ...Events.CreateMonitor,
+      additionalProps: { url: "example.com", jobType: "icmp" },
     });
   });
 
