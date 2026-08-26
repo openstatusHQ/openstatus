@@ -23,12 +23,14 @@ faq:
     answer: "Users can subscribe to receive updates when you post status reports or maintenance notices. We support email notifications, RSS/Atom feeds for feed readers, and JSON feeds for programmatic consumption. Subscribers are automatically notified when you publish updates."
   - question: "Can I customize the appearance of my status page?"
     answer: "Yes, use the Theme Store to apply community themes or create your own. Themes control colors, fonts, and layout. For private custom themes, contact us. You can also define which data to share (uptime percentages, response times, or manual reports only)."
+  - question: "How do I create a status page?"
+    answer: "Sign up, create a status page, give it a name and a slug, then add page components — either monitors synced from your uptime monitoring or external services you manage by hand. Point a custom domain at it if you want status.yourcompany.com, pick a theme, and publish. Most teams are live in under ten minutes on the free plan."
+  - question: "Public vs internal status page?"
+    answer: "A public status page is customer-facing and indexed — it deflects support tickets and answers vendor questionnaires. An internal or private status page is for staff, contractors, or a single client, and access is controlled with password protection, magic link authentication, or an IP allowlist. You can run both from the same workspace."
+  - question: "How much does a status page cost?"
+    answer: "The free Hobby plan includes one status page with three components and no credit card. Paid plans start at $30/month for Starter (one status page, 20 components, custom domain, subscribers), $100/month for Pro, and $500/month for Scale. Annual billing gives you two months free. Extra status pages are $20/month each."
   - question: "What is the Slack agent and what can it do?"
     answer: "The Slack agent lets you manage your status page directly from Slack using natural language. @mention @openstatus in any channel or thread to create incidents, post updates, and resolve reports — without leaving Slack. No slash commands required."
-  - question: "Does the Slack agent publish status reports automatically?"
-    answer: "No. The agent always shows a confirmation card before publishing anything. You can review the drafted title, status, and message, then choose to Approve, Approve & Notify (sends notifications to all subscribers), or Cancel. Nothing goes public without your explicit approval."
-  - question: "Which plan includes the Slack agent?"
-    answer: "The Slack agent is available on paid plans. Install it from your dashboard under Settings > Integrations."
 ---
 
 ## What is a status page?
@@ -44,9 +46,23 @@ A typical status page includes:
 - **Subscriber notifications** via email, RSS, or webhook
 - **Uptime history** showing reliability over time
 
+<div className="space-x-2">
+  <ButtonLink href="https://app.openstatus.dev?ref=status-page-top" children="Create Your Status Page" variant="default" />
+</div>
+
+Free to start. Paid plans from $30/mo.
+
+## Trusted by teams who ship transparency
+
+<CustomerLogos />
+
 ## Why do you need a status page?
 
-A status page is a dedicated webpage that provides real-time information about the operational status of your services. It serves as a communication tool to inform your users about any ongoing incidents, maintenance activities, or service disruptions.
+**It deflects support load.** During an outage, every user asks the same question: is it down, or is it me? Without somewhere to point them, that question arrives one ticket at a time while your team is already busy fixing the thing. A status page answers it once, for everyone. See [reducing support tickets](/use-case/reduce-support-tickets).
+
+**Enterprise buyers ask for one.** Security questionnaires and vendor reviews routinely ask how you notify customers during an incident. "We email the affected accounts" is a weaker answer than a public URL with a year of incident history behind it. See [status pages for enterprise sales](/use-case/enterprise-sales).
+
+**Auditors want the evidence.** SOC 2's CC2.3 criteria asks you to demonstrate that you communicate incidents to external parties. Every status report on openstatus is timestamped and archived automatically, so the trail already exists when the auditor asks for it. See [status pages for compliance](/use-case/compliance).
 
 <Grid>
 <div>
@@ -79,14 +95,6 @@ Page components provide a **flexible structure** that supports both:
 
 You can **group page components** by their services, locations, or any logical grouping, and they will be collapsible for better organization.
 
-### Customization
-
-Match your brand **appearance** by contributing your own theme to the community. We have build a **[Theme Store](https://themes.openstatus.dev)** that helps you create and use custom themes on your status page. Contribute your own theme. If you a private custom theme let us know via [email](mailto:ping@openstatus.dev?subject=Private%20Theme).
-
-You can **define the values** you want to share with your users. If can decide between duration values/uptime ping values or purely based on manual status report updates.
-
-You can create **custom domains** to keep the domain your users are used to.
-
 ### Links
 
 Add a **Get in touch** in touch button and add a specific **website** link or a **`mailto:`** address.
@@ -109,11 +117,6 @@ We support following communication channels:
 
 Offer your status page in **multiple languages**. Set a default locale and enable a **locale switcher** so visitors can read updates in their preferred language. Currently supports English, French, German, Turkish, Hindi, and Korean — with more languages coming from community contributions.
 
-### Audience
-
-By default, your status page is public. For internal or client-specific pages, you can protect access using **password protection**, **magic link** authentication, or **IP restriction** (CIDR-based network allowlist) to control who can view your updates.
-
-
 ### Slack Agent
 
 Manage incidents without leaving Slack. Install the **@openstatus** Slack agent and @mention it in any channel or thread to create, update, and resolve status reports using plain language - no slash commands, no tab switching.
@@ -129,6 +132,24 @@ The agent is **thread-aware**: when you follow up in the same thread (_"we found
 Already using Atlassian Statuspage, Better Stack, or Instatus? Import your entire setup -- components, component groups, incidents, maintenances, subscribers, and monitors -- in minutes. Open a status page, go to the **Components** tab, scroll down to the **Import** section, paste your API key, preview what will be imported, and confirm.
 
 Read the [migration guides](/blog/import-from-statuspage-betterstack-instatus) for details on each provider.
+
+## Branded status pages
+
+Match your brand **appearance** by contributing your own theme to the community. We have build a **[Theme Store](https://themes.openstatus.dev)** that helps you create and use custom themes on your status page. Contribute your own theme. If you a private custom theme let us know via [email](mailto:ping@openstatus.dev?subject=Private%20Theme).
+
+You can **define the values** you want to share with your users. If can decide between duration values/uptime ping values or purely based on manual status report updates.
+
+You can create **custom domains** to keep the domain your users are used to.
+
+## Internal & private status pages
+
+By default, your status page is public. For internal or client-specific pages, you can protect access using **password protection**, **magic link** authentication, or **IP restriction** (CIDR-based network allowlist) to control who can view your updates.
+
+<div className="space-x-2">
+  <ButtonLink href="https://app.openstatus.dev?ref=status-page-bottom" children="Create Your Status Page" variant="default" />
+</div>
+
+Free to start. Paid plans from $30/mo.
 
 ## Frequently asked questions
 
@@ -174,20 +195,27 @@ Yes, use the Theme Store to apply community themes or create your own. Themes co
 
 </Details>
 
+<Details summary="How do I create a status page?">
+
+Sign up, create a status page, give it a name and a slug, then add page components — either monitors synced from your uptime monitoring or external services you manage by hand. Point a custom domain at it if you want status.yourcompany.com, pick a theme, and publish. Most teams are live in under ten minutes on the free plan.
+
+</Details>
+
+<Details summary="Public vs internal status page?">
+
+A public status page is customer-facing and indexed — it deflects support tickets and answers vendor questionnaires. An internal or private status page is for staff, contractors, or a single client, and access is controlled with password protection, magic link authentication, or an IP allowlist. You can run both from the same workspace.
+
+</Details>
+
+<Details summary="How much does a status page cost?">
+
+The free Hobby plan includes one status page with three components and no credit card. Paid plans start at $30/month for Starter (one status page, 20 components, custom domain, subscribers), $100/month for Pro, and $500/month for Scale. Annual billing gives you two months free. Extra status pages are $20/month each.
+
+</Details>
+
 <Details summary="What is the Slack agent and what can it do?">
 
 The Slack agent lets you manage your status page directly from Slack using natural language. @mention @openstatus in any channel or thread to create incidents, post updates, and resolve reports — without leaving Slack. No slash commands required.
 
 </Details>
 
-<Details summary="Does the Slack agent publish status reports automatically?">
-
-No. The agent always shows a confirmation card before publishing anything. You can review the drafted title, status, and message, then choose to Approve, Approve & Notify (sends notifications to all subscribers), or Cancel. Nothing goes public without your explicit approval.
-
-</Details>
-
-<Details summary="Which plan includes the Slack agent?">
-
-The Slack agent is available on paid plans. Install it from your dashboard under Settings > Integrations.
-
-</Details>
