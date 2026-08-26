@@ -205,6 +205,26 @@ const nextConfig: NextConfig = {
         destination: "/docs/guides/how-to-connect-openstatus-to-claude-code",
         permanent: true,
       },
+      {
+        source: "/compare/atlassian-statuspage",
+        destination: "/guides/top-five-atlassian-statuspage-alternatives",
+        permanent: true,
+      },
+      {
+        source: "/compare/instatus",
+        destination: "/guides/top-five-instatus-alternatives",
+        permanent: true,
+      },
+      {
+        source: "/compare/pingdom",
+        destination: "/guides/top-five-pingdom-alternatives",
+        permanent: true,
+      },
+      {
+        source: "/compare/uptime-kuma",
+        destination: "/guides/hosted-uptime-kuma-alternative",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
