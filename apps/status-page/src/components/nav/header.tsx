@@ -92,9 +92,6 @@ export function Header({
   });
   const prefix = usePathnamePrefix();
 
-  // statusPage.subscribe creates the subscription and sends the verification
-  // email on the server. Do not call the email router here as well: doing so
-  // sends two verification messages for a single subscription.
   const subscribeMutation = useMutation(
     trpc.statusPage.subscribe.mutationOptions({}),
   );

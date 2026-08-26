@@ -1253,6 +1253,13 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
+      if (!subscription.token) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Subscription verification token was not generated",
+        });
+      }
+
       const baseUrl = _page.customDomain
         ? `https://${_page.customDomain}`
         : process.env.NEXT_PUBLIC_APP_URL
@@ -1260,26 +1267,22 @@ export const statusPageRouter = createTRPCRouter({
           : `https://${_page.slug}.openstatus.dev`;
       const verifyUrl = `${baseUrl}/verify/${subscription.token}`;
 
-      try {
-        await sendEmailVerification(
-          {
-            id: subscription.id,
-            pageId: _page.id,
-            pageName: _page.title || _page.slug,
-            pageSlug: _page.slug,
-            channelType: "email",
-            email: opts.input.email,
-            token: subscription.token,
-            componentIds: opts.input.subscribeComponents
-              ? opts.input.pageComponents
-              : [],
-            customDomain: _page.customDomain,
-          },
-          verifyUrl,
-        );
-      } catch (err) {
-        console.error("Failed to send subscription verification email:", err);
-      }
+      await sendEmailVerification(
+        {
+          id: subscription.id,
+          pageId: _page.id,
+          pageName: _page.title || _page.slug,
+          pageSlug: _page.slug,
+          channelType: "email",
+          email: opts.input.email,
+          token: subscription.token,
+          componentIds: opts.input.subscribeComponents
+            ? opts.input.pageComponents
+            : [],
+          customDomain: _page.customDomain,
+        },
+        verifyUrl,
+      );
 
       return { id: subscription.id, token: subscription.token };
     }),
