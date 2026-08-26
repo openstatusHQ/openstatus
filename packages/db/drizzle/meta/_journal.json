@@ -589,6 +589,13 @@
       "when": 1785227235369,
       "tag": "0083_wide_otto_octavius",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "6",
+      "when": 1787773726456,
+      "tag": "0084_flaky_thundra",
+      "breakpoints": true
     }
   ]
 }

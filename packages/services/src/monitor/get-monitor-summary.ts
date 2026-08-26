@@ -34,7 +34,7 @@ type MetricsRow = {
   lastTimestamp: number | null;
 };
 
-type SupportedJobType = "http" | "tcp" | "dns" | "icmp";
+type SupportedJobType = "http" | "tcp" | "dns" | "icmp" | "grpc";
 
 function fetchMetrics(
   tb: NonNullable<ServiceContext["tb"]>,
@@ -63,6 +63,11 @@ function fetchMetrics(
       "7d": tb.icmpMetricsWeekly,
       "14d": tb.icmpMetricsBiweekly,
     },
+    grpc: {
+      "1d": tb.grpcMetricsDaily,
+      "7d": tb.grpcMetricsWeekly,
+      "14d": tb.grpcMetricsBiweekly,
+    },
   }[jobType][timeRange];
   return pipe(params);
 }
@@ -86,7 +91,8 @@ export async function getMonitorSummary(args: {
     parsed.jobType !== "http" &&
     parsed.jobType !== "tcp" &&
     parsed.jobType !== "dns" &&
-    parsed.jobType !== "icmp"
+    parsed.jobType !== "icmp" &&
+    parsed.jobType !== "grpc"
   ) {
     throw new ValidationError(
       `getMonitorSummary does not support jobType '${parsed.jobType}'`,

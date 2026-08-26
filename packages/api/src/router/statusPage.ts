@@ -705,6 +705,7 @@ export const statusPageRouter = createTRPCRouter({
         tcp: monitors.filter((c) => c.monitor.jobType === "tcp"),
         dns: monitors.filter((c) => c.monitor.jobType === "dns"),
         icmp: monitors.filter((c) => c.monitor.jobType === "icmp"),
+        grpc: monitors.filter((c) => c.monitor.jobType === "grpc"),
       };
 
       const proceduresByType = {
@@ -712,6 +713,7 @@ export const statusPageRouter = createTRPCRouter({
         tcp: getStatusProcedure("45d", "tcp"),
         dns: getStatusProcedure("45d", "dns"),
         icmp: getStatusProcedure("45d", "icmp"),
+        grpc: getStatusProcedure("45d", "grpc"),
       };
 
       // Manual mode never touches Tinybird. Otherwise race the reads against
@@ -719,7 +721,7 @@ export const statusPageRouter = createTRPCRouter({
       // whole page to manual mode so bars still render from DB events.
       const tinybird = await withTinybirdFallback(() =>
         input.barType === "manual"
-          ? Promise.resolve([null, null, null, null])
+          ? Promise.resolve([null, null, null, null, null])
           : Promise.all(
               Object.entries(proceduresByType).map(([type, procedure]) => {
                 const monitorIds = monitorsByType[
@@ -732,12 +734,8 @@ export const statusPageRouter = createTRPCRouter({
       );
 
       const tinybirdUnhealthy = !tinybird.ok;
-      const [statusHttp, statusTcp, statusDns, statusIcmp] = tinybird.data ?? [
-        null,
-        null,
-        null,
-        null,
-      ];
+      const [statusHttp, statusTcp, statusDns, statusIcmp, statusGrpc] =
+        tinybird.data ?? [null, null, null, null, null];
 
       const statusDataByMonitorId = new Map<
         string,
@@ -745,6 +743,7 @@ export const statusPageRouter = createTRPCRouter({
         | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["icmp"]>>["data"]
+        | Awaited<ReturnType<(typeof proceduresByType)["grpc"]>>["data"]
       >();
 
       // Consolidate status data from all monitor types into the map
@@ -753,6 +752,7 @@ export const statusPageRouter = createTRPCRouter({
         statusTcp,
         statusDns,
         statusIcmp,
+        statusGrpc,
       ]) {
         if (statusResult?.data) {
           statusResult.data.forEach((status) => {
@@ -1020,6 +1020,7 @@ export const statusPageRouter = createTRPCRouter({
         tcp: publicMonitors.filter((c) => c.monitor.jobType === "tcp"),
         dns: publicMonitors.filter((c) => c.monitor.jobType === "dns"),
         icmp: publicMonitors.filter((c) => c.monitor.jobType === "icmp"),
+        grpc: publicMonitors.filter((c) => c.monitor.jobType === "grpc"),
       };
 
       const proceduresByType = {
@@ -1027,6 +1028,7 @@ export const statusPageRouter = createTRPCRouter({
         tcp: getMetricsLatencyMultiProcedure("1d", "tcp"),
         dns: getMetricsLatencyMultiProcedure("1d", "dns"),
         icmp: getMetricsLatencyMultiProcedure("1d", "icmp"),
+        grpc: getMetricsLatencyMultiProcedure("1d", "grpc"),
       };
 
       // Slow/erroring Tinybird → empty latency data so the page still renders.
@@ -1047,7 +1049,8 @@ export const statusPageRouter = createTRPCRouter({
         metricsLatencyMultiTcp,
         metricsLatencyMultiDns,
         metricsLatencyMultiIcmp,
-      ] = metrics.data ?? [null, null, null, null];
+        metricsLatencyMultiGrpc,
+      ] = metrics.data ?? [null, null, null, null, null];
 
       const metricsDataByMonitorId = new Map<
         string,
@@ -1055,6 +1058,7 @@ export const statusPageRouter = createTRPCRouter({
         | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["icmp"]>>["data"]
+        | Awaited<ReturnType<(typeof proceduresByType)["grpc"]>>["data"]
       >();
 
       if (metricsLatencyMultiHttp?.data) {
@@ -1089,6 +1093,16 @@ export const statusPageRouter = createTRPCRouter({
 
       if (metricsLatencyMultiIcmp?.data) {
         metricsLatencyMultiIcmp.data.forEach((metric) => {
+          const monitorId = metric.monitorId;
+          if (!metricsDataByMonitorId.has(monitorId)) {
+            metricsDataByMonitorId.set(monitorId, []);
+          }
+          metricsDataByMonitorId.get(monitorId)?.push(metric);
+        });
+      }
+
+      if (metricsLatencyMultiGrpc?.data) {
+        metricsLatencyMultiGrpc.data.forEach((metric) => {
           const monitorId = metric.monitorId;
           if (!metricsDataByMonitorId.has(monitorId)) {
             metricsDataByMonitorId.set(monitorId, []);

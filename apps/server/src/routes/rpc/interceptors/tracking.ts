@@ -18,8 +18,8 @@ type RpcEventMapping = {
 };
 
 // Create*Monitor requests nest the config under `monitor`, so top-level
-// extraction yields nothing; ICMP names its target `uri` and none of them
-// carries jobType on the wire.
+// extraction yields nothing; ICMP and gRPC name their target `uri` and none of
+// them carries jobType on the wire.
 function monitorCreateInput(jobType: string) {
   return (message: unknown): Record<string, unknown> => {
     if (typeof message !== "object" || message === null) return {};
@@ -58,6 +58,11 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     eventProps: ["url", "jobType"],
     normalizeInput: monitorCreateInput("icmp"),
   },
+  "openstatus.monitor.v1.MonitorService/CreateGRPCMonitor": {
+    event: Events.CreateMonitor,
+    eventProps: ["url", "jobType"],
+    normalizeInput: monitorCreateInput("grpc"),
+  },
   "openstatus.monitor.v1.MonitorService/UpdateHTTPMonitor": {
     event: Events.UpdateMonitor,
   },
@@ -68,6 +73,9 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     event: Events.UpdateMonitor,
   },
   "openstatus.monitor.v1.MonitorService/UpdateICMPMonitor": {
+    event: Events.UpdateMonitor,
+  },
+  "openstatus.monitor.v1.MonitorService/UpdateGRPCMonitor": {
     event: Events.UpdateMonitor,
   },
   "openstatus.monitor.v1.MonitorService/DeleteMonitor": {

@@ -8,6 +8,7 @@ const SKIP_VALIDATION_METHODS = new Set([
   "UpdateTCPMonitor",
   "UpdateDNSMonitor",
   "UpdateICMPMonitor",
+  "UpdateGRPCMonitor",
 ]);
 
 // protovalidate >=1.2 dropped the "value " prefix from the string.pattern

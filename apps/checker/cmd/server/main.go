@@ -21,9 +21,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	// otelz "go.opentelemetry.io/contrib/bridges/otelzerolog"
-	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/attribute"
 	otlploghttp "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+	"go.opentelemetry.io/otel/log/global"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.39.0"
@@ -144,7 +144,7 @@ func Logger() gin.HandlerFunc {
 
 		if shouldSample(event) {
 			attrs := MapToAttrs(event)
-			slog.LogAttrs(c.Request.Context(),slog.LevelInfo, "request done", attrs...)
+			slog.LogAttrs(c.Request.Context(), slog.LevelInfo, "request done", attrs...)
 		}
 
 		log.Debug().
@@ -221,7 +221,6 @@ func main() {
 	logProvider := sdklog.NewLoggerProvider(
 		sdklog.WithResource(res),
 		sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)),
-
 	)
 	defer logProvider.Shutdown(ctx)
 
@@ -250,10 +249,12 @@ func main() {
 	router.POST("/checker/tcp", h.TCPHandler)
 	router.POST("/checker/dns", h.DNSHandler)
 	router.POST("/checker/icmp", h.ICMPHandler)
+	router.POST("/checker/grpc", h.GRPCHandler)
 	router.POST("/ping/:region", h.PingRegionHandler)
 	router.POST("/tcp/:region", h.TCPHandlerRegion)
 	router.POST("/dns/:region", h.DNSHandlerRegion)
 	router.POST("/icmp/:region", h.ICMPHandlerRegion)
+	router.POST("/grpc/:region", h.GRPCHandlerRegion)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong", "region": region, "provider": cloudProvider})

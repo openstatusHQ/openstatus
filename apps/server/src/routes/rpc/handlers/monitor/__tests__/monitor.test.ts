@@ -50,6 +50,7 @@ let testHttpMonitorId: number;
 let testTcpMonitorId: number;
 let testDnsMonitorId: number;
 let testIcmpMonitorId: number;
+let testGrpcMonitorId: number;
 let testMonitorToDeleteId: number;
 let testMonitorWithStatusId: number;
 
@@ -209,6 +210,24 @@ beforeAll(async () => {
     .returning()
     .get();
   testIcmpMonitorId = icmpMon.id;
+
+  const grpcMon = await db
+    .insert(monitor)
+    .values({
+      workspaceId: 1,
+      name: `${TEST_PREFIX}-grpc`,
+      url: "api.example.com:443",
+      periodicity: "10m",
+      active: true,
+      regions: "ams",
+      jobType: "grpc",
+      timeout: 5000,
+      grpcService: "checkout.v1.CheckoutService",
+      grpcTls: "tls",
+    })
+    .returning()
+    .get();
+  testGrpcMonitorId = grpcMon.id;
 
   // Create monitor to be deleted
   const deleteMon = await db
@@ -933,6 +952,103 @@ describe("MonitorService.CreateICMPMonitor", () => {
   });
 });
 
+describe("MonitorService.CreateGRPCMonitor", () => {
+  test("successfully creates gRPC monitor", async () => {
+    const res = await connectRequest(
+      "CreateGRPCMonitor",
+      {
+        monitor: {
+          name: "test-create-grpc",
+          uri: "api.example.com:443",
+          periodicity: "PERIODICITY_5M",
+          timeout: "5000",
+          service: "checkout.v1.CheckoutService",
+          tlsMode: "GRPC_TLS_MODE_TLS_INSECURE",
+          metadata: [{ key: "authorization", value: "Bearer token" }],
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.uri).toBe("api.example.com:443");
+    expect(data.monitor.service).toBe("checkout.v1.CheckoutService");
+    expect(data.monitor.tlsMode).toBe("GRPC_TLS_MODE_TLS_INSECURE");
+
+    const row = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, Number(data.monitor.id)))
+      .get();
+    expect(row?.jobType).toBe("grpc");
+    expect(row?.grpcService).toBe("checkout.v1.CheckoutService");
+    expect(row?.grpcTls).toBe("tls_insecure");
+
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+
+  // The column default only applies on insert, and an omitted enum arrives as
+  // UNSPECIFIED — it must resolve to verified TLS, not to plaintext.
+  test("defaults the TLS mode to tls when omitted", async () => {
+    const res = await connectRequest(
+      "CreateGRPCMonitor",
+      {
+        monitor: {
+          name: "test-create-grpc-default-tls",
+          uri: "api.example.com:443",
+          periodicity: "PERIODICITY_5M",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    const row = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, Number(data.monitor.id)))
+      .get();
+    expect(row?.grpcTls).toBe("tls");
+
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+
+  test("rejects a target that is not host:port", async () => {
+    const res = await connectRequest(
+      "CreateGRPCMonitor",
+      {
+        monitor: {
+          name: "test-create-grpc-bad-target",
+          uri: "api.example.com",
+          periodicity: "PERIODICITY_5M",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns error when monitor is missing", async () => {
+    const res = await connectRequest(
+      "CreateGRPCMonitor",
+      {},
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+});
+
 describe("MonitorService.UpdateHTTPMonitor", () => {
   test("successfully updates HTTP monitor with partial data", async () => {
     const res = await connectRequest(
@@ -1637,6 +1753,120 @@ describe("MonitorService.UpdateICMPMonitor", () => {
       { id: String(testIcmpMonitorId), monitor: { timeout: "5000" } },
       { "x-openstatus-key": "1" },
     );
+  });
+});
+
+describe("MonitorService.UpdateGRPCMonitor", () => {
+  test("successfully updates gRPC monitor with partial data", async () => {
+    const res = await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testGrpcMonitorId),
+        monitor: { name: "updated-grpc-name" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.name).toBe("updated-grpc-name");
+    expect(data.monitor.uri).toBe("api.example.com:443");
+
+    await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testGrpcMonitorId),
+        monitor: { name: `${TEST_PREFIX}-grpc` },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  // `tlsMode` has explicit presence, so an omitted one means "leave as-is".
+  // Resolving UNSPECIFIED to TLS here would silently break a plaintext monitor.
+  test("leaves the TLS mode untouched when the patch omits it", async () => {
+    await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testGrpcMonitorId),
+        monitor: { tlsMode: "GRPC_TLS_MODE_PLAINTEXT" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testGrpcMonitorId),
+        monitor: { name: `${TEST_PREFIX}-grpc` },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    const row = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testGrpcMonitorId))
+      .get();
+    expect(row?.grpcTls).toBe("plaintext");
+
+    await db
+      .update(monitor)
+      .set({ grpcTls: "tls" })
+      .where(eq(monitor.id, testGrpcMonitorId));
+  });
+
+  // An empty service is a real value: it means "check overall server health".
+  test("clears the service name when the patch sends an empty string", async () => {
+    const res = await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testGrpcMonitorId),
+        monitor: { service: "" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const row = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testGrpcMonitorId))
+      .get();
+    expect(row?.grpcService).toBe("");
+
+    await db
+      .update(monitor)
+      .set({ grpcService: "checkout.v1.CheckoutService" })
+      .where(eq(monitor.id, testGrpcMonitorId));
+  });
+
+  test("rejects a target that is not host:port", async () => {
+    const res = await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testGrpcMonitorId),
+        monitor: { uri: "api.example.com" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns error for a monitor of another job type", async () => {
+    const res = await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: { name: "nope" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
   });
 });
 

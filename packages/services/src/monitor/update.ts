@@ -70,6 +70,8 @@ export async function updateMonitorConfig(args: {
     if (input.followRedirects !== undefined) {
       values.followRedirects = input.followRedirects;
     }
+    if (input.grpcService !== undefined) values.grpcService = input.grpcService;
+    if (input.grpcTls !== undefined) values.grpcTls = input.grpcTls;
     if (input.otelEndpoint !== undefined) {
       values.otelEndpoint = input.otelEndpoint;
     }

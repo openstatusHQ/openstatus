@@ -74,6 +74,10 @@ const MONITOR_BOUNDS = {
   degradedAtMaxMs: 120_000,
   retryMax: 10,
   regionsMaxItems: 28,
+  serviceMaxLen: 512,
+  // gRPC dials a host:port; a portless target or one carrying a scheme cannot
+  // be dialled and would surface as a bare UNAVAILABLE.
+  hostPortPattern: /^(\[[0-9a-fA-F:]+\]|[^:/\s]+):[0-9]{1,5}$/,
 } as const;
 
 function invalidArgument(message: string): never {
@@ -85,16 +89,20 @@ function invalidArgument(message: string): never {
  * tests mirror `getCommonUpdateInput` exactly: a field this skips is a field
  * that never reaches the database.
  */
-export function validateMonitorPatchBounds(mon: {
-  name?: string;
-  uri?: string;
-  url?: string;
-  timeout?: bigint;
-  degradedAt?: bigint;
-  retry?: bigint;
-  description?: string;
-  regions?: Region[];
-}): void {
+export function validateMonitorPatchBounds(
+  mon: {
+    name?: string;
+    uri?: string;
+    url?: string;
+    timeout?: bigint;
+    degradedAt?: bigint;
+    retry?: bigint;
+    description?: string;
+    regions?: Region[];
+    service?: string;
+  },
+  opts: { jobType?: "http" | "tcp" | "dns" | "icmp" | "grpc" } = {},
+): void {
   if (mon.name !== undefined && mon.name !== "") {
     if (mon.name.length > MONITOR_BOUNDS.nameMaxLen) {
       invalidArgument(
@@ -109,6 +117,25 @@ export function validateMonitorPatchBounds(mon: {
     if (target.length > MONITOR_BOUNDS.uriMaxLen) {
       invalidArgument(
         `monitor.uri: must be at most ${MONITOR_BOUNDS.uriMaxLen} characters [string.max_len]`,
+      );
+    }
+  }
+
+  if (mon.service !== undefined) {
+    if (mon.service.length > MONITOR_BOUNDS.serviceMaxLen) {
+      invalidArgument(
+        `monitor.service: must be at most ${MONITOR_BOUNDS.serviceMaxLen} characters [string.max_len]`,
+      );
+    }
+  }
+
+  // gRPC only: the other types accept a bare hostname or a URL. Checked on the
+  // job type rather than on `service` being present, so a patch that changes
+  // only the target is still validated.
+  if (opts.jobType === "grpc" && target !== undefined && target !== "") {
+    if (!MONITOR_BOUNDS.hostPortPattern.test(target)) {
+      invalidArgument(
+        "monitor.uri: must match the host:port format [string.pattern]",
       );
     }
   }

@@ -27,11 +27,12 @@ type TestTCP = RouterOutputs["checker"]["testTcp"];
 type TestHTTP = RouterOutputs["checker"]["testHttp"];
 type TestDNS = RouterOutputs["checker"]["testDns"];
 type TestICMP = RouterOutputs["checker"]["testIcmp"];
+type TestGRPC = RouterOutputs["checker"]["testGrpc"];
 
 export function NavActions() {
   const { id } = useParams<{ id: string }>();
   const [test, setTest] = useState<
-    TestTCP | TestHTTP | TestDNS | TestICMP | null
+    TestTCP | TestHTTP | TestDNS | TestICMP | TestGRPC | null
   >(null);
   const queryClient = useQueryClient();
   const trpc = useTRPC();
@@ -70,6 +71,7 @@ export function NavActions() {
   const testTcpMutation = useMutation(trpc.checker.testTcp.mutationOptions());
   const testDnsMutation = useMutation(trpc.checker.testDns.mutationOptions());
   const testIcmpMutation = useMutation(trpc.checker.testIcmp.mutationOptions());
+  const testGrpcMutation = useMutation(trpc.checker.testGrpc.mutationOptions());
 
   // curl only speaks HTTP — the action is hidden for tcp/dns monitors
   const curlCommand =
@@ -178,6 +180,27 @@ export function NavActions() {
             return error.message;
           }
           return "ICMP test failed";
+        },
+      });
+    } else if (monitor?.jobType === "grpc") {
+      const promise = testGrpcMutation.mutateAsync({
+        url: monitor.url,
+        service: monitor.grpcService ?? undefined,
+        tls: monitor.grpcTls ?? "tls",
+        headers: monitor.headers ?? [],
+      });
+
+      toast.promise(promise, {
+        loading: "Testing gRPC request...",
+        success: (data) => {
+          setTest(data);
+          return "gRPC test completed successfully";
+        },
+        error: (error) => {
+          if (isTRPCClientError(error)) {
+            return error.message;
+          }
+          return "gRPC test failed";
         },
       });
     }

@@ -7,12 +7,13 @@ import {
 } from "@openstatus/assertions";
 import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 import {
+  grpcTlsModes,
   monitorJobTypes,
   monitorMethods,
 } from "@openstatus/db/src/schema/monitors/constants";
 import { z } from "zod";
 
-export { monitorJobTypes, monitorMethods, monitorPeriodicity };
+export { grpcTlsModes, monitorJobTypes, monitorMethods, monitorPeriodicity };
 
 const headerPair = z.object({ key: z.string(), value: z.string() });
 const assertion = z.discriminatedUnion("type", [
@@ -56,6 +57,8 @@ export const CreateMonitorInput = z.object({
   degradedAfter: apiTimeoutMs.nullish(),
   retry: z.number().int().min(0).optional(),
   followRedirects: z.boolean().optional(),
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
   otelEndpoint: z.string().optional(),
   otelHeaders: z.array(headerPair).optional(),
 });
@@ -87,6 +90,8 @@ export const UpdateMonitorConfigInput = z.object({
   degradedAfter: apiTimeoutMs.nullish(),
   retry: z.number().int().min(0).optional(),
   followRedirects: z.boolean().optional(),
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
   otelEndpoint: z.string().optional(),
   otelHeaders: z.array(headerPair).optional(),
 });

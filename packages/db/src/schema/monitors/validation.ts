@@ -3,12 +3,18 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
-import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
+import {
+  grpcTlsModes,
+  monitorJobTypes,
+  monitorMethods,
+  monitorStatus,
+} from "./constants";
 import { monitor } from "./monitor";
 
 export const monitorMethodsSchema = z.enum(monitorMethods);
 export const monitorStatusSchema = z.enum(monitorStatus);
 export const monitorJobTypesSchema = z.enum(monitorJobTypes);
+export const grpcTlsModesSchema = z.enum(grpcTlsModes);
 
 // TODO: shared function
 // oxlint-disable-next-line eslint/no-unused-vars
@@ -90,3 +96,4 @@ export type MonitorPeriodicity = z.infer<typeof monitorPeriodicitySchema>;
 export type MonitorMethod = z.infer<typeof monitorMethodsSchema>;
 export type MonitorRegion = z.infer<typeof monitorRegionSchema>;
 export type MonitorJobType = z.infer<typeof monitorJobTypesSchema>;
+export type GrpcTlsMode = z.infer<typeof grpcTlsModesSchema>;

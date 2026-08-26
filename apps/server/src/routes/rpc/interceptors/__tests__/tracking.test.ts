@@ -275,6 +275,20 @@ describe("RPC_EVENT_MAP", () => {
     expect(untracked).toEqual([]);
   });
 
+  test("gRPC monitor mutations are tracked like the other monitor types", () => {
+    const create =
+      RPC_EVENT_MAP["openstatus.monitor.v1.MonitorService/CreateGRPCMonitor"];
+    const update =
+      RPC_EVENT_MAP["openstatus.monitor.v1.MonitorService/UpdateGRPCMonitor"];
+
+    expect(create?.event).toEqual(Events.CreateMonitor);
+    expect(update?.event).toEqual(Events.UpdateMonitor);
+    expect(create?.eventProps).toEqual(
+      RPC_EVENT_MAP["openstatus.monitor.v1.MonitorService/CreateDNSMonitor"]
+        ?.eventProps,
+    );
+  });
+
   test("ICMP monitor mutations are tracked like the other monitor types", () => {
     const create =
       RPC_EVENT_MAP["openstatus.monitor.v1.MonitorService/CreateICMPMonitor"];

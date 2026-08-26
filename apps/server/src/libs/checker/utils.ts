@@ -3,6 +3,7 @@ import type { selectMonitorSchema } from "@openstatus/db/src/schema";
 import {
   type DNSPayloadSchema,
   type httpPayloadSchema,
+  type grpcPayloadSchema,
   type icmpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
@@ -17,7 +18,8 @@ export function getCheckerPayload(
   | z.infer<typeof httpPayloadSchema>
   | z.infer<typeof tpcPayloadSchema>
   | z.infer<typeof DNSPayloadSchema>
-  | z.infer<typeof icmpPayloadSchema> {
+  | z.infer<typeof icmpPayloadSchema>
+  | z.infer<typeof grpcPayloadSchema> {
   const timestamp = new Date().getTime();
   switch (monitor.jobType) {
     case "http":
@@ -101,6 +103,28 @@ export function getCheckerPayload(
           : undefined,
         retry: monitor.retry ?? 0,
       };
+    case "grpc":
+      // No assertions: a gRPC health check only reports the serving status.
+      return {
+        workspaceId: String(monitor.workspaceId),
+        monitorId: String(monitor.id),
+        uri: monitor.url,
+        service: monitor.grpcService ?? undefined,
+        tls: monitor.grpcTls ?? "tls",
+        headers: transformHeaders(monitor.headers),
+        status: status,
+        cronTimestamp: timestamp,
+        degradedAfter: monitor.degradedAfter,
+        timeout: monitor.timeout,
+        trigger: "api",
+        otelConfig: monitor.otelEndpoint
+          ? {
+              endpoint: monitor.otelEndpoint,
+              headers: transformHeaders(monitor.otelHeaders),
+            }
+          : undefined,
+        retry: monitor.retry ?? 0,
+      };
     default:
       throw new OpenStatusApiError({
         code: "BAD_REQUEST",
@@ -129,6 +153,7 @@ export function getCheckerUrl(
     case "tcp":
     case "dns":
     case "icmp":
+    case "grpc":
       return `https://openstatus-checker.fly.dev/checker/${monitor.jobType}?monitor_id=${monitor.id}&trigger=${opts.trigger}&data=${opts.data}`;
     default:
       throw new OpenStatusApiError({
