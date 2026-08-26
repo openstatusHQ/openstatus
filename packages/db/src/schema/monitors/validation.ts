@@ -63,6 +63,7 @@ const headersSchema = z
 export const insertMonitorSchema = createInsertSchema(monitor, {
   name: z
     .string()
+    .trim()
     .min(1, "Name must be at least 1 character long")
     .max(255, "Name must be at most 255 characters long"),
   periodicity: monitorPeriodicitySchema.prefault("10m"),

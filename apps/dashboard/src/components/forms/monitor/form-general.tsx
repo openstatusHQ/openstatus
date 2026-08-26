@@ -77,7 +77,7 @@ const HTTP_ASSERTION_TYPES = ["status", "header", "textBody"] as const;
 const DNS_ASSERTION_TYPES = dnsRecords;
 
 const schema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required"),
   type: z.enum(TYPES),
   method: z.enum(monitorMethods),
   url: z.string().min(1, "URL is required"),
