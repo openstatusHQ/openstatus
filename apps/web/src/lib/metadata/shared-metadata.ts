@@ -83,7 +83,8 @@ export const getSocialMetadata = (args: {
 
 export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
   const { slug, metadata } = page;
-  const { title, description, category, publishedAt, seo } = metadata;
+  const { title, description, category, publishedAt, updatedAt, seo } =
+    metadata;
 
   const url = basePath
     ? `${BASE_URL}/${basePath}/${slug}`
@@ -112,6 +113,7 @@ export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
       ...openGraph,
       type: "article",
       publishedTime: publishedAt.toISOString(),
+      modifiedTime: (updatedAt ?? publishedAt).toISOString(),
     },
     twitter,
   };
