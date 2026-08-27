@@ -370,6 +370,8 @@ export const monitorRouter = createTRPCRouter({
           body: input.body,
           assertions: input.assertions,
           active: input.active,
+          grpcService: input.grpcService,
+          grpcTls: input.grpcTls,
         };
         await updateMonitorGeneral({
           ctx: toServiceCtx(ctx),
@@ -443,6 +445,8 @@ export const monitorRouter = createTRPCRouter({
           body: input.body,
           assertions: input.assertions,
           active: input.active,
+          grpcService: input.grpcService,
+          grpcTls: input.grpcTls,
         };
         return await createMonitor({
           ctx: toServiceCtx(ctx),

@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openstatushq/openstatus/apps/checker/checker"
@@ -111,15 +111,15 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 		retry = 3
 	}
 
-	op := func() error {
+	op := func() (struct{}, error) {
 		res, err := checker.PingICMP(req.Timeout, req.URI)
 		if err != nil {
-			return fmt.Errorf("unable to check icmp %s", err)
+			return struct{}{}, fmt.Errorf("unable to check icmp %s", err)
 		}
 
 		timingAsString, err := json.Marshal(res.Timing)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
+			return struct{}{}, fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
 		}
 
 		latency := res.Latency
@@ -136,7 +136,7 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 
 		id, err := uuid.NewV7()
 		if err != nil {
-			return fmt.Errorf("error while generating uuid %w", err)
+			return struct{}{}, fmt.Errorf("error while generating uuid %w", err)
 		}
 
 		timestamp := time.Now().UTC().UnixMilli()
@@ -210,10 +210,10 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 
-		return nil
+		return struct{}{}, nil
 	}
 
-	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), uint64(retry))); err != nil {
+	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry))); err != nil {
 		id, e := uuid.NewV7()
 		if e != nil {
 			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
@@ -302,11 +302,11 @@ func (h Handler) ICMPHandlerRegion(c *gin.Context) {
 
 	var response checker.ICMPResponse
 
-	op := func() error {
+	op := func() (struct{}, error) {
 		timestamp := time.Now().UTC().UnixMilli()
 		res, err := checker.PingICMP(req.Timeout, req.URI)
 		if err != nil {
-			return fmt.Errorf("unable to check icmp %s", err)
+			return struct{}{}, fmt.Errorf("unable to check icmp %s", err)
 		}
 
 		response = checker.ICMPResponse{
@@ -323,7 +323,7 @@ func (h Handler) ICMPHandlerRegion(c *gin.Context) {
 
 		timingAsString, err := json.Marshal(res.Timing)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
+			return struct{}{}, fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
 		}
 
 		data := ICMPData{
@@ -349,10 +349,10 @@ func (h Handler) ICMPHandlerRegion(c *gin.Context) {
 			}
 		}
 
-		return nil
+		return struct{}{}, nil
 	}
 
-	err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3))
+	_, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(3))
 	if err != nil {
 		response.Error = 1
 	}

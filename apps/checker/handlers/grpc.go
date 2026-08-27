@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openstatushq/openstatus/apps/checker/checker"
@@ -119,22 +119,30 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 		retry = 3
 	}
 
-	op := func() error {
+	// CheckGRPC hands back what it learned alongside its error: whatever phases
+	// completed, plus the gRPC status code. That is what separates a DNS failure
+	// from a connect or TLS one, and a timeout from a refused connection. op()
+	// drops `res` when it returns an error to the retry loop, so keep the last
+	// attempt's result.
+	var lastResult checker.GRPCResult
+
+	op := func() (struct{}, error) {
 		res, err := grpcCheck(req)
+		lastResult = res
 		if err != nil {
 			// Only a call that never reached the server is worth repeating. A
 			// server answering NOT_SERVING will answer the same three more times.
-			return fmt.Errorf("unable to check grpc %s", err)
+			return struct{}{}, fmt.Errorf("unable to check grpc %s", err)
 		}
 
 		timingAsString, err := json.Marshal(res.Timing)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
+			return struct{}{}, fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
 		}
 
 		id, err := uuid.NewV7()
 		if err != nil {
-			return fmt.Errorf("error while generating uuid %w", err)
+			return struct{}{}, fmt.Errorf("error while generating uuid %w", err)
 		}
 
 		timestamp := time.Now().UTC().UnixMilli()
@@ -220,15 +228,22 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 
-		return nil
+		return struct{}{}, nil
 	}
 
-	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), uint64(retry))); err != nil {
+	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry))); err != nil {
 		id, e := uuid.NewV7()
 		if e != nil {
 			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
 			return
 		}
+		// A marshal failure leaves the column empty rather than dropping the row:
+		// the rest of the failure record is still worth ingesting.
+		timingAsString, timingErr := json.Marshal(lastResult.Timing)
+		if timingErr != nil {
+			log.Ctx(ctx).Error().Err(timingErr).Msg("error while parsing timing data")
+		}
+
 		data := GRPCData{
 			ID:            id.String(),
 			WorkspaceID:   workspaceId,
@@ -241,6 +256,8 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 			Trigger:       trigger,
 			URI:           req.URI,
 			Service:       req.Service,
+			Timing:        string(timingAsString),
+			GRPCCode:      lastResult.GRPCCode,
 			RequestStatus: "error",
 		}
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
@@ -261,6 +278,8 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 		response.Region = h.Region
 		response.ErrorMessage = err.Error()
 		response.Error = 1
+		response.Timing = lastResult.Timing
+		response.GRPCCode = lastResult.GRPCCode
 	}
 
 	if req.OtelConfig.Endpoint != "" {
@@ -315,11 +334,23 @@ func (h Handler) GRPCHandlerRegion(c *gin.Context) {
 
 	var response checker.GRPCResponse
 
-	op := func() error {
+	var retry int
+	if req.Retry != 0 {
+		retry = int(req.Retry)
+	} else {
+		retry = 3
+	}
+
+	// Same as GRPCHandler: op() discards `res` when it hands an error back to the
+	// retry loop, so keep what the last attempt learned.
+	var lastResult checker.GRPCResult
+
+	op := func() (struct{}, error) {
 		timestamp := time.Now().UTC().UnixMilli()
 		res, err := grpcCheck(req)
+		lastResult = res
 		if err != nil {
-			return fmt.Errorf("unable to check grpc %s", err)
+			return struct{}{}, fmt.Errorf("unable to check grpc %s", err)
 		}
 
 		errorFlag := uint8(0)
@@ -345,7 +376,7 @@ func (h Handler) GRPCHandlerRegion(c *gin.Context) {
 
 		timingAsString, err := json.Marshal(res.Timing)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
+			return struct{}{}, fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
 		}
 
 		data := GRPCData{
@@ -370,15 +401,17 @@ func (h Handler) GRPCHandlerRegion(c *gin.Context) {
 			}
 		}
 
-		return nil
+		return struct{}{}, nil
 	}
 
-	err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3))
+	_, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
 	if err != nil {
 		response.JobType = "grpc"
 		response.Region = h.Region
 		response.ErrorMessage = err.Error()
 		response.Error = 1
+		response.Timing = lastResult.Timing
+		response.GRPCCode = lastResult.GRPCCode
 	}
 
 	if req.OtelConfig.Endpoint != "" {

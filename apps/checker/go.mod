@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go/auth v0.18.2
 	cloud.google.com/go/cloudtasks v1.13.7
 	connectrpc.com/connect v1.19.1
-	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/gin-gonic/gin v1.12.0
 	github.com/google/uuid v1.6.0

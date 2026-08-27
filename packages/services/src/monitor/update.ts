@@ -131,6 +131,10 @@ export async function updateMonitorGeneral(args: {
         body: input.body,
         active: input.active,
         assertions: serialiseAssertions(input.assertions),
+        ...(input.grpcService !== undefined
+          ? { grpcService: input.grpcService }
+          : {}),
+        ...(input.grpcTls !== undefined ? { grpcTls: input.grpcTls } : {}),
         updatedAt: new Date(),
       })
       .where(eq(monitor.id, existing.id))

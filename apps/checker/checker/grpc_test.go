@@ -145,6 +145,9 @@ func TestCheckGRPCConnectionRefused(t *testing.T) {
 	if err.Error() != "connection refused" {
 		t.Fatalf("unexpected message %q", err.Error())
 	}
+	if res.GRPCCode != int64(codes.Unavailable) {
+		t.Fatalf("expected Unavailable, got %d", res.GRPCCode)
+	}
 }
 
 func TestCheckGRPCTimeout(t *testing.T) {
@@ -168,8 +171,30 @@ func TestCheckGRPCTimeout(t *testing.T) {
 }
 
 func TestCheckGRPCInvalidTarget(t *testing.T) {
-	if _, err := checker.CheckGRPC(5000, "api.example.com", "", checker.GRPCTLSModeTLS, nil); err == nil {
+	res, err := checker.CheckGRPC(5000, "api.example.com", "", checker.GRPCTLSModeTLS, nil)
+	if err == nil {
 		t.Fatal("expected a portless target to be rejected")
+	}
+	// GRPCCode's zero value is codes.OK and callers persist it verbatim, so an
+	// unset code records a check that never ran as a successful one.
+	if res.GRPCCode != int64(codes.Unavailable) {
+		t.Fatalf("expected Unavailable, got %d", res.GRPCCode)
+	}
+}
+
+// A target that clears net.SplitHostPort but that grpc-go cannot parse is the
+// only route into the grpc.NewClient error branch: a merely unreachable target
+// constructs fine and fails later, on the call.
+func TestCheckGRPCUnparseableTarget(t *testing.T) {
+	res, err := checker.CheckGRPC(5000, "ho%zzst:443", "", checker.GRPCTLSModePlaintext, nil)
+	if err == nil {
+		t.Fatal("expected an unparseable target to be rejected")
+	}
+	if res.Completed {
+		t.Fatal("expected Completed to be false")
+	}
+	if res.GRPCCode != int64(codes.Unavailable) {
+		t.Fatalf("expected Unavailable, got %d", res.GRPCCode)
 	}
 }
 

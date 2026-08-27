@@ -112,9 +112,16 @@ func CheckGRPC(timeoutMs int64, target, service string, mode GRPCTLSMode, md map
 		timeoutMs = grpcDefaultTimeout
 	}
 
+	// Every failure path must set GRPCCode: its zero value is codes.OK, and
+	// callers persist it verbatim, so leaving it unset records a check that
+	// never reached the server under the code for success. Unavailable is what
+	// grpc-go itself answers for a malformed-but-parseable target, so the whole
+	// "never got on the wire" class stays one code; the error message is what
+	// separates a bad target from a refused connection.
 	host, _, err := net.SplitHostPort(target)
 	if err != nil {
-		return GRPCResult{}, fmt.Errorf("invalid target %q: expected host:port", target)
+		return GRPCResult{GRPCCode: int64(codes.Unavailable)},
+			fmt.Errorf("invalid target %q: expected host:port", target)
 	}
 
 	// One deadline for resolve, dial, handshake and call. Splitting them would
@@ -130,7 +137,10 @@ func CheckGRPC(timeoutMs int64, target, service string, mode GRPCTLSMode, md map
 		grpc.WithStatsHandler(&grpcStatsHandler{timer: timer}),
 	)
 	if err != nil {
-		return GRPCResult{Timing: timer.snapshot()}, fmt.Errorf("dial error: %w", err)
+		return GRPCResult{
+			Timing:   timer.snapshot(),
+			GRPCCode: int64(codes.Unavailable),
+		}, fmt.Errorf("dial error: %w", err)
 	}
 	defer conn.Close()
 

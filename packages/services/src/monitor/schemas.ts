@@ -108,6 +108,10 @@ export const UpdateMonitorGeneralInput = z.object({
   body: z.string().optional(),
   assertions: z.array(assertion).default([]),
   active: z.boolean().default(true),
+  // gRPC-only fields. `undefined` leaves the stored value untouched so a
+  // caller that omits them (e.g. an HTTP monitor) never clears the column.
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
 });
 export type UpdateMonitorGeneralInput = z.infer<
   typeof UpdateMonitorGeneralInput
