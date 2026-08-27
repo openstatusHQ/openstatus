@@ -1,0 +1,74 @@
+TOKEN "endpoint__tcp_list_facets_14d__v0_endpoint_read_7202" READ
+
+NODE windowed
+SQL >
+
+%
+SELECT latency
+FROM mv__tcp_14d__v1
+WHERE
+    monitorId = {{ String(monitorId, '4433', required=True) }}
+    {% if defined(fromDate) %}
+        AND time >= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(fromDate) }})))
+        AND cronTimestamp >= toInt64({{ String(fromDate) }})
+    {% end %}
+    {% if defined(toDate) %}
+        AND time <= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(toDate) }})))
+        AND cronTimestamp <= toInt64({{ String(toDate) }})
+    {% end %}
+
+NODE filtered
+SQL >
+
+%
+SELECT
+    region,
+    requestStatus,
+    trigger
+FROM mv__tcp_14d__v1
+WHERE
+    monitorId = {{ String(monitorId, '4433', required=True) }}
+    {% if defined(fromDate) %}
+        AND time >= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(fromDate) }})))
+        AND cronTimestamp >= toInt64({{ String(fromDate) }})
+    {% end %}
+    {% if defined(toDate) %}
+        AND time <= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(toDate) }})))
+        AND cronTimestamp <= toInt64({{ String(toDate) }})
+    {% end %}
+    {% if regions %} AND region IN {{ Array(regions, 'String') }} {% end %}
+    {% if status %} AND requestStatus IN {{ Array(status, 'String') }} {% end %}
+    {% if trigger %} AND trigger IN {{ Array(trigger, 'String') }} {% end %}
+    {% if defined(latencyMin) %} AND latency >= toInt64({{ String(latencyMin) }}) {% end %}
+    {% if defined(latencyMax) %} AND latency <= toInt64({{ String(latencyMax) }}) {% end %}
+
+NODE endpoint
+SQL >
+
+    SELECT 'region' AS field, toString(region) AS value, toUInt64(count()) AS count
+    FROM filtered
+    GROUP BY region
+    UNION ALL
+    SELECT 'requestStatus', toString(requestStatus), toUInt64(count())
+    FROM filtered
+    WHERE requestStatus IS NOT NULL
+    GROUP BY requestStatus
+    UNION ALL
+    SELECT 'trigger', toString(trigger), toUInt64(count())
+    FROM filtered
+    WHERE trigger IS NOT NULL
+    GROUP BY trigger
+    UNION ALL
+    SELECT '__summary', 'filtered', toUInt64(count())
+    FROM filtered
+    UNION ALL
+    SELECT '__summary', 'total', toUInt64(count())
+    FROM windowed
+    UNION ALL
+    SELECT '__summary', 'latencyMin', toUInt64(min(latency))
+    FROM windowed
+    UNION ALL
+    SELECT '__summary', 'latencyMax', toUInt64(max(latency))
+    FROM windowed
+
+TYPE endpoint

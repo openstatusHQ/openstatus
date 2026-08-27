@@ -3,6 +3,9 @@
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
+    // The shared react-library preset still targets ES2015; the data-table
+    // components use String.replaceAll and friends.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "paths": {
       "@openstatus/ui/*": ["./src/*"]
     }

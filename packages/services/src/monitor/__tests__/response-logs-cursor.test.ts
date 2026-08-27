@@ -1,0 +1,150 @@
+import { expect } from "@std/expect";
+import { describe, test } from "@std/testing/bdd";
+
+import {
+  selectWindow,
+  toPipeParams,
+  trimToTick,
+} from "../response-logs-cursor";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Expand `[tick, rowsInTick]` pairs into rows, in the order given. */
+function rowsOf(ticks: [number, number][]) {
+  return ticks.flatMap(([cronTimestamp, count]) =>
+    Array.from({ length: count }, () => ({ cronTimestamp })),
+  );
+}
+
+describe("selectWindow", () => {
+  const now = 1_700_000_000_000;
+
+  test("falls back to the widest view when the range is open-ended", () => {
+    expect(selectWindow(undefined, undefined, now)).toBe("14d");
+  });
+
+  test("picks the view by how old the oldest requested row is", () => {
+    expect(selectWindow(now - DAY_MS, now, now)).toBe("1d");
+    expect(selectWindow(now - DAY_MS - 1, now, now)).toBe("7d");
+    expect(selectWindow(now - 7 * DAY_MS, now, now)).toBe("7d");
+    expect(selectWindow(now - 7 * DAY_MS - 1, now, now)).toBe("14d");
+    expect(selectWindow(now - 14 * DAY_MS, now, now)).toBe("14d");
+  });
+
+  test("keeps an expired short range on a view that still holds it", () => {
+    // A one-day span that ended a week ago has aged out of the 1 d view.
+    expect(selectWindow(now - 9 * DAY_MS, now - 8 * DAY_MS, now)).toBe("14d");
+  });
+});
+
+describe("toPipeParams", () => {
+  test("drops absent and empty filters", () => {
+    expect(
+      toPipeParams({
+        regions: [],
+        status: undefined,
+        trigger: undefined,
+        statusCodes: undefined,
+        latencyMin: undefined,
+        latencyMax: undefined,
+      }),
+    ).toEqual({});
+  });
+
+  test("keeps every filter that carries a value", () => {
+    expect(
+      toPipeParams({
+        regions: ["ams"],
+        status: ["error"],
+        trigger: ["cron"],
+        statusCodes: [500],
+        latencyMin: 0,
+        latencyMax: 100,
+      }),
+    ).toEqual({
+      regions: ["ams"],
+      status: ["error"],
+      trigger: ["cron"],
+      statusCodes: [500],
+      latencyMin: 0,
+      latencyMax: 100,
+    });
+  });
+});
+
+describe("trimToTick", () => {
+  test("returns null cursors for an empty page", () => {
+    expect(
+      trimToTick({ rows: [], limit: 50, fetchLimit: 55, direction: "next" }),
+    ).toEqual({ rows: [], nextCursor: null, prevCursor: null });
+  });
+
+  test("stops on a clean tick boundary", () => {
+    const result = trimToTick({
+      rows: rowsOf([
+        [300, 2],
+        [200, 2],
+        [100, 2],
+      ]),
+      limit: 4,
+      fetchLimit: 6,
+      direction: "next",
+    });
+    expect(result.rows.length).toBe(4);
+    expect(result.nextCursor).toBe(200);
+    expect(result.prevCursor).toBe(300);
+  });
+
+  test("drops a trailing tick the pipe's own LIMIT may have cut", () => {
+    const result = trimToTick({
+      rows: rowsOf([
+        [300, 2],
+        [200, 2],
+      ]),
+      limit: 4,
+      fetchLimit: 4,
+      direction: "next",
+    });
+    expect(result.rows.length).toBe(2);
+    expect(result.nextCursor).toBe(300);
+  });
+
+  test("returns a tick wider than the page size whole", () => {
+    const result = trimToTick({
+      rows: rowsOf([[300, 4]]),
+      limit: 2,
+      fetchLimit: 4,
+      direction: "next",
+    });
+    expect(result.rows.length).toBe(4);
+    expect(result.nextCursor).toBe(300);
+  });
+
+  test("reports no next page when the source ran dry", () => {
+    const result = trimToTick({
+      rows: rowsOf([[300, 2]]),
+      limit: 4,
+      fetchLimit: 6,
+      direction: "next",
+    });
+    expect(result.rows.length).toBe(2);
+    expect(result.nextCursor).toBe(null);
+    expect(result.prevCursor).toBe(300);
+  });
+
+  test("walks the other way for the prev direction", () => {
+    const result = trimToTick({
+      rows: rowsOf([
+        [100, 2],
+        [200, 2],
+        [300, 2],
+      ]),
+      limit: 4,
+      fetchLimit: 6,
+      direction: "prev",
+    });
+    expect(result.rows.length).toBe(4);
+    expect(result.prevCursor).toBe(200);
+    expect(result.nextCursor).toBe(100);
+  });
+});

@@ -230,6 +230,39 @@ export const GetResponseLogInput = z.object({
 });
 export type GetResponseLogInput = z.infer<typeof GetResponseLogInput>;
 
+/** Filters the v2 response-log pipes evaluate server-side. */
+export const ResponseLogFilters = z.object({
+  regions: z.array(z.string()).optional(),
+  status: z.array(z.enum(["success", "error", "degraded"])).optional(),
+  trigger: z.array(z.enum(["cron", "api"])).optional(),
+  statusCodes: z.array(z.number().int()).optional(),
+  latencyMin: z.number().int().min(0).optional(),
+  latencyMax: z.number().int().min(0).optional(),
+});
+export type ResponseLogFilters = z.infer<typeof ResponseLogFilters>;
+
+export const ListResponseLogsInfiniteInput = ResponseLogFilters.extend({
+  monitorId: z.number().int(),
+  fromTimestamp: z.number().int().optional(),
+  toTimestamp: z.number().int().optional(),
+  /** `cronTimestamp` boundary of the previous page, exclusive. */
+  cursor: z.number().int().optional(),
+  direction: z.enum(["next", "prev"]).default("next"),
+  limit: z.number().int().min(1).max(100).default(50),
+});
+export type ListResponseLogsInfiniteInput = z.infer<
+  typeof ListResponseLogsInfiniteInput
+>;
+
+export const GetResponseLogFacetsInput = ResponseLogFilters.extend({
+  monitorId: z.number().int(),
+  fromTimestamp: z.number().int().optional(),
+  toTimestamp: z.number().int().optional(),
+});
+export type GetResponseLogFacetsInput = z.infer<
+  typeof GetResponseLogFacetsInput
+>;
+
 export const GetPrivateLocationIdsByMonitorInput = z.object({
   monitorIds: z.array(z.number().int()),
 });
