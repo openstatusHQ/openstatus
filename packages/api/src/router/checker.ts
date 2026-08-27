@@ -555,6 +555,24 @@ export async function testGrpc(input: z.infer<typeof grpcTestInput>) {
       });
     }
 
+    // Only a transport failure comes back as `state: "error"`. An RPC that
+    // completed but answered NOT_SERVING / SERVICE_UNKNOWN — or a server with no
+    // health service at all — returns the full response, where `state` is absent
+    // and prefaults to "success". `error` is omitempty, so it is present only
+    // when the check failed. Mirrors testHttp rejecting a non-2XX status: the
+    // target is reachable, but saving it would create a monitor that is already
+    // down.
+    if (result.data.error === 1) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          result.data.errorMessage ||
+          `The health check did not report SERVING${
+            result.data.servingStatus ? `: ${result.data.servingStatus}` : ""
+          }`,
+      });
+    }
+
     return result.data;
   } catch (error) {
     console.error("Checker gRPC test failed", error);

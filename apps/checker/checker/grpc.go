@@ -35,6 +35,11 @@ const (
 	ServingStatusNotServing     = "NOT_SERVING"
 	ServingStatusServiceUnknown = "SERVICE_UNKNOWN"
 	ServingStatusUnknown        = "UNKNOWN"
+	// Not a grpc.health.v1 enum value: the server answered, it just has no
+	// health service. It still needs a status, because a NULL servingStatus is
+	// what the metrics pipes use to mean "never reached the server", and this
+	// check did — with a real latency worth counting.
+	ServingStatusUnimplemented = "UNIMPLEMENTED"
 )
 
 // GRPCResponseTiming is HTTP's phase shape verbatim: gRPC is HTTP/2, and reusing
@@ -171,6 +176,7 @@ func CheckGRPC(timeoutMs int64, target, service string, mode GRPCTLSMode, md map
 			// The server is up and talking gRPC; it just has no health service.
 			// Reporting this as "down" sends people hunting the wrong problem.
 			result.Completed = true
+			result.ServingStatus = ServingStatusUnimplemented
 			result.Message = "server does not implement grpc.health.v1.Health"
 			return result, nil
 		case codes.NotFound:

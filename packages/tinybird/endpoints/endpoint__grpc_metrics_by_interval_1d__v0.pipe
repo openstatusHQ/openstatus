@@ -21,6 +21,9 @@ SQL >
     FROM mv__grpc_1d__v0
     WHERE
         monitorId = {{ String(monitorId, '4433', required=True) }}
+        -- A transport failure resets latency to 0; including those rows drags
+        -- every quantile toward zero. Only completed RPCs carry a servingStatus.
+        AND servingStatus IS NOT NULL
         {% if regions %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
     GROUP BY h, region
     ORDER BY h DESC

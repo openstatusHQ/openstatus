@@ -299,3 +299,57 @@ func TestGRPCHandler_ProbesExactlyRetryTimes(t *testing.T) {
 		})
 	}
 }
+
+// grpcTestServerNoHealth starts a plaintext gRPC server with no services
+// registered, so Health/Check answers UNIMPLEMENTED.
+func grpcTestServerNoHealth(t *testing.T) string {
+	t.Helper()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	server := grpc.NewServer()
+	go func() {
+		_ = server.Serve(listener)
+	}()
+	t.Cleanup(server.Stop)
+
+	return listener.Addr().String()
+}
+
+// A server that answers UNIMPLEMENTED reached the wire and timed a real round
+// trip, so its row must carry a serving status. A NULL one means "never reached
+// the server" to the metrics pipes, which would drop it from every latency
+// quantile alongside genuine transport failures.
+func TestGRPCHandler_UnimplementedRowCarriesServingStatus(t *testing.T) {
+	target := grpcTestServerNoHealth(t)
+
+	var sent [][]byte
+	h := handlers.Handler{
+		TbClient: capturingTinybird(t, &sent),
+		Secret:   "test",
+		Region:   "local",
+	}
+	router := gin.New()
+	router.POST("/checker/grpc", h.GRPCHandler)
+
+	// status:"error" matches the outcome, so the handler skips its status-change
+	// callback and the test makes no outbound request.
+	body := `{"uri":"` + target + `","tls":"plaintext","timeout":5000,"retry":1,"status":"error","workspaceId":"1","monitorId":"1"}`
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest(http.MethodPost, "/checker/grpc?data=true", strings.NewReader(body))
+	r.Header.Set("Authorization", "Basic test")
+	router.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	require.Len(t, sent, 1, "a completed check ships exactly one row")
+
+	var event struct {
+		ServingStatus string `json:"servingStatus"`
+		RequestStatus string `json:"requestStatus"`
+	}
+	require.NoError(t, json.Unmarshal(sent[0], &event))
+	assert.Equal(t, "UNIMPLEMENTED", event.ServingStatus)
+	// Still an unhealthy check — only its visibility to the pipes changed.
+	assert.Equal(t, "error", event.RequestStatus)
+}

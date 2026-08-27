@@ -126,8 +126,15 @@ func TestCheckGRPCUnimplemented(t *testing.T) {
 	if res.Message != "server does not implement grpc.health.v1.Health" {
 		t.Fatalf("unexpected message %q", res.Message)
 	}
-	if res.ServingStatus != "" {
-		t.Fatalf("no serving status can be known here, got %q", res.ServingStatus)
+	// Deliberately not empty. The metrics pipes read a NULL servingStatus as
+	// "never reached the server" and drop the row from every latency
+	// aggregate — but this check did reach the server and timed a real round
+	// trip, so it has to carry a status to stay in them.
+	if res.ServingStatus != checker.ServingStatusUnimplemented {
+		t.Fatalf(
+			"expected %q to keep the row in latency metrics, got %q",
+			checker.ServingStatusUnimplemented, res.ServingStatus,
+		)
 	}
 }
 

@@ -1155,8 +1155,6 @@ export const statusPageRouter = createTRPCRouter({
       if (!_monitor.public) return null;
       if (_monitor.deletedAt) return null;
 
-      const type = _monitor.jobType as "http" | "tcp" | "dns" | "icmp";
-
       const proceduresByType = {
         http: {
           latency: getMetricsLatencyProcedure("7d", "http"),
@@ -1178,32 +1176,47 @@ export const statusPageRouter = createTRPCRouter({
           regions: getMetricsRegionsProcedure("7d", "icmp"),
           uptime: getUptimeProcedure("7d", "icmp"),
         },
+        grpc: {
+          latency: getMetricsLatencyProcedure("7d", "grpc"),
+          regions: getMetricsRegionsProcedure("7d", "grpc"),
+          uptime: getUptimeProcedure("7d", "grpc"),
+        },
       };
+
+      // `udp` and `ssl` are monitor job types with no Tinybird pipes. Looking the
+      // key up instead of asserting the type means such a monitor renders with
+      // empty charts — the same shape a Tinybird outage produces — rather than
+      // throwing on a missing key.
+      const procedures =
+        proceduresByType[_monitor.jobType as keyof typeof proceduresByType] ??
+        null;
 
       const fromDate = startOfDay(subDays(new Date(), 7)).toISOString();
       const toDate = endOfDay(new Date()).toISOString();
 
       // Slow/erroring Tinybird → empty chart data so the page still renders.
-      const metrics = await withTinybirdFallback(() =>
-        Promise.all([
-          proceduresByType[type].latency({
-            monitorId: _monitor.id.toString(),
-            fromDate,
-            toDate,
-          }),
-          proceduresByType[type].regions({
-            monitorId: _monitor.id.toString(),
-            fromDate,
-            toDate,
-          }),
-          proceduresByType[type].uptime({
-            monitorId: _monitor.id.toString(),
-            interval: 240,
-            fromDate,
-            toDate,
-          }),
-        ]),
-      );
+      const metrics = !procedures
+        ? { ok: false as const, data: null }
+        : await withTinybirdFallback(() =>
+            Promise.all([
+              procedures.latency({
+                monitorId: _monitor.id.toString(),
+                fromDate,
+                toDate,
+              }),
+              procedures.regions({
+                monitorId: _monitor.id.toString(),
+                fromDate,
+                toDate,
+              }),
+              procedures.uptime({
+                monitorId: _monitor.id.toString(),
+                interval: 240,
+                fromDate,
+                toDate,
+              }),
+            ]),
+          );
 
       const [latency, regions, uptime] = metrics.data ?? [
         { data: [] },

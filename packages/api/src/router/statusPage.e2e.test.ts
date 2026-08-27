@@ -1067,6 +1067,8 @@ describe("statusPage exposes page component names, not internal monitor names", 
   let noDescriptionComponentId: number;
   let clearedDescriptionMonitorId: number;
   let clearedDescriptionComponentId: number;
+  let grpcMonitorId: number;
+  let grpcComponentId: number;
 
   const internalName = "Internal Monitor Name";
   const internalDescription = "Internal monitor description";
@@ -1195,6 +1197,37 @@ describe("statusPage exposes page component names, not internal monitor names", 
       .returning()
       .get();
     clearedDescriptionComponentId = clearedDescriptionComponent.id;
+
+    // getMonitor dispatches its Tinybird reads on jobType; a gRPC monitor must
+    // find a matching entry like every other supported type.
+    const grpcMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: "gRPC monitor",
+        jobType: "grpc",
+        periodicity: "1m",
+        url: "api.example.com:443",
+        active: true,
+        public: true,
+      })
+      .returning()
+      .get();
+    grpcMonitorId = grpcMonitor.id;
+
+    const grpcComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: publicNamePageId,
+        type: "monitor",
+        monitorId: grpcMonitorId,
+        name: "gRPC component",
+        order: 3,
+      })
+      .returning()
+      .get();
+    grpcComponentId = grpcComponent.id;
   });
 
   afterAll(async () => {
@@ -1207,6 +1240,8 @@ describe("statusPage exposes page component names, not internal monitor names", 
     await db
       .delete(pageComponent)
       .where(eq(pageComponent.id, clearedDescriptionComponentId));
+    await db.delete(pageComponent).where(eq(pageComponent.id, grpcComponentId));
+    await db.delete(monitor).where(eq(monitor.id, grpcMonitorId));
     await db.delete(monitor).where(eq(monitor.id, publicNameMonitorId));
     await db.delete(monitor).where(eq(monitor.id, noDescriptionMonitorId));
     await db.delete(monitor).where(eq(monitor.id, clearedDescriptionMonitorId));
@@ -1308,6 +1343,38 @@ describe("statusPage exposes page component names, not internal monitor names", 
     expect(component?.name).toBe(componentName);
     expect(component?.monitor?.name).toBe(componentName);
     expect(component?.monitor?.description).toBe(componentDescription);
+  });
+
+  test("getMonitor resolves metrics procedures for a gRPC monitor", async () => {
+    const caller = await createCaller();
+
+    // Tinybird is noop under test, so a resolved dispatch and a missing one both
+    // end up with empty chart data. What separates them is the TypeError that
+    // indexing proceduresByType with an absent job type throws — which
+    // withTinybirdFallback catches and files as a Tinybird outage rather than
+    // surfacing. Assert it never happens.
+    const logged: string[] = [];
+    const originalError = console.error;
+    console.error = (...args: unknown[]) => {
+      logged.push(args.map(String).join(" "));
+    };
+
+    let result: Awaited<ReturnType<typeof caller.statusPage.getMonitor>>;
+    try {
+      result = await caller.statusPage.getMonitor({
+        slug: publicNameSlug,
+        id: grpcMonitorId,
+      });
+    } finally {
+      console.error = originalError;
+    }
+
+    expect(result?.name).toBe("gRPC component");
+    expect(
+      logged.filter((line) =>
+        line.includes("Cannot read properties of undefined"),
+      ),
+    ).toEqual([]);
   });
 
   test("getMonitor returns the page component name and description", async () => {
