@@ -26,13 +26,12 @@ export function usePathnamePrefix() {
           hostname: window.location.hostname,
           pathname: window.location.pathname,
           customDomain: page?.customDomain,
-          slug: page?.slug,
           locale,
           defaultLocale,
         }),
       );
     }
-  }, [page?.customDomain, page?.slug, locale, defaultLocale]);
+  }, [page?.customDomain, locale, defaultLocale]);
 
   return prefix;
 }

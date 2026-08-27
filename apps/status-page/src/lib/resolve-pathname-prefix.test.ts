@@ -159,14 +159,13 @@ describe("resolvePathnamePrefix", () => {
   describe("subdomain-shaped host that owns no page", () => {
     // `themes.openstatus.dev` is the theme explorer: subdomain-shaped, but it
     // owns no page of its own, so its demo page is served from
-    // `/{slug}/{locale}` and its links must keep the slug prefix.
-    test("keeps the prefix when the path already carries the page", () => {
+    // `/status/{locale}` and its links must keep the slug prefix.
+    test("keeps the prefix on the explorer's status page", () => {
       expect(
         resolvePathnamePrefix({
           hostname: "themes.openstatus.dev",
           pathname: "/status/en",
           customDomain: undefined,
-          slug: "status",
           locale: "en",
           defaultLocale,
         }),
@@ -179,48 +178,54 @@ describe("resolvePathnamePrefix", () => {
           hostname: "themes.openstatus.dev",
           pathname: "/status/fr/monitors/123",
           customDomain: undefined,
-          slug: "status",
           locale: "fr",
           defaultLocale,
         }),
       ).toBe("status/fr");
     });
 
-    test("matches the slug and locale segments case-insensitively", () => {
+    test("keeps the prefix when the locale segment is absent", () => {
       expect(
         resolvePathnamePrefix({
           hostname: "themes.openstatus.dev",
-          pathname: "/Status/EN",
+          pathname: "/status",
           customDomain: undefined,
-          slug: "status",
+          locale: "en",
+          defaultLocale,
+        }),
+      ).toBe("status/en");
+    });
+
+    test("matches the slug segment case-insensitively", () => {
+      expect(
+        resolvePathnamePrefix({
+          hostname: "themes.openstatus.dev",
+          pathname: "/Status/en",
+          customDomain: undefined,
           locale: "en",
           defaultLocale,
         }),
       ).toBe("Status/en");
     });
 
-    test("falls back to hostname routing before the page has loaded", () => {
+    test("only the `status` slug is prefixed — the explorer root is not", () => {
       expect(
         resolvePathnamePrefix({
           hostname: "themes.openstatus.dev",
-          pathname: "/status/fr",
+          pathname: "/",
           customDomain: undefined,
-          slug: undefined,
           locale: "fr",
           defaultLocale,
         }),
       ).toBe("fr");
     });
 
-    test("a bare slug with no locale segment stays hostname routed", () => {
-      // `/status` renders no page — the route needs the locale segment — so no
-      // links are built from this prefix.
+    test("only the `status` slug is prefixed — other slugs are not", () => {
       expect(
         resolvePathnamePrefix({
           hostname: "themes.openstatus.dev",
-          pathname: "/status",
+          pathname: "/acme/en",
           customDomain: undefined,
-          slug: "status",
           locale: "en",
           defaultLocale,
         }),
@@ -235,22 +240,20 @@ describe("resolvePathnamePrefix", () => {
           hostname: "acme.openstatus.dev",
           pathname: "/events",
           customDomain: undefined,
-          slug: "acme",
           locale: "en",
           defaultLocale,
         }),
       ).toBe("");
     });
 
-    test("a subdomain page whose first segment collides with its slug", () => {
-      // `acme.openstatus.dev/acme` is a page section, not a slug prefix — the
-      // missing locale segment is what keeps it hostname routed.
+    test("a subdomain page whose own slug is `status`", () => {
+      // Only the explorer host opts into the prefix, so a real page at
+      // `status.openstatus.dev/status` still drops it.
       expect(
         resolvePathnamePrefix({
-          hostname: "acme.openstatus.dev",
-          pathname: "/acme",
+          hostname: "status.openstatus.dev",
+          pathname: "/status",
           customDomain: undefined,
-          slug: "acme",
           locale: "fr",
           defaultLocale,
         }),
@@ -261,9 +264,8 @@ describe("resolvePathnamePrefix", () => {
       expect(
         resolvePathnamePrefix({
           hostname: "status.acme.com",
-          pathname: "/monitors/123",
+          pathname: "/status",
           customDomain: "status.acme.com",
-          slug: "acme",
           locale: "fr",
           defaultLocale,
         }),

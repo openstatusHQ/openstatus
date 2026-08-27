@@ -1,3 +1,8 @@
+import {
+  THEME_EXPLORER_PAGE_SLUG,
+  isThemeExplorerHost,
+} from "./theme-explorer-host";
+
 /**
  * Computes the prefix used for client-side navigation links.
  *
@@ -8,14 +13,12 @@ export function resolvePathnamePrefix({
   hostname,
   pathname,
   customDomain,
-  slug,
   locale,
   defaultLocale,
 }: {
   hostname: string;
   pathname: string;
   customDomain: string | undefined;
-  slug?: string;
   locale: string;
   defaultLocale: string;
 }): string {
@@ -34,12 +37,14 @@ export function resolvePathnamePrefix({
 
   const firstSegment = pathname.split("/")[1] || "";
 
-  const isPathnameRouted =
-    !!slug &&
-    firstSegment.toLowerCase() === slug.toLowerCase() &&
-    pathname.split("/")[2]?.toLowerCase() === locale.toLowerCase();
+  // The theme explorer host is subdomain-shaped but owns no page of its own —
+  // its demo page is served from `/status/{locale}`, so links there keep the
+  // slug prefix instead of dropping it like a real subdomain page would.
+  const isThemeExplorerPage =
+    isThemeExplorerHost(hostname) &&
+    firstSegment.toLowerCase() === THEME_EXPLORER_PAGE_SLUG;
 
-  if (!isPathnameRouted && (isCustomDomain || isSubdomain)) {
+  if (!isThemeExplorerPage && (isCustomDomain || isSubdomain)) {
     // Subdomain or custom domain — no slug prefix needed
     return locale !== defaultLocale ? locale : "";
   }
