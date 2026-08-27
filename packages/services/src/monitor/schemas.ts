@@ -37,7 +37,7 @@ const apiTimeoutMs = z.coerce.number().gte(0).lte(120_000);
  * + `30m`/`1m` respectively).
  */
 export const CreateMonitorInput = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
   jobType: z.enum(monitorJobTypes),
   url: z.string(),
   method: z.enum(monitorMethods),
@@ -72,7 +72,7 @@ export type CreateMonitorInput = z.infer<typeof CreateMonitorInput>;
  */
 export const UpdateMonitorConfigInput = z.object({
   id: z.number().int(),
-  name: z.string().min(1).optional(),
+  name: z.string().trim().min(1).optional(),
   url: z.string().optional(),
   method: z.enum(monitorMethods).optional(),
   headers: z.array(headerPair).optional(),
@@ -95,7 +95,7 @@ export type UpdateMonitorConfigInput = z.infer<typeof UpdateMonitorConfigInput>;
 /** Update the "general" monitor payload — name / endpoint / headers / assertions. */
 export const UpdateMonitorGeneralInput = z.object({
   id: z.number().int(),
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
   jobType: z.enum(monitorJobTypes),
   url: z.string(),
   method: z.enum(monitorMethods),
