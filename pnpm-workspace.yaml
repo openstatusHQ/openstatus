@@ -12,6 +12,9 @@ allowBuilds:
   "@tailwindcss/oxide": true
   core-js-pure: true
   esbuild: true
+  # Optional native accelerator for msgpackr (pulled in by effect). msgpackr
+  # falls back to its pure-JS path without it, so skip the native build.
+  msgpackr-extract: false
   msw: true
   protobufjs: true
   sharp: true
@@ -140,7 +143,7 @@ catalog:
   drizzle-kit: 0.31.10
   drizzle-orm: 0.45.2
   drizzle-zod: 0.8.3
-  effect: 3.21.2
+  effect: 4.0.0-rc.112
   feed: 4.2.2
   gray-matter: 4.0.3
   hono: 4.12.21

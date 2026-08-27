@@ -37,14 +37,14 @@ export class FetchError extends Error {
   }
 }
 
-const DEFAULT_TIMEOUT: Duration.DurationInput = "30000 millis";
+const DEFAULT_TIMEOUT: Duration.Input = "30000 millis";
 
 export type FetchBaseOptions = {
   url: string;
   init?: Omit<RequestInit, "signal" | "headers"> & {
     headers?: Record<string, string>;
   };
-  timeout?: Duration.DurationInput;
+  timeout?: Duration.Input;
   fetcherName?: string;
   entryId?: string;
 };
@@ -94,15 +94,17 @@ const doFetch = (
       }),
     catch: failWith(opts, "network"),
   }).pipe(
-    Effect.timeoutFail({
+    Effect.timeoutOrElse({
       duration: opts.timeout ?? DEFAULT_TIMEOUT,
-      onTimeout: () =>
-        buildFetchError(opts, {
-          kind: "timeout",
-          cause: new Error(
-            `timeout after ${String(opts.timeout ?? DEFAULT_TIMEOUT)}`,
-          ),
-        }),
+      orElse: () =>
+        Effect.fail(
+          buildFetchError(opts, {
+            kind: "timeout",
+            cause: new Error(
+              `timeout after ${String(opts.timeout ?? DEFAULT_TIMEOUT)}`,
+            ),
+          }),
+        ),
     }),
     Effect.flatMap((response) =>
       response.ok
@@ -127,15 +129,17 @@ const fetchBody = <T>(
     Effect.retry(retryPolicy),
     Effect.flatMap((response) =>
       read(response).pipe(
-        Effect.timeoutFail({
+        Effect.timeoutOrElse({
           duration: opts.timeout ?? DEFAULT_TIMEOUT,
-          onTimeout: () =>
-            buildFetchError(opts, {
-              kind: "timeout",
-              cause: new Error(
-                `body read timeout after ${String(opts.timeout ?? DEFAULT_TIMEOUT)}`,
-              ),
-            }),
+          orElse: () =>
+            Effect.fail(
+              buildFetchError(opts, {
+                kind: "timeout",
+                cause: new Error(
+                  `body read timeout after ${String(opts.timeout ?? DEFAULT_TIMEOUT)}`,
+                ),
+              }),
+            ),
         }),
       ),
     ),

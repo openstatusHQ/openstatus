@@ -56,9 +56,9 @@ export class EmailClient {
   public readonly client: Resend;
   // Base delay for the per-batch send retry. Overridable so tests can run the
   // retry path without the real ~1s exponential sleep.
-  private readonly retryBackoff: Duration.DurationInput;
+  private readonly retryBackoff: Duration.Input;
 
-  constructor(opts: { apiKey: string; retryBackoff?: Duration.DurationInput }) {
+  constructor(opts: { apiKey: string; retryBackoff?: Duration.Input }) {
     this.client = new Resend(opts.apiKey);
     this.retryBackoff = opts.retryBackoff ?? "1000 millis";
   }
