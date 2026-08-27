@@ -57,7 +57,7 @@ export function Sidebar() {
               label: "Type",
               value: type ? (
                 <span className="flex items-center gap-1">
-                  <span className="uppercase">{type.label}</span>
+                  <span>{type.label}</span>
                   <type.icon className="text-muted-foreground h-2.5 w-2.5" />
                 </span>
               ) : (

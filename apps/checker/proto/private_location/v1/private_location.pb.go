@@ -63,6 +63,7 @@ type MonitorsResponse struct {
 	TcpMonitors   []*TCPMonitor          `protobuf:"bytes,2,rep,name=tcp_monitors,json=tcpMonitors,proto3" json:"tcp_monitors,omitempty"`
 	DnsMonitors   []*DNSMonitor          `protobuf:"bytes,3,rep,name=dns_monitors,json=dnsMonitors,proto3" json:"dns_monitors,omitempty"`
 	IcmpMonitors  []*ICMPMonitor         `protobuf:"bytes,5,rep,name=icmp_monitors,json=icmpMonitors,proto3" json:"icmp_monitors,omitempty"`
+	GrpcMonitors  []*GRPCMonitor         `protobuf:"bytes,6,rep,name=grpc_monitors,json=grpcMonitors,proto3" json:"grpc_monitors,omitempty"`
 	Region        string                 `protobuf:"bytes,4,opt,name=region,proto3" json:"region,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -122,6 +123,13 @@ func (x *MonitorsResponse) GetDnsMonitors() []*DNSMonitor {
 func (x *MonitorsResponse) GetIcmpMonitors() []*ICMPMonitor {
 	if x != nil {
 		return x.IcmpMonitors
+	}
+	return nil
+}
+
+func (x *MonitorsResponse) GetGrpcMonitors() []*GRPCMonitor {
+	if x != nil {
+		return x.GrpcMonitors
 	}
 	return nil
 }
@@ -849,17 +857,194 @@ func (*IngestICMPResponse) Descriptor() ([]byte, []int) {
 	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{10}
 }
 
+type IngestGRPCRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	MonitorId     string                 `protobuf:"bytes,2,opt,name=monitorId,proto3" json:"monitorId,omitempty"`
+	Latency       int64                  `protobuf:"varint,3,opt,name=latency,proto3" json:"latency,omitempty"`
+	Timestamp     int64                  `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	CronTimestamp int64                  `protobuf:"varint,5,opt,name=cronTimestamp,proto3" json:"cronTimestamp,omitempty"`
+	Uri           string                 `protobuf:"bytes,6,opt,name=uri,proto3" json:"uri,omitempty"`
+	Service       string                 `protobuf:"bytes,7,opt,name=service,proto3" json:"service,omitempty"`
+	ServingStatus string                 `protobuf:"bytes,8,opt,name=servingStatus,proto3" json:"servingStatus,omitempty"`
+	GrpcCode      int64                  `protobuf:"varint,9,opt,name=grpcCode,proto3" json:"grpcCode,omitempty"`
+	Message       string                 `protobuf:"bytes,10,opt,name=message,proto3" json:"message,omitempty"`
+	RequestStatus string                 `protobuf:"bytes,11,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
+	Error         int64                  `protobuf:"varint,12,opt,name=error,proto3" json:"error,omitempty"`
+	Timing        string                 `protobuf:"bytes,13,opt,name=timing,proto3" json:"timing,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IngestGRPCRequest) Reset() {
+	*x = IngestGRPCRequest{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IngestGRPCRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IngestGRPCRequest) ProtoMessage() {}
+
+func (x *IngestGRPCRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IngestGRPCRequest.ProtoReflect.Descriptor instead.
+func (*IngestGRPCRequest) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *IngestGRPCRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *IngestGRPCRequest) GetMonitorId() string {
+	if x != nil {
+		return x.MonitorId
+	}
+	return ""
+}
+
+func (x *IngestGRPCRequest) GetLatency() int64 {
+	if x != nil {
+		return x.Latency
+	}
+	return 0
+}
+
+func (x *IngestGRPCRequest) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *IngestGRPCRequest) GetCronTimestamp() int64 {
+	if x != nil {
+		return x.CronTimestamp
+	}
+	return 0
+}
+
+func (x *IngestGRPCRequest) GetUri() string {
+	if x != nil {
+		return x.Uri
+	}
+	return ""
+}
+
+func (x *IngestGRPCRequest) GetService() string {
+	if x != nil {
+		return x.Service
+	}
+	return ""
+}
+
+func (x *IngestGRPCRequest) GetServingStatus() string {
+	if x != nil {
+		return x.ServingStatus
+	}
+	return ""
+}
+
+func (x *IngestGRPCRequest) GetGrpcCode() int64 {
+	if x != nil {
+		return x.GrpcCode
+	}
+	return 0
+}
+
+func (x *IngestGRPCRequest) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *IngestGRPCRequest) GetRequestStatus() string {
+	if x != nil {
+		return x.RequestStatus
+	}
+	return ""
+}
+
+func (x *IngestGRPCRequest) GetError() int64 {
+	if x != nil {
+		return x.Error
+	}
+	return 0
+}
+
+func (x *IngestGRPCRequest) GetTiming() string {
+	if x != nil {
+		return x.Timing
+	}
+	return ""
+}
+
+type IngestGRPCResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IngestGRPCResponse) Reset() {
+	*x = IngestGRPCResponse{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IngestGRPCResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IngestGRPCResponse) ProtoMessage() {}
+
+func (x *IngestGRPCResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IngestGRPCResponse.ProtoReflect.Descriptor instead.
+func (*IngestGRPCResponse) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{12}
+}
+
 var File_private_location_v1_private_location_proto protoreflect.FileDescriptor
 
 const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\n" +
-	"*private_location/v1/private_location.proto\x12\x13private_location.v1\x1a%private_location/v1/dns_monitor.proto\x1a&private_location/v1/http_monitor.proto\x1a&private_location/v1/icmp_monitor.proto\x1a%private_location/v1/tcp_monitor.proto\"\x11\n" +
-	"\x0fMonitorsRequest\"\xc0\x02\n" +
+	"*private_location/v1/private_location.proto\x12\x13private_location.v1\x1a%private_location/v1/dns_monitor.proto\x1a&private_location/v1/grpc_monitor.proto\x1a&private_location/v1/http_monitor.proto\x1a&private_location/v1/icmp_monitor.proto\x1a%private_location/v1/tcp_monitor.proto\"\x11\n" +
+	"\x0fMonitorsRequest\"\x87\x03\n" +
 	"\x10MonitorsResponse\x12E\n" +
 	"\rhttp_monitors\x18\x01 \x03(\v2 .private_location.v1.HTTPMonitorR\fhttpMonitors\x12B\n" +
 	"\ftcp_monitors\x18\x02 \x03(\v2\x1f.private_location.v1.TCPMonitorR\vtcpMonitors\x12B\n" +
 	"\fdns_monitors\x18\x03 \x03(\v2\x1f.private_location.v1.DNSMonitorR\vdnsMonitors\x12E\n" +
-	"\ricmp_monitors\x18\x05 \x03(\v2 .private_location.v1.ICMPMonitorR\ficmpMonitors\x12\x16\n" +
+	"\ricmp_monitors\x18\x05 \x03(\v2 .private_location.v1.ICMPMonitorR\ficmpMonitors\x12E\n" +
+	"\rgrpc_monitors\x18\x06 \x03(\v2 .private_location.v1.GRPCMonitorR\fgrpcMonitors\x12\x16\n" +
 	"\x06region\x18\x04 \x01(\tR\x06region\"\x9e\x02\n" +
 	"\x10IngestTCPRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
@@ -931,7 +1116,23 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\rrequestStatus\x18\f \x01(\tR\rrequestStatus\x12\x14\n" +
 	"\x05error\x18\r \x01(\x03R\x05error\x12\x16\n" +
 	"\x06timing\x18\x0e \x01(\tR\x06timing\"\x14\n" +
-	"\x12IngestICMPResponse2\xf1\x03\n" +
+	"\x12IngestICMPResponse\"\xfb\x02\n" +
+	"\x11IngestGRPCRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
+	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
+	"\alatency\x18\x03 \x01(\x03R\alatency\x12\x1c\n" +
+	"\ttimestamp\x18\x04 \x01(\x03R\ttimestamp\x12$\n" +
+	"\rcronTimestamp\x18\x05 \x01(\x03R\rcronTimestamp\x12\x10\n" +
+	"\x03uri\x18\x06 \x01(\tR\x03uri\x12\x18\n" +
+	"\aservice\x18\a \x01(\tR\aservice\x12$\n" +
+	"\rservingStatus\x18\b \x01(\tR\rservingStatus\x12\x1a\n" +
+	"\bgrpcCode\x18\t \x01(\x03R\bgrpcCode\x12\x18\n" +
+	"\amessage\x18\n" +
+	" \x01(\tR\amessage\x12$\n" +
+	"\rrequestStatus\x18\v \x01(\tR\rrequestStatus\x12\x14\n" +
+	"\x05error\x18\f \x01(\x03R\x05error\x12\x16\n" +
+	"\x06timing\x18\r \x01(\tR\x06timing\"\x14\n" +
+	"\x12IngestGRPCResponse2\xd2\x04\n" +
 	"\x16PrivateLocationService\x12Y\n" +
 	"\bMonitors\x12$.private_location.v1.MonitorsRequest\x1a%.private_location.v1.MonitorsResponse\"\x00\x12\\\n" +
 	"\tIngestTCP\x12%.private_location.v1.IngestTCPRequest\x1a&.private_location.v1.IngestTCPResponse\"\x00\x12_\n" +
@@ -939,7 +1140,9 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"IngestHTTP\x12&.private_location.v1.IngestHTTPRequest\x1a'.private_location.v1.IngestHTTPResponse\"\x00\x12\\\n" +
 	"\tIngestDNS\x12%.private_location.v1.IngestDNSRequest\x1a&.private_location.v1.IngestDNSResponse\"\x00\x12_\n" +
 	"\n" +
-	"IngestICMP\x12&.private_location.v1.IngestICMPRequest\x1a'.private_location.v1.IngestICMPResponse\"\x00BJZHgithub.com/openstatushq/openstatus/packages/proto/private_location/v1;v1b\x06proto3"
+	"IngestICMP\x12&.private_location.v1.IngestICMPRequest\x1a'.private_location.v1.IngestICMPResponse\"\x00\x12_\n" +
+	"\n" +
+	"IngestGRPC\x12&.private_location.v1.IngestGRPCRequest\x1a'.private_location.v1.IngestGRPCResponse\"\x00BJZHgithub.com/openstatushq/openstatus/packages/proto/private_location/v1;v1b\x06proto3"
 
 var (
 	file_private_location_v1_private_location_proto_rawDescOnce sync.Once
@@ -953,7 +1156,7 @@ func file_private_location_v1_private_location_proto_rawDescGZIP() []byte {
 	return file_private_location_v1_private_location_proto_rawDescData
 }
 
-var file_private_location_v1_private_location_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_private_location_v1_private_location_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_private_location_v1_private_location_proto_goTypes = []any{
 	(*MonitorsRequest)(nil),    // 0: private_location.v1.MonitorsRequest
 	(*MonitorsResponse)(nil),   // 1: private_location.v1.MonitorsResponse
@@ -966,34 +1169,40 @@ var file_private_location_v1_private_location_proto_goTypes = []any{
 	(*IngestDNSResponse)(nil),  // 8: private_location.v1.IngestDNSResponse
 	(*IngestICMPRequest)(nil),  // 9: private_location.v1.IngestICMPRequest
 	(*IngestICMPResponse)(nil), // 10: private_location.v1.IngestICMPResponse
-	nil,                        // 11: private_location.v1.IngestDNSRequest.RecordsEntry
-	(*HTTPMonitor)(nil),        // 12: private_location.v1.HTTPMonitor
-	(*TCPMonitor)(nil),         // 13: private_location.v1.TCPMonitor
-	(*DNSMonitor)(nil),         // 14: private_location.v1.DNSMonitor
-	(*ICMPMonitor)(nil),        // 15: private_location.v1.ICMPMonitor
+	(*IngestGRPCRequest)(nil),  // 11: private_location.v1.IngestGRPCRequest
+	(*IngestGRPCResponse)(nil), // 12: private_location.v1.IngestGRPCResponse
+	nil,                        // 13: private_location.v1.IngestDNSRequest.RecordsEntry
+	(*HTTPMonitor)(nil),        // 14: private_location.v1.HTTPMonitor
+	(*TCPMonitor)(nil),         // 15: private_location.v1.TCPMonitor
+	(*DNSMonitor)(nil),         // 16: private_location.v1.DNSMonitor
+	(*ICMPMonitor)(nil),        // 17: private_location.v1.ICMPMonitor
+	(*GRPCMonitor)(nil),        // 18: private_location.v1.GRPCMonitor
 }
 var file_private_location_v1_private_location_proto_depIdxs = []int32{
-	12, // 0: private_location.v1.MonitorsResponse.http_monitors:type_name -> private_location.v1.HTTPMonitor
-	13, // 1: private_location.v1.MonitorsResponse.tcp_monitors:type_name -> private_location.v1.TCPMonitor
-	14, // 2: private_location.v1.MonitorsResponse.dns_monitors:type_name -> private_location.v1.DNSMonitor
-	15, // 3: private_location.v1.MonitorsResponse.icmp_monitors:type_name -> private_location.v1.ICMPMonitor
-	11, // 4: private_location.v1.IngestDNSRequest.records:type_name -> private_location.v1.IngestDNSRequest.RecordsEntry
-	6,  // 5: private_location.v1.IngestDNSRequest.RecordsEntry.value:type_name -> private_location.v1.Records
-	0,  // 6: private_location.v1.PrivateLocationService.Monitors:input_type -> private_location.v1.MonitorsRequest
-	2,  // 7: private_location.v1.PrivateLocationService.IngestTCP:input_type -> private_location.v1.IngestTCPRequest
-	4,  // 8: private_location.v1.PrivateLocationService.IngestHTTP:input_type -> private_location.v1.IngestHTTPRequest
-	7,  // 9: private_location.v1.PrivateLocationService.IngestDNS:input_type -> private_location.v1.IngestDNSRequest
-	9,  // 10: private_location.v1.PrivateLocationService.IngestICMP:input_type -> private_location.v1.IngestICMPRequest
-	1,  // 11: private_location.v1.PrivateLocationService.Monitors:output_type -> private_location.v1.MonitorsResponse
-	3,  // 12: private_location.v1.PrivateLocationService.IngestTCP:output_type -> private_location.v1.IngestTCPResponse
-	5,  // 13: private_location.v1.PrivateLocationService.IngestHTTP:output_type -> private_location.v1.IngestHTTPResponse
-	8,  // 14: private_location.v1.PrivateLocationService.IngestDNS:output_type -> private_location.v1.IngestDNSResponse
-	10, // 15: private_location.v1.PrivateLocationService.IngestICMP:output_type -> private_location.v1.IngestICMPResponse
-	11, // [11:16] is the sub-list for method output_type
-	6,  // [6:11] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	14, // 0: private_location.v1.MonitorsResponse.http_monitors:type_name -> private_location.v1.HTTPMonitor
+	15, // 1: private_location.v1.MonitorsResponse.tcp_monitors:type_name -> private_location.v1.TCPMonitor
+	16, // 2: private_location.v1.MonitorsResponse.dns_monitors:type_name -> private_location.v1.DNSMonitor
+	17, // 3: private_location.v1.MonitorsResponse.icmp_monitors:type_name -> private_location.v1.ICMPMonitor
+	18, // 4: private_location.v1.MonitorsResponse.grpc_monitors:type_name -> private_location.v1.GRPCMonitor
+	13, // 5: private_location.v1.IngestDNSRequest.records:type_name -> private_location.v1.IngestDNSRequest.RecordsEntry
+	6,  // 6: private_location.v1.IngestDNSRequest.RecordsEntry.value:type_name -> private_location.v1.Records
+	0,  // 7: private_location.v1.PrivateLocationService.Monitors:input_type -> private_location.v1.MonitorsRequest
+	2,  // 8: private_location.v1.PrivateLocationService.IngestTCP:input_type -> private_location.v1.IngestTCPRequest
+	4,  // 9: private_location.v1.PrivateLocationService.IngestHTTP:input_type -> private_location.v1.IngestHTTPRequest
+	7,  // 10: private_location.v1.PrivateLocationService.IngestDNS:input_type -> private_location.v1.IngestDNSRequest
+	9,  // 11: private_location.v1.PrivateLocationService.IngestICMP:input_type -> private_location.v1.IngestICMPRequest
+	11, // 12: private_location.v1.PrivateLocationService.IngestGRPC:input_type -> private_location.v1.IngestGRPCRequest
+	1,  // 13: private_location.v1.PrivateLocationService.Monitors:output_type -> private_location.v1.MonitorsResponse
+	3,  // 14: private_location.v1.PrivateLocationService.IngestTCP:output_type -> private_location.v1.IngestTCPResponse
+	5,  // 15: private_location.v1.PrivateLocationService.IngestHTTP:output_type -> private_location.v1.IngestHTTPResponse
+	8,  // 16: private_location.v1.PrivateLocationService.IngestDNS:output_type -> private_location.v1.IngestDNSResponse
+	10, // 17: private_location.v1.PrivateLocationService.IngestICMP:output_type -> private_location.v1.IngestICMPResponse
+	12, // 18: private_location.v1.PrivateLocationService.IngestGRPC:output_type -> private_location.v1.IngestGRPCResponse
+	13, // [13:19] is the sub-list for method output_type
+	7,  // [7:13] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_private_location_v1_private_location_proto_init() }
@@ -1002,6 +1211,7 @@ func file_private_location_v1_private_location_proto_init() {
 		return
 	}
 	file_private_location_v1_dns_monitor_proto_init()
+	file_private_location_v1_grpc_monitor_proto_init()
 	file_private_location_v1_http_monitor_proto_init()
 	file_private_location_v1_icmp_monitor_proto_init()
 	file_private_location_v1_tcp_monitor_proto_init()
@@ -1011,7 +1221,7 @@ func file_private_location_v1_private_location_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_private_location_v1_private_location_proto_rawDesc), len(file_private_location_v1_private_location_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -125,6 +125,26 @@ type ICMPCheckerRequest struct {
 	} `json:"otelConfig"`
 }
 
+type GRPCCheckerRequest struct {
+	Status        string            `json:"status"`
+	WorkspaceID   string            `json:"workspaceId"`
+	URI           string            `json:"uri"`
+	MonitorID     string            `json:"monitorId"`
+	Service       string            `json:"service,omitempty"`
+	TLS           string            `json:"tls,omitempty"`
+	Trigger       string            `json:"trigger,omitempty"`
+	Headers       map[string]string `json:"headers,omitempty"`
+	RequestId     int64             `json:"requestId,omitempty"`
+	CronTimestamp int64             `json:"cronTimestamp"`
+	Timeout       int64             `json:"timeout"`
+	DegradedAfter int64             `json:"degradedAfter,omitempty"`
+	Retry         int64             `json:"retry,omitempty"`
+	OtelConfig    struct {
+		Endpoint string            `json:"endpoint"`
+		Headers  map[string]string `json:"headers,omitempty"`
+	} `json:"otelConfig"`
+}
+
 type TCPRequest struct {
 	WorkspaceID   string `json:"workspaceId"`
 	URL           string `json:"url"`

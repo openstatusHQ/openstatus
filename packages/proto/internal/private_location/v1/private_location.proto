@@ -3,6 +3,7 @@ syntax = "proto3";
 package private_location.v1;
 
 import "private_location/v1/dns_monitor.proto";
+import "private_location/v1/grpc_monitor.proto";
 import "private_location/v1/http_monitor.proto";
 import "private_location/v1/icmp_monitor.proto";
 import "private_location/v1/tcp_monitor.proto";
@@ -16,6 +17,7 @@ service PrivateLocationService {
     rpc IngestHTTP(IngestHTTPRequest) returns (IngestHTTPResponse) {}
     rpc IngestDNS(IngestDNSRequest) returns (IngestDNSResponse) {}
     rpc IngestICMP(IngestICMPRequest) returns (IngestICMPResponse) {}
+    rpc IngestGRPC(IngestGRPCRequest) returns (IngestGRPCResponse) {}
 
 }
 
@@ -26,6 +28,7 @@ message MonitorsResponse {
     repeated TCPMonitor tcp_monitors = 2;
     repeated DNSMonitor dns_monitors = 3;
     repeated ICMPMonitor icmp_monitors = 5;
+    repeated GRPCMonitor grpc_monitors = 6;
     string region = 4;
 }
 
@@ -107,5 +110,25 @@ message IngestICMPRequest {
 }
 
 message IngestICMPResponse {
+
+}
+
+message IngestGRPCRequest {
+    string id = 1;
+    string monitorId = 2;
+    int64 latency = 3;
+    int64 timestamp = 4;
+    int64 cronTimestamp = 5;
+    string uri = 6;
+    string service = 7;
+    string servingStatus = 8;
+    int64 grpcCode = 9;
+    string message = 10;
+    string requestStatus = 11;
+    int64 error = 12;
+    string timing = 13;
+}
+
+message IngestGRPCResponse {
 
 }

@@ -39,7 +39,7 @@ function buildMonitor(overrides: Partial<Monitor> = {}): Monitor {
 }
 
 test("getCheckerUrl routes each job type to its own checker endpoint", () => {
-  for (const jobType of ["http", "tcp", "dns", "icmp"] as const) {
+  for (const jobType of ["http", "tcp", "dns", "icmp", "grpc"] as const) {
     const url = getCheckerUrl(buildMonitor({ jobType }));
     expect(url).toContain(`/checker/${jobType}?`);
     expect(url).toContain("monitor_id=1");
@@ -75,6 +75,41 @@ test("getCheckerPayload builds an ICMP payload without assertions", () => {
   });
   expect("assertions" in payload).toBe(false);
   expect("url" in payload).toBe(false);
+});
+
+test("getCheckerPayload builds a gRPC payload with its target configuration", () => {
+  const payload = getCheckerPayload(
+    buildMonitor({
+      jobType: "grpc",
+      url: "api.example.com:443",
+      grpcService: "checkout.v1.CheckoutService",
+      grpcTls: "tls_insecure",
+      headers: [{ key: "authorization", value: "Bearer token" }],
+      assertions:
+        '[{"version":"v1","type":"status","compare":"eq","target":200}]',
+    }),
+    "active",
+  );
+
+  expect(payload).toMatchObject({
+    uri: "api.example.com:443",
+    service: "checkout.v1.CheckoutService",
+    tls: "tls_insecure",
+    headers: { authorization: "Bearer token" },
+    trigger: "api",
+  });
+  expect("assertions" in payload).toBe(false);
+});
+
+// The column is nullable and only defaults on insert, so a row that predates
+// the default must still dial with verification on.
+test("getCheckerPayload defaults a gRPC monitor with no TLS mode to tls", () => {
+  const payload = getCheckerPayload(
+    buildMonitor({ jobType: "grpc", url: "api.example.com:443" }),
+    "active",
+  );
+
+  expect(payload).toMatchObject({ tls: "tls" });
 });
 
 test("getCheckerPayload builds a DNS payload with assertions", () => {

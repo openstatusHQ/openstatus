@@ -131,11 +131,15 @@ export function Client() {
             setPagination={setPagination}
             paginationComponent={DataTablePagination}
             defaultColumnVisibility={
-              monitor.jobType === "tcp" ||
-              monitor.jobType === "dns" ||
-              monitor.jobType === "icmp"
-                ? { timing: false, statusCode: false }
-                : {}
+              // gRPC carries HTTP's phase timings, so only its status code
+              // column is meaningless.
+              monitor.jobType === "grpc"
+                ? { statusCode: false }
+                : monitor.jobType === "tcp" ||
+                    monitor.jobType === "dns" ||
+                    monitor.jobType === "icmp"
+                  ? { timing: false, statusCode: false }
+                  : {}
             }
             // NOTE: required to control the pagination
             autoResetPageIndex={false}

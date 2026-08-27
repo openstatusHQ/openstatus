@@ -30,6 +30,8 @@ export {
   stringToHttpMethod,
   httpMethodToString,
   stringToMonitorStatus,
+  stringToGrpcTlsMode,
+  grpcTlsModeToString,
   timeRangeToKey,
   type TimeRangeKey,
 } from "./enums";
@@ -47,6 +49,7 @@ export {
   dbMonitorToHttpProto,
   dbMonitorToTcpProto,
   dbMonitorToDnsProto,
+  dbMonitorToGrpcProto,
   dbMonitorToIcmpProto,
 } from "./monitors";
 

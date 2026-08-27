@@ -247,4 +247,54 @@ describe("validateMonitorPatchBounds", () => {
       ConnectError,
     );
   });
+
+  test("rejects a gRPC service name over the proto's limit", () => {
+    expect(() =>
+      validateMonitorPatchBounds({ service: "s".repeat(513) }),
+    ).toThrow(ConnectError);
+    validateMonitorPatchBounds({ service: "s".repeat(512) });
+  });
+
+  test("accepts the host:port shapes a gRPC target can take", () => {
+    for (const uri of [
+      "api.example.com:443",
+      "10.0.0.5:50051",
+      "[2001:db8::1]:50051",
+      "svc.internal:8443",
+    ]) {
+      validateMonitorPatchBounds({ uri }, { jobType: "grpc" });
+    }
+  });
+
+  test("rejects a gRPC target with no port or with a scheme", () => {
+    for (const uri of [
+      "api.example.com",
+      "grpc://api.example.com:443",
+      "api.example.com:",
+    ]) {
+      expect(() =>
+        validateMonitorPatchBounds({ uri }, { jobType: "grpc" }),
+      ).toThrow(ConnectError);
+    }
+  });
+
+  // The format check keys off the job type, not off `service` being present,
+  // so a patch that changes only the target is still validated.
+  test("checks a gRPC target even when the patch omits the service", () => {
+    expect(() =>
+      validateMonitorPatchBounds(
+        { uri: "api.example.com" },
+        { jobType: "grpc" },
+      ),
+    ).toThrow(ConnectError);
+  });
+
+  test("leaves the other job types' targets unconstrained", () => {
+    validateMonitorPatchBounds({ uri: "openstatus.dev" });
+    validateMonitorPatchBounds({ uri: "openstatus.dev" }, { jobType: "dns" });
+    validateMonitorPatchBounds(
+      { url: "https://openstatus.dev" },
+      { jobType: "http" },
+    );
+  });
 });

@@ -8,6 +8,7 @@ import type {
   GetMonitorSummaryResponse,
   HTTPMonitor,
   HTTPResponseLogPagination,
+  GRPCMonitor,
   ICMPMonitor,
   ListMonitorHTTPResponseLogsResponse,
   MonitorConfig,
@@ -15,7 +16,7 @@ import type {
   RegionStatus,
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
-import { TimeRange } from "@openstatus/proto/monitor/v1";
+import { GRPCTlsMode, TimeRange } from "@openstatus/proto/monitor/v1";
 import {
   ForbiddenError,
   LimitExceededError,
@@ -48,7 +49,9 @@ import {
   MONITOR_DEFAULTS,
   dbMonitorToDnsProto,
   dbMonitorToHttpProto,
+  dbMonitorToGrpcProto,
   dbMonitorToIcmpProto,
+  grpcTlsModeToString,
   dbMonitorToTcpProto,
   protoDnsAssertionsToService,
   protoHeadersToService,
@@ -110,7 +113,7 @@ type DBMonitor = NonNullable<Awaited<ReturnType<typeof getMonitorById>>>;
 async function validateAndGetMonitor(
   id: string | undefined,
   workspaceId: number,
-  expectedJobType: "http" | "tcp" | "dns" | "icmp",
+  expectedJobType: "http" | "tcp" | "dns" | "icmp" | "grpc",
 ): Promise<DBMonitor> {
   if (!id || id.trim() === "") {
     throw monitorIdRequiredError();
@@ -298,6 +301,46 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       });
 
       return { monitor: dbMonitorToIcmpProto(created) };
+    } catch (err) {
+      toConnectError(err);
+    }
+  },
+
+  async createGRPCMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
+
+    if (!req.monitor) {
+      throw monitorRequiredError();
+    }
+
+    const mon = req.monitor;
+
+    // Validate required fields (proto validation handles name, uri, periodicity)
+    validateCommonMonitorFields(mon);
+
+    // Check workspace limits
+    await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
+
+    try {
+      const created = await createMonitor({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          ...getCommonCreateInput(mon),
+          jobType: "grpc",
+          url: mon.uri,
+          method: "GET",
+          headers: protoHeadersToService(mon.metadata) ?? [],
+          assertions: [],
+          grpcService: mon.service,
+          grpcTls: grpcTlsModeToString(
+            mon.tlsMode ?? GRPCTlsMode.GRPC_TLS_MODE_UNSPECIFIED,
+          ),
+        },
+      });
+
+      return { monitor: dbMonitorToGrpcProto(created) };
     } catch (err) {
       toConnectError(err);
     }
@@ -536,6 +579,73 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     );
   },
 
+  async updateGRPCMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
+
+    const dbMon = await validateAndGetMonitor(req.id, workspaceId, "grpc");
+
+    const plMap = await getPrivateLocationIdsByMonitor({
+      ctx: toServiceCtx(rpcCtx),
+      input: { monitorIds: [dbMon.id] },
+    });
+    const privateLocationIds = plMap.get(dbMon.id) ?? [];
+
+    // If no monitor data provided, return current monitor
+    if (!req.monitor) {
+      const parsed = selectMonitorSchema.safeParse(dbMon);
+      if (!parsed.success) {
+        throw monitorParseFailedError(req.id);
+      }
+      return {
+        monitor: dbMonitorToGrpcProto(parsed.data, privateLocationIds),
+      };
+    }
+
+    const mon = req.monitor;
+
+    // Validate regions if provided
+    validateCommonMonitorFields(mon);
+    // This method skips the protovalidate interceptor (see SKIP_VALIDATION_METHODS),
+    // so the message's own bounds have to be applied here.
+    validateMonitorPatchBounds(mon, { jobType: "grpc" });
+
+    // Check workspace limits if periodicity or regions are changing
+    checkMonitorConfigLimits(
+      limits,
+      mon.periodicity || undefined,
+      mon.regions && mon.regions.length > 0 ? mon.regions : undefined,
+    );
+
+    // Build update values - only include fields that are provided
+    const updateValues = getCommonUpdateInput(mon);
+
+    // Handle gRPC-specific fields
+    if (mon.uri !== undefined && mon.uri !== "") {
+      updateValues.url = mon.uri;
+    }
+
+    // `service` and `tlsMode` carry explicit presence, so `undefined` means
+    // omitted: an empty service clears it back to overall server health, and an
+    // omitted tlsMode leaves a plaintext monitor plaintext.
+    if (mon.service !== undefined) {
+      updateValues.grpcService = mon.service;
+    }
+
+    if (mon.tlsMode !== undefined) {
+      updateValues.grpcTls = grpcTlsModeToString(mon.tlsMode);
+    }
+
+    if (mon.metadata !== undefined && mon.metadata.length > 0) {
+      updateValues.headers = protoHeadersToService(mon.metadata) ?? [];
+    }
+
+    return applyUpdate(rpcCtx, dbMon.id, updateValues, (data) =>
+      dbMonitorToGrpcProto(data, privateLocationIds),
+    );
+  },
+
   async triggerMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const limits = rpcCtx.workspace.limits;
@@ -656,6 +766,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const tcpMonitors: TCPMonitor[] = [];
     const dnsMonitors: DNSMonitor[] = [];
     const icmpMonitors: ICMPMonitor[] = [];
+    const grpcMonitors: GRPCMonitor[] = [];
 
     for (const data of parsedMonitors) {
       const privateLocationIds = plMap.get(data.id) ?? [];
@@ -672,6 +783,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         case "icmp":
           icmpMonitors.push(dbMonitorToIcmpProto(data, privateLocationIds));
           break;
+        case "grpc":
+          grpcMonitors.push(dbMonitorToGrpcProto(data, privateLocationIds));
+          break;
       }
     }
 
@@ -680,6 +794,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       tcpMonitors,
       dnsMonitors,
       icmpMonitors,
+      grpcMonitors,
       totalSize: totalCount,
     };
   },
@@ -769,10 +884,19 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
           },
         };
         break;
+      case "grpc":
+        monitorConfig = {
+          $typeName: "openstatus.monitor.v1.MonitorConfig",
+          config: {
+            case: "grpc",
+            value: dbMonitorToGrpcProto(monitorData, privateLocationIds),
+          },
+        };
+        break;
       default:
         throw monitorTypeMismatchError(
           req.id,
-          "http, tcp, dns, or icmp",
+          "http, tcp, dns, icmp, or grpc",
           monitorData.jobType,
         );
     }

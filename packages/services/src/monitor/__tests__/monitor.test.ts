@@ -705,6 +705,82 @@ describe("updateMonitorGeneral", () => {
       });
     });
   });
+
+  test("persists the gRPC service / TLS mode", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-gen-grpc`,
+          jobType: "grpc",
+          url: "api.example.com:443",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+      expect(row.grpcService).toBe(null);
+      expect(row.grpcTls).toBe("tls");
+
+      const updated = await updateMonitorGeneral({
+        ctx,
+        input: {
+          id: row.id,
+          name: `${TEST_PREFIX}-gen-grpc`,
+          jobType: "grpc",
+          url: "api.example.com:443",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: true,
+          grpcService: "checkout.v1.CheckoutService",
+          grpcTls: "plaintext",
+        },
+      });
+
+      expect(updated.grpcService).toBe("checkout.v1.CheckoutService");
+      expect(updated.grpcTls).toBe("plaintext");
+    });
+  });
+
+  test("omitting the gRPC fields leaves them untouched", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-gen-grpc-keep`,
+          jobType: "grpc",
+          url: "api.example.com:443",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          grpcService: "checkout.v1.CheckoutService",
+          grpcTls: "plaintext",
+        },
+      });
+
+      const updated = await updateMonitorGeneral({
+        ctx,
+        input: {
+          id: row.id,
+          name: `${TEST_PREFIX}-gen-grpc-keep-2`,
+          jobType: "grpc",
+          url: "api.example.com:443",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: true,
+        },
+      });
+
+      expect(updated.grpcService).toBe("checkout.v1.CheckoutService");
+      expect(updated.grpcTls).toBe("plaintext");
+    });
+  });
 });
 
 describe("bulkUpdateMonitors", () => {
