@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"connectrpc.com/connect"
@@ -191,11 +192,11 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 	}
 
 	var monitors []database.Monitor
-	err := h.db.Select(&monitors, "SELECT monitor.id, monitor.job_type, monitor.url, monitor.periodicity, monitor.method, monitor.body, monitor.timeout, monitor.degraded_after, monitor.follow_redirects, monitor.headers, monitor.assertions, monitor.workspace_id, monitor.retry, monitor.otel_endpoint, monitor.otel_headers FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.token = ? AND monitor.deleted_at IS NULL and monitor.active = 1", token)
+	err := h.db.Select(&monitors, "SELECT monitor.id, monitor.job_type, monitor.url, monitor.periodicity, monitor.method, monitor.body, monitor.timeout, monitor.degraded_after, monitor.follow_redirects, monitor.headers, monitor.assertions, monitor.workspace_id, monitor.retry, monitor.otel_endpoint, monitor.otel_headers, monitor.grpc_service, monitor.grpc_tls FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.token = ? AND monitor.deleted_at IS NULL and monitor.active = 1", token)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	httpMonitors, tcpMonitors, dnsMonitors, workspaceId := mapMonitors(ctx, monitors)
+	httpMonitors, tcpMonitors, dnsMonitors, icmpMonitors, grpcMonitors, workspaceId := mapMonitors(ctx, monitors)
 
 	// Enrich wide event with monitor counts
 	if holder := GetEvent(ctx); holder != nil {
@@ -204,6 +205,8 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 			"http_monitors":  len(httpMonitors),
 			"tcp_monitors":   len(tcpMonitors),
 			"dns_monitors":   len(dnsMonitors),
+			"icmp_monitors":  len(icmpMonitors),
+			"grpc_monitors":  len(grpcMonitors),
 			"total_monitors": len(monitors),
 		}
 	}
@@ -212,6 +215,8 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 		HttpMonitors: httpMonitors,
 		TcpMonitors:  tcpMonitors,
 		DnsMonitors:  dnsMonitors,
+		IcmpMonitors: icmpMonitors,
+		GrpcMonitors: grpcMonitors,
 		Region:       location.Name,
 	}), nil
 }
@@ -220,12 +225,16 @@ func mapMonitors(ctx context.Context, monitors []database.Monitor) (
 	[]*private_locationv1.HTTPMonitor,
 	[]*private_locationv1.TCPMonitor,
 	[]*private_locationv1.DNSMonitor,
+	[]*private_locationv1.ICMPMonitor,
+	[]*private_locationv1.GRPCMonitor,
 	int,
 ) {
 	var workspaceId int
 	var httpMonitors []*private_locationv1.HTTPMonitor
 	var tcpMonitors []*private_locationv1.TCPMonitor
 	var dnsMonitors []*private_locationv1.DNSMonitor
+	var icmpMonitors []*private_locationv1.ICMPMonitor
+	var grpcMonitors []*private_locationv1.GRPCMonitor
 	for _, monitor := range monitors {
 		if workspaceId == 0 {
 			workspaceId = monitor.WorkspaceID
@@ -238,10 +247,18 @@ func mapMonitors(ctx context.Context, monitors []database.Monitor) (
 			tcpMonitors = append(tcpMonitors, toTCPMonitor(ctx, monitor))
 		case database.JobTypeDNS:
 			dnsMonitors = append(dnsMonitors, toDNSMonitor(ctx, monitor))
+		case database.JobTypeICMP:
+			icmpMonitors = append(icmpMonitors, toICMPMonitor(ctx, monitor))
+		case database.JobTypeGRPC:
+			grpcMonitors = append(grpcMonitors, toGRPCMonitor(ctx, monitor))
+		default:
+			// Without this a job type the checker does not know is dropped in
+			// silence: no row, no log, and a monitor that reads as "no data yet".
+			addParseError(ctx, "unsupported_job_type", fmt.Errorf("monitor %d has job type %q", monitor.ID, monitor.JobType))
 		}
 	}
 
-	return httpMonitors, tcpMonitors, dnsMonitors, workspaceId
+	return httpMonitors, tcpMonitors, dnsMonitors, icmpMonitors, grpcMonitors, workspaceId
 }
 
 func toHTTPMonitor(ctx context.Context, monitor database.Monitor) *private_locationv1.HTTPMonitor {
@@ -279,6 +296,46 @@ func toTCPMonitor(ctx context.Context, monitor database.Monitor) *private_locati
 		DegradedAt:  &monitor.DegradedAfter.Int64,
 		Periodicity: monitor.Periodicity,
 		Retry:       int64(monitor.Retry),
+		OtelConfig:  buildOtelConfig(ctx, monitor),
+	}
+}
+
+func toICMPMonitor(ctx context.Context, monitor database.Monitor) *private_locationv1.ICMPMonitor {
+	return &private_locationv1.ICMPMonitor{
+		Id:          strconv.Itoa(monitor.ID),
+		Uri:         monitor.URL,
+		Timeout:     monitor.Timeout,
+		DegradedAt:  &monitor.DegradedAfter.Int64,
+		Periodicity: monitor.Periodicity,
+		Retry:       int64(monitor.Retry),
+		OtelConfig:  buildOtelConfig(ctx, monitor),
+	}
+}
+
+func toGRPCMonitor(ctx context.Context, monitor database.Monitor) *private_locationv1.GRPCMonitor {
+	var metadata []*private_locationv1.Headers
+	if monitor.Headers != "" {
+		if err := json.Unmarshal([]byte(monitor.Headers), &metadata); err != nil {
+			addParseError(ctx, "metadata_unmarshal", err)
+			metadata = nil
+		}
+	}
+
+	tlsMode := monitor.GrpcTls.String
+	if tlsMode == "" {
+		tlsMode = "tls"
+	}
+
+	return &private_locationv1.GRPCMonitor{
+		Id:          strconv.Itoa(monitor.ID),
+		Uri:         monitor.URL,
+		Timeout:     monitor.Timeout,
+		DegradedAt:  &monitor.DegradedAfter.Int64,
+		Periodicity: monitor.Periodicity,
+		Retry:       int64(monitor.Retry),
+		Service:     monitor.GrpcService.String,
+		TlsMode:     tlsMode,
+		Metadata:    metadata,
 		OtelConfig:  buildOtelConfig(ctx, monitor),
 	}
 }

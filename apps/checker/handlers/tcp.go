@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openstatushq/openstatus/apps/checker/checker"
@@ -108,16 +108,16 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		retry = 3
 	}
 
-	op := func() error {
+	op := func() (struct{}, error) {
 		res, err := checker.PingTCP(int(req.Timeout), req.URI)
 
 		if err != nil {
-			return fmt.Errorf("unable to check tcp %s", err)
+			return struct{}{}, fmt.Errorf("unable to check tcp %s", err)
 		}
 
 		timingAsString, err := json.Marshal(res)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
+			return struct{}{}, fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
 		}
 
 		latency := res.TCPDone - res.TCPStart
@@ -135,7 +135,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 		id, err := uuid.NewV7()
 		if err != nil {
-			return fmt.Errorf("error while generating uuid %w", err)
+			return struct{}{}, fmt.Errorf("error while generating uuid %w", err)
 		}
 
 		data := TCPData{
@@ -204,10 +204,10 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 
-		return nil
+		return struct{}{}, nil
 	}
 
-	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), uint64(retry))); err != nil {
+	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry))); err != nil {
 
 		id, e := uuid.NewV7()
 		if e != nil {
@@ -295,13 +295,13 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 
 	var response checker.TCPResponse
 
-	op := func() error {
+	op := func() (struct{}, error) {
 		called++
 		timestamp := time.Now().UTC().UnixMilli()
 		res, err := checker.PingTCP(int(req.Timeout), req.URI)
 
 		if err != nil {
-			return fmt.Errorf("unable to check tcp %s", err)
+			return struct{}{}, fmt.Errorf("unable to check tcp %s", err)
 		}
 
 		response = checker.TCPResponse{
@@ -317,7 +317,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 
 		timingAsString, err := json.Marshal(res)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
+			return struct{}{}, fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
 		}
 
 		latency := res.TCPDone - res.TCPStart
@@ -341,10 +341,10 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 			}
 		}
 
-		return nil
+		return struct{}{}, nil
 	}
 
-	err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3))
+	_, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(3))
 	if err != nil {
 		response.Error = 1
 	}

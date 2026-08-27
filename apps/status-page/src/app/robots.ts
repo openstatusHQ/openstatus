@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { getBaseUrl } from "../lib/base-url";
 import { stripHostPort } from "../lib/domain";
 import { resolveRoute } from "../lib/resolve-route";
+import { isCanonicalThemeExplorerHost } from "../lib/theme-explorer-host";
 
 // trpc/db lookup needs Node, matching the sitemap and other content routes.
 export const runtime = "nodejs";
@@ -49,6 +50,13 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         },
       ],
     };
+  }
+
+  // No page for this host: `/` falls through to the theme explorer, which only
+  // belongs in the index on its own host. Matches the `robots` the explorer
+  // itself emits — every other host that renders it is noindex.
+  if (!row && !isCanonicalThemeExplorerHost(host)) {
+    return { rules: [{ userAgent: "*", disallow: "/" }] };
   }
 
   const sitemap = row

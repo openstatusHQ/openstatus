@@ -1,13 +1,27 @@
 ---
 title: "Uptime Monitoring"
 publishedAt: "2025-11-10"
+updatedAt: "2026-08-26"
 seo:
-  title: "Uptime Monitoring - Website & API Uptime Monitor"
-hero: "Uptime monitoring for websites and APIs"
+  title: "API & Service Uptime Monitoring for Developers"
+  description: "Monitor API and service uptime from 28 regions. Instant alerts via Slack, Discord, PagerDuty and email. Monitoring as code with YAML, CLI and Terraform."
+hero: "Uptime monitoring for websites, APIs and services"
 author: "Thibault Le Ouay Ducasse"
-description: "Monitor website and API uptime from around the world. Get instant downtime alerts via Slack, email and SMS. Free, open-source uptime monitoring"
+description: "Monitor your websites, APIs and services from 28 regions. Get alerted the moment a check fails an assertion or exceeds your threshold."
 category: "Product"
 faq:
+  - question: "What is uptime monitoring?"
+    answer: "Uptime monitoring is the practice of checking, on a fixed schedule and from outside your own network, whether a service is reachable and responding correctly. Checks typically run every 30 seconds to 10 minutes from probe locations around the world. Because the checks originate externally, they catch failures your internal dashboards cannot see — DNS problems, expired certificates, and regional outages."
+  - question: "How often should I check my service?"
+    answer: "Match the frequency to the cost of the outage. Revenue-critical endpoints justify 30-second checks; internal tooling is usually fine at 5 or 10 minutes. Higher frequency shortens the time between a failure starting and you hearing about it, but consumes more of your check quota. openstatus supports 30s, 1m, 5m and 10m intervals depending on your plan."
+  - question: "What is the difference between uptime and availability?"
+    answer: "Uptime is what your monitor measures: the proportion of checks that succeeded. Availability is what your users experienced, which includes degraded performance your checks may have passed. A service returning HTTP 200 in eight seconds is up but arguably not available. This is why thresholds matter alongside assertions — they let you count slow responses as degraded rather than healthy."
+  - question: "Can I monitor internal services?"
+    answer: "Yes. Deploy a private location probe inside your network as an 8.5MB Docker container and it appears as another monitoring region in your dashboard. The probe reaches out to openstatus, so no inbound firewall rule is needed. You can run as many private locations as you like across different VPCs or networks."
+  - question: "How do I monitor a REST or GraphQL API?"
+    answer: "Create an HTTP monitor pointing at the endpoint, choose the method, and add any headers your API needs for authentication. For GraphQL, send a POST with the query in the body. Then add assertions on the status code, response headers, or body content so the monitor verifies the response is correct rather than merely present, and set a threshold so slow responses register as degraded."
+  - question: "How much does uptime monitoring cost?"
+    answer: "The free Hobby plan includes one monitor at a 10-minute interval with no credit card. Paid plans start at $30/month for Starter (20 monitors, 1-minute checks, 6 regions per monitor), $100/month for Pro (50 monitors, 30-second checks, all 28 regions), and $500/month for Scale. Annual billing gives you two months free."
   - question: "How many regions should I monitor from?"
     answer: "Start with 3-5 regions covering your main user geographies. More regions provide better global coverage but use more check quota. For critical services, monitor from all major regions (North America, Europe, Asia) to catch regional issues quickly."
   - question: "Why monitor from multiple cloud providers instead of just one?"
@@ -25,6 +39,30 @@ faq:
   - question: "Can I run private monitoring locations in different networks?"
     answer: "Yes, you can deploy as many private location probes as needed across different networks, VPCs, or regions. Each gets its own API key and appears as a separate monitoring region in your dashboard. The Docker image is only 8.5MB and supports ARM64 and AMD64."
 ---
+
+## Why is uptime monitoring important?
+
+Uptime monitoring is the practice of continuously asking one question on your users' behalf: is this service working right now? Instead of waiting for a customer to report a problem, checks run on a schedule from outside your own network and tell you the moment the answer changes.
+
+It answers three things a dashboard inside your own infrastructure cannot:
+
+1. **Is my service reachable?** Can users actually get to it, from where they are?
+2. **Is it fast enough?** Are response times inside the range you promised?
+3. **Is it correct?** Is it returning the data you expect, not just a 200?
+
+That external vantage point is the whole point. If your service runs on the same infrastructure as your monitoring, an outage that takes down one takes down the other — and you find out from your customers instead.
+
+<div className="space-x-2">
+  <ButtonLink href="https://app.openstatus.dev?ref=uptime-monitoring-top" children="Start Monitoring Free" variant="default" />
+</div>
+
+Free to start. Paid plans from $30/mo.
+
+## Trusted by teams who ship transparency
+
+<CustomerLogos />
+
+## How uptime monitoring works
 
 ```
 +----------------+
@@ -59,11 +97,6 @@ faq:
 | Your Team |
 +-----------+
 ```
-
-
-## Why uptime monitoring is important?
-
-Uptime monitoring is your first line of defense to ensure your service is available for your customers. By monitoring your service from multiple regions around the world, you can be sure that your customers are able to reach your service.
 
 
 <Grid>
@@ -117,13 +150,13 @@ When needed, you can export to your **OTLP endpoint** the metrics for every requ
 
 ### Notification channels
 
-Set different notification channels and **get notified** whenever a not satisfying your assertions or are exceeding the thresholds.
+Set different notification channels and **get notified** whenever a response fails your assertions or exceeds your thresholds.
 
 We support:
 
-- Socials: Slack, Discord, Telegram Bot
-- Direct: Email, SMS
-- Incident Management: OpsGenie, PagerDuty
+- Socials: Slack, Discord, Telegram Bot, Google Chat, Microsoft Teams
+- Direct: Email, SMS, WhatsApp
+- Incident Management: OpsGenie, PagerDuty, Grafana OnCall
 - Custom: Webhook, Ntfy
 
 ### Status Pages
@@ -205,6 +238,42 @@ You can read more here:
 
 ## Frequently asked questions
 
+<Details summary="What is uptime monitoring?">
+
+Uptime monitoring is the practice of checking, on a fixed schedule and from outside your own network, whether a service is reachable and responding correctly. Checks typically run every 30 seconds to 10 minutes from probe locations around the world. Because the checks originate externally, they catch failures your internal dashboards cannot see — DNS problems, expired certificates, and regional outages.
+
+</Details>
+
+<Details summary="How often should I check my service?">
+
+Match the frequency to the cost of the outage. Revenue-critical endpoints justify 30-second checks; internal tooling is usually fine at 5 or 10 minutes. Higher frequency shortens the time between a failure starting and you hearing about it, but consumes more of your check quota. openstatus supports 30s, 1m, 5m and 10m intervals depending on your plan.
+
+</Details>
+
+<Details summary="What is the difference between uptime and availability?">
+
+Uptime is what your monitor measures: the proportion of checks that succeeded. Availability is what your users experienced, which includes degraded performance your checks may have passed. A service returning HTTP 200 in eight seconds is up but arguably not available. This is why thresholds matter alongside assertions — they let you count slow responses as degraded rather than healthy.
+
+</Details>
+
+<Details summary="Can I monitor internal services?">
+
+Yes. Deploy a private location probe inside your network as an 8.5MB Docker container and it appears as another monitoring region in your dashboard. The probe reaches out to openstatus, so no inbound firewall rule is needed. You can run as many private locations as you like across different VPCs or networks.
+
+</Details>
+
+<Details summary="How do I monitor a REST or GraphQL API?">
+
+Create an HTTP monitor pointing at the endpoint, choose the method, and add any headers your API needs for authentication. For GraphQL, send a POST with the query in the body. Then add assertions on the status code, response headers, or body content so the monitor verifies the response is correct rather than merely present, and set a threshold so slow responses register as degraded.
+
+</Details>
+
+<Details summary="How much does uptime monitoring cost?">
+
+The free Hobby plan includes one monitor at a 10-minute interval with no credit card. Paid plans start at $30/month for Starter (20 monitors, 1-minute checks, 6 regions per monitor), $100/month for Pro (50 monitors, 30-second checks, all 28 regions), and $500/month for Scale. Annual billing gives you two months free.
+
+</Details>
+
 <Details summary="How many regions should I monitor from?">
 
 Start with 3-5 regions covering your main user geographies. More regions provide better global coverage but use more check quota. For critical services, monitor from all major regions (North America, Europe, Asia) to catch regional issues quickly.
@@ -252,6 +321,14 @@ Use YAML + CLI for simplicity and if you're not already using Terraform. It's li
 Yes, you can deploy as many private location probes as needed across different networks, VPCs, or regions. Each gets its own API key and appears as a separate monitoring region in your dashboard. The Docker image is only 8.5MB and supports ARM64 and AMD64.
 
 </Details>
+
+---
+
+<div className="space-x-2">
+  <ButtonLink href="https://app.openstatus.dev?ref=uptime-monitoring-bottom" children="Start Monitoring Free" variant="default" />
+</div>
+
+Free to start. Paid plans from $30/mo.
 
 ---
 

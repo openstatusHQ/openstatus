@@ -7,12 +7,13 @@ import {
 } from "@openstatus/assertions";
 import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 import {
+  grpcTlsModes,
   monitorJobTypes,
   monitorMethods,
 } from "@openstatus/db/src/schema/monitors/constants";
 import { z } from "zod";
 
-export { monitorJobTypes, monitorMethods, monitorPeriodicity };
+export { grpcTlsModes, monitorJobTypes, monitorMethods, monitorPeriodicity };
 
 const headerPair = z.object({ key: z.string(), value: z.string() });
 const assertion = z.discriminatedUnion("type", [
@@ -37,7 +38,7 @@ const apiTimeoutMs = z.coerce.number().gte(0).lte(120_000);
  * + `30m`/`1m` respectively).
  */
 export const CreateMonitorInput = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
   jobType: z.enum(monitorJobTypes),
   url: z.string(),
   method: z.enum(monitorMethods),
@@ -56,6 +57,8 @@ export const CreateMonitorInput = z.object({
   degradedAfter: apiTimeoutMs.nullish(),
   retry: z.number().int().min(0).optional(),
   followRedirects: z.boolean().optional(),
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
   otelEndpoint: z.string().optional(),
   otelHeaders: z.array(headerPair).optional(),
 });
@@ -72,7 +75,7 @@ export type CreateMonitorInput = z.infer<typeof CreateMonitorInput>;
  */
 export const UpdateMonitorConfigInput = z.object({
   id: z.number().int(),
-  name: z.string().min(1).optional(),
+  name: z.string().trim().min(1).optional(),
   url: z.string().optional(),
   method: z.enum(monitorMethods).optional(),
   headers: z.array(headerPair).optional(),
@@ -87,6 +90,8 @@ export const UpdateMonitorConfigInput = z.object({
   degradedAfter: apiTimeoutMs.nullish(),
   retry: z.number().int().min(0).optional(),
   followRedirects: z.boolean().optional(),
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
   otelEndpoint: z.string().optional(),
   otelHeaders: z.array(headerPair).optional(),
 });
@@ -95,7 +100,7 @@ export type UpdateMonitorConfigInput = z.infer<typeof UpdateMonitorConfigInput>;
 /** Update the "general" monitor payload — name / endpoint / headers / assertions. */
 export const UpdateMonitorGeneralInput = z.object({
   id: z.number().int(),
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
   jobType: z.enum(monitorJobTypes),
   url: z.string(),
   method: z.enum(monitorMethods),
@@ -103,6 +108,10 @@ export const UpdateMonitorGeneralInput = z.object({
   body: z.string().optional(),
   assertions: z.array(assertion).default([]),
   active: z.boolean().default(true),
+  // gRPC-only fields. `undefined` leaves the stored value untouched so a
+  // caller that omits them (e.g. an HTTP monitor) never clears the column.
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
 });
 export type UpdateMonitorGeneralInput = z.infer<
   typeof UpdateMonitorGeneralInput

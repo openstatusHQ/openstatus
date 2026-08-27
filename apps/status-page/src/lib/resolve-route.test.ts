@@ -519,4 +519,180 @@ describe("resolveRoute", () => {
       });
     });
   });
+  describe("host header source", () => {
+    test("x-forwarded-host wins over the internal urlHost", () => {
+      // Every proxied host is rewritten to the www.stpg.dev origin; only the
+      // forwarded header still carries the tenant.
+      const result = resolveRoute({
+        host: "status.acme.com",
+        urlHost: "www.stpg.dev",
+        pathname: "/monitors/1",
+      });
+      expect(result).toEqual({
+        type: "hostname",
+        prefix: "status.acme.com",
+        locale: "en",
+        localeExplicit: false,
+        rewritePath: "/status.acme.com/en/monitors/1",
+      });
+    });
+
+    test("no forwarded header falls back to urlHost", () => {
+      const result = resolveRoute({
+        host: null,
+        urlHost: "acme.openstatus.dev",
+        pathname: "/events",
+      });
+      expect(result).toEqual({
+        type: "hostname",
+        prefix: "acme",
+        locale: "en",
+        localeExplicit: false,
+        rewritePath: "/acme/en/events",
+      });
+    });
+
+    test("origin host alone resolves no tenant", () => {
+      // www.stpg.dev/ reached directly — nothing to look up, so the request
+      // falls through to `/`.
+      expect(
+        resolveRoute({
+          host: "www.stpg.dev",
+          urlHost: "www.stpg.dev",
+          pathname: "/",
+        }),
+      ).toBeNull();
+    });
+  });
+
+  describe("vercel preview deployments", () => {
+    test("preview root resolves no tenant", () => {
+      expect(
+        resolveRoute({
+          host: "status-page-abc123.vercel.app",
+          urlHost: "status-page-abc123.vercel.app",
+          pathname: "/",
+        }),
+      ).toBeNull();
+    });
+
+    test("preview uses path routing, not the deployment name", () => {
+      const result = resolveRoute({
+        host: "status-page-abc123.vercel.app",
+        urlHost: "status-page-abc123.vercel.app",
+        pathname: "/acme/en",
+      });
+      expect(result).toEqual({
+        type: "pathname",
+        prefix: "acme",
+        locale: "en",
+        localeExplicit: true,
+        rewritePath: "/acme/en",
+      });
+    });
+
+    test("a forwarded preview host with a non-preview urlHost reads the deployment name as a slug", () => {
+      // The `.vercel.app` guard tests urlHost only. Harmless — no page matches
+      // a deployment name — but pinned so a fix is deliberate.
+      const result = resolveRoute({
+        host: "status-page-abc123.vercel.app",
+        urlHost: "www.stpg.dev",
+        pathname: "/",
+      });
+      expect(result?.prefix).toBe("status-page-abc123");
+    });
+  });
+
+  describe("path shapes", () => {
+    test("trailing slash does not add an empty segment", () => {
+      const result = resolveRoute({
+        host: "acme.openstatus.dev",
+        urlHost: "www.stpg.dev",
+        pathname: "/events/",
+      });
+      expect(result?.rewritePath).toBe("/acme/en/events");
+    });
+
+    test("repeated slashes collapse", () => {
+      const result = resolveRoute({
+        host: "acme.openstatus.dev",
+        urlHost: "www.stpg.dev",
+        pathname: "//events",
+      });
+      expect(result?.rewritePath).toBe("/acme/en/events");
+    });
+
+    test("an unsupported locale-shaped segment is treated as a path segment", () => {
+      const result = resolveRoute({
+        host: "acme.openstatus.dev",
+        urlHost: "www.stpg.dev",
+        pathname: "/de-DE/events",
+      });
+      expect(result).toEqual({
+        type: "hostname",
+        prefix: "acme",
+        locale: "en",
+        localeExplicit: false,
+        rewritePath: "/acme/en/de-DE/events",
+      });
+    });
+
+    test("path routing lowercases the lookup prefix but rewrites the original casing", () => {
+      // The `[locale]` layout then rejects "EN" and renders the 404.
+      const result = resolveRoute({
+        host: "www.stpg.dev",
+        urlHost: "www.stpg.dev",
+        pathname: "/ACME/EN/events",
+      });
+      expect(result).toEqual({
+        type: "pathname",
+        prefix: "acme",
+        locale: "en",
+        localeExplicit: true,
+        rewritePath: "/ACME/EN/events",
+      });
+    });
+  });
+
+  describe("hosts with no tenant — these fall through to `/`", () => {
+    // The proxy passes through when the resolved prefix matches no `page` row,
+    // and `/` is the theme explorer. `isThemeExplorerHost` is what keeps the
+    // explorer off the hosts below; see theme-explorer-host.test.ts.
+    test("the theme explorer host resolves as a normal subdomain", () => {
+      const result = resolveRoute({
+        host: "themes.openstatus.dev",
+        urlHost: "www.stpg.dev",
+        pathname: "/",
+      });
+      expect(result?.prefix).toBe("themes");
+    });
+
+    test("an unknown subdomain resolves to its own slug", () => {
+      const result = resolveRoute({
+        host: "does-not-exist.openstatus.dev",
+        urlHost: "www.stpg.dev",
+        pathname: "/",
+      });
+      expect(result?.prefix).toBe("does-not-exist");
+    });
+
+    test("a custom domain missing from the page table resolves to the full host", () => {
+      const result = resolveRoute({
+        host: "status.unconfigured.com",
+        urlHost: "www.stpg.dev",
+        pathname: "/",
+      });
+      expect(result?.prefix).toBe("status.unconfigured.com");
+    });
+
+    test("a look-alike host resolves to the tenant slug it imitates", () => {
+      // Substring match in getValidSubdomain — see domain.test.ts.
+      const result = resolveRoute({
+        host: "acme.openstatus.dev.evil.com",
+        urlHost: "www.stpg.dev",
+        pathname: "/",
+      });
+      expect(result?.prefix).toBe("acme");
+    });
+  });
 });

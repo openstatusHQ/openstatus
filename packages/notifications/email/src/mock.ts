@@ -28,6 +28,8 @@ const monitor: Monitor = {
   followRedirects: false,
   retry: 3,
   externalName: null,
+  grpcService: null,
+  grpcTls: null,
 };
 
 const notification: Notification = {

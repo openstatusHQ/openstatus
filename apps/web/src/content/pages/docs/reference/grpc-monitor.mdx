@@ -1,0 +1,141 @@
+---
+category: Reference
+title: gRPC Monitor Reference
+description: Complete technical specification for gRPC health check monitoring.
+---
+
+A gRPC monitor calls the [gRPC Health Checking Protocol](https://grpc.io/docs/guides/health-checking/) — a unary `grpc.health.v1.Health/Check` request — against your service and reports the serving status it answers with. This is the check Kubernetes, Envoy and `grpcurl` all speak, so a service that is already health-checked in your cluster needs no new endpoint.
+
+Each check opens a fresh connection, so the reported timings cover DNS resolution, TCP connect, the TLS handshake and the call itself.
+
+**Use cases:**
+
+- Verifying a gRPC service is not just reachable but reports itself as serving.
+- Catching a service that has drained (`NOT_SERVING`) before traffic reaches it.
+- Tracking connection and TLS handshake latency to an internal service from a private location.
+
+## Outcomes
+
+| Server answer | Monitor result | Notes |
+| --- | --- | --- |
+| `SERVING` | Up | Degraded if latency exceeds your threshold |
+| `NOT_SERVING` | Down | The service is up but reports itself as not serving |
+| `SERVICE_UNKNOWN` | Down | The server does not know the service name you configured |
+| `UNIMPLEMENTED` | Down | The server is reachable but has not registered `grpc.health.v1.Health` |
+| `DEADLINE_EXCEEDED` | Down | No answer within the timeout |
+| `UNAVAILABLE` | Down | Connection refused, DNS failure, or TLS failure |
+
+`UNIMPLEMENTED` is reported with its own message rather than a generic failure: it means the server is healthy enough to answer, it just has no health service registered. Register one with your gRPC library's health package and the check starts working.
+
+A check that reaches the server keeps its measured latency and phase timings even when the answer is `NOT_SERVING`, so a service that degrades before it drains is visible in the latency chart.
+
+## Configuration
+
+### Host:Port
+
+**Type:** String (required)
+**Format:** `host:port` — a port is required
+
+The gRPC target. IPv6 addresses must be bracketed. A scheme (`grpc://`, `https://`) is not accepted.
+
+**Examples:**
+- `api.example.com:443`
+- `10.0.0.5:50051`
+- `[2001:db8::1]:50051`
+
+### Service
+
+**Type:** String (optional)
+**Default:** empty
+
+The service name sent in the health check request. Leave it empty to check the server's overall health, which is what most deployments register.
+
+**Example:** `checkout.v1.CheckoutService`
+
+### TLS
+
+**Type:** Enum (optional)
+**Default:** `TLS (verify certificate)`
+
+How the probe secures its connection:
+
+- **TLS (verify certificate)** — verify the server certificate against the public trust store. Use this for any internet-facing endpoint.
+- **TLS (skip verification)** — negotiate TLS but accept any certificate. For internal services presenting a self-signed or mesh-issued certificate, typically behind a private location.
+- **Plaintext (h2c)** — no TLS. For a service behind a mesh or load balancer that has already terminated TLS.
+
+A certificate that fails verification is reported as `certificate verification failed`; the certificate's own details are never returned.
+
+### Metadata
+
+**Type:** Key-value pairs (optional)
+
+Metadata sent with the health check request. gRPC metadata is carried as HTTP/2 headers, so this is where an authorization token goes when your health endpoint sits behind an authenticating proxy.
+
+**Common example:**
+```
+authorization: Bearer <your_token>
+```
+
+### Regions
+
+**Type:** Array of strings (required)
+**Format:** Region identifiers (e.g., `iad`, `jnb`)
+
+The geographical regions the check runs from. See the [Location Reference](/docs/reference/location) for the full list of regions and the IPs to allowlist.
+
+### Frequency
+
+**Type:** String (required)
+**Format:** Duration string (e.g., `30s`, `1m`, `1h`)
+
+How often the health check runs. Supported frequencies:
+- `30 seconds`
+- `1 minute`
+- `5 minutes`
+- `10 minutes`
+- `30 minutes`
+- `1 hour`
+
+### Response time thresholds
+
+#### Timeout
+
+**Type:** Duration (optional)
+**Default:** `45 seconds`
+
+The budget for the whole check — name resolution, connection, TLS handshake and the call. Exceeding it reports `DEADLINE_EXCEEDED`.
+
+#### Degraded
+
+**Type:** Duration (optional)
+
+The latency above which a `SERVING` response is recorded as degraded rather than healthy.
+
+### Retry
+
+**Type:** Integer (optional)
+**Default:** `3`
+
+How many times a check is retried before reporting a definitive error. Only connection failures are retried: once the server has answered — including `NOT_SERVING` or `UNIMPLEMENTED` — the result is recorded immediately, because asking again cannot change it.
+
+### OpenTelemetry
+
+Configures the export of monitoring metrics to an OpenTelemetry-compatible observability platform.
+
+#### OTLP endpoint
+
+**Type:** String (optional)
+**Protocol:** HTTP only
+
+The OTLP endpoint URL where metrics are exported. gRPC monitors export the total request duration, the DNS, connection, TLS and time-to-first-byte phase durations, and a serving-status gauge that is `1` while the service reports `SERVING` and `0` otherwise — so a drained service can be alerted on separately from an unreachable one.
+
+#### OTLP headers
+
+**Type:** Key-value pairs (optional)
+
+Custom headers to include when sending metrics to your OTLP endpoint, commonly used for authentication or tenant identification.
+
+## Related resources
+
+- **[Create your first monitor](/docs/tutorial/create-your-first-monitor)** — step-by-step tutorial on setting up a monitor.
+- **[CLI reference](/docs/reference/cli-reference)** — manage monitors programmatically from the command line.
