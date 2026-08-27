@@ -50,7 +50,7 @@ export function MaintenanceRowActions({
   );
 
   return (
-    <>
+    <div onClick={(event) => event.stopPropagation()}>
       <QuickActions
         actions={actions}
         deleteAction={{
@@ -89,6 +89,6 @@ export function MaintenanceRowActions({
           Open sheet
         </button>
       </FormSheetMaintenance>
-    </>
+    </div>
   );
 }

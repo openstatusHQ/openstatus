@@ -1,3 +1,5 @@
+import { db, desc, eq } from "@openstatus/db";
+import { maintenanceUpdate } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
 
@@ -95,6 +97,14 @@ test("update only the message", async () => {
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
   expect(result.data?.message).toBe("Only Message Updated");
+
+  const latestUpdate = await db
+    .select()
+    .from(maintenanceUpdate)
+    .where(eq(maintenanceUpdate.maintenanceId, 1))
+    .orderBy(desc(maintenanceUpdate.date), desc(maintenanceUpdate.id))
+    .get();
+  expect(latestUpdate?.message).toBe("Only Message Updated");
 });
 
 test.ignore("update only the dates", async () => {

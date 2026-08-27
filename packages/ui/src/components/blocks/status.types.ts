@@ -36,6 +36,10 @@ export interface Maintenance {
   title: string;
   affected: string[];
   message: string;
+  maintenanceUpdates?: {
+    date: Date;
+    message: string;
+  }[];
   from: Date;
   to: Date;
 }

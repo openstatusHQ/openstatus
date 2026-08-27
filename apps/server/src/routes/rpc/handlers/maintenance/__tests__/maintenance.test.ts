@@ -1,6 +1,7 @@
 import { db, eq } from "@openstatus/db";
 import {
   maintenance,
+  maintenanceUpdate,
   maintenancesToPageComponents,
   page,
   pageComponent,
@@ -531,6 +532,14 @@ describe("MaintenanceService.CreateMaintenance", () => {
     expect(subscriptionSpies.dispatchMaintenanceUpdate).toHaveBeenCalledTimes(
       1,
     );
+    const initialUpdate = await db
+      .select({ id: maintenanceUpdate.id })
+      .from(maintenanceUpdate)
+      .where(eq(maintenanceUpdate.maintenanceId, Number(data.maintenance.id)))
+      .get();
+    expect(subscriptionSpies.dispatchMaintenanceUpdate).toHaveBeenCalledWith(
+      initialUpdate?.id,
+    );
 
     // Clean up
     await db
@@ -672,6 +681,7 @@ describe("MaintenanceService.GetMaintenance", () => {
     expect(data.maintenance).toHaveProperty("updatedAt");
     expect(data.maintenance).toHaveProperty("from");
     expect(data.maintenance).toHaveProperty("to");
+    expect(Array.isArray(data.maintenance.updates)).toBe(true);
   });
 
   test("returns 401 when no auth key provided", async () => {
@@ -737,6 +747,83 @@ describe("MaintenanceService.GetMaintenance", () => {
     );
 
     expect(res.status).toBe(400);
+  });
+});
+
+describe("MaintenanceService maintenance update CRUD", () => {
+  test("adds, updates, and deletes timeline entries", async () => {
+    const first = await connectRequest(
+      "AddMaintenanceUpdate",
+      {
+        maintenanceId: String(testMaintenanceId),
+        message: "First timeline entry",
+        notify: false,
+      },
+      { "x-openstatus-key": authKey },
+    );
+    expect(first.status).toBe(200);
+
+    const second = await connectRequest(
+      "AddMaintenanceUpdate",
+      {
+        maintenanceId: String(testMaintenanceId),
+        message: "Second timeline entry",
+        notify: false,
+      },
+      { "x-openstatus-key": authKey },
+    );
+    expect(second.status).toBe(200);
+    const created = await second.json();
+
+    const updated = await connectRequest(
+      "UpdateMaintenanceUpdate",
+      {
+        id: created.maintenanceUpdate.id,
+        message: "Corrected timeline entry",
+      },
+      { "x-openstatus-key": authKey },
+    );
+    expect(updated.status).toBe(200);
+    expect((await updated.json()).maintenanceUpdate.message).toBe(
+      "Corrected timeline entry",
+    );
+
+    const deleted = await connectRequest(
+      "DeleteMaintenanceUpdate",
+      { id: created.maintenanceUpdate.id },
+      { "x-openstatus-key": authKey },
+    );
+    expect(deleted.status).toBe(200);
+    expect(await deleted.json()).toEqual({ success: true });
+  });
+
+  test("scopes update mutations to the authenticated workspace", async () => {
+    const otherMaintenance = await db
+      .insert(maintenance)
+      .values({
+        workspaceId: OTHER_WORKSPACE_ID,
+        title: `${TEST_PREFIX}-other-update`,
+        message: "Other",
+        from: new Date(Date.now() + 1000),
+        to: new Date(Date.now() + 2000),
+      })
+      .returning()
+      .get();
+    try {
+      const res = await connectRequest(
+        "AddMaintenanceUpdate",
+        {
+          maintenanceId: String(otherMaintenance.id),
+          message: "Not allowed",
+        },
+        { "x-openstatus-key": authKey },
+      );
+      expect(res.status).toBe(404);
+    } finally {
+      await db
+        .delete(maintenance)
+        .where(eq(maintenance.id, otherMaintenance.id));
+    }
   });
 });
 

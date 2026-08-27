@@ -1,6 +1,9 @@
 import "./test-preload.ts";
 import { db, eq } from "@openstatus/db";
 import {
+  maintenance,
+  maintenanceUpdate,
+  maintenancesToPageComponents,
   pageSubscriber,
   pageSubscriberToPageComponent,
 } from "@openstatus/db/src/schema";
@@ -21,7 +24,7 @@ import {
 } from "@std/testing/bdd";
 import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 
-import { dispatchPageUpdate } from "./dispatcher";
+import { dispatchMaintenanceUpdate, dispatchPageUpdate } from "./dispatcher";
 import type { PageUpdate } from "./types";
 
 // RESEND_API_KEY is set in test-preload.ts (see bunfig.toml) so @openstatus/emails
@@ -33,7 +36,9 @@ let rejectNextSend: Error | null = null;
 // Built in `beforeAll` — a private page keeps the subscriber set this suite
 // dispatches to independent of anything else running against the database.
 let PAGE_ID: number;
+let WORKSPACE_ID: number;
 let COMPONENT_1: number;
+let COMPONENT_1_NAME: string;
 let COMPONENT_2: number;
 
 const EMAILS = {
@@ -69,8 +74,11 @@ async function cleanAll() {
 
 beforeAll(async () => {
   const { workspace } = await createTestWorkspace();
+  WORKSPACE_ID = workspace.id;
   PAGE_ID = (await createPage(workspace.id)).id;
-  COMPONENT_1 = (await createPageComponent(workspace.id, PAGE_ID)).id;
+  const component1 = await createPageComponent(workspace.id, PAGE_ID);
+  COMPONENT_1 = component1.id;
+  COMPONENT_1_NAME = component1.name;
   COMPONENT_2 = (await createPageComponent(workspace.id, PAGE_ID, { order: 1 }))
     .id;
 
@@ -224,5 +232,56 @@ describe("dispatchPageUpdate - edge cases", () => {
     await expect(
       dispatchPageUpdate(makePageUpdate({ pageComponentIds: [] })),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("dispatchMaintenanceUpdate", () => {
+  test("dispatches the selected update with parent schedule and components", async () => {
+    const startsAt = new Date("2026-08-10T10:00:00.000Z");
+    const endsAt = new Date("2026-08-10T11:00:00.000Z");
+    const occurredAt = new Date("2026-08-07T14:00:00.000Z");
+    const record = await db
+      .insert(maintenance)
+      .values({
+        workspaceId: WORKSPACE_ID,
+        pageId: PAGE_ID,
+        title: "Database maintenance",
+        message: "parent message",
+        from: startsAt,
+        to: endsAt,
+      })
+      .returning()
+      .get();
+
+    try {
+      await db
+        .insert(maintenancesToPageComponents)
+        .values({
+          maintenanceId: record.id,
+          pageComponentId: COMPONENT_1,
+        })
+        .run();
+      const update = await db
+        .insert(maintenanceUpdate)
+        .values({
+          maintenanceId: record.id,
+          message: "specific update message",
+          date: occurredAt,
+        })
+        .returning()
+        .get();
+
+      await dispatchMaintenanceUpdate(update.id);
+
+      const args = sendStatusReportUpdateMock.calls[0].args[0];
+      expect(args.message).toBe("specific update message");
+      expect(args.date).toBe(occurredAt.toISOString());
+      expect(args.pageComponents).toContain(COMPONENT_1_NAME);
+      expect(args.idempotencyKey).toMatch(
+        new RegExp(`^status-report-update:${update.id}:`),
+      );
+    } finally {
+      await db.delete(maintenance).where(eq(maintenance.id, record.id));
+    }
   });
 });

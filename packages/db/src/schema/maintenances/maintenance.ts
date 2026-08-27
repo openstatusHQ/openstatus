@@ -33,8 +33,28 @@ export const maintenance = sqliteTable(
   ],
 );
 
+export const maintenanceUpdate = sqliteTable(
+  "maintenance_update",
+  {
+    id: integer("id").primaryKey(),
+    message: text("message").notNull(),
+    date: integer("date", { mode: "timestamp" }).notNull(),
+    maintenanceId: integer("maintenance_id")
+      .references(() => maintenance.id, { onDelete: "cascade" })
+      .notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+  },
+  (t) => [index("maintenance_update_maintenance_id_idx").on(t.maintenanceId)],
+);
+
 export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
   maintenancesToPageComponents: many(maintenancesToPageComponents),
+  maintenanceUpdates: many(maintenanceUpdate),
   page: one(page, {
     fields: [maintenance.pageId],
     references: [page.id],
@@ -44,3 +64,13 @@ export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
     references: [workspace.id],
   }),
 }));
+
+export const maintenanceUpdateRelations = relations(
+  maintenanceUpdate,
+  ({ one }) => ({
+    maintenance: one(maintenance, {
+      fields: [maintenanceUpdate.maintenanceId],
+      references: [maintenance.id],
+    }),
+  }),
+);

@@ -73,7 +73,9 @@ export function FormSheetMaintenanceCreate({
     trpc.maintenance.new.mutationOptions({
       onSuccess: (maintenance) => {
         if (maintenance.notifySubscribers) {
-          sendMaintenanceUpdateMutation.mutate({ id: maintenance.id });
+          sendMaintenanceUpdateMutation.mutate({
+            id: maintenance.initialUpdateId,
+          });
         }
         // no-input prefix key — matches every maintenance.list query
         queryClient.invalidateQueries({

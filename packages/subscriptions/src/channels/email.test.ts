@@ -158,7 +158,7 @@ describe("sendEmailNotifications", () => {
     expect(args.idempotencyKey).toMatch(/^status-report-update:77:[0-9a-z]+$/);
   });
 
-  test("falls back to a page-update key when there is no update id (maintenance)", async () => {
+  test("falls back to a page-update key when there is no update id", async () => {
     const sub = makeSub();
     await sendEmailNotifications(
       [sub],
