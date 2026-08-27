@@ -56,6 +56,7 @@ describe("testGrpc", () => {
 
     const result = await testGrpc({
       url: "api.example.com:443",
+      tls: "tls",
       region: "ams",
     });
     expect(result.state).toBe("success");
@@ -71,7 +72,7 @@ describe("testGrpc", () => {
     );
 
     await expect(
-      testGrpc({ url: "api.example.com:443", region: "ams" }),
+      testGrpc({ url: "api.example.com:443", tls: "tls", region: "ams" }),
     ).rejects.toThrow("service reports NOT_SERVING");
   });
 
@@ -84,7 +85,7 @@ describe("testGrpc", () => {
     );
 
     await expect(
-      testGrpc({ url: "api.example.com:443", region: "ams" }),
+      testGrpc({ url: "api.example.com:443", tls: "tls", region: "ams" }),
     ).rejects.toThrow("does not implement");
   });
 
@@ -94,7 +95,7 @@ describe("testGrpc", () => {
     );
 
     await expect(
-      testGrpc({ url: "api.example.com:443", region: "ams" }),
+      testGrpc({ url: "api.example.com:443", tls: "tls", region: "ams" }),
     ).rejects.toThrow("SERVICE_UNKNOWN");
   });
 
@@ -103,7 +104,7 @@ describe("testGrpc", () => {
     stubChecker({ message: "uri not reachable" });
 
     await expect(
-      testGrpc({ url: "api.example.com:443", region: "ams" }),
+      testGrpc({ url: "api.example.com:443", tls: "tls", region: "ams" }),
     ).rejects.toThrow("uri not reachable");
   });
 });
