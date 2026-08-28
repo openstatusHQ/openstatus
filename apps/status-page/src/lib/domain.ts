@@ -60,13 +60,6 @@ export const getValidCustomDomain = (req: NextRequest | Request) => {
   const pathnames = url.pathname.split("/");
 
   const subdomain = getValidSubdomain(url.host);
-  console.log({
-    hostnames,
-    pathnames,
-    host,
-    urlHost: url.host,
-    subdomain,
-  });
 
   if (
     hostnames.length > 2 &&
@@ -83,8 +76,6 @@ export const getValidCustomDomain = (req: NextRequest | Request) => {
   if (subdomain !== null) {
     prefix = subdomain.toLowerCase();
   }
-
-  console.log({ type, prefix });
 
   return { type, prefix };
 };

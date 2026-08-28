@@ -9,6 +9,7 @@ import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override"
 import { applyPageSlugPrefix } from "./lib/proxy/apply-page-slug-prefix";
 import { composePageAction } from "./lib/proxy/compose-page-action";
 import { detectMarkdown } from "./lib/proxy/detect-markdown";
+import { redactLogPathname, redactLogUrl } from "./lib/proxy/redact-log-url";
 import { resolveUnresolvedHostAction } from "./lib/proxy/resolve-unresolved-host-action";
 import { sanitizeRedirectParam } from "./lib/proxy/sanitize-redirect-param";
 import { resolveRoute } from "./lib/resolve-route";
@@ -100,11 +101,11 @@ export default auth(async (req) => {
 
   console.log("[proxy] request", {
     host,
-    pathname: url.pathname,
+    pathname: redactLogPathname(url.pathname),
     slug: _page.slug,
     customDomain: _page.customDomain || null,
     accessType: _page.accessType,
-    route,
+    route: { ...route, rewritePath: redactLogPathname(route.rewritePath) },
     authEmailPresent: !!req.auth?.user?.email,
     clientIp: clientIp ?? null,
     isSelfHosted,
@@ -131,7 +132,7 @@ export default auth(async (req) => {
   console.log("[proxy] action", {
     type: action.type,
     reason: action.reason,
-    url: action.url?.toString() ?? null,
+    url: redactLogUrl(action.url),
   });
 
   switch (action.type) {
