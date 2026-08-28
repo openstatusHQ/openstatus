@@ -29,7 +29,7 @@ import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required"),
   provider: z.literal("ntfy"),
   data: z.record(z.string(), z.string()),
   monitors: z.array(z.number()),

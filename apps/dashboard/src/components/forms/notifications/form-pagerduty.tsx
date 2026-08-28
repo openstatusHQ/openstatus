@@ -31,9 +31,9 @@ import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required"),
   provider: z.literal("pagerduty"),
-  data: z.string().min(1, "Config is required"),
+  data: z.string().trim().min(1, "PagerDuty configuration is required"),
   monitors: z.array(z.number()),
 });
 

@@ -31,7 +31,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useFormSheetDirty } from "../form-sheet";
 
 const schema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required"),
   provider: z.literal("ms-teams"),
   data: z.object({
     webhookUrl: safeUrlSchema,

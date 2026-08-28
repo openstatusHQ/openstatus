@@ -40,7 +40,7 @@ const schema = z.object({
   data: z.object({
     apiKey: z.string().trim().min(1, "API key is required"),
     region: z.enum(["us", "eu"], {
-      errorMap: () => ({ message: "Please select a region" }),
+      message: "Please select a region",
     }),
   }),
   monitors: z.array(z.number()),
