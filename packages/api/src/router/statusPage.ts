@@ -309,7 +309,7 @@ export const statusPageRouter = createTRPCRouter({
 
         // Different groups or one is ungrouped - sort by group position
         // For grouped monitors, use precomputed minimum order of the group
-        // For ungrouped monsters, use their own order
+        // For ungrouped monitors, use their own order
         const aGroupMinOrder =
           aGroupId !== null
             ? (groupMinOrderMap.get(aGroupId) ?? 0)

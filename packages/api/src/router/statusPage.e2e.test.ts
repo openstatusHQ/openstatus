@@ -978,6 +978,7 @@ describe("statusPage.get monitors sorting", () => {
     const group1 = await db
       .insert(pageComponentGroup)
       .values({
+        workspaceId: sortingTestWorkspaceId,
         pageId: sortingTestPageId,
         name: "Group 1",
         defaultOpen: true,
@@ -989,6 +990,7 @@ describe("statusPage.get monitors sorting", () => {
     const group2 = await db
       .insert(pageComponentGroup)
       .values({
+        workspaceId: sortingTestWorkspaceId,
         pageId: sortingTestPageId,
         name: "Group 2",
         defaultOpen: true,
@@ -1016,8 +1018,10 @@ describe("statusPage.get monitors sorting", () => {
       .get();
 
     await db.insert(pageComponent).values({
+      workspaceId: sortingTestWorkspaceId,
       pageId: sortingTestPageId,
       monitorId: monitor1.id,
+      name: monitor1.name,
       type: "monitor",
       order: 0,
       groupId: null,
@@ -1038,8 +1042,10 @@ describe("statusPage.get monitors sorting", () => {
       .get();
 
     await db.insert(pageComponent).values({
+      workspaceId: sortingTestWorkspaceId,
       pageId: sortingTestPageId,
       monitorId: monitor2.id,
+      name: monitor2.name,
       type: "monitor",
       order: 1,
       groupId: group1Id,
@@ -1060,8 +1066,10 @@ describe("statusPage.get monitors sorting", () => {
       .get();
 
     await db.insert(pageComponent).values({
+      workspaceId: sortingTestWorkspaceId,
       pageId: sortingTestPageId,
       monitorId: monitor3.id,
+      name: monitor3.name,
       type: "monitor",
       order: 3,
       groupId: group1Id,
@@ -1082,8 +1090,10 @@ describe("statusPage.get monitors sorting", () => {
       .get();
 
     await db.insert(pageComponent).values({
+      workspaceId: sortingTestWorkspaceId,
       pageId: sortingTestPageId,
       monitorId: monitor4.id,
+      name: monitor4.name,
       type: "monitor",
       order: 4,
       groupId: null,
@@ -1104,8 +1114,10 @@ describe("statusPage.get monitors sorting", () => {
       .get();
 
     await db.insert(pageComponent).values({
+      workspaceId: sortingTestWorkspaceId,
       pageId: sortingTestPageId,
       monitorId: monitor5.id,
+      name: monitor5.name,
       type: "monitor",
       order: 5,
       groupId: group2Id,
@@ -1126,8 +1138,10 @@ describe("statusPage.get monitors sorting", () => {
       .get();
 
     await db.insert(pageComponent).values({
+      workspaceId: sortingTestWorkspaceId,
       pageId: sortingTestPageId,
       monitorId: monitor6.id,
+      name: monitor6.name,
       type: "monitor",
       order: 6,
       groupId: group2Id,
