@@ -33,6 +33,7 @@ function makePipes(
     tcp: overrides.tcp ?? fallback,
     dns: overrides.dns ?? fallback,
     icmp: overrides.icmp ?? fallback,
+    grpc: overrides.grpc ?? fallback,
   };
 }
 

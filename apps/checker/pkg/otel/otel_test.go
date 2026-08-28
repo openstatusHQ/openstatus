@@ -416,3 +416,102 @@ func TestRecordDNSMetrics_SetupFailure(t *testing.T) {
 	// Must not panic — same nil pointer guard as HTTP.
 	RecordDNSMetrics(context.Background(), req, 30, false, "us-east-1")
 }
+
+// grpcMetricValues collects every gauge and counter one recordGRPCInstruments
+// call produced, keyed by metric name.
+func grpcMetricValues(t *testing.T, reader *sdkMetrics.ManualReader) (map[string]float64, map[string]int64) {
+	t.Helper()
+
+	gauges := map[string]float64{}
+	counters := map[string]int64{}
+	for _, sm := range collectMetrics(t, reader).ScopeMetrics {
+		for _, m := range sm.Metrics {
+			if gauge, ok := m.Data.(metricdata.Gauge[float64]); ok && len(gauge.DataPoints) == 1 {
+				gauges[m.Name] = gauge.DataPoints[0].Value
+			}
+			if sum, ok := m.Data.(metricdata.Sum[int64]); ok && len(sum.DataPoints) == 1 {
+				counters[m.Name] = sum.DataPoints[0].Value
+			}
+		}
+	}
+
+	return gauges, counters
+}
+
+func TestRecordGRPCInstrumentsServing(t *testing.T) {
+	meter, reader := newTestMeter(t)
+	att := metric.WithAttributes(attribute.String("openstatus.probes", "ams"))
+
+	recordGRPCInstruments(context.Background(), meter, checker.GRPCResponse{
+		Latency:       120,
+		Completed:     true,
+		ServingStatus: checker.ServingStatusServing,
+		Timing: checker.GRPCResponseTiming{
+			DnsStart: 100, DnsDone: 104,
+			ConnectStart: 104, ConnectDone: 114,
+			TlsHandshakeStart: 114, TlsHandshakeDone: 150,
+			FirstByteStart: 150, FirstByteDone: 220,
+		},
+	}, att)
+
+	gauges, counters := grpcMetricValues(t, reader)
+
+	assert.Equal(t, float64(120), gauges["openstatus.grpc.request.duration"])
+	assert.Equal(t, float64(4), gauges["openstatus.grpc.dns.duration"])
+	assert.Equal(t, float64(10), gauges["openstatus.grpc.connection.duration"])
+	assert.Equal(t, float64(36), gauges["openstatus.grpc.tls.duration"])
+	assert.Equal(t, float64(70), gauges["openstatus.grpc.ttfb.duration"])
+	assert.Equal(t, float64(1), gauges["openstatus.grpc.serving_status"])
+
+	assert.Equal(t, int64(1), counters["openstatus.status"])
+	assert.NotContains(t, counters, "openstatus.error")
+}
+
+// A NOT_SERVING check sets the error flag but completed, so it must still
+// report its real durations and a serving_status of 0. Gating on the error flag
+// the way the ICMP path does would leave this gauge only ever emitting 1.
+func TestRecordGRPCInstrumentsNotServing(t *testing.T) {
+	meter, reader := newTestMeter(t)
+	att := metric.WithAttributes(attribute.String("openstatus.probes", "ams"))
+
+	recordGRPCInstruments(context.Background(), meter, checker.GRPCResponse{
+		Latency:       90,
+		Completed:     true,
+		Error:         1,
+		ServingStatus: checker.ServingStatusNotServing,
+		Timing: checker.GRPCResponseTiming{
+			FirstByteStart: 10, FirstByteDone: 100,
+		},
+	}, att)
+
+	gauges, counters := grpcMetricValues(t, reader)
+
+	assert.Equal(t, float64(0), gauges["openstatus.grpc.serving_status"])
+	assert.Equal(t, float64(90), gauges["openstatus.grpc.request.duration"])
+	assert.Equal(t, float64(90), gauges["openstatus.grpc.ttfb.duration"])
+	assert.Equal(t, int64(1), counters["openstatus.error"])
+	assert.NotContains(t, counters, "openstatus.status")
+}
+
+func TestRecordGRPCInstrumentsTransportFailure(t *testing.T) {
+	meter, reader := newTestMeter(t)
+	att := metric.WithAttributes(attribute.String("openstatus.probes", "ams"))
+
+	recordGRPCInstruments(context.Background(), meter, checker.GRPCResponse{
+		Completed: false,
+		Error:     1,
+	}, att)
+
+	gauges, counters := grpcMetricValues(t, reader)
+
+	assert.Equal(t, int64(1), counters["openstatus.error"])
+	assert.Empty(t, gauges, "a call that never completed has no durations to report")
+}
+
+// A phase whose hook never fired leaves a zero, and subtracting absolute epoch
+// stamps from it would report a value in the trillions.
+func TestGRPCPhaseIgnoresUnfiredHooks(t *testing.T) {
+	assert.Equal(t, float64(0), grpcPhase(0, 1761000000000))
+	assert.Equal(t, float64(0), grpcPhase(1761000000000, 0))
+	assert.Equal(t, float64(25), grpcPhase(100, 125))
+}

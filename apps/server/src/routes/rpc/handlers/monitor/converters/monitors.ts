@@ -1,6 +1,7 @@
 import type { Monitor } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
+  GRPCMonitor,
   HTTPMonitor,
   ICMPMonitor,
   TCPMonitor,
@@ -9,6 +10,7 @@ import type {
 import { parseDnsAssertions, parseHttpAssertions } from "./assertions";
 import { MONITOR_DEFAULTS } from "./defaults";
 import {
+  stringToGrpcTlsMode,
   stringToHttpMethod,
   stringToMonitorStatus,
   stringToPeriodicity,
@@ -100,6 +102,35 @@ export function dbMonitorToIcmpProto(
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
     status: stringToMonitorStatus(dbMon.status),
     privateLocationIds,
+  };
+}
+
+/**
+ * Transform database gRPC monitor to proto GRPCMonitor.
+ */
+export function dbMonitorToGrpcProto(
+  dbMon: Monitor,
+  privateLocationIds: string[] = [],
+): GRPCMonitor {
+  return {
+    $typeName: "openstatus.monitor.v1.GRPCMonitor",
+    id: String(dbMon.id),
+    name: dbMon.name,
+    uri: dbMon.url,
+    periodicity: stringToPeriodicity(dbMon.periodicity),
+    timeout: BigInt(dbMon.timeout),
+    degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
+    retry: BigInt(dbMon.retry ?? MONITOR_DEFAULTS.retry),
+    description: dbMon.description,
+    active: dbMon.active ?? MONITOR_DEFAULTS.active,
+    public: dbMon.public ?? MONITOR_DEFAULTS.public,
+    regions: stringsToRegions(dbMon.regions),
+    openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
+    status: stringToMonitorStatus(dbMon.status),
+    privateLocationIds,
+    service: dbMon.grpcService ?? undefined,
+    tlsMode: stringToGrpcTlsMode(dbMon.grpcTls),
+    metadata: toProtoHeaders(dbMon.headers),
   };
 }
 

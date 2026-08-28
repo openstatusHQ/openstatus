@@ -51,7 +51,7 @@ export function ChartAreaLatency({
   degradedAfter: number | null;
   percentile: (typeof PERCENTILES)[number];
   period: (typeof PERIODS)[number];
-  type: "http" | "tcp" | "dns" | "icmp";
+  type: "http" | "tcp" | "dns" | "icmp" | "grpc";
   regions: string[] | undefined;
 }) {
   const trpc = useTRPC();

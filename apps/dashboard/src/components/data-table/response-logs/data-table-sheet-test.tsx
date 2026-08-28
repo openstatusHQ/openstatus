@@ -16,6 +16,7 @@ type TestTCP = RouterOutputs["checker"]["testTcp"];
 type TestHTTP = RouterOutputs["checker"]["testHttp"];
 type TestDNS = RouterOutputs["checker"]["testDns"];
 type TestICMP = RouterOutputs["checker"]["testIcmp"];
+type TestGRPC = RouterOutputs["checker"]["testGrpc"];
 type Monitor = NonNullable<RouterOutputs["monitor"]["get"]>;
 
 export function DataTableSheetTest({
@@ -23,7 +24,7 @@ export function DataTableSheetTest({
   monitor,
   onClose,
 }: {
-  data: TestTCP | TestHTTP | TestDNS | TestICMP | null;
+  data: TestTCP | TestHTTP | TestDNS | TestICMP | TestGRPC | null;
   monitor: Monitor;
   onClose: () => void;
 }) {
@@ -47,7 +48,7 @@ export function DataTableSheetTest({
 }
 
 function mapping(
-  data: TestTCP | TestHTTP | TestDNS | TestICMP,
+  data: TestTCP | TestHTTP | TestDNS | TestICMP | TestGRPC,
   monitor: Monitor,
 ) {
   switch (data.type) {
@@ -124,6 +125,26 @@ function mapping(
         uri: monitor.url,
         monitorId: String(monitor.id),
         errorMessage: null,
+        assertions: null,
+      } as const;
+    case "grpc":
+      return {
+        id: null,
+        trigger: null,
+        timestamp: data.timestamp,
+        cronTimestamp: data.timestamp,
+        region: data.region,
+        type: data.type,
+        requestStatus: data.servingStatus === "SERVING" ? "success" : "error",
+        error: data.servingStatus !== "SERVING",
+        latency: data.latency ?? 0,
+        servingStatus: data.servingStatus ?? null,
+        grpcCode: data.grpcCode ?? null,
+        service: data.service ?? null,
+        timing: calculateTiming(data.timing),
+        uri: monitor.url,
+        monitorId: String(monitor.id),
+        errorMessage: data.errorMessage ?? null,
         assertions: null,
       } as const;
     default:

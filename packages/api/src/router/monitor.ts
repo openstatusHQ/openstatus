@@ -16,6 +16,7 @@ import {
   deleteMonitor,
   deleteMonitors,
   getMonitor,
+  grpcTlsModes,
   listMonitors,
   monitorJobTypes,
   monitorMethods,
@@ -35,7 +36,7 @@ import { z } from "zod";
 import { env } from "../env";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { testDns, testHttp, testIcmp, testTcp } from "./checker";
+import { testDns, testGrpc, testHttp, testIcmp, testTcp } from "./checker";
 
 // self-host has no access to the openstatus checker fleet, so the pre-save
 // endpoint test can never succeed — skip it entirely.
@@ -63,6 +64,8 @@ const newMonitorTRPCInput = z.object({
   active: z.boolean().prefault(false),
   saveCheck: z.boolean().prefault(false),
   skipCheck: z.boolean().prefault(false),
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
 });
 
 const updateGeneralTRPCInput = z.object({
@@ -77,6 +80,8 @@ const updateGeneralTRPCInput = z.object({
   active: z.boolean().prefault(true),
   skipCheck: z.boolean().prefault(true),
   saveCheck: z.boolean().prefault(false),
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
 });
 
 export const monitorRouter = createTRPCRouter({
@@ -344,6 +349,14 @@ export const monitorRouter = createTRPCRouter({
             });
           } else if (input.jobType === "icmp") {
             await testIcmp({ url: input.url, region: "ams" });
+          } else if (input.jobType === "grpc") {
+            await testGrpc({
+              url: input.url,
+              service: input.grpcService,
+              tls: input.grpcTls ?? "tls",
+              headers: input.headers,
+              region: "ams",
+            });
           }
         }
 
@@ -357,6 +370,8 @@ export const monitorRouter = createTRPCRouter({
           body: input.body,
           assertions: input.assertions,
           active: input.active,
+          grpcService: input.grpcService,
+          grpcTls: input.grpcTls,
         };
         await updateMonitorGeneral({
           ctx: toServiceCtx(ctx),
@@ -410,6 +425,14 @@ export const monitorRouter = createTRPCRouter({
             });
           } else if (input.jobType === "icmp") {
             await testIcmp({ url: input.url, region: "ams" });
+          } else if (input.jobType === "grpc") {
+            await testGrpc({
+              url: input.url,
+              service: input.grpcService,
+              tls: input.grpcTls ?? "tls",
+              headers: input.headers,
+              region: "ams",
+            });
           }
         }
 
@@ -422,6 +445,8 @@ export const monitorRouter = createTRPCRouter({
           body: input.body,
           assertions: input.assertions,
           active: input.active,
+          grpcService: input.grpcService,
+          grpcTls: input.grpcTls,
         };
         return await createMonitor({
           ctx: toServiceCtx(ctx),

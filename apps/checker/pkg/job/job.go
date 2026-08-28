@@ -32,6 +32,7 @@ type JobRunner interface {
 	HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region string) (*HttpPrivateRegionData, error)
 	DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivateRegionData, error)
 	ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region string) (*ICMPPrivateRegionData, error)
+	GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region string) (*GRPCPrivateRegionData, error)
 }
 
 type jobRunner struct{}

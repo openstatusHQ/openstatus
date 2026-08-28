@@ -54,6 +54,8 @@ export async function createMonitor(args: {
         degradedAfter: input.degradedAfter,
         retry: input.retry,
         followRedirects: input.followRedirects,
+        grpcService: input.grpcService,
+        grpcTls: input.grpcTls,
         otelEndpoint: input.otelEndpoint,
         otelHeaders: headersToDbJson(input.otelHeaders),
         updatedAt: new Date(),

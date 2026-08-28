@@ -189,9 +189,13 @@ function LogsTableInner({
   const columnVisibility = useMemo(
     () => ({
       ...getDefaultColumnVisibility(schema.definition),
+      // gRPC carries HTTP's phase timings, so only its status code column is
+      // meaningless.
       ...(monitor.jobType === "http"
         ? {}
-        : { timing: false, statusCode: false }),
+        : monitor.jobType === "grpc"
+          ? { statusCode: false }
+          : { timing: false, statusCode: false }),
     }),
     [schema, monitor.jobType],
   );

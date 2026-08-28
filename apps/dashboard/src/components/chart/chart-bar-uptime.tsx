@@ -44,7 +44,7 @@ export function ChartBarUptime({
 }: {
   monitorId: string;
   period: (typeof PERIODS)[number];
-  type: "http" | "tcp" | "dns" | "icmp";
+  type: "http" | "tcp" | "dns" | "icmp" | "grpc";
   regions: string[] | undefined;
 }) {
   const isMobile = useIsMobile();

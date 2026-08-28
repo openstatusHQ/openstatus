@@ -22,7 +22,7 @@ export type StatusPipeFn = (params: {
 // only these job types have a 45d status pipe; others (udp/ssl) have no
 // counts on the live status page either and are skipped
 export type UptimeFreezePipes = Record<
-  "http" | "tcp" | "dns" | "icmp",
+  "http" | "tcp" | "dns" | "icmp" | "grpc",
   StatusPipeFn
 >;
 
@@ -60,7 +60,8 @@ function hasStatusPipe(
     jobType === "http" ||
     jobType === "tcp" ||
     jobType === "dns" ||
-    jobType === "icmp"
+    jobType === "icmp" ||
+    jobType === "grpc"
   );
 }
 

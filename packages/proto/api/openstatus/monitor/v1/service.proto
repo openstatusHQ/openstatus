@@ -5,6 +5,7 @@ package openstatus.monitor.v1;
 import "buf/validate/validate.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "openstatus/monitor/v1/dns_monitor.proto";
+import "openstatus/monitor/v1/grpc_monitor.proto";
 import "openstatus/monitor/v1/http_monitor.proto";
 import "openstatus/monitor/v1/icmp_monitor.proto";
 import "openstatus/monitor/v1/monitor.proto";
@@ -42,6 +43,9 @@ service MonitorService {
   // CreateICMPMonitor creates a new ICMP monitor.
   rpc CreateICMPMonitor(CreateICMPMonitorRequest) returns (CreateICMPMonitorResponse);
 
+  // CreateGRPCMonitor creates a new gRPC health check monitor.
+  rpc CreateGRPCMonitor(CreateGRPCMonitorRequest) returns (CreateGRPCMonitorResponse);
+
   // UpdateHTTPMonitor updates an existing HTTP monitor.
   rpc UpdateHTTPMonitor(UpdateHTTPMonitorRequest) returns (UpdateHTTPMonitorResponse);
 
@@ -53,6 +57,9 @@ service MonitorService {
 
   // UpdateICMPMonitor updates an existing ICMP monitor.
   rpc UpdateICMPMonitor(UpdateICMPMonitorRequest) returns (UpdateICMPMonitorResponse);
+
+  // UpdateGRPCMonitor updates an existing gRPC monitor.
+  rpc UpdateGRPCMonitor(UpdateGRPCMonitorRequest) returns (UpdateGRPCMonitorResponse);
 
   // TriggerMonitor initiates an immediate check for a monitor across all configured regions.
   rpc TriggerMonitor(TriggerMonitorRequest) returns (TriggerMonitorResponse) {
@@ -83,7 +90,7 @@ service MonitorService {
   }
 
   // GetMonitor returns a single monitor by ID within the authenticated workspace.
-  // Returns the monitor configuration (HTTP, TCP, DNS, or ICMP) using the MonitorConfig oneof type.
+  // Returns the monitor configuration (HTTP, TCP, DNS, ICMP, or gRPC) using the MonitorConfig oneof type.
   rpc GetMonitor(GetMonitorRequest) returns (GetMonitorResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
@@ -147,6 +154,18 @@ message CreateICMPMonitorResponse {
   ICMPMonitor monitor = 1;
 }
 
+// CreateGRPCMonitorRequest is the request to create a new gRPC monitor.
+message CreateGRPCMonitorRequest {
+  // Monitor configuration (required).
+  GRPCMonitor monitor = 1 [(buf.validate.field).required = true];
+}
+
+// CreateGRPCMonitorResponse is the response after creating a gRPC monitor.
+message CreateGRPCMonitorResponse {
+  // The created monitor with assigned ID.
+  GRPCMonitor monitor = 1;
+}
+
 // UpdateHTTPMonitorRequest is the request to update an existing HTTP monitor.
 message UpdateHTTPMonitorRequest {
   // Monitor ID to update (required).
@@ -207,6 +226,21 @@ message UpdateICMPMonitorResponse {
   ICMPMonitor monitor = 1;
 }
 
+// UpdateGRPCMonitorRequest is the request to update an existing gRPC monitor.
+message UpdateGRPCMonitorRequest {
+  // Monitor ID to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Updated monitor configuration (all fields optional for partial updates).
+  optional GRPCMonitor monitor = 2;
+}
+
+// UpdateGRPCMonitorResponse is the response after updating a gRPC monitor.
+message UpdateGRPCMonitorResponse {
+  // The updated monitor.
+  GRPCMonitor monitor = 1;
+}
+
 // TriggerMonitorRequest is the request to trigger a monitor check.
 message TriggerMonitorRequest {
   // Monitor ID to trigger (required).
@@ -257,6 +291,9 @@ message ListMonitorsResponse {
   // ICMP monitors in the workspace.
   repeated ICMPMonitor icmp_monitors = 5;
 
+  // gRPC monitors in the workspace.
+  repeated GRPCMonitor grpc_monitors = 6;
+
   // Total number of monitors across all types.
   int32 total_size = 4;
 }
@@ -296,6 +333,8 @@ message MonitorConfig {
     DNSMonitor dns = 3;
     // ICMP monitor configuration.
     ICMPMonitor icmp = 4;
+    // gRPC monitor configuration.
+    GRPCMonitor grpc = 5;
   }
 }
 
@@ -358,7 +397,7 @@ message GetMonitorRequest {
 
 // GetMonitorResponse is the response containing the monitor.
 message GetMonitorResponse {
-  // The monitor configuration (one of HTTP, TCP, DNS, or ICMP).
+  // The monitor configuration (one of HTTP, TCP, DNS, ICMP, or gRPC).
   MonitorConfig monitor = 1;
 }
 

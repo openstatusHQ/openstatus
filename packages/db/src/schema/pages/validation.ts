@@ -68,6 +68,7 @@ export const customThemeWriteSchema = customThemeSchema
   });
 
 export const insertPageSchema = createInsertSchema(page, {
+  title: z.string().trim().min(1, "Title must be at least 1 character long"),
   customDomain: customDomainSchema.prefault(""),
   accessType: z.enum(pageAccessTypes).prefault("public"),
   icon: z.string().optional(),

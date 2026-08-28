@@ -14,7 +14,7 @@ import { tb } from "../../tb";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 
 const periods = ["1d", "7d", "14d", "30d", "90d"] as const;
-const types = ["http", "tcp", "dns", "icmp"] as const;
+const types = ["http", "tcp", "dns", "icmp", "grpc"] as const;
 type Period = (typeof periods)[number];
 type Type = (typeof types)[number];
 
@@ -49,6 +49,7 @@ function clampInterval(period: Period, interval?: number) {
 export function getWorkspace30dProcedure(type: Type) {
   if (type === "http") return tb.httpWorkspace30d;
   if (type === "icmp") return tb.icmpWorkspace30d;
+  if (type === "grpc") return tb.grpcWorkspace30d;
   return tb.tcpWorkspace30d;
 }
 
@@ -59,36 +60,42 @@ export function getMetricsProcedure(period: Period, type: Type) {
       if (type === "http") return tb.httpMetricsDaily;
       if (type === "tcp") return tb.tcpMetricsDaily;
       if (type === "icmp") return tb.icmpMetricsDaily;
+      if (type === "grpc") return tb.grpcMetricsDaily;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "7d":
       if (type === "dns") return tb.dnsMetricsWeekly;
       if (type === "http") return tb.httpMetricsWeekly;
       if (type === "tcp") return tb.tcpMetricsWeekly;
       if (type === "icmp") return tb.icmpMetricsWeekly;
+      if (type === "grpc") return tb.grpcMetricsWeekly;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "14d":
       if (type === "dns") return tb.dnsMetricsBiweekly;
       if (type === "http") return tb.httpMetricsBiweekly;
       if (type === "tcp") return tb.tcpMetricsBiweekly;
       if (type === "icmp") return tb.icmpMetricsBiweekly;
+      if (type === "grpc") return tb.grpcMetricsBiweekly;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "30d":
       if (type === "dns") return tb.dnsMetrics30d;
       if (type === "http") return tb.httpMetrics30d;
       if (type === "tcp") return tb.tcpMetrics30d;
       if (type === "icmp") return tb.icmpMetrics30d;
+      if (type === "grpc") return tb.grpcMetrics30d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "90d":
       if (type === "dns") return tb.dnsMetrics90d;
       if (type === "http") return tb.httpMetrics90d;
       if (type === "tcp") return tb.tcpMetrics90d;
       if (type === "icmp") return tb.icmpMetrics90d;
+      if (type === "grpc") return tb.grpcMetrics90d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
       if (type === "dns") return tb.dnsMetricsDaily;
       if (type === "http") return tb.httpMetricsDaily;
       if (type === "tcp") return tb.tcpMetricsDaily;
       if (type === "icmp") return tb.icmpMetricsDaily;
+      if (type === "grpc") return tb.grpcMetricsDaily;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
@@ -101,36 +108,42 @@ export function getMetricsRegionsProcedure(period: Period, type: Type) {
       if (type === "http") return tb.httpMetricsRegionsDaily;
       if (type === "tcp") return tb.tcpMetricsByIntervalDaily;
       if (type === "icmp") return tb.icmpMetricsByIntervalDaily;
+      if (type === "grpc") return tb.grpcMetricsByIntervalDaily;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "7d":
       if (type === "dns") return tb.dnsMetricsRegionsBiweekly;
       if (type === "http") return tb.httpMetricsRegionsWeekly;
       if (type === "tcp") return tb.tcpMetricsByIntervalWeekly;
       if (type === "icmp") return tb.icmpMetricsByIntervalWeekly;
+      if (type === "grpc") return tb.grpcMetricsByIntervalWeekly;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "14d":
       if (type === "dns") return tb.dnsMetricsRegionsBiweekly;
       if (type === "http") return tb.httpMetricsRegionsBiweekly;
       if (type === "tcp") return tb.tcpMetricsByIntervalBiweekly;
       if (type === "icmp") return tb.icmpMetricsByIntervalBiweekly;
+      if (type === "grpc") return tb.grpcMetricsByIntervalBiweekly;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "30d":
       if (type === "dns") return tb.dnsMetricsRegions30d;
       if (type === "http") return tb.httpMetricsRegions30d;
       if (type === "tcp") return tb.tcpMetricsByInterval30d;
       if (type === "icmp") return tb.icmpMetricsByInterval30d;
+      if (type === "grpc") return tb.grpcMetricsByInterval30d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "90d":
       if (type === "dns") return tb.dnsMetricsRegions90d;
       if (type === "http") return tb.httpMetricsRegions90d;
       if (type === "tcp") return tb.tcpMetricsByInterval90d;
       if (type === "icmp") return tb.icmpMetricsByInterval90d;
+      if (type === "grpc") return tb.grpcMetricsByInterval90d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
       if (type === "dns") return tb.dnsMetricsRegionsBiweekly;
       if (type === "http") return tb.httpMetricsRegionsDaily;
       if (type === "tcp") return tb.tcpMetricsByIntervalDaily;
       if (type === "icmp") return tb.icmpMetricsByIntervalDaily;
+      if (type === "grpc") return tb.grpcMetricsByIntervalDaily;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
@@ -140,6 +153,7 @@ export function getStatusProcedure(_period: "45d", type: Type) {
   if (type === "http") return tb.httpStatus45d;
   if (type === "tcp") return tb.tcpStatus45d;
   if (type === "icmp") return tb.icmpStatus45d;
+  if (type === "grpc") return tb.grpcStatus45d;
   throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 
@@ -150,12 +164,14 @@ export function getGetProcedure(period: "14d", type: Type) {
       if (type === "tcp") return tb.tcpGetBiweekly;
       if (type === "dns") return tb.dnsGetBiweekly;
       if (type === "icmp") return tb.icmpGetBiweekly;
+      if (type === "grpc") return tb.grpcGetBiweekly;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
       if (type === "http") return tb.httpGetBiweekly;
       if (type === "tcp") return tb.tcpGetBiweekly;
       if (type === "dns") return tb.dnsGetBiweekly;
       if (type === "icmp") return tb.icmpGetBiweekly;
+      if (type === "grpc") return tb.grpcGetBiweekly;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
@@ -165,6 +181,7 @@ export function getGlobalMetricsProcedure(type: Type) {
   if (type === "tcp") return tb.tcpGlobalMetricsDaily;
   if (type === "dns") return tb.dnsGlobalMetricsDaily;
   if (type === "icmp") return tb.icmpGlobalMetricsDaily;
+  if (type === "grpc") return tb.grpcGlobalMetricsDaily;
   throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 
@@ -176,24 +193,28 @@ export function getUptimeProcedure(period: "7d" | "30d" | "90d", type: Type) {
       if (type === "http") return tb.httpUptimeWeekly;
       if (type === "tcp") return tb.tcpUptimeWeekly;
       if (type === "icmp") return tb.icmpUptimeWeekly;
+      if (type === "grpc") return tb.grpcUptimeWeekly;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "30d":
       if (type === "dns") return tb.dnsUptime30d;
       if (type === "http") return tb.httpUptime30d;
       if (type === "tcp") return tb.tcpUptime30d;
       if (type === "icmp") return tb.icmpUptime30d;
+      if (type === "grpc") return tb.grpcUptime30d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "90d":
       if (type === "dns") return tb.dnsUptime90d;
       if (type === "http") return tb.httpUptime90d;
       if (type === "tcp") return tb.tcpUptime90d;
       if (type === "icmp") return tb.icmpUptime90d;
+      if (type === "grpc") return tb.grpcUptime90d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
       if (type === "dns") return tb.dnsUptime30d;
       if (type === "http") return tb.httpUptime30d;
       if (type === "tcp") return tb.tcpUptime30d;
       if (type === "icmp") return tb.icmpUptime30d;
+      if (type === "grpc") return tb.grpcUptime30d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
@@ -206,12 +227,14 @@ export function getMetricsLatencyProcedure(_period: Period, type: Type) {
       if (type === "http") return tb.httpMetricsLatency1d;
       if (type === "tcp") return tb.tcpMetricsLatency1d;
       if (type === "icmp") return tb.icmpMetricsLatency1d;
+      if (type === "grpc") return tb.grpcMetricsLatency1d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "7d":
       if (type === "dns") return tb.dnsMetricsLatency7d;
       if (type === "http") return tb.httpMetricsLatency7d;
       if (type === "tcp") return tb.tcpMetricsLatency7d;
       if (type === "icmp") return tb.icmpMetricsLatency7d;
+      if (type === "grpc") return tb.grpcMetricsLatency7d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     // no dedicated 14d latency pipe; 30d MV is the smallest window covering 14d
     case "14d":
@@ -220,18 +243,21 @@ export function getMetricsLatencyProcedure(_period: Period, type: Type) {
       if (type === "http") return tb.httpMetricsLatency30d;
       if (type === "tcp") return tb.tcpMetricsLatency30d;
       if (type === "icmp") return tb.icmpMetricsLatency30d;
+      if (type === "grpc") return tb.grpcMetricsLatency30d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "90d":
       if (type === "dns") return tb.dnsMetricsLatency90d;
       if (type === "http") return tb.httpMetricsLatency90d;
       if (type === "tcp") return tb.tcpMetricsLatency90d;
       if (type === "icmp") return tb.icmpMetricsLatency90d;
+      if (type === "grpc") return tb.grpcMetricsLatency90d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
       if (type === "dns") return tb.dnsMetricsLatency7d;
       if (type === "http") return tb.httpMetricsLatency1d;
       if (type === "tcp") return tb.tcpMetricsLatency1d;
       if (type === "icmp") return tb.icmpMetricsLatency1d;
+      if (type === "grpc") return tb.grpcMetricsLatency1d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
@@ -241,6 +267,7 @@ export function getMetricsLatencyMultiProcedure(_period: Period, type: Type) {
   if (type === "http") return tb.httpMetricsLatency1dMulti;
   if (type === "tcp") return tb.tcpMetricsLatency1dMulti;
   if (type === "icmp") return tb.icmpMetricsLatency1dMulti;
+  if (type === "grpc") return tb.grpcMetricsLatency1dMulti;
   throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 
@@ -496,7 +523,7 @@ export const tinybirdRouter = createTRPCRouter({
 
       const procedure = getGetProcedure(
         opts.input.period,
-        _monitor.jobType as "http" | "tcp" | "dns" | "icmp",
+        _monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc",
       );
       return await procedure(opts.input);
     }),

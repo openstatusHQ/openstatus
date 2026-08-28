@@ -78,6 +78,7 @@ export {
   GetPrivateLocationIdsByMonitorInput,
   GetResponseLogFacetsInput,
   GetResponseLogInput,
+  grpcTlsModes,
   ListMonitorsInput,
   ListResponseLogsInfiniteInput,
   ListResponseLogsInput,

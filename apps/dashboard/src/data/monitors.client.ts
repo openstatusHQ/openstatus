@@ -1,4 +1,5 @@
 import {
+  Api,
   Settings,
   Copy,
   Duplicate,
@@ -30,6 +31,11 @@ export const monitorTypes = [
     id: "icmp",
     label: "ICMP",
     icon: Speed,
+  },
+  {
+    id: "grpc",
+    label: "gRPC",
+    icon: Api,
   },
 ] as const;
 
