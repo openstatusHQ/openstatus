@@ -52,6 +52,12 @@ export type TrimToTickResult<T> = {
   rows: T[];
   nextCursor: number | null;
   prevCursor: number | null;
+  /**
+   * The page is one tick that filled `fetchLimit`, so the pipe's own LIMIT may
+   * have cut it in half. Cursors are exclusive, so paging past it would skip the
+   * rest of that tick for good — refetch wider before trusting the cursor.
+   */
+  truncatedTick: boolean;
 };
 
 /**
@@ -67,7 +73,12 @@ export function trimToTick<T extends { cronTimestamp: number }>(args: {
 }): TrimToTickResult<T> {
   const { rows, limit, fetchLimit, direction } = args;
   if (rows.length === 0) {
-    return { rows: [], nextCursor: null, prevCursor: null };
+    return {
+      rows: [],
+      nextCursor: null,
+      prevCursor: null,
+      truncatedTick: false,
+    };
   }
 
   const kept: T[] = [];
@@ -85,6 +96,9 @@ export function trimToTick<T extends { cronTimestamp: number }>(args: {
   const trailingTick = kept[kept.length - 1].cronTimestamp;
   const trailingIsLast = index === rows.length;
   const distinctTicks = new Set(kept.map((row) => row.cronTimestamp)).size;
+  // Same cut, but there is no earlier tick to fall back on, so it cannot be
+  // dropped here — flag it and let the caller widen the fetch.
+  const truncatedTick = trailingIsLast && hitCeiling && distinctTicks === 1;
 
   // The pipe's own LIMIT may have cut the final tick in half; drop it unless
   // that would leave the caller with nothing.
@@ -106,5 +120,6 @@ export function trimToTick<T extends { cronTimestamp: number }>(args: {
     rows: kept,
     nextCursor: direction === "next" ? (hasMore ? oldest : null) : oldest,
     prevCursor: direction === "prev" ? (hasMore ? newest : null) : newest,
+    truncatedTick,
   };
 }

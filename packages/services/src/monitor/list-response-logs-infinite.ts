@@ -9,6 +9,9 @@ import { getPrivateLocationIdsByMonitor } from "./private-locations";
 import { selectWindow, toPipeParams, trimToTick } from "./response-logs-cursor";
 import { ListResponseLogsInfiniteInput } from "./schemas";
 
+/** The v2 list pipes cap their own `limit` parameter here. */
+const MAX_FETCH_LIMIT = 1000;
+
 export type ListResponseLogsInfiniteResult = {
   data: ResponseLogListItem[];
   nextCursor: number | null;
@@ -81,7 +84,6 @@ export async function listResponseLogsInfinite(args: {
   const overfetch =
     selectMonitorSchema.parse(record).regions.length +
     (privateLocations.get(record.id)?.length ?? 0);
-  const fetchLimit = input.limit + overfetch;
 
   const tb = ctx.tb ?? defaultTb;
   const window = selectWindow(
@@ -89,93 +91,112 @@ export async function listResponseLogsInfinite(args: {
     input.toTimestamp,
     Date.now(),
   );
-  const params = {
+  const baseParams = {
     monitorId: String(record.id),
     fromDate: input.fromTimestamp,
     toDate: input.toTimestamp,
     cursor: input.cursor,
     direction: input.direction,
-    limit: fetchLimit,
     ...toPipeParams(input),
   };
 
-  let rows: ResponseLogListItem[];
-  if (jobType === "http") {
-    const getter =
-      window === "1d"
-        ? tb.httpListV2Daily
-        : window === "7d"
-          ? tb.httpListV2Weekly
-          : tb.httpListV2Biweekly;
-    const result = await getter(params);
-    rows = result.data.map((log) =>
-      toListItem(log, {
-        statusCode: log.statusCode ?? null,
-        timing: log.timing
-          ? {
-              dns: log.timing.dns,
-              connect: log.timing.connect,
-              tls: log.timing.tls,
-              ttfb: log.timing.ttfb,
-              transfer: log.timing.transfer,
-            }
-          : null,
-      }),
-    );
-  } else if (jobType === "tcp") {
-    const getter =
-      window === "1d"
-        ? tb.tcpListV2Daily
-        : window === "7d"
-          ? tb.tcpListV2Weekly
-          : tb.tcpListV2Biweekly;
-    const result = await getter(params);
-    rows = result.data.map((log) =>
-      toListItem(log, { statusCode: null, timing: null }),
-    );
-  } else if (jobType === "icmp") {
-    const getter =
-      window === "1d"
-        ? tb.icmpListV2Daily
-        : window === "7d"
-          ? tb.icmpListV2Weekly
-          : tb.icmpListV2Biweekly;
-    const result = await getter(params);
-    rows = result.data.map((log) =>
-      toListItem(log, { statusCode: null, timing: null }),
-    );
-  } else if (jobType === "grpc") {
-    // gRPC reads the full 14 d materialization: it is the only one carrying
-    // `timing`, and the checker writes HTTP's phase shape there verbatim.
-    const result = await tb.grpcListV2Biweekly(params);
-    rows = result.data.map((log) =>
-      toListItem(log, {
-        statusCode: null,
-        timing: log.timing
-          ? {
-              dns: log.timing.dns,
-              connect: log.timing.connect,
-              tls: log.timing.tls,
-              ttfb: log.timing.ttfb,
-              transfer: log.timing.transfer,
-            }
-          : null,
-      }),
-    );
-  } else {
-    // DNS has a single 14 d materialization, so the window never narrows it.
-    const result = await tb.dnsListV2Biweekly(params);
-    rows = result.data.map((log) =>
-      toListItem(log, { statusCode: null, timing: null }),
-    );
+  async function fetchRows(limit: number): Promise<ResponseLogListItem[]> {
+    const params = { ...baseParams, limit };
+    let rows: ResponseLogListItem[];
+    if (jobType === "http") {
+      const getter =
+        window === "1d"
+          ? tb.httpListV2Daily
+          : window === "7d"
+            ? tb.httpListV2Weekly
+            : tb.httpListV2Biweekly;
+      const result = await getter(params);
+      rows = result.data.map((log) =>
+        toListItem(log, {
+          statusCode: log.statusCode ?? null,
+          timing: log.timing
+            ? {
+                dns: log.timing.dns,
+                connect: log.timing.connect,
+                tls: log.timing.tls,
+                ttfb: log.timing.ttfb,
+                transfer: log.timing.transfer,
+              }
+            : null,
+        }),
+      );
+    } else if (jobType === "tcp") {
+      const getter =
+        window === "1d"
+          ? tb.tcpListV2Daily
+          : window === "7d"
+            ? tb.tcpListV2Weekly
+            : tb.tcpListV2Biweekly;
+      const result = await getter(params);
+      rows = result.data.map((log) =>
+        toListItem(log, { statusCode: null, timing: null }),
+      );
+    } else if (jobType === "icmp") {
+      const getter =
+        window === "1d"
+          ? tb.icmpListV2Daily
+          : window === "7d"
+            ? tb.icmpListV2Weekly
+            : tb.icmpListV2Biweekly;
+      const result = await getter(params);
+      rows = result.data.map((log) =>
+        toListItem(log, { statusCode: null, timing: null }),
+      );
+    } else if (jobType === "grpc") {
+      // gRPC reads the full 14 d materialization: it is the only one carrying
+      // `timing`, and the checker writes HTTP's phase shape there verbatim.
+      const result = await tb.grpcListV2Biweekly(params);
+      rows = result.data.map((log) =>
+        toListItem(log, {
+          statusCode: null,
+          timing: log.timing
+            ? {
+                dns: log.timing.dns,
+                connect: log.timing.connect,
+                tls: log.timing.tls,
+                ttfb: log.timing.ttfb,
+                transfer: log.timing.transfer,
+              }
+            : null,
+        }),
+      );
+    } else {
+      // DNS has a single 14 d materialization, so the window never narrows it.
+      const result = await tb.dnsListV2Biweekly(params);
+      rows = result.data.map((log) =>
+        toListItem(log, { statusCode: null, timing: null }),
+      );
+    }
+    return rows;
   }
 
-  const trimmed = trimToTick({
+  let fetchLimit = Math.min(input.limit + overfetch, MAX_FETCH_LIMIT);
+  let rows = await fetchRows(fetchLimit);
+  let trimmed = trimToTick({
     rows,
     limit: input.limit,
     fetchLimit,
     direction: input.direction,
   });
+
+  // A page that is one tick filling the fetch ceiling may have been cut
+  // mid-tick, and the cursor we would hand back is exclusive: widen until the
+  // tick fits whole, so the remainder is never skipped.
+  while (trimmed.truncatedTick && fetchLimit < MAX_FETCH_LIMIT) {
+    fetchLimit = Math.min(fetchLimit * 2, MAX_FETCH_LIMIT);
+    rows = await fetchRows(fetchLimit);
+    trimmed = trimToTick({
+      rows,
+      limit: input.limit,
+      fetchLimit,
+      direction: input.direction,
+    });
+  }
 
   return {
     data: trimmed.rows,

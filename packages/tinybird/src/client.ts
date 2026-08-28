@@ -178,17 +178,19 @@ const grpcListRowShape = {
 
 // Filters every v2 list and facet pipe accepts; each maps to one `IN` or range
 // predicate evaluated by Tinybird instead of the browser.
+// Bounded here too: these are comma-joined into the pipe request's query string,
+// so the ceiling has to hold at the boundary that builds the URL.
 const responseLogFilterShape = {
-  regions: z.array(z.string()).optional(),
-  status: z.array(z.string()).optional(),
-  trigger: z.array(z.string()).optional(),
+  regions: z.array(z.string().max(64)).max(128).optional(),
+  status: z.array(z.string().max(16)).max(3).optional(),
+  trigger: z.array(z.string().max(16)).max(2).optional(),
   latencyMin: z.int().optional(),
   latencyMax: z.int().optional(),
 };
 
 const httpResponseLogFilterShape = {
   ...responseLogFilterShape,
-  statusCodes: z.array(z.int()).optional(),
+  statusCodes: z.array(z.int()).max(100).optional(),
 };
 
 // The service overfetches by the monitor's location count on top of the caller's

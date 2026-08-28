@@ -108,6 +108,23 @@ describe("v2 response-log list pipes", () => {
       }),
     ).toEqual({ meta: [], data: [] });
   });
+
+  test("httpListV2Biweekly rejects oversized filter arrays", async () => {
+    await expect(
+      tb.httpListV2Biweekly({
+        monitorId: "1",
+        limit: 50,
+        regions: Array.from({ length: 129 }, (_, i) => `r${i}`),
+      }),
+    ).rejects.toThrow();
+    await expect(
+      tb.httpListV2Biweekly({
+        monitorId: "1",
+        limit: 50,
+        statusCodes: Array.from({ length: 101 }, (_, i) => i),
+      }),
+    ).rejects.toThrow();
+  });
 });
 
 describe("response-log facet pipes", () => {

@@ -717,6 +717,19 @@ describe("listResponseLogsInfinite", () => {
     return rows;
   }
 
+  /** Like `makeFakeTb`, but honours the `limit` the pipe was asked for. */
+  function makeLimitedFakeTb(rows: Record<string, unknown>[]) {
+    const limits: number[] = [];
+    const tb = {
+      httpListV2Biweekly: (params: Record<string, unknown>) => {
+        const limit = Number(params.limit);
+        limits.push(limit);
+        return Promise.resolve({ data: rows.slice(0, limit) });
+      },
+    } as unknown as NonNullable<ServiceContext["tb"]>;
+    return { tb, limits };
+  }
+
   test("throws ForbiddenError when plan disables response-logs", async () => {
     await withTestTransaction(async (tx) => {
       await expect(
@@ -782,6 +795,41 @@ describe("listResponseLogsInfinite", () => {
       expect(result.nextCursor).toBe(
         Math.min(...result.data.map((log) => log.cronTimestamp)),
       );
+    });
+  });
+
+  test("widens the fetch when one tick fills the ceiling", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-http-wide-tick`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          regions: REGIONS,
+        },
+      });
+      // Ten rows on the newest tick: the MV is a plain MergeTree, so a retry
+      // can land more rows on a tick than the monitor has locations, and the
+      // location-based overfetch then no longer spans it.
+      const rows = [...httpRows(1, 10), ...httpRows(2, 5).slice(5)];
+      const { tb, limits } = makeLimitedFakeTb(rows);
+
+      const result = await listResponseLogsInfinite({
+        ctx: { ...teamCtx, db: tx, tb },
+        input: { monitorId: row.id, limit: 2, direction: "next" },
+      });
+
+      // 2 + 5 locations only reaches into the tick; the retry doubles it.
+      expect(limits).toEqual([7, 14]);
+      // The tick comes back whole, so the exclusive cursor skips nothing.
+      expect(result.data.length).toBe(10);
+      expect(new Set(result.data.map((log) => log.cronTimestamp)).size).toBe(1);
+      expect(result.nextCursor).toBe(result.data[0].cronTimestamp);
     });
   });
 

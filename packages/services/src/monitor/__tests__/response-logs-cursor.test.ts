@@ -76,7 +76,12 @@ describe("trimToTick", () => {
   test("returns null cursors for an empty page", () => {
     expect(
       trimToTick({ rows: [], limit: 50, fetchLimit: 55, direction: "next" }),
-    ).toEqual({ rows: [], nextCursor: null, prevCursor: null });
+    ).toEqual({
+      rows: [],
+      nextCursor: null,
+      prevCursor: null,
+      truncatedTick: false,
+    });
   });
 
   test("stops on a clean tick boundary", () => {
@@ -107,17 +112,32 @@ describe("trimToTick", () => {
     });
     expect(result.rows.length).toBe(2);
     expect(result.nextCursor).toBe(300);
+    expect(result.truncatedTick).toBe(false);
   });
 
   test("returns a tick wider than the page size whole", () => {
     const result = trimToTick({
       rows: rowsOf([[300, 4]]),
       limit: 2,
-      fetchLimit: 4,
+      fetchLimit: 6,
       direction: "next",
     });
     expect(result.rows.length).toBe(4);
-    expect(result.nextCursor).toBe(300);
+    expect(result.truncatedTick).toBe(false);
+    // Short of the ceiling, so the tick is whole and the source is drained.
+    expect(result.nextCursor).toBe(null);
+  });
+
+  test("flags a lone tick that filled the fetch ceiling as truncated", () => {
+    // The pipe may have cut this tick, and there is no earlier tick to drop
+    // back to; paging past its (exclusive) cursor would lose the remainder.
+    const result = trimToTick({
+      rows: rowsOf([[300, 4]]),
+      limit: 2,
+      fetchLimit: 4,
+      direction: "next",
+    });
+    expect(result.truncatedTick).toBe(true);
   });
 
   test("reports no next page when the source ran dry", () => {

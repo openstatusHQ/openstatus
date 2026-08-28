@@ -239,12 +239,16 @@ export const GetResponseLogInput = z.object({
 });
 export type GetResponseLogInput = z.infer<typeof GetResponseLogInput>;
 
-/** Filters the v2 response-log pipes evaluate server-side. */
+/**
+ * Filters the v2 response-log pipes evaluate server-side. Every array is bounded:
+ * they are templated straight into the pipes' `IN (...)` lists and serialised
+ * into the request URL, so an unbounded one is caller-controlled work.
+ */
 export const ResponseLogFilters = z.object({
-  regions: z.array(z.string()).optional(),
-  status: z.array(z.enum(["success", "error", "degraded"])).optional(),
-  trigger: z.array(z.enum(["cron", "api"])).optional(),
-  statusCodes: z.array(z.number().int()).optional(),
+  regions: z.array(z.string().max(64)).max(128).optional(),
+  status: z.array(z.enum(["success", "error", "degraded"])).max(3).optional(),
+  trigger: z.array(z.enum(["cron", "api"])).max(2).optional(),
+  statusCodes: z.array(z.number().int()).max(100).optional(),
   latencyMin: z.number().int().min(0).optional(),
   latencyMax: z.number().int().min(0).optional(),
 });
