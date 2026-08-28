@@ -690,6 +690,7 @@ describe("listResponseLogsInfinite", () => {
       icmpListV2Weekly: record("icmpListV2Weekly"),
       icmpListV2Biweekly: record("icmpListV2Biweekly"),
       dnsListV2Biweekly: record("dnsListV2Biweekly"),
+      grpcListV2Biweekly: record("grpcListV2Biweekly"),
     } as unknown as NonNullable<ServiceContext["tb"]>;
     return { tb, calls };
   }
@@ -862,6 +863,50 @@ describe("listResponseLogsInfinite", () => {
       expect(calls.tcpListV2Biweekly).toBeUndefined();
       expect(result.data[0].statusCode).toBe(null);
       expect(result.data[0].timing).toBe(null);
+      expect(result.nextCursor).toBe(null);
+    });
+  });
+
+  test("routes grpc monitors to the grpc pipe, keeping its phase timings", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-grpc-infinite`,
+          jobType: "grpc",
+          url: "example.com:443",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          regions: ["ams"],
+        },
+      });
+      const timing = { dns: 1, connect: 2, tls: 3, ttfb: 4, transfer: 5 };
+      const { tb, calls } = makeFakeTb([
+        {
+          id: "grpc-1",
+          monitorId: String(row.id),
+          region: "ams",
+          requestStatus: "success",
+          trigger: "cron",
+          latency: 12,
+          cronTimestamp: 1_700_000_000_000,
+          timestamp: 1_700_000_000_000,
+          timing,
+        },
+      ]);
+
+      const result = await listResponseLogsInfinite({
+        ctx: { ...teamCtx, db: tx, tb },
+        input: { monitorId: row.id, limit: 50, direction: "next" },
+      });
+
+      expect(calls.grpcListV2Biweekly).toBeDefined();
+      expect(calls.httpListV2Biweekly).toBeUndefined();
+      // gRPC has no HTTP status code, but it does carry HTTP's phase shape.
+      expect(result.data[0].statusCode).toBe(null);
+      expect(result.data[0].timing).toEqual(timing);
       expect(result.nextCursor).toBe(null);
     });
   });

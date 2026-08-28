@@ -64,10 +64,11 @@ export async function listResponseLogsInfinite(args: {
     jobType !== "http" &&
     jobType !== "tcp" &&
     jobType !== "dns" &&
-    jobType !== "icmp"
+    jobType !== "icmp" &&
+    jobType !== "grpc"
   ) {
     throw new ValidationError(
-      `listResponseLogsInfinite only supports HTTP, TCP, DNS and ICMP monitors (got '${jobType}').`,
+      `listResponseLogsInfinite only supports HTTP, TCP, DNS, ICMP and gRPC monitors (got '${jobType}').`,
     );
   }
 
@@ -142,6 +143,24 @@ export async function listResponseLogsInfinite(args: {
     const result = await getter(params);
     rows = result.data.map((log) =>
       toListItem(log, { statusCode: null, timing: null }),
+    );
+  } else if (jobType === "grpc") {
+    // gRPC reads the full 14 d materialization: it is the only one carrying
+    // `timing`, and the checker writes HTTP's phase shape there verbatim.
+    const result = await tb.grpcListV2Biweekly(params);
+    rows = result.data.map((log) =>
+      toListItem(log, {
+        statusCode: null,
+        timing: log.timing
+          ? {
+              dns: log.timing.dns,
+              connect: log.timing.connect,
+              tls: log.timing.tls,
+              ttfb: log.timing.ttfb,
+              transfer: log.timing.transfer,
+            }
+          : null,
+      }),
     );
   } else {
     // DNS has a single 14 d materialization, so the window never narrows it.

@@ -43,10 +43,11 @@ export async function getResponseLogFacets(args: {
     jobType !== "http" &&
     jobType !== "tcp" &&
     jobType !== "dns" &&
-    jobType !== "icmp"
+    jobType !== "icmp" &&
+    jobType !== "grpc"
   ) {
     throw new ValidationError(
-      `getResponseLogFacets only supports HTTP, TCP, DNS and ICMP monitors (got '${jobType}').`,
+      `getResponseLogFacets only supports HTTP, TCP, DNS, ICMP and gRPC monitors (got '${jobType}').`,
     );
   }
 
@@ -58,7 +59,9 @@ export async function getResponseLogFacets(args: {
         ? tb.tcpListFacets
         : jobType === "icmp"
           ? tb.icmpListFacets
-          : tb.dnsListFacets;
+          : jobType === "grpc"
+            ? tb.grpcListFacets
+            : tb.dnsListFacets;
 
   const result = await getter({
     monitorId: String(record.id),

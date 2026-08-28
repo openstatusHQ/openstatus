@@ -50,6 +50,7 @@ const listV2Getters = [
   "icmpListV2Weekly",
   "icmpListV2Biweekly",
   "dnsListV2Biweekly",
+  "grpcListV2Biweekly",
 ] as const;
 
 const facetGetters = [
@@ -57,6 +58,7 @@ const facetGetters = [
   "tcpListFacets",
   "icmpListFacets",
   "dnsListFacets",
+  "grpcListFacets",
 ] as const;
 
 describe("v2 response-log list pipes", () => {

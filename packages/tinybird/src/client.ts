@@ -159,6 +159,23 @@ const dnsListRowShape = {
     .pipe(z.record(z.string(), z.array(z.string()))),
 };
 
+const grpcListRowShape = {
+  type: z.literal("grpc").prefault("grpc"),
+  id: z.string().nullable(),
+  latency: z.int(),
+  servingStatus: z.string().nullable(),
+  grpcCode: z.int().nullable(),
+  service: z.string().nullable(),
+  monitorId: z.coerce.string(),
+  requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+  region: z.enum(monitorRegions).or(z.string()),
+  cronTimestamp: z.int(),
+  trigger: z.enum(triggers).nullable().prefault("cron"),
+  timestamp: z.number(),
+  // gRPC is HTTP/2, so the checker writes HTTP's phase shape verbatim.
+  timing: timingPhasesSchema,
+};
+
 // Filters every v2 list and facet pipe accepts; each maps to one `IN` or range
 // predicate evaluated by Tinybird instead of the browser.
 const responseLogFilterShape = {
@@ -2011,6 +2028,30 @@ export class OSTinybird {
         requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
         errorMessage: z.string().nullable(),
       }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcListV2Biweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_list_14d__v1",
+      parameters: z.object({
+        ...listV2WindowShape,
+        ...responseLogFilterShape,
+      }),
+      data: z.object(grpcListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcListFacets() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_list_facets_14d__v0",
+      parameters: z.object({
+        ...facetWindowShape,
+        ...responseLogFilterShape,
+      }),
+      data: z.object(facetRowShape),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
