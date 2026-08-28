@@ -34,6 +34,7 @@ export default function Page() {
 
   if (!page) return null;
 
+  // Filter for public monitors only (sorting is handled server-side)
   const publicMonitors = page.monitors.filter((monitor) => monitor.public);
 
   return (
