@@ -246,8 +246,14 @@ export type GetResponseLogInput = z.infer<typeof GetResponseLogInput>;
  */
 export const ResponseLogFilters = z.object({
   regions: z.array(z.string().max(64)).max(128).optional(),
-  status: z.array(z.enum(["success", "error", "degraded"])).max(3).optional(),
-  trigger: z.array(z.enum(["cron", "api"])).max(2).optional(),
+  status: z
+    .array(z.enum(["success", "error", "degraded"]))
+    .max(3)
+    .optional(),
+  trigger: z
+    .array(z.enum(["cron", "api"]))
+    .max(2)
+    .optional(),
   statusCodes: z.array(z.number().int()).max(100).optional(),
   latencyMin: z.number().int().min(0).optional(),
   latencyMax: z.number().int().min(0).optional(),
