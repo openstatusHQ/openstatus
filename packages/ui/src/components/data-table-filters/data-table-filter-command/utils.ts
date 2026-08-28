@@ -264,24 +264,53 @@ export function tokenizeFilterInput(input: string): Array<[string, string]> {
   const results: Array<[string, string]> = [];
   const trimmed = input.trim();
 
-  // Regex to match: key:"quoted value" or key:unquoted_value
-  // This handles:
-  // - key:"value with spaces"
-  // - key:'value with spaces' (single quotes)
-  // - key:valueWithoutSpaces
-  const regex = /(\w+):(?:"([^"]*)"|'([^']*)'|(\S+))/g;
+  // Hand-rolled scanner instead of a `/(\w+):(?:"([^"]*)"|'([^']*)'|(\S+))/g`
+  // regex: that pattern restarts inside every word run, so a long unmatched run
+  // costs O(n^2) (CodeQL: polynomial ReDoS).
+  let i = 0;
+  while (i < trimmed.length) {
+    const keyStart = i;
+    while (i < trimmed.length && isWordChar(trimmed[i])) i++;
 
-  let match;
-  while ((match = regex.exec(trimmed)) !== null) {
-    const key = match[1];
-    // Value is in group 2 (double quotes), group 3 (single quotes), or group 4 (unquoted)
-    const value = match[2] ?? match[3] ?? match[4];
-    if (key && value !== undefined) {
-      results.push([key, value]);
+    // Not a `key:` prefix — skip the offending char and keep scanning.
+    if (i === keyStart || trimmed[i] !== ":") {
+      i++;
+      continue;
     }
+
+    const key = trimmed.slice(keyStart, i);
+    i++; // consume ":"
+
+    const quote = trimmed[i];
+    if (quote === '"' || quote === "'") {
+      const close = trimmed.indexOf(quote, i + 1);
+      if (close !== -1) {
+        results.push([key, trimmed.slice(i + 1, close)]);
+        i = close + 1;
+        continue;
+      }
+    }
+
+    // Unquoted (or unterminated quote): everything up to the next whitespace.
+    const valueStart = i;
+    while (i < trimmed.length && !isWhitespace(trimmed[i])) i++;
+    if (i > valueStart) results.push([key, trimmed.slice(valueStart, i)]);
   }
 
   return results;
+}
+
+function isWordChar(char: string): boolean {
+  return (
+    (char >= "a" && char <= "z") ||
+    (char >= "A" && char <= "Z") ||
+    (char >= "0" && char <= "9") ||
+    char === "_"
+  );
+}
+
+function isWhitespace(char: string): boolean {
+  return /\s/.test(char);
 }
 
 /**
