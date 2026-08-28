@@ -182,7 +182,12 @@ export function createColBuilder<T, F extends FilterType = FilterType>(
       const display = compact(
         options ? { type, ...options } : { type },
       ) as DisplayDescriptor;
-      return next<T, F>({ display });
+      // Selecting a built-in display drops any custom cell closure — otherwise
+      // it keeps winning in `generateColumns`, which checks renderers first.
+      return createColBuilder<T, F>(
+        { ...descriptor, display },
+        withoutRenderers("cell"),
+      );
     },
 
     filterable(

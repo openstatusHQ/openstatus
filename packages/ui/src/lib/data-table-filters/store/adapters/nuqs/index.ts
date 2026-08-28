@@ -73,7 +73,15 @@ export function useNuqsAdapter<T extends Record<string, unknown>>(
 
   // Compute merged state once per render so validateState isn't called twice
   const currentState = useMemo(() => {
-    const validated = validateState(schema, nuqsState) as T;
+    // nuqs yields null for params absent from the URL, and validateState turns
+    // those into schema defaults — fall back to initialState for them instead
+    const source: Record<string, unknown> = { ...nuqsState };
+    if (initialState) {
+      for (const [key, value] of Object.entries(initialState)) {
+        if (value !== undefined && source[key] == null) source[key] = value;
+      }
+    }
+    const validated = validateState(schema, source) as T;
     return { ...defaults, ...initialState, ...validated } as T;
   }, [nuqsState, schema, defaults, initialState]);
 

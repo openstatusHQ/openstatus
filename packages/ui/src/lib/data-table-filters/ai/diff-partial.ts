@@ -3,6 +3,8 @@ import {
   type TableSchemaDefinition,
 } from "@openstatus/ui/lib/data-table-filters/table-schema/index";
 
+import { parseAIFilterValue } from "./parse-response";
+
 export type CompletedField = {
   key: string;
   value: unknown;
@@ -16,6 +18,12 @@ export type CompletedField = {
  * - `checkbox` (array): complete on first value, updates as more arrive
  * - `slider` (tuple[2]): complete only when both values are present
  * - `timerange` (tuple[2]): complete only when both values are present
+ *
+ * Completed values go through `parseAIFilterValue` before they are emitted, so a
+ * progressive update can never apply a value the final reconciliation would
+ * reject (an unknown checkbox option, a reversed slider, an unparseable date).
+ * The returned value is the coerced one — Date objects for timeranges, clamped
+ * bounds for sliders — not the raw stream value.
  *
  * @param prev - Previous partial state from the stream (or `{}` for first chunk)
  * @param next - Current partial state from the stream
@@ -39,14 +47,12 @@ export function diffPartialState(
     // Skip if the field hasn't appeared yet
     if (nextVal === undefined || nextVal === null) continue;
 
-    const filterType = config.filter.type;
+    let changed = false;
 
-    switch (filterType) {
+    switch (config.filter.type) {
       case "input": {
         // Complete when non-null. Emit only if changed.
-        if (nextVal !== prevVal) {
-          completed.push({ key, value: nextVal });
-        }
+        changed = nextVal !== prevVal;
         break;
       }
 
@@ -56,12 +62,9 @@ export function diffPartialState(
         if (nextVal.length === 0) break;
 
         const prevArr = Array.isArray(prevVal) ? prevVal : [];
-        if (
+        changed =
           nextVal.length !== prevArr.length ||
-          nextVal.some((v, i) => v !== prevArr[i])
-        ) {
-          completed.push({ key, value: nextVal });
-        }
+          nextVal.some((v, i) => v !== prevArr[i]);
         break;
       }
 
@@ -73,9 +76,7 @@ export function diffPartialState(
           break;
 
         const prevArr = Array.isArray(prevVal) ? prevVal : [];
-        if (nextVal[0] !== prevArr[0] || nextVal[1] !== prevArr[1]) {
-          completed.push({ key, value: nextVal });
-        }
+        changed = nextVal[0] !== prevArr[0] || nextVal[1] !== prevArr[1];
         break;
       }
 
@@ -87,12 +88,15 @@ export function diffPartialState(
           break;
 
         const prevArr = Array.isArray(prevVal) ? prevVal : [];
-        if (nextVal[0] !== prevArr[0] || nextVal[1] !== prevArr[1]) {
-          completed.push({ key, value: nextVal });
-        }
+        changed = nextVal[0] !== prevArr[0] || nextVal[1] !== prevArr[1];
         break;
       }
     }
+
+    if (!changed) continue;
+
+    const parsed = parseAIFilterValue(config, nextVal);
+    if (parsed.ok) completed.push({ key, value: parsed.value });
   }
 
   return completed;

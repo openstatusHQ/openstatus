@@ -60,6 +60,21 @@ type GeneratedFilterDef<T extends TableSchemaDefinition> = {
   [K in FilterableKeys<T>]: InferFilterFieldType<T[K]>;
 };
 
+/**
+ * A numeric field that survives decimals.
+ *
+ * `field.number()` parses with `parseInt`, so a latency of `1.5` comes back
+ * from the URL as `1`. Numeric columns are continuous far more often than not,
+ * so every numeric filter branch uses this instead.
+ */
+function decimalNumber(): FieldBuilder<number | null> {
+  return field.number().parse((str) => {
+    if (str.trim() === "") return null;
+    const num = Number(str);
+    return Number.isFinite(num) ? num : null;
+  });
+}
+
 function buildFilterDefinition(
   schema: TableSchemaDefinition,
 ): SchemaDefinition {
@@ -74,7 +89,7 @@ function buildFilterDefinition(
         if (kind === "string") {
           definition[key] = field.string();
         } else if (kind === "number") {
-          definition[key] = field.number();
+          definition[key] = decimalNumber();
         }
         break;
       }
@@ -83,7 +98,7 @@ function buildFilterDefinition(
           definition[key] = field.array(field.stringLiteral(config.enumValues));
         } else if (kind === "number") {
           definition[key] = field
-            .array(field.number())
+            .array(decimalNumber())
             .delimiter(ARRAY_DELIMITER);
         } else if (kind === "boolean") {
           definition[key] = field
@@ -100,14 +115,14 @@ function buildFilterDefinition(
           // Non-enum array item — filter on the item's own scalar type.
           definition[key] =
             config.arrayItem.kind === "number"
-              ? field.array(field.number()).delimiter(ARRAY_DELIMITER)
+              ? field.array(decimalNumber()).delimiter(ARRAY_DELIMITER)
               : field.array(field.string()).delimiter(ARRAY_DELIMITER);
         }
         break;
       }
       case "slider": {
         definition[key] = field
-          .array(field.number())
+          .array(decimalNumber())
           .delimiter(SLIDER_DELIMITER);
         break;
       }
@@ -135,6 +150,9 @@ function buildFilterDefinition(
  * - col.timestamp()+ timerange→ field.array(field.timestamp()).delimiter(RANGE_DELIMITER)
  * - col.enum(v)   + checkbox → field.array(field.stringLiteral(v))
  * - col.array(col.enum(v)) + checkbox → field.array(field.stringLiteral(v))
+ *
+ * Every numeric field carries a decimal-safe parse — `field.number()` on its
+ * own truncates `1.5` to `1`.
  *
  * Non-filterable fields are excluded. Pass `extraFields` for pagination,
  * sorting, and other non-filter state.

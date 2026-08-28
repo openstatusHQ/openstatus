@@ -86,6 +86,7 @@ export interface DataTableInfiniteProps<TData, TValue> {
   totalRowsFetched?: number;
   isFetching?: boolean;
   isLoading?: boolean;
+  isFacetsLoading?: boolean;
   hasNextPage?: boolean;
   fetchNextPage: (
     options?: FetchNextPageOptions | undefined,
@@ -119,6 +120,7 @@ export function DataTableInfinite<TData, TValue>({
   filterFields = [],
   isFetching,
   isLoading,
+  isFacetsLoading,
   fetchNextPage,
   hasNextPage,
   fetchPreviousPage,
@@ -305,6 +307,7 @@ export function DataTableInfinite<TData, TValue>({
       columnVisibility={columnVisibility}
       enableColumnOrdering={true}
       isLoading={isFetching || isLoading}
+      isFacetsLoading={isFacetsLoading}
       refresh={refetch}
       totalRows={totalRows}
       filterRows={filterRows ?? table.getFilteredRowModel().rows.length}
@@ -615,6 +618,10 @@ const MemoizedRow = React.memo(
   Row,
   (prev, next) =>
     prev.row.id === next.row.id &&
+    // react-table rebuilds every `Row` on a data change, so the id alone would
+    // freeze the cells of a row whose content changed. `original` keeps its
+    // identity through react-query's structural sharing when nothing changed.
+    prev.row.original === next.row.original &&
     prev.selected === next.selected &&
     prev.detailRowId === next.detailRowId &&
     prev.onRowClick === next.onRowClick &&

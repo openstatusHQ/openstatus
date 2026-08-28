@@ -27,6 +27,11 @@ export type Checkbox = {
   type: "checkbox";
   component?: (props: Option) => JSX.Element | null;
   options?: Option[];
+  /**
+   * Keep every declared option in the list even when the facets hold no rows
+   * for it, rendering a count of `0` instead of dropping it.
+   */
+  keepEmptyOptions?: boolean;
 };
 
 export type Slider = {

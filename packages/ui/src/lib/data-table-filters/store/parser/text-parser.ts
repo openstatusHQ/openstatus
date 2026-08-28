@@ -1,3 +1,8 @@
+import {
+  serializeFilterValue,
+  tokenizeFilterInput,
+} from "@openstatus/ui/lib/data-table-filters/tokenize";
+
 import type {
   FieldBuilder,
   InferSchemaType,
@@ -52,23 +57,18 @@ export function createTextParser<T extends SchemaDefinition>(
         return result as Partial<InferSchemaType<T>>;
       }
 
-      // Split by field delimiter, but handle quoted values
-      const parts = input
-        .trim()
-        .split(new RegExp(`\\s*${escapeRegex(fieldDelimiter)}\\s*`));
+      const tokens = tokenizeFilterInput(input, {
+        fieldDelimiter,
+        keyValueDelimiter,
+      });
 
-      for (const part of parts) {
-        if (!part) continue;
-
-        const colonIndex = part.indexOf(keyValueDelimiter);
-        if (colonIndex === -1) continue;
-
-        const rawKey = part.slice(0, colonIndex).trim();
-        const rawValue = part.slice(colonIndex + 1).trim();
-
+      for (const [rawKey, rawValue] of tokens) {
         if (!rawKey || !rawValue) continue;
 
         const fieldKey = resolveAlias(rawKey);
+        // own-property only: `toString:x` would otherwise resolve on the prototype
+        if (!Object.prototype.hasOwnProperty.call(schema, fieldKey)) continue;
+
         const fieldBuilder = schema[fieldKey] as
           | FieldBuilder<unknown>
           | undefined;
@@ -101,7 +101,8 @@ export function createTextParser<T extends SchemaDefinition>(
         try {
           const serialized = fieldBuilder._config.serialize(value);
           if (serialized) {
-            parts.push(`${key}${keyValueDelimiter}${serialized}`);
+            const quoted = serializeFilterValue(serialized, { fieldDelimiter });
+            parts.push(`${key}${keyValueDelimiter}${quoted}`);
           }
         } catch {
           // Skip invalid values
@@ -198,11 +199,4 @@ export function createTextParser<T extends SchemaDefinition>(
       };
     },
   };
-}
-
-/**
- * Escape special regex characters
- */
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

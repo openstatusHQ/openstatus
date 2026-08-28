@@ -43,21 +43,34 @@ export function DataTableFilterSlider<TData>({
   const debouncedInput = useDebounce(input, 500);
 
   useEffect(() => {
-    if (debouncedInput?.length === 2) {
-      column?.setFilterValue(debouncedInput);
+    if (debouncedInput?.length !== 2) return;
+    // Untouched range: clamping it here would narrow a filter that came from
+    // the URL against faceted bounds that have not loaded yet.
+    if (
+      filters &&
+      debouncedInput[0] === filters[0] &&
+      debouncedInput[1] === filters[1]
+    ) {
+      return;
     }
+    const [first = min, second = max] = debouncedInput;
+    // The endpoints reach the server as `min`/`max` - reversed or out of
+    // bounds they match nothing.
+    const lower = Math.max(Math.min(first, second), min);
+    const upper = Math.min(Math.max(first, second), max);
+    column?.setFilterValue([lower, upper]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedInput]);
 
+  // Adopt ranges applied elsewhere (URL, command, reset). Only `filters` may
+  // trigger it - on `input` it would overwrite the range while it is typed.
   useEffect(() => {
-    if (debouncedInput?.length !== 2) {
-    } else if (!filters) {
+    if (!filters) {
       setInput(null);
-    } else if (
-      debouncedInput[0] !== filters[0] ||
-      debouncedInput[1] !== filters[1]
-    ) {
+    } else if (input?.[0] !== filters[0] || input?.[1] !== filters[1]) {
       setInput(filters);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   return (
@@ -80,7 +93,7 @@ export function DataTableFilterSlider<TData>({
               min={min}
               max={max}
               onChange={(e) =>
-                setInput((prev) => [Number(e.target.value), prev?.[1] || max])
+                setInput((prev) => [Number(e.target.value), prev?.[1] ?? max])
               }
             />
             {unit ? (
@@ -105,7 +118,7 @@ export function DataTableFilterSlider<TData>({
               min={min}
               max={max}
               onChange={(e) =>
-                setInput((prev) => [prev?.[0] || min, Number(e.target.value)])
+                setInput((prev) => [prev?.[0] ?? min, Number(e.target.value)])
               }
             />
             {unit ? (

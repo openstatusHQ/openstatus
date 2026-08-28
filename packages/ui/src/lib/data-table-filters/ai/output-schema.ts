@@ -1,8 +1,32 @@
 import {
   resolveColumn,
+  type ResolvedColumn,
   type TableSchemaDefinition,
 } from "@openstatus/ui/lib/data-table-filters/table-schema/index";
 import { z } from "zod";
+
+/**
+ * The values a checkbox column accepts, as strings. Mirrors the derivation in
+ * `generateFilterFields` / `parseAIFilterValue`: without it an enum column that
+ * never spelled out `options` would let the model return arbitrary strings that
+ * are then dropped on validation.
+ */
+function checkboxValues(config: ResolvedColumn): string[] | null {
+  const options = config.filter?.options;
+  if (options && options.length > 0) return options.map((o) => String(o.value));
+  if (config.kind === "enum" && config.enumValues.length > 0) {
+    return [...config.enumValues];
+  }
+  if (
+    config.kind === "array" &&
+    config.arrayItem.kind === "enum" &&
+    config.arrayItem.enumValues.length > 0
+  ) {
+    return [...config.arrayItem.enumValues];
+  }
+  if (config.kind === "boolean") return ["true", "false"];
+  return null;
+}
 
 /**
  * Generates a Zod schema for LLM structured output from a table schema.
@@ -40,18 +64,14 @@ export function generateAIOutputSchema(schema: TableSchemaDefinition) {
       }
 
       case "checkbox": {
-        const options = config.filter.options;
-        if (options && options.length >= 2) {
-          const values = options.map((o) => String(o.value));
+        const values = checkboxValues(config);
+        if (values && values.length >= 2) {
           shape[key] = z
             .array(z.enum(values as [string, ...string[]]))
             .optional()
             .describe(desc);
-        } else if (options && options.length === 1) {
-          shape[key] = z
-            .array(z.literal(String(options[0]!.value)))
-            .optional()
-            .describe(desc);
+        } else if (values && values.length === 1) {
+          shape[key] = z.array(z.literal(values[0]!)).optional().describe(desc);
         } else if (config.kind === "number") {
           shape[key] = z.array(z.number()).optional().describe(desc);
         } else {

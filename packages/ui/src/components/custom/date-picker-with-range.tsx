@@ -24,7 +24,7 @@ import { Separator } from "@openstatus/ui/components/ui/separator";
 import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { presets as defaultPresets } from "@openstatus/ui/lib/date-preset";
 import { cn } from "@openstatus/ui/lib/utils";
-import { format } from "date-fns";
+import { endOfDay, format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import * as React from "react";
 import type { DateRange } from "react-day-picker";
@@ -45,6 +45,13 @@ function getBounds(presets: DatePreset[]) {
   };
 }
 
+function clampToBounds(date: Date | undefined, min?: Date, max?: Date) {
+  if (!date) return undefined;
+  if (min && date < min) return min;
+  if (max && date > max) return max;
+  return date;
+}
+
 export function DatePickerWithRange({
   className,
   date,
@@ -53,6 +60,23 @@ export function DatePickerWithRange({
 }: DatePickerWithRangeProps) {
   const [open, setOpen] = React.useState(false);
   const { min, max } = React.useMemo(() => getBounds(presets), [presets]);
+
+  const onCalendarSelect = React.useCallback(
+    (range: DateRange | undefined) => {
+      if (!range) {
+        setDate(undefined);
+        return;
+      }
+      // A day in the calendar means that whole day, but react-day-picker
+      // returns its midnight - without this the last day gets excluded.
+      setDate({
+        from: clampToBounds(range.from, min, max),
+        to: clampToBounds(range.to ? endOfDay(range.to) : undefined, min, max),
+      });
+    },
+    [setDate, min, max],
+  );
+
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (!open) return;
@@ -118,7 +142,7 @@ export function DatePickerWithRange({
               mode="range"
               defaultMonth={date?.from}
               selected={date}
-              onSelect={setDate}
+              onSelect={onCalendarSelect}
               numberOfMonths={1}
               fromDate={min}
               toDate={max}
@@ -243,12 +267,11 @@ function CustomDateRange({
   min?: Date;
   max?: Date;
 }) {
-  const [dateFrom, setDateFrom] = React.useState<Date | undefined>(
-    selected?.from,
-  );
-  const [dateTo, setDateTo] = React.useState<Date | undefined>(selected?.to);
-  const debounceDateFrom = useDebounce(dateFrom, 1000);
-  const debounceDateTo = useDebounce(dateTo, 1000);
+  const [range, setRange] = React.useState<DateRange | undefined>(selected);
+  const debouncedRange = useDebounce(range, 1000);
+
+  const selectedFrom = selected?.from?.getTime();
+  const selectedTo = selected?.to?.getTime();
 
   const formatDateForInput = (date: Date | undefined): string => {
     if (!date) return "";
@@ -256,10 +279,28 @@ function CustomDateRange({
     return utcDate.toISOString().slice(0, 16);
   };
 
+  /** Presets and the calendar write `selected` - adopt it as the new draft,
+   * otherwise editing one endpoint submits the other one from a stale range. */
   React.useEffect(() => {
-    onSelect({ from: debounceDateFrom, to: debounceDateTo });
+    setRange(selected);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounceDateFrom, debounceDateTo]);
+  }, [selectedFrom, selectedTo]);
+
+  React.useEffect(() => {
+    if (
+      debouncedRange?.from?.getTime() === selectedFrom &&
+      debouncedRange?.to?.getTime() === selectedTo
+    ) {
+      return;
+    }
+    onSelect(debouncedRange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedRange]);
+
+  /** The calendar disables anything outside the presets - typing must not
+   * slip past the same window. */
+  const isWithinBounds = (date: Date) =>
+    !(min && date < min) && !(max && date > max);
 
   return (
     <div className="flex flex-col gap-2 p-3">
@@ -277,9 +318,9 @@ function CustomDateRange({
             defaultValue={formatDateForInput(selected?.from)}
             onChange={(e) => {
               const newDate = new Date(e.target.value);
-              if (!Number.isNaN(newDate.getTime())) {
-                setDateFrom(newDate);
-              }
+              if (Number.isNaN(newDate.getTime())) return;
+              if (!isWithinBounds(newDate)) return;
+              setRange((prev) => ({ from: newDate, to: prev?.to }));
             }}
             disabled={!selected?.from}
           />
@@ -296,9 +337,9 @@ function CustomDateRange({
             defaultValue={formatDateForInput(selected?.to)}
             onChange={(e) => {
               const newDate = new Date(e.target.value);
-              if (!Number.isNaN(newDate.getTime())) {
-                setDateTo(newDate);
-              }
+              if (Number.isNaN(newDate.getTime())) return;
+              if (!isWithinBounds(newDate)) return;
+              setRange((prev) => ({ from: prev?.from, to: newDate }));
             }}
             disabled={!selected?.to}
           />

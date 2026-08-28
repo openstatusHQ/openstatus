@@ -66,6 +66,7 @@ export function generateFilterFields<TData>(
           ...base,
           type: "checkbox",
           options,
+          keepEmptyOptions: filter.keepEmptyOptions || undefined,
           component: config.renderers.filterComponent,
         });
         break;

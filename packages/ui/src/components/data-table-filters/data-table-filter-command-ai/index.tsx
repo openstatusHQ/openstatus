@@ -113,6 +113,23 @@ export function DataTableFilterAICommand({
 
   // Track the last AI query for display while loading
   const [aiQuery, setAIQuery] = useState<string | null>(null);
+  // Taken before the replace-all reset so a failed request can be undone.
+  const previousFiltersRef = useRef<{ id: string; value: unknown }[] | null>(
+    null,
+  );
+
+  /**
+   * Replace-all: every filterable field missing from `filters` is cleared.
+   * Iterates `_filterFields`, not the command-visible subset, so a
+   * command-disabled field (the timerange) cannot survive as a stale constraint.
+   */
+  function applyFilterSet(filters: { id: string; value: unknown }[]) {
+    const next = new Map(filters.map((filter) => [filter.id, filter.value]));
+    for (const field of _filterFields ?? []) {
+      if (typeof field.value !== "string") continue;
+      table.getColumn(field.value)?.setFilterValue(next.get(field.value));
+    }
+  }
 
   // AI filters hook
   const { infer, isLoading: isAILoading } = useAIFilters({
@@ -122,30 +139,33 @@ export function DataTableFilterAICommand({
       table.getColumn(key)?.setFilterValue(value);
     },
     onFinish(state) {
-      // Final reconciliation: set all validated fields
-      for (const [key, value] of Object.entries(state)) {
-        table.getColumn(key)?.setFilterValue(value);
-      }
-      // Serialize from the validated state directly to avoid stale table state
-      const syntheticFilters = Object.entries(state).map(([id, value]) => ({
+      // Final reconciliation: the validated state is the whole truth, so fields
+      // that were applied progressively but did not validate get cleared here.
+      const validated = Object.entries(state).map(([id, value]) => ({
         id,
         value,
       }));
+      applyFilterSet(validated);
+      previousFiltersRef.current = null;
+      // Serialize from the validated state directly to avoid stale table state
       isSerializingRef.current = true;
-      setInputValue(columnParser.serialize(syntheticFilters));
+      setInputValue(columnParser.serialize(validated));
     },
     onComplete() {
       setAIQuery(null);
     },
     onStart() {
+      previousFiltersRef.current = table
+        .getState()
+        .columnFilters.map(({ id, value }) => ({ id, value }));
       // Clear existing filters before AI applies new ones (replace-all strategy)
-      for (const field of filterFields) {
-        if (typeof field.value === "string") {
-          table.getColumn(field.value)?.setFilterValue(undefined);
-        }
-      }
+      applyFilterSet([]);
     },
     onError(error) {
+      // A failed request must not leave the table on a query the user never
+      // asked for: put the pre-request filters back.
+      applyFilterSet(previousFiltersRef.current ?? []);
+      previousFiltersRef.current = null;
       setAIQuery(null);
       toast.error("Failed to infer filters", {
         description: error.message,

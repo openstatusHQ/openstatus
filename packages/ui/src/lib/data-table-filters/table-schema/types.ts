@@ -222,6 +222,14 @@ export interface ColBuilder<T, F extends FilterType = FilterType> {
     options?: {
       options?: Option[];
       component?: (props: Option) => JSX.Element | null;
+      /**
+       * Offer every declared option even when the facets report no rows for it,
+       * showing a count of `0`. Off by default: a column whose declared set is
+       * far wider than what the data holds (regions, status codes) is better
+       * pruned to what exists. Turn it on for a small closed set where a missing
+       * option reads as a broken filter rather than an absent value.
+       */
+      keepEmptyOptions?: boolean;
     },
   ): ColBuilder<T, "checkbox">;
   filterable(
@@ -420,6 +428,7 @@ export type FilterDescriptor = {
   defaultOpen: boolean;
   commandDisabled: boolean;
   options?: OptionDescriptor[];
+  keepEmptyOptions?: boolean;
   min?: number;
   max?: number;
   unit?: string;

@@ -42,11 +42,19 @@ function createFieldBuilder<T>(config: FieldConfig<T>): FieldBuilder<T> {
     },
 
     serialize(fn: (value: T) => string) {
-      return createFieldBuilder({ ...config, serialize: fn });
+      return createFieldBuilder({
+        ...config,
+        serialize: fn,
+        hasCustomTransform: true,
+      });
     },
 
     parse(fn: (value: string) => T | null) {
-      return createFieldBuilder({ ...config, parse: fn });
+      return createFieldBuilder({
+        ...config,
+        parse: fn,
+        hasCustomTransform: true,
+      });
     },
 
     get _config() {

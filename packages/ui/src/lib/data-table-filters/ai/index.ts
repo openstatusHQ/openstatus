@@ -6,5 +6,9 @@ export {
 export { generateAIPrompt, type GenerateAIPromptOptions } from "./prompt";
 export { generateAIOutputSchema } from "./output-schema";
 export { diffPartialState, type CompletedField } from "./diff-partial";
-export { parseAIResponse } from "./parse-response";
+export {
+  parseAIFilterValue,
+  parseAIResponse,
+  type ParsedFilterValue,
+} from "./parse-response";
 export { isStructuredQuery } from "./detect";

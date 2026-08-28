@@ -31,6 +31,15 @@ export type SchemaToNuqsParsers<T extends SchemaDefinition> = {
 function fieldConfigToParser(
   config: FieldConfig<unknown>,
 ): ParserBuilder<unknown> {
+  // A schema-level serialize/parse override defines the URL format, so it wins
+  // over the built-in parser for the field type
+  if (config.hasCustomTransform) {
+    return createParser({
+      parse: (queryValue: string) => config.parse(queryValue),
+      serialize: (value: unknown) => config.serialize(value),
+    }) as ParserBuilder<unknown>;
+  }
+
   switch (config.type) {
     case "string":
       return parseAsString as ParserBuilder<unknown>;

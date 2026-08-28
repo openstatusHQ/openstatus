@@ -36,9 +36,17 @@ export function HoverCardTimestamp({
   return (
     <HoverCard openDelay={0} closeDelay={0}>
       <HoverCardTrigger asChild>
-        <div className={cn("font-mono whitespace-nowrap", className)}>
+        {/* Phrasing content: the callers render it inside a `<span>` - and it
+            has to be focusable for the hover card to open without a pointer. */}
+        <button
+          type="button"
+          className={cn(
+            "font-mono whitespace-nowrap focus-visible:underline",
+            className,
+          )}
+        >
           {format(date, "LLL dd, y HH:mm:ss")}
-        </div>
+        </button>
       </HoverCardTrigger>
       {/* Portal is built into HoverCardContent in shadcn v4 */}
       <HoverCardContent

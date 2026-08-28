@@ -45,16 +45,15 @@ export function useReactTableSync<TData>({
   const filterState = useFilterState<Record<string, unknown>>();
   const { setFilters } = useFilterActions<Record<string, unknown>>();
 
-  // Track if we're currently syncing to avoid loops
-  const isSyncingRef = useRef(false);
+  // Read latest state without re-running the table → BYOS effect on every
+  // adapter update (that direction is driven by columnFilters only)
+  const filterStateRef = useRef(filterState);
+  filterStateRef.current = filterState;
+
+  const columnFilters = table.getState().columnFilters;
 
   // Sync BYOS state → React Table
   useEffect(() => {
-    if (isSyncingRef.current) return;
-
-    isSyncingRef.current = true;
-
-    // Convert filter state to column filters format
     for (const field of filterFields) {
       const fieldKey = field.value as string;
       const value = filterState[fieldKey];
@@ -63,39 +62,58 @@ export function useReactTableSync<TData>({
       if (column) {
         // Only update if value is different
         const currentValue = column.getFilterValue();
-        if (!isEqual(currentValue, value)) {
-          column.setFilterValue(value ?? undefined);
+        if (!isEqualFilterValue(currentValue, value)) {
+          column.setFilterValue(isUnset(value) ? undefined : value);
         }
       }
     }
-
-    isSyncingRef.current = false;
   }, [filterState, filterFields, table]);
 
-  // Sync React Table → BYOS state (via callback)
+  // Sync React Table → BYOS state
   const syncFromTable = useCallback(() => {
-    if (isSyncingRef.current) return;
-
-    isSyncingRef.current = true;
-
-    const columnFilters = table.getState().columnFilters;
+    const current = filterStateRef.current;
     const updates: Record<string, unknown> = {};
+    let changed = false;
 
     for (const field of filterFields) {
       const fieldKey = field.value as string;
       const filter = columnFilters.find((f) => f.id === fieldKey);
-      updates[fieldKey] = filter?.value ?? null;
+      const value = filter?.value ?? null;
+      if (isEqualFilterValue(current[fieldKey], value)) continue;
+      updates[fieldKey] = value;
+      changed = true;
     }
 
-    setFilters(updates);
-    onColumnFiltersChange?.(columnFilters);
+    if (changed) setFilters(updates);
+  }, [columnFilters, filterFields, setFilters]);
 
-    isSyncingRef.current = false;
-  }, [table, filterFields, setFilters, onColumnFiltersChange]);
+  useEffect(() => {
+    syncFromTable();
+  }, [syncFromTable]);
+
+  useEffect(() => {
+    onColumnFiltersChange?.(columnFilters);
+  }, [columnFilters, onColumnFiltersChange]);
 
   return {
     syncFromTable,
   };
+}
+
+/**
+ * Absent filters are `undefined` in React Table, `null`/`[]` in the store
+ */
+function isUnset(value: unknown): boolean {
+  return (
+    value === null ||
+    value === undefined ||
+    (Array.isArray(value) && value.length === 0)
+  );
+}
+
+function isEqualFilterValue(a: unknown, b: unknown): boolean {
+  if (isUnset(a) && isUnset(b)) return true;
+  return isEqual(a, b);
 }
 
 /**

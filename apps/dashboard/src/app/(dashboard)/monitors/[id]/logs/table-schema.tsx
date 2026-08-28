@@ -1,5 +1,6 @@
 import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { ApiTrigger, Clock } from "@openstatus/icons";
 import { getRegionInfo } from "@openstatus/regions";
 import {
@@ -26,6 +27,8 @@ import { cn } from "@/lib/utils";
 
 export type ResponseLog =
   RouterOutputs["tinybird"]["listInfinite"]["data"][number];
+
+type JobType = RouterOutputs["monitor"]["get"]["jobType"];
 
 export const REQUEST_STATUS = ["success", "degraded", "error"] as const;
 export const TRIGGERS = ["cron", "api"] as const;
@@ -97,11 +100,26 @@ function createTimestampPresets() {
 export function createLogsTableSchema(options: {
   regions: string[];
   privateLocations: PrivateLocation[];
+  /** Defaults to the widest schema — every column the checkers can fill. */
+  jobType?: JobType;
 }) {
-  const { regions, privateLocations } = options;
+  const { regions, privateLocations, jobType = "http" } = options;
 
+  // Only the HTTP checker records a status code. Leaving the column in would
+  // expose a filter whose every option matches nothing on the other job types.
+  const hasStatusCode = jobType === "http";
+
+  // `regions` is only what the monitor runs in *today*, but the window still
+  // holds rows from regions since removed. Every known region therefore gets a
+  // label and an enum value — otherwise those rows are unfilterable and a
+  // hand-written region would parse back to null — and the facets decide which
+  // of them the filter actually offers. Configured regions stay first so the
+  // common case keeps the monitor's own order.
   const regionOptions = [
-    ...regions.map((region) => {
+    ...[
+      ...regions,
+      ...monitorRegions.filter((region) => !regions.includes(region)),
+    ].map((region) => {
       const info = getRegionInfo(region);
       return { label: `${info.flag} ${info.code}`, value: region };
     }),
@@ -120,6 +138,9 @@ export function createLogsTableSchema(options: {
       .defaultOpen()
       .filterable("checkbox", {
         options: REQUEST_STATUS.map((value) => ({ label: value, value })),
+        // A closed set of three. A window with no degraded rows must still
+        // offer the box, or the filter reads as broken rather than empty.
+        keepEmptyOptions: true,
         component: ({ label, value }) => (
           <span className="flex items-center gap-2 truncate font-normal">
             <StatusSwatch value={String(value)} />
@@ -149,7 +170,9 @@ export function createLogsTableSchema(options: {
       .size(200)
       .filterable("timerange", { presets: createTimestampPresets() }),
 
-    statusCode: col.presets.httpStatus().label("Status").size(90),
+    ...(hasStatusCode
+      ? { statusCode: col.presets.httpStatus().label("Status").size(90) }
+      : {}),
 
     latency: col.presets
       .duration("ms", LATENCY_BOUNDS)
@@ -226,6 +249,7 @@ export function createLogsTableSchema(options: {
 export function createLogsTable(options: {
   regions: string[];
   privateLocations: PrivateLocation[];
+  jobType?: JobType;
 }) {
   const schema = createLogsTableSchema(options);
   return {

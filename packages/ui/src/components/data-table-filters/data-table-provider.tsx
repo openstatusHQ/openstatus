@@ -31,6 +31,13 @@ interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
   filterFields: DataTableFilterField<TData>[];
   columns: ColumnDef<TData, TValue>[];
   isLoading?: boolean;
+  /**
+   * Whether the facet counts are still in flight. Separate from `isLoading`,
+   * which tracks the rows: a table that fetches facets in their own request
+   * has rows on screen while the counts are still pending, and the filter
+   * would otherwise blank its counts in between.
+   */
+  isFacetsLoading?: boolean;
   /** Refetch the query behind the table; the toolbar hides its button without it. */
   refresh?: () => void;
   totalRows?: number;
@@ -84,6 +91,7 @@ export function DataTableProvider<TData, TValue>({
       props.columns,
       props.enableColumnOrdering,
       props.isLoading,
+      props.isFacetsLoading,
       props.refresh,
       props.totalRows,
       props.filterRows,

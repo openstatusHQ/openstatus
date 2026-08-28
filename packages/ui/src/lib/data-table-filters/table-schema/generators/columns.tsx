@@ -16,7 +16,10 @@ import {
 } from "@openstatus/ui/components/data-table-filters/data-table-cell/index";
 import { DataTableColumnHeader } from "@openstatus/ui/components/data-table-filters/data-table-column-header";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
-import { defineFilters } from "@openstatus/ui/lib/data-table-filters/filters/index";
+import {
+  defineFilters,
+  getValueAtKey,
+} from "@openstatus/ui/lib/data-table-filters/filters/index";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { JSX } from "react";
 
@@ -310,7 +313,9 @@ export function generateColumns<TData>(
       return {
         ...base,
         id: key,
-        accessorFn: (row: TData) => (row as Record<string, unknown>)[key],
+        // Same reader as the filter engine: a flat `"timing.dns"` key wins,
+        // a nested `{ timing: { dns } }` row is walked.
+        accessorFn: (row: TData) => getValueAtKey(row, key),
       } as ColumnDef<TData>;
     }
 

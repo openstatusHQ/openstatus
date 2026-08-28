@@ -80,6 +80,61 @@ function asKind(value: unknown, key: unknown): ColKind {
   return "string";
 }
 
+const DISPLAY_TYPES: readonly DisplayDescriptor["type"][] = [
+  "text",
+  "code",
+  "boolean",
+  "star",
+  "badge",
+  "timestamp",
+  "number",
+  "bar",
+  "heatmap",
+  "gauge",
+  "status-code",
+  "level-indicator",
+];
+
+/**
+ * Normalize a display descriptor.
+ *
+ * `renderCell` switches on `display.type` with no default branch, so an
+ * unrecognised discriminator renders an empty cell and says nothing. The typed
+ * options are sanitized too — a string `min` would reach the bar/gauge cells as
+ * a bound. Unknown keys ride along, like the ones on `filter`.
+ */
+function asDisplay(
+  value: unknown,
+  kind: ColKind,
+  key: unknown,
+): DisplayDescriptor {
+  if (!isRecord(value)) return defaultDisplayForKind(kind);
+
+  const fallback = defaultDisplayForKind(kind);
+  const { type, unit, color, min, max, colorMap, ...rest } = value;
+  if (!DISPLAY_TYPES.includes(type as DisplayDescriptor["type"])) {
+    if (type !== undefined) {
+      console.warn(
+        `[migrateSchemaJSON] Column ${JSON.stringify(key)} has unknown display ` +
+          `type ${JSON.stringify(type)}. Falling back to "${fallback.type}".`,
+      );
+    }
+    return fallback;
+  }
+
+  const display: Record<string, unknown> = { ...rest, type };
+  if (typeof unit === "string") display.unit = unit;
+  if (typeof color === "string") display.color = color;
+  if (Number.isFinite(min)) display.min = min;
+  if (Number.isFinite(max)) display.max = max;
+  if (isRecord(colorMap)) {
+    display.colorMap = Object.fromEntries(
+      Object.entries(colorMap).filter(([, v]) => typeof v === "string"),
+    );
+  }
+  return display as DisplayDescriptor;
+}
+
 /**
  * Normalize an array column's item descriptor.
  *
@@ -118,10 +173,8 @@ function normalizeColumn(raw: unknown): ColumnDescriptor & { key: string } {
 
   // v0 wrote `{ type: "text" }` for custom displays and omitted `unit`,
   // `presets`, and `resizable` entirely. Nothing can recover those — the
-  // migration fills the type-required defaults and stops there.
-  const display = isRecord(c.display)
-    ? (c.display as DisplayDescriptor)
-    : defaultDisplayForKind(kind);
+  // migration fills the type-required defaults and validates the rest.
+  const display = asDisplay(c.display, kind, c.key);
 
   // Carried through wholesale, like `display` and `sheet`. Whitelisting the
   // optional fields here would reintroduce exactly the hand-maintained

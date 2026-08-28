@@ -18,6 +18,12 @@ export function useMemoryAdapter<T extends Record<string, unknown>>(
   const pausedRef = useRef(false);
   const pendingRef = useRef<Partial<T> | null>(null);
 
+  // Cached so getServerSnapshot() is referentially stable for useSyncExternalStore
+  const serverSnapshotRef = useRef<StoreSnapshot<T>>({
+    state: { ...defaults } as T,
+    version: 0,
+  });
+
   const notify = useCallback(() => {
     for (const listener of listenersRef.current) {
       listener();
@@ -41,10 +47,7 @@ export function useMemoryAdapter<T extends Record<string, unknown>>(
       },
 
       getServerSnapshot(): StoreSnapshot<T> {
-        return {
-          state: { ...defaults } as T,
-          version: 0,
-        };
+        return serverSnapshotRef.current;
       },
 
       setState(partial: Partial<T>) {
@@ -73,9 +76,8 @@ export function useMemoryAdapter<T extends Record<string, unknown>>(
           }
           this.setState(resetPartial);
         } else {
-          stateRef.current = { ...defaults };
-          versionRef.current++;
-          notify();
+          // Through setState so a reset while paused is queued like any update
+          this.setState({ ...defaults });
         }
       },
 

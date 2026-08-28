@@ -5,7 +5,10 @@ import {
   isStructuredQuery,
   parseAIResponse,
 } from "@openstatus/ui/lib/data-table-filters/ai/index";
-import type { TableSchemaDefinition } from "@openstatus/ui/lib/data-table-filters/table-schema/index";
+import {
+  serializeSchema,
+  type TableSchemaDefinition,
+} from "@openstatus/ui/lib/data-table-filters/table-schema/index";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 export type UseAIFiltersOptions = {
@@ -15,7 +18,10 @@ export type UseAIFiltersOptions = {
   tableSchema: TableSchemaDefinition;
   /** Called for each progressively completed field */
   onField: (key: string, value: unknown) => void;
-  /** Called with the final validated state on stream end */
+  /**
+   * Called with the final validated state on stream end. Fields absent from the
+   * state did not survive validation and must be cleared by the consumer.
+   */
   onFinish: (state: Record<string, unknown>) => void;
   /** Called when the AI call fails */
   onError?: (error: Error) => void;
@@ -39,21 +45,33 @@ export function useAIFilters({
     () => generateAIOutputSchema(tableSchema),
     [tableSchema],
   );
+  // Sent with the request so the server builds its prompt and output schema from
+  // the very schema this table filters on, not a generic stand-in.
+  const serializedSchema = useMemo(
+    () => serializeSchema(tableSchema),
+    [tableSchema],
+  );
 
   const { submit, object, isLoading, error } = useObject({
     api,
     schema: outputSchema,
-    onFinish({ object }) {
+    onFinish({ object, error }) {
       prevRef.current = {};
-      if (object) {
-        const validated = parseAIResponse(
-          tableSchema,
-          object as Record<string, unknown>,
-        );
-        if (validated) {
-          onFinish(validated);
-        }
+      // The final object failing the output schema is a failed request, not an
+      // empty result — leave the table to the error path so it can be restored.
+      if (error) {
+        onComplete?.();
+        onError?.(error);
+        return;
       }
+      // Always reconcile, even with nothing valid: progressive updates already
+      // touched the table and the consumer has to clear what did not survive.
+      onFinish(
+        parseAIResponse(
+          tableSchema,
+          (object ?? {}) as Record<string, unknown>,
+        ) ?? {},
+      );
       onComplete?.();
     },
     onError(error) {
@@ -81,10 +99,10 @@ export function useAIFilters({
 
       onStart?.();
       prevRef.current = {};
-      submit({ query: trimmed });
+      submit({ query: trimmed, schema: serializedSchema });
       return true;
     },
-    [submit, tableSchema, onStart],
+    [submit, tableSchema, onStart, serializedSchema],
   );
 
   return { infer, isLoading, error };

@@ -8,9 +8,18 @@ import type {
   FieldBuilder,
   SchemaDefinition,
 } from "@openstatus/ui/lib/data-table-filters/store/schema/types";
+import {
+  serializeFilterValue,
+  tokenizeFilterInput,
+} from "@openstatus/ui/lib/data-table-filters/tokenize";
 import type { ColumnFiltersState } from "@tanstack/react-table";
 
 import type { DataTableFilterField } from "../types";
+
+export {
+  serializeFilterValue,
+  tokenizeFilterInput,
+} from "@openstatus/ui/lib/data-table-filters/tokenize";
 
 /**
  * Extracts the word from the given string at the specified caret position.
@@ -253,77 +262,6 @@ export function notEmpty<TValue>(
 }
 
 /**
- * Tokenize input string, respecting quoted values
- *
- * Examples:
- * - `name:john regions:ams` → [["name", "john"], ["regions", "ams"]]
- * - `name:"john doe" regions:ams` → [["name", "john doe"], ["regions", "ams"]]
- * - `url:"https://example.com/path with spaces"` → [["url", "https://example.com/path with spaces"]]
- */
-export function tokenizeFilterInput(input: string): Array<[string, string]> {
-  const results: Array<[string, string]> = [];
-  const trimmed = input.trim();
-
-  // Hand-rolled scanner instead of a `/(\w+):(?:"([^"]*)"|'([^']*)'|(\S+))/g`
-  // regex: that pattern restarts inside every word run, so a long unmatched run
-  // costs O(n^2) (CodeQL: polynomial ReDoS).
-  let i = 0;
-  while (i < trimmed.length) {
-    const keyStart = i;
-    while (i < trimmed.length && isWordChar(trimmed[i])) i++;
-
-    // Not a `key:` prefix — skip the offending char and keep scanning.
-    if (i === keyStart || trimmed[i] !== ":") {
-      i++;
-      continue;
-    }
-
-    const key = trimmed.slice(keyStart, i);
-    i++; // consume ":"
-
-    const quote = trimmed[i];
-    if (quote === '"' || quote === "'") {
-      const close = trimmed.indexOf(quote, i + 1);
-      if (close !== -1) {
-        results.push([key, trimmed.slice(i + 1, close)]);
-        i = close + 1;
-        continue;
-      }
-    }
-
-    // Unquoted (or unterminated quote): everything up to the next whitespace.
-    const valueStart = i;
-    while (i < trimmed.length && !isWhitespace(trimmed[i])) i++;
-    if (i > valueStart) results.push([key, trimmed.slice(valueStart, i)]);
-  }
-
-  return results;
-}
-
-function isWordChar(char: string): boolean {
-  return (
-    (char >= "a" && char <= "z") ||
-    (char >= "A" && char <= "Z") ||
-    (char >= "0" && char <= "9") ||
-    char === "_"
-  );
-}
-
-function isWhitespace(char: string): boolean {
-  return /\s/.test(char);
-}
-
-/**
- * Serialize a value, adding quotes if it contains spaces
- */
-export function serializeFilterValue(value: string): string {
-  if (value.includes(" ")) {
-    return `"${value}"`;
-  }
-  return value;
-}
-
-/**
  * Schema-based column filters parser for BYOS
  *
  * This parser works with the new schema system instead of nuqs ParserBuilder.
@@ -349,23 +287,32 @@ export function columnFiltersParserFromSchema<TData>({
 
       const searchParams = Object.entries(values).reduce(
         (prev, [key, value]) => {
+          // mirror `serialize`: only fields the command exposes can be typed
+          const field = filterFields?.find((f) => f.value === key);
+          if (!field || field.commandDisabled) return prev;
+
+          // own-property only: `toString:x` would otherwise resolve on the prototype
+          if (!Object.prototype.hasOwnProperty.call(schema, key)) return prev;
           const fieldBuilder = schema[key] as FieldBuilder<unknown> | undefined;
           if (!fieldBuilder) return prev;
 
-          let parsed = fieldBuilder._config.parse(value);
-          if (parsed !== null) {
-            // Slider fields expect [min, max] for inNumberRange — if a single
-            // value is provided (e.g. "amount:1800"), duplicate it so the range
-            // becomes [1800, 1800] (exact match).
-            const field = filterFields?.find((f) => f.value === key);
-            if (
-              field?.type === "slider" &&
-              Array.isArray(parsed) &&
-              parsed.length === 1
-            ) {
-              parsed = [parsed[0], parsed[0]];
+          try {
+            let parsed = fieldBuilder._config.parse(value);
+            if (parsed !== null) {
+              // Slider fields expect [min, max] for inNumberRange — if a single
+              // value is provided (e.g. "amount:1800"), duplicate it so the range
+              // becomes [1800, 1800] (exact match).
+              if (
+                field.type === "slider" &&
+                Array.isArray(parsed) &&
+                parsed.length === 1
+              ) {
+                parsed = [parsed[0], parsed[0]];
+              }
+              prev[key] = parsed;
             }
-            prev[key] = parsed;
+          } catch {
+            // skip fields whose custom parser rejects the input
           }
           return prev;
         },
@@ -379,16 +326,23 @@ export function columnFiltersParserFromSchema<TData>({
         const { commandDisabled } = filterFields?.find(
           (field) => curr.id === field.value,
         ) || { commandDisabled: true };
-        const fieldBuilder = schema[curr.id] as
-          | FieldBuilder<unknown>
-          | undefined;
+        const fieldBuilder = Object.prototype.hasOwnProperty.call(
+          schema,
+          curr.id,
+        )
+          ? (schema[curr.id] as FieldBuilder<unknown> | undefined)
+          : undefined;
 
         if (commandDisabled || !fieldBuilder) return prev;
 
-        const serialized = fieldBuilder._config.serialize(curr.value);
+        let serialized: string;
+        try {
+          serialized = fieldBuilder._config.serialize(curr.value);
+        } catch {
+          return prev;
+        }
         if (!serialized) return prev;
 
-        // Wrap in quotes if value contains spaces
         const quotedValue = serializeFilterValue(serialized);
         return `${prev}${curr.id}:${quotedValue} `;
       }, "");

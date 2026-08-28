@@ -18,7 +18,11 @@ import {
   getDefaultColumnVisibility,
   resolveColumns,
 } from "@openstatus/ui/lib/data-table-filters/table-schema/index";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo } from "react";
@@ -88,8 +92,9 @@ function LogsTable({ monitor }: { monitor: Monitor }) {
       createLogsTable({
         regions: monitor.regions,
         privateLocations: monitor.privateLocations ?? [],
+        jobType: monitor.jobType,
       }),
-    [monitor.regions, monitor.privateLocations],
+    [monitor.regions, monitor.privateLocations, monitor.jobType],
   );
 
   const adapter = useNuqsAdapter(filterSchema.definition, { id: TABLE_ID });
@@ -174,8 +179,14 @@ function LogsTableInner({
     ),
   );
 
-  const { data: facets } = useQuery({
+  // Hold the previous counts while the next request is in flight. Without it
+  // every filter change empties `facets`, and the checkbox filters — which
+  // derive their option list from it — collapse to their declared set and
+  // rebuild a moment later. `isPending` is then only true on the first load,
+  // which is the one time there is nothing to hold on to.
+  const { data: facets, isPending: isFacetsPending } = useQuery({
     ...trpc.tinybird.listFacets.queryOptions(filters),
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
 
@@ -184,18 +195,16 @@ function LogsTableInner({
     [data],
   );
 
-  // `.hidden()` columns from the schema, plus the two that carry no value for
-  // the non-HTTP checkers.
+  // `.hidden()` columns from the schema, plus the one that carries no value for
+  // the non-HTTP checkers. The status code column is dropped from the schema
+  // itself, so it needs no entry here.
   const columnVisibility = useMemo(
     () => ({
       ...getDefaultColumnVisibility(schema.definition),
-      // gRPC carries HTTP's phase timings, so only its status code column is
-      // meaningless.
-      ...(monitor.jobType === "http"
+      // gRPC carries HTTP's phase timings.
+      ...(monitor.jobType === "http" || monitor.jobType === "grpc"
         ? {}
-        : monitor.jobType === "grpc"
-          ? { statusCode: false }
-          : { timing: false, statusCode: false }),
+        : { timing: false }),
     }),
     [schema, monitor.jobType],
   );
@@ -261,6 +270,7 @@ function LogsTableInner({
         totalRowsFetched={rows.length}
         isFetching={isFetching}
         isLoading={isLoading}
+        isFacetsLoading={isFacetsPending}
         hasNextPage={hasNextPage}
         fetchNextPage={fetchNextPage}
         fetchPreviousPage={fetchPreviousPage}
@@ -293,8 +303,14 @@ function LogsSheet({
   onSelect: (value: string | null) => void;
 }) {
   const trpc = useTRPC();
-  const { table } = useDataTable<ResponseLog, unknown>();
-  const selectedId = table.getSelectedRowModel().rows[0]?.original.id ?? null;
+  const { table, rowSelection } = useDataTable<ResponseLog, unknown>();
+  const selectedRow = table.getSelectedRowModel().rows[0];
+  // The row model only holds fetched rows, so a bookmarked log from a later
+  // page would resolve to null and wipe `selected` from the URL. The selection
+  // record carries the id whether or not its row has been fetched.
+  const selectedId = selectedRow
+    ? (selectedRow.original.id ?? null)
+    : (Object.keys(rowSelection).find((key) => rowSelection[key]) ?? null);
 
   useEffect(() => {
     onSelect(selectedId);

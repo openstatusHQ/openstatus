@@ -16,6 +16,12 @@ export interface FieldConfig<T> {
   literals?: readonly string[];
   // For array type
   itemConfig?: FieldConfig<unknown>;
+  /**
+   * Set when the caller overrode serialize/parse, so adapters bridge to those
+   * instead of the built-in parser for the field type
+   * @internal
+   */
+  hasCustomTransform?: boolean;
 }
 
 // Field builder interface (fluent API)

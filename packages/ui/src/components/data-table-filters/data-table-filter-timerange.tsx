@@ -36,7 +36,11 @@ export function DataTableFilterTimerange<TData>({
       column?.setFilterValue([date.from]);
     }
     if (date.to && date.from) {
-      column?.setFilterValue([date.from, date.to]);
+      // A reversed range matches nothing - order it like the server does.
+      const reversed = date.from.getTime() > date.to.getTime();
+      column?.setFilterValue(
+        reversed ? [date.to, date.from] : [date.from, date.to],
+      );
     }
   };
 

@@ -18,7 +18,9 @@ export function useHotKey(
         (e.metaKey || e.ctrlKey) &&
         shiftMatch
       ) {
-        // e.preventDefault();
+        // every shortcut is meta/ctrl based, so stop the browser default (⌘K
+        // focusing the address bar, ⌘U opening the source view, …)
+        e.preventDefault();
         callbackRef.current();
       }
     }

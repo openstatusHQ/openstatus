@@ -3,6 +3,11 @@ import {
   RANGE_DELIMITER,
   SLIDER_DELIMITER,
 } from "@openstatus/ui/lib/data-table-filters/delimiters";
+import { isArrayOfDates } from "@openstatus/ui/lib/data-table-filters/is-array";
+import {
+  serializeFilterValue,
+  tokenizeFilterInput,
+} from "@openstatus/ui/lib/data-table-filters/tokenize";
 import type { ColumnFiltersState } from "@tanstack/react-table";
 import { z } from "zod";
 
@@ -11,24 +16,14 @@ import type { DataTableFilterField } from "./types";
 export function deserialize<T extends z.ZodObject>(schema: T) {
   const castToSchema = z.preprocess((val) => {
     if (typeof val !== "string") return val;
-    return val
-      .trim()
-      .split(" ")
-      .reduce(
-        (prev, curr) => {
-          // Split on the FIRST colon only — values legitimately contain colons
-          // (urls, timestamps), and `split(":")` would truncate them.
-          const separatorIndex = curr.indexOf(":");
-          // -1 = no separator, 0 = empty name; both are skipped
-          if (separatorIndex < 1) return prev;
-          const name = curr.slice(0, separatorIndex);
-          const value = curr.slice(separatorIndex + 1);
-          if (!value) return prev;
-          prev[name] = value;
-          return prev;
-        },
-        {} as Record<string, unknown>,
-      );
+    return tokenizeFilterInput(val).reduce(
+      (prev, [name, value]) => {
+        if (!value) return prev;
+        prev[name] = value;
+        return prev;
+      },
+      {} as Record<string, unknown>,
+    );
   }, schema);
   return (value: string) => castToSchema.safeParse(value);
 }
@@ -44,18 +39,27 @@ export function serializeColumnFilters<TData>(
 
     if (commandDisabled) return prev;
 
+    const append = (value: string) =>
+      `${prev}${curr.id}:${serializeFilterValue(value)} `;
+
     if (Array.isArray(curr.value)) {
       if (type === "slider") {
-        return `${prev}${curr.id}:${curr.value.join(SLIDER_DELIMITER)} `;
+        return append(curr.value.join(SLIDER_DELIMITER));
       }
       if (type === "checkbox") {
-        return `${prev}${curr.id}:${curr.value.join(ARRAY_DELIMITER)} `;
+        return append(curr.value.join(ARRAY_DELIMITER));
       }
       if (type === "timerange") {
-        return `${prev}${curr.id}:${curr.value.join(RANGE_DELIMITER)} `;
+        // the timerange filter holds `Date[]`, and the parser expects epoch millis
+        if (isArrayOfDates(curr.value)) {
+          return append(
+            curr.value.map((date) => date.getTime()).join(RANGE_DELIMITER),
+          );
+        }
+        return append(curr.value.join(RANGE_DELIMITER));
       }
     }
 
-    return `${prev}${curr.id}:${curr.value} `;
+    return append(String(curr.value));
   }, "");
 }

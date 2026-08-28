@@ -12,19 +12,25 @@ import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { formatCompactNumber } from "@openstatus/ui/lib/format";
 import { cn } from "@openstatus/ui/lib/utils";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-import type { DataTableCheckboxFilterField } from "./types";
+import type { DataTableCheckboxFilterField, Option } from "./types";
 
 export function DataTableFilterCheckbox<TData>({
   value: _value,
   options,
   component,
+  keepEmptyOptions,
 }: DataTableCheckboxFilterField<TData>) {
   const value = _value as string;
   const [inputValue, setInputValue] = useState("");
-  const { table, columnFilters, isLoading, getFacetedUniqueValues } =
-    useDataTable();
+  const {
+    table,
+    columnFilters,
+    isLoading,
+    isFacetsLoading,
+    getFacetedUniqueValues,
+  } = useDataTable();
   const column = table.getColumn(value);
   // REMINDER: avoid using column?.getFilterValue()
   const filterValue = columnFilters.find((i) => i.id === value)?.value;
@@ -33,19 +39,52 @@ export function DataTableFilterCheckbox<TData>({
 
   const Component = component;
 
+  // CHECK: it could be filterValue or searchValue
+  const filters = useMemo(
+    () =>
+      filterValue
+        ? Array.isArray(filterValue)
+          ? filterValue
+          : [filterValue]
+        : [],
+    [filterValue],
+  );
+
+  // `options` is a baseline, not the whole set: a column holds values nobody
+  // declared (an unusual status code) and declares values the data never
+  // contains. The facets know which values exist, so they win when present;
+  // `options` then only supplies labels. Selected values are kept regardless,
+  // so a filter can always be unchecked. `keepEmptyOptions` opts a column out
+  // of the pruning half: every declared option stays, at a count of zero.
+  const resolvedOptions = useMemo(() => {
+    if (!facetedValue?.size) return options;
+    const present = new Set<Option["value"]>([
+      ...facetedValue.keys(),
+      ...filters,
+    ]);
+    // Declared options keep their declared order — regions are grouped, not
+    // alphabetical, and facets arrive count-descending.
+    const declared = keepEmptyOptions
+      ? options
+      : options?.filter((option) => present.has(option.value));
+    const declaredValues = new Set(declared?.map((option) => option.value));
+    const resolved = [
+      ...(declared ?? []),
+      ...Array.from(present)
+        .filter((value) => !declaredValues.has(value))
+        .map((value) => ({ label: String(value), value })),
+    ];
+    return resolved.every((option) => typeof option.value === "number")
+      ? resolved.sort((a, b) => (a.value as number) - (b.value as number))
+      : resolved;
+  }, [facetedValue, options, filters, keepEmptyOptions]);
+
   // filter out the options based on the input value
-  const filterOptions = options?.filter(
+  const filterOptions = resolvedOptions?.filter(
     (option) =>
       inputValue === "" ||
       option.label.toLowerCase().includes(inputValue.toLowerCase()),
   );
-
-  // CHECK: it could be filterValue or searchValue
-  const filters = filterValue
-    ? Array.isArray(filterValue)
-      ? filterValue
-      : [filterValue]
-    : [];
 
   // REMINDER: if no options are defined, while fetching data, we should show a skeleton
   if (isLoading && !filterOptions?.length)
@@ -65,7 +104,7 @@ export function DataTableFilterCheckbox<TData>({
 
   return (
     <div className="grid gap-2">
-      {options && options.length > 4 ? (
+      {resolvedOptions && resolvedOptions.length > 4 ? (
         <InputGroup className="h-9 rounded-lg shadow-none">
           <InputGroupAddon>
             <Search className="mt-0.5 h-4 w-4" />
@@ -118,11 +157,13 @@ export function DataTableFilterCheckbox<TData>({
                   ) : (
                     <span className="truncate font-normal">{option.label}</span>
                   )}
-                  <span className="ml-auto flex items-center justify-center font-mono text-xs">
-                    {isLoading ? (
-                      <Skeleton className="h-4 w-4" />
+                  <span className="ml-auto flex min-w-8 items-center justify-end font-mono text-xs">
+                    {isLoading || isFacetsLoading ? (
+                      <Skeleton className="h-4 w-8" />
                     ) : facetedValue?.has(option.value) ? (
                       formatCompactNumber(facetedValue.get(option.value) || 0)
+                    ) : keepEmptyOptions && facetedValue?.size ? (
+                      formatCompactNumber(0)
                     ) : null}
                   </span>
                   <button

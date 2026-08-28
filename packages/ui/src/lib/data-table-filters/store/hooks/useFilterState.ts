@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useRef, useSyncExternalStore } from "react";
 
 import { useStoreContext } from "../context";
 
@@ -34,17 +34,74 @@ export function useFilterState<T extends Record<string, unknown>, R = T>(
     [adapter],
   );
 
-  const getSnapshot = useCallback(() => {
-    const snapshot = adapter.getSnapshot();
-    const state = snapshot.state as T;
-    return selector ? selector(state) : (state as unknown as R);
-  }, [adapter, selector]);
+  // useSyncExternalStore requires a cached snapshot: a selector returning a new
+  // array/object on every call would otherwise re-render forever.
+  const cacheRef = useRef<{
+    state: unknown;
+    selector: unknown;
+    result: R;
+  } | null>(null);
+
+  const select = useCallback(
+    (state: T): R => {
+      if (!selector) return state as unknown as R;
+
+      const cached = cacheRef.current;
+      if (cached && cached.state === state && cached.selector === selector) {
+        return cached.result;
+      }
+
+      const next = selector(state);
+      // Keep the previous reference when the contents match so consumers
+      // don't re-render on a new selector identity alone
+      const result =
+        cached && shallowEqual(cached.result, next) ? cached.result : next;
+
+      cacheRef.current = { state, selector, result };
+      return result;
+    },
+    [selector],
+  );
+
+  const getSnapshot = useCallback(
+    () => select(adapter.getSnapshot().state as T),
+    [adapter, select],
+  );
 
   const getServerSnapshot = useCallback(() => {
     const snapshot = adapter.getServerSnapshot?.() ?? adapter.getSnapshot();
-    const state = snapshot.state as T;
-    return selector ? selector(state) : (state as unknown as R);
-  }, [adapter, selector]);
+    return select(snapshot.state as T);
+  }, [adapter, select]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+function shallowEqual(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true;
+  if (
+    typeof a !== "object" ||
+    typeof b !== "object" ||
+    a === null ||
+    b === null
+  ) {
+    return false;
+  }
+
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    return a.every((item, i) => Object.is(item, b[i]));
+  }
+
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  return keysA.every(
+    (key) =>
+      Object.hasOwn(b, key) &&
+      Object.is(
+        (a as Record<string, unknown>)[key],
+        (b as Record<string, unknown>)[key],
+      ),
+  );
 }
