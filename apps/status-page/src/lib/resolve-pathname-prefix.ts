@@ -1,6 +1,6 @@
 import {
   THEME_EXPLORER_PAGE_SLUG,
-  isThemeExplorerHost,
+  isCanonicalThemeExplorerHost,
 } from "./theme-explorer-host";
 
 /**
@@ -8,6 +8,8 @@ import {
  *
  * - Hostname routing (subdomain / custom domain): locale only (empty for default)
  * - Pathname routing: always `{slug}/{locale}`
+ * - The theme explorer host is subdomain-shaped but owns no page, so its own
+ *   demo page at `/status/{locale}` is pathname routed
  */
 export function resolvePathnamePrefix({
   hostname,
@@ -39,9 +41,10 @@ export function resolvePathnamePrefix({
 
   // The theme explorer host is subdomain-shaped but owns no page of its own —
   // its demo page is served from `/status/{locale}`, so links there keep the
-  // slug prefix instead of dropping it like a real subdomain page would.
+  // slug prefix instead of dropping it like a real subdomain page would. Only
+  // the canonical host serves that page, so it alone opts in.
   const isThemeExplorerPage =
-    isThemeExplorerHost(hostname) &&
+    isCanonicalThemeExplorerHost(hostname) &&
     firstSegment.toLowerCase() === THEME_EXPLORER_PAGE_SLUG;
 
   if (!isThemeExplorerPage && (isCustomDomain || isSubdomain)) {
