@@ -85,7 +85,7 @@ export function Client() {
               <BillingOverlayDescription>
                 Create private locations to monitor your internal services.{" "}
                 <Link
-                  href="https://www.openstatus.dev/docs/tutorial/how-to-create-private-location/"
+                  href="https://www.openstatus.dev/docs/guides/how-to-create-private-location/"
                   rel="noreferrer"
                   target="_blank"
                 >

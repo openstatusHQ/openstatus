@@ -367,7 +367,7 @@ function BillingPlaceholder() {
         <BillingOverlayDescription>
           Access response headers, timing phases and more for each request.{" "}
           <Link
-            href="https://www.openstatus.dev/docs/monitoring/monitor-data-collected/"
+            href="https://www.openstatus.dev/docs/concept/latency-vs-response-time/"
             rel="noreferrer"
             target="_blank"
           >
