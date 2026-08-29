@@ -57,7 +57,16 @@ export function DataTableFilterCheckbox<TData>({
   // so a filter can always be unchecked. `keepEmptyOptions` opts a column out
   // of the pruning half: every declared option stays, at a count of zero.
   const resolvedOptions = useMemo(() => {
-    if (!facetedValue?.size) return options;
+    if (!facetedValue?.size) {
+      // A value picked out of an earlier facet list is not in `options`, and a
+      // window with no rows would drop it here — leaving a filter that is
+      // applied but has no box to uncheck.
+      const declaredValues = new Set(options?.map((option) => option.value));
+      const orphans = filters
+        .filter((value) => !declaredValues.has(value as Option["value"]))
+        .map((value) => ({ label: String(value), value }) as Option);
+      return orphans.length > 0 ? [...(options ?? []), ...orphans] : options;
+    }
     const present = new Set<Option["value"]>([
       ...facetedValue.keys(),
       ...filters,

@@ -49,6 +49,14 @@ export function tokenizeFilterInput(
       continue;
     }
 
+    // `a:1; b:2` with a non-whitespace delimiter: the space after it is not a
+    // boundary, so without this the key reads as " b" and the field is dropped.
+    // Keys never contain whitespace, and values are scanned separately.
+    if (!delimiterIsWhitespace && /\s/.test(trimmed[i])) {
+      i++;
+      continue;
+    }
+
     const keyStart = i;
     while (
       i < trimmed.length &&

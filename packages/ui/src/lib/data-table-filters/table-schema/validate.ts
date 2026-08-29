@@ -41,7 +41,26 @@ export function validateSchema(definition: TableSchemaDefinition): void {
       );
     }
 
-    // 3. Number checkbox filter requires explicit options — the number factory
+    // 3. Every option has to be an object carrying a value. `generateAIOutputSchema`
+    //    and the option generators read `option.value` unguarded, so a `[null]`
+    //    from JSON throws a TypeError downstream — past the caller's try/catch —
+    //    instead of being rejected as an invalid schema here.
+    if (c.filter?.type === "checkbox" && Array.isArray(c.filter.options)) {
+      const invalid = c.filter.options.findIndex(
+        (option) =>
+          typeof option !== "object" ||
+          option === null ||
+          (option as { value?: unknown }).value === undefined,
+      );
+      if (invalid !== -1) {
+        throw new Error(
+          `[createTableSchema] Column "${key}": checkbox option at index ${invalid} is not a { label, value } object.\n` +
+            `  Fix: .filterable("checkbox", { options: [{ label: "200", value: 200 }, ...] })`,
+        );
+      }
+    }
+
+    // 4. Number checkbox filter requires explicit options — the number factory
     //    has no value list to auto-derive from, so an empty options list would
     //    render a filter with no checkboxes (a silent no-op in the UI).
     if (
@@ -55,7 +74,7 @@ export function validateSchema(definition: TableSchemaDefinition): void {
       );
     }
 
-    // 4. Slider bounds must be valid — type system requires { min, max } to be
+    // 5. Slider bounds must be valid — type system requires { min, max } to be
     //    passed but cannot enforce min < max, and JSON input is not typed at all
     if (c.filter?.type === "slider") {
       const { min, max } = c.filter;
@@ -80,7 +99,7 @@ export function validateSchema(definition: TableSchemaDefinition): void {
       }
     }
 
-    // 5. A sheet-only column cannot carry a filter. `.sheetOnly()` is the only
+    // 6. A sheet-only column cannot carry a filter. `.sheetOnly()` is the only
     //    chain step that sets `enableHiding: false` on a hideable column, and
     //    it clears the filter, so no builder can produce this combination —
     //    only hand-written or AI-generated JSON can. It has no chain form,

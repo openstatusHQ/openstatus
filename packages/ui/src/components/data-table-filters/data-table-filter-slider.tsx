@@ -10,7 +10,7 @@ import {
 import { Label } from "@openstatus/ui/components/ui/label";
 import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { isArrayOfNumbers } from "@openstatus/ui/lib/data-table-filters/is-array";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { DataTableSliderFilterField } from "./types";
 
@@ -35,7 +35,10 @@ export function DataTableFilterSlider<TData>({
   const { table, columnFilters, getFacetedMinMaxValues } = useDataTable();
   const column = table.getColumn(value);
   const filterValue = columnFilters.find((i) => i.id === value)?.value;
-  const filters = getFilter(filterValue);
+  // `getFilter` builds a fresh pair out of a scalar or one-element filter, so
+  // without this the `[filters]` effect below fires on every render and reverts
+  // the range while it is being typed.
+  const filters = useMemo(() => getFilter(filterValue), [filterValue]);
   const [input, setInput] = useState<number[] | null>(filters);
   const [min, max] = getFacetedMinMaxValues?.(table, value) ||
     column?.getFacetedMinMaxValues() || [defaultMin, defaultMax];

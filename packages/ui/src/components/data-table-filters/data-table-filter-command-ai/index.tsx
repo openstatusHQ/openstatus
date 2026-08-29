@@ -35,6 +35,9 @@ import { LoaderCircle, Search, Sparkles, X } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+/** Suggestions kept in localStorage; only the newest five are ever rendered. */
+const MAX_COMMAND_HISTORY = 25;
+
 interface DataTableFilterAICommandProps {
   /** BYOS schema definition for parsing/serializing filter values */
   schema: SchemaDefinition;
@@ -234,7 +237,13 @@ export function DataTableFilterAICommand({
       );
       return;
     }
-    setLastSearches([...lastSearches, { search, timestamp }]);
+    // Only the newest few are ever shown, and every entry is re-serialised into
+    // localStorage on each write — so keep the stored history bounded.
+    setLastSearches(
+      [...lastSearches, { search, timestamp }]
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, MAX_COMMAND_HISTORY),
+    );
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -437,7 +446,7 @@ export function DataTableFilterAICommand({
                 <>
                   <CommandSeparator />
                   <CommandGroup heading="Suggestions">
-                    {lastSearches
+                    {[...lastSearches]
                       .sort((a, b) => b.timestamp - a.timestamp)
                       .slice(0, 5)
                       .map((item) => {

@@ -76,6 +76,11 @@ export function useFilterState<T extends Record<string, unknown>, R = T>(
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
+function isPlainObject(value: object): boolean {
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
 function shallowEqual(a: unknown, b: unknown): boolean {
   if (Object.is(a, b)) return true;
   if (
@@ -92,6 +97,11 @@ function shallowEqual(a: unknown, b: unknown): boolean {
     if (a.length !== b.length) return false;
     return a.every((item, i) => Object.is(item, b[i]));
   }
+
+  // Only arrays and plain objects carry their contents in enumerable keys. A
+  // `Date`, `Map` or `Set` has none, so key-walking two different ones reports
+  // them equal and the selector keeps handing back the stale value.
+  if (!isPlainObject(a) || !isPlainObject(b)) return false;
 
   const keysA = Object.keys(a);
   const keysB = Object.keys(b);
