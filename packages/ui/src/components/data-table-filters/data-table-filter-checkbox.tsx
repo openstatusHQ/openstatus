@@ -61,9 +61,12 @@ export function DataTableFilterCheckbox<TData>({
       // A value picked out of an earlier facet list is not in `options`, and a
       // window with no rows would drop it here — leaving a filter that is
       // applied but has no box to uncheck.
+      // Through a Set like the faceted branch below: the filter value is
+      // whatever the URL held, so `?region=ams,ams` would otherwise render two
+      // rows keyed on the same value.
       const declaredValues = new Set(options?.map((option) => option.value));
-      const orphans = filters
-        .filter((value) => !declaredValues.has(value as Option["value"]))
+      const orphans = Array.from(new Set(filters as Option["value"][]))
+        .filter((value) => !declaredValues.has(value))
         .map((value) => ({ label: String(value), value }) as Option);
       return orphans.length > 0 ? [...(options ?? []), ...orphans] : options;
     }
