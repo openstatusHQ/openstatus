@@ -75,7 +75,13 @@ describe("toPipeParams", () => {
 describe("trimToTick", () => {
   test("returns null cursors for an empty page", () => {
     expect(
-      trimToTick({ rows: [], limit: 50, fetchLimit: 55, direction: "next" }),
+      trimToTick({
+        rows: [],
+        limit: 50,
+        fetchLimit: 55,
+        direction: "next",
+        hasCursor: false,
+      }),
     ).toEqual({
       rows: [],
       nextCursor: null,
@@ -94,10 +100,11 @@ describe("trimToTick", () => {
       limit: 4,
       fetchLimit: 6,
       direction: "next",
+      hasCursor: false,
     });
     expect(result.rows.length).toBe(4);
     expect(result.nextCursor).toBe(200);
-    expect(result.prevCursor).toBe(300);
+    expect(result.prevCursor).toBe(null);
   });
 
   test("drops a trailing tick the pipe's own LIMIT may have cut", () => {
@@ -109,6 +116,7 @@ describe("trimToTick", () => {
       limit: 4,
       fetchLimit: 4,
       direction: "next",
+      hasCursor: false,
     });
     expect(result.rows.length).toBe(2);
     expect(result.nextCursor).toBe(300);
@@ -121,6 +129,7 @@ describe("trimToTick", () => {
       limit: 2,
       fetchLimit: 6,
       direction: "next",
+      hasCursor: false,
     });
     expect(result.rows.length).toBe(4);
     expect(result.truncatedTick).toBe(false);
@@ -136,6 +145,7 @@ describe("trimToTick", () => {
       limit: 2,
       fetchLimit: 4,
       direction: "next",
+      hasCursor: false,
     });
     expect(result.truncatedTick).toBe(true);
   });
@@ -146,10 +156,25 @@ describe("trimToTick", () => {
       limit: 4,
       fetchLimit: 6,
       direction: "next",
+      hasCursor: false,
     });
     expect(result.rows.length).toBe(2);
     expect(result.nextCursor).toBe(null);
-    expect(result.prevCursor).toBe(300);
+    expect(result.prevCursor).toBe(null);
+  });
+
+  test("only offers a page back once the request came from a cursor", () => {
+    const args = {
+      rows: rowsOf([
+        [300, 2],
+        [200, 2],
+      ]),
+      limit: 4,
+      fetchLimit: 6,
+      direction: "next" as const,
+    };
+    expect(trimToTick({ ...args, hasCursor: false }).prevCursor).toBe(null);
+    expect(trimToTick({ ...args, hasCursor: true }).prevCursor).toBe(300);
   });
 
   test("walks the other way for the prev direction", () => {
@@ -162,6 +187,7 @@ describe("trimToTick", () => {
       limit: 4,
       fetchLimit: 6,
       direction: "prev",
+      hasCursor: true,
     });
     expect(result.rows.length).toBe(4);
     expect(result.prevCursor).toBe(200);

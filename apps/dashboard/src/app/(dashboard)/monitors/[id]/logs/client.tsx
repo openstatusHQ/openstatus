@@ -161,23 +161,16 @@ function LogsTableInner({
     };
   }, [state, monitor.id, filterDefs]);
 
-  const {
-    data,
-    isFetching,
-    isLoading,
-    hasNextPage,
-    fetchNextPage,
-    fetchPreviousPage,
-    refetch,
-  } = useInfiniteQuery(
-    trpc.tinybird.listInfinite.infiniteQueryOptions(
-      { ...filters, limit: PAGE_SIZE },
-      {
-        getNextPageParam: (page) => page.nextCursor ?? undefined,
-        getPreviousPageParam: (page) => page.prevCursor ?? undefined,
-      },
-    ),
-  );
+  const { data, isFetching, isLoading, hasNextPage, fetchNextPage, refetch } =
+    useInfiniteQuery(
+      trpc.tinybird.listInfinite.infiniteQueryOptions(
+        { ...filters, limit: PAGE_SIZE },
+        {
+          getNextPageParam: (page) => page.nextCursor ?? undefined,
+          getPreviousPageParam: (page) => page.prevCursor ?? undefined,
+        },
+      ),
+    );
 
   // Hold the previous counts while the next request is in flight. Without it
   // every filter change empties `facets`, and the checkbox filters — which
@@ -273,7 +266,6 @@ function LogsTableInner({
         isFacetsLoading={isFacetsPending}
         hasNextPage={hasNextPage}
         fetchNextPage={fetchNextPage}
-        fetchPreviousPage={fetchPreviousPage}
         refetch={refetch}
         tableId={TABLE_ID}
         commandSlot={
@@ -368,7 +360,7 @@ function BillingPlaceholder() {
               schema={filterSchema.definition}
               tableSchema={schema.definition}
               api="/api/ai-filters"
-              tableId={TABLE_ID}
+              tableId={`${TABLE_ID}-example`}
             />
           }
         />

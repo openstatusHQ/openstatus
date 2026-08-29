@@ -190,7 +190,9 @@ const responseLogFilterShape = {
 
 const httpResponseLogFilterShape = {
   ...responseLogFilterShape,
-  statusCodes: z.array(z.int()).max(100).optional(),
+  // `Array(statusCodes, 'Int16')` in the pipes: out of that range the query
+  // errors instead of matching nothing.
+  statusCodes: z.array(z.int().min(0).max(32_767)).max(100).optional(),
 };
 
 // The service overfetches by the monitor's location count on top of the caller's

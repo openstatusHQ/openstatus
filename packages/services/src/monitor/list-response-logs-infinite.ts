@@ -175,6 +175,7 @@ export async function listResponseLogsInfinite(args: {
     return rows;
   }
 
+  const hasCursor = input.cursor !== undefined;
   let fetchLimit = Math.min(input.limit + overfetch, MAX_FETCH_LIMIT);
   let rows = await fetchRows(fetchLimit);
   let trimmed = trimToTick({
@@ -182,6 +183,7 @@ export async function listResponseLogsInfinite(args: {
     limit: input.limit,
     fetchLimit,
     direction: input.direction,
+    hasCursor,
   });
 
   // A page that is one tick filling the fetch ceiling may have been cut
@@ -195,6 +197,7 @@ export async function listResponseLogsInfinite(args: {
       limit: input.limit,
       fetchLimit,
       direction: input.direction,
+      hasCursor,
     });
   }
 

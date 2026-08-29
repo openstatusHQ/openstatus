@@ -70,8 +70,15 @@ export function trimToTick<T extends { cronTimestamp: number }>(args: {
   limit: number;
   fetchLimit: number;
   direction: "next" | "prev";
+  /**
+   * The request carried a cursor, so a page exists on the other side of this
+   * one. Without it the cursor pointing back the way we came is a dead end —
+   * the first page has nothing before it, and handing one back makes
+   * `hasPreviousPage` permanently true.
+   */
+  hasCursor: boolean;
 }): TrimToTickResult<T> {
-  const { rows, limit, fetchLimit, direction } = args;
+  const { rows, limit, fetchLimit, direction, hasCursor } = args;
   if (rows.length === 0) {
     return {
       rows: [],
@@ -118,8 +125,22 @@ export function trimToTick<T extends { cronTimestamp: number }>(args: {
 
   return {
     rows: kept,
-    nextCursor: direction === "next" ? (hasMore ? oldest : null) : oldest,
-    prevCursor: direction === "prev" ? (hasMore ? newest : null) : newest,
+    nextCursor:
+      direction === "next"
+        ? hasMore
+          ? oldest
+          : null
+        : hasCursor
+          ? oldest
+          : null,
+    prevCursor:
+      direction === "prev"
+        ? hasMore
+          ? newest
+          : null
+        : hasCursor
+          ? newest
+          : null,
     truncatedTick,
   };
 }

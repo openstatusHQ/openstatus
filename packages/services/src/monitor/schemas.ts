@@ -254,7 +254,9 @@ export const ResponseLogFilters = z.object({
     .array(z.enum(["cron", "api"]))
     .max(2)
     .optional(),
-  statusCodes: z.array(z.number().int()).max(100).optional(),
+  // The pipes cast this list to `Int16`, matching the column: a value outside
+  // that range makes Tinybird fail the query rather than match nothing.
+  statusCodes: z.array(z.number().int().min(0).max(32_767)).max(100).optional(),
   latencyMin: z.number().int().min(0).optional(),
   latencyMax: z.number().int().min(0).optional(),
 });

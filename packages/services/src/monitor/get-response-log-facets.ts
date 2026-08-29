@@ -87,9 +87,17 @@ export async function getResponseLogFacets(args: {
     facet.rows.sort((a, b) => b.total - a.total);
   }
 
+  const totalRowCount = summary.get("total") ?? 0;
   const latencyMin = summary.get("latencyMin");
   const latencyMax = summary.get("latencyMax");
-  if (latencyMin !== undefined || latencyMax !== undefined) {
+  // `min()`/`max()` have no GROUP BY, so an empty window still returns a row —
+  // holding 0. Reporting that as the bounds collapses the slider to [0, 0] and
+  // every range the user then types is clamped to it, so leave the facet out
+  // and let the column's declared bounds stand.
+  if (
+    totalRowCount > 0 &&
+    (latencyMin !== undefined || latencyMax !== undefined)
+  ) {
     facets.latency = {
       rows: [],
       total: 0,
@@ -99,7 +107,7 @@ export async function getResponseLogFacets(args: {
   }
 
   return {
-    totalRowCount: summary.get("total") ?? 0,
+    totalRowCount,
     filterRowCount: summary.get("filtered") ?? 0,
     facets,
   };

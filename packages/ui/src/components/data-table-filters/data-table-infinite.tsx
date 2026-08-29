@@ -35,7 +35,6 @@ import { formatCompactNumber } from "@openstatus/ui/lib/format";
 import { cn } from "@openstatus/ui/lib/utils";
 import {
   type FetchNextPageOptions,
-  type FetchPreviousPageOptions,
   type RefetchOptions,
 } from "@tanstack/react-query";
 import type {
@@ -91,9 +90,6 @@ export interface DataTableInfiniteProps<TData, TValue> {
   fetchNextPage: (
     options?: FetchNextPageOptions | undefined,
   ) => Promise<unknown>;
-  fetchPreviousPage?: (
-    options?: FetchPreviousPageOptions | undefined,
-  ) => Promise<unknown>;
   refetch: (options?: RefetchOptions | undefined) => void;
   renderLiveRow?: (props?: { row: Row<TData> }) => React.ReactNode;
   // Used to store column order and visibility in local storage for specific data-table namespace
@@ -123,7 +119,6 @@ export function DataTableInfinite<TData, TValue>({
   isFacetsLoading,
   fetchNextPage,
   hasNextPage,
-  fetchPreviousPage,
   refetch,
   totalRows,
   filterRows,
@@ -171,11 +166,16 @@ export function DataTableInfinite<TData, TValue>({
         Math.ceil(e.currentTarget.scrollTop + e.currentTarget.clientHeight) >=
         e.currentTarget.scrollHeight;
 
-      if (onPageBottom && !isFetching && totalRowsFetched < (filterRows ?? 0)) {
+      // The cursor decides whether a page is left, not the facet counts:
+      // `filterRows` comes from a separate query, and while it is pending or
+      // failed it reads as 0 and scrolling would silently stop loading.
+      const canFetchMore = hasNextPage ?? totalRowsFetched < (filterRows ?? 0);
+
+      if (onPageBottom && !isFetching && canFetchMore) {
         fetchNextPage();
       }
     },
-    [fetchNextPage, isFetching, filterRows, totalRowsFetched],
+    [fetchNextPage, isFetching, hasNextPage, filterRows, totalRowsFetched],
   );
 
   React.useEffect(() => {
