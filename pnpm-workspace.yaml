@@ -2,6 +2,9 @@ packages:
   - apps/*
   - packages/**/*
   - packages/config/*
+overrides:
+  "@hono/node-server": 1.19.15
+  hono: "catalog:"
 # pnpm 12 routes `@jsr` to npm.jsr.io by default when *resolving*, but the
 # supply-chain policy pass (`trustPolicy` / `minimumReleaseAge` below) verifies
 # every lockfile entry against the default registry, so the `@jsr/std__*`
@@ -157,7 +160,7 @@ catalog:
   effect: 4.0.0-rc.112
   feed: 4.2.2
   gray-matter: 4.0.3
-  hono: 4.12.21
+  hono: 4.12.34
   hono-rate-limiter: 0.4.2
   ip-cidr: 4.0.2
   isomorphic-dompurify: 3.14.0
