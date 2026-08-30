@@ -13,10 +13,12 @@ export type StatusResponse = { status: Status };
 
 export async function getStatus(
   slug: string,
-  baseUrl = process.env.NEXT_PUBLIC_OPENSTATUS_API_URL ??
-    "https://api.openstatus.dev",
+  baseUrl = process.env.OPENSTATUS_API_URL ?? "https://api.openstatus.dev",
 ): Promise<StatusResponse> {
-  const res = await fetch(`${baseUrl}/public/status/${slug}`, {
+  // read at runtime on the server: no NEXT_PUBLIC_ prefix, so deployments
+  // shipping prebuilt images can still point badges at their own API
+  const base = baseUrl.replace(/\/+$/, "") || "https://api.openstatus.dev";
+  const res = await fetch(`${base}/public/status/${slug}`, {
     cache: "no-cache",
   });
 

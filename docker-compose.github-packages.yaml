@@ -285,7 +285,7 @@ services:
             - PORT=3000
             - HOSTNAME=0.0.0.0
             - AUTH_TRUST_HOST=true
-            - NEXT_PUBLIC_OPENSTATUS_API_URL=${NEXT_PUBLIC_OPENSTATUS_API_URL:-http://server:3000}
+            - OPENSTATUS_API_URL=${OPENSTATUS_API_URL:-http://server:3000}
         depends_on:
             db-migrate:
                 condition: service_completed_successfully
