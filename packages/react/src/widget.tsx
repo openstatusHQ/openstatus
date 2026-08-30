@@ -18,15 +18,19 @@ export async function getStatus(
   // read at runtime on the server: no NEXT_PUBLIC_ prefix, so deployments
   // shipping prebuilt images can still point badges at their own API
   const base = baseUrl.replace(/\/+$/, "") || "https://api.openstatus.dev";
-  const res = await fetch(`${base}/public/status/${slug}`, {
-    cache: "no-cache",
-  });
+  try {
+    const res = await fetch(`${base}/public/status/${slug}`, {
+      cache: "no-cache",
+    });
 
-  if (res.ok) {
-    const data = (await res.json()) as StatusResponse;
-    return data;
+    if (res.ok) {
+      const data = (await res.json()) as StatusResponse;
+      return data;
+    }
+  } catch {
+    // network-level failures (unreachable host, DNS, …) degrade to "unknown"
+    // instead of bubbling a 500 out of the badge routes
   }
-
   return { status: "unknown" };
 }
 
