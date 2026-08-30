@@ -11,8 +11,12 @@ export type Status =
 
 export type StatusResponse = { status: Status };
 
-export async function getStatus(slug: string): Promise<StatusResponse> {
-  const res = await fetch(`https://api.openstatus.dev/public/status/${slug}`, {
+export async function getStatus(
+  slug: string,
+  baseUrl = process.env.NEXT_PUBLIC_OPENSTATUS_API_URL ??
+    "https://api.openstatus.dev",
+): Promise<StatusResponse> {
+  const res = await fetch(`${baseUrl}/public/status/${slug}`, {
     cache: "no-cache",
   });
 
