@@ -147,7 +147,7 @@ See [apps/dashboard/README.md](apps/dashboard/README.md) for full steps (env, db
 
 ## Contributing
 
-If you want to help us build the best status page and monitoring platform, check our [contributing guidelines](https://github.com/openstatusHQ/openstatus/blob/main/CONTRIBUTING.MD).
+If you want to help us build the best status page and monitoring platform, check our [contributing guidelines](CONTRIBUTING.md).
 
 <a href="https://github.com/openstatushq/openstatus/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=openstatushq/openstatus" />
