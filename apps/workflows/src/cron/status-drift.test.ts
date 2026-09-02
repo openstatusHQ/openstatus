@@ -62,6 +62,7 @@ describe("handleStatusDriftCron", () => {
       status: "error",
       cronTimestamp: Date.now() + 1000,
       deadlineSeconds: 300,
+      rolloutPct: 100,
     });
     expect(replay.kind).toBe("unchanged");
 

@@ -59,6 +59,7 @@ export async function handleStatusDriftCron() {
       status: candidate.status,
       cronTimestamp: Date.now(),
       deadlineSeconds: Math.floor(env().OUTBOX_DEADLINE_MS / 1000),
+      rolloutPct: env().OUTBOX_ROLLOUT_PCT,
     });
 
     if (result.kind === "evaluated" && result.transitioned) {

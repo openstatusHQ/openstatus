@@ -36,6 +36,8 @@ export type TransitionInput = {
   message?: string;
   latency?: number;
   deadlineSeconds: number;
+  /** Monitors outside this gate are still delivered by the inline sender. */
+  rolloutPct: number;
 };
 
 export type OutboxRowRef = {
@@ -178,12 +180,16 @@ function outboxStatement(
     regionCount,
   });
   const dedupPrefix = `${input.cronTimestamp}:${input.monitorId}:${input.status}:`;
+  // Outside the rollout the inline sender owns this delivery, so the row is
+  // written already consumed: it still feeds the shadow diff, but raising
+  // OUTBOX_ROLLOUT_PCT can never make the drainer re-send it.
+  const owned = sql`(${monitor.id} % 100) < ${input.rolloutPct}`;
 
   return db.all<OutboxInsertRow>(sql`
     INSERT INTO ${checkerOutbox}
       (dedup_key, monitor_id, workspace_id, notification_id, provider, event_type,
        from_status, to_status, cron_timestamp, incident_id, payload,
-       available_at, deadline_at, created_at)
+       status, last_error, available_at, deadline_at, created_at)
     SELECT
       ${dedupPrefix} || ${notification.id},
       ${monitor.id}, ${monitor.workspaceId}, ${notification.id},
@@ -194,6 +200,8 @@ function outboxStatement(
           AND ${incidentTable.resolvedAt} IS NULL
         ORDER BY id DESC LIMIT 1),
       ${JSON.stringify(payload)},
+      CASE WHEN ${owned} THEN 'pending' ELSE 'done' END,
+      CASE WHEN ${owned} THEN NULL ELSE 'inline-delivery' END,
       unixepoch(), unixepoch() + ${input.deadlineSeconds}, unixepoch()
     FROM ${monitor}
     JOIN ${notificationsToMonitors}

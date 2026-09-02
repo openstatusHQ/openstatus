@@ -313,6 +313,52 @@ describe("drainOutbox", () => {
 });
 
 describe("shutdownOutbox", () => {
+  test("does not release a row whose send is already in flight", async () => {
+    let dispatched = false;
+    let release: () => void = () => {};
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    stubs.push(
+      stub(providerToFunction.email, "sendAlert", () => {
+        dispatched = true;
+        return pending;
+      }),
+    );
+
+    const row = await insertOutboxRow({ cronTimestamp: Date.now() });
+    const drain = drainOutbox({
+      timeoutMs: 5000,
+      rolloutPct: 100,
+      monitorIds: [monitorId],
+    });
+
+    while (!dispatched) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+
+    // Grace expires while the provider call is still outstanding.
+    await shutdownOutbox(50);
+
+    const during = await db
+      .select()
+      .from(checkerOutbox)
+      .where(eq(checkerOutbox.id, row.id))
+      .all();
+    expect(during[0]?.lockedBy).not.toBe(null);
+    expect(during[0]?.status).toBe("pending");
+
+    release();
+    await drain;
+
+    const after = await db
+      .select()
+      .from(checkerOutbox)
+      .where(eq(checkerOutbox.id, row.id))
+      .all();
+    expect(after[0]?.status).toBe("done");
+  });
+
   test("hands claimed work back instead of delivering it", async () => {
     stubs.push(
       stub(providerToFunction.email, "sendAlert", () => Promise.resolve()),

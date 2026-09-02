@@ -20,6 +20,7 @@ import {
   test,
 } from "@openstatus/test-utils";
 
+import { drainOutbox } from "./outbox";
 import { applyStatusTransition, isStaleCheck } from "./transition";
 
 const REGIONS = ["ams", "arn", "atl", "bog", "bom", "bos"] as const;
@@ -78,6 +79,7 @@ function transitionInput(
     status: "error" as const,
     cronTimestamp,
     deadlineSeconds: DEADLINE_SECONDS,
+    rolloutPct: 100,
   };
 }
 
@@ -135,6 +137,7 @@ describe("fast path", () => {
       status: "active",
       cronTimestamp: now - 60_000,
       deadlineSeconds: DEADLINE_SECONDS,
+      rolloutPct: 100,
     });
 
     expect(stale.kind).toBe("unchanged");
@@ -221,6 +224,7 @@ describe("recovery", () => {
       status: "active",
       cronTimestamp: down + 60_000,
       deadlineSeconds: DEADLINE_SECONDS,
+      rolloutPct: 100,
     });
 
     expect(recovery.kind).toBe("evaluated");
@@ -308,6 +312,7 @@ describe("degraded", () => {
       status: "degraded",
       cronTimestamp: down + 60_000,
       deadlineSeconds: DEADLINE_SECONDS,
+      rolloutPct: 100,
     });
 
     expect(degraded.kind).toBe("evaluated");
@@ -342,5 +347,63 @@ describe("degraded", () => {
       )
       .all();
     expect(open[0]?.total).toBe(0);
+  });
+});
+
+describe("rollout gate", () => {
+  test("a row written outside the rollout is not redelivered when the gate opens", async () => {
+    const { monitorId, regions } = await makeMonitor(1);
+
+    const result = await applyStatusTransition({
+      monitorId,
+      region: regions[0],
+      status: "error",
+      cronTimestamp: Date.now(),
+      deadlineSeconds: DEADLINE_SECONDS,
+      rolloutPct: 0,
+    });
+
+    expect(result.kind).toBe("evaluated");
+    if (result.kind !== "evaluated") return;
+    expect(result.transitioned).toBe(true);
+
+    const rows = await db
+      .select()
+      .from(checkerOutbox)
+      .where(eq(checkerOutbox.monitorId, monitorId))
+      .all();
+    expect(rows.length).toBe(1);
+    expect(rows[0]?.status).toBe("done");
+    expect(rows[0]?.lastError).toBe("inline-delivery");
+
+    // The inline sender already delivered this one; opening the gate must not
+    // make the drainer claim it a second time.
+    const summary = await drainOutbox({
+      timeoutMs: 100,
+      rolloutPct: 100,
+      monitorIds: [monitorId],
+    });
+    expect(summary.claimed).toBe(0);
+  });
+
+  test("a row written inside the rollout is claimable", async () => {
+    const { monitorId, regions } = await makeMonitor(1);
+
+    await applyStatusTransition({
+      monitorId,
+      region: regions[0],
+      status: "error",
+      cronTimestamp: Date.now(),
+      deadlineSeconds: DEADLINE_SECONDS,
+      rolloutPct: 100,
+    });
+
+    const rows = await db
+      .select()
+      .from(checkerOutbox)
+      .where(eq(checkerOutbox.monitorId, monitorId))
+      .all();
+    expect(rows[0]?.status).toBe("pending");
+    expect(rows[0]?.lastError).toBe(null);
   });
 });

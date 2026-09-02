@@ -147,6 +147,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     message,
     latency,
     deadlineSeconds: Math.floor(env().OUTBOX_DEADLINE_MS / 1000),
+    rolloutPct: env().OUTBOX_ROLLOUT_PCT,
   });
 
   if (transition.kind === "unchanged") {

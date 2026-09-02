@@ -1,5 +1,15 @@
 import { getLogger } from "@logtape/logtape";
-import { and, count, db, eq, gte, inArray, lt, sql } from "@openstatus/db";
+import {
+  and,
+  count,
+  db,
+  eq,
+  gte,
+  inArray,
+  lt,
+  notInArray,
+  sql,
+} from "@openstatus/db";
 import type {
   Incident,
   Monitor,
@@ -51,6 +61,12 @@ export type DrainSummary = {
 };
 
 let shuttingDown = false;
+
+// Rows whose provider call has been dispatched and not yet resolved. Shutdown
+// must not hand these to the peer machine: the send can still succeed after the
+// row is released, and the peer would deliver it a second time.
+const inFlightSends = new Set<number>();
+const activeDrains = new Set<Promise<DrainSummary>>();
 
 const SEND_METHOD = {
   alert: "sendAlert",
@@ -274,12 +290,14 @@ function deliverRow(
     let lastError = "";
 
     while (true) {
+      inFlightSends.add(row.id);
       const exit = yield* Effect.exit(
         Effect.tryPromise({
           try: () => send(context),
           catch: (error) => new Error(errorMessage(error)),
         }).pipe(Effect.timeout(timeoutMs)),
       );
+      inFlightSends.delete(row.id);
 
       if (Exit.isSuccess(exit)) return { kind: "delivered", row } as const;
 
@@ -433,9 +451,15 @@ export type DrainOptions = {
 };
 
 /** One claim-and-deliver cycle. Safe to run concurrently on both machines. */
-export async function drainOutbox(
-  options: DrainOptions = {},
-): Promise<DrainSummary> {
+export function drainOutbox(options: DrainOptions = {}): Promise<DrainSummary> {
+  const drain = runDrain(options);
+  activeDrains.add(drain);
+  return drain.finally(() => {
+    activeDrains.delete(drain);
+  });
+}
+
+async function runDrain(options: DrainOptions): Promise<DrainSummary> {
   const limit = options.limit ?? CLAIM_LIMIT;
   const timeoutMs = options.timeoutMs ?? env().NOTIFICATION_TIMEOUT_MS;
   const rolloutPct = options.rolloutPct ?? env().OUTBOX_ROLLOUT_PCT;
@@ -586,13 +610,38 @@ export function startOutboxConsumer(): void {
  * Fly SIGTERMs on every deploy and on the daily restart. Releasing unstarted
  * claims hands them to the peer machine now instead of at lease expiry.
  */
-export async function shutdownOutbox(): Promise<void> {
+export async function shutdownOutbox(graceMs?: number): Promise<void> {
   shuttingDown = true;
   await Effect.runPromise(Queue.shutdown(wakeQueue));
+  await waitForDrains(graceMs ?? env().NOTIFICATION_TIMEOUT_MS + 5_000);
+
+  // Anything still sending keeps its lease: if this process is killed before the
+  // call resolves, the row is swept later rather than delivered twice.
+  const stillSending = [...inFlightSends];
   await withBusyRetry(() =>
     db
       .update(checkerOutbox)
       .set({ lockedBy: null, lockedUntil: null })
-      .where(eq(checkerOutbox.lockedBy, workerId)),
+      .where(
+        stillSending.length === 0
+          ? eq(checkerOutbox.lockedBy, workerId)
+          : and(
+              eq(checkerOutbox.lockedBy, workerId),
+              notInArray(checkerOutbox.id, stillSending),
+            ),
+      ),
   );
+}
+
+async function waitForDrains(graceMs: number): Promise<void> {
+  if (activeDrains.size === 0) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const grace = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, graceMs);
+  });
+  await Promise.race([
+    Promise.allSettled(activeDrains).then(() => undefined),
+    grace,
+  ]);
+  if (timer !== undefined) clearTimeout(timer);
 }
