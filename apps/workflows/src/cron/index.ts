@@ -75,7 +75,7 @@ app.get("/checker/:period", async (c) => {
           void cronCompleted();
         }),
       ),
-      Effect.catchAll((e) =>
+      Effect.catch((e) =>
         Effect.sync(() => {
           console.error(e);
           void reportBackgroundError(e.message);
