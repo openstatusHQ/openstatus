@@ -24,7 +24,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 const tagSchema = z.object({
   id: z.number().optional(),
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required"),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format"),
 });
 
