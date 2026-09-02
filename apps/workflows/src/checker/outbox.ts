@@ -306,21 +306,31 @@ async function commitDelivered(rows: OutboxRow[]): Promise<void> {
     ]),
   );
 
-  await Promise.all(
-    rows.map((row) =>
-      checkerAudit.publishAuditLog({
-        id: `monitor:${row.monitorId}`,
-        action: "notification.sent",
-        targets: [{ id: String(row.monitorId), type: "monitor" }],
-        metadata: {
-          provider: row.provider,
-          cronTimestamp: row.cronTimestamp,
-          type: row.eventType,
-          notificationId: row.notificationId,
-        },
-      }),
-    ),
-  );
+  // Best-effort: the rows are settled and the triggers written. Throwing here
+  // would abort the rest of the drain's commits and take the consumer loop down
+  // with it, for a telemetry write.
+  try {
+    await Promise.all(
+      rows.map((row) =>
+        checkerAudit.publishAuditLog({
+          id: `monitor:${row.monitorId}`,
+          action: "notification.sent",
+          targets: [{ id: String(row.monitorId), type: "monitor" }],
+          metadata: {
+            provider: row.provider,
+            cronTimestamp: row.cronTimestamp,
+            type: row.eventType,
+            notificationId: row.notificationId,
+          },
+        }),
+      ),
+    );
+  } catch (error) {
+    logger.warn("Failed to publish notification audit log", {
+      delivered_count: rows.length,
+      error_message: errorMessage(error),
+    });
+  }
 }
 
 async function commitSkipped(

@@ -206,17 +206,28 @@ export const triggerNotifications = async ({
         break;
     }
     // ALPHA
-    await checkerAudit.publishAuditLog({
-      id: `monitor:${monitorId}`,
-      action: "notification.sent",
-      targets: [{ id: monitorId, type: "monitor" }],
-      metadata: {
+    // Best-effort: the notification has been sent and its trigger row written,
+    // so throwing here would make Cloud Tasks retry a send that already
+    // happened — and the retry skips it on the trigger's unique index.
+    try {
+      await checkerAudit.publishAuditLog({
+        id: `monitor:${monitorId}`,
+        action: "notification.sent",
+        targets: [{ id: monitorId, type: "monitor" }],
+        metadata: {
+          provider: notif.notification.provider,
+          cronTimestamp,
+          type: notifType,
+          notificationId: notif.notification.id,
+        },
+      });
+    } catch (err) {
+      logger.warn("Failed to publish notification audit log", {
+        monitor_id: monitorId,
         provider: notif.notification.provider,
-        cronTimestamp,
-        type: notifType,
-        notificationId: notif.notification.id,
-      },
-    });
+        error_message: err instanceof Error ? err.message : String(err),
+      });
+    }
   }
 
   return triggered;

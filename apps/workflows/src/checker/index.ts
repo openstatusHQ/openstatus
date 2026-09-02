@@ -41,31 +41,42 @@ async function publishStatusAudit(payload: Payload): Promise<void> {
     latency,
   };
 
-  switch (payload.status) {
-    case "active":
-      await checkerAudit.publishAuditLog({
-        id,
-        action: "monitor.recovered",
-        targets,
-        metadata,
-      });
-      break;
-    case "degraded":
-      await checkerAudit.publishAuditLog({
-        id,
-        action: "monitor.degraded",
-        targets,
-        metadata,
-      });
-      break;
-    case "error":
-      await checkerAudit.publishAuditLog({
-        id,
-        action: "monitor.failed",
-        targets,
-        metadata: { ...metadata, message: payload.message },
-      });
-      break;
+  // Best-effort, like publishIncidentAudit: the transition batch has already
+  // committed, and throwing here would make Cloud Tasks retry a transition that
+  // has landed. The retry short-circuits on the unchanged region status, so the
+  // notification this request still owes would never be sent.
+  try {
+    switch (payload.status) {
+      case "active":
+        await checkerAudit.publishAuditLog({
+          id,
+          action: "monitor.recovered",
+          targets,
+          metadata,
+        });
+        break;
+      case "degraded":
+        await checkerAudit.publishAuditLog({
+          id,
+          action: "monitor.degraded",
+          targets,
+          metadata,
+        });
+        break;
+      case "error":
+        await checkerAudit.publishAuditLog({
+          id,
+          action: "monitor.failed",
+          targets,
+          metadata: { ...metadata, message: payload.message },
+        });
+        break;
+    }
+  } catch (error) {
+    logger.warn("Failed to publish status audit log", {
+      monitor_id: payload.monitorId,
+      error_message: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 
@@ -113,7 +124,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     latency_ms: latency,
     monitorId: monitorIdNumber,
   };
-  event.status_update = statusUpdate;
+  if (event) event.status_update = statusUpdate;
 
   if (isStaleCheck(cronTimestamp, config.STALE_CHECK_MS)) {
     statusUpdate.stale = true;
