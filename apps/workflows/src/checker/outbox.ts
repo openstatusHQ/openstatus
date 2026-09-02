@@ -1,15 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import {
-  and,
-  count,
-  db,
-  eq,
-  gte,
-  inArray,
-  lt,
-  notInArray,
-  sql,
-} from "@openstatus/db";
+import { and, db, eq, inArray, lt, notInArray, sql } from "@openstatus/db";
 import type {
   Incident,
   Monitor,
@@ -24,8 +14,6 @@ import {
   notificationTrigger,
   selectMonitorSchema,
   selectNotificationSchema,
-  selectWorkspaceSchema,
-  workspace,
 } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
 import * as Sentry from "@sentry/deno";
@@ -33,6 +21,7 @@ import { Effect, Exit, Queue } from "effect";
 
 import { env } from "../env";
 import { checkerAudit } from "../utils/audit-log";
+import { loadSmsQuotaBlocked } from "./sms-quota";
 import { providerToFunction } from "./utils";
 
 const logger = getLogger(["workflow"]);
@@ -40,7 +29,6 @@ const logger = getLogger(["workflow"]);
 const CLAIM_LIMIT = 20;
 const DELIVERY_CONCURRENCY = 5;
 const MAX_BACKOFF_MS = 30_000;
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 const workerId = crypto.randomUUID();
 
@@ -148,26 +136,24 @@ async function loadDeps(rows: OutboxRow[]): Promise<DeliveryDeps> {
     ),
   ];
 
-  const [monitorRows, notificationRows] = await withBusyRetry(() =>
-    db.batch([
-      db.select().from(monitor).where(inArray(monitor.id, monitorIds)),
-      db
-        .select()
-        .from(notification)
-        .where(inArray(notification.id, notificationIds)),
-    ]),
+  const [monitorRows, notificationRows, incidentRows] = await withBusyRetry(
+    () =>
+      db.batch([
+        db.select().from(monitor).where(inArray(monitor.id, monitorIds)),
+        db
+          .select()
+          .from(notification)
+          .where(inArray(notification.id, notificationIds)),
+        db
+          .select()
+          .from(incidentTable)
+          .where(
+            incidentIds.length === 0
+              ? sql`1 = 0`
+              : inArray(incidentTable.id, incidentIds),
+          ),
+      ]),
   );
-
-  const incidentRows =
-    incidentIds.length === 0
-      ? []
-      : await withBusyRetry(() =>
-          db
-            .select()
-            .from(incidentTable)
-            .where(inArray(incidentTable.id, incidentIds))
-            .all(),
-        );
 
   const monitors = new Map<number, Monitor>();
   for (const row of monitorRows) {
@@ -186,7 +172,6 @@ async function loadDeps(rows: OutboxRow[]): Promise<DeliveryDeps> {
     incidents.set(row.id, row);
   }
 
-  const smsBlocked = new Map<number, boolean>();
   const smsWorkspaces = [
     ...new Set(
       rows
@@ -195,55 +180,9 @@ async function loadDeps(rows: OutboxRow[]): Promise<DeliveryDeps> {
         .filter((id): id is number => id !== null),
     ),
   ];
-  for (const workspaceId of smsWorkspaces) {
-    smsBlocked.set(workspaceId, await isSmsQuotaExceeded(workspaceId));
-  }
+  const smsBlocked = await loadSmsQuotaBlocked(smsWorkspaces);
 
   return { monitors, notifications, incidents, smsBlocked };
-}
-
-/**
- * `cron_timestamp` is milliseconds; the previous implementation compared it to
- * a seconds bound, which made the window unbounded.
- */
-async function isSmsQuotaExceeded(workspaceId: number): Promise<boolean> {
-  const workspaceRows = await withBusyRetry(() =>
-    db.select().from(workspace).where(eq(workspace.id, workspaceId)).all(),
-  );
-  const parsed = selectWorkspaceSchema.safeParse(workspaceRows[0]);
-  if (!parsed.success) return true;
-
-  const smsNotifications = await withBusyRetry(() =>
-    db
-      .select({ id: notification.id })
-      .from(notification)
-      .where(
-        and(
-          eq(notification.workspaceId, workspaceId),
-          eq(notification.provider, "sms"),
-        ),
-      )
-      .all(),
-  );
-  if (smsNotifications.length === 0) return false;
-
-  const sent = await withBusyRetry(() =>
-    db
-      .select({ total: count() })
-      .from(notificationTrigger)
-      .where(
-        and(
-          inArray(
-            notificationTrigger.notificationId,
-            smsNotifications.map((row) => row.id),
-          ),
-          gte(notificationTrigger.cronTimestamp, Date.now() - THIRTY_DAYS_MS),
-        ),
-      )
-      .all(),
-  );
-
-  return (sent[0]?.total ?? 0) > parsed.data.limits["sms-limit"];
 }
 
 function deliverRow(
@@ -341,37 +280,39 @@ async function commitDelivered(rows: OutboxRow[]): Promise<void> {
     ]),
   );
 
-  for (const row of rows) {
-    await checkerAudit.publishAuditLog({
-      id: `monitor:${row.monitorId}`,
-      action: "notification.sent",
-      targets: [{ id: String(row.monitorId), type: "monitor" }],
-      metadata: {
-        provider: row.provider,
-        cronTimestamp: row.cronTimestamp,
-        type: row.eventType,
-        notificationId: row.notificationId,
-      },
-    });
-  }
+  await Promise.all(
+    rows.map((row) =>
+      checkerAudit.publishAuditLog({
+        id: `monitor:${row.monitorId}`,
+        action: "notification.sent",
+        targets: [{ id: String(row.monitorId), type: "monitor" }],
+        metadata: {
+          provider: row.provider,
+          cronTimestamp: row.cronTimestamp,
+          type: row.eventType,
+          notificationId: row.notificationId,
+        },
+      }),
+    ),
+  );
 }
 
 async function commitSkipped(
   entries: { row: OutboxRow; reason: string }[],
 ): Promise<void> {
-  for (const entry of entries) {
-    await withBusyRetry(() =>
-      db
-        .update(checkerOutbox)
-        .set({
-          status: "done",
-          lockedBy: null,
-          lockedUntil: null,
-          lastError: entry.reason,
-        })
-        .where(eq(checkerOutbox.id, entry.row.id)),
-    );
-  }
+  const [first, ...rest] = entries.map((entry) =>
+    db
+      .update(checkerOutbox)
+      .set({
+        status: "done",
+        lockedBy: null,
+        lockedUntil: null,
+        lastError: entry.reason,
+      })
+      .where(eq(checkerOutbox.id, entry.row.id)),
+  );
+  if (first === undefined) return;
+  await withBusyRetry(() => db.batch([first, ...rest]));
 }
 
 async function commitReleased(rows: OutboxRow[]): Promise<void> {
@@ -569,14 +510,21 @@ export async function drainUntilEmpty(
     dead: 0,
   };
 
+  const resolved: DrainOptions = {
+    limit: options.limit ?? CLAIM_LIMIT,
+    timeoutMs: options.timeoutMs ?? env().NOTIFICATION_TIMEOUT_MS,
+    rolloutPct: options.rolloutPct ?? env().OUTBOX_ROLLOUT_PCT,
+    monitorIds: options.monitorIds,
+  };
+
   while (!shuttingDown) {
-    const summary = await drainOutbox(options);
+    const summary = await drainOutbox(resolved);
     total.claimed += summary.claimed;
     total.delivered += summary.delivered;
     total.skipped += summary.skipped;
     total.released += summary.released;
     total.dead += summary.dead;
-    if (summary.claimed < (options.limit ?? CLAIM_LIMIT)) break;
+    if (summary.claimed < (resolved.limit ?? CLAIM_LIMIT)) break;
   }
 
   return total;

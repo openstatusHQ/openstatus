@@ -13,20 +13,44 @@ import {
 } from "@openstatus/db/src/test/factories";
 import {
   afterAll,
+  afterEach,
   beforeAll,
+  beforeEach,
   describe,
   expect,
+  type Stub,
+  stub,
   test,
 } from "@openstatus/test-utils";
 
 import { applyStatusTransition } from "../checker/transition";
+import { providerToFunction } from "../checker/utils";
+import { checkerAudit } from "../utils/audit-log";
 import { handleStatusDriftCron } from "./status-drift";
 
+// biome-ignore lint/suspicious/noExplicitAny: heterogeneous provider stubs
+type AnyStub = Stub<any>;
+let stubs: AnyStub[] = [];
 let workspaceId: number;
 
 beforeAll(async () => {
   const { workspace } = await createTestWorkspace();
   workspaceId = workspace.id;
+});
+
+beforeEach(() => {
+  stubs = [];
+  stubs.push(
+    stub(checkerAudit, "publishAuditLog", () => Promise.resolve()) as AnyStub,
+  );
+  stubs.push(
+    stub(providerToFunction.email, "sendAlert", () => Promise.resolve()),
+  );
+});
+
+afterEach(() => {
+  for (const s of stubs) s.restore();
+  stubs = [];
 });
 
 afterAll(async () => {
@@ -127,5 +151,42 @@ describe("handleStatusDriftCron", () => {
       .where(eq(monitor.id, monitorRow.id))
       .all();
     expect(after[0]?.status).toBe("active");
+  });
+});
+
+describe("drift repair delivery", () => {
+  test("sends the notification the repair is recovering", async () => {
+    const sent: string[] = [];
+    for (const s of stubs) s.restore();
+    stubs = [
+      stub(checkerAudit, "publishAuditLog", () => Promise.resolve()) as AnyStub,
+      stub(providerToFunction.email, "sendAlert", () => {
+        sent.push("alert");
+        return Promise.resolve();
+      }),
+    ];
+
+    const monitorRow = await createMonitor(workspaceId, {
+      regions: "ams",
+      active: true,
+    });
+    const notif = await createNotification(workspaceId);
+    await linkNotificationToMonitor(notif.id, monitorRow.id);
+
+    await db
+      .insert(monitorStatusTable)
+      .values({
+        monitorId: monitorRow.id,
+        region: "ams",
+        status: "error",
+        cronTimestamp: Date.now(),
+      })
+      .run();
+
+    // OUTBOX_ROLLOUT_PCT defaults to 0, so the repair must fall back to the
+    // inline sender rather than writing a row nobody delivers.
+    const result = await handleStatusDriftCron();
+    expect(result.repaired).toBeGreaterThanOrEqual(1);
+    expect(sent.length).toBeGreaterThanOrEqual(1);
   });
 });

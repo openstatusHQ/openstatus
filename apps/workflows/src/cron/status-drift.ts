@@ -5,7 +5,14 @@ import { monitor, monitorStatusTable } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
 import * as Sentry from "@sentry/deno";
 
-import { evaluateTransition } from "../checker/transition";
+import { triggerNotifications } from "../checker/alerting";
+import { enqueueOutbox } from "../checker/outbox";
+import {
+  csvRegionCountSql,
+  csvRegionMemberSql,
+  quorumMetSql,
+} from "../checker/quorum";
+import { EVENT_TYPE, evaluateTransition } from "../checker/transition";
 import { env } from "../env";
 
 const logger = getLogger(["workflow"]);
@@ -16,9 +23,7 @@ type DriftRow = { monitor_id: number; status: MonitorStatus };
 
 /**
  * Finds monitors whose regions already carry a quorum for a status the monitor
- * itself does not have. The comma-joined `monitor.regions` forces the `instr`
- * membership test and the delimiter arithmetic here; it is confined to this
- * query because the hot path passes the region list as a bound parameter.
+ * itself does not have, using the same quorum rule as a live check.
  */
 async function findDrift(): Promise<DriftRow[]> {
   return withBusyRetry(() =>
@@ -31,10 +36,9 @@ async function findDrift(): Promise<DriftRow[]> {
         AND ${monitor.active} = 1
         AND ${monitor.regions} <> ''
         AND ${monitorStatusTable.status} <> ${monitor.status}
-        AND instr(',' || ${monitor.regions} || ',', ',' || ${monitorStatusTable.region} || ',') > 0
+        AND ${csvRegionMemberSql(sql`${monitorStatusTable.region}`)}
       GROUP BY ${monitorStatusTable.monitorId}, ${monitorStatusTable.status}
-      HAVING count(*) * 2 >=
-        (length(${monitor.regions}) - length(replace(${monitor.regions}, ',', '')) + 1)
+      HAVING ${quorumMetSql(sql`count(*)`, csvRegionCountSql())}
       LIMIT ${CANDIDATE_LIMIT}
     `),
   );
@@ -62,12 +66,25 @@ export async function handleStatusDriftCron() {
       rolloutPct: env().OUTBOX_ROLLOUT_PCT,
     });
 
-    if (result.kind === "evaluated" && result.transitioned) {
-      repaired += 1;
-      logger.warn("Repaired monitor status drift", {
-        monitor_id: candidate.monitor_id,
-        status: candidate.status,
-        outbox_rows: result.outboxRows.length,
+    if (result.kind !== "evaluated" || !result.transitioned) continue;
+
+    repaired += 1;
+    logger.warn("Repaired monitor status drift", {
+      monitor_id: candidate.monitor_id,
+      status: candidate.status,
+      outbox_rows: result.outboxRows.length,
+    });
+
+    // A repair that does not deliver is the failure it exists to fix.
+    if (result.outboxRows.some((row) => row.status === "pending")) {
+      enqueueOutbox(result.outboxRows.map((row) => row.id));
+    } else if (result.outboxRows.length > 0) {
+      await triggerNotifications({
+        monitorId: String(candidate.monitor_id),
+        notifType: EVENT_TYPE[candidate.status],
+        cronTimestamp: Date.now(),
+        regions: result.affectedRegions,
+        incidentId: result.incidentId ?? undefined,
       });
     }
   }

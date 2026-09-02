@@ -10,7 +10,7 @@ import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
 import { enqueueOutbox } from "./outbox";
 import { updateStatusPrivate } from "./private-location";
-import { applyStatusTransition, isStaleCheck } from "./transition";
+import { EVENT_TYPE, applyStatusTransition, isStaleCheck } from "./transition";
 
 export const checkerRoute = new Hono<Env>();
 
@@ -30,67 +30,49 @@ type Payload = z.infer<typeof payloadSchema>;
 
 const logger = getLogger(["workflow"]);
 
-const NOTIF_TYPE = {
-  active: "recovery",
-  degraded: "degraded",
-  error: "alert",
-} as const;
-
-function usesOutbox(monitorId: number): boolean {
-  return monitorId % 100 < env().OUTBOX_ROLLOUT_PCT;
-}
-
 async function publishStatusAudit(payload: Payload): Promise<void> {
   const { monitorId, region, statusCode, cronTimestamp, latency } = payload;
+  const id = `monitor:${monitorId}`;
   const targets = [{ id: monitorId, type: "monitor" as const }];
+  const metadata = {
+    region,
+    statusCode: statusCode ?? -1,
+    cronTimestamp,
+    latency,
+  };
 
   switch (payload.status) {
     case "active":
       await checkerAudit.publishAuditLog({
-        id: `monitor:${monitorId}`,
+        id,
         action: "monitor.recovered",
         targets,
-        metadata: {
-          region,
-          statusCode: statusCode ?? -1,
-          cronTimestamp,
-          latency,
-        },
+        metadata,
       });
       break;
     case "degraded":
       await checkerAudit.publishAuditLog({
-        id: `monitor:${monitorId}`,
+        id,
         action: "monitor.degraded",
         targets,
-        metadata: {
-          region,
-          statusCode: statusCode ?? -1,
-          cronTimestamp,
-          latency,
-        },
+        metadata,
       });
       break;
     case "error":
       await checkerAudit.publishAuditLog({
-        id: `monitor:${monitorId}`,
+        id,
         action: "monitor.failed",
         targets,
-        metadata: {
-          region,
-          statusCode: statusCode ?? -1,
-          message: payload.message,
-          cronTimestamp,
-          latency,
-        },
+        metadata: { ...metadata, message: payload.message },
       });
       break;
   }
 }
 
 checkerRoute.post("/updateStatus", async (c) => {
+  const config = env();
   const auth = c.req.header("Authorization");
-  if (auth !== `Basic ${env().CRON_SECRET}`) {
+  if (auth !== `Basic ${config.CRON_SECRET}`) {
     logger.error("Unauthorized");
     return c.text("Unauthorized", 401);
   }
@@ -133,7 +115,7 @@ checkerRoute.post("/updateStatus", async (c) => {
   };
   event.status_update = statusUpdate;
 
-  if (isStaleCheck(cronTimestamp, env().STALE_CHECK_MS)) {
+  if (isStaleCheck(cronTimestamp, config.STALE_CHECK_MS)) {
     statusUpdate.stale = true;
     return c.json({ success: true }, 200);
   }
@@ -146,8 +128,8 @@ checkerRoute.post("/updateStatus", async (c) => {
     statusCode,
     message,
     latency,
-    deadlineSeconds: Math.floor(env().OUTBOX_DEADLINE_MS / 1000),
-    rolloutPct: env().OUTBOX_ROLLOUT_PCT,
+    deadlineSeconds: Math.floor(config.OUTBOX_DEADLINE_MS / 1000),
+    rolloutPct: config.OUTBOX_ROLLOUT_PCT,
   });
 
   if (transition.kind === "unchanged") {
@@ -180,18 +162,21 @@ checkerRoute.post("/updateStatus", async (c) => {
   let triggeredNotifications: { notificationId: number; provider: string }[] =
     [];
 
-  if (usesOutbox(monitorIdNumber)) {
+  // Ownership is whatever the batch actually wrote, not a second copy of the
+  // rollout formula: `pending` means the drainer owns it, `done` means the
+  // inline sender does.
+  if (transition.outboxRows.some((row) => row.status === "pending")) {
     enqueueOutbox(transition.outboxRows.map((row) => row.id));
     triggeredNotifications = transition.outboxRows.map((row) => ({
       notificationId: row.notificationId,
       provider: row.provider,
     }));
-  } else {
+  } else if (transition.outboxRows.length > 0) {
     triggeredNotifications = await triggerNotifications({
       monitorId,
       statusCode,
       message,
-      notifType: NOTIF_TYPE[status],
+      notifType: EVENT_TYPE[status],
       cronTimestamp,
       regions: transition.affectedRegions,
       latency,
