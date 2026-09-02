@@ -106,7 +106,7 @@ const componentSchema = z.object({
   id: z.number(),
   monitorId: z.number().nullish(),
   order: z.number(),
-  name: z.string().min(1, { message: "Name is required" }),
+  name: z.string().trim().min(1, { message: "Name is required" }),
   description: z.string().optional(),
   type: z.enum(["monitor", "static"]),
 });
