@@ -1,4 +1,14 @@
-import { and, count, db, eq, gte, inArray, isNull, sql } from "@openstatus/db";
+import {
+  and,
+  count,
+  db,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  sql,
+} from "@openstatus/db";
 import {
   incidentTable,
   monitor,
@@ -28,7 +38,11 @@ async function duplicateOpenIncidents() {
       openCount: count(incidentTable.id),
     })
     .from(incidentTable)
-    .where(isNull(incidentTable.resolvedAt))
+    // NULLs are distinct in a SQLite unique index, so incidents with no monitor
+    // can never collide with incident_open_idx however many are open.
+    .where(
+      and(isNull(incidentTable.resolvedAt), isNotNull(incidentTable.monitorId)),
+    )
     .groupBy(incidentTable.monitorId)
     .having(sql`count(${incidentTable.id}) > 1`)
     .all();

@@ -163,8 +163,8 @@ checkerRoute.post("/updateStatus", async (c) => {
     [];
 
   // Ownership is whatever the batch actually wrote, not a second copy of the
-  // rollout formula: `pending` means the drainer owns it, `done` means the
-  // inline sender does.
+  // rollout formula: `pending` means the drainer owns it, `settled` with an
+  // `inline` outcome means the inline sender does.
   if (transition.outboxRows.some((row) => row.deliveryStatus === "pending")) {
     enqueueOutbox(transition.outboxRows.map((row) => row.id));
     triggeredNotifications = transition.outboxRows.map((row) => ({

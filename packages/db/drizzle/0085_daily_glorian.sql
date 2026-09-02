@@ -71,6 +71,30 @@ CREATE TABLE `monitor_transition` (
 --> statement-breakpoint
 CREATE INDEX `monitor_transition_monitor_id_cron_timestamp_idx` ON `monitor_transition` (`monitor_id`,`cron_timestamp`);--> statement-breakpoint
 CREATE INDEX `monitor_transition_created_at_idx` ON `monitor_transition` (`created_at`);--> statement-breakpoint
+-- The check-then-act race in createIncident left monitors with several open
+-- incidents, which the partial unique index below would reject. Keep the newest
+-- open incident per monitor and resolve the ones it superseded, at the keeper's
+-- start (never before their own). The keeper set is an uncorrelated subquery, so
+-- it is materialised once and does not shift as rows are resolved.
+UPDATE `incident`
+SET `resolved_at` = max(
+      `started_at`,
+      coalesce(
+        (SELECT k.`started_at`
+           FROM `incident` k
+          WHERE k.`monitor_id` = `incident`.`monitor_id`
+            AND k.`id` IN (SELECT max(x.`id`) FROM `incident` x
+                            WHERE x.`resolved_at` IS NULL
+                              AND x.`monitor_id` IS NOT NULL
+                            GROUP BY x.`monitor_id`)),
+        `started_at`)),
+    `auto_resolved` = 1
+WHERE `resolved_at` IS NULL
+  AND `monitor_id` IS NOT NULL
+  AND `id` NOT IN (SELECT max(x.`id`) FROM `incident` x
+                    WHERE x.`resolved_at` IS NULL
+                      AND x.`monitor_id` IS NOT NULL
+                    GROUP BY x.`monitor_id`);--> statement-breakpoint
 DROP INDEX `incident_open_idx`;--> statement-breakpoint
 CREATE UNIQUE INDEX `incident_open_idx` ON `incident` (`monitor_id`) WHERE "incident"."resolved_at" IS NULL;--> statement-breakpoint
 ALTER TABLE `monitor_status` ADD `cron_timestamp` integer DEFAULT 0 NOT NULL;
