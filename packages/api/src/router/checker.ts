@@ -27,7 +27,8 @@ import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 const ABORT_TIMEOUT = 10000;
-const CHECKER_BASE_URL = process.env.CHECKER_URL || "https://openstatus-checker.fly.dev";
+const CHECKER_BASE_URL =
+  process.env.CHECKER_URL || "https://openstatus-checker.fly.dev";
 
 // PingICMP treats its timeout as the deadline for the whole check, so omitting
 // it means a deadline of "now": the send loop breaks before the first packet
@@ -248,30 +249,27 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
   }
 
   try {
-    const res = await fetch(
-      `${CHECKER_BASE_URL}/ping/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({
-          url: input.url,
-          method: input.method,
-          headers: input.headers?.reduce(
-            (acc, { key, value }) => {
-              if (!key) return acc;
-              return { ...acc, [key]: value };
-            },
-            {} as Record<string, string>,
-          ),
-          body: input.body,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/ping/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({
+        url: input.url,
+        method: input.method,
+        headers: input.headers?.reduce(
+          (acc, { key, value }) => {
+            if (!key) return acc;
+            return { ...acc, [key]: value };
+          },
+          {} as Record<string, string>,
+        ),
+        body: input.body,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = httpOutput.safeParse(json);
@@ -340,19 +338,16 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
 
 export async function testTcp(input: z.infer<typeof tcpTestInput>) {
   try {
-    const res = await fetch(
-      `${CHECKER_BASE_URL}/tcp/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({ uri: input.url }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/tcp/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({ uri: input.url }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = tcpOutput.safeParse(json);
@@ -391,21 +386,18 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
 
 export async function testDns(input: z.infer<typeof dnsTestInput>) {
   try {
-    const res = await fetch(
-      `${CHECKER_BASE_URL}/dns/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({
-          uri: input.url,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/dns/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({
+        uri: input.url,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = dnsOutput.safeParse(json);
@@ -461,22 +453,19 @@ export async function testDns(input: z.infer<typeof dnsTestInput>) {
 
 export async function testIcmp(input: z.infer<typeof icmpTestInput>) {
   try {
-    const res = await fetch(
-      `${CHECKER_BASE_URL}/icmp/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({
-          uri: input.url,
-          timeout: ICMP_TEST_TIMEOUT,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/icmp/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({
+        uri: input.url,
+        timeout: ICMP_TEST_TIMEOUT,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = icmpOutput.safeParse(json);
@@ -515,25 +504,22 @@ export async function testIcmp(input: z.infer<typeof icmpTestInput>) {
 
 export async function testGrpc(input: z.infer<typeof grpcTestInput>) {
   try {
-    const res = await fetch(
-      `${CHECKER_BASE_URL}/grpc/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({
-          uri: input.url,
-          service: input.service,
-          tls: input.tls,
-          headers: transformHeaders(input.headers ?? []),
-          timeout: GRPC_TEST_TIMEOUT,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/grpc/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({
+        uri: input.url,
+        service: input.service,
+        tls: input.tls,
+        headers: transformHeaders(input.headers ?? []),
+        timeout: GRPC_TEST_TIMEOUT,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = grpcOutput.safeParse(json);
