@@ -22,6 +22,7 @@ import {
   handleOutboxShadowCron,
 } from "./outbox";
 import { handlePrivateLocationHealthCron } from "./private-location-health";
+import { handleStatusDriftCron } from "./status-drift";
 import { handleUptimeFreezeCron } from "./uptime-freeze";
 
 const app = new Hono({ strict: false });
@@ -179,6 +180,11 @@ app.get("/outbox/retention", async (c) => {
 
 app.get("/outbox/shadow", async (c) => {
   const result = await handleOutboxShadowCron();
+  return c.json({ success: true, ...result }, 200);
+});
+
+app.get("/status-drift", async (c) => {
+  const result = await handleStatusDriftCron();
   return c.json({ success: true, ...result }, 200);
 });
 

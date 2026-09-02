@@ -254,6 +254,18 @@ export async function applyStatusTransition(
 
   if (changed.length === 0) return { kind: "unchanged" };
 
+  return evaluateTransition(input);
+}
+
+/**
+ * The transition half, without the region write. Exported as the repair entry
+ * point: the region write and this evaluation are separate transactions, so a
+ * crash or a failed batch between them leaves `monitor.status` behind, and the
+ * fast path means replaying the same check will not re-evaluate it.
+ */
+export async function evaluateTransition(
+  input: TransitionInput,
+): Promise<TransitionResult> {
   const [monitorRows, statusRows] = await withBusyRetry(() =>
     db.batch([
       db.select().from(monitor).where(eq(monitor.id, input.monitorId)),
@@ -294,6 +306,9 @@ export async function applyStatusTransition(
   let journalRows: JournalRow[];
   let outboxRows: OutboxInsertRow[];
 
+  // All three statuses enqueue notifications; only the incident statement moves.
+  // The outbox row reads incident_id by subquery, so it must run after the
+  // incident is created but before an existing one is resolved.
   if (input.status === "error") {
     const [journalResult, , outboxResult] = await withBusyRetry(() =>
       db.batch([

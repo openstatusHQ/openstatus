@@ -295,3 +295,52 @@ describe("isStaleCheck", () => {
     expect(isStaleCheck(now - 700_000, 600_000, now)).toBe(true);
   });
 });
+
+describe("degraded", () => {
+  test("enqueues a degraded notification and resolves an open incident", async () => {
+    const { monitorId, regions } = await makeMonitor(1);
+    const down = Date.now();
+    await applyStatusTransition(transitionInput(monitorId, regions[0], down));
+
+    const degraded = await applyStatusTransition({
+      monitorId,
+      region: regions[0],
+      status: "degraded",
+      cronTimestamp: down + 60_000,
+      deadlineSeconds: DEADLINE_SECONDS,
+    });
+
+    expect(degraded.kind).toBe("evaluated");
+    if (degraded.kind !== "evaluated") return;
+    expect(degraded.transitioned).toBe(true);
+    expect(degraded.outboxRows.length).toBe(1);
+    expect(degraded.incidentId).not.toBe(null);
+
+    const events = await db
+      .select({
+        eventType: checkerOutbox.eventType,
+        incidentId: checkerOutbox.incidentId,
+      })
+      .from(checkerOutbox)
+      .where(eq(checkerOutbox.monitorId, monitorId))
+      .all();
+    expect(events.map((row) => row.eventType).sort()).toEqual([
+      "alert",
+      "degraded",
+    ]);
+    // the degraded row captured the incident before it was resolved
+    for (const row of events) expect(row.incidentId).not.toBe(null);
+
+    const open = await db
+      .select({ total: count() })
+      .from(incidentTable)
+      .where(
+        and(
+          eq(incidentTable.monitorId, monitorId),
+          isNull(incidentTable.resolvedAt),
+        ),
+      )
+      .all();
+    expect(open[0]?.total).toBe(0);
+  });
+});
