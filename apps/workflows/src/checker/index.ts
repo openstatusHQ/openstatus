@@ -1,20 +1,16 @@
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq, inArray, schema } from "@openstatus/db";
-import { incidentTable } from "@openstatus/db/src/schema";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
-import {
-  monitorStatusSchema,
-  selectMonitorSchema,
-} from "@openstatus/db/src/schema/monitors/validation";
+import { monitorStatusSchema } from "@openstatus/db/src/schema/monitors/validation";
 import { Hono } from "hono";
 import { z } from "zod";
 
 import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
-import { triggerNotifications, upsertMonitorStatus } from "./alerting";
-import { findOpenIncident, resolveIncident } from "./incident-utils";
+import { triggerNotifications } from "./alerting";
+import { enqueueOutbox } from "./outbox";
 import { updateStatusPrivate } from "./private-location";
+import { applyStatusTransition, isStaleCheck } from "./transition";
 
 export const checkerRoute = new Hono<Env>();
 
@@ -30,7 +26,67 @@ const payloadSchema = z.object({
   latency: z.number().optional(),
 });
 
+type Payload = z.infer<typeof payloadSchema>;
+
 const logger = getLogger(["workflow"]);
+
+const NOTIF_TYPE = {
+  active: "recovery",
+  degraded: "degraded",
+  error: "alert",
+} as const;
+
+function usesOutbox(monitorId: number): boolean {
+  return monitorId % 100 < env().OUTBOX_ROLLOUT_PCT;
+}
+
+async function publishStatusAudit(payload: Payload): Promise<void> {
+  const { monitorId, region, statusCode, cronTimestamp, latency } = payload;
+  const targets = [{ id: monitorId, type: "monitor" as const }];
+
+  switch (payload.status) {
+    case "active":
+      await checkerAudit.publishAuditLog({
+        id: `monitor:${monitorId}`,
+        action: "monitor.recovered",
+        targets,
+        metadata: {
+          region,
+          statusCode: statusCode ?? -1,
+          cronTimestamp,
+          latency,
+        },
+      });
+      break;
+    case "degraded":
+      await checkerAudit.publishAuditLog({
+        id: `monitor:${monitorId}`,
+        action: "monitor.degraded",
+        targets,
+        metadata: {
+          region,
+          statusCode: statusCode ?? -1,
+          cronTimestamp,
+          latency,
+        },
+      });
+      break;
+    case "error":
+      await checkerAudit.publishAuditLog({
+        id: `monitor:${monitorId}`,
+        action: "monitor.failed",
+        targets,
+        metadata: {
+          region,
+          statusCode: statusCode ?? -1,
+          message: payload.message,
+          cronTimestamp,
+          latency,
+        },
+      });
+      break;
+  }
+}
 
 checkerRoute.post("/updateStatus", async (c) => {
   const auth = c.req.header("Authorization");
@@ -40,9 +96,7 @@ checkerRoute.post("/updateStatus", async (c) => {
   }
 
   const event = c.get("event");
-  const json = await c.req.json();
-
-  const result = payloadSchema.safeParse(json);
+  const result = payloadSchema.safeParse(await c.req.json());
 
   if (!result.success) {
     return c.text("Unprocessable Entity", 422);
@@ -57,6 +111,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     status,
     latency,
   } = result.data;
+  const monitorIdNumber = Number(monitorId);
 
   logger.info("Updating monitor status", {
     monitor_id: monitorId,
@@ -67,241 +122,84 @@ checkerRoute.post("/updateStatus", async (c) => {
     latency_ms: latency,
   });
 
-  // First we upsert the monitor status
-  await upsertMonitorStatus({
-    monitorId: monitorId,
+  const statusUpdate: Record<string, unknown> = {
     status,
-    region: region,
-  });
-
-  const currentMonitor = await db
-    .select()
-    .from(schema.monitor)
-    .where(eq(schema.monitor.id, Number(monitorId)))
-    .get();
-
-  const monitor = selectMonitorSchema.parse(currentMonitor);
-  const numberOfRegions = monitor.regions.length;
-
-  // Fetch all affected regions for notifications (single query)
-  const affectedRegions = await db
-    .select({ region: schema.monitorStatusTable.region })
-    .from(schema.monitorStatusTable)
-    .where(
-      and(
-        eq(schema.monitorStatusTable.monitorId, monitor.id),
-        eq(schema.monitorStatusTable.status, status),
-        inArray(schema.monitorStatusTable.region, monitor.regions),
-      ),
-    )
-    .all();
-
-  const affectedRegionsList = affectedRegions.map((r) => r.region);
-  const affectedRegionCount = affectedRegionsList.length;
-
-  event.status_update = {
-    status: result.data.status,
-    message: result.data.message,
-    region: result.data.region,
-    status_code: result.data.statusCode,
-    cron_timestamp: result.data.cronTimestamp,
-    latency_ms: result.data.latency,
-    affectedRegionsCount: affectedRegionCount,
-    monitorId: monitor.id,
+    message,
+    region,
+    status_code: statusCode,
+    cron_timestamp: cronTimestamp,
+    latency_ms: latency,
+    monitorId: monitorIdNumber,
   };
+  event.status_update = statusUpdate;
 
-  if (affectedRegionCount === 0) {
+  if (isStaleCheck(cronTimestamp, env().STALE_CHECK_MS)) {
+    statusUpdate.stale = true;
     return c.json({ success: true }, 200);
   }
 
-  // audit log the current state of the ping
+  const transition = await applyStatusTransition({
+    monitorId: monitorIdNumber,
+    region,
+    status,
+    cronTimestamp,
+    statusCode,
+    message,
+    latency,
+    deadlineSeconds: Math.floor(env().OUTBOX_DEADLINE_MS / 1000),
+  });
 
-  switch (status) {
-    case "active":
-      await checkerAudit.publishAuditLog({
-        id: `monitor:${monitorId}`,
-        action: "monitor.recovered",
-        targets: [{ id: monitorId, type: "monitor" }],
-        metadata: {
-          region,
-          statusCode: statusCode ?? -1,
-          cronTimestamp,
-          latency,
-        },
-      });
-      break;
-    case "degraded":
-      await checkerAudit.publishAuditLog({
-        id: `monitor:${monitorId}`,
-        action: "monitor.degraded",
-        targets: [{ id: monitorId, type: "monitor" }],
-        metadata: {
-          region,
-          statusCode: statusCode ?? -1,
-          cronTimestamp,
-          latency,
-        },
-      });
-      break;
-    case "error":
-      await checkerAudit.publishAuditLog({
-        id: `monitor:${monitorId}`,
-        action: "monitor.failed",
-        targets: [{ id: monitorId, type: "monitor" }],
-        metadata: {
-          region,
-          statusCode: statusCode ?? -1,
-          message,
-          cronTimestamp,
-          latency,
-        },
-      });
-      break;
+  if (transition.kind === "unchanged") {
+    statusUpdate.fast_path_skipped = true;
+    return c.json({ success: true }, 200);
   }
+
+  if (transition.kind === "monitor-missing") {
+    statusUpdate.monitor_missing = true;
+    return c.json({ success: true }, 200);
+  }
+
+  statusUpdate.affectedRegionsCount = transition.affectedRegions.length;
+  statusUpdate.quorum_count = transition.quorumCount;
+  statusUpdate.region_count = transition.regionCount;
+  statusUpdate.transition_applied = transition.transitioned;
+  statusUpdate.outbox_rows = transition.outboxRows.length;
+
+  await publishStatusAudit(result.data);
+
+  if (!transition.transitioned) {
+    return c.text("Ok", 200);
+  }
+
+  logger.info("Monitor status changed", {
+    monitor_id: monitorIdNumber,
+    status,
+  });
 
   let triggeredNotifications: { notificationId: number; provider: string }[] =
     [];
 
-  if (affectedRegionCount >= numberOfRegions / 2 || numberOfRegions === 1) {
-    switch (status) {
-      case "active": {
-        if (monitor.status === "active") {
-          break;
-        }
-
-        logger.info("Monitor status changed to active", {
-          monitor_id: monitor.id,
-          workspace_id: monitor.workspaceId,
-        });
-        await db
-          .update(schema.monitor)
-          .set({ status: "active" })
-          .where(eq(schema.monitor.id, monitor.id));
-
-        let incident = null;
-        if (monitor.status === "error") {
-          const incidents = await resolveIncident({ monitorId, cronTimestamp });
-          incident = incidents[0] ?? null;
-        }
-
-        triggeredNotifications = await triggerNotifications({
-          monitorId,
-          statusCode,
-          message,
-          notifType: "recovery",
-          cronTimestamp,
-          regions: affectedRegionsList,
-          latency,
-          incidentId: incident?.id,
-        });
-
-        break;
-      }
-      case "degraded":
-        if (monitor.status === "degraded") {
-          break;
-        }
-
-        logger.info("Monitor status changed to degraded", {
-          monitor_id: monitor.id,
-          workspace_id: monitor.workspaceId,
-        });
-
-        await db
-          .update(schema.monitor)
-          .set({ status: "degraded" })
-          .where(eq(schema.monitor.id, monitor.id));
-
-        let incident = null;
-        if (monitor.status === "error") {
-          const incidents = await resolveIncident({
-            monitorId,
-            cronTimestamp,
-          });
-          incident = incidents[0] ?? null;
-        }
-
-        triggeredNotifications = await triggerNotifications({
-          monitorId,
-          statusCode,
-          message,
-          notifType: "degraded",
-          cronTimestamp,
-          latency,
-          regions: affectedRegionsList,
-          incidentId: incident?.id,
-        });
-
-        break;
-      case "error":
-        if (monitor.status === "error") {
-          break;
-        }
-
-        logger.info("Monitor status changed to error", {
-          monitor_id: monitor.id,
-          workspace_id: monitor.workspaceId,
-        });
-
-        await db
-          .update(schema.monitor)
-          .set({ status: "error" })
-          .where(eq(schema.monitor.id, monitor.id));
-
-        try {
-          const existingIncident = await findOpenIncident(Number(monitorId));
-          if (existingIncident) {
-            logger.info("Already in incident", {
-              incident_id: existingIncident.id,
-            });
-            break;
-          }
-
-          const [newIncident] = await db
-            .insert(incidentTable)
-            .values({
-              monitorId: Number(monitorId),
-              workspaceId: monitor.workspaceId,
-              startedAt: new Date(cronTimestamp),
-            })
-            .returning();
-
-          if (!newIncident?.id) {
-            break;
-          }
-
-          await checkerAudit.publishAuditLog({
-            id: `monitor:${monitorId}`,
-            action: "incident.created",
-            targets: [{ id: monitorId, type: "monitor" }],
-            metadata: { cronTimestamp, incidentId: newIncident.id },
-          });
-
-          triggeredNotifications = await triggerNotifications({
-            monitorId,
-            statusCode,
-            message,
-            notifType: "alert",
-            cronTimestamp,
-            latency,
-            regions: affectedRegionsList,
-            incidentId: newIncident.id,
-          });
-        } catch (error) {
-          logger.warning("Failed to create incident", { error });
-        }
-
-        break;
-      default:
-        logger.error("should not happen");
-        break;
-    }
+  if (usesOutbox(monitorIdNumber)) {
+    enqueueOutbox(transition.outboxRows.map((row) => row.id));
+    triggeredNotifications = transition.outboxRows.map((row) => ({
+      notificationId: row.notificationId,
+      provider: row.provider,
+    }));
+  } else {
+    triggeredNotifications = await triggerNotifications({
+      monitorId,
+      statusCode,
+      message,
+      notifType: NOTIF_TYPE[status],
+      cronTimestamp,
+      regions: transition.affectedRegions,
+      latency,
+      incidentId: transition.incidentId ?? undefined,
+    });
   }
 
-  (event.status_update as Record<string, unknown>).notificationTriggered =
-    triggeredNotifications.length > 0;
-  (event.status_update as Record<string, unknown>).notifications =
-    triggeredNotifications;
+  statusUpdate.notificationTriggered = triggeredNotifications.length > 0;
+  statusUpdate.notifications = triggeredNotifications;
 
   return c.text("Ok", 200);
 });

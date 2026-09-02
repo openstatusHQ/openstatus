@@ -1,12 +1,11 @@
 import { getLogger } from "@logtape/logtape";
 import { and, count, db, eq, gte, inArray, schema } from "@openstatus/db";
-import type { Incident, MonitorStatus } from "@openstatus/db/src/schema";
+import type { Incident } from "@openstatus/db/src/schema";
 import {
   selectMonitorSchema,
   selectNotificationSchema,
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
-import type { Region } from "@openstatus/db/src/schema/constants";
 import { Effect, Schedule } from "effect";
 
 import { checkerAudit } from "../utils/audit-log";
@@ -271,32 +270,4 @@ const insertNotificationTrigger = async ({
       cronTimestamp: cronTimestamp,
     })
     .returning();
-};
-
-export const upsertMonitorStatus = async ({
-  monitorId,
-  status,
-  region,
-}: {
-  monitorId: string;
-  status: MonitorStatus;
-  region: Region;
-}) => {
-  const newData = await db
-    .insert(schema.monitorStatusTable)
-    .values({ status, region, monitorId: Number(monitorId) })
-    .onConflictDoUpdate({
-      target: [
-        schema.monitorStatusTable.monitorId,
-        schema.monitorStatusTable.region,
-      ],
-      set: { status, updatedAt: new Date() },
-    })
-    .returning();
-  logger.debug("Upserted monitor status", {
-    monitor_id: monitorId,
-    region,
-    status,
-    updated_at: newData[0]?.updatedAt,
-  });
 };
