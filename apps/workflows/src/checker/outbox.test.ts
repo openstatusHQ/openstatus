@@ -1,7 +1,7 @@
 import { and, count, db, eq } from "@openstatus/db";
-import type { CheckerOutboxPayload } from "@openstatus/db/src/schema";
+import type { NotificationOutboxPayload } from "@openstatus/db/src/schema";
 import {
-  checkerOutbox,
+  notificationOutbox,
   monitor,
   notificationDeadLetter,
   notificationTrigger,
@@ -38,7 +38,7 @@ let workspaceId: number;
 let monitorId: number;
 let notificationId: number;
 
-const PAYLOAD: CheckerOutboxPayload = { regions: ["ams"] };
+const PAYLOAD: NotificationOutboxPayload = { regions: ["ams"] };
 
 beforeAll(async () => {
   const { workspace } = await createTestWorkspace();
@@ -65,8 +65,8 @@ afterEach(async () => {
   for (const s of stubs) s.restore();
   stubs = [];
   await db
-    .delete(checkerOutbox)
-    .where(eq(checkerOutbox.monitorId, monitorId))
+    .delete(notificationOutbox)
+    .where(eq(notificationOutbox.monitorId, monitorId))
     .run();
   await db
     .delete(notificationDeadLetter)
@@ -82,10 +82,13 @@ async function insertOutboxRow(overrides: {
   cronTimestamp: number;
   eventType?: "alert" | "recovery";
   deadlineOffsetSeconds?: number;
+  attempts?: number;
+  lockedBy?: string;
+  lockedUntilOffsetSeconds?: number;
 }) {
   const now = Math.floor(Date.now() / 1000);
   const [row] = await db
-    .insert(checkerOutbox)
+    .insert(notificationOutbox)
     .values({
       dedupKey: `${overrides.cronTimestamp}:${monitorId}:test:${notificationId}`,
       monitorId,
@@ -98,7 +101,13 @@ async function insertOutboxRow(overrides: {
       cronTimestamp: overrides.cronTimestamp,
       incidentId: null,
       payload: PAYLOAD,
-      availableAt: now,
+      attempts: overrides.attempts ?? 0,
+      lockedBy: overrides.lockedBy ?? null,
+      lockedUntil:
+        overrides.lockedUntilOffsetSeconds === undefined
+          ? null
+          : now + overrides.lockedUntilOffsetSeconds,
+      nextAttemptAt: now,
       deadlineAt: now + (overrides.deadlineOffsetSeconds ?? 300),
       createdAt: now,
     })
@@ -125,10 +134,10 @@ describe("drainOutbox", () => {
 
     const rows = await db
       .select()
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.monitorId, monitorId))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
       .all();
-    expect(rows[0]?.status).toBe("done");
+    expect(rows[0]?.deliveryStatus).toBe("settled");
     expect(rows[0]?.deliveredAt).not.toBe(null);
     expect(rows[0]?.lockedUntil).toBe(null);
 
@@ -161,8 +170,8 @@ describe("drainOutbox", () => {
 
     const remaining = await db
       .select({ total: count() })
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.monitorId, monitorId))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
       .all();
     expect(remaining[0]?.total).toBe(0);
 
@@ -225,12 +234,12 @@ describe("drainOutbox", () => {
     expect(summary.claimed).toBe(1);
 
     const done = await db
-      .select({ id: checkerOutbox.id })
-      .from(checkerOutbox)
+      .select({ id: notificationOutbox.id })
+      .from(notificationOutbox)
       .where(
         and(
-          eq(checkerOutbox.monitorId, monitorId),
-          eq(checkerOutbox.status, "done"),
+          eq(notificationOutbox.monitorId, monitorId),
+          eq(notificationOutbox.deliveryStatus, "settled"),
         ),
       )
       .all();
@@ -274,7 +283,7 @@ describe("drainOutbox", () => {
 
     const now = Math.floor(Date.now() / 1000);
     await db
-      .insert(checkerOutbox)
+      .insert(notificationOutbox)
       .values({
         dedupKey: `sms:${smsMonitor.id}:${smsNotification.id}`,
         monitorId: smsMonitor.id,
@@ -286,7 +295,7 @@ describe("drainOutbox", () => {
         toStatus: "error",
         cronTimestamp: Date.now(),
         payload: PAYLOAD,
-        availableAt: now,
+        nextAttemptAt: now,
         deadlineAt: now + 300,
         createdAt: now,
       })
@@ -301,14 +310,113 @@ describe("drainOutbox", () => {
 
     const rows = await db
       .select()
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.notificationId, smsNotification.id))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.notificationId, smsNotification.id))
       .all();
-    expect(rows[0]?.status).toBe("done");
+    expect(rows[0]?.deliveryStatus).toBe("settled");
     expect(rows[0]?.deliveredAt).toBe(null);
     expect(rows[0]?.lastError).toBe("sms-quota-exceeded");
 
     await db.delete(monitor).where(eq(monitor.id, smsMonitor.id)).run();
+  });
+});
+
+describe("retry", () => {
+  test("a failed send is handed back with its backoff recorded", async () => {
+    stubs.push(
+      stub(providerToFunction.email, "sendAlert", () =>
+        Promise.reject(new Error("provider down")),
+      ),
+    );
+    await insertOutboxRow({ cronTimestamp: Date.now() });
+
+    const summary = await drainOutbox({
+      timeoutMs: 500,
+      rolloutPct: 100,
+      monitorIds: [monitorId],
+    });
+
+    expect(summary.retried).toBe(1);
+    expect(summary.dead).toBe(0);
+    expect(summary.nextRetryMs).not.toBe(null);
+
+    const now = Math.floor(Date.now() / 1000);
+    const rows = await db
+      .select()
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
+      .all();
+    expect(rows[0]?.deliveryStatus).toBe("pending");
+    expect(rows[0]?.attempts).toBe(1);
+    expect(rows[0]?.lockedBy).toBe(null);
+    expect(rows[0]?.lockedUntil).toBe(null);
+    expect(rows[0]?.lastError).toContain("provider down");
+    expect(rows[0]?.nextAttemptAt).toBeGreaterThan(now);
+
+    // The backoff is the claim predicate, so nothing is claimable until it ends.
+    const again = await drainOutbox({
+      timeoutMs: 500,
+      rolloutPct: 100,
+      monitorIds: [monitorId],
+    });
+    expect(again.claimed).toBe(0);
+  });
+
+  test("a lapsed lease lets the other machine take the row over", async () => {
+    stubs.push(
+      stub(providerToFunction.email, "sendAlert", () => Promise.resolve()),
+    );
+    // A worker that died mid-attempt: still claimed, lease already expired.
+    await insertOutboxRow({
+      cronTimestamp: Date.now(),
+      attempts: 1,
+      lockedBy: "dead-worker",
+      lockedUntilOffsetSeconds: -1,
+    });
+
+    const summary = await drainOutbox({
+      timeoutMs: 500,
+      rolloutPct: 100,
+      monitorIds: [monitorId],
+    });
+
+    expect(summary.delivered).toBe(1);
+
+    const rows = await db
+      .select()
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
+      .all();
+    expect(rows[0]?.deliveryStatus).toBe("settled");
+    expect(rows[0]?.attempts).toBe(2);
+  });
+
+  test("a live lease is left alone", async () => {
+    stubs.push(
+      stub(providerToFunction.email, "sendAlert", () => Promise.resolve()),
+    );
+    await insertOutboxRow({
+      cronTimestamp: Date.now(),
+      attempts: 1,
+      lockedBy: "peer-worker",
+      lockedUntilOffsetSeconds: 60,
+    });
+
+    const summary = await drainOutbox({
+      timeoutMs: 500,
+      rolloutPct: 100,
+      monitorIds: [monitorId],
+    });
+
+    expect(summary.claimed).toBe(0);
+
+    const rows = await db
+      .select()
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
+      .all();
+    expect(rows[0]?.lockedBy).toBe("peer-worker");
+    expect(rows[0]?.deliveryStatus).toBe("pending");
   });
 });
 
@@ -342,21 +450,23 @@ describe("shutdownOutbox", () => {
 
     const during = await db
       .select()
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.id, row.id))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.id, row.id))
       .all();
     expect(during[0]?.lockedBy).not.toBe(null);
-    expect(during[0]?.status).toBe("pending");
+    expect(during[0]?.deliveryStatus).toBe("pending");
+    // The lease covers one delivery batch, not the whole message.
+    expect(during[0]?.lockedUntil).toBeLessThan(during[0]?.deadlineAt ?? 0);
 
     release();
     await drain;
 
     const after = await db
       .select()
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.id, row.id))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.id, row.id))
       .all();
-    expect(after[0]?.status).toBe("done");
+    expect(after[0]?.deliveryStatus).toBe("settled");
   });
 
   test("hands claimed work back instead of delivering it", async () => {
@@ -377,10 +487,10 @@ describe("shutdownOutbox", () => {
 
     const rows = await db
       .select()
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.monitorId, monitorId))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
       .all();
-    expect(rows[0]?.status).toBe("pending");
+    expect(rows[0]?.deliveryStatus).toBe("pending");
     expect(rows[0]?.lockedBy).toBe(null);
     expect(rows[0]?.lockedUntil).toBe(null);
   });
@@ -391,7 +501,7 @@ describe("sweepExpiredOutbox", () => {
     const twoHoursAgo = Math.floor(Date.now() / 1000) - 2 * 60 * 60;
 
     const [neverOwned] = await db
-      .insert(checkerOutbox)
+      .insert(notificationOutbox)
       .values({
         dedupKey: `expired-never:${monitorId}`,
         monitorId,
@@ -403,14 +513,14 @@ describe("sweepExpiredOutbox", () => {
         toStatus: "error",
         cronTimestamp: Date.now(),
         payload: PAYLOAD,
-        availableAt: twoHoursAgo,
+        nextAttemptAt: twoHoursAgo,
         deadlineAt: twoHoursAgo,
         createdAt: twoHoursAgo,
       })
       .returning();
 
     await db
-      .insert(checkerOutbox)
+      .insert(notificationOutbox)
       .values({
         dedupKey: `expired-abandoned:${monitorId}`,
         monitorId,
@@ -423,7 +533,7 @@ describe("sweepExpiredOutbox", () => {
         cronTimestamp: Date.now() + 1,
         payload: PAYLOAD,
         attempts: 2,
-        availableAt: twoHoursAgo,
+        nextAttemptAt: twoHoursAgo,
         deadlineAt: twoHoursAgo,
         createdAt: twoHoursAgo,
       })
@@ -433,8 +543,8 @@ describe("sweepExpiredOutbox", () => {
 
     const remaining = await db
       .select({ total: count() })
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.monitorId, monitorId))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
       .all();
     expect(remaining[0]?.total).toBe(0);
 

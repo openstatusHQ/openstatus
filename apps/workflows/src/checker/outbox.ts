@@ -6,7 +6,7 @@ import type {
   Notification,
 } from "@openstatus/db/src/schema";
 import {
-  checkerOutbox,
+  notificationOutbox,
   incidentTable,
   monitor,
   notification,
@@ -30,14 +30,34 @@ const CLAIM_LIMIT = 20;
 const DELIVERY_CONCURRENCY = 5;
 const MAX_BACKOFF_MS = 30_000;
 
+/**
+ * A claim leases a row for one delivery attempt, not for the whole message: a
+ * worker that dies mid-send has to hand the row back long before the deadline.
+ * The lease still has to outlast the worst case for a claimed row, which is
+ * waiting behind a full batch at the delivery concurrency, plus the commit.
+ */
+const LEASE_SLACK_MS = 5_000;
+
+function leaseSeconds(limit: number, timeoutMs: number): number {
+  const waves = Math.ceil(limit / DELIVERY_CONCURRENCY);
+  return Math.ceil((waves * timeoutMs + LEASE_SLACK_MS) / 1000);
+}
+
 const workerId = crypto.randomUUID();
 
-type OutboxRow = typeof checkerOutbox.$inferSelect;
+type OutboxRow = typeof notificationOutbox.$inferSelect;
 
 type DeliveryOutcome =
   | { kind: "delivered"; row: OutboxRow }
   | { kind: "skipped"; row: OutboxRow; reason: string }
   | { kind: "released"; row: OutboxRow }
+  | {
+      kind: "retry";
+      row: OutboxRow;
+      error: string;
+      delayMs: number;
+      nextAttemptAt: number;
+    }
   | { kind: "dead"; row: OutboxRow; error: string };
 
 export type DrainSummary = {
@@ -45,7 +65,10 @@ export type DrainSummary = {
   delivered: number;
   skipped: number;
   released: number;
+  retried: number;
   dead: number;
+  /** Time until the earliest backoff this drain wrote, so the caller can wake. */
+  nextRetryMs: number | null;
 };
 
 let shuttingDown = false;
@@ -80,6 +103,7 @@ function errorMessage(error: unknown): string {
 async function claimRows(
   limit: number,
   rolloutPct: number,
+  lease: number,
   monitorIds?: number[],
 ): Promise<OutboxRow[]> {
   const scope =
@@ -92,25 +116,25 @@ async function claimRows(
 
   return withBusyRetry(() =>
     db
-      .update(checkerOutbox)
+      .update(notificationOutbox)
       .set({
         lockedBy: workerId,
-        lockedUntil: sql`${checkerOutbox.deadlineAt}`,
-        attempts: sql`${checkerOutbox.attempts} + 1`,
+        lockedUntil: sql`min(unixepoch() + ${lease}, ${notificationOutbox.deadlineAt})`,
+        attempts: sql`${notificationOutbox.attempts} + 1`,
       })
       .where(
-        sql`${checkerOutbox.id} IN (
-          SELECT o.id FROM ${checkerOutbox} o
-          WHERE o.status = 'pending'
+        sql`${notificationOutbox.id} IN (
+          SELECT o.id FROM ${notificationOutbox} o
+          WHERE o.delivery_status = 'pending'
             AND (o.monitor_id % 100) < ${rolloutPct}
-            AND o.available_at <= unixepoch()
+            AND o.next_attempt_at <= unixepoch()
             AND o.deadline_at > unixepoch()${scope}
             AND (o.locked_until IS NULL OR o.locked_until < unixepoch())
             AND NOT EXISTS (
-              SELECT 1 FROM ${checkerOutbox} older
+              SELECT 1 FROM ${notificationOutbox} older
               WHERE older.monitor_id = o.monitor_id
                 AND older.notification_id = o.notification_id
-                AND older.status = 'pending'
+                AND older.delivery_status = 'pending'
                 AND older.id < o.id)
           ORDER BY o.id LIMIT ${limit})`,
       )
@@ -224,31 +248,32 @@ function deliverRow(
           : deps.incidents.get(row.incidentId),
     };
 
-    const deadlineMs = row.deadlineAt * 1000;
-    let attempt = 0;
-    let lastError = "";
+    inFlightSends.add(row.id);
+    const exit = yield* Effect.exit(
+      Effect.tryPromise({
+        try: () => send(context),
+        catch: (error) => new Error(errorMessage(error)),
+      }).pipe(Effect.timeout(timeoutMs)),
+    );
+    inFlightSends.delete(row.id);
 
-    while (true) {
-      inFlightSends.add(row.id);
-      const exit = yield* Effect.exit(
-        Effect.tryPromise({
-          try: () => send(context),
-          catch: (error) => new Error(errorMessage(error)),
-        }).pipe(Effect.timeout(timeoutMs)),
-      );
-      inFlightSends.delete(row.id);
+    if (Exit.isSuccess(exit)) return { kind: "delivered", row } as const;
 
-      if (Exit.isSuccess(exit)) return { kind: "delivered", row } as const;
-
-      lastError = String(exit.cause);
-      attempt += 1;
-
-      const delay = backoffMs(attempt);
-      if (shuttingDown || Date.now() + delay >= deadlineMs) {
-        return { kind: "dead", row, error: lastError } as const;
-      }
-      yield* Effect.sleep(delay);
+    // The backoff is written to the row rather than slept through, so a retry
+    // survives this process and either machine can pick it up.
+    const error = String(exit.cause);
+    const delayMs = backoffMs(row.attempts);
+    if (Date.now() + delayMs >= row.deadlineAt * 1000) {
+      return { kind: "dead", row, error } as const;
     }
+
+    return {
+      kind: "retry",
+      row,
+      error,
+      delayMs,
+      nextAttemptAt: Math.ceil((Date.now() + delayMs) / 1000),
+    } as const;
   });
 }
 
@@ -259,14 +284,15 @@ async function commitDelivered(rows: OutboxRow[]): Promise<void> {
   await withBusyRetry(() =>
     db.batch([
       db
-        .update(checkerOutbox)
+        .update(notificationOutbox)
         .set({
-          status: "done",
+          deliveryStatus: "settled",
+          outcome: "delivered",
           deliveredAt: Math.floor(Date.now() / 1000),
           lockedBy: null,
           lockedUntil: null,
         })
-        .where(inArray(checkerOutbox.id, ids)),
+        .where(inArray(notificationOutbox.id, ids)),
       db
         .insert(notificationTrigger)
         .values(
@@ -302,14 +328,37 @@ async function commitSkipped(
 ): Promise<void> {
   const [first, ...rest] = entries.map((entry) =>
     db
-      .update(checkerOutbox)
+      .update(notificationOutbox)
       .set({
-        status: "done",
+        deliveryStatus: "settled",
+        outcome: "skipped",
         lockedBy: null,
         lockedUntil: null,
         lastError: entry.reason,
       })
-      .where(eq(checkerOutbox.id, entry.row.id)),
+      .where(eq(notificationOutbox.id, entry.row.id)),
+  );
+  if (first === undefined) return;
+  await withBusyRetry(() => db.batch([first, ...rest]));
+}
+
+/**
+ * Hands the row back with its backoff recorded. `attempts` already counts this
+ * claim, so the row carries how many sends it has cost across every worker.
+ */
+async function commitRetry(
+  entries: { row: OutboxRow; error: string; nextAttemptAt: number }[],
+): Promise<void> {
+  const [first, ...rest] = entries.map((entry) =>
+    db
+      .update(notificationOutbox)
+      .set({
+        nextAttemptAt: entry.nextAttemptAt,
+        lockedBy: null,
+        lockedUntil: null,
+        lastError: entry.error.slice(0, 2000),
+      })
+      .where(eq(notificationOutbox.id, entry.row.id)),
   );
   if (first === undefined) return;
   await withBusyRetry(() => db.batch([first, ...rest]));
@@ -319,11 +368,11 @@ async function commitReleased(rows: OutboxRow[]): Promise<void> {
   if (rows.length === 0) return;
   await withBusyRetry(() =>
     db
-      .update(checkerOutbox)
+      .update(notificationOutbox)
       .set({ lockedBy: null, lockedUntil: null })
       .where(
         inArray(
-          checkerOutbox.id,
+          notificationOutbox.id,
           rows.map((row) => row.id),
         ),
       ),
@@ -357,9 +406,9 @@ async function commitDead(
           diedAt,
         })),
       ),
-      db.delete(checkerOutbox).where(
+      db.delete(notificationOutbox).where(
         inArray(
-          checkerOutbox.id,
+          notificationOutbox.id,
           entries.map(({ row }) => row.id),
         ),
       ),
@@ -404,9 +453,22 @@ async function runDrain(options: DrainOptions): Promise<DrainSummary> {
   const limit = options.limit ?? CLAIM_LIMIT;
   const timeoutMs = options.timeoutMs ?? env().NOTIFICATION_TIMEOUT_MS;
   const rolloutPct = options.rolloutPct ?? env().OUTBOX_ROLLOUT_PCT;
-  const rows = await claimRows(limit, rolloutPct, options.monitorIds);
+  const rows = await claimRows(
+    limit,
+    rolloutPct,
+    leaseSeconds(limit, timeoutMs),
+    options.monitorIds,
+  );
   if (rows.length === 0) {
-    return { claimed: 0, delivered: 0, skipped: 0, released: 0, dead: 0 };
+    return {
+      claimed: 0,
+      delivered: 0,
+      skipped: 0,
+      released: 0,
+      retried: 0,
+      dead: 0,
+      nextRetryMs: null,
+    };
   }
 
   const deps = await loadDeps(rows);
@@ -424,11 +486,13 @@ async function runDrain(options: DrainOptions): Promise<DrainSummary> {
   const released = outcomes
     .filter((outcome) => outcome.kind === "released")
     .map((outcome) => outcome.row);
+  const retried = outcomes.filter((outcome) => outcome.kind === "retry");
   const dead = outcomes.filter((outcome) => outcome.kind === "dead");
 
   await commitDelivered(delivered);
   await commitSkipped(skipped);
   await commitReleased(released);
+  await commitRetry(retried);
   await commitDead(dead);
 
   return {
@@ -436,7 +500,12 @@ async function runDrain(options: DrainOptions): Promise<DrainSummary> {
     delivered: delivered.length,
     skipped: skipped.length,
     released: released.length,
+    retried: retried.length,
     dead: dead.length,
+    nextRetryMs:
+      retried.length === 0
+        ? null
+        : Math.min(...retried.map((outcome) => outcome.delayMs)),
   };
 }
 
@@ -446,8 +515,8 @@ const EXPIRED_GRACE_SECONDS = 60 * 60;
  * A row can expire without ever being claimed: the rollout gate excluded it, or
  * nothing drained for longer than the deadline. Claiming it later would page
  * someone about an outage that is long over, so the claim skips expired rows and
- * this sweep retires them. `attempts > 0` means we owned it and gave up, which
- * is a dead letter; `attempts = 0` means we never owned it.
+ * this sweep retires them. `attempts > 0` means a worker claimed it and it still
+ * never landed, which is a dead letter; `attempts = 0` means we never owned it.
  */
 export async function sweepExpiredOutbox(): Promise<{
   deadLettered: number;
@@ -458,11 +527,11 @@ export async function sweepExpiredOutbox(): Promise<{
   const expired = await withBusyRetry(() =>
     db
       .select()
-      .from(checkerOutbox)
+      .from(notificationOutbox)
       .where(
         and(
-          eq(checkerOutbox.status, "pending"),
-          lt(checkerOutbox.deadlineAt, cutoff),
+          eq(notificationOutbox.deliveryStatus, "pending"),
+          lt(notificationOutbox.deadlineAt, cutoff),
         ),
       )
       .limit(200)
@@ -483,9 +552,9 @@ export async function sweepExpiredOutbox(): Promise<{
 
   if (neverOwned.length > 0) {
     await withBusyRetry(() =>
-      db.delete(checkerOutbox).where(
+      db.delete(notificationOutbox).where(
         inArray(
-          checkerOutbox.id,
+          notificationOutbox.id,
           neverOwned.map((row) => row.id),
         ),
       ),
@@ -507,7 +576,9 @@ export async function drainUntilEmpty(
     delivered: 0,
     skipped: 0,
     released: 0,
+    retried: 0,
     dead: 0,
+    nextRetryMs: null,
   };
 
   const resolved: DrainOptions = {
@@ -523,7 +594,14 @@ export async function drainUntilEmpty(
     total.delivered += summary.delivered;
     total.skipped += summary.skipped;
     total.released += summary.released;
+    total.retried += summary.retried;
     total.dead += summary.dead;
+    if (summary.nextRetryMs !== null) {
+      total.nextRetryMs =
+        total.nextRetryMs === null
+          ? summary.nextRetryMs
+          : Math.min(total.nextRetryMs, summary.nextRetryMs);
+    }
     if (summary.claimed < (resolved.limit ?? CLAIM_LIMIT)) break;
   }
 
@@ -539,11 +617,27 @@ export function enqueueOutbox(ids: number[]): void {
   }
 }
 
+const retryTimers = new Set<ReturnType<typeof setTimeout>>();
+
+/**
+ * The backoff is already durable in `next_attempt_at` and the safety-net cron
+ * would find it; this only makes the wait match the backoff instead of the cron.
+ */
+function scheduleRetryWake(delayMs: number): void {
+  if (shuttingDown) return;
+  const timer = setTimeout(() => {
+    retryTimers.delete(timer);
+    Queue.offerUnsafe(wakeQueue, 0);
+  }, delayMs);
+  retryTimers.add(timer);
+}
+
 export function startOutboxConsumer(): void {
   const loop = Effect.gen(function* () {
     while (!shuttingDown) {
       yield* Queue.takeAll(wakeQueue);
-      yield* Effect.promise(() => drainUntilEmpty());
+      const summary = yield* Effect.promise(() => drainUntilEmpty());
+      if (summary.nextRetryMs !== null) scheduleRetryWake(summary.nextRetryMs);
     }
   });
 
@@ -560,22 +654,25 @@ export function startOutboxConsumer(): void {
  */
 export async function shutdownOutbox(graceMs?: number): Promise<void> {
   shuttingDown = true;
+  for (const timer of retryTimers) clearTimeout(timer);
+  retryTimers.clear();
   await Effect.runPromise(Queue.shutdown(wakeQueue));
   await waitForDrains(graceMs ?? env().NOTIFICATION_TIMEOUT_MS + 5_000);
 
-  // Anything still sending keeps its lease: if this process is killed before the
-  // call resolves, the row is swept later rather than delivered twice.
+  // Anything still sending keeps its lease: the provider call can succeed after
+  // we stop watching, so the peer waits for the lease to lapse rather than
+  // starting a second send while this one is outstanding.
   const stillSending = [...inFlightSends];
   await withBusyRetry(() =>
     db
-      .update(checkerOutbox)
+      .update(notificationOutbox)
       .set({ lockedBy: null, lockedUntil: null })
       .where(
         stillSending.length === 0
-          ? eq(checkerOutbox.lockedBy, workerId)
+          ? eq(notificationOutbox.lockedBy, workerId)
           : and(
-              eq(checkerOutbox.lockedBy, workerId),
-              notInArray(checkerOutbox.id, stillSending),
+              eq(notificationOutbox.lockedBy, workerId),
+              notInArray(notificationOutbox.id, stillSending),
             ),
       ),
   );

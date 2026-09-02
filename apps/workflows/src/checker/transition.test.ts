@@ -1,7 +1,7 @@
 import { and, count, db, eq, isNull } from "@openstatus/db";
 import {
-  checkerDecision,
-  checkerOutbox,
+  monitorTransition,
+  notificationOutbox,
   incidentTable,
   monitor,
   monitorStatusTable,
@@ -181,8 +181,8 @@ describe("replay", () => {
 
     const outbox = await db
       .select({ total: count() })
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.monitorId, monitorId))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
       .all();
     expect(outbox[0]?.total).toBe(1);
   });
@@ -199,8 +199,8 @@ describe("decision journal", () => {
 
     const rows = await db
       .select()
-      .from(checkerDecision)
-      .where(eq(checkerDecision.monitorId, monitorId))
+      .from(monitorTransition)
+      .where(eq(monitorTransition.monitorId, monitorId))
       .all();
 
     expect(rows.length).toBe(1);
@@ -245,9 +245,9 @@ describe("recovery", () => {
     expect(open[0]?.total).toBe(0);
 
     const events = await db
-      .select({ eventType: checkerOutbox.eventType })
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.monitorId, monitorId))
+      .select({ eventType: notificationOutbox.eventType })
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
       .all();
     expect(events.map((row) => row.eventType).sort()).toEqual([
       "alert",
@@ -278,8 +278,8 @@ describe("concurrency", () => {
 
     const outbox = await db
       .select({ total: count() })
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.monitorId, monitorId))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
       .all();
     expect(outbox[0]?.total).toBe(1);
 
@@ -323,11 +323,11 @@ describe("degraded", () => {
 
     const events = await db
       .select({
-        eventType: checkerOutbox.eventType,
-        incidentId: checkerOutbox.incidentId,
+        eventType: notificationOutbox.eventType,
+        incidentId: notificationOutbox.incidentId,
       })
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.monitorId, monitorId))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
       .all();
     expect(events.map((row) => row.eventType).sort()).toEqual([
       "alert",
@@ -369,12 +369,12 @@ describe("rollout gate", () => {
 
     const rows = await db
       .select()
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.monitorId, monitorId))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
       .all();
     expect(rows.length).toBe(1);
-    expect(rows[0]?.status).toBe("done");
-    expect(rows[0]?.lastError).toBe("inline-delivery");
+    expect(rows[0]?.deliveryStatus).toBe("settled");
+    expect(rows[0]?.outcome).toBe("inline");
 
     // The inline sender already delivered this one; opening the gate must not
     // make the drainer claim it a second time.
@@ -400,10 +400,10 @@ describe("rollout gate", () => {
 
     const rows = await db
       .select()
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.monitorId, monitorId))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
       .all();
-    expect(rows[0]?.status).toBe("pending");
-    expect(rows[0]?.lastError).toBe(null);
+    expect(rows[0]?.deliveryStatus).toBe("pending");
+    expect(rows[0]?.outcome).toBe(null);
   });
 });

@@ -76,7 +76,7 @@ export async function handleStatusDriftCron() {
     });
 
     // A repair that does not deliver is the failure it exists to fix.
-    if (result.outboxRows.some((row) => row.status === "pending")) {
+    if (result.outboxRows.some((row) => row.deliveryStatus === "pending")) {
       enqueueOutbox(result.outboxRows.map((row) => row.id));
     } else if (result.outboxRows.length > 0) {
       await triggerNotifications({

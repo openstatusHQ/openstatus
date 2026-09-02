@@ -4,8 +4,8 @@ import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { monitorStatus } from "../monitors/constants";
 import { monitor } from "../monitors/monitor";
 
-export const checkerDecision = sqliteTable(
-  "checker_decision",
+export const monitorTransition = sqliteTable(
+  "monitor_transition",
   {
     id: integer("id").primaryKey(),
     monitorId: integer("monitor_id")
@@ -22,19 +22,19 @@ export const checkerDecision = sqliteTable(
     createdAt: integer("created_at").notNull(),
   },
   (t) => [
-    index("checker_decision_monitor_id_cron_timestamp_idx").on(
+    index("monitor_transition_monitor_id_cron_timestamp_idx").on(
       t.monitorId,
       t.cronTimestamp,
     ),
-    index("checker_decision_created_at_idx").on(t.createdAt),
+    index("monitor_transition_created_at_idx").on(t.createdAt),
   ],
 );
 
-export const checkerDecisionRelations = relations(
-  checkerDecision,
+export const monitorTransitionRelations = relations(
+  monitorTransition,
   ({ one }) => ({
     monitor: one(monitor, {
-      fields: [checkerDecision.monitorId],
+      fields: [monitorTransition.monitorId],
       references: [monitor.id],
     }),
   }),

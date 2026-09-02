@@ -1,6 +1,6 @@
 import { and, count, db, eq, isNull } from "@openstatus/db";
 import {
-  checkerOutbox,
+  notificationOutbox,
   incidentTable,
   monitor,
   monitorStatusTable,
@@ -121,8 +121,8 @@ describe("handleStatusDriftCron", () => {
 
     const outbox = await db
       .select({ total: count() })
-      .from(checkerOutbox)
-      .where(eq(checkerOutbox.monitorId, monitorRow.id))
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorRow.id))
       .all();
     expect(outbox[0]?.total).toBe(1);
   });

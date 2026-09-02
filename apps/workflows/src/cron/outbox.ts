@@ -1,8 +1,8 @@
 import { getLogger } from "@logtape/logtape";
 import { and, db, lt, sql } from "@openstatus/db";
 import {
-  checkerDecision,
-  checkerOutbox,
+  monitorTransition,
+  notificationOutbox,
   notificationTrigger,
 } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
@@ -39,13 +39,13 @@ export async function handleOutboxRetentionCron() {
       // Pending rows older than the retention window are unreachable: the
       // delivery deadline is minutes, not weeks.
       db
-        .delete(checkerOutbox)
-        .where(lt(checkerOutbox.createdAt, outboxCutoff))
-        .returning({ id: checkerOutbox.id }),
+        .delete(notificationOutbox)
+        .where(lt(notificationOutbox.createdAt, outboxCutoff))
+        .returning({ id: notificationOutbox.id }),
       db
-        .delete(checkerDecision)
-        .where(lt(checkerDecision.createdAt, decisionCutoff))
-        .returning({ id: checkerDecision.id }),
+        .delete(monitorTransition)
+        .where(lt(monitorTransition.createdAt, decisionCutoff))
+        .returning({ id: monitorTransition.id }),
     ]),
   );
 
@@ -71,19 +71,19 @@ export async function handleOutboxShadowCron() {
   const missingTrigger = await withBusyRetry(() =>
     db
       .select({
-        monitorId: checkerOutbox.monitorId,
-        notificationId: checkerOutbox.notificationId,
-        cronTimestamp: checkerOutbox.cronTimestamp,
+        monitorId: notificationOutbox.monitorId,
+        notificationId: notificationOutbox.notificationId,
+        cronTimestamp: notificationOutbox.cronTimestamp,
       })
-      .from(checkerOutbox)
+      .from(notificationOutbox)
       .where(
         and(
-          sql`${checkerOutbox.cronTimestamp} >= ${since}`,
+          sql`${notificationOutbox.cronTimestamp} >= ${since}`,
           sql`NOT EXISTS (
             SELECT 1 FROM ${notificationTrigger}
-            WHERE ${notificationTrigger.monitorId} = ${checkerOutbox.monitorId}
-              AND ${notificationTrigger.notificationId} = ${checkerOutbox.notificationId}
-              AND ${notificationTrigger.cronTimestamp} = ${checkerOutbox.cronTimestamp})`,
+            WHERE ${notificationTrigger.monitorId} = ${notificationOutbox.monitorId}
+              AND ${notificationTrigger.notificationId} = ${notificationOutbox.notificationId}
+              AND ${notificationTrigger.cronTimestamp} = ${notificationOutbox.cronTimestamp})`,
         ),
       )
       .all(),
@@ -101,10 +101,10 @@ export async function handleOutboxShadowCron() {
         and(
           sql`${notificationTrigger.cronTimestamp} >= ${since}`,
           sql`NOT EXISTS (
-            SELECT 1 FROM ${checkerOutbox}
-            WHERE ${checkerOutbox.monitorId} = ${notificationTrigger.monitorId}
-              AND ${checkerOutbox.notificationId} = ${notificationTrigger.notificationId}
-              AND ${checkerOutbox.cronTimestamp} = ${notificationTrigger.cronTimestamp})`,
+            SELECT 1 FROM ${notificationOutbox}
+            WHERE ${notificationOutbox.monitorId} = ${notificationTrigger.monitorId}
+              AND ${notificationOutbox.notificationId} = ${notificationTrigger.notificationId}
+              AND ${notificationOutbox.cronTimestamp} = ${notificationTrigger.cronTimestamp})`,
         ),
       )
       .all(),

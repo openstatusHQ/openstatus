@@ -1,14 +1,14 @@
 import { getLogger } from "@logtape/logtape";
 import { type SQL, and, db, eq, sql } from "@openstatus/db";
 import type {
-  CheckerOutboxPayload,
+  NotificationOutboxPayload,
   MonitorStatus,
   NotificationProvider,
 } from "@openstatus/db/src/schema";
 import {
-  checkerDecision,
-  checkerOutbox,
-  checkerOutboxEventType,
+  monitorTransition,
+  notificationOutbox,
+  notificationOutboxEventType,
   incidentTable,
   monitor,
   monitorStatusTable,
@@ -23,7 +23,7 @@ import { checkerAudit } from "../utils/audit-log";
 const logger = getLogger(["workflow"]);
 import { quorumCountSql, quorumGuardSql } from "./quorum";
 
-export type EventType = (typeof checkerOutboxEventType)[number];
+export type EventType = (typeof notificationOutboxEventType)[number];
 
 export const EVENT_TYPE: Record<MonitorStatus, EventType> = {
   active: "recovery",
@@ -48,8 +48,8 @@ export type OutboxRowRef = {
   id: number;
   notificationId: number;
   provider: NotificationProvider;
-  /** `pending` means the drainer owns delivery; `done` means the inline sender does. */
-  status: "pending" | "done";
+  /** `pending` means the drainer owns delivery; `settled` means the inline sender does. */
+  deliveryStatus: "pending" | "settled";
 };
 
 export type TransitionResult =
@@ -86,7 +86,7 @@ type OutboxInsertRow = {
   notification_id: number;
   incident_id: number | null;
   provider: NotificationProvider;
-  status: "pending" | "done";
+  delivery_status: "pending" | "settled";
 };
 
 function journalStatement(
@@ -102,7 +102,7 @@ function journalStatement(
   const transitioning = sql`${guard} AND ${monitor.status} <> ${input.status}`;
 
   return db.all<JournalRow>(sql`
-    INSERT INTO ${checkerDecision}
+    INSERT INTO ${monitorTransition}
       (monitor_id, region, cron_timestamp, from_status, to_status,
        quorum_count, region_count, transitioned, outbox_rows, created_at)
     SELECT
@@ -155,7 +155,7 @@ function resolveIncidentStatement(input: TransitionInput, guard: SQL) {
 
 function outboxStatement(
   input: TransitionInput,
-  payload: CheckerOutboxPayload,
+  payload: NotificationOutboxPayload,
   guard: SQL,
 ) {
   const dedupPrefix = `${input.cronTimestamp}:${input.monitorId}:${input.status}:`;
@@ -165,10 +165,10 @@ function outboxStatement(
   const owned = sql`(${monitor.id} % 100) < ${input.rolloutPct}`;
 
   return db.all<OutboxInsertRow>(sql`
-    INSERT INTO ${checkerOutbox}
+    INSERT INTO ${notificationOutbox}
       (dedup_key, monitor_id, workspace_id, notification_id, provider, event_type,
        from_status, to_status, cron_timestamp, incident_id, payload,
-       status, last_error, available_at, deadline_at, created_at)
+       delivery_status, outcome, next_attempt_at, deadline_at, created_at)
     SELECT
       ${dedupPrefix} || ${notification.id},
       ${monitor.id}, ${monitor.workspaceId}, ${notification.id},
@@ -179,8 +179,8 @@ function outboxStatement(
           AND ${incidentTable.resolvedAt} IS NULL
         ORDER BY id DESC LIMIT 1),
       ${JSON.stringify(payload)},
-      CASE WHEN ${owned} THEN 'pending' ELSE 'done' END,
-      CASE WHEN ${owned} THEN NULL ELSE 'inline-delivery' END,
+      CASE WHEN ${owned} THEN 'pending' ELSE 'settled' END,
+      CASE WHEN ${owned} THEN NULL ELSE 'inline' END,
       unixepoch(), unixepoch() + ${input.deadlineSeconds}, unixepoch()
     FROM ${monitor}
     JOIN ${notificationsToMonitors}
@@ -191,7 +191,7 @@ function outboxStatement(
       AND ${monitor.status} <> ${input.status}
       AND ${guard}
     ON CONFLICT (dedup_key) DO NOTHING
-    RETURNING id, notification_id, incident_id, provider, status
+    RETURNING id, notification_id, incident_id, provider, delivery_status
   `);
 }
 
@@ -269,7 +269,7 @@ export async function evaluateTransition(
     .map((row) => row.region)
     .filter((region) => configuredRegions.has(region));
 
-  const payload: CheckerOutboxPayload = {
+  const payload: NotificationOutboxPayload = {
     regions: affectedRegions,
     statusCode: input.statusCode,
     message: input.message,
@@ -333,7 +333,7 @@ export async function evaluateTransition(
       id: row.id,
       notificationId: row.notification_id,
       provider: row.provider,
-      status: row.status,
+      deliveryStatus: row.delivery_status,
     })),
     incidentId: outboxRows[0]?.incident_id ?? null,
     incidentCreatedId,

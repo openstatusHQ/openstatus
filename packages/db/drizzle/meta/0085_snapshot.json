@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "40f84758-095b-48ad-9641-232b5d11459b",
+  "id": "10787b50-ac75-4913-ba21-f3d2da7acc6e",
   "prevId": "b39ead3f-410d-45d6-8d9d-b169d00d0039",
   "tables": {
     "workspace": {
@@ -1839,6 +1839,423 @@
           "name": "notifications_to_monitors_monitor_id_notification_id_pk"
         }
       },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "notification_dead_letter": {
+      "name": "notification_dead_letter",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "outbox_id": {
+          "name": "outbox_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "dedup_key": {
+          "name": "dedup_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "monitor_id": {
+          "name": "monitor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notification_id": {
+          "name": "notification_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "from_status": {
+          "name": "from_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "to_status": {
+          "name": "to_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cron_timestamp": {
+          "name": "cron_timestamp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "incident_id": {
+          "name": "incident_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "payload": {
+          "name": "payload",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "final_error": {
+          "name": "final_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "died_at": {
+          "name": "died_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "notification_dead_letter_dedup_key_idx": {
+          "name": "notification_dead_letter_dedup_key_idx",
+          "columns": [
+            "dedup_key"
+          ],
+          "isUnique": true
+        },
+        "notification_dead_letter_workspace_id_died_at_idx": {
+          "name": "notification_dead_letter_workspace_id_died_at_idx",
+          "columns": [
+            "workspace_id",
+            "died_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "notification_dead_letter_monitor_id_monitor_id_fk": {
+          "name": "notification_dead_letter_monitor_id_monitor_id_fk",
+          "tableFrom": "notification_dead_letter",
+          "tableTo": "monitor",
+          "columnsFrom": [
+            "monitor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "notification_dead_letter_workspace_id_workspace_id_fk": {
+          "name": "notification_dead_letter_workspace_id_workspace_id_fk",
+          "tableFrom": "notification_dead_letter",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "notification_outbox": {
+      "name": "notification_outbox",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "dedup_key": {
+          "name": "dedup_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "monitor_id": {
+          "name": "monitor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notification_id": {
+          "name": "notification_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "from_status": {
+          "name": "from_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "to_status": {
+          "name": "to_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cron_timestamp": {
+          "name": "cron_timestamp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "incident_id": {
+          "name": "incident_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "payload": {
+          "name": "payload",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "delivery_status": {
+          "name": "delivery_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "next_attempt_at": {
+          "name": "next_attempt_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deadline_at": {
+          "name": "deadline_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "locked_by": {
+          "name": "locked_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "locked_until": {
+          "name": "locked_until",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "delivered_at": {
+          "name": "delivered_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "notification_outbox_dedup_key_idx": {
+          "name": "notification_outbox_dedup_key_idx",
+          "columns": [
+            "dedup_key"
+          ],
+          "isUnique": true
+        },
+        "notification_outbox_claim_idx": {
+          "name": "notification_outbox_claim_idx",
+          "columns": [
+            "next_attempt_at"
+          ],
+          "isUnique": false,
+          "where": "\"notification_outbox\".\"delivery_status\" = 'pending'"
+        },
+        "notification_outbox_notification_id_cron_timestamp_idx": {
+          "name": "notification_outbox_notification_id_cron_timestamp_idx",
+          "columns": [
+            "notification_id",
+            "cron_timestamp"
+          ],
+          "isUnique": false
+        },
+        "notification_outbox_channel_idx": {
+          "name": "notification_outbox_channel_idx",
+          "columns": [
+            "monitor_id",
+            "notification_id"
+          ],
+          "isUnique": false,
+          "where": "\"notification_outbox\".\"delivery_status\" = 'pending'"
+        }
+      },
+      "foreignKeys": {
+        "notification_outbox_monitor_id_monitor_id_fk": {
+          "name": "notification_outbox_monitor_id_monitor_id_fk",
+          "tableFrom": "notification_outbox",
+          "tableTo": "monitor",
+          "columnsFrom": [
+            "monitor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "notification_outbox_workspace_id_workspace_id_fk": {
+          "name": "notification_outbox_workspace_id_workspace_id_fk",
+          "tableFrom": "notification_outbox",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "notification_outbox_notification_id_notification_id_fk": {
+          "name": "notification_outbox_notification_id_notification_id_fk",
+          "tableFrom": "notification_outbox",
+          "tableTo": "notification",
+          "columnsFrom": [
+            "notification_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "notification_outbox_incident_id_incident_id_fk": {
+          "name": "notification_outbox_incident_id_incident_id_fk",
+          "tableFrom": "notification_outbox",
+          "tableTo": "incident",
+          "columnsFrom": [
+            "incident_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
@@ -4941,418 +5358,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "checker_outbox": {
-      "name": "checker_outbox",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "dedup_key": {
-          "name": "dedup_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "monitor_id": {
-          "name": "monitor_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "notification_id": {
-          "name": "notification_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "provider": {
-          "name": "provider",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "event_type": {
-          "name": "event_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "from_status": {
-          "name": "from_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "to_status": {
-          "name": "to_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "cron_timestamp": {
-          "name": "cron_timestamp",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "incident_id": {
-          "name": "incident_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "payload": {
-          "name": "payload",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'pending'"
-        },
-        "attempts": {
-          "name": "attempts",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "available_at": {
-          "name": "available_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "deadline_at": {
-          "name": "deadline_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "locked_by": {
-          "name": "locked_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "locked_until": {
-          "name": "locked_until",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "delivered_at": {
-          "name": "delivered_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "last_error": {
-          "name": "last_error",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "checker_outbox_dedup_key_idx": {
-          "name": "checker_outbox_dedup_key_idx",
-          "columns": [
-            "dedup_key"
-          ],
-          "isUnique": true
-        },
-        "checker_outbox_claim_idx": {
-          "name": "checker_outbox_claim_idx",
-          "columns": [
-            "available_at"
-          ],
-          "isUnique": false,
-          "where": "\"checker_outbox\".\"status\" = 'pending'"
-        },
-        "checker_outbox_notification_id_cron_timestamp_idx": {
-          "name": "checker_outbox_notification_id_cron_timestamp_idx",
-          "columns": [
-            "notification_id",
-            "cron_timestamp"
-          ],
-          "isUnique": false
-        },
-        "checker_outbox_channel_idx": {
-          "name": "checker_outbox_channel_idx",
-          "columns": [
-            "monitor_id",
-            "notification_id"
-          ],
-          "isUnique": false,
-          "where": "\"checker_outbox\".\"status\" = 'pending'"
-        }
-      },
-      "foreignKeys": {
-        "checker_outbox_monitor_id_monitor_id_fk": {
-          "name": "checker_outbox_monitor_id_monitor_id_fk",
-          "tableFrom": "checker_outbox",
-          "tableTo": "monitor",
-          "columnsFrom": [
-            "monitor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "checker_outbox_workspace_id_workspace_id_fk": {
-          "name": "checker_outbox_workspace_id_workspace_id_fk",
-          "tableFrom": "checker_outbox",
-          "tableTo": "workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "checker_outbox_notification_id_notification_id_fk": {
-          "name": "checker_outbox_notification_id_notification_id_fk",
-          "tableFrom": "checker_outbox",
-          "tableTo": "notification",
-          "columnsFrom": [
-            "notification_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "checker_outbox_incident_id_incident_id_fk": {
-          "name": "checker_outbox_incident_id_incident_id_fk",
-          "tableFrom": "checker_outbox",
-          "tableTo": "incident",
-          "columnsFrom": [
-            "incident_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "notification_dead_letter": {
-      "name": "notification_dead_letter",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "outbox_id": {
-          "name": "outbox_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "dedup_key": {
-          "name": "dedup_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "monitor_id": {
-          "name": "monitor_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "notification_id": {
-          "name": "notification_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "provider": {
-          "name": "provider",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "event_type": {
-          "name": "event_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "from_status": {
-          "name": "from_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "to_status": {
-          "name": "to_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "cron_timestamp": {
-          "name": "cron_timestamp",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "incident_id": {
-          "name": "incident_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "payload": {
-          "name": "payload",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "attempts": {
-          "name": "attempts",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "final_error": {
-          "name": "final_error",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "died_at": {
-          "name": "died_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "notification_dead_letter_dedup_key_idx": {
-          "name": "notification_dead_letter_dedup_key_idx",
-          "columns": [
-            "dedup_key"
-          ],
-          "isUnique": true
-        },
-        "notification_dead_letter_workspace_id_died_at_idx": {
-          "name": "notification_dead_letter_workspace_id_died_at_idx",
-          "columns": [
-            "workspace_id",
-            "died_at"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "notification_dead_letter_monitor_id_monitor_id_fk": {
-          "name": "notification_dead_letter_monitor_id_monitor_id_fk",
-          "tableFrom": "notification_dead_letter",
-          "tableTo": "monitor",
-          "columnsFrom": [
-            "monitor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "notification_dead_letter_workspace_id_workspace_id_fk": {
-          "name": "notification_dead_letter_workspace_id_workspace_id_fk",
-          "tableFrom": "notification_dead_letter",
-          "tableTo": "workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "checker_decision": {
-      "name": "checker_decision",
+    "monitor_transition": {
+      "name": "monitor_transition",
       "columns": {
         "id": {
           "name": "id",
@@ -5434,16 +5441,16 @@
         }
       },
       "indexes": {
-        "checker_decision_monitor_id_cron_timestamp_idx": {
-          "name": "checker_decision_monitor_id_cron_timestamp_idx",
+        "monitor_transition_monitor_id_cron_timestamp_idx": {
+          "name": "monitor_transition_monitor_id_cron_timestamp_idx",
           "columns": [
             "monitor_id",
             "cron_timestamp"
           ],
           "isUnique": false
         },
-        "checker_decision_created_at_idx": {
-          "name": "checker_decision_created_at_idx",
+        "monitor_transition_created_at_idx": {
+          "name": "monitor_transition_created_at_idx",
           "columns": [
             "created_at"
           ],
@@ -5451,9 +5458,9 @@
         }
       },
       "foreignKeys": {
-        "checker_decision_monitor_id_monitor_id_fk": {
-          "name": "checker_decision_monitor_id_monitor_id_fk",
-          "tableFrom": "checker_decision",
+        "monitor_transition_monitor_id_monitor_id_fk": {
+          "name": "monitor_transition_monitor_id_monitor_id_fk",
+          "tableFrom": "monitor_transition",
           "tableTo": "monitor",
           "columnsFrom": [
             "monitor_id"

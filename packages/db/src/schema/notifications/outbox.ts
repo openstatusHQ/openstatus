@@ -10,21 +10,31 @@ import {
 import { incidentTable } from "../incidents/incident";
 import { monitorStatus } from "../monitors/constants";
 import { monitor } from "../monitors/monitor";
-import { notificationProvider } from "../notifications/constants";
-import { notification } from "../notifications/notification";
 import { workspace } from "../workspaces/workspace";
-import type { CheckerOutboxPayload } from "./validation";
+import { notificationProvider } from "./constants";
+import { notification } from "./notification";
+import type { NotificationOutboxPayload } from "./validation";
 
-export const checkerOutboxEventType = [
+export const notificationOutboxEventType = [
   "alert",
   "recovery",
   "degraded",
 ] as const;
 
-export const checkerOutboxStatus = ["pending", "done"] as const;
+export const notificationOutboxDeliveryStatus = ["pending", "settled"] as const;
 
-export const checkerOutbox = sqliteTable(
-  "checker_outbox",
+/**
+ * How a settled row ended: delivered by the drainer, deliberately skipped, or
+ * never ours because the inline sender owned the monitor at write time.
+ */
+export const notificationOutboxOutcome = [
+  "delivered",
+  "skipped",
+  "inline",
+] as const;
+
+export const notificationOutbox = sqliteTable(
+  "notification_outbox",
   {
     id: integer("id").primaryKey(),
     dedupKey: text("dedup_key").notNull(),
@@ -36,7 +46,9 @@ export const checkerOutbox = sqliteTable(
       .notNull()
       .references(() => notification.id, { onDelete: "cascade" }),
     provider: text("provider", { enum: notificationProvider }).notNull(),
-    eventType: text("event_type", { enum: checkerOutboxEventType }).notNull(),
+    eventType: text("event_type", {
+      enum: notificationOutboxEventType,
+    }).notNull(),
     fromStatus: text("from_status", { enum: monitorStatus }).notNull(),
     toStatus: text("to_status", { enum: monitorStatus }).notNull(),
     cronTimestamp: integer("cron_timestamp").notNull(),
@@ -44,13 +56,16 @@ export const checkerOutbox = sqliteTable(
       onDelete: "set null",
     }),
     payload: text("payload", { mode: "json" })
-      .$type<CheckerOutboxPayload>()
+      .$type<NotificationOutboxPayload>()
       .notNull(),
-    status: text("status", { enum: checkerOutboxStatus })
+    deliveryStatus: text("delivery_status", {
+      enum: notificationOutboxDeliveryStatus,
+    })
       .default("pending")
       .notNull(),
+    outcome: text("outcome", { enum: notificationOutboxOutcome }),
     attempts: integer("attempts").default(0).notNull(),
-    availableAt: integer("available_at").notNull(),
+    nextAttemptAt: integer("next_attempt_at").notNull(),
     deadlineAt: integer("deadline_at").notNull(),
     lockedBy: text("locked_by"),
     lockedUntil: integer("locked_until"),
@@ -59,17 +74,17 @@ export const checkerOutbox = sqliteTable(
     createdAt: integer("created_at").notNull(),
   },
   (t) => [
-    uniqueIndex("checker_outbox_dedup_key_idx").on(t.dedupKey),
-    index("checker_outbox_claim_idx")
-      .on(t.availableAt)
-      .where(sql`${t.status} = 'pending'`),
-    index("checker_outbox_notification_id_cron_timestamp_idx").on(
+    uniqueIndex("notification_outbox_dedup_key_idx").on(t.dedupKey),
+    index("notification_outbox_claim_idx")
+      .on(t.nextAttemptAt)
+      .where(sql`${t.deliveryStatus} = 'pending'`),
+    index("notification_outbox_notification_id_cron_timestamp_idx").on(
       t.notificationId,
       t.cronTimestamp,
     ),
-    index("checker_outbox_channel_idx")
+    index("notification_outbox_channel_idx")
       .on(t.monitorId, t.notificationId)
-      .where(sql`${t.status} = 'pending'`),
+      .where(sql`${t.deliveryStatus} = 'pending'`),
   ],
 );
 
@@ -85,13 +100,15 @@ export const notificationDeadLetter = sqliteTable(
     workspaceId: integer("workspace_id").references(() => workspace.id),
     notificationId: integer("notification_id").notNull(),
     provider: text("provider", { enum: notificationProvider }).notNull(),
-    eventType: text("event_type", { enum: checkerOutboxEventType }).notNull(),
+    eventType: text("event_type", {
+      enum: notificationOutboxEventType,
+    }).notNull(),
     fromStatus: text("from_status", { enum: monitorStatus }).notNull(),
     toStatus: text("to_status", { enum: monitorStatus }).notNull(),
     cronTimestamp: integer("cron_timestamp").notNull(),
     incidentId: integer("incident_id"),
     payload: text("payload", { mode: "json" })
-      .$type<CheckerOutboxPayload>()
+      .$type<NotificationOutboxPayload>()
       .notNull(),
     attempts: integer("attempts").notNull(),
     finalError: text("final_error"),
@@ -106,17 +123,20 @@ export const notificationDeadLetter = sqliteTable(
   ],
 );
 
-export const checkerOutboxRelations = relations(checkerOutbox, ({ one }) => ({
-  monitor: one(monitor, {
-    fields: [checkerOutbox.monitorId],
-    references: [monitor.id],
+export const notificationOutboxRelations = relations(
+  notificationOutbox,
+  ({ one }) => ({
+    monitor: one(monitor, {
+      fields: [notificationOutbox.monitorId],
+      references: [monitor.id],
+    }),
+    notification: one(notification, {
+      fields: [notificationOutbox.notificationId],
+      references: [notification.id],
+    }),
+    incident: one(incidentTable, {
+      fields: [notificationOutbox.incidentId],
+      references: [incidentTable.id],
+    }),
   }),
-  notification: one(notification, {
-    fields: [checkerOutbox.notificationId],
-    references: [notification.id],
-  }),
-  incident: one(incidentTable, {
-    fields: [checkerOutbox.incidentId],
-    references: [incidentTable.id],
-  }),
-}));
+);
