@@ -28,6 +28,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import { ForbiddenError } from "../../errors";
+import { expireSelfSignupVerification } from "../expire-verification.ts";
 import {
   createPageSubscriber,
   getSubscriberByToken,
@@ -52,7 +53,9 @@ let COMPONENT_2: number;
 // Each describe block owns its own email so suites are independent.
 const EMAILS = {
   upsert: "svc-upsert-test@example.com",
+  upsertActiveClaim: "svc-upsert-active-claim@example.com",
   upsertCase: "svc-upsert-case-test@example.com",
+  upsertExpiredClaim: "svc-upsert-expired-claim@example.com",
   upsertReactivate: "svc-upsert-reactivate-test@example.com",
   upsertPendingThenUnsub: "svc-upsert-pending-unsub-test@example.com",
   planGate: "svc-plan-gate-test@example.com",
@@ -113,6 +116,7 @@ describe("upsertSelfSignupSubscriber", () => {
     expect(result.token).toBeDefined();
     expect(result.acceptedAt).toBeNull();
     expect(result.componentIds).toEqual([]);
+    expect(result.shouldSendVerification).toBe(true);
 
     // Audit row written, attributed to the subscriber (not a workspace user).
     await expectAuditRow({
@@ -148,7 +152,10 @@ describe("upsertSelfSignupSubscriber", () => {
   });
 
   test("does not create a duplicate row when called again", async () => {
-    await upsertSelfSignupSubscriber({ input: { email, pageId: PAGE_ID } });
+    const result = await upsertSelfSignupSubscriber({
+      input: { email, pageId: PAGE_ID },
+    });
+    expect(result.shouldSendVerification).toBe(false);
     const rows = await db.query.pageSubscriber.findMany({
       where: eq(pageSubscriber.email, email),
     });
@@ -192,6 +199,87 @@ describe("upsertSelfSignupSubscriber", () => {
       where: eq(pageSubscriber.email, email),
     });
     expect(row?.expiresAt?.getTime()).toBeGreaterThan(before.getTime());
+  });
+
+  test("merges component scope without refreshing an active verification claim", async () => {
+    const fresh = EMAILS.upsertActiveClaim;
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
+    const initial = await upsertSelfSignupSubscriber({
+      input: { email: fresh, pageId: PAGE_ID },
+    });
+    const before = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, initial.id),
+    });
+
+    const result = await upsertSelfSignupSubscriber({
+      input: {
+        email: fresh,
+        pageId: PAGE_ID,
+        componentIds: [COMPONENT_1],
+      },
+      claimVerification: true,
+    });
+    const after = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, initial.id),
+    });
+
+    expect(result.shouldSendVerification).toBe(false);
+    expect(result.componentIds).toEqual([COMPONENT_1]);
+    expect(after?.expiresAt).toEqual(before?.expiresAt);
+  });
+
+  test("rotates the token when reclaiming an expired verification", async () => {
+    const fresh = EMAILS.upsertExpiredClaim;
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
+    const initial = await upsertSelfSignupSubscriber({
+      input: { email: fresh, pageId: PAGE_ID },
+    });
+    await db
+      .update(pageSubscriber)
+      .set({ expiresAt: new Date(0) })
+      .where(eq(pageSubscriber.id, initial.id));
+
+    const result = await upsertSelfSignupSubscriber({
+      input: { email: fresh, pageId: PAGE_ID },
+      claimVerification: true,
+    });
+
+    expect(result.shouldSendVerification).toBe(true);
+    expect(result.token).not.toBe(initial.token);
+
+    if (!initial.token) throw new Error("Initial token is undefined");
+    await expireSelfSignupVerification({
+      subscriberId: initial.id,
+      token: initial.token,
+    });
+    const current = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, initial.id),
+    });
+    expect(current?.expiresAt?.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  test("does not reclaim an expired verification without a send claim", async () => {
+    const fresh = EMAILS.upsertExpiredClaim;
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
+    const initial = await upsertSelfSignupSubscriber({
+      input: { email: fresh, pageId: PAGE_ID },
+    });
+    const expiredAt = new Date(0);
+    await db
+      .update(pageSubscriber)
+      .set({ expiresAt: expiredAt })
+      .where(eq(pageSubscriber.id, initial.id));
+
+    const result = await upsertSelfSignupSubscriber({
+      input: { email: fresh, pageId: PAGE_ID },
+    });
+    const current = await db.query.pageSubscriber.findFirst({
+      where: eq(pageSubscriber.id, initial.id),
+    });
+
+    expect(result.shouldSendVerification).toBe(false);
+    expect(result.token).toBe(initial.token);
+    expect(current?.expiresAt).toEqual(expiredAt);
   });
 
   test("stores email in lowercase regardless of input casing", async () => {
@@ -282,6 +370,7 @@ describe("upsertSelfSignupSubscriber", () => {
     });
     expect(result.id).toBe(initial.id);
     expect(result.acceptedAt).not.toBeNull();
+    expect(result.shouldSendVerification).toBe(false);
 
     const rows = await readAuditLog({
       workspaceId: WORKSPACE_ID,

@@ -10,6 +10,7 @@ export {
 export { hasPendingSubscriber } from "./has-pending";
 export { listPageSubscribers, type PageSubscriberListItem } from "./list";
 export { sendPageSubscriberTestWebhook } from "./send-test-webhook";
+export { subscribeSelfSignupSubscriber } from "./subscribe";
 export {
   createSlackSubscriber,
   listSlackSubscribersForChannel,
