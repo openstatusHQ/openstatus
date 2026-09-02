@@ -32,6 +32,7 @@ enum Locale {
   LOCALE_TR = 4;
   LOCALE_HI = 5;
   LOCALE_KO = 6;
+  LOCALE_JA = 7;
 }
 
 
