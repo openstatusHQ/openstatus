@@ -1,7 +1,7 @@
+import { vercelFetch } from "@openstatus/services/page";
 import { z } from "zod";
 
 import { env } from "../env";
-import { vercelFetch } from "../lib/vercel";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const domainConfigResponseSchema = z.object({
