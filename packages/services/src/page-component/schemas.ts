@@ -17,7 +17,7 @@ const componentInput = z
     id: z.number().int().optional(),
     monitorId: z.number().int().nullish(),
     order: z.number().int(),
-    name: z.string().trim(),
+    name: z.string().trim().min(1),
     description: z.string().nullish(),
     type: z.enum(["monitor", "static"]),
   })
