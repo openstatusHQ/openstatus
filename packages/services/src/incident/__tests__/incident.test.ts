@@ -292,9 +292,12 @@ describe("list / get", () => {
         workspaceId: teamCtx.workspace.id,
         monitorId: testMonitorId,
       });
+      // Only one incident per monitor may be open at a time
+      // (partial unique index `incident_open_idx`), so the second is resolved.
       const b = await insertIncident(tx, {
         workspaceId: teamCtx.workspace.id,
         monitorId: testMonitorId,
+        resolvedAt: new Date(),
       });
 
       const { items } = await listIncidents({

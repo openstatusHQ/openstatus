@@ -108,6 +108,35 @@ func TestTCPHandlerRegion_ExportsOTLPOnFailure(t *testing.T) {
 		"expected an OTLP export on TCP failure")
 }
 
+func TestICMPHandlerRegion_ExportsOTLPOnFailure(t *testing.T) {
+	otlp, count := countingOTLPServer(t)
+
+	h := handlers.Handler{
+		TbClient: testTinybird(t),
+		Secret:   "test",
+		Region:   "local",
+	}
+	router := gin.New()
+	router.POST("/icmp/:region", h.ICMPHandlerRegion)
+
+	req := request.ICMPCheckerRequest{
+		URI:     "nonexistent-host-openstatus-test.invalid", // resolve failure, no socket needed
+		Status:  "active",
+		Timeout: 1000,
+	}
+	req.OtelConfig.Endpoint = otlp.URL
+	body, _ := json.Marshal(req)
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest(http.MethodPost, "/icmp/local", strings.NewReader(string(body)))
+	r.Header.Set("Authorization", "Basic test")
+	router.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Eventually(t, func() bool { return atomic.LoadInt64(count) > 0 }, 10*time.Second, 50*time.Millisecond,
+		"expected an OTLP export on ICMP failure")
+}
+
 func TestDNSHandler_ExportsOTLPOnFailure(t *testing.T) {
 	otlp, count := countingOTLPServer(t)
 
@@ -168,4 +197,34 @@ func TestDNSHandlerRegion_ExportsOTLPOnFailure(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Eventually(t, func() bool { return atomic.LoadInt64(count) > 0 }, 10*time.Second, 50*time.Millisecond,
 		"expected an OTLP export on DNS failure")
+}
+
+func TestGRPCHandlerRegion_ExportsOTLPOnFailure(t *testing.T) {
+	otlp, count := countingOTLPServer(t)
+
+	h := handlers.Handler{
+		TbClient: testTinybird(t),
+		Secret:   "test",
+		Region:   "local",
+	}
+	router := gin.New()
+	router.POST("/grpc/:region", h.GRPCHandlerRegion)
+
+	req := request.GRPCCheckerRequest{
+		URI:     "127.0.0.1:1", // connection refused
+		TLS:     "plaintext",
+		Status:  "active",
+		Timeout: 1000,
+	}
+	req.OtelConfig.Endpoint = otlp.URL
+	body, _ := json.Marshal(req)
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest(http.MethodPost, "/grpc/local", strings.NewReader(string(body)))
+	r.Header.Set("Authorization", "Basic test")
+	router.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Eventually(t, func() bool { return atomic.LoadInt64(count) > 0 }, 10*time.Second, 50*time.Millisecond,
+		"expected an OTLP export on gRPC failure")
 }

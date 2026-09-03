@@ -99,6 +99,14 @@ ghcr.io/openstatushq/openstatus-checker:latest
 
 [Complete Coolify Deployment Guide](./COOLIFY_DEPLOYMENT.md)
 
+### Self-Hosting with Railway
+
+Deploy the full stack (dashboard, status pages, API, workflows, probes, libSQL, and Tinybird Local) to one Railway project with one click:
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template/openstatus?utm_medium=integration&utm_source=button&utm_campaign=openstatus)
+
+The template source and the setup instructions are in [ephraimduncan/openstatus-railway](https://github.com/ephraimduncan/openstatus-railway).
+
 ### Manual Setup
 
 #### Requirements
@@ -147,7 +155,7 @@ See [apps/dashboard/README.md](apps/dashboard/README.md) for full steps (env, db
 
 ## Contributing
 
-If you want to help us build the best status page and monitoring platform, check our [contributing guidelines](https://github.com/openstatusHQ/openstatus/blob/main/CONTRIBUTING.MD).
+If you want to help us build the best status page and monitoring platform, check our [contributing guidelines](CONTRIBUTING.md).
 
 <a href="https://github.com/openstatushq/openstatus/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=openstatushq/openstatus" />

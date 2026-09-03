@@ -18,7 +18,7 @@ on:
       services:
         description: 'Services to build (comma-separated)'
         required: false
-        default: 'server,dashboard,workflows,private-location,status-page,checker'
+        default: 'server,dashboard,workflows,private-location,status-page,checker,db-migrate'
         type: string
 
 concurrency:
@@ -53,7 +53,7 @@ jobs:
 
             # packages/** changes affect all services
             if echo "$CHANGED" | grep -q '^packages/'; then
-              SERVICES_LIST=("server" "dashboard" "workflows" "private-location" "status-page" "checker")
+              SERVICES_LIST=("server" "dashboard" "workflows" "private-location" "status-page" "checker" "db-migrate")
             else
               for svc in server dashboard workflows private-location status-page checker; do
                 if echo "$CHANGED" | grep -q "^apps/$svc/"; then
@@ -101,6 +101,9 @@ jobs:
           - service: checker
             context: apps/checker
             dockerfile: apps/checker/Dockerfile
+          - service: db-migrate
+            context: .
+            dockerfile: packages/db/Dockerfile
 
     steps:
       - name: Checkout repository

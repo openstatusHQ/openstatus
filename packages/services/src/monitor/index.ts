@@ -62,6 +62,7 @@ export {
   GetMonitorSummaryInput,
   GetPrivateLocationIdsByMonitorInput,
   GetResponseLogInput,
+  grpcTlsModes,
   ListMonitorsInput,
   ListResponseLogsInput,
   monitorJobTypes,

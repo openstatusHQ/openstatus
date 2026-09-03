@@ -17,6 +17,7 @@ import {
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 
 import type { monitorsApi } from "..";
+import { assertLegacyRunnableJobType } from "../utils";
 import { ParamsSchema, TriggerSchema } from "./schema";
 
 const postRoute = createRoute({
@@ -99,6 +100,8 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
     }
 
     const row = validateMonitor.data;
+
+    assertLegacyRunnableJobType(row.jobType);
 
     // Maybe later overwrite the region
 

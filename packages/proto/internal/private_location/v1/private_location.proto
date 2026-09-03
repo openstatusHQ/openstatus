@@ -3,7 +3,9 @@ syntax = "proto3";
 package private_location.v1;
 
 import "private_location/v1/dns_monitor.proto";
+import "private_location/v1/grpc_monitor.proto";
 import "private_location/v1/http_monitor.proto";
+import "private_location/v1/icmp_monitor.proto";
 import "private_location/v1/tcp_monitor.proto";
 
 
@@ -14,6 +16,8 @@ service PrivateLocationService {
     rpc IngestTCP(IngestTCPRequest) returns (IngestTCPResponse) {}
     rpc IngestHTTP(IngestHTTPRequest) returns (IngestHTTPResponse) {}
     rpc IngestDNS(IngestDNSRequest) returns (IngestDNSResponse) {}
+    rpc IngestICMP(IngestICMPRequest) returns (IngestICMPResponse) {}
+    rpc IngestGRPC(IngestGRPCRequest) returns (IngestGRPCResponse) {}
 
 }
 
@@ -23,6 +27,8 @@ message MonitorsResponse {
     repeated HTTPMonitor http_monitors = 1;
     repeated TCPMonitor tcp_monitors = 2;
     repeated DNSMonitor dns_monitors = 3;
+    repeated ICMPMonitor icmp_monitors = 5;
+    repeated GRPCMonitor grpc_monitors = 6;
     string region = 4;
 }
 
@@ -83,5 +89,46 @@ message IngestDNSRequest {
     int64 error = 11;
 }
 message IngestDNSResponse {
+
+}
+
+message IngestICMPRequest {
+    string id = 1;
+    string monitorId = 2;
+    int64 latency = 3;
+    int64 latencyMin = 4;
+    int64 latencyMax = 5;
+    int64 packetsSent = 6;
+    int64 packetsReceived = 7;
+    int64 timestamp = 8;
+    int64 cronTimestamp = 9;
+    string uri = 10;
+    string message = 11;
+    string requestStatus = 12;
+    int64 error = 13;
+    string timing = 14;
+}
+
+message IngestICMPResponse {
+
+}
+
+message IngestGRPCRequest {
+    string id = 1;
+    string monitorId = 2;
+    int64 latency = 3;
+    int64 timestamp = 4;
+    int64 cronTimestamp = 5;
+    string uri = 6;
+    string service = 7;
+    string servingStatus = 8;
+    int64 grpcCode = 9;
+    string message = 10;
+    string requestStatus = 11;
+    int64 error = 12;
+    string timing = 13;
+}
+
+message IngestGRPCResponse {
 
 }

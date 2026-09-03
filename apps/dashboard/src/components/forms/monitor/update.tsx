@@ -119,7 +119,7 @@ export function FormMonitorUpdate() {
     <FormCardGroup>
       <FormGeneral
         defaultValues={{
-          type: monitor.jobType as "http" | "tcp",
+          type: monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc",
           url: monitor.url,
           name: monitor.name,
           method: monitor.method as "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
@@ -130,6 +130,8 @@ export function FormMonitorUpdate() {
           assertions: monitor?.assertions
             ? deserialize(monitor?.assertions).map((a) => a.schema)
             : [],
+          grpcService: monitor.grpcService ?? "",
+          grpcTls: monitor.grpcTls ?? "tls",
           skipCheck: false,
           saveCheck: false,
         }}
@@ -143,6 +145,8 @@ export function FormMonitorUpdate() {
             headers: values.headers,
             body: values.body,
             assertions: values.assertions,
+            grpcService: values.grpcService,
+            grpcTls: values.grpcTls,
             skipCheck: values.skipCheck,
             saveCheck: values.saveCheck,
             active: values.active,

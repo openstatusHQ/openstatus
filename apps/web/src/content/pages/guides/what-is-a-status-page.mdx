@@ -1,31 +1,65 @@
 ---
-title: "What Is a Status Page?"
-description: "A status page is a public web page that communicates the real-time health of your service - uptime, ongoing incidents, scheduled maintenance, and historical reliability. Here's what they include, why they matter, and how to build one that actually helps users."
+title: "Status Page Terminology: Partial Outage, Degraded and Major Outage Explained"
+seo:
+  title: "Status Page Terminology — Partial Outage, Degraded & Major Outage"
+  description: "What each status on a status page actually means: operational, degraded performance, partial outage, major outage, and under maintenance — with guidance on which to pick during an incident."
+description: "What each status on a status page actually means — operational, degraded performance, partial outage, major outage and under maintenance — and how to choose the right one while an incident is running."
 author: "openstatus"
 publishedAt: "2026-05-05"
-category: "fundamentals"
+updatedAt: "2026-08-26"
+category: "reference"
 faq:
-  - question: "What is a status page?"
-    answer: "A status page is a public-facing web page that displays the real-time operational health of a service. It shows current uptime, active incidents, scheduled maintenance, and historical reliability metrics. The point is to give users a single, trustworthy place to check whether a problem is on your end or theirs."
-  - question: "Why do companies need a status page?"
-    answer: "Without a status page, every outage floods your support inbox with the same question: 'is it down?' A status page deflects that load, builds trust by being transparent during incidents, and signals operational maturity to enterprise buyers who often require one before signing a contract."
-  - question: "What's the difference between a public and private status page?"
-    answer: "A public status page is visible to anyone and shows curated, user-facing reliability data. A private status page is gated behind authentication and shows real-time operational metrics to internal teams or specific customers - typically more granular and used for SLO tracking, not customer communication."
-  - question: "What should a status page include?"
-    answer: "At minimum: current component statuses (API, dashboard, auth, etc.), active incidents with timestamps and updates, scheduled maintenance windows, and historical uptime for the last 30-90 days. Optional but valuable: subscription options (email, SMS, Slack, RSS), incident postmortems, and per-region status."
-  - question: "Should my status page be on a separate domain?"
-    answer: "Yes. Host it on a separate domain or subdomain (e.g., status.yourcompany.com) on independent infrastructure. If your main service is down and your status page is on the same servers, users see nothing - exactly when they need information most."
-  - question: "How often should I update a status page during an incident?"
-    answer: "Every 15-30 minutes during an active incident, even if there's nothing new to report. 'Still investigating, next update at 14:30' is more useful than silence. Silence makes users assume you've abandoned them."
-  - question: "Do small companies need a status page?"
-    answer: "If you have paying customers, yes. It's not about scale - it's about trust. A simple status page with uptime history and an incident feed signals you take reliability seriously. It takes less than an hour to set up and pays for itself the first time something breaks."
-  - question: "What's the difference between a status page and a monitoring tool?"
-    answer: "A monitoring tool checks whether your service is up and alerts your team. A status page communicates that information to users. They're connected - monitoring data often drives status page updates - but they serve different audiences. Monitoring is for engineers; status pages are for customers."
+  - question: "What does partial outage mean on a status page?"
+    answer: "A partial outage means part of a component is fully unavailable, or the component is unavailable for a subset of users — one region, one plan tier, or one integration. Requests to the affected part fail outright rather than merely running slowly. It sits between degraded performance, where things still work but badly, and a major outage, where nothing works for anyone."
+  - question: "What is the difference between degraded performance and a partial outage?"
+    answer: "Degraded performance means the component still works but not properly — slow responses, intermittent failures that succeed on retry, or one feature unavailable while the rest functions. A partial outage means something is failing outright, just not for everyone or not across the whole component. The test is failure versus slowness."
+  - question: "What does major outage mean?"
+    answer: "A major outage means the component is fully unavailable to essentially all users and nothing useful is being served. It is scoped to the component, not the whole service — a major outage on billing does not imply a major outage on your API, which is the reason to break a status page into components in the first place."
+  - question: "What does operational mean on a status page?"
+    answer: "Operational means the component is responding correctly and within its normal latency range, with no known issues. It is the default state. Leaving something marked operational while you actively investigate user reports is the fastest way to make a status page untrustworthy — move it to degraded performance while you look."
+  - question: "Which status should I use during an incident?"
+    answer: "Work through it in order. Is anything failing outright? If not, and it is only slow or flaky, use degraded performance. If something is failing, does it affect every user and all functionality in that component? If not, use partial outage. If so, use major outage. When two statuses both fit, choose the more severe — under-reporting costs more trust than over-reporting."
 ---
 
-When something breaks in production, users need to know if the problem is on your end or theirs. Without a single source of truth, they find out by filing duplicate support tickets, posting on social media, or assuming your whole company is down.
+Status pages use a small, shared vocabulary — operational, degraded performance, partial outage, major outage, under maintenance — and almost none of it is defined on the page itself. The result is that the same words mean different things at different companies, and readers guess.
 
-That single source of truth is the status page. It exists to deflect support load during outages, build trust through honest communication, and signal to enterprise buyers that you take reliability seriously.
+This is the reference for what each status means, and for how to pick the right one while an incident is still running. If you are looking for the broader introduction instead, [what a status page is and why you need one](/status-page) covers that.
+
+## Status page terminology
+
+### Operational
+
+Everything works. The component is responding correctly and within its normal latency range. This is the default state, and it should genuinely mean "no known issues" — marking something operational while you investigate reports is how status pages lose credibility.
+
+### Degraded performance
+
+The component works, but not properly. Responses are slow, a subset of requests fail and succeed on retry, or a feature is unavailable while the rest of the component functions.
+
+This is the most under-used status and the most useful one. Most real incidents are degradations, not outages, and reaching for "operational" or "major outage" because degraded feels ambiguous is what makes a status page feel dishonest.
+
+### Partial outage
+
+Part of the component is fully unavailable, or the component is unavailable for a subset of users — one region, one plan tier, one integration. Requests to the affected part fail rather than merely slow down.
+
+The distinction from degraded is failure, not slowness. The distinction from a major outage is scope: some users or some functionality still work completely.
+
+### Major outage
+
+The component is fully unavailable to essentially all users. Nothing useful is being served.
+
+Use it sparingly and honestly. A major outage on one component does not mean a major outage everywhere — component-level accuracy is the point of having components at all.
+
+### Under maintenance
+
+Planned, announced downtime inside a stated window. It reads differently from an outage to anyone looking, which is precisely why scheduled work belongs here rather than showing as an unexplained outage.
+
+### Choosing between them during an incident
+
+The practical test, in order: is anything failing outright? If no, and it is merely slow or flaky, that is degraded. If yes, does it affect everyone and everything in that component? If no, that is a partial outage. If yes, that is a major outage. When two statuses both fit, pick the more severe one — under-reporting costs you more trust than over-reporting.
+
+## Where these statuses appear
+
+A status page exists to deflect support load during outages, build trust through honest communication, and signal to enterprise buyers that you take reliability seriously. The vocabulary above is how it does that.
 
 ## What a Status Page Actually Shows
 
@@ -123,53 +157,37 @@ A status page is the simplest, highest-leverage trust-building tool you have dur
 
 If you don't have one, you're either too small to need one (rare) or losing trust during every outage without realizing it (common).
 
+If you are ready to run one, a [hosted status page](/status-page) gives you components, incident history, maintenance windows and subscriber notifications on your own domain without building any of it yourself.
+
 ## Frequently asked questions
 
-<Details summary="What is a status page?">
+<Details summary="What does partial outage mean on a status page?">
 
-A status page is a public-facing web page that displays the real-time operational health of a service. It shows current uptime, active incidents, scheduled maintenance, and historical reliability metrics. The point is to give users a single, trustworthy place to check whether a problem is on your end or theirs.
-
-</Details>
-
-<Details summary="Why do companies need a status page?">
-
-Without a status page, every outage floods your support inbox with the same question: 'is it down?' A status page deflects that load, builds trust by being transparent during incidents, and signals operational maturity to enterprise buyers who often require one before signing a contract.
+A partial outage means part of a component is fully unavailable, or the component is unavailable for a subset of users — one region, one plan tier, or one integration. Requests to the affected part fail outright rather than merely running slowly. It sits between degraded performance, where things still work but badly, and a major outage, where nothing works for anyone.
 
 </Details>
 
-<Details summary="What's the difference between a public and private status page?">
+<Details summary="What is the difference between degraded performance and a partial outage?">
 
-A public status page is visible to anyone and shows curated, user-facing reliability data. A private status page is gated behind authentication and shows real-time operational metrics to internal teams or specific customers - typically more granular and used for SLO tracking, not customer communication.
-
-</Details>
-
-<Details summary="What should a status page include?">
-
-At minimum: current component statuses (API, dashboard, auth, etc.), active incidents with timestamps and updates, scheduled maintenance windows, and historical uptime for the last 30-90 days. Optional but valuable: subscription options (email, SMS, Slack, RSS), incident postmortems, and per-region status.
+Degraded performance means the component still works but not properly — slow responses, intermittent failures that succeed on retry, or one feature unavailable while the rest functions. A partial outage means something is failing outright, just not for everyone or not across the whole component. The test is failure versus slowness.
 
 </Details>
 
-<Details summary="Should my status page be on a separate domain?">
+<Details summary="What does major outage mean?">
 
-Yes. Host it on a separate domain or subdomain (e.g., status.yourcompany.com) on independent infrastructure. If your main service is down and your status page is on the same servers, users see nothing - exactly when they need information most.
-
-</Details>
-
-<Details summary="How often should I update a status page during an incident?">
-
-Every 15-30 minutes during an active incident, even if there's nothing new to report. 'Still investigating, next update at 14:30' is more useful than silence. Silence makes users assume you've abandoned them.
+A major outage means the component is fully unavailable to essentially all users and nothing useful is being served. It is scoped to the component, not the whole service — a major outage on billing does not imply a major outage on your API, which is the reason to break a status page into components in the first place.
 
 </Details>
 
-<Details summary="Do small companies need a status page?">
+<Details summary="What does operational mean on a status page?">
 
-If you have paying customers, yes. It's not about scale - it's about trust. A simple status page with uptime history and an incident feed signals you take reliability seriously. It takes less than an hour to set up and pays for itself the first time something breaks.
+Operational means the component is responding correctly and within its normal latency range, with no known issues. It is the default state. Leaving something marked operational while you actively investigate user reports is the fastest way to make a status page untrustworthy — move it to degraded performance while you look.
 
 </Details>
 
-<Details summary="What's the difference between a status page and a monitoring tool?">
+<Details summary="Which status should I use during an incident?">
 
-A monitoring tool checks whether your service is up and alerts your team. A status page communicates that information to users. They're connected - monitoring data often drives status page updates - but they serve different audiences. Monitoring is for engineers; status pages are for customers.
+Work through it in order. Is anything failing outright? If not, and it is only slow or flaky, use degraded performance. If something is failing, does it affect every user and all functionality in that component? If not, use partial outage. If so, use major outage. When two statuses both fit, choose the more severe — under-reporting costs more trust than over-reporting.
 
 </Details>
 

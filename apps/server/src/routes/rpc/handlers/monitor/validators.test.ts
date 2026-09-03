@@ -1,3 +1,4 @@
+import { ConnectError } from "@connectrpc/connect";
 import { Periodicity, Region } from "@openstatus/proto/monitor/v1";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
@@ -9,6 +10,7 @@ import {
   toValidMethod,
   toValidPeriodicity,
   validateCommonMonitorFields,
+  validateMonitorPatchBounds,
 } from "./validators";
 
 describe("getCommonCreateInput", () => {
@@ -165,5 +167,134 @@ describe("validateCommonMonitorFields", () => {
         regions: [Region.UNSPECIFIED, Region.FLY_AMS],
       }).regions,
     ).toEqual(["ams"]);
+  });
+});
+
+describe("validateMonitorPatchBounds", () => {
+  test("accepts an empty patch", () => {
+    validateMonitorPatchBounds({});
+  });
+
+  test("accepts values at the documented limits", () => {
+    validateMonitorPatchBounds({
+      name: "a".repeat(256),
+      uri: "b".repeat(2048),
+      description: "c".repeat(1024),
+      timeout: BigInt(120_000),
+      degradedAt: BigInt(120_000),
+      retry: BigInt(10),
+    });
+  });
+
+  test("rejects a retry above the proto maximum", () => {
+    expect(() => validateMonitorPatchBounds({ retry: BigInt(11) })).toThrow(
+      ConnectError,
+    );
+  });
+
+  test("rejects a negative retry", () => {
+    // Proto int64 accepts a negative; only the bound rejects it. Unchecked it
+    // reaches the checker, where `uint64(retry)` becomes a huge retry count.
+    expect(() => validateMonitorPatchBounds({ retry: BigInt(-1) })).toThrow(
+      ConnectError,
+    );
+  });
+
+  test("rejects a timeout above the proto maximum", () => {
+    expect(() =>
+      validateMonitorPatchBounds({ timeout: BigInt(120_001) }),
+    ).toThrow(ConnectError);
+  });
+
+  test("rejects a degradedAt outside its range", () => {
+    expect(() =>
+      validateMonitorPatchBounds({ degradedAt: BigInt(120_001) }),
+    ).toThrow(ConnectError);
+    expect(() =>
+      validateMonitorPatchBounds({ degradedAt: BigInt(-1) }),
+    ).toThrow(ConnectError);
+  });
+
+  test("rejects an over-long description, name and uri", () => {
+    expect(() =>
+      validateMonitorPatchBounds({ description: "c".repeat(1025) }),
+    ).toThrow(ConnectError);
+    expect(() => validateMonitorPatchBounds({ name: "a".repeat(257) })).toThrow(
+      ConnectError,
+    );
+    expect(() => validateMonitorPatchBounds({ uri: "b".repeat(2049) })).toThrow(
+      ConnectError,
+    );
+  });
+
+  test("checks HTTP's `url` as well as the other types' `uri`", () => {
+    expect(() => validateMonitorPatchBounds({ url: "b".repeat(2049) })).toThrow(
+      ConnectError,
+    );
+  });
+
+  test("skips fields the patch does not supply, matching getCommonUpdateInput", () => {
+    // Zero timeout/retry mean "not supplied", so they must not be range-checked
+    // — otherwise a name-only patch would be rejected on an unrelated field.
+    validateMonitorPatchBounds({ timeout: BigInt(0), retry: BigInt(0) });
+    validateMonitorPatchBounds({ name: "" });
+    validateMonitorPatchBounds({ uri: "" });
+  });
+
+  test("rejects more regions than the proto allows", () => {
+    const tooMany = Array.from({ length: 29 }, () => 1 as Region);
+    expect(() => validateMonitorPatchBounds({ regions: tooMany })).toThrow(
+      ConnectError,
+    );
+  });
+
+  test("rejects a gRPC service name over the proto's limit", () => {
+    expect(() =>
+      validateMonitorPatchBounds({ service: "s".repeat(513) }),
+    ).toThrow(ConnectError);
+    validateMonitorPatchBounds({ service: "s".repeat(512) });
+  });
+
+  test("accepts the host:port shapes a gRPC target can take", () => {
+    for (const uri of [
+      "api.example.com:443",
+      "10.0.0.5:50051",
+      "[2001:db8::1]:50051",
+      "svc.internal:8443",
+    ]) {
+      validateMonitorPatchBounds({ uri }, { jobType: "grpc" });
+    }
+  });
+
+  test("rejects a gRPC target with no port or with a scheme", () => {
+    for (const uri of [
+      "api.example.com",
+      "grpc://api.example.com:443",
+      "api.example.com:",
+    ]) {
+      expect(() =>
+        validateMonitorPatchBounds({ uri }, { jobType: "grpc" }),
+      ).toThrow(ConnectError);
+    }
+  });
+
+  // The format check keys off the job type, not off `service` being present,
+  // so a patch that changes only the target is still validated.
+  test("checks a gRPC target even when the patch omits the service", () => {
+    expect(() =>
+      validateMonitorPatchBounds(
+        { uri: "api.example.com" },
+        { jobType: "grpc" },
+      ),
+    ).toThrow(ConnectError);
+  });
+
+  test("leaves the other job types' targets unconstrained", () => {
+    validateMonitorPatchBounds({ uri: "openstatus.dev" });
+    validateMonitorPatchBounds({ uri: "openstatus.dev" }, { jobType: "dns" });
+    validateMonitorPatchBounds(
+      { url: "https://openstatus.dev" },
+      { jobType: "http" },
+    );
   });
 });

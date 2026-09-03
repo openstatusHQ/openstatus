@@ -754,6 +754,7 @@ export async function writeMonitorsPhase(
             | "http"
             | "tcp"
             | "icmp"
+            | "grpc"
             | "udp"
             | "dns"
             | "ssl",

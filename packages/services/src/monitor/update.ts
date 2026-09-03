@@ -70,6 +70,8 @@ export async function updateMonitorConfig(args: {
     if (input.followRedirects !== undefined) {
       values.followRedirects = input.followRedirects;
     }
+    if (input.grpcService !== undefined) values.grpcService = input.grpcService;
+    if (input.grpcTls !== undefined) values.grpcTls = input.grpcTls;
     if (input.otelEndpoint !== undefined) {
       values.otelEndpoint = input.otelEndpoint;
     }
@@ -129,6 +131,10 @@ export async function updateMonitorGeneral(args: {
         body: input.body,
         active: input.active,
         assertions: serialiseAssertions(input.assertions),
+        ...(input.grpcService !== undefined
+          ? { grpcService: input.grpcService }
+          : {}),
+        ...(input.grpcTls !== undefined ? { grpcTls: input.grpcTls } : {}),
         updatedAt: new Date(),
       })
       .where(eq(monitor.id, existing.id))
