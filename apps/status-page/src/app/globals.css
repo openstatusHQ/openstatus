@@ -13,7 +13,6 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-commit-mono, var(--font-geist-mono));
-  --radius-xs: calc(var(--radius) - 8px);
 }
 
 :root {
