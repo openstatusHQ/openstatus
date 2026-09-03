@@ -10,6 +10,7 @@ import { GITHUB_HIGH_CONTRAST_THEME } from "./github";
 import { GRUVBOX_THEME } from "./gruvbox";
 import { OPENSTATUS_ROUNDED_THEME, OPENSTATUS_THEME } from "./openstatus";
 import { PASSBOLT_THEME } from "./passbolt";
+import { PROBO_THEME } from "./probo";
 import { SUPABASE_THEME } from "./supabase";
 import { TOMORROW_THEME } from "./tomorrow";
 import type { Theme, ThemeDefinition, ThemeMap } from "./types";
@@ -24,6 +25,7 @@ const THEMES_LIST = [
   PASSBOLT_THEME,
   GRUVBOX_THEME,
   TOMORROW_THEME,
+  PROBO_THEME,
 ] satisfies Theme[];
 
 // NOTE: runtime validation to ensure that the theme IDs are unique
