@@ -738,7 +738,7 @@ function ComponentRow({
       className={cn("rounded-md", className)}
       {...props}
     >
-      <div className="grid h-9 grid-cols-4 gap-2">
+      <div className="grid min-h-9 grid-cols-4 gap-2">
         <div className="flex flex-row items-center gap-1 self-center">
           <SortableItemHandle>
             <DragHandle
