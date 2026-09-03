@@ -117,7 +117,7 @@ const schema = z.object({
     z.object({
       id: z.number(),
       order: z.number(),
-      name: z.string(),
+      name: z.string().trim().min(1, { message: "Name is required" }),
       defaultOpen: z.boolean(),
       components: z.array(componentSchema).min(1, {
         message: "At least one component is required",

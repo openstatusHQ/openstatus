@@ -37,7 +37,7 @@ const groupInput = z.object({
   // assignments, subscriber scopes) off a cliff.
   id: z.number().int().optional(),
   order: z.number().int(),
-  name: z.string(),
+  name: z.string().trim().min(1),
   defaultOpen: z.boolean().optional().default(false),
   components: z.array(componentInput),
 });
