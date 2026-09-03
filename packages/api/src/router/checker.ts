@@ -27,6 +27,17 @@ import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 const ABORT_TIMEOUT = 10000;
+const CHECKER_BASE_URL = env.CHECKER_URL.replace(/\/+$/, "");
+
+function handleCheckerFetchError(testType: string, error: unknown): never {
+  console.error(`Checker ${testType} test failed:`, error);
+  if (error instanceof TRPCError) throw error;
+  const detail = error instanceof Error ? ` (${error.message})` : "";
+  throw new TRPCError({
+    code: "INTERNAL_SERVER_ERROR",
+    message: `Unable to reach the checker service at ${CHECKER_BASE_URL}. Please verify your CHECKER_URL configuration.${detail}`,
+  });
+}
 
 // PingICMP treats its timeout as the deadline for the whole check, so omitting
 // it means a deadline of "now": the send loop breaks before the first packet
@@ -247,30 +258,27 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
   }
 
   try {
-    const res = await fetch(
-      `https://openstatus-checker.fly.dev/ping/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({
-          url: input.url,
-          method: input.method,
-          headers: input.headers?.reduce(
-            (acc, { key, value }) => {
-              if (!key) return acc;
-              return { ...acc, [key]: value };
-            },
-            {} as Record<string, string>,
-          ),
-          body: input.body,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/ping/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({
+        url: input.url,
+        method: input.method,
+        headers: input.headers?.reduce(
+          (acc, { key, value }) => {
+            if (!key) return acc;
+            return { ...acc, [key]: value };
+          },
+          {} as Record<string, string>,
+        ),
+        body: input.body,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = httpOutput.safeParse(json);
@@ -325,33 +333,22 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker HTTP test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: error instanceof Error ? error.message : "HTTP check failed",
-    });
+    handleCheckerFetchError("HTTP", error);
   }
 }
 
 export async function testTcp(input: z.infer<typeof tcpTestInput>) {
   try {
-    const res = await fetch(
-      `https://openstatus-checker.fly.dev/tcp/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({ uri: input.url }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/tcp/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({ uri: input.url }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = tcpOutput.safeParse(json);
@@ -376,35 +373,24 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker TCP test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "TCP check failed",
-    });
+    handleCheckerFetchError("TCP", error);
   }
 }
 
 export async function testDns(input: z.infer<typeof dnsTestInput>) {
   try {
-    const res = await fetch(
-      `https://openstatus-checker.fly.dev/dns/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({
-          uri: input.url,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/dns/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({
+        uri: input.url,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = dnsOutput.safeParse(json);
@@ -446,36 +432,25 @@ export async function testDns(input: z.infer<typeof dnsTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker DNS test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "DNS check failed",
-    });
+    handleCheckerFetchError("DNS", error);
   }
 }
 
 export async function testIcmp(input: z.infer<typeof icmpTestInput>) {
   try {
-    const res = await fetch(
-      `https://openstatus-checker.fly.dev/icmp/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({
-          uri: input.url,
-          timeout: ICMP_TEST_TIMEOUT,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/icmp/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({
+        uri: input.url,
+        timeout: ICMP_TEST_TIMEOUT,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = icmpOutput.safeParse(json);
@@ -500,39 +475,28 @@ export async function testIcmp(input: z.infer<typeof icmpTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker ICMP test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "ICMP check failed",
-    });
+    handleCheckerFetchError("ICMP", error);
   }
 }
 
 export async function testGrpc(input: z.infer<typeof grpcTestInput>) {
   try {
-    const res = await fetch(
-      `https://openstatus-checker.fly.dev/grpc/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({
-          uri: input.url,
-          service: input.service,
-          tls: input.tls,
-          headers: transformHeaders(input.headers ?? []),
-          timeout: GRPC_TEST_TIMEOUT,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/grpc/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({
+        uri: input.url,
+        service: input.service,
+        tls: input.tls,
+        headers: transformHeaders(input.headers ?? []),
+        timeout: GRPC_TEST_TIMEOUT,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = grpcOutput.safeParse(json);
@@ -575,15 +539,7 @@ export async function testGrpc(input: z.infer<typeof grpcTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker gRPC test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "gRPC check failed",
-    });
+    handleCheckerFetchError("gRPC", error);
   }
 }
 
@@ -732,15 +688,15 @@ export async function triggerChecker(
 function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
   switch (row.jobType) {
     case "http":
-      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}`;
+      return `${CHECKER_BASE_URL}/checker/http?monitor_id=${row.id}`;
     case "tcp":
-      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}`;
+      return `${CHECKER_BASE_URL}/checker/tcp?monitor_id=${row.id}`;
     case "dns":
-      return `https://openstatus-checker.fly.dev/checker/dns?monitor_id=${row.id}`;
+      return `${CHECKER_BASE_URL}/checker/dns?monitor_id=${row.id}`;
     case "icmp":
-      return `https://openstatus-checker.fly.dev/checker/icmp?monitor_id=${row.id}`;
+      return `${CHECKER_BASE_URL}/checker/icmp?monitor_id=${row.id}`;
     case "grpc":
-      return `https://openstatus-checker.fly.dev/checker/grpc?monitor_id=${row.id}`;
+      return `${CHECKER_BASE_URL}/checker/grpc?monitor_id=${row.id}`;
     default:
       throw new Error("Invalid jobType");
   }
