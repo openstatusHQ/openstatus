@@ -72,6 +72,12 @@ In `blocks/`, bare `rounded` is off-limits: its 0.4 ratio comes from our
 `globals.css`, and a consumer's stock Tailwind resolves it to a fixed 0.25rem.
 `lg`/`md`/`sm` are safe — shadcn defines those keys too.
 
+The ratios deliberately stay out of `registry.json` `cssVars`. `--success` and
+friends are tokens a consumer lacks; `--radius-sm` is one they already have, and
+overwriting it would reshape every button and card in their app because they
+installed a status block. Installed blocks follow the host's scale — see
+`REGISTRY.md` for the snippet consumers can opt into.
+
 ## Generated output
 
 `dist/` and `public/r/` are build artifacts of `pnpm registry:build` (which
