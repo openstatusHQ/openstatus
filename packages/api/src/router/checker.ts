@@ -32,9 +32,10 @@ const CHECKER_BASE_URL = env.CHECKER_URL.replace(/\/+$/, "");
 function handleCheckerFetchError(testType: string, error: unknown): never {
   console.error(`Checker ${testType} test failed:`, error);
   if (error instanceof TRPCError) throw error;
+  const detail = error instanceof Error ? ` (${error.message})` : "";
   throw new TRPCError({
     code: "INTERNAL_SERVER_ERROR",
-    message: `Unable to reach the checker service at ${CHECKER_BASE_URL}. Please verify your CHECKER_URL configuration.`,
+    message: `Unable to reach the checker service at ${CHECKER_BASE_URL}. Please verify your CHECKER_URL configuration.${detail}`,
   });
 }
 
