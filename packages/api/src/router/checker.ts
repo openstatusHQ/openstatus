@@ -27,8 +27,16 @@ import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 const ABORT_TIMEOUT = 10000;
-const CHECKER_BASE_URL =
-  process.env.CHECKER_URL || "https://openstatus-checker.fly.dev";
+const CHECKER_BASE_URL = env.CHECKER_URL.replace(/\/+$/, "");
+
+function handleCheckerFetchError(testType: string, error: unknown): never {
+  console.error(`Checker ${testType} test failed:`, error);
+  if (error instanceof TRPCError) throw error;
+  throw new TRPCError({
+    code: "INTERNAL_SERVER_ERROR",
+    message: `Unable to reach the checker service at ${CHECKER_BASE_URL}. Please verify your CHECKER_URL configuration.`,
+  });
+}
 
 // PingICMP treats its timeout as the deadline for the whole check, so omitting
 // it means a deadline of "now": the send loop breaks before the first packet
