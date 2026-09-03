@@ -332,15 +332,7 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker HTTP test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: error instanceof Error ? error.message : "HTTP check failed",
-    });
+    handleCheckerFetchError("HTTP", error);
   }
 }
 
@@ -380,15 +372,7 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker TCP test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "TCP check failed",
-    });
+    handleCheckerFetchError("TCP", error);
   }
 }
 
@@ -447,15 +431,7 @@ export async function testDns(input: z.infer<typeof dnsTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker DNS test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "DNS check failed",
-    });
+    handleCheckerFetchError("DNS", error);
   }
 }
 
@@ -498,15 +474,7 @@ export async function testIcmp(input: z.infer<typeof icmpTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker ICMP test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "ICMP check failed",
-    });
+    handleCheckerFetchError("ICMP", error);
   }
 }
 
@@ -570,15 +538,7 @@ export async function testGrpc(input: z.infer<typeof grpcTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker gRPC test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "gRPC check failed",
-    });
+    handleCheckerFetchError("gRPC", error);
   }
 }
 
