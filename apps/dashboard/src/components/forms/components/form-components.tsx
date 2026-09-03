@@ -106,7 +106,7 @@ const componentSchema = z.object({
   id: z.number(),
   monitorId: z.number().nullish(),
   order: z.number(),
-  name: z.string().min(1, { message: "Name is required" }),
+  name: z.string().trim().min(1, { message: "Name is required" }),
   description: z.string().optional(),
   type: z.enum(["monitor", "static"]),
 });
@@ -117,7 +117,7 @@ const schema = z.object({
     z.object({
       id: z.number(),
       order: z.number(),
-      name: z.string(),
+      name: z.string().trim().min(1, { message: "Name is required" }),
       defaultOpen: z.boolean(),
       components: z.array(componentSchema).min(1, {
         message: "At least one component is required",
@@ -738,7 +738,7 @@ function ComponentRow({
       className={cn("rounded-md", className)}
       {...props}
     >
-      <div className="grid h-9 grid-cols-4 gap-2">
+      <div className="grid min-h-9 grid-cols-4 gap-2">
         <div className="flex flex-row items-center gap-1 self-center">
           <SortableItemHandle>
             <DragHandle
