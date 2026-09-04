@@ -32,7 +32,7 @@ catalog:
   "@astrojs/sitemap": 3.7.2
   "@astrojs/starlight": 0.37.7
   "@astrojs/starlight-tailwind": 4.0.2
-  "@auth/core": 0.40.0
+  "@auth/core": 0.41.2
   "@auth/drizzle-adapter": 1.11.2
   "@aws-sdk/client-s3": 3.1051.0
   "@bufbuild/buf": 1.69.0
