@@ -87,12 +87,18 @@ func setupLogger() (*slog.Logger, *sdklog.LoggerProvider) {
 	ctx := context.Background()
 
 	axiomToken := env("AXIOM_TOKEN", "")
-	axiomDataset := env("AXIOM_DATASET", "dev")
+	axiomDataset := env("AXIOM_DATASET", "")
 
 	// If no Axiom token, return a standard logger
 	if axiomToken == "" {
 		logger := slog.Default()
 		return logger, nil
+	}
+
+	// Fail closed: never route to an implicit dataset tier.
+	if axiomDataset == "" {
+		fmt.Fprintf(os.Stderr, "AXIOM_DATASET is required when AXIOM_TOKEN is set; skipping Axiom log export\n")
+		return slog.Default(), nil
 	}
 
 	environment := env("ENVIRONMENT", "production")
