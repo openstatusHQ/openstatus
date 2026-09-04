@@ -273,7 +273,7 @@ export function FormGeneral({
               render={({ field }) => (
                 <FormItem className="sm:pt-5.5">
                   {/* pt = label height + gap, so the checkbox sits on the input line */}
-                  <div className="flex sm:h-9 items-center gap-2">
+                  <div className="flex items-center gap-2 sm:h-9">
                     <FormControl>
                       <Checkbox
                         checked={field.value}

@@ -251,9 +251,7 @@ export function FormTags({
                   })),
                 }}
               >
-                <Button variant="outline">
-                  Edit Tags
-                </Button>
+                <Button variant="outline">Edit Tags</Button>
               </FormSheetMonitorTag>
             </div>
           </FormCardContent>
