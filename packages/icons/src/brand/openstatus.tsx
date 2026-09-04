@@ -109,7 +109,12 @@ export function OpenStatusLoadingIcon(props: React.ComponentProps<"svg">) {
         />
       </mask>
       <g className="openstatus-mark">
-        <circle cx="165" cy="165" r="165" mask="url(#openstatus-mark-loading)" />
+        <circle
+          cx="165"
+          cy="165"
+          r="165"
+          mask="url(#openstatus-mark-loading)"
+        />
       </g>
     </svg>
   );
