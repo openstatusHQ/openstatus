@@ -32,6 +32,12 @@ To contribute code changes, follow these steps:
 3. Run `pnpm verify` — formatting, lint, doc references and type checks. It needs
    no database and takes seconds. `pnpm verify:test` runs the tests for the
    packages your diff touches; those do need a local libSQL server.
+
+   Note: the type checks (`check` task) in most packages run through
+   [Deno](https://deno.com/), which must be installed locally. Without it,
+   `pnpm verify` fails with `deno: command not found` in every package.
+   See the [Requirements](./README.md#requirements) list in the README for the
+   full toolchain (Node.js, pnpm, Bun, Deno, Turso CLI).
 4. Make commits with clear and descriptive messages. Each commit should have a single logical purpose.
 5. Push your branch to your forked repository.
 6. Open a pull request (PR) from your branch to the original repository's `main` branch.

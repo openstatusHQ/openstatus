@@ -68,7 +68,7 @@ function EventItem({ event }: { event: HistoryEvent }) {
       <div className="flex items-center gap-2">
         <span
           className={cn(
-            "size-2.5 shrink-0 rounded-[2px]",
+            "size-2.5 shrink-0 rounded-xs",
             eventIndicatorStyles[event.type],
           )}
         />
@@ -130,7 +130,7 @@ export function TableCellUptime({
           <div className="flex items-center gap-2">
             <span
               className={cn(
-                "size-2.5 shrink-0 rounded-[2px]",
+                "size-2.5 shrink-0 rounded-xs",
                 indicatorStyles[cell.status],
               )}
             />

@@ -96,7 +96,7 @@ export function DataTableBasicsHTTP({
           <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
             <div className="flex items-center gap-2">
               <div
-                className={cn("bg-muted h-2.5 w-2.5 rounded-[2px]", {
+                className={cn("bg-muted h-2.5 w-2.5 rounded-xs", {
                   "bg-destructive": data?.requestStatus === "error",
                   "bg-warning": data?.requestStatus === "degraded",
                   "bg-success": data?.requestStatus === "success",
@@ -402,7 +402,7 @@ function BasicsRequestRows({ data }: { data: BasicsRequestFields }) {
       <BasicsRow label="Result">
         <div className="flex items-center gap-2">
           <div
-            className={cn("bg-muted h-2.5 w-2.5 rounded-[2px]", {
+            className={cn("bg-muted h-2.5 w-2.5 rounded-xs", {
               "bg-destructive": data?.requestStatus === "error",
               "bg-warning": data?.requestStatus === "degraded",
               "bg-success": data?.requestStatus === "success",

@@ -18,7 +18,7 @@ export const PrivateLocationMetadata = z
 export type PrivateLocationMetadata = z.infer<typeof PrivateLocationMetadata>;
 
 export const CreatePrivateLocationInput = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
   token: z.string().min(1).optional(),
   monitors: monitorIds,
   metadata: PrivateLocationMetadata.optional(),
@@ -29,7 +29,7 @@ export type CreatePrivateLocationInput = z.infer<
 
 export const UpdatePrivateLocationInput = z.object({
   id: z.number().int(),
-  name: z.string().min(1).optional(),
+  name: z.string().trim().min(1).optional(),
   monitors: monitorIds.optional(),
   metadata: PrivateLocationMetadata.optional(),
 });

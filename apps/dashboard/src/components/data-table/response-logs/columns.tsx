@@ -33,13 +33,13 @@ export function getColumns(
       cell: ({ row }) => {
         const value = row.getValue("requestStatus");
         if (value === "error") {
-          return <div className="bg-destructive h-2.5 w-2.5 rounded-[2px]" />;
+          return <div className="bg-destructive h-2.5 w-2.5 rounded-xs" />;
         }
         if (value === "degraded") {
-          return <div className="bg-warning h-2.5 w-2.5 rounded-[2px]" />;
+          return <div className="bg-warning h-2.5 w-2.5 rounded-xs" />;
         }
         if (value === "success") {
-          return <div className="bg-success h-2.5 w-2.5 rounded-[2px]" />;
+          return <div className="bg-success h-2.5 w-2.5 rounded-xs" />;
         }
         return <div className="text-muted-foreground">-</div>;
       },

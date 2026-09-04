@@ -54,6 +54,30 @@ codebases that are not this one.
 - **Defaults must render unconfigured.** Slots are optional, i18n falls back to
   English. The registry preview has no wiring.
 
+## Border radius
+
+`globals.css` defines the scale as ratios of the themed `--radius`, anchored so
+the 0.625rem default keeps shadcn's pixel values: `xs` 0.2 (2px), `rounded` 0.4
+(4px), `sm` 0.6 (6px), `md` 0.8 (8px), `lg` 1.0 (10px, the base), `xl` 1.4
+(14px). Stock shadcn subtracts fixed pixels instead (`calc(var(--radius) -
+4px)`), which collapses whole steps to 0 on the status page, where a theme can
+set `--radius` to 0.25rem or 0.
+
+Never hard-code a radius, and prefer `rounded-lg` over the equivalent
+`rounded-(--radius)`. `rounded-full` is only for a chip that wraps a glyph
+(`StatusIcon`); a coloured status marker takes `rounded-lg` so it matches the
+bar it describes.
+
+In `blocks/`, bare `rounded` is off-limits: its 0.4 ratio comes from our
+`globals.css`, and a consumer's stock Tailwind resolves it to a fixed 0.25rem.
+`lg`/`md`/`sm` are safe — shadcn defines those keys too.
+
+The ratios deliberately stay out of `registry.json` `cssVars`. `--success` and
+friends are tokens a consumer lacks; `--radius-sm` is one they already have, and
+overwriting it would reshape every button and card in their app because they
+installed a status block. Installed blocks follow the host's scale — see
+`REGISTRY.md` for the snippet consumers can opt into.
+
 ## Generated output
 
 `dist/` and `public/r/` are build artifacts of `pnpm registry:build` (which

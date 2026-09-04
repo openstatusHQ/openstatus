@@ -19,6 +19,7 @@ export const monitorStatusTable = sqliteTable(
     status: text("status", { enum: monitorStatusEnum })
       .default("active")
       .notNull(),
+    cronTimestamp: integer("cron_timestamp").notNull().default(0),
 
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
