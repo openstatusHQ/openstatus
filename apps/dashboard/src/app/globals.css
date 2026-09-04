@@ -9,6 +9,11 @@
 @theme {
   --breakpoint-xs: 30rem;
 
+  /* Heights of the sticky app chrome. Pages that fill the viewport instead of
+   * growing the document (monitor logs) subtract both. */
+  --spacing-app-header: 3.5rem;
+  --spacing-app-tabs: 41px;
+
   /* A 0.3s hold, then a 0.3s half-turn, on repeat. The mark is symmetric under
    * a half turn, so every cycle ends where it visually began and the loop never
    * jumps. ease-in-out because a linear turn that stops dead looks broken. */
@@ -31,6 +36,10 @@
   --font-sans: var(--font-inter);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--destructive);
+  --color-info: var(--info);
 }
 
 @layer base {

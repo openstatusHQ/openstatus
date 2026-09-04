@@ -32,6 +32,12 @@ export default defineConfig({
   ignorePatterns: [
     "packages/ui/src/components/*.ts",
     "packages/ui/src/components/*.tsx",
+    // Vendored from the data-table-filters shadcn registry — reformatting or
+    // hand-patching these makes the next `shadcn add` a merge conflict.
+    "packages/ui/src/components/data-table-filters/**",
+    "packages/ui/src/lib/data-table-filters/**",
+    "apps/dashboard/src/lib/react-table.d.ts",
+    "packages/ui/src/react-table.d.ts",
     "apps/dashboard/src/scripts/*.ts",
     "packages/proto/gen/**",
     "**/*_pb.ts",

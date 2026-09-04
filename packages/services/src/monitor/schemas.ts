@@ -239,6 +239,51 @@ export const GetResponseLogInput = z.object({
 });
 export type GetResponseLogInput = z.infer<typeof GetResponseLogInput>;
 
+/**
+ * Filters the v2 response-log pipes evaluate server-side. Every array is bounded:
+ * they are templated straight into the pipes' `IN (...)` lists and serialised
+ * into the request URL, so an unbounded one is caller-controlled work.
+ */
+export const ResponseLogFilters = z.object({
+  regions: z.array(z.string().max(64)).max(128).optional(),
+  status: z
+    .array(z.enum(["success", "error", "degraded"]))
+    .max(3)
+    .optional(),
+  trigger: z
+    .array(z.enum(["cron", "api"]))
+    .max(2)
+    .optional(),
+  // The pipes cast this list to `Int16`, matching the column: a value outside
+  // that range makes Tinybird fail the query rather than match nothing.
+  statusCodes: z.array(z.number().int().min(0).max(32_767)).max(100).optional(),
+  latencyMin: z.number().int().min(0).optional(),
+  latencyMax: z.number().int().min(0).optional(),
+});
+export type ResponseLogFilters = z.infer<typeof ResponseLogFilters>;
+
+export const ListResponseLogsInfiniteInput = ResponseLogFilters.extend({
+  monitorId: z.number().int(),
+  fromTimestamp: z.number().int().optional(),
+  toTimestamp: z.number().int().optional(),
+  /** `cronTimestamp` boundary of the previous page, exclusive. */
+  cursor: z.number().int().optional(),
+  direction: z.enum(["next", "prev"]).default("next"),
+  limit: z.number().int().min(1).max(100).default(50),
+});
+export type ListResponseLogsInfiniteInput = z.infer<
+  typeof ListResponseLogsInfiniteInput
+>;
+
+export const GetResponseLogFacetsInput = ResponseLogFilters.extend({
+  monitorId: z.number().int(),
+  fromTimestamp: z.number().int().optional(),
+  toTimestamp: z.number().int().optional(),
+});
+export type GetResponseLogFacetsInput = z.infer<
+  typeof GetResponseLogFacetsInput
+>;
+
 export const GetPrivateLocationIdsByMonitorInput = z.object({
   monitorIds: z.array(z.number().int()),
 });

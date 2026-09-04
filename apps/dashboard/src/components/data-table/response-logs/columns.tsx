@@ -18,7 +18,7 @@ import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellRegion } from "@/components/data-table/table-cell-region";
 import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 
-type ResponseLog = RouterOutputs["tinybird"]["list"]["data"][number];
+type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
 
 // export const columns: ColumnDef<ResponseLog>[] =
 export function getColumns(
