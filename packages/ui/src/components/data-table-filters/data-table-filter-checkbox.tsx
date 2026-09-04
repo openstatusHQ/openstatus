@@ -169,7 +169,7 @@ export function DataTableFilterCheckbox<TData>({
                   ) : (
                     <span className="truncate font-normal">{option.label}</span>
                   )}
-                  <span className="ml-auto flex min-w-8 items-center justify-end font-mono text-xs">
+                  <span className="ml-auto flex min-w-8 items-center justify-end font-mono text-xs group-hover:invisible">
                     {isLoading || isFacetsLoading ? (
                       <Skeleton className="h-4 w-8" />
                     ) : facetedValue?.has(option.value) ? (
@@ -182,11 +182,11 @@ export function DataTableFilterCheckbox<TData>({
                     type="button"
                     onClick={() => column?.setFilterValue([option.value])}
                     className={cn(
-                      "text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 hidden font-normal backdrop-blur-xs group-hover:block",
-                      "focus-visible:border-ring focus-visible:ring-ring/50 rounded-md transition-all outline-none focus-visible:ring-[3px]",
+                      "text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 hidden items-center px-2 font-normal group-hover:flex",
+                      "focus-visible:border-ring focus-visible:ring-ring/50 rounded-md transition-colors outline-none focus-visible:ring-[3px]",
                     )}
                   >
-                    <span className="px-2">only</span>
+                    only
                   </button>
                 </Label>
               </div>
