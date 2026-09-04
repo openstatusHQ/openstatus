@@ -46,7 +46,7 @@ jobs:
           go-version: "stable"
 
       - name: 📥 Install protoc-gen-connect-openapi
-        run: go install github.com/sudorandom/protoc-gen-connect-openapi@latest
+        run: go install github.com/sudorandom/protoc-gen-connect-openapi@v0.25.8
 
       - name: 📥 Download deps
         run: pnpm install

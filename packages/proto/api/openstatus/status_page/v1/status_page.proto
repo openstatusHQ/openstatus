@@ -130,12 +130,12 @@ message StatusPage {
 
   // Timestamp when the page was created (RFC 3339 format).
   string created_at = 12 [
-    (gnostic.openapi.v3.property) = {example: {yaml: "2024-01-15T09:00:00Z"}}
+    (gnostic.openapi.v3.property) = {example: {yaml: "\"2024-01-15T09:00:00Z\""}}
   ];
 
   // Timestamp when the page was last updated (RFC 3339 format).
   string updated_at = 13 [
-    (gnostic.openapi.v3.property) = {example: {yaml: "2024-06-20T14:30:00Z"}}
+    (gnostic.openapi.v3.property) = {example: {yaml: "\"2024-06-20T14:30:00Z\""}}
   ];
 
   // Default locale for the status page.
