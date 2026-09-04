@@ -32,7 +32,7 @@ export const sendAlert = async ({
     },
   });
   if (!res.ok) {
-    throw new Error(`Failed to send alert notification: ${res.statusText}`);
+    throw new Error(`Failed to send alert notification: ${res.status} ${res.statusText}`);
   }
 };
 
@@ -61,7 +61,7 @@ export const sendRecovery = async ({
     },
   });
   if (!res.ok) {
-    throw new Error(`Failed to send recovery notification: ${res.statusText}`);
+    throw new Error(`Failed to send recovery notification: ${res.status} ${res.statusText}`);
   }
 };
 
@@ -91,7 +91,7 @@ export const sendDegraded = async ({
     },
   });
   if (!res.ok) {
-    throw new Error(`Failed to send degraded notification: ${res.statusText}`);
+    throw new Error(`Failed to send degraded notification: ${res.status} ${res.statusText}`);
   }
 };
 

@@ -438,6 +438,21 @@ async function commitDead(
       new Error(
         `Notification dead-lettered: ${row.provider} for monitor ${row.monitorId}`,
       ),
+      {
+        tags: {
+          provider: row.provider,
+          event_type: row.eventType,
+          from_status: row.fromStatus,
+          to_status: row.toStatus,
+        },
+        extra: {
+          monitor_id: row.monitorId,
+          notification_id: row.notificationId,
+          workspace_id: row.workspaceId,
+          attempts: row.attempts,
+          final_error: error,
+        },
+      },
     );
   }
 }
