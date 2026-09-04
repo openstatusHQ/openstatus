@@ -213,7 +213,7 @@ export function DataTableFilterAICommand({
     }
   }, [columnFilters, filterFields, open]);
 
-  useHotKey(() => setOpen((open) => !open), "k");
+  useHotKey(() => setOpen((open) => !open), "j");
 
   useEffect(() => {
     if (open) {
@@ -292,7 +292,7 @@ export function DataTableFilterAICommand({
         </span>
         <Kbd className="text-muted-foreground group-hover:text-accent-foreground ml-auto">
           <span className="mr-1">⌘</span>
-          <span>K</span>
+          <span>J</span>
         </Kbd>
       </button>
       <Command
