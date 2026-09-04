@@ -3,6 +3,7 @@ title: "How to Migrate from UptimeRobot to openstatus"
 description: "A step-by-step guide to moving from UptimeRobot to openstatus — exporting your monitors, recreating them in the UI or as code, wiring up alerts, and publishing a status page. Most teams finish in under an hour."
 author: "openstatus"
 publishedAt: "2026-06-19"
+updatedAt: "2026-08-26"
 category: "alternative"
 howto:
   totalTime: "PT1H"
@@ -112,6 +113,36 @@ Leave both tools running for a week or two. Once you trust the openstatus alerts
 ## Need Help?
 
 Join our [Discord community](https://www.openstatus.dev/discord), check the [documentation](https://www.openstatus.dev/docs), or reach out via [email](mailto:ping@openstatus.dev).
+
+## Frequently asked questions
+
+<Details summary="Does openstatus automatically import my UptimeRobot monitors?">
+
+openstatus's one-click importer covers status-page tools (Instatus, Atlassian Statuspage, Better Stack) — it imports components, incidents, maintenances, and subscribers. UptimeRobot is a monitoring tool, so its monitors are recreated rather than imported: rebuild them in the dashboard, or define them as code with the Terraform provider or CLI. Most setups take under an hour.
+
+</Details>
+
+<Details summary="How long does migrating from UptimeRobot take?">
+
+For a typical setup of a few dozen monitors, under an hour. If you define monitors as code with Terraform or the CLI, you can script the whole thing and apply it in one go.
+
+</Details>
+
+<Details summary="Will my uptime history transfer from UptimeRobot?">
+
+Historical uptime data stays in UptimeRobot — it isn't transferred. openstatus starts collecting data the moment your monitors go live. Many teams run both in parallel for a short period before switching off UptimeRobot.
+
+</Details>
+
+<Details summary="Why migrate from UptimeRobot in the first place?">
+
+Common reasons: UptimeRobot checks from a single location while openstatus checks from 28 regions in parallel; UptimeRobot restricted its free tier to non-commercial use in October 2024; openstatus is open-source and self-hostable; and openstatus includes monitoring as code, a CLI, and an MCP server for AI agents.
+
+</Details>
+
+---
+
+Still deciding rather than migrating? [UptimeRobot vs openstatus](/compare/uptime-robot) is the feature-by-feature comparison.
 
 ---
 

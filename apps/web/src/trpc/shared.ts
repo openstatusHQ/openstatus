@@ -34,16 +34,6 @@ export const sentryLoggerLink = (): TRPCLink<AppRouter> =>
   });
 
 /**
- * Shared onError handler for tRPC route handlers.
- */
-export function createOnError(label: string) {
-  return ({ error }: { error: { code: string; message: string } }) => {
-    console.log(`Error in tRPC handler (${label})`);
-    console.error(error);
-  };
-}
-
-/**
  * Filter out requests that don't come from our tRPC clients.
  * Our server and client links always set `x-trpc-source`.
  * This is a convention filter for bots/crawlers, not a security boundary —

@@ -1,7 +1,7 @@
 "use client";
 
+import { Inbox } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { Inbox } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useState } from "react";

@@ -15,6 +15,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { useTRPC } from "@/lib/trpc/client";
+import { switchWorkspace } from "@/lib/workspace-cookie";
 
 import { searchParamsParsers } from "./search-params";
 
@@ -30,8 +31,7 @@ export function Client() {
     trpc.invitation.accept.mutationOptions({
       onSuccess: (workspace) => {
         if (!workspace) return;
-        document.cookie = `workspace-slug=${workspace.slug}; path=/;`;
-        window.location.href = "/overview";
+        switchWorkspace(workspace.slug);
       },
     }),
   );

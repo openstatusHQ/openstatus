@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -10,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Lock } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 

@@ -73,7 +73,7 @@ func Test_ping(t *testing.T) {
 			want: checker.Response{Status: 500, Body: "OK"}, wantErr: false},
 
 		{name: "Wrong url should return an error", args: args{client: &http.Client{}, inputData: request.HttpCheckerRequest{URL: "https://somethingthatwillfail.ed", CronTimestamp: 1}},
-			want: checker.Response{Status: 0}, wantErr: true},
+			want: checker.Response{Status: 0}, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -90,6 +90,11 @@ func Test_ping(t *testing.T) {
 
 			if got.Body != tt.want.Body {
 				t.Errorf("Ping() = %v, want %v", got, tt.want)
+			}
+
+			// For the error test case, verify Response.Error is populated
+			if tt.name == "Wrong url should return an error" && got.Error == "" {
+				t.Errorf("Expected Response.Error to be populated for transport failure")
 			}
 		})
 	}

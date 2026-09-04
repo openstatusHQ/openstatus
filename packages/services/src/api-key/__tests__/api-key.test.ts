@@ -3,10 +3,9 @@ import { apiKey } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
+  createWorkspaceFixture,
   expectAuditRow,
-  loadSeededWorkspace,
   makeApiKeyCtx,
   makeUserCtx,
   readAuditLog,
@@ -27,7 +26,7 @@ const TEST_PREFIX = "svc-apikey-test";
 let teamCtx: ServiceContext;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+  const team = (await createWorkspaceFixture("team")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
 });
 
@@ -41,7 +40,7 @@ describe("createApiKey", () => {
       });
 
       expect(token).toMatch(/^os_[a-f0-9]{32}$/);
-      expect(key.workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
+      expect(key.workspaceId).toBe(teamCtx.workspace.id);
 
       const stored = await tx
         .select({ hashedToken: apiKey.hashedToken })
@@ -111,9 +110,8 @@ describe("createApiKey", () => {
 
   test("rejects read-only actor", async () => {
     await withTestTransaction(async (tx) => {
-      const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
       const readOnlyCtx = {
-        ...makeApiKeyCtx(team, {
+        ...makeApiKeyCtx(teamCtx.workspace, {
           keyId: "k-read",
           userId: 1,
           scopes: ["read"],
@@ -173,7 +171,6 @@ describe("revokeApiKey", () => {
 
   test("self-revoke carve-out: read-only key can revoke itself", async () => {
     await withTestTransaction(async (tx) => {
-      const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
       // Create the key as a user so we get a real row id back.
       const { key } = await createApiKey({
         ctx: { ...teamCtx, db: tx },
@@ -182,7 +179,7 @@ describe("revokeApiKey", () => {
 
       // Now revoke as the read-only key itself — should succeed.
       const selfCtx = {
-        ...makeApiKeyCtx(team, {
+        ...makeApiKeyCtx(teamCtx.workspace, {
           keyId: String(key.id),
           userId: 1,
           scopes: ["read"],
@@ -244,7 +241,6 @@ describe("revokeApiKey", () => {
 
   test("read-only actor cannot revoke a different key", async () => {
     await withTestTransaction(async (tx) => {
-      const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
       const { key } = await createApiKey({
         ctx: { ...teamCtx, db: tx },
         input: { name: `${TEST_PREFIX}-other-key` },
@@ -252,7 +248,7 @@ describe("revokeApiKey", () => {
 
       // Read-only actor with a different keyId tries to revoke `key`.
       const otherCtx = {
-        ...makeApiKeyCtx(team, {
+        ...makeApiKeyCtx(teamCtx.workspace, {
           keyId: "different-key-id",
           userId: 1,
           scopes: ["read"],

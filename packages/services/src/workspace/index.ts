@@ -1,14 +1,17 @@
 export {
   getWorkspace,
-  getWorkspaceWithUsage,
+  getWorkspaceByStripeId,
+  getWorkspaceUsage,
   listWorkspaces,
   type WorkspaceUsage,
-  type WorkspaceWithUsage,
 } from "./list";
-export { updateWorkspaceName } from "./update";
+export { downgradeWorkspaceToFree } from "./downgrade";
+export { updateWorkspaceName, updateWorkspacePlan } from "./update";
 export {
+  GetWorkspaceByStripeIdInput,
   GetWorkspaceInput,
-  GetWorkspaceWithUsageInput,
+  GetWorkspaceUsageInput,
   ListWorkspacesInput,
   UpdateWorkspaceNameInput,
+  UpdateWorkspacePlanInput,
 } from "./schemas";

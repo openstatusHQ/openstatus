@@ -54,6 +54,19 @@ func ProtoStringAssertionToComparator(assertion v1.StringComparator) (request.St
 	return "", fmt.Errorf("unknown comparator type: %v", assertion)
 }
 
+// httpFailureMessage explains a failed check in the alert body: checker.Http
+// only fills Error for transport failures such as timeouts.
+func httpFailureMessage(res checker.Response, statusOK bool) string {
+	switch {
+	case res.Error != "":
+		return res.Error
+	case !statusOK:
+		return fmt.Sprintf("Request failed with status code %d", res.Status)
+	default:
+		return "Assertions failed"
+	}
+}
+
 func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region string) (*HttpPrivateRegionData, error) {
 
 	retry := monitor.Retry
@@ -141,7 +154,14 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 		}
 
 		status := statusCode(res.Status)
+		// Only use default 2xx check if no status assertions exist
+		// If status assertions are configured, let them determine success
+		hasStatusAssertions := len(monitor.StatusCodeAssertions) > 0
 		isSuccessful := status.IsSuccessful()
+		if hasStatusAssertions {
+			isSuccessful = true // Start with true, assertions will override
+		}
+
 		if len(monitor.HeaderAssertions) > 0 {
 			headersAsString, err := json.Marshal(res.Headers)
 			if err != nil {
@@ -158,7 +178,7 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 					Target:     assertion.Target,
 					Key:        assertion.Key,
 				}
-				assert.HeaderEvaluate(string(headersAsString))
+				isSuccessful = isSuccessful && assert.HeaderEvaluate(string(headersAsString))
 			}
 		}
 
@@ -219,6 +239,7 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 			}
 		} else {
 			data.Error = 1
+			data.Message = httpFailureMessage(res, status.IsSuccessful())
 			// Mark the recorded response as errored so OTel emits the error counter
 			// for non-2xx / failed assertions, matching the public checker.
 			lastRes.Error = "Error"

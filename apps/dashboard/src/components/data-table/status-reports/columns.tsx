@@ -5,10 +5,10 @@ import {
   type PageComponentImpact,
   worstImpact,
 } from "@openstatus/db/src/schema/page_components/constants";
+import { ChevronDown, ChevronUp } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 
 import { TableCellBadge } from "@/components/data-table/table-cell-badge";

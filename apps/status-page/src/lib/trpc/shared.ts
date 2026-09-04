@@ -2,7 +2,6 @@ import type { AppRouter } from "@openstatus/api";
 import * as Sentry from "@sentry/nextjs";
 import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
 import { httpBatchLink, loggerLink } from "@trpc/client";
-import type { TRPCError } from "@trpc/server";
 import superjson from "superjson";
 
 /**
@@ -33,16 +32,6 @@ export const sentryLoggerLink = (): TRPCLink<AppRouter> =>
       }
     },
   });
-
-/**
- * Shared onError handler for tRPC route handlers.
- */
-export function createOnError(label: string) {
-  return ({ error }: { error: TRPCError }) => {
-    console.log(`Error in tRPC handler (${label})`);
-    console.error(error);
-  };
-}
 
 /**
  * Filter out requests that don't come from our tRPC clients.

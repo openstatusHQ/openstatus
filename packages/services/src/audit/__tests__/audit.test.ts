@@ -5,12 +5,8 @@ import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
   clearAuditLog,
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeApiKeyCtx,
   makeSlackCtx,
   makeSystemCtx,
@@ -40,17 +36,25 @@ async function emitLoose(
 }
 
 let teamCtx: ServiceContext;
+let teamUserId: number;
+let otherCtx: ServiceContext;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  teamCtx = makeUserCtx(team, { userId: 1 });
+  const team = await createWorkspaceFixture("team");
+  teamUserId = team.userId;
+  teamCtx = makeUserCtx(team.workspace, { userId: teamUserId });
+  // Built here rather than inside a test: `withTestTransaction` holds an open
+  // transaction on the shared connection, and a committed write mid-stream
+  // aborts it.
+  const other = await createWorkspaceFixture("free");
+  otherCtx = makeUserCtx(other.workspace, { userId: other.userId });
   // Wipe rows from prior aborted runs — the fail-closed test below runs
   // outside `withTestTransaction` and could leak on a botched prior run.
   await clearAuditLog(teamCtx.workspace.id);
 });
 
 afterAll(async () => {
-  await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID);
+  await clearAuditLog(teamCtx.workspace.id);
 });
 
 describe("diffTopLevel", () => {
@@ -155,8 +159,8 @@ describe("emitAudit — row persistence", () => {
       expect(row.entityType).toBe("monitor");
       expect(row.entityId).toBe("9001");
       expect(row.actorType).toBe("user");
-      expect(row.actorId).toBe("1");
-      expect(row.actorUserId).toBe(1);
+      expect(row.actorId).toBe(String(teamUserId));
+      expect(row.actorUserId).toBe(teamUserId);
       expect(row.metadata).toEqual({
         jobType: "http",
         url: "https://example.com",
@@ -366,8 +370,8 @@ describe("emitAudit — actor derivation", () => {
         db: tx,
       });
       expect(row?.actorType).toBe("user");
-      expect(row?.actorId).toBe("1");
-      expect(row?.actorUserId).toBe(1);
+      expect(row?.actorId).toBe(String(teamUserId));
+      expect(row?.actorUserId).toBe(teamUserId);
     });
   });
 
@@ -604,7 +608,7 @@ describe("getAuditLog", () => {
       expect(row.entityType).toBe("monitor");
       expect(row.entityId).toBe("9800");
       expect(row.changedFields).toEqual(["name"]);
-      expect(row.user?.id).toBe(1);
+      expect(row.user?.id).toBe(teamUserId);
     });
   });
 
@@ -623,11 +627,6 @@ describe("getAuditLog", () => {
         db: tx,
       });
       if (!inserted) throw new Error("unreachable");
-
-      const otherWorkspace = await loadSeededWorkspace(
-        SEEDED_WORKSPACE_FREE_ID,
-      );
-      const otherCtx = makeUserCtx(otherWorkspace, { userId: 1 });
 
       let caught: unknown;
       try {

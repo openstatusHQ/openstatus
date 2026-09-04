@@ -1,10 +1,11 @@
 import { Events } from "@openstatus/analytics";
-import { and, eq, inArray, sql } from "@openstatus/db";
+import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
   maintenance,
   page,
   pageComponent,
   pageConfigurationSchema,
+  privateLocationToMonitors,
   selectMaintenancePageSchema,
   selectPageComponentWithMonitorRelation,
   selectPageSchema,
@@ -247,13 +248,89 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
 
+      // Add privateLocationCount to each monitor
+      const privateLocationCounts = new Map<number, number>();
+      if (monitors.length > 0) {
+        const monitorIds = monitors.map((m) => m.id);
+        const privateLocations =
+          await opts.ctx.db.query.privateLocationToMonitors.findMany({
+            where: and(
+              inArray(privateLocationToMonitors.monitorId, monitorIds),
+              isNull(privateLocationToMonitors.deletedAt),
+            ),
+            columns: {
+              monitorId: true,
+            },
+          });
+
+        // Count private locations per monitor
+        for (const pl of privateLocations) {
+          if (pl.monitorId === null) continue;
+          privateLocationCounts.set(
+            pl.monitorId,
+            (privateLocationCounts.get(pl.monitorId) ?? 0) + 1,
+          );
+        }
+      }
+
+      // Create new array with privateLocationCount included (no mutation/cast)
+      const monitorsWithPrivateLocationCount = monitors.map((m) => ({
+        ...m,
+        privateLocationCount: privateLocationCounts.get(m.id) ?? 0,
+      }));
+
+      // Sort monitors to match trackers behavior: group by monitorGroupId, order
+      // groups by minimum order, sort within groups by groupOrder, and sort
+      // ungrouped monitors by order
+      const groupMinOrderMap = new Map<number, number>();
+      for (const monitor of monitorsWithPrivateLocationCount) {
+        const groupId = monitor.monitorGroupId;
+        if (groupId !== null) {
+          const order = monitor.order ?? 0;
+          const currentMin =
+            groupMinOrderMap.get(groupId) ?? Number.MAX_SAFE_INTEGER;
+          groupMinOrderMap.set(groupId, Math.min(currentMin, order));
+        }
+      }
+
+      monitorsWithPrivateLocationCount.sort((a, b) => {
+        const aGroupId = a.monitorGroupId ?? null;
+        const bGroupId = b.monitorGroupId ?? null;
+
+        // If both monitors are in the same group (or both ungrouped with null)
+        if (aGroupId === bGroupId) {
+          if (aGroupId === null) {
+            // Both ungrouped - sort by order
+            return (a.order ?? 0) - (b.order ?? 0);
+          }
+          // Both in same group - sort by groupOrder within the group
+          return (a.groupOrder ?? 0) - (b.groupOrder ?? 0);
+        }
+
+        // Different groups or one is ungrouped - sort by group position
+        // For grouped monitors, use precomputed minimum order of the group
+        // For ungrouped monitors, use their own order
+        const aGroupMinOrder =
+          aGroupId !== null
+            ? (groupMinOrderMap.get(aGroupId) ?? 0)
+            : (a.order ?? 0);
+        const bGroupMinOrder =
+          bGroupId !== null
+            ? (groupMinOrderMap.get(bGroupId) ?? 0)
+            : (b.order ?? 0);
+
+        return aGroupMinOrder - bGroupMinOrder;
+      });
+
       // no barType gate: incident-driven error is already suppressed per
       // monitor in manual mode; report-driven error (major_outage) must show
-      const status = monitors.some((m) => m.status === "error")
+      const status = monitorsWithPrivateLocationCount.some(
+        (m) => m.status === "error",
+      )
         ? "error"
-        : monitors.some((m) => m.status === "degraded")
+        : monitorsWithPrivateLocationCount.some((m) => m.status === "degraded")
           ? "degraded"
-          : monitors.some((m) => m.status === "info")
+          : monitorsWithPrivateLocationCount.some((m) => m.status === "info")
             ? "info"
             : "success";
 
@@ -430,10 +507,11 @@ export const statusPageRouter = createTRPCRouter({
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
         customTheme,
-        monitors,
+        monitors: monitorsWithPrivateLocationCount,
         monitorGroups,
         trackers,
-        incidents: monitors.flatMap((m) => m.incidents) ?? [],
+        incidents:
+          monitorsWithPrivateLocationCount.flatMap((m) => m.incidents) ?? [],
         statusReports,
         maintenances,
         workspacePlan: _page.workspace.plan,
@@ -669,12 +747,16 @@ export const statusPageRouter = createTRPCRouter({
         http: monitors.filter((c) => c.monitor.jobType === "http"),
         tcp: monitors.filter((c) => c.monitor.jobType === "tcp"),
         dns: monitors.filter((c) => c.monitor.jobType === "dns"),
+        icmp: monitors.filter((c) => c.monitor.jobType === "icmp"),
+        grpc: monitors.filter((c) => c.monitor.jobType === "grpc"),
       };
 
       const proceduresByType = {
         http: getStatusProcedure("45d", "http"),
         tcp: getStatusProcedure("45d", "tcp"),
         dns: getStatusProcedure("45d", "dns"),
+        icmp: getStatusProcedure("45d", "icmp"),
+        grpc: getStatusProcedure("45d", "grpc"),
       };
 
       // Manual mode never touches Tinybird. Otherwise race the reads against
@@ -682,7 +764,7 @@ export const statusPageRouter = createTRPCRouter({
       // whole page to manual mode so bars still render from DB events.
       const tinybird = await withTinybirdFallback(() =>
         input.barType === "manual"
-          ? Promise.resolve([null, null, null])
+          ? Promise.resolve([null, null, null, null, null])
           : Promise.all(
               Object.entries(proceduresByType).map(([type, procedure]) => {
                 const monitorIds = monitorsByType[
@@ -695,21 +777,26 @@ export const statusPageRouter = createTRPCRouter({
       );
 
       const tinybirdUnhealthy = !tinybird.ok;
-      const [statusHttp, statusTcp, statusDns] = tinybird.data ?? [
-        null,
-        null,
-        null,
-      ];
+      const [statusHttp, statusTcp, statusDns, statusIcmp, statusGrpc] =
+        tinybird.data ?? [null, null, null, null, null];
 
       const statusDataByMonitorId = new Map<
         string,
         | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
+        | Awaited<ReturnType<(typeof proceduresByType)["icmp"]>>["data"]
+        | Awaited<ReturnType<(typeof proceduresByType)["grpc"]>>["data"]
       >();
 
       // Consolidate status data from all monitor types into the map
-      for (const statusResult of [statusHttp, statusTcp, statusDns]) {
+      for (const statusResult of [
+        statusHttp,
+        statusTcp,
+        statusDns,
+        statusIcmp,
+        statusGrpc,
+      ]) {
         if (statusResult?.data) {
           statusResult.data.forEach((status) => {
             const monitorId = status.monitorId;
@@ -975,12 +1062,16 @@ export const statusPageRouter = createTRPCRouter({
         http: publicMonitors.filter((c) => c.monitor.jobType === "http"),
         tcp: publicMonitors.filter((c) => c.monitor.jobType === "tcp"),
         dns: publicMonitors.filter((c) => c.monitor.jobType === "dns"),
+        icmp: publicMonitors.filter((c) => c.monitor.jobType === "icmp"),
+        grpc: publicMonitors.filter((c) => c.monitor.jobType === "grpc"),
       };
 
       const proceduresByType = {
         http: getMetricsLatencyMultiProcedure("1d", "http"),
         tcp: getMetricsLatencyMultiProcedure("1d", "tcp"),
         dns: getMetricsLatencyMultiProcedure("1d", "dns"),
+        icmp: getMetricsLatencyMultiProcedure("1d", "icmp"),
+        grpc: getMetricsLatencyMultiProcedure("1d", "grpc"),
       };
 
       // Slow/erroring Tinybird → empty latency data so the page still renders.
@@ -1000,13 +1091,17 @@ export const statusPageRouter = createTRPCRouter({
         metricsLatencyMultiHttp,
         metricsLatencyMultiTcp,
         metricsLatencyMultiDns,
-      ] = metrics.data ?? [null, null, null];
+        metricsLatencyMultiIcmp,
+        metricsLatencyMultiGrpc,
+      ] = metrics.data ?? [null, null, null, null, null];
 
       const metricsDataByMonitorId = new Map<
         string,
         | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
+        | Awaited<ReturnType<(typeof proceduresByType)["icmp"]>>["data"]
+        | Awaited<ReturnType<(typeof proceduresByType)["grpc"]>>["data"]
       >();
 
       if (metricsLatencyMultiHttp?.data) {
@@ -1031,6 +1126,26 @@ export const statusPageRouter = createTRPCRouter({
 
       if (metricsLatencyMultiDns?.data) {
         metricsLatencyMultiDns.data.forEach((metric) => {
+          const monitorId = metric.monitorId;
+          if (!metricsDataByMonitorId.has(monitorId)) {
+            metricsDataByMonitorId.set(monitorId, []);
+          }
+          metricsDataByMonitorId.get(monitorId)?.push(metric);
+        });
+      }
+
+      if (metricsLatencyMultiIcmp?.data) {
+        metricsLatencyMultiIcmp.data.forEach((metric) => {
+          const monitorId = metric.monitorId;
+          if (!metricsDataByMonitorId.has(monitorId)) {
+            metricsDataByMonitorId.set(monitorId, []);
+          }
+          metricsDataByMonitorId.get(monitorId)?.push(metric);
+        });
+      }
+
+      if (metricsLatencyMultiGrpc?.data) {
+        metricsLatencyMultiGrpc.data.forEach((metric) => {
           const monitorId = metric.monitorId;
           if (!metricsDataByMonitorId.has(monitorId)) {
             metricsDataByMonitorId.set(monitorId, []);
@@ -1083,8 +1198,6 @@ export const statusPageRouter = createTRPCRouter({
       if (!_monitor.public) return null;
       if (_monitor.deletedAt) return null;
 
-      const type = _monitor.jobType as "http" | "tcp";
-
       const proceduresByType = {
         http: {
           latency: getMetricsLatencyProcedure("7d", "http"),
@@ -1101,32 +1214,52 @@ export const statusPageRouter = createTRPCRouter({
           regions: getMetricsRegionsProcedure("7d", "dns"),
           uptime: getUptimeProcedure("7d", "dns"),
         },
+        icmp: {
+          latency: getMetricsLatencyProcedure("7d", "icmp"),
+          regions: getMetricsRegionsProcedure("7d", "icmp"),
+          uptime: getUptimeProcedure("7d", "icmp"),
+        },
+        grpc: {
+          latency: getMetricsLatencyProcedure("7d", "grpc"),
+          regions: getMetricsRegionsProcedure("7d", "grpc"),
+          uptime: getUptimeProcedure("7d", "grpc"),
+        },
       };
+
+      // `udp` and `ssl` are monitor job types with no Tinybird pipes. Looking the
+      // key up instead of asserting the type means such a monitor renders with
+      // empty charts — the same shape a Tinybird outage produces — rather than
+      // throwing on a missing key.
+      const procedures =
+        proceduresByType[_monitor.jobType as keyof typeof proceduresByType] ??
+        null;
 
       const fromDate = startOfDay(subDays(new Date(), 7)).toISOString();
       const toDate = endOfDay(new Date()).toISOString();
 
       // Slow/erroring Tinybird → empty chart data so the page still renders.
-      const metrics = await withTinybirdFallback(() =>
-        Promise.all([
-          proceduresByType[type].latency({
-            monitorId: _monitor.id.toString(),
-            fromDate,
-            toDate,
-          }),
-          proceduresByType[type].regions({
-            monitorId: _monitor.id.toString(),
-            fromDate,
-            toDate,
-          }),
-          proceduresByType[type].uptime({
-            monitorId: _monitor.id.toString(),
-            interval: 240,
-            fromDate,
-            toDate,
-          }),
-        ]),
-      );
+      const metrics = !procedures
+        ? { ok: false as const, data: null }
+        : await withTinybirdFallback(() =>
+            Promise.all([
+              procedures.latency({
+                monitorId: _monitor.id.toString(),
+                fromDate,
+                toDate,
+              }),
+              procedures.regions({
+                monitorId: _monitor.id.toString(),
+                fromDate,
+                toDate,
+              }),
+              procedures.uptime({
+                monitorId: _monitor.id.toString(),
+                interval: 240,
+                fromDate,
+                toDate,
+              }),
+            ]),
+          );
 
       const [latency, regions, uptime] = metrics.data ?? [
         { data: [] },

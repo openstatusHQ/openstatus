@@ -3,23 +3,22 @@ import {
   monitor,
   page as pageTable,
   pageComponent,
+  selectWorkspaceSchema,
+  statusReport,
+  workspace,
 } from "@openstatus/db/src/schema";
+import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
-  cleanQuotaGatedTables,
   expectAuditRow,
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { ServiceContext } from "../../context";
+import type { DrizzleTx, ServiceContext } from "../../context";
 import {
   ConflictError,
   ForbiddenError,
@@ -41,17 +40,35 @@ let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let teamMonitorId: number;
 
-beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
-  teamCtx = makeUserCtx(team, { userId: 1 });
-  freeCtx = makeUserCtx(free, { userId: 2 });
+// Dedicated, freshly-inserted free-plan workspace for the quota-sensitive
+// negative-path tests (status-pages limit = 1). They assume exclusive control
+// of the workspace's page count, but the shared seeded free workspace (#2) is
+// written concurrently by the apps/server RPC suites under parallel test
+// execution — which intermittently exhausts the quota and fails the wrong
+// assertion. An isolated workspace removes that cross-suite race; because every
+// test writes inside a rolled-back transaction, its committed page count stays
+// at zero for the whole suite.
+const FREE_WS_SLUG = `${TEST_PREFIX}-free-ws`;
 
-  // Clear leftover quota-gated rows on the free workspace so
-  // negative-path tests hit their intended assertion (e.g.
-  // `assertStatusPageQuota` on free = 1 page) regardless of what
-  // prior runs left behind.
-  await cleanQuotaGatedTables(SEEDED_WORKSPACE_FREE_ID);
+beforeAll(async () => {
+  const team = (await createWorkspaceFixture("team")).workspace;
+  teamCtx = makeUserCtx(team, { userId: 1 });
+
+  await db
+    .delete(workspace)
+    .where(eq(workspace.slug, FREE_WS_SLUG))
+    .catch(() => undefined);
+  const freeRow = await db
+    .insert(workspace)
+    .values({
+      slug: FREE_WS_SLUG,
+      name: `${TEST_PREFIX}-free`,
+      plan: "free",
+      limits: JSON.stringify(getLimits("free")),
+    })
+    .returning()
+    .get();
+  freeCtx = makeUserCtx(selectWorkspaceSchema.parse(freeRow), { userId: 2 });
 
   const teamMonitor = await db
     .insert(monitor)
@@ -73,6 +90,10 @@ afterAll(async () => {
   await db
     .delete(monitor)
     .where(eq(monitor.id, teamMonitorId))
+    .catch(() => undefined);
+  await db
+    .delete(workspace)
+    .where(eq(workspace.slug, FREE_WS_SLUG))
     .catch(() => undefined);
 });
 
@@ -136,7 +157,7 @@ describe("createPage (full form)", () => {
           slug,
           description: "desc",
           customDomain: "",
-          workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+          workspaceId: teamCtx.workspace.id,
           monitors: [{ monitorId: teamMonitorId }],
         },
       });
@@ -160,7 +181,7 @@ describe("createPage (full form)", () => {
             slug,
             description: "",
             customDomain: "",
-            workspaceId: SEEDED_WORKSPACE_FREE_ID,
+            workspaceId: freeCtx.workspace.id,
             monitors: [{ monitorId: teamMonitorId }],
           },
         }),
@@ -352,14 +373,15 @@ describe("updatePageCustomTheme", () => {
   test("rejects when plan lacks custom-theme", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...freeCtx, db: tx };
-      const p = await newPage({
-        ctx,
-        input: { title: "Free Theme", slug: uniqueSlug("free-theme") },
-      });
+      // No page needed: the `custom-theme` limit check fires before the
+      // page lookup (mirrors the read-only-actor case below). Creating a
+      // page here would depend on the shared free workspace's status-pages
+      // quota, which a parallel suite can exhaust → flaky LimitExceededError
+      // on the wrong assertion.
       await expect(
         updatePageCustomTheme({
           ctx,
-          input: { id: p.id, customTheme: { light: { "--primary": "red" } } },
+          input: { id: 1, customTheme: { light: { "--primary": "red" } } },
         }),
       ).rejects.toBeInstanceOf(LimitExceededError);
     });
@@ -445,6 +467,100 @@ describe("list / get / getSlugAvailable", () => {
   });
 });
 
+describe("listPages hasActiveStatusReport", () => {
+  const addReport = async (
+    tx: DrizzleTx,
+    pageId: number,
+    workspaceId: number,
+    status: "investigating" | "resolved",
+  ) =>
+    tx.insert(statusReport).values({
+      workspaceId,
+      pageId,
+      status,
+      title: `${TEST_PREFIX}-report-${status}`,
+    });
+
+  const flagFor = async (ctx: ServiceContext, pageId: number) => {
+    const items = await listPages({ ctx, input: { order: "desc" } });
+    return items.find((p) => p.id === pageId)?.hasActiveStatusReport;
+  };
+
+  test("false when the page has no status reports", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "No reports", slug: uniqueSlug("flag-none") },
+      });
+      expect(await flagFor(ctx, p.id)).toBe(false);
+    });
+  });
+
+  test("true when the page has a non-resolved report", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Active", slug: uniqueSlug("flag-active") },
+      });
+      await addReport(tx, p.id, teamCtx.workspace.id, "investigating");
+      expect(await flagFor(ctx, p.id)).toBe(true);
+    });
+  });
+
+  test("false once every report on the page is resolved", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Resolved", slug: uniqueSlug("flag-resolved") },
+      });
+      await addReport(tx, p.id, teamCtx.workspace.id, "resolved");
+      await addReport(tx, p.id, teamCtx.workspace.id, "resolved");
+      expect(await flagFor(ctx, p.id)).toBe(false);
+    });
+  });
+
+  test("an active report on one page does not flag its siblings", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const noisy = await newPage({
+        ctx,
+        input: { title: "Noisy", slug: uniqueSlug("flag-noisy") },
+      });
+      const quiet = await newPage({
+        ctx,
+        input: { title: "Quiet", slug: uniqueSlug("flag-quiet") },
+      });
+      await addReport(tx, noisy.id, teamCtx.workspace.id, "investigating");
+
+      expect(await flagFor(ctx, noisy.id)).toBe(true);
+      expect(await flagFor(ctx, quiet.id)).toBe(false);
+    });
+  });
+
+  test("the probe is workspace-scoped", async () => {
+    await withTestTransaction(async (tx) => {
+      const teamCtxTx = { ...teamCtx, db: tx };
+      const freeCtxTx = { ...freeCtx, db: tx };
+      const foreign = await newPage({
+        ctx: freeCtxTx,
+        input: { title: "Foreign", slug: uniqueSlug("flag-foreign") },
+      });
+      // Active report owned by the *other* workspace, pointing at its page.
+      await addReport(tx, foreign.id, freeCtx.workspace.id, "investigating");
+
+      const teamItems = await listPages({
+        ctx: teamCtxTx,
+        input: { order: "desc" },
+      });
+      expect(teamItems.some((p) => p.hasActiveStatusReport)).toBe(false);
+      expect(await flagFor(freeCtxTx, foreign.id)).toBe(true);
+    });
+  });
+});
+
 describe("getPageBySlug", () => {
   test("returns the row when slug exists", async () => {
     await withTestTransaction(async (tx) => {
@@ -514,6 +630,50 @@ describe("deletePage", () => {
       await expect(
         deletePage({ ctx: { ...freeCtx, db: tx }, input: { id: p.id } }),
       ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+});
+
+describe("status-page count quota", () => {
+  test("createPage rejects once the plan's page cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      // Free plan caps status pages at 1.
+      const ctx = { ...freeCtx, db: tx };
+      await newPage({
+        ctx,
+        input: { title: "Quota 1", slug: uniqueSlug("quota-1") },
+      });
+
+      await expect(
+        createPage({
+          ctx,
+          input: {
+            title: "Quota 2",
+            description: "",
+            slug: uniqueSlug("quota-2"),
+            customDomain: "",
+            workspaceId: ctx.workspace.id,
+            monitors: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("newPage rejects once the cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      await newPage({
+        ctx,
+        input: { title: "Quota 3", slug: uniqueSlug("quota-3") },
+      });
+
+      await expect(
+        newPage({
+          ctx,
+          input: { title: "Quota 4", slug: uniqueSlug("quota-4") },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
     });
   });
 });

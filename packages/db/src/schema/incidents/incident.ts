@@ -5,6 +5,7 @@ import {
   sqliteTable,
   text,
   unique,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 import { monitor } from "../monitors";
@@ -63,7 +64,15 @@ export const incidentTable = sqliteTable(
   },
   (table) => [
     unique().on(table.monitorId, table.startedAt),
-    index("incident_workspace_id_idx").on(table.workspaceId),
+    index("incident_workspace_id_started_at_idx").on(
+      table.workspaceId,
+      table.startedAt,
+    ),
+    // Partial: open incidents are looked up on every check result, every region,
+    // every minute. Unique so a monitor cannot hold two open incidents at once.
+    uniqueIndex("incident_open_idx")
+      .on(table.monitorId)
+      .where(sql`${table.resolvedAt} IS NULL`),
   ],
 );
 

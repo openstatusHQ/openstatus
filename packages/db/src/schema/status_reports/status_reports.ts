@@ -7,13 +7,9 @@ import {
 } from "../page_components";
 import { page } from "../pages";
 import { workspace } from "../workspaces";
+import { statusReportStatus } from "./constants";
 
-export const statusReportStatus = [
-  "investigating",
-  "identified",
-  "monitoring",
-  "resolved",
-] as const;
+export { statusReportStatus };
 
 export const statusReport = sqliteTable(
   "status_report",

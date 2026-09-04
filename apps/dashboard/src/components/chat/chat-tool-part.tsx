@@ -1,3 +1,4 @@
+import { Api, ChevronDown, Table } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Collapsible,
@@ -12,7 +13,6 @@ import {
   type UITools,
   getToolName,
 } from "ai";
-import { BracesIcon, ChevronDownIcon, TableIcon } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { ChangesTable } from "@/components/common/changes-table";
@@ -191,7 +191,7 @@ function ToolDisclosure({
                     tabIndex={open ? 0 : -1}
                     className="h-[18px] px-1 [&_svg:not([class*='size-'])]:size-3"
                   >
-                    <TableIcon />
+                    <Table />
                   </TabsTrigger>
                   <TabsTrigger
                     value="raw"
@@ -199,13 +199,13 @@ function ToolDisclosure({
                     tabIndex={open ? 0 : -1}
                     className="h-[18px] px-1 [&_svg:not([class*='size-'])]:size-3"
                   >
-                    <BracesIcon />
+                    <Api />
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
           ) : null}
-          <ChevronDownIcon
+          <ChevronDown
             className={cn(
               "text-muted-foreground size-4 shrink-0 transition-transform",
               open && "rotate-180",

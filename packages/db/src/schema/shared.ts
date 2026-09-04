@@ -95,6 +95,7 @@ const selectPublicMonitorWithStatusSchema = selectPublicMonitorBaseSchema
     monitorGroupId: z.number().nullable().optional(),
     order: z.number().default(0).optional(),
     groupOrder: z.number().default(0).nullish(),
+    privateLocationCount: z.number().optional(),
   })
   .transform((data) => ({
     ...data,

@@ -1,0 +1,60 @@
+---
+category: Guides
+title: Set up SAML single sign-on
+description: "Let your team sign in to openstatus through Okta, Entra ID, or any SAML identity provider"
+---
+
+
+| | |
+|---|---|
+| **Time** | ~20 minutes, plus DNS propagation |
+| **Level** | Advanced |
+| **Prerequisites** | The **SSO add-on** on your workspace, workspace **owner** access, and permission to add a DNS TXT record for your domain |
+
+SAML single sign-on lets your team sign in to openstatus through your own identity provider. GitHub and Google stay available — SSO is an additional way in, not a replacement.
+
+<Aside>SSO is a paid add-on, available on the **Starter**, **Team**, and **Scale** plans. If your subscription ends, SSO is switched off automatically and your team keeps access through GitHub and Google. Your provider configuration is retained, so re-subscribing restores it without reconnecting.</Aside>
+
+## Step 1: add SSO to your workspace
+
+Go to **Settings → Billing** and add **SAML Single Sign-On** to your subscription. Until the add-on is active, **Enable SSO** is refused.
+
+## Step 2: enable SSO
+
+Go to **Settings → SSO** and select **Enable SSO**. This creates the organization that holds your connection and verified domains.
+
+Only workspace owners can see and manage this page.
+
+## Step 3: verify your domain
+
+Select **Verify a domain** and follow the steps to add the DNS TXT record you're given.
+
+This step is not optional. openstatus only allows an SSO sign-in when the email address your identity provider asserts belongs to a domain you have verified. Until at least one domain is verified, every SSO sign-in is refused — this is what stops another organisation's identity provider from asserting one of your users' email addresses.
+
+DNS changes can take a while to propagate. The domain shows as **Pending** until verification completes, then flips to **Verified** on its own.
+
+## Step 4: connect your identity provider
+
+Select **Configure in WorkOS** and follow the setup for your provider — Okta, Entra ID, Google Workspace, OneLogin, and generic SAML are all supported.
+
+When the connection goes live, the SSO page shows **Ready — your team can sign in with SSO**.
+
+## Signing in
+
+On the login page your team selects **Sign in with SSO** and enters their work email. The domain is matched against your verified domains and they're redirected to your identity provider.
+
+Users signing in this way are added to your workspace automatically as **members** on first login. Someone who already has an openstatus account with the same email keeps that account, along with any role they already hold — an existing owner stays an owner.
+
+Signing in from your identity provider's app tile also works.
+
+## Removing access
+
+Because membership is granted by your identity provider, removing someone from the openstatus workspace alone is not enough — they can sign in again and rejoin. Remove them in your identity provider.
+
+<Aside type="caution">SCIM directory sync is not supported yet, so deprovisioning is not automatic. Removing a user from your identity provider prevents future sign-ins, but does not remove their existing workspace membership.</Aside>
+
+## Turning SSO off
+
+**Disable SSO** on the settings page stops SSO sign-ins. Nobody loses access to the workspace and no memberships are removed — everyone continues with GitHub or Google.
+
+Disabling SSO does not cancel the add-on. To stop being billed for it, remove **SAML Single Sign-On** from your subscription in **Settings → Billing**.

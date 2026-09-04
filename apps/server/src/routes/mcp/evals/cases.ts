@@ -150,4 +150,9 @@ export const cases: EvalCase[] = [
       "What alerting channels do we have configured? Will anyone get paged if monitor 17 goes down?",
     expectedTool: "list_notifications",
   },
+  {
+    id: "select.list_private_locations",
+    prompt: "Is our on-prem checker agent still reporting in?",
+    expectedTool: "list_private_locations",
+  },
 ];

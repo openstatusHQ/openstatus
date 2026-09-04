@@ -1,5 +1,6 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
+import { statusLabel } from "@openstatus/utils";
 import {
   Body,
   Column,
@@ -76,13 +77,8 @@ function StatusReportEmail({
               <Heading as="h3">{pageTitle}</Heading>
             </Column>
             <Column style={{ textAlign: "right" }}>
-              <Text
-                style={{
-                  color: getStatusColor(status),
-                  textTransform: "uppercase",
-                }}
-              >
-                {status}
+              <Text style={{ color: getStatusColor(status) }}>
+                {statusLabel(status)}
               </Text>
             </Column>
           </Row>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Sidebar as SidebarIcon } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Sidebar,
@@ -19,7 +20,6 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
-import { PanelRight } from "lucide-react";
 import * as React from "react";
 
 import { Kbd } from "../common/kbd";
@@ -123,7 +123,7 @@ export function SidebarTrigger({
       }}
       {...props}
     >
-      <PanelRight />
+      <SidebarIcon />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

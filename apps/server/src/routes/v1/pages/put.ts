@@ -143,19 +143,21 @@ export function registerPutPage(api: typeof pagesApi) {
         : monitors.map((m) => m.monitorId)
       : [];
 
-    if (monitors?.length) {
-      const monitorsData = await db
-        .select()
-        .from(monitor)
-        .where(
-          and(
-            inArray(monitor.id, monitorIds),
-            eq(monitor.workspaceId, workspaceId),
-            isNull(monitor.deletedAt),
-          ),
-        )
-        .all();
+    const monitorsData = monitors?.length
+      ? await db
+          .select()
+          .from(monitor)
+          .where(
+            and(
+              inArray(monitor.id, monitorIds),
+              eq(monitor.workspaceId, workspaceId),
+              isNull(monitor.deletedAt),
+            ),
+          )
+          .all()
+      : [];
 
+    if (monitors?.length) {
       if (monitorsData.length !== monitors.length) {
         throw new OpenStatusApiError({
           code: "BAD_REQUEST",
@@ -163,6 +165,8 @@ export function registerPutPage(api: typeof pagesApi) {
         });
       }
     }
+
+    const monitorsById = new Map(monitorsData.map((m) => [m.id, m]));
 
     const newPage = await db
       .update(page)
@@ -209,13 +213,7 @@ export function registerPutPage(api: typeof pagesApi) {
       for (const [index, m] of monitors.entries()) {
         const values = typeof m === "number" ? { monitorId: m } : m;
 
-        const _monitor = await db.query.monitor.findFirst({
-          where: and(
-            eq(monitor.id, values.monitorId),
-            eq(monitor.workspaceId, workspaceId),
-            isNull(monitor.deletedAt),
-          ),
-        });
+        const _monitor = monitorsById.get(values.monitorId);
 
         if (!_monitor) {
           throw new OpenStatusApiError({

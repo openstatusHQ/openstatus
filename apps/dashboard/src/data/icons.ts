@@ -1,12 +1,12 @@
 "use client";
 
-import { Activity, AlertCircle, Search, SearchCheck } from "lucide-react";
+import { Monitor, Alert, Search, Resolved } from "@openstatus/icons";
 
 export const status = {
-  resolved: SearchCheck,
-  investigating: AlertCircle,
+  resolved: Resolved,
+  investigating: Alert,
   identified: Search,
-  monitoring: Activity,
+  monitoring: Monitor,
 } as const;
 
 export const icons = {

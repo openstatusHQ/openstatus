@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Add, Close } from "@openstatus/icons";
 import { detectWebhookFlavor } from "@openstatus/subscriptions/client";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -17,7 +18,6 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { Plus, X } from "lucide-react";
 import React, { useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -346,7 +346,7 @@ export function FormSubscriber({
                       aria-label="Remove header"
                       onClick={() => remove(idx)}
                     >
-                      <X />
+                      <Close />
                     </Button>
                   </div>
                 ))}
@@ -357,7 +357,7 @@ export function FormSubscriber({
                     type="button"
                     onClick={() => append({ key: "", value: "" })}
                   >
-                    <Plus />
+                    <Add />
                     Add Header
                   </Button>
                 </div>

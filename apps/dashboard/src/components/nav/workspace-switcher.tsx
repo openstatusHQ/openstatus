@@ -1,5 +1,6 @@
 "use client";
 
+import { Expand, Add } from "@openstatus/icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,10 +17,10 @@ import {
 } from "@openstatus/ui/components/ui/sidebar";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronsUpDown, Plus } from "lucide-react";
 
 import { Link } from "@/components/common/link";
 import { useTRPC } from "@/lib/trpc/client";
+import { switchWorkspace } from "@/lib/workspace-cookie";
 
 interface WorkspaceSwitcherProps {
   className?: string;
@@ -33,11 +34,6 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
   const { data: workspaces } = useQuery(trpc.workspace.list.queryOptions());
 
   if (!workspace) return null;
-
-  function handleClick(slug: string) {
-    document.cookie = `workspace-slug=${slug}; path=/;`;
-    window.location.href = "/overview";
-  }
 
   return (
     <SidebarMenu>
@@ -72,7 +68,7 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
                   </span>
                 </div>
               </div>
-              <ChevronsUpDown className="ml-auto" />
+              <Expand className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -88,7 +84,7 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
               <DropdownMenuItem
                 key={workspace.id}
                 onClick={() => {
-                  handleClick(workspace.slug);
+                  switchWorkspace(workspace.slug);
                   setOpenMobile(false);
                 }}
                 className="gap-2 p-2"
@@ -104,7 +100,7 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 p-2" asChild>
               <Link href="/settings/general">
-                <Plus />
+                <Add />
                 <div className="font-commit-mono text-muted-foreground tracking-tight">
                   Add team member
                 </div>

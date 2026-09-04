@@ -39,6 +39,11 @@ function baseReq(
 const ok = { data: { data: [] }, error: null } as any;
 // biome-ignore lint/suspicious/noExplicitAny: simulated Resend application error
 const fail = { data: null, error: { name: "application_error" } } as any;
+// biome-ignore lint/suspicious/noExplicitAny: simulated Resend 409 conflict
+const idempotencyConflict = {
+  data: null,
+  error: { name: "invalid_idempotent_request" },
+} as any;
 
 describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
   let client: EmailClient;
@@ -114,5 +119,20 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
       "status-report-update:7:0",
       "status-report-update:7:0",
     ]);
+  });
+
+  test("does not retry a deterministic idempotency conflict", async () => {
+    batchSend.restore();
+    batchSend = stub(client.client.batch, "send", () =>
+      Promise.resolve(idempotencyConflict),
+    );
+
+    await client.sendStatusReportUpdate(
+      baseReq({ idempotencyKey: "status-report-update:7" }),
+    );
+
+    // a 409 invalid_idempotent_request replays identically on every attempt;
+    // retrying only re-logs the same error.
+    assertSpyCalls(batchSend, 1);
   });
 });

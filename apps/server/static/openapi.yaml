@@ -448,6 +448,28 @@ components:
       title: CreateDNSMonitorResponse
       additionalProperties: false
       description: CreateDNSMonitorResponse is the response after creating a DNS monitor.
+    openstatus.monitor.v1.CreateGRPCMonitorRequest:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: Monitor configuration (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.GRPCMonitor'
+      title: CreateGRPCMonitorRequest
+      required:
+        - monitor
+      additionalProperties: false
+      description: CreateGRPCMonitorRequest is the request to create a new gRPC monitor.
+    openstatus.monitor.v1.CreateGRPCMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The created monitor with assigned ID.
+          $ref: '#/components/schemas/openstatus.monitor.v1.GRPCMonitor'
+      title: CreateGRPCMonitorResponse
+      additionalProperties: false
+      description: CreateGRPCMonitorResponse is the response after creating a gRPC monitor.
     openstatus.monitor.v1.CreateHTTPMonitorRequest:
       type: object
       properties:
@@ -470,6 +492,28 @@ components:
       title: CreateHTTPMonitorResponse
       additionalProperties: false
       description: CreateHTTPMonitorResponse is the response after creating an HTTP monitor.
+    openstatus.monitor.v1.CreateICMPMonitorRequest:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: Monitor configuration (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+      title: CreateICMPMonitorRequest
+      required:
+        - monitor
+      additionalProperties: false
+      description: CreateICMPMonitorRequest is the request to create a new ICMP monitor.
+    openstatus.monitor.v1.CreateICMPMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The created monitor with assigned ID.
+          $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+      title: CreateICMPMonitorResponse
+      additionalProperties: false
+      description: CreateICMPMonitorResponse is the response after creating an ICMP monitor.
     openstatus.monitor.v1.CreateTCPMonitorRequest:
       type: object
       properties:
@@ -558,16 +602,22 @@ components:
           maxItems: 10
           description: DNS record assertions for validation.
         description:
-          type: string
+          type:
+            - string
+            - "null"
           title: description
           maxLength: 1024
           description: Description of the monitor (optional).
         active:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           title: active
           description: Whether the monitor is active (defaults to false).
         public:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           title: public
           description: Whether the monitor is publicly visible (defaults to false).
         regions:
@@ -585,6 +635,14 @@ components:
           title: status
           description: Current operational status of the monitor.
           $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+        privateLocationIds:
+          type: array
+          items:
+            type: string
+            readOnly: true
+          title: private_location_ids
+          description: IDs of private locations that run this monitor. Read-only.
+          readOnly: true
       title: DNSMonitor
       additionalProperties: false
       description: DNSMonitor defines the configuration for a DNS monitor.
@@ -609,6 +667,143 @@ components:
       title: DeleteMonitorResponse
       additionalProperties: false
       description: DeleteMonitorResponse is the response after deleting a monitor.
+    openstatus.monitor.v1.GRPCMonitor:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the monitor (output only for create requests).
+        name:
+          type: string
+          examples:
+            - Checkout gRPC
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Name of the monitor (required, max 256 characters).
+        uri:
+          type: string
+          examples:
+            - api.example.com:443
+          title: uri
+          maxLength: 2048
+          minLength: 1
+          pattern: ^(\[[0-9a-fA-F:]+\]|[^:/\s]+):[0-9]{1,5}$
+          description: Target in "host:port" form. IPv6 addresses must be bracketed.
+        periodicity:
+          not:
+            enum:
+              - PERIODICITY_UNSPECIFIED
+          title: periodicity
+          description: Check periodicity (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+        timeout:
+          type:
+            - integer
+            - string
+          title: timeout
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Timeout in milliseconds (0-120000, defaults to 45000).
+        degradedAt:
+          type:
+            - integer
+            - string
+            - "null"
+          title: degraded_at
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+        retry:
+          type:
+            - integer
+            - string
+          title: retry
+          maximum: 10
+          minimum: 0
+          format: int64
+          description: Number of retry attempts (0-10, defaults to 3).
+        description:
+          type:
+            - string
+            - "null"
+          title: description
+          maxLength: 1024
+          description: Description of the monitor (optional).
+        active:
+          type:
+            - boolean
+            - "null"
+          title: active
+          description: Whether the monitor is active (defaults to false).
+        public:
+          type:
+            - boolean
+            - "null"
+          title: public
+          description: Whether the monitor is publicly visible (defaults to false).
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Geographic regions to run checks from.
+        openTelemetry:
+          title: open_telemetry
+          description: OpenTelemetry configuration for exporting metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+        status:
+          title: status
+          description: Current operational status of the monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+        privateLocationIds:
+          type: array
+          items:
+            type: string
+            readOnly: true
+          title: private_location_ids
+          description: IDs of private locations that run this monitor. Read-only.
+          readOnly: true
+        service:
+          type:
+            - string
+            - "null"
+          examples:
+            - checkout.v1.CheckoutService
+          title: service
+          maxLength: 512
+          description: Service name passed to Health/Check. Empty means overall server health.
+        tlsMode:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.monitor.v1.GRPCTlsMode'
+            - type: "null"
+          title: tls_mode
+          description: How the connection to the target is secured. Defaults to TLS.
+        metadata:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Headers'
+          title: metadata
+          maxItems: 20
+          description: Metadata sent with the health check request.
+      title: GRPCMonitor
+      additionalProperties: false
+      description: |-
+        GRPCMonitor defines the configuration for a gRPC health check monitor.
+         The probe calls grpc.health.v1.Health/Check on the target.
+    openstatus.monitor.v1.GRPCTlsMode:
+      type: string
+      title: GRPCTlsMode
+      enum:
+        - GRPC_TLS_MODE_UNSPECIFIED
+        - GRPC_TLS_MODE_TLS
+        - GRPC_TLS_MODE_PLAINTEXT
+        - GRPC_TLS_MODE_TLS_INSECURE
+      description: GRPCTlsMode selects how the probe secures its connection to the target.
     openstatus.monitor.v1.GetMonitorHTTPResponseLogRequest:
       type: object
       properties:
@@ -651,7 +846,7 @@ components:
       properties:
         monitor:
           title: monitor
-          description: The monitor configuration (one of HTTP, TCP, or DNS).
+          description: The monitor configuration (one of HTTP, TCP, DNS, ICMP, or gRPC).
           $ref: '#/components/schemas/openstatus.monitor.v1.MonitorConfig'
       title: GetMonitorResponse
       additionalProperties: false
@@ -907,16 +1102,22 @@ components:
           maxItems: 10
           description: Header assertions for the response.
         description:
-          type: string
+          type:
+            - string
+            - "null"
           title: description
           maxLength: 1024
           description: Description of the monitor (optional).
         active:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           title: active
           description: Whether the monitor is active (defaults to false).
         public:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           title: public
           description: Whether the monitor is publicly visible (defaults to false).
         regions:
@@ -934,6 +1135,14 @@ components:
           title: status
           description: Current operational status of the monitor.
           $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+        privateLocationIds:
+          type: array
+          items:
+            type: string
+            readOnly: true
+          title: private_location_ids
+          description: IDs of private locations that run this monitor. Read-only.
+          readOnly: true
       title: HTTPMonitor
       additionalProperties: false
       description: HTTPMonitor defines the configuration for an HTTP monitor.
@@ -1161,6 +1370,109 @@ components:
       title: Headers
       additionalProperties: false
       description: Headers represents a key-value pair for HTTP headers.
+    openstatus.monitor.v1.ICMPMonitor:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the monitor (output only for create requests).
+        name:
+          type: string
+          examples:
+            - Ping Gateway
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Name of the monitor (required, max 256 characters).
+        uri:
+          type: string
+          examples:
+            - 1.1.1.1
+          title: uri
+          maxLength: 2048
+          minLength: 1
+          description: URI to monitor in format "host or IP" (required, max 2048 characters).
+        periodicity:
+          not:
+            enum:
+              - PERIODICITY_UNSPECIFIED
+          title: periodicity
+          description: Check periodicity (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+        timeout:
+          type:
+            - integer
+            - string
+          title: timeout
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Timeout in milliseconds (0-120000, defaults to 45000).
+        degradedAt:
+          type:
+            - integer
+            - string
+            - "null"
+          title: degraded_at
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+        retry:
+          type:
+            - integer
+            - string
+          title: retry
+          maximum: 10
+          minimum: 0
+          format: int64
+          description: Number of retry attempts (0-10, defaults to 3).
+        description:
+          type:
+            - string
+            - "null"
+          title: description
+          maxLength: 1024
+          description: Description of the monitor (optional).
+        active:
+          type:
+            - boolean
+            - "null"
+          title: active
+          description: Whether the monitor is active (defaults to false).
+        public:
+          type:
+            - boolean
+            - "null"
+          title: public
+          description: Whether the monitor is publicly visible (defaults to false).
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Geographic regions to run checks from.
+        openTelemetry:
+          title: open_telemetry
+          description: OpenTelemetry configuration for exporting metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+        status:
+          title: status
+          description: Current operational status of the monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+        privateLocationIds:
+          type: array
+          items:
+            type: string
+            readOnly: true
+          title: private_location_ids
+          description: IDs of private locations that run this monitor. Read-only.
+          readOnly: true
+      title: ICMPMonitor
+      additionalProperties: false
+      description: ICMPMonitor defines the configuration for a ICMP monitor.
     openstatus.monitor.v1.ListMonitorHTTPResponseLogsRequest:
       type: object
       properties:
@@ -1265,6 +1577,18 @@ components:
             $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
           title: dns_monitors
           description: DNS monitors in the workspace.
+        icmpMonitors:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+          title: icmp_monitors
+          description: ICMP monitors in the workspace.
+        grpcMonitors:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.GRPCMonitor'
+          title: grpc_monitors
+          description: gRPC monitors in the workspace.
         totalSize:
           type: integer
           title: total_size
@@ -1287,6 +1611,15 @@ components:
             - dns
         - type: object
           properties:
+            grpc:
+              title: grpc
+              description: gRPC monitor configuration.
+              $ref: '#/components/schemas/openstatus.monitor.v1.GRPCMonitor'
+          title: grpc
+          required:
+            - grpc
+        - type: object
+          properties:
             http:
               title: http
               description: HTTP monitor configuration.
@@ -1294,6 +1627,15 @@ components:
           title: http
           required:
             - http
+        - type: object
+          properties:
+            icmp:
+              title: icmp
+              description: ICMP monitor configuration.
+              $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+          title: icmp
+          required:
+            - icmp
         - type: object
           properties:
             tcp:
@@ -1539,16 +1881,22 @@ components:
           format: int64
           description: Number of retry attempts (0-10, defaults to 3).
         description:
-          type: string
+          type:
+            - string
+            - "null"
           title: description
           maxLength: 1024
           description: Description of the monitor (optional).
         active:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           title: active
           description: Whether the monitor is active (defaults to false).
         public:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           title: public
           description: Whether the monitor is publicly visible (defaults to false).
         regions:
@@ -1566,6 +1914,14 @@ components:
           title: status
           description: Current operational status of the monitor.
           $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+        privateLocationIds:
+          type: array
+          items:
+            type: string
+            readOnly: true
+          title: private_location_ids
+          description: IDs of private locations that run this monitor. Read-only.
+          readOnly: true
       title: TCPMonitor
       additionalProperties: false
       description: TCPMonitor defines the configuration for a TCP monitor.
@@ -1626,6 +1982,33 @@ components:
       title: UpdateDNSMonitorResponse
       additionalProperties: false
       description: UpdateDNSMonitorResponse is the response after updating a DNS monitor.
+    openstatus.monitor.v1.UpdateGRPCMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to update (required).
+        monitor:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.monitor.v1.GRPCMonitor'
+            - type: "null"
+          title: monitor
+          description: Updated monitor configuration (all fields optional for partial updates).
+      title: UpdateGRPCMonitorRequest
+      additionalProperties: false
+      description: UpdateGRPCMonitorRequest is the request to update an existing gRPC monitor.
+    openstatus.monitor.v1.UpdateGRPCMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The updated monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.GRPCMonitor'
+      title: UpdateGRPCMonitorResponse
+      additionalProperties: false
+      description: UpdateGRPCMonitorResponse is the response after updating a gRPC monitor.
     openstatus.monitor.v1.UpdateHTTPMonitorRequest:
       type: object
       properties:
@@ -1653,6 +2036,33 @@ components:
       title: UpdateHTTPMonitorResponse
       additionalProperties: false
       description: UpdateHTTPMonitorResponse is the response after updating an HTTP monitor.
+    openstatus.monitor.v1.UpdateICMPMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to update (required).
+        monitor:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+            - type: "null"
+          title: monitor
+          description: Updated monitor configuration (all fields optional for partial updates).
+      title: UpdateICMPMonitorRequest
+      additionalProperties: false
+      description: UpdateICMPMonitorRequest is the request to update an existing ICMP monitor.
+    openstatus.monitor.v1.UpdateICMPMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The updated monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+      title: UpdateICMPMonitorResponse
+      additionalProperties: false
+      description: UpdateICMPMonitorResponse is the response after updating an ICMP monitor.
     openstatus.monitor.v1.UpdateTCPMonitorRequest:
       type: object
       properties:
@@ -2325,6 +2735,335 @@ components:
       title: WhatsappData
       additionalProperties: false
       description: WhatsappData contains configuration for WhatsApp notifications.
+    openstatus.private_location.v1.CreatePrivateLocationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+            - eu-west-agent
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Display name for the private location (required, 1-256 characters).
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: IDs of monitors this private location should run (optional).
+        metadata:
+          type: object
+          title: metadata
+          maxProperties: 20
+          additionalProperties:
+            type: string
+            title: value
+            maxLength: 256
+          description: User-defined key/value labels (optional, up to 20 entries).
+      title: CreatePrivateLocationRequest
+      additionalProperties: false
+      description: CreatePrivateLocationRequest is the request to create a new private location.
+    openstatus.private_location.v1.CreatePrivateLocationRequest.MetadataEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: MetadataEntry
+      additionalProperties: false
+    openstatus.private_location.v1.CreatePrivateLocationResponse:
+      type: object
+      properties:
+        privateLocation:
+          title: private_location
+          description: The created private location, including its generated agent token.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocation'
+      title: CreatePrivateLocationResponse
+      additionalProperties: false
+      description: CreatePrivateLocationResponse is the response after creating a private location.
+    openstatus.private_location.v1.DeletePrivateLocationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the private location to delete (required).
+      title: DeletePrivateLocationRequest
+      additionalProperties: false
+      description: DeletePrivateLocationRequest is the request to delete a private location.
+    openstatus.private_location.v1.DeletePrivateLocationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeletePrivateLocationResponse
+      additionalProperties: false
+      description: DeletePrivateLocationResponse is the response after deleting a private location.
+    openstatus.private_location.v1.GetPrivateLocationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the private location to retrieve (required).
+      title: GetPrivateLocationRequest
+      additionalProperties: false
+      description: GetPrivateLocationRequest is the request to get a private location by ID.
+    openstatus.private_location.v1.GetPrivateLocationResponse:
+      type: object
+      properties:
+        privateLocation:
+          title: private_location
+          description: The requested private location.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocation'
+      title: GetPrivateLocationResponse
+      additionalProperties: false
+      description: GetPrivateLocationResponse is the response containing the private location.
+    openstatus.private_location.v1.ListPrivateLocationsRequest:
+      type: object
+      properties:
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of private locations to return (1-100, defaults to 50).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of private locations to skip for pagination (defaults to 0).
+      title: ListPrivateLocationsRequest
+      additionalProperties: false
+      description: ListPrivateLocationsRequest is the request to list private locations.
+    openstatus.private_location.v1.ListPrivateLocationsResponse:
+      type: object
+      properties:
+        privateLocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocationSummary'
+          title: private_locations
+          description: List of private locations.
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of private locations in the workspace.
+      title: ListPrivateLocationsResponse
+      additionalProperties: false
+      description: ListPrivateLocationsResponse is the response containing private location summaries.
+    openstatus.private_location.v1.PrivateLocation:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the private location.
+        name:
+          type: string
+          title: name
+          description: Display name for the private location.
+        token:
+          type: string
+          title: token
+          description: |-
+            Agent credential. Generated by the server on creation and used by the
+             agent to authenticate; treat it as a secret.
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: IDs of monitors this private location runs.
+        lastSeenAt:
+          type: string
+          title: last_seen_at
+          description: Last time the agent reported a result (RFC 3339), empty if it never has.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the private location was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the private location was last updated (RFC 3339 format).
+        metadata:
+          type: object
+          title: metadata
+          additionalProperties:
+            type: string
+            title: value
+          description: User-defined key/value labels attached to this private location.
+        status:
+          title: status
+          description: Computed health of the agent. Read-only.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocationStatus'
+      title: PrivateLocation
+      additionalProperties: false
+      description: PrivateLocation represents a self-hosted checker agent with full details.
+    openstatus.private_location.v1.PrivateLocation.MetadataEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: MetadataEntry
+      additionalProperties: false
+    openstatus.private_location.v1.PrivateLocationStatus:
+      type: string
+      title: PrivateLocationStatus
+      enum:
+        - PRIVATE_LOCATION_STATUS_UNSPECIFIED
+        - PRIVATE_LOCATION_STATUS_ACTIVE
+        - PRIVATE_LOCATION_STATUS_ERROR
+      description: |-
+        PrivateLocationStatus is the computed health of a private location, derived
+         from the agent heartbeat. Read-only — it cannot be set through the API.
+    openstatus.private_location.v1.PrivateLocationSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the private location.
+        name:
+          type: string
+          title: name
+          description: Display name for the private location.
+        monitorCount:
+          type: integer
+          title: monitor_count
+          format: int32
+          description: Number of monitors this private location runs.
+        lastSeenAt:
+          type: string
+          title: last_seen_at
+          description: Last time the agent reported a result (RFC 3339), empty if it never has.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the private location was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the private location was last updated (RFC 3339 format).
+        status:
+          title: status
+          description: Computed health of the agent. Read-only.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocationStatus'
+        metadata:
+          type: object
+          title: metadata
+          additionalProperties:
+            type: string
+            title: value
+          description: User-defined key/value labels attached to this private location.
+      title: PrivateLocationSummary
+      additionalProperties: false
+      description: |-
+        PrivateLocationSummary represents metadata for a private location (used in
+         list responses). The agent token is intentionally omitted.
+    openstatus.private_location.v1.PrivateLocationSummary.MetadataEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: MetadataEntry
+      additionalProperties: false
+    openstatus.private_location.v1.UpdatePrivateLocationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the private location to update (required).
+        name:
+          type:
+            - string
+            - "null"
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: New display name for the private location (optional).
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: New list of monitor IDs. Only applied when update_monitor_ids is true.
+        updateMonitorIds:
+          type:
+            - boolean
+            - "null"
+          title: update_monitor_ids
+          description: |-
+            When true, monitor_ids replaces the current associations (an empty list
+             clears all). When false or unset, monitor_ids is ignored and existing
+             associations are preserved.
+        metadata:
+          type: object
+          title: metadata
+          maxProperties: 20
+          additionalProperties:
+            type: string
+            title: value
+            maxLength: 256
+          description: New key/value labels. Only applied when update_metadata is true.
+        updateMetadata:
+          type:
+            - boolean
+            - "null"
+          title: update_metadata
+          description: |-
+            When true, metadata replaces the current labels (an empty map clears all).
+             When false or unset, metadata is ignored and existing labels are preserved.
+      title: UpdatePrivateLocationRequest
+      additionalProperties: false
+      description: UpdatePrivateLocationRequest is the request to update a private location.
+    openstatus.private_location.v1.UpdatePrivateLocationRequest.MetadataEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: MetadataEntry
+      additionalProperties: false
+    openstatus.private_location.v1.UpdatePrivateLocationResponse:
+      type: object
+      properties:
+        privateLocation:
+          title: private_location
+          description: The updated private location.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocation'
+      title: UpdatePrivateLocationResponse
+      additionalProperties: false
+      description: UpdatePrivateLocationResponse is the response after updating a private location.
     openstatus.status_page.v1.AddMonitorComponentRequest:
       type: object
       properties:
@@ -2955,6 +3694,27 @@ components:
       title: GetPageComponentDailySummaryResponse
       additionalProperties: false
       description: GetPageComponentDailySummaryResponse is the response containing per-component summaries.
+    openstatus.status_page.v1.GetPageComponentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the component to retrieve (required).
+      title: GetPageComponentRequest
+      additionalProperties: false
+      description: GetPageComponentRequest is the request to fetch a single component by ID.
+    openstatus.status_page.v1.GetPageComponentResponse:
+      type: object
+      properties:
+        component:
+          title: component
+          description: The requested component.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+      title: GetPageComponentResponse
+      additionalProperties: false
+      description: GetPageComponentResponse is the response containing the component.
     openstatus.status_page.v1.GetStatusPageContentRequest:
       type: object
       oneOf:
@@ -3192,6 +3952,9 @@ components:
         - LOCALE_EN
         - LOCALE_FR
         - LOCALE_DE
+        - LOCALE_TR
+        - LOCALE_HI
+        - LOCALE_KO
       description: Locale defines the supported languages for a status page.
     openstatus.status_page.v1.OverallStatus:
       type: string
@@ -4360,6 +5123,10 @@ tags:
       notified automatically when maintenance is created.
   - name: HealthService
     description: Health check endpoint for load balancer probes. No authentication required.
+  - name: PrivateLocationService
+    description: |-
+      PrivateLocationService provides CRUD operations for private locations —
+       self-hosted checker agents that run monitors from your own network.
 paths:
   /rpc/openstatus.health.v1.HealthService/Check:
     get:
@@ -4621,6 +5388,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.CreateDNSMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/CreateGRPCMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: CreateGRPCMonitor
+      description: CreateGRPCMonitor creates a new gRPC health check monitor.
+      operationId: MonitorService_CreateGRPCMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.CreateGRPCMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.CreateGRPCMonitorResponse'
   /rpc/openstatus.monitor.v1.MonitorService/CreateHTTPMonitor:
     post:
       tags:
@@ -4647,6 +5440,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.CreateHTTPMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/CreateICMPMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: CreateICMPMonitor
+      description: CreateICMPMonitor creates a new ICMP monitor.
+      operationId: MonitorService_CreateICMPMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.CreateICMPMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.CreateICMPMonitorResponse'
   /rpc/openstatus.monitor.v1.MonitorService/CreateTCPMonitor:
     post:
       tags:
@@ -4706,7 +5525,7 @@ paths:
       summary: GetMonitor
       description: |-
         GetMonitor returns a single monitor by ID within the authenticated workspace.
-         Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
+         Returns the monitor configuration (HTTP, TCP, DNS, ICMP, or gRPC) using the MonitorConfig oneof type.
       operationId: MonitorService_GetMonitor.get
       parameters:
         - name: message
@@ -4734,7 +5553,7 @@ paths:
       summary: GetMonitor
       description: |-
         GetMonitor returns a single monitor by ID within the authenticated workspace.
-         Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
+         Returns the monitor configuration (HTTP, TCP, DNS, ICMP, or gRPC) using the MonitorConfig oneof type.
       operationId: MonitorService_GetMonitor
       requestBody:
         content:
@@ -5067,6 +5886,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.UpdateDNSMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/UpdateGRPCMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: UpdateGRPCMonitor
+      description: UpdateGRPCMonitor updates an existing gRPC monitor.
+      operationId: MonitorService_UpdateGRPCMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.UpdateGRPCMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.UpdateGRPCMonitorResponse'
   /rpc/openstatus.monitor.v1.MonitorService/UpdateHTTPMonitor:
     post:
       tags:
@@ -5093,6 +5938,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.UpdateHTTPMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/UpdateICMPMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: UpdateICMPMonitor
+      description: UpdateICMPMonitor updates an existing ICMP monitor.
+      operationId: MonitorService_UpdateICMPMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.UpdateICMPMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.UpdateICMPMonitorResponse'
   /rpc/openstatus.monitor.v1.MonitorService/UpdateTCPMonitor:
     post:
       tags:
@@ -5379,6 +6250,196 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/CreatePrivateLocation:
+    post:
+      tags:
+        - PrivateLocationService
+      summary: CreatePrivateLocation
+      description: Creates a private location. The agent token is generated by the server and returned in the response - it cannot be supplied by the caller. Use the token to configure the agent so it can pull its monitors and report results.
+      operationId: PrivateLocationService_CreatePrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.CreatePrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.CreatePrivateLocationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/DeletePrivateLocation:
+    post:
+      tags:
+        - PrivateLocationService
+      summary: DeletePrivateLocation
+      description: DeletePrivateLocation removes a private location.
+      operationId: PrivateLocationService_DeletePrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.DeletePrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.DeletePrivateLocationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/GetPrivateLocation:
+    get:
+      tags:
+        - PrivateLocationService
+      summary: GetPrivateLocation
+      description: |-
+        GetPrivateLocation retrieves a single private location by ID, including
+         its agent token.
+      operationId: PrivateLocationService_GetPrivateLocation.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationResponse'
+    post:
+      tags:
+        - PrivateLocationService
+      summary: GetPrivateLocation
+      description: |-
+        GetPrivateLocation retrieves a single private location by ID, including
+         its agent token.
+      operationId: PrivateLocationService_GetPrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/ListPrivateLocations:
+    get:
+      tags:
+        - PrivateLocationService
+      summary: ListPrivateLocations
+      description: |-
+        ListPrivateLocations returns a paginated list of private location
+         summaries. Agent tokens are not included - use GetPrivateLocation.
+      operationId: PrivateLocationService_ListPrivateLocations.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsResponse'
+    post:
+      tags:
+        - PrivateLocationService
+      summary: ListPrivateLocations
+      description: |-
+        ListPrivateLocations returns a paginated list of private location
+         summaries. Agent tokens are not included - use GetPrivateLocation.
+      operationId: PrivateLocationService_ListPrivateLocations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/UpdatePrivateLocation:
+    post:
+      tags:
+        - PrivateLocationService
+      summary: UpdatePrivateLocation
+      description: UpdatePrivateLocation updates a private location.
+      operationId: PrivateLocationService_UpdatePrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.UpdatePrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.UpdatePrivateLocationResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/AddMonitorComponent:
     post:
       tags:
@@ -5613,6 +6674,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/GetPageComponent:
+    get:
+      tags:
+        - StatusPageService
+      summary: GetPageComponent
+      description: Returns a single status-page component by its ID, scoped to the authenticated workspace. Use this to resolve a component id to its name (and other fields) instead of fetching the whole page via GetStatusPageContent and filtering .components.
+      operationId: StatusPageService_GetPageComponent.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: GetPageComponent
+      description: Returns a single status-page component by its ID, scoped to the authenticated workspace. Use this to resolve a component id to its name (and other fields) instead of fetching the whole page via GetStatusPageContent and filtering .components.
+      operationId: StatusPageService_GetPageComponent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/GetPageComponentDailySummary:
     get:
       tags:

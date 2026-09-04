@@ -1,6 +1,6 @@
+import { Loading } from "@openstatus/icons";
 import { QRCode } from "@openstatus/ui/components/ui/qr-code";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-import { Loader2 } from "lucide-react";
 
 export default function TelegramQRCode({
   chatType,
@@ -35,7 +35,7 @@ export default function TelegramQRCode({
           "Generating QR Code..."
         ) : isPolling ? (
           <>
-            <Loader2 className="h-3 w-3 animate-spin" />
+            <Loading className="h-3 w-3 animate-spin" />
             {chatType === "private"
               ? "Retrieving your account..."
               : "Waiting for group connection..."}

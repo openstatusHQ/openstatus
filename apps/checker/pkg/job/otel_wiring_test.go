@@ -115,8 +115,9 @@ func TestHTTPJob_RecordsOTelOnFailure(t *testing.T) {
 		OtelConfig: &v1.OtelConfig{Endpoint: otlp.server.URL},
 	}
 
-	_, err := job.NewJobRunner().HTTPJob(context.Background(), monitor, "test-region")
-	require.Error(t, err)
+	data, err := job.NewJobRunner().HTTPJob(context.Background(), monitor, "test-region")
+	require.NoError(t, err)
+	require.NotEmpty(t, data.Message, "Expected error message to be populated for transport failure")
 	otlp.requireMetric(t, "openstatus.error")
 }
 
@@ -148,7 +149,7 @@ func TestTCPJob_RecordsOTelMetrics(t *testing.T) {
 
 	data, err := job.NewJobRunner().TCPJob(context.Background(), monitor, "test-region")
 	require.NoError(t, err)
-	assert.Equal(t, "active", data.RequestStatus)
+	assert.Equal(t, "success", data.RequestStatus)
 	otlp.requireMetric(t, "openstatus.status")
 }
 

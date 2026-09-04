@@ -4,18 +4,16 @@ import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
 
+import {
+  TEST_SIGNING_SECRET as SIGNING_SECRET,
+  withSlackConfig,
+} from "@/libs/test/slack-config";
+
+import type { SlackEnv } from "./config";
 import { handleSlackInstall, handleSlackOAuthCallback } from "./oauth";
 
-const SIGNING_SECRET =
-  process.env.SLACK_SIGNING_SECRET ?? "test-signing-secret";
-
-process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;
-process.env.SLACK_CLIENT_ID = "test-client-id";
-process.env.SLACK_CLIENT_SECRET = "test-client-secret";
-process.env.NODE_ENV = "development";
-
 function createTestApp() {
-  const app = new Hono();
+  const app = withSlackConfig(new Hono<SlackEnv>());
   app.get("/slack/install", handleSlackInstall);
   app.get("/slack/oauth/callback", handleSlackOAuthCallback);
   return app;

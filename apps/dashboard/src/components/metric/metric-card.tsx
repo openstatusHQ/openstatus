@@ -1,9 +1,9 @@
+import { ChevronDown, ChevronUp } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 

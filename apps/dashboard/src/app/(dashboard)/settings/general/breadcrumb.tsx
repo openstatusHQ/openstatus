@@ -1,6 +1,6 @@
 "use client";
 
-import { Cog, SlidersHorizontal } from "lucide-react";
+import { Settings } from "@openstatus/icons";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 
@@ -11,10 +11,10 @@ export function Breadcrumb() {
         {
           type: "link",
           label: "Settings",
-          icon: Cog,
+          icon: Settings,
           href: "/settings/general",
         },
-        { type: "page", label: "General", icon: SlidersHorizontal },
+        { type: "page", label: "General", icon: Settings },
       ]}
     />
   );

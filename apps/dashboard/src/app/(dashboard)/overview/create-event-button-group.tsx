@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown, Add } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { ButtonGroup } from "@openstatus/ui/components/ui/button-group";
 import {
@@ -8,23 +9,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@openstatus/ui/components/ui/dropdown-menu";
-import { ChevronDown, Plus } from "lucide-react";
-import { useRef } from "react";
+import { useState } from "react";
 
 import { FormSheetMaintenanceCreate } from "@/components/forms/maintenance/sheet-create";
 import { FormSheetStatusReportCreate } from "@/components/forms/status-report/sheet-create";
 
 export function CreateEventButtonGroup() {
-  // the maintenance sheet lives outside the dropdown — a trigger inside
-  // DropdownMenuContent unmounts (and closes the sheet) when the menu closes
-  const maintenanceButtonRef = useRef<HTMLButtonElement>(null);
+  const [maintenanceOpen, setMaintenanceOpen] = useState(false);
 
   return (
     <div>
       <ButtonGroup>
         <FormSheetStatusReportCreate>
           <Button data-section="action" variant="outline" size="sm">
-            <Plus />
+            <Add />
             Create Status Report
           </Button>
         </FormSheetStatusReportCreate>
@@ -40,20 +38,17 @@ export function CreateEventButtonGroup() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onSelect={() => maintenanceButtonRef.current?.click()}
-            >
-              <Plus className="text-muted-foreground" />
+            <DropdownMenuItem onSelect={() => setMaintenanceOpen(true)}>
+              <Add className="text-muted-foreground" />
               Create Maintenance
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </ButtonGroup>
-      <FormSheetMaintenanceCreate>
-        <button ref={maintenanceButtonRef} type="button" className="sr-only">
-          Open sheet
-        </button>
-      </FormSheetMaintenanceCreate>
+      <FormSheetMaintenanceCreate
+        open={maintenanceOpen}
+        onOpenChange={setMaintenanceOpen}
+      />
     </div>
   );
 }

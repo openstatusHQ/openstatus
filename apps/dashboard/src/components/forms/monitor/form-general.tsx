@@ -12,7 +12,19 @@ import {
   stringCompareDictionary,
   textBodyAssertion,
 } from "@openstatus/assertions";
-import { monitorMethods } from "@openstatus/db/src/schema";
+import {
+  grpcTlsModes,
+  monitorMethods,
+} from "@openstatus/db/src/schema/monitors/constants";
+import {
+  Add,
+  Api,
+  Close,
+  Globe,
+  Network,
+  Server,
+  Speed,
+} from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +66,6 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { Globe, Network, Plus, Server, X } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -72,12 +83,17 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 
-const TYPES = ["http", "tcp", "dns"] as const;
+const TYPES = ["http", "tcp", "dns", "icmp", "grpc"] as const;
+const GRPC_TLS_LABELS = {
+  tls: "TLS (verify certificate)",
+  tls_insecure: "TLS (skip verification)",
+  plaintext: "Plaintext (h2c)",
+} as const;
 const HTTP_ASSERTION_TYPES = ["status", "header", "textBody"] as const;
 const DNS_ASSERTION_TYPES = dnsRecords;
 
 const schema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required"),
   type: z.enum(TYPES),
   method: z.enum(monitorMethods),
   url: z.string().min(1, "URL is required"),
@@ -98,6 +114,8 @@ const schema = z.object({
     ]),
   ),
   body: z.string().optional(),
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional().prefault("tls"),
   skipCheck: z.boolean().optional().prefault(false),
   saveCheck: z.boolean().optional().prefault(false),
 });
@@ -126,6 +144,8 @@ export function FormGeneral({
       headers: [],
       body: "",
       assertions: [],
+      grpcService: "",
+      grpcTls: "tls",
       skipCheck: false,
       saveCheck: false,
     },
@@ -273,13 +293,15 @@ export function FormGeneral({
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className="grid grid-cols-2 gap-4 sm:grid-cols-4"
+                      className="grid grid-cols-2 gap-4 sm:grid-cols-5"
                       disabled={!!defaultValues?.type}
                     >
                       {[
                         { value: "http", icon: Globe, label: "HTTP" },
                         { value: "tcp", icon: Network, label: "TCP" },
                         { value: "dns", icon: Server, label: "DNS" },
+                        { value: "icmp", icon: Speed, label: "ICMP" },
+                        { value: "grpc", icon: Api, label: "gRPC" },
                       ].map((type) => {
                         return (
                           <Tooltip key={type.value}>
@@ -426,7 +448,7 @@ export function FormGeneral({
                               field.onChange(newHeaders);
                             }}
                           >
-                            <X />
+                            <Close />
                           </Button>
                         </div>
                       ))}
@@ -442,7 +464,7 @@ export function FormGeneral({
                             ]);
                           }}
                         >
-                          <Plus />
+                          <Add />
                           Add Header
                         </Button>
                       </div>
@@ -604,7 +626,7 @@ export function FormGeneral({
                               field.onChange(newAssertions);
                             }}
                           >
-                            <X />
+                            <Close />
                           </Button>
                         </div>
                       ))}
@@ -627,7 +649,7 @@ export function FormGeneral({
                             ]);
                           }}
                         >
-                          <Plus />
+                          <Add />
                           Add Status Assertion
                         </Button>
                         <Button
@@ -649,7 +671,7 @@ export function FormGeneral({
                             ]);
                           }}
                         >
-                          <Plus />
+                          <Add />
                           Add Header Assertion
                         </Button>
                         <Button
@@ -670,7 +692,7 @@ export function FormGeneral({
                             ]);
                           }}
                         >
-                          <Plus />
+                          <Add />
                           Add Body Assertion
                         </Button>
                       </div>
@@ -722,6 +744,187 @@ export function FormGeneral({
                   </li>
                 </ul>
               </div>
+            </FormCardContent>
+          )}
+          {watchType === "icmp" && (
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="url"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Host</FormLabel>
+                    <FormControl>
+                      <Input placeholder="1.1.1.1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>
+                      The host to ping. Supports a domain, IPv4, or IPv6 address
+                      (no port).
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+              <div className="text-muted-foreground col-span-full text-sm">
+                Examples:
+                <ul className="list-inside list-disc">
+                  <li>
+                    Domain:{" "}
+                    <span className="text-foreground font-mono">
+                      openstatus.dev
+                    </span>
+                  </li>
+                  <li>
+                    IPv4:{" "}
+                    <span className="text-foreground font-mono">1.1.1.1</span>
+                  </li>
+                  <li>
+                    IPv6:{" "}
+                    <span className="text-foreground font-mono">
+                      2001:4860:4860::8888
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </FormCardContent>
+          )}
+          {watchType === "grpc" && (
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="url"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Host:Port</FormLabel>
+                    <FormControl>
+                      <Input placeholder="api.example.com:443" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>
+                      The gRPC target. A port is required; bracket IPv6
+                      addresses.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="grpcTls"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>TLS</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ?? "tls"}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {grpcTlsModes.map((mode) => (
+                          <SelectItem key={mode} value={mode}>
+                            {GRPC_TLS_LABELS[mode]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="grpcService"
+                render={({ field }) => (
+                  <FormItem className="col-span-full">
+                    <FormLabel>Service</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="checkout.v1.CheckoutService"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>
+                      The service name passed to grpc.health.v1.Health/Check.
+                      Leave empty to check overall server health.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="headers"
+                render={({ field }) => (
+                  <FormItem className="col-span-full">
+                    <FormLabel>Metadata</FormLabel>
+                    {field.value.map((header, index) => (
+                      <div key={index} className="grid gap-2 sm:grid-cols-5">
+                        <Input
+                          placeholder="Key"
+                          className="col-span-2"
+                          value={header.key}
+                          onChange={(e) => {
+                            const newHeaders = [...field.value];
+                            newHeaders[index] = {
+                              ...newHeaders[index],
+                              key: e.target.value,
+                            };
+                            field.onChange(newHeaders);
+                          }}
+                        />
+                        <Input
+                          placeholder="Value"
+                          className="col-span-2"
+                          value={header.value}
+                          onChange={(e) => {
+                            const newHeaders = [...field.value];
+                            newHeaders[index] = {
+                              ...newHeaders[index],
+                              value: e.target.value,
+                            };
+                            field.onChange(newHeaders);
+                          }}
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => {
+                            field.onChange(
+                              field.value.filter((_, i) => i !== index),
+                            );
+                          }}
+                        >
+                          <Close />
+                        </Button>
+                      </div>
+                    ))}
+                    <div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        type="button"
+                        onClick={() => {
+                          field.onChange([
+                            ...field.value,
+                            { key: "", value: "" },
+                          ]);
+                        }}
+                      >
+                        <Add />
+                        Add Metadata
+                      </Button>
+                    </div>
+                    <FormDescription>
+                      Sent with the health check request, commonly for
+                      authentication.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
             </FormCardContent>
           )}
           {watchType === "dns" && (
@@ -890,7 +1093,7 @@ export function FormGeneral({
                               field.onChange(newAssertions);
                             }}
                           >
-                            <X />
+                            <Close />
                           </Button>
                         </div>
                       ))}
@@ -914,7 +1117,7 @@ export function FormGeneral({
                             ]);
                           }}
                         >
-                          <Plus />
+                          <Add />
                           Add DNS Record Assertion
                         </Button>
                       </div>

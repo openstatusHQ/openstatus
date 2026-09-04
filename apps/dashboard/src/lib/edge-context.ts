@@ -2,6 +2,7 @@ import { asc, db, eq, schema } from "@openstatus/db";
 import type { ServiceContext } from "@openstatus/services";
 
 import { auth } from "@/lib/auth";
+import { WORKSPACE_SLUG_COOKIE } from "@/lib/workspace-cookie";
 
 /**
  * Build a `ServiceContext` from a Next.js Edge Route Handler request.
@@ -44,7 +45,7 @@ export async function getServiceContextFromRequest(
       .get("cookie")
       ?.split(";")
       .map((c) => c.trim())
-      .find((c) => c.startsWith("workspace-slug="));
+      .find((c) => c.startsWith(`${WORKSPACE_SLUG_COOKIE}=`));
     return raw ? raw.slice(raw.indexOf("=") + 1) : undefined;
   })();
 

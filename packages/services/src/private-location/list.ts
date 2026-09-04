@@ -1,8 +1,10 @@
-import { eq } from "@openstatus/db";
+import { count, desc, eq } from "@openstatus/db";
 import { privateLocation } from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb } from "../context";
 import { ListPrivateLocationsInput } from "./schemas";
+
+const LIMIT_DEFAULT = 50;
 
 /**
  * List private locations in the caller's workspace, each one flattened to
@@ -18,7 +20,7 @@ export async function listPrivateLocations(args: {
   ctx: ServiceContext;
   input?: ListPrivateLocationsInput;
 }) {
-  ListPrivateLocationsInput.parse(args.input ?? {});
+  const input = ListPrivateLocationsInput.parse(args.input ?? {});
   const db = getReadDb(args.ctx);
 
   const rows = await db.query.privateLocation.findMany({
@@ -28,12 +30,24 @@ export async function listPrivateLocations(args: {
         with: { monitor: true },
       },
     },
+    orderBy: desc(privateLocation.id),
+    limit: input.limit ?? LIMIT_DEFAULT,
+    offset: input.offset ?? 0,
   });
 
-  return rows.map((row) => ({
-    ...row,
-    monitors: row.privateLocationToMonitors
-      .map((link) => link.monitor)
-      .filter((m) => m !== null),
-  }));
+  const total = await db
+    .select({ count: count() })
+    .from(privateLocation)
+    .where(eq(privateLocation.workspaceId, args.ctx.workspace.id))
+    .get();
+
+  return {
+    items: rows.map((row) => ({
+      ...row,
+      monitors: row.privateLocationToMonitors
+        .map((link) => link.monitor)
+        .filter((m) => m !== null),
+    })),
+    totalSize: total?.count ?? 0,
+  };
 }

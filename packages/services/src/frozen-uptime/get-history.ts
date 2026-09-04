@@ -241,6 +241,8 @@ export async function getUptimeHistory(args: {
       http: defaultTb.httpStatus45d,
       tcp: defaultTb.tcpStatus45d,
       dns: defaultTb.dnsStatus45d,
+      icmp: defaultTb.icmpStatus45d,
+      grpc: defaultTb.grpcStatus45d,
     };
     return fetchFreezeCounts({
       monitorIdsByJobType,
@@ -385,9 +387,7 @@ export async function getUptimeHistory(args: {
     summary[wk] = {
       uptime:
         uptimes.length > 0
-          ? Math.floor(
-              (uptimes.reduce((a, b) => a + b, 0) / uptimes.length) * 100,
-            ) / 100
+          ? floorPct(uptimes.reduce((a, b) => a + b, 0) / uptimes.length / 100)
           : null,
       reports: seen.size,
     };

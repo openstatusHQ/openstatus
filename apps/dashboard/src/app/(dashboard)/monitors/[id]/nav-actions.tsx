@@ -2,6 +2,7 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { deserialize } from "@openstatus/assertions";
+import { Speed } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Tooltip,
@@ -9,9 +10,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
+import { buildCurlCommand } from "@openstatus/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { Zap } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,10 +26,14 @@ import { useTRPC } from "@/lib/trpc/client";
 type TestTCP = RouterOutputs["checker"]["testTcp"];
 type TestHTTP = RouterOutputs["checker"]["testHttp"];
 type TestDNS = RouterOutputs["checker"]["testDns"];
+type TestICMP = RouterOutputs["checker"]["testIcmp"];
+type TestGRPC = RouterOutputs["checker"]["testGrpc"];
 
 export function NavActions() {
   const { id } = useParams<{ id: string }>();
-  const [test, setTest] = useState<TestTCP | TestHTTP | TestDNS | null>(null);
+  const [test, setTest] = useState<
+    TestTCP | TestHTTP | TestDNS | TestICMP | TestGRPC | null
+  >(null);
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const router = useRouter();
@@ -65,6 +70,12 @@ export function NavActions() {
   const testHttpMutation = useMutation(trpc.checker.testHttp.mutationOptions());
   const testTcpMutation = useMutation(trpc.checker.testTcp.mutationOptions());
   const testDnsMutation = useMutation(trpc.checker.testDns.mutationOptions());
+  const testIcmpMutation = useMutation(trpc.checker.testIcmp.mutationOptions());
+  const testGrpcMutation = useMutation(trpc.checker.testGrpc.mutationOptions());
+
+  // curl only speaks HTTP — the action is hidden for tcp/dns monitors
+  const curlCommand =
+    monitor?.jobType === "http" ? buildCurlCommand(monitor) : null;
 
   const actions = getActions({
     edit: () => router.push(`/monitors/${id}/edit`),
@@ -72,6 +83,12 @@ export function NavActions() {
       await navigator.clipboard.writeText(id);
       toast.success("Monitor ID copied to clipboard");
     },
+    "copy-curl": curlCommand
+      ? async () => {
+          await navigator.clipboard.writeText(curlCommand);
+          toast.success("cURL command copied to clipboard");
+        }
+      : undefined,
     clone: () => {
       const promise = cloneMonitorMutation.mutateAsync({
         id: Number.parseInt(id),
@@ -87,7 +104,7 @@ export function NavActions() {
         },
       });
     },
-  });
+  }).filter((action) => action.id !== "copy-curl" || Boolean(curlCommand));
 
   async function testAction() {
     if (monitor?.jobType === "http") {
@@ -149,6 +166,43 @@ export function NavActions() {
           return "DNS test failed";
         },
       });
+    } else if (monitor?.jobType === "icmp") {
+      const promise = testIcmpMutation.mutateAsync({ url: monitor.url });
+
+      toast.promise(promise, {
+        loading: "Testing ICMP request...",
+        success: (data) => {
+          setTest(data);
+          return "ICMP test completed successfully";
+        },
+        error: (error) => {
+          if (isTRPCClientError(error)) {
+            return error.message;
+          }
+          return "ICMP test failed";
+        },
+      });
+    } else if (monitor?.jobType === "grpc") {
+      const promise = testGrpcMutation.mutateAsync({
+        url: monitor.url,
+        service: monitor.grpcService ?? undefined,
+        tls: monitor.grpcTls ?? "tls",
+        headers: monitor.headers ?? [],
+      });
+
+      toast.promise(promise, {
+        loading: "Testing gRPC request...",
+        success: (data) => {
+          setTest(data);
+          return "gRPC test completed successfully";
+        },
+        error: (error) => {
+          if (isTRPCClientError(error)) {
+            return error.message;
+          }
+          return "gRPC test failed";
+        },
+      });
     }
   }
 
@@ -158,24 +212,37 @@ export function NavActions() {
     <div className="flex items-center gap-2 text-sm">
       <NavFeedback />
       <div className="text-muted-foreground hidden font-medium lg:inline-block">
-        {!monitor.active ? (
-          <span className="relative ml-1.5 inline-flex">
-            <span className="bg-muted-foreground/70 relative inline-flex h-2.5 w-2.5 rounded-full" />
-          </span>
-        ) : monitor.status === "active" ? (
-          <span className="relative ml-1.5 inline-flex">
-            <span className="bg-success/80 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
-            <span className="bg-success relative inline-flex h-2.5 w-2.5 rounded-full" />
-          </span>
-        ) : monitor.status === "error" ? (
-          <span className="relative ml-1.5 inline-flex">
-            <span className="bg-destructive relative inline-flex h-2.5 w-2.5 rounded-full" />
-          </span>
-        ) : (
-          <span className="relative ml-1.5 inline-flex">
-            <span className="bg-warning relative inline-flex h-2.5 w-2.5 rounded-full" />
-          </span>
-        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {!monitor.active ? (
+              <span className="relative ml-1.5 inline-flex">
+                <span className="bg-muted-foreground/70 relative inline-flex h-2.5 w-2.5 rounded-full" />
+              </span>
+            ) : monitor.status === "active" ? (
+              <span className="relative ml-1.5 inline-flex">
+                <span className="bg-success/80 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
+                <span className="bg-success relative inline-flex h-2.5 w-2.5 rounded-full" />
+              </span>
+            ) : monitor.status === "error" ? (
+              <span className="relative ml-1.5 inline-flex">
+                <span className="bg-destructive relative inline-flex h-2.5 w-2.5 rounded-full" />
+              </span>
+            ) : (
+              <span className="relative ml-1.5 inline-flex">
+                <span className="bg-warning relative inline-flex h-2.5 w-2.5 rounded-full" />
+              </span>
+            )}
+          </TooltipTrigger>
+          <TooltipContent>
+            {!monitor.active
+              ? "Inactive"
+              : monitor.status === "active"
+                ? "Normal"
+                : monitor.status === "error"
+                  ? "Failing"
+                  : "Degraded"}
+          </TooltipContent>
+        </Tooltip>
       </div>
       <TooltipProvider>
         <Tooltip>
@@ -187,7 +254,7 @@ export function NavActions() {
               type="button"
               onClick={testAction}
             >
-              <Zap className="text-muted-foreground group-hover:text-foreground" />
+              <Speed className="text-muted-foreground group-hover:text-foreground" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>Test Monitor</TooltipContent>

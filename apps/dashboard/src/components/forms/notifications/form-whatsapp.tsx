@@ -29,9 +29,9 @@ import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
-  name: z.string(),
+  name: z.string().trim().min(1, "Name is required"),
   provider: z.literal("whatsapp"),
-  data: z.string(),
+  data: z.string().trim().min(1, "Phone number is required"),
   monitors: z.array(z.number()),
 });
 
@@ -96,10 +96,16 @@ export function FormWhatsApp({
   function testAction() {
     if (isPending) return;
 
+    // Validate phone number field before sending test
+    const data = form.getValues("data");
+    if (!data || data.trim() === "") {
+      toast.error("Please enter a phone number before sending test");
+      return;
+    }
+
     startTransition(async () => {
       try {
         const provider = form.getValues("provider");
-        const data = form.getValues("data");
         const promise = sendTestMutation.mutateAsync({
           provider,
           data: {

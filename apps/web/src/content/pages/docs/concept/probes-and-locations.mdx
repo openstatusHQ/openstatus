@@ -17,7 +17,7 @@ That's the relationship in shorthand. The rest of this page unpacks each term an
 A **probe** is the software that actually performs a check. It opens the TCP connection, sends the HTTP request, resolves the DNS record, measures the timing — and reports the result back. There are two kinds:
 
 - **Public probes.** Operated by openstatus, deployed across Fly.io, Railway, and Koyeb regions. You don't manage them.
-- **Private probes.** A container image (`ghcr.io/openstatushq/probe:latest`) you run on your own infrastructure. See [Understanding Private Locations](/docs/concept/private-locations).
+- **Private probes.** A container image (`ghcr.io/openstatushq/private-location:latest`) you run on your own infrastructure. See [Understanding Private Locations](/docs/concept/private-locations).
 
 In day-to-day usage you rarely interact with the "probe" abstraction directly — you assign a *location* to a monitor, and the location decides which probe runs the check. The word matters mostly when you're reading debug output, opening a support ticket, or deploying a private location.
 

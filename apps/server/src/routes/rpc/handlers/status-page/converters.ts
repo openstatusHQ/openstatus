@@ -1,5 +1,5 @@
 import type { PageConfiguration as DBPageConfiguration } from "@openstatus/db/src/schema";
-import type { Locale } from "@openstatus/locales";
+import { defaultLocale, type Locale } from "@openstatus/locales";
 import type {
   CustomTheme,
   PageComponent,
@@ -299,36 +299,41 @@ export function eventStatusToProto(
   }
 }
 
+// Keyed by `Locale`, so adding a language to `@openstatus/locales` fails to
+// compile until the proto enum gains a matching value — a missing case here
+// used to silently fold the locale to EN and produce duplicates on read.
+const DB_LOCALE_TO_PROTO: Record<Locale, ProtoLocale> = {
+  en: ProtoLocale.EN,
+  fr: ProtoLocale.FR,
+  de: ProtoLocale.DE,
+  tr: ProtoLocale.TR,
+  hi: ProtoLocale.HI,
+  ko: ProtoLocale.KO,
+};
+
+const PROTO_LOCALE_TO_DB: Record<ProtoLocale, Locale | null> = {
+  [ProtoLocale.UNSPECIFIED]: null,
+  [ProtoLocale.EN]: "en",
+  [ProtoLocale.FR]: "fr",
+  [ProtoLocale.DE]: "de",
+  [ProtoLocale.TR]: "tr",
+  [ProtoLocale.HI]: "hi",
+  [ProtoLocale.KO]: "ko",
+};
+
 /**
  * Convert DB locale string to proto enum.
  */
 export function dbLocaleToProto(locale: Locale): ProtoLocale {
-  switch (locale) {
-    case "en":
-      return ProtoLocale.EN;
-    case "fr":
-      return ProtoLocale.FR;
-    case "de":
-      return ProtoLocale.DE;
-    default:
-      return ProtoLocale.EN;
-  }
+  return DB_LOCALE_TO_PROTO[locale] ?? ProtoLocale.UNSPECIFIED;
 }
 
 /**
- * Convert proto locale enum to DB string.
+ * Convert proto locale enum to DB string. Unknown/unspecified values fall back
+ * to the default locale.
  */
 export function protoLocaleToDb(locale: ProtoLocale): Locale {
-  switch (locale) {
-    case ProtoLocale.EN:
-      return "en";
-    case ProtoLocale.FR:
-      return "fr";
-    case ProtoLocale.DE:
-      return "de";
-    default:
-      return "en";
-  }
+  return PROTO_LOCALE_TO_DB[locale] ?? defaultLocale;
 }
 
 /**
@@ -351,7 +356,9 @@ export function dbPageToProto(page: DBPage): StatusPage {
     createdAt: page.createdAt?.toISOString() ?? "",
     updatedAt: page.updatedAt?.toISOString() ?? "",
     defaultLocale: dbLocaleToProto(page.defaultLocale),
-    locales: page.locales?.map(dbLocaleToProto) ?? [],
+    locales: page.locales
+      ? [...new Set(page.locales.map(dbLocaleToProto))]
+      : [],
     password: page.password ?? "",
     authEmailDomains: page.authEmailDomains?.split(",").filter(Boolean) ?? [],
     allowIndex: page.allowIndex ?? true,

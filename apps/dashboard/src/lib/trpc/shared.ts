@@ -1,7 +1,7 @@
 import type { AppRouter } from "@openstatus/api";
 import * as Sentry from "@sentry/nextjs";
-import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
-import { httpBatchLink, loggerLink } from "@trpc/client";
+import type { HTTPHeaders, TRPCLink } from "@trpc/client";
+import { httpBatchStreamLink, loggerLink } from "@trpc/client";
 import superjson from "superjson";
 
 /**
@@ -34,16 +34,6 @@ export const sentryLoggerLink = (): TRPCLink<AppRouter> =>
   });
 
 /**
- * Shared onError handler for tRPC route handlers.
- */
-export function createOnError(label: string) {
-  return ({ error }: { error: { code: string; message: string } }) => {
-    console.log(`Error in tRPC handler (${label})`);
-    console.error(error);
-  };
-}
-
-/**
  * Filter out requests that don't come from our tRPC clients.
  * Our server and client links always set `x-trpc-source`.
  * This is a convention filter for bots/crawlers, not a security boundary —
@@ -66,16 +56,19 @@ const getBaseUrl = () => {
 
 // The whole tRPC surface is served from a single Node.js endpoint — there is
 // no longer an Edge/Node split, so all calls go to one link.
+// Streaming rather than plain batching: a batch mixing cheap queries with a
+// slow Tinybird pipe would otherwise deliver none of them until the slowest
+// one settles. Note this makes per-procedure errors arrive in-band on a 200 —
+// `sentryLoggerLink` above is what still reports them.
 export const endingLink =
   (opts?: {
     fetch?: typeof fetch;
     headers?: HTTPHeaders | (() => HTTPHeaders | Promise<HTTPHeaders>);
   }): TRPCLink<AppRouter> =>
   (runtime) =>
-    httpBatchLink({
+    httpBatchStreamLink<AppRouter>({
       headers: opts?.headers,
       fetch: opts?.fetch,
       transformer: superjson,
       url: `${getBaseUrl()}/api/trpc/lambda`,
-      // oxlint-disable-next-line typescript/no-explicit-any -- FIXME: remove any
-    } satisfies Partial<HTTPBatchLinkOptions<any>>)(runtime);
+    })(runtime);

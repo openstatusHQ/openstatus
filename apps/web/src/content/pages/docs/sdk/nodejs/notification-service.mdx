@@ -4,7 +4,7 @@ title: Notification Service
 description: "Manage notification channels and providers with the openstatus Node.js SDK"
 ---
 
-Manage notification channels for monitor alerts. Supports 12 providers. The Notification Service provides 7 RPC methods.
+Manage notification channels for monitor alerts. Supports 13 providers. The Notification Service provides 7 RPC methods.
 
 ## Create Notification
 
@@ -172,6 +172,26 @@ const { notification } = await client.notification.v1.NotificationService
       data: {
         case: "grafanaOncall",
         value: { webhookUrl: "https://oncall.example.com/..." },
+      },
+    },
+    monitorIds: ["123456"],
+  });
+```
+
+### Microsoft Teams
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Teams Alerts",
+    provider: NotificationProvider.MS_TEAMS,
+    data: {
+      data: {
+        case: "msTeams",
+        value: {
+          webhookUrl:
+            "https://prod-00.westeurope.logic.azure.com:443/workflows/abc/triggers/manual/paths/invoke",
+        },
       },
     },
     monitorIds: ["123456"],

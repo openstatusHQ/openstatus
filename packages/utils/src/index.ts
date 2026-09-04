@@ -6,13 +6,20 @@ export {
   type TcpPayload,
   DNSPayloadSchema,
   type DNSPayload,
+  icmpPayloadSchema,
+  grpcPayloadSchema,
+  GRPC_TLS_MODES,
+  type IcmpPayload,
+  type GrpcPayload,
 } from "./payloads";
 export {
   MONITOR_METHODS,
   MONITOR_STATUSES,
   MONITOR_JOB_TYPES,
 } from "./constants";
+export { buildCurlCommand, type CurlRequest } from "./curl";
 export { yieldMany, iteratorToStream } from "./stream";
+export { statusLabel, type PageUpdateStatus } from "./status";
 
 export function transformHeaders(headers: { key: string; value: string }[]) {
   return headers.length > 0

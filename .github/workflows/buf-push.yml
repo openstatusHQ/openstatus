@@ -1,0 +1,49 @@
+name: Push API Schema to BSR
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "packages/proto/api/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: buf-push
+  cancel-in-progress: false
+
+jobs:
+  buf-push:
+    name: 🚀 Push api module to the BSR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v6
+        with:
+          # --git-metadata derives labels from the tags/branches pointing at HEAD
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.12.0
+          cache: "pnpm"
+
+      - name: 📥 Download deps
+        run: pnpm install
+
+      - name: 🧹 Lint api protos
+        working-directory: ./packages/proto
+        run: pnpm buf:lint:api
+
+      - name: 🚀 Push to BSR
+        working-directory: ./packages/proto
+        env:
+          BUF_TOKEN: ${{ secrets.BUF_TOKEN }}
+        run: pnpm exec buf push api --git-metadata

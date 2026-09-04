@@ -1,4 +1,5 @@
-import { OSTinybird, safePipeData } from "@openstatus/tinybird";
+import { readFile } from "node:fs/promises";
+
 import { ImageResponse } from "next/og";
 
 import { isStale } from "../../../(landing)/status/utils";
@@ -12,12 +13,16 @@ import {
   cachedListExternalServices,
 } from "../../../../lib/external-service-cache";
 import { cn } from "../../../../lib/utils";
-import { SIZE } from "../utils";
 
 // nodejs (not edge): this route pulls in the service reads + Effect retry, which
 // push the bundle past the 2 MB edge limit. Node has no such cap.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// Inlined (not imported from ../utils) so this node route never evaluates the
+// module-level font `fetch()` calls in ../utils, which reject at import time on
+// node and crash the build with an unhandled rejection.
+const SIZE = { width: 1200, height: 630 };
 
 const FOOTER = "openstatus.dev/status";
 const INDEX_TITLE = "External Status";
@@ -79,21 +84,34 @@ const UNKNOWN = {
 };
 
 export async function GET(req: Request) {
-  const fontMonoRegular = await fetch(
-    new URL("../../../../public/fonts/RobotoMono-Regular.ttf", import.meta.url),
-  ).then((res) => res.arrayBuffer());
-  const fontMonoMedium = await fetch(
-    new URL("../../../../public/fonts/RobotoMono-Medium.ttf", import.meta.url),
-  ).then((res) => res.arrayBuffer());
-  const fontMonoBold = await fetch(
-    new URL("../../../../public/fonts/RobotoMono-Bold.ttf", import.meta.url),
-  ).then((res) => res.arrayBuffer());
-  const logoSvg = await fetch(
-    new URL(
-      "../../../../../public/assets/logos/OpenStatus-Logo.svg",
-      import.meta.url,
-    ),
-  ).then((res) => res.text());
+  const [fontMonoRegular, fontMonoMedium, fontMonoBold, logoSvg] =
+    await Promise.all([
+      readFile(
+        new URL(
+          "../../../../public/fonts/RobotoMono-Regular.ttf",
+          import.meta.url,
+        ),
+      ),
+      readFile(
+        new URL(
+          "../../../../public/fonts/RobotoMono-Medium.ttf",
+          import.meta.url,
+        ),
+      ),
+      readFile(
+        new URL(
+          "../../../../public/fonts/RobotoMono-Bold.ttf",
+          import.meta.url,
+        ),
+      ),
+      readFile(
+        new URL(
+          "../../../../../public/assets/logos/OpenStatus-Logo.svg",
+          import.meta.url,
+        ),
+        "utf-8",
+      ),
+    ]);
   const logoSrc = `data:image/svg+xml;base64,${btoa(logoSvg)}`;
 
   const { searchParams } = new URL(req.url);

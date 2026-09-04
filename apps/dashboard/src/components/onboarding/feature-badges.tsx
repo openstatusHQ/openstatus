@@ -1,23 +1,24 @@
 "use client";
 
-import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons";
 import {
   ArrowUpRight,
-  Bell,
+  Notification,
   BookOpen,
-  Braces,
+  Api,
+  Server,
   FileText,
   Globe,
-  Palette,
-  ScanEye,
-  ScrollText,
-  ServerCog,
+  Theme,
+  AuditLog,
+  Changelog,
+  PrivateLocation,
   Shield,
   Terminal,
-  UserPlus,
-  Users,
-  Zap,
-} from "lucide-react";
+  Invite,
+  Team,
+  Speed,
+} from "@openstatus/icons";
+import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons/brand";
 import Link from "next/link";
 
 import { QuestionForm } from "@/components/forms/onboarding/question";
@@ -42,7 +43,7 @@ const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [
       {
         name: "Changelog",
         href: `${WEB}/changelog`,
-        icon: ScrollText,
+        icon: Changelog,
         external: true,
       },
       {
@@ -59,19 +60,19 @@ const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [
       {
         name: "OpenTelemetry",
         href: `${DOCS}/guides/how-to-export-metrics-to-otlp-endpoint`,
-        icon: Zap,
+        icon: Speed,
         external: true,
       },
       {
         name: "Private locations",
         href: `${DOCS}/tutorial/how-to-create-private-location`,
-        icon: ServerCog,
+        icon: PrivateLocation,
         external: true,
       },
       {
         name: "Notifications",
         href: `${DOCS}/reference/notification`,
-        icon: Bell,
+        icon: Notification,
         external: true,
       },
     ],
@@ -88,7 +89,7 @@ const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [
       {
         name: "Themes Store",
         href: "https://themes.openstatus.dev",
-        icon: Palette,
+        icon: Theme,
         external: true,
       },
       {
@@ -106,7 +107,7 @@ const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [
       {
         name: "Subscribers",
         href: `${DOCS}/reference/subscriber`,
-        icon: Users,
+        icon: Team,
         external: true,
       },
     ],
@@ -116,8 +117,8 @@ const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [
     items: [
       {
         name: "REST API",
-        href: `${DOCS}/api-reference`,
-        icon: Braces,
+        href: "https://api.openstatus.dev/openapi",
+        icon: Api,
         external: true,
       },
       {
@@ -132,13 +133,19 @@ const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [
         icon: ModelContextProtocolIcon,
         external: true,
       },
+      {
+        name: "Terraform",
+        href: "https://registry.terraform.io/providers/openstatusHQ/openstatus/latest",
+        icon: Server,
+        external: true,
+      },
     ],
   },
   {
     label: "Workspace",
     items: [
-      { name: "Audit logs", href: "/settings/audit-logs", icon: ScanEye },
-      { name: "Team & invites", href: "/settings/general", icon: UserPlus },
+      { name: "Audit logs", href: "/settings/audit-logs", icon: AuditLog },
+      { name: "Team & invites", href: "/settings/general", icon: Invite },
     ],
   },
 ];

@@ -28,6 +28,7 @@ builders:
       STRIPE_SECRET_KEY: test
       AUTH_SECRET: build-time-placeholder-min-32-chars-long
       SELF_HOST: "true"
+      NEXT_PUBLIC_SELF_HOST: "true"
     run:
       - corepack enable
       - pnpm install --frozen-lockfile

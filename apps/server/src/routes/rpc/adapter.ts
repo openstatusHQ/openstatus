@@ -2,6 +2,8 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { type ServiceContext, ServiceError } from "@openstatus/services";
 import { ZodError } from "zod";
 
+import { tb } from "@/libs/clients";
+
 import type { RpcContext } from "./interceptors";
 
 /**
@@ -19,6 +21,7 @@ export function toServiceCtx(rpcCtx: RpcContext): ServiceContext {
       scopes: rpcCtx.apiKey.scopes,
     },
     requestId: rpcCtx.requestId,
+    tb,
   };
 }
 
@@ -26,7 +29,8 @@ export function toServiceCtx(rpcCtx: RpcContext): ServiceContext {
  * Map any error thrown by a service call to a `ConnectError`. Preserves the
  * existing Connect error surface — granular reasons carried by the caller's
  * per-handler error helpers (in `errors.ts`) still bypass this mapper since
- * they throw `ConnectError` directly.
+ * they throw `ConnectError` directly. Errors it can't classify propagate
+ * untouched to `errorInterceptor`, which logs and redacts them.
  */
 export function toConnectError(err: unknown): never {
   if (err instanceof ConnectError) throw err;
@@ -56,6 +60,8 @@ export function toConnectError(err: unknown): never {
         throw new ConnectError(err.message, Code.Internal);
     }
   }
-  const message = err instanceof Error ? err.message : "Unknown error";
-  throw new ConnectError(message, Code.Internal);
+  // Unclassified: rethrow raw so `errorInterceptor` handles it. Only the
+  // interceptor holds the `RpcContext`, so it's the only layer that can put
+  // the request id in both the log line and the client's message.
+  throw err;
 }

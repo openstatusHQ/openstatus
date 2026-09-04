@@ -11,7 +11,10 @@ import { type NextRequest, after } from "next/server.js";
 import superjson from "superjson";
 import { ZodError, treeifyError } from "zod";
 
-import { resolveActiveWorkspace } from "./auth/resolve-active-workspace";
+import {
+  type ResolveActiveWorkspaceResult,
+  resolveActiveWorkspace,
+} from "./auth/resolve-active-workspace";
 
 // Generic session type that works with both User and Viewer
 type Session = {
@@ -33,12 +36,14 @@ type Session = {
 type CreateContextOptions = {
   session: Session | null;
   workspace?: Workspace | null;
+  workspaces?: Workspace[] | null;
   user?: User | null;
   req?: NextRequest;
   metadata?: {
     userAgent?: string;
     location?: string;
   };
+  resolveWorkspace?: () => Promise<ResolveActiveWorkspaceResult>;
 };
 
 type Meta = {
@@ -75,12 +80,26 @@ export const createTRPCContext = async (opts: {
   // Use provided auth function or return null session
   const session = opts.auth ? await opts.auth() : null;
   const workspace = null;
+  const workspaces = null;
   const user = null;
+
+  // Context is per HTTP request while middleware runs per procedure — a
+  // batched request would otherwise re-run the same user×workspaces query
+  // once per procedure. Zero-arg by design: userId/slug are bound here so
+  // the first call's promise is safe to share across the whole batch.
+  let resolution: Promise<ResolveActiveWorkspaceResult> | undefined;
+  const resolveWorkspace = () =>
+    (resolution ??= resolveActiveWorkspace({
+      userId: Number(session?.user?.id),
+      workspaceSlug: opts.req.cookies.get("workspace-slug")?.value,
+    }));
 
   return createInnerTRPCContext({
     session,
     workspace,
+    workspaces,
     user,
+    resolveWorkspace,
     req: opts.req,
     metadata: {
       userAgent: opts.req.headers.get("user-agent") ?? undefined,
@@ -131,6 +150,25 @@ export const t = initTRPC
 export const createTRPCRouter = t.router;
 export const mergeRouters = t.mergeRouters;
 
+const timingMiddleware = t.middleware(async (opts) => {
+  const start = performance.now();
+  const result = await opts.next();
+  if (process.env.NODE_ENV !== "test") {
+    const durationMs = Math.round(performance.now() - start);
+    console.info(
+      JSON.stringify({
+        msg: "trpc.timing",
+        path: opts.path,
+        type: opts.type,
+        durationMs,
+        ok: result.ok,
+        region: process.env.VERCEL_REGION,
+      }),
+    );
+  }
+  return result;
+});
+
 /**
  * Public (unauthed) procedure
  *
@@ -138,7 +176,7 @@ export const mergeRouters = t.mergeRouters;
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = t.procedure;
+export const publicProcedure = t.procedure.use(timingMiddleware);
 
 /**
  * Reusable middleware that enforces users are logged in before running the
@@ -163,7 +201,12 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
     ctx.user != null
   ) {
     return opts.next({
-      ctx: { ...ctx, user: ctx.user, workspace: ctx.workspace },
+      ctx: {
+        ...ctx,
+        user: ctx.user,
+        workspace: ctx.workspace,
+        workspaces: ctx.workspaces ?? [ctx.workspace],
+      },
     });
   }
 
@@ -174,10 +217,12 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
    */
   const workspaceSlug = ctx.req?.cookies.get("workspace-slug")?.value;
 
-  const resolved = await resolveActiveWorkspace({
-    userId: Number(ctx.session.user.id),
-    workspaceSlug,
-  });
+  const resolved = await (ctx.resolveWorkspace
+    ? ctx.resolveWorkspace()
+    : resolveActiveWorkspace({
+        userId: Number(ctx.session.user.id),
+        workspaceSlug,
+      }));
 
   if (!resolved.ok) {
     throw new TRPCError({
@@ -189,14 +234,16 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
     });
   }
 
-  const { user, workspace } = resolved.value;
+  const { user, workspace, workspaces } = resolved.value;
 
   if (workspace.slug !== workspaceSlug) {
     // properly set the workspace slug cookie
     ctx.req?.cookies.set("workspace-slug", workspace.slug);
   }
 
-  const result = await opts.next({ ctx: { ...ctx, user, workspace } });
+  const result = await opts.next({
+    ctx: { ...ctx, user, workspace, workspaces },
+  });
 
   if (process.env.NODE_ENV === "test") {
     return result;
@@ -260,4 +307,6 @@ export const formdataMiddleware = t.middleware(async (opts) => {
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+export const protectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(enforceUserIsAuthed);

@@ -25,7 +25,7 @@ If your endpoint is already public and you only want geographic coverage, the [p
 
 A private location is not an inbound port openstatus calls into. The probe initiates everything:
 
-1. You deploy the openstatus probe container — typically `ghcr.io/openstatushq/probe:latest` — somewhere inside the network that needs to be monitored.
+1. You deploy the openstatus probe container — typically `ghcr.io/openstatushq/private-location:latest` — somewhere inside the network that needs to be monitored.
 2. The probe opens an outbound, authenticated connection to the openstatus platform using the token issued when you created the location.
 3. openstatus dispatches the checks assigned to that location down the connection. The probe runs them against your internal endpoints and streams the results back.
 
@@ -39,8 +39,8 @@ The consequence is that you only need **outbound** network access from the probe
 | Network reach | Public internet only | Whatever the probe host can reach |
 | IPs to allowlist | [Documented per region](/docs/reference/location) | Yours |
 | Cost model | Included with monitor checks | You pay for the host/container |
-| Auto-incident & alerts | Yes | Not yet (see limitations below) |
-| Use on public status pages | Yes | Not yet (see limitations below) |
+| Auto-incident & alerts | Yes | Yes |
+| Use on public status pages | Yes | Yes |
 
 A monitor can be assigned to public locations, private locations, or both. Public-and-private hybrids are useful when you want a public probe for SLA reporting and a private probe for in-network diagnostics on the same endpoint.
 
@@ -51,13 +51,6 @@ Running a private location moves operational responsibility to you. Plan for:
 - **Probe availability.** If your probe host is down, openstatus can't run checks from it. Treat the probe as part of your own infrastructure — restart policy, host monitoring, log retention.
 - **Token handling.** The probe's token authenticates it as your workspace. Inject it as an environment variable, store it the same way you store other secrets, and rotate it if a host is decommissioned.
 - **Egress only.** Because the connection is outbound, an egress firewall that blocks `api.openstatus.dev:443` will silently stop the probe from running checks. The probe will appear "connected" briefly and then go quiet.
-
-## Current limitations
-
-- **No automatic incidents.** A failing check from a private location does not currently open an incident or fire notifications. If you need alerting today, keep at least one public location on the monitor.
-- **Not displayed on public status pages.** Monitors assigned only to private locations won't appear on a public status page as a monitor-linked component.
-
-Both are tracked and expected to land — when they do, the [private location reference](/docs/reference/private-location) will reflect the change.
 
 ## Next steps
 

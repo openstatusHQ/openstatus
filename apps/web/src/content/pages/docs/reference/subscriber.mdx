@@ -16,9 +16,11 @@ A subscriber in openstatus is an entity (typically a user or an integration) tha
 
 Users typically subscribe to a status page's updates through a dedicated interface provided on the status page itself. The process involves:
 
-1. **Inputting contact information** — providing an email address, phone number, or other contact details depending on the available notification channels.
-2. **Opt-in confirmation** — confirming the subscription, often through a verification link sent to the provided contact to prevent unwanted subscriptions.
-3. **Channel selection (optional)** — selecting which specific notification channels (e.g., email, SMS, Slack webhook) to receive updates through, if multiple options are available.
+1. **Entering an email address** — public self-subscription is email-only.
+2. **Opt-in confirmation** — a verification email is sent, and the subscription only activates once the recipient confirms it.
+3. **Scope selection (optional)** — where enabled, choosing which page components to be notified about instead of the whole page.
+
+Webhook and Slack subscriptions cannot be created from the public page. An operator adds those from the dashboard (see below).
 
 ## Notification types received
 
@@ -26,8 +28,9 @@ Subscribers receive notifications for key events affecting the monitored service
 
 - **Incident creation** — when a new incident is detected and published.
 - **Incident updates** — when status reports are published for an ongoing incident (e.g., status changes from `investigating` to `identified`, `monitoring`, or `resolved`).
-- **Monitor status changes** — direct alerts for individual monitor status changes if configured to do so (less common for public subscribers).
 - **Scheduled maintenance** — when a maintenance window is created on the page, subscribers can be notified that it has been scheduled (see the [maintenance reference](/docs/reference/maintenance)).
+
+Raw monitor status changes are *not* sent to status page subscribers. Those go to your configured [notification channels](/docs/reference/notification). Subscribers only receive status report updates and scheduled maintenance.
 
 ## Subscriber management
 
@@ -39,12 +42,13 @@ Status page administrators can manage their subscriber lists, including:
 
 ## Adding subscribers from the dashboard
 
-Beyond public self-subscription, administrators can add subscribers directly from the dashboard. This is useful for onboarding partners, internal teams, or automation that should receive updates without going through the public opt-in flow. Each manually added subscriber uses one of two channels:
+Beyond public self-subscription, administrators can add subscribers directly from the dashboard. This is useful for onboarding partners, internal teams, or automation that should receive updates without going through the public opt-in flow. Each manually added subscriber uses one of three channels:
 
 - **Email** — delivers updates to a contact address. By adding an email here you confirm the contact has consented to receive status updates; no confirmation email is sent.
 - **Webhook** — POSTs each update to a URL. Slack and Discord URLs receive channel-native messages; any other URL receives a generic JSON payload.
+- **Slack** — posts each update straight into a Slack channel through the openstatus Slack app. The bot token is resolved from the workspace integration at send time and is never stored on the subscriber.
 
-For both channels, you can optionally:
+For every channel, you can optionally:
 
 - **Set a display label** — shown in place of the raw destination in the dashboard (e.g. `Supabase #incidents`).
 - **Scope to page components** — leave empty to notify for the entire page, or select specific components to only notify on matching reports.
@@ -100,7 +104,7 @@ Any other URL receives a versioned, channel-agnostic JSON payload. Use this to f
 }
 ```
 
-`page.url` is the canonical status page origin, while `status_report.url` (and `maintenance.url` below) is the deep link to that specific event. Each entry in `components` carries an `impact`, which may be `null` when no impact is associated with the component for this update.
+`page.url` is the canonical status page origin, while `status_report.url` (and `maintenance.url` below) is the deep link to that specific event. Each entry in `components` carries an `impact`. The schema permits `null` for forward compatibility, but the current sender always emits a concrete impact, falling back to `operational` for reports created before component impacts existed.
 
 Scheduled maintenance is delivered with `type: "maintenance"` and a `data.maintenance` object carrying `starts_at` / `ends_at` in place of the `update` block. The `version` field is bumped on any breaking change, so pin to it when consuming the payload.
 

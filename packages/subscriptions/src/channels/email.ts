@@ -33,6 +33,19 @@ function idempotencyKeyFor(pageUpdate: PageUpdate): string {
     : `page-update:${pageUpdate.id}:${pageUpdate.status}`;
 }
 
+// FNV-1a, Edge-safe (no node:crypto). Resend 409s when a key is reused within
+// 24h with a different body (e.g. the subscriber list changed between two
+// dispatches of the same update), so the key must vary with the payload while
+// staying identical across retries of the same send.
+function fingerprint(input: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(36);
+}
+
 function hasEmailAndToken(
   sub: Subscription,
 ): sub is Subscription & { email: string; token: string } {
@@ -71,6 +84,20 @@ export async function sendEmailNotifications(
 
   const firstSub = validSubscriptions[0];
 
+  const payloadHash = fingerprint(
+    JSON.stringify([
+      validSubscriptions.map((sub) => [sub.email, sub.token]),
+      firstSub.pageName,
+      firstSub.pageSlug,
+      firstSub.customDomain ?? null,
+      pageUpdate.title,
+      pageUpdate.status,
+      pageUpdate.message,
+      pageUpdate.date,
+      pageUpdate.pageComponents,
+    ]),
+  );
+
   const client = getEmailClient();
   await client.sendStatusReportUpdate({
     subscribers: validSubscriptions.map((sub) => ({
@@ -85,6 +112,6 @@ export async function sendEmailNotifications(
     message: pageUpdate.message,
     date: pageUpdate.date,
     pageComponents: pageUpdate.pageComponents,
-    idempotencyKey: idempotencyKeyFor(pageUpdate),
+    idempotencyKey: `${idempotencyKeyFor(pageUpdate)}:${payloadHash}`,
   });
 }

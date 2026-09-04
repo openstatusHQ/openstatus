@@ -49,7 +49,7 @@ export type CreatePageInput = {
 
 /** Minimal create — the onboarding / `new` path with no monitors. */
 export const NewPageInput = z.object({
-  title: z.string(),
+  title: z.string().trim().min(1),
   // Canonical `slugSchema` from db validation — regex + min(3).
   // Plain `z.string().toLowerCase()` here let malformed slugs through
   // that `insertPageSchema` would reject, so `create` and `new` had
@@ -81,7 +81,7 @@ export type GetSlugAvailableInput = z.infer<typeof GetSlugAvailableInput>;
 
 export const UpdatePageGeneralInput = z.object({
   id: z.number().int(),
-  title: z.string(),
+  title: z.string().trim().min(1),
   slug: slugSchema,
   description: z.string().nullish(),
   icon: z.string().nullish(),

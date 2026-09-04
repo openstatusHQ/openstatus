@@ -12,6 +12,7 @@ export {
   type GetMonitorSummaryResult,
 } from "./get-monitor-summary";
 export { getResponseLog, type ResponseLogDetail } from "./get-response-log";
+export { getPrivateLocationIdsByMonitor } from "./private-locations";
 export {
   listResponseLogs,
   type ListResponseLogsResult,
@@ -37,8 +38,11 @@ export {
   StreamMonitorPreviewInput,
   streamMonitorPreview,
 } from "./stream-monitor-preview";
+export { triggerMonitorRun, type TriggerMonitorResult } from "./trigger";
+export { assertMonitorUrlSafe } from "./url-safety";
 export {
   bulkUpdateMonitors,
+  updateMonitorConfig,
   updateMonitorFollowRedirects,
   updateMonitorGeneral,
   updateMonitorOtel,
@@ -56,7 +60,9 @@ export {
   GetMonitorInput,
   GetMonitorStatusInput,
   GetMonitorSummaryInput,
+  GetPrivateLocationIdsByMonitorInput,
   GetResponseLogInput,
+  grpcTlsModes,
   ListMonitorsInput,
   ListResponseLogsInput,
   monitorJobTypes,
@@ -64,6 +70,8 @@ export {
   monitorPeriodicity,
   type MonitorTimeRange,
   monitorTimeRange,
+  TriggerMonitorInput,
+  UpdateMonitorConfigInput,
   UpdateMonitorFollowRedirectsInput,
   UpdateMonitorGeneralInput,
   UpdateMonitorNotifiersInput,

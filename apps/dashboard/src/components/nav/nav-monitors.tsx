@@ -1,5 +1,6 @@
 "use client";
 
+import { More, Add } from "@openstatus/icons";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -17,10 +18,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
+import { buildCurlCommand } from "@openstatus/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -43,6 +45,7 @@ export function NavMonitors() {
   const [openDialog, setOpenDialog] = useState(false);
   const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
   const { isMobile, setOpenMobile } = useSidebar();
+  const { copy } = useCopyToClipboard();
   const trpc = useTRPC();
   const router = useRouter();
   const pathname = usePathname();
@@ -58,7 +61,7 @@ export function NavMonitors() {
       onSuccess: () => {
         refetch();
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
       },
     }),
@@ -68,7 +71,7 @@ export function NavMonitors() {
       onSuccess: (newMonitor) => {
         refetch();
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
         router.push(`/monitors/${newMonitor.id}`);
       },
@@ -109,7 +112,7 @@ export function NavMonitors() {
                     setOpenMobile(false);
                   }}
                 >
-                  <Plus className="text-muted-foreground" />
+                  <Add className="text-muted-foreground" />
                   <span className="sr-only">Create Monitor</span>
                 </SidebarMenuAction>
               </TooltipTrigger>
@@ -128,12 +131,22 @@ export function NavMonitors() {
         ) : monitors && monitors.length > 0 ? (
           monitors.map((item) => {
             const isActive = pathname.startsWith(`/monitors/${item.id}/`);
+            // curl only speaks HTTP — the action is hidden for tcp/dns monitors
+            const isHttp = item.jobType === "http";
             const actions = getActions({
               edit: () => router.push(`/monitors/${item.id}/edit`),
               "copy-id": () => {
                 navigator.clipboard.writeText(item.id.toString());
                 toast.success("Monitor ID copied to clipboard");
               },
+              "copy-curl": isHttp
+                ? async () => {
+                    const copied = await copy(buildCurlCommand(item), {
+                      withToast: "cURL command copied to clipboard",
+                    });
+                    if (!copied) toast.error("Failed to copy cURL command");
+                  }
+                : undefined,
               clone: () => {
                 const promise = cloneMonitorMutation.mutateAsync({
                   id: item.id,
@@ -150,7 +163,7 @@ export function NavMonitors() {
                 });
               },
               // export: () => setOpenDialog(true),
-            });
+            }).filter((action) => action.id !== "copy-curl" || isHttp);
             return (
               <SidebarMenuItem key={item.id}>
                 <SidebarMenuButton
@@ -201,7 +214,7 @@ export function NavMonitors() {
                   align={isMobile ? "end" : "start"}
                 >
                   <SidebarMenuAction showOnHover>
-                    <MoreHorizontal />
+                    <More />
                     <span className="sr-only">More</span>
                   </SidebarMenuAction>
                 </QuickActions>

@@ -44,7 +44,11 @@ import {
 
 const logger = getLogger(["workflow", "external-status"]);
 
-const tb = new OSTinybird(env().TINY_BIRD_API_KEY);
+const tb = new OSTinybird({
+  token: env().TINY_BIRD_API_KEY,
+  baseUrl: env().TINYBIRD_URL,
+  noop: env().TINYBIRD_NOOP,
+});
 
 // 10 per phase × 3 phases = peak 30 concurrent HTTP requests upstream; keeps
 // Atlassian/Incident.io CDNs comfortable while still parallelising heavily.
@@ -179,7 +183,7 @@ function runStatusPhase(
         ),
         // Failure reporting is deferred: the detect step after this phase
         // either merges it into a detection story or reports it plain.
-        Effect.catchAll((err: FetchError) =>
+        Effect.catch((err: FetchError) =>
           Effect.succeed<StatusPhaseOutcome>({
             kind: "fail",
             slug: entry.id,
@@ -233,7 +237,7 @@ function runIncidentPhase(
             ),
           ),
         ),
-        Effect.catchAll((err: FetchError) =>
+        Effect.catch((err: FetchError) =>
           Effect.sync<IncidentPhaseOutcome>(() => {
             reportFetchFailure({
               phase: "incidents",
@@ -303,7 +307,7 @@ function runComponentPhase(
             }),
           ),
         ),
-        Effect.catchAll((err: FetchError) =>
+        Effect.catch((err: FetchError) =>
           Effect.sync<ComponentPhaseOutcome>(() => {
             reportFetchFailure({
               phase: "components",
@@ -527,7 +531,7 @@ function applyDetection(args: {
       });
       return { kind: outcome, slug: entry.id };
     }),
-    Effect.catchAll((e) =>
+    Effect.catch((e) =>
       Effect.sync((): DetectOutcome => {
         logger.warn(
           "external-status detect: write failed for slug={slug}: {message}",
@@ -730,7 +734,7 @@ export async function handleExternalStatusCron(c: Context) {
           void cronCompleted();
         }),
       ),
-      Effect.catchAll((e) =>
+      Effect.catch((e) =>
         Effect.sync(() => {
           logger.error("external-status tick errored: {message}", {
             message: e.message,

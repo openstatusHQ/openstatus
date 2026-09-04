@@ -83,9 +83,18 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		URI:           req.Msg.Uri,
 		RequestStatus: req.Msg.RequestStatus,
 		Records:       string(recordsJSON),
+		ErrorMessage:  req.Msg.Message,
 	}
 
 	h.sendEventAndUpdateLastSeen(ctx, data, tinybird.DatasourceDNS, ic.Region.ID)
+
+	h.forwardStatusUpdate(ctx, ic, statusUpdateInput{
+		RequestStatus: data.RequestStatus,
+		Message:       data.ErrorMessage,
+		Latency:       data.Latency,
+		CronTimestamp: data.CronTimestamp,
+		ErrorFlag:     data.Error,
+	})
 
 	return connect.NewResponse(&private_locationv1.IngestDNSResponse{}), nil
 }

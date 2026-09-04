@@ -15,6 +15,8 @@ export const env = () =>
       DATABASE_AUTH_TOKEN: z.string().prefault(""),
       RESEND_API_KEY: z.string().prefault(""),
       TINY_BIRD_API_KEY: z.string().prefault(""),
+      TINYBIRD_URL: z.string().prefault("https://api.tinybird.co"),
+      TINYBIRD_NOOP: z.stringbool().catch(false),
       QSTASH_TOKEN: z.string().prefault(""),
       SCREENSHOT_SERVICE_URL: z.string().prefault(""),
       TWILLIO_AUTH_TOKEN: z.string().prefault(""),
@@ -22,5 +24,9 @@ export const env = () =>
       SENTRY_DSN: z.string().prefault(""),
       AXIOM_TOKEN: z.string().prefault(""),
       AXIOM_DATASET: z.string().prefault(""),
+      STALE_CHECK_MS: z.coerce.number().prefault(600_000),
+      OUTBOX_DEADLINE_MS: z.coerce.number().prefault(300_000),
+      NOTIFICATION_TIMEOUT_MS: z.coerce.number().prefault(10_000),
+      OUTBOX_ROLLOUT_PCT: z.coerce.number().min(0).max(100).prefault(0),
     })
     .parse(process.env);

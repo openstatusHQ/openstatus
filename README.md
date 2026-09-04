@@ -55,6 +55,15 @@ Monitor your servers, websites and APIs from 28 regions across multiple cloud pr
 <a href="https://news.ycombinator.com/item?id=37740870"><img alt="Featured on Hacker News" src="https://hackerbadge.now.sh/api?id=37740870" style="width: 250px; height: 55px;" width="250" height="55" /></a>
 <a href="https://www.producthunt.com/posts/openstatus-2?utm_source=badge-top-post-badge&utm_medium=badge" target="_blank"><img alt="openstatus - #2 Product of the Day on Product Hunt" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=openstatus-2&theme=light&period=daily" style="width: 250px; height: 55px;" width="250" height="55" /></a>
 
+## Tooling
+
+Everything the dashboard does is reachable from your terminal, your infrastructure code, and your AI assistant — all sharing a single API key.
+
+- **[API](https://www.openstatus.dev/tooling/api)** — typed JSON-over-HTTP (ConnectRPC) with a [Node SDK](https://github.com/openstatusHQ/sdk-node)
+- **[CLI](https://www.openstatus.dev/tooling/cli)** — interactive for humans, `--json` for agents, YAML monitoring as code
+- **[Terraform](https://www.openstatus.dev/tooling/terraform)** — monitors, notifications, and status pages as HCL
+- **[MCP server](https://www.openstatus.dev/tooling/mcp-server)** — connect Claude, ChatGPT, Cursor, or any MCP client to your workspace
+
 ## Getting Started
 
 ### With Docker (Recommended)
@@ -90,56 +99,48 @@ ghcr.io/openstatushq/openstatus-checker:latest
 
 [Complete Coolify Deployment Guide](./COOLIFY_DEPLOYMENT.md)
 
+### Self-Hosting with Railway
+
+Deploy the full stack (dashboard, status pages, API, workflows, probes, libSQL, and Tinybird Local) to one Railway project with one click:
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template/openstatus?utm_medium=integration&utm_source=button&utm_campaign=openstatus)
+
+The template source and the setup instructions are in [ephraimduncan/openstatus-railway](https://github.com/ephraimduncan/openstatus-railway).
+
 ### Manual Setup
 
 #### Requirements
 
 - [Node.js](https://nodejs.org/en/) >= 20.0.0
-- [pnpm](https://pnpm.io/) >= 8.6.2
+- [pnpm](https://pnpm.io/) >= 10.26.0
 - [Bun](https://bun.sh/)
-- [Turso CLI](https://docs.turso.tech/quickstart)
+- [Deno](https://deno.com/)
+- [Turso CLI](https://docs.turso.tech/quickstart).
 
-#### Setup
+#### Dashboard
 
-1. Clone the repository
+See [apps/dashboard/README.md](apps/dashboard/README.md) for full steps (env, db, login, troubleshooting).
 
-```sh
-git clone https://github.com/openstatushq/openstatus.git
-```
+#### Status page
 
-2. Install dependencies
+1. Install dependencies
 
-```sh
-pnpm install
-```
+`pnpm install`
 
-3. Initialize the development environment
+2. Run the server
 
-Launch the database in one terminal:
+`pnpm -w dev:status-page`.
 
-```sh
-turso dev --db-file openstatus-dev.db
-```
+#### Web (marketing site)
 
-In another terminal, run the following command:
+1. Install dependencies
 
-```sh
-pnpm dx
-```
+`pnpm install`
 
-4. Launch whatever app you wish to:
+2. Run the server
 
-```sh
-pnpm dev:web
-pnpm dev:status-page
-pnpm dev:dashboard
-```
+`pnpm -w dev:web`.
 
-The above commands will automatically run the libSQL client on `8080` so you might want to kill the turso command from step 3.
-
-5. See the results:
-
-- open [http://localhost:3000](http://localhost:3000) (default port)
 
 ## Tech Stack
 
@@ -154,7 +155,7 @@ The above commands will automatically run the libSQL client on `8080` so you mig
 
 ## Contributing
 
-If you want to help us build the best status page and monitoring platform, check our [contributing guidelines](https://github.com/openstatusHQ/openstatus/blob/main/CONTRIBUTING.MD).
+If you want to help us build the best status page and monitoring platform, check our [contributing guidelines](CONTRIBUTING.md).
 
 <a href="https://github.com/openstatushq/openstatus/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=openstatushq/openstatus" />

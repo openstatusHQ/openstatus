@@ -7,7 +7,7 @@ import {
   TextBodyAssertion,
   serialize,
 } from "@openstatus/assertions";
-import { and, count, eq, inArray, isNull } from "@openstatus/db";
+import { and, eq, inArray, isNull } from "@openstatus/db";
 import {
   monitor,
   monitorTag,
@@ -44,19 +44,6 @@ export async function getMonitorInWorkspace(args: {
     .get();
   if (!row) throw new NotFoundError("monitor", id);
   return row;
-}
-
-/** Count active (not soft-deleted) monitors in the workspace. */
-export async function countMonitorsInWorkspace(
-  tx: DB,
-  workspaceId: number,
-): Promise<number> {
-  const res = await tx
-    .select({ count: count() })
-    .from(monitor)
-    .where(and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)))
-    .get();
-  return res?.count ?? 0;
 }
 
 /** Validate that tag ids exist and belong to the workspace. */

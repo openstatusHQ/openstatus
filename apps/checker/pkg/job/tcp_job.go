@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/cenkalti/backoff/v5"
 	"github.com/google/uuid"
@@ -66,11 +67,14 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region stri
 
 			lastResult = checker.TCPResponse{Error: 1}
 
+			// Use current timestamp since connection failed and res.TCPStart would be 0
+			now := time.Now().UnixMilli()
+
 			return &TCPPrivateRegionData{
 				ID:            id.String(),
 				Latency:       0,
-				Timestamp:     res.TCPStart,
-				CronTimestamp: res.TCPStart,
+				Timestamp:     now,
+				CronTimestamp: now,
 				URI:           monitor.Uri,
 				RequestStatus: "error",
 				Error:         1,
@@ -81,7 +85,7 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region stri
 		latency := res.TCPDone - res.TCPStart
 		lastResult = checker.TCPResponse{Latency: latency, Timing: res}
 
-		var requestStatus = "active"
+		var requestStatus = "success"
 
 		if degradedAfter > 0 && latency > degradedAfter {
 			requestStatus = "degraded"

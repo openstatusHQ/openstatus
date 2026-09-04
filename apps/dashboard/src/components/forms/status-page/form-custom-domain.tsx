@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -15,7 +16,6 @@ import {
 } from "@openstatus/ui/components/ui/input-group";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { isTRPCClientError } from "@trpc/client";
-import { Lock } from "lucide-react";
 import type React from "react";
 import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";

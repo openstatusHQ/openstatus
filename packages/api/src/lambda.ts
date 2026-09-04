@@ -2,6 +2,7 @@ import { apiKeyRouter } from "./router/apiKey";
 import { blobRouter } from "./router/blob";
 import { emailRouter } from "./router/email";
 import { integrationRouter } from "./router/integration";
+import { ssoRouter } from "./router/sso";
 import { stripeRouter } from "./router/stripe";
 import { subscriberNotificationRouter } from "./router/subscriber-notification";
 import { createTRPCRouter } from "./trpc";
@@ -9,10 +10,11 @@ import { createTRPCRouter } from "./trpc";
 export const lambdaRouter = createTRPCRouter({
   stripeRouter: stripeRouter,
   emailRouter: emailRouter,
-  apiKeyRouter: apiKeyRouter,
+  apiKey: apiKeyRouter,
   integrationRouter: integrationRouter,
   blob: blobRouter,
   subscriberNotification: subscriberNotificationRouter,
+  sso: ssoRouter,
 });
 
 export { stripe } from "./router/stripe/shared";

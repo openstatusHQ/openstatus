@@ -83,7 +83,12 @@ export function Client() {
     ...trpc.tinybird.metricsRegions.queryOptions({
       monitorId: id,
       period: effectivePeriod,
-      type: (monitor?.jobType ?? "http") as "http" | "tcp",
+      type: (monitor?.jobType ?? "http") as
+        | "http"
+        | "tcp"
+        | "dns"
+        | "icmp"
+        | "grpc",
       regions: selectedRegions,
       // bucket by period (daily at 30d/90d) to keep payload + chart readable
       interval: periodToInterval[effectivePeriod],
@@ -144,7 +149,7 @@ export function Client() {
         </div>
         <GlobalUptimeSection
           monitorId={id}
-          jobType={monitor.jobType as "http" | "tcp"}
+          jobType={monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc"}
           period={effectivePeriod}
           regions={selectedRegions}
         />
@@ -158,7 +163,7 @@ export function Client() {
         </SectionHeader>
         <ChartBarUptime
           monitorId={id}
-          type={monitor.jobType as "http" | "tcp"}
+          type={monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc"}
           period={effectivePeriod}
           regions={selectedRegions}
         />
@@ -197,7 +202,7 @@ export function Client() {
             monitorId={id}
             percentile={percentile}
             degradedAfter={monitor.degradedAfter}
-            type={monitor.jobType as "http" | "tcp"}
+            type={monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc"}
             period={effectivePeriod}
             regions={selectedRegions}
           />

@@ -1,11 +1,11 @@
-import { Fly, Koyeb, Railway } from "@openstatus/icons";
+import { Globe } from "@openstatus/icons";
+import { Fly, Koyeb, Railway } from "@openstatus/icons/brand";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import { Globe } from "lucide-react";
 
 import { cn } from "../lib/utils";
 

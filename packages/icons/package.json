@@ -1,14 +1,34 @@
 {
   "name": "@openstatus/icons",
   "version": "0.0.0",
-  "license": "MIT",
-  "main": "./src/index.tsx",
-  "types": "./src/index.tsx",
+  "private": true,
+  "license": "SEE LICENSE IN README.md",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/lucide/index.ts",
+      "default": "./src/lucide/index.ts"
+    },
+    "./lucide": {
+      "types": "./src/lucide/index.ts",
+      "default": "./src/lucide/index.ts"
+    },
+    "./nucleo": {
+      "types": "./src/nucleo/index.ts",
+      "default": "./src/nucleo/index.ts"
+    },
+    "./brand": {
+      "types": "./src/brand/index.tsx",
+      "default": "./src/brand/index.tsx"
+    }
+  },
   "scripts": {
     "check": "deno check --sloppy-imports .",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "tsc": "tsc --noEmit"
   },
   "dependencies": {
+    "lucide-react": "catalog:",
     "react": "catalog:"
   },
   "devDependencies": {

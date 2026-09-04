@@ -22,13 +22,13 @@ Every request must include your openstatus API key in the `x-openstatus-key` hea
 x-openstatus-key: os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-Get a key from the dashboard's **Settings → API Tokens**.
+Get a key from the dashboard's **Settings → General → API Keys**.
 
 ### Scopes
 
 Each API key carries a scope that controls what tools the MCP server exposes:
 
-- **Read-only** — the server only registers read tools (`list_*`, `get_*`, and `search_docs`). Mutation tools (`create_*`, `update_*`, `add_*`, `resolve_*`) are not advertised in `tools/list` and cannot be called.
+- **Read-only** — the server only registers read tools (`list_*` and `get_*`). Mutation tools (`create_*`, `update_*`, `add_*`, `resolve_*`) are not advertised in `tools/list` and cannot be called.
 - **Read & write** — every tool is available.
 
 Scope is set at key creation time and is **immutable**. To change a key's scope, revoke it and issue a new one.
@@ -37,7 +37,7 @@ For AI agents that should only observe state — health summaries, paging on-cal
 
 ## Tools
 
-The server exposes 20 tools, grouped by resource and scoped to the workspace tied to your API key. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
+The server exposes 19 tools (17 on plans without the `audit-log` feature), grouped by resource and scoped to the workspace tied to your API key. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
 
 ### Pages
 
@@ -80,6 +80,12 @@ The server exposes 20 tools, grouped by resource and scoped to the workspace tie
 |----------------------|------|---------|
 | `list_notifications` | read | List notification channels and the monitors each one is wired to. Channel credentials are never exposed. |
 
+### Private locations
+
+| Tool                     | Type | Purpose |
+|--------------------------|------|---------|
+| `list_private_locations` | read | List the workspace's private locations with their name, status (`active` / `error`), metadata, and `lastSeenAt`. Agent tokens are never exposed. |
+
 ### Audit
 
 Registered only when the workspace plan includes the `audit-log` feature — otherwise these tools are absent from `tools/list`.
@@ -89,20 +95,11 @@ Registered only when the workspace plan includes the `audit-log` feature — oth
 | `list_audit_logs` | read | List audit-log entries (mutating actions) newest-first, bounded to the last 14 days. Optional `entityType` + `entityId` filter. |
 | `get_audit_log`   | read | Full before/after snapshots and `changedFields` for a single audit-log entry. |
 
-### Docs
-
-These query the public openstatus documentation — not your workspace data — so the assistant can answer product and how-to questions grounded in the official docs.
-
-| Tool           | Type | Purpose |
-|----------------|------|---------|
-| `search_docs`  | read | Search the public documentation, guides, or changelog (`type: "docs" \| "guides" \| "changelog"`). Returns scored results with title, snippet, url, and a `path` to pass to `get_doc_page`. |
-| `get_doc_page` | read | Fetch the full markdown of a docs, guides, or changelog page by `path` (as returned by `search_docs`). Long pages are truncated with a marker linking to the full page. |
-
 The MCP client gates every tool call behind your approval — the server does not gate again. Each tool also carries [MCP annotations](https://modelcontextprotocol.io/specification/server/tools#tool-annotations) (`readOnlyHint`, `destructiveHint`, `idempotentHint`) so well-behaved clients can decide whether to confirm, cache, or surface differently.
 
 ### Notifying subscribers
 
-Every mutation tool has a **required** `notify: boolean` field — there is no default. The tool's input schema rejects calls that omit it, which forces the LLM to make an explicit choice (and therefore ask the user) before firing.
+Every publishing tool — `create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance` — has a **required** `notify: boolean` field, with no default. The tool's input schema rejects calls that omit it, which forces the LLM to make an explicit choice (and therefore ask the user) before firing. `update_status_report` edits metadata only and carries no `notify` field at all.
 
 This required-field behaviour is specific to MCP. The dashboard AI assistant and the Slack agent wrap these same tools in an approval step that strips `notify` from the model-facing schema and injects it from a human toggle defaulting to `false`. MCP exposes the raw schema, so the caller must supply `notify` explicitly.
 
@@ -182,7 +179,7 @@ In Cursor, open **Settings → MCP → Add Server**:
 
 Errors map by severity:
 
-- **Recoverable** (`NOT_FOUND`, `VALIDATION`, `CONFLICT`, `LIMIT_EXCEEDED`) come back as a tool result with `isError: true`. The model can read the message and retry with corrected input.
+- **Recoverable** (`NOT_FOUND`, `VALIDATION`, `CONFLICT`, `LIMIT_EXCEEDED`, `PRECONDITION_FAILED`) come back as a tool result with `isError: true`. The model can read the message and retry with corrected input.
 - **Transport-level** (`UNAUTHORIZED`, `FORBIDDEN`, `INTERNAL`, malformed input) come back as a JSON-RPC error.
 
 Error messages are not redacted — the consumer is an LLM that benefits from the detail.
@@ -190,7 +187,7 @@ Error messages are not redacted — the consumer is an LLM that benefits from th
 ## Limits
 
 - `list_status_reports` and `list_maintenances` use offset pagination: `page` (1-indexed, default 1) and `perPage` (default 50, max 200). The response's `pagination.totalPages` tells the LLM whether more pages exist. `list_status_pages` is unpaginated (workspaces typically have a handful).
-- `list_monitors` and `list_audit_logs` page via `perPage` (max 50); `list_notifications` via `perPage` (max 200); `list_response_logs` via `limit` (max 100) and `offset`.
+- `list_monitors` and `list_audit_logs` page via `perPage` (max 50); `list_notifications` via `perPage` (max 200); `list_private_locations` via `perPage` (max 100); `list_response_logs` via `limit` (max 100) and `offset`.
 - No per-key rate limiting today. Treat MCP usage like REST: one server call per tool invocation.
 
 ## Audit log

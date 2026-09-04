@@ -1,6 +1,6 @@
 "use client";
 
-import { Cog, Globe } from "lucide-react";
+import { Settings, Globe } from "@openstatus/icons";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 
@@ -11,7 +11,7 @@ export function Breadcrumb() {
         {
           type: "link",
           label: "Settings",
-          icon: Cog,
+          icon: Settings,
           href: "/settings/general",
         },
         { type: "page", label: "Private Locations", icon: Globe },

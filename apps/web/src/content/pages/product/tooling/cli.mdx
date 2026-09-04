@@ -71,3 +71,29 @@ Every mutation lands in the audit log under `actor_type = 'cli'`, so you can tra
 ## Reference
 
 Full command list and flags in the [CLI reference](https://www.openstatus.dev/docs/reference/cli-reference/).
+
+## Frequently asked questions
+
+<Details summary="Is the CLI suitable for AI agents?">
+
+Yes. Every command supports --json output and structured errors, and required flags fail with a clear list of what's missing instead of hanging in a wizard. Combined with our agent skills, the CLI is the recommended way to give AI agents scriptable control over openstatus.
+
+</Details>
+
+<Details summary="Can I run the CLI in CI?">
+
+Yes. Set `OPENSTATUS_API_TOKEN`, use the `--json` flag for parseable output, and run `openstatus monitors apply` to sync your YAML config. We also publish a GitHub Action that wraps the CLI for synthetic tests.
+
+</Details>
+
+<Details summary="What's the difference between the CLI's YAML config and the Terraform provider?">
+
+Both treat monitoring as code. The YAML config is lighter to adopt and lives next to your repo. Terraform is the right choice when monitors are part of a larger HCL-managed infrastructure. Run `openstatus terraform generate` to bootstrap an HCL file from your existing workspace if you want to migrate.
+
+</Details>
+
+<Details summary="Are skills different from the MCP server?">
+
+Skills are prompt and command bundles installed into your local agent (Claude Code, etc.) that wrap the openstatus CLI. The MCP server is a remote endpoint that any MCP-compatible client can connect to. Skills are great for terminal-shaped workflows; MCP is great for chat-shaped workflows.
+
+</Details>

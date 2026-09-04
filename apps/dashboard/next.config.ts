@@ -1,8 +1,29 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
+// ICON_SET=nucleo swaps the icon set at resolution time (see packages/icons)
+const useNucleoIcons = process.env.ICON_SET === "nucleo";
+
 const nextConfig: NextConfig = {
   output: process.env.SELF_HOST === "true" ? "standalone" : undefined,
+  experimental: {
+    // barrel-optimize only when unaliased — the rewrite would bypass the nucleo alias
+    optimizePackageImports: useNucleoIcons ? [] : ["@openstatus/icons"],
+    // dashboard routes are dynamic (auth/cookies); default dynamic staleTime of 0
+    // discards prefetched entries on navigation, so keep them 30s to make prefetch pay off
+    staleTimes: {
+      dynamic: 30,
+    },
+  },
+  turbopack: useNucleoIcons
+    ? { resolveAlias: { "@openstatus/icons": "@openstatus/icons/nucleo" } }
+    : undefined,
+  webpack: (config) => {
+    if (useNucleoIcons) {
+      config.resolve.alias["@openstatus/icons$"] = "@openstatus/icons/nucleo";
+    }
+    return config;
+  },
   images: {
     remotePatterns: [
       new URL("https://openstatus.dev/**"),
@@ -18,6 +39,11 @@ const nextConfig: NextConfig = {
   // moved under /settings — keep old links working
   async redirects() {
     return [
+      {
+        source: "/",
+        destination: "/overview",
+        permanent: false,
+      },
       {
         source: "/private-locations",
         destination: "/settings/private-locations",

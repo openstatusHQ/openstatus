@@ -2,6 +2,7 @@ import type { RouterOutputs } from "@openstatus/api";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Addons } from "@openstatus/db/src/schema/plan/schema";
 import { getAddonPriceConfig } from "@openstatus/db/src/schema/plan/utils";
+import { Check, Remove, Add } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +21,6 @@ import { Label } from "@openstatus/ui/components/ui/label";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { Check, MinusIcon, PlusIcon } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -261,7 +261,7 @@ function QuantityControl({
           onClick={() => setValue(value - 1)}
           disabled={value <= 0}
         >
-          <MinusIcon />
+          <Remove />
         </Button>
         <Input
           type="number"
@@ -276,7 +276,7 @@ function QuantityControl({
           size="icon"
           onClick={() => setValue(value + 1)}
         >
-          <PlusIcon />
+          <Add />
         </Button>
       </ButtonGroup>
     </div>

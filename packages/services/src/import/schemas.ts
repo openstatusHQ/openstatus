@@ -4,6 +4,7 @@ export const importProviders = [
   "statuspage",
   "betterstack",
   "instatus",
+  "checkly",
 ] as const;
 export type ImportProviderName = (typeof importProviders)[number];
 
@@ -27,6 +28,8 @@ const providerFields = {
   statuspagePageId: nullishString,
   betterstackStatusPageId: nullishString,
   instatusPageId: nullishString,
+  checklyAccountId: nullishString,
+  checklyStatusPageId: nullishString,
 };
 
 export const ImportOptions = z.object({

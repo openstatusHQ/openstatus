@@ -1,8 +1,8 @@
 "use client";
 
+import { Info } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { Info } from "lucide-react";
 
 import { Code } from "@/components/common/code";
 import { Link } from "@/components/common/link";
@@ -35,6 +35,21 @@ const messages = [
     message:
       "@openstatus schedule a maintenance window for my database next Friday from 2–3 PM.",
     description: "Plan downtime so subscribers are informed in advance.",
+  },
+];
+
+const commands = [
+  {
+    command: "/openstatus subscribe <status-page-url>",
+    description: "Subscribe this channel to a status page.",
+  },
+  {
+    command: "/openstatus unsubscribe <status-page-url>",
+    description: "Unsubscribe this channel from a status page.",
+  },
+  {
+    command: "/openstatus subscriptions",
+    description: "Show this channel's subscriptions.",
   },
 ];
 
@@ -87,6 +102,30 @@ export default function Page() {
                 {message.description}
               </p>
               <Code>{message.message}</Code>
+            </li>
+          ))}
+        </ul>
+      </Section>
+      <Section>
+        <SectionHeader>
+          <SectionTitle>Commands</SectionTitle>
+          <SectionDescription>
+            Slash commands to manage which status pages notify this channel.
+            Also useful for Slack Connect channels shared with customers.
+          </SectionDescription>
+        </SectionHeader>
+        <Note size="sm">
+          <Info />
+          Subscribing also joins the bot to the channel. Private channels
+          require /invite @openstatus first.
+        </Note>
+        <ul className="flex flex-col gap-2">
+          {commands.map((command, i) => (
+            <li key={i} className="flex flex-col gap-0.5">
+              <p className="text-muted-foreground text-xs">
+                {command.description}
+              </p>
+              <Code>{command.command}</Code>
             </li>
           ))}
         </ul>

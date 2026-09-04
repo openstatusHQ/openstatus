@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, Copy, type IconType, More, Delete } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,13 +26,6 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import type { DropdownMenuContentProps } from "@radix-ui/react-dropdown-menu";
 import { isTRPCClientError } from "@trpc/client";
-import {
-  Check,
-  Copy,
-  type LucideIcon,
-  MoreHorizontal,
-  Trash2,
-} from "lucide-react";
 import type * as React from "react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -42,7 +36,7 @@ interface QuickActionsProps extends React.ComponentProps<typeof Button> {
   actions?: {
     id: string;
     label: string;
-    icon: LucideIcon;
+    icon: IconType;
     variant: "default" | "destructive";
     onClick?: () => Promise<void> | void;
   }[];
@@ -52,6 +46,7 @@ interface QuickActionsProps extends React.ComponentProps<typeof Button> {
      * If omitted, no type-to-confirm step is shown.
      */
     confirmationValue?: string;
+    description?: React.ReactNode;
     submitAction?: () => Promise<void>;
   };
 }
@@ -94,8 +89,14 @@ export function QuickActions({
     });
   };
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    // Reset the input value when dialog state changes
+    setValue("");
+  };
+
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           {children ?? (
@@ -105,7 +106,7 @@ export function QuickActions({
               className={className ?? "data-[state=open]:bg-accent h-7 w-7"}
               {...props}
             >
-              <MoreHorizontal />
+              <More />
             </Button>
           )}
         </DropdownMenuTrigger>
@@ -136,7 +137,7 @@ export function QuickActions({
               {actions?.length ? <DropdownMenuSeparator /> : null}
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem variant="destructive">
-                  <Trash2 className="text-muted-foreground" />
+                  <Delete className="text-muted-foreground" />
                   Delete
                 </DropdownMenuItem>
               </AlertDialogTrigger>
@@ -158,8 +159,8 @@ export function QuickActions({
               : "Are you sure?"}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently remove the entry
-            from the database.
+            {deleteAction?.description ??
+              "This action cannot be undone. This will permanently remove the entry from the database."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {deleteAction?.confirmationValue ? (

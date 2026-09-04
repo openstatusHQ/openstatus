@@ -13,7 +13,7 @@ description: "Set up monitoring from your own infrastructure using Docker-based 
 
 In this guide, you'll set up a **private location** — a monitoring probe running on your own infrastructure. This lets you monitor internal applications, private APIs, and network resources behind your firewall without exposing them to the public internet.
 
-<Aside type="caution">Private locations are currently in **beta**. Some features like incident creation and public status page support are not yet available for private locations.</Aside>
+<Aside type="caution">Private locations are currently in **beta**.</Aside>
 
 For background on when to use a private location and how the connection works, see [Understanding private locations](/docs/concept/private-locations).
 
@@ -36,8 +36,8 @@ Run the monitoring probe on your server using Docker:
 docker run -d \
   --name openstatus-probe \
   --restart unless-stopped \
-  -e OPENSTATUS_TOKEN=<your-token> \
-  ghcr.io/openstatushq/probe:latest
+  -e OPENSTATUS_KEY=<your-token> \
+  ghcr.io/openstatushq/private-location:latest
 ```
 
 Replace `<your-token>` with the token from Step 1.
@@ -51,8 +51,8 @@ docker ps --filter name=openstatus-probe
 You should see the container listed with a status of `Up`:
 
 ```
-CONTAINER ID   IMAGE                              STATUS         NAMES
-abc123         ghcr.io/openstatushq/probe:latest  Up 2 minutes   openstatus-probe
+CONTAINER ID   IMAGE                                          STATUS         NAMES
+abc123         ghcr.io/openstatushq/private-location:latest   Up 2 minutes   openstatus-probe
 ```
 
 ## Step 3: assign monitors to your private location
@@ -69,10 +69,6 @@ abc123         ghcr.io/openstatushq/probe:latest  Up 2 minutes   openstatus-prob
 - Deployed a monitoring probe on your own infrastructure
 - Assigned monitors to check from your private location
 
-## Current limitations
-
-- Incidents are **not yet created** for monitors running via private locations. Continue using openstatus public regions if you need alerting.
-- Public monitors on status pages **do not yet support** private locations.
 
 ## Troubleshooting
 
@@ -87,13 +83,14 @@ docker logs openstatus-probe
 Common causes:
 
 - **Invalid token** — double-check the token value; ensure no extra spaces or newlines.
-- **Network issues** — ensure the container can reach `api.openstatus.dev` on port 443.
+- **Wrong variable name** — the probe reads `OPENSTATUS_KEY`. `OPENSTATUS_TOKEN` is ignored, so the probe starts unauthenticated and fetches no monitors.
+- **Network issues** — ensure the container can reach `openstatus-private-location.fly.dev` on port 443.
 
 ### No data appearing in the dashboard
 
 1. Verify the container is running: `docker ps --filter name=openstatus-probe`
 2. Check that you've assigned at least one monitor to the private location
-3. Wait 2-3 minutes — there may be a short delay before the first check runs
+3. Wait for the probe to pick up the change. It fetches its monitor list on startup and then every 10 minutes, so a monitor assigned after the probe started can take that long to appear. Restart the container to apply it immediately.
 
 ### Container can't reach internal services
 
@@ -104,8 +101,8 @@ docker run -d \
   --name openstatus-probe \
   --restart unless-stopped \
   --network host \
-  -e OPENSTATUS_TOKEN=<your-token> \
-  ghcr.io/openstatushq/probe:latest
+  -e OPENSTATUS_KEY=<your-token> \
+  ghcr.io/openstatushq/private-location:latest
 ```
 
 ## What's next

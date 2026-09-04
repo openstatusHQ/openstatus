@@ -150,3 +150,35 @@ Watch a full migration from Atlassian Statuspage to openstatus in real time.
 - [Blog: Import from Statuspage, Betterstack, and Instatus](/blog/import-from-statuspage-betterstack-instatus)
 - [Docs: How to Import a Status Page](https://www.openstatus.dev/docs/guides/how-to-import-status-page)
 - [Top Five Atlassian Statuspage Alternatives](/guides/top-five-atlassian-statuspage-alternatives)
+
+## Frequently asked questions
+
+<Details summary="How long does it take to migrate from Statuspage to openstatus?">
+
+The import itself takes under 2 minutes. You'll need your Statuspage API key and optionally your Page ID if you have multiple pages.
+
+</Details>
+
+<Details summary="Will I lose any data when migrating from Statuspage?">
+
+No. Openstatus imports your components, component groups, incidents (with all updates), maintenances, and email subscribers. SMS and Slack subscribers are not supported — you'll see a warning during preview.
+
+</Details>
+
+<Details summary="Can I preview the import before committing?">
+
+Yes. The importer shows a full preview of what will be imported — including counts per resource type and any warnings — before you confirm.
+
+</Details>
+
+<Details summary="Does openstatus import my Statuspage monitors?">
+
+Atlassian Statuspage doesn't expose monitor configurations via their API, so components are imported as static components. You can connect openstatus monitors to them after import.
+
+</Details>
+
+<Details summary="Can I run the import multiple times?">
+
+Components, component groups, and subscribers are deduplicated by name — the importer skips existing resources. However, incidents and maintenances are always created as new entries, so re-running the import will produce duplicates for those.
+
+</Details>

@@ -134,7 +134,7 @@ export const docsNav: DocsNavSection[] = [
       },
       {
         slug: "guides/how-to-monitor-mcp-server",
-        label: "How to Monitor Your Model Context Provider (MCP) Server",
+        label: "How to Monitor an MCP Server",
       },
       {
         slug: "guides/how-to-run-synthetic-test-github-action",
@@ -167,6 +167,10 @@ export const docsNav: DocsNavSection[] = [
       {
         slug: "guides/how-to-deploy-probes-cloudflare-containers",
         label: "How to Deploy a Private Probe on Cloudflare Containers",
+      },
+      {
+        slug: "guides/how-to-set-up-saml-sso",
+        label: "How to Set Up SAML Single Sign-On",
       },
       {
         slug: "guides/self-hosting-openstatus",
@@ -238,7 +242,9 @@ export const docsNav: DocsNavSection[] = [
       { slug: "reference/cli-reference", label: "CLI Reference" },
       { slug: "reference/mcp-server", label: "MCP Server" },
       { slug: "reference/dns-monitor", label: "DNS Monitor Reference" },
+      { slug: "reference/grpc-monitor", label: "gRPC Monitor Reference" },
       { slug: "reference/http-monitor", label: "HTTP Monitor Reference" },
+      { slug: "reference/icmp-monitor", label: "ICMP Monitor Reference" },
       { slug: "reference/incident", label: "Incident Reference" },
       { slug: "reference/tcp-monitor", label: "TCP Monitor Reference" },
       {

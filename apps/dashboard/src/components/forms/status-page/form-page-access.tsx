@@ -1,6 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  ApiKey,
+  Lock,
+  Unlock,
+  Restricted,
+  ShieldUser,
+} from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -19,7 +26,6 @@ import {
 import { Switch } from "@openstatus/ui/components/ui/switch";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { Key, Lock, LockOpen, ShieldAlert, ShieldUser } from "lucide-react";
 import { useTransition } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -157,8 +163,8 @@ export function FormPageAccess({
                       className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                     >
                       {[
-                        { value: "public", icon: LockOpen, label: "Public" },
-                        { value: "password", icon: Key, label: "Password" },
+                        { value: "public", icon: Unlock, label: "Public" },
+                        { value: "password", icon: ApiKey, label: "Password" },
                         {
                           value: "email-domain",
                           icon: ShieldUser,
@@ -166,7 +172,7 @@ export function FormPageAccess({
                         },
                         {
                           value: "ip-restriction",
-                          icon: ShieldAlert,
+                          icon: Restricted,
                           label: "IP Restriction",
                         },
                       ].map((type) => {

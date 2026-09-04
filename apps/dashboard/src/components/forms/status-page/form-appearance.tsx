@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowUpRight, System, Dark, Light } from "@openstatus/icons";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -18,7 +19,6 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { isTRPCClientError } from "@trpc/client";
-import { ArrowUpRight, Laptop, Moon, Sun } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -112,19 +112,19 @@ export function FormAppearance({
                     <SelectContent>
                       <SelectItem value="light">
                         <div className="flex items-center gap-2">
-                          <Sun className="h-4 w-4" />
+                          <Light className="h-4 w-4" />
                           <span>Light</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="dark">
                         <div className="flex items-center gap-2">
-                          <Moon className="h-4 w-4" />
+                          <Dark className="h-4 w-4" />
                           <span>Dark</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="system">
                         <div className="flex items-center gap-2">
-                          <Laptop className="h-4 w-4" />
+                          <System className="h-4 w-4" />
                           <span>System</span>
                         </div>
                       </SelectItem>

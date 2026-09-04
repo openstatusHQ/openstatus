@@ -12,10 +12,17 @@ allowBuilds:
   "@tailwindcss/oxide": true
   core-js-pure: true
   esbuild: true
+  # Optional native accelerator for msgpackr (pulled in by effect). msgpackr
+  # falls back to its pure-JS path without it, so skip the native build.
+  msgpackr-extract: false
   msw: true
   protobufjs: true
   sharp: true
 autoInstallPeers: true
+# `turbo` is deliberately pinned literally in package.json rather than listed
+# here: Vercel can't read a version through `catalog:`, and on failing to infer
+# it disables corepack and falls back to pnpm 9 — which ignores the `overrides`
+# above and fails the frozen install.
 catalog:
   "@ai-sdk/anthropic": 1.2.12
   "@ai-sdk/openai-compatible": 2.0.54
@@ -121,6 +128,7 @@ catalog:
   "@upstash/qstash": 2.11.0
   "@upstash/redis": 1.38.0
   "@vercel/blob": 0.23.4
+  "@workos-inc/node": 10.8.0
   ai: 6.0.188
   astro: 5.18.1
   bcryptjs: 3.0.3
@@ -135,7 +143,7 @@ catalog:
   drizzle-kit: 0.31.10
   drizzle-orm: 0.45.2
   drizzle-zod: 0.8.3
-  effect: 3.21.2
+  effect: 4.0.0-rc.112
   feed: 4.2.2
   gray-matter: 4.0.3
   hono: 4.12.21
@@ -148,7 +156,7 @@ catalog:
   lucide-react: 0.525.0
   nanoid: 5.1.11
   nanoid-dictionary: 5.0.0
-  next: 16.2.6
+  next: 16.3.0
   next-auth: 5.0.0-beta.31
   next-intl: 4.12.0
   next-mdx-remote: 6.0.0

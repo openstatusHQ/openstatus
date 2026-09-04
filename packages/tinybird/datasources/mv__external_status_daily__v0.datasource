@@ -1,4 +1,3 @@
-# Data Source created from Pipe 'mv__external_status_daily__v0'
 
 SCHEMA >
     `day` Date,

@@ -6,8 +6,10 @@ import { auth } from "./lib/auth";
 import { resolveClientIp } from "./lib/http/client-ip";
 import { createProtectedCookieKey } from "./lib/protected";
 import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override";
+import { applyPageSlugPrefix } from "./lib/proxy/apply-page-slug-prefix";
 import { composePageAction } from "./lib/proxy/compose-page-action";
 import { detectMarkdown } from "./lib/proxy/detect-markdown";
+import { resolveUnresolvedHostAction } from "./lib/proxy/resolve-unresolved-host-action";
 import { sanitizeRedirectParam } from "./lib/proxy/sanitize-redirect-param";
 import { resolveRoute } from "./lib/resolve-route";
 
@@ -16,10 +18,31 @@ const isSelfHosted = process.env.SELF_HOST === "true";
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
   const passthroughResponse = NextResponse.next();
+
   // HTML and markdown share the same URL (negotiated by Accept) — tell shared
   // caches to key on it so a markdown variant is never served to a browser.
   passthroughResponse.headers.set("Vary", "Accept");
   const host = req.headers.get("x-forwarded-host");
+
+  // HTML served via internal rewrite shares its URL with the markdown variant —
+  // carry the same Vary as the passthrough so caches don't cross them.
+  const rewriteWithVary = (target: URL) => {
+    const response = NextResponse.rewrite(target);
+    response.headers.set("Vary", "Accept");
+    return response;
+  };
+
+  // `/` is the theme explorer, so a host that resolves to no page must 404
+  // rather than fall through to it.
+  const unresolvedHostResponse = () => {
+    const action = resolveUnresolvedHostAction({
+      host,
+      urlHost: url.host,
+      requestUrl: req.url,
+    });
+    if (action.type !== "rewrite") return passthroughResponse;
+    return rewriteWithVary(action.url);
+  };
 
   // Strip a `.md` suffix before route resolution so path-based markdown
   // (`/foo/en/monitors/123.md`) parses slug/locale correctly.
@@ -35,7 +58,7 @@ export default auth(async (req) => {
   });
 
   if (!initialRoute) {
-    return passthroughResponse;
+    return unresolvedHostResponse();
   }
 
   // Markdown requests bypass the proxy's DB lookup and gate chain: the route is
@@ -62,12 +85,16 @@ export default auth(async (req) => {
 
   const validation = selectPageSchema.safeParse(query);
 
+  // No page for this host/slug — never fall through to the theme explorer.
   if (!validation.success) {
-    return passthroughResponse;
+    return unresolvedHostResponse();
   }
 
   const _page = validation.data;
-  const route = applyPageLocaleOverride(initialRoute, _page);
+  const route = applyPageSlugPrefix(
+    applyPageLocaleOverride(initialRoute, _page),
+    _page,
+  );
 
   const clientIp = resolveClientIp(req.headers);
 
@@ -110,13 +137,8 @@ export default auth(async (req) => {
   switch (action.type) {
     case "redirect":
       return NextResponse.redirect(action.url);
-    case "rewrite": {
-      // HTML served via internal rewrite shares its URL with the markdown
-      // variant — carry the same Vary so caches don't cross them.
-      const rewriteResponse = NextResponse.rewrite(action.url);
-      rewriteResponse.headers.set("Vary", "Accept");
-      return rewriteResponse;
-    }
+    case "rewrite":
+      return rewriteWithVary(action.url);
     case "passthrough":
       return passthroughResponse;
   }

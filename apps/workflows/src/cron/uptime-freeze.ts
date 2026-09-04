@@ -11,12 +11,18 @@ import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 
 const logger = getLogger(["workflow", "uptime-freeze"]);
 
-const tb = new OSTinybird(env().TINY_BIRD_API_KEY);
+const tb = new OSTinybird({
+  token: env().TINY_BIRD_API_KEY,
+  baseUrl: env().TINYBIRD_URL,
+  noop: env().TINYBIRD_NOOP,
+});
 
 const pipes: UptimeFreezePipes = {
   http: tb.httpStatus45d,
   tcp: tb.tcpStatus45d,
   dns: tb.dnsStatus45d,
+  icmp: tb.icmpStatus45d,
+  grpc: tb.grpcStatus45d,
 };
 
 export async function handleUptimeFreezeCron(c: Context) {
