@@ -1,5 +1,7 @@
-import { AuthError } from "@auth/core/errors";
 import type { LoggerInstance } from "@auth/core/types";
+// Import from next-auth, not @auth/core: guarantees the same class next-auth
+// throws, even if the catalog and next-auth pin different @auth/core versions.
+import { AuthError } from "next-auth";
 
 /**
  * Auth.js' default logger, minus `UnknownAction`: scanners probing
