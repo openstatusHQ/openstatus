@@ -73,8 +73,8 @@ export class EmailClient {
     try {
       const html = await render(<FollowUpEmail />);
       const result = await this.client.emails.send({
-        from: `Thibault Le Ouay Ducasse <${env.EMAIL_FROM_WELCOME}>`,
-        replyTo: `Thibault Le Ouay Ducasse <${env.EMAIL_FROM_FEEDBACK}>`,
+        from: `${env.EMAIL_FROM_WELCOME_NAME} <${env.EMAIL_FROM_WELCOME}>`,
+        replyTo: `${env.EMAIL_FROM_FEEDBACK_NAME} <${env.EMAIL_FROM_FEEDBACK}>`,
         subject: "How's it going with OpenStatus?",
         to: req.to,
         html,
@@ -100,7 +100,7 @@ export class EmailClient {
     const html = await render(<FollowUpEmail />);
     const result = await this.client.batch.send(
       req.to.map((subscriber) => ({
-        from: `Thibault Le Ouay Ducasse <${env.EMAIL_FROM_FEEDBACK}>`,
+        from: `${env.EMAIL_FROM_FEEDBACK_NAME} <${env.EMAIL_FROM_FEEDBACK}>`,
         subject: "How's it going with OpenStatus?",
         to: subscriber,
         html,
@@ -131,8 +131,8 @@ export class EmailClient {
     try {
       const html = await render(<SlackFeedbackEmail />);
       const result = await this.client.emails.send({
-        from: `Thibault Le Ouay Ducasse <${env.EMAIL_FROM_FEEDBACK}>`,
-        replyTo: `Thibault Le Ouay Ducasse <${env.EMAIL_FROM_FEEDBACK}>`,
+        from: `${env.EMAIL_FROM_FEEDBACK_NAME} <${env.EMAIL_FROM_FEEDBACK}>`,
+        replyTo: `${env.EMAIL_FROM_FEEDBACK_NAME} <${env.EMAIL_FROM_FEEDBACK}>`,
         subject: "How's the Slack app working for you?",
         to: req.to,
         html,
@@ -158,7 +158,7 @@ export class EmailClient {
     const html = await render(<SlackFeedbackEmail />);
     const result = await this.client.batch.send(
       req.to.map((subscriber) => ({
-        from: `Thibault Le Ouay Ducasse <${env.EMAIL_FROM_FEEDBACK}>`,
+        from: `${env.EMAIL_FROM_FEEDBACK_NAME} <${env.EMAIL_FROM_FEEDBACK}>`,
         subject: "How's the Slack app working for you?",
         to: subscriber,
         html,
@@ -266,9 +266,9 @@ export class EmailClient {
     try {
       const html = await render(<TeamInvitationEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `${req.workspaceName ?? "OpenStatus"} <${env.EMAIL_FROM}>`,
+        from: `${req.workspaceName ?? env.EMAIL_FROM_NAME} <${env.EMAIL_FROM}>`,
         subject: `You've been invited to join ${
-          req.workspaceName ?? "OpenStatus"
+          req.workspaceName ?? env.EMAIL_FROM_NAME
         }`,
         to: req.to,
         html,
@@ -295,7 +295,7 @@ export class EmailClient {
       // const html = await render(<MonitorAlertEmail {...req} />);
       const html = monitorAlertEmail(req);
       const result = await this.client.emails.send({
-        from: `OpenStatus <${env.EMAIL_FROM}>`,
+        from: `${env.EMAIL_FROM_NAME} <${env.EMAIL_FROM}>`,
         subject: `${req.name}: ${req.type.toUpperCase()}`,
         to: req.to,
         html,
@@ -483,7 +483,7 @@ export class EmailClient {
       );
       const result = await this.client.batch.send(
         req.to.map((to) => ({
-          from: `OpenStatus <${env.EMAIL_FROM}>`,
+          from: `${env.EMAIL_FROM_NAME} <${env.EMAIL_FROM}>`,
           subject,
           to,
           html,
