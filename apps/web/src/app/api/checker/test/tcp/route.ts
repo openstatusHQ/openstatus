@@ -77,11 +77,9 @@ async function checkTCP(url: string, region: Region) {
 
   // A timeout / unreachable target is an expected outcome, not a bug — throw so
   // the caller returns 400, but the catch keeps it out of Sentry. A parse miss
-  // here may also be checker schema drift, so surface it outside production.
+  // here may also be checker schema drift, so warn so it stays observable.
   if (!data.success) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("Unexpected TCP checker response shape:", json);
-    }
+    console.warn("Unexpected TCP checker response shape:", json);
     throw new TargetUnreachableError(data.error.message);
   }
 

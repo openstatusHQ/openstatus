@@ -173,7 +173,14 @@ export function Form({
           clearTimeout(timeoutId);
 
           const reader = response?.body?.getReader();
-          if (!reader) return;
+          if (!reader) {
+            toast.error("Failed to read response", {
+              id: toastId,
+              description: "Please try again.",
+              className: "text-destructive!",
+            });
+            return;
+          }
 
           const decoder = new TextDecoder();
           let done = false;

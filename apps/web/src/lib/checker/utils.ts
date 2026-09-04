@@ -262,10 +262,9 @@ export async function checkRegion(
 
   if (!data.success) {
     // Neither the success nor the error shape matched — likely checker schema
-    // drift rather than an unreachable target. Surface it so it isn't lost.
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("Unexpected checker response shape:", json);
-    }
+    // drift rather than an unreachable target. Warn (not error) so it stays
+    // observable in production without paging Sentry.
+    console.warn("Unexpected checker response shape:", json);
     throw new TargetUnreachableError(data.error.message);
   }
 
