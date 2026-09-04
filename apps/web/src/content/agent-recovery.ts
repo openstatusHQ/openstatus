@@ -17,9 +17,12 @@ export function notFoundMarkdown(pathname: string): string {
   const links = AGENT_RECOVERY_LINKS.map(
     ([title, href]) => `- [${title}](${BASE}${href})`,
   ).join("\n");
+  // The path is attacker-chosen and lands in a code span an agent reads:
+  // percent-encoding keeps a backtick or newline from closing it and injecting
+  // markdown of its own. `encodeURI` leaves `/` readable.
   return `# 404 — Not Found
 
-No page exists at \`${pathname}\` on openstatus.dev.
+No page exists at \`${encodeURI(pathname)}\` on openstatus.dev.
 
 ## Where to look next
 

@@ -91,6 +91,12 @@ describe("MCP transport", () => {
     expect(body.error?.code).toBe(-32601);
   });
 
+  test("a present but empty key is a 401, not the public surface", async () => {
+    const app = makeApp();
+    const res = await app.fetch(jsonRpc({ method: "resources/list" }, ""));
+    expect(res.status).toBe(401);
+  });
+
   test("resources/list is also served to an authenticated key", async () => {
     const app = makeApp();
     const res = await app.fetch(jsonRpc({ method: "resources/list" }));

@@ -209,20 +209,23 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return {
-      // `/openapi.json` is the path agents probe for an API description, and
-      // they probe it on the site they were pointed at. The spec is generated
-      // in apps/server, so proxy rather than keep a second copy in sync.
-      afterFiles: [
+      beforeFiles: [
+        // `/openapi.json` is the path agents probe for an API description, and
+        // they probe it on the site they were pointed at. The spec is generated
+        // in apps/server, so proxy rather than keep a second copy in sync.
+        // Host-scoped and ahead of the status-page rules below: those catch
+        // every path on any host once `sp_mode=new` is set, and a customer's
+        // custom domain has no business serving the openstatus API spec.
         {
           source: "/openapi.json",
+          has: [{ type: "host", value: "(www\\.)?openstatus\\.dev" }],
           destination: "https://api.openstatus.dev/openapi.json",
         },
         {
           source: "/openapi.yaml",
+          has: [{ type: "host", value: "(www\\.)?openstatus\\.dev" }],
           destination: "https://api.openstatus.dev/openapi.yaml",
         },
-      ],
-      beforeFiles: [
         {
           source: "/status-page/themes/:path*",
           destination: "https://www.stpg.dev/:path*",

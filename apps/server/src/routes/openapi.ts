@@ -1,11 +1,10 @@
 import { Hono } from "hono";
 
 import openapiV1Json from "../../static/openapi-v1.json" with { type: "json" };
+// Generated alongside openapi.json; embedded rather than read from disk because
+// `deno bundle` flattens src/ and a runtime path would resolve from the bundle.
+import openapiYaml from "../../static/openapi-yaml";
 import openapiJson from "../../static/openapi.json" with { type: "json" };
-
-const openapiYaml = await Deno.readTextFile(
-  new URL("../../static/openapi.yaml", import.meta.url),
-);
 
 // Serialized once: the documents are ~320 KB and never change at runtime.
 const openapiJsonBody = JSON.stringify(openapiJson);

@@ -29,7 +29,10 @@ async function optionalAuthMiddleware(
   c: Context<{ Variables: Variables }, "/*">,
   next: Next,
 ) {
-  if (!c.req.header("x-openstatus-key")) return next();
+  // `=== undefined` rather than a truthiness check: a client that sends the
+  // header with an empty value is misconfigured, not anonymous, and should be
+  // told so instead of silently dropping to the public surface.
+  if (c.req.header("x-openstatus-key") === undefined) return next();
   return authMiddleware(c, next);
 }
 

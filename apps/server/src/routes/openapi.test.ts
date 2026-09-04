@@ -3,6 +3,7 @@ import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
 import { parse as parseYaml } from "jsr:@std/yaml@^1.0.9";
 
+import openapiYaml from "../../static/openapi-yaml";
 import openapiJson from "../../static/openapi.json" with { type: "json" };
 import { openapiRoute } from "./openapi";
 
@@ -16,6 +17,14 @@ describe("OpenAPI documents", () => {
       ),
     );
     expect(JSON.parse(JSON.stringify(openapiJson))).toEqual(yaml);
+  });
+
+  test("the embedded YAML module matches openapi.yaml on disk", async () => {
+    expect(openapiYaml).toBe(
+      await Deno.readTextFile(
+        new URL("../../static/openapi.yaml", import.meta.url),
+      ),
+    );
   });
 
   test("declares the production server so agents can resolve paths", () => {
