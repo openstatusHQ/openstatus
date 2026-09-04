@@ -19,6 +19,7 @@ import type { StatusReportProps } from "../emails/status-report";
 import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
 import { monitorAlertEmail } from "../hotfix/monitor-alert";
+import { env } from "./env";
 
 export function statusReportSubject(req: {
   status: StatusReportProps["status"];
@@ -72,8 +73,8 @@ export class EmailClient {
     try {
       const html = await render(<FollowUpEmail />);
       const result = await this.client.emails.send({
-        from: "Thibault Le Ouay Ducasse <welcome@openstatus.dev>",
-        replyTo: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        from: `Thibault Le Ouay Ducasse <${env.EMAIL_FROM_WELCOME}>`,
+        replyTo: `Thibault Le Ouay Ducasse <${env.EMAIL_FROM_FEEDBACK}>`,
         subject: "How's it going with OpenStatus?",
         to: req.to,
         html,
@@ -99,7 +100,7 @@ export class EmailClient {
     const html = await render(<FollowUpEmail />);
     const result = await this.client.batch.send(
       req.to.map((subscriber) => ({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        from: `Thibault Le Ouay Ducasse <${env.EMAIL_FROM_FEEDBACK}>`,
         subject: "How's it going with OpenStatus?",
         to: subscriber,
         html,
@@ -130,8 +131,8 @@ export class EmailClient {
     try {
       const html = await render(<SlackFeedbackEmail />);
       const result = await this.client.emails.send({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-        replyTo: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        from: `Thibault Le Ouay Ducasse <${env.EMAIL_FROM_FEEDBACK}>`,
+        replyTo: `Thibault Le Ouay Ducasse <${env.EMAIL_FROM_FEEDBACK}>`,
         subject: "How's the Slack app working for you?",
         to: req.to,
         html,
@@ -157,7 +158,7 @@ export class EmailClient {
     const html = await render(<SlackFeedbackEmail />);
     const result = await this.client.batch.send(
       req.to.map((subscriber) => ({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        from: `Thibault Le Ouay Ducasse <${env.EMAIL_FROM_FEEDBACK}>`,
         subject: "How's the Slack app working for you?",
         to: subscriber,
         html,
@@ -218,7 +219,7 @@ export class EmailClient {
               const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
-                from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
+                from: `${req.pageTitle} <${env.EMAIL_FROM}>`,
                 subject: statusReportSubject(req),
                 to: subscriber.email,
                 react: (
@@ -265,9 +266,7 @@ export class EmailClient {
     try {
       const html = await render(<TeamInvitationEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `${
-          req.workspaceName ?? "OpenStatus"
-        } <notifications@notifications.openstatus.dev>`,
+        from: `${req.workspaceName ?? "OpenStatus"} <${env.EMAIL_FROM}>`,
         subject: `You've been invited to join ${
           req.workspaceName ?? "OpenStatus"
         }`,
@@ -296,7 +295,7 @@ export class EmailClient {
       // const html = await render(<MonitorAlertEmail {...req} />);
       const html = monitorAlertEmail(req);
       const result = await this.client.emails.send({
-        from: "OpenStatus <notifications@notifications.openstatus.dev>",
+        from: `OpenStatus <${env.EMAIL_FROM}>`,
         subject: `${req.name}: ${req.type.toUpperCase()}`,
         to: req.to,
         html,
@@ -325,7 +324,7 @@ export class EmailClient {
     try {
       const html = await render(<PageSubscriptionEmail {...req} />);
       const result = await this.client.emails.send({
-        from: "Status Page <notifications@notifications.openstatus.dev>",
+        from: `Status Page <${env.EMAIL_FROM}>`,
         subject: `Confirm your subscription to ${req.page}`,
         to: req.to,
         html,
@@ -354,7 +353,7 @@ export class EmailClient {
     try {
       const html = await render(<StatusPageMagicLinkEmail {...req} />);
       const result = await this.client.emails.send({
-        from: "Status Page <notifications@notifications.openstatus.dev>",
+        from: `Status Page <${env.EMAIL_FROM}>`,
         subject: `Authenticate to ${req.page}`,
         to: req.to,
         html,
@@ -411,7 +410,7 @@ export class EmailClient {
               const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
-                from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
+                from: `${req.pageTitle} <${env.EMAIL_FROM}>`,
                 subject: `Scheduled Maintenance: ${req.maintenanceTitle}`,
                 to: subscriber.email,
                 react: (
@@ -484,7 +483,7 @@ export class EmailClient {
       );
       const result = await this.client.batch.send(
         req.to.map((to) => ({
-          from: "OpenStatus <notifications@notifications.openstatus.dev>",
+          from: `OpenStatus <${env.EMAIL_FROM}>`,
           subject,
           to,
           html,
