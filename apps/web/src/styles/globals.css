@@ -277,6 +277,17 @@
   @apply cursor-pointer font-medium text-foreground select-none;
 }
 
+/* A summary rendered as a heading (see Details `headingLevel`) is outline
+   semantics, not a visual step — inherit the summary's own type entirely so
+   the rendering is identical to a plain-text summary. */
+.prose details summary :is(h2, h3, h4) {
+  display: inline;
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
 .prose details summary:hover {
   @apply bg-muted;
 }

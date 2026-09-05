@@ -24,10 +24,10 @@ import { showRoutes } from "hono/dev";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 
-import openapiV1Json from "../static/openapi-v1.json" with { type: "json" };
 import { env } from "./env";
 import { handleError } from "./libs/errors";
 import { mcpRoute } from "./routes/mcp";
+import { openapiRoute } from "./routes/openapi";
 import { publicRoute } from "./routes/public";
 import { mountRpcRoutes } from "./routes/rpc";
 import { slackRoute } from "./routes/slack";
@@ -46,10 +46,6 @@ export const app = new Hono<Env>({
 
 const logger = getLogger("api-server");
 const otelLogger = getLogger("api-server-otel");
-
-const openapiYaml = await Deno.readTextFile(
-  new URL("../static/openapi.yaml", import.meta.url),
-);
 
 /**
  * Configure logging asynchronously without blocking module initialization.
@@ -222,14 +218,7 @@ app.get("/ping", (c) => {
   );
 });
 
-app.get("/openapi.yaml", (c) => {
-  return c.text(openapiYaml, 200, { "Content-Type": "application/yaml" });
-});
-app.get("/openapi-v1.json", (c) => {
-  return c.text(JSON.stringify(openapiV1Json), 200, {
-    "Content-Type": "application/json",
-  });
-});
+app.route("/", openapiRoute);
 
 app.get(
   "/openapi",
