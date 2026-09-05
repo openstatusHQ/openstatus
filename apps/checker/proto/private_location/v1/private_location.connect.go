@@ -44,6 +44,12 @@ const (
 	// PrivateLocationServiceIngestDNSProcedure is the fully-qualified name of the
 	// PrivateLocationService's IngestDNS RPC.
 	PrivateLocationServiceIngestDNSProcedure = "/private_location.v1.PrivateLocationService/IngestDNS"
+	// PrivateLocationServiceIngestICMPProcedure is the fully-qualified name of the
+	// PrivateLocationService's IngestICMP RPC.
+	PrivateLocationServiceIngestICMPProcedure = "/private_location.v1.PrivateLocationService/IngestICMP"
+	// PrivateLocationServiceIngestGRPCProcedure is the fully-qualified name of the
+	// PrivateLocationService's IngestGRPC RPC.
+	PrivateLocationServiceIngestGRPCProcedure = "/private_location.v1.PrivateLocationService/IngestGRPC"
 )
 
 // PrivateLocationServiceClient is a client for the private_location.v1.PrivateLocationService
@@ -53,6 +59,8 @@ type PrivateLocationServiceClient interface {
 	IngestTCP(context.Context, *connect.Request[IngestTCPRequest]) (*connect.Response[IngestTCPResponse], error)
 	IngestHTTP(context.Context, *connect.Request[IngestHTTPRequest]) (*connect.Response[IngestHTTPResponse], error)
 	IngestDNS(context.Context, *connect.Request[IngestDNSRequest]) (*connect.Response[IngestDNSResponse], error)
+	IngestICMP(context.Context, *connect.Request[IngestICMPRequest]) (*connect.Response[IngestICMPResponse], error)
+	IngestGRPC(context.Context, *connect.Request[IngestGRPCRequest]) (*connect.Response[IngestGRPCResponse], error)
 }
 
 // NewPrivateLocationServiceClient constructs a client for the
@@ -90,6 +98,18 @@ func NewPrivateLocationServiceClient(httpClient connect.HTTPClient, baseURL stri
 			connect.WithSchema(privateLocationServiceMethods.ByName("IngestDNS")),
 			connect.WithClientOptions(opts...),
 		),
+		ingestICMP: connect.NewClient[IngestICMPRequest, IngestICMPResponse](
+			httpClient,
+			baseURL+PrivateLocationServiceIngestICMPProcedure,
+			connect.WithSchema(privateLocationServiceMethods.ByName("IngestICMP")),
+			connect.WithClientOptions(opts...),
+		),
+		ingestGRPC: connect.NewClient[IngestGRPCRequest, IngestGRPCResponse](
+			httpClient,
+			baseURL+PrivateLocationServiceIngestGRPCProcedure,
+			connect.WithSchema(privateLocationServiceMethods.ByName("IngestGRPC")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -99,6 +119,8 @@ type privateLocationServiceClient struct {
 	ingestTCP  *connect.Client[IngestTCPRequest, IngestTCPResponse]
 	ingestHTTP *connect.Client[IngestHTTPRequest, IngestHTTPResponse]
 	ingestDNS  *connect.Client[IngestDNSRequest, IngestDNSResponse]
+	ingestICMP *connect.Client[IngestICMPRequest, IngestICMPResponse]
+	ingestGRPC *connect.Client[IngestGRPCRequest, IngestGRPCResponse]
 }
 
 // Monitors calls private_location.v1.PrivateLocationService.Monitors.
@@ -121,6 +143,16 @@ func (c *privateLocationServiceClient) IngestDNS(ctx context.Context, req *conne
 	return c.ingestDNS.CallUnary(ctx, req)
 }
 
+// IngestICMP calls private_location.v1.PrivateLocationService.IngestICMP.
+func (c *privateLocationServiceClient) IngestICMP(ctx context.Context, req *connect.Request[IngestICMPRequest]) (*connect.Response[IngestICMPResponse], error) {
+	return c.ingestICMP.CallUnary(ctx, req)
+}
+
+// IngestGRPC calls private_location.v1.PrivateLocationService.IngestGRPC.
+func (c *privateLocationServiceClient) IngestGRPC(ctx context.Context, req *connect.Request[IngestGRPCRequest]) (*connect.Response[IngestGRPCResponse], error) {
+	return c.ingestGRPC.CallUnary(ctx, req)
+}
+
 // PrivateLocationServiceHandler is an implementation of the
 // private_location.v1.PrivateLocationService service.
 type PrivateLocationServiceHandler interface {
@@ -128,6 +160,8 @@ type PrivateLocationServiceHandler interface {
 	IngestTCP(context.Context, *connect.Request[IngestTCPRequest]) (*connect.Response[IngestTCPResponse], error)
 	IngestHTTP(context.Context, *connect.Request[IngestHTTPRequest]) (*connect.Response[IngestHTTPResponse], error)
 	IngestDNS(context.Context, *connect.Request[IngestDNSRequest]) (*connect.Response[IngestDNSResponse], error)
+	IngestICMP(context.Context, *connect.Request[IngestICMPRequest]) (*connect.Response[IngestICMPResponse], error)
+	IngestGRPC(context.Context, *connect.Request[IngestGRPCRequest]) (*connect.Response[IngestGRPCResponse], error)
 }
 
 // NewPrivateLocationServiceHandler builds an HTTP handler from the service implementation. It
@@ -161,6 +195,18 @@ func NewPrivateLocationServiceHandler(svc PrivateLocationServiceHandler, opts ..
 		connect.WithSchema(privateLocationServiceMethods.ByName("IngestDNS")),
 		connect.WithHandlerOptions(opts...),
 	)
+	privateLocationServiceIngestICMPHandler := connect.NewUnaryHandler(
+		PrivateLocationServiceIngestICMPProcedure,
+		svc.IngestICMP,
+		connect.WithSchema(privateLocationServiceMethods.ByName("IngestICMP")),
+		connect.WithHandlerOptions(opts...),
+	)
+	privateLocationServiceIngestGRPCHandler := connect.NewUnaryHandler(
+		PrivateLocationServiceIngestGRPCProcedure,
+		svc.IngestGRPC,
+		connect.WithSchema(privateLocationServiceMethods.ByName("IngestGRPC")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/private_location.v1.PrivateLocationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PrivateLocationServiceMonitorsProcedure:
@@ -171,6 +217,10 @@ func NewPrivateLocationServiceHandler(svc PrivateLocationServiceHandler, opts ..
 			privateLocationServiceIngestHTTPHandler.ServeHTTP(w, r)
 		case PrivateLocationServiceIngestDNSProcedure:
 			privateLocationServiceIngestDNSHandler.ServeHTTP(w, r)
+		case PrivateLocationServiceIngestICMPProcedure:
+			privateLocationServiceIngestICMPHandler.ServeHTTP(w, r)
+		case PrivateLocationServiceIngestGRPCProcedure:
+			privateLocationServiceIngestGRPCHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -194,4 +244,12 @@ func (UnimplementedPrivateLocationServiceHandler) IngestHTTP(context.Context, *c
 
 func (UnimplementedPrivateLocationServiceHandler) IngestDNS(context.Context, *connect.Request[IngestDNSRequest]) (*connect.Response[IngestDNSResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("private_location.v1.PrivateLocationService.IngestDNS is not implemented"))
+}
+
+func (UnimplementedPrivateLocationServiceHandler) IngestICMP(context.Context, *connect.Request[IngestICMPRequest]) (*connect.Response[IngestICMPResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("private_location.v1.PrivateLocationService.IngestICMP is not implemented"))
+}
+
+func (UnimplementedPrivateLocationServiceHandler) IngestGRPC(context.Context, *connect.Request[IngestGRPCRequest]) (*connect.Response[IngestGRPCResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("private_location.v1.PrivateLocationService.IngestGRPC is not implemented"))
 }

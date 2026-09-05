@@ -1,27 +1,31 @@
 ---
-title: "How openstatus Compares to Other Status Page Tools"
-description: "A head-to-head comparison of openstatus vs. Atlassian Statuspage, Instatus, Betterstack, Datadog Status Page, and Status.io — features, pricing, monitoring, and developer experience."
+title: "Status Page Pricing Compared: Atlassian, Instatus, Better Stack, Datadog & openstatus"
+seo:
+  title: "Status Page Pricing Compared — Atlassian, Instatus, Better Stack & More"
+  description: "What a status page actually costs across Atlassian Statuspage, Instatus, Better Stack, Datadog and Status.io — list prices, per-seat charges, private-page add-ons and the cost of adding monitoring."
+description: "What a status page actually costs across the major providers — list prices, per-seat charges, private-page add-ons, and what you pay separately for monitoring."
 author: "openstatus"
 publishedAt: "2026-06-09"
-category: "alternative"
+updatedAt: "2026-08-26"
+category: "pricing"
 faq:
-  - question: "What makes openstatus different from other status page tools?"
-    answer: "openstatus is the only tool that combines built-in synthetic monitoring, monitoring-as-code via Terraform, native OpenTelemetry export, private locations, an MCP server for AI coding agents, unlimited team members, and the option to self-host as open-source. Most competitors cover one or two of these — none cover all of them."
-  - question: "Is openstatus a replacement for Atlassian Statuspage?"
-    answer: "Yes, for most use cases. openstatus covers the core incident communication workflows (components, incidents, maintenances, subscribers) and adds built-in monitoring, monitoring-as-code, and an MCP server that Atlassian Statuspage doesn't ship. The one area where Atlassian still leads is deep Jira/Opsgenie integration for teams already standardized on Atlassian tooling."
-  - question: "How does openstatus pricing compare?"
-    answer: "openstatus starts at $30/month with unlimited team members and monitoring included. That's typically cheaper than Atlassian Statuspage ($99/month for private pages), Status.io ($349/month for advanced features), or Betterstack once you add private-page and styling add-ons. Instatus has a comparable free tier but no monitoring."
-  - question: "Can I migrate my existing status page to openstatus?"
-    answer: "Yes. openstatus ships a one-click importer for Atlassian Statuspage and Instatus that moves components, component groups, incidents with full update history, maintenances, and email subscribers. For other tools, components and subscribers can be imported via CSV."
-  - question: "Is openstatus production-ready?"
-    answer: "Yes. openstatus powers status pages for teams across SaaS, fintech, and infrastructure companies, and runs synthetic checks from multiple regions globally. The hosted platform is fully managed, and the same codebase backs the self-hosted distribution."
+  - question: "How much does a status page cost?"
+    answer: "It ranges from free to $349/month depending on what you need. Free tiers exist at openstatus, Instatus and Better Stack but are limited to a public page and a handful of components. A private, branded page on a custom domain starts at $30/month with openstatus, $50/month with Instatus, $99/month with Atlassian Statuspage, and $349/month with Status.io. Per-seat charges and monitoring are extra almost everywhere except openstatus."
+  - question: "Why is Atlassian Statuspage so expensive?"
+    answer: "Three multipliers stack. The $29/month entry plan caps you at 100 subscribers and the price climbs as that audience grows. A private page needs the $99/month tier. Custom HTML and CSS only appear on the $399/month plan. Seats are billed on top at roughly $20 each, and because Statuspage ships no monitoring, you also pay a separate monitoring vendor to feed it."
+  - question: "Which status page provider is cheapest?"
+    answer: "For a public page with no private access and a small component count, the free tiers at openstatus, Instatus and Better Stack all cost nothing. Once you need a private page, a custom domain, more than a couple of seats, and monitoring behind it, openstatus at $30/month is usually the lowest total because seats are unlimited and monitoring is included rather than billed separately."
+  - question: "Does the price include uptime monitoring?"
+    answer: "Usually not. Atlassian Statuspage, Instatus and Status.io ship no monitoring at all, so the checks that drive your components come from a separate tool you pay for on top. Better Stack and Datadog include monitoring but bill it per seat or per run. openstatus includes monitoring from 28 regions in the base price."
+  - question: "What hidden costs should I watch for?"
+    answer: "Subscriber-count billing, which grows with your audience rather than your usage. Per-seat pricing, which punishes you for adding engineers to an incident workflow. Private-page and custom-styling add-ons billed per page per month. And the separate monitoring bill, which is the largest hidden cost on any status-page-only product."
 ---
 
-# How openstatus Compares to Other Status Page Tools
+# Status Page Pricing Compared
 
-If you're evaluating status page tools in 2026, the market is crowded: Atlassian Statuspage is the incumbent, Instatus is the design-forward newcomer, Betterstack is the all-in-one bundle, Datadog is the observability extension, and Status.io is the long-standing pure-play.
+Status page pricing is hard to compare because almost nobody charges for one thing. The headline number buys a public page; private pages, extra seats, custom styling and the monitoring that feeds the page are billed separately, and the mix differs at every vendor.
 
-This guide is the head-to-head: how **openstatus** stacks up against each of them on the dimensions that actually matter — monitoring, developer experience, pricing, and incident workflows.
+This guide puts the actual cost side by side across **Atlassian Statuspage, Instatus, Better Stack, Datadog Status Page, Status.io and openstatus** — list price, what each charges per seat, what a private page costs, and what you still have to buy elsewhere.
 
 ## TL;DR
 
@@ -36,7 +40,7 @@ openstatus is the only tool in this comparison that combines **all** of the foll
 
 Every other tool on this list is missing at least two of these. If those bullets describe what your team needs, the comparison is short. If you only need a small subset (e.g. just incident comms, or just a pretty page), some of the competitors are still credible — and we'll be honest about when.
 
-## At a Glance
+## What each provider costs
 
 | Feature | openstatus | Atlassian Statuspage | Instatus | Betterstack | Datadog | Status.io |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -52,7 +56,7 @@ Every other tool on this list is missing at least two of these. If those bullets
 
 Prices reflect publicly listed plans at time of writing and change frequently — always confirm with the vendor.
 
-## How openstatus Compares on Each Dimension
+## Where the cost actually comes from
 
 ### Monitoring depth
 
@@ -92,7 +96,7 @@ Datadog also ships MCP. None of the others do.
 
 **openstatus wins on**: developer workflows, version-controlled config, and AI agent integration.
 
-### Pricing at scale
+### The bill at scale
 
 openstatus is **$30/month with unlimited team members** and includes monitoring. Compare that to:
 
@@ -120,7 +124,7 @@ openstatus is the only tool here with an open-source codebase you can read, fork
 
 **openstatus wins on**: ownership and optionality.
 
-## openstatus vs. Each Competitor
+## Cost by provider
 
 ### openstatus vs. Atlassian Statuspage
 
@@ -156,7 +160,7 @@ Status.io is the long-standing pure-play: status communication and nothing else,
 
 **Pick openstatus if**: you want monitoring included, modern dev tooling, or aren't willing to jump to a $349/month tier for private pages. **Pick Status.io if**: you specifically want a tool that does one thing and is decoupled from the rest of your stack.
 
-## Where openstatus Isn't the Right Fit
+## When paying more is the right call
 
 Being honest: openstatus is not for every team.
 
@@ -193,32 +197,32 @@ If you need help along the way, feel free to join our [Discord community](https:
 
 ## Frequently asked questions
 
-<Details summary="What makes openstatus different from other status page tools?">
+<Details summary="How much does a status page cost?">
 
-openstatus is the only tool that combines built-in synthetic monitoring, monitoring-as-code via Terraform, native OpenTelemetry export, private locations, an MCP server for AI coding agents, unlimited team members, and the option to self-host as open-source. Most competitors cover one or two of these — none cover all of them.
-
-</Details>
-
-<Details summary="Is openstatus a replacement for Atlassian Statuspage?">
-
-Yes, for most use cases. openstatus covers the core incident communication workflows (components, incidents, maintenances, subscribers) and adds built-in monitoring, monitoring-as-code, and an MCP server that Atlassian Statuspage doesn't ship. The one area where Atlassian still leads is deep Jira/Opsgenie integration for teams already standardized on Atlassian tooling.
+It ranges from free to $349/month depending on what you need. Free tiers exist at openstatus, Instatus and Better Stack but are limited to a public page and a handful of components. A private, branded page on a custom domain starts at $30/month with openstatus, $50/month with Instatus, $99/month with Atlassian Statuspage, and $349/month with Status.io. Per-seat charges and monitoring are extra almost everywhere except openstatus.
 
 </Details>
 
-<Details summary="How does openstatus pricing compare?">
+<Details summary="Why is Atlassian Statuspage so expensive?">
 
-openstatus starts at $30/month with unlimited team members and monitoring included. That's typically cheaper than Atlassian Statuspage ($99/month for private pages), Status.io ($349/month for advanced features), or Betterstack once you add private-page and styling add-ons. Instatus has a comparable free tier but no monitoring.
-
-</Details>
-
-<Details summary="Can I migrate my existing status page to openstatus?">
-
-Yes. openstatus ships a one-click importer for Atlassian Statuspage and Instatus that moves components, component groups, incidents with full update history, maintenances, and email subscribers. For other tools, components and subscribers can be imported via CSV.
+Three multipliers stack. The $29/month entry plan caps you at 100 subscribers and the price climbs as that audience grows. A private page needs the $99/month tier. Custom HTML and CSS only appear on the $399/month plan. Seats are billed on top at roughly $20 each, and because Statuspage ships no monitoring, you also pay a separate monitoring vendor to feed it.
 
 </Details>
 
-<Details summary="Is openstatus production-ready?">
+<Details summary="Which status page provider is cheapest?">
 
-Yes. openstatus powers status pages for teams across SaaS, fintech, and infrastructure companies, and runs synthetic checks from multiple regions globally. The hosted platform is fully managed, and the same codebase backs the self-hosted distribution.
+For a public page with no private access and a small component count, the free tiers at openstatus, Instatus and Better Stack all cost nothing. Once you need a private page, a custom domain, more than a couple of seats, and monitoring behind it, openstatus at $30/month is usually the lowest total because seats are unlimited and monitoring is included rather than billed separately.
+
+</Details>
+
+<Details summary="Does the price include uptime monitoring?">
+
+Usually not. Atlassian Statuspage, Instatus and Status.io ship no monitoring at all, so the checks that drive your components come from a separate tool you pay for on top. Better Stack and Datadog include monitoring but bill it per seat or per run. openstatus includes monitoring from 28 regions in the base price.
+
+</Details>
+
+<Details summary="What hidden costs should I watch for?">
+
+Subscriber-count billing, which grows with your audience rather than your usage. Per-seat pricing, which punishes you for adding engineers to an incident workflow. Private-page and custom-styling add-ons billed per page per month. And the separate monitoring bill, which is the largest hidden cost on any status-page-only product.
 
 </Details>

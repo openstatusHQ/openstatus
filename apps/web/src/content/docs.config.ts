@@ -242,13 +242,15 @@ export const docsNav: DocsNavSection[] = [
       { slug: "reference/cli-reference", label: "CLI Reference" },
       { slug: "reference/mcp-server", label: "MCP Server" },
       { slug: "reference/dns-monitor", label: "DNS Monitor Reference" },
+      { slug: "reference/grpc-monitor", label: "gRPC Monitor Reference" },
       { slug: "reference/http-monitor", label: "HTTP Monitor Reference" },
-      { slug: "reference/incident", label: "Incident Reference" },
+      { slug: "reference/icmp-monitor", label: "ICMP Monitor Reference" },
       { slug: "reference/tcp-monitor", label: "TCP Monitor Reference" },
       {
         slug: "reference/notification",
         label: "Notification Channels Reference",
       },
+      { slug: "reference/incident", label: "Incident Reference" },
       { slug: "reference/location", label: "Location Reference" },
       {
         slug: "reference/private-location",

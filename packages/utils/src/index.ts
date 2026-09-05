@@ -6,6 +6,11 @@ export {
   type TcpPayload,
   DNSPayloadSchema,
   type DNSPayload,
+  icmpPayloadSchema,
+  grpcPayloadSchema,
+  GRPC_TLS_MODES,
+  type IcmpPayload,
+  type GrpcPayload,
 } from "./payloads";
 export {
   MONITOR_METHODS,

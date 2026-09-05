@@ -36,7 +36,7 @@ export function ChartBarUptimeLight({
   regions,
 }: {
   monitorId: string;
-  type: "http" | "tcp";
+  type: "http" | "tcp" | "dns" | "icmp" | "grpc";
   regions?: Region[];
 }) {
   const trpc = useTRPC();

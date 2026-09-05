@@ -7,12 +7,13 @@ import {
 } from "@openstatus/assertions";
 import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 import {
+  grpcTlsModes,
   monitorJobTypes,
   monitorMethods,
 } from "@openstatus/db/src/schema/monitors/constants";
 import { z } from "zod";
 
-export { monitorJobTypes, monitorMethods, monitorPeriodicity };
+export { grpcTlsModes, monitorJobTypes, monitorMethods, monitorPeriodicity };
 
 const headerPair = z.object({ key: z.string(), value: z.string() });
 const assertion = z.discriminatedUnion("type", [
@@ -37,7 +38,7 @@ const apiTimeoutMs = z.coerce.number().gte(0).lte(120_000);
  * + `30m`/`1m` respectively).
  */
 export const CreateMonitorInput = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
   jobType: z.enum(monitorJobTypes),
   url: z.string(),
   method: z.enum(monitorMethods),
@@ -56,6 +57,8 @@ export const CreateMonitorInput = z.object({
   degradedAfter: apiTimeoutMs.nullish(),
   retry: z.number().int().min(0).optional(),
   followRedirects: z.boolean().optional(),
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
   otelEndpoint: z.string().optional(),
   otelHeaders: z.array(headerPair).optional(),
 });
@@ -72,7 +75,7 @@ export type CreateMonitorInput = z.infer<typeof CreateMonitorInput>;
  */
 export const UpdateMonitorConfigInput = z.object({
   id: z.number().int(),
-  name: z.string().min(1).optional(),
+  name: z.string().trim().min(1).optional(),
   url: z.string().optional(),
   method: z.enum(monitorMethods).optional(),
   headers: z.array(headerPair).optional(),
@@ -87,6 +90,8 @@ export const UpdateMonitorConfigInput = z.object({
   degradedAfter: apiTimeoutMs.nullish(),
   retry: z.number().int().min(0).optional(),
   followRedirects: z.boolean().optional(),
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
   otelEndpoint: z.string().optional(),
   otelHeaders: z.array(headerPair).optional(),
 });
@@ -95,7 +100,7 @@ export type UpdateMonitorConfigInput = z.infer<typeof UpdateMonitorConfigInput>;
 /** Update the "general" monitor payload — name / endpoint / headers / assertions. */
 export const UpdateMonitorGeneralInput = z.object({
   id: z.number().int(),
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
   jobType: z.enum(monitorJobTypes),
   url: z.string(),
   method: z.enum(monitorMethods),
@@ -103,6 +108,10 @@ export const UpdateMonitorGeneralInput = z.object({
   body: z.string().optional(),
   assertions: z.array(assertion).default([]),
   active: z.boolean().default(true),
+  // gRPC-only fields. `undefined` leaves the stored value untouched so a
+  // caller that omits them (e.g. an HTTP monitor) never clears the column.
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
 });
 export type UpdateMonitorGeneralInput = z.infer<
   typeof UpdateMonitorGeneralInput
@@ -229,6 +238,51 @@ export const GetResponseLogInput = z.object({
   logId: z.string().min(1),
 });
 export type GetResponseLogInput = z.infer<typeof GetResponseLogInput>;
+
+/**
+ * Filters the v2 response-log pipes evaluate server-side. Every array is bounded:
+ * they are templated straight into the pipes' `IN (...)` lists and serialised
+ * into the request URL, so an unbounded one is caller-controlled work.
+ */
+export const ResponseLogFilters = z.object({
+  regions: z.array(z.string().max(64)).max(128).optional(),
+  status: z
+    .array(z.enum(["success", "error", "degraded"]))
+    .max(3)
+    .optional(),
+  trigger: z
+    .array(z.enum(["cron", "api"]))
+    .max(2)
+    .optional(),
+  // The pipes cast this list to `Int16`, matching the column: a value outside
+  // that range makes Tinybird fail the query rather than match nothing.
+  statusCodes: z.array(z.number().int().min(0).max(32_767)).max(100).optional(),
+  latencyMin: z.number().int().min(0).optional(),
+  latencyMax: z.number().int().min(0).optional(),
+});
+export type ResponseLogFilters = z.infer<typeof ResponseLogFilters>;
+
+export const ListResponseLogsInfiniteInput = ResponseLogFilters.extend({
+  monitorId: z.number().int(),
+  fromTimestamp: z.number().int().optional(),
+  toTimestamp: z.number().int().optional(),
+  /** `cronTimestamp` boundary of the previous page, exclusive. */
+  cursor: z.number().int().optional(),
+  direction: z.enum(["next", "prev"]).default("next"),
+  limit: z.number().int().min(1).max(100).default(50),
+});
+export type ListResponseLogsInfiniteInput = z.infer<
+  typeof ListResponseLogsInfiniteInput
+>;
+
+export const GetResponseLogFacetsInput = ResponseLogFilters.extend({
+  monitorId: z.number().int(),
+  fromTimestamp: z.number().int().optional(),
+  toTimestamp: z.number().int().optional(),
+});
+export type GetResponseLogFacetsInput = z.infer<
+  typeof GetResponseLogFacetsInput
+>;
 
 export const GetPrivateLocationIdsByMonitorInput = z.object({
   monitorIds: z.array(z.number().int()),

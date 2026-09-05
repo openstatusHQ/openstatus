@@ -19,7 +19,7 @@ export type GetWorkspaceByStripeIdInput = z.infer<
 >;
 
 export const UpdateWorkspaceNameInput = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
 });
 export type UpdateWorkspaceNameInput = z.infer<typeof UpdateWorkspaceNameInput>;
 

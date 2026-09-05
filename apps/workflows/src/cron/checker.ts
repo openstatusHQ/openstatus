@@ -28,10 +28,12 @@ import { regionDict } from "@openstatus/regions";
 import {
   type DNSPayloadSchema,
   type httpPayloadSchema,
+  type grpcPayloadSchema,
+  type icmpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
-import { Effect, Either, Schedule } from "effect";
+import { Effect, Result, Schedule } from "effect";
 import { z } from "zod";
 
 import { env } from "../env";
@@ -237,22 +239,22 @@ export async function sendCheckerTasks(
             times: 3,
             schedule: Schedule.exponential("1000 millis"),
           }),
-          Effect.either,
+          Effect.result,
         ),
       { concurrency: 100 },
     ),
   );
 
   for (const result of results) {
-    if (Either.isLeft(result)) {
+    if (Result.isFailure(result)) {
       logger.error("Task creation failed after retries", {
-        error_message: result.left.message,
+        error_message: result.failure.message,
       });
     }
   }
 
-  const success = results.filter(Either.isRight).length;
-  const failed = results.filter(Either.isLeft).length;
+  const success = results.filter(Result.isSuccess).length;
+  const failed = results.filter(Result.isFailure).length;
 
   logger.info("Completed cron job", {
     periodicity,
@@ -285,6 +287,8 @@ const createCronTask = async (
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
     | z.infer<typeof DNSPayloadSchema>
+    | z.infer<typeof icmpPayloadSchema>
+    | z.infer<typeof grpcPayloadSchema>
     | null = null;
 
   //
@@ -341,6 +345,49 @@ const createCronTask = async (
       cronTimestamp: timestamp,
       status: status,
       assertions: row.assertions ? JSON.parse(row.assertions) : null,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+      trigger: "cron",
+      otelConfig: row.otelEndpoint
+        ? {
+            endpoint: row.otelEndpoint,
+            headers: transformHeaders(row.otelHeaders),
+          }
+        : undefined,
+      retry: row.retry || 3,
+    };
+  }
+
+  if (row.jobType === "icmp") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      uri: row.url,
+      cronTimestamp: timestamp,
+      status: status,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+      trigger: "cron",
+      otelConfig: row.otelEndpoint
+        ? {
+            endpoint: row.otelEndpoint,
+            headers: transformHeaders(row.otelHeaders),
+          }
+        : undefined,
+      retry: row.retry || 3,
+    };
+  }
+
+  if (row.jobType === "grpc") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      uri: row.url,
+      service: row.grpcService ?? undefined,
+      tls: row.grpcTls ?? "tls",
+      headers: transformHeaders(row.headers),
+      cronTimestamp: timestamp,
+      status: status,
       degradedAfter: row.degradedAfter,
       timeout: row.timeout,
       trigger: "cron",

@@ -34,7 +34,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 export const schema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required"),
   description: z.string().optional(),
   expiresAt: z.string().optional(),
   // Single-value radio. The wire format on the create-key API is

@@ -55,6 +55,26 @@ describe("buildRootMessage", () => {
     );
   });
 
+  test("context line says Updated for reports and Scheduled for maintenance", () => {
+    const contextText = (root: ReturnType<typeof buildRootMessage>) =>
+      JSON.stringify(root.attachments[0]?.blocks);
+    expect(contextText(buildRootMessage(makeUpdate(), makeSub()))).toContain(
+      "Updated 2026-01-01T10:00:00.000Z",
+    );
+    const maintenance = buildRootMessage(
+      makeUpdate({
+        status: "maintenance",
+        updateId: undefined,
+        date: "2026-01-01T10:00:00.000Z - 2026-01-02T10:00:00.000Z",
+      }),
+      makeSub(),
+    );
+    expect(contextText(maintenance)).toContain(
+      "Scheduled 2026-01-01T10:00:00.000Z - 2026-01-02T10:00:00.000Z",
+    );
+    expect(contextText(maintenance)).not.toContain("Updated");
+  });
+
   test("uses the custom domain origin when present", () => {
     const root = buildRootMessage(
       makeUpdate(),

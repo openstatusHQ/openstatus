@@ -15,6 +15,8 @@ const (
 	DatasourceHTTP = "ping_response__v8"
 	DatasourceTCP  = "tcp_response__v0"
 	DatasourceDNS  = "dns_response__v0"
+	DatasourceICMP = "icmp_response__v0"
+	DatasourceGRPC = "grpc_response__v0"
 )
 
 func getBaseURL() string {

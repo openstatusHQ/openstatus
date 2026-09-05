@@ -14,7 +14,22 @@ const logger = getLogger("api-server");
 type RpcEventMapping = {
   event: EventProps;
   eventProps?: string[];
+  normalizeInput?: (message: unknown) => Record<string, unknown>;
 };
+
+// Create*Monitor requests nest the config under `monitor`, so top-level
+// extraction yields nothing; ICMP and gRPC name their target `uri` and none of
+// them carries jobType on the wire.
+function monitorCreateInput(jobType: string) {
+  return (message: unknown): Record<string, unknown> => {
+    if (typeof message !== "object" || message === null) return {};
+    const { monitor } = message as {
+      monitor?: Record<string, unknown> | undefined;
+    };
+    if (!monitor) return {};
+    return { ...monitor, url: monitor.uri ?? monitor.url, jobType };
+  };
+}
 
 /**
  * Mapping from "ServiceTypeName/MethodName" to OpenPanel event + optional props.
@@ -26,14 +41,27 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
   "openstatus.monitor.v1.MonitorService/CreateHTTPMonitor": {
     event: Events.CreateMonitor,
     eventProps: ["url", "jobType"],
+    normalizeInput: monitorCreateInput("http"),
   },
   "openstatus.monitor.v1.MonitorService/CreateTCPMonitor": {
     event: Events.CreateMonitor,
     eventProps: ["url", "jobType"],
+    normalizeInput: monitorCreateInput("tcp"),
   },
   "openstatus.monitor.v1.MonitorService/CreateDNSMonitor": {
     event: Events.CreateMonitor,
     eventProps: ["url", "jobType"],
+    normalizeInput: monitorCreateInput("dns"),
+  },
+  "openstatus.monitor.v1.MonitorService/CreateICMPMonitor": {
+    event: Events.CreateMonitor,
+    eventProps: ["url", "jobType"],
+    normalizeInput: monitorCreateInput("icmp"),
+  },
+  "openstatus.monitor.v1.MonitorService/CreateGRPCMonitor": {
+    event: Events.CreateMonitor,
+    eventProps: ["url", "jobType"],
+    normalizeInput: monitorCreateInput("grpc"),
   },
   "openstatus.monitor.v1.MonitorService/UpdateHTTPMonitor": {
     event: Events.UpdateMonitor,
@@ -42,6 +70,12 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     event: Events.UpdateMonitor,
   },
   "openstatus.monitor.v1.MonitorService/UpdateDNSMonitor": {
+    event: Events.UpdateMonitor,
+  },
+  "openstatus.monitor.v1.MonitorService/UpdateICMPMonitor": {
+    event: Events.UpdateMonitor,
+  },
+  "openstatus.monitor.v1.MonitorService/UpdateGRPCMonitor": {
     event: Events.UpdateMonitor,
   },
   "openstatus.monitor.v1.MonitorService/DeleteMonitor": {
@@ -138,7 +172,8 @@ export function trackingInterceptor(): Interceptor {
       return response;
     }
 
-    const additionalProps = parseInputToProps(req.message, mapping.eventProps);
+    const input = mapping.normalizeInput?.(req.message) ?? req.message;
+    const additionalProps = parseInputToProps(input, mapping.eventProps);
 
     setupAnalytics({
       userId: `api_${rpcCtx.workspace.id}`,

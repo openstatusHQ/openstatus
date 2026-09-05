@@ -44,7 +44,7 @@ export function ChartTooltipNumberRaw({
     <>
       <div
         className={cn(
-          "h-2.5 w-2.5 shrink-0 rounded-[2px] bg-(--color-bg)",
+          "h-2.5 w-2.5 shrink-0 rounded-xs bg-(--color-bg)",
           className,
         )}
         style={style}

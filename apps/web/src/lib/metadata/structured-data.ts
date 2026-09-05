@@ -38,6 +38,10 @@ export const getJsonLDWebPage = (
     "@type": "WebPage",
     name: `${input.metadata.title} | openstatus`,
     headline: input.metadata.description,
+    datePublished: input.metadata.publishedAt.toISOString(),
+    dateModified: (
+      input.metadata.updatedAt ?? input.metadata.publishedAt
+    ).toISOString(),
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": BASE_URL,
@@ -66,7 +70,9 @@ export const getJsonLDBlogPosting = (
     "@type": "BlogPosting",
     headline: post.metadata.title,
     datePublished: post.metadata.publishedAt.toISOString(),
-    dateModified: post.metadata.publishedAt.toISOString(),
+    dateModified: (
+      post.metadata.updatedAt ?? post.metadata.publishedAt
+    ).toISOString(),
     description: post.metadata.description,
     image: post.metadata.image
       ? `${BASE_URL}${post.metadata.image}`
@@ -92,7 +98,9 @@ export const getJsonLDTechArticle = (
     headline: doc.metadata.title,
     description: doc.metadata.description,
     datePublished: doc.metadata.publishedAt.toISOString(),
-    dateModified: doc.metadata.publishedAt.toISOString(),
+    dateModified: (
+      doc.metadata.updatedAt ?? doc.metadata.publishedAt
+    ).toISOString(),
     url: `${BASE_URL}${doc.href}`,
     author: {
       "@type": "Organization",

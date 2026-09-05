@@ -13,6 +13,9 @@ import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 import {
   type httpPayloadSchema,
+  type grpcPayloadSchema,
+  type icmpPayloadSchema,
+  GRPC_TLS_MODES,
   safeUrlSchema,
   type tpcPayloadSchema,
   transformHeaders,
@@ -24,6 +27,43 @@ import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 const ABORT_TIMEOUT = 10000;
+
+// PingICMP treats its timeout as the deadline for the whole check, so omitting
+// it means a deadline of "now": the send loop breaks before the first packet
+// and every test reports "no reply". Kept under ABORT_TIMEOUT so the checker
+// answers before the fetch above gives up.
+const ICMP_TEST_TIMEOUT = 5000;
+
+// Kept under ABORT_TIMEOUT so the checker answers before the fetch gives up.
+const GRPC_TEST_TIMEOUT = 5000;
+
+// Unreachable targets, failed assertions and timeouts are expected outcomes
+// already surfaced to the user as BAD_REQUEST; only unexpected failures should
+// reach the logs (and Sentry).
+function toCheckerError(
+  error: unknown,
+  label: string,
+  fallback: string,
+): TRPCError {
+  if (error instanceof TRPCError) {
+    if (error.code !== "BAD_REQUEST") {
+      console.error(`Checker ${label} test failed`, error);
+    }
+    return error;
+  }
+
+  if (error instanceof Error && error.name === "TimeoutError") {
+    return new TRPCError({
+      code: "BAD_REQUEST",
+      message: `The ${label} check did not complete within ${
+        ABORT_TIMEOUT / 1000
+      } seconds. Please try again.`,
+    });
+  }
+
+  console.error(`Checker ${label} test failed`, error);
+  return new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: fallback });
+}
 
 // Input schemas
 const httpTestInput = z.object({
@@ -78,6 +118,82 @@ const dnsTestInput = z.object({
     .prefault([]),
 });
 
+const icmpTestInput = z.object({
+  url: z.string(),
+  region: monitorRegionSchema.optional().prefault("ams"),
+});
+
+const grpcTestInput = z.object({
+  url: z.string(),
+  service: z.string().optional(),
+  tls: z.enum(GRPC_TLS_MODES).optional().prefault("tls"),
+  headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
+  region: monitorRegionSchema.optional().prefault("ams"),
+});
+
+export const grpcOutput = z
+  .object({
+    state: z.literal("success").prefault("success"),
+    type: z.literal("grpc").prefault("grpc"),
+    jobType: z.literal("grpc").optional(),
+    requestId: z.number().optional(),
+    workspaceId: z.number().optional(),
+    monitorId: z.number().optional(),
+    timestamp: z.number(),
+    timing: z.object({
+      dnsStart: z.number(),
+      dnsDone: z.number(),
+      connectStart: z.number(),
+      connectDone: z.number(),
+      tlsHandshakeStart: z.number(),
+      tlsHandshakeDone: z.number(),
+      firstByteStart: z.number(),
+      firstByteDone: z.number(),
+      transferStart: z.number(),
+      transferDone: z.number(),
+    }),
+    latency: z.number().optional(),
+    servingStatus: z.string().optional(),
+    service: z.string().optional(),
+    grpcCode: z.number().optional(),
+    completed: z.boolean().optional(),
+    errorMessage: z.string().optional(),
+    error: z.number().optional(),
+    region: monitorRegionSchema,
+  })
+  .or(
+    z.object({
+      state: z.literal("error").prefault("error"),
+      message: z.string(),
+    }),
+  );
+
+export const icmpOutput = z
+  .object({
+    state: z.literal("success").prefault("success"),
+    type: z.literal("icmp").prefault("icmp"),
+    requestId: z.number().optional(),
+    workspaceId: z.number().optional(),
+    monitorId: z.number().optional(),
+    timestamp: z.number(),
+    timing: z.object({
+      rtts: z.array(z.number()),
+    }),
+    latency: z.number().optional(),
+    latencyMin: z.number().optional(),
+    latencyMax: z.number().optional(),
+    packetsSent: z.number().optional(),
+    packetsReceived: z.number().optional(),
+    error: z.string().optional(),
+    region: monitorRegionSchema,
+  })
+  .or(
+    z.object({
+      state: z.literal("error").prefault("error"),
+      message: z.string(),
+    }),
+  );
+
 export const tcpOutput = z
   .object({
     state: z.literal("success").prefault("success"),
@@ -129,6 +245,13 @@ export const httpOutput = z
       state: z.literal("error").prefault("error"),
       message: z.string(),
     }),
+  )
+  .or(
+    // A target the checker could not reach (timeout, DNS, refused): `checker.Http`
+    // answers 200 with `error` set and `status`/`headers` omitted.
+    z
+      .object({ error: z.string().min(1), timestamp: z.number() })
+      .transform(({ error }) => ({ state: "error" as const, message: error })),
   );
 
 export const dnsOutput = z
@@ -237,15 +360,11 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker HTTP test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: error instanceof Error ? error.message : "HTTP check failed",
-    });
+    throw toCheckerError(
+      error,
+      "HTTP",
+      error instanceof Error ? error.message : "HTTP check failed",
+    );
   }
 }
 
@@ -288,15 +407,7 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker TCP test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "TCP check failed",
-    });
+    throw toCheckerError(error, "TCP", "TCP check failed");
   }
 }
 
@@ -358,15 +469,120 @@ export async function testDns(input: z.infer<typeof dnsTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker DNS test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
+    throw toCheckerError(error, "DNS", "DNS check failed");
+  }
+}
+
+export async function testIcmp(input: z.infer<typeof icmpTestInput>) {
+  try {
+    const res = await fetch(
+      `https://openstatus-checker.fly.dev/icmp/${input.region}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${env.CRON_SECRET}`,
+          "Content-Type": "application/json",
+          "fly-prefer-region": input.region,
+        },
+        body: JSON.stringify({
+          uri: input.url,
+          timeout: ICMP_TEST_TIMEOUT,
+        }),
+        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+      },
+    );
+
+    const json = await res.json();
+    const result = icmpOutput.safeParse(json);
+
+    if (!result.success) {
+      console.error(
+        `Checker ICMP test failed for ${input.url}:`,
+        result.error.message,
+      );
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `Checker response is not valid. Please try again. If the problem persists, please contact support. ${result.error.message}`,
+      });
     }
 
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "DNS check failed",
-    });
+    if (result.data.state === "error") {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: result.data.message,
+      });
+    }
+
+    return result.data;
+  } catch (error) {
+    throw toCheckerError(error, "ICMP", "ICMP check failed");
+  }
+}
+
+export async function testGrpc(input: z.infer<typeof grpcTestInput>) {
+  try {
+    const res = await fetch(
+      `https://openstatus-checker.fly.dev/grpc/${input.region}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${env.CRON_SECRET}`,
+          "Content-Type": "application/json",
+          "fly-prefer-region": input.region,
+        },
+        body: JSON.stringify({
+          uri: input.url,
+          service: input.service,
+          tls: input.tls,
+          headers: transformHeaders(input.headers ?? []),
+          timeout: GRPC_TEST_TIMEOUT,
+        }),
+        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+      },
+    );
+
+    const json = await res.json();
+    const result = grpcOutput.safeParse(json);
+
+    if (!result.success) {
+      console.error(
+        `Checker gRPC test failed for ${input.url}:`,
+        result.error.message,
+      );
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `Checker response is not valid. Please try again. If the problem persists, please contact support. ${result.error.message}`,
+      });
+    }
+
+    if (result.data.state === "error") {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: result.data.message,
+      });
+    }
+
+    // Only a transport failure comes back as `state: "error"`. An RPC that
+    // completed but answered NOT_SERVING / SERVICE_UNKNOWN — or a server with no
+    // health service at all — returns the full response, where `state` is absent
+    // and prefaults to "success". `error` is omitempty, so it is present only
+    // when the check failed. Mirrors testHttp rejecting a non-2XX status: the
+    // target is reachable, but saving it would create a monitor that is already
+    // down.
+    if (result.data.error === 1) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          result.data.errorMessage ||
+          `The health check did not report SERVING${
+            result.data.servingStatus ? `: ${result.data.servingStatus}` : ""
+          }`,
+      });
+    }
+
+    return result.data;
+  } catch (error) {
+    throw toCheckerError(error, "gRPC", "gRPC check failed");
   }
 }
 
@@ -376,6 +592,8 @@ export async function triggerChecker(
   let payload:
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
+    | z.infer<typeof icmpPayloadSchema>
+    | z.infer<typeof grpcPayloadSchema>
     | null = null;
 
   if (process.env.NODE_ENV !== "production") {
@@ -450,6 +668,47 @@ export async function triggerChecker(
       followRedirects: input.followRedirects || true,
     };
   }
+  if (input.jobType === "icmp") {
+    payload = {
+      workspaceId: String(input.workspaceId),
+      monitorId: String(input.id),
+      uri: input.url,
+      status: "active",
+      cronTimestamp: timestamp,
+      degradedAfter: input.degradedAfter,
+      timeout: input.timeout,
+      trigger: "cron",
+      retry: input.retry || 3,
+      otelConfig: input.otelEndpoint
+        ? {
+            endpoint: input.otelEndpoint,
+            headers: transformHeaders(input.otelHeaders),
+          }
+        : undefined,
+    };
+  }
+  if (input.jobType === "grpc") {
+    payload = {
+      workspaceId: String(input.workspaceId),
+      monitorId: String(input.id),
+      uri: input.url,
+      service: input.grpcService ?? undefined,
+      tls: input.grpcTls ?? "tls",
+      headers: transformHeaders(input.headers),
+      status: "active",
+      cronTimestamp: timestamp,
+      degradedAfter: input.degradedAfter,
+      timeout: input.timeout,
+      trigger: "cron",
+      retry: input.retry || 3,
+      otelConfig: input.otelEndpoint
+        ? {
+            endpoint: input.otelEndpoint,
+            headers: transformHeaders(input.otelHeaders),
+          }
+        : undefined,
+    };
+  }
   const allResult = [];
 
   for (const region of input.regions) {
@@ -477,6 +736,10 @@ function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
       return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}`;
     case "dns":
       return `https://openstatus-checker.fly.dev/checker/dns?monitor_id=${row.id}`;
+    case "icmp":
+      return `https://openstatus-checker.fly.dev/checker/icmp?monitor_id=${row.id}`;
+    case "grpc":
+      return `https://openstatus-checker.fly.dev/checker/grpc?monitor_id=${row.id}`;
     default:
       throw new Error("Invalid jobType");
   }
@@ -501,6 +764,19 @@ export const checkerRouter = createTRPCRouter({
     .input(dnsTestInput)
     .mutation(async ({ input }) => {
       return testDns(input);
+    }),
+  testIcmp: protectedProcedure
+    .meta({ track: Events.TestMonitor })
+    .input(icmpTestInput)
+    .mutation(async ({ input }) => {
+      return testIcmp(input);
+    }),
+
+  testGrpc: protectedProcedure
+    .meta({ track: Events.TestMonitor })
+    .input(grpcTestInput)
+    .mutation(async ({ input }) => {
+      return testGrpc(input);
     }),
 
   triggerChecker: protectedProcedure

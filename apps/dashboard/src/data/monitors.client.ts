@@ -1,9 +1,11 @@
 import {
+  Api,
   Settings,
   Copy,
   Duplicate,
   Globe,
   Network,
+  Speed,
   Server,
   Terminal,
   Delete,
@@ -24,6 +26,16 @@ export const monitorTypes = [
     id: "dns",
     label: "DNS",
     icon: Server,
+  },
+  {
+    id: "icmp",
+    label: "ICMP",
+    icon: Speed,
+  },
+  {
+    id: "grpc",
+    label: "gRPC",
+    icon: Api,
   },
 ] as const;
 

@@ -87,7 +87,7 @@ CREATE TABLE "monitor" (
 	`headers` text DEFAULT '',
 	`body` text DEFAULT '',
 	`method` text(5) DEFAULT 'GET',
-	`created_at` integer DEFAULT (strftime('%s', 'now')), `regions` text DEFAULT '' NOT NULL, `updated_at` integer, `status` text(2) DEFAULT 'active' NOT NULL, `assertions` text, `deleted_at` integer, `public` integer DEFAULT false, `timeout` integer DEFAULT 45000 NOT NULL, `degraded_after` integer, `otel_endpoint` text, `otel_headers` text, `retry` integer DEFAULT 3, `follow_redirects` integer DEFAULT true,
+	`created_at` integer DEFAULT (strftime('%s', 'now')), `regions` text DEFAULT '' NOT NULL, `updated_at` integer, `status` text(2) DEFAULT 'active' NOT NULL, `assertions` text, `deleted_at` integer, `public` integer DEFAULT false, `timeout` integer DEFAULT 45000 NOT NULL, `degraded_after` integer, `otel_endpoint` text, `otel_headers` text, `retry` integer DEFAULT 3, `follow_redirects` integer DEFAULT true, `grpc_service` text, `grpc_tls` text DEFAULT 'tls',
 	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action
 );
 

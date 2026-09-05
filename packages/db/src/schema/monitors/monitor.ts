@@ -8,7 +8,12 @@ import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
 import { privateLocationToMonitors } from "../private_locations";
 import { workspace } from "../workspaces/workspace";
-import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
+import {
+  grpcTlsModes,
+  monitorJobTypes,
+  monitorMethods,
+  monitorStatus,
+} from "./constants";
 
 export const monitor = sqliteTable(
   "monitor",
@@ -55,6 +60,10 @@ export const monitor = sqliteTable(
     followRedirects: integer("follow_redirects", { mode: "boolean" }).default(
       true,
     ),
+
+    grpcService: text("grpc_service"),
+
+    grpcTls: text("grpc_tls", { enum: grpcTlsModes }).default("tls"),
 
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,

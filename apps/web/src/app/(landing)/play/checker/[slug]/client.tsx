@@ -301,7 +301,7 @@ function InfoDialog({
         <DialogHeader>
           <DialogTitle>Response Details</DialogTitle>
           <DialogDescription>
-            Basic informations like header and latency about the response.
+            Basic information like header and latency about the response.
           </DialogDescription>
         </DialogHeader>
         <div className="prose dark:prose-invert max-w-none min-w-0">

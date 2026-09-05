@@ -1,28 +1,30 @@
 ---
-title: "Ship your status page before your SOC 2 auditor asks for it"
+title: "Open Source Status Page & Uptime Monitoring"
+hero: "Ship your status page before your SOC 2 auditor asks for it"
 publishedAt: "2026-04-07"
+updatedAt: "2026-08-26"
 author: "openstatus"
-description: "The status page trusted by growing teams. Communicate incidents, prove compliance readiness, and monitor uptime from 28 global regions."
+description: "The status page trusted by growing teams. Communicate incidents, prove compliance readiness, and stay audit-ready on your own domain. Hosted for you, or self-host the open source stack."
 category: "product"
 faq:
   - question: "What is openstatus?"
-    answer: "Openstatus gives you a branded status page and uptime monitoring that's audit-ready out of the box. Set up status.yourcompany.com, connect your monitors, and start communicating incidents — in minutes. It's open-source, self-hostable, and used by teams like Cal.com, WhiteBIT, and Documenso."
+    answer: "Openstatus gives you a branded status page and uptime monitoring that's audit-ready out of the box. Set up status.yourcompany.com, connect your monitors, and start communicating incidents in minutes. It's open-source, self-hostable, and used by teams like Cal.com, WhiteBIT, and Documenso."
   - question: "Do I need a status page for SOC 2?"
-    answer: "SOC 2's CC2.3 criteria requires you to demonstrate incident communication with external parties — but it doesn't prescribe a specific tool. That said, a status page is the fastest, most auditor-friendly way to satisfy that requirement. Every status report on openstatus is timestamped and documented automatically, giving you an audit-ready trail of how you communicated during incidents. Most teams set it up in under 10 minutes."
+    answer: "SOC 2's CC2.3 criteria requires you to demonstrate incident communication with external parties, but it doesn't prescribe a specific tool. That said, a status page is the fastest, most auditor-friendly way to satisfy that requirement. Every status report on openstatus is timestamped and documented automatically, giving you an audit-ready trail of how you communicated during incidents. Most teams set it up in under 10 minutes. Read more about [SOC 2 status pages](/use-case/compliance)."
   - question: "How does openstatus help with SOC 2 compliance?"
-    answer: "Openstatus gives you a branded status page with incident history, subscriber notifications, and maintenance windows — all the evidence an auditor needs to verify your incident communication process. Every status report and update is timestamped and documented automatically."
+    answer: "Openstatus gives you everything an auditor needs to verify your incident communication process: a branded status page with a custom domain, incident history with timestamped status reports, subscriber notifications so stakeholders are proactively informed, maintenance windows for planned changes, and password protection for internal or client-specific pages. You can be SOC 2-ready in minutes, not weeks."
   - question: "What does the free plan include?"
     answer: "The free plan includes one monitor, one status page with three page components, and a minimum check interval of 10 minutes. No credit card is required, and you can upgrade or cancel at any time."
   - question: "Who is behind openstatus?"
-    answer: "Openstatus is built by Thibault and Max, a bootstrapped two-person team. We're profitable and self-funded — we'll be here when your next audit comes around."
+    answer: "Openstatus is built by Thibault and Max, a bootstrapped two-person team building in public. We're profitable and self-funded, and we'll be here when your next audit comes around."
   - question: "What regions does openstatus monitor from?"
     answer: "Openstatus monitors from 28 regions worldwide: Europe (Amsterdam, Stockholm, Paris, Frankfurt, London), North America (Dallas, New Jersey, Los Angeles, San Jose, Chicago, Toronto), South America (São Paulo), Asia (Mumbai, Tokyo, Singapore), Africa (Johannesburg), and Oceania (Sydney)."
   - question: "Do you offer annual billing?"
-    answer: "Yes. All paid plans are available with monthly or annual billing. Choose annual billing to get 2 months free — that's Starter at $300/year ($25/mo) and Pro at $1,000/year (~$83/mo). You can switch between billing cycles at any time."
+    answer: "Yes. All paid plans are available with monthly or annual billing. Choose annual billing to get 2 months free: that's Starter at $300/year ($25/mo) and Pro at $1,000/year (~$83/mo). You can switch between billing cycles at any time."
   - question: "Can I self-host openstatus?"
     answer: "Yes. Openstatus is fully open source and can be self-hosted using its 8.5MB Docker image. You can also deploy private monitoring locations behind your firewall for internal services. The source code is available on GitHub."
   - question: "Does openstatus have an API?"
-    answer: "Yes. Openstatus exposes a typed JSON-over-HTTP API powered by ConnectRPC, with a published OpenAPI spec at api.openstatus.dev/openapi. Every action in the dashboard — managing monitors, status pages, status reports, maintenance windows, and notification channels — is reachable from the API. The same API key works across the API, CLI, Node SDK, Terraform provider, and MCP server, and every mutation lands in the audit log."
+    answer: "Yes. Openstatus exposes a typed JSON-over-HTTP API powered by ConnectRPC, with a published OpenAPI spec at api.openstatus.dev/openapi. Every action in the dashboard (managing monitors, status pages, status reports, maintenance windows, and notification channels) is reachable from the API. The same API key works across the API, CLI, Node SDK, Terraform provider, and MCP server, and every mutation lands in the audit log."
   - question: "Can I manage openstatus from Claude or ChatGPT?"
     answer: "Yes. Openstatus ships a remote MCP (Model Context Protocol) server at api.openstatus.dev/mcp that connects Claude Desktop, ChatGPT, Cursor, and any MCP-compatible client to your workspace. The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every publishing tool requires the assistant to explicitly choose whether to notify subscribers, and every call is recorded in the audit log."
   - question: "Can I manage monitors as code?"
@@ -38,67 +40,40 @@ faq:
   />
 </div>
 
-Free to start. Paid plans from $30/mo.
+Free to start. Paid plans from $30/mo. Open source and self-hostable.
 
 <Image src="/assets/landing/statuspage-meow.png" alt="statuspage" priority />
 
 ## Trusted by teams who ship transparency
 
-<Grid cols={4}>
-  <a href="https://status.cal.com">Cal.com</a>
-  <a href="https://status.documenso.com">Documenso</a>
-  <a href="https://status.whitebit.com">WhiteBIT</a>
-  <a href="/customers/traefik">Traefik</a>
-  <a href="https://status.openpanel.dev">OpenPanel</a>
-  <a href="https://probostatus.com">Probo</a>
-  <a href="https://status.hanko.io">Hanko</a>
-  <a href="https://status.superwall.com">Superwall</a>
-  <a href="https://status.streamelements.com/">StreamElements</a>
-  <a href="https://status.smplrspace.com">Smplrspace</a>
-  <a href="https://passboltuptime.com">Passbolt</a>
-  <a href="/customers/twenty">TwentyCRM</a>
-</Grid>
+<CustomerLogos />
 
 ## The status page that closes enterprise deals
 
-A status page helps you communicate incidents more effectively. It adds **transparency**, so users aren't left guessing. It enables **proactive communication**, giving updates without users needing to ask. And it shows **reliability**, not just in uptime but in how you handle downtime and keep people informed.
+Security questionnaires ask how you notify customers during an incident. openstatus answers that in one link: a branded page on your own domain, with timestamped incident history an auditor can read without asking you for screenshots.
 
-Make it yours with [themes from our Theme Store](https://themes.openstatus.dev), custom domains, and branding. Share publicly or password protect for internal teams. Keep everyone in the loop with status reports, maintenance windows, and subscriptions.
+Themes, custom domains, public or password-protected access, status reports, maintenance windows and subscriptions: see it all on [status pages](/status-page).
 
-- **Customization** with our Theme Store
-- Public or **password protected** pages
-- **Custom domains**
-- **Status reports** and **maintenance windows**
-- **Subscription channels**: email, RSS/Atom, SSH
+## Monitor from 28 regions: know before your customers do
 
-Read more [about status pages](/status-page).
-
-## Monitor from 28 regions — know before your customers do
-
-Monitor your endpoints from 28 regions across multiple clouds. Get alerted on Slack, Discord, PagerDuty, or email the moment something breaks. Your status page updates automatically — no manual work during incidents.
-
-- **28 regions**, 3 cloud providers — no blind spots
-- Monitor any **HTTP endpoint**, REST or GraphQL
-- Version your monitors with **YAML** and **CI/CD**
-- Monitor behind firewalls with a single **Docker container**
-- Alerts on **Slack**, **Discord**, **PagerDuty**, email, webhooks, ...
+Monitor your endpoints from 28 regions across multiple clouds. Get alerted on Slack, Discord, PagerDuty, or email the moment something breaks. Your status page updates automatically, with no manual work during incidents.
 
 Read more about [uptime monitoring](/uptime-monitoring).
 
-## Managing openstatus — for humans and agents
+## Managing openstatus for humans and agents
 
 Every action in the dashboard is reachable programmatically. One API key, four ways in:
 
-- **[CLI](/tooling/cli)** — manage from your terminal
-- **[API](/tooling/api)** — typed HTTP endpoints with an [OpenAPI spec](https://api.openstatus.dev/openapi)
-- **[MCP server](/tooling/mcp-server)** — let Claude, ChatGPT, or Cursor run your monitoring
-- **[Terraform provider](/tooling/terraform)** — version monitors as HCL
+- **[CLI](/tooling/cli)**: manage from your terminal
+- **[API](/tooling/api)**: typed HTTP endpoints with an [OpenAPI spec](https://api.openstatus.dev/openapi)
+- **[MCP server](/tooling/mcp-server)**: let Claude, ChatGPT, or Cursor run your monitoring
+- **[Terraform provider](/tooling/terraform)**: version monitors as HCL
 
 Read more about our [tooling](/tooling).
 
----
+## Try it before you sign up
 
-Check your website's latency
+Check any URL's response time from every one of our 28 regions. No account, no credit card. It's the same probe network that powers your monitors.
 
 <ButtonLink href="/play/checker">Global Speed Checker</ButtonLink>
 
@@ -130,7 +105,7 @@ Check your website's latency
 
 <Details summary="What is openstatus?" headingLevel={3}>
 
-Openstatus gives you a branded status page and uptime monitoring that's audit-ready out of the box. Set up status.yourcompany.com, connect your monitors, and start communicating incidents — in minutes.
+Openstatus gives you a branded status page and uptime monitoring that's audit-ready out of the box. Set up status.yourcompany.com, connect your monitors, and start communicating incidents in minutes.
 
 It's open-source, self-hostable, and used by teams like [Cal.com](https://status.cal.com), [WhiteBIT](https://status.whitebit.com), and [Documenso](https://status.documenso.com). Available as a [managed SaaS](https://app.openstatus.dev) or for [self-hosting](https://github.com/openstatushq/openstatus).
 
@@ -138,9 +113,11 @@ It's open-source, self-hostable, and used by teams like [Cal.com](https://status
 
 <Details summary="Do I need a status page for SOC 2?" headingLevel={3}>
 
-SOC 2's CC2.3 criteria requires you to demonstrate incident communication with external parties — but it doesn't prescribe a specific tool. That said, a status page is the **fastest, most auditor-friendly** way to satisfy that requirement.
+SOC 2's CC2.3 criteria requires you to demonstrate incident communication with external parties, but it doesn't prescribe a specific tool. That said, a status page is the **fastest, most auditor-friendly** way to satisfy that requirement.
 
-Every status report on openstatus is **timestamped** and documented automatically, giving you an audit-ready trail of how you communicated during incidents. Most teams set it up in under 2 minutes.
+Every status report on openstatus is **timestamped** and documented automatically, giving you an audit-ready trail of how you communicated during incidents. Most teams set it up in under 10 minutes.
+
+Read more about [SOC 2 status pages](/use-case/compliance).
 
 </Details>
 
@@ -162,15 +139,15 @@ You can be SOC 2-ready in minutes, not weeks.
 
 The free plan includes **one monitor**, **one status page** (with three page components), and a minimum check interval of `10m`. Check the pricing table for a full comparison.
 
-No credit card required — upgrade or cancel at any time.
+No credit card required. Upgrade or cancel at any time.
 
 </Details>
 
 <Details summary="Who is behind openstatus?" headingLevel={3}>
 
-Openstatus is built by [Thibault](https://bsky.app/profile/thibaultleouay.dev) and [Max](https://x.com/mxkaske) — a bootstrapped two-person team building in public.
+Openstatus is built by [Thibault](https://bsky.app/profile/thibaultleouay.dev) and [Max](https://x.com/mxkaske), a bootstrapped two-person team building in public.
 
-We're profitable and self-funded — we'll be here when your next audit comes around.
+We're profitable and self-funded, and we'll be here when your next audit comes around.
 
 Read more on [our about page](/about).
 
@@ -210,13 +187,13 @@ Johannesburg 🇿🇦
 
 Sydney 🇦🇺
 
-*Need a specific region?* Feel free to [contact us](mailto:ping@openstatus.dev) or join our [Discord](https://discord.gg/openstatus) — we're always looking to expand our coverage!
+*Need a specific region?* Feel free to [contact us](mailto:ping@openstatus.dev) or join our [Discord](https://discord.gg/openstatus). We're always looking to expand our coverage!
 
 </Details>
 
 <Details summary="Do you offer annual billing?" headingLevel={3}>
 
-Yes. All paid plans are available with **monthly** or **annual** billing. Choose annual billing to get **2 months free** — that's Starter at $300/year ($25/mo) and Pro at $1,000/year (~$83/mo).
+Yes. All paid plans are available with **monthly** or **annual** billing. Choose annual billing to get **2 months free**: that's Starter at $300/year ($25/mo) and Pro at $1,000/year (~$83/mo).
 
 You can switch between billing cycles at any time. Check the [pricing page](/pricing) for a full comparison.
 
@@ -237,7 +214,7 @@ The source code is available on [GitHub](https://openstatus.dev/github).
 
 Yes. Openstatus exposes a typed **JSON-over-HTTP API** powered by [ConnectRPC](/blog/migrating-from-zod-openapi-to-connectrpc), with a published [OpenAPI spec](https://api.openstatus.dev/openapi).
 
-Every action in the dashboard — managing monitors, status pages, status reports, maintenance windows, and notification channels — is reachable from the API. The same API key works across the [API](/tooling/api), [CLI](/tooling/cli), Node SDK, [Terraform provider](/tooling/terraform), and [MCP server](/tooling/mcp-server), and every mutation lands in the audit log.
+Every action in the dashboard (managing monitors, status pages, status reports, maintenance windows, and notification channels) is reachable from the API. The same API key works across the [API](/tooling/api), [CLI](/tooling/cli), Node SDK, [Terraform provider](/tooling/terraform), and [MCP server](/tooling/mcp-server), and every mutation lands in the audit log.
 
 </Details>
 
@@ -245,7 +222,7 @@ Every action in the dashboard — managing monitors, status pages, status report
 
 Yes. Openstatus ships a remote [MCP server](/tooling/mcp-server) at `api.openstatus.dev/mcp` that connects **Claude Desktop**, **ChatGPT**, **Cursor**, and any [Model Context Protocol](https://modelcontextprotocol.io) client to your workspace.
 
-The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every publishing tool requires the assistant to explicitly choose whether to notify subscribers — models can't quietly fan out an alert — and every call is recorded in the audit log under `actor_type = 'mcp'`.
+The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every publishing tool requires the assistant to explicitly choose whether to notify subscribers (models can't quietly fan out an alert), and every call is recorded in the audit log under `actor_type = 'mcp'`.
 
 </Details>
 
@@ -253,9 +230,9 @@ The assistant can list status pages, create and resolve status reports, and sche
 
 Yes. Openstatus offers two ways to treat monitoring as code:
 
-- **YAML + [CLI](/tooling/cli)** — keep your monitor configuration in your repo and sync with `openstatus monitors apply`. Lighter to adopt, ships with a GitHub Action for CI/CD.
-- **[Terraform provider](/tooling/terraform)** — for teams already managing infrastructure in HCL. Same plan-and-apply lifecycle as the rest of your stack.
+- **YAML + [CLI](/tooling/cli)**: keep your monitor configuration in your repo and sync with `openstatus monitors apply`. Lighter to adopt, ships with a GitHub Action for CI/CD.
+- **[Terraform provider](/tooling/terraform)**: for teams already managing infrastructure in HCL. Same plan-and-apply lifecycle as the rest of your stack.
 
-Already have monitors in the dashboard? Run `openstatus terraform generate` from the CLI to bootstrap an HCL file with cross-references and import blocks — no hand-writing required.
+Already have monitors in the dashboard? Run `openstatus terraform generate` from the CLI to bootstrap an HCL file with cross-references and import blocks. No hand-writing required.
 
 </Details>

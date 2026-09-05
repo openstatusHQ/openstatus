@@ -65,7 +65,7 @@ const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [
       },
       {
         name: "Private locations",
-        href: `${DOCS}/tutorial/how-to-create-private-location`,
+        href: `${DOCS}/guides/how-to-create-private-location`,
         icon: PrivateLocation,
         external: true,
       },

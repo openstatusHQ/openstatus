@@ -74,6 +74,70 @@ func TestRecordGauge(t *testing.T) {
 	assert.Equal(t, "test-value", val.AsString())
 }
 
+func TestRecordGaugeWithUnit(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		unit string
+	}{
+		{name: "percentage", unit: unitPercent},
+		{name: "duration", unit: unitMilliseconds},
+		{name: "unitless", unit: ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			meter, reader := newTestMeter(t)
+			att := metric.WithAttributes(attribute.String("region", "ams"))
+
+			err := recordGaugeWithUnit(context.Background(), meter, "test.gauge", "A test gauge", tc.unit, 12.5, att)
+			require.NoError(t, err)
+
+			rm := collectMetrics(t, reader)
+			require.Len(t, rm.ScopeMetrics, 1)
+			require.Len(t, rm.ScopeMetrics[0].Metrics, 1)
+
+			m := rm.ScopeMetrics[0].Metrics[0]
+			assert.Equal(t, tc.unit, m.Unit)
+
+			gauge, ok := m.Data.(metricdata.Gauge[float64])
+			require.True(t, ok)
+			require.Len(t, gauge.DataPoints, 1)
+			assert.Equal(t, 12.5, gauge.DataPoints[0].Value)
+		})
+	}
+}
+
+// The two ICMP gauges carry different units, so they cannot share the
+// ms-defaulting helper: a percentage exported as "ms" is rendered as a duration
+// by the backend.
+func TestICMPGaugeUnits(t *testing.T) {
+	meter, reader := newTestMeter(t)
+	att := metric.WithAttributes(attribute.String("openstatus.probes", "ams"))
+
+	recordICMPInstruments(context.Background(), meter, checker.ICMPResponse{
+		Latency:         42,
+		PacketsSent:     3,
+		PacketsReceived: 2,
+	}, att)
+
+	units := map[string]string{}
+	values := map[string]float64{}
+	for _, sm := range collectMetrics(t, reader).ScopeMetrics {
+		for _, m := range sm.Metrics {
+			units[m.Name] = m.Unit
+			if gauge, ok := m.Data.(metricdata.Gauge[float64]); ok && len(gauge.DataPoints) == 1 {
+				values[m.Name] = gauge.DataPoints[0].Value
+			}
+		}
+	}
+
+	assert.Equal(t, "ms", units["openstatus.icmp.request.duration"])
+	assert.Equal(t, "%", units["openstatus.icmp.packet.loss"],
+		"packet loss is a percentage, not a duration")
+
+	assert.Equal(t, float64(42), values["openstatus.icmp.request.duration"])
+	assert.InDelta(t, 33.33, values["openstatus.icmp.packet.loss"], 0.01,
+		"1 of 3 packets lost is ~33%, confirming the value really is a percentage")
+}
+
 func TestRecordGauge_MultipleMetrics(t *testing.T) {
 	meter, reader := newTestMeter(t)
 	ctx := context.Background()
@@ -351,4 +415,103 @@ func TestRecordDNSMetrics_SetupFailure(t *testing.T) {
 
 	// Must not panic — same nil pointer guard as HTTP.
 	RecordDNSMetrics(context.Background(), req, 30, false, "us-east-1")
+}
+
+// grpcMetricValues collects every gauge and counter one recordGRPCInstruments
+// call produced, keyed by metric name.
+func grpcMetricValues(t *testing.T, reader *sdkMetrics.ManualReader) (map[string]float64, map[string]int64) {
+	t.Helper()
+
+	gauges := map[string]float64{}
+	counters := map[string]int64{}
+	for _, sm := range collectMetrics(t, reader).ScopeMetrics {
+		for _, m := range sm.Metrics {
+			if gauge, ok := m.Data.(metricdata.Gauge[float64]); ok && len(gauge.DataPoints) == 1 {
+				gauges[m.Name] = gauge.DataPoints[0].Value
+			}
+			if sum, ok := m.Data.(metricdata.Sum[int64]); ok && len(sum.DataPoints) == 1 {
+				counters[m.Name] = sum.DataPoints[0].Value
+			}
+		}
+	}
+
+	return gauges, counters
+}
+
+func TestRecordGRPCInstrumentsServing(t *testing.T) {
+	meter, reader := newTestMeter(t)
+	att := metric.WithAttributes(attribute.String("openstatus.probes", "ams"))
+
+	recordGRPCInstruments(context.Background(), meter, checker.GRPCResponse{
+		Latency:       120,
+		Completed:     true,
+		ServingStatus: checker.ServingStatusServing,
+		Timing: checker.GRPCResponseTiming{
+			DnsStart: 100, DnsDone: 104,
+			ConnectStart: 104, ConnectDone: 114,
+			TlsHandshakeStart: 114, TlsHandshakeDone: 150,
+			FirstByteStart: 150, FirstByteDone: 220,
+		},
+	}, att)
+
+	gauges, counters := grpcMetricValues(t, reader)
+
+	assert.Equal(t, float64(120), gauges["openstatus.grpc.request.duration"])
+	assert.Equal(t, float64(4), gauges["openstatus.grpc.dns.duration"])
+	assert.Equal(t, float64(10), gauges["openstatus.grpc.connection.duration"])
+	assert.Equal(t, float64(36), gauges["openstatus.grpc.tls.duration"])
+	assert.Equal(t, float64(70), gauges["openstatus.grpc.ttfb.duration"])
+	assert.Equal(t, float64(1), gauges["openstatus.grpc.serving_status"])
+
+	assert.Equal(t, int64(1), counters["openstatus.status"])
+	assert.NotContains(t, counters, "openstatus.error")
+}
+
+// A NOT_SERVING check sets the error flag but completed, so it must still
+// report its real durations and a serving_status of 0. Gating on the error flag
+// the way the ICMP path does would leave this gauge only ever emitting 1.
+func TestRecordGRPCInstrumentsNotServing(t *testing.T) {
+	meter, reader := newTestMeter(t)
+	att := metric.WithAttributes(attribute.String("openstatus.probes", "ams"))
+
+	recordGRPCInstruments(context.Background(), meter, checker.GRPCResponse{
+		Latency:       90,
+		Completed:     true,
+		Error:         1,
+		ServingStatus: checker.ServingStatusNotServing,
+		Timing: checker.GRPCResponseTiming{
+			FirstByteStart: 10, FirstByteDone: 100,
+		},
+	}, att)
+
+	gauges, counters := grpcMetricValues(t, reader)
+
+	assert.Equal(t, float64(0), gauges["openstatus.grpc.serving_status"])
+	assert.Equal(t, float64(90), gauges["openstatus.grpc.request.duration"])
+	assert.Equal(t, float64(90), gauges["openstatus.grpc.ttfb.duration"])
+	assert.Equal(t, int64(1), counters["openstatus.error"])
+	assert.NotContains(t, counters, "openstatus.status")
+}
+
+func TestRecordGRPCInstrumentsTransportFailure(t *testing.T) {
+	meter, reader := newTestMeter(t)
+	att := metric.WithAttributes(attribute.String("openstatus.probes", "ams"))
+
+	recordGRPCInstruments(context.Background(), meter, checker.GRPCResponse{
+		Completed: false,
+		Error:     1,
+	}, att)
+
+	gauges, counters := grpcMetricValues(t, reader)
+
+	assert.Equal(t, int64(1), counters["openstatus.error"])
+	assert.Empty(t, gauges, "a call that never completed has no durations to report")
+}
+
+// A phase whose hook never fired leaves a zero, and subtracting absolute epoch
+// stamps from it would report a value in the trillions.
+func TestGRPCPhaseIgnoresUnfiredHooks(t *testing.T) {
+	assert.Equal(t, float64(0), grpcPhase(0, 1761000000000))
+	assert.Equal(t, float64(0), grpcPhase(1761000000000, 0))
+	assert.Equal(t, float64(25), grpcPhase(100, 125))
 }

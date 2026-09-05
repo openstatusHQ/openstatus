@@ -27,7 +27,7 @@ export type StatusReportListPeriod = (typeof statusReportListPeriods)[number];
 export const statusReportListPeriodSchema = z.enum(statusReportListPeriods);
 
 export const CreateStatusReportInput = z.object({
-  title: z.string().min(1).max(256),
+  title: z.string().trim().min(1).max(256),
   status: statusReportStatusSchema,
   message: z.string(),
   date: z.coerce.date(),
@@ -40,7 +40,7 @@ export type CreateStatusReportInput = z.infer<typeof CreateStatusReportInput>;
 
 export const UpdateStatusReportInput = z.object({
   id: z.number().int(),
-  title: z.string().min(1).max(256).optional(),
+  title: z.string().trim().min(1).max(256).optional(),
   status: statusReportStatusSchema.optional(),
   /** When provided, replaces the full association set (empty array clears). */
   pageComponentIds: z.array(z.number().int()).optional(),

@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+
 import {
   AppHeader,
   AppHeaderActions,
@@ -23,12 +25,12 @@ export default async function Layout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const monitorId = Number.parseInt(id);
+  if (Number.isNaN(monitorId)) notFound();
   const queryClient = getQueryClient();
 
   await Promise.all([
-    fetchQueryOrNotFound(
-      trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
-    ),
+    fetchQueryOrNotFound(trpc.monitor.get.queryOptions({ id: monitorId })),
     queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions()),
   ]);
 
