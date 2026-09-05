@@ -24,6 +24,7 @@ import {
   upsertSelfSignupSubscriber,
   verifySelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
+import { sendEmailVerification } from "@openstatus/subscriptions";
 import { TRPCError } from "@trpc/server";
 import { endOfDay, startOfDay, subDays } from "date-fns";
 import { z } from "zod";
@@ -1349,6 +1350,37 @@ export const statusPageRouter = createTRPCRouter({
           message: "Email already subscribed",
         });
       }
+
+      if (!subscription.token) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Subscription verification token was not generated",
+        });
+      }
+
+      const baseUrl = _page.customDomain
+        ? `https://${_page.customDomain}`
+        : process.env.NEXT_PUBLIC_APP_URL
+          ? `${process.env.NEXT_PUBLIC_APP_URL}`
+          : `https://${_page.slug}.openstatus.dev`;
+      const verifyUrl = `${baseUrl}/verify/${subscription.token}`;
+
+      await sendEmailVerification(
+        {
+          id: subscription.id,
+          pageId: _page.id,
+          pageName: _page.title || _page.slug,
+          pageSlug: _page.slug,
+          channelType: "email",
+          email: opts.input.email,
+          token: subscription.token,
+          componentIds: opts.input.subscribeComponents
+            ? opts.input.pageComponents
+            : [],
+          customDomain: _page.customDomain,
+        },
+        verifyUrl,
+      );
 
       return { id: subscription.id, token: subscription.token };
     }),
