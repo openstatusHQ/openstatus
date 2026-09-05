@@ -56,7 +56,7 @@ The service name sent in the health check request. Leave it empty to check the s
 This is a service name, not a method path. `grpc.health.v1.Health` is the health service the monitor already calls — putting it here asks the server whether it has registered a service *called* `grpc.health.v1.Health`, which almost no server does, and the check comes back `SERVICE_UNKNOWN`. Leave the field empty unless you register per-service health status.
 </Aside>
 
-Servers differ on how they answer for a name they do not know: the reference implementations return the `SERVICE_UNKNOWN` status, while some return the `NOT_FOUND` code. Both are reported as `SERVICE_UNKNOWN`.
+Servers differ on how they answer for a name they do not know: the reference implementations return the `NOT_FOUND` status code, while some return the `SERVICE_UNKNOWN` enum value. Both are reported as `SERVICE_UNKNOWN`.
 
 ### TLS
 
