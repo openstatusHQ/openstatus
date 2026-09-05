@@ -277,6 +277,12 @@ function LogsTableInner({
           />
         }
         sheetSlot={<LogsSheet monitor={monitor} onSelect={setSelected} />}
+        footerSlot={
+          <p className="text-muted-foreground text-xs text-balance">
+            Build your own data-table filters with{" "}
+            <Link href="https://logs.run?ref=openstatus">logs.run</Link>
+          </p>
+        }
       />
     </>
   );

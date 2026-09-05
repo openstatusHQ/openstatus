@@ -348,8 +348,9 @@ export function DataTableInfinite<TData, TValue>({
           <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
             <DataTableFilterControls />
           </div>
+          {/* REMINDER: h-14 keeps the border-t in line with the app sidebar footer */}
           {footerSlot ? (
-            <div className="border-border bg-background shrink-0 border-t p-4">
+            <div className="border-border bg-background flex h-14 shrink-0 flex-col justify-center border-t px-4">
               {footerSlot}
             </div>
           ) : null}
