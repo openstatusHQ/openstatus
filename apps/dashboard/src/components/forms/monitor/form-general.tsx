@@ -850,7 +850,9 @@ export function FormGeneral({
                     <FormMessage />
                     <FormDescription>
                       The service name passed to grpc.health.v1.Health/Check.
-                      Leave empty to check overall server health.
+                      Leave empty to check overall server health. This is a
+                      service name, not a method path: entering
+                      grpc.health.v1.Health itself returns SERVICE_UNKNOWN.
                     </FormDescription>
                   </FormItem>
                 )}
