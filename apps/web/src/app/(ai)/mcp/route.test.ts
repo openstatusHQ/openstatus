@@ -29,7 +29,18 @@ describe("/mcp discovery", () => {
     );
   });
 
-  test("forwards a JSON-RPC POST to the transport without losing the body", () => {
+  test("forwards a streamable GET to the transport", () => {
+    const res = GET(
+      new Request("https://www.openstatus.dev/mcp", {
+        headers: { accept: "text/event-stream" },
+      }),
+    );
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe(MCP_TRANSPORT_URL);
+  });
+
+  // 307 rather than 302 is what keeps the method and body intact.
+  test("forwards a JSON-RPC POST to the transport with a 307", () => {
     const res = POST();
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toBe(MCP_TRANSPORT_URL);

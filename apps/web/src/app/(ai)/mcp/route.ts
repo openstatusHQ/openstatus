@@ -7,6 +7,13 @@ export const MCP_TRANSPORT_URL = "https://api.openstatus.dev/mcp";
 
 export function GET(request: Request) {
   const accept = request.headers.get("accept") ?? "";
+  // A client keeps the URL it was handed after the 307 below, so its Streamable
+  // HTTP listening channel arrives here too. Forwarding it lets the transport
+  // answer (405 in stateless mode) instead of handing an SSE request the
+  // human-readable page.
+  if (accept.includes("text/event-stream")) {
+    return Response.redirect(MCP_TRANSPORT_URL, 307);
+  }
   if (accept.includes("application/json")) {
     return serverCardGET();
   }

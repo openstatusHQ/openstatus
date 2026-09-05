@@ -1,14 +1,10 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { expect } from "@std/expect";
 import { afterEach, describe, test } from "@std/testing/bdd";
 
-import {
-  PUBLIC_RESOURCES,
-  readPublicResource,
-  registerPublicResources,
-} from "./resources";
+import { PUBLIC_RESOURCES, readPublicResource } from "./resources";
+import { createPublicMcpServer } from "./server";
 
 const realFetch = globalThis.fetch;
 
@@ -91,10 +87,9 @@ describe("public MCP resources", () => {
   });
 });
 
-/** Connect a client to a server carrying only the public documents. */
+/** Connect a client to the anonymous server the route actually builds. */
 async function connectPublicServer() {
-  const server = new McpServer({ name: "openstatus", version: "test" });
-  registerPublicResources(server);
+  const server = createPublicMcpServer();
   const client = new Client({ name: "probe", version: "test" });
   const [clientTransport, serverTransport] =
     InMemoryTransport.createLinkedPair();
