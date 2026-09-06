@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "26bca75a-7218-4608-97de-35cbe732e369",
+  "id": "2333506c-1926-4dd8-9855-243404e86332",
   "prevId": "10787b50-ac75-4913-ba21-f3d2da7acc6e",
   "tables": {
     "workspace": {
@@ -5613,7 +5613,22 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "oauth_session_client_id_idx": {
+          "name": "oauth_session_client_id_idx",
+          "columns": [
+            "client_id"
+          ],
+          "isUnique": false
+        },
+        "oauth_session_expires_at_idx": {
+          "name": "oauth_session_expires_at_idx",
+          "columns": [
+            "expires_at"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "oauth_session_client_id_oauth_client_client_id_fk": {
           "name": "oauth_session_client_id_oauth_client_client_id_fk",
@@ -5726,6 +5741,13 @@
           "name": "oauth_authorization_code_expires_at_idx",
           "columns": [
             "expires_at"
+          ],
+          "isUnique": false
+        },
+        "oauth_authorization_code_client_id_idx": {
+          "name": "oauth_authorization_code_client_id_idx",
+          "columns": [
+            "client_id"
           ],
           "isUnique": false
         }
@@ -5913,10 +5935,18 @@
           ],
           "isUnique": false
         },
-        "oauth_grant_client_id_idx": {
-          "name": "oauth_grant_client_id_idx",
+        "oauth_grant_client_id_user_id_idx": {
+          "name": "oauth_grant_client_id_user_id_idx",
           "columns": [
-            "client_id"
+            "client_id",
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "oauth_grant_user_id_idx": {
+          "name": "oauth_grant_user_id_idx",
+          "columns": [
+            "user_id"
           ],
           "isUnique": false
         },
@@ -5924,6 +5954,13 @@
           "name": "oauth_grant_previous_refresh_token_hash_idx",
           "columns": [
             "previous_refresh_token_hash"
+          ],
+          "isUnique": false
+        },
+        "oauth_grant_refresh_token_expires_at_idx": {
+          "name": "oauth_grant_refresh_token_expires_at_idx",
+          "columns": [
+            "refresh_token_expires_at"
           ],
           "isUnique": false
         }
