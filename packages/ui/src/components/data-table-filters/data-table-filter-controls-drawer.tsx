@@ -28,9 +28,13 @@ export function DataTableFilterControlsDrawer() {
   const triggerButtonRef = React.useRef<HTMLButtonElement>(null);
   const isMobile = useMediaQuery("(max-width: 640px)");
 
-  useHotKey(() => {
-    triggerButtonRef.current?.click();
-  }, "\\");
+  useHotKey(
+    () => {
+      triggerButtonRef.current?.click();
+    },
+    "\\",
+    { code: "Backslash" },
+  );
 
   return (
     <Drawer>

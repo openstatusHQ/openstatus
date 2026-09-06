@@ -27,7 +27,7 @@ export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
   const { table, isLoading, columnFilters, totalRows, filterRows } =
     useDataTable();
   const { open, setOpen } = useControls();
-  useHotKey(() => setOpen((prev) => !prev), "\\");
+  useHotKey(() => setOpen((prev) => !prev), "\\", { code: "Backslash" });
   const rows = {
     total: totalRows ?? table.getCoreRowModel().rows.length,
     filtered: filterRows ?? table.getFilteredRowModel().rows.length,
