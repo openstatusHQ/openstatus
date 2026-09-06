@@ -156,6 +156,123 @@ describe("resolvePathnamePrefix", () => {
     });
   });
 
+  describe("subdomain-shaped host that owns no page", () => {
+    // `themes.openstatus.dev` is the theme explorer: subdomain-shaped, but it
+    // owns no page of its own, so its demo page is served from
+    // `/status/{locale}` and its links must keep the slug prefix.
+    test("keeps the prefix on the explorer's status page", () => {
+      expect(
+        resolvePathnamePrefix({
+          hostname: "themes.openstatus.dev",
+          pathname: "/status/en",
+          customDomain: undefined,
+          locale: "en",
+          defaultLocale,
+        }),
+      ).toBe("status/en");
+    });
+
+    test("keeps the prefix on a deep path with a non-default locale", () => {
+      expect(
+        resolvePathnamePrefix({
+          hostname: "themes.openstatus.dev",
+          pathname: "/status/fr/monitors/123",
+          customDomain: undefined,
+          locale: "fr",
+          defaultLocale,
+        }),
+      ).toBe("status/fr");
+    });
+
+    test("keeps the prefix when the locale segment is absent", () => {
+      expect(
+        resolvePathnamePrefix({
+          hostname: "themes.openstatus.dev",
+          pathname: "/status",
+          customDomain: undefined,
+          locale: "en",
+          defaultLocale,
+        }),
+      ).toBe("status/en");
+    });
+
+    test("matches the slug segment case-insensitively", () => {
+      expect(
+        resolvePathnamePrefix({
+          hostname: "themes.openstatus.dev",
+          pathname: "/Status/en",
+          customDomain: undefined,
+          locale: "en",
+          defaultLocale,
+        }),
+      ).toBe("Status/en");
+    });
+
+    test("only the `status` slug is prefixed — the explorer root is not", () => {
+      expect(
+        resolvePathnamePrefix({
+          hostname: "themes.openstatus.dev",
+          pathname: "/",
+          customDomain: undefined,
+          locale: "fr",
+          defaultLocale,
+        }),
+      ).toBe("fr");
+    });
+
+    test("only the `status` slug is prefixed — other slugs are not", () => {
+      expect(
+        resolvePathnamePrefix({
+          hostname: "themes.openstatus.dev",
+          pathname: "/acme/en",
+          customDomain: undefined,
+          locale: "en",
+          defaultLocale,
+        }),
+      ).toBe("");
+    });
+  });
+
+  describe("hostname-routed pages are unaffected", () => {
+    test("a subdomain page keeps dropping the prefix", () => {
+      expect(
+        resolvePathnamePrefix({
+          hostname: "acme.openstatus.dev",
+          pathname: "/events",
+          customDomain: undefined,
+          locale: "en",
+          defaultLocale,
+        }),
+      ).toBe("");
+    });
+
+    test("a subdomain page whose own slug is `status`", () => {
+      // Only the explorer host opts into the prefix, so a real page at
+      // `status.openstatus.dev/status` still drops it.
+      expect(
+        resolvePathnamePrefix({
+          hostname: "status.openstatus.dev",
+          pathname: "/status",
+          customDomain: undefined,
+          locale: "fr",
+          defaultLocale,
+        }),
+      ).toBe("fr");
+    });
+
+    test("a custom domain page keeps dropping the prefix", () => {
+      expect(
+        resolvePathnamePrefix({
+          hostname: "status.acme.com",
+          pathname: "/status",
+          customDomain: "status.acme.com",
+          locale: "fr",
+          defaultLocale,
+        }),
+      ).toBe("fr");
+    });
+  });
+
   describe("edge cases", () => {
     test("www subdomain is treated as pathname routing", () => {
       expect(

@@ -182,6 +182,18 @@ type CheckRegionRequest = {
 // API Functions
 // ============================================================================
 
+// A timeout / unreachable target is an expected outcome, not a bug. Callers
+// throw this so a route catch can return 400 while keeping it out of Sentry.
+export class TargetUnreachableError extends Error {}
+
+// Bound the upstream checker request below the client's 10s abort so a stalled
+// checker can't keep the route running to the platform limit.
+export const CHECKER_REQUEST_TIMEOUT_MS = 9_000;
+
+export function isTimeoutError(e: unknown): boolean {
+  return e instanceof Error && e.name === "TimeoutError";
+}
+
 export async function checkRegion(
   props: CheckRegionRequest,
 ): Promise<RegionCheckerResponse> {
@@ -209,40 +221,51 @@ export async function checkRegion(
       break;
   }
 
-  const res = await fetch(endpoint, {
-    headers: {
-      Authorization: `Basic ${process.env.CRON_SECRET}`,
-      "Content-Type": "application/json",
-      ...regionHeader,
-    },
-    method: "POST",
-    body: JSON.stringify({
-      url,
-      method: method || "GET",
-      headers: headers?.reduce(
-        (acc, { key, value }) => {
-          if (!key) return acc; // key === "" is an invalid header
-          return { ...acc, [key]: value };
-        },
-        {} as Record<string, string>,
-      ),
-      body: body ? body : undefined,
-    }),
-    signal,
-    next: { revalidate: 0 },
-  });
+  // A caller-supplied signal is the caller's to interpret (it inspects the raw
+  // TimeoutError); only our own default bound maps to TargetUnreachableError.
+  const usingDefaultTimeout = !signal;
+
+  let res: Response;
+  try {
+    res = await fetch(endpoint, {
+      headers: {
+        Authorization: `Basic ${process.env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        ...regionHeader,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        url,
+        method: method || "GET",
+        headers: headers?.reduce(
+          (acc, { key, value }) => {
+            if (!key) return acc; // key === "" is an invalid header
+            return { ...acc, [key]: value };
+          },
+          {} as Record<string, string>,
+        ),
+        body: body ? body : undefined,
+      }),
+      next: { revalidate: 0 },
+      signal: signal ?? AbortSignal.timeout(CHECKER_REQUEST_TIMEOUT_MS),
+    });
+  } catch (e) {
+    if (usingDefaultTimeout && isTimeoutError(e)) {
+      throw new TargetUnreachableError("checker request timed out");
+    }
+    throw e;
+  }
 
   const json = await res.json();
 
   const data = checkerSchema.or(errorRequest).safeParse(json);
 
   if (!data.success) {
-    console.error(JSON.stringify(res));
-    console.error(JSON.stringify(json));
-    console.error(
-      `something went wrong with request to ${url} error ${data.error.message}`,
-    );
-    throw new Error(data.error.message);
+    // Neither the success nor the error shape matched — likely checker schema
+    // drift rather than an unreachable target. Warn (not error) so it stays
+    // observable in production without paging Sentry.
+    console.warn("Unexpected checker response shape:", json);
+    throw new TargetUnreachableError(data.error.message);
   }
 
   return {

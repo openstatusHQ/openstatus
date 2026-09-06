@@ -9,20 +9,10 @@
 @theme {
   --breakpoint-xs: 30rem;
 
-  /* A 0.3s hold, then a 0.3s half-turn, on repeat. The mark is symmetric under
-   * a half turn, so every cycle ends where it visually began and the loop never
-   * jumps. ease-in-out because a linear turn that stops dead looks broken. */
-  --animate-spin-half: spin-half 0.6s ease-in-out infinite;
-
-  @keyframes spin-half {
-    0%,
-    50% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(180deg);
-    }
-  }
+  /* Heights of the sticky app chrome. Pages that fill the viewport instead of
+   * growing the document (monitor logs) subtract both. */
+  --spacing-app-header: 3.5rem;
+  --spacing-app-tabs: 41px;
 }
 
 @theme inline {
@@ -31,6 +21,10 @@
   --font-sans: var(--font-inter);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--destructive);
+  --color-info: var(--info);
 }
 
 @layer base {

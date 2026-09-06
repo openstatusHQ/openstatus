@@ -28,6 +28,7 @@ export const OIDCProvider: OIDCConfig<Profile> = {
   issuer: process.env.AUTH_OIDC_ISSUER,
   clientId: process.env.AUTH_OIDC_ID,
   clientSecret: process.env.AUTH_OIDC_SECRET,
+  checks: ["pkce", "state"],
 };
 
 // The stock provider bakes an empty `connection=` into the authorize URL, and

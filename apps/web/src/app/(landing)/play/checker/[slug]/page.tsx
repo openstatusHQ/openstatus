@@ -52,18 +52,22 @@ export async function generateMetadata({
 
   if (!data) return metadata;
 
-  const regions = data.checks.sort((a, b) => a.latency - b.latency);
+  const regions = [...data.checks].sort((a, b) => a.latency - b.latency);
   const fastestRegion = regions[0];
   const slowestRegion = regions[regions.length - 1];
 
   const TITLE = data.url;
-  const DESCRIPTION = `${formatDate(
-    new Date(data.timestamp),
-  )} | Fastest: ${regionFormatter(fastestRegion.region)} (${latencyFormatter(
-    fastestRegion.latency,
-  )}) | Slowest: ${regionFormatter(slowestRegion.region)} (${latencyFormatter(
-    slowestRegion.latency,
-  )})`;
+  // `checks` is empty when every region failed (only the base hash is stored).
+  const DESCRIPTION =
+    fastestRegion && slowestRegion
+      ? `${formatDate(
+          new Date(data.timestamp),
+        )} | Fastest: ${regionFormatter(fastestRegion.region)} (${latencyFormatter(
+          fastestRegion.latency,
+        )}) | Slowest: ${regionFormatter(slowestRegion.region)} (${latencyFormatter(
+          slowestRegion.latency,
+        )})`
+      : `${formatDate(new Date(data.timestamp))} | No successful checks`;
 
   return {
     ...metadata,

@@ -12,12 +12,27 @@ export {
   type GetMonitorSummaryResult,
 } from "./get-monitor-summary";
 export { getResponseLog, type ResponseLogDetail } from "./get-response-log";
+export {
+  getResponseLogFacets,
+  type GetResponseLogFacetsResult,
+  type ResponseLogFacet,
+} from "./get-response-log-facets";
 export { getPrivateLocationIdsByMonitor } from "./private-locations";
 export {
   listResponseLogs,
   type ListResponseLogsResult,
   type ResponseLogListItem,
 } from "./list-response-logs";
+export {
+  listResponseLogsInfinite,
+  type ListResponseLogsInfiniteResult,
+} from "./list-response-logs-infinite";
+export {
+  type ResponseLogWindow,
+  selectWindow,
+  toPipeParams,
+  trimToTick,
+} from "./response-logs-cursor";
 export {
   getMonitor,
   type ListMonitorsResult,
@@ -61,13 +76,16 @@ export {
   GetMonitorStatusInput,
   GetMonitorSummaryInput,
   GetPrivateLocationIdsByMonitorInput,
+  GetResponseLogFacetsInput,
   GetResponseLogInput,
   grpcTlsModes,
   ListMonitorsInput,
+  ListResponseLogsInfiniteInput,
   ListResponseLogsInput,
   monitorJobTypes,
   monitorMethods,
   monitorPeriodicity,
+  ResponseLogFilters,
   type MonitorTimeRange,
   monitorTimeRange,
   TriggerMonitorInput,

@@ -15,7 +15,9 @@ function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
       className={cn(
         "group/input-group border-input dark:bg-input/30 relative flex w-full items-center rounded-md border shadow-xs transition-[color,box-shadow] outline-none",
         "h-9 min-w-0 has-[>textarea]:h-auto",
-        "has-[:disabled]:pointer-events-none has-[:disabled]:opacity-50",
+        // Scoped to the control: an addon button going disabled (e.g. an empty
+        // send button) must not make the whole group non-interactive.
+        "has-[[data-slot=input-group-control]:disabled]:pointer-events-none has-[[data-slot=input-group-control]:disabled]:opacity-50",
 
         // Variants based on alignment.
         "has-[>[data-align=inline-start]]:[&>input]:pl-2",
@@ -72,7 +74,9 @@ function InputGroupAddon({
         if ((e.target as HTMLElement).closest("button")) {
           return;
         }
-        e.currentTarget.parentElement?.querySelector("input")?.focus();
+        e.currentTarget.parentElement
+          ?.querySelector<HTMLElement>("[data-slot=input-group-control]")
+          ?.focus();
       }}
       {...props}
     />

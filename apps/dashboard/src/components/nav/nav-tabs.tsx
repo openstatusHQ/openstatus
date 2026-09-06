@@ -20,7 +20,7 @@ export function NavTabs({ items }: NavTabsProps) {
   const normalizedPath = pathname.replace(/\/+$/, "") || "/";
 
   return (
-    <nav className="bg-background sticky top-14 z-10 h-[41px] w-full overflow-x-auto border-b px-2">
+    <nav className="bg-background top-app-header h-app-tabs sticky z-10 w-full overflow-x-auto border-b px-2">
       <ul className="inline-flex h-full items-center gap-1 px-3 text-sm">
         {items.map((item) => {
           const normalizedHref = item.href.replace(/\/+$/, "") || "/";

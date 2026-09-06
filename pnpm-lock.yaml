@@ -16,8 +16,8 @@ catalogs:
       specifier: 3.0.190
       version: 3.0.190
     '@auth/core':
-      specifier: 0.40.0
-      version: 0.40.0
+      specifier: 0.41.2
+      version: 0.41.2
     '@auth/drizzle-adapter':
       specifier: 1.11.2
       version: 1.11.2
@@ -192,6 +192,9 @@ catalogs:
     '@radix-ui/react-tooltip':
       specifier: 1.2.8
       version: 1.2.8
+    '@radix-ui/react-visually-hidden':
+      specifier: 1.2.3
+      version: 1.2.3
     '@react-email/ui':
       specifier: 6.1.5
       version: 6.1.5
@@ -237,6 +240,9 @@ catalogs:
     '@tanstack/react-table':
       specifier: 8.21.3
       version: 8.21.3
+    '@tanstack/react-virtual':
+      specifier: 3.14.10
+      version: 3.14.10
     '@trpc/client':
       specifier: 11.17.0
       version: 11.17.0
@@ -559,7 +565,7 @@ importers:
         version: 3.0.190(react@19.2.6)(zod@4.1.13)
       '@auth/core':
         specifier: 'catalog:'
-        version: 0.40.0
+        version: 0.41.2
       '@auth/drizzle-adapter':
         specifier: 'catalog:'
         version: 1.11.2
@@ -1081,7 +1087,7 @@ importers:
     dependencies:
       '@auth/core':
         specifier: 'catalog:'
-        version: 0.40.0
+        version: 0.41.2
       '@auth/drizzle-adapter':
         specifier: 'catalog:'
         version: 1.11.2
@@ -1313,7 +1319,7 @@ importers:
     dependencies:
       '@auth/core':
         specifier: 'catalog:'
-        version: 0.40.0
+        version: 0.41.2
       '@auth/drizzle-adapter':
         specifier: 'catalog:'
         version: 1.11.2
@@ -2890,6 +2896,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@ai-sdk/react':
+        specifier: 'catalog:'
+        version: 3.0.190(react@19.2.6)(zod@4.1.13)
       '@date-fns/utc':
         specifier: 'catalog:'
         version: 2.1.1
@@ -2977,6 +2986,21 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: 'catalog:'
         version: 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@radix-ui/react-visually-hidden':
+        specifier: 'catalog:'
+        version: 1.2.3(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.100.11(react@19.2.6)
+      '@tanstack/react-table':
+        specifier: 'catalog:'
+        version: 8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@tanstack/react-virtual':
+        specifier: 'catalog:'
+        version: 3.14.10(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      ai:
+        specifier: 'catalog:'
+        version: 6.0.188(zod@4.1.13)
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -2998,6 +3022,9 @@ importers:
       next-themes:
         specifier: 'catalog:'
         version: 0.4.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      nuqs:
+        specifier: 'catalog:'
+        version: 2.8.9(next@16.3.0(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
       qr-code-styling:
         specifier: 'catalog:'
         version: 1.9.2
@@ -3195,20 +3222,6 @@ packages:
     resolution: {integrity: sha512-SABbKiObg5dLRiTFnqiW1WWwGcg1BJfmHtT2asIBnBHg6Smy/Ms2KHc650+JI4Hw7lSkdiNebEGXpwoxfben8Q==}
     peerDependencies:
       zod: ^4.0.0
-
-  '@auth/core@0.40.0':
-    resolution: {integrity: sha512-n53uJE0RH5SqZ7N1xZoMKekbHfQgjd0sAEyUbE+IYJnmuQkbvuZnXItCU7d+i7Fj8VGOgqvNO7Mw4YfBTlZeQw==}
-    peerDependencies:
-      '@simplewebauthn/browser': ^9.0.1
-      '@simplewebauthn/server': ^9.0.2
-      nodemailer: ^6.8.0
-    peerDependenciesMeta:
-      '@simplewebauthn/browser':
-        optional: true
-      '@simplewebauthn/server':
-        optional: true
-      nodemailer:
-        optional: true
 
   '@auth/core@0.41.2':
     resolution: {integrity: sha512-Hx5MNBxN2fJTbJKGUKAA0wca43D0Akl3TvufY54Gn8lop7F+34vU1zA1pn0vQfIoVuLIrpfc2nkyjwIaPJMW7w==}
@@ -7270,9 +7283,18 @@ packages:
       react: '>=16.8'
       react-dom: '>=16.8'
 
+  '@tanstack/react-virtual@3.14.10':
+    resolution: {integrity: sha512-SRyoUbdFMRHuYXMijV5H4ZarQWpXkj3iANq8OFre+pybeVap8ZJjZ3Nz9bVjx4d8PfobVUQUdKyyyHYk3E+djw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   '@tanstack/table-core@8.21.3':
     resolution: {integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==}
     engines: {node: '>=12'}
+
+  '@tanstack/virtual-core@3.17.8':
+    resolution: {integrity: sha512-BfEvehNpOT75r5Ksc5xW6NZuXujTfb7nlSEyVu4XHG3gdxNg1KqXruWbDewXOUaUYIo4oRbSfkjIajz4MAT8tA==}
 
   '@tootallnate/quickjs-emscripten@0.23.0':
     resolution: {integrity: sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==}
@@ -11939,14 +11961,6 @@ snapshots:
       openapi3-ts: 4.5.0
       zod: 4.1.13
 
-  '@auth/core@0.40.0':
-    dependencies:
-      '@panva/hkdf': 1.2.1
-      jose: 6.1.3
-      oauth4webapi: 3.8.3
-      preact: 10.24.3
-      preact-render-to-string: 6.5.11(preact@10.24.3)
-
   '@auth/core@0.41.2':
     dependencies:
       '@panva/hkdf': 1.2.1
@@ -15776,7 +15790,15 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
+  '@tanstack/react-virtual@3.14.10(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+    dependencies:
+      '@tanstack/virtual-core': 3.17.8
+      react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
+
   '@tanstack/table-core@8.21.3': {}
+
+  '@tanstack/virtual-core@3.17.8': {}
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
 

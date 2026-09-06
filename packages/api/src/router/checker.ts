@@ -37,6 +37,34 @@ const ICMP_TEST_TIMEOUT = 5000;
 // Kept under ABORT_TIMEOUT so the checker answers before the fetch gives up.
 const GRPC_TEST_TIMEOUT = 5000;
 
+// Unreachable targets, failed assertions and timeouts are expected outcomes
+// already surfaced to the user as BAD_REQUEST; only unexpected failures should
+// reach the logs (and Sentry).
+function toCheckerError(
+  error: unknown,
+  label: string,
+  fallback: string,
+): TRPCError {
+  if (error instanceof TRPCError) {
+    if (error.code !== "BAD_REQUEST") {
+      console.error(`Checker ${label} test failed`, error);
+    }
+    return error;
+  }
+
+  if (error instanceof Error && error.name === "TimeoutError") {
+    return new TRPCError({
+      code: "BAD_REQUEST",
+      message: `The ${label} check did not complete within ${
+        ABORT_TIMEOUT / 1000
+      } seconds. Please try again.`,
+    });
+  }
+
+  console.error(`Checker ${label} test failed`, error);
+  return new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: fallback });
+}
+
 // Input schemas
 const httpTestInput = z.object({
   url: safeUrlSchema,
@@ -217,6 +245,13 @@ export const httpOutput = z
       state: z.literal("error").prefault("error"),
       message: z.string(),
     }),
+  )
+  .or(
+    // A target the checker could not reach (timeout, DNS, refused): `checker.Http`
+    // answers 200 with `error` set and `status`/`headers` omitted.
+    z
+      .object({ error: z.string().min(1), timestamp: z.number() })
+      .transform(({ error }) => ({ state: "error" as const, message: error })),
   );
 
 export const dnsOutput = z
@@ -325,15 +360,11 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker HTTP test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: error instanceof Error ? error.message : "HTTP check failed",
-    });
+    throw toCheckerError(
+      error,
+      "HTTP",
+      error instanceof Error ? error.message : "HTTP check failed",
+    );
   }
 }
 
@@ -376,15 +407,7 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker TCP test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "TCP check failed",
-    });
+    throw toCheckerError(error, "TCP", "TCP check failed");
   }
 }
 
@@ -446,15 +469,7 @@ export async function testDns(input: z.infer<typeof dnsTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker DNS test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "DNS check failed",
-    });
+    throw toCheckerError(error, "DNS", "DNS check failed");
   }
 }
 
@@ -500,15 +515,7 @@ export async function testIcmp(input: z.infer<typeof icmpTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker ICMP test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "ICMP check failed",
-    });
+    throw toCheckerError(error, "ICMP", "ICMP check failed");
   }
 }
 
@@ -575,15 +582,7 @@ export async function testGrpc(input: z.infer<typeof grpcTestInput>) {
 
     return result.data;
   } catch (error) {
-    console.error("Checker gRPC test failed", error);
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "gRPC check failed",
-    });
+    throw toCheckerError(error, "gRPC", "gRPC check failed");
   }
 }
 

@@ -97,12 +97,15 @@ export function buildRootMessage(
     });
   }
 
+  // Maintenance carries a scheduled window, not an update timestamp.
+  const dateLabel =
+    pageUpdate.status === "maintenance" ? "Scheduled" : "Updated";
   blocks.push({
     type: "context",
     elements: [
       {
         type: "mrkdwn",
-        text: `Updated ${pageUpdate.date} · <${eventUrl(pageUpdate, subscription)}|View details> · Manage with \`/openstatus unsubscribe\``,
+        text: `${dateLabel} ${pageUpdate.date} · <${eventUrl(pageUpdate, subscription)}|View details> · Manage with \`/openstatus unsubscribe\``,
       },
     ],
   });

@@ -3,10 +3,6 @@
   "version": "0.0.0",
   "license": "MIT",
   "exports": {
-    "./components/ui/*": {
-      "types": "./src/components/ui/*.tsx",
-      "default": "./src/components/ui/*.tsx"
-    },
     "./components/blocks/status.types": {
       "types": "./src/components/blocks/status.types.ts",
       "default": "./src/components/blocks/status.types.ts"
@@ -14,6 +10,27 @@
     "./components/blocks/status.utils": {
       "types": "./src/components/blocks/status.utils.ts",
       "default": "./src/components/blocks/status.utils.ts"
+    },
+    "./components/data-table-filters/data-table-filter-command/utils": {
+      "types": "./src/components/data-table-filters/data-table-filter-command/utils.ts",
+      "default": "./src/components/data-table-filters/data-table-filter-command/utils.ts"
+    },
+    "./components/data-table-filters/types": {
+      "types": "./src/components/data-table-filters/types.ts",
+      "default": "./src/components/data-table-filters/types.ts"
+    },
+    "./components/data-table-filters/utils": {
+      "types": "./src/components/data-table-filters/utils.ts",
+      "default": "./src/components/data-table-filters/utils.ts"
+    },
+    "./globals": "./src/globals.css",
+    "./lib/data-table-filters/store/provider/DataTableStoreProvider": {
+      "types": "./src/lib/data-table-filters/store/provider/DataTableStoreProvider.tsx",
+      "default": "./src/lib/data-table-filters/store/provider/DataTableStoreProvider.tsx"
+    },
+    "./lib/data-table-filters/table-schema/generators/columns": {
+      "types": "./src/lib/data-table-filters/table-schema/generators/columns.tsx",
+      "default": "./src/lib/data-table-filters/table-schema/generators/columns.tsx"
     },
     "./components/blocks/*": {
       "types": "./src/components/blocks/*.tsx",
@@ -23,15 +40,22 @@
       "types": "./src/components/custom/*.tsx",
       "default": "./src/components/custom/*.tsx"
     },
-    "./lib/*": {
-      "types": "./src/lib/*.ts",
-      "default": "./src/lib/*.ts"
+    "./components/data-table-filters/*": {
+      "types": "./src/components/data-table-filters/*.tsx",
+      "default": "./src/components/data-table-filters/*.tsx"
+    },
+    "./components/ui/*": {
+      "types": "./src/components/ui/*.tsx",
+      "default": "./src/components/ui/*.tsx"
     },
     "./hooks/*": {
       "types": "./src/hooks/*.ts",
       "default": "./src/hooks/*.ts"
     },
-    "./globals": "./src/globals.css"
+    "./lib/*": {
+      "types": "./src/lib/*.ts",
+      "default": "./src/lib/*.ts"
+    }
   },
   "scripts": {
     "build": "echo '@openstatus/ui has no build step (registry builds separately)'",
@@ -40,6 +64,7 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/react": "catalog:",
     "@date-fns/utc": "catalog:",
     "@dnd-kit/core": "catalog:",
     "@dnd-kit/modifiers": "catalog:",
@@ -69,12 +94,18 @@
     "@radix-ui/react-tabs": "catalog:",
     "@radix-ui/react-toggle": "catalog:",
     "@radix-ui/react-tooltip": "catalog:",
+    "@radix-ui/react-visually-hidden": "catalog:",
+    "@tanstack/react-query": "catalog:",
+    "@tanstack/react-table": "catalog:",
+    "@tanstack/react-virtual": "catalog:",
+    "ai": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "cmdk": "catalog:",
     "date-fns": "catalog:",
     "lucide-react": "catalog:",
     "next": "catalog:",
+    "nuqs": "catalog:",
     "qr-code-styling": "catalog:",
     "radix-ui": "catalog:",
     "react": "catalog:",

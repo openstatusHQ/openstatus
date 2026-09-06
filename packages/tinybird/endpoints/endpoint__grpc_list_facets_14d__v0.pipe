@@ -1,0 +1,61 @@
+TAGS "grpc"
+
+NODE base
+SQL >
+
+%
+SELECT
+    region,
+    requestStatus,
+    trigger,
+    latency,
+    {% if regions %} region IN {{ Array(regions, 'String') }} {% else %} 1 {% end %} AS m_region,
+    {% if status %} requestStatus IN {{ Array(status, 'String') }} {% else %} 1 {% end %} AS m_request_status,
+    {% if trigger %} trigger IN {{ Array(trigger, 'String') }} {% else %} 1 {% end %} AS m_trigger,
+    (
+        {% if defined(latencyMin) %} latency >= toInt64({{ String(latencyMin) }}) {% else %} 1 {% end %}
+        AND
+        {% if defined(latencyMax) %} latency <= toInt64({{ String(latencyMax) }}) {% else %} 1 {% end %}
+    ) AS m_latency
+FROM mv__grpc_full_14d__v0
+WHERE
+    monitorId = {{ String(monitorId, '4433', required=True) }}
+    {% if defined(fromDate) %}
+        AND time >= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(fromDate) }})))
+        AND cronTimestamp >= toInt64({{ String(fromDate) }})
+    {% end %}
+    {% if defined(toDate) %}
+        AND time <= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(toDate) }})))
+        AND cronTimestamp <= toInt64({{ String(toDate) }})
+    {% end %}
+
+NODE endpoint
+SQL >
+
+    SELECT 'region' AS field, toString(region) AS value, toUInt64(countIf(m_request_status AND m_trigger AND m_latency)) AS count
+    FROM base
+    GROUP BY region
+    UNION ALL
+    SELECT 'requestStatus', toString(requestStatus), toUInt64(countIf(m_region AND m_trigger AND m_latency))
+    FROM base
+    WHERE requestStatus IS NOT NULL
+    GROUP BY requestStatus
+    UNION ALL
+    SELECT 'trigger', toString(trigger), toUInt64(countIf(m_region AND m_request_status AND m_latency))
+    FROM base
+    WHERE trigger IS NOT NULL
+    GROUP BY trigger
+    UNION ALL
+    SELECT '__summary', 'filtered', toUInt64(countIf(m_region AND m_request_status AND m_trigger AND m_latency))
+    FROM base
+    UNION ALL
+    SELECT '__summary', 'total', toUInt64(count())
+    FROM base
+    UNION ALL
+    SELECT '__summary', 'latencyMin', toUInt64(min(latency))
+    FROM base
+    UNION ALL
+    SELECT '__summary', 'latencyMax', toUInt64(max(latency))
+    FROM base
+
+TYPE endpoint

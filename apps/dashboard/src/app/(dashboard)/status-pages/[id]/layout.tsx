@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+
 import {
   AppHeader,
   AppHeaderActions,
@@ -18,10 +20,10 @@ export default async function Layout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const pageId = Number.parseInt(id);
+  if (Number.isNaN(pageId)) notFound();
 
-  await fetchQueryOrNotFound(
-    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
-  );
+  await fetchQueryOrNotFound(trpc.page.get.queryOptions({ id: pageId }));
 
   return (
     <HydrateClient>

@@ -1191,7 +1191,7 @@ describe("MaintenanceService.UpdateMaintenance", () => {
     expect(afterRecord?.pageId).toBe(beforeRecord?.pageId);
   });
 
-  test("clears pageId when removing all components", async () => {
+  test("keeps pageId when removing all components", async () => {
     const tempRecord = await db
       .insert(maintenance)
       .values({
@@ -1228,7 +1228,7 @@ describe("MaintenanceService.UpdateMaintenance", () => {
         .from(maintenance)
         .where(eq(maintenance.id, tempRecord.id))
         .get();
-      expect(afterRecord?.pageId).toBeNull();
+      expect(afterRecord?.pageId).toBe(testPageId);
 
       const afterAssociations = await db
         .select()
