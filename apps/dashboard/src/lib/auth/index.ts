@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { cache } from "react";
 
 import { adapter } from "./adapter";
+import { logger } from "./logger";
 import {
   GitHubProvider,
   GoogleProvider,
@@ -51,6 +52,7 @@ const {
 } = NextAuth({
   // debug: true,
   adapter,
+  logger,
   providers: [
     GitHubProvider,
     GoogleProvider,

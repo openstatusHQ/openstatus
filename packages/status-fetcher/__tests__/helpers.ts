@@ -34,7 +34,7 @@ export const expectFetchError = (
   if (!Exit.isFailure(exit)) {
     throw new Error("expected Exit.Failure, got Success");
   }
-  const failure = Cause.failureOption(exit.cause);
+  const failure = Cause.findErrorOption(exit.cause);
   if (Option.isNone(failure)) {
     throw new Error("expected Cause.Fail, got defect");
   }
@@ -67,7 +67,7 @@ export const expectIncidentsFetchError = (
   if (!Exit.isFailure(exit)) {
     throw new Error("expected Exit.Failure, got Success");
   }
-  const failure = Cause.failureOption(exit.cause);
+  const failure = Cause.findErrorOption(exit.cause);
   if (Option.isNone(failure)) {
     throw new Error("expected Cause.Fail, got defect");
   }
@@ -100,7 +100,7 @@ export const expectComponentsFetchError = (
   if (!Exit.isFailure(exit)) {
     throw new Error("expected Exit.Failure, got Success");
   }
-  const failure = Cause.failureOption(exit.cause);
+  const failure = Cause.findErrorOption(exit.cause);
   if (Option.isNone(failure)) {
     throw new Error("expected Cause.Fail, got defect");
   }

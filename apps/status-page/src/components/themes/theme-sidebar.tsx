@@ -449,10 +449,9 @@ export function SidebarTrigger({
         </Button>
       </TooltipTrigger>
       <TooltipContent side="left" className="flex items-center gap-2">
-        Toggle Sidebar{" "}
+        Toggle Sidebar
         <KbdGroup>
           <Kbd>⌘</Kbd>
-          <span>+</span>
           <Kbd>B</Kbd>
         </KbdGroup>
       </TooltipContent>

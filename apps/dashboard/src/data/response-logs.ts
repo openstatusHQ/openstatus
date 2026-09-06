@@ -2,11 +2,11 @@ import type { RouterOutputs } from "@openstatus/api";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { startOfDay } from "date-fns";
 
-type ResponseLog = RouterOutputs["tinybird"]["list"]["data"][number];
+type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
 
 const today = startOfDay(new Date());
 
-export const exampleLogs: ResponseLog[] = Array.from({ length: 10 }).map(
+export const exampleLogs: ResponseLog[] = Array.from({ length: 30 }).map(
   (_, i) => ({
     id: i.toString(),
     type: "http",
@@ -22,8 +22,8 @@ export const exampleLogs: ResponseLog[] = Array.from({ length: 10 }).map(
       ttfb: 40,
       transfer: 50,
     },
-    assertions: [],
-    region: monitorRegions[i],
+    assertions: "[]",
+    region: monitorRegions[i % 6],
     error: false,
     timestamp: today.getTime() + i * 1000 * 60,
     headers: {
@@ -34,6 +34,8 @@ export const exampleLogs: ResponseLog[] = Array.from({ length: 10 }).map(
       Server: "Vercel",
     },
     workspaceId: "1",
+    message: null,
+    body: null,
     monitorId: "1",
     cronTimestamp: today.getTime() + i * 1000 * 60,
     trigger: "cron" as const satisfies "cron" | "api",

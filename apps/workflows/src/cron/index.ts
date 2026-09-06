@@ -16,7 +16,13 @@ import {
   StepPaused,
   workflowStepSchema,
 } from "./monitor";
+import {
+  handleOutboxDrainCron,
+  handleOutboxRetentionCron,
+  handleOutboxShadowCron,
+} from "./outbox";
 import { handlePrivateLocationHealthCron } from "./private-location-health";
+import { handleStatusDriftCron } from "./status-drift";
 import { handleUptimeFreezeCron } from "./uptime-freeze";
 
 const app = new Hono({ strict: false });
@@ -75,7 +81,7 @@ app.get("/checker/:period", async (c) => {
           void cronCompleted();
         }),
       ),
-      Effect.catchAll((e) =>
+      Effect.catch((e) =>
         Effect.sync(() => {
           console.error(e);
           void reportBackgroundError(e.message);
@@ -160,6 +166,26 @@ app.get("/monitors/:step", async (c) => {
   }
 
   return c.json({ success: true }, 200);
+});
+
+app.get("/outbox/drain", async (c) => {
+  const summary = await handleOutboxDrainCron();
+  return c.json({ success: true, ...summary }, 200);
+});
+
+app.get("/outbox/retention", async (c) => {
+  const summary = await handleOutboxRetentionCron();
+  return c.json({ success: true, ...summary }, 200);
+});
+
+app.get("/outbox/shadow", async (c) => {
+  const result = await handleOutboxShadowCron();
+  return c.json({ success: true, ...result }, 200);
+});
+
+app.get("/status-drift", async (c) => {
+  const result = await handleStatusDriftCron();
+  return c.json({ success: true, ...result }, 200);
 });
 
 export { app as cronRouter };

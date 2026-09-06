@@ -7,6 +7,7 @@ import { headers } from "next/headers";
 import { getValidCustomDomain } from "../domain";
 import { getQueryClient, trpc } from "../trpc/server";
 import { adapter } from "./adapter";
+import { logger } from "./logger";
 import { ResendProvider } from "./providers";
 
 export type { DefaultSession };
@@ -14,6 +15,7 @@ export type { DefaultSession };
 export const { handlers, signIn, signOut, auth } = NextAuth({
   debug: process.env.NODE_ENV === "development",
   adapter,
+  logger,
   providers: [ResendProvider],
   callbacks: {
     async signIn(params) {

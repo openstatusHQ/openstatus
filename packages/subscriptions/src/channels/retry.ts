@@ -46,10 +46,12 @@ export function postWebhookWithRetry(opts: {
       }),
     catch: (cause) => new WebhookSendError("Webhook request failed", { cause }),
   }).pipe(
-    Effect.timeoutFail({
+    Effect.timeoutOrElse({
       duration: `${opts.timeoutMs} millis`,
-      onTimeout: () =>
-        new WebhookSendError(`Webhook timed out after ${opts.timeoutMs}ms`),
+      orElse: () =>
+        Effect.fail(
+          new WebhookSendError(`Webhook timed out after ${opts.timeoutMs}ms`),
+        ),
     }),
     Effect.flatMap((response) =>
       response.ok

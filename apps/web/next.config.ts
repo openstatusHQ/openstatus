@@ -35,7 +35,7 @@ const homepageLinkHeader = [
   '</.well-known/agent-skills/index.json>; rel="agent-skills"; type="application/json"',
   '</.well-known/mcp.json>; rel="mcp-server"; type="application/json"',
   '<https://www.openstatus.dev/docs>; rel="service-doc"; type="text/html"',
-  '<https://api.openstatus.dev/openapi>; rel="service-desc"; type="application/json"',
+  '<https://www.openstatus.dev/openapi.json>; rel="service-desc"; type="application/json"',
   '<https://www.openstatus.dev/llms.txt>; rel="describedby"; type="text/plain"',
   '<https://www.openstatus.dev/llms-full.txt>; rel="alternate"; type="text/plain"; title="llms-full"',
   '<https://www.openstatus.dev/terms>; rel="terms-of-service"',
@@ -230,6 +230,22 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        // `/openapi.json` is the path agents probe for an API description, and
+        // they probe it on the site they were pointed at. The spec is generated
+        // in apps/server, so proxy rather than keep a second copy in sync.
+        // Host-scoped and ahead of the status-page rules below: those catch
+        // every path on any host once `sp_mode=new` is set, and a customer's
+        // custom domain has no business serving the openstatus API spec.
+        {
+          source: "/openapi.json",
+          has: [{ type: "host", value: "(www\\.)?openstatus\\.dev" }],
+          destination: "https://api.openstatus.dev/openapi.json",
+        },
+        {
+          source: "/openapi.yaml",
+          has: [{ type: "host", value: "(www\\.)?openstatus\\.dev" }],
+          destination: "https://api.openstatus.dev/openapi.yaml",
+        },
         {
           source: "/status-page/themes/:path*",
           destination: "https://www.stpg.dev/:path*",

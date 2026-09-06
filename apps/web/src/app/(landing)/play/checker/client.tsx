@@ -132,6 +132,8 @@ export function Form({
     startTransition(async () => {
       async function fetchAndReadStream() {
         let toastId: string | number | undefined;
+        let resultId: string | null = null;
+        let successCount = 0;
         try {
           toastId = toast.loading("Loading data from regions...", {
             duration: Number.POSITIVE_INFINITY,
@@ -171,7 +173,14 @@ export function Form({
           clearTimeout(timeoutId);
 
           const reader = response?.body?.getReader();
-          if (!reader) return;
+          if (!reader) {
+            toast.error("Failed to read response", {
+              id: toastId,
+              description: "Please try again.",
+              className: "text-destructive!",
+            });
+            return;
+          }
 
           const decoder = new TextDecoder();
           let done = false;
@@ -191,15 +200,7 @@ export function Form({
                     // Store the ID if it's a 32-char hex string
                     if (is32CharHex(item)) {
                       setId(item);
-                      toast.success("Data is available!", {
-                        id: toastId,
-                        description: "Learn about the response details.",
-                        action: {
-                          label: "Details",
-                          onClick: () => router.push(`/play/checker/${item}`),
-                        },
-                        duration: 4000,
-                      });
+                      resultId = item;
                       return null;
                     }
 
@@ -225,6 +226,7 @@ export function Form({
                 .filter(notEmpty);
 
               if (results.length > 0) {
+                successCount += results.length;
                 setValues((prev) => [...prev, ...results]);
                 toast.loading(
                   `Checking ${regionFormatter(
@@ -238,13 +240,41 @@ export function Form({
               }
             }
           }
+
+          if (successCount === 0) {
+            toast.error("No region could reach the target", {
+              id: toastId,
+              description: "It may be down or blocking our requests.",
+              className: "text-destructive!",
+            });
+          } else {
+            toast.success("Data is available!", {
+              id: toastId,
+              description: "Learn about the response details.",
+              ...(resultId
+                ? {
+                    action: {
+                      label: "Details",
+                      onClick: () => router.push(`/play/checker/${resultId}`),
+                    },
+                  }
+                : {}),
+              duration: 4000,
+            });
+          }
         } catch (error) {
           console.error("Error fetching data:", error);
           if (error instanceof Error && error.name === "AbortError") {
             toast.error("Request timeout", {
               id: toastId,
               description:
-                "The request took too long and was aborted after 7 seconds.",
+                "The request took too long and was aborted after 10 seconds.",
+              className: "text-destructive!",
+            });
+          } else {
+            toast.error("Something went wrong", {
+              id: toastId,
+              description: "Please try again.",
               className: "text-destructive!",
             });
           }

@@ -1,7 +1,7 @@
 import { expect } from "@std/expect";
 import { afterEach, describe, test } from "@std/testing/bdd";
 
-import { testGrpc } from "./checker";
+import { testGrpc, testHttp, testTcp } from "./checker";
 
 const originalFetch = globalThis.fetch;
 
@@ -19,6 +19,117 @@ function stubChecker(body: unknown) {
       }),
     )) as typeof globalThis.fetch;
 }
+
+/** Make the checker fetch reject, e.g. with the AbortSignal.timeout error. */
+function stubCheckerRejects(error: unknown) {
+  globalThis.fetch = (() => Promise.reject(error)) as typeof globalThis.fetch;
+}
+
+/** Count console.error calls while `fn` runs, then restore. */
+async function countErrors(fn: () => Promise<unknown>): Promise<number> {
+  const origError = console.error;
+  let count = 0;
+  console.error = () => {
+    count++;
+  };
+  try {
+    await fn().catch(() => {});
+  } finally {
+    console.error = origError;
+  }
+  return count;
+}
+
+const timing = {
+  dnsStart: 1,
+  dnsDone: 2,
+  connectStart: 2,
+  connectDone: 3,
+  tlsHandshakeStart: 3,
+  tlsHandshakeDone: 4,
+  firstByteStart: 4,
+  firstByteDone: 5,
+  transferStart: 5,
+  transferDone: 6,
+};
+
+describe("testHttp", () => {
+  const input = {
+    url: "https://example.com",
+    method: "GET" as const,
+    region: "ams" as const,
+    assertions: [],
+  };
+
+  test("accepts a 2XX response", async () => {
+    stubChecker({
+      status: 200,
+      latency: 5,
+      headers: {},
+      timestamp: 1_700_000_000_000,
+      timing,
+      region: "ams",
+    });
+
+    const result = await testHttp(input);
+    expect(result.state).toBe("success");
+  });
+
+  test("maps the unreachable shape to its error message without logging", async () => {
+    // `checker.Http` answers 200 with `error` set and status/headers omitted.
+    stubChecker({
+      error: "Timeout after 45000 ms",
+      latency: 45000,
+      timestamp: 1_700_000_000_000,
+      timing,
+      region: "ams",
+    });
+
+    await expect(testHttp(input)).rejects.toThrow("Timeout after 45000 ms");
+    expect(await countErrors(() => testHttp(input))).toBe(0);
+  });
+
+  test("does not log a failed assertion", async () => {
+    stubChecker({
+      status: 500,
+      latency: 5,
+      headers: {},
+      timestamp: 1_700_000_000_000,
+      timing,
+      region: "ams",
+    });
+
+    await expect(testHttp(input)).rejects.toThrow("Assertion error");
+    expect(await countErrors(() => testHttp(input))).toBe(0);
+  });
+
+  test("maps a checker timeout to BAD_REQUEST without logging", async () => {
+    stubCheckerRejects(new DOMException("timed out", "TimeoutError"));
+
+    const error = await testHttp(input).catch((e) => e);
+    expect(error.code).toBe("BAD_REQUEST");
+    expect(await countErrors(() => testHttp(input))).toBe(0);
+  });
+
+  test("still logs an unexpected failure", async () => {
+    stubCheckerRejects(new TypeError("fetch failed"));
+
+    const error = await testHttp(input).catch((e) => e);
+    expect(error.code).toBe("INTERNAL_SERVER_ERROR");
+    expect(await countErrors(() => testHttp(input))).toBe(1);
+  });
+});
+
+describe("testTcp", () => {
+  const input = { url: "example.com:443", region: "ams" as const };
+
+  test("does not log an unreachable target", async () => {
+    stubChecker({ message: "uri not reachable" });
+
+    await expect(testTcp(input)).rejects.toThrow("uri not reachable");
+    expect(await countErrors(() => testTcp(input))).toBe(0);
+  });
+});
 
 /**
  * The shape GRPCHandlerRegion returns for a completed RPC. `state` is absent —

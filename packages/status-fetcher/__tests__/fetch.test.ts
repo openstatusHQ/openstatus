@@ -52,7 +52,7 @@ const expectFailure = <A>(exit: Exit.Exit<A, FetchError>): FetchError => {
   if (!Exit.isFailure(exit)) {
     throw new Error("expected Exit.Failure");
   }
-  const failure = Cause.failureOption(exit.cause);
+  const failure = Cause.findErrorOption(exit.cause);
   if (Option.isNone(failure)) {
     throw new Error("expected Cause.Fail");
   }

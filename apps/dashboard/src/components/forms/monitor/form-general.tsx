@@ -36,6 +36,7 @@ import {
   AlertDialogTitle,
 } from "@openstatus/ui/components/ui/alert-dialog";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -57,7 +58,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
-import { Switch } from "@openstatus/ui/components/ui/switch";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import {
   Tooltip,
@@ -153,6 +153,9 @@ export function FormGeneral({
   const [isPending, startTransition] = useTransition();
   const watchType = form.watch("type");
   const watchMethod = form.watch("method");
+  // Each type has its own reference page; only http and dns support assertions.
+  const referenceUrl = `https://www.openstatus.dev/docs/reference/${watchType ?? "http"}-monitor/`;
+  const hasAssertions = watchType === "http" || watchType === "dns";
 
   useEffect(() => {
     // NOTE: reset form when type changes
@@ -259,8 +262,7 @@ export function FormGeneral({
                   </FormControl>
                   <FormMessage />
                   <FormDescription>
-                    Internal name for your monitor. This will be used to
-                    identify the monitor in the dashboard.
+                    Internal name to identify the monitor in the dashboard.
                   </FormDescription>
                 </FormItem>
               )}
@@ -269,14 +271,18 @@ export function FormGeneral({
               control={form.control}
               name="active"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center">
-                  <FormLabel>Active</FormLabel>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
+                <FormItem className="sm:pt-5.5">
+                  {/* pt = label height + gap, so the checkbox sits on the input line */}
+                  <div className="flex items-center gap-2 sm:h-9">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel>Active</FormLabel>
+                  </div>
+                  <FormDescription>Uncheck to pause checks.</FormDescription>
                 </FormItem>
               )}
             />
@@ -850,7 +856,9 @@ export function FormGeneral({
                     <FormMessage />
                     <FormDescription>
                       The service name passed to grpc.health.v1.Health/Check.
-                      Leave empty to check overall server health.
+                      Leave empty to check overall server health. This is a
+                      service name, not a method path: entering
+                      grpc.health.v1.Health itself returns SERVICE_UNKNOWN.
                     </FormDescription>
                   </FormItem>
                 )}
@@ -1131,21 +1139,22 @@ export function FormGeneral({
           <FormCardFooter>
             <FormCardFooterInfo>
               Learn more about{" "}
-              <Link
-                href="https://www.openstatus.dev/docs/tutorial/how-to-create-monitor/"
-                rel="noreferrer"
-                target="_blank"
-              >
+              <Link href={referenceUrl} rel="noreferrer" target="_blank">
                 Monitor Type
-              </Link>{" "}
-              and{" "}
-              <Link
-                href="https://www.openstatus.dev/docs/tutorial/how-to-create-monitor/"
-                rel="noreferrer"
-                target="_blank"
-              >
-                Assertions
               </Link>
+              {hasAssertions && (
+                <>
+                  {" "}
+                  and{" "}
+                  <Link
+                    href={`${referenceUrl}#assertions`}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Assertions
+                  </Link>
+                </>
+              )}
               . We test your endpoint before saving the monitor.
             </FormCardFooterInfo>
             <Button type="submit" disabled={isPending || disabled}>

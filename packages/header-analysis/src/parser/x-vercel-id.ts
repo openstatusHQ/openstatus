@@ -9,10 +9,20 @@ export function parseXVercelId(header: string): ParserReturn<Region[]> {
     return { status: "failed", error: new Error("Couldn't parse the header.") };
   }
 
-  const data = arr.map((r) => {
+  const data: Region[] = [];
+  for (const r of arr) {
     const regionId = r.replace(/:+/, "");
-    return regions[regionId];
-  });
+    const region = regions[regionId];
+    if (!region) {
+      return {
+        status: "failed",
+        error: new Error(
+          `It seems like the region '${regionId}' is not listed.`,
+        ),
+      };
+    }
+    data.push(region);
+  }
 
   return { status: "success", data };
 }

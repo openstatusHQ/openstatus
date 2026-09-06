@@ -76,7 +76,7 @@ COPY \
     "/app/packages" "/app/packages"
 RUN <<EOF
 deno bundle --platform=deno --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
-deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi-v1.json --output app src/_serve.bundle.mjs
+deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi.json --include static/openapi-v1.json --output app src/_serve.bundle.mjs
 EOF
 
 # runtime

@@ -53,7 +53,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z
   .object({
-    title: z.string().min(1, "Title is required"),
+    title: z.string().trim().min(1, "Title is required"),
     message: z.string(),
     startDate: z.date(),
     endDate: z.date(),

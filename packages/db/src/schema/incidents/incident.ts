@@ -5,6 +5,7 @@ import {
   sqliteTable,
   text,
   unique,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 import { monitor } from "../monitors";
@@ -68,8 +69,8 @@ export const incidentTable = sqliteTable(
       table.startedAt,
     ),
     // Partial: open incidents are looked up on every check result, every region,
-    // every minute. Keeps that b-tree small enough to stay hot.
-    index("incident_open_idx")
+    // every minute. Unique so a monitor cannot hold two open incidents at once.
+    uniqueIndex("incident_open_idx")
       .on(table.monitorId)
       .where(sql`${table.resolvedAt} IS NULL`),
   ],

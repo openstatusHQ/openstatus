@@ -52,6 +52,12 @@ The service name sent in the health check request. Leave it empty to check the s
 
 **Example:** `checkout.v1.CheckoutService`
 
+<Aside type="caution">
+This is a service name, not a method path. `grpc.health.v1.Health` is the health service the monitor already calls — putting it here asks the server whether it has registered a service *called* `grpc.health.v1.Health`, which almost no server does, and the check comes back `SERVICE_UNKNOWN`. Leave the field empty unless you register per-service health status.
+</Aside>
+
+Servers differ on how they answer for a name they do not know: the reference implementations return the `NOT_FOUND` status code, while some return the `SERVICE_UNKNOWN` enum value. Both are reported as `SERVICE_UNKNOWN`.
+
 ### TLS
 
 **Type:** Enum (optional)
@@ -134,6 +140,27 @@ The OTLP endpoint URL where metrics are exported. gRPC monitors export the total
 **Type:** Key-value pairs (optional)
 
 Custom headers to include when sending metrics to your OTLP endpoint, commonly used for authentication or tenant identification.
+
+## Checking with grpcurl
+
+Every monitor configuration maps onto a [`grpcurl`](https://github.com/fullstorydev/grpcurl) command, so you can confirm a target answers before creating the monitor — and reproduce a failing check from your own terminal.
+
+| Monitor configuration | Equivalent command |
+| --- | --- |
+| Default (TLS, no service) | `grpcurl example.com:443 grpc.health.v1.Health/Check` |
+| A named service | `grpcurl -d '{"service":"checkout.v1.CheckoutService"}' example.com:443 grpc.health.v1.Health/Check` |
+| TLS (skip verification) | `grpcurl -insecure example.com:443 grpc.health.v1.Health/Check` |
+| Plaintext (h2c) | `grpcurl -plaintext example.com:50051 grpc.health.v1.Health/Check` |
+
+A serving target answers:
+
+```json
+{
+  "status": "SERVING"
+}
+```
+
+If `grpcurl` succeeds and the monitor does not, the difference is almost always the TLS mode: pointing a plaintext monitor at a TLS endpoint fails the connection before any health request is sent, and is reported as `UNAVAILABLE`.
 
 ## Related resources
 

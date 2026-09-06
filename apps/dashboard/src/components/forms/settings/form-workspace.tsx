@@ -26,7 +26,7 @@ import {
 } from "@/components/forms/form-card";
 
 const schema = z.object({
-  name: z.string(),
+  name: z.string().trim().min(1, "Name is required"),
 });
 
 type FormValues = z.infer<typeof schema>;

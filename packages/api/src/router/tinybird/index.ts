@@ -1,12 +1,17 @@
 import { type SQL, and, db, eq, inArray } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
+import {
+  getResponseLogFacets,
+  listResponseLogsInfinite,
+  ResponseLogFilters,
+} from "@openstatus/services/monitor";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { toServiceCtx, toTRPCError } from "../../service-adapter";
 import { tb } from "../../tb";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
-import { calculatePeriod } from "./utils";
 
 const periods = ["1d", "7d", "14d", "30d", "90d"] as const;
 const types = ["http", "tcp", "dns", "icmp", "grpc"] as const;
@@ -46,39 +51,6 @@ export function getWorkspace30dProcedure(type: Type) {
   if (type === "icmp") return tb.icmpWorkspace30d;
   if (type === "grpc") return tb.grpcWorkspace30d;
   return tb.tcpWorkspace30d;
-}
-// Helper functions to get the right procedure based on period and type
-export function getListProcedure(period: Period, type: Type) {
-  switch (period) {
-    case "1d":
-      if (type === "http") return tb.httpListDaily;
-      if (type === "tcp") return tb.tcpListDaily;
-      if (type === "dns") return tb.dnsListBiweekly;
-      if (type === "icmp") return tb.icmpListDaily;
-      if (type === "grpc") return tb.grpcListDaily;
-      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
-    case "7d":
-      if (type === "http") return tb.httpListWeekly;
-      if (type === "tcp") return tb.tcpListWeekly;
-      if (type === "dns") return tb.dnsListBiweekly;
-      if (type === "icmp") return tb.icmpListWeekly;
-      if (type === "grpc") return tb.grpcListWeekly;
-      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
-    case "14d":
-      if (type === "http") return tb.httpListBiweekly;
-      if (type === "tcp") return tb.tcpListBiweekly;
-      if (type === "dns") return tb.dnsListBiweekly;
-      if (type === "icmp") return tb.icmpListBiweekly;
-      if (type === "grpc") return tb.grpcListBiweekly;
-      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
-    default:
-      if (type === "http") return tb.httpListDaily;
-      if (type === "tcp") return tb.tcpListDaily;
-      if (type === "dns") return tb.dnsListBiweekly;
-      if (type === "icmp") return tb.icmpListDaily;
-      if (type === "grpc") return tb.grpcListDaily;
-      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
-  }
 }
 
 export function getMetricsProcedure(period: Period, type: Type) {
@@ -311,45 +283,60 @@ export function getTimingPhasesProcedure(period: Period, type: Type) {
   }
 }
 
+const listInfiniteInput = ResponseLogFilters.extend({
+  monitorId: z.coerce.number().int(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+  cursor: z.int().optional(),
+  // `@trpc/tanstack-react-query` puts React Query's own paging direction on
+  // every infinite-query input, so this field is theirs — the service's
+  // `next`/`prev` vocabulary is mapped below.
+  direction: z.enum(["forward", "backward"]).optional(),
+  limit: z.int().min(1).max(100).prefault(50),
+});
+
+const listFacetsInput = ResponseLogFilters.extend({
+  monitorId: z.coerce.number().int(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+
 export const tinybirdRouter = createTRPCRouter({
-  list: protectedProcedure
-    .input(
-      z.object({
-        monitorId: z.string(),
-        region: z.enum(monitorRegions).or(z.string()).optional(),
-        cronTimestamp: z.int().optional(),
-        from: z.coerce.date().optional(),
-        to: z.coerce.date().optional(),
-      }),
-    )
-    .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!_monitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found",
+  listInfinite: protectedProcedure
+    .input(listInfiniteInput)
+    .query(async ({ ctx, input }) => {
+      try {
+        const { from, to, direction, ...rest } = input;
+        return await listResponseLogsInfinite({
+          ctx: toServiceCtx(ctx),
+          input: {
+            ...rest,
+            fromTimestamp: from?.getTime(),
+            toTimestamp: to?.getTime(),
+            direction: direction === "backward" ? "prev" : "next",
+          },
         });
+      } catch (err) {
+        toTRPCError(err);
       }
+    }),
 
-      const period = calculatePeriod(opts.input.from, opts.input.to);
-
-      const procedure = getListProcedure(
-        period,
-        _monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc",
-      );
-      return await procedure({
-        ...opts.input,
-        fromDate: opts.input.from?.getTime() ?? undefined,
-        toDate: opts.input.to?.getTime(),
-      });
+  listFacets: protectedProcedure
+    .input(listFacetsInput)
+    .query(async ({ ctx, input }) => {
+      try {
+        const { from, to, ...rest } = input;
+        return await getResponseLogFacets({
+          ctx: toServiceCtx(ctx),
+          input: {
+            ...rest,
+            fromTimestamp: from?.getTime(),
+            toTimestamp: to?.getTime(),
+          },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   uptime: protectedProcedure

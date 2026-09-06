@@ -33,7 +33,7 @@ import {
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
-import { Effect, Either, Schedule } from "effect";
+import { Effect, Result, Schedule } from "effect";
 import { z } from "zod";
 
 import { env } from "../env";
@@ -239,22 +239,22 @@ export async function sendCheckerTasks(
             times: 3,
             schedule: Schedule.exponential("1000 millis"),
           }),
-          Effect.either,
+          Effect.result,
         ),
       { concurrency: 100 },
     ),
   );
 
   for (const result of results) {
-    if (Either.isLeft(result)) {
+    if (Result.isFailure(result)) {
       logger.error("Task creation failed after retries", {
-        error_message: result.left.message,
+        error_message: result.failure.message,
       });
     }
   }
 
-  const success = results.filter(Either.isRight).length;
-  const failed = results.filter(Either.isLeft).length;
+  const success = results.filter(Result.isSuccess).length;
+  const failed = results.filter(Result.isFailure).length;
 
   logger.info("Completed cron job", {
     periodicity,

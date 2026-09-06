@@ -47,6 +47,24 @@ The status blocks ship with English (`en-US`) defaults and an optional context p
 
 Blocks intentionally do **not** import `next-intl`, `react-intl`, or any i18n library directly — that contract keeps them shadcn-shippable. See [`src/components/blocks/README.md`](./src/components/blocks/README.md#internationalization-i18n) for the full provider example.
 
+## Border radius (optional)
+
+The blocks use the standard `--radius-*` tokens, so they inherit whatever radius scale your app already has. No setup needed.
+
+One caveat if your `--radius` is small: shadcn's stock scale subtracts fixed pixels, so at `--radius: 0.25rem` the `sm` step is `calc(0.25rem - 4px)` — zero. Steps collapse into each other and a small marker ends up square next to a rounded bar. We use a proportional scale instead, anchored so the 0.625rem default keeps shadcn's exact pixel values. To opt in, drop this into your `globals.css`:
+
+```css
+@theme inline {
+  --radius-xs: calc(var(--radius) * 0.2);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+```
+
+This is app-wide, not block-scoped — which is why the registry does not ship it for you.
+
 ## Adding Components to the Registry
 
 To add a new component to the registry, update `packages/ui/registry.json`:

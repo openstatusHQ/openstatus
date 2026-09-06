@@ -17,7 +17,7 @@ const componentInput = z
     id: z.number().int().optional(),
     monitorId: z.number().int().nullish(),
     order: z.number().int(),
-    name: z.string(),
+    name: z.string().trim().min(1),
     description: z.string().nullish(),
     type: z.enum(["monitor", "static"]),
   })
@@ -37,7 +37,7 @@ const groupInput = z.object({
   // assignments, subscriber scopes) off a cliff.
   id: z.number().int().optional(),
   order: z.number().int(),
-  name: z.string(),
+  name: z.string().trim().min(1),
   defaultOpen: z.boolean().optional().default(false),
   components: z.array(componentInput),
 });
@@ -60,7 +60,7 @@ export const CreatePageComponentInput = z
     pageId: z.number().int(),
     type: z.enum(["monitor", "static"]),
     monitorId: z.number().int().nullish(),
-    name: z.string().min(1).optional(),
+    name: z.string().trim().min(1).optional(),
     description: z.string().nullish(),
     order: z.number().int().default(0),
     groupId: z.number().int().nullish(),
@@ -84,7 +84,7 @@ export type CreatePageComponentInput = z.input<typeof CreatePageComponentInput>;
 /** Partial patch — `undefined` leaves a field as-is, `null` clears it. */
 export const UpdatePageComponentInput = z.object({
   id: z.number().int(),
-  name: z.string().min(1).optional(),
+  name: z.string().trim().min(1).optional(),
   description: z.string().nullish(),
   order: z.number().int().optional(),
   groupId: z.number().int().nullish(),

@@ -1,0 +1,19 @@
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        id,
+        uri,
+        latency,
+        region,
+        trigger,
+        timestamp,
+        cronTimestamp,
+        monitorId,
+        requestStatus,
+        records
+    FROM dns_response__v0
+
+TYPE materialized
+DATASOURCE mv__dns_14d__v0

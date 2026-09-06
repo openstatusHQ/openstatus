@@ -79,3 +79,66 @@ test("tinybird.metricsTimingPhases succeeds for own workspace monitor", async ()
   });
   expect(result).toBeDefined();
 });
+
+// ─── listInfinite / listFacets ───────────────────────────────────
+
+test("tinybird.listInfinite rejects monitor from another workspace", async () => {
+  const caller = callerForWorkspace(1);
+
+  try {
+    // Monitor 5 belongs to workspace 3
+    await caller.tinybird.listInfinite({ monitorId: 5, limit: 50 });
+    throw new Error("Should have thrown");
+  } catch (e) {
+    expect(e).toBeInstanceOf(TRPCError);
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
+  }
+});
+
+test("tinybird.listInfinite succeeds for own workspace monitor", async () => {
+  const caller = callerForWorkspace(1);
+
+  const result = await caller.tinybird.listInfinite({
+    monitorId: 1,
+    limit: 50,
+  });
+  expect(result).toEqual({ data: [], nextCursor: null, prevCursor: null });
+});
+
+test("tinybird.listFacets rejects monitor from another workspace", async () => {
+  const caller = callerForWorkspace(1);
+
+  try {
+    await caller.tinybird.listFacets({ monitorId: 5 });
+    throw new Error("Should have thrown");
+  } catch (e) {
+    expect(e).toBeInstanceOf(TRPCError);
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
+  }
+});
+
+test("tinybird.listFacets succeeds for own workspace monitor", async () => {
+  const caller = callerForWorkspace(1);
+
+  const result = await caller.tinybird.listFacets({ monitorId: 1 });
+  expect(result).toEqual({
+    totalRowCount: 0,
+    filterRowCount: 0,
+    facets: {},
+  });
+});
+
+test("tinybird.listInfinite accepts React Query's own paging direction", async () => {
+  const caller = callerForWorkspace(1);
+
+  // `@trpc/tanstack-react-query` puts `direction: "forward" | "backward"` on
+  // every infinite-query input; rejecting it breaks the very first page load.
+  for (const direction of ["forward", "backward"] as const) {
+    const result = await caller.tinybird.listInfinite({
+      monitorId: 1,
+      limit: 50,
+      direction,
+    });
+    expect(result).toEqual({ data: [], nextCursor: null, prevCursor: null });
+  }
+});

@@ -149,7 +149,7 @@ export function FormTags({
                           variant="outline"
                           role="combobox"
                           className={cn(
-                            "h-auto min-h-9 w-full justify-between",
+                            "w-full justify-between",
                             !field.value?.length && "text-muted-foreground",
                           )}
                         >
@@ -251,9 +251,7 @@ export function FormTags({
                   })),
                 }}
               >
-                <Button variant="outline" size="sm">
-                  Edit Tags
-                </Button>
+                <Button variant="outline">Edit Tags</Button>
               </FormSheetMonitorTag>
             </div>
           </FormCardContent>
