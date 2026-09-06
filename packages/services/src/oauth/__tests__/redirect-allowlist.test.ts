@@ -73,6 +73,14 @@ describe("isAllowedRedirectUri", () => {
       false,
     );
     expect(isAllowedRedirectUri("http://user@localhost:3000/cb")).toBe(false);
+  });
+
+  test("rejects empty userinfo that URL parsing drops", () => {
+    expect(isAllowedRedirectUri("https://@claude.ai/cb")).toBe(false);
+    expect(isAllowedRedirectUri("https://:@claude.ai/cb")).toBe(false);
+    expect(isAllowedRedirectUri("http://@localhost:3000/cb")).toBe(false);
+    expect(isAllowedRedirectUri("cursor://@callback")).toBe(false);
+    expect(isAllowedRedirectUri("https:\n//@claude.ai/cb")).toBe(false);
     expect(isAllowedRedirectUri("not a url")).toBe(false);
     expect(isAllowedRedirectUri("")).toBe(false);
   });
@@ -131,6 +139,33 @@ describe("matchesRegisteredRedirectUri", () => {
     ).toBe(false);
     expect(
       matchesRegisteredRedirectUri(legacy, "http://user@localhost:1/cb"),
+    ).toBe(false);
+    expect(
+      matchesRegisteredRedirectUri(
+        ["https://@claude.ai/cb"],
+        "https://@claude.ai/cb",
+      ),
+    ).toBe(false);
+  });
+
+  test("a legacy loopback entry with userinfo never widens the match", () => {
+    expect(
+      matchesRegisteredRedirectUri(
+        ["http://user:pw@localhost/cb"],
+        "http://localhost:1/cb",
+      ),
+    ).toBe(false);
+    expect(
+      matchesRegisteredRedirectUri(
+        ["http://@localhost/cb"],
+        "http://localhost:1/cb",
+      ),
+    ).toBe(false);
+    expect(
+      matchesRegisteredRedirectUri(
+        ["http://localhost/cb#x"],
+        "http://localhost:1/cb",
+      ),
     ).toBe(false);
   });
 

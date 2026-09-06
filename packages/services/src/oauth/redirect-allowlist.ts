@@ -46,16 +46,30 @@ function isAllowlistedHost(hostname: string): boolean {
   );
 }
 
-export function isAllowedRedirectUri(redirectUri: string): boolean {
+/**
+ * `URL` drops an empty userinfo (`https://@host`), so `username`/`password`
+ * alone miss it. Inspect the raw authority, normalised the way `URL` does.
+ */
+function hasUserinfo(uri: string): boolean {
+  const raw = uri.trim().replace(/[\t\n\r]/g, "");
+  const authority = /^[^:/?#]+:\/\/([^/?#]*)/.exec(raw)?.[1] ?? "";
+  return authority.includes("@");
+}
+
+function hasFragmentOrUserinfo(uri: string): boolean {
   // `URL.hash` is empty for a bare trailing `#`, so check the raw string.
-  if (redirectUri.includes("#")) return false;
+  return uri.includes("#") || hasUserinfo(uri);
+}
+
+export function isAllowedRedirectUri(redirectUri: string): boolean {
+  // RFC 6749 §3.1.2 forbids fragments; credentials have no legitimate use.
+  if (hasFragmentOrUserinfo(redirectUri)) return false;
   let url: URL;
   try {
     url = new URL(redirectUri);
   } catch {
     return false;
   }
-  // RFC 6749 §3.1.2 forbids fragments; credentials have no legitimate use.
   if (url.username || url.password) return false;
   const protocol = url.protocol.toLowerCase();
   if ((ALLOWED_REDIRECT_SCHEMES as readonly string[]).includes(protocol)) {
@@ -73,13 +87,14 @@ export function isAllowedRedirectUri(redirectUri: string): boolean {
  * RFC 8252 §7.3: native clients bind an ephemeral port, so a loopback
  * redirect matches its registered entry on everything but the port.
  * Any other URI must match a registered entry exactly. Fragments (RFC 6749
- * §3.1.2) and userinfo are never registered, so they never match.
+ * §3.1.2) and userinfo never match on either side: registration rejects them
+ * today, and entries written before that guard must not widen the match.
  */
 export function matchesRegisteredRedirectUri(
   registered: readonly string[],
   requested: string,
 ): boolean {
-  if (requested.includes("#")) return false;
+  if (hasFragmentOrUserinfo(requested)) return false;
   let url: URL;
   try {
     url = new URL(requested);
@@ -92,6 +107,7 @@ export function matchesRegisteredRedirectUri(
   const protocol = url.protocol.toLowerCase();
   if (protocol !== "http:" && protocol !== "https:") return false;
   return registered.some((entry) => {
+    if (hasFragmentOrUserinfo(entry)) return false;
     let candidate: URL;
     try {
       candidate = new URL(entry);
@@ -99,6 +115,8 @@ export function matchesRegisteredRedirectUri(
       return false;
     }
     return (
+      !candidate.username &&
+      !candidate.password &&
       candidate.protocol.toLowerCase() === protocol &&
       candidate.hostname.toLowerCase() === url.hostname.toLowerCase() &&
       candidate.pathname === url.pathname &&
