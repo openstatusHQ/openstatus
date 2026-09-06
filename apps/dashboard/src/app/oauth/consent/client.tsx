@@ -194,7 +194,8 @@ function ConsentForm({
         </div>
       </div>
       <p className="text-muted-foreground mx-auto max-w-md px-8 text-center text-xs text-pretty">
-        You can revoke this connection any time from <code>Settings / Integrations</code>.
+        You can revoke this connection any time from{" "}
+        <code>Settings / Integrations</code>.
       </p>
     </div>
   );
