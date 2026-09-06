@@ -4,8 +4,6 @@
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    // "node" (from the shared base) predates package `exports`, so it can't
-    // resolve @openstatus/icons; the package is bundled by Next.js anyway.
     "moduleResolution": "bundler",
     "paths": {
       "@openstatus/ui/*": ["./src/*"]
