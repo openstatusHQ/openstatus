@@ -1,5 +1,6 @@
 "use client";
 
+import { Calendar as CalendarIcon } from "@openstatus/icons";
 import type { DatePreset } from "@openstatus/ui/components/data-table-filters/types";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";
@@ -25,7 +26,6 @@ import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { presets as defaultPresets } from "@openstatus/ui/lib/date-preset";
 import { cn } from "@openstatus/ui/lib/utils";
 import { endOfDay, format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
 import * as React from "react";
 import type { DateRange } from "react-day-picker";
 

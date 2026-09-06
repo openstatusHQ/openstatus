@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "@openstatus/icons";
 import { useDataTable } from "@openstatus/ui/components/data-table-filters/data-table-provider";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
@@ -11,7 +12,6 @@ import { Label } from "@openstatus/ui/components/ui/label";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { formatCompactNumber } from "@openstatus/ui/lib/format";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import type { DataTableCheckboxFilterField, Option } from "./types";

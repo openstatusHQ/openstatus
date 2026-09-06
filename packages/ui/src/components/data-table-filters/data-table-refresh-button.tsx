@@ -1,5 +1,6 @@
 "use client";
 
+import { Refresh } from "@openstatus/icons";
 import { useDataTable } from "@openstatus/ui/components/data-table-filters/data-table-provider";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -9,7 +10,6 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
-import { RefreshCcw } from "lucide-react";
 
 export function DataTableRefreshButton() {
   const { refresh, isLoading } = useDataTable();
@@ -26,9 +26,7 @@ export function DataTableRefreshButton() {
             disabled={isLoading}
             onClick={() => refresh()}
           >
-            <RefreshCcw
-              className={cn("h-4 w-4", isLoading && "animate-spin")}
-            />
+            <Refresh className={cn("h-4 w-4", isLoading && "animate-spin")} />
             <span className="sr-only">Refresh</span>
           </Button>
         </TooltipTrigger>

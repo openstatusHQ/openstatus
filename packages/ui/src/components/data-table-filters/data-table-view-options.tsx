@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, DragHandle } from "@openstatus/icons";
 import {
   Sortable,
   SortableDragHandle,
@@ -21,7 +22,7 @@ import {
   PopoverTrigger,
 } from "@openstatus/ui/components/ui/popover";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Check, GripVertical, Settings2 } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export function DataTableViewOptions() {
@@ -108,10 +109,7 @@ export function DataTableViewOptions() {
                             size="icon"
                             className="text-muted-foreground hover:text-foreground focus:bg-muted focus:text-foreground ml-auto size-5"
                           >
-                            <GripVertical
-                              className="size-4"
-                              aria-hidden="true"
-                            />
+                            <DragHandle className="size-4" aria-hidden="true" />
                           </SortableDragHandle>
                         ) : null}
                       </CommandItem>

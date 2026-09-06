@@ -21,7 +21,7 @@ export function NavTabs({ items }: NavTabsProps) {
 
   return (
     <nav className="bg-background top-app-header h-app-tabs sticky z-10 w-full overflow-x-auto border-b px-2">
-      <ul className="inline-flex h-full items-center gap-1 px-3 text-sm">
+      <ul className="inline-flex h-full items-center gap-1 text-sm">
         {items.map((item) => {
           const normalizedHref = item.href.replace(/\/+$/, "") || "/";
           const isActive =
@@ -33,7 +33,7 @@ export function NavTabs({ items }: NavTabsProps) {
               className={cn(
                 "relative flex h-full items-center",
                 isActive &&
-                  "after:bg-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-px",
+                  "after:bg-foreground after:absolute after:inset-x-2 after:bottom-0 after:h-px",
               )}
             >
               <Link

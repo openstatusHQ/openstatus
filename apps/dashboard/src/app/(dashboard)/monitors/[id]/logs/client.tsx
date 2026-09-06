@@ -60,7 +60,11 @@ type LogsFilterState = {
   trigger?: string[];
 };
 
-export function Client() {
+export function Client({
+  controlsDefaultOpen,
+}: {
+  controlsDefaultOpen: boolean;
+}) {
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -78,15 +82,24 @@ export function Client() {
   return (
     <div className="relative flex h-[calc(100svh-var(--spacing-app-header)-var(--spacing-app-tabs))] w-full flex-col overflow-hidden">
       {workspace.plan === "free" ? (
-        <BillingPlaceholder />
+        <BillingPlaceholder controlsDefaultOpen={controlsDefaultOpen} />
       ) : (
-        <LogsTable monitor={monitor} />
+        <LogsTable
+          monitor={monitor}
+          controlsDefaultOpen={controlsDefaultOpen}
+        />
       )}
     </div>
   );
 }
 
-function LogsTable({ monitor }: { monitor: Monitor }) {
+function LogsTable({
+  monitor,
+  controlsDefaultOpen,
+}: {
+  monitor: Monitor;
+  controlsDefaultOpen: boolean;
+}) {
   const { schema, columns, filterFields, filterSchema } = useMemo(
     () =>
       createLogsTable({
@@ -103,6 +116,7 @@ function LogsTable({ monitor }: { monitor: Monitor }) {
     <DataTableStoreProvider adapter={adapter}>
       <LogsTableInner
         monitor={monitor}
+        controlsDefaultOpen={controlsDefaultOpen}
         columns={columns}
         filterFields={filterFields}
         schema={schema}
@@ -114,12 +128,14 @@ function LogsTable({ monitor }: { monitor: Monitor }) {
 
 function LogsTableInner({
   monitor,
+  controlsDefaultOpen,
   columns,
   filterFields,
   schema,
   filterSchema,
 }: {
   monitor: Monitor;
+  controlsDefaultOpen: boolean;
   columns: ReturnType<typeof createLogsTable>["columns"];
   filterFields: ReturnType<typeof createLogsTable>["filterFields"];
   schema: ReturnType<typeof createLogsTable>["schema"];
@@ -261,6 +277,7 @@ function LogsTableInner({
         totalRows={facets?.totalRowCount}
         filterRows={facets?.filterRowCount}
         totalRowsFetched={rows.length}
+        controlsDefaultOpen={controlsDefaultOpen}
         isFetching={isFetching}
         isLoading={isLoading}
         isFacetsLoading={isFacetsPending}
@@ -334,7 +351,11 @@ function LogsSheet({
   );
 }
 
-function BillingPlaceholder() {
+function BillingPlaceholder({
+  controlsDefaultOpen,
+}: {
+  controlsDefaultOpen: boolean;
+}) {
   const { columns, filterFields, filterSchema, schema } = useMemo(
     () =>
       createLogsTable({
@@ -355,6 +376,7 @@ function BillingPlaceholder() {
           data={exampleLogs as unknown as ResponseLog[]}
           filterFields={filterFields}
           totalRowsFetched={exampleLogs.length}
+          controlsDefaultOpen={controlsDefaultOpen}
           hasNextPage={false}
           fetchNextPage={() => Promise.resolve()}
           refetch={() => {}}

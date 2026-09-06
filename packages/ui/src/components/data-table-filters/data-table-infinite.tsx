@@ -3,6 +3,7 @@
 // REMINDER: React Compiler is not compatible with Tanstack Table v8 https://github.com/TanStack/table/issues/5567
 "use no memo";
 
+import { Loading } from "@openstatus/icons";
 import {
   Table,
   TableBody,
@@ -11,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@openstatus/ui/components/custom/table";
+import { useControls } from "@openstatus/ui/components/data-table-filters/controls";
 import { DataTableFilterControls } from "@openstatus/ui/components/data-table-filters/data-table-filter-controls";
 import { DataTableFilterRail } from "@openstatus/ui/components/data-table-filters/data-table-filter-rail";
 import { DataTableProvider } from "@openstatus/ui/components/data-table-filters/data-table-provider";
@@ -56,7 +58,6 @@ import {
   getFacetedMinMaxValues as getTTableFacetedMinMaxValues,
   useReactTable,
 } from "@tanstack/react-table";
-import { LoaderCircle } from "lucide-react";
 import * as React from "react";
 
 // TODO: add a possible chartGroupBy
@@ -94,6 +95,8 @@ export interface DataTableInfiniteProps<TData, TValue> {
   renderLiveRow?: (props?: { row: Row<TData> }) => React.ReactNode;
   // Used to store column order and visibility in local storage for specific data-table namespace
   tableId?: string;
+  /** Server-read initial state of the filter controls panel. */
+  controlsDefaultOpen?: boolean;
   // Optional slots for extensibility
   commandSlot?: React.ReactNode;
   sheetSlot?: React.ReactNode;
@@ -127,6 +130,7 @@ export function DataTableInfinite<TData, TValue>({
   getFacetedMinMaxValues,
   renderLiveRow,
   tableId = "infinite",
+  controlsDefaultOpen,
   commandSlot,
   sheetSlot,
   toolbarActions,
@@ -313,6 +317,7 @@ export function DataTableInfinite<TData, TValue>({
       filterRows={filterRows ?? table.getFilteredRowModel().rows.length}
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
+      controlsDefaultOpen={controlsDefaultOpen}
     >
       <div
         className={cn(
@@ -327,13 +332,7 @@ export function DataTableInfinite<TData, TValue>({
           } as React.CSSProperties
         }
       >
-        <div
-          className={cn(
-            "h-full w-full flex-col sm:w-[var(--controls-width)] sm:shrink-0",
-            "group-data-[expanded=false]/controls:hidden",
-            "hidden sm:flex",
-          )}
-        >
+        <FilterPanel>
           <div className="border-border bg-background shrink-0 border-b p-2">
             <div className="flex h-[46px] items-center justify-between gap-3">
               <p className="text-foreground px-2 font-medium">Filters</p>
@@ -354,19 +353,26 @@ export function DataTableInfinite<TData, TValue>({
               {footerSlot}
             </div>
           ) : null}
-        </div>
+        </FilterPanel>
         <div
           className={cn(
-            "border-border relative flex min-h-0 max-w-full flex-1 flex-col sm:border-l",
+            "border-border relative flex min-h-0 max-w-full flex-1 flex-col",
+            // Collapsed, the panel is w-0 and this border would stack on the app
+            // sidebar's border-r. Keep the 1px so nothing shifts, drop the colour.
+            "sm:border-l sm:border-l-transparent",
+            "sm:group-data-[expanded=true]/controls:border-l-border",
             // Chrome issue
             "sm:group-data-[expanded=true]/controls:max-w-[calc(100%-var(--controls-width))]",
+            // Matches the panel's own transition: without it the pane snaps to
+            // its final width while the panel is still sliding.
+            "transition-[max-width,border-color] duration-200 ease-linear motion-reduce:transition-none",
           )}
         >
           <DataTableFilterRail />
           <div
             ref={topBarRef}
             className={cn(
-              "bg-background flex flex-col gap-4 p-2",
+              "bg-background flex flex-col gap-4 px-4 py-2",
               "z-10 shrink-0 pb-4",
             )}
           >
@@ -494,7 +500,7 @@ export function DataTableInfinite<TData, TValue>({
                         variant="outline"
                       >
                         {isFetching ? (
-                          <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                          <Loading className="mr-2 h-4 w-4 animate-spin" />
                         ) : null}
                         Load More
                       </Button>
@@ -521,6 +527,33 @@ export function DataTableInfinite<TData, TValue>({
       {sheetSlot}
       {floatingBarSlot}
     </DataTableProvider>
+  );
+}
+
+/**
+ * The filter controls column. Collapsing animates `width` — `display` can't be
+ * transitioned — so the inner wrapper holds its own width and the content
+ * slides out of view instead of reflowing on every frame.
+ */
+function FilterPanel({ children }: { children: React.ReactNode }) {
+  const { open } = useControls();
+
+  return (
+    <div
+      // `hidden sm:flex` is the breakpoint only; the collapsed state is `w-0`,
+      // which leaves the filters focusable — hence `inert`.
+      inert={!open}
+      className={cn(
+        "h-full w-full flex-col sm:w-[var(--controls-width)] sm:shrink-0",
+        "sm:group-data-[expanded=false]/controls:w-0",
+        "hidden overflow-hidden transition-[width] duration-200 ease-linear sm:flex",
+        "motion-reduce:transition-none",
+      )}
+    >
+      <div className="flex h-full w-full flex-col sm:w-[var(--controls-width)]">
+        {children}
+      </div>
+    </div>
   );
 }
 

@@ -1,8 +1,8 @@
 "use client";
 
+import { Close } from "@openstatus/icons";
 import { useDataTable } from "@openstatus/ui/components/data-table-filters/data-table-provider";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { X } from "lucide-react";
 
 import type { DataTableFilterField } from "./types";
 
@@ -42,7 +42,7 @@ export function DataTableFilterResetButton<TData>({
       {/* REMINDER: `AccordionTrigger` is also a button(!) and we get Hydration error when rendering button within button */}
       <div role="button" tabIndex={0}>
         <span>{filters.length}</span>
-        <X className="text-muted-foreground ml-1! size-2.5!" />
+        <Close className="text-muted-foreground ml-1! size-2.5!" />
       </div>
     </Button>
   );
