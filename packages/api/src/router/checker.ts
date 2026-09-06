@@ -27,7 +27,9 @@ import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 const ABORT_TIMEOUT = 10000;
-const CHECKER_BASE_URL = env.CHECKER_URL.replace(/\/+$/, "");
+const CHECKER_BASE_URL = (
+  env.CHECKER_URL || "https://openstatus-checker.fly.dev"
+).replace(/\/+$/, "");
 
 // PingICMP treats its timeout as the deadline for the whole check, so omitting
 // it means a deadline of "now": the send loop breaks before the first packet
