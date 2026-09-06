@@ -31,3 +31,11 @@ describe("validateKey (dev fallback)", () => {
     expect(result.authMethod).toBe("dev");
   });
 });
+
+describe("validateKey (oauth access tokens)", () => {
+  test("rejects an unknown os_oat_ token before the dev fallback", async () => {
+    const { result, error } = await validateKey("os_oat_not-a-real-token");
+    expect(result.valid).toBe(false);
+    expect(error?.message).toContain("access token");
+  });
+});

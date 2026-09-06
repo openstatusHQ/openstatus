@@ -69,6 +69,10 @@
       "import": "./src/api-key/index.ts",
       "types": "./src/api-key/index.ts"
     },
+    "./oauth": {
+      "import": "./src/oauth/index.ts",
+      "types": "./src/oauth/index.ts"
+    },
     "./chat-session": {
       "import": "./src/chat-session/index.ts",
       "types": "./src/chat-session/index.ts"

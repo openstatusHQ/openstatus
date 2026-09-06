@@ -12,6 +12,7 @@ import { memberRouter } from "./router/member";
 import { monitorRouter } from "./router/monitor";
 import { monitorTagRouter } from "./router/monitorTag";
 import { notificationRouter } from "./router/notification";
+import { oauthRouter } from "./router/oauth";
 import { pageRouter } from "./router/page";
 import { pageComponentRouter } from "./router/pageComponent";
 import { pageSubscriberRouter } from "./router/pageSubscriber";
@@ -48,4 +49,5 @@ export const edgeRouter = createTRPCRouter({
   import: importRouter,
   auditLog: auditLogRouter,
   chatSession: chatSessionRouter,
+  oauth: oauthRouter,
 });

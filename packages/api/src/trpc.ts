@@ -14,6 +14,7 @@ import { ZodError, treeifyError } from "zod";
 import {
   type ResolveActiveWorkspaceResult,
   resolveActiveWorkspace,
+  resolveUserWorkspaces,
 } from "./auth/resolve-active-workspace";
 
 // Generic session type that works with both User and Viewer
@@ -297,6 +298,31 @@ export const formdataMiddleware = t.middleware(async (opts) => {
     input: formData,
   });
 });
+
+/**
+ * Signed-in user without an active workspace. `ctx.workspaces` may be empty;
+ * `ctx.workspace` stays null. Only for surfaces that must render for a user
+ * who belongs to no workspace — everything else uses `protectedProcedure`.
+ */
+const enforceUserIsSignedIn = t.middleware(async (opts) => {
+  const { ctx } = opts;
+  if (!ctx.session?.user?.id) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  const resolved = await resolveUserWorkspaces({
+    userId: Number(ctx.session.user.id),
+  });
+  if (!resolved) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "User Not Found" });
+  }
+  return opts.next({
+    ctx: { ...ctx, user: resolved.user, workspaces: resolved.workspaces },
+  });
+});
+
+export const userProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(enforceUserIsSignedIn);
 
 /**
  * Protected (authed) procedure

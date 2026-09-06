@@ -27,6 +27,8 @@ import { requestId } from "hono/request-id";
 import { env } from "./env";
 import { handleError } from "./libs/errors";
 import { mcpRoute } from "./routes/mcp";
+import { createOAuthRoutes } from "./routes/oauth";
+import { oauthConfigFromEnv } from "./routes/oauth/config";
 import { openapiRoute } from "./routes/openapi";
 import { publicRoute } from "./routes/public";
 import { mountRpcRoutes } from "./routes/rpc";
@@ -202,6 +204,12 @@ app.onError(handleError);
  */
 
 mountRpcRoutes(app);
+
+/**
+ * OAuth 2.1 authorization server for MCP clients: RFC 8414 / 9728 metadata,
+ * dynamic registration, authorize, token and revoke.
+ */
+app.route("/", createOAuthRoutes(oauthConfigFromEnv()));
 
 /**
  * Public Routes

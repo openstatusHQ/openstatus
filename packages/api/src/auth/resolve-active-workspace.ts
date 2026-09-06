@@ -65,3 +65,25 @@ export async function resolveActiveWorkspace(args: {
   );
   return { ok: true, value: { user, workspace, workspaces } };
 }
+
+/**
+ * User plus every workspace they belong to, without electing an active one.
+ * For surfaces that must render for a user with zero workspaces (OAuth
+ * consent after removal from every workspace).
+ */
+export async function resolveUserWorkspaces(args: {
+  userId: number;
+}): Promise<{ user: User; workspaces: Workspace[] } | null> {
+  const row = await db.query.user.findFirst({
+    where: eq(schema.user.id, args.userId),
+    with: { usersToWorkspaces: { with: { workspace: true } } },
+  });
+  if (!row) return null;
+  const { usersToWorkspaces, ...userProps } = row;
+  return {
+    user: schema.selectUserSchema.parse(userProps),
+    workspaces: (usersToWorkspaces ?? []).map((m) =>
+      schema.selectWorkspaceSchema.parse(m.workspace),
+    ),
+  };
+}
