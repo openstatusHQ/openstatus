@@ -1,5 +1,6 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   RadioGroup,
@@ -12,38 +13,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import Link from "next/link";
+import { useQueryStates } from "nuqs";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { useTRPC } from "@/lib/trpc/client";
 
+import { searchParamsParsers } from "./search-params";
+
 type Scope = "read" | "write";
 
-type Props = {
-  sessionId: string;
-  clientName: string;
-  clientOrigin: string | null;
-  requestedScope: string[];
-  workspaces: { id: number; name: string | null; slug: string }[];
-};
-
-export function ConsentForm({
-  sessionId,
-  clientName,
-  clientOrigin,
-  requestedScope,
-  workspaces,
-}: Props) {
+// The page fetched the session server-side and hydrated it, so this query
+// resolves from cache; the guard below only covers a stale or missing id.
+export function Client() {
   const trpc = useTRPC();
+  const [{ session: sessionId }] = useQueryStates(searchParamsParsers);
+  const { data } = useQuery(
+    trpc.oauth.getSession.queryOptions({ id: sessionId ?? "" }),
+  );
+  if (!sessionId || !data) return null;
+  return <ConsentForm sessionId={sessionId} data={data} />;
+}
+
+function ConsentForm({
+  sessionId,
+  data,
+}: {
+  sessionId: string;
+  data: RouterOutputs["oauth"]["getSession"];
+}) {
+  const trpc = useTRPC();
+  const { clientName, clientOrigin, scope: requestedScope } = data.session;
+  const { workspaces } = data;
   const requestedWrite = requestedScope.includes("write");
-  const [workspaceId, setWorkspaceId] = useState<string>(
-    workspaces[0] ? String(workspaces[0].id) : "",
+  const [workspaceId, setWorkspaceId] = useState<number | null>(
+    workspaces[0]?.id ?? null,
   );
   const [scope, setScope] = useState<Scope>(requestedWrite ? "write" : "read");
-  const [decision, setDecision] = useState<"approve" | "deny" | null>(null);
 
   const decide = useMutation(
     trpc.oauth.decide.mutationOptions({
@@ -51,7 +60,6 @@ export function ConsentForm({
         window.location.assign(redirectUrl);
       },
       onError: (error) => {
-        setDecision(null);
         toast.error(
           isTRPCClientError(error) ? error.message : "Something went wrong",
         );
@@ -60,18 +68,11 @@ export function ConsentForm({
   );
 
   const approve = () => {
-    setDecision("approve");
-    decide.mutate({
-      id: sessionId,
-      approved: true,
-      workspaceId: Number(workspaceId),
-      scope,
-    });
+    if (workspaceId === null) return;
+    decide.mutate({ id: sessionId, approved: true, workspaceId, scope });
   };
-  const deny = () => {
-    setDecision("deny");
-    decide.mutate({ id: sessionId, approved: false });
-  };
+  const deny = () => decide.mutate({ id: sessionId, approved: false });
+  const pending = decide.isPending ? decide.variables?.approved : undefined;
 
   if (workspaces.length === 0) {
     return (
@@ -121,7 +122,10 @@ export function ConsentForm({
           <label htmlFor="workspace" className="text-sm font-medium">
             Workspace
           </label>
-          <Select value={workspaceId} onValueChange={setWorkspaceId}>
+          <Select
+            value={workspaceId === null ? "" : String(workspaceId)}
+            onValueChange={(value) => setWorkspaceId(Number(value))}
+          >
             <SelectTrigger id="workspace" className="w-full">
               <SelectValue placeholder="Select a workspace" />
             </SelectTrigger>
@@ -135,8 +139,11 @@ export function ConsentForm({
           </Select>
         </div>
         <div className="grid gap-2">
-          <p className="text-sm font-medium">Access</p>
+          <p id="oauth-scope-label" className="text-sm font-medium">
+            Access
+          </p>
           <RadioGroup
+            aria-labelledby="oauth-scope-label"
             value={scope}
             onValueChange={(value) => setScope(value as Scope)}
             className="gap-3"
@@ -172,10 +179,13 @@ export function ConsentForm({
         </div>
         <div className="grid grid-cols-2 gap-2">
           <Button variant="outline" onClick={deny} disabled={decide.isPending}>
-            {decision === "deny" ? "Cancelling…" : "Deny"}
+            {pending === false ? "Cancelling…" : "Deny"}
           </Button>
-          <Button onClick={approve} disabled={decide.isPending || !workspaceId}>
-            {decision === "approve" ? "Connecting…" : "Approve"}
+          <Button
+            onClick={approve}
+            disabled={decide.isPending || workspaceId === null}
+          >
+            {pending === true ? "Connecting…" : "Approve"}
           </Button>
         </div>
       </div>

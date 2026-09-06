@@ -1,4 +1,4 @@
-import { db as defaultDb, eq } from "@openstatus/db";
+import { and, db as defaultDb, eq, isNull } from "@openstatus/db";
 import {
   type OAuthClient,
   type OAuthGrant,
@@ -30,6 +30,7 @@ import { OAuthError } from "./errors";
 import { type TokenResponse, formatScope } from "./schemas";
 
 export type GrantRevokeReason =
+  | "expired"
   | "manual"
   | "re_consent"
   | "code_reuse"
@@ -147,10 +148,12 @@ export async function revokeGrantRows(
   let revoked = 0;
   for (const grant of grants) {
     if (grant.revokedAt) continue;
+    // Only the live-to-revoked transition is audited; a racing revoke
+    // matches nothing here.
     const [row] = await tx
       .update(oauthGrant)
       .set({ revokedAt: now })
-      .where(eq(oauthGrant.id, grant.id))
+      .where(and(eq(oauthGrant.id, grant.id), isNull(oauthGrant.revokedAt)))
       .returning();
     if (!row) continue;
     revoked += 1;

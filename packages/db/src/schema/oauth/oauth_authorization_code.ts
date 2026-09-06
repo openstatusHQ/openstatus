@@ -31,7 +31,10 @@ export const oauthAuthorizationCode = sqliteTable(
       onDelete: "set null",
     }),
   },
-  (t) => [index("oauth_authorization_code_expires_at_idx").on(t.expiresAt)],
+  (t) => [
+    index("oauth_authorization_code_expires_at_idx").on(t.expiresAt),
+    index("oauth_authorization_code_client_id_idx").on(t.clientId),
+  ],
 );
 
 export const oauthAuthorizationCodeRelations = relations(
@@ -44,6 +47,14 @@ export const oauthAuthorizationCodeRelations = relations(
     grant: one(oauthGrant, {
       fields: [oauthAuthorizationCode.grantId],
       references: [oauthGrant.id],
+    }),
+    user: one(user, {
+      fields: [oauthAuthorizationCode.userId],
+      references: [user.id],
+    }),
+    workspace: one(workspace, {
+      fields: [oauthAuthorizationCode.workspaceId],
+      references: [workspace.id],
     }),
   }),
 );

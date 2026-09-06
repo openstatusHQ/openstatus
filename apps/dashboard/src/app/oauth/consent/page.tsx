@@ -1,10 +1,10 @@
-import type { RouterOutputs } from "@openstatus/api";
+import { TRPCError } from "@trpc/server";
 import type { Metadata } from "next";
 import type { SearchParams } from "nuqs/server";
 
-import { getQueryClient, trpc } from "@/lib/trpc/server";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
-import { ConsentForm } from "./consent-form";
+import { Client } from "./client";
 import { searchParamsCache } from "./search-params";
 
 export const metadata: Metadata = {
@@ -31,22 +31,25 @@ export default async function Page(props: {
   if (!session) return <Unavailable />;
 
   // Blocking fetch: an expired or decided session renders server-side.
-  let data: RouterOutputs["oauth"]["getSession"];
+  // Anything else (auth, internal) is a real failure and must surface.
+  const queryClient = getQueryClient();
   try {
-    data = await getQueryClient().fetchQuery(
+    await queryClient.fetchQuery(
       trpc.oauth.getSession.queryOptions({ id: session }),
     );
-  } catch {
-    return <Unavailable />;
+  } catch (error) {
+    if (
+      error instanceof TRPCError &&
+      (error.code === "NOT_FOUND" || error.code === "PRECONDITION_FAILED")
+    ) {
+      return <Unavailable />;
+    }
+    throw error;
   }
 
   return (
-    <ConsentForm
-      sessionId={session}
-      clientName={data.session.clientName}
-      clientOrigin={data.session.clientOrigin}
-      requestedScope={data.session.scope}
-      workspaces={data.workspaces}
-    />
+    <HydrateClient>
+      <Client />
+    </HydrateClient>
   );
 }

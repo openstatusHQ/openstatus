@@ -1,9 +1,10 @@
 import { db as defaultDb, eq } from "@openstatus/db";
 import { oauthGrant } from "@openstatus/db/src/schema";
 import type { Scope } from "@openstatus/db/src/schema/api-keys/constants";
+import { shouldUpdateLastUsed } from "@openstatus/db/src/utils/api-key";
 
 import type { DB } from "../context";
-import { ACCESS_TOKEN_PREFIX, LAST_USED_DEBOUNCE_MS } from "./constants";
+import { ACCESS_TOKEN_PREFIX } from "./constants";
 import { sha256Hex } from "./crypto";
 
 export type VerifiedAccessToken = {
@@ -38,10 +39,7 @@ export async function verifyAccessToken(
   if (!grant || grant.revokedAt) return null;
   if (grant.accessTokenExpiresAt < now) return null;
 
-  const stale =
-    !grant.lastUsedAt ||
-    now.getTime() - grant.lastUsedAt.getTime() > LAST_USED_DEBOUNCE_MS;
-  if (stale) {
+  if (shouldUpdateLastUsed(grant.lastUsedAt)) {
     await db
       .update(oauthGrant)
       .set({ lastUsedAt: now })

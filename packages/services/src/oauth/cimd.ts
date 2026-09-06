@@ -4,6 +4,7 @@ import {
   oauthClient,
   selectOAuthClientSchema,
 } from "@openstatus/db/src/schema";
+import { assertSafeUrlSync } from "@openstatus/utils";
 import { z } from "zod";
 
 import type { DB } from "../context";
@@ -19,11 +20,17 @@ import { OAuthError } from "./errors";
 export const CIMD_FETCH_TIMEOUT_MS = 5_000;
 export const CIMD_MAX_BYTES = 64 * 1024;
 
-const PRIVATE_V4 =
-  /^(10\.|127\.|0\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/;
+// Carrier-grade NAT; the shared helper does not cover it.
+const CGNAT_V4 = /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./;
 
-/** HTTPS, non-root path, public hostname. Blocks the SSRF targets a fetch could reach. */
+/**
+ * HTTPS, non-root path, public hostname. Layers CIMD rules on the repo's
+ * SSRF blocklist. Hostname checks cannot see what DNS resolves to, so a name
+ * pointing at a private address still reaches `fetch`; the fetch itself
+ * refuses redirects and is bounded in time and size.
+ */
 export function isUrlClientId(clientId: string): boolean {
+  if (clientId.includes("#")) return false;
   let url: URL;
   try {
     url = new URL(clientId);
@@ -31,14 +38,18 @@ export function isUrlClientId(clientId: string): boolean {
     return false;
   }
   if (url.protocol !== "https:") return false;
-  if (url.pathname === "/" || url.username || url.password || url.hash) {
+  if (url.pathname === "/" || url.username || url.password) return false;
+
+  try {
+    assertSafeUrlSync(clientId);
+  } catch {
     return false;
   }
-  const host = url.hostname.toLowerCase();
+
+  // Trailing dot is the same name to DNS; strip it before suffix checks.
+  const host = url.hostname.toLowerCase().replace(/\.$/, "");
   if (host.startsWith("[")) return false;
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) {
-    return !PRIVATE_V4.test(host);
-  }
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return !CGNAT_V4.test(host);
   if (
     host === "localhost" ||
     host.endsWith(".localhost") ||
@@ -53,9 +64,9 @@ export function isUrlClientId(clientId: string): boolean {
 }
 
 const redirectUriSchema = z.string().refine((value) => {
+  if (value.includes("#")) return false;
   try {
     const url = new URL(value);
-    if (url.hash) return false;
     const host = url.hostname.toLowerCase();
     const loopback =
       host === "localhost" || host === "127.0.0.1" || host === "[::1]";
@@ -100,6 +111,34 @@ export type ClientMetadataFetcher = (
   clientId: string,
 ) => Promise<ClientMetadataDocument>;
 
+/** Reads at most `limit` bytes; an oversized or chunked body is cut off, not buffered. */
+async function readBounded(res: Response, limit: number): Promise<string> {
+  const reader = res.body?.getReader();
+  if (!reader) return "";
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    received += value.byteLength;
+    if (received > limit) {
+      await reader.cancel();
+      throw new OAuthError(
+        "invalid_client",
+        "Client metadata document is too large",
+      );
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
+}
+
 /** Default fetcher: no redirects, bounded time and size, JSON only. */
 export async function fetchClientMetadataDocument(
   clientId: string,
@@ -124,20 +163,7 @@ export async function fetchClientMetadataDocument(
         `Client metadata document responded with HTTP ${res.status}`,
       );
     }
-    const length = Number(res.headers.get("content-length") ?? 0);
-    if (length > CIMD_MAX_BYTES) {
-      throw new OAuthError(
-        "invalid_client",
-        "Client metadata document is too large",
-      );
-    }
-    const text = await res.text();
-    if (text.length > CIMD_MAX_BYTES) {
-      throw new OAuthError(
-        "invalid_client",
-        "Client metadata document is too large",
-      );
-    }
+    const text = await readBounded(res, CIMD_MAX_BYTES);
     let body: unknown;
     try {
       body = JSON.parse(text);
@@ -172,7 +198,7 @@ export async function resolveUrlClient(
   fetcher: ClientMetadataFetcher = fetchClientMetadataDocument,
 ): Promise<OAuthClient> {
   const existing = await db
-    .select()
+    .select({ revokedAt: oauthClient.revokedAt })
     .from(oauthClient)
     .where(eq(oauthClient.clientId, clientId))
     .get();

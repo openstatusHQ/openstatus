@@ -1,18 +1,19 @@
 import { StreamableHTTPTransport } from "@hono/mcp";
 import type { Workspace } from "@openstatus/db/src/schema";
+import { resourceMetadataUrl } from "@openstatus/services/oauth";
 import { Hono } from "hono";
 import type { Context, Next } from "hono";
 
 import { handleError } from "../../libs/errors";
 import { authMiddleware } from "../../libs/middlewares/auth";
 import type { Variables } from "../../types";
-import { oauthConfigFromEnv, resourceMetadataUrl } from "../oauth/config";
+import { oauthConfigFromEnv } from "../oauth/config";
 import { toServiceCtx } from "./adapter";
 import { createMcpServer, createPublicMcpServer } from "./server";
 
 export const mcpRoute = new Hono<{ Variables: Variables }>({ strict: false });
 
-const wwwAuthenticate = `Bearer resource_metadata="${resourceMetadataUrl(oauthConfigFromEnv())}"`;
+const wwwAuthenticate = `Bearer resource_metadata="${resourceMetadataUrl(oauthConfigFromEnv().issuer)}"`;
 
 // Match production's global error handler at the sub-router level so
 // `OpenStatusApiError` (thrown by `authMiddleware` on bad/missing
@@ -41,7 +42,14 @@ async function optionalAuthMiddleware(
   // `=== undefined` rather than a truthiness check: a client that sends the
   // header with an empty value is misconfigured, not anonymous, and should be
   // told so instead of silently dropping to the public surface.
-  if (c.req.header("x-openstatus-key") === undefined) return next();
+  // A bearer token is a credential too; it must be validated, never treated
+  // as anonymous.
+  if (
+    c.req.header("x-openstatus-key") === undefined &&
+    c.req.header("authorization") === undefined
+  ) {
+    return next();
+  }
   return authMiddleware(c, next);
 }
 

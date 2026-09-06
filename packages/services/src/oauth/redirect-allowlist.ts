@@ -47,14 +47,14 @@ function isAllowlistedHost(hostname: string): boolean {
 }
 
 export function isAllowedRedirectUri(redirectUri: string): boolean {
+  // `URL.hash` is empty for a bare trailing `#`, so check the raw string.
+  if (redirectUri.includes("#")) return false;
   let url: URL;
   try {
     url = new URL(redirectUri);
   } catch {
     return false;
   }
-  if (url.hash) return false;
-
   const protocol = url.protocol.toLowerCase();
   if ((ALLOWED_REDIRECT_SCHEMES as readonly string[]).includes(protocol)) {
     return true;
@@ -65,4 +65,39 @@ export function isAllowedRedirectUri(redirectUri: string): boolean {
     return protocol === "http:" || protocol === "https:";
   }
   return protocol === "https:" && isAllowlistedHost(hostname);
+}
+
+/**
+ * RFC 8252 §7.3: native clients bind an ephemeral port, so a loopback
+ * redirect matches its registered entry on everything but the port.
+ * Any other URI must match a registered entry exactly.
+ */
+export function matchesRegisteredRedirectUri(
+  registered: readonly string[],
+  requested: string,
+): boolean {
+  if (registered.includes(requested)) return true;
+  let url: URL;
+  try {
+    url = new URL(requested);
+  } catch {
+    return false;
+  }
+  if (!isLoopbackHost(url.hostname.toLowerCase())) return false;
+  const protocol = url.protocol.toLowerCase();
+  if (protocol !== "http:" && protocol !== "https:") return false;
+  return registered.some((entry) => {
+    let candidate: URL;
+    try {
+      candidate = new URL(entry);
+    } catch {
+      return false;
+    }
+    return (
+      candidate.protocol.toLowerCase() === protocol &&
+      candidate.hostname.toLowerCase() === url.hostname.toLowerCase() &&
+      candidate.pathname === url.pathname &&
+      candidate.search === url.search
+    );
+  });
 }

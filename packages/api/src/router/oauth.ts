@@ -1,8 +1,10 @@
+import { apiKeySettableScopes } from "@openstatus/db/src/schema/api-keys/constants";
 import {
   GetSessionInput,
   RevokeGrantInput,
   decideSession,
   getSession,
+  isUrlClientId,
   listGrants,
   revokeGrant,
 } from "@openstatus/services/oauth";
@@ -14,18 +16,14 @@ import { createTRPCRouter, protectedProcedure, userProcedure } from "../trpc";
 // URL client ids prove domain ownership; surface that host so a user can spot
 // a lookalike name. DCR clients are self-described and carry no origin.
 function clientOrigin(clientId: string): string | null {
-  try {
-    return clientId.startsWith("https://") ? new URL(clientId).hostname : null;
-  } catch {
-    return null;
-  }
+  return isUrlClientId(clientId) ? new URL(clientId).hostname : null;
 }
 
 const DecideInput = z.object({
   id: z.string().min(1),
   approved: z.boolean(),
   workspaceId: z.number().int().optional(),
-  scope: z.enum(["read", "write"]).optional(),
+  scope: z.enum(apiKeySettableScopes).optional(),
 });
 
 /**

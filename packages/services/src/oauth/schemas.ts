@@ -3,6 +3,7 @@ import {
   type SettableScope,
   apiKeySettableScopes,
 } from "@openstatus/db/src/schema/api-keys/constants";
+import { oauthScopesSchema } from "@openstatus/db/src/schema/oauth/validation";
 import { z } from "zod";
 
 import {
@@ -11,8 +12,6 @@ import {
   RESPONSE_TYPES,
   TOKEN_ENDPOINT_AUTH_METHODS,
 } from "./constants";
-
-const scopesSchema = z.array(z.enum(apiKeySettableScopes)).min(1);
 
 /**
  * Space-delimited RFC 6749 scope string to the stored array. Read+write
@@ -43,47 +42,18 @@ export function formatScope(scopes: readonly Scope[]): string {
   return normalizeScopes(scopes).join(" ");
 }
 
-export const RegisterClientInput = z
-  .object({
-    client_name: z.string().trim().min(1).max(120).optional(),
-    redirect_uris: z.array(z.string().min(1)).min(1).max(10),
-    token_endpoint_auth_method: z.string().optional(),
-    grant_types: z.array(z.string()).optional(),
-    response_types: z.array(z.string()).optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      data.token_endpoint_auth_method !== undefined &&
-      !(TOKEN_ENDPOINT_AUTH_METHODS as readonly string[]).includes(
-        data.token_endpoint_auth_method,
-      )
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["token_endpoint_auth_method"],
-        message:
-          "Only public clients (token_endpoint_auth_method 'none') are supported",
-      });
-    }
-    for (const g of data.grant_types ?? []) {
-      if (!(GRANT_TYPES as readonly string[]).includes(g)) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["grant_types"],
-          message: `Unsupported grant_type '${g}'`,
-        });
-      }
-    }
-    for (const r of data.response_types ?? []) {
-      if (!(RESPONSE_TYPES as readonly string[]).includes(r)) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["response_types"],
-          message: `Unsupported response_type '${r}'`,
-        });
-      }
-    }
-  });
+export const RegisterClientInput = z.object({
+  client_name: z.string().trim().min(1).max(120).optional(),
+  redirect_uris: z.array(z.string().min(1)).min(1).max(10),
+  token_endpoint_auth_method: z
+    .enum(TOKEN_ENDPOINT_AUTH_METHODS, {
+      message:
+        "Only public clients (token_endpoint_auth_method 'none') are supported",
+    })
+    .optional(),
+  grant_types: z.array(z.enum(GRANT_TYPES)).optional(),
+  response_types: z.array(z.enum(RESPONSE_TYPES)).optional(),
+});
 export type RegisterClientInput = z.input<typeof RegisterClientInput>;
 
 // Loose on purpose: `createSession` decides per field whether the failure
@@ -93,7 +63,7 @@ export const CreateSessionInput = z.object({
   client_id: z.string().optional(),
   redirect_uri: z.string().optional(),
   scope: z.string().optional(),
-  state: z.string().max(1024).optional(),
+  state: z.string().optional(),
   resource: z.string().optional(),
   code_challenge: z.string().optional(),
   code_challenge_method: z.string().optional(),
@@ -101,6 +71,8 @@ export const CreateSessionInput = z.object({
   expectedResource: z.string().optional(),
 });
 export type CreateSessionInput = z.input<typeof CreateSessionInput>;
+
+export const MAX_STATE_LENGTH = 1024;
 
 export const GetSessionInput = z.object({ id: z.string().min(1) });
 export type GetSessionInput = z.infer<typeof GetSessionInput>;
@@ -110,7 +82,7 @@ export const DecideSessionInput = z.object({
   approved: z.boolean(),
   userId: z.number().int(),
   workspaceId: z.number().int().optional(),
-  scope: scopesSchema.optional(),
+  scope: oauthScopesSchema.optional(),
 });
 export type DecideSessionInput = z.infer<typeof DecideSessionInput>;
 
@@ -136,9 +108,6 @@ export type RevokeTokenInput = z.infer<typeof RevokeTokenInput>;
 
 export const RevokeGrantInput = z.object({ grantId: z.number().int() });
 export type RevokeGrantInput = z.infer<typeof RevokeGrantInput>;
-
-export const ListGrantsInput = z.object({}).strict();
-export type ListGrantsInput = z.infer<typeof ListGrantsInput>;
 
 export const TokenResponse = z.object({
   access_token: z.string(),

@@ -62,8 +62,9 @@ async function callerFor(userId: number) {
   return edgeRouter.createCaller(ctx);
 }
 
-async function newSession(scope = "read write") {
+async function newSession(scope = "read write", now?: Date) {
   const { id } = await createSession({
+    now,
     input: {
       response_type: "code",
       client_id: clientId,
@@ -107,7 +108,24 @@ describe("oauth router", () => {
     expect(result.workspaces).toEqual([]);
   });
 
-  test("getSession maps expired and unknown sessions to tRPC errors", async () => {
+  test("getSession maps expired sessions to PRECONDITION_FAILED", async () => {
+    const caller = await callerFor(ownerId);
+    const id = await newSession("read", new Date(Date.now() - 60 * 60 * 1000));
+    await expect(caller.oauth.getSession({ id })).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+    });
+  });
+
+  test("a soft-deleted account cannot use the consent procedures", async () => {
+    const ghost = await createUser({ deletedAt: new Date() });
+    const caller = await callerFor(ghost.id);
+    const id = await newSession();
+    await expect(caller.oauth.getSession({ id })).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+  });
+
+  test("getSession maps decided and unknown sessions to tRPC errors", async () => {
     const caller = await callerFor(ownerId);
     await expect(
       caller.oauth.getSession({ id: "missing" }),

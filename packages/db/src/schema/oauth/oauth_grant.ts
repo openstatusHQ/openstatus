@@ -42,9 +42,15 @@ export const oauthGrant = sqliteTable(
   },
   (t) => [
     index("oauth_grant_workspace_id_idx").on(t.workspaceId),
-    index("oauth_grant_client_id_idx").on(t.clientId),
+    // One client id is shared by every user of Claude / Cursor, so the
+    // re-consent lookup needs the user in the key.
+    index("oauth_grant_client_id_user_id_idx").on(t.clientId, t.userId),
+    index("oauth_grant_user_id_idx").on(t.userId),
     index("oauth_grant_previous_refresh_token_hash_idx").on(
       t.previousRefreshTokenHash,
+    ),
+    index("oauth_grant_refresh_token_expires_at_idx").on(
+      t.refreshTokenExpiresAt,
     ),
   ],
 );

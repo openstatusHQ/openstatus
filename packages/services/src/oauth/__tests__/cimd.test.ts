@@ -112,6 +112,16 @@ describe("isUrlClientId", () => {
     }
     expect(isUrlClientId("https://8.8.8.8/client")).toBe(true);
   });
+
+  test("a trailing dot does not bypass the hostname checks", () => {
+    expect(isUrlClientId("https://localhost./client")).toBe(false);
+    expect(isUrlClientId("https://intranet./client")).toBe(false);
+    expect(isUrlClientId("https://partner.example./client")).toBe(true);
+  });
+
+  test("a bare trailing # counts as a fragment", () => {
+    expect(isUrlClientId(`${CLIENT_ID}#`)).toBe(false);
+  });
 });
 
 describe("parseClientMetadataDocument", () => {

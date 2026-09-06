@@ -2,6 +2,7 @@ import { getLogger } from "@logtape/logtape";
 import * as Sentry from "@sentry/deno";
 import { Effect, Fiber, Schedule } from "effect";
 
+import { runOAuthPruneTick } from "./oauth-prune";
 import { handleOutboxDrainCron, handleOutboxRetentionCron } from "./outbox";
 import { handleStatusDriftCron } from "./status-drift";
 
@@ -34,6 +35,11 @@ export const SCHEDULED_TASKS: ScheduledTask[] = [
     name: "outbox-retention",
     expression: "17 3 * * *",
     run: handleOutboxRetentionCron,
+  },
+  {
+    name: "oauth-prune",
+    expression: "41 3 * * *",
+    run: runOAuthPruneTick,
   },
 ];
 

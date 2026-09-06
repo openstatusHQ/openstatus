@@ -1,5 +1,6 @@
 import { db as defaultDb, eq } from "@openstatus/db";
 import {
+  type OAuthSession,
   oauthClient,
   oauthSession,
   selectOAuthSessionSchema,
@@ -21,9 +22,11 @@ import { SESSION_TTL_MS } from "./constants";
 import { randomBase64Url } from "./crypto";
 import { OAuthError } from "./errors";
 import { getLiveClient } from "./internal";
+import { matchesRegisteredRedirectUri } from "./redirect-allowlist";
 import {
   CreateSessionInput,
   GetSessionInput,
+  MAX_STATE_LENGTH,
   parseScopeParam,
 } from "./schemas";
 
@@ -53,13 +56,18 @@ export async function createSession(args: {
   if (!input.redirect_uri) {
     throw new OAuthError("invalid_request", "redirect_uri is required");
   }
-  if (!client.redirectUris.includes(input.redirect_uri)) {
+  if (!matchesRegisteredRedirectUri(client.redirectUris, input.redirect_uri)) {
     throw new OAuthError(
       "invalid_redirect_uri",
       "redirect_uri does not match a registered redirect URI",
     );
   }
-  const redirect = { redirectUri: input.redirect_uri, state: input.state };
+  // From here on the redirect target is trusted; the state itself is checked
+  // last so an oversized one still travels back (truncated) to the client.
+  const redirect = {
+    redirectUri: input.redirect_uri,
+    state: input.state?.slice(0, MAX_STATE_LENGTH),
+  };
 
   if (input.response_type !== "code") {
     throw new OAuthError(
@@ -101,6 +109,13 @@ export async function createSession(args: {
       redirect,
     );
   }
+  if (input.state !== undefined && input.state.length > MAX_STATE_LENGTH) {
+    throw new OAuthError(
+      "invalid_request",
+      `state must be at most ${MAX_STATE_LENGTH} characters`,
+      redirect,
+    );
+  }
 
   const id = randomBase64Url(32);
   const [row] = await db
@@ -121,6 +136,30 @@ export async function createSession(args: {
   return { id: row.id };
 }
 
+/** The one definition of "still answerable": exists, undecided, unexpired. */
+export async function loadPendingSession(
+  db: DB,
+  id: string,
+  now: Date,
+): Promise<OAuthSession> {
+  const raw = await db
+    .select()
+    .from(oauthSession)
+    .where(eq(oauthSession.id, id))
+    .get();
+  if (!raw) throw new NotFoundError("oauth_session");
+  const session = selectOAuthSessionSchema.parse(raw);
+  if (session.decidedAt) {
+    throw new PreconditionFailedError(
+      "This authorization request was already answered",
+    );
+  }
+  if (session.expiresAt < now) {
+    throw new PreconditionFailedError("This authorization request expired");
+  }
+  return session;
+}
+
 export type PendingSession = {
   id: string;
   clientId: string;
@@ -139,31 +178,18 @@ export async function getSession(args: {
   const db = args.db ?? defaultDb;
   const now = args.now ?? new Date();
 
-  const row = await db
-    .select({
-      session: oauthSession,
-      clientId: oauthClient.clientId,
-      clientName: oauthClient.name,
-    })
-    .from(oauthSession)
-    .innerJoin(oauthClient, eq(oauthClient.clientId, oauthSession.clientId))
-    .where(eq(oauthSession.id, input.id))
+  const session = await loadPendingSession(db, input.id, now);
+  const client = await db
+    .select({ clientId: oauthClient.clientId, name: oauthClient.name })
+    .from(oauthClient)
+    .where(eq(oauthClient.clientId, session.clientId))
     .get();
-  if (!row) throw new NotFoundError("oauth_session");
+  if (!client) throw new NotFoundError("oauth_client", session.clientId);
 
-  const session = selectOAuthSessionSchema.parse(row.session);
-  if (session.decidedAt) {
-    throw new PreconditionFailedError(
-      "This authorization request was already answered",
-    );
-  }
-  if (session.expiresAt < now) {
-    throw new PreconditionFailedError("This authorization request expired");
-  }
   return {
     id: session.id,
-    clientId: row.clientId,
-    clientName: row.clientName,
+    clientId: client.clientId,
+    clientName: client.name,
     scope: session.scope,
     expiresAt: session.expiresAt,
   };

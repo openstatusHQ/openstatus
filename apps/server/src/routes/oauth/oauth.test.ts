@@ -215,6 +215,14 @@ describe("well-known metadata", () => {
     expect(res.status).toBe(204);
     expect(res.headers.get("access-control-allow-origin")).toBe("*");
   });
+
+  test("does not leak the wildcard CORS policy onto other routes", async () => {
+    const res = await app.request("/ping", {
+      headers: { Origin: "https://claude.ai" },
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("access-control-allow-origin")).toBeNull();
+  });
 });
 
 describe("POST /oauth/register", () => {
@@ -455,8 +463,16 @@ describe("POST /oauth/revoke", () => {
 });
 
 describe("bearer tokens on the resource surfaces", () => {
-  test("/mcp without credentials is a 401 carrying WWW-Authenticate", async () => {
+  test("/mcp without any credential falls to the public surface", async () => {
+    // Anonymous requests are served the public documents; OAuth discovery
+    // therefore starts from the 401 an invalid or empty credential produces.
     const res = await mcp();
+    expect(res.status).toBe(200);
+    expect(await toolNames(res)).toEqual([]);
+  });
+
+  test("/mcp with an empty Authorization header is a 401 carrying WWW-Authenticate", async () => {
+    const res = await mcp({ Authorization: "" });
     expect(res.status).toBe(401);
     expect(res.headers.get("www-authenticate")).toBe(
       `Bearer resource_metadata="${config.issuer}/.well-known/oauth-protected-resource/mcp"`,
@@ -567,6 +583,11 @@ describe("URL client ids (CIMD)", () => {
       entityType: "oauth_grant",
       entityIds: grants.map((g) => g.id),
     });
+    await db.delete(oauthGrant).where(eq(oauthGrant.clientId, CIMD_ID));
+    await db
+      .delete(oauthAuthorizationCode)
+      .where(eq(oauthAuthorizationCode.clientId, CIMD_ID));
+    await db.delete(oauthSession).where(eq(oauthSession.clientId, CIMD_ID));
     await db.delete(oauthClient).where(eq(oauthClient.clientId, CIMD_ID));
   });
 

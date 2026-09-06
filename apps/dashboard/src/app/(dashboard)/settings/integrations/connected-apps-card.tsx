@@ -47,7 +47,8 @@ function userLabel(user: Grant["user"]): string {
 export function ConnectedAppsCard() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { data: grants = [] } = useQuery(trpc.oauth.listGrants.queryOptions());
+  const query = useQuery(trpc.oauth.listGrants.queryOptions());
+  const grants = query.data ?? [];
 
   const revoke = useMutation(
     trpc.oauth.revokeGrant.mutationOptions({
@@ -68,7 +69,15 @@ export function ConnectedAppsCard() {
         </FormCardDescription>
       </FormCardHeader>
       <FormCardContent>
-        {grants.length === 0 ? (
+        {query.isPending ? (
+          <p className="text-muted-foreground text-sm">
+            Loading connected apps…
+          </p>
+        ) : query.isError ? (
+          <p className="text-destructive text-sm">
+            Could not load connected apps. Reload the page to try again.
+          </p>
+        ) : grants.length === 0 ? (
           <EmptyStateContainer>
             <EmptyStateTitle>No connected apps</EmptyStateTitle>
             <EmptyStateDescription>

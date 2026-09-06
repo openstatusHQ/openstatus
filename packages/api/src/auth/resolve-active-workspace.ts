@@ -1,4 +1,4 @@
-import { db, eq, schema } from "@openstatus/db";
+import { and, db, eq, isNull, schema } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
 
 /**
@@ -29,53 +29,15 @@ export type ResolveActiveWorkspaceResult =
  * `workspace-slug` cookie and falls back to the user's first workspace
  * when the cookie is missing or stale (cookie manipulation, deleted slug).
  */
-export async function resolveActiveWorkspace(args: {
-  userId: number;
-  workspaceSlug?: string;
-}): Promise<ResolveActiveWorkspaceResult> {
-  const userAndWorkspace = await db.query.user.findFirst({
-    where: eq(schema.user.id, args.userId),
-    with: {
-      usersToWorkspaces: {
-        with: { workspace: true },
-      },
-    },
-  });
-
-  if (!userAndWorkspace) {
-    return { ok: false, error: { kind: "user_not_found" } };
-  }
-
-  const { usersToWorkspaces, ...userProps } = userAndWorkspace;
-
-  const activeWorkspace =
-    usersToWorkspaces?.find(({ workspace }) => {
-      if (args.workspaceSlug) return workspace.slug === args.workspaceSlug;
-      return true;
-    })?.workspace ?? usersToWorkspaces?.[0]?.workspace;
-
-  if (!activeWorkspace) {
-    return { ok: false, error: { kind: "workspace_not_found" } };
-  }
-
-  const user = schema.selectUserSchema.parse(userProps);
-  const workspace = schema.selectWorkspaceSchema.parse(activeWorkspace);
-  const workspaces = (usersToWorkspaces ?? []).map((row) =>
-    schema.selectWorkspaceSchema.parse(row.workspace),
-  );
-  return { ok: true, value: { user, workspace, workspaces } };
-}
-
 /**
  * User plus every workspace they belong to, without electing an active one.
- * For surfaces that must render for a user with zero workspaces (OAuth
- * consent after removal from every workspace).
+ * Soft-deleted accounts resolve to nothing even if a session cookie survives.
  */
 export async function resolveUserWorkspaces(args: {
   userId: number;
 }): Promise<{ user: User; workspaces: Workspace[] } | null> {
   const row = await db.query.user.findFirst({
-    where: eq(schema.user.id, args.userId),
+    where: and(eq(schema.user.id, args.userId), isNull(schema.user.deletedAt)),
     with: { usersToWorkspaces: { with: { workspace: true } } },
   });
   if (!row) return null;
@@ -86,4 +48,29 @@ export async function resolveUserWorkspaces(args: {
       schema.selectWorkspaceSchema.parse(m.workspace),
     ),
   };
+}
+
+/**
+ * Canonical workspace-from-cookie resolver — looks up the
+ * `workspace-slug` cookie and falls back to the user's first workspace
+ * when the cookie is missing or stale (cookie manipulation, deleted slug).
+ */
+export async function resolveActiveWorkspace(args: {
+  userId: number;
+  workspaceSlug?: string;
+}): Promise<ResolveActiveWorkspaceResult> {
+  const resolved = await resolveUserWorkspaces({ userId: args.userId });
+  if (!resolved) {
+    return { ok: false, error: { kind: "user_not_found" } };
+  }
+  const { user, workspaces } = resolved;
+
+  const workspace =
+    workspaces.find((w) =>
+      args.workspaceSlug ? w.slug === args.workspaceSlug : true,
+    ) ?? workspaces[0];
+  if (!workspace) {
+    return { ok: false, error: { kind: "workspace_not_found" } };
+  }
+  return { ok: true, value: { user, workspace, workspaces } };
 }

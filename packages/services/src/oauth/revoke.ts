@@ -1,5 +1,5 @@
 import { and, db as defaultDb, eq, isNull, or } from "@openstatus/db";
-import { oauthGrant, usersToWorkspaces } from "@openstatus/db/src/schema";
+import { oauthGrant } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
 import {
@@ -9,6 +9,7 @@ import {
   withTransaction,
 } from "../context";
 import { ForbiddenError, NotFoundError, UnauthorizedError } from "../errors";
+import { getMembership } from "../member/membership";
 import { sha256Hex } from "./crypto";
 import { getLiveClient, revokeGrantAsOwner, revokeGrantRows } from "./internal";
 import { RevokeGrantInput, RevokeTokenInput } from "./schemas";
@@ -49,16 +50,7 @@ export async function revokeGrant(args: {
     if (!grant) throw new NotFoundError("oauth_grant", input.grantId);
 
     if (grant.userId !== actorUserId) {
-      const membership = await tx
-        .select({ role: usersToWorkspaces.role })
-        .from(usersToWorkspaces)
-        .where(
-          and(
-            eq(usersToWorkspaces.userId, actorUserId),
-            eq(usersToWorkspaces.workspaceId, ctx.workspace.id),
-          ),
-        )
-        .get();
+      const membership = await getMembership(tx, actorUserId, ctx.workspace.id);
       if (membership?.role !== "owner" && membership?.role !== "admin") {
         throw new ForbiddenError(
           "Only owners and admins can revoke other members' grants",

@@ -1,5 +1,5 @@
 // oxlint-disable-next-line unicorn/prefer-node-protocol
-import crypto from "crypto";
+import crypto from "node:crypto";
 
 import bcrypt from "bcryptjs";
 

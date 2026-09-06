@@ -1,4 +1,4 @@
-import { and, db as defaultDb, eq } from "@openstatus/db";
+import { and, db as defaultDb, eq, isNull, or } from "@openstatus/db";
 import { oauthGrant } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
@@ -18,7 +18,10 @@ type GrantRow = typeof oauthGrant.$inferSelect;
 const invalidGrant = (message: string) =>
   new OAuthError("invalid_grant", message);
 
-/** Rotate in place; `where refresh_token_hash = expected` makes concurrent refreshes lose cleanly. */
+/**
+ * Rotate in place. The predicate pins the hash being replaced and the live
+ * state, so a concurrent refresh or revoke makes this match nothing.
+ */
 async function rotate(
   db: DB,
   grant: GrantRow,
@@ -41,10 +44,18 @@ async function rotate(
       and(
         eq(oauthGrant.id, grant.id),
         eq(oauthGrant.refreshTokenHash, expectedCurrentHash),
+        isNull(oauthGrant.revokedAt),
       ),
     )
     .returning();
   return updated ? toTokenResponse(updated, tokens) : null;
+}
+
+function insideGrace(grant: GrantRow, now: Date): boolean {
+  return (
+    grant.rotatedAt !== null &&
+    now.getTime() - grant.rotatedAt.getTime() <= REFRESH_GRACE_MS
+  );
 }
 
 /**
@@ -64,43 +75,43 @@ export async function refreshGrant(args: {
   const client = await getLiveClient(db, input.clientId);
   const hash = await sha256Hex(input.refreshToken);
 
-  const current = await db
-    .select()
-    .from(oauthGrant)
-    .where(eq(oauthGrant.refreshTokenHash, hash))
-    .get();
-  if (current) {
-    if (current.clientId !== client.clientId || current.revokedAt) {
-      throw invalidGrant("Invalid refresh token");
-    }
-    if (current.refreshTokenExpiresAt < now) {
-      await revokeGrantAsOwner(db, current, "refresh_reuse", now);
-      throw invalidGrant("Refresh token expired");
-    }
-    const rotated = await rotate(db, current, hash, now);
-    if (rotated) return rotated;
-  }
+  const load = () =>
+    db
+      .select()
+      .from(oauthGrant)
+      .where(
+        or(
+          eq(oauthGrant.refreshTokenHash, hash),
+          eq(oauthGrant.previousRefreshTokenHash, hash),
+        ),
+      )
+      .get();
 
-  const previous = await db
-    .select()
-    .from(oauthGrant)
-    .where(eq(oauthGrant.previousRefreshTokenHash, hash))
-    .get();
-  if (
-    !previous ||
-    previous.clientId !== client.clientId ||
-    previous.revokedAt
-  ) {
+  let grant = await load();
+  if (!grant || grant.clientId !== client.clientId || grant.revokedAt) {
     throw invalidGrant("Invalid refresh token");
   }
-  const insideGrace =
-    previous.rotatedAt !== null &&
-    now.getTime() - previous.rotatedAt.getTime() <= REFRESH_GRACE_MS;
-  if (!insideGrace) {
-    await revokeGrantAsOwner(db, previous, "refresh_reuse", now);
+
+  if (grant.refreshTokenHash === hash) {
+    if (grant.refreshTokenExpiresAt < now) {
+      await revokeGrantAsOwner(db, grant, "refresh_reuse", now);
+      throw invalidGrant("Refresh token expired");
+    }
+    const rotated = await rotate(db, grant, hash, now);
+    if (rotated) return rotated;
+    // Lost a race: either a concurrent refresh moved this hash to
+    // `previous`, or a revoke landed. Re-read and fall through.
+    grant = await load();
+    if (!grant || grant.revokedAt || grant.previousRefreshTokenHash !== hash) {
+      throw invalidGrant("Invalid refresh token");
+    }
+  }
+
+  if (!insideGrace(grant, now)) {
+    await revokeGrantAsOwner(db, grant, "refresh_reuse", now);
     throw invalidGrant("Refresh token reused; grant revoked");
   }
-  const rotated = await rotate(db, previous, previous.refreshTokenHash, now);
+  const rotated = await rotate(db, grant, grant.refreshTokenHash, now);
   if (!rotated) throw invalidGrant("Invalid refresh token");
   return rotated;
 }

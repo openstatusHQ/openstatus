@@ -16,9 +16,7 @@ import { type Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import { ZodError } from "zod";
 
-import { type OAuthConfig, resourceMetadataUrl } from "./config";
-
-export { type OAuthConfig, oauthConfigFromEnv } from "./config";
+import type { OAuthConfig } from "./config";
 
 const logger = getLogger("api-server");
 
@@ -70,7 +68,7 @@ function handleOAuthError(err: Error, c: Context): Response {
       const url = new URL(err.redirectUri);
       url.searchParams.set("error", err.oauthCode);
       url.searchParams.set("error_description", err.message);
-      if (err.state) url.searchParams.set("state", err.state);
+      if (err.state !== undefined) url.searchParams.set("state", err.state);
       return c.redirect(url.toString(), 302);
     }
     // 401 is the token/revoke contract; an authorize-time unknown client is
@@ -133,16 +131,16 @@ export function createOAuthRoutes(config: OAuthConfig) {
   const app = new Hono({ strict: false });
   const resource = mcpResource(config.issuer);
 
-  // Browser-based MCP clients fetch metadata and tokens cross-origin.
-  app.use(
-    "*",
-    cors({
-      origin: "*",
-      allowMethods: ["GET", "POST", "OPTIONS"],
-      allowHeaders: ["Content-Type", "Authorization", "mcp-protocol-version"],
-      maxAge: 86400,
-    }),
-  );
+  // Browser-based MCP clients fetch metadata and tokens cross-origin. Scoped
+  // to these paths: the sub-app mounts at "/", so "*" would cover every route.
+  const oauthCors = cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization", "mcp-protocol-version"],
+    maxAge: 86400,
+  });
+  app.use("/.well-known/*", oauthCors);
+  app.use("/oauth/*", oauthCors);
   app.onError(handleOAuthError);
 
   // RFC 8414
@@ -225,5 +223,3 @@ export function createOAuthRoutes(config: OAuthConfig) {
 
   return app;
 }
-
-export { resourceMetadataUrl };

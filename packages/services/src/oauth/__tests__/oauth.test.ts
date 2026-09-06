@@ -4,6 +4,7 @@ import {
   oauthClient,
   oauthGrant,
   oauthSession,
+  user,
   usersToWorkspaces,
 } from "@openstatus/db/src/schema";
 import {
@@ -47,6 +48,7 @@ import {
   revokeToken,
   verifyAccessToken,
 } from "../index";
+import { revokeGrantRows } from "../internal";
 
 const VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
 const REDIRECT = "http://localhost:8765/callback";
@@ -196,7 +198,8 @@ describe("registerClient", () => {
         registerClient({
           input: {
             redirect_uris: [REDIRECT],
-            token_endpoint_auth_method: "client_secret_post",
+            // Off-enum on purpose: the wire is untyped.
+            token_endpoint_auth_method: "client_secret_post" as never,
           },
           db: tx,
         }),
@@ -336,6 +339,47 @@ describe("decideSession", () => {
       expect(url.searchParams.get("error")).toBe("access_denied");
       expect(url.searchParams.get("state")).toBe("state-123");
       expect(url.searchParams.get("code")).toBeNull();
+    });
+  });
+
+  test("an empty state is echoed back, a missing one is omitted", async () => {
+    await withTestTransaction(async (tx) => {
+      const client = await register(tx);
+      const empty = await start(tx, client.client_id, { state: "" });
+      const emptyUrl = new URL(
+        (
+          await decideSession({
+            input: { id: empty.id, approved: false, userId: ownerId },
+            db: tx,
+          })
+        ).redirectUrl,
+      );
+      expect(emptyUrl.searchParams.has("state")).toBe(true);
+      expect(emptyUrl.searchParams.get("state")).toBe("");
+
+      const none = await start(tx, client.client_id, { state: undefined });
+      const noneUrl = new URL(
+        (
+          await decideSession({
+            input: { id: none.id, approved: false, userId: ownerId },
+            db: tx,
+          })
+        ).redirectUrl,
+      );
+      expect(noneUrl.searchParams.has("state")).toBe(false);
+    });
+  });
+
+  test("an oversized state is rejected through the redirect, not a 400", async () => {
+    await withTestTransaction(async (tx) => {
+      const client = await register(tx);
+      const err = await start(tx, client.client_id, {
+        state: "x".repeat(1025),
+      }).catch((e) => e);
+      expect(err).toBeInstanceOf(OAuthError);
+      expect(err.oauthCode).toBe("invalid_request");
+      expect(err.redirectUri).toBe(REDIRECT);
+      expect(err.state?.length).toBe(1024);
     });
   });
 
@@ -671,6 +715,63 @@ describe("exchangeCode", () => {
       expect(
         rows.find((r) => r.action === "oauth_grant.delete")?.metadata,
       ).toMatchObject({ reason: "re_consent" });
+    });
+  });
+
+  test("a code minted before the member was removed no longer exchanges", async () => {
+    await withTestTransaction(async (tx) => {
+      const client = await register(tx);
+      const memberId = (await createUser({}, tx as never)).id;
+      await addUserToWorkspace(memberId, team.id, "member", tx as never);
+      const { id } = await start(tx, client.client_id);
+      const code = await consent(tx, id, memberId, team.id);
+
+      await removeMemberInWorkspace({
+        tx,
+        ctx: { ...makeUserCtx(team, { userId: ownerId }), db: tx },
+        userId: memberId,
+      });
+
+      await expect(
+        exchangeCode({
+          input: {
+            clientId: client.client_id,
+            code,
+            codeVerifier: VERIFIER,
+            redirectUri: REDIRECT,
+          },
+          db: tx,
+        }),
+      ).rejects.toMatchObject({ oauthCode: "invalid_grant" });
+      const grants = await tx
+        .select()
+        .from(oauthGrant)
+        .where(eq(oauthGrant.clientId, client.client_id))
+        .all();
+      expect(grants.length).toBe(0);
+    });
+  });
+
+  test("a code minted before the account was deleted no longer exchanges", async () => {
+    await withTestTransaction(async (tx) => {
+      const client = await register(tx);
+      const { id } = await start(tx, client.client_id);
+      const code = await consent(tx, id, ownerId, team.id);
+      await tx
+        .update(user)
+        .set({ deletedAt: new Date() })
+        .where(eq(user.id, ownerId));
+      await expect(
+        exchangeCode({
+          input: {
+            clientId: client.client_id,
+            code,
+            codeVerifier: VERIFIER,
+            redirectUri: REDIRECT,
+          },
+          db: tx,
+        }),
+      ).rejects.toMatchObject({ oauthCode: "invalid_grant" });
     });
   });
 
@@ -1147,6 +1248,39 @@ describe("revokeToken (RFC 7009)", () => {
       expect(
         await verifyAccessToken(a.access_token, { db: tx }),
       ).not.toBeNull();
+    });
+  });
+});
+
+describe("revokeGrantRows", () => {
+  test("an already revoked grant is skipped and not audited twice", async () => {
+    await withTestTransaction(async (tx) => {
+      const client = await register(tx);
+      const tokens = await mintGrant(tx, {
+        clientId: client.client_id,
+        userId: ownerId,
+        workspaceId: team.id,
+      });
+      const grantId = await grantIdOf(tx, tokens.access_token);
+      const ctx = { ...makeUserCtx(team, { userId: ownerId }), db: tx };
+      const stale = await tx
+        .select()
+        .from(oauthGrant)
+        .where(eq(oauthGrant.id, grantId))
+        .get();
+      if (!stale) throw new Error("grant missing");
+      expect(await revokeGrantRows(tx, ctx, [stale], "manual")).toBe(1);
+      // Same pre-revocation snapshot presented again, as a racing caller would.
+      expect(await revokeGrantRows(tx, ctx, [stale], "manual")).toBe(0);
+      const rows = await readAuditLog({
+        workspaceId: team.id,
+        entityType: "oauth_grant",
+        entityId: grantId,
+        db: tx,
+      });
+      expect(rows.filter((r) => r.action === "oauth_grant.delete").length).toBe(
+        1,
+      );
     });
   });
 });

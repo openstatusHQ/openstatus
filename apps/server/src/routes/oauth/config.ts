@@ -1,7 +1,4 @@
-import {
-  type ClientMetadataFetcher,
-  resourceMetadataUrl as metadataUrl,
-} from "@openstatus/services/oauth";
+import type { ClientMetadataFetcher } from "@openstatus/services/oauth";
 
 import { env } from "@/env";
 
@@ -16,21 +13,18 @@ export type OAuthConfig = {
 
 const trimSlash = (url: string) => url.replace(/\/+$/, "");
 
-// `skipValidation` in env.ts means zod defaults never apply; resolve them here.
+// `skipValidation` in env.ts means zod never runs: defaults do not apply and
+// an empty string passes through, so fall back on falsy, not just nullish.
 export function oauthConfigFromEnv(): OAuthConfig {
   const production = env.NODE_ENV === "production";
   return {
     issuer: trimSlash(
-      env.OAUTH_ISSUER ??
+      env.OAUTH_ISSUER ||
         (production ? "https://api.openstatus.dev" : "http://localhost:3000"),
     ),
     dashboardUrl: trimSlash(
-      env.DASHBOARD_URL ??
+      env.DASHBOARD_URL ||
         (production ? "https://app.openstatus.dev" : "http://localhost:3001"),
     ),
   };
-}
-
-export function resourceMetadataUrl(config: OAuthConfig): string {
-  return metadataUrl(config.issuer);
 }

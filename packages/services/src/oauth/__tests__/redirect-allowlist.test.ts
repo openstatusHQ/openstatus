@@ -1,7 +1,10 @@
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 
-import { isAllowedRedirectUri } from "../redirect-allowlist";
+import {
+  isAllowedRedirectUri,
+  matchesRegisteredRedirectUri,
+} from "../redirect-allowlist";
 
 describe("isAllowedRedirectUri", () => {
   test("allows loopback on http and https", () => {
@@ -64,7 +67,71 @@ describe("isAllowedRedirectUri", () => {
 
   test("rejects fragments and unparsable input", () => {
     expect(isAllowedRedirectUri("https://claude.ai/cb#frag")).toBe(false);
+    expect(isAllowedRedirectUri("https://claude.ai/cb#")).toBe(false);
     expect(isAllowedRedirectUri("not a url")).toBe(false);
     expect(isAllowedRedirectUri("")).toBe(false);
+  });
+});
+
+describe("matchesRegisteredRedirectUri", () => {
+  const registered = [
+    "http://localhost/callback",
+    "http://127.0.0.1/callback",
+    "https://claude.ai/api/mcp/auth_callback",
+  ];
+
+  test("ignores the port on loopback (RFC 8252 §7.3)", () => {
+    expect(
+      matchesRegisteredRedirectUri(
+        registered,
+        "http://localhost:53495/callback",
+      ),
+    ).toBe(true);
+    expect(
+      matchesRegisteredRedirectUri(
+        registered,
+        "http://127.0.0.1:8080/callback",
+      ),
+    ).toBe(true);
+    expect(
+      matchesRegisteredRedirectUri(
+        ["http://localhost:3000/cb"],
+        "http://localhost/cb",
+      ),
+    ).toBe(true);
+  });
+
+  test("still requires scheme, host, path and query to match on loopback", () => {
+    expect(
+      matchesRegisteredRedirectUri(registered, "https://localhost:1/callback"),
+    ).toBe(false);
+    expect(
+      matchesRegisteredRedirectUri(registered, "http://[::1]:1/callback"),
+    ).toBe(false);
+    expect(
+      matchesRegisteredRedirectUri(registered, "http://localhost:1/other"),
+    ).toBe(false);
+    expect(
+      matchesRegisteredRedirectUri(
+        registered,
+        "http://localhost:1/callback?x=1",
+      ),
+    ).toBe(false);
+  });
+
+  test("requires an exact match for non-loopback hosts", () => {
+    expect(
+      matchesRegisteredRedirectUri(
+        registered,
+        "https://claude.ai/api/mcp/auth_callback",
+      ),
+    ).toBe(true);
+    expect(
+      matchesRegisteredRedirectUri(
+        registered,
+        "https://claude.ai:8443/api/mcp/auth_callback",
+      ),
+    ).toBe(false);
+    expect(matchesRegisteredRedirectUri(registered, "not a url")).toBe(false);
   });
 });

@@ -3,7 +3,6 @@ import { oauthClient, oauthGrant, user } from "@openstatus/db/src/schema";
 import type { Scope } from "@openstatus/db/src/schema/api-keys/constants";
 
 import { type ServiceContext, getReadDb } from "../context";
-import type { ListGrantsInput } from "./schemas";
 
 export type ConnectedApp = {
   id: number;
@@ -24,7 +23,6 @@ export type ConnectedApp = {
 /** Live grants for the workspace, joined with client and consenting user. Hashes never leave the row. */
 export async function listGrants(args: {
   ctx: ServiceContext;
-  input?: ListGrantsInput;
   now?: Date;
 }): Promise<ConnectedApp[]> {
   const { ctx } = args;

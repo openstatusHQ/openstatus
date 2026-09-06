@@ -1,10 +1,15 @@
 import { and, db as defaultDb, eq, isNull } from "@openstatus/db";
-import { oauthAuthorizationCode, oauthGrant } from "@openstatus/db/src/schema";
+import {
+  oauthAuthorizationCode,
+  oauthGrant,
+  user,
+} from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type DB, type ServiceContext, withTransaction } from "../context";
 import { InternalServiceError } from "../errors";
+import { getMembership } from "../member/membership";
 import { sha256Hex, verifyPkce } from "./crypto";
 import { OAuthError } from "./errors";
 import {
@@ -78,17 +83,17 @@ export async function exchangeCode(args: {
   const tokens = await mintTokens(now);
 
   return withTransaction(ctx, async (tx) => {
-    const [consumed] = await tx
-      .update(oauthAuthorizationCode)
-      .set({ consumedAt: now })
-      .where(
-        and(
-          eq(oauthAuthorizationCode.id, code.id),
-          isNull(oauthAuthorizationCode.consumedAt),
-        ),
-      )
-      .returning({ id: oauthAuthorizationCode.id });
-    if (!consumed) throw invalidGrant("Authorization code already used");
+    // Consent can be minutes old: the member may have been removed or the
+    // account deleted in between, and pending codes are not invalidated then.
+    const membership = await getMembership(tx, code.userId, code.workspaceId);
+    const owner = await tx
+      .select({ deletedAt: user.deletedAt })
+      .from(user)
+      .where(eq(user.id, code.userId))
+      .get();
+    if (!membership || !owner || owner.deletedAt) {
+      throw invalidGrant("The consenting user no longer has access");
+    }
 
     const others = await tx
       .select()
@@ -118,10 +123,19 @@ export async function exchangeCode(args: {
       .returning();
     if (!grant) throw new InternalServiceError("Failed to create OAuth grant");
 
-    await tx
+    // Single conditional write: a concurrent exchange that consumed the code
+    // first makes this match nothing, and the throw rolls the grant back.
+    const [consumed] = await tx
       .update(oauthAuthorizationCode)
-      .set({ grantId: grant.id })
-      .where(eq(oauthAuthorizationCode.id, code.id));
+      .set({ consumedAt: now, grantId: grant.id })
+      .where(
+        and(
+          eq(oauthAuthorizationCode.id, code.id),
+          isNull(oauthAuthorizationCode.consumedAt),
+        ),
+      )
+      .returning({ id: oauthAuthorizationCode.id });
+    if (!consumed) throw invalidGrant("Authorization code already used");
 
     await emitAudit(tx, ctx, {
       action: "oauth_grant.create",
