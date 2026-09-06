@@ -68,6 +68,11 @@ describe("isAllowedRedirectUri", () => {
   test("rejects fragments and unparsable input", () => {
     expect(isAllowedRedirectUri("https://claude.ai/cb#frag")).toBe(false);
     expect(isAllowedRedirectUri("https://claude.ai/cb#")).toBe(false);
+    expect(isAllowedRedirectUri("https://user:pw@claude.ai/cb")).toBe(false);
+    expect(isAllowedRedirectUri("https://user@app.openstatus.dev/cb")).toBe(
+      false,
+    );
+    expect(isAllowedRedirectUri("http://user@localhost:3000/cb")).toBe(false);
     expect(isAllowedRedirectUri("not a url")).toBe(false);
     expect(isAllowedRedirectUri("")).toBe(false);
   });
@@ -116,6 +121,16 @@ describe("matchesRegisteredRedirectUri", () => {
         registered,
         "http://localhost:1/callback?x=1",
       ),
+    ).toBe(false);
+  });
+
+  test("rejects userinfo even when the registered entry carries it", () => {
+    const legacy = ["https://user:pw@claude.ai/cb", "http://user@localhost/cb"];
+    expect(
+      matchesRegisteredRedirectUri(legacy, "https://user:pw@claude.ai/cb"),
+    ).toBe(false);
+    expect(
+      matchesRegisteredRedirectUri(legacy, "http://user@localhost:1/cb"),
     ).toBe(false);
   });
 

@@ -67,6 +67,7 @@ const redirectUriSchema = z.string().refine((value) => {
   if (value.includes("#")) return false;
   try {
     const url = new URL(value);
+    if (url.username || url.password) return false;
     const host = url.hostname.toLowerCase();
     const loopback =
       host === "localhost" || host === "127.0.0.1" || host === "[::1]";
@@ -74,7 +75,7 @@ const redirectUriSchema = z.string().refine((value) => {
   } catch {
     return false;
   }
-}, "redirect_uris must be https or loopback");
+}, "redirect_uris must be https or loopback, without fragment or credentials");
 
 export const ClientMetadataDocument = z.object({
   client_id: z.string().url(),

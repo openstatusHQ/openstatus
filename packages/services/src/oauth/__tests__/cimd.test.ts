@@ -159,6 +159,18 @@ describe("parseClientMetadataDocument", () => {
       ),
     ).toThrow(OAuthError);
     expect(() =>
+      parseClientMetadataDocument(
+        CLIENT_ID,
+        doc({ redirect_uris: ["https://user:pw@partner.example/cb"] }),
+      ),
+    ).toThrow(OAuthError);
+    expect(() =>
+      parseClientMetadataDocument(
+        CLIENT_ID,
+        doc({ redirect_uris: ["https://partner.example/cb#x"] }),
+      ),
+    ).toThrow(OAuthError);
+    expect(() =>
       parseClientMetadataDocument(CLIENT_ID, {
         ...doc(),
         token_endpoint_auth_method: "client_secret_basic",

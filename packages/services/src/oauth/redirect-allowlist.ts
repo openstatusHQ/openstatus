@@ -55,6 +55,8 @@ export function isAllowedRedirectUri(redirectUri: string): boolean {
   } catch {
     return false;
   }
+  // RFC 6749 §3.1.2 forbids fragments; credentials have no legitimate use.
+  if (url.username || url.password) return false;
   const protocol = url.protocol.toLowerCase();
   if ((ALLOWED_REDIRECT_SCHEMES as readonly string[]).includes(protocol)) {
     return true;
@@ -78,7 +80,6 @@ export function matchesRegisteredRedirectUri(
   requested: string,
 ): boolean {
   if (requested.includes("#")) return false;
-  if (registered.includes(requested)) return true;
   let url: URL;
   try {
     url = new URL(requested);
@@ -86,6 +87,7 @@ export function matchesRegisteredRedirectUri(
     return false;
   }
   if (url.username || url.password) return false;
+  if (registered.includes(requested)) return true;
   if (!isLoopbackHost(url.hostname.toLowerCase())) return false;
   const protocol = url.protocol.toLowerCase();
   if (protocol !== "http:" && protocol !== "https:") return false;
