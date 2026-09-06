@@ -122,6 +122,14 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
           EUR: 20,
         },
       },
+      monitors: {
+        title: "Monitor Pack",
+        description: "Add 10 monitors to your workspace.",
+        price: {
+          USD: 15,
+          EUR: 15,
+        },
+      },
       sso: {
         title: "SAML Single Sign-On",
         description:
@@ -217,6 +225,14 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
           EUR: 20,
         },
       },
+      monitors: {
+        title: "Monitor Pack",
+        description: "Add 10 monitors to your workspace.",
+        price: {
+          USD: 15,
+          EUR: 15,
+        },
+      },
       sso: {
         title: "SAML Single Sign-On",
         description:
@@ -283,6 +299,14 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         price: {
           USD: 20,
           EUR: 20,
+        },
+      },
+      monitors: {
+        title: "Monitor Pack",
+        description: "Add 10 monitors to your workspace.",
+        price: {
+          USD: 15,
+          EUR: 15,
         },
       },
       sso: {

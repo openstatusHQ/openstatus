@@ -1,5 +1,5 @@
 import { Events } from "@openstatus/analytics";
-import { count, eq, schema } from "@openstatus/db";
+import { eq } from "@openstatus/db";
 import {
   selectWorkspaceSchema,
   user,
@@ -7,20 +7,35 @@ import {
   workspace,
   workspacePlans,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import type { AddonQuantityKey } from "@openstatus/db/src/schema/plan/schema";
 import {
   addons,
   billingIntervals,
 } from "@openstatus/db/src/schema/plan/schema";
-import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
+import {
+  isAddonQuantityKey,
+  updateAddonInLimits,
+} from "@openstatus/db/src/schema/plan/utils";
+import { countWorkspaceUsage } from "@openstatus/services";
 import { TRPCError } from "@trpc/server";
 import type { Stripe } from "stripe";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
-import { getPriceIdForFeature, getPriceIdForPlan } from "./utils";
+import {
+  getPlanFromPriceId,
+  getPriceIdForFeature,
+  getPriceIdForPlan,
+  resolveAddonQuantity,
+} from "./utils";
 import { webhookRouter } from "./webhook";
+
+// The addon `title` reads wrong in the "you already have N ..." sentence.
+const LIMIT_LABEL: Record<AddonQuantityKey, string> = {
+  monitors: "monitors",
+  "status-pages": "status pages",
+};
 
 const url =
   process.env.NODE_ENV === "production"
@@ -239,50 +254,84 @@ export const stripeRouter = createTRPCRouter({
         });
       }
 
-      const quantity =
-        typeof opts.input.value === "number" ? opts.input.value : 1;
+      const subscriptionId = sub.subscriptions.data[0].id;
 
-      // We need to check the total of status page
-      if (opts.input.feature === "status-pages") {
-        const statusPageCt = await opts.ctx.db
-          .select({ count: count() })
-          .from(schema.page)
-          .where(eq(schema.page.workspaceId, result.id))
-          .get();
-        const pageCount = statusPageCt?.count ?? 0;
-        if (pageCount > quantity + allPlans[ws.plan].limits["status-pages"]) {
+      const items = await stripe.subscriptionItems.list({
+        subscription: subscriptionId,
+      });
+
+      // Stripe rejects mixed billing intervals on one subscription and every
+      // addon price is monthly, so a yearly plan cannot hold one.
+      const planItem = items.data.find((item) =>
+        getPlanFromPriceId(item.price.id),
+      );
+      if (planItem?.price.recurring?.interval === "year") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Add-ons are billed monthly. Contact us to add them to a yearly plan.",
+        });
+      }
+
+      let quantity = 1;
+      let newValue: boolean | number = opts.input.value;
+
+      if (typeof opts.input.value === "number") {
+        let resolved: ReturnType<typeof resolveAddonQuantity>;
+        try {
+          resolved = resolveAddonQuantity({
+            addon: opts.input.feature,
+            plan: ws.plan,
+            packs: opts.input.value,
+          });
+        } catch (e) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: `You already have ${pageCount} status pages, please delete some status page first.`,
+            message: e instanceof Error ? e.message : "Invalid quantity",
+          });
+        }
+
+        quantity = resolved.quantity;
+        newValue = resolved.newLimit;
+
+        if (!isAddonQuantityKey(opts.input.feature)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid feature",
+          });
+        }
+
+        const current = await countWorkspaceUsage(
+          opts.ctx.db,
+          result.id,
+          opts.input.feature,
+        );
+        if (current > resolved.newLimit) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `You already have ${current} ${LIMIT_LABEL[opts.input.feature]}, please delete some first.`,
           });
         }
       }
 
-      const items = await stripe.subscriptionItems.list({
-        subscription: sub.subscriptions?.data[0]?.id,
-      });
-
       const item = items.data.find((item) => item.price.id === priceId);
+      const isRemoval = opts.input.value === false || quantity === 0;
 
-      if (!opts.input.value && typeof opts.input.value === "boolean" && item) {
-        await stripe.subscriptionItems.del(item.id);
-      } else if (typeof opts.input.value === "number" && item) {
+      if (isRemoval) {
+        if (item) {
+          await stripe.subscriptionItems.del(item.id);
+        }
+      } else if (item) {
         await stripe.subscriptionItems.update(item.id, {
           quantity,
         });
       } else {
         await stripe.subscriptionItems.create({
           price: priceId,
-          subscription: sub.subscriptions?.data[0]?.id,
+          subscription: subscriptionId,
           quantity,
         });
       }
-
-      const defaultLimit = allPlans[ws.plan].limits[opts.input.feature];
-      const newValue =
-        typeof opts.input.value === "number" && typeof defaultLimit === "number"
-          ? opts.input.value + defaultLimit
-          : opts.input.value;
 
       const newLimits = updateAddonInLimits(
         ws.limits,

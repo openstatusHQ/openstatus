@@ -1,8 +1,12 @@
 "use client";
 
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
-import type { BillingInterval } from "@openstatus/db/src/schema/plan/schema";
+import type {
+  Addons,
+  BillingInterval,
+} from "@openstatus/db/src/schema/plan/schema";
 import {
+  getAddonPackSize,
   getAddonPriceConfig,
   getPriceConfig,
 } from "@openstatus/db/src/schema/plan/utils";
@@ -33,6 +37,11 @@ const BASE_URL =
   process.env.NODE_ENV === "production"
     ? "https://app.openstatus.dev"
     : "http://localhost:3000";
+
+function getQuantitySuffix(addon: keyof Addons) {
+  const packSize = getAddonPackSize(addon);
+  return packSize > 1 ? `/mo./${packSize}` : "/mo./each";
+}
 
 export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
@@ -219,7 +228,11 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                                       style: "currency",
                                       currency: price.currency,
                                     }).format(price.value)}
-                                    {isNumber ? "/mo./each" : "/mo."}
+                                    {isNumber
+                                      ? getQuantitySuffix(
+                                          value as keyof typeof plan.addons,
+                                        )
+                                      : "/mo."}
                                   </span>
                                 </span>
                               </div>
