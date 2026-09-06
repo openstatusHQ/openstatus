@@ -4706,7 +4706,8 @@
           "LOCALE_DE",
           "LOCALE_TR",
           "LOCALE_HI",
-          "LOCALE_KO"
+          "LOCALE_KO",
+          "LOCALE_JA"
         ],
         "description": "Locale defines the supported languages for a status page."
       },
