@@ -25,11 +25,6 @@ export type ResolveActiveWorkspaceResult =
   | { ok: false; error: ResolveActiveWorkspaceFailure };
 
 /**
- * Canonical workspace-from-cookie resolver — looks up the
- * `workspace-slug` cookie and falls back to the user's first workspace
- * when the cookie is missing or stale (cookie manipulation, deleted slug).
- */
-/**
  * User plus every workspace they belong to, without electing an active one.
  * Soft-deleted accounts resolve to nothing even if a session cookie survives.
  */

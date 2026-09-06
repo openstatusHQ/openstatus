@@ -119,6 +119,30 @@ describe("matchesRegisteredRedirectUri", () => {
     ).toBe(false);
   });
 
+  test("rejects fragments and userinfo on loopback", () => {
+    expect(
+      matchesRegisteredRedirectUri(
+        registered,
+        "http://localhost:1/callback#frag",
+      ),
+    ).toBe(false);
+    expect(
+      matchesRegisteredRedirectUri(registered, "http://localhost:1/callback#"),
+    ).toBe(false);
+    expect(
+      matchesRegisteredRedirectUri(
+        registered,
+        "http://user:pass@localhost:1/callback",
+      ),
+    ).toBe(false);
+    expect(
+      matchesRegisteredRedirectUri(
+        registered,
+        "http://user@127.0.0.1:1/callback",
+      ),
+    ).toBe(false);
+  });
+
   test("requires an exact match for non-loopback hosts", () => {
     expect(
       matchesRegisteredRedirectUri(

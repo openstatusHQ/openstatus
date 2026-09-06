@@ -70,12 +70,14 @@ export function isAllowedRedirectUri(redirectUri: string): boolean {
 /**
  * RFC 8252 §7.3: native clients bind an ephemeral port, so a loopback
  * redirect matches its registered entry on everything but the port.
- * Any other URI must match a registered entry exactly.
+ * Any other URI must match a registered entry exactly. Fragments (RFC 6749
+ * §3.1.2) and userinfo are never registered, so they never match.
  */
 export function matchesRegisteredRedirectUri(
   registered: readonly string[],
   requested: string,
 ): boolean {
+  if (requested.includes("#")) return false;
   if (registered.includes(requested)) return true;
   let url: URL;
   try {
@@ -83,6 +85,7 @@ export function matchesRegisteredRedirectUri(
   } catch {
     return false;
   }
+  if (url.username || url.password) return false;
   if (!isLoopbackHost(url.hostname.toLowerCase())) return false;
   const protocol = url.protocol.toLowerCase();
   if (protocol !== "http:" && protocol !== "https:") return false;

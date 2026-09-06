@@ -39,7 +39,7 @@ export async function verifyAccessToken(
   if (!grant || grant.revokedAt) return null;
   if (grant.accessTokenExpiresAt < now) return null;
 
-  if (shouldUpdateLastUsed(grant.lastUsedAt)) {
+  if (shouldUpdateLastUsed(grant.lastUsedAt, undefined, now)) {
     await db
       .update(oauthGrant)
       .set({ lastUsedAt: now })

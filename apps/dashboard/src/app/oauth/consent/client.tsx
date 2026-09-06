@@ -31,9 +31,10 @@ type Scope = "read" | "write";
 export function Client() {
   const trpc = useTRPC();
   const [{ session: sessionId }] = useQueryStates(searchParamsParsers);
-  const { data } = useQuery(
-    trpc.oauth.getSession.queryOptions({ id: sessionId ?? "" }),
-  );
+  const { data } = useQuery({
+    ...trpc.oauth.getSession.queryOptions({ id: sessionId ?? "" }),
+    enabled: Boolean(sessionId),
+  });
   if (!sessionId || !data) return null;
   return <ConsentForm sessionId={sessionId} data={data} />;
 }
