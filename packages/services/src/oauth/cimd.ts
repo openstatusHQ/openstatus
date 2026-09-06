@@ -25,9 +25,11 @@ const CGNAT_V4 = /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./;
 
 /**
  * HTTPS, non-root path, public hostname. Layers CIMD rules on the repo's
- * SSRF blocklist. Hostname checks cannot see what DNS resolves to, so a name
- * pointing at a private address still reaches `fetch`; the fetch itself
- * refuses redirects and is bounded in time and size.
+ * SSRF blocklist. Hostname checks cannot see what DNS resolves to, so a
+ * rebound name still reaches `fetch`. That is accepted because the fetch is
+ * HTTPS with certificate verification: an internal host cannot present a
+ * certificate for the attacker's name, so its response is never read.
+ * The residual is a timing oracle on whether an internal port answers.
  */
 export function isUrlClientId(clientId: string): boolean {
   if (clientId.includes("#")) return false;
@@ -177,11 +179,16 @@ export async function fetchClientMetadataDocument(
     return parseClientMetadataDocument(clientId, body);
   } catch (err) {
     if (err instanceof OAuthError) throw err;
-    throw new OAuthError(
-      "invalid_client",
-      `Client metadata document could not be fetched: ${
+    // The raw error distinguishes refused / bad certificate / timeout, which
+    // would let an unauthenticated caller probe internal ports. Log it only.
+    console.warn(
+      `[oauth/cimd] fetch failed for ${clientId}: ${
         err instanceof Error ? err.message : String(err)
       }`,
+    );
+    throw new OAuthError(
+      "invalid_client",
+      "Client metadata document could not be fetched",
     );
   } finally {
     clearTimeout(timer);
