@@ -24,10 +24,7 @@ export function AppHeaderContent({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div
-      className={cn("flex flex-1 items-center gap-2", className)}
-      {...props}
-    >
+    <div className={cn("flex flex-1 items-center gap-2", className)} {...props}>
       {children}
     </div>
   );
