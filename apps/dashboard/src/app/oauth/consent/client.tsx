@@ -133,7 +133,10 @@ function ConsentForm({
             <SelectContent>
               {workspaces.map((ws) => (
                 <SelectItem key={ws.id} value={String(ws.id)}>
-                  {ws.name || ws.slug}
+                  {ws.slug}
+                  {ws.name ? (
+                    <span className="text-muted-foreground"> ({ws.name})</span>
+                  ) : null}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -191,7 +194,7 @@ function ConsentForm({
         </div>
       </div>
       <p className="text-muted-foreground mx-auto max-w-md px-8 text-center text-xs text-pretty">
-        You can revoke this connection any time from Settings → Integrations.
+        You can revoke this connection any time from <code>Settings / Integrations</code>.
       </p>
     </div>
   );
