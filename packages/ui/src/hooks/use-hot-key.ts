@@ -15,9 +15,9 @@ export function useHotKey(
   useEffect(() => {
     function handler(e: KeyboardEvent) {
       const shiftMatch = options?.shift ? e.shiftKey : !e.shiftKey;
-      // `code` is the physical key, for characters a layout only types with a
-      // modifier (`\` is ⌥⇧7 on German macOS, AltGr+ß on German Windows) and
-      // that `e.key` would therefore never report on a bare ⌘/ctrl press.
+      // A layout that doesn't type `key` unmodified reports its own character
+      // for that physical key (⌘\ is ⌘# on German), so `e.key` alone never
+      // matches a bare ⌘/ctrl press. `code` is the layout-independent position.
       const keyMatch =
         e.key.toLowerCase() === key.toLowerCase() ||
         (code !== undefined && e.code === code);
