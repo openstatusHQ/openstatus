@@ -82,7 +82,7 @@ export function Client({
   return (
     <div className="relative flex h-[calc(100svh-var(--spacing-app-header)-var(--spacing-app-tabs))] w-full flex-col overflow-hidden">
       {workspace.plan === "free" ? (
-        <BillingPlaceholder controlsDefaultOpen={controlsDefaultOpen} />
+        <BillingPlaceholder />
       ) : (
         <LogsTable
           monitor={monitor}
@@ -351,11 +351,7 @@ function LogsSheet({
   );
 }
 
-function BillingPlaceholder({
-  controlsDefaultOpen,
-}: {
-  controlsDefaultOpen: boolean;
-}) {
+function BillingPlaceholder() {
   const { columns, filterFields, filterSchema, schema } = useMemo(
     () =>
       createLogsTable({
@@ -376,7 +372,6 @@ function BillingPlaceholder({
           data={exampleLogs as unknown as ResponseLog[]}
           filterFields={filterFields}
           totalRowsFetched={exampleLogs.length}
-          controlsDefaultOpen={controlsDefaultOpen}
           hasNextPage={false}
           fetchNextPage={() => Promise.resolve()}
           refetch={() => {}}
