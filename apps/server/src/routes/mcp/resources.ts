@@ -85,11 +85,6 @@ export async function readPublicResource(
   };
 }
 
-/**
- * Registered on every server, authenticated or not: they carry no workspace
- * data, and they are what an anonymous client reads to learn how to
- * authenticate.
- */
 export function registerPublicResources(server: McpServer): void {
   for (const resource of PUBLIC_RESOURCES) {
     server.registerResource(
