@@ -1,7 +1,7 @@
 import { db as defaultDb, eq } from "@openstatus/db";
 import {
-  type OAuthSession,
   oauthClient,
+  type OAuthSession,
   oauthSession,
   selectOAuthSessionSchema,
 } from "@openstatus/db/src/schema";
@@ -154,7 +154,7 @@ export async function loadPendingSession(
       "This authorization request was already answered",
     );
   }
-  if (session.expiresAt < now) {
+  if (session.expiresAt <= now) {
     throw new PreconditionFailedError("This authorization request expired");
   }
   return session;

@@ -282,6 +282,41 @@ describe("createSession", () => {
 });
 
 describe("getSession", () => {
+  test("rejects reads and decisions at the expiration instant", async () => {
+    await withTestTransaction(async (tx) => {
+      const client = await register(tx);
+      const { id } = await start(tx, client.client_id);
+      const { expiresAt } = await getSession({ input: { id }, db: tx });
+      expect(
+        (
+          await getSession({
+            input: { id },
+            db: tx,
+            now: new Date(expiresAt.getTime() - 1),
+          })
+        ).id,
+      ).toBe(id);
+      for (const delta of [0, 1]) {
+        const now = new Date(expiresAt.getTime() + delta);
+        await expect(
+          getSession({ input: { id }, db: tx, now }),
+        ).rejects.toBeInstanceOf(PreconditionFailedError);
+        await expect(
+          decideSession({
+            input: {
+              id,
+              approved: true,
+              userId: ownerId,
+              workspaceId: team.id,
+            },
+            db: tx,
+            now,
+          }),
+        ).rejects.toBeInstanceOf(PreconditionFailedError);
+      }
+    });
+  });
+
   test("returns client name and requested scope while pending", async () => {
     await withTestTransaction(async (tx) => {
       const client = await register(tx, "Cursor");
@@ -800,6 +835,40 @@ describe("exchangeCode", () => {
 });
 
 describe("verifyAccessToken", () => {
+  test("rejects access tokens at the expiration instant", async () => {
+    await withTestTransaction(async (tx) => {
+      const client = await register(tx);
+      const tokens = await mintGrant(tx, {
+        clientId: client.client_id,
+        userId: ownerId,
+        workspaceId: team.id,
+      });
+      const grantId = await grantIdOf(tx, tokens.access_token);
+      const grant = await tx
+        .select()
+        .from(oauthGrant)
+        .where(eq(oauthGrant.id, grantId))
+        .get();
+      if (!grant) throw new Error("grant missing");
+      expect(
+        (
+          await verifyAccessToken(tokens.access_token, {
+            db: tx,
+            now: new Date(grant.accessTokenExpiresAt.getTime() - 1),
+          })
+        )?.grantId,
+      ).toBe(grantId);
+      for (const delta of [0, 1]) {
+        expect(
+          await verifyAccessToken(tokens.access_token, {
+            db: tx,
+            now: new Date(grant.accessTokenExpiresAt.getTime() + delta),
+          }),
+        ).toBeNull();
+      }
+    });
+  });
+
   test("resolves workspace, user and scopes and bumps last_used_at", async () => {
     await withTestTransaction(async (tx) => {
       const client = await register(tx);
