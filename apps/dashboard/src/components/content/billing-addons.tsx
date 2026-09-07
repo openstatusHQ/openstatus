@@ -204,12 +204,17 @@ export function BillingAddons({
 }
 
 // NOTE: could move to lib/formatter.ts
-function formatPrice(price: PriceConfig | null) {
+function formatAmount(price: PriceConfig | null, amount: number) {
   if (!price) return "N/A";
   return new Intl.NumberFormat(price.locale, {
     style: "currency",
     currency: price.currency,
-  }).format(price.value);
+  }).format(amount);
+}
+
+function formatPrice(price: PriceConfig | null) {
+  if (!price) return "N/A";
+  return formatAmount(price, price.value);
 }
 
 function getButtonLabel(
@@ -257,11 +262,11 @@ function getDialogDescription(
   }
 
   if (isQuantity) {
-    const amount =
-      packSize > 1
-        ? `${value} ${value === 1 ? "pack" : "packs"} (${value * packSize} ${unitLabel})`
-        : `${value}`;
-    return `${label} will be updated to ${amount} on your next billing cycle. You will be charged ${formattedPrice}${priceSuffix} on your next billing cycle.`;
+    if (value === 0) {
+      return `${label} will be removed from your subscription. You will stop being charged for it on your next billing cycle.`;
+    }
+    const total = formatAmount(price, price ? price.value * value : 0);
+    return `Your workspace will get ${value * packSize} extra ${unitLabel}. You will be charged ${total}/mo., starting on your next billing cycle.`;
   }
 }
 
