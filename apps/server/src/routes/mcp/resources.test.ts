@@ -1,10 +1,12 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import type { Workspace } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterEach, describe, test } from "@std/testing/bdd";
 
+import { toServiceCtx } from "./adapter";
 import { PUBLIC_RESOURCES, readPublicResource } from "./resources";
-import { createPublicMcpServer } from "./server";
+import { createMcpServer } from "./server";
 
 const realFetch = globalThis.fetch;
 
@@ -87,9 +89,27 @@ describe("public MCP resources", () => {
   });
 });
 
-/** Connect a client to the anonymous server the route actually builds. */
-async function connectPublicServer() {
-  const server = createPublicMcpServer();
+/**
+ * Connect a client to the server the route actually builds. The public
+ * documents live on the authenticated server — `/mcp` has no anonymous
+ * surface, so there is no other server to connect to. `limits` is real
+ * because tool registration reads it (`registerAuditTools` gates on
+ * `audit-log`); the rest of the workspace is never touched by a
+ * `resources/*` call.
+ */
+async function connectServer() {
+  const server = createMcpServer(
+    toServiceCtx({
+      workspace: {
+        id: 1,
+        slug: "ws",
+        name: "ws",
+        limits: {},
+      } as unknown as Workspace,
+      apiKey: { id: "k1", scopes: ["*"] },
+      requestId: "req-resources",
+    }),
+  );
   const client = new Client({ name: "probe", version: "test" });
   const [clientTransport, serverTransport] =
     InMemoryTransport.createLinkedPair();
@@ -100,13 +120,12 @@ async function connectPublicServer() {
   return { client, close: () => client.close() };
 }
 
-describe("anonymous MCP surface", () => {
+describe("public MCP documents over the transport", () => {
   test("advertises the resources capability on initialize", async () => {
     stubFetch(() => Promise.resolve(new Response("# doc")));
-    const { client, close } = await connectPublicServer();
+    const { client, close } = await connectServer();
     try {
       expect(client.getServerCapabilities()?.resources).toBeDefined();
-      expect(client.getServerCapabilities()?.tools).toBeUndefined();
     } finally {
       await close();
     }
@@ -114,7 +133,7 @@ describe("anonymous MCP surface", () => {
 
   test("resources/list returns every public document", async () => {
     stubFetch(() => Promise.resolve(new Response("# doc")));
-    const { client, close } = await connectPublicServer();
+    const { client, close } = await connectServer();
     try {
       const { resources } = await client.listResources();
       expect(resources.map((r) => r.uri).sort()).toEqual(
@@ -132,22 +151,12 @@ describe("anonymous MCP surface", () => {
 
   test("resources/read returns a non-empty body for each", async () => {
     stubFetch(() => Promise.resolve(new Response("# doc")));
-    const { client, close } = await connectPublicServer();
+    const { client, close } = await connectServer();
     try {
       for (const resource of PUBLIC_RESOURCES) {
         const result = await client.readResource({ uri: resource.uri });
         expect(String(result.contents[0].text).length).toBeGreaterThan(0);
       }
-    } finally {
-      await close();
-    }
-  });
-
-  test("exposes no tools without a key", async () => {
-    stubFetch(() => Promise.resolve(new Response("# doc")));
-    const { client, close } = await connectPublicServer();
-    try {
-      await expect(client.listTools()).rejects.toThrow();
     } finally {
       await close();
     }

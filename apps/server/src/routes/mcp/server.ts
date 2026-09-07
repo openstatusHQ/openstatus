@@ -37,19 +37,3 @@ export function createMcpServer(ctx: ServiceContext): McpServer {
   registerAuditTools(server, ctx);
   return server;
 }
-
-/**
- * Server for a request that carried no `x-openstatus-key`. MCP clients
- * `initialize` before they have a credential, and an endpoint that refuses the
- * handshake reads as unreachable rather than as protected. No tool is
- * registered, so `tools/list` and `tools/call` are absent — not empty — and
- * nothing workspace-scoped is reachable without a key.
- */
-export function createPublicMcpServer(): McpServer {
-  const server = new McpServer({
-    name: "openstatus",
-    version: packageJson.version,
-  });
-  registerPublicResources(server);
-  return server;
-}

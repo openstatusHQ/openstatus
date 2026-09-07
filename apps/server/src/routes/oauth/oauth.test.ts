@@ -464,12 +464,15 @@ describe("POST /oauth/revoke", () => {
 });
 
 describe("bearer tokens on the resource surfaces", () => {
-  test("/mcp without any credential falls to the public surface", async () => {
-    // Anonymous requests are served the public documents; OAuth discovery
-    // therefore starts from the 401 an invalid or empty credential produces.
+  test("/mcp without any credential is the 401 that starts discovery", async () => {
+    // `/mcp` is a protected resource with no anonymous surface: a client that
+    // `initialize`s before it holds a token is told where the authorization
+    // server is rather than being handed a credential-less session.
     const res = await mcp();
-    expect(res.status).toBe(200);
-    expect(await toolNames(res)).toEqual([]);
+    expect(res.status).toBe(401);
+    expect(res.headers.get("www-authenticate")).toBe(
+      `Bearer resource_metadata="${config.issuer}/.well-known/oauth-protected-resource/mcp"`,
+    );
   });
 
   test("/mcp with an empty Authorization header is a 401 carrying WWW-Authenticate", async () => {

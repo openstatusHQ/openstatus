@@ -4,14 +4,14 @@ import { Events, setupAnalytics } from "@openstatus/analytics";
 import type { Workspace } from "@openstatus/db/src/schema";
 import { resourceMetadataUrl } from "@openstatus/services/oauth";
 import { Hono } from "hono";
-import type { Context, Next } from "hono";
+import type { Context } from "hono";
 
 import { handleError } from "../../libs/errors";
 import { authMiddleware } from "../../libs/middlewares/auth";
 import type { Variables } from "../../types";
 import { oauthConfigFromEnv } from "../oauth/config";
 import { toServiceCtx } from "./adapter";
-import { createMcpServer, createPublicMcpServer } from "./server";
+import { createMcpServer } from "./server";
 
 const logger = getLogger("api-server");
 
@@ -33,31 +33,16 @@ mcpRoute.onError((err, c) => {
 });
 
 /**
- * An MCP client `initialize`s before it has a credential, and a handshake that
- * 401s reads as an unreachable server rather than a protected one. A missing
- * key drops the request to the public surface (documents only, no tools); a
- * key that is present but invalid is still a 401, so a misconfigured client
- * gets told so instead of silently losing its workspace.
+ * `/mcp` is an OAuth protected resource (RFC 9728), so every request needs a
+ * credential and one without gets a 401 carrying `WWW-Authenticate`.
+ *
+ * That 401 is not a failure mode, it is the discovery mechanism: an MCP client
+ * `initialize`s without a credential precisely so the challenge tells it where
+ * the authorization server lives. Answering the handshake anonymously instead
+ * leaves such a client permanently connected but unauthenticated — it never
+ * learns OAuth is on offer, and never sees a tool.
  */
-async function optionalAuthMiddleware(
-  c: Context<{ Variables: Variables }, "/*">,
-  next: Next,
-) {
-  // `=== undefined` rather than a truthiness check: a client that sends the
-  // header with an empty value is misconfigured, not anonymous, and should be
-  // told so instead of silently dropping to the public surface.
-  // A bearer token is a credential too; it must be validated, never treated
-  // as anonymous.
-  if (
-    c.req.header("x-openstatus-key") === undefined &&
-    c.req.header("authorization") === undefined
-  ) {
-    return next();
-  }
-  return authMiddleware(c, next);
-}
-
-mcpRoute.use("*", optionalAuthMiddleware);
+mcpRoute.use("*", authMiddleware);
 
 /**
  * The JSON-RPC calls carried by a request body, as OpenPanel event properties.
@@ -87,25 +72,23 @@ function rpcCalls(body: unknown): Record<string, unknown>[] {
  * Emitted before execution: this measures calls, not successes, so a tool that
  * throws still shows up in the volume.
  *
- * Authenticated requests reuse the `api_<workspaceId>` profile the RPC tracking
- * interceptor writes to — one identity per workspace across both programmatic
- * surfaces, with the `mcp` channel telling them apart. Anonymous requests (an
- * `initialize` before the client has a credential, or a public `resources/read`)
- * carry no profile: `setupAnalytics` skips `identify` without a `userId` and the
- * event still lands, marked `authenticated: false`.
+ * Requests reuse the `api_<workspaceId>` profile the RPC tracking interceptor
+ * writes to — one identity per workspace across both programmatic surfaces,
+ * with the `mcp` channel telling them apart. Requests rejected by
+ * `authMiddleware` never reach here, so this counts authenticated traffic only.
  */
 function trackMcpRequest(
   c: Context<{ Variables: Variables }, "/*">,
-  workspace: Workspace | undefined,
+  workspace: Workspace,
   body: unknown,
 ) {
   const calls = rpcCalls(body);
   if (calls.length === 0) return;
 
   setupAnalytics({
-    userId: workspace ? `api_${workspace.id}` : undefined,
-    workspaceId: workspace ? `${workspace.id}` : undefined,
-    plan: workspace?.plan,
+    userId: `api_${workspace.id}`,
+    workspaceId: `${workspace.id}`,
+    plan: workspace.plan,
     location: c.req.header("x-forwarded-for"),
     userAgent: c.req.header("user-agent"),
   })
@@ -115,7 +98,7 @@ function trackMcpRequest(
           analytics.track({
             ...Events.McpRequest,
             ...call,
-            authenticated: workspace !== undefined,
+            authenticated: true,
           }),
         ),
       ),
@@ -136,9 +119,8 @@ function trackMcpRequest(
  * surface as HTTP 401, which is correct.
  */
 mcpRoute.all("/", async (c) => {
-  // Anonymous requests reach here with `workspace` unset, which `Variables`
-  // (shared with the authenticated V1 surface) cannot express.
-  const workspace = c.get("workspace") as Workspace | undefined;
+  // `authMiddleware` ran on every path into this handler, so both are set.
+  const workspace = c.get("workspace");
   const requestId = c.get("requestId");
 
   // Pre-parse the JSON-RPC body so we can mirror the request `id` on
@@ -170,11 +152,9 @@ mcpRoute.all("/", async (c) => {
   // NOT call `server.close()` in a `finally` — closing tears down the
   // SSE stream before Hono finishes writing the body, sending an
   // empty response to the client.
-  const server = workspace
-    ? createMcpServer(
-        toServiceCtx({ workspace, apiKey: c.get("apiKey"), requestId }),
-      )
-    : createPublicMcpServer();
+  const server = createMcpServer(
+    toServiceCtx({ workspace, apiKey: c.get("apiKey"), requestId }),
+  );
   const transport = new StreamableHTTPTransport();
   try {
     await server.connect(transport);
