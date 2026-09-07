@@ -1,9 +1,17 @@
 import { sentry } from "@hono/sentry";
+import { Events } from "@openstatus/analytics";
 import { db, desc, eq } from "@openstatus/db";
 import { auditLog, page, statusReport } from "@openstatus/db/src/schema";
 import { SEEDED_WORKSPACE_TEAM_ID } from "@openstatus/services/test/fixtures";
+import type { MockFn } from "@openstatus/test-utils";
 import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  test,
+} from "@std/testing/bdd";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
 
@@ -224,6 +232,73 @@ describe("MCP transport", () => {
       expect(tool.inputSchema).toBeDefined();
       expect(tool.outputSchema).toBeDefined();
     }
+  });
+});
+
+/**
+ * `@openstatus/analytics` is swapped for a double (test.importmap.json) whose
+ * spies live on `globalThis.__analyticsSpies`.
+ */
+const analyticsSpies = (globalThis as Record<string, unknown>)
+  .__analyticsSpies as { track: MockFn; setupAnalytics: MockFn };
+
+/**
+ * Tracking is fire-and-forget — `track` runs in a microtask chained off
+ * `setupAnalytics`, which may not have settled when `app.fetch` resolves.
+ */
+async function flushTracking() {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+describe("MCP transport — analytics", () => {
+  beforeEach(() => {
+    analyticsSpies.setupAnalytics.mockClear();
+    analyticsSpies.track.mockClear();
+  });
+
+  test("tools/call tracks mcp_request with the tool name", async () => {
+    const app = makeApp();
+    await app.fetch(
+      jsonRpc({
+        method: "tools/call",
+        params: { name: "list_status_pages", arguments: {} },
+      }),
+    );
+    await flushTracking();
+
+    const identify = analyticsSpies.setupAnalytics.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(identify?.userId).toBe(`api_${SEEDED_WORKSPACE_TEAM_ID}`);
+
+    const event = analyticsSpies.track.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(event?.name).toBe(Events.McpRequest.name);
+    expect(event?.method).toBe("tools/call");
+    expect(event?.tool).toBe("list_status_pages");
+    expect(event?.authenticated).toBe(true);
+  });
+
+  test("an anonymous call is tracked without a profile", async () => {
+    const app = makeApp();
+    await app.fetch(jsonRpc({ method: "resources/list" }, false));
+    await flushTracking();
+
+    const identify = analyticsSpies.setupAnalytics.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(identify?.userId).toBeUndefined();
+
+    const event = analyticsSpies.track.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(event?.method).toBe("resources/list");
+    expect(event?.authenticated).toBe(false);
   });
 });
 

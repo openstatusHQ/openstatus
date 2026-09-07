@@ -220,4 +220,8 @@ export const Events = {
     name: "cdn_checker",
     channel: "checker",
   },
+  McpRequest: {
+    name: "mcp_request",
+    channel: "mcp",
+  },
 } as const satisfies Record<string, EventProps>;

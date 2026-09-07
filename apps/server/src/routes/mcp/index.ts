@@ -1,4 +1,6 @@
 import { StreamableHTTPTransport } from "@hono/mcp";
+import { getLogger } from "@logtape/logtape";
+import { Events, setupAnalytics } from "@openstatus/analytics";
 import type { Workspace } from "@openstatus/db/src/schema";
 import { resourceMetadataUrl } from "@openstatus/services/oauth";
 import { Hono } from "hono";
@@ -10,6 +12,8 @@ import type { Variables } from "../../types";
 import { oauthConfigFromEnv } from "../oauth/config";
 import { toServiceCtx } from "./adapter";
 import { createMcpServer, createPublicMcpServer } from "./server";
+
+const logger = getLogger("api-server");
 
 export const mcpRoute = new Hono<{ Variables: Variables }>({ strict: false });
 
@@ -56,6 +60,74 @@ async function optionalAuthMiddleware(
 mcpRoute.use("*", optionalAuthMiddleware);
 
 /**
+ * The JSON-RPC calls carried by a request body, as OpenPanel event properties.
+ * A batch arrives as an array and every entry is its own call; `params.name` is
+ * the tool for `tools/call`, `params.uri` the document for `resources/read`.
+ */
+function rpcCalls(body: unknown): Record<string, unknown>[] {
+  const entries = Array.isArray(body) ? body : [body];
+  const calls: Record<string, unknown>[] = [];
+  for (const entry of entries) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const { method, params } = entry as { method?: unknown; params?: unknown };
+    if (typeof method !== "string") continue;
+    const { name, uri } = (params ?? {}) as { name?: unknown; uri?: unknown };
+    calls.push({
+      method,
+      ...(typeof name === "string" ? { tool: name } : {}),
+      ...(typeof uri === "string" ? { uri } : {}),
+    });
+  }
+  return calls;
+}
+
+/**
+ * Fire-and-forget OpenPanel event for every JSON-RPC call that reaches the
+ * transport, so MCP traffic is countable alongside the REST and RPC surfaces.
+ * Emitted before execution: this measures calls, not successes, so a tool that
+ * throws still shows up in the volume.
+ *
+ * Authenticated requests reuse the `api_<workspaceId>` profile the RPC tracking
+ * interceptor writes to — one identity per workspace across both programmatic
+ * surfaces, with the `mcp` channel telling them apart. Anonymous requests (an
+ * `initialize` before the client has a credential, or a public `resources/read`)
+ * carry no profile: `setupAnalytics` skips `identify` without a `userId` and the
+ * event still lands, marked `authenticated: false`.
+ */
+function trackMcpRequest(
+  c: Context<{ Variables: Variables }, "/*">,
+  workspace: Workspace | undefined,
+  body: unknown,
+) {
+  const calls = rpcCalls(body);
+  if (calls.length === 0) return;
+
+  setupAnalytics({
+    userId: workspace ? `api_${workspace.id}` : undefined,
+    workspaceId: workspace ? `${workspace.id}` : undefined,
+    plan: workspace?.plan,
+    location: c.req.header("x-forwarded-for"),
+    userAgent: c.req.header("user-agent"),
+  })
+    .then((analytics) =>
+      Promise.all(
+        calls.map((call) =>
+          analytics.track({
+            ...Events.McpRequest,
+            ...call,
+            authenticated: workspace !== undefined,
+          }),
+        ),
+      ),
+    )
+    .catch(() => {
+      logger.warn("Failed to send MCP analytics event for {methods}", {
+        methods: calls.map((call) => call.method),
+      });
+    });
+}
+
+/**
  * The transport handler MUST return a JSON-RPC error envelope on
  * unexpected throws — Hono's default `app.onError(handleError)` returns
  * the openstatus HTTP error shape, which MCP clients can't parse and
@@ -89,6 +161,8 @@ mcpRoute.all("/", async (c) => {
       // will produce its own ParseError JSON-RPC envelope.
     }
   }
+
+  trackMcpRequest(c, workspace, parsedBody);
 
   // Stateless mode: a fresh `McpServer` + transport per request. Both
   // are local to this scope and become garbage-collectable once the
