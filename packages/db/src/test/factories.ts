@@ -28,21 +28,62 @@ type NotificationInsert = typeof notification.$inferInsert;
 
 const unique = () => crypto.randomUUID().slice(0, 8);
 
+// SQLite returns SQLITE_BUSY / SQLITE_LOCKED when a concurrent test file holds
+// the write lock, which surfaces as "database is locked" on bare inserts.
+// Retry briefly instead of failing the whole suite; mirrors the retryable-error
+// rules in @openstatus/services (which db cannot depend on — services depends on db).
+const RETRYABLE_CODES = new Set(["SQLITE_BUSY", "SQLITE_LOCKED"]);
+const RETRYABLE_MESSAGE = /database is (locked|busy)/i;
+const MAX_ATTEMPTS = 5;
+const BASE_DELAY_MS = 25;
+
+function isBusyError(err: unknown): boolean {
+  if (typeof err !== "object" || err === null) return false;
+  if ("code" in err && typeof (err as { code: unknown }).code === "string") {
+    if (RETRYABLE_CODES.has((err as { code: string }).code)) return true;
+  }
+  if (
+    "message" in err &&
+    typeof (err as { message: unknown }).message === "string"
+  ) {
+    if (RETRYABLE_MESSAGE.test((err as { message: string }).message)) return true;
+  }
+  return false;
+}
+
+async function withBusyRetry<T>(fn: () => Promise<T>): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (!isBusyError(err)) throw err;
+      lastErr = err;
+      await new Promise((resolve) =>
+        setTimeout(resolve, BASE_DELAY_MS * 2 ** attempt),
+      );
+    }
+  }
+  throw lastErr;
+}
+
 export async function createWorkspace(
   overrides: Partial<WorkspaceInsert> = {},
   db: Db = defaultDb,
 ) {
   const u = unique();
-  const [row] = await db
-    .insert(workspace)
-    .values({
-      slug: `test-ws-${u}`,
-      name: "Test Workspace",
-      stripeId: `test-stripe-${u}`,
-      plan: "team",
-      ...overrides,
-    })
-    .returning();
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(workspace)
+      .values({
+        slug: `test-ws-${u}`,
+        name: "Test Workspace",
+        stripeId: `test-stripe-${u}`,
+        plan: "team",
+        ...overrides,
+      })
+      .returning(),
+  );
   if (!row) throw new Error("factory insert returned no row");
   return row;
 }
@@ -52,15 +93,17 @@ export async function createMonitor(
   overrides: Partial<MonitorInsert> = {},
   db: Db = defaultDb,
 ) {
-  const [row] = await db
-    .insert(monitor)
-    .values({
-      workspaceId,
-      url: "https://example.openstatus.dev",
-      name: `test-monitor-${unique()}`,
-      ...overrides,
-    })
-    .returning();
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(monitor)
+      .values({
+        workspaceId,
+        url: "https://example.openstatus.dev",
+        name: `test-monitor-${unique()}`,
+        ...overrides,
+      })
+      .returning(),
+  );
   if (!row) throw new Error("factory insert returned no row");
   return row;
 }
@@ -70,17 +113,19 @@ export async function createUser(
   db: Db = defaultDb,
 ) {
   const u = unique();
-  const [row] = await db
-    .insert(user)
-    .values({
-      tenantId: `test-tenant-${u}`,
-      firstName: "Test",
-      lastName: "User",
-      email: `test-${u}@openstatus.dev`,
-      photoUrl: "",
-      ...overrides,
-    })
-    .returning();
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(user)
+      .values({
+        tenantId: `test-tenant-${u}`,
+        firstName: "Test",
+        lastName: "User",
+        email: `test-${u}@openstatus.dev`,
+        photoUrl: "",
+        ...overrides,
+      })
+      .returning(),
+  );
   if (!row) throw new Error("factory insert returned no row");
   return row;
 }
@@ -91,10 +136,12 @@ export async function addUserToWorkspace(
   role: "owner" | "member" = "owner",
   db: Db = defaultDb,
 ) {
-  const [row] = await db
-    .insert(usersToWorkspaces)
-    .values({ userId, workspaceId, role })
-    .returning();
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(usersToWorkspaces)
+      .values({ userId, workspaceId, role })
+      .returning(),
+  );
   if (!row) throw new Error("factory insert returned no row");
   return row;
 }
@@ -104,19 +151,21 @@ export async function createPage(
   overrides: Partial<PageInsert> = {},
   db: Db = defaultDb,
 ) {
-  const [row] = await db
-    .insert(page)
-    .values({
-      workspaceId,
-      title: "Test Page",
-      description: "Test page description",
-      // `slug` is globally unique, not per-workspace.
-      slug: `test-page-${unique()}`,
-      customDomain: "",
-      published: true,
-      ...overrides,
-    })
-    .returning();
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(page)
+      .values({
+        workspaceId,
+        title: "Test Page",
+        description: "Test page description",
+        // `slug` is globally unique, not per-workspace.
+        slug: `test-page-${unique()}`,
+        customDomain: "",
+        published: true,
+        ...overrides,
+      })
+      .returning(),
+  );
   if (!row) throw new Error("factory insert returned no row");
   return row;
 }
@@ -127,17 +176,19 @@ export async function createPageComponent(
   overrides: Partial<PageComponentInsert> = {},
   db: Db = defaultDb,
 ) {
-  const [row] = await db
-    .insert(pageComponent)
-    .values({
-      workspaceId,
-      pageId,
-      type: "static",
-      name: `test-component-${unique()}`,
-      order: 0,
-      ...overrides,
-    })
-    .returning();
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(pageComponent)
+      .values({
+        workspaceId,
+        pageId,
+        type: "static",
+        name: `test-component-${unique()}`,
+        order: 0,
+        ...overrides,
+      })
+      .returning(),
+  );
   if (!row) throw new Error("factory insert returned no row");
   return row;
 }
@@ -147,16 +198,18 @@ export async function createNotification(
   overrides: Partial<NotificationInsert> = {},
   db: Db = defaultDb,
 ) {
-  const [row] = await db
-    .insert(notification)
-    .values({
-      workspaceId,
-      name: `test-notification-${unique()}`,
-      provider: "email",
-      data: JSON.stringify({ email: `test-${unique()}@openstatus.dev` }),
-      ...overrides,
-    })
-    .returning();
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(notification)
+      .values({
+        workspaceId,
+        name: `test-notification-${unique()}`,
+        provider: "email",
+        data: JSON.stringify({ email: `test-${unique()}@openstatus.dev` }),
+        ...overrides,
+      })
+      .returning(),
+  );
   if (!row) throw new Error("factory insert returned no row");
   return row;
 }
@@ -166,10 +219,12 @@ export async function linkNotificationToMonitor(
   monitorId: number,
   db: Db = defaultDb,
 ) {
-  const [row] = await db
-    .insert(notificationsToMonitors)
-    .values({ notificationId, monitorId })
-    .returning();
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(notificationsToMonitors)
+      .values({ notificationId, monitorId })
+      .returning(),
+  );
   if (!row) throw new Error("factory insert returned no row");
   return row;
 }
