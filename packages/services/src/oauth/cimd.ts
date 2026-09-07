@@ -110,6 +110,16 @@ export function parseClientMetadataDocument(
   return parsed.data;
 }
 
+/**
+ * The document could not be reached (network failure, timeout, bot challenge,
+ * rate limit, 5xx). Unlike a 404 or an invalid body, a stored copy may stand in.
+ */
+export class ClientMetadataUnavailableError extends OAuthError {
+  constructor(message: string) {
+    super("invalid_client", message);
+  }
+}
+
 export type ClientMetadataFetcher = (
   clientId: string,
 ) => Promise<ClientMetadataDocument>;
@@ -168,10 +178,14 @@ export async function fetchClientMetadataDocument(
       console.warn(
         `[oauth/cimd] ${clientId} responded with HTTP ${res.status} (${diag})`,
       );
-      throw new OAuthError(
-        "invalid_client",
-        `Client metadata document responded with HTTP ${res.status}`,
-      );
+      const message = `Client metadata document responded with HTTP ${res.status}`;
+      const unavailable =
+        res.status === 403 ||
+        res.status === 429 ||
+        res.status >= 500 ||
+        res.headers.has("cf-mitigated");
+      if (unavailable) throw new ClientMetadataUnavailableError(message);
+      throw new OAuthError("invalid_client", message);
     }
     const text = await readBounded(res, CIMD_MAX_BYTES);
     let body: unknown;
@@ -193,8 +207,7 @@ export async function fetchClientMetadataDocument(
         err instanceof Error ? err.message : String(err)
       }`,
     );
-    throw new OAuthError(
-      "invalid_client",
+    throw new ClientMetadataUnavailableError(
       "Client metadata document could not be fetched",
     );
   } finally {
@@ -218,20 +231,23 @@ export const KNOWN_CLIENT_DOCUMENTS: Record<string, ClientMetadataDocument> = {
 /**
  * Fetch the document and upsert the client row keyed by its URL. Runs once per
  * authorize request, so no separate cache; a row an operator revoked stays
- * revoked no matter what the document says. When the fetch fails, the last
- * stored document (or a pinned one) stands in, since it passed the same
- * domain-ownership check when it was stored.
+ * revoked no matter what the document says. When the document is unreachable,
+ * the last stored document (or a pinned one) stands in, since it passed the
+ * same domain-ownership check when it was stored. A 404 or an invalid body is
+ * still a hard failure so a de-registered client does not live on.
  */
 export async function resolveUrlClient(
   db: DB,
   clientId: string,
   fetcher: ClientMetadataFetcher = fetchClientMetadataDocument,
 ): Promise<OAuthClient> {
-  const existing = await db
-    .select()
-    .from(oauthClient)
-    .where(eq(oauthClient.clientId, clientId))
-    .get();
+  const loadStored = () =>
+    db
+      .select()
+      .from(oauthClient)
+      .where(eq(oauthClient.clientId, clientId))
+      .get();
+  const existing = await loadStored();
   if (existing?.revokedAt) {
     throw new OAuthError("invalid_client", "Unknown or revoked client");
   }
@@ -239,21 +255,26 @@ export async function resolveUrlClient(
   let doc: ClientMetadataDocument;
   try {
     doc = await fetcher(clientId);
-    console.info(
+    console.warn(
       `[oauth/cimd] fetched document for ${clientId} (${doc.redirect_uris.length} redirect_uris, ${existing ? "update" : "insert"})`,
     );
   } catch (err) {
-    const reason = err instanceof Error ? err.message : String(err);
-    if (existing) {
+    if (!(err instanceof ClientMetadataUnavailableError)) throw err;
+    // Re-read: the operator may have revoked the client while the fetch ran.
+    const stored = await loadStored();
+    if (stored?.revokedAt) {
+      throw new OAuthError("invalid_client", "Unknown or revoked client");
+    }
+    if (stored) {
       console.warn(
-        `[oauth/cimd] using stored document for ${clientId}: ${reason}`,
+        `[oauth/cimd] using stored document for ${clientId}: ${err.message}`,
       );
-      return selectOAuthClientSchema.parse(existing);
+      return selectOAuthClientSchema.parse(stored);
     }
     const pinned = KNOWN_CLIENT_DOCUMENTS[clientId];
     if (!pinned) throw err;
     console.warn(
-      `[oauth/cimd] using pinned document for ${clientId}: ${reason}`,
+      `[oauth/cimd] using pinned document for ${clientId}: ${err.message}`,
     );
     doc = pinned;
   }

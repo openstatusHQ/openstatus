@@ -10,6 +10,7 @@ import {
 import type { Workspace } from "../../types";
 import {
   type ClientMetadataDocument,
+  ClientMetadataUnavailableError,
   isUrlClientId,
   KNOWN_CLIENT_DOCUMENTS,
   parseClientMetadataDocument,
@@ -314,8 +315,7 @@ describe("authorize with a URL client id", () => {
       const { id } = await authorizeAs(
         CLIENT_ID,
         stub(
-          new OAuthError(
-            "invalid_client",
+          new ClientMetadataUnavailableError(
             "Client metadata document responded with HTTP 403",
           ),
         ),
@@ -340,8 +340,7 @@ describe("authorize with a URL client id", () => {
       const { id } = await authorizeAs(
         clientId,
         stub(
-          new OAuthError(
-            "invalid_client",
+          new ClientMetadataUnavailableError(
             "Client metadata document responded with HTTP 403",
           ),
         ),
@@ -358,6 +357,44 @@ describe("authorize with a URL client id", () => {
         .get();
       expect(row?.name).toBe(pinned.client_name);
       expect(row?.redirectUris).toEqual(pinned.redirect_uris);
+    });
+  });
+
+  test("a 404 for a stored client is still a hard failure", async () => {
+    await withTestTransaction(async (tx) => {
+      await authorizeAs(CLIENT_ID, stub(doc()), tx);
+      const err = await authorizeAs(
+        CLIENT_ID,
+        stub(
+          new OAuthError(
+            "invalid_client",
+            "Client metadata document responded with HTTP 404",
+          ),
+        ),
+        tx,
+      ).catch((e) => e);
+      expect(err.oauthCode).toBe("invalid_client");
+    });
+  });
+
+  test("a client revoked while the fetch is in flight does not fall back", async () => {
+    await withTestTransaction(async (tx) => {
+      await authorizeAs(CLIENT_ID, stub(doc()), tx);
+      const err = await authorizeAs(
+        CLIENT_ID,
+        async () => {
+          await tx
+            .update(oauthClient)
+            .set({ revokedAt: new Date() })
+            .where(eq(oauthClient.clientId, CLIENT_ID));
+          throw new ClientMetadataUnavailableError(
+            "Client metadata document could not be fetched",
+          );
+        },
+        tx,
+      ).catch((e) => e);
+      expect(err.oauthCode).toBe("invalid_client");
+      expect(err.message).toContain("revoked");
     });
   });
 

@@ -17,6 +17,7 @@ export { pkceChallenge } from "./crypto";
 export {
   type ClientMetadataDocument,
   type ClientMetadataFetcher,
+  ClientMetadataUnavailableError,
   isUrlClientId,
   parseClientMetadataDocument,
 } from "./cimd";
