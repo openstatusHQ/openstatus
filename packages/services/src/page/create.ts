@@ -88,6 +88,12 @@ export async function createPage(args: {
         })
         .filter((v): v is NonNullable<typeof v> => v !== null);
       if (pageComponentValues.length > 0) {
+        await assertWithinLimit({
+          tx,
+          workspaceId: ctx.workspace.id,
+          limit: "page-components",
+          delta: pageComponentValues.length,
+        });
         await tx.insert(pageComponent).values(pageComponentValues).run();
       }
     }
