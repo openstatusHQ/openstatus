@@ -3,22 +3,23 @@ import { OpenPanel, type TrackProperties } from "@openpanel/sdk";
 import { env } from "../env";
 import type { EventProps } from "./events";
 
-// Lazily instantiate so importing this module has no side effects — a top-level
-// `new OpenPanel()` runs the node SDK at import time, which breaks bundling the
-// tRPC context into the Edge runtime.
-let client: OpenPanel | undefined;
-
-function getClient() {
-  if (!client) {
-    client = new OpenPanel({
-      clientId: env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
-      clientSecret: env.OPENPANEL_CLIENT_SECRET,
-    });
-    client.setGlobalProperties({
-      env: process.env.VERCEL_ENV || env.NODE_ENV || "localhost",
-      // app_version
-    });
-  }
+// Instantiated per call rather than shared: the OpenPanel client carries
+// per-request mutable state (the `x-client-ip`/`user-agent` headers set below
+// and the `profileId` that `identify()` stores and `track()` reads back), so a
+// module-level singleton lets concurrent requests overwrite each other and
+// attribute events to the wrong IP, user agent or profile.
+// Constructing it here also keeps importing this module side-effect free — a
+// top-level `new OpenPanel()` runs the node SDK at import time, which breaks
+// bundling the tRPC context into the Edge runtime.
+function createClient() {
+  const client = new OpenPanel({
+    clientId: env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
+    clientSecret: env.OPENPANEL_CLIENT_SECRET,
+  });
+  client.setGlobalProperties({
+    env: process.env.VERCEL_ENV || env.NODE_ENV || "localhost",
+    // app_version
+  });
   return client;
 }
 
@@ -38,7 +39,7 @@ export async function setupAnalytics(props: IdentifyProps) {
     return noop();
   }
 
-  const op = getClient();
+  const op = createClient();
 
   if (props.location) {
     op.api.addHeader("x-client-ip", props.location);
