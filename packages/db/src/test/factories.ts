@@ -46,7 +46,8 @@ function isBusyError(err: unknown): boolean {
     "message" in err &&
     typeof (err as { message: unknown }).message === "string"
   ) {
-    if (RETRYABLE_MESSAGE.test((err as { message: string }).message)) return true;
+    if (RETRYABLE_MESSAGE.test((err as { message: string }).message))
+      return true;
   }
   return false;
 }
