@@ -4,6 +4,7 @@ import { Scalar } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
 import type { RequestIdVariables } from "hono/request-id";
 
+import { env } from "@/env";
 import { handleZodError } from "@/libs/errors";
 import { authMiddleware, requireWriteScope } from "@/libs/middlewares";
 
@@ -36,7 +37,7 @@ api.openAPIRegistry.registerComponent("securitySchemes", "ApiKeyAuth", {
   "x-openstatus-key": "string",
 });
 // this is a fix for the memory leak
-if (process.env.NODE_ENV === "production") {
+if (env.NODE_ENV === "production") {
   api.get("/openapi", (c) =>
     c.redirect("https://api.openstatus.dev/openapi-v1.json"),
   );

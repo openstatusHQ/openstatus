@@ -19,6 +19,7 @@ import type { StatusReportProps } from "../emails/status-report";
 import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
 import { monitorAlertEmail } from "../hotfix/monitor-alert";
+import { env } from "./env";
 
 export function statusReportSubject(req: {
   status: StatusReportProps["status"];
@@ -64,7 +65,7 @@ export class EmailClient {
   }
 
   public async sendFollowUp(req: { to: string }) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending follow up email to ${req.to}`);
       return;
     }
@@ -91,7 +92,7 @@ export class EmailClient {
   }
 
   public async sendFollowUpBatched(req: { to: string[] }) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending follow up emails to ${req.to.join(", ")}`);
       return;
     }
@@ -122,7 +123,7 @@ export class EmailClient {
   }
 
   public async sendSlackFeedback(req: { to: string }) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending slack feedback email to ${req.to}`);
       return;
     }
@@ -149,7 +150,7 @@ export class EmailClient {
   }
 
   public async sendSlackFeedbackBatched(req: { to: string[] }) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending slack feedback emails to ${req.to.join(", ")}`);
       return;
     }
@@ -192,7 +193,7 @@ export class EmailClient {
       ? `https://${req.customDomain}`
       : `https://${req.pageSlug}.openstatus.dev`;
 
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(
         `Sending status report update emails to ${req.subscribers
           .map((s) => s.email)
@@ -255,7 +256,7 @@ export class EmailClient {
   }
 
   public async sendTeamInvitation(req: TeamInvitationProps & { to: string }) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending team invitation email to ${req.to}`);
       return;
     }
@@ -285,7 +286,7 @@ export class EmailClient {
   }
 
   public async sendMonitorAlert(req: MonitorAlertProps & { to: string }) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending monitor alert email to ${req.to}`);
       return;
     }
@@ -315,7 +316,7 @@ export class EmailClient {
   public async sendPageSubscription(
     req: PageSubscriptionProps & { to: string },
   ) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending page subscription email to ${req.to}`);
       return;
     }
@@ -343,7 +344,7 @@ export class EmailClient {
   public async sendStatusPageMagicLink(
     req: StatusPageMagicLinkProps & { to: string },
   ) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending status page magic link email to ${req.to}`);
       console.log(`>>> Magic Link: ${req.link}`);
       return;
@@ -385,7 +386,7 @@ export class EmailClient {
       ? `https://${req.customDomain}`
       : `https://${req.pageSlug}.openstatus.dev`;
 
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(
         `Sending maintenance notification emails to ${req.subscribers
           .map((s) => s.email)
@@ -463,7 +464,7 @@ export class EmailClient {
         ? `Your private location "${req.locationName}" is unhealthy`
         : `Your private location "${req.locationName}" is healthy again`;
 
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(
         `Sending private location ${req.status} email to ${req.to.join(", ")}`,
       );

@@ -15,7 +15,7 @@ function getClient() {
       clientSecret: env.OPENPANEL_CLIENT_SECRET,
     });
     client.setGlobalProperties({
-      env: process.env.VERCEL_ENV || process.env.NODE_ENV || "localhost",
+      env: process.env.VERCEL_ENV || env.NODE_ENV || "localhost",
       // app_version
     });
   }
@@ -34,7 +34,7 @@ export type IdentifyProps = {
 };
 
 export async function setupAnalytics(props: IdentifyProps) {
-  if (process.env.NODE_ENV !== "production") {
+  if (env.NODE_ENV !== "production") {
     return noop();
   }
 

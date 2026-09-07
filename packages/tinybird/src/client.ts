@@ -2,6 +2,7 @@ import { Tinybird as Client, NoopTinybird } from "@chronark/zod-bird";
 import { z } from "zod";
 
 import { monitorRegions } from "../../db/src/schema/constants";
+import { env } from "./env";
 import {
   headersSchema,
   timingPhasesSchema,
@@ -11,7 +12,7 @@ import {
 
 const PUBLIC_CACHE = 300; // 5 * 60 = 300s = 5m
 const DEV_CACHE = 10 * 60; // 10m
-const REVALIDATE = process.env.NODE_ENV === "development" ? DEV_CACHE : 0;
+const REVALIDATE = env.NODE_ENV === "development" ? DEV_CACHE : 0;
 
 // Daily-aggregate columns shared by the external-status history pipes (page-
 // level and per-component). One shape so the `day` GMT-parse can't drift.
@@ -311,8 +312,7 @@ export class OSTinybird {
   constructor(config: OSTinybirdConfig) {
     // Tests must never reach a real instance whatever token sits in the env —
     // checked here so no call site can forget it.
-    const noop =
-      process.env.NODE_ENV === "test" || noopFlagSchema.parse(config.noop);
+    const noop = env.NODE_ENV === "test" || noopFlagSchema.parse(config.noop);
     // An empty token cannot authenticate, so noop keeps pipes resolving empty
     // instead of throwing at every call site.
     if (noop || !config.token) {

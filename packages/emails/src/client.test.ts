@@ -1,3 +1,4 @@
+import "./test-preload.ts";
 import { expect } from "@std/expect";
 import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
 import {
@@ -8,9 +9,6 @@ import {
 } from "@std/testing/mock";
 
 import { EmailClient } from "./client";
-
-// sendStatusReportUpdate early-returns in development; force the real send path.
-process.env.NODE_ENV = "test";
 
 function makeSubscribers(n: number) {
   return Array.from({ length: n }, (_, i) => ({

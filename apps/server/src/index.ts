@@ -281,6 +281,6 @@ app.route("/mcp", mcpRoute);
  * create incidents, and send notifications.
  */
 
-if (process.env.NODE_ENV === "development") {
+if (env.NODE_ENV === "development") {
   showRoutes(app, { verbose: true, colorize: true });
 }
