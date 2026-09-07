@@ -184,6 +184,65 @@ describe("drainOutbox", () => {
     expect(dead[0]?.finalError).toContain("provider down");
   });
 
+  test("a dedup conflict on the dead-letter insert is a no-op, not a throw", async () => {
+    stubs.push(
+      stub(providerToFunction.email, "sendAlert", () =>
+        Promise.reject(new Error("provider down")),
+      ),
+    );
+    const cronTimestamp = Date.now();
+    const row = await insertOutboxRow({
+      cronTimestamp,
+      deadlineOffsetSeconds: 1,
+    });
+
+    // The same dedup key already landed in the dead-letter table (a peer
+    // worker or the sweep got there first).
+    const now = Math.floor(Date.now() / 1000);
+    await db
+      .insert(notificationDeadLetter)
+      .values({
+        outboxId: row.id,
+        dedupKey: `${cronTimestamp}:${monitorId}:test:${notificationId}`,
+        monitorId,
+        workspaceId,
+        notificationId,
+        provider: "email",
+        eventType: "alert",
+        fromStatus: "active",
+        toStatus: "error",
+        cronTimestamp,
+        payload: PAYLOAD,
+        attempts: 1,
+        finalError: "already dead-lettered",
+        diedAt: now,
+      })
+      .run();
+
+    const summary = await drainOutbox({
+      timeoutMs: 500,
+      rolloutPct: 100,
+      monitorIds: [monitorId],
+    });
+
+    expect(summary.dead).toBe(1);
+
+    const remaining = await db
+      .select({ total: count() })
+      .from(notificationOutbox)
+      .where(eq(notificationOutbox.monitorId, monitorId))
+      .all();
+    expect(remaining[0]?.total).toBe(0);
+
+    const dead = await db
+      .select()
+      .from(notificationDeadLetter)
+      .where(eq(notificationDeadLetter.monitorId, monitorId))
+      .all();
+    expect(dead.length).toBe(1);
+    expect(dead[0]?.finalError).toBe("already dead-lettered");
+  });
+
   test("a hanging provider is bounded by the timeout", async () => {
     stubs.push(
       stub(
