@@ -627,8 +627,10 @@ describe("URL client ids (CIMD)", () => {
     ).toBe(200);
   });
 
-  test("an unreachable or mismatched document is a 400 invalid_client", async () => {
-    const missing = await cimdAuthorize(cimdApp(null));
+  test("an unreachable or mismatched document for an unknown client is a 400 invalid_client", async () => {
+    // A client id never stored, so no fallback document exists.
+    const unknown = { client_id: "https://partner.example/.well-known/other" };
+    const missing = await cimdAuthorize(cimdApp(null), unknown);
     expect(missing.status).toBe(400);
     expect((await missing.json()).error).toBe("invalid_client");
 
@@ -637,9 +639,18 @@ describe("URL client ids (CIMD)", () => {
         client_id: "https://other.example/c",
         redirect_uris: [CIMD_REDIRECT],
       }),
+      unknown,
     );
     expect(mismatched.status).toBe(400);
     expect((await mismatched.json()).error).toBe("invalid_client");
+  });
+
+  test("an unreachable document for a stored client falls back to the stored row", async () => {
+    const res = await cimdAuthorize(cimdApp(null));
+    expect(res.status).toBe(302);
+    expect(
+      new URL(res.headers.get("location") ?? "").searchParams.get("session"),
+    ).not.toBeNull();
   });
 
   test("a URL client id on a private host is refused before any fetch", async () => {
