@@ -79,12 +79,26 @@ const redirectUriSchema = z.string().refine((value) => {
   }
 }, "redirect_uris must be https or loopback, without fragment or credentials");
 
-export const ClientMetadataDocument = z.object({
-  client_id: z.string().url(),
-  client_name: z.string().trim().min(1).max(120).optional(),
-  redirect_uris: z.array(redirectUriSchema).min(1).max(20),
-  token_endpoint_auth_method: z.literal("none").optional(),
-});
+export const ClientMetadataDocument = z
+  .object({
+    client_id: z.string().url(),
+    client_name: z.string().trim().min(1).max(120).optional(),
+    redirect_uris: z.array(redirectUriSchema).min(1).max(20),
+    token_endpoint_auth_method: z.string().optional(),
+    // Non-standard but published by e.g. ChatGPT: the client prefers
+    // private_key_jwt yet can fall back to `none` when the server only offers that.
+    token_endpoint_auth_methods_supported: z.array(z.string()).optional(),
+  })
+  .refine(
+    (doc) =>
+      (doc.token_endpoint_auth_method ?? "none") === "none" ||
+      doc.token_endpoint_auth_methods_supported?.includes("none") === true,
+    {
+      path: ["token_endpoint_auth_method"],
+      message:
+        'Only public clients are supported: expected "none", or "none" listed in token_endpoint_auth_methods_supported',
+    },
+  );
 export type ClientMetadataDocument = z.infer<typeof ClientMetadataDocument>;
 
 /** Validates the body and pins `client_id` to the URL it was fetched from. */

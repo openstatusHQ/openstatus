@@ -133,6 +133,29 @@ describe("parseClientMetadataDocument", () => {
     expect(parsed.client_name).toBe("Partner App");
   });
 
+  test("accepts a client that prefers private_key_jwt but also supports none", () => {
+    const parsed = parseClientMetadataDocument(
+      CLIENT_ID,
+      doc({
+        token_endpoint_auth_method: "private_key_jwt",
+        token_endpoint_auth_methods_supported: ["none", "private_key_jwt"],
+      }),
+    );
+    expect(parsed.client_name).toBe("Partner App");
+  });
+
+  test("rejects a confidential client that cannot fall back to none", () => {
+    expect(() =>
+      parseClientMetadataDocument(
+        CLIENT_ID,
+        doc({
+          token_endpoint_auth_method: "private_key_jwt",
+          token_endpoint_auth_methods_supported: ["private_key_jwt"],
+        }),
+      ),
+    ).toThrow(OAuthError);
+  });
+
   test("rejects a document whose client_id differs from its URL", () => {
     expect(() =>
       parseClientMetadataDocument(
