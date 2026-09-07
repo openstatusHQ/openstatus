@@ -11,6 +11,7 @@ import type { Workspace } from "../../types";
 import {
   type ClientMetadataDocument,
   isUrlClientId,
+  KNOWN_CLIENT_DOCUMENTS,
   parseClientMetadataDocument,
 } from "../cimd";
 import { pkceChallenge } from "../crypto";
@@ -304,6 +305,59 @@ describe("authorize with a URL client id", () => {
           .where(eq(oauthClient.clientId, CLIENT_ID))
           .get(),
       ).toBeUndefined();
+    });
+  });
+
+  test("a fetch failure falls back to the stored document", async () => {
+    await withTestTransaction(async (tx) => {
+      await authorizeAs(CLIENT_ID, stub(doc({ client_name: "Stored" })), tx);
+      const { id } = await authorizeAs(
+        CLIENT_ID,
+        stub(
+          new OAuthError(
+            "invalid_client",
+            "Client metadata document responded with HTTP 403",
+          ),
+        ),
+        tx,
+      );
+      expect((await getSession({ input: { id }, db: tx })).clientId).toBe(
+        CLIENT_ID,
+      );
+      const row = await tx
+        .select()
+        .from(oauthClient)
+        .where(eq(oauthClient.clientId, CLIENT_ID))
+        .get();
+      expect(row?.name).toBe("Stored");
+      expect(row?.redirectUris).toEqual([REDIRECT]);
+    });
+  });
+
+  test("a fetch failure falls back to a pinned document when nothing is stored", async () => {
+    const [clientId, pinned] = Object.entries(KNOWN_CLIENT_DOCUMENTS)[0];
+    await withTestTransaction(async (tx) => {
+      const { id } = await authorizeAs(
+        clientId,
+        stub(
+          new OAuthError(
+            "invalid_client",
+            "Client metadata document responded with HTTP 403",
+          ),
+        ),
+        tx,
+        { redirect_uri: pinned.redirect_uris[0] },
+      );
+      expect((await getSession({ input: { id }, db: tx })).clientId).toBe(
+        clientId,
+      );
+      const row = await tx
+        .select()
+        .from(oauthClient)
+        .where(eq(oauthClient.clientId, clientId))
+        .get();
+      expect(row?.name).toBe(pinned.client_name);
+      expect(row?.redirectUris).toEqual(pinned.redirect_uris);
     });
   });
 

@@ -161,6 +161,13 @@ export async function fetchClientMetadataDocument(
       signal: controller.signal,
     });
     if (!res.ok) {
+      // cf-mitigated/cf-ray tell a bot challenge apart from a real 4xx.
+      const diag = ["cf-mitigated", "cf-ray", "server", "content-type"]
+        .map((h) => `${h}=${res.headers.get(h) ?? "-"}`)
+        .join(" ");
+      console.warn(
+        `[oauth/cimd] ${clientId} responded with HTTP ${res.status} (${diag})`,
+      );
       throw new OAuthError(
         "invalid_client",
         `Client metadata document responded with HTTP ${res.status}`,
@@ -196,9 +203,24 @@ export async function fetchClientMetadataDocument(
 }
 
 /**
+ * Documents pinned for clients whose hosts sit behind bot protection that
+ * challenges datacenter egress IPs. Used only when the live fetch fails and
+ * nothing is stored yet; a successful fetch always wins.
+ */
+export const KNOWN_CLIENT_DOCUMENTS: Record<string, ClientMetadataDocument> = {
+  "https://claude.ai/oauth/mcp-oauth-client-metadata": {
+    client_id: "https://claude.ai/oauth/mcp-oauth-client-metadata",
+    client_name: "Claude",
+    redirect_uris: ["https://claude.ai/api/mcp/auth_callback"],
+  },
+};
+
+/**
  * Fetch the document and upsert the client row keyed by its URL. Runs once per
  * authorize request, so no separate cache; a row an operator revoked stays
- * revoked no matter what the document says.
+ * revoked no matter what the document says. When the fetch fails, the last
+ * stored document (or a pinned one) stands in, since it passed the same
+ * domain-ownership check when it was stored.
  */
 export async function resolveUrlClient(
   db: DB,
@@ -206,7 +228,7 @@ export async function resolveUrlClient(
   fetcher: ClientMetadataFetcher = fetchClientMetadataDocument,
 ): Promise<OAuthClient> {
   const existing = await db
-    .select({ revokedAt: oauthClient.revokedAt })
+    .select()
     .from(oauthClient)
     .where(eq(oauthClient.clientId, clientId))
     .get();
@@ -214,7 +236,28 @@ export async function resolveUrlClient(
     throw new OAuthError("invalid_client", "Unknown or revoked client");
   }
 
-  const doc = await fetcher(clientId);
+  let doc: ClientMetadataDocument;
+  try {
+    doc = await fetcher(clientId);
+    console.info(
+      `[oauth/cimd] fetched document for ${clientId} (${doc.redirect_uris.length} redirect_uris, ${existing ? "update" : "insert"})`,
+    );
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    if (existing) {
+      console.warn(
+        `[oauth/cimd] using stored document for ${clientId}: ${reason}`,
+      );
+      return selectOAuthClientSchema.parse(existing);
+    }
+    const pinned = KNOWN_CLIENT_DOCUMENTS[clientId];
+    if (!pinned) throw err;
+    console.warn(
+      `[oauth/cimd] using pinned document for ${clientId}: ${reason}`,
+    );
+    doc = pinned;
+  }
+
   const values = {
     name: doc.client_name ?? new URL(clientId).hostname,
     redirectUris: Array.from(new Set(doc.redirect_uris)),
