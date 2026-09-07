@@ -9,6 +9,7 @@ import {
   expectAuditRow,
   makeApiKeyCtx,
   makeUserCtx,
+  readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
@@ -222,6 +223,37 @@ describe("acceptInvitation", () => {
         .where(eq(usersToWorkspaces.userId, acceptingUserId))
         .get();
       expect(membership?.workspaceId).toBe(teamCtx.workspace.id);
+    });
+  });
+
+  test("records acceptance only in the invited workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const email = `${TEST_PREFIX}-audit-${Date.now()}@example.com`;
+      const created = await createInvitation({
+        ctx: { ...teamCtx, db: tx },
+        input: { email },
+      });
+
+      await acceptInvitation({
+        ctx: { ...freeCtx, db: tx },
+        input: { id: created.id, email },
+      });
+
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "invitation.update",
+        entityType: "invitation",
+        entityId: created.id,
+        actorType: "user",
+        db: tx,
+      });
+      const activeWorkspaceRows = await readAuditLog({
+        workspaceId: freeCtx.workspace.id,
+        entityType: "invitation",
+        entityId: created.id,
+        db: tx,
+      });
+      expect(activeWorkspaceRows).toEqual([]);
     });
   });
 
