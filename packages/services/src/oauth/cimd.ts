@@ -91,8 +91,9 @@ export const ClientMetadataDocument = z
   })
   .refine(
     (doc) =>
-      (doc.token_endpoint_auth_method ?? "none") === "none" ||
-      doc.token_endpoint_auth_methods_supported?.includes("none") === true,
+      doc.token_endpoint_auth_methods_supported
+        ? doc.token_endpoint_auth_methods_supported.includes("none")
+        : (doc.token_endpoint_auth_method ?? "none") === "none",
     {
       path: ["token_endpoint_auth_method"],
       message:

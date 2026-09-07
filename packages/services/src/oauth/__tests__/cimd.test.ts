@@ -156,6 +156,15 @@ describe("parseClientMetadataDocument", () => {
     ).toThrow(OAuthError);
   });
 
+  test("a supported-methods list without none is rejected even if the method is omitted", () => {
+    expect(() =>
+      parseClientMetadataDocument(
+        CLIENT_ID,
+        doc({ token_endpoint_auth_methods_supported: ["private_key_jwt"] }),
+      ),
+    ).toThrow(OAuthError);
+  });
+
   test("rejects a document whose client_id differs from its URL", () => {
     expect(() =>
       parseClientMetadataDocument(
