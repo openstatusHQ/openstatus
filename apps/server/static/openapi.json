@@ -1887,10 +1887,31 @@
             },
             "title": "tcp",
             "required": ["tcp"]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["dns"]
+                },
+                {
+                  "required": ["grpc"]
+                },
+                {
+                  "required": ["http"]
+                },
+                {
+                  "required": ["icmp"]
+                },
+                {
+                  "required": ["tcp"]
+                }
+              ]
+            }
           }
         ],
+        "unevaluatedProperties": false,
         "title": "MonitorConfig",
-        "additionalProperties": false,
         "description": "MonitorConfig represents the type-specific configuration for a monitor."
       },
       "openstatus.monitor.v1.MonitorStatus": {
@@ -2888,10 +2909,55 @@
             },
             "title": "whatsapp",
             "required": ["whatsapp"]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["discord"]
+                },
+                {
+                  "required": ["email"]
+                },
+                {
+                  "required": ["googleChat"]
+                },
+                {
+                  "required": ["grafanaOncall"]
+                },
+                {
+                  "required": ["msTeams"]
+                },
+                {
+                  "required": ["ntfy"]
+                },
+                {
+                  "required": ["opsgenie"]
+                },
+                {
+                  "required": ["pagerduty"]
+                },
+                {
+                  "required": ["slack"]
+                },
+                {
+                  "required": ["sms"]
+                },
+                {
+                  "required": ["telegram"]
+                },
+                {
+                  "required": ["webhook"]
+                },
+                {
+                  "required": ["whatsapp"]
+                }
+              ]
+            }
           }
         ],
+        "unevaluatedProperties": false,
         "title": "NotificationData",
-        "additionalProperties": false,
         "description": "NotificationData is a union of provider-specific configuration."
       },
       "openstatus.notification.v1.NotificationProvider": {
@@ -3968,12 +4034,34 @@
                 },
                 "title": "webhook_channel",
                 "required": ["webhookChannel"]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": ["emailChannel"]
+                    },
+                    {
+                      "required": ["webhookChannel"]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "oneOf": [
+              {
+                "required": ["emailChannel"]
+              },
+              {
+                "required": ["webhookChannel"]
               }
             ]
           }
         ],
+        "unevaluatedProperties": false,
         "title": "CreatePageSubscriptionRequest",
-        "additionalProperties": false,
         "description": "CreatePageSubscriptionRequest is the request to add a vendor-managed subscriber to a status page."
       },
       "openstatus.status_page.v1.CreatePageSubscriptionResponse": {
@@ -4287,10 +4375,22 @@
             },
             "title": "slug",
             "required": ["slug"]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["id"]
+                },
+                {
+                  "required": ["slug"]
+                }
+              ]
+            }
           }
         ],
+        "unevaluatedProperties": false,
         "title": "GetOverallStatusRequest",
-        "additionalProperties": false,
         "description": "GetOverallStatusRequest is the request to get the overall status of a status page."
       },
       "openstatus.status_page.v1.GetOverallStatusResponse": {
@@ -4363,12 +4463,24 @@
                 },
                 "title": "slug",
                 "required": ["slug"]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": ["id"]
+                    },
+                    {
+                      "required": ["slug"]
+                    }
+                  ]
+                }
               }
             ]
           }
         ],
+        "unevaluatedProperties": false,
         "title": "GetPageComponentDailySummaryRequest",
-        "additionalProperties": false,
         "description": "GetPageComponentDailySummaryRequest is the request for per-component daily summaries."
       },
       "openstatus.status_page.v1.GetPageComponentDailySummaryResponse": {
@@ -4440,10 +4552,22 @@
             },
             "title": "slug",
             "required": ["slug"]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["id"]
+                },
+                {
+                  "required": ["slug"]
+                }
+              ]
+            }
           }
         ],
+        "unevaluatedProperties": false,
         "title": "GetStatusPageContentRequest",
-        "additionalProperties": false,
         "description": "GetStatusPageContentRequest is the request to get the full content of a status page."
       },
       "openstatus.status_page.v1.GetStatusPageContentResponse": {
@@ -5315,12 +5439,24 @@
                 },
                 "title": "id",
                 "required": ["id"]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": ["email"]
+                    },
+                    {
+                      "required": ["id"]
+                    }
+                  ]
+                }
               }
             ]
           }
         ],
+        "unevaluatedProperties": false,
         "title": "UnsubscribeFromPageRequest",
-        "additionalProperties": false,
         "description": "UnsubscribeFromPageRequest is the request to unsubscribe from a status page."
       },
       "openstatus.status_page.v1.UnsubscribeFromPageResponse": {
