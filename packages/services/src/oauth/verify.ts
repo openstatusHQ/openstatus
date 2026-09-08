@@ -37,7 +37,7 @@ export async function verifyAccessToken(
     .where(eq(oauthGrant.accessTokenHash, await sha256Hex(token)))
     .get();
   if (!grant || grant.revokedAt) return null;
-  if (grant.accessTokenExpiresAt < now) return null;
+  if (grant.accessTokenExpiresAt <= now) return null;
 
   if (shouldUpdateLastUsed(grant.lastUsedAt, undefined, now)) {
     await db
