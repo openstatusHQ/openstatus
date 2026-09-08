@@ -12,8 +12,8 @@ import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
-  expectAuditRow,
   createWorkspaceFixture,
+  expectAuditRow,
   makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
@@ -167,6 +167,115 @@ describe("createPage (full form)", () => {
         .where(eq(pageComponent.pageId, row.id))
         .all();
       expect(components.map((c) => c.monitorId)).toEqual([teamMonitorId]);
+    });
+  });
+
+  test("counts components on other pages and the full monitor batch", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await tx
+        .update(workspace)
+        .set({
+          limits: JSON.stringify({
+            ...teamCtx.workspace.limits,
+            "status-pages": 10,
+            "page-components": 2,
+          }),
+        })
+        .where(eq(workspace.id, ctx.workspace.id));
+      const existing = await newPage({
+        ctx,
+        input: { title: "Existing", slug: uniqueSlug("component-existing") },
+      });
+      await tx.insert(pageComponent).values({
+        workspaceId: ctx.workspace.id,
+        pageId: existing.id,
+        type: "static",
+        name: "Existing component",
+      });
+      const secondMonitor = await tx
+        .insert(monitor)
+        .values({
+          workspaceId: ctx.workspace.id,
+          active: true,
+          url: "https://example.com",
+          name: "Second monitor",
+          method: "GET",
+          periodicity: "10m",
+          regions: "ams",
+        })
+        .returning()
+        .get();
+      await expect(
+        createPage({
+          ctx,
+          input: {
+            workspaceId: ctx.workspace.id,
+            description: "",
+            title: "Over limit",
+            slug: uniqueSlug("component-batch"),
+            monitors: [
+              { monitorId: teamMonitorId },
+              { monitorId: secondMonitor.id },
+            ],
+          },
+        }),
+      ).rejects.toMatchObject({
+        code: "LIMIT_EXCEEDED",
+        max: 2,
+        current: 1,
+      });
+      const allowed = await createPage({
+        ctx,
+        input: {
+          workspaceId: ctx.workspace.id,
+          description: "",
+          title: "At limit",
+          slug: uniqueSlug("component-allowed"),
+          monitors: [{ monitorId: teamMonitorId }],
+        },
+      });
+      const components = await tx
+        .select()
+        .from(pageComponent)
+        .where(eq(pageComponent.workspaceId, ctx.workspace.id))
+        .all();
+      expect(components.map((c) => c.pageId).sort()).toEqual(
+        [existing.id, allowed.id].sort(),
+      );
+      await expect(
+        createPage({
+          ctx,
+          input: {
+            workspaceId: ctx.workspace.id,
+            description: "",
+            title: "Cap spent",
+            slug: uniqueSlug("component-spent"),
+            monitors: [{ monitorId: secondMonitor.id }],
+          },
+        }),
+      ).rejects.toMatchObject({
+        code: "LIMIT_EXCEEDED",
+        max: 2,
+        current: 2,
+      });
+      const empty = await createPage({
+        ctx,
+        input: {
+          workspaceId: ctx.workspace.id,
+          description: "",
+          title: "No components",
+          slug: uniqueSlug("component-empty"),
+          monitors: [],
+        },
+      });
+      expect(
+        await tx
+          .select()
+          .from(pageComponent)
+          .where(eq(pageComponent.pageId, empty.id))
+          .all(),
+      ).toEqual([]);
     });
   });
 
