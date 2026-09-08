@@ -40,6 +40,8 @@ const data = {
   },
   overview: [
     { name: "Overview", url: NAV.overview.href, icon: NAV.overview.icon },
+    { name: "Assistant", url: NAV.chat.href, icon: NAV.chat.icon },
+    { name: "Agents", url: NAV.agents.href, icon: NAV.agents.icon },
     {
       name: "Status Pages",
       url: NAV.statusPages.href,
@@ -52,8 +54,6 @@ const data = {
       icon: NAV.notifications.icon,
     },
     { name: "Settings", url: NAV.settings.href, icon: NAV.settings.icon },
-    { name: "Assistant", url: NAV.chat.href, icon: NAV.chat.icon },
-    { name: "Slack agent", url: NAV.agents.href, icon: NAV.agents.icon },
   ],
 };
 

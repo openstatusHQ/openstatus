@@ -4,7 +4,7 @@ title: MCP Server
 description: Connect openstatus to AI assistants via the Model Context Protocol
 ---
 
-The openstatus MCP server lets AI assistants (Claude Desktop, Cursor, and other [Model Context Protocol](https://modelcontextprotocol.io) clients) read and manage your status pages, status reports, and maintenance windows directly from a conversation.
+The openstatus MCP server lets AI assistants (Claude.ai, Claude Desktop, Claude Code, ChatGPT, Cursor, and other [Model Context Protocol](https://modelcontextprotocol.io) clients) read and manage your status pages, status reports, and maintenance windows directly from a conversation.
 
 ## Endpoint
 
@@ -16,28 +16,53 @@ The transport is **Streamable HTTP** (stateless). The server speaks JSON-RPC 2.0
 
 ## Authentication
 
-Every request must include your openstatus API key in the `x-openstatus-key` header — the same key REST and ConnectRPC use. There is no separate MCP-only credential.
+The MCP server accepts two credentials. OAuth is the default for interactive clients; the API key header stays for CI and headless agents.
+
+For a guided walkthrough of registering, signing in, and verifying the connection, see [Connect openstatus to your coding agent](/docs/guides/how-to-connect-openstatus-to-your-agent).
+
+### OAuth (recommended)
+
+Point your client at `https://api.openstatus.dev/mcp` with no header. The server answers `401` with a `WWW-Authenticate` header pointing at its protected-resource metadata, and any client that implements the [MCP authorization spec](https://modelcontextprotocol.io/specification/basic/authorization) (Claude.ai, Claude Desktop, Claude Code, ChatGPT, Cursor, VS Code) takes it from there:
+
+1. The client registers itself once (dynamic client registration) and opens the authorization URL in your browser.
+2. You sign in to openstatus if needed, pick the **workspace** to connect and the **access** level (read-only or read & write), and click **Approve**.
+3. The client exchanges the code for an access token (PKCE `S256`) and starts calling tools with `Authorization: Bearer os_oat_…`.
+
+There is nothing to copy. The token is scoped to the workspace you picked at consent, so a user in several workspaces connects each one as a separate app.
+
+| | |
+|---|---|
+| Access token | `os_oat_` prefix, valid for 1 hour, refreshed automatically by the client |
+| Refresh token | 90 days sliding, rotated on every refresh |
+| Grant | one live grant per client and user; connecting again replaces it |
+| Revoke | **Settings > Integrations > Connected apps**; the next call fails with `401` |
+
+A connection lives in **Settings > Integrations > Connected apps** with the client name, granted access, who connected it, and when it was last used. Members revoke their own connections, owners and admins revoke any. Removing a member from the workspace revokes their connections too.
+
+### API key (fallback)
+
+Send an openstatus API key in the `x-openstatus-key` header. This is the same key the REST API, ConnectRPC, CLI, and Terraform provider use, and the right choice when no browser is available: CI pipelines, cron jobs, or an agent running on a server.
 
 ```http
 x-openstatus-key: os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-Get a key from the dashboard's **Settings → General → API Keys**.
+Get a key from the dashboard's **Settings > API Tokens**. When both credentials are present, the header wins.
 
 ### Scopes
 
-Each API key carries a scope that controls what tools the MCP server exposes:
+Both credentials carry a scope that controls what tools the MCP server exposes:
 
 - **Read-only** — the server only registers read tools (`list_*` and `get_*`). Mutation tools (`create_*`, `update_*`, `add_*`, `resolve_*`) are not advertised in `tools/list` and cannot be called.
 - **Read & write** — every tool is available.
 
-Scope is set at key creation time and is **immutable**. To change a key's scope, revoke it and issue a new one.
+With OAuth you choose the scope on the consent screen; a client may request read & write and you can still downgrade it to read-only. On an API key the scope is set at creation time and is **immutable**: to change it, revoke the key and issue a new one.
 
-For AI agents that should only observe state — health summaries, paging on-call, drafting communication — issue a **Read-only** key. The server gates writes at two layers (the `tools/list` filter is the visible UX; the service-layer scope check is the boundary), so a misconfigured client can't accidentally mutate.
+For AI agents that should only observe state — health summaries, paging on-call, drafting communication — grant **Read-only**. The server gates writes at two layers (the `tools/list` filter is the visible UX; the service-layer scope check is the boundary), so a misconfigured client can't accidentally mutate.
 
 ## Tools
 
-The server exposes 19 tools (17 on plans without the `audit-log` feature), grouped by resource and scoped to the workspace tied to your API key. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
+The server exposes 19 tools (17 on plans without the `audit-log` feature), grouped by resource and scoped to the workspace tied to your credential. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
 
 ### Pages
 
@@ -130,11 +155,21 @@ The tool's response includes a `notified: boolean` field so the assistant can co
 
 `create_status_report` and `create_maintenance` require a `pageId`, and they (plus `update_status_report`) accept an optional `pageComponentIds`. The tool descriptions instruct the model to call `list_status_pages` for the `pageId` and `list_page_components` for component ids first; **never** type a numeric id you don't know — make the assistant resolve it. Ids that don't belong to the workspace (or, for components, to the supplied page) come back as `NOT_FOUND`.
 
-## Configure Claude Desktop
+## Configure Claude Code
 
-Claude Desktop launches MCP servers as local stdio processes, so the remote HTTP server is bridged through [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) — a small open-source proxy that translates Claude Desktop's stdio calls into HTTP requests against `https://api.openstatus.dev/mcp`. You'll need Node.js 18+ on your PATH so Claude Desktop can run `npx`.
+```bash
+claude mcp add --transport http --scope user openstatus https://api.openstatus.dev/mcp
+```
 
-Add the server to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\\Claude\\claude_desktop_config.json` (Windows):
+Run `/mcp` inside Claude Code, select **openstatus**, and choose **Authenticate**. Your browser opens the consent screen; approve, and the tools appear. Step-by-step in [Connect openstatus to Claude Code](/guides/connect-openstatus-to-claude-code).
+
+For a headless setup, pass the API key instead: `--header "x-openstatus-key: os_…"`.
+
+## Configure Claude.ai and Claude Desktop
+
+Claude.ai and Claude Desktop share one connector list. Open **Settings > Connectors > Add custom connector**, enter `https://api.openstatus.dev/mcp` as the URL, and click **Connect**. Approve on the consent screen and enable the connector in the chat's tool picker.
+
+If you need an API key instead (Claude Desktop only), bridge the server through [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) in `claude_desktop_config.json`:
 
 ```json
 {
@@ -155,25 +190,85 @@ Add the server to `~/Library/Application Support/Claude/claude_desktop_config.js
 }
 ```
 
-The API key is held in `env` and referenced via `${API_KEY}` in the `--header` value because `mcp-remote` parses header args before shell expansion — inlining the key after the colon breaks parsing.
-
-Fully quit and relaunch Claude Desktop (`Cmd+Q` on macOS, **File → Quit** on Windows). The openstatus tools appear in the tool picker after restart.
+The key is held in `env` and referenced via `${API_KEY}` because `mcp-remote` parses header args before shell expansion. Fully quit and relaunch Claude Desktop afterwards.
 
 ## Configure Cursor
 
-In Cursor, open **Settings → MCP → Add Server**:
+Add the server to `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
 
 ```json
 {
-  "openstatus": {
-    "type": "http",
-    "url": "https://api.openstatus.dev/mcp",
-    "headers": {
-      "x-openstatus-key": "os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  "mcpServers": {
+    "openstatus": {
+      "url": "https://api.openstatus.dev/mcp"
     }
   }
 }
 ```
+
+Cursor shows the server as **Needs login**; click it to run the OAuth flow. To use an API key instead, add `"headers": { "x-openstatus-key": "os_…" }` to the entry.
+
+## Configure opencode
+
+Add the server to `opencode.json` (project) or `~/.config/opencode/opencode.json` (global), then run `opencode mcp auth openstatus` to complete the OAuth flow:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "openstatus": {
+      "type": "remote",
+      "url": "https://api.openstatus.dev/mcp",
+      "enabled": true
+    }
+  }
+}
+```
+
+To use an API key instead, add `"headers": { "x-openstatus-key": "{env:OPENSTATUS_API_KEY}" }` and `"oauth": false` to the entry. Step-by-step in [Connect openstatus to opencode](/guides/connect-openstatus-to-opencode).
+
+## Configure Codex
+
+```bash
+codex mcp add openstatus --url https://api.openstatus.dev/mcp
+codex mcp login openstatus
+```
+
+The first command writes the server to `~/.codex/config.toml`, which the Codex CLI, the Codex IDE extension, and the ChatGPT desktop app all share; the second opens the consent screen. For a headless setup, pass the API key instead: `--header "x-openstatus-key=os_…"`, or `env_http_headers = { "x-openstatus-key" = "OPENSTATUS_API_KEY" }` in a committed `.codex/config.toml`. Step-by-step in [Connect openstatus to Codex](/guides/connect-openstatus-to-codex).
+
+## Configure ChatGPT
+
+In ChatGPT on the web, switch on **Developer mode** under **Settings > Security and login**, then open **Settings > Connectors > Create**, enter `https://api.openstatus.dev/mcp` as the MCP server URL with **OAuth** authentication, and complete the consent screen. Enable the connector per chat from the **+** menu under **Developer mode**. Step-by-step in [Connect openstatus to ChatGPT](/guides/connect-openstatus-to-chatgpt).
+
+## OAuth endpoints
+
+For client authors. openstatus is an OAuth 2.1 authorization server for the `/mcp` resource, with public clients only.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /.well-known/oauth-authorization-server` | Authorization server metadata (RFC 8414) |
+| `GET /.well-known/oauth-protected-resource/mcp` | Protected resource metadata for `/mcp` (RFC 9728) |
+| `POST /oauth/register` | Dynamic client registration (RFC 7591) |
+| `GET /oauth/authorize` | Authorization request; redirects to the consent screen |
+| `POST /oauth/token` | `authorization_code` and `refresh_token` grants; form or JSON body |
+| `POST /oauth/revoke` | Token revocation (RFC 7009); accepts either token of a grant |
+
+- `response_type=code` with PKCE `S256` is required. Scopes are `read` and `write`; an authorization request without a scope asks for `write`.
+- Clients are public (`token_endpoint_auth_method: none`). There are no client secrets.
+- Dynamic registration only accepts redirect URIs on loopback hosts, `https` URLs on `openstatus.dev`, `claude.ai`, `chatgpt.com`, `cursor.com` and their subdomains, or the `cursor://`, `vscode://`, and `vscode-insiders://` schemes. Loopback redirects match on everything but the port (RFC 8252).
+- Any other client can skip registration and use a **Client ID Metadata Document**: pass a public `https` URL with a path as `client_id`. The document is fetched on every authorization request, must echo its own URL as `client_id`, and its `redirect_uris` are used as-is. Domain ownership replaces the allowlist.
+- Errors follow RFC 6749 (`{ "error", "error_description" }`), not the openstatus API envelope.
+
+### Self-hosting
+
+The issuer is fixed by configuration, not derived from the request host, so metadata stays stable behind proxies. Set both on the API server:
+
+```env
+OAUTH_ISSUER=https://api.example.com       # origin of /mcp and /oauth/*
+DASHBOARD_URL=https://app.example.com      # serves /oauth/consent
+```
+
+Outside production `OAUTH_ISSUER` defaults to `http://localhost:3000` and `DASHBOARD_URL` to `http://localhost:3001` — the ports of `pnpm dev`. The Docker stack binds different ports; see [How to Self-Host openstatus](/docs/guides/self-hosting-openstatus) for the values that go with it.
 
 ## Errors
 
@@ -195,5 +290,7 @@ Error messages are not redacted — the consumer is an LLM that benefits from th
 Every mutation invoked through MCP appears in the workspace audit log with:
 
 - `actor_type = "mcp"` — slice by surface: `WHERE actor_type = 'mcp'`.
-- `actor_id` = the API key's stable identifier (not the workspace id) — trace a specific key with `WHERE actor_id = '<keyId>'`.
-- `actor_user_id` = the openstatus user who created the API key (custom keys only) — attribute mutations back to a person with a join to the `user` table.
+- `actor_id` = the credential's stable identifier (not the workspace id). For an API key this is the key id; for an OAuth connection it is `oat_<grant id>`. Trace a specific credential with `WHERE actor_id = '<id>'`.
+- `actor_user_id` = the openstatus user behind the credential: who created the API key (custom keys only), or who approved the OAuth consent. Attribute mutations back to a person with a join to the `user` table.
+
+Connecting and revoking an app are audited too, as `oauth_grant.create` and `oauth_grant.delete`.

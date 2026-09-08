@@ -1,0 +1,228 @@
+---
+category: Guides
+title: Connect openstatus to your coding agent
+description: "Step-by-step tutorial to add the openstatus MCP server to Claude Code, Codex, opencode, Cursor, Claude Desktop, or ChatGPT so the agent can read and manage your status pages"
+---
+
+
+| | |
+|---|---|
+| **Time** | ~2 minutes |
+| **Level** | Beginner |
+| **Prerequisites** | openstatus account with at least one status page, an MCP-capable agent installed |
+
+openstatus exposes one [Model Context Protocol](https://modelcontextprotocol.io) server at `https://api.openstatus.dev/mcp`. Every MCP-capable agent connects to the same endpoint, signs in through the same OAuth consent screen, and gets the same tools — so this guide is one walkthrough with a per-agent registration step.
+
+By the end, your agent can list status pages, draft incidents, and schedule maintenance windows. There is no key to copy.
+
+## 1. Register the MCP server
+
+Pick your agent. The endpoint is a stateless Streamable HTTP server, not a local stdio process — some clients need to be told that explicitly.
+
+### Claude Code
+
+```bash
+claude mcp add \
+  --transport http \
+  --scope user \
+  openstatus \
+  https://api.openstatus.dev/mcp
+```
+
+`--scope user` registers the server for every session on your machine. Use `--scope project` to write a `.mcp.json` you can commit so your team picks it up automatically; each teammate signs in on their own.
+
+### Codex
+
+```bash
+codex mcp add openstatus --url https://api.openstatus.dev/mcp
+```
+
+`--url` marks the server as remote. The command writes to `~/.codex/config.toml`, which the Codex CLI, the Codex IDE extension, and the ChatGPT desktop app all read.
+
+### opencode
+
+Add the server to `opencode.json` (project) or `~/.config/opencode/opencode.json` (global):
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "openstatus": {
+      "type": "remote",
+      "url": "https://api.openstatus.dev/mcp",
+      "enabled": true
+    }
+  }
+}
+```
+
+### Cursor
+
+Add the server to `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
+
+```json
+{
+  "mcpServers": {
+    "openstatus": {
+      "url": "https://api.openstatus.dev/mcp"
+    }
+  }
+}
+```
+
+### Claude Desktop and Claude.ai
+
+Both share one connector list. Open **Settings > Connectors > Add custom connector**, enter `https://api.openstatus.dev/mcp` as the URL, and click **Connect**.
+
+### ChatGPT
+
+Switch on **Developer mode** under **Settings > Security and login**, then open **Settings > Connectors > Create** and enter `https://api.openstatus.dev/mcp` as the MCP server URL with **OAuth** authentication.
+
+## 2. Sign in
+
+Trigger the OAuth flow the way your agent expects:
+
+| Agent | How to sign in |
+|---|---|
+| Claude Code | Run `/mcp`, select **openstatus**, choose **Authenticate** |
+| Codex | Run `codex mcp login openstatus` |
+| opencode | Run `opencode mcp auth openstatus` |
+| Cursor | The server shows as **Needs login** — click it |
+| Claude Desktop, Claude.ai, ChatGPT | The connect button opens the flow directly |
+
+Your browser opens the openstatus consent screen:
+
+- **Workspace** — the workspace this connection can reach. Pick one per connection.
+- **Access** — **Read-only** lets the agent list status pages, reports, monitors, and maintenance windows but change nothing. **Read & write** also lets it create status reports, append updates, resolve incidents, and schedule maintenance.
+
+Click **Approve**. The browser hands a code back to the agent, which exchanges it for a token and refreshes it in the background from then on.
+
+<Aside type="tip">Start with **Read-only** while you get familiar with the tools. To upgrade later, run the sign-in again and pick **Read & write**; the new connection replaces the old one.</Aside>
+
+## 3. Verify the connection
+
+Ask your agent to list its MCP servers — `/mcp` in Claude Code and Codex, `opencode mcp list`, the MCP pane in Cursor's settings, the tool picker in Claude Desktop and ChatGPT. `openstatus` should show as connected, with the read tools (`list_status_pages`, `list_monitors`, `get_monitor_status`, `list_private_locations`, …) and — if you granted write access — the mutation tools (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`, …). See the [MCP server reference](/docs/reference/mcp-server) for the full list.
+
+If the server shows as disconnected, see [Troubleshooting](#troubleshooting) below.
+
+## 4. Try your first prompt
+
+Ask for something that exercises a read tool:
+
+```
+> list my openstatus status pages
+```
+
+The agent calls `list_status_pages`, prompts you to approve the call, and returns the page slugs and ids in your workspace.
+
+If you granted write access, try drafting an incident — the agent shows you the title, status, message, and notify choice **before** firing the tool, so nothing reaches subscribers without an explicit approval:
+
+```
+> draft a status report on my "api" page: investigating elevated latency on the payment endpoint
+```
+
+<Aside>Every publishing tool requires an explicit `notify: true | false`. The agent will ask whether to notify subscribers — answer before approving the tool call.</Aside>
+
+## Using an API key instead
+
+OAuth needs a browser. For CI, a remote box, or a committed config where you'd rather not sign in, pass an API key in the `x-openstatus-key` header instead. Create one in **Settings > API Tokens** with the scope you want (scopes are immutable on a key), then add the header where your agent puts it:
+
+```bash
+# Claude Code
+claude mcp add --transport http --scope user openstatus \
+  https://api.openstatus.dev/mcp \
+  --header "x-openstatus-key: os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Codex
+codex mcp add openstatus --url https://api.openstatus.dev/mcp \
+  --header "x-openstatus-key=os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+For the JSON- and TOML-configured clients, add the header to the server entry — `"headers": { "x-openstatus-key": "os_…" }` in `.mcp.json` and `.cursor/mcp.json`, or `env_http_headers = { "x-openstatus-key" = "OPENSTATUS_API_KEY" }` in `.codex/config.toml`. In a committed file, read the key from the environment so it never lands in version control:
+
+```json
+{
+  "mcpServers": {
+    "openstatus": {
+      "type": "http",
+      "url": "https://api.openstatus.dev/mcp",
+      "headers": {
+        "x-openstatus-key": "${OPENSTATUS_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+opencode uses its own interpolation syntax and needs OAuth switched off explicitly, otherwise it still opens a browser when a call is rejected:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "openstatus": {
+      "type": "remote",
+      "url": "https://api.openstatus.dev/mcp",
+      "enabled": true,
+      "headers": {
+        "x-openstatus-key": "{env:OPENSTATUS_API_KEY}"
+      },
+      "oauth": false
+    }
+  }
+}
+```
+
+When a header is present, the agent skips the OAuth sign-in.
+
+## Managing the connection
+
+Every OAuth connection is listed in **Settings > Integrations > Connected apps** with the client name, granted access, who connected it, and when it was last used. Revoke it there and the agent's next call fails with `401`; sign in again to reconnect. Members can revoke their own connections; owners and admins can revoke any. Removing a member from the workspace revokes their connections automatically.
+
+## What you've accomplished
+
+- Registered the openstatus MCP server with your agent
+- Signed in with OAuth and picked a workspace and access level
+- Verified the connection and the tools it exposes
+- Ran your first read and (optionally) write tool calls
+
+## Troubleshooting
+
+### The server shows as disconnected
+
+1. **Sign in again** — tokens refresh automatically, but a connection revoked from the dashboard or a member removal needs a new sign-in.
+2. **Reachability** — the endpoint is stateless and speaks Streamable HTTP, so a plain `curl` GET returns `406 Not Acceptable` unless you ask for an event stream:
+
+   ```bash
+   curl -i -H "Accept: text/event-stream" https://api.openstatus.dev/mcp
+   ```
+
+   A `401` with a `WWW-Authenticate` header is the expected answer for an unauthenticated request; a network error means a proxy or firewall is blocking the connection. There is no `mcp-session-id` header — the server never issues one.
+3. **Re-add the server** — remove and re-register it (`claude mcp remove openstatus`, `codex mcp remove openstatus`, or delete the entry from the JSON config), then repeat step 1.
+
+### The browser never opens
+
+CLI agents print the authorization URL in the terminal. Copy it into a browser on the same machine; the callback goes to a `localhost` port the agent is listening on. If the session is remote (SSH, a container), use an [API key](#using-an-api-key-instead) instead.
+
+### "Tool not available" when asking the agent to create an incident
+
+Your connection is read-only. The agent only sees the read tools — the server filters mutation tools out of `tools/list` for read-only credentials. Sign in again and pick **Read & write** on the consent screen, or issue a write-scoped API key.
+
+### Audit log shows `actor_type = 'mcp'` for changes I made manually
+
+That's expected — every mutation routed through an MCP client is attributed to `mcp` in the audit log, with `actor_id` set to the connection (`oat_<id>` for OAuth, the key id for an API key) and `actor_user_id` set to the user who approved the connection or created the key. This is how openstatus separates AI-driven actions from CLI, dashboard, and API mutations.
+
+## What's next
+
+- **[MCP server reference](/docs/reference/mcp-server)** — full tool schema, error codes, OAuth endpoints, and the contract behind the required `notify` flag.
+- **[Get started with the openstatus CLI](/docs/tutorial/get-started-with-openstatus-cli)** — for terminal workflows that don't need an LLM in the loop.
+
+### Per-agent walkthroughs
+
+Longer guides with the safeguards, the incident workflow, and an FAQ for each client:
+
+- [Connect openstatus to Claude Code](/guides/connect-openstatus-to-claude-code)
+- [Connect openstatus to Claude Desktop](/guides/connect-openstatus-to-claude-desktop)
+- [Connect openstatus to Codex](/guides/connect-openstatus-to-codex)
+- [Connect openstatus to opencode](/guides/connect-openstatus-to-opencode)
+- [Connect openstatus to ChatGPT](/guides/connect-openstatus-to-chatgpt)

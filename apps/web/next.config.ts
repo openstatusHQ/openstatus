@@ -121,6 +121,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/docs/guides/how-to-connect-openstatus-to-claude-code",
+        destination: "/docs/guides/how-to-connect-openstatus-to-your-agent",
+        permanent: true,
+      },
+      {
         source: "/legal/terms",
         destination: "/terms",
         permanent: true,
@@ -202,7 +207,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/docs/tutorial/how-to-connect-openstatus-to-claude-code",
-        destination: "/docs/guides/how-to-connect-openstatus-to-claude-code",
+        destination: "/docs/guides/how-to-connect-openstatus-to-your-agent",
         permanent: true,
       },
       {
