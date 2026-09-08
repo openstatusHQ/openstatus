@@ -161,7 +161,7 @@ The tool's response includes a `notified: boolean` field so the assistant can co
 claude mcp add --transport http --scope user openstatus https://api.openstatus.dev/mcp
 ```
 
-Run `/mcp` inside Claude Code, select **openstatus**, and choose **Authenticate**. Your browser opens the consent screen; approve, and the tools appear. Step-by-step in [Connect openstatus to Claude Code](https://www.openstatus.dev/guides/connect-openstatus-to-claude-code).
+Run `/mcp` inside Claude Code, select **openstatus**, and choose **Authenticate**. Your browser opens the consent screen; approve, and the tools appear. Step-by-step in [Connect openstatus to Claude Code](/guides/connect-openstatus-to-claude-code).
 
 For a headless setup, pass the API key instead: `--header "x-openstatus-key: os_…"`.
 
@@ -225,7 +225,7 @@ Add the server to `opencode.json` (project) or `~/.config/opencode/opencode.json
 }
 ```
 
-To use an API key instead, add `"headers": { "x-openstatus-key": "{env:OPENSTATUS_API_KEY}" }` and `"oauth": false` to the entry. Step-by-step in [Connect openstatus to opencode](https://www.openstatus.dev/guides/connect-openstatus-to-opencode).
+To use an API key instead, add `"headers": { "x-openstatus-key": "{env:OPENSTATUS_API_KEY}" }` and `"oauth": false` to the entry. Step-by-step in [Connect openstatus to opencode](/guides/connect-openstatus-to-opencode).
 
 ## Configure Codex
 
@@ -234,11 +234,11 @@ codex mcp add openstatus --url https://api.openstatus.dev/mcp
 codex mcp login openstatus
 ```
 
-The first command writes the server to `~/.codex/config.toml`, which the Codex CLI, the Codex IDE extension, and the ChatGPT desktop app all share; the second opens the consent screen. For a headless setup, pass the API key instead: `--header "x-openstatus-key=os_…"`, or `env_http_headers = { "x-openstatus-key" = "OPENSTATUS_API_KEY" }` in a committed `.codex/config.toml`. Step-by-step in [Connect openstatus to Codex](https://www.openstatus.dev/guides/connect-openstatus-to-codex).
+The first command writes the server to `~/.codex/config.toml`, which the Codex CLI, the Codex IDE extension, and the ChatGPT desktop app all share; the second opens the consent screen. For a headless setup, pass the API key instead: `--header "x-openstatus-key=os_…"`, or `env_http_headers = { "x-openstatus-key" = "OPENSTATUS_API_KEY" }` in a committed `.codex/config.toml`. Step-by-step in [Connect openstatus to Codex](/guides/connect-openstatus-to-codex).
 
 ## Configure ChatGPT
 
-In ChatGPT on the web, switch on **Developer mode** under **Settings > Security and login**, then open **Settings > Connectors > Create**, enter `https://api.openstatus.dev/mcp` as the MCP server URL with **OAuth** authentication, and complete the consent screen. Enable the connector per chat from the **+** menu under **Developer mode**. Step-by-step in [Connect openstatus to ChatGPT](https://www.openstatus.dev/guides/connect-openstatus-to-chatgpt).
+In ChatGPT on the web, switch on **Developer mode** under **Settings > Security and login**, then open **Settings > Connectors > Create**, enter `https://api.openstatus.dev/mcp` as the MCP server URL with **OAuth** authentication, and complete the consent screen. Enable the connector per chat from the **+** menu under **Developer mode**. Step-by-step in [Connect openstatus to ChatGPT](/guides/connect-openstatus-to-chatgpt).
 
 ## OAuth endpoints
 
@@ -268,7 +268,7 @@ OAUTH_ISSUER=https://api.example.com       # origin of /mcp and /oauth/*
 DASHBOARD_URL=https://app.example.com      # serves /oauth/consent
 ```
 
-Outside production they default to `http://localhost:3000` and `http://localhost:3001`.
+Outside production `OAUTH_ISSUER` defaults to `http://localhost:3000` and `DASHBOARD_URL` to `http://localhost:3001` — the ports of `pnpm dev`. The Docker stack binds different ports; see [How to Self-Host openstatus](/docs/guides/self-hosting-openstatus) for the values that go with it.
 
 ## Errors
 

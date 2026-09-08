@@ -138,7 +138,7 @@ codex mcp add openstatus --url https://api.openstatus.dev/mcp \
   --header "x-openstatus-key=os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-For the JSON- and TOML-configured clients, add the header to the server entry — `"headers": { "x-openstatus-key": "os_…" }` in `.mcp.json`, `opencode.json`, and `.cursor/mcp.json`, or `env_http_headers = { "x-openstatus-key" = "OPENSTATUS_API_KEY" }` in `.codex/config.toml`. In a committed file, read the key from the environment so it never lands in version control:
+For the JSON- and TOML-configured clients, add the header to the server entry — `"headers": { "x-openstatus-key": "os_…" }` in `.mcp.json` and `.cursor/mcp.json`, or `env_http_headers = { "x-openstatus-key" = "OPENSTATUS_API_KEY" }` in `.codex/config.toml`. In a committed file, read the key from the environment so it never lands in version control:
 
 ```json
 {
@@ -149,6 +149,25 @@ For the JSON- and TOML-configured clients, add the header to the server entry �
       "headers": {
         "x-openstatus-key": "${OPENSTATUS_API_KEY}"
       }
+    }
+  }
+}
+```
+
+opencode uses its own interpolation syntax and needs OAuth switched off explicitly, otherwise it still opens a browser when a call is rejected:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "openstatus": {
+      "type": "remote",
+      "url": "https://api.openstatus.dev/mcp",
+      "enabled": true,
+      "headers": {
+        "x-openstatus-key": "{env:OPENSTATUS_API_KEY}"
+      },
+      "oauth": false
     }
   }
 }
@@ -202,8 +221,8 @@ That's expected — every mutation routed through an MCP client is attributed to
 
 Longer guides with the safeguards, the incident workflow, and an FAQ for each client:
 
-- [Connect openstatus to Claude Code](https://www.openstatus.dev/guides/connect-openstatus-to-claude-code)
-- [Connect openstatus to Claude Desktop](https://www.openstatus.dev/guides/connect-openstatus-to-claude-desktop)
-- [Connect openstatus to Codex](https://www.openstatus.dev/guides/connect-openstatus-to-codex)
-- [Connect openstatus to opencode](https://www.openstatus.dev/guides/connect-openstatus-to-opencode)
-- [Connect openstatus to ChatGPT](https://www.openstatus.dev/guides/connect-openstatus-to-chatgpt)
+- [Connect openstatus to Claude Code](/guides/connect-openstatus-to-claude-code)
+- [Connect openstatus to Claude Desktop](/guides/connect-openstatus-to-claude-desktop)
+- [Connect openstatus to Codex](/guides/connect-openstatus-to-codex)
+- [Connect openstatus to opencode](/guides/connect-openstatus-to-opencode)
+- [Connect openstatus to ChatGPT](/guides/connect-openstatus-to-chatgpt)

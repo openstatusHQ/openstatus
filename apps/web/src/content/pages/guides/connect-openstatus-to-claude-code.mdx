@@ -102,7 +102,7 @@ In Claude Code, run:
 
 Select **openstatus** and choose **Authenticate**. Your browser opens the openstatus consent screen:
 
-- **Workspace** — the workspace this connection can reach. If you belong to several, pick one; connect again to switch.
+- **Workspace** — the workspace this connection can reach. If you belong to several, pick one. To switch later, revoke the connection in **Settings > Integrations > Connected apps** and run **Authenticate** again — while a connection is live you are not shown the consent screen.
 - **Access** — **Read-only** lets Claude Code list status pages, reports, and maintenance windows. **Read & write** also lets it create reports, append updates, resolve incidents, and schedule maintenance.
 
 Click **Approve**. Claude Code receives a token and refreshes it in the background; you won't be asked again unless the connection is revoked.
@@ -165,7 +165,7 @@ Open **Settings > Integrations > Connected apps** in the dashboard. Each connect
 
 ## What's next?
 
-- **[MCP Server Reference](https://www.openstatus.dev/docs/reference/mcp-server)** — full tool schema, error codes, OAuth endpoints, and scope mechanics.
+- **[MCP Server Reference](/docs/reference/mcp-server)** — full tool schema, error codes, OAuth endpoints, and scope mechanics.
 - **[Connect to Claude Desktop](/guides/connect-openstatus-to-claude-desktop)** — chat-shaped variant of this guide.
 - **[Connect to Codex](/guides/connect-openstatus-to-codex)** — the same setup for OpenAI's terminal agent.
 - **[Connect to opencode](/guides/connect-openstatus-to-opencode)** — the same setup for the open-source terminal agent.

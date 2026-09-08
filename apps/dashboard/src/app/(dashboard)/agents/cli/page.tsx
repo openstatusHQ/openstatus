@@ -18,14 +18,14 @@ import React from "react";
 import { Code } from "@/components/common/code";
 import { Link } from "@/components/common/link";
 import {
+  Section,
   SectionDescription,
   SectionGroup,
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { Section } from "@/components/content/section";
 
-const OS = ["macOs", "Windows", "Linux"] as const;
+const OS = ["macOS", "Windows", "Linux"] as const;
 
 const installs = [
   {
@@ -34,7 +34,7 @@ const installs = [
     description:
       "Install the OpenStatus CLI to set up your monitors straight in your code.",
     command: {
-      macOs: [
+      macOS: [
         "brew install openstatusHQ/cli/openstatus --cask",
         "curl -fsSL https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.sh | bash",
       ],
@@ -62,8 +62,8 @@ const installs = [
       </>
     ),
     command: {
-      macOs: ["export OPENSTATUS_API_TOKEN=<your-api-token>"],
-      Windows: ["set OPENSTATUS_API_TOKEN=<your-api-token>"],
+      macOS: ["export OPENSTATUS_API_TOKEN=<your-api-token>"],
+      Windows: ['$env:OPENSTATUS_API_TOKEN = "<your-api-token>"'],
       Linux: ["export OPENSTATUS_API_TOKEN=<your-api-token>"],
     },
   },
@@ -331,7 +331,7 @@ export default function Page() {
             >
               guide
             </Link>{" "}
-            to to run synthetic tests in a GitHub action.
+            to run synthetic tests in a GitHub action.
           </SectionDescription>
         </SectionHeader>
         <div className="flex flex-col gap-6">

@@ -1,6 +1,7 @@
 // Single source of truth for docs section order, page order, and sidebar labels.
-// Labels mirror each page's `title`, except section-landing pages which keep a
-// short label (e.g. title "Foundational Concepts" → label "Overview"). Page→section
+// Labels mirror each page's `title` in title case, except: section-landing pages
+// keep a short label (e.g. title "Foundational Concepts" → label "Overview"), and
+// Guides entries carry a "How to " prefix the page title may omit. Page→section
 // membership is mirrored by each doc's `category` frontmatter and cross-checked
 // at build time (see `validateDocsNav`).
 

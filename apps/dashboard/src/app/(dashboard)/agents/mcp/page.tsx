@@ -142,7 +142,8 @@ const clients = [
       "type": "remote",
       "url": "${ENDPOINT}",
       "enabled": true,
-      "headers": { "x-openstatus-key": "os_..." }
+      "headers": { "x-openstatus-key": "{env:OPENSTATUS_API_KEY}" },
+      "oauth": false
     }
   }
 }`,

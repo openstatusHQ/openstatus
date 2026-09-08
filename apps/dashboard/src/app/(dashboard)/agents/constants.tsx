@@ -8,7 +8,7 @@ function withSize(Icon: React.ComponentType<React.ComponentProps<"svg">>) {
     size = 24,
     absoluteStrokeWidth: _,
     ...props
-  }: IconProps) => <Icon width={size} height={size} {...props} />;
+  }: IconProps) => <Icon {...props} width={size} height={size} />;
   return Sized;
 }
 

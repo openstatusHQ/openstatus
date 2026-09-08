@@ -20,7 +20,8 @@ const messages = [
   {
     message:
       "@openstatus create an incident for the payment API – high latency detected.",
-    description: "Open a new incident and notify your subscribers.",
+    description:
+      "Open a new incident, then Approve or Approve & Notify subscribers.",
   },
   {
     message:
@@ -29,7 +30,8 @@ const messages = [
   },
   {
     message: "@openstatus resolve the ongoing incident on my API status page.",
-    description: "Close an active incident and update your subscribers.",
+    description:
+      "Close an active incident, then Approve or Approve & Notify subscribers.",
   },
   {
     message:

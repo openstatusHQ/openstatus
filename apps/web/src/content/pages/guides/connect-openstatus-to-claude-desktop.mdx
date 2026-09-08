@@ -49,7 +49,7 @@ If your incident workflow already runs through chat, Claude Desktop is the right
 
 - **Drafting customer-facing copy** — turn engineer shorthand ("payment-api spiking p99 to 6s") into the calm, structured update your subscribers expect, then approve and post it without leaving the chat.
 - **On-call summaries** — "Summarize the last 7 days of incidents on my API page" in seconds, useful for weekly reviews and handoffs.
-- **Read-only audits** — a teammate connects with read-only access; their Claude Desktop sees only the `list_*` tools and cannot mutate anything.
+- **Read-only audits** — a teammate connects with read-only access; their Claude Desktop sees only the `list_*` and `get_*` tools and cannot mutate anything.
 
 The same server works with [Claude Code](/guides/connect-openstatus-to-claude-code), [ChatGPT](/guides/connect-openstatus-to-chatgpt), [Codex](/guides/connect-openstatus-to-codex), [opencode](/guides/connect-openstatus-to-opencode), Cursor, and any other MCP-compatible client.
 
@@ -141,7 +141,7 @@ Open **Settings > Integrations > Connected apps** in the openstatus dashboard. E
 
 ## What's next?
 
-- **[MCP Server Reference](https://www.openstatus.dev/docs/reference/mcp-server)** — full tool schema, error codes, OAuth endpoints, and scope mechanics.
+- **[MCP Server Reference](/docs/reference/mcp-server)** — full tool schema, error codes, OAuth endpoints, and scope mechanics.
 - **[Connect to Claude Code](/guides/connect-openstatus-to-claude-code)** — terminal-shaped variant of this guide.
 - **[Connect to ChatGPT](/guides/connect-openstatus-to-chatgpt)** — the same setup for OpenAI's chat client.
 - **[Openstatus CLI](/tooling/cli)** — for terminal workflows that don't need an LLM in the loop.
