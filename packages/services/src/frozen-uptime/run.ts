@@ -42,7 +42,7 @@ const TB_THROTTLE_MS = 250;
 
 // the status pipes look back a fixed 45 days; past monthStart + 45d the
 // earliest month days return no rows and would freeze as permanent zeros
-const FREEZE_CUTOFF_MS = 45 * 86_400_000;
+export const FREEZE_CUTOFF_MS = 45 * 86_400_000;
 
 function chunk<T>(items: T[], size: number): T[][] {
   if (size <= 0) throw new Error(`chunk size must be positive, got ${size}`);
