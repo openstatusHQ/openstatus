@@ -1,0 +1,246 @@
+---
+title: "Connect Openstatus to Codex (MCP Setup Guide)"
+author: "openstatus"
+description: "Wire the openstatus MCP server into OpenAI Codex so the agent can list status pages, draft incidents, and schedule maintenance from your terminal — sign in with OAuth, no key to paste, with audit-logged mutations and explicit notify semantics."
+publishedAt: "2026-09-08"
+updatedAt: "2026-09-08"
+category: "education"
+howto:
+  totalTime: "PT2M"
+  steps:
+    - name: "Register the MCP server with Codex"
+      text: "Run `codex mcp add openstatus --url https://api.openstatus.dev/mcp` to attach the openstatus tools to every Codex session."
+      url: "#step-1-register-the-mcp-server"
+    - name: "Sign in with OAuth"
+      text: "Run `codex mcp login openstatus`. Approve the connection in the browser, picking a workspace and read-only or read & write access."
+      url: "#step-2-sign-in"
+    - name: "Verify the connection"
+      text: "Run `codex mcp list` or type /mcp inside Codex and confirm openstatus is listed as enabled with the expected tools (list_status_pages, list_status_reports, …)."
+      url: "#step-3-verify-the-connection"
+    - name: "Run your first prompt"
+      text: "Ask Codex to list your status pages or draft an incident. The agent asks for approval before each tool call."
+      url: "#step-4-run-your-first-prompt"
+faq:
+  - question: "Does Codex support remote MCP servers like openstatus?"
+    answer: "Yes. Codex supports stdio and Streamable HTTP MCP servers. The openstatus MCP server is a stateless Streamable HTTP endpoint, registered with `codex mcp add openstatus --url https://api.openstatus.dev/mcp`."
+  - question: "What can Codex do once the openstatus MCP server is connected?"
+    answer: "Codex can list status pages, status reports, monitors, and maintenance windows; create new status reports; append updates to existing reports; resolve reports; edit metadata; and schedule maintenance windows — all scoped to the workspace you picked when you approved the connection."
+  - question: "Do I need an API key to connect Codex?"
+    answer: "No. The openstatus MCP server is an OAuth 2.1 authorization server. `codex mcp login openstatus` opens a consent screen in your browser where you pick a workspace and an access level; tokens are issued and refreshed automatically. An API key in the `x-openstatus-key` header still works for CI and headless agents."
+  - question: "Does the same setup work in the ChatGPT desktop app and the Codex IDE extension?"
+    answer: "Yes. The Codex CLI, the Codex IDE extension, and the ChatGPT desktop app share one MCP configuration in `~/.codex/config.toml`. Register openstatus once and every surface picks it up; sign in once and the token is reused."
+  - question: "Can Codex accidentally notify subscribers when creating an incident?"
+    answer: "No. Every publishing tool (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) requires an explicit `notify: true | false` field. Codex must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag. `update_status_report` is metadata-only and has no notify path at all."
+  - question: "How do I give Codex read-only access to my workspace?"
+    answer: "Pick Read-only on the consent screen. The MCP server filters write tools out of the `tools/list` response for read-only connections, so Codex sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session."
+  - question: "How do I disconnect Codex from my workspace?"
+    answer: "Open Settings > Integrations > Connected apps in the openstatus dashboard and revoke the connection. Codex's next call fails with 401; run `codex mcp login openstatus` to reconnect. Members revoke their own connections, owners and admins can revoke any."
+  - question: "Where do MCP-driven changes appear in the audit log?"
+    answer: "Every mutation routed through the MCP server lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the connection (`oat_<id>` for OAuth, the key id for an API key) and `actor_user_id` set to the user who approved the connection or created the key. This separates AI-driven actions from CLI, dashboard, and direct API mutations."
+  - question: "Can I commit the MCP configuration to my repository?"
+    answer: "Yes. Add the `[mcp_servers.openstatus]` block to a project-scoped `.codex/config.toml` at the repo root with no header; Codex reads it for trusted projects and each teammate signs in with OAuth on first use. For CI, use `env_http_headers` to read `x-openstatus-key` from an environment variable so the secret stays out of source control."
+---
+
+**TL;DR** — Run one `codex mcp add` command, sign in with `codex mcp login`, and Codex can drive your status pages: list incidents, draft updates, and schedule maintenance from your terminal. No key to paste. Every mutation is audit-logged under `actor_type = 'mcp'` and notifications never fire unless you explicitly approve.
+
+---
+
+[Codex](https://developers.openai.com/codex) is OpenAI's coding agent for the terminal, your IDE, and the ChatGPT desktop app. The [Model Context Protocol](https://modelcontextprotocol.io) (MCP) lets it reach out to remote services like openstatus — with the agent's host responsible for approval and audit. This guide walks through the two-minute setup.
+
+## Why connect Openstatus to Codex?
+
+Status page work usually lands while you're already debugging in a terminal. Connecting openstatus to Codex keeps the writing side of the workflow there too:
+
+- **During an incident** — draft an investigating-status update for the right page and approve it without opening the dashboard.
+- **At deploy time** — schedule a maintenance window from the same Codex session you used to ship the change.
+- **Read-only audits** — a teammate connects with read-only access; their Codex can summarize page health and monitor status with zero mutation risk.
+
+The same server works with [ChatGPT](/guides/connect-openstatus-to-chatgpt), [Claude Code](/guides/connect-openstatus-to-claude-code), [Claude Desktop](/guides/connect-openstatus-to-claude-desktop), [opencode](/guides/connect-openstatus-to-opencode), Cursor, and any other MCP-compatible client.
+
+## Prerequisites
+
+- An [openstatus account](https://www.openstatus.dev) with at least one status page.
+- Codex CLI installed and signed in (`codex --version` should print a version).
+
+## Step 1: Register the MCP server
+
+Codex talks to the openstatus MCP server over Streamable HTTP. Register it with `codex mcp add`:
+
+```bash
+codex mcp add openstatus --url https://api.openstatus.dev/mcp
+```
+
+`--url` tells Codex this is a remote HTTP endpoint rather than a local stdio process. The command writes the server to `~/.codex/config.toml`, which every Codex surface on your machine reads — the CLI, the IDE extension, and the ChatGPT desktop app.
+
+### Config file alternative (`config.toml`)
+
+If you'd rather edit the file directly, add this block to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.openstatus]
+url = "https://api.openstatus.dev/mcp"
+```
+
+To commit the configuration to a repo so your team picks it up automatically, put the same block in a project-scoped `.codex/config.toml` at the project root. Codex only loads project config for trusted projects. No secret in the file: each teammate signs in with OAuth the first time they use it.
+
+## Step 2: Sign in
+
+Run:
+
+```bash
+codex mcp login openstatus
+```
+
+Your browser opens the openstatus consent screen:
+
+- **Workspace** — the workspace this connection can reach. If you belong to several, pick one; log in again to switch.
+- **Access** — **Read-only** lets Codex list status pages, reports, monitors, and maintenance windows. **Read & write** also lets it create reports, append updates, resolve incidents, and schedule maintenance.
+
+Click **Approve**. Codex receives a token and refreshes it in the background; you won't be asked again unless the connection is revoked.
+
+You can also sign in from inside a session: type `/mcp`, and choose **Authenticate** next to openstatus.
+
+## Step 3: Verify the connection
+
+Run:
+
+```bash
+codex mcp list
+```
+
+`openstatus` should be listed as enabled with no pending sign-in. Inside a Codex session, `/mcp` shows the same list with the tools each server exposes. With read-only access you'll see `list_status_pages`, `list_status_reports`, `list_maintenances`, `list_monitors`, and the other read tools. With read & write you'll also see `create_status_report`, `add_status_report_update`, `update_status_report`, `resolve_status_report`, and `create_maintenance`. The server filters mutation tools out for read-only connections, so a misconfigured client cannot call them.
+
+## Step 4: Run your first prompt
+
+Try a read tool first:
+
+```
+> list my openstatus status pages
+```
+
+Codex calls `list_status_pages`, asks for your approval if your approval policy requires it, and returns the slugs and ids in your workspace.
+
+With write access, draft an incident — Codex shows you the title, status, message, and notify choice **before** firing:
+
+```
+> draft a status report on my "api" page: investigating elevated latency on the payment endpoint, do not notify subscribers yet
+```
+
+The agent resolves the page id via `list_status_pages`, presents the draft, and only calls `create_status_report` once you confirm.
+
+## Headless setups: use an API key
+
+OAuth needs a browser on the same machine. In CI, on a remote box, or inside a container, pass an API key instead. Create one in **Settings > API Tokens** (scopes are immutable on a key) and add the header:
+
+```bash
+codex mcp add openstatus \
+  --url https://api.openstatus.dev/mcp \
+  --header "x-openstatus-key=os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+In a committed `.codex/config.toml`, read the key from the environment so it never lands in version control:
+
+```toml
+[mcp_servers.openstatus]
+url = "https://api.openstatus.dev/mcp"
+
+[mcp_servers.openstatus.env_http_headers]
+"x-openstatus-key" = "OPENSTATUS_API_KEY"
+```
+
+Export `OPENSTATUS_API_KEY` in your shell and Codex resolves it at connection time. When a header is present, the OAuth sign-in is skipped.
+
+## Built-in safeguards
+
+Four properties make this safe enough for a real incident:
+
+- **Workspace-scoped consent** — the token only reaches the workspace you approved, with the access level you chose. You can downgrade a client that asks for write access to read-only on the consent screen.
+- **Required `notify: boolean`** on every mutation tool — the schema rejects calls that omit it, so the LLM has to ask before firing. `notify: false` is a hard guarantee that no subscriber alert goes out.
+- **Lookup-before-mutate** — `create_status_report` and `create_maintenance` require a `pageId` resolved via `list_status_pages` rather than guessed.
+- **Audit log attribution** — every mutation lands in the audit log under `actor_type = 'mcp'`, with `actor_id` (the connection) and `actor_user_id` (the user who approved it), so AI-driven actions are traceable as a separate slice. Connecting and revoking are audited too.
+
+## Disconnecting
+
+Open **Settings > Integrations > Connected apps** in the dashboard. Each connection shows the client, its access, who connected it, and when it was last used. Revoke it and Codex's next call fails with `401`; run `codex mcp login openstatus` to reconnect. Members revoke their own connections; owners and admins can revoke any. Removing a member from the workspace revokes their connections automatically.
+
+To drop the credential on your side without touching the dashboard, run `codex mcp logout openstatus`. To remove the server entirely, run `codex mcp remove openstatus`.
+
+## Troubleshooting
+
+- **`codex mcp list` shows openstatus as needing sign-in.** Run `codex mcp login openstatus` again. Sanity-check reachability with `curl -i -H "Accept: text/event-stream" https://api.openstatus.dev/mcp` — a `401` with a `WWW-Authenticate` header means the server is up and waiting for a sign-in.
+- **The browser never opens.** Codex prints the authorization URL; open it in a browser on the same machine, since the callback lands on a `127.0.0.1` port Codex listens on. For remote sessions, use an [API key](#headless-setups-use-an-api-key).
+- **"Tool not available" when creating an incident.** Your connection is read-only. Sign in again and pick **Read & write**.
+- **Tools don't appear after editing `config.toml`.** Codex reads the file at startup; start a new session. In the ChatGPT desktop app, save the server and choose **Restart**.
+
+## What's next?
+
+- **[MCP Server Reference](https://www.openstatus.dev/docs/reference/mcp-server)** — full tool schema, error codes, OAuth endpoints, and scope mechanics.
+- **[Connect to ChatGPT](/guides/connect-openstatus-to-chatgpt)** — chat-shaped variant of this guide.
+- **[Connect to Claude Code](/guides/connect-openstatus-to-claude-code)** — the same setup for Anthropic's terminal agent.
+- **[Connect to opencode](/guides/connect-openstatus-to-opencode)** — the same setup for the open-source terminal agent.
+- **[Openstatus CLI](/tooling/cli)** — for terminal workflows that don't need an LLM in the loop.
+- **[Slack Agent](/status-page#slack-agent)** — for teams that live in Slack.
+
+## Frequently asked questions
+
+<Details summary="Does Codex support remote MCP servers like openstatus?">
+
+Yes. Codex supports stdio and Streamable HTTP MCP servers. The openstatus MCP server is a stateless Streamable HTTP endpoint, registered with `codex mcp add openstatus --url https://api.openstatus.dev/mcp`.
+
+</Details>
+
+<Details summary="What can Codex do once the openstatus MCP server is connected?">
+
+Codex can list status pages, status reports, monitors, and maintenance windows; create new status reports; append updates to existing reports; resolve reports; edit metadata; and schedule maintenance windows — all scoped to the workspace you picked when you approved the connection.
+
+</Details>
+
+<Details summary="Do I need an API key to connect Codex?">
+
+No. The openstatus MCP server is an OAuth 2.1 authorization server. `codex mcp login openstatus` opens a consent screen in your browser where you pick a workspace and an access level; tokens are issued and refreshed automatically. An API key in the `x-openstatus-key` header still works for CI and headless agents.
+
+</Details>
+
+<Details summary="Does the same setup work in the ChatGPT desktop app and the Codex IDE extension?">
+
+Yes. The Codex CLI, the Codex IDE extension, and the ChatGPT desktop app share one MCP configuration in `~/.codex/config.toml`. Register openstatus once and every surface picks it up; sign in once and the token is reused.
+
+</Details>
+
+<Details summary="Can Codex accidentally notify subscribers when creating an incident?">
+
+No. Every publishing tool (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) requires an explicit `notify: true | false` field. Codex must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag. `update_status_report` is metadata-only and has no notify path at all.
+
+</Details>
+
+<Details summary="How do I give Codex read-only access to my workspace?">
+
+Pick **Read-only** on the consent screen. The MCP server filters write tools out of the `tools/list` response for read-only connections, so Codex sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session.
+
+</Details>
+
+<Details summary="How do I disconnect Codex from my workspace?">
+
+Open **Settings > Integrations > Connected apps** in the openstatus dashboard and revoke the connection. Codex's next call fails with `401`; run `codex mcp login openstatus` to reconnect. Members revoke their own connections, owners and admins can revoke any.
+
+</Details>
+
+<Details summary="Where do MCP-driven changes appear in the audit log?">
+
+Every mutation routed through the MCP server lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the connection (`oat_<id>` for OAuth, the key id for an API key) and `actor_user_id` set to the user who approved the connection or created the key. This separates AI-driven actions from CLI, dashboard, and direct API mutations.
+
+</Details>
+
+<Details summary="Can I commit the MCP configuration to my repository?">
+
+Yes. Add the `[mcp_servers.openstatus]` block to a project-scoped `.codex/config.toml` at the repo root with no header; Codex reads it for trusted projects and each teammate signs in with OAuth on first use. For CI, use `env_http_headers` to read `x-openstatus-key` from an environment variable so the secret stays out of source control.
+
+</Details>
+
+---
+
+Start free. No credit card required. Configure Codex to drive your status pages in under 5 minutes.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---

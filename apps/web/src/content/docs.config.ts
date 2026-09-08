@@ -153,8 +153,8 @@ export const docsNav: DocsNavSection[] = [
         label: "How to Auto-Post Status Updates to X and Bluesky",
       },
       {
-        slug: "guides/how-to-connect-openstatus-to-claude-code",
-        label: "How to Connect openstatus to Claude Code",
+        slug: "guides/how-to-connect-openstatus-to-your-agent",
+        label: "How to Connect openstatus to Your Coding Agent",
       },
       {
         slug: "guides/how-to-manage-openstatus-with-terraform",
