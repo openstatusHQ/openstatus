@@ -47,12 +47,12 @@ Create (or temporarily reconfigure) a monitor with these settings:
 - **Frequency:** `1 minute` — so you don't have to wait long.
 - **Notification channel:** the one you just created.
 
-Wait a couple of minutes. Once enough consecutive checks have failed to cross the trigger threshold (50% of recent checks — see [Incident Reference](/docs/reference/incident)), openstatus opens an incident and fires the notification.
+Wait a couple of minutes. Once at least half of the monitor's configured regions report an `error` (a single-region monitor triggers on its one region — see [Incident Reference](/docs/reference/incident)), openstatus opens an incident and fires the notification.
 
 Check the inbox you used in step 1. You should see an alert with the monitor name, the URL, the status code, and a link back to the dashboard. Delete the test monitor — or point it back at a real URL — once you've confirmed the email arrived.
 
 <Aside type="tip">
-The same trigger threshold that fires the alert also gates *recovery*. If you point the test monitor back at a healthy URL, you'll get a second email confirming the monitor is up again, once enough checks have passed.
+The same region agreement that fires the alert also gates *recovery*. If you point the test monitor back at a healthy URL, you'll get a second email confirming the monitor is up again, once the regions report success again.
 </Aside>
 
 ## What you've accomplished
