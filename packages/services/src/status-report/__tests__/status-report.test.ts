@@ -4,9 +4,9 @@ import {
   pageComponent,
   pageSubscriber,
   statusReport,
+  statusReportsToPageComponents,
   statusReportUpdate,
   statusReportUpdateToPageComponents,
-  statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import {
@@ -18,8 +18,8 @@ import {
 } from "@std/testing/bdd";
 
 import {
-  expectAuditRow,
   createWorkspaceFixture,
+  expectAuditRow,
   makeApiKeyCtx,
   makeSlackCtx,
   makeUserCtx,
@@ -535,6 +535,69 @@ describe("updateStatusReportUpdate", () => {
 });
 
 describe("listStatusReports / getStatusReport", () => {
+  test("returns equal-date updates by descending id after sorting by date", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const date = new Date("2026-01-02T00:00:00Z");
+      const { statusReport: report, initialUpdate } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-equal-date`,
+          status: "investigating",
+          message: "investigating",
+          date,
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+      const { statusReportUpdate: resolved } = await addStatusReportUpdate({
+        ctx,
+        input: {
+          statusReportId: report.id,
+          status: "resolved",
+          message: "all clear",
+          date,
+        },
+      });
+      const { statusReportUpdate: older } = await addStatusReportUpdate({
+        ctx,
+        input: {
+          statusReportId: report.id,
+          status: "identified",
+          message: "backfilled update",
+          date: new Date("2026-01-01T00:00:00Z"),
+        },
+      });
+
+      const full = await getStatusReport({ ctx, input: { id: report.id } });
+      const { items } = await listStatusReports({
+        ctx,
+        input: {
+          limit: 100,
+          offset: 0,
+          statuses: [],
+          order: "desc",
+          pageId: testPageId,
+        },
+      });
+      for (const result of [
+        full,
+        items.find((item) => item.id === report.id),
+      ]) {
+        expect(result?.updates.map((update) => update.id)).toEqual([
+          resolved.id,
+          initialUpdate.id,
+          older.id,
+        ]);
+        expect(result?.status).toBe("resolved");
+        expect(result?.updates[0]).toMatchObject({
+          status: "resolved",
+          message: "all clear",
+        });
+      }
+    });
+  });
+
   test("respects workspace isolation", async () => {
     await withTestTransaction(async (tx) => {
       const teamCtxTx = { ...teamCtx, db: tx };
