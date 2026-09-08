@@ -7,6 +7,7 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { LimitExceededError } from "../errors";
 import { assertWithinLimit } from "../limits";
 import type { Page } from "../types";
 import {
@@ -24,6 +25,17 @@ export async function createPage(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = CreatePageInput.parse(args.input);
+
+  if (input.customTheme && !ctx.workspace.limits["custom-theme"]) {
+    throw new LimitExceededError("custom-theme", 0);
+  }
+  if (
+    !ctx.workspace.limits.i18n &&
+    (input.defaultLocale !== "en" ||
+      input.locales?.some((locale) => locale !== "en"))
+  ) {
+    throw new LimitExceededError("i18n", 0);
+  }
 
   return withTransaction(ctx, async (tx) => {
     await assertWithinLimit({
