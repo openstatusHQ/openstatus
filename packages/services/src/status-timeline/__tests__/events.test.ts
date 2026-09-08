@@ -2,18 +2,20 @@ import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 
 import {
-  type Event,
-  type ImpactInterval,
-  type StatusData,
   activeReportStatus,
+  type Event,
   eventWorstImpact,
+  getEvents,
   getHighestPriorityStatus,
   getWorstVariant,
+  type ImpactInterval,
   isDateWithinEvent,
   reportEventDayImpact,
   reportEventDayStatus,
   resolveDayStatus,
+  type StatusData,
 } from "../events";
+import { durationDowntimeMs } from "../uptime";
 
 const day = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
 
@@ -40,6 +42,58 @@ function makeBucket(overrides: Partial<StatusData> = {}): StatusData {
     ...overrides,
   };
 }
+
+describe("getEvents incident timestamps", () => {
+  const now = Date.now();
+  const incident = {
+    id: 1,
+    title: "",
+    summary: "",
+    status: "resolved" as const,
+    monitorId: 1,
+    workspaceId: 1,
+    startedAt: new Date(now - 3_600_000),
+    acknowledgedAt: null,
+    acknowledgedBy: null,
+    resolvedAt: new Date(now),
+    resolvedBy: null,
+    incidentScreenshotUrl: null,
+    recoveryScreenshotUrl: null,
+    autoResolved: true,
+    createdAt: new Date(now - 1_800_000),
+    updatedAt: new Date(now),
+  };
+
+  test("counts the full outage when persistence is delayed or undated", () => {
+    for (const createdAt of [incident.createdAt, null]) {
+      const events = getEvents({
+        maintenances: [],
+        incidents: [{ ...incident, createdAt }],
+        reports: [],
+        monitorId: 1,
+      });
+
+      expect(events[0]?.from).toEqual(incident.startedAt);
+      expect(
+        durationDowntimeMs(events, {
+          start: now - 86_400_000,
+          end: now,
+          now,
+        }),
+      ).toBe(3_600_000);
+    }
+  });
+
+  test("filters old incident starts even when persistence is recent", () => {
+    const events = getEvents({
+      maintenances: [],
+      incidents: [{ ...incident, startedAt: new Date(now - 46 * 86_400_000) }],
+      reports: [],
+    });
+
+    expect(events).toEqual([]);
+  });
+});
 
 describe("getWorstVariant", () => {
   test("empty input is operational (success)", () => {

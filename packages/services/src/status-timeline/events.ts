@@ -311,11 +311,11 @@ export function getEvents({
         monitorId ? incident.monitorId === monitorId : true,
       )
       .forEach((incident) => {
-        if (!incident.createdAt || incident.createdAt < pastThreshold) return;
+        if (incident.startedAt < pastThreshold) return;
         events.push({
           id: incident.id,
           name: "Downtime",
-          from: incident.createdAt,
+          from: incident.startedAt,
           to: incident.resolvedAt,
           type: "incident",
           status: "error" as const,
