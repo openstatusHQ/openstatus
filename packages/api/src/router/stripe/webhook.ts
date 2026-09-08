@@ -14,22 +14,13 @@ import { z } from "zod";
 
 import { removeDomainFromVercelIfUnused } from "../../lib/vercel";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
-import { stripe } from "./shared";
-import { buildLimitsFromSubscription } from "./utils";
-
-// An unsupported price is a permanent misconfiguration; surface it as a 400 so
-// Stripe stops retrying instead of hammering the endpoint on a 5xx.
-function buildFromSubscriptionOrThrow(subscription: Stripe.Subscription) {
-  try {
-    return buildLimitsFromSubscription(subscription);
-  } catch (e) {
-    console.error(e);
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: e instanceof Error ? e.message : "Invalid subscription",
-    });
-  }
-}
+import {
+  buildFromSubscriptionOrThrow,
+  cancelSupersededSubscriptions,
+  getCurrentSubscription,
+  listLiveSubscriptions,
+  stripe,
+} from "./shared";
 
 const webhookProcedure = publicProcedure.input(
   z.object({
@@ -48,16 +39,29 @@ const webhookProcedure = publicProcedure.input(
 
 export const webhookRouter = createTRPCRouter({
   customerSubscriptionUpdated: webhookProcedure.mutation(async (opts) => {
-    const subscription = opts.input.event.data.object as Stripe.Subscription;
-
-    if (subscription.status !== "active") {
-      return;
-    }
+    const eventSubscription = opts.input.event.data
+      .object as Stripe.Subscription;
 
     const customerId =
-      typeof subscription.customer === "string"
-        ? subscription.customer
-        : subscription.customer.id;
+      typeof eventSubscription.customer === "string"
+        ? eventSubscription.customer
+        : eventSubscription.customer.id;
+
+    // Deliberately built from Stripe's live state rather than from
+    // `event.data.object`: Stripe guarantees neither delivery order nor
+    // exactly-once delivery, so a late or duplicated event would otherwise
+    // replay an outdated item set — re-enabling an addon the customer just
+    // removed, or dropping one they just bought. Re-reading makes every
+    // delivery converge on the same result. It also keeps
+    // `current_period_end` trustworthy, which the raw payload is not: it is
+    // serialised with the API version pinned on the Stripe *endpoint*, and
+    // newer versions moved that field onto the subscription items.
+    const { active, current } = await getCurrentSubscription(customerId);
+
+    // Nothing active left — `customer.subscription.deleted` owns the downgrade.
+    if (!current) {
+      return;
+    }
 
     const ws = await getWorkspaceByStripeId({
       input: { stripeId: customerId },
@@ -72,13 +76,23 @@ export const webhookRouter = createTRPCRouter({
 
     const oldPlan = ws.plan;
 
-    const built = buildFromSubscriptionOrThrow(subscription);
+    const built = buildFromSubscriptionOrThrow(current);
 
     // Subscription has no recognized plan item (e.g. a standalone addon sub);
     // nothing to sync here, unlike sessionCompleted which always has a plan.
+    // Bail before cancelling anything: if the newest subscription is not one
+    // we can classify, the plan may well be carried by an older one, and
+    // retiring that would leave the workspace paying for nothing.
     if (!built) {
       return;
     }
+
+    // The workspace follows the newest active subscription; anything older is
+    // a leftover from a plan change that went through checkout. Cancelling by
+    // age rather than by "whichever subscription this event named" is what
+    // stops a stale event from retiring the subscription the customer is
+    // actually on.
+    await cancelSupersededSubscriptions(active, current);
 
     // No `reason` metadata: `customer.subscription.updated` fires on trivial
     // changes too, so let the audit no-op-skip drop rows where nothing
@@ -92,26 +106,12 @@ export const webhookRouter = createTRPCRouter({
       },
       input: {
         plan: built.plan,
-        subscriptionId: subscription.id,
-        endsAt: new Date(subscription.current_period_end * 1000),
-        paidUntil: new Date(subscription.current_period_end * 1000),
+        subscriptionId: current.id,
+        endsAt: new Date(current.current_period_end * 1000),
+        paidUntil: new Date(current.current_period_end * 1000),
         limits: built.limits,
       },
     });
-
-    const allActive = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-    });
-
-    for (const sub of allActive.data) {
-      if (sub.id === subscription.id) continue;
-      try {
-        await stripe.subscriptions.cancel(sub.id);
-      } catch (e) {
-        console.error(`Failed to cancel duplicate subscription ${sub.id}:`, e);
-      }
-    }
 
     const newPlan = built.plan;
     if (newPlan !== oldPlan) {
@@ -179,6 +179,12 @@ export const webhookRouter = createTRPCRouter({
       });
     }
 
+    // Checkout always opens a new subscription, so anything else still active
+    // predates it and would keep billing. Retire it here instead of waiting
+    // for an unrelated `customer.subscription.updated` to come along.
+    const { active } = await getCurrentSubscription(customerId);
+    await cancelSupersededSubscriptions(active, subscription);
+
     await updateWorkspacePlan({
       ctx: {
         workspace: ws,
@@ -220,12 +226,14 @@ export const webhookRouter = createTRPCRouter({
         ? subscription.customer
         : subscription.customer.id;
 
-    const activeSubscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-    });
+    // Only the customer's *last* subscription going away is a downgrade. This
+    // event also fires for a subscription we retired ourselves as superseded,
+    // and for one Stripe cancelled after dunning while another still stands —
+    // in both cases the customer is still subscribed and the cascade below
+    // would be destructive.
+    const live = await listLiveSubscriptions(customerId);
 
-    if (activeSubscriptions.data.length > 0) {
+    if (live.length > 0) {
       return;
     }
 
