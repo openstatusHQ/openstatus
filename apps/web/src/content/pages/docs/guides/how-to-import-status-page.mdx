@@ -110,7 +110,7 @@ The import creates resources in openstatus but does not automatically make your 
 
 1. **Verify imported data** — open your status page and confirm that components, incidents, and maintenances appear correctly. Check that component groups are structured as expected.
 2. **Connect monitors to static components** — imported components may not have monitors attached. Navigate to each component and link an existing openstatus monitor, or [create a new monitor](/docs/tutorial/create-your-first-monitor) for it.
-3. **Update DNS for your custom domain** — if you are migrating a custom domain (e.g., `status.yourdomain.com`), update your CNAME record to point to `status.openstatus.dev`. See the [status page reference](/docs/reference/status-page) for DNS configuration details.
+3. **Update DNS for your custom domain** — if you are migrating a custom domain (e.g., `status.yourdomain.com`), point its CNAME record at `cname.vercel-dns.com` (or, for an apex domain, an A record at `76.76.21.21`). See the [status page reference](/docs/reference/status-page) for DNS configuration details.
 4. **Invite subscribers** — if your provider does not support subscriber export (Better Stack) or you need to re-verify email subscribers, use the openstatus subscription system to notify your users of the new page.
 
 ## Troubleshooting

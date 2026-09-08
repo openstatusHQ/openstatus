@@ -8,7 +8,7 @@ The openstatus Terraform provider lets you manage your monitoring infrastructure
 
 **Key capabilities:**
 
-- Manage HTTP, TCP, and DNS monitors with assertions.
+- Manage HTTP, TCP, DNS, and ICMP monitors with assertions.
 - Configure notification channels (Slack, PagerDuty, email, webhooks, and more).
 - Create and manage status pages with component groups.
 - Provision private locations and assign monitors to them.
@@ -46,6 +46,11 @@ provider "openstatus" {
 
 ## Resources
 
+<Aside>
+gRPC monitors are not yet exposed as a Terraform resource. Manage them from the dashboard, the
+[ConnectRPC API](https://api.openstatus.dev/openapi), or the CLI until the provider catches up.
+</Aside>
+
 ### `openstatus_http_monitor`
 
 Manages an HTTP monitor with support for custom headers, request bodies, and response assertions.
@@ -57,7 +62,7 @@ Manages an HTTP monitor with support for custom headers, request bodies, and res
 | `name`             | `string`        | Yes      |          | Monitor name (max 256 chars).                                               |
 | `url`              | `string`        | Yes      |          | URL to monitor (max 2048 chars).                                            |
 | `periodicity`      | `string`        | Yes      |          | Check frequency: `30s`, `1m`, `5m`, `10m`, `30m`, `1h`.                    |
-| `method`           | `string`        | No       | `"GET"`  | HTTP method: `GET`, `POST`, `HEAD`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`.   |
+| `method`           | `string`        | No       | `"GET"`  | HTTP method: `GET`, `POST`, `HEAD`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`, `TRACE`, `CONNECT`. |
 | `body`             | `string`        | No       | `""`     | Request body for `POST`, `PUT`, `PATCH` methods.                            |
 | `timeout`          | `number`        | No       | `45000`  | Timeout in milliseconds (0–120000).                                         |
 | `degraded_at`      | `number`        | No       | computed | Response time threshold (ms) after which the monitor is considered degraded. |
@@ -87,7 +92,11 @@ Manages an HTTP monitor with support for custom headers, request bodies, and res
   - `target` (string, required) — Expected value.
   - `comparator` (string, required) — Same comparators as `body_assertions`.
 
-**Read-only attributes:** `id` (string), `status` (string: `active`, `degraded`, `error`, `unknown`).
+- **`open_telemetry`** — Export this monitor's metrics to an OTLP endpoint (HTTP only).
+  - `endpoint` (string, optional) — OTLP metrics endpoint URL.
+  - `headers` (block list, optional) — Headers sent with each export; each has a required `key` and `value`.
+
+**Read-only attributes:** `id` (string), `status` (string: `active`, `degraded`, `error`, `unknown`), `private_location_ids` (set of string — managed from `openstatus_private_location.monitor_ids`).
 
 **Example — Basic health check:**
 
@@ -197,7 +206,13 @@ Manages a TCP connection monitor to verify that a port is open and reachable.
 | `description` | `string`      | No       |          | Monitor description (max 1024 chars).                              |
 | `regions`     | `set(string)` | No       |          | Regions to monitor from. See [Available Regions](#available-regions). |
 
-**Read-only attributes:** `id` (string), `status` (string).
+**Blocks:**
+
+- **`open_telemetry`** — Export this monitor's metrics to an OTLP endpoint (HTTP only).
+  - `endpoint` (string, optional) — OTLP metrics endpoint URL.
+  - `headers` (block list, optional) — Headers sent with each export; each has a required `key` and `value`.
+
+**Read-only attributes:** `id` (string), `status` (string), `private_location_ids` (set of string — managed from `openstatus_private_location.monitor_ids`).
 
 **Example — Database port check:**
 
@@ -259,7 +274,11 @@ Manages a DNS monitor with support for record type assertions.
   - `target` (string, required) — Expected value.
   - `comparator` (string, required) — One of: `eq`, `neq`, `contains`, `not_contains`.
 
-**Read-only attributes:** `id` (string), `status` (string).
+- **`open_telemetry`** — Export this monitor's metrics to an OTLP endpoint (HTTP only).
+  - `endpoint` (string, optional) — OTLP metrics endpoint URL.
+  - `headers` (block list, optional) — Headers sent with each export; each has a required `key` and `value`.
+
+**Read-only attributes:** `id` (string), `status` (string), `private_location_ids` (set of string — managed from `openstatus_private_location.monitor_ids`).
 
 **Example — A record validation:**
 
@@ -302,6 +321,61 @@ resource "openstatus_dns_monitor" "email" {
 
 ```bash
 terraform import openstatus_dns_monitor.main_domain <monitor_id>
+```
+
+---
+
+### `openstatus_icmp_monitor`
+
+Manages an ICMP (ping) monitor that checks host reachability and round-trip latency.
+
+**Arguments:**
+
+| Argument      | Type          | Required | Default  | Description                                                        |
+| :------------ | :------------ | :------- | :------- | :----------------------------------------------------------------- |
+| `name`        | `string`      | Yes      |          | Monitor name (max 256 chars).                                      |
+| `uri`         | `string`      | Yes      |          | Target host or IP address to ping, without a port.                 |
+| `periodicity` | `string`      | Yes      |          | Check frequency: `30s`, `1m`, `5m`, `10m`, `30m`, `1h`.           |
+| `timeout`     | `number`      | No       | `45000`  | Budget in milliseconds for the whole check (0–120000).             |
+| `degraded_at` | `number`      | No       | computed | Average-latency threshold in milliseconds.                         |
+| `retry`       | `number`      | No       | `3`      | Number of retries on a fully failed check (0–10).                  |
+| `active`      | `bool`        | No       | `false`  | Whether the monitor is active.                                     |
+| `public`      | `bool`        | No       | `false`  | Whether the monitor is publicly visible.                           |
+| `description` | `string`      | No       |          | Monitor description (max 1024 chars).                              |
+| `regions`     | `set(string)` | No       |          | Regions to monitor from. See [Available Regions](#available-regions). |
+
+**Blocks:**
+
+- **`open_telemetry`** — Export this monitor's metrics to an OTLP endpoint (HTTP only).
+  - `endpoint` (string, optional) — OTLP metrics endpoint URL.
+  - `headers` (block list, optional) — Headers sent with each export; each has a required `key` and `value`.
+
+**Read-only attributes:** `id` (string), `status` (string), `private_location_ids` (set of string — managed from `openstatus_private_location.monitor_ids`).
+
+See the [ICMP monitor reference](/docs/reference/icmp-monitor) for how a check is run (three echo requests, average latency, packet loss).
+
+**Example — Gateway reachability:**
+
+```terraform
+resource "openstatus_icmp_monitor" "gateway" {
+  name        = "Gateway Ping"
+  description = "Round-trip latency to the upstream gateway."
+  uri         = "8.8.8.8"
+  periodicity = "1m"
+  timeout     = 10000
+  active      = true
+  regions     = ["fly-iad", "fly-fra"]
+
+  open_telemetry {
+    endpoint = "https://otel.example.com/v1/metrics"
+  }
+}
+```
+
+**Import:**
+
+```bash
+terraform import openstatus_icmp_monitor.gateway <monitor_id>
 ```
 
 ---
@@ -633,7 +707,7 @@ output "agent_token" {
 
 ### `openstatus_monitor`
 
-Look up a single monitor by ID. Works for HTTP, TCP, and DNS monitors.
+Look up a single monitor by ID. Works for HTTP, TCP, DNS, and ICMP monitors.
 
 ```terraform
 data "openstatus_monitor" "existing" {
@@ -649,7 +723,7 @@ output "monitor_type" {
 }
 ```
 
-**Computed attributes:** `type` (`http`, `tcp`, `dns`), `name`, `url` (HTTP only), `uri` (TCP/DNS only), `periodicity`, `method` (HTTP only), `active`, `public`, `description`, `timeout`, `status`.
+**Computed attributes:** `type` (`http`, `tcp`, `dns`, `icmp`), `name`, `url` (HTTP only), `uri` (TCP/DNS/ICMP only), `periodicity`, `method` (HTTP only), `active`, `public`, `description`, `timeout`, `status`, `private_location_ids`.
 
 ---
 

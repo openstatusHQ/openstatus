@@ -13,6 +13,7 @@ A status page is a dedicated web interface that publicly displays the operationa
 - Customisable branding and domain.
 - Multiple access control options.
 - Multi-language support with a locale switcher.
+- Configurable status trackers, history window, and uptime calculation.
 
 ## Configuration
 
@@ -86,6 +87,15 @@ Allows you to upload a custom favicon that will appear in browser tabs and bookm
 
 Selects one of the community themes for your status page. Browse and preview them in the [Theme Explorer](https://themes.openstatus.dev), or [contribute your own](/docs/guides/how-to-create-status-page-theme).
 
+### Appearance mode
+
+**Type:** Enum (optional, defaults to `system`)
+
+Whether the page follows the visitor's OS preference or is pinned to one mode.
+
+- `system` — follow the visitor's `prefers-color-scheme`.
+- `light` / `dark` — force that mode for every visitor and hide the toggle.
+
 ### Custom theme
 
 **Type:** Per-mode CSS variable overrides (included on Pro and Scale, available as a paid add-on on Starter)
@@ -148,6 +158,40 @@ Values accept any valid CSS value (colors in `oklch`, `hsl`, hex, lengths, etc.)
 **Regions** — differentiate the monitoring regions on the public monitor charts. Optional; the defaults cover all regions:
 
 `--rainbow-1`, `--rainbow-2`, `--rainbow-3`, `--rainbow-4`, `--rainbow-5`, `--rainbow-6`, `--rainbow-7`, `--rainbow-8`, `--rainbow-9`, `--rainbow-10`, `--rainbow-11`, `--rainbow-12`, `--rainbow-13`, `--rainbow-14`, `--rainbow-15`, `--rainbow-16`, `--rainbow-17`
+
+### Components and uptime display
+
+**Type:** Object (optional)
+
+Controls how each component's status tracker renders and how uptime is computed. Configured on
+the **Components** page in the dashboard; see
+[Configure your status page](/docs/guides/how-to-configure-status-page#1-components-configuration).
+
+| Field | Values | Default | Description |
+|---|---|---|---|
+| `type` | `absolute`, `manual` | `absolute` | Bar type. `absolute` draws each day proportionally; `manual` shows only the most significant status of the day. |
+| `value` | `duration`, `requests`, `manual` | `requests` | What the hover card and uptime percentage are derived from. Only meaningful when `type` is `absolute`. |
+| `uptime` | boolean | `true` | Whether the uptime percentage is shown at all. |
+| `days` | `30`, `45` | `45` | Number of days of history rendered on the bars. |
+
+See [Uptime calculation and shared values](/docs/concept/uptime-calculation-and-values) for what
+each mode actually measures.
+
+### Links
+
+**Type:** String (optional)
+
+Two optional URLs shown in the status page header.
+
+- **Homepage URL** — your logo links here instead of to the status page root.
+- **Contact URL** — renders a message icon linking to a contact page. A `mailto:` URL works too, e.g. `mailto:support@example.com`.
+
+### Search engine indexing
+
+**Type:** Boolean (optional, defaults to `true`)
+
+When enabled the page is indexable. Disable it to serve a `noindex` directive and keep the page
+out of search results — useful for an internal or pre-launch page. Available on paid plans.
 
 ### JSON feed
 

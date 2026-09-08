@@ -214,6 +214,10 @@ export const docsNav: DocsNavSection[] = [
             slug: "sdk/nodejs/notification-service",
             label: "Notification Service",
           },
+          {
+            slug: "sdk/nodejs/private-location-service",
+            label: "Private Location Service",
+          },
           { slug: "sdk/nodejs/health-service", label: "Health Service" },
           { slug: "sdk/nodejs/error-handling", label: "Error Handling" },
           { slug: "sdk/nodejs/typescript-tips", label: "TypeScript Tips" },
