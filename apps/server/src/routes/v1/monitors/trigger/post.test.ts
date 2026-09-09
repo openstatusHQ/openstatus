@@ -1,5 +1,13 @@
+import { db, eq } from "@openstatus/db";
+import { monitor } from "@openstatus/db/src/schema";
 import { createMonitor } from "@openstatus/db/src/test/factories";
-import { afterEach, expect, mock, test } from "@openstatus/test-utils";
+import {
+  afterAll,
+  afterEach,
+  expect,
+  mock,
+  test,
+} from "@openstatus/test-utils";
 
 import { app } from "@/index";
 
@@ -9,8 +17,19 @@ const mockFetch = mock();
 
 global.fetch = mockFetch as unknown as typeof fetch;
 
+// These create monitors in the seeded workspace 1. Without cleanup every local
+// run leaks a few more and eventually trips the plan's monitor limit, which
+// surfaces as unrelated 403s across the suite.
+const createdMonitorIds: number[] = [];
+
 afterEach(() => {
   mockFetch.mockReset();
+});
+
+afterAll(async () => {
+  for (const id of createdMonitorIds) {
+    await db.delete(monitor).where(eq(monitor.id, id));
+  }
 });
 
 test("trigger monitor with valid id should return 200", async () => {
@@ -194,6 +213,7 @@ test("trigger ICMP monitor is rejected by the legacy v1 API", async () => {
     regions: "ams",
     periodicity: "10m",
   });
+  createdMonitorIds.push(icmpMonitor.id);
 
   mockFetch.mockReturnValue(
     Promise.resolve(new Response(null, { status: 200 })),
@@ -224,6 +244,7 @@ test("trigger DNS monitor is rejected by the legacy v1 API", async () => {
     regions: "ams",
     periodicity: "10m",
   });
+  createdMonitorIds.push(dnsMonitor.id);
 
   mockFetch.mockReturnValue(
     Promise.resolve(new Response(null, { status: 200 })),

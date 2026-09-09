@@ -191,7 +191,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       cronTimestamp,
       regions: transition.affectedRegions,
       latency,
-      incidentId: transition.incidentId ?? undefined,
+      incidentId: transition.monitorIncidentId ?? undefined,
     });
   }
 

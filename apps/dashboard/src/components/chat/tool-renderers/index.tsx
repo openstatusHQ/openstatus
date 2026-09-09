@@ -15,11 +15,13 @@ import { createMaintenanceChanges } from "./create-maintenance";
 import { createStatusReportChanges } from "./create-status-report";
 import { DetailsTable } from "./details-table";
 import { getAuditLogChanges } from "./get-audit-log";
+import { getIncidentDetails } from "./get-incident";
 import { getMonitorDetails } from "./get-monitor";
 import { getMonitorStatusTable } from "./get-monitor-status";
 import { getMonitorSummaryDetails } from "./get-monitor-summary";
 import { getResponseLogDetails } from "./get-response-log";
 import { listAuditLogsTable } from "./list-audit-logs";
+import { listIncidentsTable } from "./list-incidents";
 import { listMaintenancesTable } from "./list-maintenances";
 import { listMonitorsTable } from "./list-monitors";
 import { listNotificationsTable } from "./list-notifications";
@@ -63,6 +65,49 @@ export const toolRenderers: ToolRendererRegistry = {
       <ResultTable {...listStatusPagesTable(output)} />
     ),
     summary: (o) => itemsCountSummary(o.items),
+  },
+  list_incidents: {
+    renderResult: ({ output }) => (
+      <ResultTable {...listIncidentsTable(output)} />
+    ),
+    summary: (o) => itemsCountSummary(o.items),
+  },
+  get_incident: {
+    renderResult: ({ output }) => (
+      <DetailsTable {...getIncidentDetails(output)} />
+    ),
+    summary: (o) => `${o.title} — ${o.status}`,
+  },
+  create_incident: {
+    renderDraft: (input) => [
+      { field: "title", after: input.title },
+      { field: "severity", after: input.severity },
+      { field: "summary", after: input.summary },
+    ],
+    summary: (o) => `Opened incident #${o.id}`,
+  },
+  update_incident: {
+    renderDraft: (input) => {
+      const rows: ChangeRow[] = [{ field: "id", after: input.id }];
+      if (input.title !== undefined)
+        rows.push({ field: "title", after: input.title });
+      if (input.summary !== undefined)
+        rows.push({ field: "summary", after: input.summary });
+      if (input.status !== undefined)
+        rows.push({ field: "status", after: input.status });
+      if (input.severity !== undefined)
+        rows.push({ field: "severity", after: input.severity });
+      return rows;
+    },
+    summary: (o) => `Updated incident #${o.id}`,
+  },
+  acknowledge_incident: {
+    renderDraft: (input) => [{ field: "id", after: input.id }],
+    summary: (o) => `Acknowledged incident #${o.id}`,
+  },
+  resolve_incident: {
+    renderDraft: (input) => [{ field: "id", after: input.id }],
+    summary: (o) => `Resolved incident #${o.id}`,
   },
   list_page_components: {
     renderResult: ({ output }) => (

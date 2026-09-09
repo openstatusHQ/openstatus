@@ -1,7 +1,7 @@
 import { and, count, db, eq, isNull } from "@openstatus/db";
 import {
   notificationOutbox,
-  incidentTable,
+  monitorIncidentTable,
   monitor,
   monitorStatusTable,
 } from "@openstatus/db/src/schema";
@@ -109,11 +109,11 @@ describe("handleStatusDriftCron", () => {
 
     const incidents = await db
       .select({ total: count() })
-      .from(incidentTable)
+      .from(monitorIncidentTable)
       .where(
         and(
-          eq(incidentTable.monitorId, monitorRow.id),
-          isNull(incidentTable.resolvedAt),
+          eq(monitorIncidentTable.monitorId, monitorRow.id),
+          isNull(monitorIncidentTable.resolvedAt),
         ),
       )
       .all();

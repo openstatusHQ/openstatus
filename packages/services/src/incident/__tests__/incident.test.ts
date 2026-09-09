@@ -1,104 +1,61 @@
 import { db, eq } from "@openstatus/db";
-import { incidentTable, monitor } from "@openstatus/db/src/schema";
+import { incidentTable, page } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
-  expectAuditRow,
   createWorkspaceFixture,
+  expectAuditRow,
   makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { DrizzleTx, ServiceContext } from "../../context";
+import type { ServiceContext } from "../../context";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../errors";
 import { acknowledgeIncident } from "../acknowledge";
+import { createIncident } from "../create";
 import { deleteIncident } from "../delete";
 import { getIncident, listIncidents } from "../list";
+import { promoteIncident } from "../promote";
 import { resolveIncident } from "../resolve";
+import { updateIncident } from "../update";
 
-const TEST_PREFIX = "svc-incident-test";
+const TEST_PREFIX = "svc-new-incident-test";
 
 let teamCtx: ServiceContext;
-let freeCtx: ServiceContext;
-let testMonitorId: number;
+let otherCtx: ServiceContext;
 
 beforeAll(async () => {
   const team = (await createWorkspaceFixture("team")).workspace;
-  const free = (await createWorkspaceFixture("free")).workspace;
+  const other = (await createWorkspaceFixture("team")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
-  freeCtx = makeUserCtx(free, { userId: 2 });
-
-  const monitorRow = await db
-    .insert(monitor)
-    .values({
-      workspaceId: team.id,
-      active: true,
-      url: "https://example.com",
-      name: `${TEST_PREFIX}-monitor`,
-      method: "GET",
-      periodicity: "10m",
-      regions: "ams",
-    })
-    .returning()
-    .get();
-  testMonitorId = monitorRow.id;
+  otherCtx = makeUserCtx(other, { userId: 2 });
 });
 
-afterAll(async () => {
-  await db
-    .delete(monitor)
-    .where(eq(monitor.id, testMonitorId))
-    .catch(() => undefined);
-});
-
-let nextStartedAtOffset = 0;
-async function insertIncident(
-  tx: DrizzleTx,
-  opts: {
-    workspaceId: number;
-    monitorId: number;
-    acknowledgedAt?: Date;
-    resolvedAt?: Date;
-  },
-) {
-  // Unique `(monitor_id, started_at)` constraint means we bump per-call.
-  nextStartedAtOffset += 1;
-  const startedAt = new Date(Date.now() - nextStartedAtOffset * 60 * 1000);
-  const row = await tx
-    .insert(incidentTable)
-    .values({
-      workspaceId: opts.workspaceId,
-      monitorId: opts.monitorId,
-      startedAt,
-      acknowledgedAt: opts.acknowledgedAt ?? null,
-      resolvedAt: opts.resolvedAt ?? null,
-    })
-    .returning()
-    .get();
-  return row;
-}
-
-describe("acknowledgeIncident", () => {
-  test("stamps acknowledgedAt + acknowledgedBy and emits audit", async () => {
+describe("createIncident", () => {
+  test("creates an external incident and writes an audit row", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-
-      const updated = await acknowledgeIncident({
+      const incident = await createIncident({
         ctx,
-        input: { id: incident.id },
+        input: {
+          title: `${TEST_PREFIX}-a`,
+          summary: "",
+          severity: "critical",
+          origin: "external",
+          fingerprint: "group-a",
+        },
       });
 
-      expect(updated.acknowledgedAt).toBeInstanceOf(Date);
-      expect(updated.acknowledgedBy).toBe(1);
+      expect(incident.origin).toBe("external");
+      expect(incident.status).toBe("triage");
+      expect(incident.severity).toBe("critical");
+      expect(incident.resolvedAt).toBe(null);
+      expect(incident.startedAt.getTime()).toBe(incident.lastSeenAt.getTime());
 
       await expectAuditRow({
         workspaceId: teamCtx.workspace.id,
-        action: "incident.update",
+        action: "incident.create",
         entityType: "incident",
         entityId: incident.id,
         db: tx,
@@ -106,216 +63,219 @@ describe("acknowledgeIncident", () => {
     });
   });
 
-  test("throws ConflictError when already acknowledged", async () => {
-    await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-        acknowledgedAt: new Date(),
-      });
-
-      await expect(
-        acknowledgeIncident({ ctx, input: { id: incident.id } }),
-      ).rejects.toBeInstanceOf(ConflictError);
+  test("rejects a read-only actor", async () => {
+    const ctx = makeApiKeyCtx(teamCtx.workspace, {
+      keyId: "k1",
+      scopes: ["read"],
     });
-  });
-
-  test("throws NotFoundError for a cross-workspace incident", async () => {
-    await withTestTransaction(async (tx) => {
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-
-      await expect(
-        acknowledgeIncident({
-          ctx: { ...freeCtx, db: tx },
-          input: { id: incident.id },
-        }),
-      ).rejects.toBeInstanceOf(NotFoundError);
-    });
-  });
-
-  test("rejects read-only actor", async () => {
-    await withTestTransaction(async (tx) => {
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-      const ctx = {
-        ...makeApiKeyCtx(teamCtx.workspace, {
-          keyId: "k-read",
-          userId: 1,
-          scopes: ["read"],
-        }),
-        db: tx,
-      };
-      await expect(
-        acknowledgeIncident({ ctx, input: { id: incident.id } }),
-      ).rejects.toBeInstanceOf(ForbiddenError);
-    });
-  });
-});
-
-describe("resolveIncident", () => {
-  test("stamps resolvedAt + resolvedBy", async () => {
-    await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-
-      const updated = await resolveIncident({
+    await expect(
+      createIncident({
         ctx,
-        input: { id: incident.id },
-      });
-      expect(updated.resolvedAt).toBeInstanceOf(Date);
-      expect(updated.resolvedBy).toBe(1);
-    });
-  });
-
-  test("throws ConflictError when already resolved", async () => {
-    await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-        resolvedAt: new Date(),
-      });
-
-      await expect(
-        resolveIncident({ ctx, input: { id: incident.id } }),
-      ).rejects.toBeInstanceOf(ConflictError);
-    });
-  });
-
-  test("throws NotFoundError for a cross-workspace incident", async () => {
-    await withTestTransaction(async (tx) => {
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-
-      await expect(
-        resolveIncident({
-          ctx: { ...freeCtx, db: tx },
-          input: { id: incident.id },
-        }),
-      ).rejects.toBeInstanceOf(NotFoundError);
-    });
-  });
-});
-
-describe("deleteIncident", () => {
-  test("removes the row and emits audit", async () => {
-    await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-
-      await deleteIncident({ ctx, input: { id: incident.id } });
-
-      const remaining = await tx
-        .select()
-        .from(incidentTable)
-        .where(eq(incidentTable.id, incident.id))
-        .all();
-      expect(remaining).toHaveLength(0);
-
-      await expectAuditRow({
-        workspaceId: teamCtx.workspace.id,
-        action: "incident.delete",
-        entityType: "incident",
-        entityId: incident.id,
-        db: tx,
-      });
-    });
-  });
-
-  test("throws NotFoundError for cross-workspace delete", async () => {
-    await withTestTransaction(async (tx) => {
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-
-      await expect(
-        deleteIncident({
-          ctx: { ...freeCtx, db: tx },
-          input: { id: incident.id },
-        }),
-      ).rejects.toBeInstanceOf(NotFoundError);
-    });
-  });
-});
-
-describe("list / get", () => {
-  test("respects workspace isolation and enriches monitor", async () => {
-    await withTestTransaction(async (tx) => {
-      const teamCtxTx = { ...teamCtx, db: tx };
-      const freeCtxTx = { ...freeCtx, db: tx };
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-
-      const full = await getIncident({
-        ctx: teamCtxTx,
-        input: { id: incident.id },
-      });
-      expect(full.monitor?.id).toBe(testMonitorId);
-
-      await expect(
-        getIncident({ ctx: freeCtxTx, input: { id: incident.id } }),
-      ).rejects.toBeInstanceOf(NotFoundError);
-
-      const { items } = await listIncidents({
-        ctx: freeCtxTx,
         input: {
-          limit: 100,
-          offset: 0,
-          order: "desc",
+          title: "nope",
+          summary: "",
+          severity: "info",
+          origin: "manual",
         },
-      });
-      expect(items.find((r) => r.id === incident.id)).toBeUndefined();
-    });
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
-  test("list batch-enriches monitors without duplication", async () => {
+  test("a second open incident for one fingerprint is unrepresentable", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const a = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-      // Only one incident per monitor may be open at a time
-      // (partial unique index `incident_open_idx`), so the second is resolved.
-      const b = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-        resolvedAt: new Date(),
-      });
+      const source = await tx
+        .insert(incidentTable)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          title: `${TEST_PREFIX}-dup`,
+          origin: "external",
+          fingerprint: null,
+          alertSourceId: null,
+          startedAt: new Date(),
+          lastSeenAt: new Date(),
+        })
+        .returning()
+        .get();
+      expect(source.id).toBeTruthy();
+    });
+  });
+});
 
-      const { items } = await listIncidents({
+describe("acknowledgeIncident / resolveIncident", () => {
+  test("acknowledge moves triage to investigating, then resolve closes it", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const created = await createIncident({
         ctx,
         input: {
-          limit: 100,
-          offset: 0,
-          order: "desc",
-          monitorId: testMonitorId,
+          title: `${TEST_PREFIX}-b`,
+          summary: "",
+          severity: "warning",
+          origin: "manual",
         },
       });
 
-      // Both incidents share the monitor — they should share the same enriched
-      // Monitor object (same-pageId dedup logic in the batch loader).
-      const ours = items.filter((i) => i.id === a.id || i.id === b.id);
-      expect(ours).toHaveLength(2);
-      expect(ours[0]?.monitor?.id).toBe(testMonitorId);
-      expect(ours[1]?.monitor?.id).toBe(testMonitorId);
+      const acked = await acknowledgeIncident({
+        ctx,
+        input: { id: created.id },
+      });
+      expect(acked.acknowledgedAt).not.toBe(null);
+      expect(acked.status).toBe("investigating");
+
+      await expect(
+        acknowledgeIncident({ ctx, input: { id: created.id } }),
+      ).rejects.toBeInstanceOf(ConflictError);
+
+      const resolved = await resolveIncident({
+        ctx,
+        input: { id: created.id },
+      });
+      expect(resolved.resolvedAt).not.toBe(null);
+      expect(resolved.status).toBe("resolved");
+      expect(resolved.autoResolved).toBe(false);
+
+      await expect(
+        resolveIncident({ ctx, input: { id: created.id } }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
+  });
+});
+
+describe("workspace scoping", () => {
+  test("another workspace cannot read, update or delete the incident", async () => {
+    await withTestTransaction(async (tx) => {
+      const created = await createIncident({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          title: `${TEST_PREFIX}-c`,
+          summary: "",
+          severity: "info",
+          origin: "manual",
+        },
+      });
+      const foreign = { ...otherCtx, db: tx };
+
+      await expect(
+        getIncident({ ctx: foreign, input: { id: created.id } }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+      await expect(
+        updateIncident({ ctx: foreign, input: { id: created.id, title: "x" } }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+      await expect(
+        deleteIncident({ ctx: foreign, input: { id: created.id } }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+});
+
+describe("listIncidents", () => {
+  test("returns only this workspace's incidents, newest first", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await createIncident({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-old`,
+          summary: "",
+          severity: "info",
+          origin: "manual",
+          startedAt: new Date(Date.now() - 60_000),
+        },
+      });
+      const newer = await createIncident({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-new`,
+          summary: "",
+          severity: "info",
+          origin: "manual",
+        },
+      });
+
+      const { items } = await listIncidents({ ctx, input: { order: "desc" } });
+      expect(items.length).toBeGreaterThanOrEqual(2);
+      expect(items[0].id).toBe(newer.id);
+      for (const item of items) {
+        expect(item.workspaceId).toBe(teamCtx.workspace.id);
+      }
+    });
+  });
+
+  test("filters by origin", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await createIncident({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-ext`,
+          summary: "",
+          severity: "info",
+          origin: "external",
+        },
+      });
+      const { items } = await listIncidents({
+        ctx,
+        input: { origin: "external" },
+      });
+      for (const item of items) expect(item.origin).toBe("external");
+    });
+  });
+});
+
+describe("promoteIncident", () => {
+  test("creates a status report and links it back, once", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const pageRow = await tx
+        .insert(page)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          title: `${TEST_PREFIX}-page`,
+          description: "",
+          slug: `${TEST_PREFIX}-${Date.now()}`,
+          customDomain: "",
+        })
+        .returning()
+        .get();
+
+      const created = await createIncident({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-promote`,
+          summary: "",
+          severity: "critical",
+          origin: "external",
+        },
+      });
+
+      const { incident, statusReport } = await promoteIncident({
+        ctx,
+        input: {
+          id: created.id,
+          pageId: pageRow.id,
+          pageComponentIds: [],
+          message: "We are looking into it.",
+        },
+      });
+
+      expect(statusReport.id).toBeTruthy();
+      expect(incident.statusReportId).toBe(statusReport.id);
+      expect(statusReport.title).toBe(created.title);
+
+      await expect(
+        promoteIncident({
+          ctx,
+          input: {
+            id: created.id,
+            pageId: pageRow.id,
+            pageComponentIds: [],
+            message: "again",
+          },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+
+      await tx.delete(incidentTable).where(eq(incidentTable.id, created.id));
     });
   });
 });

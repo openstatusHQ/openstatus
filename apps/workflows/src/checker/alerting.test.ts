@@ -98,6 +98,19 @@ beforeAll(async () => {
   await linkNotificationToMonitor(emailNotificationId, emailMonitorId);
 });
 
+// `alerting.ts` uses notification_trigger's unique index as a delivery lock, and
+// these tests use fixed cronTimestamps — leaving rows behind makes the *next*
+// local run silently skip every send. CI never sees it: each package gets a
+// fresh database.
+afterAll(async () => {
+  for (const monitorId of [emailMonitorId, noNotifMonitorId]) {
+    await db
+      .delete(notificationTrigger)
+      .where(eq(notificationTrigger.monitorId, monitorId))
+      .run();
+  }
+});
+
 await describe("triggerNotifications", async () => {
   test("should send alert notification and return triggered list", async () => {
     const cronTimestamp = 9000001;

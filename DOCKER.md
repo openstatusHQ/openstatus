@@ -55,12 +55,23 @@ docker builder prune
 | workflows | 3000 | Background jobs |
 | server | 3001 | API backend (tRPC) |
 | dashboard | 3002 | Admin interface |
+| ingest | 3004 | Third-party alert webhooks |
 | status-page | 3003 | Public status pages |
 | private-location | 8081 | Monitoring agent |
 | libsql | 8080 | Database (HTTP) |
 | libsql | 5001 | Database (gRPC) |
 | tinybird-local | 7181 | Analytics |
 
+
+### Alert ingest and rate limiting
+
+The `ingest` service receives third-party alert webhooks at
+`POST /v1/ingest/<provider>`. Per-source rate limiting uses Upstash Redis, which
+is **not part of this compose file**: without `UPSTASH_REDIS_REST_URL` and
+`UPSTASH_REDIS_REST_TOKEN`, ingest runs normally but applies **no rate limit**.
+That is deliberate — a missing cache must not stop alerts from being accepted —
+but it means a runaway sender can fill `alert_inbox`. Set those variables if you
+expose ingest to the internet.
 
 ## Architecture
 

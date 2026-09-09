@@ -1,0 +1,28 @@
+import { AppHeader, AppHeaderContent } from "@/components/nav/app-header";
+import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+
+import { Breadcrumb } from "./breadcrumb";
+
+export default async function Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery(trpc.incident.list.queryOptions({}));
+
+  return (
+    <HydrateClient>
+      <div>
+        <AppHeader>
+          <AppHeaderContent>
+            <AppSidebarTrigger />
+            <Breadcrumb />
+          </AppHeaderContent>
+        </AppHeader>
+        <main className="w-full flex-1">{children}</main>
+      </div>
+    </HydrateClient>
+  );
+}

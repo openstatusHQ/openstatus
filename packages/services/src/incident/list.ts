@@ -6,17 +6,12 @@ import {
   desc,
   eq,
   gte,
-  inArray,
-  sql,
 } from "@openstatus/db";
-import {
-  incidentTable,
-  monitor,
-  selectMonitorSchema,
-} from "@openstatus/db/src/schema";
+import { incidentTable } from "@openstatus/db/src/schema";
+import type { z } from "zod";
 
-import type { DB, ServiceContext } from "../context";
-import type { Incident, Monitor } from "../types";
+import type { ServiceContext } from "../context";
+import type { Incident } from "../types";
 import { getIncidentInWorkspace } from "./internal";
 import {
   GetIncidentInput,
@@ -34,116 +29,56 @@ function periodToSince(period: IncidentListPeriod): Date {
       return new Date(now - 7 * day);
     case "14d":
       return new Date(now - 14 * day);
+    case "30d":
+      return new Date(now - 30 * day);
   }
 }
-
-export type IncidentWithRelations = Incident & {
-  monitor: Monitor | null;
-};
 
 export type ListIncidentsResult = {
-  items: IncidentWithRelations[];
-  totalSize: number;
+  items: Incident[];
 };
-
-/**
- * Load each incident's monitor in a single IN query against distinct
- * `monitorId`s — avoids the per-row fetch that would balloon with the
- * 10_000 sentinel tRPC passes. Scoped to `workspaceId` for defence-in-depth:
- * the `incident.monitorId` column has no FK constraint against workspace
- * ownership, so a cross-workspace pointer (however unlikely) should not
- * leak the other workspace's monitor row.
- */
-async function enrichIncidentsBatch(
-  db: DB,
-  rows: Incident[],
-  workspaceId: number,
-): Promise<IncidentWithRelations[]> {
-  if (rows.length === 0) return [];
-
-  const monitorIdsSet = new Set<number>();
-  for (const r of rows) if (r.monitorId != null) monitorIdsSet.add(r.monitorId);
-  const monitorIds = Array.from(monitorIdsSet);
-
-  const monitorById = new Map<number, Monitor>();
-  if (monitorIds.length > 0) {
-    const monitorRows = await db
-      .select()
-      .from(monitor)
-      .where(
-        and(
-          inArray(monitor.id, monitorIds),
-          eq(monitor.workspaceId, workspaceId),
-        ),
-      )
-      .all();
-    for (const m of monitorRows) {
-      monitorById.set(m.id, selectMonitorSchema.parse(m));
-    }
-  }
-
-  return rows.map((r) => ({
-    ...r,
-    monitor:
-      r.monitorId != null ? (monitorById.get(r.monitorId) ?? null) : null,
-  }));
-}
 
 export async function listIncidents(args: {
   ctx: ServiceContext;
-  input: ListIncidentsInput;
+  input?: z.input<typeof ListIncidentsInput>;
 }): Promise<ListIncidentsResult> {
   const { ctx } = args;
-  const input = ListIncidentsInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const input = ListIncidentsInput.parse(args.input ?? {});
+  const tx = ctx.db ?? defaultDb;
 
   const conditions: SQL[] = [eq(incidentTable.workspaceId, ctx.workspace.id)];
-  if (input.monitorId !== undefined) {
-    conditions.push(eq(incidentTable.monitorId, input.monitorId));
-  }
-  if (input.period !== undefined) {
+  if (input.period) {
     conditions.push(gte(incidentTable.startedAt, periodToSince(input.period)));
   }
-  const whereClause = and(...conditions);
+  if (input.status) conditions.push(eq(incidentTable.status, input.status));
+  if (input.origin) conditions.push(eq(incidentTable.origin, input.origin));
 
-  const [countRow, rows] = await Promise.all([
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(incidentTable)
-      .where(whereClause)
-      .get(),
-    db
-      .select()
-      .from(incidentTable)
-      .where(whereClause)
-      .orderBy(
-        input.order === "asc"
-          ? asc(incidentTable.startedAt)
-          : desc(incidentTable.startedAt),
-      )
-      .limit(input.limit)
-      .offset(input.offset)
-      .all(),
-  ]);
+  const items = await tx
+    .select()
+    .from(incidentTable)
+    .where(and(...conditions))
+    .orderBy(
+      input.order === "asc"
+        ? asc(incidentTable.startedAt)
+        : desc(incidentTable.startedAt),
+    )
+    .limit(input.limit)
+    .offset(input.offset)
+    .all();
 
-  const totalSize = countRow?.count ?? 0;
-  const items = await enrichIncidentsBatch(db, rows, ctx.workspace.id);
-  return { items, totalSize };
+  return { items };
 }
 
 export async function getIncident(args: {
   ctx: ServiceContext;
   input: GetIncidentInput;
-}): Promise<IncidentWithRelations> {
+}): Promise<Incident> {
   const { ctx } = args;
   const input = GetIncidentInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
-  const record = await getIncidentInWorkspace({
-    tx: db,
+  const tx = ctx.db ?? defaultDb;
+  return getIncidentInWorkspace({
+    tx,
     id: input.id,
     workspaceId: ctx.workspace.id,
   });
-  const [enriched] = await enrichIncidentsBatch(db, [record], ctx.workspace.id);
-  // oxlint-disable-next-line typescript/no-non-null-assertion -- always defined for len === 1
-  return enriched!;
 }

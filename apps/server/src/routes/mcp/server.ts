@@ -4,6 +4,7 @@ import type { ServiceContext } from "@openstatus/services";
 import packageJson from "../../../package.json" with { type: "json" };
 import { registerPublicResources } from "./resources";
 import { registerAuditTools } from "./tools/audit";
+import { registerIncidentTools } from "./tools/incident";
 import { registerMaintenanceTools } from "./tools/maintenance";
 import { registerMonitorTools } from "./tools/monitor";
 import { registerNotificationTools } from "./tools/notification";
@@ -30,6 +31,7 @@ export function createMcpServer(ctx: ServiceContext): McpServer {
   registerPublicResources(server);
   registerPageTools(server, ctx);
   registerStatusReportTools(server, ctx);
+  registerIncidentTools(server, ctx);
   registerMaintenanceTools(server, ctx);
   registerMonitorTools(server, ctx);
   registerNotificationTools(server, ctx);

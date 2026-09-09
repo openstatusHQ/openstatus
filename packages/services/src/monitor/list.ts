@@ -10,7 +10,7 @@ import {
   sql,
 } from "@openstatus/db";
 import {
-  incidentTable,
+  monitorIncidentTable,
   monitor,
   monitorTag,
   monitorTagsToMonitors,
@@ -18,7 +18,7 @@ import {
   notificationsToMonitors,
   privateLocation,
   privateLocationToMonitors,
-  selectIncidentSchema,
+  selectMonitorIncidentSchema,
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
@@ -27,7 +27,7 @@ import {
 
 import type { DB, ServiceContext } from "../context";
 import type {
-  Incident,
+  MonitorIncident,
   Monitor,
   MonitorTag,
   Notification,
@@ -38,12 +38,12 @@ import { GetMonitorInput, ListMonitorsInput } from "./schemas";
 
 export type MonitorListItem = Monitor & {
   tags: MonitorTag[];
-  incidents: Incident[];
+  incidents: MonitorIncident[];
 };
 
 export type MonitorWithRelations = Monitor & {
   tags: MonitorTag[];
-  incidents: Incident[];
+  incidents: MonitorIncident[];
   notifications: Notification[];
   privateLocations: PrivateLocation[];
 };
@@ -92,14 +92,14 @@ async function enrichMonitorsBatch(
       .all(),
     db
       .select()
-      .from(incidentTable)
+      .from(monitorIncidentTable)
       .where(
         and(
-          inArray(incidentTable.monitorId, ids),
+          inArray(monitorIncidentTable.monitorId, ids),
           // Scope to caller's workspace — defence-in-depth in case an
           // incident.monitorId somehow points cross-workspace. The
           // `incident.monitorId` FK doesn't enforce workspace ownership.
-          eq(incidentTable.workspaceId, workspaceId),
+          eq(monitorIncidentTable.workspaceId, workspaceId),
         ),
       )
       .all(),
@@ -151,10 +151,10 @@ async function enrichMonitorsBatch(
     else tagsByMonitor.set(row.monitorId, [tag]);
   }
 
-  const incidentsByMonitor = new Map<number, Incident[]>();
+  const incidentsByMonitor = new Map<number, MonitorIncident[]>();
   for (const row of incidentRows) {
     if (row.monitorId == null) continue;
-    const incident = selectIncidentSchema.parse(row);
+    const incident = selectMonitorIncidentSchema.parse(row);
     const arr = incidentsByMonitor.get(row.monitorId);
     if (arr) arr.push(incident);
     else incidentsByMonitor.set(row.monitorId, [incident]);

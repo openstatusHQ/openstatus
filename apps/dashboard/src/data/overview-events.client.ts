@@ -8,7 +8,7 @@ import {
   Maintenance as MaintenanceIcon,
 } from "@openstatus/icons";
 
-type Incident = RouterOutputs["incident"]["list"][number];
+type Incident = RouterOutputs["monitorIncident"]["list"][number];
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 

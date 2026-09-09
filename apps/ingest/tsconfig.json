@@ -1,0 +1,14 @@
+{
+  "extends": "../../packages/tsconfig/base.json",
+  "include": ["src", "*.ts", "**/*.ts"],
+  "compilerOptions": {
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "types": [],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

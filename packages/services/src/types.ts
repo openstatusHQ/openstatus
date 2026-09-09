@@ -24,7 +24,14 @@ export type { Page, PageComponent } from "@openstatus/db/src/schema";
 
 export type { Maintenance } from "@openstatus/db/src/schema";
 
-export type { Incident, Monitor } from "@openstatus/db/src/schema";
+export type {
+  AlertDeadLetter,
+  AlertInbox,
+  AlertSource,
+  Incident,
+  MonitorIncident,
+  Monitor,
+} from "@openstatus/db/src/schema";
 
 export type {
   MonitorTag,

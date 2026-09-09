@@ -1,5 +1,5 @@
 import type {
-  Incident,
+  MonitorIncident,
   Maintenance,
   PageComponent,
   StatusReport,
@@ -1129,7 +1129,7 @@ describe("getEvents - pageComponent filtering", () => {
   }
 
   // Helper to create a mock incident
-  function createMockIncident(id: number, monitorId: number): Incident {
+  function createMockIncident(id: number, monitorId: number): MonitorIncident {
     const now = new Date();
     const startedAt = new Date(now.getTime() - 1000 * 60 * 60); // 1 hour ago
 
@@ -1140,6 +1140,7 @@ describe("getEvents - pageComponent filtering", () => {
       status: "investigating",
       monitorId,
       workspaceId: 1,
+      incidentId: null,
       startedAt,
       acknowledgedAt: null,
       acknowledgedBy: null,

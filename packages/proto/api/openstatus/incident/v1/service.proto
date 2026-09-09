@@ -1,0 +1,159 @@
+syntax = "proto3";
+
+package openstatus.incident.v1;
+
+import "buf/validate/validate.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "openstatus/incident/v1/incident.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/incident/v1;incidentv1";
+
+// IncidentService provides operations for workspace incidents.
+//
+// An incident is internal triage state: something is wrong, whatever produced
+// the signal. It is distinct from a monitor incident (one monitor being down,
+// exposed on the deprecated /v1/incidents REST endpoint) and from a status
+// report (the public write-up). Publishing is an explicit promotion.
+service IncidentService {
+  // CreateIncident opens an incident by hand.
+  rpc CreateIncident(CreateIncidentRequest) returns (CreateIncidentResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Opens a workspace incident. Incidents raised from ingested third-party alerts are created automatically and do not go through this endpoint."
+    };
+  }
+
+  // GetIncident retrieves a specific incident by ID.
+  rpc GetIncident(GetIncidentRequest) returns (GetIncidentResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // ListIncidents returns incidents for the workspace, newest first.
+  rpc ListIncidents(ListIncidentsRequest) returns (ListIncidentsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // UpdateIncident changes the title, summary, status or severity.
+  rpc UpdateIncident(UpdateIncidentRequest) returns (UpdateIncidentResponse);
+
+  // AcknowledgeIncident records that someone has picked the incident up.
+  rpc AcknowledgeIncident(AcknowledgeIncidentRequest) returns (AcknowledgeIncidentResponse);
+
+  // ResolveIncident closes the incident.
+  rpc ResolveIncident(ResolveIncidentRequest) returns (ResolveIncidentResponse);
+
+  // DeleteIncident removes the incident.
+  rpc DeleteIncident(DeleteIncidentRequest) returns (DeleteIncidentResponse);
+
+  // PromoteIncident publishes the incident as a status report on a page.
+  rpc PromoteIncident(PromoteIncidentRequest) returns (PromoteIncidentResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Creates a status report from the incident, seeded with its title, and links the two. An incident can only be promoted once."
+    };
+  }
+}
+
+// CreateIncidentRequest opens an incident by hand.
+message CreateIncidentRequest {
+  // Title of the incident (required).
+  string title = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (gnostic.openapi.v3.property) = {example: {yaml: "Checkout latency elevated"}}
+  ];
+
+  // Longer description of what is known so far.
+  string summary = 2;
+
+  // How badly service is affected.
+  IncidentSeverity severity = 3 [(buf.validate.field).enum.defined_only = true];
+}
+
+// CreateIncidentResponse returns the created incident.
+message CreateIncidentResponse {
+  Incident incident = 1;
+}
+
+// GetIncidentRequest identifies an incident.
+message GetIncidentRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// GetIncidentResponse returns the incident.
+message GetIncidentResponse {
+  Incident incident = 1;
+}
+
+// ListIncidentsRequest optionally filters the list.
+message ListIncidentsRequest {
+  // Only incidents in this status.
+  optional IncidentStatus status = 1;
+
+  // Only incidents from this origin.
+  optional IncidentOrigin origin = 2;
+}
+
+// ListIncidentsResponse returns the incidents, newest first.
+message ListIncidentsResponse {
+  repeated Incident incidents = 1;
+}
+
+// UpdateIncidentRequest changes mutable fields. Omitted fields are unchanged.
+message UpdateIncidentRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  optional string title = 2;
+  optional string summary = 3;
+  optional IncidentStatus status = 4;
+  optional IncidentSeverity severity = 5;
+}
+
+// UpdateIncidentResponse returns the updated incident.
+message UpdateIncidentResponse {
+  Incident incident = 1;
+}
+
+// AcknowledgeIncidentRequest identifies an incident to acknowledge.
+message AcknowledgeIncidentRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// AcknowledgeIncidentResponse returns the acknowledged incident.
+message AcknowledgeIncidentResponse {
+  Incident incident = 1;
+}
+
+// ResolveIncidentRequest identifies an incident to resolve.
+message ResolveIncidentRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// ResolveIncidentResponse returns the resolved incident.
+message ResolveIncidentResponse {
+  Incident incident = 1;
+}
+
+// DeleteIncidentRequest identifies an incident to delete.
+message DeleteIncidentRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// DeleteIncidentResponse is empty.
+message DeleteIncidentResponse {}
+
+// PromoteIncidentRequest publishes an incident to a status page.
+message PromoteIncidentRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Page to publish on (required).
+  string page_id = 2 [(buf.validate.field).string.min_len = 1];
+
+  // Components to mark as affected.
+  repeated string page_component_ids = 3;
+
+  // First public update message (required).
+  string message = 4 [(buf.validate.field).string.min_len = 1];
+}
+
+// PromoteIncidentResponse returns the incident and the report it produced.
+message PromoteIncidentResponse {
+  Incident incident = 1;
+  string status_report_id = 2;
+}

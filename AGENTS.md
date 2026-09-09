@@ -81,6 +81,7 @@ boundaries with external SDKs or at registry-style dispatch. When you need one:
 - `packages/ui/AGENTS.md` — stock shadcn vs. the published blocks registry
 - `apps/dashboard/AGENTS.md` — Next.js runtimes, client boundary, UI verification
 - `apps/server/AGENTS.md` — Hono API, API-key scopes
+- `apps/ingest/AGENTS.md` — third-party alert webhooks, the inbox pattern
 - `apps/status-page/AGENTS.md` — public surfaces and gated content
 - `apps/workflows/AGENTS.md` — Deno runtime constraints
 - `apps/checker/AGENTS.md` — Go probing tier

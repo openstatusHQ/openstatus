@@ -60,6 +60,14 @@
       ]
     },
     "members": {
+      "apps/ingest": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@jsr/std__expect@^1.0.19",
+            "npm:@jsr/std__testing@^1.0.19"
+          ]
+        }
+      },
       "apps/server": {
         "packageJson": {
           "dependencies": [
@@ -85,6 +93,14 @@
         }
       },
       "packages/ai": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@jsr/std__expect@^1.0.19",
+            "npm:@jsr/std__testing@^1.0.19"
+          ]
+        }
+      },
+      "packages/alert-adapters": {
         "packageJson": {
           "dependencies": [
             "npm:@jsr/std__expect@^1.0.19",

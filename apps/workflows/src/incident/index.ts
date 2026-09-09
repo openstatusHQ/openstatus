@@ -17,9 +17,9 @@ incidentRoute.use("*", async (c, next) => {
 incidentRoute.get("/cleanup", async (c) => {
   // Find monitors that have unresolved incidents but are active
   const unresolvedIncidentMonitorIds = db
-    .select({ monitorId: schema.incidentTable.monitorId })
-    .from(schema.incidentTable)
-    .where(isNull(schema.incidentTable.resolvedAt));
+    .select({ monitorId: schema.monitorIncidentTable.monitorId })
+    .from(schema.monitorIncidentTable)
+    .where(isNull(schema.monitorIncidentTable.resolvedAt));
 
   const activeMonitorsWithUnresolvedIncidents = await db
     .select({ id: schema.monitor.id })
@@ -41,18 +41,18 @@ incidentRoute.get("/cleanup", async (c) => {
 
   // Update incidents for these monitors: set resolvedAt to now and autoResolved to true
   const result = await db
-    .update(schema.incidentTable)
+    .update(schema.monitorIncidentTable)
     .set({
       resolvedAt: new Date(),
       autoResolved: true,
     })
     .where(
       and(
-        inArray(schema.incidentTable.monitorId, monitorIds),
-        isNull(schema.incidentTable.resolvedAt),
+        inArray(schema.monitorIncidentTable.monitorId, monitorIds),
+        isNull(schema.monitorIncidentTable.resolvedAt),
       ),
     )
-    .returning({ id: schema.incidentTable.id });
+    .returning({ id: schema.monitorIncidentTable.id });
 
   return c.json({ status: "ok", updated: result.length });
 });

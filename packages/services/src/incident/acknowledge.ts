@@ -3,11 +3,7 @@ import { incidentTable } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import {
-  type ServiceContext,
-  tryGetActorUserId,
-  withTransaction,
-} from "../context";
+import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError } from "../errors";
 import type { Incident } from "../types";
 import { getIncidentInWorkspace } from "./internal";
@@ -22,47 +18,43 @@ export async function acknowledgeIncident(args: {
   const input = AcknowledgeIncidentInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
-    const existing = await getIncidentInWorkspace({
+    const before = await getIncidentInWorkspace({
       tx,
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
-    if (existing.acknowledgedAt) {
+
+    if (before.acknowledgedAt) {
       throw new ConflictError("Incident already acknowledged.");
     }
 
-    const now = new Date();
-    // Conditional update — atomically flips `acknowledged_at` only while it
-    // is still NULL. A concurrent acknowledger losing the race returns no
-    // row, at which point we throw the same `ConflictError` the pre-read
-    // would have raised.
-    const updated = await tx
+    const after = await tx
       .update(incidentTable)
       .set({
-        acknowledgedAt: now,
-        acknowledgedBy: tryGetActorUserId(ctx.actor),
-        updatedAt: now,
+        acknowledgedAt: new Date(),
+        acknowledgedBy: ctx.actor.type === "user" ? ctx.actor.userId : null,
+        status: before.status === "triage" ? "investigating" : before.status,
+        updatedAt: new Date(),
       })
       .where(
         and(
-          eq(incidentTable.id, existing.id),
+          eq(incidentTable.id, before.id),
           isNull(incidentTable.acknowledgedAt),
         ),
       )
       .returning()
       .get();
-    if (!updated) {
-      throw new ConflictError("Incident already acknowledged.");
-    }
+
+    if (!after) throw new ConflictError("Incident already acknowledged.");
 
     await emitAudit(tx, ctx, {
-      action: "incident.update",
+      action: "incident.acknowledge",
       entityType: "incident",
-      entityId: updated.id,
-      before: existing,
-      after: updated,
+      entityId: after.id,
+      before,
+      after,
     });
 
-    return updated;
+    return after;
   });
 }

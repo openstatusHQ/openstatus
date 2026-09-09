@@ -1,4 +1,4 @@
-import { eq } from "@openstatus/db";
+import { and, eq } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
@@ -22,7 +22,14 @@ export async function deleteIncident(args: {
       workspaceId: ctx.workspace.id,
     });
 
-    await tx.delete(incidentTable).where(eq(incidentTable.id, existing.id));
+    await tx
+      .delete(incidentTable)
+      .where(
+        and(
+          eq(incidentTable.id, existing.id),
+          eq(incidentTable.workspaceId, ctx.workspace.id),
+        ),
+      );
 
     await emitAudit(tx, ctx, {
       action: "incident.delete",

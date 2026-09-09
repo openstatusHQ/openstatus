@@ -21,6 +21,10 @@
       "import": "./gen/ts/openstatus/status_report/v1/index.ts",
       "types": "./gen/ts/openstatus/status_report/v1/index.ts"
     },
+    "./incident/v1": {
+      "import": "./gen/ts/openstatus/incident/v1/index.ts",
+      "types": "./gen/ts/openstatus/incident/v1/index.ts"
+    },
     "./status_page/v1": {
       "import": "./gen/ts/openstatus/status_page/v1/index.ts",
       "types": "./gen/ts/openstatus/status_page/v1/index.ts"

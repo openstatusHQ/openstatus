@@ -39,7 +39,9 @@ export default function Page() {
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
   // no period — an incident open for weeks must still surface here
-  const { data: incidents } = useQuery(trpc.incident.list.queryOptions());
+  const { data: incidents } = useQuery(
+    trpc.monitorIncident.list.queryOptions(),
+  );
   const { data: statusReports } = useQuery(
     trpc.statusReport.list.queryOptions({}),
   );

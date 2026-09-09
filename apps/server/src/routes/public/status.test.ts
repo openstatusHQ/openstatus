@@ -13,7 +13,7 @@ import { app } from "../../index";
 const testRedisStore = (globalThis as Record<string, unknown>)
   .__testRedisStore as Map<string, string> | undefined;
 import {
-  incidentTable,
+  monitorIncidentTable,
   maintenance,
   monitor,
   page,
@@ -125,8 +125,8 @@ afterAll(async () => {
   // Clean up test data
   if (testIncidentId) {
     await db
-      .delete(incidentTable)
-      .where(eq(incidentTable.id, testIncidentId))
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.id, testIncidentId))
       .catch(() => {});
   }
   if (testStatusReportId) {
@@ -210,7 +210,7 @@ describe("Status Route: Active monitor filtering", () => {
   test("only considers active monitors for status calculation", async () => {
     // Create an incident for the inactive monitor
     const inactiveIncident = await db
-      .insert(incidentTable)
+      .insert(monitorIncidentTable)
       .values({
         monitorId: testMonitor2Id,
         title: "Inactive Monitor Incident",
@@ -229,8 +229,8 @@ describe("Status Route: Active monitor filtering", () => {
 
     // Clean up
     await db
-      .delete(incidentTable)
-      .where(eq(incidentTable.id, inactiveIncident.id));
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.id, inactiveIncident.id));
   });
 });
 
@@ -238,7 +238,7 @@ describe("Status Route: Incident detection", () => {
   test("returns incident status with ongoing incident", async () => {
     // Create an ongoing incident for the active monitor
     const incident = await db
-      .insert(incidentTable)
+      .insert(monitorIncidentTable)
       .values({
         monitorId: testMonitorId,
         title: "Test Incident",
@@ -257,7 +257,9 @@ describe("Status Route: Incident detection", () => {
     expect(data.status).toBe("incident");
 
     // Clean up
-    await db.delete(incidentTable).where(eq(incidentTable.id, testIncidentId));
+    await db
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.id, testIncidentId));
     testIncidentId = 0;
   });
 
@@ -265,15 +267,15 @@ describe("Status Route: Incident detection", () => {
     // First clean up the ongoing incident from previous test if it still exists
     if (testIncidentId) {
       await db
-        .delete(incidentTable)
-        .where(eq(incidentTable.id, testIncidentId))
+        .delete(monitorIncidentTable)
+        .where(eq(monitorIncidentTable.id, testIncidentId))
         .catch(() => {});
       testIncidentId = 0;
     }
 
     // Create a resolved incident
     const resolvedIncident = await db
-      .insert(incidentTable)
+      .insert(monitorIncidentTable)
       .values({
         monitorId: testMonitorId,
         title: "Resolved Incident",
@@ -293,8 +295,8 @@ describe("Status Route: Incident detection", () => {
 
     // Clean up
     await db
-      .delete(incidentTable)
-      .where(eq(incidentTable.id, resolvedIncident.id));
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.id, resolvedIncident.id));
   });
 });
 

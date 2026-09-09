@@ -11,7 +11,7 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
-type Incident = RouterOutputs["incident"]["list"][number];
+type Incident = RouterOutputs["monitorIncident"]["list"][number];
 
 export const columns: ColumnDef<Incident>[] = [
   {

@@ -27,7 +27,7 @@ export default function Page() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const { data: incidents } = useQuery(
-    trpc.incident.list.queryOptions({
+    trpc.monitorIncident.list.queryOptions({
       monitorId: Number.parseInt(id),
     }),
   );

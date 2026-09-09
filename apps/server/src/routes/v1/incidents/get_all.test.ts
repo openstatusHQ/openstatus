@@ -1,5 +1,5 @@
 import { db, eq } from "@openstatus/db";
-import { incidentTable, monitor } from "@openstatus/db/src/schema";
+import { monitorIncidentTable, monitor } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, test } from "@std/testing/bdd";
 
@@ -13,8 +13,8 @@ let testIncidentId: number;
 
 beforeAll(async () => {
   await db
-    .delete(incidentTable)
-    .where(eq(incidentTable.title, `${TEST_PREFIX}-incident`));
+    .delete(monitorIncidentTable)
+    .where(eq(monitorIncidentTable.title, `${TEST_PREFIX}-incident`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-monitor`));
 
   const mon = await db
@@ -35,7 +35,7 @@ beforeAll(async () => {
   testMonitorId = mon.id;
 
   const incident = await db
-    .insert(incidentTable)
+    .insert(monitorIncidentTable)
     .values({
       workspaceId: 1,
       monitorId: testMonitorId,
@@ -50,8 +50,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await db
-    .delete(incidentTable)
-    .where(eq(incidentTable.title, `${TEST_PREFIX}-incident`));
+    .delete(monitorIncidentTable)
+    .where(eq(monitorIncidentTable.title, `${TEST_PREFIX}-incident`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-monitor`));
 });
 

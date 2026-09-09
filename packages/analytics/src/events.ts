@@ -164,6 +164,18 @@ export const Events = {
     name: "incident_deleted",
     channel: "incident",
   },
+  CreateIncident: {
+    name: "incident_created",
+    channel: "incident",
+  },
+  PromoteIncident: {
+    name: "incident_promoted",
+    channel: "incident",
+  },
+  UpdateAlertSource: {
+    name: "alert_source_updated",
+    channel: "incident",
+  },
   InviteUser: {
     name: "user_invited",
     channel: "team",

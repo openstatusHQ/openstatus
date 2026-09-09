@@ -84,7 +84,7 @@ export async function handleStatusDriftCron() {
         notifType: EVENT_TYPE[candidate.status],
         cronTimestamp: Date.now(),
         regions: result.affectedRegions,
-        incidentId: result.incidentId ?? undefined,
+        incidentId: result.monitorIncidentId ?? undefined,
       });
     }
   }

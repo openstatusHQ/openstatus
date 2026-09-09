@@ -21,9 +21,21 @@
       "import": "./src/maintenance/index.ts",
       "types": "./src/maintenance/index.ts"
     },
+    "./alert-source": {
+      "import": "./src/alert-source/index.ts",
+      "types": "./src/alert-source/index.ts"
+    },
+    "./alert-inbox": {
+      "import": "./src/alert-inbox/index.ts",
+      "types": "./src/alert-inbox/index.ts"
+    },
     "./incident": {
       "import": "./src/incident/index.ts",
       "types": "./src/incident/index.ts"
+    },
+    "./monitor-incident": {
+      "import": "./src/monitor-incident/index.ts",
+      "types": "./src/monitor-incident/index.ts"
     },
     "./monitor": {
       "import": "./src/monitor/index.ts",

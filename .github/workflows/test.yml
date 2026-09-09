@@ -34,6 +34,9 @@ jobs:
           - name: workflows
             filter: "--filter=@openstatus/workflows"
             database: true
+          - name: ingest
+            filter: "--filter=@openstatus/ingest"
+            database: true
           - name: subscriptions
             filter: "--filter=@openstatus/subscriptions"
             database: true
@@ -43,6 +46,7 @@ jobs:
               --filter=!@openstatus/server
               --filter=!@openstatus/api
               --filter=!@openstatus/workflows
+              --filter=!@openstatus/ingest
               --filter=!@openstatus/subscriptions
             database: false
     services:

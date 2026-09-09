@@ -105,6 +105,319 @@ components:
         - SERVING_STATUS_SERVING
         - SERVING_STATUS_NOT_SERVING
       description: ServingStatus represents the health status of the service.
+    openstatus.incident.v1.AcknowledgeIncidentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+      title: AcknowledgeIncidentRequest
+      additionalProperties: false
+      description: AcknowledgeIncidentRequest identifies an incident to acknowledge.
+    openstatus.incident.v1.AcknowledgeIncidentResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: AcknowledgeIncidentResponse
+      additionalProperties: false
+      description: AcknowledgeIncidentResponse returns the acknowledged incident.
+    openstatus.incident.v1.CreateIncidentRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          examples:
+            - Checkout latency elevated
+          title: title
+          minLength: 1
+          description: Title of the incident (required).
+        summary:
+          type: string
+          title: summary
+          description: Longer description of what is known so far.
+        severity:
+          title: severity
+          description: How badly service is affected.
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentSeverity'
+      title: CreateIncidentRequest
+      additionalProperties: false
+      description: CreateIncidentRequest opens an incident by hand.
+    openstatus.incident.v1.CreateIncidentResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: CreateIncidentResponse
+      additionalProperties: false
+      description: CreateIncidentResponse returns the created incident.
+    openstatus.incident.v1.DeleteIncidentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+      title: DeleteIncidentRequest
+      additionalProperties: false
+      description: DeleteIncidentRequest identifies an incident to delete.
+    openstatus.incident.v1.DeleteIncidentResponse:
+      type: object
+      title: DeleteIncidentResponse
+      additionalProperties: false
+      description: DeleteIncidentResponse is empty.
+    openstatus.incident.v1.GetIncidentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+      title: GetIncidentRequest
+      additionalProperties: false
+      description: GetIncidentRequest identifies an incident.
+    openstatus.incident.v1.GetIncidentResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: GetIncidentResponse
+      additionalProperties: false
+      description: GetIncidentResponse returns the incident.
+    openstatus.incident.v1.Incident:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the incident.
+        title:
+          type: string
+          title: title
+          description: Short human-readable title.
+        summary:
+          type: string
+          title: summary
+          description: Longer description of what is known so far.
+        status:
+          title: status
+          description: Where the incident is in triage.
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentStatus'
+        severity:
+          title: severity
+          description: How badly service is understood to be affected.
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentSeverity'
+        origin:
+          title: origin
+          description: What produced the incident.
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentOrigin'
+        alertSourceId:
+          type:
+            - string
+            - "null"
+          title: alert_source_id
+          description: ID of the alert source that produced it, when origin is EXTERNAL.
+        statusReportId:
+          type:
+            - string
+            - "null"
+          title: status_report_id
+          description: ID of the status report this incident was published as, once promoted.
+        startedAt:
+          type: string
+          title: started_at
+          description: When the incident began (RFC 3339 format).
+        lastSeenAt:
+          type: string
+          title: last_seen_at
+          description: When a firing signal was last seen (RFC 3339 format). Drives auto-resolve.
+        acknowledgedAt:
+          type:
+            - string
+            - "null"
+          title: acknowledged_at
+          description: When the incident was acknowledged (RFC 3339 format).
+        resolvedAt:
+          type:
+            - string
+            - "null"
+          title: resolved_at
+          description: When the incident was resolved (RFC 3339 format).
+        autoResolved:
+          type: boolean
+          title: auto_resolved
+          description: True when the incident was closed by the system rather than a person.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the incident was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the incident was last updated (RFC 3339 format).
+      title: Incident
+      additionalProperties: false
+      description: |-
+        Incident is internal triage state. It is not published until it is promoted
+         to a status report.
+    openstatus.incident.v1.IncidentOrigin:
+      type: string
+      title: IncidentOrigin
+      enum:
+        - INCIDENT_ORIGIN_UNSPECIFIED
+        - INCIDENT_ORIGIN_MONITOR
+        - INCIDENT_ORIGIN_EXTERNAL
+        - INCIDENT_ORIGIN_MANUAL
+      description: IncidentOrigin is what produced the incident.
+    openstatus.incident.v1.IncidentSeverity:
+      type: string
+      title: IncidentSeverity
+      enum:
+        - INCIDENT_SEVERITY_UNSPECIFIED
+        - INCIDENT_SEVERITY_CRITICAL
+        - INCIDENT_SEVERITY_WARNING
+        - INCIDENT_SEVERITY_INFO
+      description: IncidentSeverity is how badly the incident is understood to be affecting service.
+    openstatus.incident.v1.IncidentStatus:
+      type: string
+      title: IncidentStatus
+      enum:
+        - INCIDENT_STATUS_UNSPECIFIED
+        - INCIDENT_STATUS_TRIAGE
+        - INCIDENT_STATUS_INVESTIGATING
+        - INCIDENT_STATUS_IDENTIFIED
+        - INCIDENT_STATUS_MONITORING
+        - INCIDENT_STATUS_RESOLVED
+      description: IncidentStatus represents where an incident is in triage.
+    openstatus.incident.v1.ListIncidentsRequest:
+      type: object
+      properties:
+        status:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentStatus'
+            - type: "null"
+          title: status
+          description: Only incidents in this status.
+        origin:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentOrigin'
+            - type: "null"
+          title: origin
+          description: Only incidents from this origin.
+      title: ListIncidentsRequest
+      additionalProperties: false
+      description: ListIncidentsRequest optionally filters the list.
+    openstatus.incident.v1.ListIncidentsResponse:
+      type: object
+      properties:
+        incidents:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+          title: incidents
+      title: ListIncidentsResponse
+      additionalProperties: false
+      description: ListIncidentsResponse returns the incidents, newest first.
+    openstatus.incident.v1.PromoteIncidentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: Page to publish on (required).
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: Components to mark as affected.
+        message:
+          type: string
+          title: message
+          minLength: 1
+          description: First public update message (required).
+      title: PromoteIncidentRequest
+      additionalProperties: false
+      description: PromoteIncidentRequest publishes an incident to a status page.
+    openstatus.incident.v1.PromoteIncidentResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+        statusReportId:
+          type: string
+          title: status_report_id
+      title: PromoteIncidentResponse
+      additionalProperties: false
+      description: PromoteIncidentResponse returns the incident and the report it produced.
+    openstatus.incident.v1.ResolveIncidentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+      title: ResolveIncidentRequest
+      additionalProperties: false
+      description: ResolveIncidentRequest identifies an incident to resolve.
+    openstatus.incident.v1.ResolveIncidentResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: ResolveIncidentResponse
+      additionalProperties: false
+      description: ResolveIncidentResponse returns the resolved incident.
+    openstatus.incident.v1.UpdateIncidentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+        title:
+          type:
+            - string
+            - "null"
+          title: title
+        summary:
+          type:
+            - string
+            - "null"
+          title: summary
+        status:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentStatus'
+            - type: "null"
+          title: status
+        severity:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentSeverity'
+            - type: "null"
+          title: severity
+      title: UpdateIncidentRequest
+      additionalProperties: false
+      description: UpdateIncidentRequest changes mutable fields. Omitted fields are unchanged.
+    openstatus.incident.v1.UpdateIncidentResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: UpdateIncidentResponse
+      additionalProperties: false
+      description: UpdateIncidentResponse returns the updated incident.
     openstatus.maintenance.v1.CreateMaintenanceRequest:
       type: object
       properties:
@@ -1648,20 +1961,8 @@ components:
           title: tcp
           required:
             - tcp
-        - not:
-            anyOf:
-              - required:
-                  - dns
-              - required:
-                  - grpc
-              - required:
-                  - http
-              - required:
-                  - icmp
-              - required:
-                  - tcp
-      unevaluatedProperties: false
       title: MonitorConfig
+      additionalProperties: false
       description: MonitorConfig represents the type-specific configuration for a monitor.
     openstatus.monitor.v1.MonitorStatus:
       type: string
@@ -2471,36 +2772,8 @@ components:
           title: whatsapp
           required:
             - whatsapp
-        - not:
-            anyOf:
-              - required:
-                  - discord
-              - required:
-                  - email
-              - required:
-                  - googleChat
-              - required:
-                  - grafanaOncall
-              - required:
-                  - msTeams
-              - required:
-                  - ntfy
-              - required:
-                  - opsgenie
-              - required:
-                  - pagerduty
-              - required:
-                  - slack
-              - required:
-                  - sms
-              - required:
-                  - telegram
-              - required:
-                  - webhook
-              - required:
-                  - whatsapp
-      unevaluatedProperties: false
       title: NotificationData
+      additionalProperties: false
       description: NotificationData is a union of provider-specific configuration.
     openstatus.notification.v1.NotificationProvider:
       type: string
@@ -3409,19 +3682,8 @@ components:
               title: webhook_channel
               required:
                 - webhookChannel
-            - not:
-                anyOf:
-                  - required:
-                      - emailChannel
-                  - required:
-                      - webhookChannel
-        - oneOf:
-            - required:
-                - emailChannel
-            - required:
-                - webhookChannel
-      unevaluatedProperties: false
       title: CreatePageSubscriptionRequest
+      additionalProperties: false
       description: CreatePageSubscriptionRequest is the request to add a vendor-managed subscriber to a status page.
     openstatus.status_page.v1.CreatePageSubscriptionResponse:
       type: object
@@ -3675,14 +3937,8 @@ components:
           title: slug
           required:
             - slug
-        - not:
-            anyOf:
-              - required:
-                  - id
-              - required:
-                  - slug
-      unevaluatedProperties: false
       title: GetOverallStatusRequest
+      additionalProperties: false
       description: GetOverallStatusRequest is the request to get the overall status of a status page.
     openstatus.status_page.v1.GetOverallStatusResponse:
       type: object
@@ -3739,14 +3995,8 @@ components:
               title: slug
               required:
                 - slug
-            - not:
-                anyOf:
-                  - required:
-                      - id
-                  - required:
-                      - slug
-      unevaluatedProperties: false
       title: GetPageComponentDailySummaryRequest
+      additionalProperties: false
       description: GetPageComponentDailySummaryRequest is the request for per-component daily summaries.
     openstatus.status_page.v1.GetPageComponentDailySummaryResponse:
       type: object
@@ -3802,14 +4052,8 @@ components:
           title: slug
           required:
             - slug
-        - not:
-            anyOf:
-              - required:
-                  - id
-              - required:
-                  - slug
-      unevaluatedProperties: false
       title: GetStatusPageContentRequest
+      additionalProperties: false
       description: GetStatusPageContentRequest is the request to get the full content of a status page.
     openstatus.status_page.v1.GetStatusPageContentResponse:
       type: object
@@ -4520,14 +4764,8 @@ components:
               title: id
               required:
                 - id
-            - not:
-                anyOf:
-                  - required:
-                      - email
-                  - required:
-                      - id
-      unevaluatedProperties: false
       title: UnsubscribeFromPageRequest
+      additionalProperties: false
       description: UnsubscribeFromPageRequest is the request to unsubscribe from a status page.
     openstatus.status_page.v1.UnsubscribeFromPageResponse:
       type: object
@@ -5202,6 +5440,14 @@ tags:
       notified automatically when maintenance is created.
   - name: HealthService
     description: Health check endpoint for load balancer probes. No authentication required.
+  - name: IncidentService
+    description: |-
+      IncidentService provides operations for workspace incidents.
+
+       An incident is internal triage state: something is wrong, whatever produced
+       the signal. It is distinct from a monitor incident (one monitor being down,
+       exposed on the deprecated /v1/incidents REST endpoint) and from a status
+       report (the public write-up). Publishing is an explicit promotion.
   - name: PrivateLocationService
     description: |-
       PrivateLocationService provides CRUD operations for private locations —
@@ -5259,6 +5505,266 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.health.v1.CheckResponse'
+  /rpc/openstatus.incident.v1.IncidentService/AcknowledgeIncident:
+    post:
+      tags:
+        - IncidentService
+      summary: AcknowledgeIncident
+      description: AcknowledgeIncident records that someone has picked the incident up.
+      operationId: IncidentService_AcknowledgeIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.AcknowledgeIncidentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.AcknowledgeIncidentResponse'
+  /rpc/openstatus.incident.v1.IncidentService/CreateIncident:
+    post:
+      tags:
+        - IncidentService
+      summary: CreateIncident
+      description: Opens a workspace incident. Incidents raised from ingested third-party alerts are created automatically and do not go through this endpoint.
+      operationId: IncidentService_CreateIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.CreateIncidentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.CreateIncidentResponse'
+  /rpc/openstatus.incident.v1.IncidentService/DeleteIncident:
+    post:
+      tags:
+        - IncidentService
+      summary: DeleteIncident
+      description: DeleteIncident removes the incident.
+      operationId: IncidentService_DeleteIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.DeleteIncidentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.DeleteIncidentResponse'
+  /rpc/openstatus.incident.v1.IncidentService/GetIncident:
+    get:
+      tags:
+        - IncidentService
+      summary: GetIncident
+      description: GetIncident retrieves a specific incident by ID.
+      operationId: IncidentService_GetIncident.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.GetIncidentRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.GetIncidentResponse'
+    post:
+      tags:
+        - IncidentService
+      summary: GetIncident
+      description: GetIncident retrieves a specific incident by ID.
+      operationId: IncidentService_GetIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.GetIncidentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.GetIncidentResponse'
+  /rpc/openstatus.incident.v1.IncidentService/ListIncidents:
+    get:
+      tags:
+        - IncidentService
+      summary: ListIncidents
+      description: ListIncidents returns incidents for the workspace, newest first.
+      operationId: IncidentService_ListIncidents.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.ListIncidentsRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.ListIncidentsResponse'
+    post:
+      tags:
+        - IncidentService
+      summary: ListIncidents
+      description: ListIncidents returns incidents for the workspace, newest first.
+      operationId: IncidentService_ListIncidents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.ListIncidentsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.ListIncidentsResponse'
+  /rpc/openstatus.incident.v1.IncidentService/PromoteIncident:
+    post:
+      tags:
+        - IncidentService
+      summary: PromoteIncident
+      description: Creates a status report from the incident, seeded with its title, and links the two. An incident can only be promoted once.
+      operationId: IncidentService_PromoteIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.PromoteIncidentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.PromoteIncidentResponse'
+  /rpc/openstatus.incident.v1.IncidentService/ResolveIncident:
+    post:
+      tags:
+        - IncidentService
+      summary: ResolveIncident
+      description: ResolveIncident closes the incident.
+      operationId: IncidentService_ResolveIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.ResolveIncidentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.ResolveIncidentResponse'
+  /rpc/openstatus.incident.v1.IncidentService/UpdateIncident:
+    post:
+      tags:
+        - IncidentService
+      summary: UpdateIncident
+      description: UpdateIncident changes the title, summary, status or severity.
+      operationId: IncidentService_UpdateIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.UpdateIncidentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.UpdateIncidentResponse'
   /rpc/openstatus.maintenance.v1.MaintenanceService/CreateMaintenance:
     post:
       tags:

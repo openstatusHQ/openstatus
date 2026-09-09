@@ -34,7 +34,7 @@ status.get("/:slug", async (c) => {
           with: {
             monitor: {
               with: {
-                incidents: true,
+                monitorIncidents: true,
               },
             },
           },
@@ -65,7 +65,8 @@ status.get("/:slug", async (c) => {
 
     // Extract all ongoing incidents from active monitors
     const ongoingIncidents = monitorComponents.flatMap(
-      (c) => c.monitor?.incidents?.filter((inc) => !inc.resolvedAt) ?? [],
+      (c) =>
+        c.monitor?.monitorIncidents?.filter((inc) => !inc.resolvedAt) ?? [],
     );
 
     // Filter for unresolved status reports

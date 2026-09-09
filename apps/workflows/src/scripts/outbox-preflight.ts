@@ -10,7 +10,7 @@ import {
   sql,
 } from "@openstatus/db";
 import {
-  incidentTable,
+  monitorIncidentTable,
   monitor,
   notification,
   notificationTrigger,
@@ -34,17 +34,20 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 async function duplicateOpenIncidents() {
   const rows = await db
     .select({
-      monitorId: incidentTable.monitorId,
-      openCount: count(incidentTable.id),
+      monitorId: monitorIncidentTable.monitorId,
+      openCount: count(monitorIncidentTable.id),
     })
-    .from(incidentTable)
+    .from(monitorIncidentTable)
     // NULLs are distinct in a SQLite unique index, so incidents with no monitor
     // can never collide with incident_open_idx however many are open.
     .where(
-      and(isNull(incidentTable.resolvedAt), isNotNull(incidentTable.monitorId)),
+      and(
+        isNull(monitorIncidentTable.resolvedAt),
+        isNotNull(monitorIncidentTable.monitorId),
+      ),
     )
-    .groupBy(incidentTable.monitorId)
-    .having(sql`count(${incidentTable.id}) > 1`)
+    .groupBy(monitorIncidentTable.monitorId)
+    .having(sql`count(${monitorIncidentTable.id}) > 1`)
     .all();
 
   console.log(

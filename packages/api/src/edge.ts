@@ -1,3 +1,4 @@
+import { alertSourceRouter } from "./router/alertSource";
 import { auditLogRouter } from "./router/auditLog";
 import { chatSessionRouter } from "./router/chatSession";
 import { checkerRouter } from "./router/checker";
@@ -10,6 +11,7 @@ import { invitationRouter } from "./router/invitation";
 import { maintenanceRouter } from "./router/maintenance";
 import { memberRouter } from "./router/member";
 import { monitorRouter } from "./router/monitor";
+import { monitorIncidentRouter } from "./router/monitorIncident";
 import { monitorTagRouter } from "./router/monitorTag";
 import { notificationRouter } from "./router/notification";
 import { oauthRouter } from "./router/oauth";
@@ -36,7 +38,9 @@ export const edgeRouter = createTRPCRouter({
   user: userRouter,
   notification: notificationRouter,
   invitation: invitationRouter,
+  monitorIncident: monitorIncidentRouter,
   incident: incidentRouter,
+  alertSource: alertSourceRouter,
   pageSubscriber: pageSubscriberRouter,
   tinybird: tinybirdRouter,
   monitorTag: monitorTagRouter,

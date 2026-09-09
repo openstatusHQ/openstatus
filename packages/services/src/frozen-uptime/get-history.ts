@@ -177,7 +177,7 @@ export async function getUptimeHistory(args: {
         },
       },
       pageComponents: {
-        with: { monitor: { with: { incidents: true } } },
+        with: { monitor: { with: { monitorIncidents: true } } },
         orderBy: (components, { asc }) => asc(components.order),
       },
     },
@@ -289,7 +289,7 @@ export async function getUptimeHistory(args: {
   const rows: UptimeHistoryRow[] = components.map((c) => {
     const events = getEvents({
       maintenances: _page.maintenances,
-      incidents: c.monitor?.incidents ?? [],
+      incidents: c.monitor?.monitorIncidents ?? [],
       reports: _page.statusReports,
       pageComponentId: c.id,
       monitorId: c.monitorId ?? undefined,

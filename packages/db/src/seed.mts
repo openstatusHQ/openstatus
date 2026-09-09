@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/libsql";
 import { env } from "../env.mjs";
 import {
   externalService,
-  incidentTable,
+  monitorIncidentTable,
   maintenance,
   maintenancesToPageComponents,
   monitor,
@@ -443,7 +443,7 @@ async function main() {
   );
 
   await db
-    .insert(incidentTable)
+    .insert(monitorIncidentTable)
     .values([
       {
         id: 1,

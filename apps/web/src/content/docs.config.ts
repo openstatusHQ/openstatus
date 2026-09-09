@@ -158,6 +158,10 @@ export const docsNav: DocsNavSection[] = [
         label: "How to Connect openstatus to Your Coding Agent",
       },
       {
+        slug: "guides/how-to-connect-alert-sources",
+        label: "Connecting Alert Sources",
+      },
+      {
         slug: "guides/how-to-manage-openstatus-with-terraform",
         label: "How to Manage Your openstatus Stack with Terraform",
       },

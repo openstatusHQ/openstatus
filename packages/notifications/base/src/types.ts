@@ -1,5 +1,5 @@
 import type {
-  Incident,
+  MonitorIncident,
   Monitor,
   Notification,
 } from "@openstatus/db/src/schema";
@@ -15,7 +15,7 @@ export interface NotificationContext {
   cronTimestamp: number;
   regions?: string[];
   latency?: number;
-  incident?: Incident;
+  incident?: MonitorIncident;
 }
 
 /**

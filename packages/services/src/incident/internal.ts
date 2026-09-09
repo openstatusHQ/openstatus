@@ -4,7 +4,6 @@ import { incidentTable } from "@openstatus/db/src/schema";
 import type { DB } from "../context";
 import { NotFoundError } from "../errors";
 
-/** Load an incident by id, scoped to the workspace. Throws on miss. */
 export async function getIncidentInWorkspace(args: {
   tx: DB;
   id: number;

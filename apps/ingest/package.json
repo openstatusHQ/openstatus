@@ -1,0 +1,38 @@
+{
+  "name": "@openstatus/ingest",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "deno run -A --watch --sloppy-imports --env-file=.env src/serve.ts",
+    "start": "NODE_ENV=production deno run -A --sloppy-imports src/serve.ts",
+    "test": "NODE_ENV=test deno test -A --no-check --sloppy-imports --env-file=.env.test",
+    "check": "deno check --sloppy-imports src/serve.ts"
+  },
+  "dependencies": {
+    "@hono/sentry": "catalog:",
+    "@logtape/logtape": "catalog:",
+    "@logtape/otel": "catalog:",
+    "@openstatus/alert-adapters": "workspace:*",
+    "@openstatus/db": "workspace:*",
+    "@openstatus/services": "workspace:*",
+    "@openstatus/upstash": "workspace:*",
+    "@opentelemetry/exporter-logs-otlp-http": "catalog:",
+    "@opentelemetry/resources": "catalog:",
+    "@opentelemetry/sdk-logs": "catalog:",
+    "@opentelemetry/semantic-conventions": "catalog:",
+    "@sentry/deno": "catalog:",
+    "@t3-oss/env-core": "catalog:",
+    "effect": "catalog:",
+    "hono": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
+    "@openstatus/tsconfig": "workspace:*",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
+    "typescript": "catalog:"
+  }
+}

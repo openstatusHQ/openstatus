@@ -1,0 +1,105 @@
+---
+title: Connecting Alert Sources
+description: "Send alerts from Prometheus Alertmanager or Grafana to openstatus, so they open incidents alongside the ones your own monitors raise."
+category: Guides
+---
+
+openstatus can ingest alerts from the tools you already run. An ingested alert
+opens an [incident](/docs/concept/status-reports-and-incidents) in your
+workspace — internal triage state, private until you publish it as a status
+report.
+
+Today two sources are supported: **Prometheus Alertmanager** and **Grafana**.
+
+## The endpoint
+
+```
+POST https://ingest.openstatus.dev/v1/ingest/<provider>
+```
+
+`<provider>` is `alertmanager` or `grafana`. Authenticate with your workspace
+API key — the same key you use for the REST API — in the `x-openstatus-key`
+header. The key needs **write** scope; a read-only key is rejected.
+
+If your tool cannot set custom headers, pass the key as a `?key=` query
+parameter instead.
+
+You do not create anything in openstatus first. The source appears under
+**Settings → Integrations** on its first delivery.
+
+## Prometheus Alertmanager
+
+Add openstatus as a webhook receiver in `alertmanager.yml`:
+
+```yaml
+receivers:
+  - name: openstatus
+    webhook_configs:
+      - url: https://ingest.openstatus.dev/v1/ingest/alertmanager
+        send_resolved: true
+        http_config:
+          authorization:
+            type: Bearer
+            credentials: os_your_api_key
+
+route:
+  receiver: openstatus
+```
+
+`send_resolved: true` matters — without it openstatus never hears that the
+alert cleared, and the incident only closes on the staleness timeout below.
+
+## Grafana
+
+In **Alerting → Contact points**, add a **Webhook** contact point:
+
+- **URL** — `https://ingest.openstatus.dev/v1/ingest/grafana`
+- **Optional Webhook settings → HTTP Headers** — add `x-openstatus-key` with
+  your API key
+
+Then point a notification policy at it.
+
+## What counts as one incident
+
+openstatus does **not** re-group your alerts. It uses whatever the sending tool
+already decided was one problem:
+
+- Alertmanager: the `groupKey` it derives from your `group_by` routing.
+- Grafana: the alert rule's UID.
+
+That grouping is what pairs a firing alert with its resolution. It also means
+tuning grouping is a job for your alerting tool, not for openstatus — if one
+outage produces forty incidents, widen `group_by` upstream.
+
+## How an incident closes
+
+In order:
+
+1. **The source says so.** A `resolved` delivery closes the matching incident.
+2. **It goes quiet.** If no further firing signal arrives within the source's
+   staleness window (6 hours by default, configurable per source under Settings
+   → Integrations), openstatus closes the incident and marks it auto-resolved.
+
+Alertmanager and Grafana both re-send while an alert is still firing, so a real
+outage keeps resetting the clock. The timeout exists for sources that never send
+a resolution at all.
+
+If the same alert fires again after it closed, that opens a **new** incident
+rather than reopening the old one.
+
+## Nothing is dropped
+
+Every payload accepted is stored before it is processed. That has two
+consequences worth knowing:
+
+- If openstatus cannot parse a payload, it is kept and listed under **Settings →
+  Integrations → Unprocessed alerts** rather than discarded, so it can be
+  replayed once the mapping is fixed.
+- If your plan's alert-source limit is already reached, the payload is still
+  kept and marked as unprocessed. Upgrading processes what was retained.
+
+## Limits
+
+The number of alert sources you can connect is part of your plan. Since a source
+is created per provider, that is effectively how many different alerting tools
+you can wire up.

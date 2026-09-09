@@ -1,4 +1,4 @@
-import { and, db, eq } from "@openstatus/db";
+import { and, db, eq, like } from "@openstatus/db";
 import {
   auditLog,
   monitor,
@@ -285,6 +285,17 @@ afterAll(async () => {
   await db
     .delete(monitor)
     .where(eq(monitor.name, `${TEST_PREFIX}-with-status`));
+  // Created inside a test rather than in beforeAll; without this it leaks into
+  // workspace 1 on every run and eventually trips the plan's monitor limit.
+  await db
+    .delete(monitor)
+    .where(eq(monitor.name, `${TEST_PREFIX}-icmp-trigger`));
+  // CreateXMonitor tests mint monitors through the API under generated names.
+  await db
+    .delete(monitor)
+    .where(
+      and(eq(monitor.workspaceId, 1), like(monitor.name, `${TEST_PREFIX}-%`)),
+    );
 });
 
 describe("MonitorService.ListMonitors", () => {

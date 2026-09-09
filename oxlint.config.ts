@@ -53,7 +53,7 @@ export default defineConfig({
       files: [
         "packages/api/src/router/statusReport.ts",
         "packages/api/src/router/maintenance.ts",
-        "packages/api/src/router/incident.ts",
+        "packages/api/src/router/monitorIncident.ts",
         "packages/api/src/router/monitor.ts",
         "packages/api/src/router/pageComponent.ts",
         "packages/api/src/router/page.ts",
@@ -67,6 +67,7 @@ export default defineConfig({
         "apps/server/src/routes/rpc/handlers/maintenance/**",
         "apps/server/src/routes/rpc/handlers/notification/**",
         "apps/server/src/routes/slack/interactions.ts",
+        "apps/ingest/src/routes/**",
       ],
       excludeFiles: [
         "**/__tests__/**",

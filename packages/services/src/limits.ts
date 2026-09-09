@@ -1,5 +1,6 @@
 import { and, count, eq, gte, isNull } from "@openstatus/db";
 import {
+  alertSource,
   monitor,
   monitorRun,
   notification,
@@ -28,6 +29,7 @@ export const LIMIT_KEYS = [
   "page-components",
   "notification-channels",
   "synthetic-checks",
+  "alert-sources",
 ] as const;
 
 export type LimitKey = (typeof LIMIT_KEYS)[number];
@@ -108,6 +110,14 @@ export async function countWorkspaceUsage(
         .where(
           and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)),
         )
+        .get();
+      return row?.count ?? 0;
+    }
+    case "alert-sources": {
+      const row = await tx
+        .select({ count: count() })
+        .from(alertSource)
+        .where(eq(alertSource.workspaceId, workspaceId))
         .get();
       return row?.count ?? 0;
     }

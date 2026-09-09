@@ -2,6 +2,14 @@ import type { z } from "zod";
 
 import { getAuditLogTool, listAuditLogsTool } from "./audit";
 import { getDocPageTool, searchDocsTool } from "./docs";
+import {
+  acknowledgeIncidentTool,
+  createIncidentTool,
+  getIncidentTool,
+  listIncidentsTool,
+  resolveIncidentTool,
+  updateIncidentTool,
+} from "./incident";
 import { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
 import {
   getMonitorStatusTool,
@@ -27,6 +35,14 @@ import type { AnyAgentTool } from "./types";
 export { getAuditLogTool, listAuditLogsTool } from "./audit";
 export { getDocPageTool, searchDocsTool } from "./docs";
 export { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
+export {
+  acknowledgeIncidentTool,
+  createIncidentTool,
+  getIncidentTool,
+  listIncidentsTool,
+  resolveIncidentTool,
+  updateIncidentTool,
+} from "./incident";
 export {
   getMonitorStatusTool,
   getMonitorSummaryTool,
@@ -80,6 +96,12 @@ export const agentTools = {
   add_status_report_update: addStatusReportUpdateTool,
   update_status_report: updateStatusReportTool,
   resolve_status_report: resolveStatusReportTool,
+  list_incidents: listIncidentsTool,
+  get_incident: getIncidentTool,
+  create_incident: createIncidentTool,
+  update_incident: updateIncidentTool,
+  acknowledge_incident: acknowledgeIncidentTool,
+  resolve_incident: resolveIncidentTool,
   list_maintenances: listMaintenancesTool,
   create_maintenance: createMaintenanceTool,
   list_monitors: listMonitorsTool,

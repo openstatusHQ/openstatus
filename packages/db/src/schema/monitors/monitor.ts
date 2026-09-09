@@ -2,7 +2,7 @@ import { relations, sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { monitorPeriodicity } from "../constants";
-import { incidentTable } from "../incidents/incident";
+import { monitorIncidentTable } from "../monitor_incidents/monitor_incident";
 import { monitorStatusTable } from "../monitor_status/monitor_status";
 import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
@@ -88,7 +88,7 @@ export const monitorRelation = relations(monitor, ({ one, many }) => ({
     references: [workspace.id],
   }),
   monitorsToNotifications: many(notificationsToMonitors),
-  incidents: many(incidentTable),
+  monitorIncidents: many(monitorIncidentTable),
   monitorStatus: many(monitorStatusTable),
   privateLocationToMonitors: many(privateLocationToMonitors),
 }));

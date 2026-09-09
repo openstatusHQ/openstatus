@@ -1,41 +1,32 @@
 import { Events } from "@openstatus/analytics";
+import {
+  incidentOriginSchema,
+  incidentSeveritySchema,
+  incidentStatusSchema,
+} from "@openstatus/db/src/schema";
 import { NotFoundError } from "@openstatus/services";
 import {
   acknowledgeIncident,
+  createIncident,
   deleteIncident,
+  getIncident,
   listIncidents,
+  promoteIncident,
   resolveIncident,
+  updateIncident,
 } from "@openstatus/services/incident";
 import { z } from "zod";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { periods } from "./utils";
 
 export const incidentRouter = createTRPCRouter({
-  delete: protectedProcedure
-    .meta({ track: Events.DeleteIncident })
-    .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      try {
-        await deleteIncident({
-          ctx: toServiceCtx(ctx),
-          input: { id: input.id },
-        });
-      } catch (err) {
-        // Preserve the pre-migration idempotent behaviour — the old tRPC
-        // delete silently returned when the row was already gone.
-        if (err instanceof NotFoundError) return;
-        toTRPCError(err);
-      }
-    }),
-
   list: protectedProcedure
     .input(
       z
         .object({
-          period: z.enum(periods).optional(),
-          monitorId: z.number().nullish(),
+          status: incidentStatusSchema.optional(),
+          origin: incidentOriginSchema.optional(),
           order: z.enum(["asc", "desc"]).optional(),
         })
         .optional(),
@@ -45,21 +36,62 @@ export const incidentRouter = createTRPCRouter({
         const { items } = await listIncidents({
           ctx: toServiceCtx(ctx),
           input: {
-            monitorId: input?.monitorId ?? undefined,
-            period: input?.period,
+            status: input?.status,
+            origin: input?.origin,
             order: input?.order ?? "desc",
-            // Same sentinel as status-report / maintenance — dashboard has
-            // no paging UI; Connect-equivalent would cap externally.
             limit: 10_000,
-            offset: 0,
           },
         });
-        // Filter-and-log instead of throwing on orphaned rows: a single
-        // incident missing its monitor (data-migration artifact, partial
-        // cascade) shouldn't blow up the whole list and break the
-        // `/overview` / `/monitors/:id/incidents` surfaces. We still log
-        // so the inconsistency remains visible.
-        return items.filter(hasMonitor);
+        return items;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  get: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        return await getIncident({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  create: protectedProcedure
+    .meta({ track: Events.CreateIncident })
+    .input(
+      z.object({
+        title: z.string().trim().min(1).max(256),
+        summary: z.string().default(""),
+        severity: incidentSeveritySchema.default("warning"),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await createIncident({
+          ctx: toServiceCtx(ctx),
+          input: { ...input, origin: "manual" },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  update: protectedProcedure
+    .meta({ track: Events.UpdateIncident })
+    .input(
+      z.object({
+        id: z.number(),
+        title: z.string().trim().min(1).max(256).optional(),
+        summary: z.string().optional(),
+        status: incidentStatusSchema.optional(),
+        severity: incidentSeveritySchema.optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await updateIncident({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
@@ -70,12 +102,7 @@ export const incidentRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        await acknowledgeIncident({
-          ctx: toServiceCtx(ctx),
-          input: { id: input.id },
-        });
-        // Old contract was `return true`; preserve.
-        return true;
+        return await acknowledgeIncident({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
@@ -86,33 +113,40 @@ export const incidentRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        await resolveIncident({
-          ctx: toServiceCtx(ctx),
-          input: { id: input.id },
-        });
-        return true;
+        return await resolveIncident({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
     }),
-});
 
-/**
- * Type predicate: narrow `monitor` to non-null for the tRPC list return.
- * The old zod parse required `monitor: selectMonitorSchema`, so clients
- * rely on the non-null shape. An orphan here is a data-integrity signal
- * (FK `set default` on delete should prevent it, but migrations /
- * partial cascades have produced them historically) — we log and drop
- * rather than throw, so a single bad row can't break the whole list.
- */
-function hasMonitor<T extends { id: number; monitor: unknown }>(
-  incident: T,
-): incident is T & { monitor: NonNullable<T["monitor"]> } {
-  if (incident.monitor == null) {
-    console.warn(
-      `incident ${incident.id} has no associated monitor (data inconsistency); dropping from list`,
-    );
-    return false;
-  }
-  return true;
-}
+  promote: protectedProcedure
+    .meta({ track: Events.PromoteIncident })
+    .input(
+      z.object({
+        id: z.number(),
+        pageId: z.number(),
+        pageComponentIds: z.array(z.number()).default([]),
+        message: z.string().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await promoteIncident({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  delete: protectedProcedure
+    .meta({ track: Events.DeleteIncident })
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await deleteIncident({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        // Same idempotent posture as the monitor-incident router.
+        if (err instanceof NotFoundError) return;
+        toTRPCError(err);
+      }
+    }),
+});

@@ -209,6 +209,40 @@ services:
                 reservations:
                     memory: 128M
 
+    ingest:
+        container_name: openstatus-ingest
+        build:
+            context: .
+            dockerfile: apps/ingest/Dockerfile
+        image: openstatus/ingest:latest
+        networks:
+            - openstatus
+        ports:
+            - "3004:3004"
+        env_file:
+            - .env.docker
+        environment:
+            - DATABASE_URL=http://libsql:8080
+            - PORT=3004
+        depends_on:
+            db-migrate:
+                condition: service_completed_successfully
+            libsql:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:3004/ping"]
+            interval: 15s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 256M
+
     dashboard:
         container_name: openstatus-dashboard
         build:

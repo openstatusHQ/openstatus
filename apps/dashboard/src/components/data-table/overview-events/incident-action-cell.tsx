@@ -9,7 +9,7 @@ import {
   type IncidentConfirmType,
 } from "@/components/data-table/incidents/dialog-confirm";
 
-type Incident = RouterOutputs["incident"]["list"][number];
+type Incident = RouterOutputs["monitorIncident"]["list"][number];
 
 export function IncidentActionCell({ incident }: { incident: Incident }) {
   // capture the action at click time so a background refetch can't flip it mid-dialog

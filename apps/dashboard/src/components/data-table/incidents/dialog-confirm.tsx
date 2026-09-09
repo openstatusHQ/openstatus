@@ -18,7 +18,7 @@ import { toast } from "sonner";
 
 import { useTRPC } from "@/lib/trpc/client";
 
-type Incident = RouterOutputs["incident"]["list"][number];
+type Incident = RouterOutputs["monitorIncident"]["list"][number];
 
 export type IncidentConfirmType = "acknowledge" | "resolve";
 
@@ -40,13 +40,15 @@ export function DialogConfirmIncident({
   // no-input prefix key — matches every incident.list query (overview, monitor detail)
   const invalidateList = () =>
     queryClient.invalidateQueries({
-      queryKey: trpc.incident.list.queryKey(),
+      queryKey: trpc.monitorIncident.list.queryKey(),
     });
   const acknowledgeIncidentMutation = useMutation(
-    trpc.incident.acknowledge.mutationOptions({ onSuccess: invalidateList }),
+    trpc.monitorIncident.acknowledge.mutationOptions({
+      onSuccess: invalidateList,
+    }),
   );
   const resolveIncidentMutation = useMutation(
-    trpc.incident.resolve.mutationOptions({ onSuccess: invalidateList }),
+    trpc.monitorIncident.resolve.mutationOptions({ onSuccess: invalidateList }),
   );
 
   const handleConfirm = () => {

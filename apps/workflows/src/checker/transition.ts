@@ -9,7 +9,7 @@ import {
   monitorTransition,
   notificationOutbox,
   notificationOutboxEventType,
-  incidentTable,
+  monitorIncidentTable,
   monitor,
   monitorStatusTable,
   notification,
@@ -62,7 +62,7 @@ export type TransitionResult =
       regionCount: number;
       affectedRegions: string[];
       outboxRows: OutboxRowRef[];
-      incidentId: number | null;
+      monitorIncidentId: number | null;
       incidentCreatedId: number | null;
       incidentResolvedIds: number[];
     };
@@ -84,7 +84,7 @@ type JournalRow = { quorum_count: number; transitioned: number };
 type OutboxInsertRow = {
   id: number;
   notification_id: number;
-  incident_id: number | null;
+  monitor_incident_id: number | null;
   provider: NotificationProvider;
   delivery_status: "pending" | "settled";
 };
@@ -123,16 +123,16 @@ function journalStatement(
 
 function createIncidentStatement(input: TransitionInput, guard: SQL) {
   return db.all<{ id: number }>(sql`
-    INSERT INTO ${incidentTable} (monitor_id, workspace_id, started_at)
+    INSERT INTO ${monitorIncidentTable} (monitor_id, workspace_id, started_at)
     SELECT ${monitor.id}, ${monitor.workspaceId}, ${Math.floor(input.cronTimestamp / 1000)}
     FROM ${monitor}
     WHERE ${monitor.id} = ${input.monitorId}
       AND ${monitor.status} <> ${input.status}
       AND ${guard}
       AND NOT EXISTS (
-        SELECT 1 FROM ${incidentTable}
-        WHERE ${incidentTable.monitorId} = ${monitor.id}
-          AND ${incidentTable.resolvedAt} IS NULL)
+        SELECT 1 FROM ${monitorIncidentTable}
+        WHERE ${monitorIncidentTable.monitorId} = ${monitor.id}
+          AND ${monitorIncidentTable.resolvedAt} IS NULL)
     ON CONFLICT DO NOTHING
     RETURNING id
   `);
@@ -140,10 +140,10 @@ function createIncidentStatement(input: TransitionInput, guard: SQL) {
 
 function resolveIncidentStatement(input: TransitionInput, guard: SQL) {
   return db.all<{ id: number }>(sql`
-    UPDATE ${incidentTable}
+    UPDATE ${monitorIncidentTable}
     SET resolved_at = ${Math.floor(input.cronTimestamp / 1000)}, auto_resolved = 1
-    WHERE ${incidentTable.monitorId} = ${input.monitorId}
-      AND ${incidentTable.resolvedAt} IS NULL
+    WHERE ${monitorIncidentTable.monitorId} = ${input.monitorId}
+      AND ${monitorIncidentTable.resolvedAt} IS NULL
       AND EXISTS (
         SELECT 1 FROM ${monitor}
         WHERE ${monitor.id} = ${input.monitorId}
@@ -167,16 +167,16 @@ function outboxStatement(
   return db.all<OutboxInsertRow>(sql`
     INSERT INTO ${notificationOutbox}
       (dedup_key, monitor_id, workspace_id, notification_id, provider, event_type,
-       from_status, to_status, cron_timestamp, incident_id, payload,
+       from_status, to_status, cron_timestamp, monitor_incident_id, payload,
        delivery_status, outcome, next_attempt_at, deadline_at, created_at)
     SELECT
       ${dedupPrefix} || ${notification.id},
       ${monitor.id}, ${monitor.workspaceId}, ${notification.id},
       ${notification.provider}, ${EVENT_TYPE[input.status]},
       ${monitor.status}, ${input.status}, ${input.cronTimestamp},
-      (SELECT id FROM ${incidentTable}
-        WHERE ${incidentTable.monitorId} = ${monitor.id}
-          AND ${incidentTable.resolvedAt} IS NULL
+      (SELECT id FROM ${monitorIncidentTable}
+        WHERE ${monitorIncidentTable.monitorId} = ${monitor.id}
+          AND ${monitorIncidentTable.resolvedAt} IS NULL
         ORDER BY id DESC LIMIT 1),
       ${JSON.stringify(payload)},
       CASE WHEN ${owned} THEN 'pending' ELSE 'settled' END,
@@ -191,7 +191,7 @@ function outboxStatement(
       AND ${monitor.status} <> ${input.status}
       AND ${guard}
     ON CONFLICT (dedup_key) DO NOTHING
-    RETURNING id, notification_id, incident_id, provider, delivery_status
+    RETURNING id, notification_id, monitor_incident_id, provider, delivery_status
   `);
 }
 
@@ -290,7 +290,7 @@ export async function evaluateTransition(
   let incidentRows: { id: number }[] = [];
 
   // All three statuses enqueue notifications; only the incident statement moves.
-  // The outbox row reads incident_id by subquery, so it must run after the
+  // The outbox row reads monitor_incident_id by subquery, so it must run after the
   // incident is created but before an existing one is resolved.
   if (input.status === "error") {
     const [journalResult, incidentResult, outboxResult] = await withBusyRetry(
@@ -335,7 +335,7 @@ export async function evaluateTransition(
       provider: row.provider,
       deliveryStatus: row.delivery_status,
     })),
-    incidentId: outboxRows[0]?.incident_id ?? null,
+    monitorIncidentId: outboxRows[0]?.monitor_incident_id ?? null,
     incidentCreatedId,
     incidentResolvedIds,
   };

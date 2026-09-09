@@ -1,5 +1,6 @@
 import { createConnectRouter } from "@connectrpc/connect";
 import { HealthService } from "@openstatus/proto/health/v1";
+import { IncidentService } from "@openstatus/proto/incident/v1";
 import { MaintenanceService } from "@openstatus/proto/maintenance/v1";
 import { MonitorService } from "@openstatus/proto/monitor/v1";
 import { NotificationService } from "@openstatus/proto/notification/v1";
@@ -8,6 +9,7 @@ import { StatusPageService } from "@openstatus/proto/status_page/v1";
 import { StatusReportService } from "@openstatus/proto/status_report/v1";
 
 import { healthServiceImpl } from "./handlers/health";
+import { incidentServiceImpl } from "./handlers/incident";
 import { maintenanceServiceImpl } from "./handlers/maintenance";
 import { monitorServiceImpl } from "./handlers/monitor";
 import { notificationServiceImpl } from "./handlers/notification";
@@ -43,6 +45,7 @@ export const routes = createConnectRouter({
   .service(MonitorService, monitorServiceImpl)
   .service(HealthService, healthServiceImpl)
   .service(StatusReportService, statusReportServiceImpl)
+  .service(IncidentService, incidentServiceImpl)
   .service(StatusPageService, statusPageServiceImpl)
   .service(MaintenanceService, maintenanceServiceImpl)
   .service(NotificationService, notificationServiceImpl)

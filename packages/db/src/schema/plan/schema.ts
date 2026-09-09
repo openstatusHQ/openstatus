@@ -52,6 +52,7 @@ export const limitsSchema = z.object({
   whatsapp: z.boolean().prefault(false),
   sms: z.boolean().prefault(false),
   "sms-limit": z.number().prefault(0),
+  "alert-sources": z.number().prefault(1),
   "notification-channels": z.number().prefault(1),
 
   /**

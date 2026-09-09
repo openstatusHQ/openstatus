@@ -18,7 +18,7 @@ import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
-import { findOpenIncident, resolveIncident } from "./incident-utils";
+import { findOpenIncident, resolveIncident } from "./monitor-incident-utils";
 
 const logger = getLogger(["workflow"]);
 
@@ -257,7 +257,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             const existingIncident = await findOpenIncident(monitorIdNumber);
             if (!existingIncident) {
               const [newIncident] = await db
-                .insert(schema.incidentTable)
+                .insert(schema.monitorIncidentTable)
                 .values({
                   monitorId: monitorIdNumber,
                   workspaceId: monitor.workspaceId,

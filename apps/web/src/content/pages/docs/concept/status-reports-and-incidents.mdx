@@ -1,12 +1,18 @@
 ---
 title: Understanding Status Reports and Incidents
-description: "How openstatus separates detecting a problem (incidents) from communicating it (status reports and maintenance windows), and how report updates drive your status page."
+description: "How openstatus separates detecting a problem (monitor incidents), triaging it (incidents) and communicating it (status reports and maintenance windows)."
 category: Concepts
 ---
 
-When something goes wrong, two different things need to happen: your team needs to find out, and your users need to be told. openstatus models these as two separate objects — **incidents** and **status reports** — and adds a third, **maintenance windows**, for disruption you planned ahead of time.
+When something goes wrong, three different things need to happen: something has to notice, your team has to triage it, and your users have to be told. openstatus models these as three separate objects — **monitor incidents**, **incidents** and **status reports** — plus **maintenance windows** for disruption you planned ahead of time.
 
-The word "incident" is overloaded. Colloquially it means the whole event — the outage, the scramble, the postmortem. In openstatus it means something narrower: the machine-created record that a monitor is failing. Keeping the two apart is the key to using all three tools well.
+The word "incident" is overloaded. Colloquially it means the whole event — the outage, the scramble, the postmortem. openstatus splits it deliberately:
+
+- A **monitor incident** is the narrow, machine-created record that one monitor is failing. You never create one by hand.
+- An **incident** is workspace-level triage state: *something is wrong*, whatever noticed it — one of your monitors, an alert ingested from Alertmanager or Grafana, or a person. It is internal and stays private.
+- A **status report** is the public write-up. Publishing is always a deliberate act.
+
+Keeping the three apart is the key to using them well.
 
 ```
         DETECTION                          COMMUNICATION
@@ -21,25 +27,37 @@ The word "incident" is overloaded. Colloquially it means the whole event — the
 +---------------------+            +--------------------------+
 ```
 
-## Incidents: detection
+## Monitor incidents: detection
 
-An incident is created **automatically** when at least half of a monitor's configured regions report an `error` — requiring agreement across regions is what filters out a single flaky probe. You never create an incident by hand.
+A monitor incident is created **automatically** when at least half of a monitor's configured regions report an `error` — requiring agreement across regions is what filters out a single flaky probe. You never create one by hand.
 
-An incident is scoped to a single **monitor** and is primarily an internal object:
+A monitor incident is scoped to a single **monitor** and is primarily an internal object:
 
 - It alerts your team through your configured [notification channels](/docs/reference/notification).
 - It can be **acknowledged** (someone is on it) and **resolved** (it's over) — and openstatus auto-resolves it when checks recover.
 - It records the timeline: when it started, who acknowledged it, who (or what) resolved it.
 
-Think of an incident as the smoke detector going off. It tells *you* something is wrong; it doesn't explain anything to your users. See the [Incident reference](/docs/reference/incident) for the full lifecycle.
+Think of a monitor incident as the smoke detector going off. It tells *you* something is wrong; it doesn't explain anything to your users. See the [Incident reference](/docs/reference/incident) for the full lifecycle.
+
+## Incidents: triage
+
+An incident is workspace-level, not monitor-level, and it is where a response actually lives. It carries a title, a summary, a severity, a triage status (`triage` → `investigating` → `identified` → `monitoring` → `resolved`), and who acknowledged or resolved it.
+
+Incidents come from three places:
+
+- **Ingested alerts.** An alert from a connected source — see [Connecting alert sources](/docs/guides/how-to-connect-alert-sources) — opens an incident automatically, grouped by whatever that tool already considers one problem.
+- **By hand.** Something you noticed that no monitor can see.
+- **Your monitors**, in a later release, so a monitor incident rolls up into the same object.
+
+An incident is **never public**. Its history is the workspace audit log, and it stays internal until you publish it.
 
 ## Status reports: communication
 
 A status report is what your users actually read. It is created **manually** (dashboard, CLI, or API), belongs to a single **status page**, and is attached to one or more of that page's [components](/docs/reference/page-components) — the services your users recognize, not your internal monitors.
 
-Crucially, a status report is **not linked to an incident** in the data model. They are independent:
+Nothing is published on your behalf. A status report exists only when someone creates one — either directly, or by **publishing an incident**, which creates a report seeded from that incident and links the two so you can see it was published.
 
-- A monitor can fail (incident) without you publishing anything — say, a flapping internal service.
+- A monitor can fail without you publishing anything — say, a flapping internal service.
 - You can publish a report with no incident behind it — a third-party provider is down, or you spot a problem your monitors can't see.
 
 Most of the time, though, an incident is the *trigger* and the status report is the *response*.

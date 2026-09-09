@@ -1,13 +1,13 @@
 import { getLogger } from "@logtape/logtape";
 import { and, db, eq, inArray, lt, notInArray, sql } from "@openstatus/db";
 import type {
-  Incident,
+  MonitorIncident,
   Monitor,
   Notification,
 } from "@openstatus/db/src/schema";
 import {
   notificationOutbox,
-  incidentTable,
+  monitorIncidentTable,
   monitor,
   notification,
   notificationDeadLetter,
@@ -145,7 +145,7 @@ async function claimRows(
 type DeliveryDeps = {
   monitors: Map<number, Monitor>;
   notifications: Map<number, Notification>;
-  incidents: Map<number, Incident>;
+  incidents: Map<number, MonitorIncident>;
   smsBlocked: Map<number, boolean>;
 };
 
@@ -155,7 +155,7 @@ async function loadDeps(rows: OutboxRow[]): Promise<DeliveryDeps> {
   const incidentIds = [
     ...new Set(
       rows
-        .map((row) => row.incidentId)
+        .map((row) => row.monitorIncidentId)
         .filter((id): id is number => id !== null),
     ),
   ];
@@ -170,11 +170,11 @@ async function loadDeps(rows: OutboxRow[]): Promise<DeliveryDeps> {
           .where(inArray(notification.id, notificationIds)),
         db
           .select()
-          .from(incidentTable)
+          .from(monitorIncidentTable)
           .where(
             incidentIds.length === 0
               ? sql`1 = 0`
-              : inArray(incidentTable.id, incidentIds),
+              : inArray(monitorIncidentTable.id, incidentIds),
           ),
       ]),
   );
@@ -191,7 +191,7 @@ async function loadDeps(rows: OutboxRow[]): Promise<DeliveryDeps> {
     if (parsed.success) notifications.set(row.id, parsed.data);
   }
 
-  const incidents = new Map<number, Incident>();
+  const incidents = new Map<number, MonitorIncident>();
   for (const row of incidentRows) {
     incidents.set(row.id, row);
   }
@@ -243,9 +243,9 @@ function deliverRow(
       regions: row.payload.regions,
       latency: row.payload.latency,
       incident:
-        row.incidentId === null
+        row.monitorIncidentId === null
           ? undefined
-          : deps.incidents.get(row.incidentId),
+          : deps.incidents.get(row.monitorIncidentId),
     };
 
     inFlightSends.add(row.id);
@@ -409,7 +409,7 @@ async function commitDead(
           fromStatus: row.fromStatus,
           toStatus: row.toStatus,
           cronTimestamp: row.cronTimestamp,
-          incidentId: row.incidentId,
+          monitorIncidentId: row.monitorIncidentId,
           payload: row.payload,
           attempts: row.attempts,
           finalError: error.slice(0, 2000),

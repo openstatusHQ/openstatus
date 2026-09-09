@@ -121,9 +121,23 @@ const maintenanceActions = [
   action("maintenance.delete", "maintenance", intId),
 ] as const;
 
+const monitorIncidentActions = [
+  action("monitor_incident.update", "monitor_incident", intId),
+  action("monitor_incident.delete", "monitor_incident", intId),
+] as const;
+
 const incidentActions = [
+  action("incident.create", "incident", intId, { optionalMetadata: true }),
   action("incident.update", "incident", intId),
+  action("incident.acknowledge", "incident", intId),
+  action("incident.resolve", "incident", intId),
+  action("incident.promote", "incident", intId, { optionalMetadata: true }),
   action("incident.delete", "incident", intId),
+  action("alert_source.create", "alert_source", intId, {
+    optionalMetadata: true,
+  }),
+  action("alert_source.update", "alert_source", intId),
+  action("alert_source.delete", "alert_source", intId),
 ] as const;
 
 const statusReportActions = [
@@ -158,7 +172,7 @@ const invitationActions = [
 //     (the acceptance stamp), so `member.create` covers only the paths that
 //     mint a membership with no invitation behind it — today, SSO JIT
 //     provisioning.
-//   - `incident`: rows originate from the checker pipeline, not user
+//   - `monitor_incident`: rows originate from the checker pipeline, not user
 //     mutations.
 // When those write paths migrate to the service layer, add the missing
 // verbs alongside.
@@ -222,6 +236,7 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...userActions,
   ...workspaceActions,
   ...maintenanceActions,
+  ...monitorIncidentActions,
   ...incidentActions,
   ...statusReportActions,
   ...statusReportUpdateActions,

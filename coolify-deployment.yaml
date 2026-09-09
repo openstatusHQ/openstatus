@@ -247,6 +247,40 @@ services:
         reservations:
           memory: 256M
 
+  ingest:
+    image: ghcr.io/openstatushq/openstatus-ingest:latest
+    container_name: openstatus-ingest
+    networks:
+      - openstatus
+    ports:
+      - "3004:3004"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-http://libsql:8080}
+      - DATABASE_AUTH_TOKEN=${DATABASE_AUTH_TOKEN:-}
+      - PORT=${INGEST_PORT:-3004}
+      # Rate limiting is skipped entirely when Upstash is not configured — see
+      # apps/ingest/AGENTS.md. Ingest still works, it just has no per-source cap.
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL:-}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN:-}
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+      libsql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
   private-location:
     image: ghcr.io/openstatushq/openstatus-private-location:latest
     container_name: openstatus-private-location

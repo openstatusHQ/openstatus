@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package openstatus.incident.v1;
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/incident/v1;incidentv1";
+
+// IncidentStatus represents where an incident is in triage.
+enum IncidentStatus {
+  INCIDENT_STATUS_UNSPECIFIED = 0;
+  INCIDENT_STATUS_TRIAGE = 1;
+  INCIDENT_STATUS_INVESTIGATING = 2;
+  INCIDENT_STATUS_IDENTIFIED = 3;
+  INCIDENT_STATUS_MONITORING = 4;
+  INCIDENT_STATUS_RESOLVED = 5;
+}
+
+// IncidentSeverity is how badly the incident is understood to be affecting service.
+enum IncidentSeverity {
+  INCIDENT_SEVERITY_UNSPECIFIED = 0;
+  INCIDENT_SEVERITY_CRITICAL = 1;
+  INCIDENT_SEVERITY_WARNING = 2;
+  INCIDENT_SEVERITY_INFO = 3;
+}
+
+// IncidentOrigin is what produced the incident.
+enum IncidentOrigin {
+  INCIDENT_ORIGIN_UNSPECIFIED = 0;
+  // Raised from an openstatus monitor going down.
+  INCIDENT_ORIGIN_MONITOR = 1;
+  // Ingested from a third-party alert source.
+  INCIDENT_ORIGIN_EXTERNAL = 2;
+  // Opened by a person.
+  INCIDENT_ORIGIN_MANUAL = 3;
+}
+
+// Incident is internal triage state. It is not published until it is promoted
+// to a status report.
+message Incident {
+  // Unique identifier for the incident.
+  string id = 1;
+
+  // Short human-readable title.
+  string title = 2;
+
+  // Longer description of what is known so far.
+  string summary = 3;
+
+  // Where the incident is in triage.
+  IncidentStatus status = 4;
+
+  // How badly service is understood to be affected.
+  IncidentSeverity severity = 5;
+
+  // What produced the incident.
+  IncidentOrigin origin = 6;
+
+  // ID of the alert source that produced it, when origin is EXTERNAL.
+  optional string alert_source_id = 7;
+
+  // ID of the status report this incident was published as, once promoted.
+  optional string status_report_id = 8;
+
+  // When the incident began (RFC 3339 format).
+  string started_at = 9;
+
+  // When a firing signal was last seen (RFC 3339 format). Drives auto-resolve.
+  string last_seen_at = 10;
+
+  // When the incident was acknowledged (RFC 3339 format).
+  optional string acknowledged_at = 11;
+
+  // When the incident was resolved (RFC 3339 format).
+  optional string resolved_at = 12;
+
+  // True when the incident was closed by the system rather than a person.
+  bool auto_resolved = 13;
+
+  // Timestamp when the incident was created (RFC 3339 format).
+  string created_at = 14;
+
+  // Timestamp when the incident was last updated (RFC 3339 format).
+  string updated_at = 15;
+}
