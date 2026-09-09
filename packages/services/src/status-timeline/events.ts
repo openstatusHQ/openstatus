@@ -292,7 +292,7 @@ export function getEvents({
       return true;
     })
     .forEach((maintenance) => {
-      if (maintenance.from < pastThreshold) return;
+      if (maintenance.to < pastThreshold) return;
       events.push({
         id: maintenance.id,
         name: maintenance.title,
@@ -311,7 +311,12 @@ export function getEvents({
         monitorId ? incident.monitorId === monitorId : true,
       )
       .forEach((incident) => {
-        if (!incident.createdAt || incident.createdAt < pastThreshold) return;
+        if (
+          !incident.createdAt ||
+          (incident.resolvedAt && incident.resolvedAt < pastThreshold)
+        ) {
+          return;
+        }
         events.push({
           id: incident.id,
           name: "Downtime",
