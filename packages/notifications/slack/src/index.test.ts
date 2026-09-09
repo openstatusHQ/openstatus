@@ -8,6 +8,7 @@ import {
   buildAlertBlocks,
   buildDegradedBlocks,
   buildRecoveryBlocks,
+  escapeSlackText,
 } from "./blocks";
 import {
   sendAlert,
@@ -208,6 +209,8 @@ describe("Slack title limits", () => {
         "API Health",
         "A".repeat(150 - suffix.length),
         "A".repeat(255),
+        "A & <B>",
+        "&<>".repeat(20),
         "&<>".repeat(85),
         "\u{1F680}".repeat(127),
         `A${"\u{1F680}".repeat(127)}`,
@@ -237,7 +240,7 @@ describe("Slack title limits", () => {
           .replace(/&amp;/g, "&");
         expect(decoded.length).toBeGreaterThan(0);
         expect(monitorName.startsWith(decoded)).toBe(true);
-        if (monitorName.length <= 150 - suffix.length) {
+        if (escapeSlackText(monitorName).length <= 150 - suffix.length) {
           expect(decoded).toBe(monitorName);
         }
         expect(data.monitorName).toBe(monitorName);
