@@ -18,6 +18,7 @@ import {
   buildFromSubscriptionOrThrow,
   cancelSupersededSubscriptions,
   getCurrentSubscription,
+  isNewerSubscription,
   listLiveSubscriptions,
   stripe,
 } from "./shared";
@@ -56,9 +57,9 @@ export const webhookRouter = createTRPCRouter({
     // `current_period_end` trustworthy, which the raw payload is not: it is
     // serialised with the API version pinned on the Stripe *endpoint*, and
     // newer versions moved that field onto the subscription items.
-    const { active, current } = await getCurrentSubscription(customerId);
+    const { live, current } = await getCurrentSubscription(customerId);
 
-    // Nothing active left — `customer.subscription.deleted` owns the downgrade.
+    // Nothing live left — `customer.subscription.deleted` owns the downgrade.
     if (!current) {
       return;
     }
@@ -92,7 +93,7 @@ export const webhookRouter = createTRPCRouter({
     // age rather than by "whichever subscription this event named" is what
     // stops a stale event from retiring the subscription the customer is
     // actually on.
-    await cancelSupersededSubscriptions(active, current);
+    await cancelSupersededSubscriptions(live, current);
 
     // No `reason` metadata: `customer.subscription.updated` fires on trivial
     // changes too, so let the audit no-op-skip drop rows where nothing
@@ -174,9 +175,9 @@ export const webhookRouter = createTRPCRouter({
     // that a newer one has already superseded. Writing it would move the
     // workspace back to the older plan while the newer subscription keeps
     // billing, so leave the workspace to that subscription's own events.
-    const { active, current } = await getCurrentSubscription(customerId);
+    const { live, current } = await getCurrentSubscription(customerId);
 
-    if (current && current.created > subscription.created) {
+    if (current && isNewerSubscription(current, subscription)) {
       return;
     }
 
@@ -192,7 +193,7 @@ export const webhookRouter = createTRPCRouter({
     // Checkout always opens a new subscription, so anything else still active
     // predates it and would keep billing. Retire it here instead of waiting
     // for an unrelated `customer.subscription.updated` to come along.
-    await cancelSupersededSubscriptions(active, subscription);
+    await cancelSupersededSubscriptions(live, subscription);
 
     await updateWorkspacePlan({
       ctx: {

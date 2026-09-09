@@ -28,10 +28,56 @@ export function buildFromSubscriptionOrThrow(
   }
 }
 
+// Statuses that mean the customer still has a subscription. `incomplete` and
+// `incomplete_expired` are abandoned checkouts, `unpaid` and `paused` no longer
+// entitle anything, and `canceled` is gone.
+const LIVE_STATUSES: Stripe.Subscription.Status[] = [
+  "active",
+  "trialing",
+  "past_due",
+];
+
+/**
+ * Every subscription that still entitles the customer to something.
+ *
+ * Auto-paged on purpose: every abandoned checkout leaves an `incomplete` (then
+ * `incomplete_expired`) subscription behind and Stripe returns those in an
+ * unfiltered list, so enough of them push a customer's real subscription past
+ * the first page. Reading one page would report "nothing left" for a paying
+ * customer — which is what `customer.subscription.deleted` turns into a
+ * destructive downgrade.
+ */
+export async function listLiveSubscriptions(customerId: string) {
+  const subscriptions = await stripe.subscriptions
+    .list({ customer: customerId, limit: 100 })
+    .autoPagingToArray({ limit: 1000 });
+
+  return subscriptions.filter((sub) => LIVE_STATUSES.includes(sub.status));
+}
+
+/**
+ * Total order over a customer's subscriptions, newest first. `created` is only
+ * second-granular, so two subscriptions can tie; falling back to the id keeps
+ * every caller — the "which one is current" pick, the staleness guard and the
+ * cancellation — resolving a tie the same way instead of each choosing its own
+ * winner and contradicting the others.
+ */
+export function isNewerSubscription(
+  a: Stripe.Subscription,
+  b: Stripe.Subscription,
+) {
+  if (a.created !== b.created) return a.created > b.created;
+  return a.id > b.id;
+}
+
 /**
  * The customer's live subscriptions and the one the workspace should follow:
- * the newest active subscription. Stripe returns `list` newest-first today but
- * does not contract it, so the pick is explicit.
+ * the newest of them. Stripe returns `list` newest-first today but does not
+ * contract it, so the pick is explicit.
+ *
+ * Live rather than strictly `active`: a newer subscription that is `trialing`
+ * or `past_due` still entitles the customer, and omitting it would let an
+ * older active one look current and revert the workspace onto its plan.
  *
  * Always read through this rather than off a webhook payload: Stripe
  * guarantees neither delivery order nor exactly-once delivery, and it
@@ -39,18 +85,15 @@ export function buildFromSubscriptionOrThrow(
  * than the one this client pins.
  */
 export async function getCurrentSubscription(customerId: string) {
-  const active = await stripe.subscriptions.list({
-    customer: customerId,
-    status: "active",
-  });
+  const live = await listLiveSubscriptions(customerId);
 
-  const current = active.data.reduce<Stripe.Subscription | undefined>(
+  const current = live.reduce<Stripe.Subscription | undefined>(
     (newest, sub) =>
-      newest === undefined || sub.created > newest.created ? sub : newest,
+      newest === undefined || isNewerSubscription(sub, newest) ? sub : newest,
     undefined,
   );
 
-  return { active: active.data, current };
+  return { live, current };
 }
 
 /**
@@ -76,36 +119,13 @@ export async function cancelSupersededSubscriptions(
     // Only ever cancel *downwards*. A replayed or out-of-order delivery names
     // a subscription that may already have been superseded, and retiring the
     // newer one on its behalf is the failure this whole path exists to avoid.
-    if (sub.created > current.created) continue;
+    if (isNewerSubscription(sub, current)) continue;
     try {
       await stripe.subscriptions.cancel(sub.id);
     } catch (e) {
       console.error(`Failed to cancel superseded subscription ${sub.id}:`, e);
     }
   }
-}
-
-// Statuses that mean the customer still has a subscription. `incomplete` and
-// `incomplete_expired` are abandoned checkouts, `unpaid` and `paused` no longer
-// entitle anything, and `canceled` is gone.
-const LIVE_STATUSES: Stripe.Subscription.Status[] = [
-  "active",
-  "trialing",
-  "past_due",
-];
-
-/**
- * Every subscription that still entitles the customer to something. This is
- * the "is there anything left?" guard to use before a downgrade: filtering on
- * `active` alone misses a trialing or past-due subscription and drops the
- * workspace to free while the customer is still subscribed.
- */
-export async function listLiveSubscriptions(customerId: string) {
-  const subscriptions = await stripe.subscriptions.list({
-    customer: customerId,
-  });
-
-  return subscriptions.data.filter((sub) => LIVE_STATUSES.includes(sub.status));
 }
 
 export async function cancelSubscription(customer?: string) {
