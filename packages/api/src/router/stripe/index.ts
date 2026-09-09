@@ -19,7 +19,6 @@ import {
 import { countWorkspaceUsage } from "@openstatus/services";
 import { updateWorkspacePlan } from "@openstatus/services/workspace";
 import { TRPCError } from "@trpc/server";
-import type { Stripe } from "stripe";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
@@ -330,15 +329,15 @@ export const stripeRouter = createTRPCRouter({
         });
       }
 
-      const sub = (await stripe.customers.retrieve(stripeId, {
-        expand: ["subscriptions"],
-      })) as Stripe.Customer;
+      // Same "which subscription is current" rule as the plan change and the
+      // webhooks. `customers.retrieve(expand: ["subscriptions"])` also returns
+      // the `incomplete` records an abandoned checkout leaves behind, and
+      // taking the first of those would attach the addon to a subscription
+      // that never bills — granting the limit for free until a later webhook
+      // rebuilt it away.
+      const { current } = await getCurrentSubscription(stripeId);
 
-      if (!sub) {
-        return;
-      }
-
-      if (!sub.subscriptions?.data[0]?.id) {
+      if (!current) {
         return;
       }
 
@@ -351,10 +350,9 @@ export const stripeRouter = createTRPCRouter({
         });
       }
 
-      const subscriptionId = sub.subscriptions.data[0].id;
-
       const items = await stripe.subscriptionItems.list({
-        subscription: subscriptionId,
+        subscription: current.id,
+        limit: 100,
       });
 
       // Stripe rejects mixed billing intervals on one subscription and every
@@ -425,7 +423,7 @@ export const stripeRouter = createTRPCRouter({
       } else {
         await stripe.subscriptionItems.create({
           price: priceId,
-          subscription: subscriptionId,
+          subscription: current.id,
           quantity,
         });
       }
