@@ -210,11 +210,22 @@ export const stripeRouter = createTRPCRouter({
           });
         }
 
+        // Classify before mutating Stripe. An item on a price neither table
+        // knows throws, and throwing *after* the update would leave the
+        // customer re-priced and billed while the workspace kept the old plan
+        // — a split the webhook cannot repair either, since it throws on the
+        // same item.
+        buildFromSubscriptionOrThrow(current);
+
         // Only the plan item is listed, so Stripe leaves every other item
-        // untouched and the addons survive the plan change.
+        // untouched and the addons survive the plan change. Clearing
+        // `cancel_at_period_end` resumes a subscription the customer had
+        // scheduled to cancel — choosing a paid plan says they mean to keep
+        // paying.
         const updated = await stripe.subscriptions.update(current.id, {
           items: [{ id: planItem.id, price: priceId }],
           proration_behavior: "create_prorations",
+          cancel_at_period_end: false,
         });
 
         const built = buildFromSubscriptionOrThrow(updated);

@@ -170,6 +170,16 @@ export const webhookRouter = createTRPCRouter({
       });
     }
 
+    // A replayed or late `checkout.session.completed` can name a subscription
+    // that a newer one has already superseded. Writing it would move the
+    // workspace back to the older plan while the newer subscription keeps
+    // billing, so leave the workspace to that subscription's own events.
+    const { active, current } = await getCurrentSubscription(customerId);
+
+    if (current && current.created > subscription.created) {
+      return;
+    }
+
     const built = buildFromSubscriptionOrThrow(subscription);
     if (!built) {
       console.error("Invalid plan");
@@ -182,7 +192,6 @@ export const webhookRouter = createTRPCRouter({
     // Checkout always opens a new subscription, so anything else still active
     // predates it and would keep billing. Retire it here instead of waiting
     // for an unrelated `customer.subscription.updated` to come along.
-    const { active } = await getCurrentSubscription(customerId);
     await cancelSupersededSubscriptions(active, subscription);
 
     await updateWorkspacePlan({
