@@ -52,7 +52,7 @@ if (env.NODE_ENV === "production") {
         url: "https://www.openstatus.dev",
       },
       description:
-        "This version is deprecated please use v2 API: Read more about the new API in the documentation: https://www.openstatus.dev/docs/reference/api",
+        "This version is deprecated please use v2 API: https://api.openstatus.dev/openapi. Read more in the documentation: https://www.openstatus.dev/docs/reference/overview",
     },
     tags: [
       {

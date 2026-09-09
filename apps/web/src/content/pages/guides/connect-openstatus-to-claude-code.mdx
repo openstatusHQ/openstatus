@@ -1,20 +1,21 @@
 ---
 title: "Connect Openstatus to Claude Code (MCP Setup Guide)"
 author: "openstatus"
-description: "Wire the openstatus MCP server into Claude Code so the agent can list status pages, draft incidents, and schedule maintenance from your terminal — with audit-logged mutations and explicit notify semantics."
+description: "Wire the openstatus MCP server into Claude Code so the agent can list status pages, draft incidents, and schedule maintenance from your terminal — sign in with OAuth, no key to paste, with audit-logged mutations and explicit notify semantics."
 publishedAt: "2026-05-08"
+updatedAt: "2026-09-07"
 category: "education"
 howto:
-  totalTime: "PT3M"
+  totalTime: "PT2M"
   steps:
-    - name: "Create an openstatus API key"
-      text: "Open Settings → API Tokens in the openstatus dashboard, click Create Token, and pick read-only or read & write scope."
-      url: "#step-1-create-an-api-key"
     - name: "Register the MCP server with Claude Code"
-      text: "Run `claude mcp add --transport http --scope user --header \"x-openstatus-key: os_…\" openstatus https://api.openstatus.dev/mcp` to attach the openstatus tools to every Claude Code session."
-      url: "#step-2-register-the-mcp-server"
+      text: "Run `claude mcp add --transport http --scope user openstatus https://api.openstatus.dev/mcp` to attach the openstatus tools to every Claude Code session."
+      url: "#step-1-register-the-mcp-server"
+    - name: "Sign in with OAuth"
+      text: "In Claude Code, run /mcp, select openstatus, and choose Authenticate. Approve the connection in the browser, picking a workspace and read-only or read & write access."
+      url: "#step-2-sign-in"
     - name: "Verify the connection"
-      text: "In Claude Code, run /mcp and confirm openstatus is listed as connected with the expected tools (list_status_pages, list_status_reports, …)."
+      text: "Run /mcp again and confirm openstatus is listed as connected with the expected tools (list_status_pages, list_status_reports, …)."
       url: "#step-3-verify-the-connection"
     - name: "Run your first prompt"
       text: "Ask Claude Code to list your status pages or draft an incident. The agent will request approval before each tool call."
@@ -23,24 +24,26 @@ faq:
   - question: "Does Claude Code support remote MCP servers like openstatus?"
     answer: "Yes. Claude Code supports stdio, HTTP, and SSE transports. The openstatus MCP server is a stateless Streamable HTTP endpoint, registered with `claude mcp add --transport http`."
   - question: "What can Claude Code do once the openstatus MCP server is connected?"
-    answer: "Claude Code can list status pages, status reports, and maintenance windows; create new status reports; append updates to existing reports; resolve reports; edit metadata; and schedule maintenance windows — all scoped to the workspace tied to your API key."
-  - question: "Do I need a separate MCP credential for Claude Code?"
-    answer: "No. Authentication is the standard `x-openstatus-key` header — the same API key the openstatus CLI, REST API, and Terraform provider use. There is no MCP-specific OAuth flow."
+    answer: "Claude Code can list status pages, status reports, and maintenance windows; create new status reports; append updates to existing reports; resolve reports; edit metadata; and schedule maintenance windows — all scoped to the workspace you picked when you approved the connection."
+  - question: "Do I need an API key to connect Claude Code?"
+    answer: "No. The openstatus MCP server is an OAuth 2.1 authorization server. Claude Code opens a consent screen in your browser where you pick a workspace and an access level; tokens are issued and refreshed automatically. An API key in the `x-openstatus-key` header still works for CI and headless agents."
   - question: "Can Claude Code accidentally notify subscribers when creating an incident?"
     answer: "No. Every publishing tool (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) requires an explicit `notify: true | false` field. Claude Code must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag. `update_status_report` is metadata-only and has no notify path at all."
   - question: "How do I give Claude Code read-only access to my workspace?"
-    answer: "Create an API key with `read` scope. The MCP server filters write tools out of the `tools/list` response for read-only keys, so Claude Code sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session."
+    answer: "Pick Read-only on the consent screen. The MCP server filters write tools out of the `tools/list` response for read-only connections, so Claude Code sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session."
+  - question: "How do I disconnect Claude Code from my workspace?"
+    answer: "Open Settings > Integrations > Connected apps in the openstatus dashboard and revoke the connection. Claude Code's next call fails with 401; run /mcp > Authenticate to reconnect. Members revoke their own connections, owners and admins can revoke any."
   - question: "Where do MCP-driven changes appear in the audit log?"
-    answer: "Every mutation routed through the MCP server lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the API key id and `actor_user_id` set to the user who created the key. This separates AI-driven actions from CLI, dashboard, and direct API mutations."
+    answer: "Every mutation routed through the MCP server lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the connection (`oat_<id>` for OAuth, the key id for an API key) and `actor_user_id` set to the user who approved the connection or created the key. This separates AI-driven actions from CLI, dashboard, and direct API mutations."
   - question: "Can I commit the MCP configuration to my repository?"
-    answer: "Yes. Create a project-scoped `.mcp.json` at the repo root with the MCP server definition, and use `${OPENSTATUS_API_KEY}` for the header value so the secret stays out of source control."
+    answer: "Yes. Create a project-scoped `.mcp.json` at the repo root with the MCP server definition and no header; each teammate signs in with OAuth on first use. For CI, add an `x-openstatus-key` header with `${OPENSTATUS_API_KEY}` so the secret stays out of source control."
 ---
 
-**TL;DR** — Run one `claude mcp add` command with your openstatus API key and Claude Code can drive your status pages: list incidents, draft updates, and schedule maintenance from your terminal. Every mutation is audit-logged under `actor_type = 'mcp'` and notifications never fire unless you explicitly approve.
+**TL;DR** — Run one `claude mcp add` command, sign in from `/mcp`, and Claude Code can drive your status pages: list incidents, draft updates, and schedule maintenance from your terminal. No key to paste. Every mutation is audit-logged under `actor_type = 'mcp'` and notifications never fire unless you explicitly approve.
 
 ---
 
-[Claude Code](https://docs.claude.com/en/docs/claude-code/overview) is an agent that lives in your terminal. The [Model Context Protocol](https://modelcontextprotocol.io) (MCP) lets it reach out to remote services like openstatus — with the agent's host responsible for approval and audit. This guide walks through the three-minute setup.
+[Claude Code](https://docs.claude.com/en/docs/claude-code/overview) is an agent that lives in your terminal. The [Model Context Protocol](https://modelcontextprotocol.io) (MCP) lets it reach out to remote services like openstatus — with the agent's host responsible for approval and audit. This guide walks through the two-minute setup.
 
 ## Why connect Openstatus to Claude Code?
 
@@ -48,25 +51,16 @@ Status page work usually lands while you're already debugging in a terminal. Con
 
 - **During an incident** — draft an investigating-status update for the right page and approve it without opening the dashboard.
 - **At deploy time** — schedule a maintenance window from the same Claude Code session you used to ship the change.
-- **Read-only audits** — hand a teammate a read-scoped key so their Claude Code can summarize page health with zero mutation risk.
+- **Read-only audits** — a teammate connects with read-only access; their Claude Code can summarize page health with zero mutation risk.
 
-The same key works with [Claude Desktop](/guides/connect-openstatus-to-claude-desktop), Cursor, ChatGPT, and any other MCP-compatible client.
+The same server works with [Claude Desktop](/guides/connect-openstatus-to-claude-desktop), Claude.ai, [Codex](/guides/connect-openstatus-to-codex), [ChatGPT](/guides/connect-openstatus-to-chatgpt), [opencode](/guides/connect-openstatus-to-opencode), Cursor, and any other MCP-compatible client.
 
 ## Prerequisites
 
 - An [openstatus account](https://www.openstatus.dev) with at least one status page.
 - Claude Code installed (`claude --version` should print a version).
 
-## Step 1: Create an API key
-
-In the openstatus dashboard, go to **Settings → API Tokens** → **Create Token**. Pick a scope:
-
-- **Read-only** — Claude Code can only list status pages, reports, and maintenance windows.
-- **Read & write** — Claude Code can also create reports, append updates, resolve incidents, and schedule maintenance.
-
-Scopes are immutable on a key. Copy the value (starts with `os_`); you'll only see it once.
-
-## Step 2: Register the MCP server
+## Step 1: Register the MCP server
 
 Claude Code talks to the openstatus MCP server over Streamable HTTP. Register it with `claude mcp add`:
 
@@ -74,7 +68,6 @@ Claude Code talks to the openstatus MCP server over Streamable HTTP. Register it
 claude mcp add \
   --transport http \
   --scope user \
-  --header "x-openstatus-key: os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
   openstatus \
   https://api.openstatus.dev/mcp
 ```
@@ -91,18 +84,15 @@ To commit the configuration to a repo so your team picks it up automatically, cr
   "mcpServers": {
     "openstatus": {
       "type": "http",
-      "url": "https://api.openstatus.dev/mcp",
-      "headers": {
-        "x-openstatus-key": "${OPENSTATUS_API_KEY}"
-      }
+      "url": "https://api.openstatus.dev/mcp"
     }
   }
 }
 ```
 
-Export `OPENSTATUS_API_KEY` in your shell — Claude Code expands it at connection time, so the key never lands in source control.
+No secret in the file: each teammate signs in with OAuth the first time they use it.
 
-## Step 3: Verify the connection
+## Step 2: Sign in
 
 In Claude Code, run:
 
@@ -110,7 +100,16 @@ In Claude Code, run:
 /mcp
 ```
 
-`openstatus` should be listed as **connected**. With a read-only key you'll see `list_status_pages`, `list_status_reports`, `list_maintenances`. With a read & write key you'll also see `create_status_report`, `add_status_report_update`, `update_status_report`, `resolve_status_report`, and `create_maintenance`. The server filters mutation tools out for read-only keys, so a misconfigured client cannot call them.
+Select **openstatus** and choose **Authenticate**. Your browser opens the openstatus consent screen:
+
+- **Workspace** — the workspace this connection can reach. If you belong to several, pick one. To switch later, revoke the connection in **Settings > Integrations > Connected apps** and run **Authenticate** again — while a connection is live you are not shown the consent screen.
+- **Access** — **Read-only** lets Claude Code list status pages, reports, and maintenance windows. **Read & write** also lets it create reports, append updates, resolve incidents, and schedule maintenance.
+
+Click **Approve**. Claude Code receives a token and refreshes it in the background; you won't be asked again unless the connection is revoked.
+
+## Step 3: Verify the connection
+
+Run `/mcp` again. `openstatus` should be listed as **connected**. With read-only access you'll see `list_status_pages`, `list_status_reports`, `list_maintenances`. With read & write you'll also see `create_status_report`, `add_status_report_update`, `update_status_report`, `resolve_status_report`, and `create_maintenance`. The server filters mutation tools out for read-only connections, so a misconfigured client cannot call them.
 
 ## Step 4: Run your first prompt
 
@@ -122,7 +121,7 @@ Try a read tool first:
 
 Claude Code calls `list_status_pages`, asks for your approval, and returns the slugs and ids in your workspace.
 
-With a write-scoped key, draft an incident — Claude Code shows you the title, status, message, and notify choice **before** firing:
+With write access, draft an incident — Claude Code shows you the title, status, message, and notify choice **before** firing:
 
 ```
 > draft a status report on my "api" page: investigating elevated latency on the payment endpoint, do not notify subscribers yet
@@ -130,23 +129,46 @@ With a write-scoped key, draft an incident — Claude Code shows you the title, 
 
 The agent resolves the page id via `list_status_pages`, presents the draft, and only calls `create_status_report` once you confirm.
 
+## Headless setups: use an API key
+
+OAuth needs a browser on the same machine. In CI, on a remote box, or inside a container, pass an API key instead. Create one in **Settings > API Tokens** (scopes are immutable on a key) and add the header:
+
+```bash
+claude mcp add \
+  --transport http \
+  --scope user \
+  --header "x-openstatus-key: os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  openstatus \
+  https://api.openstatus.dev/mcp
+```
+
+In a committed `.mcp.json`, use `"headers": { "x-openstatus-key": "${OPENSTATUS_API_KEY}" }` and export the variable in your shell — Claude Code expands it at connection time. When a header is present, the OAuth sign-in is skipped.
+
 ## Built-in safeguards
 
-Three properties make this safe enough for a real incident:
+Four properties make this safe enough for a real incident:
 
+- **Workspace-scoped consent** — the token only reaches the workspace you approved, with the access level you chose. You can downgrade a client that asks for write access to read-only on the consent screen.
 - **Required `notify: boolean`** on every mutation tool — the schema rejects calls that omit it, so the LLM has to ask before firing. `notify: false` is a hard guarantee that no subscriber alert goes out.
 - **Lookup-before-mutate** — `create_status_report` and `create_maintenance` require a `pageId` resolved via `list_status_pages` rather than guessed.
-- **Audit log attribution** — every mutation lands in the audit log under `actor_type = 'mcp'`, with `actor_id` (key) and `actor_user_id` (the user who created the key), so AI-driven actions are traceable as a separate slice.
+- **Audit log attribution** — every mutation lands in the audit log under `actor_type = 'mcp'`, with `actor_id` (the connection) and `actor_user_id` (the user who approved it), so AI-driven actions are traceable as a separate slice. Connecting and revoking are audited too.
+
+## Disconnecting
+
+Open **Settings > Integrations > Connected apps** in the dashboard. Each connection shows the client, its access, who connected it, and when it was last used. Revoke it and Claude Code's next call fails with `401`; run `/mcp` > **Authenticate** to reconnect. Members revoke their own connections; owners and admins can revoke any. Removing a member from the workspace revokes their connections automatically.
 
 ## Troubleshooting
 
-- **`/mcp` shows openstatus as disconnected.** Run `claude mcp list` and verify the `x-openstatus-key` value matches a key in **Settings → API Tokens** (whitespace from copy-paste is the usual culprit). Sanity-check with `curl -i -H "x-openstatus-key: os_..." https://api.openstatus.dev/mcp` — a `200` plus `mcp-session-id` header means the key is good.
-- **"Tool not available" when creating an incident.** Your key is read-only. Issue a new **Read & write** key and re-run `claude mcp add`.
+- **`/mcp` shows openstatus as disconnected.** Select it and choose **Authenticate** again. Sanity-check reachability with `curl -i -H "Accept: text/event-stream" https://api.openstatus.dev/mcp` — a `401` with a `WWW-Authenticate` header means the server is up and waiting for a sign-in.
+- **The browser never opens.** Claude Code prints the authorization URL; open it in a browser on the same machine, since the callback lands on a `localhost` port Claude Code listens on. For remote sessions, use an [API key](#headless-setups-use-an-api-key).
+- **"Tool not available" when creating an incident.** Your connection is read-only. Sign in again and pick **Read & write**.
 
 ## What's next?
 
-- **[MCP Server Reference](https://www.openstatus.dev/docs/reference/mcp-server)** — full tool schema, error codes, and scope mechanics.
+- **[MCP Server Reference](/docs/reference/mcp-server)** — full tool schema, error codes, OAuth endpoints, and scope mechanics.
 - **[Connect to Claude Desktop](/guides/connect-openstatus-to-claude-desktop)** — chat-shaped variant of this guide.
+- **[Connect to Codex](/guides/connect-openstatus-to-codex)** — the same setup for OpenAI's terminal agent.
+- **[Connect to opencode](/guides/connect-openstatus-to-opencode)** — the same setup for the open-source terminal agent.
 - **[Openstatus CLI](/tooling/cli)** — for terminal workflows that don't need an LLM in the loop.
 - **[Slack Agent](/status-page#slack-agent)** — for teams that live in Slack.
 
@@ -160,13 +182,13 @@ Yes. Claude Code supports stdio, HTTP, and SSE transports. The openstatus MCP se
 
 <Details summary="What can Claude Code do once the openstatus MCP server is connected?">
 
-Claude Code can list status pages, status reports, and maintenance windows; create new status reports; append updates to existing reports; resolve reports; edit metadata; and schedule maintenance windows — all scoped to the workspace tied to your API key.
+Claude Code can list status pages, status reports, and maintenance windows; create new status reports; append updates to existing reports; resolve reports; edit metadata; and schedule maintenance windows — all scoped to the workspace you picked when you approved the connection.
 
 </Details>
 
-<Details summary="Do I need a separate MCP credential for Claude Code?">
+<Details summary="Do I need an API key to connect Claude Code?">
 
-No. Authentication is the standard `x-openstatus-key` header — the same API key the openstatus CLI, REST API, and Terraform provider use. There is no MCP-specific OAuth flow.
+No. The openstatus MCP server is an OAuth 2.1 authorization server. Claude Code opens a consent screen in your browser where you pick a workspace and an access level; tokens are issued and refreshed automatically. An API key in the `x-openstatus-key` header still works for CI and headless agents.
 
 </Details>
 
@@ -178,19 +200,25 @@ No. Every publishing tool (`create_status_report`, `add_status_report_update`, `
 
 <Details summary="How do I give Claude Code read-only access to my workspace?">
 
-Create an API key with `read` scope. The MCP server filters write tools out of the `tools/list` response for read-only keys, so Claude Code sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session.
+Pick **Read-only** on the consent screen. The MCP server filters write tools out of the `tools/list` response for read-only connections, so Claude Code sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session.
+
+</Details>
+
+<Details summary="How do I disconnect Claude Code from my workspace?">
+
+Open **Settings > Integrations > Connected apps** in the openstatus dashboard and revoke the connection. Claude Code's next call fails with `401`; run `/mcp` > **Authenticate** to reconnect. Members revoke their own connections, owners and admins can revoke any.
 
 </Details>
 
 <Details summary="Where do MCP-driven changes appear in the audit log?">
 
-Every mutation routed through the MCP server lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the API key id and `actor_user_id` set to the user who created the key. This separates AI-driven actions from CLI, dashboard, and direct API mutations.
+Every mutation routed through the MCP server lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the connection (`oat_<id>` for OAuth, the key id for an API key) and `actor_user_id` set to the user who approved the connection or created the key. This separates AI-driven actions from CLI, dashboard, and direct API mutations.
 
 </Details>
 
 <Details summary="Can I commit the MCP configuration to my repository?">
 
-Yes. Create a project-scoped `.mcp.json` at the repo root with the MCP server definition, and use `${OPENSTATUS_API_KEY}` for the header value so the secret stays out of source control.
+Yes. Create a project-scoped `.mcp.json` at the repo root with the MCP server definition and no header; each teammate signs in with OAuth on first use. For CI, add an `x-openstatus-key` header with `${OPENSTATUS_API_KEY}` so the secret stays out of source control.
 
 </Details>
 

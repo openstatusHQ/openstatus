@@ -1,5 +1,6 @@
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
+import { FakeTime } from "@std/testing/time";
 
 import {
   activeReportStatus,
@@ -84,14 +85,101 @@ describe("getEvents incident timestamps", () => {
     }
   });
 
-  test("filters old incident starts even when persistence is recent", () => {
+  test("filters incidents resolved before the window even when persistence is recent", () => {
     const events = getEvents({
       maintenances: [],
-      incidents: [{ ...incident, startedAt: new Date(now - 46 * 86_400_000) }],
+      incidents: [
+        {
+          ...incident,
+          startedAt: new Date(now - 47 * 86_400_000),
+          resolvedAt: new Date(now - 46 * 86_400_000),
+        },
+      ],
       reports: [],
     });
 
     expect(events).toEqual([]);
+  });
+});
+
+describe("getEvents lookback", () => {
+  test("keeps overlapping intervals and clips incident downtime to the window", () => {
+    const time = new FakeTime(day("2026-03-01"));
+    try {
+      const from = day("2025-12-01");
+      const threshold = day("2026-01-15");
+      const ends = [
+        day("2026-03-02"),
+        day("2026-02-01"),
+        threshold,
+        new Date(threshold.getTime() - 1),
+      ];
+      const events = getEvents({
+        reports: [],
+        maintenances: ends.map((to, id) => ({
+          id,
+          title: "Maintenance",
+          message: "",
+          from,
+          to,
+          workspaceId: 1,
+          pageId: 1,
+          createdAt: from,
+          updatedAt: from,
+          maintenancesToPageComponents: [],
+        })),
+        incidents: [null, ...ends].map((resolvedAt, id) => ({
+          id,
+          title: "Incident",
+          summary: "",
+          status: resolvedAt ? "resolved" : "investigating",
+          monitorId: 1,
+          workspaceId: 1,
+          startedAt: from,
+          acknowledgedAt: null,
+          acknowledgedBy: null,
+          resolvedAt,
+          resolvedBy: null,
+          incidentScreenshotUrl: null,
+          recoveryScreenshotUrl: null,
+          autoResolved: false,
+          createdAt: from,
+          updatedAt: from,
+        })),
+      });
+
+      expect(
+        events
+          .filter((event) => event.type === "maintenance")
+          .map((event) => event.id),
+      ).toEqual([0, 1, 2]);
+      expect(
+        events
+          .filter((event) => event.type === "incident")
+          .map((event) => event.id),
+      ).toEqual([0, 1, 2, 3]);
+      expect(
+        resolveDayStatus(
+          makeBucket({ day: "2026-02-28T00:00:00.000Z" }),
+          events,
+        ).status,
+      ).toBe("down");
+      expect(
+        durationDowntimeMs(events, {
+          start: threshold.getTime(),
+          end: time.now,
+          now: time.now,
+        }),
+      ).toBe(3_888_000_000);
+      expect(
+        resolveDayStatus(
+          makeBucket({ day: "2026-02-28T00:00:00.000Z" }),
+          events.filter((event) => event.type === "maintenance"),
+        ).status,
+      ).toBe("maintenance");
+    } finally {
+      time.restore();
+    }
   });
 });
 

@@ -13,8 +13,8 @@ import {
 import {
   UpdatePageAppearanceInput,
   UpdatePageConfigurationInput,
-  UpdatePageCustomThemeInput,
   UpdatePageCustomDomainInput,
+  UpdatePageCustomThemeInput,
   UpdatePageGeneralInput,
   UpdatePageLinksInput,
   UpdatePageLocalesInput,
@@ -74,6 +74,10 @@ export async function updatePageCustomDomain(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = UpdatePageCustomDomainInput.parse(args.input);
+
+  if (input.customDomain && !ctx.workspace.limits["custom-domain"]) {
+    throw new LimitExceededError("custom-domain", 0);
+  }
 
   return withTransaction(ctx, async (tx) => {
     const existing = await getPageInWorkspace({
@@ -346,7 +350,11 @@ export async function updatePageConfiguration(args: {
       .set({
         configuration: {
           ...currentConfiguration,
-          ...input.configuration,
+          ...Object.fromEntries(
+            Object.entries(input.configuration ?? {}).filter(
+              ([, value]) => value !== undefined,
+            ),
+          ),
         },
         updatedAt: new Date(),
       })

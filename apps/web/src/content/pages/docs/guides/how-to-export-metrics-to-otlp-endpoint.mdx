@@ -11,13 +11,13 @@ You want to analyze your openstatus monitoring data alongside other telemetry da
 
 ## Solution
 
-openstatus can export monitoring metrics to any OTLP (OpenTelemetry Protocol) compatible endpoint. By adding a simple configuration to your `openstatus.yaml` file, you can have metrics from every check sent directly to your monitoring stack.
+openstatus can export monitoring metrics to any OTLP (OpenTelemetry Protocol) compatible endpoint. Add an `open_telemetry` block to a monitor in your Terraform configuration and metrics from every check that monitor runs are sent straight to your monitoring stack.
 
 ## Prerequisites
 
 - An observability platform that supports OTLP metric ingestion over HTTP.
-- An `openstatus.yaml` file to configure your monitors.
-- The [openstatus CLI](/docs/tutorial/get-started-with-openstatus-cli) to apply your configuration.
+- A workspace on a plan that includes OTLP export (**Pro** and **Scale**).
+- Terraform and the [openstatus provider](/docs/reference/terraform) configured — see [Manage openstatus with Terraform](/docs/guides/how-to-manage-openstatus-with-terraform) if you have not set it up yet.
 
 ## Step-by-step guide
 
@@ -28,39 +28,86 @@ First, you need to find the specific URL and any required authentication headers
 - **Endpoint URL** — look for an HTTP endpoint for OTLP metrics. It typically ends in `/v1/metrics`. For example: `https://otlp.your-provider.com/v1/metrics`.
 - **Headers** — you will likely need an authentication header, such as `Authorization: Bearer YOUR_API_KEY` or `X-API-Key: YOUR_API_KEY`.
 
-### 2. Configure your `openstatus.yaml` file
+### 2. Add an `open_telemetry` block to your monitor
 
-Open your `openstatus.yaml` file and add the `openTelemetry` block at the top level.
+`open_telemetry` is a block on the monitor resource, so each monitor declares its own export
+target. It is available on every monitor type — `openstatus_http_monitor`,
+`openstatus_tcp_monitor`, `openstatus_dns_monitor`, and `openstatus_icmp_monitor`.
 
-```yaml
-# yaml-language-server: $schema=https://www.openstatus.dev/schema.json
+```terraform
+variable "otlp_token" {
+  type      = string
+  sensitive = true
+}
 
-openTelemetry:
-  endpoint: <YOUR_OTLP_ENDPOINT_URL>
-  headers:
-    Authorization: Bearer <YOUR_TOKEN>
-    # Add any other required headers here
+resource "openstatus_http_monitor" "api" {
+  name        = "API Health Check"
+  url         = "https://api.example.com/health"
+  periodicity = "1m"
+  active      = true
+  regions     = ["fly-iad", "fly-ams"]
 
-# Your monitors are defined below
-my-first-monitor:
-  # ...
+  open_telemetry {
+    endpoint = "https://otlp.your-provider.com/v1/metrics"
+
+    headers {
+      key   = "Authorization"
+      value = "Bearer ${var.otlp_token}"
+    }
+  }
+}
 ```
 
-Replace `<YOUR_OTLP_ENDPOINT_URL>` and `<YOUR_TOKEN>` with the values you found in step 1.
+Mark the token `sensitive` and pass it in with `TF_VAR_otlp_token` or from a secrets manager
+rather than committing it.
 
 **Note**: Currently, we only support OTLP over HTTP.
 
-### 3. Apply the configuration
+### 3. Share one endpoint across many monitors
 
-Use the openstatus CLI to apply the changes to your account.
+Because the block lives on each resource, put the endpoint and headers in a `locals` block and
+use `dynamic` so a change to the destination is a one-line edit rather than a sweep across every
+monitor:
 
-```bash
-openstatus monitors apply
+```terraform
+locals {
+  otlp_endpoint = "https://otlp.your-provider.com/v1/metrics"
+  otlp_headers = {
+    Authorization = "Bearer ${var.otlp_token}"
+  }
+}
+
+resource "openstatus_http_monitor" "api" {
+  name        = "API Health Check"
+  url         = "https://api.example.com/health"
+  periodicity = "1m"
+  active      = true
+  regions     = ["fly-iad", "fly-ams"]
+
+  open_telemetry {
+    endpoint = local.otlp_endpoint
+
+    dynamic "headers" {
+      for_each = local.otlp_headers
+      content {
+        key   = headers.key
+        value = headers.value
+      }
+    }
+  }
+}
 ```
 
-After applying the configuration, openstatus will send metrics to your specified endpoint after every check is completed.
+### 4. Apply the configuration
 
-### 4. Verify in your observability platform
+```bash
+terraform plan    # confirm only the open_telemetry block is changing
+terraform apply
+```
+
+Once applied, openstatus sends metrics to your endpoint after every check completes.
+
+### 5. Verify in your observability platform
 
 Go to your observability platform and look for the new metrics coming from openstatus. You should be able to build dashboards and alerts based on this data.
 

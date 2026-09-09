@@ -121,12 +121,19 @@ The interval at which the HTTP monitor will perform checks. Supported frequencie
 - `30 minutes`
 - `1 hour`
 
+<Aside>
+Which frequencies you can select depends on your plan: **Hobby** offers `10m`, `30m` and `1h`;
+**Starter** adds `1m` and `5m`; `30s` is **Pro** and **Scale** only. See
+[pricing](https://www.openstatus.dev/pricing) for the full breakdown.
+</Aside>
+
 ### Response time thresholds
 
 #### Timeout
 
 **Type:** Duration (optional)
 **Default:** `45 seconds`
+**Range:** 0–120000 ms
 
 The maximum duration to wait for the HTTP request to complete. If the request exceeds this time, it is considered a failure.
 
@@ -140,6 +147,7 @@ The duration after which the HTTP request is considered to be performing in a de
 
 **Type:** Integer (optional)
 **Default:** `3`
+**Range:** 0–10
 
 The number of times the monitor will automatically retry the HTTP request upon failure before reporting a definitive error. For example: `3`
 
@@ -152,7 +160,7 @@ Whether the checker follows HTTP redirects. When enabled, up to 10 redirects are
 
 ### Assertions
 
-Assertions let you validate specific aspects of the HTTP response. You can define up to 10 status code, 10 body, and 10 header assertions per monitor.
+Assertions let you validate specific aspects of the HTTP response. You can define up to 10 status code, 10 body, and 10 header assertions per monitor. Body assertions come in two flavours: raw text and JSONPath.
 
 #### Body assertions
 
@@ -169,9 +177,35 @@ Validate the content of the HTTP response body.
 - `Greater Than` / `Greater Than or Equal` — lexicographic comparison against the target.
 - `Less Than` / `Less Than or Equal` — lexicographic comparison against the target.
 
+#### JSON body assertions
+
+Validate a single value inside a JSON response body, addressed by a
+[JSONPath](https://www.npmjs.com/package/jsonpath-plus) expression. The extracted value is
+compared as a string, using the same comparators as body assertions.
+
+| Field | Description |
+|---|---|
+| `path` | JSONPath expression, e.g. `$.status` or `$.data.items[0].id`. |
+| `compare` | Any body-assertion comparator. |
+| `target` | Expected value. |
+
+A body that fails to parse as JSON fails the assertion.
+
+<Aside type="caution">
+JSON body assertions cannot currently be created from any surface. The checker evaluates them,
+and a monitor that already stores one keeps working, but none of the write paths accept one:
+the dashboard's assertion editor offers status, header, and (text) body assertions only; the v1
+REST API leaves the JSON body variant out of its assertion union; and the ConnectRPC API,
+the SDKs, and the Terraform provider have no equivalent message.
+
+One consequence is worth knowing if you hold an existing JSON body assertion: reading such a
+monitor back over ConnectRPC reports it as a plain body assertion, with the JSONPath dropped.
+The stored assertion itself is unchanged and the checker still evaluates the path.
+</Aside>
+
 #### Status code assertions
 
-Validate the HTTP status code of the response.
+Validate the HTTP status code of the response. The target must be a valid status code, 100–599.
 
 **Comparisons:**
 
