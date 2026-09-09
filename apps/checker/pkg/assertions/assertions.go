@@ -79,6 +79,7 @@ func (target HeaderTarget) HeaderEvaluate(s string) bool {
 			return t.StringEvaluate(fmt.Sprintf("%v", value))
 		}
 	}
+
 	return false
 }
 

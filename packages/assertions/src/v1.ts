@@ -308,10 +308,12 @@ export class HeaderAssertion implements Assertion {
         message: "Invalid request type for header assertion",
       };
     }
+
     const key = this.schema.key.toLowerCase();
     const value = Object.entries(req.header).find(
       ([name]) => name.toLowerCase() === key,
     )?.[1];
+
     const { success, message } = evaluateString(
       value ?? "",
       this.schema.compare,
