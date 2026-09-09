@@ -6,7 +6,7 @@ description: "Let an AI agent run your status page. It receives openstatus webho
 category: "AI Agents"
 faq:
   - question: "What is the openstatus MCP server?"
-    answer: "Openstatus ships a remote MCP (Model Context Protocol) server at api.openstatus.dev/mcp. It exposes typed tools for every workspace entity — monitors, response logs, status pages, page components, status reports, maintenance windows, notification channels, and audit logs. Any MCP-compatible client (Claude Desktop, ChatGPT, Cursor) or any agent built with the MCP SDK can connect with an openstatus API key."
+    answer: "Openstatus ships a remote MCP (Model Context Protocol) server at api.openstatus.dev/mcp. It exposes typed tools for every workspace entity — monitors, response logs, status pages, page components, status reports, maintenance windows, notification channels, and audit logs. Any MCP-compatible client (Claude Desktop, ChatGPT, Cursor) or any agent built with the MCP SDK can connect: interactive clients sign in with OAuth and pick a workspace and access level on a consent screen, headless agents pass an openstatus API key."
   - question: "How does an agent know a monitor failed?"
     answer: "Configure a webhook notification channel on the monitor. When openstatus detects a failure, it posts a payload to your endpoint. Your agent runtime receives it, opens an MCP session against api.openstatus.dev/mcp using your workspace API key, and starts investigating with the tools below."
   - question: "Which MCP tools matter for incident response?"
@@ -162,7 +162,7 @@ Every status-report mutation requires the agent to choose whether to notify subs
 
 <Details summary="What is the openstatus MCP server?">
 
-Openstatus ships a remote MCP (Model Context Protocol) server at api.openstatus.dev/mcp. It exposes typed tools for every workspace entity — monitors, response logs, status pages, page components, status reports, maintenance windows, notification channels, and audit logs. Any MCP-compatible client (Claude Desktop, ChatGPT, Cursor) or any agent built with the MCP SDK can connect with an openstatus API key.
+Openstatus ships a remote MCP (Model Context Protocol) server at api.openstatus.dev/mcp. It exposes typed tools for every workspace entity — monitors, response logs, status pages, page components, status reports, maintenance windows, notification channels, and audit logs. Any MCP-compatible client (Claude Desktop, ChatGPT, Cursor) or any agent built with the MCP SDK can connect: interactive clients sign in with OAuth and pick a workspace and access level on a consent screen, headless agents pass an openstatus API key.
 
 </Details>
 

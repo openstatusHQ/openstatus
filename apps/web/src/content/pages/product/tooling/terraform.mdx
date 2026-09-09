@@ -12,7 +12,7 @@ faq:
   - question: "How do I migrate an existing workspace into Terraform?"
     answer: "Run openstatus terraform generate from the CLI. It fetches your full configuration and produces valid HCL with cross-references and import blocks — no hand-writing required."
   - question: "Where do I get an API token?"
-    answer: "Generate one from Settings → API Tokens, then set OPENSTATUS_API_TOKEN before running terraform plan. The same token works across the CLI, API, and MCP server."
+    answer: "Generate one from Settings > API Tokens, then set OPENSTATUS_API_TOKEN before running terraform plan. The same token works across the CLI, API, and MCP server."
 ---
 
 The [openstatus Terraform provider](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest) treats monitoring as code: monitors, notifications, and status pages live in the same plan-and-apply lifecycle as the rest of your infrastructure.
@@ -62,7 +62,7 @@ The output is a valid HCL configuration with cross-references between resources 
 
 ## Auth & audit
 
-Set `OPENSTATUS_API_TOKEN` before running Terraform. The token is the same one the CLI, API, and MCP server share — generate it from **Settings → API Tokens**.
+Set `OPENSTATUS_API_TOKEN` before running Terraform. The token is the same one the CLI, API, and MCP server share — generate it from **Settings > API Tokens**.
 
 Every mutation through the provider lands in the audit log under `actor_type = 'api'`, so you can trace any change back to a key, a user, and a transport.
 
@@ -98,6 +98,6 @@ Run openstatus terraform generate from the CLI. It fetches your full configurati
 
 <Details summary="Where do I get an API token?">
 
-Generate one from Settings → API Tokens, then set `OPENSTATUS_API_TOKEN` before running terraform plan. The same token works across the CLI, API, and MCP server.
+Generate one from Settings > API Tokens, then set `OPENSTATUS_API_TOKEN` before running terraform plan. The same token works across the CLI, API, and MCP server.
 
 </Details>

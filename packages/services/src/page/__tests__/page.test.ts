@@ -28,8 +28,9 @@ import {
 import { createPage, newPage } from "../create";
 import { deletePage } from "../delete";
 import { getPage, getPageBySlug, getSlugAvailable, listPages } from "../list";
-import type { CreatePageInput } from "../schemas";
+import { type CreatePageInput, UpdatePageConfigurationInput } from "../schemas";
 import {
+  updatePageConfiguration,
   updatePageCustomTheme,
   updatePageGeneral,
   updatePageLocales,
@@ -472,6 +473,66 @@ describe("updatePageGeneral", () => {
           },
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+});
+
+describe("updatePageConfiguration", () => {
+  test("preserves omitted settings in partial updates", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await createPage({
+        ctx,
+        input: {
+          workspaceId: ctx.workspace.id,
+          title: "Configuration",
+          slug: uniqueSlug("configuration"),
+          description: "",
+          customDomain: "",
+          configuration: {
+            type: "manual",
+            value: "manual",
+            uptime: false,
+            theme: "default-rounded",
+            days: 30,
+          },
+        },
+      });
+
+      for (const configuration of [
+        { days: 45 },
+        {},
+        { theme: undefined },
+        null,
+        undefined,
+      ]) {
+        await updatePageConfiguration({
+          ctx,
+          input: UpdatePageConfigurationInput.parse({
+            id: p.id,
+            configuration,
+          }),
+        });
+        const row = await tx
+          .select()
+          .from(pageTable)
+          .where(eq(pageTable.id, p.id))
+          .get();
+        expect(row?.configuration).toEqual({
+          type: "manual",
+          value: "manual",
+          uptime: false,
+          theme: "default-rounded",
+          days: 45,
+        });
+      }
+      await expectAuditRow({
+        workspaceId: ctx.workspace.id,
+        action: "page.update",
+        entityType: "page",
+        entityId: p.id,
+        db: tx,
+      });
     });
   });
 });
