@@ -28,7 +28,7 @@ import {
 import { createPage, newPage } from "../create";
 import { deletePage } from "../delete";
 import { getPage, getPageBySlug, getSlugAvailable, listPages } from "../list";
-import { UpdatePageConfigurationInput } from "../schemas";
+import { type CreatePageInput, UpdatePageConfigurationInput } from "../schemas";
 import {
   updatePageConfiguration,
   updatePageCustomTheme,
@@ -149,6 +149,109 @@ describe("newPage", () => {
 });
 
 describe("createPage (full form)", () => {
+  for (const { name, input } of [
+    {
+      name: "custom theme",
+      input: { customTheme: { dark: { "--primary": "pink" } } },
+    },
+    {
+      name: "nondefault locale",
+      input: { defaultLocale: "fr" },
+    },
+    {
+      name: "additional locale",
+      input: { locales: ["en", "fr"] },
+    },
+  ] satisfies {
+    name: string;
+    input: Partial<CreatePageInput>;
+  }[]) {
+    test(`rejects ${name} without the feature entitlement`, async () => {
+      await withTestTransaction(async (tx) => {
+        const slug = uniqueSlug("feature-denied");
+        await expect(
+          createPage({
+            ctx: { ...freeCtx, db: tx },
+            input: {
+              workspaceId: freeCtx.workspace.id,
+              title: "Restricted feature",
+              description: "",
+              slug,
+              ...input,
+            },
+          }),
+        ).rejects.toMatchObject({ code: "LIMIT_EXCEEDED", max: 0 });
+        expect(
+          await tx
+            .select()
+            .from(pageTable)
+            .where(eq(pageTable.slug, slug))
+            .get(),
+        ).toBeUndefined();
+      });
+    });
+  }
+
+  for (const [index, input] of (
+    [
+      {},
+      { customTheme: null, locales: null },
+      {
+        customTheme: { light: {}, dark: {} },
+        defaultLocale: "en",
+        locales: ["en"],
+      },
+    ] satisfies Partial<CreatePageInput>[]
+  ).entries()) {
+    test(`allows default features without entitlements (${index})`, async () => {
+      await withTestTransaction(async (tx) => {
+        const row = await createPage({
+          ctx: { ...freeCtx, db: tx },
+          input: {
+            workspaceId: freeCtx.workspace.id,
+            title: "Default features",
+            description: "",
+            slug: uniqueSlug("feature-defaults"),
+            ...input,
+          },
+        });
+        expect(row.customTheme).toBeNull();
+        expect(row.defaultLocale).toBe("en");
+        expect(row.locales).toEqual(input.locales ?? null);
+      });
+    });
+  }
+
+  test("stores custom theme and locales with feature entitlements", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createPage({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          workspaceId: teamCtx.workspace.id,
+          title: "Paid features",
+          description: "",
+          slug: uniqueSlug("feature-allowed"),
+          customTheme: { light: { "--primary": " red " } },
+          defaultLocale: "fr",
+          locales: ["fr"],
+        },
+      });
+      expect(row.customTheme).toEqual({
+        light: { "--primary": "red" },
+        dark: {},
+      });
+      expect(row.defaultLocale).toBe("fr");
+      expect(row.locales).toEqual(["fr"]);
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page.create",
+        entityType: "page",
+        entityId: row.id,
+        db: tx,
+      });
+    });
+  });
+
   test("attaches monitors as pageComponents", async () => {
     await withTestTransaction(async (tx) => {
       const slug = uniqueSlug("full");
