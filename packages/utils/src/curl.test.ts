@@ -30,6 +30,34 @@ describe("buildCurlCommand", () => {
     expect(command).toContain(`--data-raw '{"a":1}'`);
   });
 
+  it("sends decoded binary POST bytes without shell or text conversion", async () => {
+    const server = Deno.serve(
+      { hostname: "127.0.0.1", port: 0 },
+      async (request) => new Response(await request.arrayBuffer()),
+    );
+    try {
+      const command = buildCurlCommand({
+        url: `http://127.0.0.1:${server.addr.port}/upload`,
+        method: "POST",
+        body: "data:application/octet-stream;base64,AP8nJFwNCgA=",
+        headers: [{ key: "Content-Type", value: "application/octet-stream" }],
+        timeout: 5000,
+      });
+      const result = await new Deno.Command("sh", {
+        args: ["-c", command],
+        env: { NO_PROXY: "*" },
+        stdout: "piped",
+        stderr: "piped",
+      }).output();
+      expect(result.code).toBe(0);
+      expect(result.stdout).toEqual(
+        new Uint8Array([0, 255, 39, 36, 92, 13, 10, 0]),
+      );
+    } finally {
+      await server.shutdown();
+    }
+  });
+
   it("does not override a custom content type or user agent", () => {
     const command = buildCurlCommand({
       url: "https://example.com",

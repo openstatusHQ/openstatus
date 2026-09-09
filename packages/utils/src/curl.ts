@@ -46,9 +46,21 @@ export function buildCurlCommand(request: CurlRequest): string {
     args.push(`-H ${quote("Content-Type: application/json")}`);
   }
 
-  if (body) args.push(`--data-raw ${quote(body)}`);
+  let command = "curl";
+  if (body) {
+    if (
+      method === "POST" &&
+      headers.find((h) => h.key === "Content-Type")?.value ===
+        "application/octet-stream"
+    ) {
+      command = `printf %s ${quote(body.split(",")[1] ?? "")} | base64 -d | curl`;
+      args.push("--data-binary @-");
+    } else {
+      args.push(`--data-raw ${quote(body)}`);
+    }
+  }
   if (request.followRedirects) args.push("-L");
   if (request.timeout) args.push(`--max-time ${seconds(request.timeout)}`);
 
-  return ["curl", ...args].join(" \\\n  ");
+  return [command, ...args].join(" \\\n  ");
 }
