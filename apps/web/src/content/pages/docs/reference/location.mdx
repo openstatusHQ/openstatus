@@ -12,15 +12,22 @@ You can use these locations to:
 - Allowlist monitoring IPs in your firewall.
 - Understand where requests originate during synthetic monitoring.
 
-## Two forms of the same region code
+## Three forms of the same region code
 
-The dashboard, the CLI, and the deprecated v1 REST API use the **bare** code (`iad`, `fra`,
-`koyeb_fra`, `railway_us-east4-eqdc4a`). The ConnectRPC API, the Terraform provider, and the SDKs
-use a **prefixed, hyphenated** form derived from the `Region` enum (`fly-iad`, `fly-fra`,
-`koyeb-fra`, `railway-us-east4`).
+The same probe is addressed by a different spelling depending on the surface you are using:
 
-They address the same probe — pick whichever form the surface you are using expects. The tables
-below list both.
+| Surface | Form | Example |
+|---|---|---|
+| Dashboard, CLI, deprecated v1 REST API | **bare** code | `iad`, `fra`, `koyeb_fra`, `railway_us-east4-eqdc4a` |
+| Terraform provider | **prefixed, hyphenated** | `fly-iad`, `fly-fra`, `koyeb-fra`, `railway-us-east4` |
+| ConnectRPC API and the SDKs | the **protobuf enum** value | `REGION_FLY_IAD`, `REGION_FLY_FRA`, `REGION_KOYEB_FRA`, `REGION_RAILWAY_US_EAST4` |
+
+The SDKs expose the enum as a generated constant rather than a raw string — `Region.FLY_IAD` in
+the Node.js SDK, `Region::REGION_FLY_IAD` in PHP — so you rarely type the value out.
+
+Pick whichever form the surface you are using expects. The tables below list the bare and
+prefixed codes; the enum value is the prefixed code upper-cased with `-` replaced by `_` and
+`REGION_` prepended.
 
 ### Fly.io regions and monitoring IPs
 

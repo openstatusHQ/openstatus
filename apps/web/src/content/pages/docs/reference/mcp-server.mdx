@@ -47,7 +47,7 @@ Send an openstatus API key in the `x-openstatus-key` header. This is the same ke
 x-openstatus-key: os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-Get a key from the dashboard's **Settings > API Tokens**. When both credentials are present, the header wins.
+Get a key from the dashboard's **Settings > General**, in the **API Keys** card. When both credentials are present, the header wins.
 
 ### Scopes
 
@@ -121,6 +121,21 @@ Registered only when the workspace plan includes the `audit-log` feature — oth
 | `get_audit_log`   | read | Full before/after snapshots and `changedFields` for a single audit-log entry. |
 
 The MCP client gates every tool call behind your approval — the server does not gate again. Each tool also carries [MCP annotations](https://modelcontextprotocol.io/specification/server/tools#tool-annotations) (`readOnlyHint`, `destructiveHint`, `idempotentHint`) so well-behaved clients can decide whether to confirm, cache, or surface differently.
+
+### Resources
+
+Alongside its tools, the server exposes a small set of read-only MCP **resources** — public
+documents carrying no workspace data, so they are available on any credential and any scope.
+List them with `resources/list` and fetch one with `resources/read`:
+
+| Resource | URI | Contents |
+|---|---|---|
+| `openapi-specification` | `https://api.openstatus.dev/openapi.json` | The full OpenAPI document, served from the binary rather than fetched. |
+| `mcp-server-reference` | `https://www.openstatus.dev/docs/reference/mcp-server` | This page. |
+| `site-index` | `https://www.openstatus.dev/llms.txt` | `llms.txt`: product context, pricing, and a linked index of every page on openstatus.dev. |
+
+Remotely fetched resources are capped at a 5-second timeout and never resolve empty: on a failure
+the read returns a short pointer back to the same URI rather than a blank body.
 
 ### Notifying subscribers
 

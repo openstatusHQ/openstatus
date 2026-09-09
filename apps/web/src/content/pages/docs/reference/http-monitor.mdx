@@ -191,10 +191,16 @@ compared as a string, using the same comparators as body assertions.
 
 A body that fails to parse as JSON fails the assertion.
 
-<Aside>
-JSON body assertions are available through the REST and ConnectRPC APIs, the CLI, and Terraform.
-The dashboard's assertion editor currently offers status, header, and (text) body assertions
-only — a monitor created with a JSON body assertion keeps it, but you cannot add one from the UI.
+<Aside type="caution">
+JSON body assertions cannot currently be created from any surface. The checker evaluates them,
+and a monitor that already stores one keeps working, but none of the write paths accept one:
+the dashboard's assertion editor offers status, header, and (text) body assertions only; the v1
+REST API leaves the JSON body variant out of its assertion union; and the ConnectRPC API,
+the SDKs, and the Terraform provider have no equivalent message.
+
+One consequence is worth knowing if you hold an existing JSON body assertion: reading such a
+monitor back over ConnectRPC reports it as a plain body assertion, with the JSONPath dropped.
+The stored assertion itself is unchanged and the checker still evaluates the path.
 </Aside>
 
 #### Status code assertions
