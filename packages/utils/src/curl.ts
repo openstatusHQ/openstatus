@@ -47,17 +47,30 @@ export function buildCurlCommand(request: CurlRequest): string {
   }
 
   let command = "curl";
-  if (body) {
+  if (
+    method === "POST" &&
+    headers.find((h) => h.key === "Content-Type")?.value ===
+      "application/octet-stream"
+  ) {
+    const parts = body.split(",");
+    const encoded = parts[1]?.replace(/[\r\n]/g, "");
     if (
-      method === "POST" &&
-      headers.find((h) => h.key === "Content-Type")?.value ===
-        "application/octet-stream"
+      parts.length !== 2 ||
+      encoded === undefined ||
+      !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?(?![\s\S])/.test(
+        encoded,
+      )
     ) {
-      command = `printf %s ${quote(body.split(",")[1] ?? "")} | base64 -d | curl`;
-      args.push("--data-binary @-");
-    } else {
-      args.push(`--data-raw ${quote(body)}`);
+      return "printf '%s\\n' 'Invalid base64 data URL body' >&2; false";
     }
+    const octal = atob(encoded).replace(
+      /./gs,
+      (byte) => `\\0${byte.charCodeAt(0).toString(8).padStart(3, "0")}`,
+    );
+    command = `printf %b ${quote(octal)} | curl`;
+    args.push("--data-binary @-");
+  } else if (body) {
+    args.push(`--data-raw ${quote(body)}`);
   }
   if (request.followRedirects) args.push("-L");
   if (request.timeout) args.push(`--max-time ${seconds(request.timeout)}`);

@@ -36,23 +36,69 @@ describe("buildCurlCommand", () => {
       async (request) => new Response(await request.arrayBuffer()),
     );
     try {
-      const command = buildCurlCommand({
-        url: `http://127.0.0.1:${server.addr.port}/upload`,
-        method: "POST",
-        body: "data:application/octet-stream;base64,AP8nJFwNCgA=",
-        headers: [{ key: "Content-Type", value: "application/octet-stream" }],
-        timeout: 5000,
-      });
-      const result = await new Deno.Command("sh", {
-        args: ["-c", command],
-        env: { NO_PROXY: "*" },
-        stdout: "piped",
-        stderr: "piped",
-      }).output();
-      expect(result.code).toBe(0);
-      expect(result.stdout).toEqual(
-        new Uint8Array([0, 255, 39, 36, 92, 13, 10, 0]),
-      );
+      for (const { body, bytes } of [
+        {
+          body: "data:application/octet-stream;base64,AP8nJFwNCgA=",
+          bytes: [0, 255, 39, 36, 92, 13, 10, 0],
+        },
+        { body: "data:application/octet-stream;base64,", bytes: [] },
+        {
+          body: "data:application/octet-stream;base64,aGVs\r\nbG8=",
+          bytes: [104, 101, 108, 108, 111],
+        },
+      ]) {
+        const command = buildCurlCommand({
+          url: `http://127.0.0.1:${server.addr.port}/upload`,
+          method: "POST",
+          body,
+          headers: [{ key: "Content-Type", value: "application/octet-stream" }],
+          timeout: 5000,
+        });
+        const result = await new Deno.Command("sh", {
+          args: ["-c", command],
+          env: { NO_PROXY: "*" },
+          stdout: "piped",
+          stderr: "piped",
+        }).output();
+        expect(result.code).toBe(0);
+        expect(result.stdout).toEqual(new Uint8Array(bytes));
+      }
+    } finally {
+      await server.shutdown();
+    }
+  });
+
+  it("rejects malformed binary bodies before sending a request", async () => {
+    let requests = 0;
+    const server = Deno.serve({ hostname: "127.0.0.1", port: 0 }, () => {
+      requests++;
+      return new Response("received");
+    });
+    try {
+      for (const body of [
+        "",
+        "not a data URL",
+        "data:application/octet-stream;base64,aGVsbG8=,extra",
+        "data:application/octet-stream;base64,aGVsbG8=!",
+        "data:application/octet-stream;base64,aGVsbG8",
+        "data:application/octet-stream;base64,aGVsbG8=\u2028",
+      ]) {
+        const command = buildCurlCommand({
+          url: `http://127.0.0.1:${server.addr.port}/upload`,
+          method: "POST",
+          body,
+          headers: [{ key: "Content-Type", value: "application/octet-stream" }],
+          timeout: 5000,
+        });
+        const result = await new Deno.Command("sh", {
+          args: ["-c", command],
+          env: { NO_PROXY: "*" },
+          stdout: "piped",
+          stderr: "piped",
+        }).output();
+        expect(requests).toBe(0);
+        expect(result.code).not.toBe(0);
+      }
     } finally {
       await server.shutdown();
     }
