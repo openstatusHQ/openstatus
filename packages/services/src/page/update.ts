@@ -350,7 +350,11 @@ export async function updatePageConfiguration(args: {
       .set({
         configuration: {
           ...currentConfiguration,
-          ...input.configuration,
+          ...Object.fromEntries(
+            Object.entries(input.configuration ?? {}).filter(
+              ([, value]) => value !== undefined,
+            ),
+          ),
         },
         updatedAt: new Date(),
       })
