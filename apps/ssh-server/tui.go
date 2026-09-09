@@ -40,12 +40,12 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	if !ok {
 		return nil, nil
 	}
-	slug := strings.ToLower(s.User())
-	if slug == "help" || !slugPattern.MatchString(slug) {
+	t, ok := resolveTarget(s.User())
+	if !ok {
 		return nil, nil
 	}
 	s.Context().SetValue(tuiKey, true)
-	return newModel(slug, sessionRenderer(s, pty), pty.Window.Width), nil
+	return newModel(t, sessionRenderer(s, pty), pty.Window.Width), nil
 }
 
 // sessionRenderer is wish's MakeRenderer without its background-colour probe.
@@ -91,7 +91,7 @@ type fetchedMsg struct {
 type tickMsg time.Time
 
 type model struct {
-	slug   string
+	t      target
 	styles styles
 	width  int
 
@@ -109,12 +109,12 @@ type model struct {
 	firstDraw bool
 }
 
-func newModel(slug string, r *lipgloss.Renderer, width int) model {
+func newModel(t target, r *lipgloss.Renderer, width int) model {
 	sp := spinner.New(spinner.WithSpinner(spinner.Dot))
 	st := newStyles(r)
 	sp.Style = st.dim
 	return model{
-		slug:      slug,
+		t:         t,
 		styles:    st,
 		width:     clampWidth(width),
 		spin:      sp,
@@ -137,10 +137,10 @@ func clampWidth(w int) int {
 	}
 }
 
-func fetchCmd(slug string) tea.Cmd {
+func fetchCmd(t target) tea.Cmd {
 	return func() tea.Msg {
 		start := time.Now()
-		sum, hit, err := fetchSummary(slug)
+		sum, hit, err := fetchSummary(t)
 		return fetchedMsg{sum: sum, err: err, took: time.Since(start), cached: hit}
 	}
 }
@@ -152,7 +152,7 @@ func tickCmd() tea.Cmd {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(m.spin.Tick, fetchCmd(m.slug), tickCmd())
+	return tea.Batch(m.spin.Tick, fetchCmd(m.t), tickCmd())
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -170,7 +170,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			m.loading = true
-			return m, tea.Batch(fetchCmd(m.slug), m.spin.Tick)
+			return m, tea.Batch(fetchCmd(m.t), m.spin.Tick)
 		}
 		return m, nil
 
@@ -178,7 +178,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// A page that doesn't exist won't start existing; stop hammering it.
 		if !m.loading && !errors.Is(m.err, errNoPage) && time.Since(m.lastTry) >= refreshEvery {
 			m.loading = true
-			return m, tea.Batch(fetchCmd(m.slug), m.spin.Tick, tickCmd())
+			return m, tea.Batch(fetchCmd(m.t), m.spin.Tick, tickCmd())
 		}
 		return m, tickCmd()
 
@@ -218,15 +218,15 @@ func (m model) View() string {
 	write("")
 	switch {
 	case m.firstDraw:
-		write(m.spin.View() + " reading " + m.slug + "…")
+		write(m.spin.View() + " reading " + m.t.name + "…")
 		write("")
 		return indent(b.String() + m.footer())
 	case errors.Is(m.err, errNoPage):
-		write("🤷  " + st.bold.Render(fmt.Sprintf("No status page called %q", m.slug)))
+		write("🤷  " + st.bold.Render(fmt.Sprintf("No status page called %q", m.t.name)))
 		write("")
-		write(st.dim.Render("Check the slug — it's the one in <slug>.openstatus.dev."))
+		write(m.clip(st.dim.Render(noPageHint(m.t))))
 	case errors.Is(m.err, errPassword), errors.Is(m.err, errForbidden):
-		write("🔒  " + st.bold.Render(fmt.Sprintf("%q is not public", m.slug)))
+		write("🔒  " + st.bold.Render(fmt.Sprintf("%q is not public", m.t.name)))
 		write("")
 		write(st.dim.Render("Open it in a browser to get in."))
 	case m.err != nil && m.sum == nil:
@@ -343,7 +343,7 @@ func (m model) footer() string {
 	right := st.dim.Render("r refresh · q quit")
 	left := ""
 	if m.sum != nil {
-		left = st.dim.Render(m.sum.url(m.slug))
+		left = st.dim.Render(m.sum.url(m.t))
 	}
 
 	status := ""

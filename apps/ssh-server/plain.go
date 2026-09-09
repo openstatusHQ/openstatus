@@ -54,25 +54,25 @@ func plainMiddleware(next ssh.Handler) ssh.Handler {
 func plainHandler(s ssh.Session) {
 	sc := newScreen(s)
 
-	slug := strings.ToLower(s.User())
-	if slug == "help" || !slugPattern.MatchString(slug) {
+	t, ok := resolveTarget(s.User())
+	if !ok {
 		writeUsage(sc)
 		return
 	}
 
 	start := time.Now()
-	sum, hit, err := fetchSummary(slug)
+	sum, hit, err := fetchSummary(t)
 	took := time.Since(start)
 
 	switch {
 	case errors.Is(err, errNoPage):
-		writeNoPage(sc, slug)
+		writeNoPage(sc, t)
 		return
 	case errors.Is(err, errPassword):
-		writeLocked(sc, slug, "This status page is password protected.")
+		writeLocked(sc, t, "This status page is password protected.")
 		return
 	case errors.Is(err, errForbidden):
-		writeLocked(sc, slug, "This status page is restricted to its own people.")
+		writeLocked(sc, t, "This status page is restricted to its own people.")
 		return
 	case err != nil:
 		writeError(sc, err)
@@ -106,7 +106,7 @@ func plainHandler(s ssh.Session) {
 	if hit {
 		read = "cached"
 	}
-	sc.row(sum.url(slug), "", read, ansiDim)
+	sc.row(sum.url(t), "", read, ansiDim)
 	sc.line("")
 }
 
@@ -269,6 +269,8 @@ func writeUsage(sc screen) {
 	sc.line(sc.paint(ansiBold, "OpenStatus, in your terminal."))
 	sc.line("")
 	sc.line(sc.paint(ansiDim, "Usage") + "   ssh <your-page>@" + sshHost)
+	sc.line("        ssh <your-domain>@" + sshHost)
+	sc.line("")
 	sc.line(sc.paint(ansiDim, "Try") + "     ssh status@" + sshHost)
 	sc.line("")
 	sc.rule()
@@ -276,25 +278,25 @@ func writeUsage(sc screen) {
 	sc.line("")
 }
 
-func writeNoPage(sc screen, slug string) {
+func writeNoPage(sc screen, t target) {
 	sc.line("")
-	sc.line("🤷  " + sc.paint(ansiBold, fmt.Sprintf("No status page called %q", slug)))
+	sc.line("🤷  " + sc.paint(ansiBold, fmt.Sprintf("No status page called %q", t.name)))
 	sc.line("")
-	sc.prose("Check the slug — it's the one in <slug>.openstatus.dev.", ansiDim)
+	sc.prose(noPageHint(t), ansiDim)
 	sc.line("")
 	sc.rule()
 	sc.line(sc.paint(ansiDim, "Create your status page at ") + siteURL)
 	sc.line("")
 }
 
-func writeLocked(sc screen, slug, why string) {
+func writeLocked(sc screen, t target, why string) {
 	sc.line("")
-	sc.line("🔒  " + sc.paint(ansiBold, fmt.Sprintf("%q is not public", slug)))
+	sc.line("🔒  " + sc.paint(ansiBold, fmt.Sprintf("%q is not public", t.name)))
 	sc.line("")
 	sc.prose(why+" Open it in a browser to get in.", ansiDim)
 	sc.line("")
 	sc.rule()
-	sc.line(fmt.Sprintf("https://%s.openstatus.dev", slug))
+	sc.line(t.web)
 	sc.line("")
 }
 

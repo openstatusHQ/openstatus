@@ -39,6 +39,82 @@ var client = &http.Client{Timeout: 5 * time.Second}
 // never reaches DNS.
 var slugPattern = regexp.MustCompile(`^[A-Za-z0-9-]{3,64}$`)
 
+// A page reached by its own domain is served the same summary — the route
+// matches `lower(page.slug) = prefix OR lower(page.customDomain) = prefix` —
+// so `ssh status.cal.com@` and `ssh cal@` land on the same board.
+const summaryPath = "/api/status/summary.json"
+
+// target is the page a session asked for: either a slug, which expands through
+// the operator-configured template, or a domain the user typed, which does not.
+type target struct {
+	name string // what was typed, lowercased — used in messages
+	url  string // where the summary comes from
+	web  string // fallback link, when the payload carries no page url
+	// domain marks a host supplied by the client rather than by configuration,
+	// which is the difference between a trusted fetch and a guarded one.
+	domain bool
+}
+
+// resolveTarget turns an SSH username into a page to read, or reports that it
+// isn't one — `help`, junk, and anything that could point inward all land here.
+func resolveTarget(user string) (target, bool) {
+	name := strings.ToLower(strings.TrimSuffix(strings.TrimSpace(user), "."))
+	switch {
+	case name == "" || name == "help":
+		return target{}, false
+	case slugPattern.MatchString(name):
+		return target{
+			name: name,
+			url:  strings.ReplaceAll(pageURL, "{slug}", name),
+			web:  fmt.Sprintf("https://%s.openstatus.dev", name),
+		}, true
+	case isPublicDomain(name):
+		return target{
+			name:   name,
+			url:    "https://" + name + summaryPath,
+			web:    "https://" + name,
+			domain: true,
+		}, true
+	}
+	return target{}, false
+}
+
+var (
+	labelPattern = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`)
+	// An all-digit final label means an IPv4 literal dressed as a hostname.
+	tldPattern = regexp.MustCompile(`^[a-z]{2,63}$`)
+)
+
+// Suffixes that resolve inside a private network. `.flycast` and `.internal`
+// are fly's own 6PN names, which is exactly what an SSRF here would reach for.
+var blockedSuffixes = []string{".internal", ".flycast", ".local", ".localhost", ".arpa", ".onion"}
+
+// isPublicDomain screens a hostname before any lookup happens. It is the first
+// of two gates: this one rejects shapes, and guardedDial rejects addresses.
+func isPublicDomain(name string) bool {
+	if len(name) == 0 || len(name) > 253 || strings.ContainsAny(name, ":/@ _") {
+		return false
+	}
+	labels := strings.Split(name, ".")
+	if len(labels) < 2 {
+		return false
+	}
+	for _, label := range labels {
+		if !labelPattern.MatchString(label) {
+			return false
+		}
+	}
+	if !tldPattern.MatchString(labels[len(labels)-1]) {
+		return false
+	}
+	for _, suffix := range blockedSuffixes {
+		if strings.HasSuffix(name, suffix) {
+			return false
+		}
+	}
+	return true
+}
+
 var (
 	errNoPage    = errors.New("no page")
 	errPassword  = errors.New("password protected")
@@ -99,15 +175,15 @@ var (
 
 // fetchSummary reports whether the answer came from the shared cache, so the
 // renderers can say "cached" instead of claiming a 0ms fetch.
-func fetchSummary(slug string) (sum *summary, cached bool, err error) {
+func fetchSummary(t target) (sum *summary, cached bool, err error) {
 	cacheMu.Lock()
-	hit, ok := cache[slug]
+	hit, ok := cache[t.url]
 	cacheMu.Unlock()
 	if ok && time.Since(hit.at) < cacheTTL {
 		return hit.sum, true, nil
 	}
 
-	sum, err = fetchLive(slug)
+	sum, err = fetchLive(t)
 	if err != nil {
 		return nil, false, err
 	}
@@ -120,21 +196,26 @@ func fetchSummary(slug string) (sum *summary, cached bool, err error) {
 			}
 		}
 	}
-	cache[slug] = cacheEntry{sum: sum, at: time.Now()}
+	cache[t.url] = cacheEntry{sum: sum, at: time.Now()}
 	cacheMu.Unlock()
 
 	return sum, false, nil
 }
 
-func fetchLive(slug string) (*summary, error) {
-	req, err := http.NewRequest(http.MethodGet, strings.ReplaceAll(pageURL, "{slug}", slug), nil)
+func fetchLive(t target) (*summary, error) {
+	req, err := http.NewRequest(http.MethodGet, t.url, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Accept", "application/json")
 
-	res, err := client.Do(req)
+	// A client-supplied host is only ever fetched through the guarded client.
+	hc := client
+	if t.domain {
+		hc = guardedClient
+	}
+	res, err := hc.Do(req)
 	if err != nil {
 		var netErr net.Error
 		if errors.As(err, &netErr) && netErr.Timeout() {
@@ -172,11 +253,11 @@ func (s *summary) label() string {
 	return humanize(s.Status.Indicator)
 }
 
-func (s *summary) url(slug string) string {
+func (s *summary) url(t target) string {
 	if s.Page.URL != "" {
 		return s.Page.URL
 	}
-	return fmt.Sprintf("https://%s.openstatus.dev", slug)
+	return t.web
 }
 
 // split separates the components worth naming from the healthy remainder.
@@ -252,6 +333,14 @@ func (c conditions) quipExcept(current string) string {
 		return current
 	}
 	return options[mathrand.IntN(len(options))]
+}
+
+// noPageHint points at whichever of the two spellings the caller used.
+func noPageHint(t target) string {
+	if t.domain {
+		return "No page is served on that domain — check the spelling, or try the page's openstatus slug."
+	}
+	return "Check the slug — it's the one in <slug>.openstatus.dev. A custom domain works here too."
 }
 
 func humanize(status string) string {
