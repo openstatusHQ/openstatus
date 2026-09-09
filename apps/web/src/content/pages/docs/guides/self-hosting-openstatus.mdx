@@ -205,10 +205,16 @@ Now that the services are running, you can access the dashboard and perform the 
     -   Sign up and create a new workspace.
     -   Because this is a self-hosted instance, you need to manually set the feature limits for your workspace directly in the database.
 
-    The following command updates the limits for the workspace with `id = 1`. If your workspace has a different ID, change the `WHERE id = 1` part of the command.
+    Every key you leave out falls back to its **free-plan default**, not to "unlimited" — a
+    partial payload silently caps the workspace at 3 page components, 6 regions, and no OTLP export,
+    screenshots, response logs, custom theme, or translations. The block below sets every key the
+    current `limitsSchema` (`packages/db/src/schema/plan/schema.ts`) defines, so nothing falls
+    through. Change the `WHERE id = 1` at the end if your workspace has a different ID.
+
     ```bash
-    curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
-      -d '{"statements":["UPDATE workspace SET limits = '\''{\\"monitors\\":100,\\"periodicity\\":[\\"30s\\",\\"1m\\",\\"5m\\",\\"10m\\",\\"30m\\",\\"1h\\"],\\"multi-region\\":true,\\"data-retention\\":\\"24 months\\",\\"status-pages\\":20,\\"maintenance\\":true,\\"status-subscribers\\":true,\\"custom-domain\\":true,\\"password-protection\\":true,\\"white-label\\":true,\\"notifications\\":true,\\"sms\\":true,\\"pagerduty\\":true,\\"notification-channels\\":50,\\"members\\":\\"Unlimited\\",\\"audit-log\\":true,\\"private-locations\\":true}'\'' WHERE id = 1"]}'
+    curl -sS -X POST http://localhost:8080/ -H "Content-Type: application/json" -d @- <<'JSON'
+    {"statements":["UPDATE workspace SET limits = '{\"monitors\":100,\"synthetic-checks\":100000,\"periodicity\":[\"30s\",\"1m\",\"5m\",\"10m\",\"30m\",\"1h\"],\"multi-region\":true,\"max-regions\":28,\"data-retention\":\"24 months\",\"regions\":[\"ams\",\"arn\",\"bom\",\"cdg\",\"dfw\",\"ewr\",\"fra\",\"gru\",\"iad\",\"jnb\",\"lax\",\"lhr\",\"nrt\",\"ord\",\"sjc\",\"sin\",\"syd\",\"yyz\",\"koyeb_fra\",\"koyeb_was\",\"koyeb_sin\",\"koyeb_tyo\",\"koyeb_par\",\"koyeb_sfo\",\"railway_europe-west4-drams3a\",\"railway_us-east4-eqdc4a\",\"railway_asia-southeast1-eqsg3a\",\"railway_us-west2\"],\"private-locations\":true,\"screenshots\":true,\"response-logs\":true,\"otel\":true,\"status-pages\":20,\"page-components\":500,\"maintenance\":true,\"monitor-values-visibility\":true,\"uptime-history\":true,\"status-subscribers\":true,\"custom-domain\":true,\"i18n\":true,\"password-protection\":true,\"email-domain-protection\":true,\"ip-restriction\":true,\"white-label\":true,\"no-index\":true,\"custom-theme\":true,\"notifications\":true,\"pagerduty\":true,\"opsgenie\":true,\"grafana-oncall\":true,\"whatsapp\":true,\"sms\":true,\"sms-limit\":1000,\"notification-channels\":50,\"members\":\"Unlimited\",\"audit-log\":true,\"sso\":true,\"slack-agent\":true}' WHERE id = 1"]}
+    JSON
     ```
     You can find your workspace ID by inspecting the database with a command like `curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{"statements":["SELECT id, name FROM workspace"]}'`.
     
@@ -239,7 +245,7 @@ Now that the services are running, you can access the dashboard and perform the 
 
     The two environment variables are:
 
-    -   `OPENSTATUS_KEY` — the key you copied from the dashboard. Some older docs call this `OPENSTATUS_TOKEN`; that name is not read by the probe.
+    -   `OPENSTATUS_KEY` — the key you copied from the dashboard. Some older docs call this `OPENSTATUS_TOKEN`; that name is not read by the probe, which exits on startup with `OPENSTATUS_KEY is required` if the variable is unset.
     -   `OPENSTATUS_INGEST_URL` — the URL of your **ingest server**, i.e. the `private-location` service on port **8081**. If you don't set it, the probe defaults to openstatus Cloud (`https://openstatus-private-location.fly.dev`) and your self-hosted instance will never see a check.
 
     If you run the probe on the same Docker network as the rest of the stack, use the internal address instead — `http://private-location:8080`.

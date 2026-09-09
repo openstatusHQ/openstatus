@@ -28,7 +28,12 @@ An incident's lifecycle is tracked with timestamps rather than a manual workflow
 
 - **Open** — created when the failure threshold is met. `resolvedAt` is null.
 - **Acknowledged** — a team member has taken ownership. `acknowledgedAt` and `acknowledgedBy` are set.
-- **Resolved** — either auto-resolved when the monitor recovers (`autoResolved: true`) or manually resolved, setting `resolvedAt` and `resolvedBy`.
+- **Resolved** — either auto-resolved (`autoResolved: true`) or manually resolved, setting `resolvedAt` and `resolvedBy`.
+
+Auto-resolution fires when the monitor leaves the `error` state by the same region-agreement rule
+that opened the incident. That includes a transition to `degraded`, not only to `active`: a monitor
+that improves from down to slow closes its open incident. The notification that goes out matches the
+new state — a recovery alert for `active`, a degraded alert for `degraded`.
 
 The stored `status` field accepts `triage` (the default), `investigating`, `identified`, `monitoring`, `resolved`, and `duplicated`.
 

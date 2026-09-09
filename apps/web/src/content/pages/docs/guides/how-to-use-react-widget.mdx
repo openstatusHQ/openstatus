@@ -89,7 +89,9 @@ async function CustomStatusWidget() {
 ### Pointing at a self-hosted API
 
 Both `getStatus` and `StatusWidget` call `https://api.openstatus.dev` by default. If you self-host
-openstatus, set `OPENSTATUS_API_URL` on the server, or pass the base URL as the second argument:
+openstatus, set `OPENSTATUS_API_URL` on the server — that is the only lever for `StatusWidget`,
+which takes just `slug` and `href`. `getStatus` additionally accepts the base URL as a second
+argument:
 
 ```tsx
 const res = await getStatus("slug", "https://api.status.example.com");

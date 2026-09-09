@@ -38,7 +38,9 @@ Private locations require the **Pro** or **Scale** plan.
 
 ## API surface
 
-Private locations can be created, listed, updated, and deleted from:
+Private locations can be created, listed, updated, and deleted from the dashboard, the
+ConnectRPC API, the Terraform provider, and the Node.js SDK. The CLI covers reads and creation
+only, and the MCP server is read-only.
 
 - the **dashboard** (Settings → Private Locations);
 - the **ConnectRPC API** — `PrivateLocationService` exposes `CreatePrivateLocation`, `GetPrivateLocation`, `ListPrivateLocations`, `UpdatePrivateLocation`, and `DeletePrivateLocation` (see the [API reference](https://api.openstatus.dev/openapi));

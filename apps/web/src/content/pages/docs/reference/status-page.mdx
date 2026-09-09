@@ -193,20 +193,29 @@ Two optional URLs shown in the status page header.
 When enabled the page is indexable. Disable it to serve a `noindex` directive and keep the page
 out of search results — useful for an internal or pre-launch page. Available on paid plans.
 
-### JSON feed
+### Feeds
 
-**Type:** Read-only endpoint
-**Format:** JSON
+**Type:** Read-only endpoints
 
-Provides a machine-readable JSON representation of your status page data. This feed can be accessed by appending `/feed/json` to your status page URL.
+Every status page publishes its events in three machine-readable formats, reached by appending a
+path to the page URL:
+
+| Path | Format | Contents |
+|---|---|---|
+| `/feed/json` | JSON | Full page state: components, status reports, maintenances, and the deprecated monitor fields below. |
+| `/feed/rss` | RSS 2.0 | Status reports and maintenances as feed entries, for readers and automations. |
+| `/feed/atom` | Atom 1.0 | The same entries in Atom. |
 
 **Example:** `https://status.openstatus.dev/feed/json`
+
+On a password-protected page the feeds are protected too; append `?pw=your-secret-password` to
+read them from a feed reader.
 
 **Deprecation notice:**
 
 The following fields are deprecated and will be removed in a future version:
 
-- **`monitors`** (top-level) — use `pageComponents` instead, which provides a more flexible component-based structure that supports both monitors and external services.
+- **`monitors`** (top-level) — use `pageComponents` instead, which provides a more flexible component-based structure that supports both monitor-linked and static components.
 - **`maintenances[].monitors`** — use `maintenances[].pageComponents` instead, which references page component IDs rather than monitor IDs.
 - **`statusReports[].monitors`** — use `statusReports[].pageComponents` instead, which references page component IDs rather than monitor IDs.
 
