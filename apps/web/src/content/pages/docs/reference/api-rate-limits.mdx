@@ -62,7 +62,7 @@ When a server is overloaded it may also answer `503 Service Unavailable` with a 
 - **Cache status.** Public status endpoints change rarely; poll them at most every few seconds, not on every page view.
 
 ```typescript
-async function withRetryAfter<T>(fn: () => Promise<Response>): Promise<Response> {
+async function withRetryAfter(fn: () => Promise<Response>): Promise<Response> {
   for (let attempt = 0; ; attempt++) {
     const res = await fn();
     if ((res.status !== 429 && res.status !== 503) || attempt === 5) return res;

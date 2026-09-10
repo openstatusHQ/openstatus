@@ -298,7 +298,7 @@ Error messages are not redacted — the consumer is an LLM that benefits from th
 
 - `list_status_reports` and `list_maintenances` use offset pagination: `page` (1-indexed, default 1) and `perPage` (default 50, max 200). The response's `pagination.totalPages` tells the LLM whether more pages exist. `list_status_pages` is unpaginated (workspaces typically have a handful).
 - `list_monitors` and `list_audit_logs` page via `perPage` (max 50); `list_notifications` via `perPage` (max 200); `list_private_locations` via `perPage` (max 100); `list_response_logs` via `limit` (max 100) and `offset`.
-- No per-key rate limiting today. Treat MCP usage like REST: one server call per tool invocation.
+- Every tool invocation is one server call and counts against the [rate limits](#rate-limits) below.
 
 ## Audit log
 

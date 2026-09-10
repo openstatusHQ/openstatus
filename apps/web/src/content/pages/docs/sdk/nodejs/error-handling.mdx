@@ -33,7 +33,7 @@ try {
 
 ## Retry Strategy
 
-ConnectRPC does not retry by default. For transient failures (`resource_exhausted`, `unavailable`, `deadline_exceeded`), implement your own retry logic. Keep the delay at or above the `Retry-After` header when it is present:
+ConnectRPC does not retry by default. For transient failures (`resource_exhausted`, `unavailable`, `deadline_exceeded`), implement your own retry logic. The response headers, including `Retry-After`, are available on `error.metadata`; keep the delay at or above that value when it is present:
 
 ```typescript
 import { Code, ConnectError } from "@connectrpc/connect";
@@ -50,7 +50,11 @@ async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
           error.code === Code.DeadlineExceeded) &&
         attempt < maxRetries
       ) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** attempt));
+        const retryAfter = Number(error.metadata.get("retry-after")) * 1000;
+        const backoff = 1000 * 2 ** attempt;
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.max(retryAfter || 0, backoff)),
+        );
         continue;
       }
       throw error;
