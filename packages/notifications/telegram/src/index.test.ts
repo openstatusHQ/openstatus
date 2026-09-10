@@ -1,9 +1,15 @@
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
+import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 
-import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
+import {
+  sendAlert,
+  sendDegraded,
+  sendMessage,
+  sendRecovery,
+  sendTest,
+} from "./index";
 
 describe("Telegram Notifications", () => {
   let fetchMock: Stub<typeof globalThis>;
@@ -23,6 +29,22 @@ describe("Telegram Notifications", () => {
     } else {
       delete process.env.TELEGRAM_BOT_TOKEN;
     }
+  });
+
+  describe("sendMessage", () => {
+    test("preserves message text without adding query parameters", async () => {
+      const message =
+        "API A+B #1 / https://example.com/?a=1&b=2\nError: café 50% %26 &chat_id=other";
+
+      await sendMessage({ chatId: "-123456789", message });
+
+      assertSpyCalls(fetchMock, 1);
+      const url = new URL(new Request(fetchMock.calls[0].args[0]).url);
+      expect([...url.searchParams]).toEqual([
+        ["chat_id", "-123456789"],
+        ["text", message],
+      ]);
+    });
   });
 
   const createMockMonitor = () => ({
@@ -72,7 +94,9 @@ describe("Telegram Notifications", () => {
       "https://api.telegram.org/bottest-bot-token-123/sendMessage",
     );
     expect(callArgs[0]).toContain("chat_id=123456789");
-    expect(callArgs[0]).toContain("API Health Check");
+    const text = new URL(new Request(callArgs[0]).url).searchParams.get("text");
+    expect(text).toContain(monitor.name);
+    expect(text).toContain(monitor.url);
   });
 
   test("Send Alert without statusCode", async () => {
@@ -91,7 +115,8 @@ describe("Telegram Notifications", () => {
 
     assertSpyCalls(fetchMock, 1);
     const callArgs = fetchMock.calls[0].args;
-    expect(callArgs[0]).toContain("error: Connection timeout");
+    const text = new URL(new Request(callArgs[0]).url).searchParams.get("text");
+    expect(text).toContain("Connection timeout");
   });
 
   test("Send Recovery", async () => {
@@ -111,7 +136,9 @@ describe("Telegram Notifications", () => {
 
     assertSpyCalls(fetchMock, 1);
     const callArgs = fetchMock.calls[0].args;
-    expect(callArgs[0]).toContain("is up again");
+    const text = new URL(new Request(callArgs[0]).url).searchParams.get("text");
+    expect(text).toContain(monitor.name);
+    expect(text).toContain(monitor.url);
   });
 
   test("Send Degraded", async () => {
@@ -131,7 +158,9 @@ describe("Telegram Notifications", () => {
 
     assertSpyCalls(fetchMock, 1);
     const callArgs = fetchMock.calls[0].args;
-    expect(callArgs[0]).toContain("is degraded");
+    const text = new URL(new Request(callArgs[0]).url).searchParams.get("text");
+    expect(text).toContain(monitor.name);
+    expect(text).toContain(monitor.url);
   });
 
   test("Send Test", async () => {
@@ -146,7 +175,6 @@ describe("Telegram Notifications", () => {
       "https://api.telegram.org/bottest-bot-token-123/sendMessage",
     );
     expect(callArgs[0]).toContain("chat_id=123456789");
-    expect(callArgs[0]).toContain("This is a test message from OpenStatus");
   });
 
   test("Send Test returns false on error", async () => {
