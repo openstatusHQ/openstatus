@@ -36,6 +36,7 @@ export const env = createEnv({
     API_RATE_LIMIT_BURST_PER_10S: z.coerce.number().optional(),
     API_RATE_LIMIT_WRITES_PER_MINUTE: z.coerce.number().optional(),
     API_RATE_LIMIT_PUBLIC_PER_MINUTE: z.coerce.number().optional(),
+    API_RATE_LIMIT_OAUTH_REGISTER_PER_MINUTE: z.coerce.number().optional(),
   },
 
   /**

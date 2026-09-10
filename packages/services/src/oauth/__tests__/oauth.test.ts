@@ -33,7 +33,7 @@ import { removeMemberInWorkspace } from "../../member/internal";
 import type { Workspace } from "../../types";
 import { deleteAccount } from "../../user/delete";
 import { pkceChallenge } from "../crypto";
-import { OAuthError } from "../errors";
+import { OAuthError, RedirectUriRejectedError } from "../errors";
 import {
   createSession,
   decideSession,
@@ -183,12 +183,15 @@ describe("registerClient", () => {
 
   test("rejects redirect URIs outside the allowlist", async () => {
     await withTestTransaction(async (tx) => {
-      await expect(
-        registerClient({
-          input: { redirect_uris: [REDIRECT, "https://evil.example/cb"] },
-          db: tx,
-        }),
-      ).rejects.toMatchObject({ oauthCode: "invalid_redirect_uri" });
+      const err = await registerClient({
+        input: { redirect_uris: [REDIRECT, "https://evil.example/cb"] },
+        db: tx,
+      }).catch((e) => e);
+      expect(err).toBeInstanceOf(RedirectUriRejectedError);
+      expect(err.oauthCode).toBe("invalid_redirect_uri");
+      // a client fault; the transport groups on `rejected`, not on the message
+      expect(err.expected).toBe(true);
+      expect(err.rejected).toEqual(["https://evil.example/cb"]);
     });
   });
 

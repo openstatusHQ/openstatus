@@ -7,4 +7,6 @@ export const limits = {
   burstPer10s: Number(env.API_RATE_LIMIT_BURST_PER_10S) || 100,
   writesPerMinute: Number(env.API_RATE_LIMIT_WRITES_PER_MINUTE) || 60,
   publicPerMinute: Number(env.API_RATE_LIMIT_PUBLIC_PER_MINUTE) || 120,
+  oauthRegisterPerMinute:
+    Number(env.API_RATE_LIMIT_OAUTH_REGISTER_PER_MINUTE) || 10,
 };

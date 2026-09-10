@@ -17,6 +17,7 @@ function build(
     burstPer10s?: number;
     writesPerMinute?: number;
     publicPerMinute?: number;
+    oauthRegisterPerMinute?: number;
   },
   handler: (c: Context<Env>) => Response = (c) => c.text("ok"),
 ) {
@@ -37,6 +38,7 @@ function build(
       burstPer10s: HUGE,
       writesPerMinute: HUGE,
       publicPerMinute: HUGE,
+      oauthRegisterPerMinute: HUGE,
       ...config,
     }),
   );
@@ -54,6 +56,7 @@ const pub = build({ publicPerMinute: 2 });
 const recovery = build({ burstPer10s: 1, perMinute: 2 });
 const precedence = build({ burstPer10s: 1 });
 const isolation = build({ perMinute: 1, publicPerMinute: 1 });
+const register = build({ oauthRegisterPerMinute: 2 });
 // stands in for the auth middleware: `valid*` credentials are accepted
 const authFailures = build({ perMinute: 2 }, (c) =>
   c.req.header("x-openstatus-key")?.startsWith("valid")
@@ -168,6 +171,29 @@ describe("rate limit", () => {
     expect(
       (await app.request("/public/status/acme", spoofed("3.3.3.3"))).status,
     ).toBe(429);
+  });
+
+  test("dynamic client registration has its own per-IP bucket", async () => {
+    const { app } = register;
+    const post = {
+      method: "POST",
+      headers: { "fly-client-ip": "203.0.113.9" },
+    };
+    expect((await fire(app, "/oauth/register", 2, post)).status).toBe(200);
+    expect((await app.request("/oauth/register", post)).status).toBe(429);
+    // other IPs, other oauth endpoints and reads keep flowing
+    expect(
+      (
+        await app.request("/oauth/register", {
+          method: "POST",
+          headers: { "fly-client-ip": "203.0.113.10" },
+        })
+      ).status,
+    ).toBe(200);
+    expect((await app.request("/oauth/token", post)).status).toBe(200);
+    expect(
+      (await app.request("/oauth/register", { headers: post.headers })).status,
+    ).toBe(200);
   });
 
   test("/ping, /openapi* and /.well-known/* are unaffected", async () => {

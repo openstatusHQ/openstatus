@@ -84,6 +84,24 @@ export function isAllowedRedirectUri(redirectUri: string): boolean {
 }
 
 /**
+ * Stable grouping key for a redirect URI: its origin, or the bare scheme for
+ * app schemes, which have none. Never throws — a URI that fails to parse
+ * buckets under `<unparseable>` rather than taking the caller down with it.
+ */
+export function redirectUriOrigin(redirectUri: string): string {
+  let url: URL;
+  try {
+    url = new URL(redirectUri);
+  } catch {
+    return "<unparseable>";
+  }
+  // `URL.origin` is the string "null" for non-special schemes such as `cursor:`.
+  return url.origin && url.origin !== "null"
+    ? url.origin.toLowerCase()
+    : url.protocol.toLowerCase();
+}
+
+/**
  * RFC 8252 §7.3: native clients bind an ephemeral port, so a loopback
  * redirect matches its registered entry on everything but the port.
  * Any other URI must match a registered entry exactly. Fragments (RFC 6749
