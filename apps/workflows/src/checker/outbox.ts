@@ -571,7 +571,7 @@ export async function sweepExpiredOutbox(): Promise<{
   await commitDead(
     abandoned.map((row) => ({
       row,
-      error: "expired before delivery completed",
+      error: row.lastError ?? "expired before delivery completed",
     })),
   );
 
