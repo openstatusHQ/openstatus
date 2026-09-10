@@ -25,7 +25,8 @@ const instatusMaintenanceSchema = z.object({
   name: z.string(),
   start: z.string().optional(),
   status: z.string().optional(),
-  duration: z.string().optional(),
+  // Instatus docs show duration as a string; live pages send a number.
+  duration: z.union([z.number(), z.string()]).optional(),
   url: z.string().optional(),
 });
 
