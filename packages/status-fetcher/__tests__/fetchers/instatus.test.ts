@@ -151,7 +151,7 @@ describe("InstatusFetcher", () => {
       expect(result.updated_at).toBe(Date.parse("2024-02-16T13:00:00.000Z"));
     });
 
-    it("should map HASISSUES without impact to degraded", async () => {
+    it("should map HASISSUES without impact to minor/degraded", async () => {
       mockJson({
         page: {
           name: "Test",
@@ -163,9 +163,31 @@ describe("InstatusFetcher", () => {
 
       const result = await runFetcher(fetcher, entry);
 
-      expect(result.severity).toBe("major");
+      expect(result.severity).toBe("minor");
       expect(result.status).toBe("degraded");
       expect(result.description).toBe("Something");
+    });
+
+    it("should ignore scheduled maintenance when deriving updated_at", async () => {
+      const before = Date.now();
+      mockJson({
+        page: { name: "Test", url: "https://test.instatus.com", status: "UP" },
+        activeMaintenances: [
+          {
+            name: "Upcoming DB upgrade",
+            start: "2999-01-01T00:00:00.000Z",
+            status: "NOTSTARTEDYET",
+            duration: "120",
+            url: "https://test.instatus.com/m",
+          },
+        ],
+      });
+
+      const result = await runFetcher(fetcher, entry);
+
+      expect(result.status).toBe("operational");
+      expect(result.updated_at).toBeGreaterThanOrEqual(before);
+      expect(result.updated_at).toBeLessThanOrEqual(Date.now());
     });
 
     it("should map UNDERMAINTENANCE to under_maintenance", async () => {

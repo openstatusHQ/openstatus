@@ -105,13 +105,19 @@ class FetchError extends Error {
   readonly fetcherName?: string;
   readonly entryId?: string;
   readonly httpStatus?: number;
+  readonly kind?: "http" | "parse" | "schema" | "network" | "timeout";
   // `.cause: unknown` (inherited from Error)
 }
 ```
 
-The computed `.message` is `[<fetcherName> (<entryId>)] HTTP <status>: <url>`
-or `[<fetcherName> (<entryId>)] fetch failed: <url>` when no HTTP status is
-available.
+`kind` classifies the failure: `http` (non-2xx), `parse` (body is not JSON),
+`schema` (JSON that the fetcher's zod schema rejects), `network` (fetch threw)
+or `timeout`.
+
+The computed `.message` is `[<fetcherName> (<entryId>)] <label>: <url>` where
+`<label>` is `HTTP <status>` when a status is available, otherwise
+`non-JSON body`, `schema mismatch`, `network error` or `timeout` by `kind`,
+and `fetch failed` when neither is set.
 
 ## Retry & timeout
 

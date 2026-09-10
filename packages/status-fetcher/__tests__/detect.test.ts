@@ -245,6 +245,27 @@ describe("detectProvider", () => {
     expect(fetchMock.calls.length).toBe(7);
   });
 
+  it("probes the new origin root when the redirect lands on a subpath", async () => {
+    const MOVED = "https://example.status.atlassian.com";
+    installMockFetch((url) => {
+      const { origin, pathname } = new URL(url);
+      if (origin === MOVED && pathname === "/api/v2/summary.json") {
+        return Promise.resolve(json(atlassianBody));
+      }
+      if (origin === PAGE_URL && pathname === "/") {
+        return Promise.resolve(html("<html>moved</html>", `${MOVED}/en/`));
+      }
+      return Promise.resolve(notFound());
+    });
+    const result = await Effect.runPromise(
+      detectProvider({ statusPageUrl: PAGE_URL, currentProvider: "unknown" }),
+    );
+    expect(result.movedTo?.base).toBe(MOVED);
+    expect(result.movedTo?.matches.map((m) => m.provider)).toEqual([
+      "atlassian-statuspage",
+    ]);
+  });
+
   it("does not re-probe when the redirect stays on the same origin", async () => {
     const fetchMock = route({
       "/": () => html("<html>page</html>", `${PAGE_URL}/en/`),

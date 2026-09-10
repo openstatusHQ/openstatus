@@ -84,7 +84,12 @@ export class InstatusFetcher implements StatusFetcher {
   }
 
   private normalize(data: InstatusResponse): StatusResult {
-    const { activeIncidents, activeMaintenances } = data;
+    const { activeIncidents } = data;
+    // Scheduled maintenances ride along in activeMaintenances; their future
+    // start must not become the page's last update.
+    const activeMaintenances = data.activeMaintenances.filter(
+      (m) => m.status !== "NOTSTARTEDYET",
+    );
     const updated_at = latestTimestamp([
       ...activeIncidents.map((i) => i.started),
       ...activeMaintenances.map((m) => m.start),
@@ -102,8 +107,9 @@ export class InstatusFetcher implements StatusFetcher {
           timezone: "UTC",
         };
       case "HASISSUES": {
-        // Worst active incident impact wins; unknown impacts fold to degraded.
-        let worst = { rank: 0, severity: "major", status: "degraded" } as {
+        // Worst active incident impact wins; the fallback is the least severe
+        // so a known impact can only escalate it.
+        let worst = { rank: 0, severity: "minor", status: "degraded" } as {
           rank: number;
           severity: SeverityLevel;
           status: StatusType;

@@ -280,7 +280,9 @@ export const detectProvider = (args: {
         originOf(page.finalUrl) !== null &&
         originOf(page.finalUrl) !== originOf(args.statusPageUrl);
       if (page && candidates.length === 0 && originMoved) {
-        const movedBase = probeBase(page.finalUrl);
+        // Providers serve their API at the root, so a redirect landing on a
+        // subpath must not carry that path into the probes.
+        const movedBase = originOf(page.finalUrl) ?? probeBase(page.finalUrl);
         const movedCandidates = yield* runProbes(
           movedBase,
           args.entryId,
