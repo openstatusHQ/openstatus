@@ -20,13 +20,6 @@
     "url": "https://www.openstatus.dev/docs"
   },
   "components": {
-    "securitySchemes": {
-      "ApiKeyAuth": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "x-openstatus-key"
-      }
-    },
     "responses": {
       "RateLimited": {
         "description": "Rate limit exceeded (Connect code resource_exhausted). Retry after the number of seconds in the Retry-After header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
@@ -46,6 +39,13 @@
             }
           }
         }
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-openstatus-key"
       }
     },
     "schemas": {
