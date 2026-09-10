@@ -26,6 +26,9 @@ import { requestId } from "hono/request-id";
 
 import { env } from "./env";
 import { handleError } from "./libs/errors";
+import { concurrencyGuard } from "./libs/middlewares/concurrency";
+import { rateLimit } from "./libs/middlewares/rate-limit";
+import { shouldSample } from "./libs/sampling";
 import { mcpRoute } from "./routes/mcp";
 import { createOAuthRoutes } from "./routes/oauth";
 import { oauthConfigFromEnv } from "./routes/oauth/config";
@@ -105,19 +108,6 @@ await configure({
   contextLocalStorage: new AsyncLocalStorage(),
 });
 
-/* oxlint-disable-next-line typescript/no-explicit-any */
-function shouldSample(event: Record<string, any>): boolean {
-  // Always keep errors
-  if (event.status_code >= 500) return true;
-  if (event.error) return true;
-
-  // Always keep slow requests (above p99)
-  if (event.duration_ms > 2000) return true;
-
-  // Random sample the rest at 20%
-  return Math.random() < 0.2;
-}
-
 /**
  * Middleware
  */
@@ -196,6 +186,13 @@ app.use("*", async (c, next) => {
     },
   );
 });
+
+/**
+ * Overload guards, after the wide event so shed requests still log with
+ * `shed` / `rate_limited`, before any route so they stay cheap.
+ */
+app.use("*", concurrencyGuard.middleware);
+app.use("*", ...rateLimit);
 
 app.onError(handleError);
 

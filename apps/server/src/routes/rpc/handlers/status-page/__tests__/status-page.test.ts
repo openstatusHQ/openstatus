@@ -15,6 +15,16 @@ import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import { app } from "../../../../../index";
+import { limits } from "../../../../../libs/middlewares/limits";
+
+// 200+ steps hit key "1" within seconds, which the 10 s burst bucket would shed.
+const burstPer10s = limits.burstPer10s;
+beforeAll(() => {
+  limits.burstPer10s = Number.MAX_SAFE_INTEGER;
+});
+afterAll(() => {
+  limits.burstPer10s = burstPer10s;
+});
 
 /**
  * Helper to make ConnectRPC requests using the Connect protocol (JSON).

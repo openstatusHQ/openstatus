@@ -29,6 +29,13 @@ export const env = createEnv({
     // behind proxies. Defaults resolve in `routes/oauth/config.ts`.
     OAUTH_ISSUER: z.url().optional(),
     DASHBOARD_URL: z.url().optional(),
+    // Overload guards, per machine. `skipValidation` skips these defaults;
+    // `libs/middlewares/limits.ts` coerces and falls back.
+    API_MAX_IN_FLIGHT: z.coerce.number().default(128),
+    API_RATE_LIMIT_PER_MINUTE: z.coerce.number().default(600),
+    API_RATE_LIMIT_BURST_PER_10S: z.coerce.number().default(100),
+    API_RATE_LIMIT_WRITES_PER_MINUTE: z.coerce.number().default(60),
+    API_RATE_LIMIT_PUBLIC_PER_MINUTE: z.coerce.number().default(120),
   },
 
   /**

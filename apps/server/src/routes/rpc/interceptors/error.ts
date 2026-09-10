@@ -20,7 +20,9 @@ const ERROR_CODE_MAP: Record<ErrorCode, Code> = {
   METHOD_NOT_ALLOWED: Code.Unimplemented,
   CONFLICT: Code.AlreadyExists,
   UNPROCESSABLE_ENTITY: Code.InvalidArgument,
+  TOO_MANY_REQUESTS: Code.ResourceExhausted,
   INTERNAL_SERVER_ERROR: Code.Internal,
+  SERVICE_UNAVAILABLE: Code.Unavailable,
 };
 
 /**
