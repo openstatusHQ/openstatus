@@ -46,9 +46,34 @@ export function buildCurlCommand(request: CurlRequest): string {
     args.push(`-H ${quote("Content-Type: application/json")}`);
   }
 
-  if (body) args.push(`--data-raw ${quote(body)}`);
+  let command = "curl";
+  if (
+    method === "POST" &&
+    headers.find((h) => h.key === "Content-Type")?.value ===
+      "application/octet-stream"
+  ) {
+    const parts = body.split(",");
+    const encoded = parts[1]?.replace(/[\r\n]/g, "");
+    if (
+      parts.length !== 2 ||
+      encoded === undefined ||
+      !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?(?![\s\S])/.test(
+        encoded,
+      )
+    ) {
+      return "printf '%s\\n' 'Invalid base64 data URL body' >&2; false";
+    }
+    const octal = atob(encoded).replace(
+      /./gs,
+      (byte) => `\\0${byte.charCodeAt(0).toString(8).padStart(3, "0")}`,
+    );
+    command = `printf %b ${quote(octal)} | curl`;
+    args.push("--data-binary @-");
+  } else if (body) {
+    args.push(`--data-raw ${quote(body)}`);
+  }
   if (request.followRedirects) args.push("-L");
   if (request.timeout) args.push(`--max-time ${seconds(request.timeout)}`);
 
-  return ["curl", ...args].join(" \\\n  ");
+  return [command, ...args].join(" \\\n  ");
 }
