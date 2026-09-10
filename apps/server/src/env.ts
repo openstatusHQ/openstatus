@@ -12,6 +12,10 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_URL: z.string().min(1),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
     FLY_REGION: z.enum(monitorRegions),
+    // Injected by Fly at boot, reported by `/ping`. Absent locally and in tests.
+    FLY_MACHINE_ID: z.string().optional(),
+    FLY_APP_NAME: z.string().optional(),
+    FLY_MACHINE_VERSION: z.string().optional(),
     CRON_SECRET: z.string(),
     SCREENSHOT_SERVICE_URL: z.string(),
     QSTASH_TOKEN: z.string(),

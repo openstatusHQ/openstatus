@@ -27,8 +27,11 @@ import { requestId } from "hono/request-id";
 import { env } from "./env";
 import { handleError } from "./libs/errors";
 import { concurrencyGuard } from "./libs/middlewares/concurrency";
+import { limits } from "./libs/middlewares/limits";
 import { rateLimit } from "./libs/middlewares/rate-limit";
 import { shouldSample } from "./libs/sampling";
+import { createHealthRoute } from "./routes/health";
+import { probesFromEnv } from "./routes/health/probes";
 import { mcpRoute } from "./routes/mcp";
 import { createOAuthRoutes } from "./routes/oauth";
 import { oauthConfigFromEnv } from "./routes/oauth/config";
@@ -215,7 +218,9 @@ app.route("/", createOAuthRoutes(oauthConfigFromEnv()));
 app.route("/public", publicRoute);
 
 /**
- * Ping Pong
+ * Ping Pong — liveness only, and deliberately so: this is the Fly HTTP check
+ * and the container healthcheck, so it must not fail over a dependency
+ * someone else operates. Dependency status lives on `/health`.
  */
 app.get("/ping", (c) => {
   return c.json(
@@ -223,6 +228,19 @@ app.get("/ping", (c) => {
     200,
   );
 });
+
+/**
+ * Readiness — Turso, Upstash, Tinybird and Unkey, plus the vitals of the
+ * machine that answered. Rate limited and shed like any other route.
+ */
+app.route(
+  "/",
+  createHealthRoute({
+    probes: probesFromEnv(),
+    inFlight: () => concurrencyGuard.inFlight(),
+    maxInFlight: () => limits.maxInFlight,
+  }),
+);
 
 app.route("/", openapiRoute);
 
