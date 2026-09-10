@@ -73,40 +73,36 @@ describe("InstatusFetcher", () => {
   });
 
   describe("fetch", () => {
-    it("should fetch and parse UP status", async () => {
-      const entry: StatusPageEntry = {
-        id: "test",
-        name: "Test Service",
-        url: "https://test.com",
-        status_page_url: "https://test.instatus.com",
-        provider: "instatus",
-        industry: ["saas"],
-      };
+    const entry: StatusPageEntry = {
+      id: "test",
+      name: "Test Service",
+      url: "https://test.com",
+      status_page_url: "https://test.instatus.com",
+      provider: "instatus",
+      industry: ["saas"],
+    };
 
-      const mockResponse = {
-        activeIncidents: [],
-        activeMaintenances: [],
-        status: {
-          text: "All Systems Operational",
-          type: "UP",
-        },
+    const mockJson = (body: unknown) =>
+      installMockFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: async () => body,
+        } as Response),
+      );
+
+    it("should fetch and parse UP status (arrays omitted when empty)", async () => {
+      const fetchMock = mockJson({
         page: {
           name: "Test Service",
           url: "https://test.instatus.com",
-          updated: "2024-02-16T12:00:00.000Z",
+          status: "UP",
         },
-      };
-
-      const fetchMock = installMockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: async () => mockResponse,
-        } as Response),
-      );
+      });
 
       const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
+      expect(result.status).toBe("operational");
       expect(result.description).toBe("All Systems Operational");
       expect(result.timezone).toBe("UTC");
       expect(typeof result.updated_at).toBe("number");
@@ -121,116 +117,95 @@ describe("InstatusFetcher", () => {
       );
     });
 
-    it("should map HASISSUES to major indicator", async () => {
-      const entry: StatusPageEntry = {
-        id: "test",
-        name: "Test",
-        url: "https://test.com",
-        status_page_url: "https://test.instatus.com",
-        provider: "instatus",
-        industry: ["saas"],
-      };
-
-      const mockResponse = {
-        activeIncidents: [{ id: 1, name: "API Errors" }],
-        activeMaintenances: [],
-        status: {
-          text: "Service Degraded",
-          type: "HASISSUES",
-        },
+    it("should map HASISSUES to the worst active incident impact", async () => {
+      mockJson({
         page: {
           name: "Test",
           url: "https://test.instatus.com",
-          updated: "2024-02-16T12:00:00.000Z",
+          status: "HASISSUES",
         },
-      };
-
-      installMockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: async () => mockResponse,
-        } as Response),
-      );
+        activeIncidents: [
+          {
+            name: "API Errors",
+            started: "2024-02-16T12:00:00.000Z",
+            status: "INVESTIGATING",
+            impact: "DEGRADEDPERFORMANCE",
+            url: "https://test.instatus.com/abc",
+          },
+          {
+            name: "Dashboard Down",
+            started: "2024-02-16T13:00:00.000Z",
+            status: "IDENTIFIED",
+            impact: "PARTIALOUTAGE",
+            url: "https://test.instatus.com/def",
+          },
+        ],
+        activeMaintenances: [],
+      });
 
       const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("major");
-      expect(result.description).toBe("Service Degraded");
+      expect(result.status).toBe("partial_outage");
+      expect(result.description).toBe("API Errors, Dashboard Down");
+      expect(result.updated_at).toBe(Date.parse("2024-02-16T13:00:00.000Z"));
     });
 
-    it("should map UNDERMAINTENANCE to minor indicator", async () => {
-      const entry: StatusPageEntry = {
-        id: "test",
-        name: "Test",
-        url: "https://test.com",
-        status_page_url: "https://test.instatus.com",
-        provider: "instatus",
-        industry: ["saas"],
-      };
-
-      const mockResponse = {
-        activeIncidents: [],
-        activeMaintenances: [{ id: 1, name: "Scheduled Maintenance" }],
-        status: {
-          text: "Under Maintenance",
-          type: "UNDERMAINTENANCE",
-        },
+    it("should map HASISSUES without impact to degraded", async () => {
+      mockJson({
         page: {
           name: "Test",
           url: "https://test.instatus.com",
-          updated: "2024-02-16T12:00:00.000Z",
+          status: "HASISSUES",
         },
-      };
+        activeIncidents: [{ name: "Something" }],
+      });
 
-      installMockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: async () => mockResponse,
-        } as Response),
-      );
+      const result = await runFetcher(fetcher, entry);
+
+      expect(result.severity).toBe("major");
+      expect(result.status).toBe("degraded");
+      expect(result.description).toBe("Something");
+    });
+
+    it("should map UNDERMAINTENANCE to under_maintenance", async () => {
+      mockJson({
+        page: {
+          name: "Test",
+          url: "https://test.instatus.com",
+          status: "UNDERMAINTENANCE",
+        },
+        activeIncidents: [],
+        activeMaintenances: [
+          {
+            name: "Scheduled Maintenance",
+            start: "2024-02-16T12:00:00.000Z",
+            status: "INPROGRESS",
+            duration: "60",
+            url: "https://test.instatus.com/m",
+          },
+        ],
+      });
 
       const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
-      expect(result.description).toBe("Under Maintenance");
+      expect(result.status).toBe("under_maintenance");
+      expect(result.description).toBe("Scheduled Maintenance");
     });
 
     it("should use custom endpoint if provided", async () => {
-      const entry: StatusPageEntry = {
-        id: "test",
-        name: "Test",
-        url: "https://test.com",
-        status_page_url: "https://test.instatus.com",
-        provider: "instatus",
-        industry: ["saas"],
+      const fetchMock = mockJson({
+        page: { name: "Test", url: "https://test.instatus.com", status: "UP" },
+      });
+
+      await runFetcher(fetcher, {
+        ...entry,
         api_config: {
           type: "instatus",
           endpoint: "https://custom.endpoint.com/status.json",
         },
-      };
-
-      const mockResponse = {
-        activeIncidents: [],
-        activeMaintenances: [],
-        status: {
-          text: "Operational",
-          type: "UP",
-        },
-        page: {
-          name: "Test",
-          url: "https://test.instatus.com",
-          updated: "2024-02-16T12:00:00.000Z",
-        },
-      };
-
-      const fetchMock = installMockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: async () => mockResponse,
-        } as Response),
-      );
-
-      await runFetcher(fetcher, entry);
+      });
 
       const call = fetchMock.calls[fetchMock.calls.length - 1];
       expect(call.args[0]).toBe("https://custom.endpoint.com/status.json");
@@ -238,15 +213,6 @@ describe("InstatusFetcher", () => {
     });
 
     it("should fail with FetchError on non-200 response (after retries)", async () => {
-      const entry: StatusPageEntry = {
-        id: "test",
-        name: "Test",
-        url: "https://test.com",
-        status_page_url: "https://test.instatus.com",
-        provider: "instatus",
-        industry: ["saas"],
-      };
-
       installMockFetch(() =>
         Promise.resolve({
           ok: false,
@@ -261,24 +227,11 @@ describe("InstatusFetcher", () => {
     });
 
     it("should fail with FetchError on invalid JSON schema", async () => {
-      const entry: StatusPageEntry = {
-        id: "test",
-        name: "Test",
-        url: "https://test.com",
-        status_page_url: "https://test.instatus.com",
-        provider: "instatus",
-        industry: ["saas"],
-      };
-
-      installMockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: async () => ({ invalid: "data" }),
-        } as Response),
-      );
+      mockJson({ invalid: "data" });
 
       const exit = await runFetcherExit(fetcher, entry);
       const err = expectFetchError(exit);
+      expect(err.kind).toBe("schema");
       expect(err.cause).toBeInstanceOf(Error);
     });
   });

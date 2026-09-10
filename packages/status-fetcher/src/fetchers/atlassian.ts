@@ -14,6 +14,8 @@ import type {
 import { SEVERITY_LEVELS } from "../types";
 import { inferStatus, urlHostnameEndsWith } from "../utils";
 
+// Statuspage reports "maintenance" as a fifth indicator while a scheduled
+// maintenance is in progress; it is not a severity, so it maps to none.
 export const atlassianResponseSchema = z.object({
   page: z.object({
     id: z.string(),
@@ -23,10 +25,30 @@ export const atlassianResponseSchema = z.object({
     updated_at: z.string().datetime({ offset: true }),
   }),
   status: z.object({
-    indicator: z.enum(SEVERITY_LEVELS),
+    indicator: z.enum([...SEVERITY_LEVELS, "maintenance"]),
     description: z.string(),
   }),
 });
+
+export type AtlassianSummary = z.infer<typeof atlassianResponseSchema>;
+
+export const normalizeAtlassianSummary = (
+  data: AtlassianSummary,
+): StatusResult => {
+  const description = data.status.description;
+  const indicator = data.status.indicator;
+  const severity = indicator === "maintenance" ? "none" : indicator;
+  return {
+    severity,
+    status:
+      indicator === "maintenance"
+        ? "under_maintenance"
+        : inferStatus(description, severity),
+    description,
+    updated_at: new Date(data.page.updated_at).getTime(),
+    timezone: data.page.timezone,
+  };
+};
 
 export class AtlassianFetcher implements StatusFetcher {
   name = "atlassian";
@@ -49,19 +71,7 @@ export class AtlassianFetcher implements StatusFetcher {
       schema: atlassianResponseSchema,
       fetcherName: this.name,
       entryId: entry.id,
-    }).pipe(
-      Effect.map((data) => {
-        const severity = data.status.indicator;
-        const description = data.status.description;
-        return {
-          severity,
-          status: inferStatus(description, severity),
-          description,
-          updated_at: new Date(data.page.updated_at).getTime(),
-          timezone: data.page.timezone,
-        };
-      }),
-    );
+    }).pipe(Effect.map(normalizeAtlassianSummary));
   }
 
   fetchIncidents(

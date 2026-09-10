@@ -126,7 +126,8 @@ describe("fetchJson", () => {
     );
     const err = expectFailure(exit);
     expect(err.cause).toBeInstanceOf(Error);
-    expect(err.kind).toBe("parse");
+    expect(err.kind).toBe("schema");
+    expect(err.message).toBe(`[FetchError] schema mismatch: ${TEST_URL}`);
     expect(fetchMock.calls.length).toBe(1);
   });
 

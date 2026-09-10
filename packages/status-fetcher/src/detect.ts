@@ -23,6 +23,9 @@ export type DetectionResult = {
   currentProviderValidated: boolean;
   matches: ProviderMatch[];
   hostnameSuggestions: StatusPageProvider[];
+  // Set when the page redirects to another origin whose probes validate: the
+  // stored status_page_url is stale, not (necessarily) the provider.
+  movedTo?: { base: string; matches: ProviderMatch[] };
   evidence: string[];
 };
 
@@ -75,8 +78,11 @@ const PROBES: Probe[] = [
   },
 ];
 
-const HOSTNAME_EVIDENCE: { domain: string; provider: StatusPageProvider }[] = [
+type HostnameHit = { domain: string; provider: StatusPageProvider };
+
+const HOSTNAME_EVIDENCE: HostnameHit[] = [
   { domain: "statuspage.io", provider: "atlassian-statuspage" },
+  { domain: "status.atlassian.com", provider: "atlassian-statuspage" },
   { domain: "incident.io", provider: "incidentio" },
   { domain: "incidentio.com", provider: "incidentio" },
   { domain: "instatus.com", provider: "instatus" },
@@ -88,13 +94,20 @@ const HOSTNAME_EVIDENCE: { domain: string; provider: StatusPageProvider }[] = [
 const HTML_MARKERS: { provider: StatusPageProvider; needle: string }[] = [
   { provider: "incidentio", needle: "incident.io" },
   { provider: "atlassian-statuspage", needle: "statuspage.io" },
+  { provider: "instatus", needle: "instatus.com" },
+  { provider: "better-uptime", needle: "betteruptime.com" },
 ];
 
 const describeError = (err: FetchError): string =>
   `${err.kind ?? "error"}${err.httpStatus ? ` ${err.httpStatus}` : ""}`;
 
-const hostnameHits = (url: string) =>
+const hostnameHits = (url: string): HostnameHit[] =>
   HOSTNAME_EVIDENCE.filter((h) => urlHostnameEndsWith(url, h.domain));
+
+const htmlMarkerHits = (html: string) => {
+  const lower = html.toLowerCase();
+  return HTML_MARKERS.filter((m) => lower.includes(m.needle));
+};
 
 const trimTrailingSlash = (value: string): string => {
   let end = value.length;
@@ -121,6 +134,77 @@ const canonicalHref = (value: string): string => {
   }
 };
 
+const originOf = (value: string): string | null => {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+};
+
+const isPair = (candidates: ProviderMatch[]): boolean =>
+  candidates.length === 2 &&
+  candidates.every((c) => c.type === "atlassian" || c.type === "incidentio");
+
+const runProbes = (
+  base: string,
+  entryId: string | undefined,
+  evidence: string[],
+): Effect.Effect<ProviderMatch[]> =>
+  Effect.forEach(
+    PROBES,
+    (probe) => {
+      const endpoint = `${base}${probe.path}`;
+      return probe.validate(endpoint, entryId).pipe(
+        Effect.match({
+          onSuccess: () => ({ probe, endpoint, ok: true }),
+          onFailure: (err: FetchError) => {
+            evidence.push(`${endpoint}: ${describeError(err)}`);
+            return { probe, endpoint, ok: false };
+          },
+        }),
+      );
+    },
+    { concurrency: 3 },
+  ).pipe(
+    Effect.map((probed) =>
+      probed
+        .filter((r) => r.ok)
+        .flatMap((r) => {
+          evidence.push(`validated ${r.endpoint}`);
+          return r.probe.candidates.map((c) => ({
+            ...c,
+            endpoint: r.endpoint,
+          }));
+        }),
+    ),
+  );
+
+// Hostname evidence outranks html markers: a page hosted on a provider domain
+// is unambiguous, while markers can name a competitor in prose.
+const tiebreakPair = (
+  candidates: ProviderMatch[],
+  hits: HostnameHit[],
+  html: string | undefined,
+  evidence: string[],
+): ProviderMatch[] => {
+  const hitProviders = new Set(hits.map((h) => h.provider));
+  const pairHits = candidates.filter((c) => hitProviders.has(c.provider));
+  if (pairHits.length === 1) {
+    evidence.push(`hostname tiebreak: ${pairHits[0].provider}`);
+    return pairHits;
+  }
+  if (html === undefined) return candidates;
+  const markerHits = htmlMarkerHits(html).filter((m) =>
+    candidates.some((c) => c.provider === m.provider),
+  );
+  const markerProviders = new Set(markerHits.map((m) => m.provider));
+  if (markerProviders.size !== 1) return candidates;
+  const pick = markerHits[0];
+  evidence.push(`html marker: ${pick.needle}`);
+  return candidates.filter((c) => c.provider === pick.provider);
+};
+
 export const detectProvider = (args: {
   statusPageUrl: string;
   currentProvider: StatusPageProvider;
@@ -130,29 +214,7 @@ export const detectProvider = (args: {
     const base = probeBase(args.statusPageUrl);
     const evidence: string[] = [];
 
-    const probed = yield* Effect.forEach(
-      PROBES,
-      (probe) => {
-        const endpoint = `${base}${probe.path}`;
-        return probe.validate(endpoint, args.entryId).pipe(
-          Effect.match({
-            onSuccess: () => ({ probe, endpoint, ok: true }),
-            onFailure: (err: FetchError) => {
-              evidence.push(`${endpoint}: ${describeError(err)}`);
-              return { probe, endpoint, ok: false };
-            },
-          }),
-        );
-      },
-      { concurrency: 3 },
-    );
-
-    const candidates: ProviderMatch[] = probed
-      .filter((r) => r.ok)
-      .flatMap((r) => {
-        evidence.push(`validated ${r.endpoint}`);
-        return r.probe.candidates.map((c) => ({ ...c, endpoint: r.endpoint }));
-      });
+    const candidates = yield* runProbes(base, args.entryId, evidence);
 
     // Deliberate trade-off: a validating current provider ends detection, so
     // atlassian↔incidentio label drift goes unflagged — the APIs are identical
@@ -169,17 +231,14 @@ export const detectProvider = (args: {
     const staticHits = hostnameHits(args.statusPageUrl);
     for (const h of staticHits) evidence.push(`hostname matches ${h.domain}`);
 
-    const isPair =
-      candidates.length === 2 &&
-      candidates.every(
-        (c) => c.type === "atlassian" || c.type === "incidentio",
-      );
-
-    let finalUrlHits: typeof staticHits = [];
+    const ambiguous = isPair(candidates);
+    let finalUrlHits: HostnameHit[] = [];
     let matches = candidates;
+    let movedTo: DetectionResult["movedTo"];
+    let page: { text: string; finalUrl: string } | null = null;
 
-    if (isPair || candidates.length === 0) {
-      const page = yield* fetchTextWithUrl({
+    if (ambiguous || candidates.length === 0) {
+      page = yield* fetchTextWithUrl({
         url: args.statusPageUrl,
         fetcherName: "detect",
         entryId: args.entryId,
@@ -193,10 +252,10 @@ export const detectProvider = (args: {
         }),
       );
 
-      if (
+      const redirected =
         page?.finalUrl &&
-        canonicalHref(page.finalUrl) !== canonicalHref(args.statusPageUrl)
-      ) {
+        canonicalHref(page.finalUrl) !== canonicalHref(args.statusPageUrl);
+      if (page && redirected) {
         evidence.push(`final url ${page.finalUrl}`);
         finalUrlHits = hostnameHits(page.finalUrl);
         for (const h of finalUrlHits) {
@@ -204,49 +263,58 @@ export const detectProvider = (args: {
         }
       }
 
-      if (isPair) {
-        const hitProviders = new Set(
-          [...staticHits, ...finalUrlHits].map((h) => h.provider),
+      if (ambiguous) {
+        matches = tiebreakPair(
+          candidates,
+          [...staticHits, ...finalUrlHits],
+          page?.text,
+          evidence,
         );
-        const pairHits = candidates.filter((c) => hitProviders.has(c.provider));
-        const hostnamePick = pairHits.length === 1 ? pairHits[0] : undefined;
-        if (hostnamePick) {
-          matches = [hostnamePick];
-          evidence.push(`hostname tiebreak: ${hostnamePick.provider}`);
-        } else if (page) {
-          const html = page.text.toLowerCase();
-          const markerHits = HTML_MARKERS.filter((m) =>
-            html.includes(m.needle),
-          );
-          const markerPick =
-            new Set(markerHits.map((m) => m.provider)).size === 1
-              ? markerHits[0]
-              : undefined;
-          if (markerPick) {
-            matches = candidates.filter(
-              (c) => c.provider === markerPick.provider,
-            );
-            evidence.push(`html marker: ${markerPick.needle}`);
-          }
+      }
+
+      // Nothing validates here but the page lives elsewhere now: probe the
+      // new origin so a stale status_page_url surfaces as a concrete move.
+      const originMoved =
+        page &&
+        redirected &&
+        originOf(page.finalUrl) !== null &&
+        originOf(page.finalUrl) !== originOf(args.statusPageUrl);
+      if (page && candidates.length === 0 && originMoved) {
+        const movedBase = probeBase(page.finalUrl);
+        const movedCandidates = yield* runProbes(
+          movedBase,
+          args.entryId,
+          evidence,
+        );
+        if (movedCandidates.length > 0) {
+          movedTo = {
+            base: movedBase,
+            matches: isPair(movedCandidates)
+              ? tiebreakPair(movedCandidates, finalUrlHits, page.text, evidence)
+              : movedCandidates,
+          };
         }
       }
     }
 
-    const hostnameSuggestions =
-      candidates.length === 0
-        ? [
-            ...new Set(
-              [...staticHits, ...finalUrlHits]
-                .map((h) => h.provider)
-                .filter((p) => p !== args.currentProvider),
-            ),
-          ]
-        : [];
+    let hostnameSuggestions: StatusPageProvider[] = [];
+    if (candidates.length === 0) {
+      const markerHits = page && !movedTo ? htmlMarkerHits(page.text) : [];
+      for (const m of markerHits) evidence.push(`html marker: ${m.needle}`);
+      hostnameSuggestions = [
+        ...new Set(
+          [...staticHits, ...finalUrlHits, ...markerHits]
+            .map((h) => h.provider)
+            .filter((p) => p !== args.currentProvider),
+        ),
+      ];
+    }
 
     return {
       currentProviderValidated: false,
       matches,
       hostnameSuggestions,
+      ...(movedTo ? { movedTo } : {}),
       evidence,
     };
   });

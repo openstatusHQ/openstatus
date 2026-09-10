@@ -1,5 +1,6 @@
 import { FetchError } from "@openstatus/status-fetcher";
 import * as Sentry from "@sentry/deno";
+import type { SeverityLevel } from "@sentry/deno";
 
 import { env } from "../env";
 
@@ -38,11 +39,13 @@ export type DetectionOutcome =
   | { kind: "applied"; provider: string }
   | { kind: "config-cleared" }
   | { kind: "suggest"; suggestion: string }
+  | { kind: "schema-mismatch" }
   | { kind: "none" };
 
 // One event tells the whole story of a probed tick: the fetch failure plus
 // what detection concluded. Fingerprinted per (slug, outcome) so repeats
-// collapse into a single issue.
+// collapse into a single issue; a schema mismatch is our bug, so it groups
+// per provider instead.
 export function reportDetectionStory(args: {
   slug: string;
   currentProvider: string;
@@ -55,33 +58,43 @@ export function reportDetectionStory(args: {
     switch (outcome.kind) {
       case "applied":
         return {
-          key: `applied:${outcome.provider}`,
+          fingerprint: [
+            "external-status-detect",
+            slug,
+            `applied:${outcome.provider}`,
+          ],
           level: "info" as const,
           message: `provider auto-updated ${currentProvider} → ${outcome.provider}`,
         };
       case "config-cleared":
         return {
-          key: "config-cleared",
+          fingerprint: ["external-status-detect", slug, "config-cleared"],
           level: "info" as const,
           message: `stale api_config cleared (provider ${currentProvider})`,
         };
       case "suggest":
         return {
-          key: outcome.suggestion,
+          fingerprint: ["external-status-detect", slug, outcome.suggestion],
           level: "warning" as const,
           message: `provider suggestion: ${outcome.suggestion} (currently ${currentProvider})`,
         };
+      case "schema-mismatch":
+        return {
+          fingerprint: ["external-status-detect", "schema", currentProvider],
+          level: "error" as const,
+          message: `JSON did not match the ${currentProvider} schema`,
+        };
       case "none":
         return {
-          key: "none",
-          level: "error" as const,
+          fingerprint: ["external-status-detect", slug, "none"],
+          level: "warning" as const,
           message: `failing, no provider detected (currently ${currentProvider})`,
         };
     }
   })();
   Sentry.captureMessage(`external-status: ${slug} ${story.message}`, {
     level: story.level,
-    fingerprint: ["external-status-detect", slug, story.key],
+    fingerprint: story.fingerprint,
     tags: {
       cron: "external-status",
       phase: "detect",
@@ -112,9 +125,18 @@ export function reportFetchFailure(args: {
   phase: "status" | "incidents" | "components";
   slug: string;
   error: FetchError;
+  level?: SeverityLevel;
 }): void {
-  const { phase, slug, error } = args;
+  const { phase, slug, error, level } = args;
   Sentry.captureException(error, {
+    level,
+    fingerprint: [
+      "external-status-fetch",
+      slug,
+      phase,
+      error.kind ?? "unknown",
+      String(error.httpStatus ?? ""),
+    ],
     tags: {
       cron: "external-status",
       phase,

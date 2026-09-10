@@ -47,14 +47,7 @@ const atlassianBody = {
 };
 
 const instatusBody = {
-  activeIncidents: [],
-  activeMaintenances: [],
-  status: { text: "All systems operational", type: "UP" },
-  page: {
-    name: "Example",
-    url: "https://status.example.com",
-    updated: "2024-01-01T00:00:00Z",
-  },
+  page: { name: "Example", url: "https://status.example.com", status: "UP" },
 };
 
 const route = (routes: Record<string, () => Response>) =>
@@ -218,6 +211,64 @@ describe("detectProvider", () => {
     expect(result.evidence).toContain(
       "final url https://stats.uptimerobot.com/xyz",
     );
+  });
+
+  it("reports a move when the page redirects to an origin whose probes validate", async () => {
+    const MOVED = "https://example.status.atlassian.com";
+    const fetchMock = installMockFetch((url) => {
+      const { origin, pathname } = new URL(url);
+      if (origin === MOVED && pathname === "/api/v2/summary.json") {
+        return Promise.resolve(json(atlassianBody));
+      }
+      if (origin === PAGE_URL && pathname === "/") {
+        return Promise.resolve(html("<html>moved</html>", `${MOVED}/`));
+      }
+      return Promise.resolve(notFound());
+    });
+    const result = await Effect.runPromise(
+      detectProvider({
+        statusPageUrl: PAGE_URL,
+        currentProvider: "atlassian-statuspage",
+      }),
+    );
+    expect(result.currentProviderValidated).toBe(false);
+    expect(result.matches).toEqual([]);
+    expect(result.movedTo?.base).toBe(MOVED);
+    expect(result.movedTo?.matches.map((m) => m.provider)).toEqual([
+      "atlassian-statuspage",
+    ]);
+    expect(result.evidence).toContain(`final url ${MOVED}/`);
+    expect(result.evidence).toContain(
+      "hostname tiebreak: atlassian-statuspage",
+    );
+    // 3 probes at the old base, the html fetch, 3 probes at the new base
+    expect(fetchMock.calls.length).toBe(7);
+  });
+
+  it("does not re-probe when the redirect stays on the same origin", async () => {
+    const fetchMock = route({
+      "/": () => html("<html>page</html>", `${PAGE_URL}/en/`),
+    });
+    const result = await Effect.runPromise(
+      detectProvider({ statusPageUrl: PAGE_URL, currentProvider: "unknown" }),
+    );
+    expect(result.movedTo).toBeUndefined();
+    expect(fetchMock.calls.length).toBe(4);
+  });
+
+  it("suggests instatus from an html marker when nothing validates", async () => {
+    route({
+      "/": () => html('<img src="https://instatus.com/user-content/logo.png">'),
+    });
+    const result = await Effect.runPromise(
+      detectProvider({
+        statusPageUrl: PAGE_URL,
+        currentProvider: "uptime-robot",
+      }),
+    );
+    expect(result.matches).toEqual([]);
+    expect(result.hostnameSuggestions).toEqual(["instatus"]);
+    expect(result.evidence).toContain("html marker: instatus.com");
   });
 
   it("never suggests the current provider from hostname evidence", async () => {
