@@ -5,6 +5,9 @@ on:
       - main
     paths:
       - "apps/checker/**"
+concurrency:
+  group: fly-deploy-checker-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   deploy-checker:
     name: Deploy Checker

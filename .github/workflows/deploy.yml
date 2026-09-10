@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - main
+concurrency:
+  group: fly-deploy-server-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   deploy:
     name: Deploy API
