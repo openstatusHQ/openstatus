@@ -5,11 +5,11 @@ effective: |
     install:
       fromImage:
         path: node
-        digest: sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
+        digest: sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
       label:
+        org.opencontainers.image.base.digest: sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
         org.opencontainers.image.base.name: docker.io/node:24-slim
         org.opencontainers.image.stage: install
-        org.opencontainers.image.base.digest: sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
       workdir: /app/
       run:
       - corepack enable pnpm
@@ -37,16 +37,16 @@ effective: |
         source: packages/utils/package.json
   fromImage:
     path: denoland/deno
-    digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
+    digest: sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d
   label:
     org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.title: OpenStatus DB Migrate
-    org.opencontainers.image.base.digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.description: One-shot database migration runner for OpenStatus
-    org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.2
-    io.dofigen.version: 2.8.0
+    org.opencontainers.image.title: OpenStatus DB Migrate
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.base.digest: sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d
+    org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.6
+    io.dofigen.version: 2.8.0
   workdir: /app/packages/db
   env:
     DENO_DIR: /tmp/deno-dir
@@ -85,15 +85,15 @@ images:
   docker.io:
     denoland:
       deno:
-        2.9.2:
-          digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
+        2.9.6:
+          digest: sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d
     library:
       node:
         24-slim:
-          digest: sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
+          digest: sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
 resources:
   dofigen.yml:
-    hash: cccac38ef65a7631285c314a64bd31a90785166f5305f5860e092f89d3fa6880
+    hash: b1986271c968bdb2d3e6a3a72b718f67e15c83f2230e4094c8454dba5acb8203
     content: |
       ignore:
         - node_modules
@@ -121,7 +121,7 @@ resources:
 
       # One-shot migration runner: drizzle's migrator reads drizzle/ from disk at
       # runtime, so the image ships source + node_modules instead of a compiled binary.
-      fromImage: denoland/deno:2.9.2
+      fromImage: denoland/deno:2.9.6
       workdir: /app/packages/db
 
       labels:

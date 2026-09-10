@@ -24,7 +24,7 @@ builders:
 
 # One-shot migration runner: drizzle's migrator reads drizzle/ from disk at
 # runtime, so the image ships source + node_modules instead of a compiled binary.
-fromImage: denoland/deno:2.9.2
+fromImage: denoland/deno:2.9.6
 workdir: /app/packages/db
 
 labels:

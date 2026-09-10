@@ -15,11 +15,11 @@ effective: |
     install:
       fromImage:
         path: node
-        digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
+        digest: sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
       label:
-        org.opencontainers.image.base.digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
-        org.opencontainers.image.stage: install
         org.opencontainers.image.base.name: docker.io/node:24-slim
+        org.opencontainers.image.base.digest: sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
+        org.opencontainers.image.stage: install
       workdir: /app/
       run:
       - corepack enable pnpm
@@ -94,11 +94,11 @@ effective: |
     build:
       fromImage:
         path: denoland/deno
-        digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
+        digest: sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d
       label:
-        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.2
+        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.6
+        org.opencontainers.image.base.digest: sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d
         org.opencontainers.image.stage: build
-        org.opencontainers.image.base.digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
       workdir: /app/apps/workflows
       env:
         NODE_ENV: production
@@ -131,13 +131,13 @@ effective: |
     path: hi/curl
     digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
   label:
-    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
-    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
-    org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
     io.dofigen.version: 2.8.0
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
   user:
     user: '1000'
     group: '1000'
@@ -164,17 +164,17 @@ effective: |
     retries: 3
 images:
   docker.io:
-    denoland:
-      deno:
-        2.9.2:
-          digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
     library:
       node:
         24-slim:
-          digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
+          digest: sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
+    denoland:
+      deno:
+        2.9.6:
+          digest: sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d
 resources:
   dofigen.yml:
-    hash: 614452ec2a7099d450629d841ea4c89e5b10bef8776c82581d57e7b7354fc2bd
+    hash: 1ff9b3016cac0c9d641f1365e1e9cd0ea262691c32b90ba54dfe46a5eed64c5c
     content: |
       ignore:
         - node_modules
@@ -237,7 +237,7 @@ resources:
 
         # Stage 4: Build application (compile to binary with Deno)
         build:
-          fromImage: denoland/deno:2.9.2
+          fromImage: denoland/deno:2.9.6
           workdir: /app/apps/workflows
           labels:
             org.opencontainers.image.stage: build
