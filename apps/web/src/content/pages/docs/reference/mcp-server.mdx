@@ -309,3 +309,7 @@ Every mutation invoked through MCP appears in the workspace audit log with:
 - `actor_user_id` = the openstatus user behind the credential: who created the API key (custom keys only), or who approved the OAuth consent. Attribute mutations back to a person with a join to the `user` table.
 
 Connecting and revoking an app are audited too, as `oauth_grant.create` and `oauth_grant.delete`.
+
+## Rate limits
+
+MCP requests share the per-token limits of the HTTP API. A rejected request gets a plain `429` with a `Retry-After` header rather than a JSON-RPC error; see [API rate limits](/docs/reference/api-rate-limits).

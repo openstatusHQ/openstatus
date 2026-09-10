@@ -11,7 +11,8 @@
     "test": "deno test --parallel -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json",
     "check": "deno check --sloppy-imports src/serve.ts",
     "eval:mcp": "deno run -A --sloppy-imports src/routes/mcp/evals/run.ts",
-    "openapi:json": "deno run -A scripts/build-openapi-json.ts && pnpm exec oxfmt static/openapi.json static/openapi-yaml.ts"
+    "openapi:json": "deno run -A scripts/build-openapi-json.ts && pnpm exec oxfmt static/openapi.json static/openapi-yaml.ts",
+    "openapi:v1": "deno run -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json scripts/build-openapi-v1-json.ts && pnpm exec oxfmt static/openapi-v1.json"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "catalog:",

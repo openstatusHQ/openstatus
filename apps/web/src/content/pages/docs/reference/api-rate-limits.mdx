@@ -1,0 +1,74 @@
+---
+category: Reference
+title: API Rate Limits
+description: "Request limits for the openstatus API, what a 429 response looks like, and how to retry."
+---
+
+Every request to `api.openstatus.dev` is counted against a small set of limits. They exist to keep one client from degrading the API for everyone else; a well-behaved integration will never notice them.
+
+## Limits
+
+| Scope | Limit | Applies to |
+|---|---|---|
+| Per API key or token | 600 requests per minute | all authenticated requests |
+| Per API key or token | 100 requests per 10 seconds | all authenticated requests |
+| Per API key or token | 60 write requests per minute | mutations on `/v1` and `/rpc` (see below) |
+| Per client IP | 120 requests per minute | unauthenticated `/public/*` status endpoints |
+
+Requests are attributed to the `x-openstatus-key` header, or to the OAuth bearer token when there is no key. Requests that carry neither are attributed to the client IP.
+
+A **write** is any `POST`, `PUT`, `PATCH`, or `DELETE` on `/v1`, and any RPC on `/rpc` whose method does not start with `Get`, `List`, or `Check`. `CreateMonitor`, `DeleteStatusReport`, `TriggerMonitor`, and `SendTestNotification` are writes; `ListMonitors` and `GetStatusPage` are not.
+
+All requests count, including the ones that fail with a `4xx`. The health check `/ping`, the OpenAPI documents, and the OAuth discovery endpoints under `/.well-known/` are exempt.
+
+<Aside type="note">
+Limits are enforced per API server instance, so the numbers above are approximate. A client whose requests are spread across several servers gets slightly more headroom, never less.
+</Aside>
+
+## Rate limited response
+
+A request over a limit is rejected before it reaches the route. The response is `429 Too Many Requests` with a `Retry-After` header in seconds and the standard error envelope:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 7
+Content-Type: application/json
+
+{
+  "code": "TOO_MANY_REQUESTS",
+  "message": "Rate limit exceeded, retry later",
+  "docs": "https://www.openstatus.dev/docs/api-references/errors/code/TOO_MANY_REQUESTS",
+  "requestId": "1c4b8f1e-3f4b-4f79-9f9d-2a6d7f0b6c1a"
+}
+```
+
+On `/rpc` the body is a Connect error instead, so ConnectRPC clients such as the [Node.js SDK](/docs/sdk/nodejs/error-handling) raise a `ConnectError` with code `resource_exhausted`:
+
+```json
+{ "code": "resource_exhausted", "message": "Rate limit exceeded, retry later" }
+```
+
+When a server is overloaded it may also answer `503 Service Unavailable` with a `Retry-After` header: `code: "SERVICE_UNAVAILABLE"` in the envelope, `unavailable` on `/rpc`. Treat it exactly like a `429`.
+
+## Retrying
+
+- **Honour `Retry-After`.** Wait at least that many seconds before sending the next request. The header is always present on `429` and `503`.
+- **Back off exponentially** on repeated rejections and add jitter so several workers do not retry in lockstep.
+- **Do not retry in a tight loop.** A client that retries immediately, without a timeout, stays rate limited for the whole window and starves its own successful requests.
+- **Batch reads.** Use the `List*` RPCs and `/v1` list endpoints instead of fetching resources one by one.
+- **Cache status.** Public status endpoints change rarely; poll them at most every few seconds, not on every page view.
+
+```typescript
+async function withRetryAfter<T>(fn: () => Promise<Response>): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fn();
+    if ((res.status !== 429 && res.status !== 503) || attempt === 5) return res;
+    const seconds = Number(res.headers.get("retry-after") ?? 2 ** attempt);
+    await new Promise((r) => setTimeout(r, seconds * 1000 + Math.random() * 250));
+  }
+}
+```
+
+## Need more?
+
+The limits are sized well above what any workspace uses today. If your integration legitimately needs more, contact [ping@openstatus.dev](mailto:ping@openstatus.dev) with your workspace slug and the request pattern.

@@ -33,6 +33,7 @@ function build(maxInFlight: number) {
     throw new Error("boom");
   });
   app.get("/ping", (c) => c.text("pong"));
+  app.post("/rpc/*", (c) => c.text("ok"));
   app.onError((_, c) => c.text("error", 500));
 
   return { app, guard, events, release };
@@ -102,6 +103,26 @@ describe("concurrency guard", () => {
       message: "Server is busy, retry shortly",
       docs: "https://www.openstatus.dev/docs/api-references/errors/code/SERVICE_UNAVAILABLE",
       requestId: expect.any(String),
+    });
+    release();
+    await held;
+  });
+
+  test("sheds /rpc with a Connect error body", async () => {
+    const { app, release } = build(1);
+    const held = app.request("/slow");
+    await tick();
+    const shed = await app.request(
+      "/rpc/openstatus.monitor.v1.MonitorService/ListMonitors",
+      {
+        method: "POST",
+      },
+    );
+    expect(shed.status).toBe(503);
+    expect(shed.headers.get("retry-after")).toBe("5");
+    expect(await shed.json()).toEqual({
+      code: "unavailable",
+      message: "Server is busy, retry shortly",
     });
     release();
     await held;

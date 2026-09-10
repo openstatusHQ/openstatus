@@ -7,7 +7,7 @@
       "email": "ping@openstatus.dev",
       "url": "https://www.openstatus.dev"
     },
-    "description": "This version is deprecated please use v2"
+    "description": "This version is deprecated please use v2 API: https://api.openstatus.dev/openapi. Read more in the documentation: https://www.openstatus.dev/docs/reference/overview"
   },
   "tags": [
     {
@@ -367,7 +367,7 @@
           },
           "jobType": {
             "type": "string",
-            "enum": ["http", "tcp", "icmp", "udp", "dns", "ssl"],
+            "enum": ["http", "tcp", "icmp", "grpc", "udp", "dns", "ssl"],
             "default": "http",
             "description": "The type of the monitor"
           },
@@ -408,7 +408,9 @@
               "NOT_FOUND",
               "UNAUTHORIZED",
               "METHOD_NOT_ALLOWED",
-              "UNPROCESSABLE_ENTITY"
+              "UNPROCESSABLE_ENTITY",
+              "TOO_MANY_REQUESTS",
+              "SERVICE_UNAVAILABLE"
             ],
             "example": "BAD_REQUEST",
             "description": "The error code related to the status code."
@@ -445,7 +447,9 @@
               "NOT_FOUND",
               "UNAUTHORIZED",
               "METHOD_NOT_ALLOWED",
-              "UNPROCESSABLE_ENTITY"
+              "UNPROCESSABLE_ENTITY",
+              "TOO_MANY_REQUESTS",
+              "SERVICE_UNAVAILABLE"
             ],
             "example": "UNAUTHORIZED",
             "description": "The error code related to the status code."
@@ -482,7 +486,9 @@
               "NOT_FOUND",
               "UNAUTHORIZED",
               "METHOD_NOT_ALLOWED",
-              "UNPROCESSABLE_ENTITY"
+              "UNPROCESSABLE_ENTITY",
+              "TOO_MANY_REQUESTS",
+              "SERVICE_UNAVAILABLE"
             ],
             "example": "PAYMENT_REQUIRED",
             "description": "The error code related to the status code."
@@ -519,7 +525,9 @@
               "NOT_FOUND",
               "UNAUTHORIZED",
               "METHOD_NOT_ALLOWED",
-              "UNPROCESSABLE_ENTITY"
+              "UNPROCESSABLE_ENTITY",
+              "TOO_MANY_REQUESTS",
+              "SERVICE_UNAVAILABLE"
             ],
             "example": "FORBIDDEN",
             "description": "The error code related to the status code."
@@ -556,7 +564,9 @@
               "NOT_FOUND",
               "UNAUTHORIZED",
               "METHOD_NOT_ALLOWED",
-              "UNPROCESSABLE_ENTITY"
+              "UNPROCESSABLE_ENTITY",
+              "TOO_MANY_REQUESTS",
+              "SERVICE_UNAVAILABLE"
             ],
             "example": "NOT_FOUND",
             "description": "The error code related to the status code."
@@ -593,7 +603,9 @@
               "NOT_FOUND",
               "UNAUTHORIZED",
               "METHOD_NOT_ALLOWED",
-              "UNPROCESSABLE_ENTITY"
+              "UNPROCESSABLE_ENTITY",
+              "TOO_MANY_REQUESTS",
+              "SERVICE_UNAVAILABLE"
             ],
             "example": "CONFLICT",
             "description": "The error code related to the status code."
@@ -607,6 +619,45 @@
             "type": "string",
             "description": "A link to the documentation for the error.",
             "example": "https://www.openstatus.dev/docs/api-references/errors/code/CONFLICT"
+          },
+          "requestId": {
+            "type": "string",
+            "description": "The request id to be used for debugging and error reporting.",
+            "example": "<uuid>"
+          }
+        },
+        "required": ["code", "message", "docs", "requestId"]
+      },
+      "ErrTooManyRequests": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "BAD_REQUEST",
+              "FORBIDDEN",
+              "INTERNAL_SERVER_ERROR",
+              "PAYMENT_REQUIRED",
+              "CONFLICT",
+              "NOT_FOUND",
+              "UNAUTHORIZED",
+              "METHOD_NOT_ALLOWED",
+              "UNPROCESSABLE_ENTITY",
+              "TOO_MANY_REQUESTS",
+              "SERVICE_UNAVAILABLE"
+            ],
+            "example": "TOO_MANY_REQUESTS",
+            "description": "The error code related to the status code."
+          },
+          "message": {
+            "type": "string",
+            "description": "A human readable message describing the issue.",
+            "example": "<string>"
+          },
+          "docs": {
+            "type": "string",
+            "description": "A link to the documentation for the error.",
+            "example": "https://www.openstatus.dev/docs/api-references/errors/code/TOO_MANY_REQUESTS"
           },
           "requestId": {
             "type": "string",
@@ -630,7 +681,9 @@
               "NOT_FOUND",
               "UNAUTHORIZED",
               "METHOD_NOT_ALLOWED",
-              "UNPROCESSABLE_ENTITY"
+              "UNPROCESSABLE_ENTITY",
+              "TOO_MANY_REQUESTS",
+              "SERVICE_UNAVAILABLE"
             ],
             "example": "INTERNAL_SERVER_ERROR",
             "description": "The error code related to the status code."
@@ -644,6 +697,45 @@
             "type": "string",
             "description": "A link to the documentation for the error.",
             "example": "https://www.openstatus.dev/docs/api-references/errors/code/INTERNAL_SERVER_ERROR"
+          },
+          "requestId": {
+            "type": "string",
+            "description": "The request id to be used for debugging and error reporting.",
+            "example": "<uuid>"
+          }
+        },
+        "required": ["code", "message", "docs", "requestId"]
+      },
+      "ErrServiceUnavailable": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "BAD_REQUEST",
+              "FORBIDDEN",
+              "INTERNAL_SERVER_ERROR",
+              "PAYMENT_REQUIRED",
+              "CONFLICT",
+              "NOT_FOUND",
+              "UNAUTHORIZED",
+              "METHOD_NOT_ALLOWED",
+              "UNPROCESSABLE_ENTITY",
+              "TOO_MANY_REQUESTS",
+              "SERVICE_UNAVAILABLE"
+            ],
+            "example": "SERVICE_UNAVAILABLE",
+            "description": "The error code related to the status code."
+          },
+          "message": {
+            "type": "string",
+            "description": "A human readable message describing the issue.",
+            "example": "<string>"
+          },
+          "docs": {
+            "type": "string",
+            "description": "A link to the documentation for the error.",
+            "example": "https://www.openstatus.dev/docs/api-references/errors/code/SERVICE_UNAVAILABLE"
           },
           "requestId": {
             "type": "string",
@@ -835,8 +927,8 @@
           "date": {
             "type": "string",
             "nullable": true,
-            "format": "date",
-            "default": "2026-02-12T22:01:46.114Z",
+            "format": "date-time",
+            "default": "2026-09-10T07:58:20.617Z",
             "description": "The date of the update in ISO8601 format"
           },
           "message": {
@@ -862,7 +954,7 @@
           "startedAt": {
             "type": "string",
             "nullable": true,
-            "format": "date",
+            "format": "date-time",
             "description": "The date the incident started"
           },
           "monitorId": {
@@ -874,7 +966,7 @@
           "acknowledgedAt": {
             "type": "string",
             "nullable": true,
-            "format": "date",
+            "format": "date-time",
             "description": "The date the incident was acknowledged"
           },
           "acknowledgedBy": {
@@ -885,7 +977,7 @@
           "resolvedAt": {
             "type": "string",
             "nullable": true,
-            "format": "date",
+            "format": "date-time",
             "description": "The date the incident was resolved"
           },
           "resolvedBy": {
@@ -923,13 +1015,13 @@
           "from": {
             "type": "string",
             "nullable": true,
-            "format": "date",
+            "format": "date-time",
             "description": "When the maintenance starts"
           },
           "to": {
             "type": "string",
             "nullable": true,
-            "format": "date",
+            "format": "date-time",
             "description": "When the maintenance ends"
           },
           "monitorIds": {
@@ -981,196 +1073,7 @@
             "example": "discord"
           },
           "payload": {
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "discord": {
-                    "type": "string",
-                    "format": "uri"
-                  }
-                },
-                "required": ["discord"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  }
-                },
-                "required": ["email"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "grafana-oncall": {
-                    "type": "object",
-                    "properties": {
-                      "webhookUrl": {
-                        "type": "string",
-                        "format": "uri"
-                      }
-                    },
-                    "required": ["webhookUrl"]
-                  }
-                },
-                "required": ["grafana-oncall"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "ms-teams": {
-                    "type": "object",
-                    "properties": {
-                      "webhookUrl": {
-                        "type": "string",
-                        "format": "uri"
-                      }
-                    },
-                    "required": ["webhookUrl"]
-                  }
-                },
-                "required": ["ms-teams"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "ntfy": {
-                    "type": "object",
-                    "properties": {
-                      "topic": {
-                        "type": "string",
-                        "default": ""
-                      },
-                      "serverUrl": {
-                        "type": "string",
-                        "default": "https://ntfy.sh"
-                      },
-                      "token": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                },
-                "required": ["ntfy"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "opsgenie": {
-                    "type": "object",
-                    "properties": {
-                      "apiKey": {
-                        "type": "string"
-                      },
-                      "region": {
-                        "type": "string",
-                        "enum": ["us", "eu"]
-                      }
-                    },
-                    "required": ["apiKey", "region"]
-                  }
-                },
-                "required": ["opsgenie"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "pagerduty": {
-                    "type": "string"
-                  }
-                },
-                "required": ["pagerduty"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "sms": {
-                    "type": "string",
-                    "pattern": "^([+]?[\\s0-9]+)?(\\d{3}|[(]?[0-9]+[)])?([-]?[\\s]?[0-9])+$"
-                  }
-                },
-                "required": ["sms"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "telegram": {
-                    "type": "object",
-                    "properties": {
-                      "chatId": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["chatId"]
-                  }
-                },
-                "required": ["telegram"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "slack": {
-                    "type": "string",
-                    "format": "uri"
-                  }
-                },
-                "required": ["slack"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "webhook": {
-                    "type": "object",
-                    "properties": {
-                      "endpoint": {
-                        "type": "string",
-                        "format": "uri"
-                      },
-                      "headers": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "key": {
-                              "type": "string"
-                            },
-                            "value": {
-                              "type": "string"
-                            }
-                          },
-                          "required": ["key", "value"]
-                        }
-                      }
-                    },
-                    "required": ["endpoint"]
-                  }
-                },
-                "required": ["webhook"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "whatsapp": {
-                    "type": "string",
-                    "pattern": "^([+]?[\\s0-9]+)?(\\d{3}|[(]?[0-9]+[)])?([-]?[\\s]?[0-9])+$"
-                  }
-                },
-                "required": ["whatsapp"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "google-chat": {
-                    "type": "string",
-                    "format": "uri"
-                  }
-                },
-                "required": ["google-chat"]
-              }
-            ],
+            "nullable": true,
             "description": "The data of the notification"
           },
           "monitors": {
@@ -1183,7 +1086,7 @@
             "example": [1, 2]
           }
         },
-        "required": ["id", "name", "provider", "payload"]
+        "required": ["id", "name", "provider"]
       },
       "PageSubscriber": {
         "type": "object",
@@ -1220,12 +1123,39 @@
           "plan": {
             "type": "string",
             "nullable": true,
-            "enum": ["free", "starter", "team"],
+            "enum": ["free", "starter", "team", "scale", null],
             "default": "free",
             "description": "The current workspace plan"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/WhoamiActor"
           }
         },
-        "required": ["slug"]
+        "required": ["slug", "actor"]
+      },
+      "WhoamiActor": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["apiKey"],
+            "description": "Transport surface that authenticated this request"
+          },
+          "keyId": {
+            "type": "string",
+            "description": "Stable identifier for the API key"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["read", "write"]
+            },
+            "description": "Scopes the API key holds. Lets clients introspect what they're allowed to do without probe-and-fail."
+          }
+        },
+        "required": ["type", "keyId", "scopes"],
+        "description": "Resolved API key actor for this request."
       }
     },
     "parameters": {}
@@ -1309,12 +1239,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -1633,7 +1601,15 @@
                   },
                   "jobType": {
                     "type": "string",
-                    "enum": ["http", "tcp", "icmp", "udp", "dns", "ssl"],
+                    "enum": [
+                      "http",
+                      "tcp",
+                      "icmp",
+                      "grpc",
+                      "udp",
+                      "dns",
+                      "ssl"
+                    ],
                     "default": "http",
                     "description": "The type of the monitor"
                   },
@@ -1734,12 +1710,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -1836,12 +1850,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -2174,7 +2226,15 @@
                   },
                   "jobType": {
                     "type": "string",
-                    "enum": ["http", "tcp", "icmp", "udp", "dns", "ssl"],
+                    "enum": [
+                      "http",
+                      "tcp",
+                      "icmp",
+                      "grpc",
+                      "udp",
+                      "dns",
+                      "ssl"
+                    ],
                     "default": "http",
                     "description": "The type of the monitor"
                   },
@@ -2274,12 +2334,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -2375,12 +2473,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -2787,12 +2923,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -3031,12 +3205,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -3305,12 +3517,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -3731,12 +3981,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -3989,12 +4277,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -4277,12 +4603,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -4333,7 +4697,7 @@
                           "day": {
                             "type": "string",
                             "nullable": true,
-                            "format": "date",
+                            "format": "date-time",
                             "description": "The date of the daily stat in ISO8601 format"
                           }
                         },
@@ -4406,12 +4770,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -4516,12 +4918,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -4760,12 +5200,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -5102,12 +5580,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -5204,12 +5720,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -5430,12 +5984,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -5521,12 +6113,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -5734,12 +6364,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -5825,12 +6493,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -5877,8 +6583,8 @@
                   "date": {
                     "type": "string",
                     "nullable": true,
-                    "format": "date",
-                    "default": "2026-02-12T22:01:46.114Z",
+                    "format": "date-time",
+                    "default": "2026-09-10T07:58:20.617Z",
                     "description": "The date of the report in ISO8601 format, defaults to now"
                   },
                   "message": {
@@ -5962,12 +6668,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -6065,12 +6809,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -6165,12 +6947,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -6218,8 +7038,8 @@
                   "date": {
                     "type": "string",
                     "nullable": true,
-                    "format": "date",
-                    "default": "2026-02-12T22:01:46.114Z",
+                    "format": "date-time",
+                    "default": "2026-09-10T07:58:20.617Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
@@ -6304,12 +7124,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -6406,12 +7264,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -6443,8 +7339,8 @@
                   "date": {
                     "type": "string",
                     "nullable": true,
-                    "format": "date",
-                    "default": "2026-02-12T22:01:46.114Z",
+                    "format": "date-time",
+                    "default": "2026-09-10T07:58:20.617Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
@@ -6533,12 +7429,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -6624,12 +7558,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -6727,12 +7699,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -6768,13 +7778,13 @@
                   "acknowledgedAt": {
                     "type": "string",
                     "nullable": true,
-                    "format": "date",
+                    "format": "date-time",
                     "description": "The date the incident was acknowledged"
                   },
                   "resolvedAt": {
                     "type": "string",
                     "nullable": true,
-                    "format": "date",
+                    "format": "date-time",
                     "description": "The date the incident was resolved"
                   }
                 }
@@ -6853,12 +7863,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -6944,12 +7992,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -6978,13 +8064,13 @@
                   "from": {
                     "type": "string",
                     "nullable": true,
-                    "format": "date",
+                    "format": "date-time",
                     "description": "When the maintenance starts"
                   },
                   "to": {
                     "type": "string",
                     "nullable": true,
-                    "format": "date",
+                    "format": "date-time",
                     "description": "When the maintenance ends"
                   },
                   "monitorIds": {
@@ -7076,12 +8162,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -7179,12 +8303,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -7228,13 +8390,13 @@
                   "from": {
                     "type": "string",
                     "nullable": true,
-                    "format": "date",
+                    "format": "date-time",
                     "description": "When the maintenance starts"
                   },
                   "to": {
                     "type": "string",
                     "nullable": true,
-                    "format": "date",
+                    "format": "date-time",
                     "description": "When the maintenance ends"
                   },
                   "monitorIds": {
@@ -7325,12 +8487,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -7416,12 +8616,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -7450,6 +8688,7 @@
                       "email",
                       "google-chat",
                       "grafana-oncall",
+                      "ms-teams",
                       "ntfy",
                       "pagerduty",
                       "opsgenie",
@@ -7463,196 +8702,7 @@
                     "example": "discord"
                   },
                   "payload": {
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "discord": {
-                            "type": "string",
-                            "format": "uri"
-                          }
-                        },
-                        "required": ["discord"]
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "email": {
-                            "type": "string",
-                            "format": "email"
-                          }
-                        },
-                        "required": ["email"]
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "grafana-oncall": {
-                            "type": "object",
-                            "properties": {
-                              "webhookUrl": {
-                                "type": "string",
-                                "format": "uri"
-                              }
-                            },
-                            "required": ["webhookUrl"]
-                          }
-                        },
-                        "required": ["grafana-oncall"]
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "ms-teams": {
-                            "type": "object",
-                            "properties": {
-                              "webhookUrl": {
-                                "type": "string",
-                                "format": "uri"
-                              }
-                            },
-                            "required": ["webhookUrl"]
-                          }
-                        },
-                        "required": ["ms-teams"]
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "ntfy": {
-                            "type": "object",
-                            "properties": {
-                              "topic": {
-                                "type": "string",
-                                "default": ""
-                              },
-                              "serverUrl": {
-                                "type": "string",
-                                "default": "https://ntfy.sh"
-                              },
-                              "token": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        },
-                        "required": ["ntfy"]
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "opsgenie": {
-                            "type": "object",
-                            "properties": {
-                              "apiKey": {
-                                "type": "string"
-                              },
-                              "region": {
-                                "type": "string",
-                                "enum": ["us", "eu"]
-                              }
-                            },
-                            "required": ["apiKey", "region"]
-                          }
-                        },
-                        "required": ["opsgenie"]
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "pagerduty": {
-                            "type": "string"
-                          }
-                        },
-                        "required": ["pagerduty"]
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "sms": {
-                            "type": "string",
-                            "pattern": "^([+]?[\\s0-9]+)?(\\d{3}|[(]?[0-9]+[)])?([-]?[\\s]?[0-9])+$"
-                          }
-                        },
-                        "required": ["sms"]
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "telegram": {
-                            "type": "object",
-                            "properties": {
-                              "chatId": {
-                                "type": "string"
-                              }
-                            },
-                            "required": ["chatId"]
-                          }
-                        },
-                        "required": ["telegram"]
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "slack": {
-                            "type": "string",
-                            "format": "uri"
-                          }
-                        },
-                        "required": ["slack"]
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "webhook": {
-                            "type": "object",
-                            "properties": {
-                              "endpoint": {
-                                "type": "string",
-                                "format": "uri"
-                              },
-                              "headers": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": ["key", "value"]
-                                }
-                              }
-                            },
-                            "required": ["endpoint"]
-                          }
-                        },
-                        "required": ["webhook"]
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "whatsapp": {
-                            "type": "string",
-                            "pattern": "^([+]?[\\s0-9]+)?(\\d{3}|[(]?[0-9]+[)])?([-]?[\\s]?[0-9])+$"
-                          }
-                        },
-                        "required": ["whatsapp"]
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "google-chat": {
-                            "type": "string",
-                            "format": "uri"
-                          }
-                        },
-                        "required": ["google-chat"]
-                      }
-                    ],
+                    "nullable": true,
                     "description": "The data of the notification"
                   },
                   "monitors": {
@@ -7665,7 +8715,7 @@
                     "example": [1, 2]
                   }
                 },
-                "required": ["name", "provider", "payload"]
+                "required": ["name", "provider"]
               }
             }
           }
@@ -7741,12 +8791,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -7843,12 +8931,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -7964,12 +9090,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -8834,12 +9998,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }
@@ -8850,7 +10052,7 @@
     "/whoami": {
       "get": {
         "tags": ["whoami"],
-        "summary": "Get your informations",
+        "summary": "Get your information",
         "description": "Get the current workspace information attached to the API key.",
         "responses": {
           "200": {
@@ -8923,12 +10125,50 @@
               }
             }
           },
+          "429": {
+            "description": "The rate limit for the API key, token or client IP was exceeded. Retry after the number of seconds in the `Retry-After` header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 7
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrTooManyRequests"
+                }
+              }
+            }
+          },
           "500": {
             "description": "The server has encountered a situation it doesn't know how to handle.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrInternalServerError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is shedding load. Retry after the number of seconds in the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 5
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrServiceUnavailable"
                 }
               }
             }

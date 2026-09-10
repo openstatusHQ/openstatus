@@ -108,17 +108,31 @@ describe("rate limit", () => {
     ).toBe(429);
   });
 
-  test("write limit applies to /v1 mutations only", async () => {
+  test("write limit covers /v1 mutations and mutating RPC methods, not reads or /mcp", async () => {
     const { app } = writes;
     const post = { method: "POST", headers: keyHeaders("a") };
-    expect((await fire(app, "/v1/monitor", 2, post)).status).toBe(200);
-    expect((await app.request("/v1/monitor", post)).status).toBe(429);
-    // reads and non-v1 POST surfaces (rpc, mcp) are not writes
+    const svc = "/rpc/openstatus.monitor.v1.MonitorService";
+    expect((await app.request("/v1/monitor", post)).status).toBe(200);
+    expect((await app.request(`${svc}/CreateMonitor`, post)).status).toBe(200);
+    const limited = await app.request(`${svc}/DeleteMonitor`, post);
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get("retry-after")).not.toBeNull();
+    // Connect clients read the code from the body, so /rpc gets the Connect shape
+    expect(await limited.json()).toEqual({
+      code: "resource_exhausted",
+      message: "Rate limit exceeded, retry later",
+    });
+    // reads over POST and JSON-RPC are not writes
     expect(
       (await app.request("/v1/monitor", { headers: keyHeaders("a") })).status,
     ).toBe(200);
+    expect((await app.request(`${svc}/ListMonitors`, post)).status).toBe(200);
+    expect((await app.request(`${svc}/GetMonitor`, post)).status).toBe(200);
+    expect(
+      (await app.request(`${svc}/GetMonitor`, { headers: keyHeaders("a") }))
+        .status,
+    ).toBe(200);
     expect((await app.request("/mcp", post)).status).toBe(200);
-    expect((await app.request("/rpc/x", post)).status).toBe(200);
   });
 
   test("IP fallback keys anonymous /public/status/* requests", async () => {

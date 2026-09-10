@@ -19,9 +19,19 @@ function isPublic(path: string): boolean {
   return path === "/public" || path.startsWith("/public/");
 }
 
-/** `/rpc` and `/mcp` carry reads over POST, so write limits apply to `/v1` only. */
-function isV1Write(c: Context): boolean {
-  return c.req.path.startsWith("/v1/") && WRITE_METHODS.has(c.req.method);
+const RPC_READ = /\/(Get|List|Check)[A-Za-z]*$/;
+
+/**
+ * Connect sends reads over POST, so `/rpc` is classified by method name;
+ * `/mcp` is JSON-RPC and stays unclassified.
+ */
+function isWrite(c: Context): boolean {
+  const path = c.req.path;
+  if (path.startsWith("/v1/")) return WRITE_METHODS.has(c.req.method);
+  if (path.startsWith("/rpc/")) {
+    return c.req.method === "POST" && !RPC_READ.test(path);
+  }
+  return false;
 }
 
 /** Raw credentials must never sit in the store or in logs. */
@@ -119,7 +129,7 @@ export function createRateLimit(config: RateLimitConfig): MiddlewareHandler[] {
     windowMs: 60_000,
     limit: () => config.writesPerMinute,
     keyGenerator: credentialKey,
-    skip: (c) => skipKeyed(c) || !isV1Write(c),
+    skip: (c) => skipKeyed(c) || !isWrite(c),
   });
   const publicLimiter = limiter({
     windowMs: 60_000,

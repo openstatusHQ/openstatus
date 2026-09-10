@@ -93,7 +93,18 @@ for (let j = 0; j < out.length; j++) {
   final.push(out[j]);
 }
 
-const cleaned = final.join("\n");
+// Every operation runs behind the rate limiter; the generator only emits per-RPC responses.
+const RATE_LIMITED = [
+  '        "429":',
+  "          $ref: '#/components/responses/RateLimited'",
+];
+const withRateLimit: string[] = [];
+for (const line of final) {
+  withRateLimit.push(line);
+  if (/^      responses:\s*$/.test(line)) withRateLimit.push(...RATE_LIMITED);
+}
+
+const cleaned = withRateLimit.join("\n");
 writeFileSync(OPENAPI_PATH, cleaned);
 
 // Copy cleaned spec to server static directory
