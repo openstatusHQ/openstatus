@@ -186,16 +186,10 @@ describe("Fetcher Edge Cases", () => {
       };
 
       const mockResponse = {
-        activeIncidents: [],
-        activeMaintenances: [],
-        status: {
-          text: "Unknown",
-          type: "UNKNOWN",
-        },
         page: {
           name: "Test",
           url: "https://test.instatus.com",
-          updated: "2024-02-16T12:00:00.000Z",
+          status: "UNKNOWN",
         },
       };
 
