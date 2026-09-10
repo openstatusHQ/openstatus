@@ -2,6 +2,15 @@ packages:
   - apps/*
   - packages/**/*
   - packages/config/*
+# pnpm 12 routes `@jsr` to npm.jsr.io by default when *resolving*, but the
+# supply-chain policy pass (`trustPolicy` / `minimumReleaseAge` below) verifies
+# every lockfile entry against the default registry, so the `@jsr/std__*`
+# packages behind our `jsr:` specifiers 404 on a cold cache. Declaring the route
+# here makes both passes agree.
+registries:
+  "https://npm.jsr.io/":
+    scopes:
+      - "@jsr"
 trustPolicy: off
 minimumReleaseAge: 1440
 allowBuilds:

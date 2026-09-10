@@ -22,7 +22,7 @@ RUN \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
 corepack enable pnpm
-pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --verbose
+pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --loglevel debug
 EOF
 
 # runtime
