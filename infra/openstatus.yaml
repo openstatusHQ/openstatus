@@ -121,6 +121,21 @@
     method: GET
     url: https://api.openstatus.dev/ping
   retry: 3
+"openstatus api health":
+  active: true
+  description: "Our API readiness \U0001F510"
+  frequency: 1m
+  kind: http
+  name: OpenStatus API Health
+  public: true
+  regions:
+  - ams
+  - iad
+  - fra
+  request:
+    method: GET
+    url: https://api.openstatus.dev/health
+  retry: 3
 "openstat.us":
   active: true
   frequency: 1m
