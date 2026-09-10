@@ -93,7 +93,40 @@ for (let j = 0; j < out.length; j++) {
   final.push(out[j]);
 }
 
-const cleaned = final.join("\n");
+// Every operation runs behind the rate limiter; the generator only emits per-RPC responses.
+// The shared response lives here rather than in base.openapi.yaml because the plugin
+// validates the base file before merging, so it cannot reference the generated connect.error schema.
+const RATE_LIMITED_COMPONENT = [
+  "  responses:",
+  "    RateLimited:",
+  "      description: Rate limit exceeded (Connect code resource_exhausted). Retry after the number of seconds in the Retry-After header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+  "      headers:",
+  "        Retry-After:",
+  "          description: Seconds to wait before retrying.",
+  "          schema:",
+  "            type: integer",
+  "            example: 7",
+  "      content:",
+  "        application/json:",
+  "          schema:",
+  "            $ref: '#/components/schemas/connect.error'",
+];
+const RATE_LIMITED_REF = [
+  '        "429":',
+  "          $ref: '#/components/responses/RateLimited'",
+];
+const withRateLimit: string[] = [];
+for (const line of final) {
+  if (/^components:\s*$/.test(line)) {
+    withRateLimit.push(line, ...RATE_LIMITED_COMPONENT);
+    continue;
+  }
+  withRateLimit.push(line);
+  if (/^      responses:\s*$/.test(line))
+    withRateLimit.push(...RATE_LIMITED_REF);
+}
+
+const cleaned = withRateLimit.join("\n");
 writeFileSync(OPENAPI_PATH, cleaned);
 
 // Copy cleaned spec to server static directory

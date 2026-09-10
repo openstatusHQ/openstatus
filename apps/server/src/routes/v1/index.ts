@@ -36,82 +36,85 @@ api.openAPIRegistry.registerComponent("securitySchemes", "ApiKeyAuth", {
   name: "x-openstatus-key",
   "x-openstatus-key": "string",
 });
+/** Shared with `scripts/build-openapi-v1-json.ts`, which renders `static/openapi-v1.json`. */
+export const openapiV1Config = {
+  openapi: "3.0.0",
+  info: {
+    version: "1.0.0",
+    title: "OpenStatus API",
+    contact: {
+      email: "ping@openstatus.dev",
+      url: "https://www.openstatus.dev",
+    },
+    description:
+      "This version is deprecated please use v2 API: https://api.openstatus.dev/openapi. Read more in the documentation: https://www.openstatus.dev/docs/reference/overview",
+  },
+  tags: [
+    {
+      name: "monitor",
+      description: "Monitor related endpoints",
+      "x-displayName": "Monitor",
+    },
+    {
+      name: "page",
+      description: "Page related endpoints",
+      "x-displayName": "Page",
+    },
+    {
+      name: "status_report",
+      description: "Status report related endpoints",
+      "x-displayName": "Status Report",
+    },
+    {
+      name: "status_report_update",
+      description: "Status report update related endpoints",
+      "x-displayName": "Status Report Update",
+    },
+    {
+      name: "incident",
+      description: "Incident related endpoints",
+      "x-displayName": "Incident",
+    },
+    {
+      name: "maintenance",
+      description: "Maintenance related endpoints",
+      "x-displayName": "Maintenance",
+    },
+    {
+      name: "notification",
+      description: "Notification related endpoints",
+      "x-displayName": "Notification",
+    },
+    {
+      name: "page_subscriber",
+      description: "Page subscriber related endpoints",
+      "x-displayName": "Page Subscriber",
+    },
+    {
+      name: "check",
+      description: "Check related endpoints",
+      "x-displayName": "Check",
+    },
+    {
+      name: "whoami",
+      description: "WhoAmI related endpoints",
+      "x-displayName": "WhoAmI",
+    },
+  ],
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
+};
+
 // this is a fix for the memory leak
 if (env.NODE_ENV === "production") {
   api.get("/openapi", (c) =>
     c.redirect("https://api.openstatus.dev/openapi-v1.json"),
   );
 } else {
-  api.doc("/openapi", {
-    openapi: "3.0.0",
-    info: {
-      version: "1.0.0",
-      title: "OpenStatus API",
-      contact: {
-        email: "ping@openstatus.dev",
-        url: "https://www.openstatus.dev",
-      },
-      description:
-        "This version is deprecated please use v2 API: https://api.openstatus.dev/openapi. Read more in the documentation: https://www.openstatus.dev/docs/reference/overview",
-    },
-    tags: [
-      {
-        name: "monitor",
-        description: "Monitor related endpoints",
-        "x-displayName": "Monitor",
-      },
-      {
-        name: "page",
-        description: "Page related endpoints",
-        "x-displayName": "Page",
-      },
-      {
-        name: "status_report",
-        description: "Status report related endpoints",
-        "x-displayName": "Status Report",
-      },
-      {
-        name: "status_report_update",
-        description: "Status report update related endpoints",
-        "x-displayName": "Status Report Update",
-      },
-      {
-        name: "incident",
-        description: "Incident related endpoints",
-        "x-displayName": "Incident",
-      },
-      {
-        name: "maintenance",
-        description: "Maintenance related endpoints",
-        "x-displayName": "Maintenance",
-      },
-      {
-        name: "notification",
-        description: "Notification related endpoints",
-        "x-displayName": "Notification",
-      },
-      {
-        name: "page_subscriber",
-        description: "Page subscriber related endpoints",
-        "x-displayName": "Page Subscriber",
-      },
-      {
-        name: "check",
-        description: "Check related endpoints",
-        "x-displayName": "Check",
-      },
-      {
-        name: "whoami",
-        description: "WhoAmI related endpoints",
-        "x-displayName": "WhoAmI",
-      },
-    ],
-    security: [
-      {
-        ApiKeyAuth: [],
-      },
-    ],
-  });
+  api.doc("/openapi", openapiV1Config);
 }
 api.get(
   "/",

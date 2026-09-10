@@ -28,10 +28,12 @@ try {
 | `invalid_argument` | Validation failure (e.g., missing required field, value out of range) |
 | `permission_denied` | No access to this workspace or resource |
 | `already_exists` | Duplicate resource (e.g., slug already taken) |
+| `resource_exhausted` | Rate limited (HTTP `429`); wait for the `Retry-After` header, see [API rate limits](/docs/reference/api-rate-limits) |
+| `unavailable` | The server is shedding load (HTTP `503`); retry with backoff |
 
 ## Retry Strategy
 
-ConnectRPC does not retry by default. For transient failures (`unavailable`, `deadline_exceeded`), implement your own retry logic:
+ConnectRPC does not retry by default. For transient failures (`resource_exhausted`, `unavailable`, `deadline_exceeded`), implement your own retry logic. The response headers, including `Retry-After`, are available on `error.metadata`; keep the delay at or above that value when it is present:
 
 ```typescript
 import { Code, ConnectError } from "@connectrpc/connect";
@@ -43,11 +45,16 @@ async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
     } catch (error) {
       if (
         error instanceof ConnectError &&
-        (error.code === Code.Unavailable ||
+        (error.code === Code.ResourceExhausted ||
+          error.code === Code.Unavailable ||
           error.code === Code.DeadlineExceeded) &&
         attempt < maxRetries
       ) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** attempt));
+        const retryAfter = Number(error.metadata.get("retry-after")) * 1000;
+        const backoff = 1000 * 2 ** attempt;
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.max(retryAfter || 0, backoff)),
+        );
         continue;
       }
       throw error;
