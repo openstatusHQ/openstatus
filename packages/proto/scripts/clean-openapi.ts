@@ -122,7 +122,8 @@ for (const line of final) {
     continue;
   }
   withRateLimit.push(line);
-  if (/^      responses:\s*$/.test(line)) withRateLimit.push(...RATE_LIMITED_REF);
+  if (/^      responses:\s*$/.test(line))
+    withRateLimit.push(...RATE_LIMITED_REF);
 }
 
 const cleaned = withRateLimit.join("\n");
