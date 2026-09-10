@@ -64,7 +64,7 @@ export function buildCurlCommand(request: CurlRequest): string {
       return "printf '%s\\n' 'Invalid base64 data URL body' >&2; false";
     }
     const octal = atob(encoded).replace(
-      /./gs,
+      /[\s\S]/g,
       (byte) => `\\0${byte.charCodeAt(0).toString(8).padStart(3, "0")}`,
     );
     command = `printf %b ${quote(octal)} | curl`;
