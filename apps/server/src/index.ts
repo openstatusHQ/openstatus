@@ -189,10 +189,11 @@ app.use("*", async (c, next) => {
 
 /**
  * Overload guards, after the wide event so shed requests still log with
- * `shed` / `rate_limited`, before any route so they stay cheap.
+ * `shed` / `rate_limited`, before any route so they stay cheap. Rate limits
+ * go first so rejected traffic never occupies an in-flight slot.
  */
-app.use("*", concurrencyGuard.middleware);
 app.use("*", ...rateLimit);
+app.use("*", concurrencyGuard.middleware);
 
 app.onError(handleError);
 

@@ -1,7 +1,7 @@
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 import { FakeTime } from "@std/testing/time";
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
 import { requestId } from "hono/request-id";
 
 import { createRateLimit, credentialKey } from "./rate-limit";
@@ -11,12 +11,15 @@ type Env = { Variables: { event: Record<string, unknown> } };
 const HUGE = 1_000_000;
 
 // Limiters own an interval timer; build them at module scope, outside the sanitizer.
-function build(config: {
-  perMinute?: number;
-  burstPer10s?: number;
-  writesPerMinute?: number;
-  publicPerMinute?: number;
-}) {
+function build(
+  config: {
+    perMinute?: number;
+    burstPer10s?: number;
+    writesPerMinute?: number;
+    publicPerMinute?: number;
+  },
+  handler: (c: Context<Env>) => Response = (c) => c.text("ok"),
+) {
   const app = new Hono<Env>();
   const events: Record<string, unknown>[] = [];
   let handled = 0;
@@ -39,7 +42,7 @@ function build(config: {
   );
   app.all("*", (c) => {
     handled++;
-    return c.text("ok");
+    return handler(c);
   });
   return { app, events, handled: () => handled };
 }
@@ -51,6 +54,12 @@ const pub = build({ publicPerMinute: 2 });
 const recovery = build({ burstPer10s: 1, perMinute: 2 });
 const precedence = build({ burstPer10s: 1 });
 const isolation = build({ perMinute: 1, publicPerMinute: 1 });
+// stands in for the auth middleware: `valid*` credentials are accepted
+const authFailures = build({ perMinute: 2 }, (c) =>
+  c.req.header("x-openstatus-key")?.startsWith("valid")
+    ? c.text("ok")
+    : c.text("nope", 401),
+);
 const keyApp = new Hono().get("/k", async (c) =>
   c.text(await credentialKey(c)),
 );
@@ -144,6 +153,23 @@ describe("rate limit", () => {
     expect((await app.request("/public/status/acme", ip2)).status).toBe(200);
   });
 
+  test("x-forwarded-for keys on the proxy-appended last entry, not the client-supplied first", async () => {
+    const { app } = pub;
+    // the trusted proxy appends 203.0.113.3; everything before it is attacker input
+    const spoofed = (fake: string) => ({
+      headers: { "x-forwarded-for": `${fake}, 203.0.113.3` },
+    });
+    expect(
+      (await app.request("/public/status/acme", spoofed("1.1.1.1"))).status,
+    ).toBe(200);
+    expect(
+      (await app.request("/public/status/acme", spoofed("2.2.2.2"))).status,
+    ).toBe(200);
+    expect(
+      (await app.request("/public/status/acme", spoofed("3.3.3.3"))).status,
+    ).toBe(429);
+  });
+
   test("/ping, /openapi* and /.well-known/* are unaffected", async () => {
     const { app } = burst;
     for (const path of [
@@ -180,9 +206,13 @@ describe("rate limit", () => {
 
   test("a limited request never reaches the handler and Retry-After stays within the window", async () => {
     const { app, handled } = burst;
+    expect(
+      (await fire(app, "/v1/monitor", 3, { headers: keyHeaders("handler") }))
+        .status,
+    ).toBe(200);
     const before = handled();
     const limited = await app.request("/v1/monitor", {
-      headers: keyHeaders("a"),
+      headers: keyHeaders("handler"),
     });
     expect(limited.status).toBe(429);
     expect(handled()).toBe(before);
@@ -280,5 +310,49 @@ describe("rate limit", () => {
         })
       ).status,
     ).toBe(200);
+  });
+
+  test("unauthenticated OAuth registration and token POSTs count as writes per IP", async () => {
+    const { app } = writes;
+    const post = (path: string) =>
+      app.request(path, {
+        method: "POST",
+        headers: { "fly-client-ip": "203.0.113.42" },
+      });
+    expect((await post("/oauth/register")).status).toBe(200);
+    expect((await post("/oauth/token")).status).toBe(200);
+    expect((await post("/oauth/revoke")).status).toBe(429);
+    // authorize is a redirect, not a write
+    expect(
+      (
+        await app.request("/oauth/authorize", {
+          headers: { "fly-client-ip": "203.0.113.42" },
+        })
+      ).status,
+    ).toBe(200);
+  });
+
+  test("rotating bad credentials from one IP is capped by the 401 budget, successes are refunded", async () => {
+    const { app } = authFailures;
+    const from = (ip: string, key: string) =>
+      app.request("/v1/monitor", {
+        headers: { ...keyHeaders(key), "fly-client-ip": ip },
+      });
+    // valid traffic never counts, however much of it there is
+    for (let i = 0; i < 5; i++) {
+      expect((await from("203.0.113.10", `valid-${i}`)).status).toBe(200);
+    }
+    expect((await from("203.0.113.10", "fake-1")).status).toBe(401);
+    expect((await from("203.0.113.10", "fake-2")).status).toBe(401);
+    expect((await from("203.0.113.10", "fake-3")).status).toBe(429);
+    // another IP has its own budget; anonymous requests are not credential rotation
+    expect((await from("203.0.113.11", "fake-4")).status).toBe(401);
+    expect(
+      (
+        await app.request("/v1/monitor", {
+          headers: { "fly-client-ip": "203.0.113.10" },
+        })
+      ).status,
+    ).toBe(401);
   });
 });

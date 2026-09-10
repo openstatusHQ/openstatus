@@ -1,6 +1,6 @@
 import { env } from "@/env";
 
-/** `skipValidation` hands back raw strings, so coerce; missing or bad values fall back. */
+/** `skipValidation` hands back raw strings, so coerce; missing, non-numeric or zero values fall back. */
 export const limits = {
   maxInFlight: Number(env.API_MAX_IN_FLIGHT) || 128,
   perMinute: Number(env.API_RATE_LIMIT_PER_MINUTE) || 600,

@@ -12,12 +12,15 @@ Every request to `api.openstatus.dev` is counted against a small set of limits. 
 |---|---|---|
 | Per API key or token | 600 requests per minute | all authenticated requests |
 | Per API key or token | 100 requests per 10 seconds | all authenticated requests |
-| Per API key or token | 60 write requests per minute | mutations on `/v1` and `/rpc` (see below) |
+| Per API key or token | 60 write requests per minute | mutations on `/v1`, `/rpc` and `/oauth` (see below) |
 | Per client IP | 120 requests per minute | unauthenticated `/public/*` status endpoints |
+| Per client IP | 600 failed authentications per minute | requests that present a credential and get a `401`, across all credentials |
 
 Requests are attributed to the `x-openstatus-key` header, or to the OAuth bearer token when there is no key. Requests that carry neither are attributed to the client IP.
 
-A **write** is any `POST`, `PUT`, `PATCH`, or `DELETE` on `/v1`, and any RPC on `/rpc` whose method does not start with `Get`, `List`, or `Check`. `CreateMonitor`, `DeleteStatusReport`, `TriggerMonitor`, and `SendTestNotification` are writes; `ListMonitors` and `GetStatusPage` are not.
+A **write** is any `POST`, `PUT`, `PATCH`, or `DELETE` on `/v1` or `/oauth`, and any RPC on `/rpc` whose method does not start with `Get`, `List`, or `Check`. `CreateMonitor`, `DeleteStatusReport`, `TriggerMonitor`, and `SendTestNotification` are writes; `ListMonitors` and `GetStatusPage` are not. OAuth registration, token and revocation requests usually carry no credential, so their write budget is per client IP.
+
+The failed-authentication budget only counts `401` responses, so a client sharing an egress IP with others is never charged for their traffic. Once it is exhausted, every request from that IP that carries a credential is rejected until the window resets.
 
 All requests count, including the ones that fail with a `4xx`. The health check `/ping`, the OpenAPI documents, and the OAuth discovery endpoints under `/.well-known/` are exempt.
 

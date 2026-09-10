@@ -23,11 +23,14 @@ const RPC_READ = /\/(Get|List|Check)[A-Za-z]*$/;
 
 /**
  * Connect sends reads over POST, so `/rpc` is classified by method name;
- * `/mcp` is JSON-RPC and stays unclassified.
+ * `/mcp` is JSON-RPC and stays unclassified. `/oauth` POSTs register
+ * clients and mint tokens, mostly unauthenticated, so they are writes too.
  */
 function isWrite(c: Context): boolean {
   const path = c.req.path;
-  if (path.startsWith("/v1/")) return WRITE_METHODS.has(c.req.method);
+  if (path.startsWith("/v1/") || path.startsWith("/oauth/")) {
+    return WRITE_METHODS.has(c.req.method);
+  }
   if (path.startsWith("/rpc/")) {
     return c.req.method === "POST" && !RPC_READ.test(path);
   }
@@ -47,11 +50,16 @@ async function fingerprint(token: string): Promise<string> {
     .slice(0, 16);
 }
 
+/**
+ * Fly sets `fly-client-ip` itself. Without it, only the last
+ * `x-forwarded-for` entry was appended by a proxy we trust; the client
+ * controls everything before it.
+ */
 function clientIp(c: Context): string {
   const fly = c.req.header("fly-client-ip");
   if (fly) return fly;
   const forwarded = c.req.header("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
+  if (forwarded) return forwarded.split(",").at(-1)?.trim() || "unknown";
   return "unknown";
 }
 
@@ -65,6 +73,10 @@ function ipKey(c: Context): string {
   return `ip:${clientIp(c)}`;
 }
 
+function hasCredential(c: Context): boolean {
+  return extractCredential({ get: (n) => c.req.header(n) }) !== null;
+}
+
 type RateLimitVariables = { Variables: { rateLimit: RateLimitInfo } };
 
 function limiter(opts: {
@@ -72,12 +84,16 @@ function limiter(opts: {
   limit: () => number;
   keyGenerator: (c: Context) => string | Promise<string>;
   skip: (c: Context) => boolean;
+  /** Count only responses with this status; everything else is refunded. */
+  countStatus?: number;
 }): MiddlewareHandler {
   return rateLimiter<RateLimitVariables>({
     windowMs: opts.windowMs,
     limit: () => opts.limit(),
     keyGenerator: opts.keyGenerator,
     skip: opts.skip,
+    skipSuccessfulRequests: opts.countStatus !== undefined,
+    requestWasSuccessful: (c) => c.res.status !== opts.countStatus,
     standardHeaders: false,
     handler: (c) => {
       const event = wideEvent(c);
@@ -108,11 +124,22 @@ export type RateLimitConfig = {
  * not to meter usage globally. Windows are fixed, not sliding; the 10 s
  * bucket is what stops a burst before a fixed minute window fills.
  * Limits are read per request so the shared `limits` object stays live.
+ *
+ * Credential buckets exist before authentication, so rotating made-up keys
+ * would dodge them; `authFailures` caps 401s per client IP instead. Only
+ * failures count, so tenants behind one egress IP never pay for each other.
  */
 export function createRateLimit(config: RateLimitConfig): MiddlewareHandler[] {
   const skipKeyed = (c: Context) =>
     isExempt(c.req.path) || isPublic(c.req.path);
 
+  const authFailures = limiter({
+    windowMs: 60_000,
+    limit: () => config.perMinute,
+    keyGenerator: ipKey,
+    skip: (c) => skipKeyed(c) || !hasCredential(c),
+    countStatus: 401,
+  });
   const burst = limiter({
     windowMs: 10_000,
     limit: () => config.burstPer10s,
@@ -138,7 +165,7 @@ export function createRateLimit(config: RateLimitConfig): MiddlewareHandler[] {
     skip: (c) => !isPublic(c.req.path),
   });
 
-  return [burst, minute, writes, publicLimiter];
+  return [authFailures, burst, minute, writes, publicLimiter];
 }
 
 export const rateLimit = createRateLimit(limits);
