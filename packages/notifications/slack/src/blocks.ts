@@ -91,7 +91,6 @@ export function escapeSlackText(text: string): string {
  * });
  */
 export function buildAlertBlocks(data: FormattedMessageData): SlackBlock[] {
-  const escapedName = escapeSlackText(data.monitorName);
   const escapedError = escapeSlackText(data.errorMessage);
 
   // Format description as "METHOD URL" or just "URL" for non-HTTP
@@ -105,7 +104,7 @@ export function buildAlertBlocks(data: FormattedMessageData): SlackBlock[] {
       type: "header",
       text: {
         type: "plain_text",
-        text: `${escapedName} is failing`,
+        text: buildTitle(data.monitorName, " is failing"),
         emoji: false,
       },
     },
@@ -195,8 +194,6 @@ export function buildAlertBlocks(data: FormattedMessageData): SlackBlock[] {
  * });
  */
 export function buildRecoveryBlocks(data: FormattedMessageData): SlackBlock[] {
-  const escapedName = escapeSlackText(data.monitorName);
-
   // Format description as "METHOD URL" or just "URL" for non-HTTP
   const description =
     data.monitorMethod && data.monitorJobType === "http"
@@ -208,7 +205,7 @@ export function buildRecoveryBlocks(data: FormattedMessageData): SlackBlock[] {
       type: "header",
       text: {
         type: "plain_text",
-        text: `${escapedName} is recovered`,
+        text: buildTitle(data.monitorName, " is recovered"),
         emoji: false,
       },
     },
@@ -307,8 +304,6 @@ export function buildRecoveryBlocks(data: FormattedMessageData): SlackBlock[] {
  * });
  */
 export function buildDegradedBlocks(data: FormattedMessageData): SlackBlock[] {
-  const escapedName = escapeSlackText(data.monitorName);
-
   // Format description as "METHOD URL" or just "URL" for non-HTTP
   const description =
     data.monitorMethod && data.monitorJobType === "http"
@@ -320,7 +315,7 @@ export function buildDegradedBlocks(data: FormattedMessageData): SlackBlock[] {
       type: "header",
       text: {
         type: "plain_text",
-        text: `${escapedName} is degraded`,
+        text: buildTitle(data.monitorName, " is degraded"),
         emoji: false,
       },
     },
@@ -387,4 +382,12 @@ export function buildDegradedBlocks(data: FormattedMessageData): SlackBlock[] {
   );
 
   return blocks;
+}
+
+function buildTitle(name: string, suffix: string): string {
+  const shortenedName = escapeSlackText(name)
+    .slice(0, 150 - suffix.length)
+    // Keep escape sequences and surrogate pairs complete at the title limit.
+    .replace(/&[^;]*$|[\uD800-\uDBFF]$/g, "");
+  return `${shortenedName}${suffix}`;
 }

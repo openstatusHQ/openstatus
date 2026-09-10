@@ -5,6 +5,11 @@ import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
 import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 
 import {
+  buildAlertEmbed,
+  buildDegradedEmbed,
+  buildRecoveryEmbed,
+} from "./embeds";
+import {
   sendAlert,
   sendDegraded,
   sendRecovery,
@@ -165,4 +170,45 @@ describe("Discord Notifications", () => {
       }),
     ).rejects.toThrow();
   });
+});
+
+describe("Discord title limits", () => {
+  for (const [build, suffix] of [
+    [buildAlertEmbed, " is failing"],
+    [buildRecoveryEmbed, " is recovered"],
+    [buildDegradedEmbed, " is degraded"],
+  ] as const) {
+    test(`${build.name} keeps the status and complete characters within 256 characters`, () => {
+      for (const monitorName of [
+        "API Health",
+        "A".repeat(256 - suffix.length),
+        "A".repeat(255),
+        "\u{1F680}".repeat(127),
+        `A${"\u{1F680}".repeat(127)}`,
+      ]) {
+        const data = Object.freeze({
+          monitorName,
+          monitorUrl: "https://example.com/health",
+          monitorJobType: "http",
+          statusCodeFormatted: "503 Service Unavailable",
+          errorMessage: "Connection timeout",
+          timestampFormatted: "Sep 9, 2026 at 00:00 UTC",
+          regionsDisplay: "iad",
+          latencyDisplay: "100ms",
+          dashboardUrl: "https://app.openstatus.dev/monitors/1",
+        });
+        const title = build(data).title;
+        expect(title.length).toBeLessThanOrEqual(256);
+        expect(title.endsWith(suffix)).toBe(true);
+        const name = title.slice(0, -suffix.length);
+        expect(name.isWellFormed()).toBe(true);
+        expect(name.length).toBeGreaterThan(0);
+        expect(monitorName.startsWith(name)).toBe(true);
+        if (monitorName.length <= 256 - suffix.length) {
+          expect(name).toBe(monitorName);
+        }
+        expect(data.monitorName).toBe(monitorName);
+      }
+    });
+  }
 });
