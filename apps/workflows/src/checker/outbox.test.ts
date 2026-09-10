@@ -155,9 +155,13 @@ describe("drainOutbox", () => {
         Promise.reject(new Error("provider down")),
       ),
     );
+    // `attempts` caps the backoff (>=15s), so the failed send's retry lands
+    // past the deadline below without the claim racing a 1s deadline under
+    // parallel test load.
     await insertOutboxRow({
       cronTimestamp: Date.now(),
-      deadlineOffsetSeconds: 1,
+      attempts: 10,
+      deadlineOffsetSeconds: 10,
     });
 
     const summary = await drainOutbox({
@@ -194,7 +198,8 @@ describe("drainOutbox", () => {
     );
     await insertOutboxRow({
       cronTimestamp: Date.now(),
-      deadlineOffsetSeconds: 1,
+      attempts: 10,
+      deadlineOffsetSeconds: 10,
     });
 
     const started = Date.now();
