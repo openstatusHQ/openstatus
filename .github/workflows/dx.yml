@@ -44,7 +44,7 @@ jobs:
       - name: 🦕 Setup Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: 2.9.4
+          deno-version: 2.9.6
 
       - name: 🔥  DX task
         run: pnpm dx
