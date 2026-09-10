@@ -287,9 +287,11 @@ export default function Page() {
         </SectionHeader>
         <Note size="sm">
           <Info />
-          Every client you authorize via OAuth shows up under{" "}
-          <strong>Settings &gt; Integrations</strong> as a connected app. Check
-          which apps have access and revoke them at any time.
+          <p>
+            Every client you authorize via OAuth shows up under{" "}
+            <strong>Settings &gt; Integrations</strong> as a connected app.
+            Check which apps have access and revoke them at any time.
+          </p>
           <NoteButton variant="default" asChild>
             <NextLink href="/settings/integrations#connected-apps">
               View connected apps
