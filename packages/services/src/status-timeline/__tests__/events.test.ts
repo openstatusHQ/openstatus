@@ -44,6 +44,64 @@ function makeBucket(overrides: Partial<StatusData> = {}): StatusData {
   };
 }
 
+describe("getEvents incident timestamps", () => {
+  const now = Date.now();
+  const incident = {
+    id: 1,
+    title: "",
+    summary: "",
+    status: "resolved" as const,
+    monitorId: 1,
+    workspaceId: 1,
+    startedAt: new Date(now - 3_600_000),
+    acknowledgedAt: null,
+    acknowledgedBy: null,
+    resolvedAt: new Date(now),
+    resolvedBy: null,
+    incidentScreenshotUrl: null,
+    recoveryScreenshotUrl: null,
+    autoResolved: true,
+    createdAt: new Date(now - 1_800_000),
+    updatedAt: new Date(now),
+  };
+
+  test("counts the full outage when persistence is delayed or undated", () => {
+    for (const createdAt of [incident.createdAt, null]) {
+      const events = getEvents({
+        maintenances: [],
+        incidents: [{ ...incident, createdAt }],
+        reports: [],
+        monitorId: 1,
+      });
+
+      expect(events[0]?.from).toEqual(incident.startedAt);
+      expect(
+        durationDowntimeMs(events, {
+          start: now - 86_400_000,
+          end: now,
+          now,
+        }),
+      ).toBe(3_600_000);
+    }
+  });
+
+  test("filters incidents resolved before the window even when persistence is recent", () => {
+    const events = getEvents({
+      maintenances: [],
+      incidents: [
+        {
+          ...incident,
+          startedAt: new Date(now - 47 * 86_400_000),
+          resolvedAt: new Date(now - 46 * 86_400_000),
+        },
+      ],
+      reports: [],
+    });
+
+    expect(events).toEqual([]);
+  });
+});
+
 describe("getEvents lookback", () => {
   test("keeps overlapping intervals and clips incident downtime to the window", () => {
     const time = new FakeTime(day("2026-03-01"));
