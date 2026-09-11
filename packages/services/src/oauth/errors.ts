@@ -37,3 +37,17 @@ export class OAuthError extends ServiceError {
     this.state = redirect?.state ?? undefined;
   }
 }
+
+/**
+ * Registration rejected because a proposed redirect URI is off the allowlist.
+ * Carries the URIs so the transport can group and count them by host instead
+ * of parsing them back out of the message.
+ */
+export class RedirectUriRejectedError extends OAuthError {
+  constructor(public readonly rejected: string[]) {
+    super(
+      "invalid_redirect_uri",
+      `redirect_uris must target an allowlisted host, a loopback address or a supported app scheme. Rejected: ${rejected.join(", ")}`,
+    );
+  }
+}

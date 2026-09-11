@@ -3,6 +3,7 @@ import { ServiceError } from "@openstatus/services";
 import {
   GRANT_TYPES,
   OAuthError,
+  RedirectUriRejectedError,
   authorizationServerMetadata,
   createSession,
   exchangeCode,
@@ -17,6 +18,7 @@ import { cors } from "hono/cors";
 import { ZodError } from "zod";
 
 import type { OAuthConfig } from "./config";
+import { reportRedirectUriRejected } from "./telemetry";
 
 const logger = getLogger("api-server");
 
@@ -58,11 +60,29 @@ function require(body: Body, name: string): string {
 }
 
 /**
+ * `@hono/sentry` captures whatever `c.error` holds once the route settles, at
+ * error level. Registration and token endpoints are open, so a rejected client
+ * is routine 4xx traffic and must not sit in the error stream.
+ */
+function reportOAuthError(err: Error, c: Context): void {
+  if (err instanceof RedirectUriRejectedError) {
+    reportRedirectUriRejected(err, c);
+    // Already reported, grouped by origin; keep the raw exception out.
+    c.get("sentry")?.setEnabled(false);
+    return;
+  }
+  const expected =
+    err instanceof ServiceError ? err.expected : err instanceof ZodError;
+  if (expected) c.get("sentry")?.setLevel("warning");
+}
+
+/**
  * RFC 6749 error bodies, never the openstatus envelope: MCP clients treat
  * anything else as a transport failure. Authorize-time errors with a valid
  * redirect target go back to the client via the redirect.
  */
 function handleOAuthError(err: Error, c: Context): Response {
+  reportOAuthError(err, c);
   if (err instanceof OAuthError) {
     if (err.redirectUri) {
       const url = new URL(err.redirectUri);
