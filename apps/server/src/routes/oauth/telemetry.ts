@@ -9,32 +9,37 @@ import { wideEvent } from "@/libs/middlewares/shed";
 
 const counter = getLogger("api-server-otel");
 
-// `/oauth/register` is open, so a flood cannot be ruled out: Sentry keeps one
-// event per origin per window, the counter below stays unsampled.
+/**
+ * `/oauth/register` is open, so Sentry keeps one event per origin per window
+ * while the counter below stays unsampled. Fixed slots rather than a map of
+ * seen origins: nothing is ever evicted, so a flood of new origins cannot
+ * reset the window of one already seen and then replay it for a fresh event.
+ * Colliding origins share a window, costing at most a skipped Sentry event.
+ */
 const CAPTURE_WINDOW_MS = 10 * 60_000;
-const MAX_TRACKED_ORIGINS = 1024;
-const lastCapturedAt = new Map<string, number>();
+const CAPTURE_SLOTS = 1024;
+const lastCapturedAt = new Float64Array(CAPTURE_SLOTS);
+
+function slotFor(origin: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < origin.length; i++) {
+    hash ^= origin.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % CAPTURE_SLOTS;
+}
 
 function shouldCapture(origin: string, now: number): boolean {
-  const previous = lastCapturedAt.get(origin);
-  if (previous !== undefined && now - previous < CAPTURE_WINDOW_MS) {
-    return false;
-  }
-  if (lastCapturedAt.size >= MAX_TRACKED_ORIGINS) {
-    for (const [tracked, at] of lastCapturedAt) {
-      if (now - at >= CAPTURE_WINDOW_MS) lastCapturedAt.delete(tracked);
-    }
-    // A flood of distinct origins outruns the pruning; drop the window instead
-    // of the machine's memory.
-    if (lastCapturedAt.size >= MAX_TRACKED_ORIGINS) lastCapturedAt.clear();
-  }
-  lastCapturedAt.set(origin, now);
+  const slot = slotFor(origin);
+  // A zeroed slot was never captured, and `now` is always past the window.
+  if (now - lastCapturedAt[slot] < CAPTURE_WINDOW_MS) return false;
+  lastCapturedAt[slot] = now;
   return true;
 }
 
 /** Test seam: the window is process-wide and would leak across cases. */
 export function resetRedirectUriCaptureWindow(): void {
-  lastCapturedAt.clear();
+  lastCapturedAt.fill(0);
 }
 
 function groupByOrigin(rejected: string[]): Map<string, string[]> {
