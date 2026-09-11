@@ -6,10 +6,14 @@ on:
       - main
     paths:
       - "packages/db/drizzle/**"
+concurrency:
+  group: migrate-db
+  cancel-in-progress: false
 jobs:
   migrate:
     name: 🗃️ Migrate DB
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       DATABASE_URL:  ${{ secrets.DATABASE_URL }}
       DATABASE_AUTH_TOKEN:  ${{ secrets.DATABASE_AUTH_TOKEN }}
