@@ -3,9 +3,9 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM node@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS install
+FROM node@sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553" \
+    org.opencontainers.image.base.digest="sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc" \
     org.opencontainers.image.base.name="docker.io/node:24-slim" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
@@ -49,10 +49,10 @@ pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --loglev
 EOF
 
 # build
-FROM denoland/deno@sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d AS build
+FROM denoland/deno@sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62 AS build
 LABEL \
-    org.opencontainers.image.base.digest="sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d" \
-    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.6" \
+    org.opencontainers.image.base.digest="sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62" \
+    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.2" \
     org.opencontainers.image.stage="build"
 ENV NODE_ENV="production"
 WORKDIR /app/apps/workflows
