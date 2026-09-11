@@ -1,0 +1,129 @@
+name: Vercel Production Watchdog
+
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: read
+
+env:
+  # Vercel's GitHub environments are named "Production – <project>" (en dash);
+  # preview deployments live under "Preview – <project>" and are excluded, so
+  # this watchdog only observes production-targeted builds.
+  PROJECTS: openstatus-web openstatus-dashboard openstatus-status-page
+  PUSH_GRACE_MINUTES: 30
+  BUILD_STUCK_MINUTES: 60
+
+jobs:
+  watchdog:
+    name: 🌐 Production deploy watchdog
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Check Vercel production deployments
+        run: |
+          set -euo pipefail
+
+          now() { date -u +%s; }
+          epoch() { date -u -d "$1" +%s; }
+
+          head_sha="$(gh api "repos/$REPO/commits/main" --jq '.sha')"
+          head_at="$(gh api "repos/$REPO/commits/main" --jq '.commit.committer.date')"
+
+          alerts=0
+
+          echo "## Vercel production deployments" > "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| project | production serving | deployed | HEAD deploy state |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+
+          for app in $PROJECTS; do
+            env_name="Production – $app"
+            deps="$(gh api --method GET "repos/$REPO/deployments" -f environment="$env_name" -f per_page=30)"
+
+            count="$(jq 'length' <<<"$deps")"
+            if [ "$count" -eq 0 ]; then
+              echo "::error::$app: no deployments found in GitHub environment '$env_name' — has the Vercel integration stopped reporting?"
+              alerts=$((alerts + 1))
+              echo "| $app | none | — | no deployments |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+
+            live_sha=""
+            live_at=""
+            latest_sha=""
+            latest_at=""
+            latest_state="unknown"
+            broken=""
+
+            # Deployments are returned newest-first: every row walked before the
+            # first success is newer than the build production is serving.
+            row=0
+            while [ "$row" -lt "$count" ]; do
+              id="$(jq -r ".[$row].id" <<<"$deps")"
+              sha="$(jq -r ".[$row].sha" <<<"$deps")"
+              at="$(jq -r ".[$row].created_at" <<<"$deps")"
+              state="$(gh api "repos/$REPO/deployments/$id/statuses" --jq 'sort_by(.id) | last | .state // ""')"
+              if [ "$row" -eq 0 ]; then
+                latest_sha="$sha"
+                latest_at="$at"
+                latest_state="$state"
+              fi
+              if [ "$state" = "success" ]; then
+                live_sha="$sha"
+                live_at="$at"
+                break
+              fi
+              case "$state" in
+                failure|error)
+                  broken="$broken ${sha:0:8}"
+                  ;;
+              esac
+              row=$((row + 1))
+            done
+
+            if [ -z "$live_at" ]; then
+              echo "::error::$app: no successful production deployment in the last $count attempts (newest $latest_at) — production is serving a build older than this window."
+              alerts=$((alerts + 1))
+              echo "| $app | unknown | — | $latest_state |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+
+            if [ -n "$broken" ]; then
+              echo "::error::$app: production build failing —${broken} reported status failure and never deployed; production still serves ${live_sha:0:8}. Fix or revert: main ships nothing to this project until the build is green."
+              alerts=$((alerts + 1))
+            fi
+
+            head_lag=$(( ( $(epoch "$head_at") - $(epoch "$latest_at") ) / 60 ))
+            head_age=$(( ( $(now) - $(epoch "$head_at") ) / 60 ))
+            if [ "$head_lag" -gt 0 ] && [ "$head_age" -gt "$PUSH_GRACE_MINUTES" ]; then
+              echo "::error::$app: main (${head_sha:0:8}, pushed $head_at) never created a Vercel production deployment — the push did not reach Vercel. Check the Vercel GitHub app and webhooks."
+              alerts=$((alerts + 1))
+            fi
+
+            case "$latest_state" in
+              queued|in_progress|pending)
+                stuck=$(( ( $(now) - $(epoch "$latest_at") ) / 60 ))
+                if [ "$stuck" -gt "$BUILD_STUCK_MINUTES" ]; then
+                  echo "::error::$app: production deployment ${latest_sha:0:8} stuck in '$latest_state' for ${stuck}m — check the Vercel build queue."
+                  alerts=$((alerts + 1))
+                fi
+                ;;
+            esac
+
+            live_age_h=$(( ( $(now) - $(epoch "$live_at") ) / 3600 ))
+            echo "| $app | \`${live_sha:0:8}\` | ${live_age_h}h ago | $latest_state |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+          if [ "$alerts" -gt 0 ]; then
+            echo "::error::Vercel production watchdog: $alerts alert(s) — see the run summary for what production is serving."
+            exit 1
+          fi
+
+          echo "All three projects' production deployments verified."
