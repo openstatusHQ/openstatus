@@ -63,7 +63,7 @@ const otelLogger = getLogger("api-server-otel");
 // can't resolve.
 const loggerProvider = new LoggerProvider({
   resource: resourceFromAttributes({
-    [ATTR_SERVICE_NAME]: "openstatus-server",
+    [ATTR_SERVICE_NAME]: "openstatus-api",
     [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: env.NODE_ENV,
   }),
   processors: [
