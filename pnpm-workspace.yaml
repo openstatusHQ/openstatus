@@ -13,6 +13,9 @@ registries:
       - "@jsr"
 trustPolicy: off
 minimumReleaseAge: 1440
+# Our own scope; we adopt our packages the day they ship.
+minimumReleaseAgeExclude:
+  - "@openstatus/*"
 allowBuilds:
   "@bufbuild/buf": true
   "@parcel/watcher": true
@@ -75,6 +78,13 @@ catalog:
   "@openpanel/astro": 1.4.1
   "@openpanel/nextjs": 1.5.1
   "@openpanel/sdk": 1.3.1
+  "@openstatus/health": 0.1.0
+  "@openstatus/health-fly": 0.1.0
+  "@openstatus/health-hono": 0.1.0
+  "@openstatus/health-tinybird": 0.1.0
+  "@openstatus/health-turso": 0.1.0
+  "@openstatus/health-unkey": 0.1.0
+  "@openstatus/health-upstash": 0.1.0
   "@opentelemetry/exporter-logs-otlp-http": 0.208.0
   "@opentelemetry/resources": 2.7.1
   "@opentelemetry/sdk-logs": 0.208.0

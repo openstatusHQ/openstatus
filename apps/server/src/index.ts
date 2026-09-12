@@ -29,6 +29,7 @@ import { handleError } from "./libs/errors";
 import { concurrencyGuard } from "./libs/middlewares/concurrency";
 import { rateLimit } from "./libs/middlewares/rate-limit";
 import { shouldSample } from "./libs/sampling";
+import { pingRoute } from "./routes/health";
 import { mcpRoute } from "./routes/mcp";
 import { createOAuthRoutes } from "./routes/oauth";
 import { oauthConfigFromEnv } from "./routes/oauth/config";
@@ -215,14 +216,10 @@ app.route("/", createOAuthRoutes(oauthConfigFromEnv()));
 app.route("/public", publicRoute);
 
 /**
- * Ping Pong
+ * Health check — probes the database, Tinybird, Unkey and Upstash and reports
+ * the Fly machine answering.
  */
-app.get("/ping", (c) => {
-  return c.json(
-    { ping: "pong", region: env.FLY_REGION, requestId: c.get("requestId") },
-    200,
-  );
-});
+app.route("/", pingRoute);
 
 app.route("/", openapiRoute);
 

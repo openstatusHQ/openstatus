@@ -298,6 +298,11 @@ export const TINYBIRD_DEFAULT_URL = "https://api.tinybird.co";
  */
 export const noopFlagSchema = z.stringbool().or(z.boolean()).catch(false);
 
+/** Test runs and the `TINYBIRD_NOOP` flag resolve every pipe to empty. */
+export function isTinybirdNoop(noop: OSTinybirdConfig["noop"]): boolean {
+  return env.NODE_ENV === "test" || noopFlagSchema.parse(noop);
+}
+
 export type OSTinybirdConfig = {
   token: string;
   /** Instance to query. Callers pass their app's validated env value. */
@@ -312,7 +317,7 @@ export class OSTinybird {
   constructor(config: OSTinybirdConfig) {
     // Tests must never reach a real instance whatever token sits in the env —
     // checked here so no call site can forget it.
-    const noop = env.NODE_ENV === "test" || noopFlagSchema.parse(config.noop);
+    const noop = isTinybirdNoop(config.noop);
     // An empty token cannot authenticate, so noop keeps pipes resolving empty
     // instead of throwing at every call site.
     if (noop || !config.token) {
