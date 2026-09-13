@@ -4,7 +4,7 @@ hero: "Keep your status page in code. Let your agents update it."
 publishedAt: "2026-04-07"
 updatedAt: "2026-09-13"
 author: "openstatus"
-description: "Open-source status page and uptime monitoring. Declare monitors in your repo with Terraform or the CLI. Let agents open and resolve status reports over MCP, every call audited. Hosted or self-hosted."
+description: "Open-source status page and uptime monitoring. Declare monitors in your repo with Terraform or the CLI. Let agents open and resolve status reports over MCP, every mutation audited. Hosted or self-hosted."
 category: "product"
 faq:
   - question: "What is openstatus?"
@@ -26,7 +26,7 @@ faq:
   - question: "Does openstatus have an API?"
     answer: "Yes. Openstatus exposes a typed JSON-over-HTTP API powered by ConnectRPC, with a published OpenAPI spec at api.openstatus.dev/openapi. Every action in the dashboard (managing monitors, status pages, status reports, maintenance windows, and notification channels) is reachable from the API. The same API key works across the API, CLI, Node SDK, Terraform provider, and MCP server, and every mutation lands in the audit log."
   - question: "Can I manage openstatus from Claude or ChatGPT?"
-    answer: "Yes. Openstatus ships a remote MCP (Model Context Protocol) server at api.openstatus.dev/mcp that connects Claude Desktop, ChatGPT, Cursor, and any MCP-compatible client to your workspace. The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every publishing tool requires the assistant to explicitly choose whether to notify subscribers, and every call is recorded in the audit log."
+    answer: "Yes. Openstatus ships a remote MCP (Model Context Protocol) server at api.openstatus.dev/mcp that connects Claude Desktop, ChatGPT, Cursor, and any MCP-compatible client to your workspace. The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every publishing tool requires the assistant to explicitly choose whether to notify subscribers, and every mutation is recorded in the audit log."
   - question: "Can I manage monitors as code?"
     answer: "Yes. Openstatus offers two ways to treat monitoring as code: a CLI with YAML config that lives in your repo (`openstatus monitors apply`), and a Terraform provider for HCL-managed infrastructure. Run `openstatus terraform generate` from the CLI to bootstrap an HCL file from an existing workspace."
 ---
@@ -222,7 +222,7 @@ Every action in the dashboard (managing monitors, status pages, status reports, 
 
 Yes. Openstatus ships a remote [MCP server](/tooling/mcp-server) at `api.openstatus.dev/mcp` that connects **Claude Desktop**, **ChatGPT**, **Cursor**, and any [Model Context Protocol](https://modelcontextprotocol.io) client to your workspace.
 
-The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every publishing tool requires the assistant to explicitly choose whether to notify subscribers (models can't quietly fan out an alert), and every call is recorded in the audit log under `actor_type = 'mcp'`.
+The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every publishing tool requires the assistant to explicitly choose whether to notify subscribers (models can't quietly fan out an alert), and every mutation is recorded in the audit log under `actor_type = 'mcp'`.
 
 </Details>
 

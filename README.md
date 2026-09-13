@@ -37,7 +37,7 @@ Monitors, status pages, and notification channels are declared in YAML or Terraf
 ## Why openstatus?
 
 - **Infra as code** — monitors, status pages, and notifications in YAML or Terraform, applied from the CLI or CI
-- **Built for humans and agents** — MCP server, `--json` CLI, typed API, read-only or read-write key scopes, every call in the audit log
+- **Built for humans and agents** — MCP server, `--json` CLI, typed API, read-only or read-write key scopes, every mutation in the audit log
 - **Status pages + monitoring in one tool** — no need to wire up a separate monitoring service
 - **28 global regions** checking in parallel across 3 cloud providers
 - **Flat pricing, unlimited members** — no per-seat or per-subscriber charges

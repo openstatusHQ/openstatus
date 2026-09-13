@@ -12,7 +12,7 @@ faq:
   - question: "Do I need an API key to connect an MCP client?"
     answer: "No. The MCP server is an OAuth 2.1 authorization server: Claude, ChatGPT, Cursor, and other clients open a consent screen where you pick a workspace and read-only or read & write access, and tokens are issued and refreshed automatically. The x-openstatus-key header still works for CI and headless agents, with the same key the CLI, API, and Terraform use."
   - question: "Can the assistant accidentally notify subscribers?"
-    answer: "No. Every publishing tool requires the assistant to set notify: true | false explicitly — there's no default. Metadata-only edits like update_status_report can't notify at all. Every call lands in the audit log under actor_type = 'mcp', so you can see exactly what happened."
+    answer: "No. Every publishing tool requires the assistant to set notify: true | false explicitly — there's no default. Metadata-only edits like update_status_report can't notify at all. Every mutation lands in the audit log under actor_type = 'mcp', so you can see exactly what happened."
 ---
 
 The openstatus MCP server connects Claude Desktop, ChatGPT, Cursor, and any other [Model Context Protocol](https://modelcontextprotocol.io) client to your workspace — so an AI assistant can read monitors, response logs, and audit history, and drive status pages, status reports, and maintenance windows directly from a conversation.
@@ -92,6 +92,6 @@ No. The MCP server is an OAuth 2.1 authorization server: Claude, ChatGPT, Cursor
 
 <Details summary="Can the assistant accidentally notify subscribers?">
 
-No. Every publishing tool requires the assistant to set notify: true | false explicitly — there's no default. Metadata-only edits like update_status_report can't notify at all. Every call lands in the audit log under actor_type = 'mcp', so you can see exactly what happened.
+No. Every publishing tool requires the assistant to set notify: true | false explicitly — there's no default. Metadata-only edits like update_status_report can't notify at all. Every mutation lands in the audit log under actor_type = 'mcp', so you can see exactly what happened.
 
 </Details>
