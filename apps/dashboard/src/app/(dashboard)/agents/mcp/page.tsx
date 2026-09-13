@@ -225,6 +225,15 @@ const tools = [
       "get_audit_log",
     ],
   },
+  {
+    group: "Content",
+    items: [
+      "search_docs",
+      "get_doc_page",
+      "search_content",
+      "get_content_page",
+    ],
+  },
 ];
 
 export default function Page() {
@@ -336,7 +345,8 @@ export default function Page() {
           <SectionDescription>
             Read tools are available on every credential. Mutation tools require
             read &amp; write access. Audit log tools require the audit-log
-            feature on your plan.
+            feature on your plan. Content tools search public openstatus.dev
+            pages and carry no workspace data.
           </SectionDescription>
         </SectionHeader>
         <ul className="flex flex-col gap-2">

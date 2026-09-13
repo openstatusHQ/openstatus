@@ -123,6 +123,8 @@ describe("MCP transport", () => {
       "create_maintenance",
       "create_status_report",
       "get_audit_log",
+      "get_content_page",
+      "get_doc_page",
       "get_monitor",
       "get_monitor_status",
       "get_monitor_summary",
@@ -137,6 +139,8 @@ describe("MCP transport", () => {
       "list_status_pages",
       "list_status_reports",
       "resolve_status_report",
+      "search_content",
+      "search_docs",
       "update_status_report",
     ]);
   });

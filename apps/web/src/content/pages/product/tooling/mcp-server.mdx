@@ -27,7 +27,7 @@ Add the URL as a custom connector in Claude, ChatGPT, or Cursor, or run `claude 
 
 ## What you can do
 
-The server exposes **19 tools** scoped to your workspace, grouped by entity:
+The server exposes **23 tools**, grouped by entity:
 
 - **Status pages** — `list_status_pages` · `list_page_components`
 - **Status reports** — `list_status_reports` · `create_status_report` · `add_status_report_update` · `update_status_report` · `resolve_status_report`
@@ -37,6 +37,7 @@ The server exposes **19 tools** scoped to your workspace, grouped by entity:
 - **Notifications** — `list_notifications`
 - **Private locations** — `list_private_locations`
 - **Audit log** *(workspaces on the audit-log plan only)* — `list_audit_logs` · `get_audit_log`
+- **Content** *(public openstatus.dev pages)* — `search_docs` · `get_doc_page` · `search_content` · `get_content_page`
 
 The four **publishing** tools (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) require `notify: true | false` — the assistant must explicitly choose whether to notify subscribers, so an LLM cannot quietly fan out an alert. `update_status_report` is metadata-only and cannot notify.
 

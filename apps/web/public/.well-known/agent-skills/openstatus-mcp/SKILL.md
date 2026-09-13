@@ -1,11 +1,11 @@
 ---
 name: openstatus-mcp
-description: Use the openstatus MCP server to read monitors, notification channels, private locations and audit logs, and to read and update status pages, status reports, and maintenance windows from any Model Context Protocol client (Claude, ChatGPT, Cursor, Codex, opencode, etc.). Use when an AI assistant needs to check a monitor's health, post an incident, append an update, resolve a report, or schedule maintenance for an openstatus workspace.
+description: Use the openstatus MCP server to read monitors, notification channels, private locations and audit logs, to read and update status pages, status reports, and maintenance windows, and to search the openstatus docs, pricing, and other public content from any Model Context Protocol client (Claude, ChatGPT, Cursor, Codex, opencode, etc.). Use when an AI assistant needs to check a monitor's health, post an incident, append an update, resolve a report, or schedule maintenance for an openstatus workspace.
 ---
 
 # openstatus MCP server
 
-The openstatus MCP server is a remote, streamable-HTTP endpoint at `https://api.openstatus.dev/mcp`. It exposes 19 tools (17 on plans without the `audit-log` feature) scoped to a single workspace.
+The openstatus MCP server is a remote, streamable-HTTP endpoint at `https://api.openstatus.dev/mcp`. It exposes 23 tools (21 on plans without the `audit-log` feature): 19 scoped to a single workspace plus 4 that search and read public openstatus.dev content.
 
 ## Connect
 
@@ -87,6 +87,15 @@ Both credentials carry a scope. **Read-only** credentials only see `list_*` and 
 - `list_private_locations` — private locations with status and `lastSeenAt`. Agent tokens are never exposed.
 - `list_audit_logs` — audit-log entries, last 14 days, optional `entityType` + `entityId` filter. Requires the `audit-log` plan feature.
 - `get_audit_log` — before/after snapshots and `changedFields` for one entry. Requires the `audit-log` plan feature.
+
+### Content (read-only, public)
+
+Public openstatus.dev pages — no workspace data, available on any credential and any scope.
+
+- `search_docs` — search documentation, guides, or changelog (`type`, default `docs`). Returns a `path` for `get_doc_page`.
+- `get_doc_page` — full markdown of one docs, guide, or changelog page by `path`.
+- `search_content` — search every public page: product/pricing, blog, comparisons, use cases, customer stories, tooling, plus docs/guides/changelog (`type`, default `all`). Returns a `path` for `get_content_page`.
+- `get_content_page` — full markdown of any public page by `path` (e.g. `pricing`, `blog/…`, `compare/…`). Use it for "which plan fits" or "how does openstatus compare to X" questions.
 
 ### Resources
 

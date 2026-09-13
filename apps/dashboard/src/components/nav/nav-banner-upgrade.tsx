@@ -1,6 +1,8 @@
 "use client";
 
-import { Launch, Close } from "@openstatus/icons";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import { Clock, Close, Globe, Notification, Team } from "@openstatus/icons";
+import { SlackIcon } from "@openstatus/icons/brand";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -16,6 +18,19 @@ import { useTRPC } from "@/lib/trpc/client";
 
 import { UpgradeDialog } from "../dialogs/upgrade";
 
+const plan = allPlans.starter;
+
+const features = [
+  {
+    icon: Clock,
+    title: `1 min checks, ${plan.limits.monitors} monitors`,
+  },
+  { icon: Globe, title: "Custom domain & subscribers" },
+  { icon: Team, title: "Unlimited team members" },
+  { icon: SlackIcon, title: "Slack integration" },
+  { icon: Notification, title: "PagerDuty, Opsgenie & SMS" },
+];
+
 export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -24,9 +39,9 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
   if (!workspace) return null;
 
   return (
-    <SidebarGroup className="bg-background rounded-lg border group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel className="flex items-center justify-between pr-1">
-        <span>OpenStatus Pro</span>
+    <SidebarGroup className="bg-background rounded-lg border px-2 py-1.5 group-data-[collapsible=icon]:hidden">
+      <SidebarGroupLabel className="flex h-7 items-center justify-between pr-0 pl-0">
+        <span>Upgrade to {plan.title}</span>
         <SidebarMenuAction
           onClick={handleClose}
           className="relative top-0 right-0"
@@ -35,13 +50,16 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
         </SidebarMenuAction>
       </SidebarGroupLabel>
       <SidebarMenu>
-        <SidebarMenuItem className="flex items-center gap-2 text-sm">
-          <Launch className="text-info shrink-0" size={12} />
-          <span>
-            Unlock custom domains, teams, 1 min. checks, subscriptions and more.
-          </span>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
+        {features.map((feature) => (
+          <SidebarMenuItem
+            key={feature.title}
+            className="flex items-center gap-2 text-sm"
+          >
+            <feature.icon className="text-muted-foreground size-3 shrink-0" />
+            <span>{feature.title}</span>
+          </SidebarMenuItem>
+        ))}
+        <SidebarMenuItem className="pt-1">
           <SidebarMenuButton
             className="justify-center border"
             data-active="true"

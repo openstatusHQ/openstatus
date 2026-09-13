@@ -62,7 +62,7 @@ For AI agents that should only observe state — health summaries, paging on-cal
 
 ## Tools
 
-The server exposes 19 tools (17 on plans without the `audit-log` feature), grouped by resource and scoped to the workspace tied to your credential. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
+The server exposes 23 tools (21 on plans without the `audit-log` feature), grouped by resource and scoped to the workspace tied to your credential. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
 
 ### Pages
 
@@ -119,6 +119,17 @@ Registered only when the workspace plan includes the `audit-log` feature — oth
 |-------------------|------|---------|
 | `list_audit_logs` | read | List audit-log entries (mutating actions) newest-first, bounded to the last 14 days. Optional `entityType` + `entityId` filter. |
 | `get_audit_log`   | read | Full before/after snapshots and `changedFields` for a single audit-log entry. |
+
+### Content
+
+Public openstatus.dev content — no workspace data, available on any credential and any scope.
+
+| Tool               | Type | Purpose |
+|--------------------|------|---------|
+| `search_docs`      | read | Search the documentation, guides, or changelog (`type`, default `docs`). Returns title, snippet, url, and a `path` for `get_doc_page`. |
+| `get_doc_page`     | read | Full markdown of one docs, guide, or changelog page by `path`. |
+| `search_content`   | read | Search every public page — product/pricing, blog, comparisons, use cases, customer stories, tooling, plus docs/guides/changelog. `type` defaults to `all`. Returns title, type, snippet, url, and a `path` for `get_content_page`. |
+| `get_content_page` | read | Full markdown of any public page by `path` (e.g. `pricing`, `blog/…`, `compare/…`). |
 
 The MCP client gates every tool call behind your approval — the server does not gate again. Each tool also carries [MCP annotations](https://modelcontextprotocol.io/specification/server/tools#tool-annotations) (`readOnlyHint`, `destructiveHint`, `idempotentHint`) so well-behaved clients can decide whether to confirm, cache, or surface differently.
 
