@@ -185,7 +185,7 @@ export const getJsonLDProduct = (): WithContext<Product> => {
     "@type": "Product",
     name: "openstatus",
     description:
-      "The open-source status page and uptime monitoring platform trusted by growing teams.",
+      "The open-source status page and uptime monitoring platform built for infra as code. Declare monitors in code and let your agents update them.",
     image: `${BASE_URL}/assets/logos/OpenStatus-Logo.svg`,
     url: BASE_URL,
     brand: {
@@ -213,7 +213,7 @@ export const getJsonLDSoftwareApplication =
       name: "openstatus",
       url: BASE_URL,
       description:
-        "The open-source status page and uptime monitoring platform trusted by growing teams.",
+        "The open-source status page and uptime monitoring platform built for infra as code. Declare monitors in code and let your agents update them.",
       applicationCategory: "BusinessApplication",
       applicationSubCategory: "Status Pages & Uptime Monitoring",
       operatingSystem: "Web, Self-hosted",

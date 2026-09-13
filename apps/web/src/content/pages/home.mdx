@@ -1,10 +1,10 @@
 ---
 title: "Open Source Status Page & Uptime Monitoring"
-hero: "Ship your status page before your SOC 2 auditor asks for it"
+hero: "Keep your status page in code. Let your agents update it."
 publishedAt: "2026-04-07"
-updatedAt: "2026-08-26"
+updatedAt: "2026-09-13"
 author: "openstatus"
-description: "The status page trusted by growing teams. Communicate incidents, prove compliance readiness, and stay audit-ready on your own domain. Hosted for you, or self-host the open source stack."
+description: "Open-source status page and uptime monitoring. Declare monitors in your repo with Terraform or the CLI. Let agents open and resolve status reports over MCP, every mutation audited. Hosted or self-hosted."
 category: "product"
 faq:
   - question: "What is openstatus?"
@@ -26,7 +26,7 @@ faq:
   - question: "Does openstatus have an API?"
     answer: "Yes. Openstatus exposes a typed JSON-over-HTTP API powered by ConnectRPC, with a published OpenAPI spec at api.openstatus.dev/openapi. Every action in the dashboard (managing monitors, status pages, status reports, maintenance windows, and notification channels) is reachable from the API. The same API key works across the API, CLI, Node SDK, Terraform provider, and MCP server, and every mutation lands in the audit log."
   - question: "Can I manage openstatus from Claude or ChatGPT?"
-    answer: "Yes. Openstatus ships a remote MCP (Model Context Protocol) server at api.openstatus.dev/mcp that connects Claude Desktop, ChatGPT, Cursor, and any MCP-compatible client to your workspace. The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every publishing tool requires the assistant to explicitly choose whether to notify subscribers, and every call is recorded in the audit log."
+    answer: "Yes. Openstatus ships a remote MCP (Model Context Protocol) server at api.openstatus.dev/mcp that connects Claude Desktop, ChatGPT, Cursor, and any MCP-compatible client to your workspace. The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every publishing tool requires the assistant to explicitly choose whether to notify subscribers, and every mutation is recorded in the audit log."
   - question: "Can I manage monitors as code?"
     answer: "Yes. Openstatus offers two ways to treat monitoring as code: a CLI with YAML config that lives in your repo (`openstatus monitors apply`), and a Terraform provider for HCL-managed infrastructure. Run `openstatus terraform generate` from the CLI to bootstrap an HCL file from an existing workspace."
 ---
@@ -48,6 +48,17 @@ Free to start. Paid plans from $30/mo. Open source and self-hostable.
 
 <CustomerLogos />
 
+## Managing openstatus for humans and agents
+
+Every action in the dashboard is reachable programmatically. One API key, four ways in:
+
+- **[CLI](/tooling/cli)**: manage from your terminal
+- **[API](/tooling/api)**: typed HTTP endpoints with an [OpenAPI spec](https://api.openstatus.dev/openapi)
+- **[MCP server](/tooling/mcp-server)**: let Claude, ChatGPT, or Cursor run your monitoring
+- **[Terraform provider](/tooling/terraform)**: version monitors as HCL
+
+Read more about our [tooling](/tooling).
+
 ## The status page that closes enterprise deals
 
 Security questionnaires ask how you notify customers during an incident. openstatus answers that in one link: a branded page on your own domain, with timestamped incident history an auditor can read without asking you for screenshots.
@@ -59,17 +70,6 @@ Themes, custom domains, public or password-protected access, status reports, mai
 Monitor your endpoints from 28 regions across multiple clouds. Get alerted on Slack, Discord, PagerDuty, or email the moment something breaks. Your status page updates automatically, with no manual work during incidents.
 
 Read more about [uptime monitoring](/uptime-monitoring).
-
-## Managing openstatus for humans and agents
-
-Every action in the dashboard is reachable programmatically. One API key, four ways in:
-
-- **[CLI](/tooling/cli)**: manage from your terminal
-- **[API](/tooling/api)**: typed HTTP endpoints with an [OpenAPI spec](https://api.openstatus.dev/openapi)
-- **[MCP server](/tooling/mcp-server)**: let Claude, ChatGPT, or Cursor run your monitoring
-- **[Terraform provider](/tooling/terraform)**: version monitors as HCL
-
-Read more about our [tooling](/tooling).
 
 ## Try it before you sign up
 
@@ -222,7 +222,7 @@ Every action in the dashboard (managing monitors, status pages, status reports, 
 
 Yes. Openstatus ships a remote [MCP server](/tooling/mcp-server) at `api.openstatus.dev/mcp` that connects **Claude Desktop**, **ChatGPT**, **Cursor**, and any [Model Context Protocol](https://modelcontextprotocol.io) client to your workspace.
 
-The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every publishing tool requires the assistant to explicitly choose whether to notify subscribers (models can't quietly fan out an alert), and every call is recorded in the audit log under `actor_type = 'mcp'`.
+The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every publishing tool requires the assistant to explicitly choose whether to notify subscribers (models can't quietly fan out an alert), and every mutation is recorded in the audit log under `actor_type = 'mcp'`.
 
 </Details>
 

@@ -26,7 +26,9 @@
 
 ## About openstatus
 
-openstatus is an open-source platform that combines **status pages** and **uptime monitoring** in a single tool. Keep your users informed and your services reliable. Available as a managed service or self-hosted.
+openstatus is the open-source **uptime monitoring** and **status page** platform built for **infra as code**. Declare monitors and status pages in code. Let your agents update them.
+
+Monitors, status pages, and notification channels are declared in YAML or Terraform, applied from the CLI or CI, and operable from Claude, ChatGPT, or Cursor over MCP. Available as a managed service or self-hosted.
 
 <p align="center">
   <img src="https://www.openstatus.dev/assets/landing/statuspage-meow.png" alt="openstatus status page" width="720" />
@@ -34,11 +36,12 @@ openstatus is an open-source platform that combines **status pages** and **uptim
 
 ## Why openstatus?
 
+- **Infra as code** — monitors, status pages, and notifications in YAML or Terraform, applied from the CLI or CI
+- **Built for humans and agents** — MCP server, `--json` CLI, typed API, read-only or read-write key scopes, every mutation in the audit log
 - **Status pages + monitoring in one tool** — no need to wire up a separate monitoring service
 - **28 global regions** checking in parallel across 3 cloud providers
 - **Flat pricing, unlimited members** — no per-seat or per-subscriber charges
 - **Open source & self-hostable** — AGPL-3.0, private-locations run in a single 8.5MB Docker image
-- **Monitoring as code** — YAML config, CLI, GitHub Actions, Terraform
 - **Incident communication** — subscriber notifications via email, RSS, and webhooks
 
 ### Status pages

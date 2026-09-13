@@ -348,7 +348,7 @@ export function docsNavTree(): DocsNavNode {
     label: "openstatus documentation",
     href: "/docs",
     description:
-      "Learn how to create your status page, monitor your endpoints, and configure notifications.",
+      "Infra as code for uptime monitoring and status pages. Let your agents update them. Learn how to monitor your endpoints, create your status page, configure notifications, and drive it all from the CLI, Terraform, API, or MCP.",
     children: docsNav.map((section) => {
       const parent = sectionParentSlug(section);
       return {
