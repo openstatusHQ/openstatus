@@ -11,20 +11,39 @@ const FETCH_TIMEOUT_MS = 10_000;
 // ≈6k tokens — the free tier runs Haiku; a clipped page beats a blown context.
 const MAX_MARKDOWN_CHARS = 24_000;
 
-const DOC_PATH_PREFIXES = ["docs/", "guides/", "changelog/"];
+// Mirrors `PAGE_TYPES` in apps/web/src/content/utils — the corpora /api/search accepts.
+const CONTENT_TYPES = [
+  "all",
+  "docs",
+  "guides",
+  "changelog",
+  "blog",
+  "product",
+  "compare",
+  "use-case",
+  "customers",
+  "tooling",
+  "tools",
+  "unrelated",
+] as const;
 
-const SearchDocsInput = z
+// Site-relative slug path only (`docs/concept/monitor`, `pricing`) — blocks
+// traversal and absolute URLs; /api/markdown decides whether the page exists.
+const SAFE_PATH = /^[a-z0-9-]+(?:\/[a-z0-9-]+)*$/;
+
+const SearchContentInput = z
   .object({
     query: z.string().min(1),
-    type: z.enum(["docs", "guides", "changelog"]).default("docs"),
+    type: z.enum(CONTENT_TYPES).default("all"),
   })
   .strict();
 
-const SearchDocsOutput = z.object({
+const SearchContentOutput = z.object({
   results: z.array(
     z.object({
       title: z.string(),
       description: z.string().optional(),
+      type: z.string(),
       snippet: z.string(),
       url: z.string(),
       path: z.string(),
@@ -33,21 +52,22 @@ const SearchDocsOutput = z.object({
   error: z.string().optional(),
 });
 
-export const searchDocsTool: AgentTool<
-  z.infer<typeof SearchDocsInput>,
-  z.infer<typeof SearchDocsOutput>
+export const searchContentTool: AgentTool<
+  z.infer<typeof SearchContentInput>,
+  z.infer<typeof SearchContentOutput>
 > = {
-  name: "search_docs",
+  name: "search_content",
   description:
-    "Search the public openstatus documentation, guides, or changelog. Returns scored results with title, snippet, url, and a path usable with get_doc_page.",
+    "Search every public openstatus.dev page — marketing/product pages (pricing, features), blog, comparisons, use cases, customer stories, tooling, plus docs/guides/changelog. Broader than search_docs; prefer search_docs for pure how-to questions. Narrow with `type`. Returns scored results with title, type, snippet, url, and a path usable with get_content_page.",
   scope: "read",
   destructive: false,
-  inputSchema: SearchDocsInput,
-  outputSchema: SearchDocsOutput,
-  // A docs lookup failure should degrade the answer, not abort the chat turn.
+  inputSchema: SearchContentInput,
+  outputSchema: SearchContentOutput,
+  // A content lookup failure should degrade the answer, not abort the chat turn.
   async run({ input }) {
     try {
-      const { query, type } = input;
+      // Adapters parse through the schema, but direct callers may skip the default.
+      const { query, type = "all" } = input;
       const res = await fetch(
         `${WEB_BASE_URL}/api/search?p=${type}&q=${encodeURIComponent(query)}`,
         { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
@@ -70,12 +90,16 @@ export const searchDocsTool: AgentTool<
         .flatMap((el) => {
           const item = el as {
             metadata?: { title?: unknown; description?: unknown };
+            type?: unknown;
             content?: unknown;
             href?: unknown;
           };
           const title = item.metadata?.title;
           const href = item.href;
           if (typeof title !== "string" || typeof href !== "string") return [];
+          // Homepage (href "/") has no slug path get_content_page can fetch.
+          const path = href.split(/[?#]/)[0].replace(/^\//, "");
+          if (!path) return [];
           return [
             {
               title,
@@ -83,9 +107,10 @@ export const searchDocsTool: AgentTool<
                 typeof item.metadata?.description === "string"
                   ? item.metadata.description
                   : undefined,
+              type: typeof item.type === "string" ? item.type : "page",
               snippet: typeof item.content === "string" ? item.content : "",
               url: `${WEB_BASE_URL}${href}`,
-              path: href.split(/[?#]/)[0].replace(/^\//, ""),
+              path,
             },
           ];
         })
@@ -97,39 +122,40 @@ export const searchDocsTool: AgentTool<
   },
 };
 
-const GetDocPageInput = z.object({ path: z.string().min(1) }).strict();
+const GetContentPageInput = z.object({ path: z.string().min(1) }).strict();
 
-const GetDocPageOutput = z.object({
+const GetContentPageOutput = z.object({
   url: z.string(),
   markdown: z.string(),
   truncated: z.boolean(),
   error: z.string().optional(),
 });
 
-export const getDocPageTool: AgentTool<
-  z.infer<typeof GetDocPageInput>,
-  z.infer<typeof GetDocPageOutput>
+export const getContentPageTool: AgentTool<
+  z.infer<typeof GetContentPageInput>,
+  z.infer<typeof GetContentPageOutput>
 > = {
-  name: "get_doc_page",
+  name: "get_content_page",
   description:
-    "Fetch the full markdown content of a documentation, guide, or changelog page by path (as returned by search_docs).",
+    "Fetch the full markdown content of any public openstatus.dev page by path (as returned by search_content), e.g. pricing, blog/…, compare/…, use-case/…. Superset of get_doc_page.",
   scope: "read",
   destructive: false,
-  inputSchema: GetDocPageInput,
-  outputSchema: GetDocPageOutput,
+  inputSchema: GetContentPageInput,
+  outputSchema: GetContentPageOutput,
   async run({ input }) {
-    const path = input.path.replace(/^\//, "");
+    // Loop instead of /\/+$/ — CodeQL flags that regex as polynomial on
+    // untrusted input.
+    let path = input.path;
+    while (path.startsWith("/")) path = path.slice(1);
+    while (path.endsWith("/")) path = path.slice(0, -1);
     const url = `${WEB_BASE_URL}/${path}`;
-    // Allowlist keeps this a docs reader, not a generic URL fetcher.
-    if (
-      !DOC_PATH_PREFIXES.some((prefix) => path.startsWith(prefix)) ||
-      path.includes("..")
-    ) {
+    if (!SAFE_PATH.test(path)) {
       return {
         url,
         markdown: "",
         truncated: false,
-        error: "path must start with docs/, guides/ or changelog/",
+        error:
+          "path must be a site-relative page path like docs/concept/monitor",
       };
     }
     try {

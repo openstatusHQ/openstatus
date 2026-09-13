@@ -130,6 +130,16 @@ describe("get_doc_page", () => {
     expect(result.error).toBe("page not found (HTTP 404)");
   });
 
+  test("reports non-404 failures as unavailable, not missing", async () => {
+    mockFetch(new Response("oops", { status: 500 }));
+    const result = await getDocPageTool.run({
+      ctx,
+      input: { path: "docs/concept/monitor" },
+    });
+    expect(result.markdown).toBe("");
+    expect(result.error).toBe("page unavailable (HTTP 500)");
+  });
+
   test("returns error shape when fetch throws", async () => {
     globalThis.fetch = (async () => {
       throw new Error("ECONNREFUSED");

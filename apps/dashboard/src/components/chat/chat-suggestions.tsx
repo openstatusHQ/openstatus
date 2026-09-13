@@ -1,6 +1,7 @@
 import { ModelContextProtocolIcon } from "@openstatus/icons/brand";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import NextLink from "next/link";
 
 import { Note, NoteButton } from "@/components/common/note";
@@ -11,6 +12,7 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
+import { useTRPC } from "@/lib/trpc/client";
 
 const SUGGESTIONS = [
   "List all my monitors",
@@ -24,6 +26,13 @@ type Props = {
 };
 
 export function ChatSuggestions({ onSelect }: Props) {
+  const trpc = useTRPC();
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const suggestions =
+    workspace?.plan === "free"
+      ? [...SUGGESTIONS, "Which pricing plan fits best to me?"]
+      : SUGGESTIONS;
+
   return (
     <SectionGroup className="mx-auto max-w-3xl">
       <Section className="flex w-full flex-col items-center">
@@ -41,7 +50,7 @@ export function ChatSuggestions({ onSelect }: Props) {
           </SectionDescription>
         </SectionHeader>
         <div className="flex flex-wrap items-center justify-center gap-2">
-          {SUGGESTIONS.map((s) => (
+          {suggestions.map((s) => (
             <Button
               key={s}
               variant="outline"
