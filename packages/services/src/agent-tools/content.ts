@@ -140,7 +140,11 @@ export const getContentPageTool: AgentTool<
   inputSchema: GetContentPageInput,
   outputSchema: GetContentPageOutput,
   async run({ input }) {
-    const path = input.path.replace(/^\/+/, "").replace(/\/+$/, "");
+    // Loop instead of /\/+$/ — CodeQL flags that regex as polynomial on
+    // untrusted input.
+    let path = input.path;
+    while (path.startsWith("/")) path = path.slice(1);
+    while (path.endsWith("/")) path = path.slice(0, -1);
     const url = `${WEB_BASE_URL}/${path}`;
     if (!SAFE_PATH.test(path)) {
       return {

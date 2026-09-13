@@ -39,7 +39,10 @@ function searchFixture(i: number, type = "product") {
 describe("search_content", () => {
   test("defaults to the `all` corpus", async () => {
     const fn = mockFetch(Response.json([]));
-    await searchContentTool.run({ ctx, input: { query: "pricing" } });
+    await searchContentTool.run({
+      ctx,
+      input: searchContentTool.inputSchema.parse({ query: "pricing" }),
+    });
     assertSpyCalls(fn, 1);
     const url = String((fn.calls[0] as { args: unknown[] }).args[0]);
     expect(url).toContain("/api/search?p=all&q=pricing");
