@@ -97,6 +97,9 @@ export const searchContentTool: AgentTool<
           const title = item.metadata?.title;
           const href = item.href;
           if (typeof title !== "string" || typeof href !== "string") return [];
+          // Homepage (href "/") has no slug path get_content_page can fetch.
+          const path = href.split(/[?#]/)[0].replace(/^\//, "");
+          if (!path) return [];
           return [
             {
               title,
@@ -107,7 +110,7 @@ export const searchContentTool: AgentTool<
               type: typeof item.type === "string" ? item.type : "page",
               snippet: typeof item.content === "string" ? item.content : "",
               url: `${WEB_BASE_URL}${href}`,
-              path: href.split(/[?#]/)[0].replace(/^\//, ""),
+              path,
             },
           ];
         })
@@ -166,7 +169,10 @@ export const getContentPageTool: AgentTool<
           url,
           markdown: "",
           truncated: false,
-          error: `page not found (HTTP ${res.status})`,
+          error:
+            res.status === 404
+              ? `page not found (HTTP ${res.status})`
+              : `page unavailable (HTTP ${res.status})`,
         };
       }
       const text = await res.text();

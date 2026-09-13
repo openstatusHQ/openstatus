@@ -244,8 +244,8 @@ export default function Page() {
           <SectionTitle>MCP Server</SectionTitle>
           <SectionDescription>
             Connect Claude, ChatGPT, Cursor or any Model Context Protocol client
-            to read and manage your status pages, reports and maintenances from
-            a conversation.{" "}
+            to read and manage your status pages, reports and maintenances, and
+            search public openstatus.dev content, from a conversation.{" "}
             <Link href="https://www.openstatus.dev/docs/reference/mcp-server">
               Read more
             </Link>

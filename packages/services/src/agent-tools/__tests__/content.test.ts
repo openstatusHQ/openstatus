@@ -78,6 +78,21 @@ describe("search_content", () => {
     expect(JSON.stringify(result)).not.toContain("filePath");
   });
 
+  test("drops the homepage — get_content_page has no path for it", async () => {
+    mockFetch(
+      Response.json([
+        { ...searchFixture(0), href: "/" },
+        { ...searchFixture(1), href: "/?ref=search" },
+        searchFixture(2),
+      ]),
+    );
+    const result = await searchContentTool.run({
+      ctx,
+      input: { query: "what is openstatus", type: "all" },
+    });
+    expect(result.results.map((r) => r.path)).toEqual(["page-2"]);
+  });
+
   test("returns error shape on non-OK response without throwing", async () => {
     mockFetch(new Response("oops", { status: 500 }));
     const result = await searchContentTool.run({
@@ -152,6 +167,16 @@ describe("get_content_page", () => {
     });
     expect(result.markdown).toBe("");
     expect(result.error).toBe("page not found (HTTP 404)");
+  });
+
+  test("reports non-404 failures as unavailable, not missing", async () => {
+    mockFetch(new Response("oops", { status: 500 }));
+    const result = await getContentPageTool.run({
+      ctx,
+      input: { path: "pricing" },
+    });
+    expect(result.markdown).toBe("");
+    expect(result.error).toBe("page unavailable (HTTP 500)");
   });
 
   test("rejects traversal, absolute urls and odd characters without fetching", async () => {
