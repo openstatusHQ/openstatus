@@ -26,7 +26,6 @@ import {
   ValidationError,
 } from "../errors";
 import type { Workspace } from "../types";
-import type { NotificationDataInput } from "./schemas";
 
 /** Load a notification by id, scoped to the workspace. Throws on miss. */
 export async function getNotificationInWorkspace(args: {
@@ -128,14 +127,10 @@ const providerDataSchemas = {
   whatsapp: whatsappDataSchema,
 } as const satisfies Record<NotificationProvider, ZodType>;
 
-/**
- * Validate that `data` is the canonical payload for the given `provider`.
- * Runs the provider-specific Zod schema — this checks both key presence
- * and the value's shape/content in one pass.
- */
+/** Reject data that does not match the selected provider's schema. */
 export function validateNotificationData(
   provider: NotificationProvider,
-  data: NotificationDataInput,
+  data: unknown,
 ): void {
   const schema = providerDataSchemas[provider];
   const parsed = schema.safeParse(data);
