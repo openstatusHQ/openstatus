@@ -210,26 +210,29 @@ catalogs:
       specifier: 1.3.1
       version: 1.3.1
     '@openstatus/health':
-      specifier: 0.1.0
-      version: 0.1.0
+      specifier: 0.1.2
+      version: 0.1.2
     '@openstatus/health-fly':
-      specifier: 0.1.0
-      version: 0.1.0
+      specifier: 0.1.2
+      version: 0.1.2
     '@openstatus/health-hono':
-      specifier: 0.1.0
-      version: 0.1.0
+      specifier: 0.1.2
+      version: 0.1.2
     '@openstatus/health-tinybird':
-      specifier: 0.1.0
-      version: 0.1.0
+      specifier: 0.1.2
+      version: 0.1.2
     '@openstatus/health-turso':
-      specifier: 0.1.0
-      version: 0.1.0
+      specifier: 0.1.2
+      version: 0.1.2
     '@openstatus/health-unkey':
-      specifier: 0.1.0
-      version: 0.1.0
+      specifier: 0.1.2
+      version: 0.1.2
     '@openstatus/health-upstash':
-      specifier: 0.1.0
-      version: 0.1.0
+      specifier: 0.1.2
+      version: 0.1.2
+    '@openstatus/health-vercel':
+      specifier: 0.1.2
+      version: 0.1.2
     '@opentelemetry/exporter-logs-otlp-http':
       specifier: 0.208.0
       version: 0.208.0
@@ -747,16 +750,19 @@ importers:
         version: link:../../packages/header-analysis
       '@openstatus/health':
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.1.2
       '@openstatus/health-tinybird':
         specifier: 'catalog:'
-        version: 0.1.0(@openstatus/health@0.1.0)
+        version: 0.1.2(@openstatus/health@0.1.2)
       '@openstatus/health-turso':
         specifier: 'catalog:'
-        version: 0.1.0(@libsql/client@0.17.4)(@openstatus/health@0.1.0)
+        version: 0.1.2(@libsql/client@0.17.4)(@openstatus/health@0.1.2)
       '@openstatus/health-upstash':
         specifier: 'catalog:'
-        version: 0.1.0(@openstatus/health@0.1.0)
+        version: 0.1.2(@openstatus/health@0.1.2)
+      '@openstatus/health-vercel':
+        specifier: 'catalog:'
+        version: 0.1.2(@openstatus/health@0.1.2)
       '@openstatus/icons':
         specifier: workspace:*
         version: link:../../packages/icons
@@ -1088,25 +1094,25 @@ importers:
         version: link:../../packages/error
       '@openstatus/health':
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.1.2
       '@openstatus/health-fly':
         specifier: 'catalog:'
-        version: 0.1.0(@openstatus/health@0.1.0)
+        version: 0.1.2(@openstatus/health@0.1.2)
       '@openstatus/health-hono':
         specifier: 'catalog:'
-        version: 0.1.0(@openstatus/health@0.1.0)(hono@4.12.21)
+        version: 0.1.2(@openstatus/health@0.1.2)(hono@4.12.21)
       '@openstatus/health-tinybird':
         specifier: 'catalog:'
-        version: 0.1.0(@openstatus/health@0.1.0)
+        version: 0.1.2(@openstatus/health@0.1.2)
       '@openstatus/health-turso':
         specifier: 'catalog:'
-        version: 0.1.0(@libsql/client@0.17.4)(@openstatus/health@0.1.0)
+        version: 0.1.2(@libsql/client@0.17.4)(@openstatus/health@0.1.2)
       '@openstatus/health-unkey':
         specifier: 'catalog:'
-        version: 0.1.0(@openstatus/health@0.1.0)
+        version: 0.1.2(@openstatus/health@0.1.2)
       '@openstatus/health-upstash':
         specifier: 'catalog:'
-        version: 0.1.0(@openstatus/health@0.1.0)
+        version: 0.1.2(@openstatus/health@0.1.2)
       '@openstatus/locales':
         specifier: workspace:*
         version: link:../../packages/locales
@@ -1293,16 +1299,19 @@ importers:
         version: link:../../packages/error
       '@openstatus/health':
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.1.2
       '@openstatus/health-tinybird':
         specifier: 'catalog:'
-        version: 0.1.0(@openstatus/health@0.1.0)
+        version: 0.1.2(@openstatus/health@0.1.2)
       '@openstatus/health-turso':
         specifier: 'catalog:'
-        version: 0.1.0(@libsql/client@0.17.4)(@openstatus/health@0.1.0)
+        version: 0.1.2(@libsql/client@0.17.4)(@openstatus/health@0.1.2)
       '@openstatus/health-upstash':
         specifier: 'catalog:'
-        version: 0.1.0(@openstatus/health@0.1.0)
+        version: 0.1.2(@openstatus/health@0.1.2)
+      '@openstatus/health-vercel':
+        specifier: 'catalog:'
+        version: 0.1.2(@openstatus/health@0.1.2)
       '@openstatus/icons':
         specifier: workspace:*
         version: link:../../packages/icons
@@ -1799,19 +1808,19 @@ importers:
         version: link:../../packages/emails
       '@openstatus/health':
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.1.2
       '@openstatus/health-fly':
         specifier: 'catalog:'
-        version: 0.1.0(@openstatus/health@0.1.0)
+        version: 0.1.2(@openstatus/health@0.1.2)
       '@openstatus/health-hono':
         specifier: 'catalog:'
-        version: 0.1.0(@openstatus/health@0.1.0)(hono@4.12.21)
+        version: 0.1.2(@openstatus/health@0.1.2)(hono@4.12.21)
       '@openstatus/health-tinybird':
         specifier: 'catalog:'
-        version: 0.1.0(@openstatus/health@0.1.0)
+        version: 0.1.2(@openstatus/health@0.1.2)
       '@openstatus/health-turso':
         specifier: 'catalog:'
-        version: 0.1.0(@libsql/client@0.17.4)(@openstatus/health@0.1.0)
+        version: 0.1.2(@libsql/client@0.17.4)(@openstatus/health@0.1.2)
       '@openstatus/notification-base':
         specifier: workspace:*
         version: link:../../packages/notifications/base
@@ -5215,49 +5224,55 @@ packages:
   '@openpanel/web@1.4.1':
     resolution: {integrity: sha512-DgUWeocZw+b57YiJjefZPg+6sceR7TdOF8x7Ut75lu3CwcwqGi5jZNPXjikNemGL37aNWXCB4buhcoNan2j7RA==}
 
-  '@openstatus/health-fly@0.1.0':
-    resolution: {integrity: sha512-psrzoRSYbWw9ucTtX/twww1rhSlVKwZ2PXJSSg1WWfKh/7wy0mkCuzGL2H9MLLqzUOf+Ze/Pt8pfh4q5tRPqSQ==}
+  '@openstatus/health-fly@0.1.2':
+    resolution: {integrity: sha512-qD+Jp7wfpHuK+xeeXes2/O6RXKPftzZE9CEeB7EihBQbkWi+fjCBU/yq/XtRLJn7Ys3+Z3jXC2rQZBDQPE1pFQ==}
     engines: {node: '>=22'}
     peerDependencies:
-      '@openstatus/health': ^0.1.0
+      '@openstatus/health': ^0.1.2
 
-  '@openstatus/health-hono@0.1.0':
-    resolution: {integrity: sha512-kkEVZULlHY1qbr2BQRaCiwkGddqPbc+UKqgLOm3l0h2zcEXLzczRCUXUAnwCDcD1r8VXvdLls6ckhSWy0cwcmw==}
+  '@openstatus/health-hono@0.1.2':
+    resolution: {integrity: sha512-40Fy3wXMAzPSmJu7nX+Qe2cpmHmqbAUsgOhOWAsM6wYd4jpexRRB6ny7mGv2plicpc71oF1af1QVRYMQ5CjImA==}
     engines: {node: '>=22'}
     peerDependencies:
-      '@openstatus/health': ^0.1.0
+      '@openstatus/health': ^0.1.2
       hono: ^4.0.0
 
-  '@openstatus/health-tinybird@0.1.0':
-    resolution: {integrity: sha512-D8ncCGU6UQ5Wf213lfMhuf4nxd5PAYP2/p8A10N040nKIXSD3ukI3OIqOCfSdrBva3y5wYskF+BKhj0F4H/Wmw==}
+  '@openstatus/health-tinybird@0.1.2':
+    resolution: {integrity: sha512-K1mbQN88Ckb2a+z4cbrFjWCqex11vxFxoa3YIKHNNAhxede0EZE6tdQkT06XpFw9QCxKJ4sAK/4m65ojO6S83g==}
     engines: {node: '>=22'}
     peerDependencies:
-      '@openstatus/health': ^0.1.0
+      '@openstatus/health': ^0.1.2
 
-  '@openstatus/health-turso@0.1.0':
-    resolution: {integrity: sha512-j2Np1g8UJqjOeenhcGbgRWOxN/4qWXGAywngJlmuSBZ7xOXbtBOqI53aDBxHImSLpCtKrwrC3loYy9yMz14FiA==}
+  '@openstatus/health-turso@0.1.2':
+    resolution: {integrity: sha512-bd9MM+U6Y6kfpfUckKLCJkLyLAogLY9OA9+vp3jypxvPo2R++67TTlFS1MJo4ZN3Ec1a5x8LTgyQoxLClWZzRw==}
     engines: {node: '>=22'}
     peerDependencies:
       '@libsql/client': '>=0.5.0'
-      '@openstatus/health': ^0.1.0
+      '@openstatus/health': ^0.1.2
     peerDependenciesMeta:
       '@libsql/client':
         optional: true
 
-  '@openstatus/health-unkey@0.1.0':
-    resolution: {integrity: sha512-WjwsSwtnAi6MX1IpGGwgwsO06qOhiEZ2TMzznLuZLG4JrMzcTabsBoDZF006mfzJnlqCHcJdKRrIDJLXh15a9A==}
+  '@openstatus/health-unkey@0.1.2':
+    resolution: {integrity: sha512-v1K6Za9IplL5NVSSLKU9yP6MT9jcmxplMaSpTZ1WSuUqhwLGAbX/d3Sny8wQRMTUhwliFSmU8s2v5pOhB9cTEw==}
     engines: {node: '>=22'}
     peerDependencies:
-      '@openstatus/health': ^0.1.0
+      '@openstatus/health': ^0.1.2
 
-  '@openstatus/health-upstash@0.1.0':
-    resolution: {integrity: sha512-4JHK87iZOyQFWv5gBXuVJb1Nj0lhsoLULBtHr797TT4vXozFmAAdT5q8dIS4TJJQg0C/NviXNyZKUSIvnflltA==}
+  '@openstatus/health-upstash@0.1.2':
+    resolution: {integrity: sha512-UFN8dB0hF5OQgG+SIykpnEmaCebQQLpNXj7foi+d6cWYQzjLo2jMHAhER5MAJ483Kyot8bILkZFDpZVNCjY/5A==}
     engines: {node: '>=22'}
     peerDependencies:
-      '@openstatus/health': ^0.1.0
+      '@openstatus/health': ^0.1.2
 
-  '@openstatus/health@0.1.0':
-    resolution: {integrity: sha512-heT1OkxFjCqrzbkb+yYJY10bHfo+MwG7IvenKhjCehDQbFxI4CIV4PRFmL8q82fO9JUSN7Cjlma7dXaD1ru03A==}
+  '@openstatus/health-vercel@0.1.2':
+    resolution: {integrity: sha512-UJgJ9m+vIIAjOC6EHWiyEpa0ZGGBuTdoZt2OX5Mw5kXjC45NMumLN9HxbblGAyjkVUt3doe0KoMBu95uUJkYKQ==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      '@openstatus/health': ^0.1.2
+
+  '@openstatus/health@0.1.2':
+    resolution: {integrity: sha512-to/POQQQpM7dFgHapUfHFOPaRfrPK++9b/xwrkjfiAc2Hh17lyeu2IHcxyGVR4YmRosJuI74L8wD2D5uJ2yqmg==}
     engines: {node: '>=22'}
 
   '@opentelemetry/api-logs@0.207.0':
@@ -13927,34 +13942,38 @@ snapshots:
       '@rrweb/types': 2.0.0-alpha.20
       rrweb: 2.0.0-alpha.20
 
-  '@openstatus/health-fly@0.1.0(@openstatus/health@0.1.0)':
+  '@openstatus/health-fly@0.1.2(@openstatus/health@0.1.2)':
     dependencies:
-      '@openstatus/health': 0.1.0
+      '@openstatus/health': 0.1.2
 
-  '@openstatus/health-hono@0.1.0(@openstatus/health@0.1.0)(hono@4.12.21)':
+  '@openstatus/health-hono@0.1.2(@openstatus/health@0.1.2)(hono@4.12.21)':
     dependencies:
-      '@openstatus/health': 0.1.0
+      '@openstatus/health': 0.1.2
       hono: 4.12.21
 
-  '@openstatus/health-tinybird@0.1.0(@openstatus/health@0.1.0)':
+  '@openstatus/health-tinybird@0.1.2(@openstatus/health@0.1.2)':
     dependencies:
-      '@openstatus/health': 0.1.0
+      '@openstatus/health': 0.1.2
 
-  '@openstatus/health-turso@0.1.0(@libsql/client@0.17.4)(@openstatus/health@0.1.0)':
+  '@openstatus/health-turso@0.1.2(@libsql/client@0.17.4)(@openstatus/health@0.1.2)':
     dependencies:
-      '@openstatus/health': 0.1.0
+      '@openstatus/health': 0.1.2
     optionalDependencies:
       '@libsql/client': 0.17.4
 
-  '@openstatus/health-unkey@0.1.0(@openstatus/health@0.1.0)':
+  '@openstatus/health-unkey@0.1.2(@openstatus/health@0.1.2)':
     dependencies:
-      '@openstatus/health': 0.1.0
+      '@openstatus/health': 0.1.2
 
-  '@openstatus/health-upstash@0.1.0(@openstatus/health@0.1.0)':
+  '@openstatus/health-upstash@0.1.2(@openstatus/health@0.1.2)':
     dependencies:
-      '@openstatus/health': 0.1.0
+      '@openstatus/health': 0.1.2
 
-  '@openstatus/health@0.1.0': {}
+  '@openstatus/health-vercel@0.1.2(@openstatus/health@0.1.2)':
+    dependencies:
+      '@openstatus/health': 0.1.2
+
+  '@openstatus/health@0.1.2': {}
 
   '@opentelemetry/api-logs@0.207.0':
     dependencies:
