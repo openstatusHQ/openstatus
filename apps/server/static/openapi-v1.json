@@ -1988,7 +1988,6 @@
                         "railway_us-west2"
                       ]
                     },
-                    "default": [],
                     "example": ["ams"],
                     "description": "Where we should monitor it"
                   },
@@ -2027,7 +2026,6 @@
                   "body": {
                     "type": "string",
                     "nullable": true,
-                    "default": "",
                     "example": "Hello World",
                     "description": "The body"
                   },
@@ -2190,17 +2188,14 @@
                         }
                       ]
                     },
-                    "default": [],
                     "description": "The assertions to run"
                   },
                   "active": {
                     "type": "boolean",
-                    "default": false,
                     "description": "If the monitor is active"
                   },
                   "public": {
                     "type": "boolean",
-                    "default": false,
                     "description": "If the monitor is public"
                   },
                   "degradedAfter": {
@@ -2211,17 +2206,14 @@
                   "timeout": {
                     "type": "number",
                     "nullable": true,
-                    "default": 45000,
                     "description": "The timeout of the request in milliseconds"
                   },
                   "retry": {
                     "type": "number",
-                    "default": 3,
                     "description": "The number of retries to attempt"
                   },
                   "followRedirects": {
                     "type": "boolean",
-                    "default": true,
                     "description": "If the monitor should follow redirects"
                   },
                   "jobType": {
@@ -2235,7 +2227,6 @@
                       "dns",
                       "ssl"
                     ],
-                    "default": "http",
                     "description": "The type of the monitor"
                   },
                   "openTelemetry": {
