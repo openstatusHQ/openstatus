@@ -3,6 +3,7 @@ import { createHealthHandler } from "@openstatus/health";
 import { tinybirdProbe } from "@openstatus/health-tinybird";
 import { tursoProbe } from "@openstatus/health-turso";
 import { upstashProbe } from "@openstatus/health-upstash";
+import { vercelExtend } from "@openstatus/health-vercel";
 import { TINYBIRD_DEFAULT_URL, isTinybirdNoop } from "@openstatus/tinybird";
 
 export const runtime = "nodejs";
@@ -29,6 +30,7 @@ const handler = createHealthHandler({
         ]
       : []),
   ],
+  extend: vercelExtend({ omit: ["targetEnvironment", "projectId"] }),
 });
 
 export const GET = handler;
