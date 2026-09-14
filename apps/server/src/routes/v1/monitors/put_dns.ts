@@ -83,7 +83,7 @@ export function registerPutDNSMonitor(api: typeof monitorsApi) {
       });
     }
 
-    if (_monitor.jobType !== "tcp") {
+    if (_monitor.jobType !== "dns") {
       throw new OpenStatusApiError({
         code: "NOT_FOUND",
         message: `Monitor ${id} not found`,
