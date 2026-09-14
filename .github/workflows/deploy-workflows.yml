@@ -12,6 +12,9 @@ on:
       - "packages/notifications/**"
       - "packages/status-fetcher/**"
       - "pnpm-workspace.yaml"
+concurrency:
+  group: fly-deploy-workflows-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   deploy-workflows:
     name: Deploy Workflows

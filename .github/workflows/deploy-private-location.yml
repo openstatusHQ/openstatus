@@ -6,6 +6,9 @@ on:
     paths:
       - "apps/private-location/**"
       - "apps/checker/**"
+concurrency:
+  group: fly-deploy-private-location-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   deploy-private-location:
     name: Deploy Private Location
