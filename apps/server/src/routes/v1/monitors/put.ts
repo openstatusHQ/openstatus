@@ -104,7 +104,14 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       assertSafeMonitorUrl({ jobType: _monitor.jobType, url: input.url });
     }
 
-    const { headers, regions, assertions, ...rest } = input;
+    const { headers, regions, assertions, openTelemetry, ...rest } = input;
+
+    const otelHeadersEntries = openTelemetry?.headers
+      ? Object.entries(openTelemetry.headers).map(([key, value]) => ({
+          key,
+          value,
+        }))
+      : undefined;
 
     const assert = assertions ? getAssertions(assertions) : [];
 
@@ -115,6 +122,10 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         regions: regions ? regions.join(",") : undefined,
         description: input.description ?? undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
+        otelEndpoint: openTelemetry?.endpoint,
+        otelHeaders: otelHeadersEntries
+          ? JSON.stringify(otelHeadersEntries)
+          : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
         timeout: input.timeout || 45000,
         updatedAt: new Date(),

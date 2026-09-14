@@ -1,3 +1,6 @@
+import { db, eq } from "@openstatus/db";
+import { monitor } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
 
@@ -5,6 +8,57 @@ import { app } from "@/index";
 import { createErrorSchema } from "@/libs/errors";
 
 import { MonitorSchema } from "./schema";
+
+test("create a monitor persists OpenTelemetry for subsequent reads", async () => {
+  const { workspace } = await createTestWorkspace();
+  const headers = {
+    "x-openstatus-key": String(workspace.id),
+    "content-type": "application/json",
+  };
+  const openTelemetry = {
+    endpoint: "https://otel.example.com/v1/traces",
+    headers: { "x-api-key": "test-key", "x-tenant-id": "test-tenant" },
+  };
+
+  try {
+    const res = await app.request("/v1/monitor", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        name: "Telemetry monitor",
+        url: "https://example.com",
+        method: "GET",
+        periodicity: "10m",
+        regions: ["ams"],
+        openTelemetry,
+      }),
+    });
+    expect(res.status).toBe(200);
+    const created = MonitorSchema.parse(await res.json());
+    const stored = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.workspaceId, workspace.id))
+      .get();
+    expect(stored?.otelEndpoint).toBe(openTelemetry.endpoint);
+    expect(JSON.parse(stored?.otelHeaders ?? "null")).toEqual([
+      { key: "x-api-key", value: "test-key" },
+      { key: "x-tenant-id", value: "test-tenant" },
+    ]);
+    expect(created.openTelemetry).toEqual(openTelemetry);
+
+    const read = await app.request(`/v1/monitor/${created.id}`, { headers });
+    expect(read.status).toBe(200);
+    expect(MonitorSchema.parse(await read.json()).openTelemetry).toEqual(
+      openTelemetry,
+    );
+    const list = await app.request("/v1/monitor", { headers });
+    expect(list.status).toBe(200);
+    expect(MonitorSchema.array().parse(await list.json())).toEqual([created]);
+  } finally {
+    await db.delete(monitor).where(eq(monitor.workspaceId, workspace.id));
+  }
+});
 
 test("create a valid monitor", async () => {
   const res = await app.request("/v1/monitor", {

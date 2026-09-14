@@ -96,7 +96,14 @@ export function registerPostMonitor(api: typeof monitorsApi) {
     // `jobType` is nullable on the wire; the column defaults to "http".
     assertSafeMonitorUrl({ jobType: input.jobType ?? "http", url: input.url });
 
-    const { headers, regions, assertions, ...rest } = input;
+    const { headers, regions, assertions, openTelemetry, ...rest } = input;
+
+    const otelHeadersEntries = openTelemetry?.headers
+      ? Object.entries(openTelemetry.headers).map(([key, value]) => ({
+          key,
+          value,
+        }))
+      : undefined;
 
     const assert = assertions ? getAssertions(assertions) : [];
 
@@ -108,6 +115,10 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         regions: regions ? regions.join(",") : undefined,
         description: input.description ?? undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
+        otelEndpoint: openTelemetry?.endpoint,
+        otelHeaders: otelHeadersEntries
+          ? JSON.stringify(otelHeadersEntries)
+          : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
         timeout: input.timeout || 45000,
       })
