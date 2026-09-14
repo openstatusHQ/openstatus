@@ -72,6 +72,41 @@ test("update a monitor replaces OpenTelemetry and preserves it when omitted", as
   }
 });
 
+for (const endpoint of [
+  "http://127.0.0.1:4317",
+  "ftp://otel.example.com",
+  undefined,
+]) {
+  test(`update rejects unsafe OpenTelemetry endpoint ${endpoint ?? "(default)"}`, async () => {
+    const { workspace } = await createTestWorkspace();
+    const existing = await createMonitor(workspace.id, {
+      jobType: "tcp",
+      url: "example.com:443",
+      otelEndpoint: "https://otel.example.com",
+      otelHeaders: '[{"key":"x-api-key","value":"existing-key"}]',
+    });
+    try {
+      const res = await app.request(`/v1/monitor/${existing.id}`, {
+        method: "PUT",
+        headers: {
+          "x-openstatus-key": String(workspace.id),
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ jobType: "tcp", openTelemetry: { endpoint } }),
+      });
+      const stored = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, existing.id))
+        .get();
+      expect(stored).toEqual(existing);
+      expect(res.status).toBe(400);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.workspaceId, workspace.id));
+    }
+  });
+}
+
 test("update the monitor", async () => {
   const res = await app.request("/v1/monitor/1", {
     method: "PUT",

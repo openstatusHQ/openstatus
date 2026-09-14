@@ -60,6 +60,42 @@ test("create a monitor persists OpenTelemetry for subsequent reads", async () =>
   }
 });
 
+for (const endpoint of [
+  "http://127.0.0.1:4317",
+  "ftp://otel.example.com",
+  undefined,
+]) {
+  test(`create rejects unsafe OpenTelemetry endpoint ${endpoint ?? "(default)"}`, async () => {
+    const { workspace } = await createTestWorkspace();
+    try {
+      const res = await app.request("/v1/monitor", {
+        method: "POST",
+        headers: {
+          "x-openstatus-key": String(workspace.id),
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          name: "Telemetry monitor",
+          url: "example.com:443",
+          jobType: "tcp",
+          method: "GET",
+          periodicity: "10m",
+          regions: ["ams"],
+          openTelemetry: { endpoint },
+        }),
+      });
+      const stored = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.workspaceId, workspace.id));
+      expect(stored).toEqual([]);
+      expect(res.status).toBe(400);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.workspaceId, workspace.id));
+    }
+  });
+}
+
 test("create a valid monitor", async () => {
   const res = await app.request("/v1/monitor", {
     method: "POST",

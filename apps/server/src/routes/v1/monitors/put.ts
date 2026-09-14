@@ -105,6 +105,12 @@ export function registerPutMonitor(api: typeof monitorsApi) {
     }
 
     const { headers, regions, assertions, openTelemetry, ...rest } = input;
+    if (openTelemetry) {
+      assertSafeMonitorUrl({
+        jobType: "http",
+        url: openTelemetry.endpoint,
+      });
+    }
 
     const otelHeadersEntries = openTelemetry?.headers
       ? Object.entries(openTelemetry.headers).map(([key, value]) => ({

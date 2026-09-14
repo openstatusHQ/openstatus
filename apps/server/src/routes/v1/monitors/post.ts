@@ -4,7 +4,7 @@ import { serialize } from "@openstatus/assertions";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { openApiErrorResponses, OpenStatusApiError } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 
 import type { monitorsApi } from "./index";
@@ -97,6 +97,12 @@ export function registerPostMonitor(api: typeof monitorsApi) {
     assertSafeMonitorUrl({ jobType: input.jobType ?? "http", url: input.url });
 
     const { headers, regions, assertions, openTelemetry, ...rest } = input;
+    if (openTelemetry) {
+      assertSafeMonitorUrl({
+        jobType: "http",
+        url: openTelemetry.endpoint,
+      });
+    }
 
     const otelHeadersEntries = openTelemetry?.headers
       ? Object.entries(openTelemetry.headers).map(([key, value]) => ({
