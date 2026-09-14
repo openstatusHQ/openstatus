@@ -125,7 +125,7 @@ Your private location probe is now running on Cloudflare Containers and will sta
 
 ## Verify the deployment
 
-You can check the logs of your Cloudflare Worker to see the probe in action. In your openstatus dashboard, the private location should now show as connected.
+You can check the logs of your Cloudflare Worker to see the probe in action. In your openstatus dashboard, the private location's status flips to **active** once the agent reports, and checks from it start appearing in your monitors' response logs.
 
 <Image
     src="/docs/guides/how-to-deploy-probes-cf-containters/cloudflare-log.png"
@@ -135,6 +135,6 @@ You can check the logs of your Cloudflare Worker to see the probe in action. In 
 
 <Image
     src="/docs/guides/how-to-deploy-probes-cf-containters/private-location.jpg"
-    alt="openstatus Private Location connected"
-    caption="The private location showing as 'Connected' in the openstatus dashboard."
+    alt="openstatus monitor response logs showing checks from a private location"
+    caption="Response logs for a monitor, showing checks arriving from the private probe (Cloud Provider: private)."
   />

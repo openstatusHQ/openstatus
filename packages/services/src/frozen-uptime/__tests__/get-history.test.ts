@@ -5,9 +5,9 @@ import {
   page,
   pageComponent,
   statusReport,
+  statusReportsToPageComponents,
   statusReportUpdate,
   statusReportUpdateToPageComponents,
-  statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
@@ -49,7 +49,10 @@ function key(offset: number): string {
   const d = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - offset, 1),
   );
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(
+    2,
+    "0",
+  )}`;
 }
 
 function monthStart(k: string): Date {
@@ -383,7 +386,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes,
-        now,
+        now: new Date(monthStart(key(0)).getTime() + MS_PER_DAY),
         sleep: noSleep,
       });
 
@@ -398,6 +401,67 @@ describe("getUptimeHistory", () => {
       // aged past the TB window without a freeze → no data, never down
       expect(row.months[key(3)]).toBe(null);
       expect(res.createdAt?.getTime()).toBe(testPage.createdAt?.getTime());
+    });
+  });
+
+  test("expired previous-month counts are no-data unless frozen", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const testMonitor = await insertMonitor(tx);
+      const testPage = await insertPage(tx);
+      await insertComponent(tx, {
+        pageId: testPage.id,
+        monitorId: testMonitor.id,
+      });
+      const pipes = makePipes([
+        {
+          monitorId: String(testMonitor.id),
+          day: "2026-08-31",
+          ok: 100,
+          degraded: 0,
+          error: 0,
+        },
+        {
+          monitorId: String(testMonitor.id),
+          day: "2026-09-01",
+          ok: 0,
+          degraded: 0,
+          error: 100,
+        },
+      ]);
+
+      for (const [date, previous, rolling] of [
+        ["2026-09-14T23:59:59.999Z", 100, 50],
+        ["2026-09-15T00:00:00.000Z", null, 0],
+        ["2026-09-30T12:00:00.000Z", null, 0],
+      ] as const) {
+        const res = await getUptimeHistory({
+          ctx,
+          input: { pageId: testPage.id },
+          pipes,
+          now: new Date(date),
+          sleep: noSleep,
+        });
+        expect(res.rows[0].months["2026-08"]).toBe(previous);
+        expect(res.rows[0].months["2026-09"]).toBe(0);
+        expect(res.rows[0].rolling["6"]).toBe(rolling);
+        expect(res.summary["6"].uptime).toBe(rolling);
+      }
+
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: "2026-08-01",
+        days: [{ day: "2026-08-01", ok: 25, degraded: 0, error: 75 }],
+      });
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes,
+        now: new Date("2026-09-30T12:00:00.000Z"),
+        sleep: noSleep,
+      });
+      expect(res.rows[0].months["2026-08"]).toBe(25);
+      expect(res.rows[0].rolling["6"]).toBe(12.5);
     });
   });
 

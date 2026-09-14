@@ -1,7 +1,7 @@
 import { count, desc, eq } from "@openstatus/db";
 import { privateLocation } from "@openstatus/db/src/schema";
 
-import { type ServiceContext, getReadDb } from "../context";
+import { getReadDb, type ServiceContext } from "../context";
 import { ListPrivateLocationsInput } from "./schemas";
 
 const LIMIT_DEFAULT = 50;
@@ -9,7 +9,7 @@ const LIMIT_DEFAULT = 50;
 /**
  * List private locations in the caller's workspace, each one flattened to
  * include the monitors it's attached to (the relational join's `monitor`
- * link lifted onto `monitors`, filtered to non-null).
+ * link lifted onto `monitors`, excluding deleted monitors).
  *
  * Return type is deliberately inferred from drizzle's relational query
  * rather than annotated: pulling the shape out of `@openstatus/db`'s
@@ -46,7 +46,9 @@ export async function listPrivateLocations(args: {
       ...row,
       monitors: row.privateLocationToMonitors
         .map((link) => link.monitor)
-        .filter((m) => m !== null),
+        .filter(
+          (m): m is NonNullable<typeof m> => m !== null && m.deletedAt === null,
+        ),
     })),
     totalSize: total?.count ?? 0,
   };

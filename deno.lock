@@ -8,7 +8,8 @@
     "jsr:@std/internal@^1.0.12": "1.0.14",
     "jsr:@std/internal@^1.0.13": "1.0.14",
     "jsr:@std/path@^1.1.4": "1.1.4",
-    "jsr:@std/testing@*": "1.0.19"
+    "jsr:@std/testing@*": "1.0.19",
+    "jsr:@std/yaml@^1.0.9": "1.2.0"
   },
   "jsr": {
     "@std/assert@1.0.19": {
@@ -47,6 +48,9 @@
         "jsr:@std/async",
         "jsr:@std/data-structures"
       ]
+    },
+    "@std/yaml@1.2.0": {
+      "integrity": "20beb41e4983ba3437dbefac62b14061ab058e8a187596f19d28ff9035f6e6cf"
     }
   },
   "workspace": {

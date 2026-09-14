@@ -27,3 +27,4 @@ export * from "./external_services";
 export * from "./chat_sessions";
 export * from "./frozen_uptime";
 export * from "./monitor_transition";
+export * from "./oauth";

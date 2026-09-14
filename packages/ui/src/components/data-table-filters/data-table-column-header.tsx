@@ -1,7 +1,7 @@
+import { ChevronDown, ChevronUp } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
 import type { Column } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import type React from "react";
 
 interface DataTableColumnHeaderProps<

@@ -78,8 +78,9 @@ export async function sendMessage({
   if (!process.env.TELEGRAM_BOT_TOKEN) {
     throw new Error("TELEGRAM_BOT_TOKEN is not set");
   }
+  const params = new URLSearchParams({ chat_id: chatId, text: message });
   const res = await fetch(
-    `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${chatId}&text=${message}`,
+    `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage?${params}`,
   );
   if (!res.ok) {
     throw new Error(`Failed to send telegram message: ${res.statusText}`);

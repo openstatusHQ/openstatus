@@ -36,7 +36,11 @@ export function NavActions() {
           <Link href="/monitors/create">Create Monitor</Link>
         </Button>
       )}
-      <UpgradeDialog open={openDialog} onOpenChange={setOpenDialog} />
+      <UpgradeDialog
+        open={openDialog}
+        onOpenChange={setOpenDialog}
+        limit="monitors"
+      />
     </div>
   );
 }

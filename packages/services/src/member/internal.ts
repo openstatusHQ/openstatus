@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { emitAudit } from "../audit";
 import { type DB, type ServiceContext } from "../context";
+import { revokeGrantsForUser } from "../oauth/revoke";
 
 // Composite-PK rows: drizzle's createSelectSchema would flatten the join,
 // but the membership row has no auto-generated columns we'd want to drop
@@ -51,5 +52,13 @@ export async function removeMemberInWorkspace(args: {
     entityType: "member",
     entityId: userId,
     before: memberRowSnapshot.parse(removed),
+  });
+
+  await revokeGrantsForUser({
+    tx,
+    ctx,
+    userId,
+    workspaceId: ctx.workspace.id,
+    reason: "member_removed",
   });
 }

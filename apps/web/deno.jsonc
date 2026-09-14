@@ -1,5 +1,9 @@
-/* Needed to fix the import aliases */
+/* Needed to fix the import aliases, and to render components in `deno test` */
 {
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+  },
   "imports": {
     "@/": "./src/",
   },

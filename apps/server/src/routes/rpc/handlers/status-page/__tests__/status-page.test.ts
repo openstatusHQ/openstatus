@@ -1239,10 +1239,10 @@ describe("StatusPageService locale fields", () => {
       .where(eq(page.id, testPageToUpdateId));
   });
 
-  test("returns distinct enum values for tr, hi and ko", async () => {
+  test("returns distinct enum values for tr, hi, ko and ja", async () => {
     await db
       .update(page)
-      .set({ defaultLocale: "ko", locales: ["en", "tr", "hi", "ko"] })
+      .set({ defaultLocale: "ja", locales: ["en", "tr", "hi", "ko", "ja"] })
       .where(eq(page.id, testPageId));
 
     const res = await connectRequest(
@@ -1254,12 +1254,13 @@ describe("StatusPageService locale fields", () => {
     expect(res.status).toBe(200);
 
     const data = await res.json();
-    expect(data.statusPage.defaultLocale).toBe("LOCALE_KO");
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_JA");
     expect(data.statusPage.locales).toEqual([
       "LOCALE_EN",
       "LOCALE_TR",
       "LOCALE_HI",
       "LOCALE_KO",
+      "LOCALE_JA",
     ]);
 
     // Restore defaults
@@ -1269,13 +1270,13 @@ describe("StatusPageService locale fields", () => {
       .where(eq(page.id, testPageId));
   });
 
-  test("round-trips tr, hi and ko through update", async () => {
+  test("round-trips tr, hi, ko and ja through update", async () => {
     const res = await connectRequest(
       "UpdateStatusPage",
       {
         id: String(testPageToUpdateId),
         defaultLocale: "LOCALE_TR",
-        locales: ["LOCALE_TR", "LOCALE_HI", "LOCALE_KO"],
+        locales: ["LOCALE_TR", "LOCALE_HI", "LOCALE_KO", "LOCALE_JA"],
       },
       { "x-openstatus-key": "1" },
     );
@@ -1288,6 +1289,7 @@ describe("StatusPageService locale fields", () => {
       "LOCALE_TR",
       "LOCALE_HI",
       "LOCALE_KO",
+      "LOCALE_JA",
     ]);
 
     const stored = await db
@@ -1296,7 +1298,7 @@ describe("StatusPageService locale fields", () => {
       .where(eq(page.id, testPageToUpdateId))
       .get();
     expect(stored?.defaultLocale).toBe("tr");
-    expect(stored?.locales).toEqual(["tr", "hi", "ko"]);
+    expect(stored?.locales).toEqual(["tr", "hi", "ko", "ja"]);
 
     // Restore defaults
     await db

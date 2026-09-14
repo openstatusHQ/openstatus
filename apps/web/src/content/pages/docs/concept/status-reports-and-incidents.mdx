@@ -23,7 +23,7 @@ The word "incident" is overloaded. Colloquially it means the whole event — the
 
 ## Incidents: detection
 
-An incident is created **automatically** when enough of a monitor's recent checks fail — a threshold mechanism that filters out one-off network blips. You never create an incident by hand.
+An incident is created **automatically** when at least half of a monitor's configured regions report an `error` — requiring agreement across regions is what filters out a single flaky probe. You never create an incident by hand.
 
 An incident is scoped to a single **monitor** and is primarily an internal object:
 
@@ -90,7 +90,7 @@ On the status page itself, when several apply to one component, the worst wins: 
 
 ## A typical event, end to end
 
-1. **14:00** — Your API monitor's checks start failing from multiple regions. An **incident** is created and your on-call gets paged.
+1. **14:00** — Your API monitor's checks start failing from enough regions to cross the threshold. An **incident** is created and your on-call gets paged.
 2. **14:02** — You acknowledge the incident, confirm it's real, and publish a **status report** on your status page: status `investigating`, API component set to `major_outage`.
 3. **14:15** — Root cause found. You post an update: `identified`, API downgraded to `partial_outage` as the rollback lands.
 4. **14:30** — Rollback complete, checks recovering. Update: `monitoring`.

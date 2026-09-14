@@ -62,10 +62,13 @@ export const DataTableContext = createContext<DataTableContextType<
 
 export function DataTableProvider<TData, TValue>({
   children,
+  controlsDefaultOpen,
   ...props
 }: Partial<DataTableStateContextType> &
   DataTableBaseContextType<TData, TValue> & {
     children: React.ReactNode;
+    /** Server-read initial state of the filter controls panel. */
+    controlsDefaultOpen?: boolean;
   }) {
   const value = useMemo(
     // eslint-disable-next-line react-hooks/preserve-manual-memoization
@@ -102,7 +105,7 @@ export function DataTableProvider<TData, TValue>({
 
   return (
     <DataTableContext.Provider value={value}>
-      <ControlsProvider>
+      <ControlsProvider defaultOpen={controlsDefaultOpen}>
         <DataTableStoreSync />
         {children}
       </ControlsProvider>

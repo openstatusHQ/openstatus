@@ -397,7 +397,7 @@ export function FormImport({
                           <FormMessage />
                           <FormDescription>
                             Your Checkly account ID. Found in Checkly under
-                            Account Settings → General.
+                            Account Settings &gt; General.
                           </FormDescription>
                         </FormItem>
                       )}

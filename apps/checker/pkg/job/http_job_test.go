@@ -171,7 +171,7 @@ func TestHTTPJob_HeaderAssertions(t *testing.T) {
 			Retry:   1,
 			HeaderAssertions: []*v1.HeaderAssertion{
 				{
-					Key:        "X-Custom",
+					Key:        "x-custom",
 					Comparator: v1.StringComparator_STRING_COMPARATOR_EQUAL,
 					Target:     target,
 				},

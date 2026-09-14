@@ -5,6 +5,12 @@
 - Deno
 - HonoJS
 
+## MCP Registry
+
+The hosted MCP server is listed in the official MCP Registry as
+`dev.openstatus/mcp`. See [MCP_REGISTRY.md](./MCP_REGISTRY.md) for the
+listing file, namespace ownership, and how to publish a new version.
+
 ## Deploy
 
 From root

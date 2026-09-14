@@ -30,8 +30,7 @@ export function DevelopmentIndicator() {
               <TooltipContent side="top">
                 {!isMobile ? (
                   <p>
-                    Press <Kbd className="ms-0 -me-0">F</Kbd> key to provide
-                    feedback.
+                    Press <Kbd>F</Kbd> key to provide feedback.
                   </p>
                 ) : (
                   <p>Use a larger screen to provide feedback.</p>

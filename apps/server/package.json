@@ -6,11 +6,13 @@
   "main": "src/index.ts",
   "scripts": {
     "env": "deno run -A env.ts",
-    "dev": "deno run -A --watch --sloppy-imports src/serve.ts",
+    "dev": "deno run -A --watch --sloppy-imports --env-file=.env src/serve.ts",
     "start": "NODE_ENV=production deno run -A --sloppy-imports src/serve.ts",
     "test": "deno test --parallel -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json",
     "check": "deno check --sloppy-imports src/serve.ts",
-    "eval:mcp": "deno run -A --sloppy-imports src/routes/mcp/evals/run.ts"
+    "eval:mcp": "deno run -A --sloppy-imports src/routes/mcp/evals/run.ts",
+    "openapi:json": "deno run -A scripts/build-openapi-json.ts && pnpm exec oxfmt static/openapi.json static/openapi-yaml.ts",
+    "openapi:v1": "deno run -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json scripts/build-openapi-v1-json.ts && pnpm exec oxfmt static/openapi-v1.json"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "catalog:",
@@ -32,6 +34,13 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/error": "workspace:*",
+    "@openstatus/health": "catalog:",
+    "@openstatus/health-fly": "catalog:",
+    "@openstatus/health-hono": "catalog:",
+    "@openstatus/health-tinybird": "catalog:",
+    "@openstatus/health-turso": "catalog:",
+    "@openstatus/health-unkey": "catalog:",
+    "@openstatus/health-upstash": "catalog:",
     "@openstatus/locales": "workspace:*",
     "@openstatus/notification-bird-whatsapp": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",

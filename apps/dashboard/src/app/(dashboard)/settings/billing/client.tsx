@@ -229,6 +229,14 @@ export function Client() {
                     workspace={workspace}
                   />
                 ) : null}
+                {planAddons.monitors ? (
+                  <BillingAddons
+                    label={planAddons.monitors.title}
+                    description={planAddons.monitors.description}
+                    addon="monitors"
+                    workspace={workspace}
+                  />
+                ) : null}
                 {planAddons.sso ? (
                   <BillingAddons
                     label={planAddons.sso.title}

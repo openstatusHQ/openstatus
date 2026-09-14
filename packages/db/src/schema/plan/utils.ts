@@ -2,6 +2,8 @@ import type { WorkspacePlan } from "../workspaces/validation";
 import { allPlans } from "./config";
 import {
   type Addons,
+  type AddonQuantityKey,
+  addonQuantityConfig,
   type BillingInterval,
   type Limits,
   limitsSchema,
@@ -64,6 +66,24 @@ export function getPriceConfig(
 ) {
   const planConfig = allPlans[plan];
   return resolvePriceConfig(planConfig.price[interval], currency);
+}
+
+export function isAddonQuantityKey(
+  addon: keyof Addons,
+): addon is AddonQuantityKey {
+  return addon in addonQuantityConfig;
+}
+
+export function getAddonQuantityConfig(addon: keyof Addons) {
+  return isAddonQuantityKey(addon) ? addonQuantityConfig[addon] : null;
+}
+
+export function getAddonPackSize(addon: keyof Addons): number {
+  return getAddonQuantityConfig(addon)?.packSize ?? 1;
+}
+
+export function getAddonMaxQuantity(addon: keyof Addons): number | null {
+  return getAddonQuantityConfig(addon)?.maxQuantity ?? null;
 }
 
 export function getAddonPriceConfig(

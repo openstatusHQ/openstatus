@@ -1,9 +1,9 @@
-import { eq } from "@openstatus/db";
+import { desc, eq } from "@openstatus/db";
 import {
   statusReport,
+  statusReportsToPageComponents,
   statusReportUpdate,
   statusReportUpdateToPageComponents,
-  statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
@@ -64,7 +64,24 @@ export async function updateStatusReport(args: {
 
     const updateValues: Record<string, unknown> = { updatedAt: new Date() };
     if (input.title !== undefined) updateValues.title = input.title;
-    if (input.status !== undefined) updateValues.status = input.status;
+    if (input.status !== undefined) {
+      const latest = await tx
+        .select({ id: statusReportUpdate.id })
+        .from(statusReportUpdate)
+        .where(eq(statusReportUpdate.statusReportId, report.id))
+        .orderBy(desc(statusReportUpdate.date), desc(statusReportUpdate.id))
+        .limit(1)
+        .get();
+
+      if (latest) {
+        await updateStatusReportUpdate({
+          ctx: { ...ctx, db: tx },
+          input: { id: latest.id, status: input.status },
+        });
+      } else {
+        updateValues.status = input.status;
+      }
+    }
 
     if (input.pageComponentIds !== undefined) {
       const validated = await validatePageComponentIds({

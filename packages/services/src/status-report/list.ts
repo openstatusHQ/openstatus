@@ -1,5 +1,4 @@
 import {
-  type SQL,
   and,
   asc,
   db as defaultDb,
@@ -7,21 +6,22 @@ import {
   eq,
   gte,
   inArray,
+  type SQL,
   sql,
 } from "@openstatus/db";
 import {
-  type PageComponentImpact,
-  pageComponent,
   page as pageTable,
+  pageComponent,
+  type PageComponentImpact,
   selectPageComponentSchema,
   selectPageSchema,
   statusReport,
+  statusReportsToPageComponents,
   statusReportUpdate,
   statusReportUpdateToPageComponents,
-  statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
-import { type DB, type ServiceContext, batchReads } from "../context";
+import { batchReads, type DB, type ServiceContext } from "../context";
 import type {
   Page,
   PageComponent,
@@ -99,7 +99,7 @@ async function enrichReportsBatch(
       .select()
       .from(statusReportUpdate)
       .where(inArray(statusReportUpdate.statusReportId, reportIds))
-      .orderBy(desc(statusReportUpdate.date)),
+      .orderBy(desc(statusReportUpdate.date), desc(statusReportUpdate.id)),
     // Explicit column selection with aliases avoids depending on drizzle's
     // auto-derived `row.<object_name>` keys — those are named after the
     // exported JS variable, so a rename in the schema silently breaks the

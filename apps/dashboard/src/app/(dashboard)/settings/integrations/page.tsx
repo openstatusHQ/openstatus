@@ -16,6 +16,7 @@ import {
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { ConnectedAppsCard } from "./connected-apps-card";
 import { SlackIntegrationCard } from "./slack-card";
 
 export default function Page() {
@@ -62,6 +63,7 @@ export default function Page() {
                 : null
             }
           />
+          <ConnectedAppsCard />
         </FormCardGroup>
       </Section>
     </SectionGroup>

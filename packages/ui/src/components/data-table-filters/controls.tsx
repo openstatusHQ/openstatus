@@ -1,6 +1,10 @@
-import { useLocalStorage } from "@openstatus/ui/hooks/use-local-storage";
-import { CONTROLS_KEY } from "@openstatus/ui/lib/data-table-filters/local-storage";
-import { createContext, useContext } from "react";
+"use client";
+
+import {
+  CONTROLS_COOKIE_MAX_AGE,
+  CONTROLS_COOKIE_NAME,
+} from "@openstatus/ui/lib/data-table-filters/cookie";
+import { createContext, useCallback, useContext, useState } from "react";
 
 interface ControlsContextType {
   open: boolean;
@@ -9,8 +13,27 @@ interface ControlsContextType {
 
 export const ControlsContext = createContext<ControlsContextType | null>(null);
 
-export function ControlsProvider({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useLocalStorage(CONTROLS_KEY, true);
+export function ControlsProvider({
+  children,
+  defaultOpen = true,
+}: {
+  children: React.ReactNode;
+  /**
+   * Read `CONTROLS_COOKIE_NAME` on the server and pass it in to persist the
+   * panel across loads; without it the panel reopens on every reload.
+   */
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpenState] = useState(defaultOpen);
+
+  const setOpen = useCallback(
+    (value: React.SetStateAction<boolean>) => {
+      const next = value instanceof Function ? value(open) : value;
+      setOpenState(next);
+      document.cookie = `${CONTROLS_COOKIE_NAME}=${next}; path=/; max-age=${CONTROLS_COOKIE_MAX_AGE}`;
+    },
+    [open],
+  );
 
   return (
     <ControlsContext.Provider value={{ open, setOpen }}>

@@ -4,6 +4,7 @@
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "moduleResolution": "bundler",
     "paths": {
       "@openstatus/ui/*": ["./src/*"]
     }

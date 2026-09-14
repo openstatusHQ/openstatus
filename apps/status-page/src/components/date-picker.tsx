@@ -3,6 +3,7 @@
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";
 import { Input } from "@openstatus/ui/components/ui/input";
+import { Kbd } from "@openstatus/ui/components/ui/kbd";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { endOfDay } from "date-fns";
@@ -11,7 +12,6 @@ import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 
 import { formatDateForInput } from "../lib/formatter";
-import { Kbd } from "./common/kbd";
 
 type DatePickerProps = {
   range: DateRange;

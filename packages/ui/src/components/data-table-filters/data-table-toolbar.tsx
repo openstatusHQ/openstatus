@@ -1,9 +1,10 @@
 "use client";
 
+import { SidebarLeft } from "@openstatus/icons";
 import { useControls } from "@openstatus/ui/components/data-table-filters/controls";
 import { useDataTable } from "@openstatus/ui/components/data-table-filters/data-table-provider";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { Kbd } from "@openstatus/ui/components/ui/kbd";
+import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
 import {
   Tooltip,
   TooltipContent,
@@ -12,7 +13,6 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { useHotKey } from "@openstatus/ui/hooks/use-hot-key";
 import { formatCompactNumber } from "@openstatus/ui/lib/format";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { DataTableFilterControlsDrawer } from "./data-table-filter-controls-drawer";
 import { DataTableRefreshButton } from "./data-table-refresh-button";
@@ -27,7 +27,7 @@ export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
   const { table, isLoading, columnFilters, totalRows, filterRows } =
     useDataTable();
   const { open, setOpen } = useControls();
-  useHotKey(() => setOpen((prev) => !prev), "b");
+  useHotKey(() => setOpen((prev) => !prev), "\\", { code: "Backslash" });
   const rows = {
     total: totalRows ?? table.getCoreRowModel().rows.length,
     filtered: filterRows ?? table.getFilteredRowModel().rows.length,
@@ -35,36 +35,31 @@ export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="-ml-2.5 flex flex-wrap items-center gap-2">
         <TooltipProvider>
           <Tooltip delayDuration={100}>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
+                size="icon"
                 onClick={() => setOpen((prev) => !prev)}
-                className="hidden gap-2 sm:flex"
+                className="hidden h-9 w-9 sm:flex"
               >
-                {open ? (
-                  <>
-                    <PanelLeftClose className="h-4 w-4" />
-                    <span className="hidden md:block">Hide Controls</span>
-                  </>
-                ) : (
-                  <>
-                    <PanelLeftOpen className="h-4 w-4" />
-                    <span className="hidden md:block">Show Controls</span>
-                  </>
-                )}
+                <SidebarLeft />
+                <span className="sr-only">
+                  {open ? "Hide Controls" : "Show Controls"}
+                </span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">
-              <p className="text-nowrap">
-                Toggle controls with{" "}
-                <Kbd className="text-muted-foreground group-hover:text-accent-foreground ml-1">
-                  <span className="mr-1">⌘</span>
-                  <span>B</span>
-                </Kbd>
-              </p>
+            <TooltipContent
+              side="right"
+              className="flex items-center gap-2 text-nowrap"
+            >
+              Toggle Controls
+              <KbdGroup>
+                <Kbd>⌘</Kbd>
+                <Kbd>\</Kbd>
+              </KbdGroup>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

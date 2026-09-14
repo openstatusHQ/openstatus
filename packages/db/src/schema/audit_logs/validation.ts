@@ -90,6 +90,17 @@ const apiKeyActions = [
   action("api_key.delete", "api_key", intId),
 ] as const;
 
+// `delete` covers every revocation path: manual, re-consent, member removal
+// and account deletion. `metadata` carries client name and scope on create.
+const oauthGrantActions = [
+  action("oauth_grant.create", "oauth_grant", intId, {
+    optionalMetadata: true,
+  }),
+  action("oauth_grant.delete", "oauth_grant", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
 const notificationActions = [
   action("notification.create", "notification", intId),
   action("notification.update", "notification", intId),
@@ -206,6 +217,7 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...pageComponentGroupActions,
   ...pageSubscriberActions,
   ...apiKeyActions,
+  ...oauthGrantActions,
   ...notificationActions,
   ...userActions,
   ...workspaceActions,

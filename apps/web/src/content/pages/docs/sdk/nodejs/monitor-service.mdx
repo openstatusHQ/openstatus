@@ -235,6 +235,12 @@ const { monitor } = await client.monitor.v1.MonitorService.updateDNSMonitor({
 
 List all monitors with offset-based pagination. Returns monitors grouped by type.
 
+<Aside>
+The response also carries `icmpMonitors` and `grpcMonitors`, and `totalSize` counts every type.
+The SDK does not yet ship create/update methods for those two — call the
+[ConnectRPC API](https://api.openstatus.dev/openapi) directly if you need them.
+</Aside>
+
 ```typescript
 const { httpMonitors, tcpMonitors, dnsMonitors, totalSize } =
   await client.monitor.v1.MonitorService.listMonitors({
@@ -257,7 +263,7 @@ Pagination parameters:
 
 ## Get Monitor
 
-Get a single monitor by ID. The response uses a `MonitorConfig` oneof type that contains one of HTTP, TCP, or DNS configuration.
+Get a single monitor by ID. The response uses a `MonitorConfig` oneof type that contains one of the HTTP, TCP, DNS, ICMP, or gRPC configurations.
 
 ```typescript
 const { monitor } = await client.monitor.v1.MonitorService.getMonitor({

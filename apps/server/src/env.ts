@@ -25,7 +25,17 @@ export const env = createEnv({
     SLACK_CLIENT_SECRET: z.string().optional(),
     SLACK_REDIRECT_URI: z.string().optional(),
     AI_GATEWAY_API_KEY: z.string().optional(),
-    STATUS_PAGE_URL: z.string().url().optional(),
+    // Fixed, not derived from the request host, so OAuth metadata is stable
+    // behind proxies. Defaults resolve in `routes/oauth/config.ts`.
+    OAUTH_ISSUER: z.url().optional(),
+    DASHBOARD_URL: z.url().optional(),
+    // Overload guards, per machine. `skipValidation` never runs these schemas,
+    // so defaults live in `libs/middlewares/limits.ts`.
+    API_MAX_IN_FLIGHT: z.coerce.number().optional(),
+    API_RATE_LIMIT_PER_MINUTE: z.coerce.number().optional(),
+    API_RATE_LIMIT_BURST_PER_10S: z.coerce.number().optional(),
+    API_RATE_LIMIT_WRITES_PER_MINUTE: z.coerce.number().optional(),
+    API_RATE_LIMIT_PUBLIC_PER_MINUTE: z.coerce.number().optional(),
   },
 
   /**

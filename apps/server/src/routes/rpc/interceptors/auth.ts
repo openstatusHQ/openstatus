@@ -2,13 +2,17 @@ import { Code, ConnectError, type Interceptor } from "@connectrpc/connect";
 import { nanoid } from "nanoid";
 
 import { lookupWorkspace, validateKey } from "../../../libs/middlewares/auth";
+import {
+  MISSING_CREDENTIALS_MESSAGE,
+  extractCredential,
+} from "../../../libs/middlewares/credentials";
 import { RPC_CONTEXT_KEY, type RpcContext } from "./context";
 
 export { RPC_CONTEXT_KEY, type RpcContext, getRpcContext } from "./context";
 
 /**
  * Authentication interceptor for ConnectRPC.
- * Validates the x-openstatus-key header and sets workspace context.
+ * Validates `x-openstatus-key` or a bearer token and sets workspace context.
  * Skips authentication for HealthService endpoints.
  */
 export function authInterceptor(): Interceptor {
@@ -18,16 +22,13 @@ export function authInterceptor(): Interceptor {
       return next(req);
     }
 
-    const apiKey = req.header.get("x-openstatus-key");
+    const credential = extractCredential(req.header);
 
-    if (!apiKey) {
-      throw new ConnectError(
-        "Missing 'x-openstatus-key' header",
-        Code.Unauthenticated,
-      );
+    if (!credential) {
+      throw new ConnectError(MISSING_CREDENTIALS_MESSAGE, Code.Unauthenticated);
     }
 
-    const { error, result } = await validateKey(apiKey);
+    const { error, result } = await validateKey(credential.token);
 
     if (error) {
       throw new ConnectError(error.message, Code.Unauthenticated);

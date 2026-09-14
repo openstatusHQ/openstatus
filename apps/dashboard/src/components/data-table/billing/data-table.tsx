@@ -1,8 +1,12 @@
 "use client";
 
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
-import type { BillingInterval } from "@openstatus/db/src/schema/plan/schema";
+import type {
+  Addons,
+  BillingInterval,
+} from "@openstatus/db/src/schema/plan/schema";
 import {
+  getAddonPackSize,
   getAddonPriceConfig,
   getPriceConfig,
 } from "@openstatus/db/src/schema/plan/utils";
@@ -20,9 +24,11 @@ import {
 } from "@openstatus/ui/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
 import { useRouter } from "next/navigation";
 import { Fragment, useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import { config as featureGroups, plans } from "@/data/plans";
 import { getStripe } from "@/lib/stripe";
@@ -34,11 +40,17 @@ const BASE_URL =
     ? "https://app.openstatus.dev"
     : "http://localhost:3000";
 
+function getQuantitySuffix(addon: keyof Addons) {
+  const packSize = getAddonPackSize(addon);
+  return packSize > 1 ? `/mo./${packSize}` : "/mo./each";
+}
+
 export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [currency] = useCookieState("x-currency", "USD");
   const trpc = useTRPC();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 
@@ -47,8 +59,19 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
       onSuccess: async (data) => {
         if (!data) return;
 
+        // An existing subscriber has the plan swapped on the subscription they
+        // already have, so there is no checkout to redirect to — only the
+        // refreshed workspace to pick up.
+        if (data.type === "updated") {
+          await queryClient.invalidateQueries({
+            queryKey: trpc.workspace.get.queryKey(),
+          });
+          toast.success("Your plan has been updated");
+          return;
+        }
+
         const stripe = await getStripe();
-        stripe?.redirectToCheckout({ sessionId: data.id });
+        stripe?.redirectToCheckout({ sessionId: data.session.id });
       },
     }),
   );
@@ -132,21 +155,29 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                       variant={id === "starter" ? "default" : "outline"}
                       onClick={() => {
                         startTransition(async () => {
-                          if (id === "free") {
-                            await customerPortalMutation.mutateAsync({
+                          try {
+                            if (id === "free") {
+                              await customerPortalMutation.mutateAsync({
+                                workspaceSlug: workspace.slug,
+                                returnUrl: `${BASE_URL}/settings/billing`,
+                              });
+                              return;
+                            }
+                            await checkoutSessionMutation.mutateAsync({
+                              currency: currency || "USD",
+                              plan: id,
+                              interval,
                               workspaceSlug: workspace.slug,
-                              returnUrl: `${BASE_URL}/settings/billing`,
+                              successUrl: `${BASE_URL}/settings/billing?success=true`,
+                              cancelUrl: `${BASE_URL}/settings/billing`,
                             });
-                            return;
+                          } catch (error) {
+                            toast.error(
+                              isTRPCClientError(error)
+                                ? error.message
+                                : "Failed to update your plan",
+                            );
                           }
-                          await checkoutSessionMutation.mutateAsync({
-                            currency: currency || "USD",
-                            plan: id,
-                            interval,
-                            workspaceSlug: workspace.slug,
-                            successUrl: `${BASE_URL}/settings/billing?success=true`,
-                            cancelUrl: `${BASE_URL}/settings/billing`,
-                          });
                         });
                       }}
                       disabled={isPending || isCurrentPlan}
@@ -219,7 +250,11 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                                       style: "currency",
                                       currency: price.currency,
                                     }).format(price.value)}
-                                    {isNumber ? "/mo./each" : "/mo."}
+                                    {isNumber
+                                      ? getQuantitySuffix(
+                                          value as keyof typeof plan.addons,
+                                        )
+                                      : "/mo."}
                                   </span>
                                 </span>
                               </div>

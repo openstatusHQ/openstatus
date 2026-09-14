@@ -29,10 +29,25 @@ export function clearProbeStamp(
   map.delete(slug);
 }
 
-export function isSuspicious(err: FetchError): boolean {
-  if (err.kind === "parse") return true;
+const BLOCKED_STATUSES = new Set([401, 403, 429]);
+
+// Bot challenges and rate limits say nothing about the provider; probing them
+// daily only adds noise.
+export function isBlocked(err: FetchError): boolean {
   return (
-    err.kind === "http" && err.httpStatus !== undefined && err.httpStatus < 500
+    err.kind === "http" &&
+    err.httpStatus !== undefined &&
+    BLOCKED_STATUSES.has(err.httpStatus)
+  );
+}
+
+export function isSuspicious(err: FetchError): boolean {
+  if (err.kind === "parse" || err.kind === "schema") return true;
+  return (
+    err.kind === "http" &&
+    err.httpStatus !== undefined &&
+    err.httpStatus < 500 &&
+    !isBlocked(err)
   );
 }
 
@@ -63,6 +78,18 @@ export function decideDetectionAction(
         .map((m) => m.provider)
         .sort()
         .join("|"),
+      evidence,
+    };
+  }
+  // A move needs a status_page_url edit, which stays manual.
+  if (result.movedTo) {
+    const providers = result.movedTo.matches
+      .map((m) => m.provider)
+      .sort()
+      .join("|");
+    return {
+      kind: "suggest",
+      suggestion: `${providers} at ${result.movedTo.base}`,
       evidence,
     };
   }

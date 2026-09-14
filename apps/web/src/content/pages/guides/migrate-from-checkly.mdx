@@ -10,7 +10,7 @@ faq:
   - question: "Which Checkly check types are supported?"
     answer: "API and URL checks import as HTTP monitors. TCP, ICMP, DNS, and SSL map to their openstatus job types. Browser, Playwright, multi-step, heartbeat, gRPC, traceroute, and AI checks have no HTTP-family equivalent and are skipped with a reason in the preview."
   - question: "What credentials do I need?"
-    answer: "Two values: a Checkly API key (User Settings → API keys) and your Checkly account ID (Account Settings → General). Checkly requires the account ID on every API request, so both are mandatory."
+    answer: "Two values: a Checkly API key (User Settings > API keys) and your Checkly account ID (Account Settings > General). Checkly requires the account ID on every API request, so both are mandatory."
   - question: "How are Checkly locations mapped to openstatus?"
     answer: "Checkly's AWS-region locations are mapped to the nearest openstatus probe: us-east-1 → iad, us-west-2 → sea, eu-west-1 → lhr, eu-central-1 → fra, ap-southeast-1 → sin, ap-southeast-2 → syd, and so on. Unmapped locations fall back to iad."
   - question: "Do Checkly status-page services become monitored components?"
@@ -21,7 +21,7 @@ howto:
   totalTime: "PT2M"
   steps:
     - name: "Get your Checkly API key and account ID"
-      text: "In Checkly, go to User Settings → API keys and create a key. Then open Account Settings → General and copy your account ID. You need both."
+      text: "In Checkly, go to User Settings > API keys and create a key. Then open Account Settings > General and copy your account ID. You need both."
     - name: "Preview the import"
       text: "In your openstatus dashboard, go to Status Pages, select a status page, open the Components tab, and scroll to the Import section. Select Checkly, paste your API key and account ID, then click Preview."
     - name: "Run the import"
@@ -198,7 +198,7 @@ API and URL checks import as HTTP monitors. TCP, ICMP, DNS, and SSL map to their
 
 <Details summary="What credentials do I need?">
 
-Two values: a Checkly API key (User Settings → API keys) and your Checkly account ID (Account Settings → General). Checkly requires the account ID on every API request, so both are mandatory.
+Two values: a Checkly API key (User Settings > API keys) and your Checkly account ID (Account Settings > General). Checkly requires the account ID on every API request, so both are mandatory.
 
 </Details>
 

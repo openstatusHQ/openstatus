@@ -11,8 +11,8 @@ import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
-  expectAuditRow,
   createWorkspaceFixture,
+  expectAuditRow,
   makeApiKeyCtx,
   makeUserCtx,
   readAuditLog,
@@ -643,6 +643,35 @@ describe("getPrivateLocation", () => {
       expect(found.id).toBe(created.id);
       expect(found.token).toBe(created.token);
       expect(found.monitors.map((m) => m.id)).toEqual([teamMonitorId]);
+    });
+  });
+
+  test("excludes soft-deleted monitors from get and list without losing healthy monitors", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const created = await createPrivateLocation({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-deleted-attachment`,
+          monitors: [teamMonitorId, secondMonitorId],
+        },
+      });
+      await tx
+        .update(monitor)
+        .set({ active: false, deletedAt: new Date() })
+        .where(eq(monitor.id, secondMonitorId));
+
+      const found = await getPrivateLocation({
+        ctx,
+        input: { id: created.id },
+      });
+      const listed = await listPrivateLocations({ ctx });
+      expect({
+        get: found.monitors.map((m) => m.id),
+        list: listed.items
+          .find((item) => item.id === created.id)
+          ?.monitors.map((m) => m.id),
+      }).toEqual({ get: [teamMonitorId], list: [teamMonitorId] });
     });
   });
 

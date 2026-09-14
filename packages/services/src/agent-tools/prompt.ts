@@ -31,10 +31,10 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
     opts.surface === "dashboard"
       ? `\n\nAfter a tool returns, the dashboard already renders a structured view of the result:
 - Write tools (create_*, update_*, resolve_*, add_*) render a diff card with every input/output field (id, status, message, dates, notify outcome).
-- List tools (list_status_pages, list_page_components, list_status_reports, list_maintenances, list_monitors, list_notifications, list_response_logs, list_audit_logs, search_docs) render a table with one row per result.
+- List tools (list_status_pages, list_page_components, list_status_reports, list_maintenances, list_monitors, list_notifications, list_response_logs, list_audit_logs, search_docs, search_content) render a table with one row per result.
 - Detail tools (get_monitor, get_monitor_status, get_monitor_summary, get_response_log, get_audit_log) render a structured detail card.
 DO NOT restate that data in your reply — no markdown tables, no bullet recaps of the rows, no field-by-field summaries. A one-line acknowledgement ("You have 4 status reports — 3 active." / "Monitor 12 is healthy in 5/7 regions; failing in gru, fra." / "Incident resolved.") plus an optional next step is enough.
-Exception: after get_doc_page, DO synthesize an answer from the page content — the answer is the point; just don't paste the whole page.`
+Exception: after get_doc_page or get_content_page, DO synthesize an answer from the page content — the answer is the point; just don't paste the whole page.`
       : "";
 
   const preamble = opts.preamble ? `${opts.preamble}\n\n` : "";
@@ -77,8 +77,9 @@ Docs knowledge base:
 - For questions about how openstatus itself works (features, configuration, CLI, API, plans), call search_docs BEFORE answering — never answer product questions from memory.
 - Reformulate the question into keyword queries. If the first search misses, retry once with different terms or type: "guides". "When did X ship?" → type: "changelog".
 - For the best 1-2 hits, call get_doc_page and ground your answer in that content. ALWAYS cite the page URL(s) in your reply as markdown links.
+- For questions beyond the docs — pricing and which plan fits, feature comparisons with other tools, use cases, customer stories, blog posts — call search_content (type: "all", or narrow to "product", "compare", "use-case", "customers", "blog") and read the best hits with get_content_page. Plan/pricing questions → search_content + get_content_page on "pricing".
 - If nothing relevant is found, say so plainly instead of guessing.
-- Do NOT use search_docs for workspace data questions — the list/get tools are the source of truth there.
+- Do NOT use search_docs or search_content for workspace data questions — the list/get tools are the source of truth there.
 
 Lifecycle:
 - Status reports flow: create_status_report once → add_status_report_update repeatedly → resolve_status_report.

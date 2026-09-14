@@ -1,6 +1,7 @@
 // Single source of truth for docs section order, page order, and sidebar labels.
-// Labels mirror each page's `title`, except section-landing pages which keep a
-// short label (e.g. title "Foundational Concepts" → label "Overview"). Page→section
+// Labels mirror each page's `title` in title case, except: section-landing pages
+// keep a short label (e.g. title "Foundational Concepts" → label "Overview"), and
+// Guides entries carry a "How to " prefix the page title may omit. Page→section
 // membership is mirrored by each doc's `category` frontmatter and cross-checked
 // at build time (see `validateDocsNav`).
 
@@ -153,8 +154,8 @@ export const docsNav: DocsNavSection[] = [
         label: "How to Auto-Post Status Updates to X and Bluesky",
       },
       {
-        slug: "guides/how-to-connect-openstatus-to-claude-code",
-        label: "How to Connect openstatus to Claude Code",
+        slug: "guides/how-to-connect-openstatus-to-your-agent",
+        label: "How to Connect openstatus to Your Coding Agent",
       },
       {
         slug: "guides/how-to-manage-openstatus-with-terraform",
@@ -214,6 +215,10 @@ export const docsNav: DocsNavSection[] = [
             slug: "sdk/nodejs/notification-service",
             label: "Notification Service",
           },
+          {
+            slug: "sdk/nodejs/private-location-service",
+            label: "Private Location Service",
+          },
           { slug: "sdk/nodejs/health-service", label: "Health Service" },
           { slug: "sdk/nodejs/error-handling", label: "Error Handling" },
           { slug: "sdk/nodejs/typescript-tips", label: "TypeScript Tips" },
@@ -239,6 +244,7 @@ export const docsNav: DocsNavSection[] = [
         label: "API Reference V2",
         external: true,
       },
+      { slug: "reference/api-rate-limits", label: "API Rate Limits" },
       { slug: "reference/cli-reference", label: "CLI Reference" },
       { slug: "reference/mcp-server", label: "MCP Server" },
       { slug: "reference/dns-monitor", label: "DNS Monitor Reference" },
@@ -342,7 +348,7 @@ export function docsNavTree(): DocsNavNode {
     label: "openstatus documentation",
     href: "/docs",
     description:
-      "Learn how to create your status page, monitor your endpoints, and configure notifications.",
+      "Infra as code for uptime monitoring and status pages. Let your agents update them. Learn how to monitor your endpoints, create your status page, configure notifications, and drive it all from the CLI, Terraform, API, or MCP.",
     children: docsNav.map((section) => {
       const parent = sectionParentSlug(section);
       return {

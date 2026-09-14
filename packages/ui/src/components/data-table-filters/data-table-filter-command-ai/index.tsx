@@ -1,5 +1,6 @@
 "use client";
 
+import { AI, Close, Loading, Search } from "@openstatus/icons";
 import { TextShimmer } from "@openstatus/ui/components/data-table-filters/data-table-filter-command-ai/text-shimmer";
 import {
   columnFiltersParserFromSchema,
@@ -18,7 +19,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@openstatus/ui/components/ui/command";
-import { Kbd } from "@openstatus/ui/components/ui/kbd";
+import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { useHotKey } from "@openstatus/ui/hooks/use-hot-key";
 import { useLocalStorage } from "@openstatus/ui/hooks/use-local-storage";
@@ -31,7 +32,6 @@ import { formatCompactNumber } from "@openstatus/ui/lib/format";
 import { cn } from "@openstatus/ui/lib/utils";
 import { Command as CommandPrimitive } from "cmdk";
 import { formatDistanceToNow } from "date-fns";
-import { LoaderCircle, Search, Sparkles, X } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -277,7 +277,7 @@ export function DataTableFilterAICommand({
         onClick={() => setOpen(true)}
       >
         {isLoading || isAILoading ? (
-          <LoaderCircle className="text-muted-foreground group-hover:text-popover-foreground mr-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
+          <Loading className="text-muted-foreground group-hover:text-popover-foreground mr-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
         ) : (
           <Search className="text-muted-foreground group-hover:text-popover-foreground mr-2 h-4 w-4 shrink-0 opacity-50" />
         )}
@@ -290,10 +290,10 @@ export function DataTableFilterAICommand({
             <span>Search data table...</span>
           )}
         </span>
-        <Kbd className="text-muted-foreground group-hover:text-accent-foreground ml-auto">
-          <span className="mr-1">⌘</span>
-          <span>J</span>
-        </Kbd>
+        <KbdGroup className="text-muted-foreground group-hover:text-accent-foreground ml-auto">
+          <Kbd>⌘</Kbd>
+          <Kbd>J</Kbd>
+        </KbdGroup>
       </button>
       <Command
         className={cn(
@@ -434,7 +434,7 @@ export function DataTableFilterAICommand({
                       }
                     }}
                   >
-                    <Sparkles className="size-4 shrink-0" />
+                    <AI className="size-4 shrink-0" />
                     {inputValue.trim()}
                     <span className="text-muted-foreground ml-auto text-xs">
                       describe your query to infer filters
@@ -488,7 +488,7 @@ export function DataTableFilterAICommand({
                               }}
                               className="hover:bg-background ml-1 hidden rounded-md p-0.5 group-aria-selected:block"
                             >
-                              <X className="h-4 w-4" />
+                              <Close className="h-4 w-4" />
                             </button>
                           </CommandItem>
                         );
@@ -531,7 +531,7 @@ export function DataTableFilterAICommand({
                 <span>
                   AI:{" "}
                   <Kbd>
-                    <Sparkles className="size-2.5 shrink-0" />
+                    <AI className="size-2.5 shrink-0" />
                   </Kbd>
                 </span>
               </div>

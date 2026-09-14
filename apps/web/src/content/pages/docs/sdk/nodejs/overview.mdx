@@ -11,10 +11,10 @@ The SDK is open source and developed in its own repository, [openstatusHQ/sdk-no
 
 ## Features
 
-- **HTTP, TCP, and DNS monitoring** — monitor websites, APIs, database connections, and DNS records from 28 locations worldwide.
+- **HTTP, TCP, and DNS monitoring** — monitor websites, APIs, database connections, and DNS records from 28 locations worldwide. (ICMP and gRPC monitors exist in the API but are not yet exposed by this SDK.)
 - **Status pages** — create and manage public status pages with monitor-based or static components, grouping, and subscribers.
 - **Status reports and maintenance** — manage incident reports with update timelines and schedule planned maintenance windows.
-- **Notifications** — configure Slack, Discord, Email, PagerDuty, Opsgenie, Telegram, and webhook channels.
+- **Notifications** — configure all 13 channels: Slack, Discord, Microsoft Teams, Email, SMS, WhatsApp, Telegram, PagerDuty, Opsgenie, Google Chat, Grafana OnCall, ntfy, and generic webhooks.
 - **Type-safe** — typed request/response messages generated from the openstatus protobuf schemas.
 - **Cross-runtime** — works on Node.js, Deno, and Bun, in both ESM and CJS.
 
@@ -38,6 +38,7 @@ The client exposes one service per domain. Each has its own reference page:
 | Status Page | [Status Page Service](/docs/sdk/nodejs/status-page-service) | Manage status pages, components, component groups, and subscribers. |
 | Maintenance | [Maintenance Service](/docs/sdk/nodejs/maintenance-service) | Schedule and manage planned maintenance windows. |
 | Notification | [Notification Service](/docs/sdk/nodejs/notification-service) | Configure notification channels and check usage limits. |
+| Private Location | [Private Location Service](/docs/sdk/nodejs/private-location-service) | Manage self-hosted probes and their agent tokens. |
 
 For authentication, errors, and TypeScript ergonomics, see [Authentication](/docs/sdk/nodejs/authentication), [Error Handling](/docs/sdk/nodejs/error-handling), [TypeScript Tips](/docs/sdk/nodejs/typescript-tips), and the full [Reference](/docs/sdk/nodejs/reference).
 

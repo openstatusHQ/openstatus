@@ -1,5 +1,6 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
+import "./test-preload.ts";
 import { statusLabel } from "@openstatus/utils";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";

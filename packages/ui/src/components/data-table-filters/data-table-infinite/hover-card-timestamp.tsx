@@ -1,6 +1,7 @@
 "use client";
 
 import { UTCDate } from "@date-fns/utc";
+import { Check, Copy } from "@openstatus/icons";
 import {
   HoverCard,
   HoverCardContent,
@@ -9,7 +10,6 @@ import {
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { format, formatDistanceToNowStrict } from "date-fns";
-import { Check, Copy } from "lucide-react";
 import type { ComponentPropsWithoutRef } from "react";
 
 type HoverCardContentProps = ComponentPropsWithoutRef<typeof HoverCardContent>;

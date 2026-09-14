@@ -8,6 +8,3 @@ export const getColumnOrderKey = (tableId: string) =>
 // Filter command search history per table
 export const getCommandHistoryKey = (tableId: string) =>
   `data-table-command-${tableId}`;
-
-// Controls panel open/close state (global)
-export const CONTROLS_KEY = "data-table-controls";

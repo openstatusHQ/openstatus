@@ -1,4 +1,4 @@
-import { Check, Minus } from "lucide-react";
+import { Check, Remove } from "@openstatus/icons";
 
 export function DataTableCellBoolean({
   value,
@@ -16,7 +16,7 @@ export function DataTableCellBoolean({
     );
   }
   return (
-    <Minus
+    <Remove
       className={`ml-auto h-4 w-4 ${color ? "" : "text-muted-foreground/50"}`}
       style={color ? { color } : undefined}
     />

@@ -1,8 +1,9 @@
 "use client";
 
+import { Close } from "@openstatus/icons";
 import { useDataTable } from "@openstatus/ui/components/data-table-filters/data-table-provider";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { Kbd } from "@openstatus/ui/components/ui/kbd";
+import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
 import {
   Tooltip,
   TooltipContent,
@@ -10,7 +11,6 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { useHotKey } from "@openstatus/ui/hooks/use-hot-key";
-import { X } from "lucide-react";
 
 export function DataTableResetButton() {
   const { table } = useDataTable();
@@ -21,18 +21,19 @@ export function DataTableResetButton() {
       <Tooltip delayDuration={100}>
         <TooltipTrigger asChild>
           <Button variant="ghost" onClick={() => table.resetColumnFilters()}>
-            <X className="mr-2 h-4 w-4" />
+            <Close className="mr-2 h-4 w-4" />
             Reset
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="left">
-          <p className="text-nowrap">
-            Reset filters with{" "}
-            <Kbd className="text-muted-foreground group-hover:text-accent-foreground ml-1">
-              <span className="mr-1">⌘</span>
-              <span>Esc</span>
-            </Kbd>
-          </p>
+        <TooltipContent
+          side="left"
+          className="flex items-center gap-2 text-nowrap"
+        >
+          Reset Filters
+          <KbdGroup>
+            <Kbd>⌘</Kbd>
+            <Kbd>Esc</Kbd>
+          </KbdGroup>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

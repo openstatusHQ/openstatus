@@ -11,10 +11,10 @@ The SDK is open source and developed in its own repository, [openstatusHQ/sdk-ph
 
 ## Features
 
-- **HTTP, TCP, and DNS monitoring** — monitor websites, APIs, database connections, and DNS records from 28 locations worldwide.
+- **HTTP, TCP, and DNS monitoring** — monitor websites, APIs, database connections, and DNS records from 28 locations worldwide. (ICMP and gRPC monitors exist in the API but are not yet exposed by this SDK.)
 - **Status pages** — create and manage public status pages with monitor-based or static components, grouping, and subscribers.
 - **Status reports and maintenance** — manage incident reports with update timelines and schedule planned maintenance windows.
-- **Notifications** — configure Slack, Discord, Email, PagerDuty, Opsgenie, Telegram, and webhook channels.
+- **Notifications** — configure all 13 channels: Slack, Discord, Microsoft Teams, Email, SMS, WhatsApp, Telegram, PagerDuty, Opsgenie, Google Chat, Grafana OnCall, ntfy, and generic webhooks.
 - **Type-safe** — strongly-typed messages generated from the openstatus protobuf schemas; no proto toolchain needed.
 - **PSR-18 transport** — bring your own HTTP client, or use the bundled Guzzle implementation.
 
@@ -22,7 +22,7 @@ The SDK is open source and developed in its own repository, [openstatusHQ/sdk-ph
 
 Before using the SDK, you need an API key:
 
-1. Log in to the [openstatus dashboard](https://www.openstatus.dev/app/login)
+1. Log in to the [openstatus dashboard](https://app.openstatus.dev/login)
 2. Go to **Settings** > **General** and find the **API Keys** card
 3. Click **Create** and copy the key
 

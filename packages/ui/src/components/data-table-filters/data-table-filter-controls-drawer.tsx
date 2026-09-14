@@ -1,3 +1,4 @@
+import { Filter } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Drawer,
@@ -9,7 +10,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@openstatus/ui/components/ui/drawer";
-import { Kbd } from "@openstatus/ui/components/ui/kbd";
+import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
 import {
   Tooltip,
   TooltipContent,
@@ -19,7 +20,6 @@ import {
 import { useHotKey } from "@openstatus/ui/hooks/use-hot-key";
 import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { FilterIcon } from "lucide-react";
 import React from "react";
 
 import { DataTableFilterControls } from "./data-table-filter-controls";
@@ -28,9 +28,13 @@ export function DataTableFilterControlsDrawer() {
   const triggerButtonRef = React.useRef<HTMLButtonElement>(null);
   const isMobile = useMediaQuery("(max-width: 640px)");
 
-  useHotKey(() => {
-    triggerButtonRef.current?.click();
-  }, "b");
+  useHotKey(
+    () => {
+      triggerButtonRef.current?.click();
+    },
+    "\\",
+    { code: "Backslash" },
+  );
 
   return (
     <Drawer>
@@ -44,18 +48,19 @@ export function DataTableFilterControlsDrawer() {
                 size="icon"
                 className="h-9 w-9"
               >
-                <FilterIcon className="h-4 w-4" />
+                <Filter className="h-4 w-4" />
               </Button>
             </DrawerTrigger>
           </TooltipTrigger>
-          <TooltipContent side="right">
-            <p className="text-nowrap">
-              Toggle controls with{" "}
-              <Kbd className="text-muted-foreground group-hover:text-accent-foreground ml-1">
-                <span className="mr-1">⌘</span>
-                <span>B</span>
-              </Kbd>
-            </p>
+          <TooltipContent
+            side="right"
+            className="flex items-center gap-2 text-nowrap"
+          >
+            Toggle Controls
+            <KbdGroup>
+              <Kbd>⌘</Kbd>
+              <Kbd>\</Kbd>
+            </KbdGroup>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

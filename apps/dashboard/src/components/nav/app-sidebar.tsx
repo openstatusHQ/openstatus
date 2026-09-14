@@ -2,6 +2,7 @@
 
 import { SidebarLeft } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
 import {
   Sidebar,
   SidebarContent,
@@ -18,7 +19,6 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import * as React from "react";
 
-import { Kbd } from "@/components/common/kbd";
 import { NavMonitors } from "@/components/nav/nav-monitors";
 import { NavOverview } from "@/components/nav/nav-overview";
 import { NavStatusPages } from "@/components/nav/nav-status-pages";
@@ -40,6 +40,8 @@ const data = {
   },
   overview: [
     { name: "Overview", url: NAV.overview.href, icon: NAV.overview.icon },
+    { name: "Assistant", url: NAV.chat.href, icon: NAV.chat.icon },
+    { name: "Agents", url: NAV.agents.href, icon: NAV.agents.icon },
     {
       name: "Status Pages",
       url: NAV.statusPages.href,
@@ -52,8 +54,6 @@ const data = {
       icon: NAV.notifications.icon,
     },
     { name: "Settings", url: NAV.settings.href, icon: NAV.settings.icon },
-    { name: "Assistant", url: NAV.chat.href, icon: NAV.chat.icon },
-    { name: "Slack agent", url: NAV.agents.href, icon: NAV.agents.icon },
   ],
 };
 
@@ -115,16 +115,12 @@ export function AppSidebarTrigger() {
             <span className="sr-only">Toggle Sidebar</span>
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="right">
-          <p className="mr-px inline-flex items-center">
-            Toggle Sidebar{" "}
-            <Kbd className="border-muted-foreground bg-primary text-background font-mono">
-              ⌘
-            </Kbd>
-            <Kbd className="border-muted-foreground bg-primary text-background font-mono">
-              {SIDEBAR_KEYBOARD_SHORTCUT}
-            </Kbd>
-          </p>
+        <TooltipContent side="right" className="flex items-center gap-2">
+          Toggle Sidebar
+          <KbdGroup>
+            <Kbd>⌘</Kbd>
+            <Kbd>{SIDEBAR_KEYBOARD_SHORTCUT}</Kbd>
+          </KbdGroup>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

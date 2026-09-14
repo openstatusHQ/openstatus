@@ -24,6 +24,7 @@ import {
 } from "../errors";
 import { deleteMonitors } from "../monitor/delete";
 import { deleteNotification } from "../notification/delete";
+import { revokeGrantsForUser } from "../oauth/revoke";
 import { deletePage } from "../page/delete";
 import { DeleteAccountInput } from "./schemas";
 
@@ -37,7 +38,9 @@ import { DeleteAccountInput } from "./schemas";
  *    notifications so we don't keep running probes / sending alerts for
  *    an unreachable owner. The workspace row and the owner membership
  *    are intentionally left in place; reclaiming those is out of scope.
- * 3. Removes their membership from every workspace they don't own.
+ * 3. Revokes their OAuth grants everywhere (soft delete means the FK
+ *    cascade never fires) and removes their membership from every
+ *    workspace they don't own.
  * 4. Deletes their sessions and OAuth accounts.
  * 5. Blanks out PII on the user row and stamps `deletedAt`.
  *
@@ -161,6 +164,8 @@ export async function deleteAccount(args: {
         await deleteNotification({ ctx: subCtx, input: { id } });
       }
     }
+
+    await revokeGrantsForUser({ tx, ctx, userId, reason: "account_deleted" });
 
     await tx
       .delete(usersToWorkspaces)

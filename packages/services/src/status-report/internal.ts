@@ -1,11 +1,11 @@
 import { and, asc, desc, eq, inArray, notInArray } from "@openstatus/db";
 import {
-  type PageComponentImpact,
   pageComponent,
+  type PageComponentImpact,
   statusReport,
+  statusReportsToPageComponents,
   statusReportUpdate,
   statusReportUpdateToPageComponents,
-  statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
@@ -181,7 +181,7 @@ export async function getUpdatesForReport(tx: DB, statusReportId: number) {
     .select()
     .from(statusReportUpdate)
     .where(eq(statusReportUpdate.statusReportId, statusReportId))
-    .orderBy(desc(statusReportUpdate.date))
+    .orderBy(desc(statusReportUpdate.date), desc(statusReportUpdate.id))
     .all();
 }
 

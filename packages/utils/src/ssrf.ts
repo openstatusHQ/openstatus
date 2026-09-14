@@ -83,7 +83,9 @@ function isBlockedHost(hostname: string): boolean {
 
 /**
  * Validates that a URL is safe to fetch (not targeting internal/private infrastructure).
- * Checks protocol, hostname, and resolved IP address.
+ * Checks protocol and hostname/literal IP only; DNS is never resolved, so a
+ * public name that resolves to a private address still passes. Same checks as
+ * `assertSafeUrlSync`, kept async for existing callers.
  * Throws an error if the URL is not safe.
  */
 export async function assertSafeUrl(urlString: string): Promise<void> {

@@ -58,7 +58,7 @@ You get incident communication templates, maintenance announcement drafts, perio
 
 ## Auth & audit
 
-Authenticate with `openstatus login` (browser flow) or `OPENSTATUS_API_TOKEN` (CI). The token is the same one the API, Terraform provider, and MCP server share — generate it from **Settings → API Tokens**.
+Authenticate with `openstatus login` (browser flow) or `OPENSTATUS_API_TOKEN` (CI). The token is the same one the API, Terraform provider, and MCP server share — generate it from **Settings > API Tokens**.
 
 Every mutation lands in the audit log under `actor_type = 'cli'`, so you can trace any change back to a key, a user, and a transport.
 

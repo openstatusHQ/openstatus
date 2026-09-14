@@ -175,16 +175,18 @@ export const UpdatePageLocalesInput = z
   );
 export type UpdatePageLocalesInput = z.infer<typeof UpdatePageLocalesInput>;
 
-// Reuse the canonical `pageConfigurationSchema` — the read path runs
-// stored configuration through it, so anything the update accepts that
-// doesn't round-trip here would surface as an opaque parse error at
-// status-page render time rather than at write time. The prior
-// `z.record(z.string(), z.union([z.string(), z.boolean()]))` happily
-// persisted any key/value and broke the read parser on values outside
-// the defined enums.
+// Match undefined before the read validators can fill in defaults.
 export const UpdatePageConfigurationInput = z.object({
   id: z.number().int(),
-  configuration: pageConfigurationSchema.nullish(),
+  configuration: z
+    .object({
+      value: z.undefined().or(pageConfigurationSchema.shape.value),
+      type: z.undefined().or(pageConfigurationSchema.shape.type),
+      uptime: z.undefined().or(pageConfigurationSchema.shape.uptime),
+      theme: z.undefined().or(pageConfigurationSchema.shape.theme),
+      days: z.undefined().or(pageConfigurationSchema.shape.days),
+    })
+    .nullish(),
 });
 export type UpdatePageConfigurationInput = z.infer<
   typeof UpdatePageConfigurationInput

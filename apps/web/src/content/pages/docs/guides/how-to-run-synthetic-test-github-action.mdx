@@ -38,15 +38,15 @@ tests:
 
 1. Go to your openstatus dashboard.
 2. Click on a monitor.
-3. The ID is in the URL: `https://www.openstatus.dev/app/[workspace]/monitors/[ID]`.
+3. The ID is in the URL: `https://app.openstatus.dev/monitors/[ID]`.
 
 **Tip:** start with your most critical monitors and expand from there.
 
 ### 2. Get your openstatus API key
 
-1. Go to your openstatus workspace settings
-2. Navigate to the API section
-3. Create a new API key or copy an existing one
+1. Go to **Settings → General** in your openstatus dashboard
+2. Find the **API Keys** card
+3. Click **Create** and copy the key — you won't see it again after closing the dialog
 4. Store it securely - you'll need it for the next step
 
 ### 3. Add your API key to GitHub Secrets
@@ -54,7 +54,7 @@ tests:
 Secure your API key as a GitHub secret:
 
 1. Go to your GitHub repository
-2. Click **Settings** → **Secrets and variables** → **Actions**
+2. Click **Settings** > **Secrets and variables** > **Actions**
 3. Click **New repository secret**
 4. Name: `OPENSTATUS_API_KEY`
 5. Value: Your openstatus API key

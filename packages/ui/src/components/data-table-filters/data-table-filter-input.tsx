@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "@openstatus/icons";
 import { useDataTable } from "@openstatus/ui/components/data-table-filters/data-table-provider";
 import {
   InputGroup,
@@ -8,7 +9,6 @@ import {
 } from "@openstatus/ui/components/ui/input-group";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
-import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import type { DataTableInputFilterField } from "./types";

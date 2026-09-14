@@ -1,12 +1,15 @@
 // Shamelessly stolen from dub.co
 
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type {
   Addons,
   BillingInterval,
   Limits,
 } from "@openstatus/db/src/schema/plan/schema";
 import {
+  getAddonMaxQuantity,
+  getAddonPackSize,
   getLimits,
   updateAddonInLimits,
 } from "@openstatus/db/src/schema/plan/utils";
@@ -40,14 +43,60 @@ export function buildLimitsFromSubscription(
       );
     }
     // Accumulate onto the running value so repeated addon items add up; boolean
-    // addons just flip on.
+    // addons just flip on. One unit of a pack addon grants `packSize` units.
     const current = limits[feature.feature];
     const value =
-      typeof current === "number" ? current + (item.quantity ?? 1) : true;
+      typeof current === "number"
+        ? current + (item.quantity ?? 1) * getAddonPackSize(feature.feature)
+        : true;
     limits = updateAddonInLimits(limits, feature.feature, value);
   }
 
   return { plan: detectedPlan.plan, limits };
+}
+
+/**
+ * Resolve a requested pack count into the Stripe subscription quantity and the
+ * workspace limit it produces. Throws when the request is not a whole number of
+ * packs or exceeds the self-serve ceiling.
+ */
+export function resolveAddonQuantity(args: {
+  addon: keyof Addons;
+  plan: WorkspacePlan;
+  packs: number;
+}): {
+  quantity: number;
+  newLimit: number;
+  packSize: number;
+  maxPacks: number | null;
+} {
+  const { addon, plan, packs } = args;
+  const packSize = getAddonPackSize(addon);
+  const maxPacks = getAddonMaxQuantity(addon);
+
+  if (!Number.isInteger(packs) || packs < 0) {
+    throw new Error(
+      `Quantity must be a whole number of packs, received ${packs}`,
+    );
+  }
+
+  if (maxPacks !== null && packs > maxPacks) {
+    throw new Error(
+      `You can add up to ${maxPacks * packSize} with this add-on. Contact us for more.`,
+    );
+  }
+
+  const planDefault = allPlans[plan].limits[addon];
+  if (typeof planDefault !== "number") {
+    throw new Error(`${addon} is not a quantity add-on`);
+  }
+
+  return {
+    quantity: packs,
+    newLimit: planDefault + packs * packSize,
+    packSize,
+    maxPacks,
+  };
 }
 
 export const getPlanFromPriceId = (priceId: string) => {
@@ -197,6 +246,19 @@ export const FEATURES = [
         priceIds: {
           test: "price_1Slrk8BXJcTfzsyJXQxshFU4",
           production: "price_1SlrkHBXJcTfzsyJIxHeKUYe",
+        },
+      },
+    },
+  },
+  {
+    feature: "monitors",
+    price: {
+      monthly: {
+        priceIds: {
+          // TODO: create the "Monitor Pack" product and its monthly
+          // multi-currency price (USD 15 / EUR 15) in Stripe, then paste the ids.
+          test: "price_1UChsCBXJcTfzsyJgomhUtYY",
+          production: "price_1UChsCBXJcTfzsyJgomhUtYY",
         },
       },
     },

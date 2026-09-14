@@ -8,7 +8,7 @@ export function AppHeader({
   return (
     <header
       className={cn(
-        "bg-background h-app-header sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b px-2",
+        "bg-background h-app-header sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b px-2.5",
         className,
       )}
       {...props}
@@ -24,10 +24,7 @@ export function AppHeaderContent({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div
-      className={cn("flex flex-1 items-center gap-2 px-3", className)}
-      {...props}
-    >
+    <div className={cn("flex flex-1 items-center gap-2", className)} {...props}>
       {children}
     </div>
   );
@@ -39,7 +36,7 @@ export function AppHeaderActions({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("ml-auto px-3", className)} {...props}>
+    <div className={cn("ml-auto", className)} {...props}>
       {children}
     </div>
   );
