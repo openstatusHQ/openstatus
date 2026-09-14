@@ -56,6 +56,7 @@ test("run monitor with valid id should return 200", async () => {
 });
 
 test("run monitor with no-wait parameter should return empty array", async () => {
+  mockFetch.mockReturnValue(Promise.resolve(new Response()));
   const res = await app.request("/v1/monitor/1/run?no-wait=true", {
     method: "POST",
     headers: {
