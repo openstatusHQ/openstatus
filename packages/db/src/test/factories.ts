@@ -5,6 +5,8 @@
 //
 // Pass a transaction as the last arg to scope creation to it (e.g. inside a
 // rolled-back `withTestTransaction`); omit it to commit to the shared db.
+import { DrizzleQueryError } from "drizzle-orm";
+
 import { db as defaultDb } from "../db";
 import {
   monitor,
@@ -38,6 +40,7 @@ const MAX_ATTEMPTS = 5;
 const BASE_DELAY_MS = 25;
 
 function isBusyError(err: unknown): boolean {
+  if (err instanceof DrizzleQueryError) return isBusyError(err.cause);
   if (typeof err !== "object" || err === null) return false;
   if ("code" in err && typeof (err as { code: unknown }).code === "string") {
     if (RETRYABLE_CODES.has((err as { code: string }).code)) return true;
@@ -46,8 +49,9 @@ function isBusyError(err: unknown): boolean {
     "message" in err &&
     typeof (err as { message: unknown }).message === "string"
   ) {
-    if (RETRYABLE_MESSAGE.test((err as { message: string }).message))
+    if (RETRYABLE_MESSAGE.test((err as { message: string }).message)) {
       return true;
+    }
   }
   return false;
 }
