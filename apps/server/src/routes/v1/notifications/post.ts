@@ -9,7 +9,7 @@ import {
 import { ValidationError } from "@openstatus/services";
 import { validateNotificationData } from "@openstatus/services/notification";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { openApiErrorResponses, OpenStatusApiError } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 
 import type { notificationsApi } from "./index";
@@ -51,18 +51,6 @@ export function registerPostNotification(api: typeof notificationsApi) {
     const limits = c.get("workspace").limits;
     const input = c.req.valid("json");
 
-    try {
-      validateNotificationData(input.provider, input.payload);
-    } catch (err) {
-      if (err instanceof ValidationError) {
-        throw new OpenStatusApiError({
-          code: "BAD_REQUEST",
-          message: err.message,
-        });
-      }
-      throw err;
-    }
-
     if (input.provider === "sms" && workspacePlan === "free") {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
@@ -83,6 +71,18 @@ export function registerPostNotification(api: typeof notificationsApi) {
         code: "PAYMENT_REQUIRED",
         message: "Upgrade for more notification channels",
       });
+    }
+
+    try {
+      validateNotificationData(input.provider, input.payload);
+    } catch (err) {
+      if (err instanceof ValidationError) {
+        throw new OpenStatusApiError({
+          code: "BAD_REQUEST",
+          message: err.message,
+        });
+      }
+      throw err;
     }
 
     const { payload, monitors, ...rest } = input;

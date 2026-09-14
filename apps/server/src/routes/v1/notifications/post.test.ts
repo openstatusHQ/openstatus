@@ -70,8 +70,8 @@ for (const { provider, payload } of [
       payload,
       monitors: [monitorId],
     });
-    const result = NotificationSchema.parse(await res.json());
     expect(res.status).toBe(200);
+    const result = NotificationSchema.parse(await res.json());
     expect(result).toMatchObject({ provider, payload, monitors: [monitorId] });
 
     const read = await app.request(`/v1/notification/${result.id}`, {
@@ -123,6 +123,34 @@ for (const { name, payload } of [
       rows: [],
       links: [],
     });
+  });
+}
+
+for (const { provider, channelLimit } of [
+  { provider: "sms", channelLimit: 1 },
+  { provider: "email", channelLimit: 0 },
+]) {
+  test(`preserve payment errors for invalid ${provider} payloads`, async () => {
+    const { workspace } = await createTestWorkspace({
+      plan: "free",
+      limits: JSON.stringify({ "notification-channels": channelLimit }),
+    });
+    const res = await app.request("/v1/notification", {
+      method: "POST",
+      headers: {
+        "x-openstatus-key": String(workspace.id),
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ name: "OpenStatus", provider, payload: {} }),
+    });
+
+    expect(res.status).toBe(402);
+    expect(await res.json()).toMatchObject({ code: "PAYMENT_REQUIRED" });
+    const rows = await db
+      .select()
+      .from(notification)
+      .where(eq(notification.workspaceId, workspace.id));
+    expect(rows).toEqual([]);
   });
 }
 
