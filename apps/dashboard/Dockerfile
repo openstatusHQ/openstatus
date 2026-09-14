@@ -35,7 +35,7 @@ COPY \
     --link \
     "." "/app/"
 RUN <<EOF
-corepack enable
+npm install -g pnpm@12.3.4
 pnpm install --frozen-lockfile
 pnpm turbo run build --filter=@openstatus/dashboard
 EOF

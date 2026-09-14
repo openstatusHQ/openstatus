@@ -18,6 +18,7 @@ export {
   MONITOR_STATUSES,
 } from "./constants";
 export { buildCurlCommand, type CurlRequest } from "./curl";
+export { buildStatusPageUrl } from "./status-page-url";
 export { iteratorToStream, yieldMany } from "./stream";
 export { type PageUpdateStatus, statusLabel } from "./status";
 

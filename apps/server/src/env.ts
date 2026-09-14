@@ -25,6 +25,7 @@ export const env = createEnv({
     SLACK_CLIENT_SECRET: z.string().optional(),
     SLACK_REDIRECT_URI: z.string().optional(),
     AI_GATEWAY_API_KEY: z.string().optional(),
+    STATUS_PAGE_URL: z.url().optional(),
     // Fixed, not derived from the request host, so OAuth metadata is stable
     // behind proxies. Defaults resolve in `routes/oauth/config.ts`.
     OAUTH_ISSUER: z.url().optional(),

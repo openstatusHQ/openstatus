@@ -1,11 +1,8 @@
 name: Migrate DB
+# Self-host fork uses local libsql via docker-compose (db-migrate service),
+# so this never auto-runs. Manual fallback only for a hosted Turso database.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "packages/db/drizzle/**"
 jobs:
   migrate:
     name: 🗃️ Migrate DB

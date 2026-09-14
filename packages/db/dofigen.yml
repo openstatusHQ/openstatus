@@ -17,7 +17,7 @@ builders:
       - packages/theme-store/package.json
       - packages/utils/package.json
     run:
-      - corepack enable pnpm
+      - npm install -g pnpm@12.3.4
       - pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --loglevel debug
     cache:
       - /root/.local/share/pnpm/store
