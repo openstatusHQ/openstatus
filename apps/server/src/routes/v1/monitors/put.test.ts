@@ -73,6 +73,17 @@ for (const { name, input, expected } of [
     input: { assertions: [{ type: "status", compare: "eq", target: 204 }] },
     expected: [{ type: "status", compare: "eq", target: 204 }],
   },
+  {
+    name: "persists DNS record assertions instead of clearing stored assertions",
+    input: {
+      assertions: [
+        { type: "dnsRecord", key: "A", compare: "eq", target: "192.0.2.1" },
+      ],
+    },
+    expected: [
+      { type: "dnsRecord", key: "A", compare: "eq", target: "192.0.2.1" },
+    ],
+  },
 ]) {
   test(name, async () => {
     const { workspace } = await createTestWorkspace();
