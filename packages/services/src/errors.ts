@@ -17,6 +17,14 @@ export class ServiceError extends Error {
     super(message);
     this.name = this.constructor.name;
   }
+
+  /**
+   * The caller is at fault and the rejection is the system working as
+   * designed. Transports report these as warnings, not errors.
+   */
+  get expected(): boolean {
+    return this.code !== "INTERNAL";
+  }
 }
 
 export class NotFoundError extends ServiceError {

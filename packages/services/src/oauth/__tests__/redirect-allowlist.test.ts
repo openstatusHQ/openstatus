@@ -4,6 +4,7 @@ import { describe, test } from "@std/testing/bdd";
 import {
   isAllowedRedirectUri,
   matchesRegisteredRedirectUri,
+  redirectUriOrigin,
 } from "../redirect-allowlist";
 
 describe("isAllowedRedirectUri", () => {
@@ -207,5 +208,36 @@ describe("matchesRegisteredRedirectUri", () => {
       ),
     ).toBe(false);
     expect(matchesRegisteredRedirectUri(registered, "not a url")).toBe(false);
+  });
+});
+
+describe("redirectUriOrigin", () => {
+  test("collapses every path on a host to one key", () => {
+    expect(
+      redirectUriOrigin("https://glama.ai/api/app/mcp/oauth/callback"),
+    ).toBe("https://glama.ai");
+    expect(redirectUriOrigin("https://glama.ai/other?q=1")).toBe(
+      "https://glama.ai",
+    );
+    expect(redirectUriOrigin("https://GLAMA.ai/cb")).toBe("https://glama.ai");
+  });
+
+  test("keeps scheme, host and port apart", () => {
+    expect(redirectUriOrigin("http://127.0.0.1:8080/cb")).toBe(
+      "http://127.0.0.1:8080",
+    );
+    expect(redirectUriOrigin("http://example.com/cb")).not.toBe(
+      redirectUriOrigin("https://example.com/cb"),
+    );
+  });
+
+  test("app schemes have no origin, so they key on the scheme", () => {
+    expect(redirectUriOrigin("cursor://anything/cb")).toBe("cursor:");
+    expect(redirectUriOrigin("vscode://openstatus/cb")).toBe("vscode:");
+  });
+
+  test("an unparseable URI buckets instead of throwing", () => {
+    expect(redirectUriOrigin("not a url")).toBe("<unparseable>");
+    expect(redirectUriOrigin("")).toBe("<unparseable>");
   });
 });

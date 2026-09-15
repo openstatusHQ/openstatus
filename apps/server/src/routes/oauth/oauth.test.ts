@@ -1,3 +1,4 @@
+import { sentry } from "@hono/sentry";
 import { db, eq, inArray } from "@openstatus/db";
 import {
   oauthAuthorizationCode,
@@ -15,12 +16,19 @@ import {
 } from "@openstatus/services/oauth";
 import { clearAuditLogFor } from "@openstatus/services/test/helpers";
 import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
-import { Hono } from "hono";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  test,
+} from "@std/testing/bdd";
+import { type Context, Hono, type Next } from "hono";
 
 import { app } from "../../index";
 import { oauthConfigFromEnv } from "./config";
 import * as routes from "./index";
+import { resetRedirectUriCaptureWindow } from "./telemetry";
 
 const VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
 const REDIRECT = "http://127.0.0.1:43111/callback";
@@ -72,6 +80,54 @@ function form(path: string, fields: Record<string, string>) {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams(fields).toString(),
   });
+}
+
+type CapturedEvent = {
+  message: string;
+  level?: string;
+  fingerprint?: string[];
+  context?: Record<string, unknown>;
+};
+
+/** Toucan needs a DSN and a live fetch; this covers what the route touches. */
+function stubSentry() {
+  const events: CapturedEvent[] = [];
+  const state: { enabled: boolean; level?: string } = { enabled: true };
+  const sentry = {
+    setEnabled(enabled: boolean) {
+      state.enabled = enabled;
+    },
+    setLevel(level: string) {
+      state.level = level;
+    },
+    withScope(run: (scope: unknown) => void) {
+      const event: CapturedEvent = { message: "" };
+      const scope = {
+        setFingerprint(fingerprint: string[]) {
+          event.fingerprint = fingerprint;
+          return scope;
+        },
+        setContext(_name: string, context: Record<string, unknown>) {
+          event.context = context;
+          return scope;
+        },
+        captureMessage(message: string, level?: string) {
+          events.push({ ...event, message, level });
+          return "event-id";
+        },
+      };
+      run(scope);
+    },
+  };
+  return { sentry, events, state };
+}
+
+function withStubSentry(stub: ReturnType<typeof stubSentry>["sentry"]) {
+  return async (c: Context, next: Next) => {
+    // Only the members above are ever called on it.
+    c.set("sentry", stub as never);
+    await next();
+  };
 }
 
 async function registerClient(name = "Test MCP Client"): Promise<string> {
@@ -266,6 +322,238 @@ describe("POST /oauth/register", () => {
     });
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe("invalid_client_metadata");
+  });
+});
+
+describe("rejected registrations report as warnings", () => {
+  const FINGERPRINT = ["oauth", "register", "redirect_uri_rejected"];
+
+  function build() {
+    const stub = stubSentry();
+    const local = new Hono();
+    const wideEvents: Record<string, unknown>[] = [];
+    local.use("*", withStubSentry(stub.sentry));
+    local.use("*", async (c, next) => {
+      const event: Record<string, unknown> = {};
+      wideEvents.push(event);
+      c.set("event" as never, event as never);
+      await next();
+    });
+    local.route("/", routes.createOAuthRoutes(config));
+    return { ...stub, local, wideEvents };
+  }
+
+  function register(local: Hono, redirectUris: string[]) {
+    return local.request("/oauth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ redirect_uris: redirectUris }),
+    });
+  }
+
+  beforeEach(() => resetRedirectUriCaptureWindow());
+
+  test("400 as before, captured as a warning fingerprinted by origin", async () => {
+    const { local, events, state } = build();
+    const uri = "https://glama.ai/api/app/mcp/oauth/callback";
+    const res = await register(local, [uri]);
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: "invalid_redirect_uri" });
+    expect(events).toEqual([
+      {
+        message: "redirect_uri host not allowlisted",
+        level: "warning",
+        fingerprint: [...FINGERPRINT, "https://glama.ai"],
+        context: { origin: "https://glama.ai", rejected: [uri] },
+      },
+    ]);
+    // the raw exception must not also land in the error stream
+    expect(state.enabled).toBe(false);
+  });
+
+  test("two paths on one host share an issue; a second host opens its own", async () => {
+    const { local, events } = build();
+    await register(local, ["https://glama.ai/one"]);
+    resetRedirectUriCaptureWindow();
+    await register(local, ["https://glama.ai/two"]);
+    await register(local, ["https://attacker.example/cb"]);
+
+    expect(events.map((e) => e.fingerprint)).toEqual([
+      [...FINGERPRINT, "https://glama.ai"],
+      [...FINGERPRINT, "https://glama.ai"],
+      [...FINGERPRINT, "https://attacker.example"],
+    ]);
+    expect(new Set(events.map((e) => e.message)).size).toBe(1);
+  });
+
+  test("a repeat within the window is captured once but counted twice", async () => {
+    const { local, events, wideEvents } = build();
+    expect((await register(local, ["https://glama.ai/cb"])).status).toBe(400);
+    expect((await register(local, ["https://glama.ai/cb"])).status).toBe(400);
+
+    expect(events).toHaveLength(1);
+    // the counter is the demand signal, so the deduped repeat still records
+    expect(wideEvents.map((e) => e.oauth_register_rejected_origins)).toEqual([
+      ["https://glama.ai"],
+      ["https://glama.ai"],
+    ]);
+  });
+
+  test("a flood of origins stays bounded and buys nothing on replay", async () => {
+    const { local, events } = build();
+    // ten per request is the schema maximum, so this is the cheapest flood
+    const flood = Array.from({ length: 120 }, (_, batch) =>
+      Array.from(
+        { length: 10 },
+        (_, i) => `https://flood-${batch * 10 + i}.example/cb`,
+      ),
+    );
+    for (const batch of flood) await register(local, batch);
+    // 1200 distinct origins, capped by the slot table
+    const firstPass = events.length;
+    expect(firstPass).toBeLessThanOrEqual(1024);
+
+    for (const batch of flood) await register(local, batch);
+    expect(events.length).toBe(firstPass);
+  });
+
+  test("a malformed redirect_uri buckets instead of throwing", async () => {
+    const { local, events } = build();
+    const res = await register(local, ["not-a-url"]);
+    expect(res.status).toBe(400);
+    expect(events[0]?.fingerprint).toEqual([...FINGERPRINT, "<unparseable>"]);
+  });
+
+  test("other client faults stay in Sentry, downgraded to warning", async () => {
+    const { local, events, state } = build();
+    const res = await local.request("/oauth/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "password",
+        client_id: "whatever",
+      }).toString(),
+    });
+    expect(res.status).toBe(400);
+    expect(state.level).toBe("warning");
+    expect(state.enabled).toBe(true);
+    expect(events).toEqual([]);
+  });
+});
+
+/**
+ * The stub above records the calls the route makes; this drives the real SDK
+ * and reads the envelope at the transport, which is where `setEnabled(false)`
+ * takes effect — so what would reach Sentry is asserted, not assumed.
+ */
+describe("severity through the real Sentry client", () => {
+  type Probe = {
+    level?: string;
+    message?: string;
+    fingerprint?: string[];
+    exception?: unknown;
+  };
+
+  /** Envelope wire format: header, then alternating item header and payload. */
+  function eventsIn(body: unknown): Probe[] {
+    const lines = String(body).split("\n").filter(Boolean);
+    const events: Probe[] = [];
+    for (let i = 1; i < lines.length; i += 2) {
+      if (JSON.parse(lines[i]).type === "event") {
+        events.push(JSON.parse(lines[i + 1]));
+      }
+    }
+    return events;
+  }
+
+  function build(config_ = config) {
+    const sent: Probe[] = [];
+    const local = new Hono();
+    local.use(
+      "*",
+      sentry({
+        dsn: "https://0123456789abcdef0123456789abcdef@o1.ingest.sentry.io/1",
+        transportOptions: {
+          fetcher: (_url: unknown, init?: { body?: unknown }) => {
+            sent.push(...eventsIn(init?.body));
+            return Promise.resolve(new Response("{}"));
+          },
+        },
+      } as Parameters<typeof sentry>[0]),
+    );
+    local.route("/", routes.createOAuthRoutes(config_));
+    return { local, sent };
+  }
+
+  /** Capture runs after the response resolves, then the event pipeline is async. */
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 20));
+
+  beforeEach(() => resetRedirectUriCaptureWindow());
+
+  test("a rejected redirect_uri arrives as one warning, grouped by origin", async () => {
+    const { local, sent } = build();
+    const res = await local.request("/oauth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ redirect_uris: ["https://glama.ai/cb"] }),
+    });
+    expect(res.status).toBe(400);
+    await flush();
+
+    // exactly one: the raw exception is suppressed before the transport
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.level).toBe("warning");
+    expect(sent[0]?.message).toBe("redirect_uri host not allowlisted");
+    expect(sent[0]?.fingerprint).toEqual([
+      "oauth",
+      "register",
+      "redirect_uri_rejected",
+      "https://glama.ai",
+    ]);
+  });
+
+  test("another client fault is downgraded to warning, not dropped", async () => {
+    const { local, sent } = build();
+    const res = await local.request("/oauth/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "password",
+        client_id: "whatever",
+      }).toString(),
+    });
+    expect(res.status).toBe(400);
+    await flush();
+
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.level).toBe("warning");
+  });
+
+  test("a server fault still arrives as an error", async () => {
+    const { local, sent } = build({
+      ...config,
+      fetchClientMetadata: () => {
+        throw new Error("boom");
+      },
+    });
+    const params = new URLSearchParams({
+      response_type: "code",
+      client_id: "https://partner.example/.well-known/oauth-client",
+      redirect_uri: "https://partner.example/oauth/callback",
+      code_challenge: await pkceChallenge(VERIFIER),
+      code_challenge_method: "S256",
+    });
+    const res = await local.request(`/oauth/authorize?${params}`, {
+      redirect: "manual",
+    });
+    expect(res.status).toBe(500);
+    await flush();
+
+    // an exception event carries no explicit level, which Sentry reads as error
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.exception).toBeDefined();
+    expect(sent[0]?.level).not.toBe("warning");
   });
 });
 
@@ -670,6 +958,35 @@ describe("URL client ids (CIMD)", () => {
 
     const gone = await cimdAuthorize(cimdApp(null));
     expect(gone.status).toBe(400);
+  });
+
+  test("a plain failure inside the fetcher is still an error, not a warning", async () => {
+    const stub = stubSentry();
+    const local = new Hono();
+    local.use("*", withStubSentry(stub.sentry));
+    local.route(
+      "/",
+      routes.createOAuthRoutes({
+        ...config,
+        fetchClientMetadata: () => {
+          throw new Error("boom");
+        },
+      }),
+    );
+    const params = new URLSearchParams({
+      response_type: "code",
+      client_id: CIMD_ID,
+      redirect_uri: CIMD_REDIRECT,
+      code_challenge: await pkceChallenge(VERIFIER),
+      code_challenge_method: "S256",
+    });
+    const res = await local.request(`/oauth/authorize?${params}`, {
+      redirect: "manual",
+    });
+    expect(res.status).toBe(500);
+    expect(stub.state.level).toBeUndefined();
+    expect(stub.state.enabled).toBe(true);
+    expect(stub.events).toEqual([]);
   });
 
   test("a URL client id on a private host is refused before any fetch", async () => {

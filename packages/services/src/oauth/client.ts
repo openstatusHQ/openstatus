@@ -5,7 +5,7 @@ import type { DB } from "../context";
 import { InternalServiceError } from "../errors";
 import { GRANT_TYPES, RESPONSE_TYPES } from "./constants";
 import { randomHex } from "./crypto";
-import { OAuthError } from "./errors";
+import { OAuthError, RedirectUriRejectedError } from "./errors";
 import { isAllowedRedirectUri } from "./redirect-allowlist";
 import { RegisterClientInput } from "./schemas";
 
@@ -36,12 +36,7 @@ export async function registerClient(args: {
 
   const redirectUris = Array.from(new Set(input.redirect_uris));
   const rejected = redirectUris.filter((uri) => !isAllowedRedirectUri(uri));
-  if (rejected.length > 0) {
-    throw new OAuthError(
-      "invalid_redirect_uri",
-      `redirect_uris must target an allowlisted host, a loopback address or a supported app scheme. Rejected: ${rejected.join(", ")}`,
-    );
-  }
+  if (rejected.length > 0) throw new RedirectUriRejectedError(rejected);
 
   const [row] = await db
     .insert(oauthClient)
