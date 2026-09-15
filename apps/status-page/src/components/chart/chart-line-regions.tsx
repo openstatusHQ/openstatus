@@ -40,6 +40,7 @@ function getChartConfig(
     timestamp: string;
     [key: string]: string | number | null;
   }[],
+  labels?: Record<string, string>,
 ): ChartConfig {
   const regions =
     data.length > 0
@@ -60,12 +61,13 @@ function getChartConfig(
     })
     .map((region, index) => ({
       code: region,
+      label: labels?.[region] ?? region,
       color: `var(--rainbow-${((index + 5) % 17) + 1})`,
     }))
     .reduce(
       (acc, item) => {
         acc[item.code] = {
-          label: item.code,
+          label: item.label,
           color: item.color,
         };
         return acc;
@@ -74,11 +76,14 @@ function getChartConfig(
     ) satisfies ChartConfig;
 }
 
-function getChartConfigDefault(regions: MonitorRegion[]) {
+function getChartConfigDefault(
+  regions: MonitorRegion[],
+  labels?: Record<string, string>,
+) {
   return regions.reduce(
     (acc, region, index) => {
       acc[region] = {
-        label: region,
+        label: labels?.[region] ?? region,
         color: `var(--rainbow-${((index + 5) % 17) + 1})`,
       };
       return acc;
@@ -91,6 +96,7 @@ export function ChartLineRegions({
   className,
   data,
   defaultRegions,
+  labels,
 }: {
   className?: string;
   data: {
@@ -98,11 +104,12 @@ export function ChartLineRegions({
     [key: string]: string | number | null;
   }[];
   defaultRegions?: MonitorRegion[];
+  labels?: Record<string, string>;
 }) {
   const chartConfig =
     data.length > 0
-      ? getChartConfig(data)
-      : getChartConfigDefault(defaultRegions ?? []);
+      ? getChartConfig(data, labels)
+      : getChartConfigDefault(defaultRegions ?? [], labels);
   const [activeSeries, setActiveSeries] = useState<
     Array<keyof typeof chartConfig>
   >(Object.keys(chartConfig).slice(0, 2));
@@ -150,10 +157,11 @@ export function ChartLineRegions({
                   value={value}
                   name={name}
                   labelFormatter={(_, name) => {
+                    const display = labels?.[String(name)] ?? name;
                     const region = regions.find((r) => r.code === name);
                     return (
                       <>
-                        <span className="font-mono">{name}</span>{" "}
+                        <span className="font-mono">{display}</span>{" "}
                         <span className="text-muted-foreground text-xs">
                           {region?.location}
                         </span>

@@ -89,14 +89,16 @@ export default function Page() {
       }));
   }, [monitor?.data.latency?.data]);
 
+  const regionLabels = useMemo(() => {
+    return Object.fromEntries(
+      (
+        monitor?.privateLocations as { id: number; name: string }[] | undefined
+      )?.map((pl) => [String(pl.id), pl.name]) ?? [],
+    ) as Record<string, string>;
+  }, [monitor?.privateLocations]);
+
   const regionLatencyData = useMemo(() => {
     if (!monitor?.data.regions?.data) return [];
-
-    const privateLocationMap = new Map(
-      (
-        monitor.privateLocations as { id: number; name: string }[] | undefined
-      )?.map((pl) => [String(pl.id), pl.name]) ?? [],
-    );
 
     const grouped = monitor.data.regions.data
       .sort((a, b) => a.timestamp - b.timestamp)
@@ -113,9 +115,10 @@ export default function Page() {
           if (!acc[timestamp]) {
             acc[timestamp] = { timestamp };
           }
-          const displayRegion =
-            privateLocationMap.get(item.region) ?? item.region;
-          acc[timestamp][displayRegion] = item.p75Latency;
+          // Key by the stable region id/code so the name (which can contain
+          // spaces) never becomes a CSS variable in the chart. Human names
+          // are passed separately via `labels`.
+          acc[timestamp][item.region] = item.p75Latency;
           return acc;
         },
         {} as Record<
@@ -125,7 +128,7 @@ export default function Page() {
       );
 
     return Object.values(grouped);
-  }, [monitor?.data.regions?.data, monitor?.privateLocations]);
+  }, [monitor?.data.regions?.data]);
 
   const uptimeData = useMemo(() => {
     if (!monitor?.data.uptime?.data) return [];
@@ -203,14 +206,16 @@ export default function Page() {
         }).replace("K", "k"),
         uptimePercentage:
           uptimeStats.total > 0 ? formatPercentage(uptimePercentage) : "N/A",
-        slowestRegion: slowestRegion?.region || "N/A",
+        slowestRegion: slowestRegion?.region
+          ? (regionLabels[slowestRegion.region] ?? slowestRegion.region)
+          : "N/A",
         p75Range:
           p75Range.min !== Number.POSITIVE_INFINITY ||
           p75Range.max !== Number.NEGATIVE_INFINITY
             ? formatMillisecondsRange(p75Range.min, p75Range.max)
             : "N/A",
       };
-    }, [uptimeData, regionLatencyData, globalLatencyData]);
+    }, [uptimeData, regionLatencyData, globalLatencyData, regionLabels]);
 
   if (!isLoading && !monitor) {
     return (
@@ -331,6 +336,7 @@ export default function Page() {
                   className="h-[250px]"
                   data={regionLatencyData}
                   defaultRegions={tempMonitor?.regions}
+                  labels={regionLabels}
                 />
               )}
             </StatusChartContent>
