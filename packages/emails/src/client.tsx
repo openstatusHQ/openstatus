@@ -40,6 +40,18 @@ const NON_RETRYABLE_RESEND_ERRORS = new Set<string>([
   "validation_error",
 ]);
 
+const defaultNotificationFrom = "OpenStatus <notifications@notifications.openstatus.dev>";
+
+function notificationFrom(displayName?: string): string {
+  const configuredFrom = process.env.OPENSTATUS_EMAIL_FROM?.trim();
+  if (!configuredFrom) {
+    return displayName
+      ? `${displayName} <notifications@notifications.openstatus.dev>`
+      : defaultNotificationFrom;
+  }
+  return displayName ? `${displayName} <${configuredFrom}>` : configuredFrom;
+}
+
 function isRetryableSendError(error: { name: string }): boolean {
   return !NON_RETRYABLE_RESEND_ERRORS.has(error.name);
 }
@@ -217,7 +229,7 @@ export class EmailClient {
               const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
-                from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
+                from: notificationFrom(req.pageTitle),
                 subject: statusReportSubject(req),
                 to: subscriber.email,
                 react: (
@@ -295,7 +307,7 @@ export class EmailClient {
       // const html = await render(<MonitorAlertEmail {...req} />);
       const html = monitorAlertEmail(req);
       const result = await this.client.emails.send({
-        from: "OpenStatus <notifications@notifications.openstatus.dev>",
+        from: notificationFrom(),
         subject: `${req.name}: ${req.type.toUpperCase()}`,
         to: req.to,
         html,
@@ -324,7 +336,7 @@ export class EmailClient {
     try {
       const html = await render(<PageSubscriptionEmail {...req} />);
       const result = await this.client.emails.send({
-        from: "Status Page <notifications@notifications.openstatus.dev>",
+        from: notificationFrom("Status Page"),
         subject: `Confirm your subscription to ${req.page}`,
         to: req.to,
         html,
@@ -338,6 +350,7 @@ export class EmailClient {
       throw result.error;
     } catch (err) {
       console.error(`Error sending page subscription to ${req.to}`, err);
+      throw err;
     }
   }
 
@@ -353,7 +366,7 @@ export class EmailClient {
     try {
       const html = await render(<StatusPageMagicLinkEmail {...req} />);
       const result = await this.client.emails.send({
-        from: "Status Page <notifications@notifications.openstatus.dev>",
+        from: notificationFrom("Status Page"),
         subject: `Authenticate to ${req.page}`,
         to: req.to,
         html,
@@ -408,7 +421,7 @@ export class EmailClient {
               const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
-                from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
+                from: notificationFrom(req.pageTitle),
                 subject: `Scheduled Maintenance: ${req.maintenanceTitle}`,
                 to: subscriber.email,
                 react: (
@@ -481,7 +494,7 @@ export class EmailClient {
       );
       const result = await this.client.batch.send(
         req.to.map((to) => ({
-          from: "OpenStatus <notifications@notifications.openstatus.dev>",
+          from: notificationFrom(),
           subject,
           to,
           html,
