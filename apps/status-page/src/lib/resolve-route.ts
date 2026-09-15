@@ -52,6 +52,24 @@ function resolveConfiguredHost(
   }
 }
 
+// The configured base domain alone carries no slug (`{slug}` is empty), so it
+// owns no tenant. Without this the generic subdomain fallback below would
+// claim its first label as a slug (`status.example.com` → `status`).
+function isConfiguredBaseHost(
+  statusPageUrl: string | null | undefined,
+  requestHost: string | null,
+): boolean {
+  if (!statusPageUrl || !requestHost) return false;
+  try {
+    const baseHost = new URL(
+      statusPageUrl.replace("{slug}.", "").replace("{slug}", ""),
+    ).hostname.toLowerCase();
+    return requestHost === baseHost;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Resolves the routing type, page slug, and locale from request context.
  * Pure function — no side effects, no DB calls, no Next.js APIs.
@@ -79,6 +97,8 @@ export function resolveRoute({
   const subdomain = getValidSubdomain(host ?? urlHost);
   const requestHost = stripHostPort(host ?? urlHost)?.toLowerCase() ?? null;
   const configuredHost = resolveConfiguredHost(statusPageUrl, requestHost);
+
+  if (isConfiguredBaseHost(statusPageUrl, requestHost)) return null;
 
   let prefix: string;
   let type: RouteType;
