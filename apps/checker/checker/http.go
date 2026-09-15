@@ -45,7 +45,7 @@ type Response struct {
 
 // maxResponseBodyBytes caps the read of a probed response body so a large body
 // cannot OOM the 512 MB checker machines (exit 137 waves).
-const maxResponseBodyBytes = 1 << 20 // 1 MiB
+const maxResponseBodyBytes = 10 << 20 // 10 MiB
 
 // decodeBase64Body decodes a data URL base64 body if needed
 func decodeBase64Body(body string) ([]byte, error) {
