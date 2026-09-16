@@ -13,6 +13,10 @@ name: Rotate Axiom Ingest Token
 # openstatus-log is deliberately excluded: it is the suspended fly-log-shipper
 # (machine stopped since 2026-03-02) whose stale credential must not be carried
 # into a rotation.
+# The job talks only to the Fly API via FLY_API_TOKEN and never reads the
+# repository, so the GITHUB_TOKEN needs no permissions at all.
+permissions: {}
+
 on:
   workflow_dispatch:
     inputs:
