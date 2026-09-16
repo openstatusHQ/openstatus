@@ -119,6 +119,30 @@ export function reportDetectionWriteFailure(args: {
   });
 }
 
+// A permanently misconfigured external_service row (a dead endpoint) fails
+// on every tick of the fetch loop. Capturing each identical failure would
+// flood Sentry with the same event dozens of times a day, so each distinct
+// (slug, phase, kind, status) failure is reported once per window; a change
+// in any of those fields is a new fingerprint and fires immediately.
+const FETCH_FAILURE_REPORT_WINDOW_MS = 24 * 60 * 60 * 1000;
+const fetchFailureStamps = new Map<string, number>();
+
+export function shouldReportFetchFailure(
+  fingerprint: string,
+  now: number,
+): boolean {
+  const last = fetchFailureStamps.get(fingerprint);
+  if (last !== undefined && now - last < FETCH_FAILURE_REPORT_WINDOW_MS) {
+    return false;
+  }
+  fetchFailureStamps.set(fingerprint, now);
+  return true;
+}
+
+export function clearFetchFailureStamps(): void {
+  fetchFailureStamps.clear();
+}
+
 // Fires inside the per-service fetch loop, so no flush here — the tick's
 // cronCompleted/cronFailed path flushes once the tick settles.
 export function reportFetchFailure(args: {
@@ -128,15 +152,19 @@ export function reportFetchFailure(args: {
   level?: SeverityLevel;
 }): void {
   const { phase, slug, error, level } = args;
+  const fingerprint = [
+    "external-status-fetch",
+    slug,
+    phase,
+    error.kind ?? "unknown",
+    String(error.httpStatus ?? ""),
+  ];
+  if (!shouldReportFetchFailure(fingerprint.join(":"), Date.now())) {
+    return;
+  }
   Sentry.captureException(error, {
     level,
-    fingerprint: [
-      "external-status-fetch",
-      slug,
-      phase,
-      error.kind ?? "unknown",
-      String(error.httpStatus ?? ""),
-    ],
+    fingerprint,
     tags: {
       cron: "external-status",
       phase,
