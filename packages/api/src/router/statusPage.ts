@@ -1263,9 +1263,7 @@ export const statusPageRouter = createTRPCRouter({
 
       const baseUrl = _page.customDomain
         ? `https://${_page.customDomain}`
-        : process.env.NEXT_PUBLIC_APP_URL
-          ? `${process.env.NEXT_PUBLIC_APP_URL}`
-          : `https://${_page.slug}.openstatus.dev`;
+        : `https://${_page.slug}.openstatus.dev`;
       const verifyUrl = `${baseUrl}/verify/${subscription.token}`;
 
       try {
@@ -1290,7 +1288,14 @@ export const statusPageRouter = createTRPCRouter({
         // Clean up pending subscriber record so send failures don't permanently strand subscribers
         await opts.ctx.db
           .delete(pageSubscriber)
-          .where(eq(pageSubscriber.id, subscription.id))
+          .where(
+            and(
+              eq(pageSubscriber.id, subscription.id),
+              eq(pageSubscriber.token, subscription.token),
+              isNull(pageSubscriber.acceptedAt),
+              isNull(pageSubscriber.unsubscribedAt),
+            ),
+          )
           .catch((cleanupErr) => {
             console.error(
               "Failed to clean up pending subscriber record on send failure:",
