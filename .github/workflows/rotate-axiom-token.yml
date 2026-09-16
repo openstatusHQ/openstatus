@@ -1,0 +1,121 @@
+name: Rotate Axiom Ingest Token
+
+# Rotates the Axiom ingest credential across every producer writing to the
+# `prod` dataset. The fleet runs two distinct AXIOM_TOKEN values
+# (openstatus-api + openstatus-workflows share one, openstatus-checker +
+# openstatus-private-location share another) behind one shared AXIOM_DATASET,
+# so a rotation that updates only one pair silently drops that half of the
+# request logs with no signal anywhere. This workflow sets the same new token
+# and dataset on all four producers in one job, then verifies every app carries
+# the new digest and that the fleet now shares a single one, so a partial
+# update fails the run instead of going unnoticed. Running it once also
+# converges the fleet from today's two-token split onto one shared credential.
+# openstatus-log is deliberately excluded: it is the suspended fly-log-shipper
+# (machine stopped since 2026-03-02) whose stale credential must not be carried
+# into a rotation.
+on:
+  workflow_dispatch:
+    inputs:
+      token:
+        description: New Axiom ingest token (value is never echoed)
+        required: true
+      dataset:
+        description: Axiom dataset name
+        required: false
+        default: prod
+
+concurrency:
+  group: rotate-axiom-token
+  cancel-in-progress: false
+
+jobs:
+  rotate:
+    name: Rotate AXIOM_TOKEN across producers
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Capture current AXIOM_TOKEN digests
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          apps="openstatus-api openstatus-workflows openstatus-checker openstatus-private-location"
+          before=""
+          for app in $apps; do
+            digest=$(flyctl secrets list --app "$app" --json |
+              jq -r '.[] | select((.name // .Name) == "AXIOM_TOKEN") | (.digest // .Digest)' |
+              sort -u | tr '\n' ' ')
+            echo "$app: current AXIOM_TOKEN digest $digest"
+            if [ -z "$digest" ]; then
+              echo "::error::$app is missing AXIOM_TOKEN"
+              exit 1
+            fi
+            before="$before $digest"
+          done
+          echo "AXIOM_DIGESTS_BEFORE=$(printf '%s' "$before" | xargs | tr ' ' ',')" >> "$GITHUB_ENV"
+
+      - name: Set AXIOM_TOKEN and AXIOM_DATASET on all producers
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          AXIOM_TOKEN: ${{ inputs.token }}
+          AXIOM_DATASET: ${{ inputs.dataset }}
+        run: |
+          set -uo pipefail
+          apps="openstatus-api openstatus-workflows openstatus-checker openstatus-private-location"
+          failed=""
+          for app in $apps; do
+            if flyctl secrets set \
+              AXIOM_TOKEN="$AXIOM_TOKEN" \
+              AXIOM_DATASET="$AXIOM_DATASET" \
+              --app "$app"; then
+              echo "$app: Axiom secrets updated"
+            else
+              echo "$app: FAILED to update Axiom secrets"
+              failed="$failed $app"
+            fi
+          done
+          if [ -n "$failed" ]; then
+            echo "::error::Axiom secret update failed on:$failed"
+            exit 1
+          fi
+
+      - name: Verify every producer carries the new token digest
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          apps="openstatus-api openstatus-workflows openstatus-checker openstatus-private-location"
+          token_digests=""
+          dataset_digests=""
+          for app in $apps; do
+            token_digest=$(flyctl secrets list --app "$app" --json |
+              jq -r '.[] | select((.name // .Name) == "AXIOM_TOKEN") | (.digest // .Digest)' |
+              sort -u | tr '\n' ' ')
+            dataset_digest=$(flyctl secrets list --app "$app" --json |
+              jq -r '.[] | select((.name // .Name) == "AXIOM_DATASET") | (.digest // .Digest)' |
+              sort -u | tr '\n' ' ')
+            echo "$app: AXIOM_TOKEN digest $token_digest, AXIOM_DATASET digest $dataset_digest"
+            if [ -z "$token_digest" ] || [ -z "$dataset_digest" ]; then
+              echo "::error::$app is missing an AXIOM secret"
+              exit 1
+            fi
+            token_digests="$token_digests $token_digest"
+            dataset_digests="$dataset_digests $dataset_digest"
+          done
+          unique=$(printf '%s\n' $token_digests | sort -u | grep -c .)
+          if [ "$unique" -ne 1 ]; then
+            echo "::error::AXIOM_TOKEN digest differs across producers; rotation was partial"
+            exit 1
+          fi
+          shared=$(printf '%s\n' $token_digests | sort -u | grep . | head -1)
+          if printf '%s' "$AXIOM_DIGESTS_BEFORE" | tr ',' '\n' | grep -qx "$shared"; then
+            echo "::error::AXIOM_TOKEN digest $shared is unchanged from before the rotation"
+            exit 1
+          fi
+          if [ "$(printf '%s\n' $dataset_digests | sort -u | grep -c .)" -ne 1 ]; then
+            echo "::error::AXIOM_DATASET digest differs across producers"
+            exit 1
+          fi
+          echo "All producers share the new AXIOM_TOKEN digest $shared"
