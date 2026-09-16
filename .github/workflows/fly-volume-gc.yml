@@ -5,6 +5,9 @@ on:
     - cron: "0 3 * * *"
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+
 concurrency:
   group: fly-volume-gc
   cancel-in-progress: false
