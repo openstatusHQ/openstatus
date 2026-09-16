@@ -241,6 +241,11 @@ export const KNOWN_CLIENT_DOCUMENTS: Record<string, ClientMetadataDocument> = {
     client_name: "Claude",
     redirect_uris: ["https://claude.ai/api/mcp/auth_callback"],
   },
+  "https://claude.ai/oauth/claude-code-client-metadata": {
+    client_id: "https://claude.ai/oauth/claude-code-client-metadata",
+    client_name: "Claude Code",
+    redirect_uris: ["http://localhost/callback", "http://127.0.0.1/callback"],
+  },
 };
 
 /**

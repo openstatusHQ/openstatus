@@ -222,6 +222,12 @@ describe("parseClientMetadataDocument", () => {
     );
     expect(parsed.redirect_uris.length).toBe(2);
   });
+
+  test("every pinned document passes the validation a fetched one would", () => {
+    for (const [clientId, pinned] of Object.entries(KNOWN_CLIENT_DOCUMENTS)) {
+      expect(parseClientMetadataDocument(clientId, pinned)).toEqual(pinned);
+    }
+  });
 });
 
 describe("authorize with a URL client id", () => {
@@ -367,29 +373,33 @@ describe("authorize with a URL client id", () => {
   });
 
   test("a fetch failure falls back to a pinned document when nothing is stored", async () => {
-    const [clientId, pinned] = Object.entries(KNOWN_CLIENT_DOCUMENTS)[0];
-    await withTestTransaction(async (tx) => {
-      const { id } = await authorizeAs(
-        clientId,
-        stub(
-          new ClientMetadataUnavailableError(
-            "Client metadata document responded with HTTP 403",
+    for (const [clientId, pinned] of Object.entries(KNOWN_CLIENT_DOCUMENTS)) {
+      const redirect = new URL(pinned.redirect_uris[0]);
+      // Native clients bind an ephemeral port; the pinned entry is port-less.
+      if (redirect.protocol === "http:") redirect.port = "54545";
+      await withTestTransaction(async (tx) => {
+        const { id } = await authorizeAs(
+          clientId,
+          stub(
+            new ClientMetadataUnavailableError(
+              "Client metadata document responded with HTTP 403",
+            ),
           ),
-        ),
-        tx,
-        { redirect_uri: pinned.redirect_uris[0] },
-      );
-      expect((await getSession({ input: { id }, db: tx })).clientId).toBe(
-        clientId,
-      );
-      const row = await tx
-        .select()
-        .from(oauthClient)
-        .where(eq(oauthClient.clientId, clientId))
-        .get();
-      expect(row?.name).toBe(pinned.client_name);
-      expect(row?.redirectUris).toEqual(pinned.redirect_uris);
-    });
+          tx,
+          { redirect_uri: redirect.href },
+        );
+        expect((await getSession({ input: { id }, db: tx })).clientId).toBe(
+          clientId,
+        );
+        const row = await tx
+          .select()
+          .from(oauthClient)
+          .where(eq(oauthClient.clientId, clientId))
+          .get();
+        expect(row?.name).toBe(pinned.client_name);
+        expect(row?.redirectUris).toEqual(pinned.redirect_uris);
+      });
+    }
   });
 
   test("a 404 for a stored client is still a hard failure", async () => {
