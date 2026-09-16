@@ -5,6 +5,7 @@ import {
   page,
   pageComponent,
   pageConfigurationSchema,
+  pageSubscriber,
   privateLocationToMonitors,
   selectMaintenancePageSchema,
   selectPageComponentWithMonitorRelation,
@@ -1267,22 +1268,41 @@ export const statusPageRouter = createTRPCRouter({
           : `https://${_page.slug}.openstatus.dev`;
       const verifyUrl = `${baseUrl}/verify/${subscription.token}`;
 
-      await sendEmailVerification(
-        {
-          id: subscription.id,
-          pageId: _page.id,
-          pageName: _page.title || _page.slug,
-          pageSlug: _page.slug,
-          channelType: "email",
-          email: opts.input.email,
-          token: subscription.token,
-          componentIds: opts.input.subscribeComponents
-            ? opts.input.pageComponents
-            : [],
-          customDomain: _page.customDomain,
-        },
-        verifyUrl,
-      );
+      try {
+        await sendEmailVerification(
+          {
+            id: subscription.id,
+            pageId: _page.id,
+            pageName: _page.title || _page.slug,
+            pageSlug: _page.slug,
+            channelType: "email",
+            email: opts.input.email,
+            token: subscription.token,
+            componentIds: opts.input.subscribeComponents
+              ? opts.input.pageComponents
+              : [],
+            customDomain: _page.customDomain,
+          },
+          verifyUrl,
+        );
+      } catch (err) {
+        console.error("Failed to send subscription verification email:", err);
+        // Clean up pending subscriber record so send failures don't permanently strand subscribers
+        await opts.ctx.db
+          .delete(pageSubscriber)
+          .where(eq(pageSubscriber.id, subscription.id))
+          .catch((cleanupErr) => {
+            console.error(
+              "Failed to clean up pending subscriber record on send failure:",
+              cleanupErr,
+            );
+          });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to send verification email. Please try again later.",
+          cause: err,
+        });
+      }
 
       return { id: subscription.id, token: subscription.token };
     }),
