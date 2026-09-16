@@ -1,0 +1,49 @@
+name: Fly Detached Volume GC
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: fly-volume-gc
+  cancel-in-progress: false
+
+jobs:
+  gc:
+    name: Delete detached volumes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Delete detached named-mount volumes
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          # A named mount source in fly.toml makes Fly mint a persistent
+          # volume per machine; rolling deploys leave the superseded machine's
+          # volume detached, still billed. These volumes only hold a read-only
+          # cache (the libsql replica of the Turso primary) or a superseded
+          # host key, so deleting a detached one loses nothing.
+          names=$(grep -rhE '^[[:space:]]*source[[:space:]]*=[[:space:]]*"' apps --include=fly.toml | sed -E 's/.*"([^"]+)".*/\1/' | sort -u)
+          echo "Named mount sources covered: $(echo "$names" | tr '\n' ' ')"
+          names_json=$(printf '%s' "$names" | jq -R -s 'split("\n") | map(select(length > 0))')
+          apps=$(flyctl apps list -q)
+          total=0
+          for app in $apps; do
+            flyctl volumes list -a "$app" --json \
+              | jq -r --argjson names "$names_json" \
+                  '.[] | select(has("attached_machine_id") and .attached_machine_id == null) | select(.name | IN($names[])) | .id' \
+              > /tmp/detached-volumes
+            while read -r vol; do
+              [ -z "$vol" ] && continue
+              echo "Deleting detached volume $vol on $app"
+              flyctl volumes destroy "$vol" -a "$app" --yes
+              total=$((total + 1))
+            done < /tmp/detached-volumes
+          done
+          echo "Deleted $total detached volume(s)"
