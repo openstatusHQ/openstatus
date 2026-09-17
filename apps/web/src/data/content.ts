@@ -183,6 +183,10 @@ const toolsSection = {
       href: "/registry",
     },
     {
+      label: "Health Endpoints",
+      href: "/health",
+    },
+    {
       label: "Theme Explorer",
       href: "https://themes.openstatus.dev",
     },
