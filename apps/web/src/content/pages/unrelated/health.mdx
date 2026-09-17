@@ -19,7 +19,7 @@ faq:
 
 A monitor that polls your homepage for a `200` tells you the process is alive. It does not tell you that your database is gone, that your cache is timing out, or that the queue you depend on stopped accepting writes — all of which happily return `200` right up until the moment they matter.
 
-`@openstatus/health` is the toolkit we extracted from our own services to close that gap. You describe one probe per dependency; it runs them concurrently, caches the result, and renders a JSON report that says `ok`, `degraded`, or `unhealthy` — and which dependency is responsible.
+[`@openstatus/health`](https://github.com/openstatusHQ/health) is the toolkit we extracted from our own services to close that gap. You describe one probe per dependency; it runs them concurrently, caches the result, and renders a JSON report that says `ok`, `degraded`, or `unhealthy` — and which dependency is responsible.
 
 Zero dependencies. Runs on Node 22+, Bun, Deno, and edge runtimes. MIT licensed.
 
