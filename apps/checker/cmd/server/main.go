@@ -17,6 +17,7 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/handlers"
 
 	"github.com/openstatushq/openstatus/apps/checker/pkg/logger"
+	"github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/tinybird"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
@@ -220,7 +221,7 @@ func main() {
 	// Create log provider with resource and batch processor
 	logProvider := sdklog.NewLoggerProvider(
 		sdklog.WithResource(res),
-		sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)),
+		sdklog.WithProcessor(sdklog.NewBatchProcessor(otel.WithReporting(exporter))),
 	)
 	defer logProvider.Shutdown(ctx)
 
