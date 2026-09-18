@@ -1,5 +1,6 @@
 export { createNotification } from "./create";
 export { deleteNotification } from "./delete";
+export { validateNotificationData } from "./internal";
 export {
   getNotification,
   type ListNotificationsResult,
