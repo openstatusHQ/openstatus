@@ -159,7 +159,7 @@ Most platforms ask your service two distinct questions:
 - **Liveness** (/livez): "Are you still running?" (If false: restart container)
 - **Readiness** (/readyz): "Can you process incoming traffic?" (If false: route traffic elsewhere)
 
-You can separate these concerns in two lines of code by re-using the adapter::
+You can separate these concerns in two lines of code by re-using the adapter:
 
 ```ts
 // Liveness: Process is alive (no checks run, always 200 OK)
