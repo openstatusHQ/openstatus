@@ -1,5 +1,6 @@
 import type { Assertion } from "@openstatus/assertions";
 import {
+  DnsRecordAssertion,
   HeaderAssertion,
   StatusAssertion,
   TextBodyAssertion,
@@ -65,6 +66,9 @@ export const getAssertions = (
     }
     if (a.type === "status") {
       assert.push(new StatusAssertion({ ...a, version: "v1" }));
+    }
+    if (a.type === "dnsRecord") {
+      assert.push(new DnsRecordAssertion({ ...a, version: "v1" }));
     }
   }
   return assert;
