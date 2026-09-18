@@ -92,109 +92,80 @@ export const ParamsSchema = z.object({
 
 const PeriodicityEnumHonoSchema = z.enum([...monitorPeriodicitySchema.options]);
 
-export const MonitorSchema = z
-  .object({
-    id: z.number().openapi({
-      example: 123,
-      description: "The id of the monitor",
-    }),
-    periodicity: PeriodicityEnumHonoSchema.openapi({
-      example: "1m",
-      description: "How often the monitor should run",
-    }),
-    url: z.string().openapi({
-      example: "https://www.documenso.co",
-      description: "The url to monitor",
-    }),
-    regions: z
-      .preprocess(
-        (val) => {
-          let parsedRegions: Array<unknown> = [];
-          if (!val) return parsedRegions;
-          if (Array.isArray(val)) {
-            parsedRegions = val;
-          }
-          if (String(val).length > 0) {
-            parsedRegions = String(val).split(",");
-          }
-          return parsedRegions;
-        },
-        z.array(z.enum(monitorRegions)),
-      )
-      .superRefine((regions, ctx) => {
-        const deprecatedRegions = regions.filter((r) => {
-          return !AVAILABLE_REGIONS.includes(
-            r as (typeof AVAILABLE_REGIONS)[number],
-          );
-        });
-        if (deprecatedRegions.length > 0) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["regions"],
-            message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
-              ", ",
-            )}`,
-          });
+const monitorSchema = z.object({
+  id: z.number().openapi({
+    example: 123,
+    description: "The id of the monitor",
+  }),
+  periodicity: PeriodicityEnumHonoSchema.openapi({
+    example: "1m",
+    description: "How often the monitor should run",
+  }),
+  url: z.string().openapi({
+    example: "https://www.documenso.co",
+    description: "The url to monitor",
+  }),
+  regions: z
+    .preprocess(
+      (val) => {
+        let parsedRegions: Array<unknown> = [];
+        if (!val) return parsedRegions;
+        if (Array.isArray(val)) {
+          parsedRegions = val;
         }
-      })
-      .prefault([])
-      .openapi({
-        example: ["ams"],
-        description: "Where we should monitor it",
-      }),
-    name: z.string().openapi({
-      example: "documenso-web",
-      description: "The name of the monitor",
+        if (String(val).length > 0) {
+          parsedRegions = String(val).split(",");
+        }
+        return parsedRegions;
+      },
+      z.array(z.enum(monitorRegions)),
+    )
+    .superRefine((regions, ctx) => {
+      const deprecatedRegions = regions.filter((r) => {
+        return !AVAILABLE_REGIONS.includes(
+          r as (typeof AVAILABLE_REGIONS)[number],
+        );
+      });
+      if (deprecatedRegions.length > 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["regions"],
+          message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
+            ", ",
+          )}`,
+        });
+      }
+    })
+    .openapi({
+      example: ["ams"],
+      description: "Where we should monitor it",
     }),
-    externalName: z.string().nullish().openapi({
-      example: "Documenso",
-      description:
-        "The external name of the monitor, used to display on the status page or in the external notifications",
+  name: z.string().openapi({
+    example: "documenso-web",
+    description: "The name of the monitor",
+  }),
+  externalName: z.string().nullish().openapi({
+    example: "Documenso",
+    description:
+      "The external name of the monitor, used to display on the status page or in the external notifications",
+  }),
+  description: z.string().nullish().openapi({
+    example: "Documenso website",
+    description: "The description of your monitor",
+  }),
+  method: z.enum(monitorMethods).openapi({ example: "GET" }),
+  body: z
+    .preprocess((val) => {
+      return String(val);
+    }, z.string())
+    .nullish()
+    .openapi({
+      example: "Hello World",
+      description: "The body",
     }),
-    description: z.string().nullish().openapi({
-      example: "Documenso website",
-      description: "The description of your monitor",
-    }),
-    method: z.enum(monitorMethods).openapi({ example: "GET" }),
-    body: z
-      .preprocess((val) => {
-        return String(val);
-      }, z.string())
-      .nullish()
-      .prefault("")
-      .openapi({
-        example: "Hello World",
-        description: "The body",
-      }),
-    headers: z
-      .preprocess(
-        (val) => {
-          if (val == null) return [];
-          try {
-            if (Array.isArray(val)) return val;
-            if (String(val).length > 0) {
-              return JSON.parse(String(val));
-            }
-            return [];
-          } catch (e) {
-            throw new ZodError([
-              {
-                code: "custom",
-                path: ["headers"],
-                message: e instanceof Error ? e.message : "Invalid value",
-              },
-            ]);
-          }
-        },
-        z.array(z.object({ key: z.string(), value: z.string() })).prefault([]),
-      )
-      .nullish()
-      .openapi({
-        description: "The headers of your request",
-        example: [{ key: "x-apikey", value: "supersecrettoken" }],
-      }),
-    assertions: z
-      .preprocess((val) => {
+  headers: z
+    .preprocess(
+      (val) => {
         if (val == null) return [];
         try {
           if (Array.isArray(val)) return val;
@@ -206,60 +177,94 @@ export const MonitorSchema = z
           throw new ZodError([
             {
               code: "custom",
-              path: ["assertions"],
+              path: ["headers"],
               message: e instanceof Error ? e.message : "Invalid value",
             },
           ]);
         }
-      }, z.array(assertion))
-      .nullish()
-      .prefault([])
-      .openapi({
-        description: "The assertions to run",
+      },
+      z.array(z.object({ key: z.string(), value: z.string() })).prefault([]),
+    )
+    .nullish()
+    .openapi({
+      description: "The headers of your request",
+      example: [{ key: "x-apikey", value: "supersecrettoken" }],
+    }),
+  assertions: z
+    .preprocess((val) => {
+      if (val == null) return [];
+      try {
+        if (Array.isArray(val)) return val;
+        if (String(val).length > 0) {
+          return JSON.parse(String(val));
+        }
+        return [];
+      } catch (e) {
+        throw new ZodError([
+          {
+            code: "custom",
+            path: ["assertions"],
+            message: e instanceof Error ? e.message : "Invalid value",
+          },
+        ]);
+      }
+    }, z.array(assertion))
+    .nullish()
+    .openapi({
+      description: "The assertions to run",
+    }),
+  active: z.boolean().openapi({ description: "If the monitor is active" }),
+  public: z.boolean().openapi({ description: "If the monitor is public" }),
+  degradedAfter: z.number().nullish().openapi({
+    description:
+      "The time after the monitor is considered degraded in milliseconds",
+  }),
+  timeout: z.number().nullish().openapi({
+    description: "The timeout of the request in milliseconds",
+  }),
+  retry: z.number().openapi({
+    description: "The number of retries to attempt",
+  }),
+  followRedirects: z.boolean().openapi({
+    description: "If the monitor should follow redirects",
+  }),
+  jobType: z.enum(monitorJobTypes).optional().openapi({
+    description: "The type of the monitor",
+  }),
+  openTelemetry: z
+    .object({
+      endpoint: z.url().optional().prefault("http://localhost:4317").openapi({
+        description: "The endpoint of the OpenTelemetry collector",
       }),
-    active: z
-      .boolean()
-      .prefault(false)
-      .openapi({ description: "If the monitor is active" }),
-    public: z
-      .boolean()
-      .prefault(false)
-      .openapi({ description: "If the monitor is public" }),
-    degradedAfter: z.number().nullish().openapi({
-      description:
-        "The time after the monitor is considered degraded in milliseconds",
-    }),
-    timeout: z.number().nullish().prefault(45000).openapi({
-      description: "The timeout of the request in milliseconds",
-    }),
-    retry: z.number().prefault(3).openapi({
-      description: "The number of retries to attempt",
-    }),
-    followRedirects: z.boolean().prefault(true).openapi({
-      description: "If the monitor should follow redirects",
-    }),
-    jobType: z.enum(monitorJobTypes).optional().prefault("http").openapi({
-      description: "The type of the monitor",
-    }),
-    openTelemetry: z
-      .object({
-        endpoint: z.url().optional().prefault("http://localhost:4317").openapi({
-          description: "The endpoint of the OpenTelemetry collector",
+      headers: z
+        .record(z.string(), z.string())
+        .optional()
+        .prefault({})
+        .openapi({
+          description: "The headers to send to the OpenTelemetry collector",
         }),
-        headers: z
-          .record(z.string(), z.string())
-          .optional()
-          .prefault({})
-          .openapi({
-            description: "The headers to send to the OpenTelemetry collector",
-          }),
-      })
-      .optional()
-      .openapi({
-        description: "The OpenTelemetry configuration",
-      }),
+    })
+    .optional()
+    .openapi({
+      description: "The OpenTelemetry configuration",
+    }),
+});
+
+export const MonitorSchema = monitorSchema
+  .extend({
+    regions: monitorSchema.shape.regions.prefault([]),
+    body: monitorSchema.shape.body.prefault(""),
+    assertions: monitorSchema.shape.assertions.prefault([]),
+    active: monitorSchema.shape.active.prefault(false),
+    public: monitorSchema.shape.public.prefault(false),
+    timeout: monitorSchema.shape.timeout.prefault(45000),
+    retry: monitorSchema.shape.retry.prefault(3),
+    followRedirects: monitorSchema.shape.followRedirects.prefault(true),
+    jobType: monitorSchema.shape.jobType.prefault("http"),
   })
   .openapi("Monitor");
+
+export const UpdateMonitorSchema = monitorSchema.omit({ id: true }).partial();
 
 export type MonitorSchema = z.infer<typeof MonitorSchema>;
 
