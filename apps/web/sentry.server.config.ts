@@ -7,20 +7,24 @@ import * as Sentry from "@sentry/nextjs";
 
 import { env } from "@/env";
 
-Sentry.init({
-  dsn: env.NEXT_PUBLIC_SENTRY_DSN,
+// Preview builds must not report to the shared Sentry project: their traffic
+// pollutes the baselines of the environment-less "Failed query" key queries.
+if (process.env.VERCEL_ENV !== "preview") {
+  Sentry.init({
+    dsn: env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Adjust this value in production, or use tracesSampler for greater control
-  tracesSampleRate: 0.2,
+    // Adjust this value in production, or use tracesSampler for greater control
+    tracesSampleRate: 0.2,
 
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  debug: false,
-  integrations: [Sentry.captureConsoleIntegration({ levels: ["error"] })],
+    // Setting this option to true will print useful information to the console while you're setting up Sentry.
+    debug: false,
+    integrations: [Sentry.captureConsoleIntegration({ levels: ["error"] })],
 
-  beforeSend(event, hint) {
-    if (isExpectedTRPCError(hint.originalException)) {
-      return null;
-    }
-    return event;
-  },
-});
+    beforeSend(event, hint) {
+      if (isExpectedTRPCError(hint.originalException)) {
+        return null;
+      }
+      return event;
+    },
+  });
+}
