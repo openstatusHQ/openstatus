@@ -37,6 +37,10 @@ function isWrite(c: Context): boolean {
   return false;
 }
 
+function isOAuthRegister(c: Context): boolean {
+  return c.req.method === "POST" && /^\/oauth\/register\/?$/.test(c.req.path);
+}
+
 /** Raw credentials must never sit in the store or in logs. */
 async function fingerprint(token: string): Promise<string> {
   const digest = await crypto.subtle.digest(
@@ -117,6 +121,7 @@ export type RateLimitConfig = {
   burstPer10s: number;
   writesPerMinute: number;
   publicPerMinute: number;
+  oauthRegisterPerMinute: number;
 };
 
 /**
@@ -164,8 +169,16 @@ export function createRateLimit(config: RateLimitConfig): MiddlewareHandler[] {
     keyGenerator: ipKey,
     skip: (c) => !isPublic(c.req.path),
   });
+  // Dynamic client registration is unauthenticated and inserts a row per call,
+  // so it gets a tighter bucket than the shared write limit.
+  const oauthRegister = limiter({
+    windowMs: 60_000,
+    limit: () => config.oauthRegisterPerMinute,
+    keyGenerator: ipKey,
+    skip: (c) => !isOAuthRegister(c),
+  });
 
-  return [authFailures, burst, minute, writes, publicLimiter];
+  return [authFailures, burst, minute, writes, publicLimiter, oauthRegister];
 }
 
 export const rateLimit = createRateLimit(limits);
