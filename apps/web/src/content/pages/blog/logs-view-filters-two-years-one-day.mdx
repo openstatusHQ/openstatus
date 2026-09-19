@@ -37,7 +37,9 @@ The first iterations were _hand-crafted_, including the design of how you config
 
 Then it grew: first the **sidebar**, then the **command palette**, then the **infinite data table** (the hero), the **zoomable timeline chart**, **live mode**, and more on top.
 
-And now with AI, you can go _a lot further_:
+> I know, I know. It's 2026 and only a few of us still look at _beautifully crafted_ data table UIs. Everyone else is busy wiring up MCP servers and letting agents do the looking. So we made the table talk to the agents too btw.
+
+So now with AI, you can go _a lot further_:
 
 - `DataTableAuto` infers the columns from your row types. [Docs](https://data-table.openstatus.dev/docs/builder?referrer=openstatus)
 - `createDrizzleHandler` gives you filtering, sorting and cursor pagination for the infinite table without rebuilding that logic yourself. [Docs](https://data-table.openstatus.dev/docs/drizzle-orm?referrer=openstatus)
@@ -46,6 +48,15 @@ And now with AI, you can go _a lot further_:
 - `DataTableRemote` renders a headless table from an endpoint that returns the schema and the data, so the server decides how the table looks. [Docs](https://data-table.openstatus.dev/docs/headless?referrer=openstatus)
 
 There's so much you can do with it. I'm a bit _obsessed_ with this repo. I care a lot about it, and I also know it **doesn't bring openstatus any money**. Awareness is always good, but devs often do not pay for open-source work.
+
+## Who it inspired
+
+What makes me really proud: bigger companies picked it up as a reference for their own logs.
+
+- **Supabase** gave us a shoutout in their [new observability features](https://supabase.com/blog/new-observability-features-in-supabase?referrer=openstatus) post, and it served as the reference for their [Unified Logs](https://supabase.com/blog/unified-logs-open-beta?referrer=openstatus).
+- **Langfuse** took inspiration from it for their tables.
+
+Built something with it? Let us know and we'll add it to the list.
 
 ## Getting started
 
