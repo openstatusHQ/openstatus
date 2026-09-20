@@ -41,6 +41,7 @@ export function KeyValue({ rows }: { rows: KeyValueRow[] }) {
         {rows.map((row, i) => {
           const tone = row.tone ? tones[row.tone] : undefined;
           const borderTop = i === 0 ? undefined : `1px solid ${colors.border}`;
+          const hasValue = row.value !== null;
           return (
             <tr
               key={row.label}
@@ -48,45 +49,50 @@ export function KeyValue({ rows }: { rows: KeyValueRow[] }) {
                 backgroundColor: i % 2 === 0 ? colors.subtle : colors.card,
               }}
             >
-              <td style={{ ...cell, borderTop, color: colors.muted }}>
+              <td
+                colSpan={hasValue ? undefined : 2}
+                style={{ ...cell, borderTop, color: colors.muted }}
+              >
                 {row.label}
               </td>
-              <td
-                align="right"
-                style={{
-                  ...cell,
-                  borderTop,
-                  textAlign: "right",
-                  wordBreak: "break-word",
-                  color: tone?.text ?? colors.foreground,
-                  fontWeight: row.bold || (tone && row.hint) ? 600 : 400,
-                  fontFamily: row.mono ? fonts.mono : undefined,
-                }}
-              >
-                {row.dot ? (
-                  <span
-                    style={{
-                      color: (tone ?? tones.neutral).dot,
-                      fontFamily: fonts.sans,
-                    }}
-                  >
-                    ●&nbsp;&nbsp;
-                  </span>
-                ) : null}
-                {row.value}
-                {row.hint ? (
-                  <span
-                    style={{
-                      color: colors.muted,
-                      fontWeight: 400,
-                      fontFamily: fonts.sans,
-                    }}
-                  >
-                    {" · "}
-                    {row.hint}
-                  </span>
-                ) : null}
-              </td>
+              {hasValue ? (
+                <td
+                  align="right"
+                  style={{
+                    ...cell,
+                    borderTop,
+                    textAlign: "right",
+                    wordBreak: "break-word",
+                    color: tone?.text ?? colors.foreground,
+                    fontWeight: row.bold || (tone && row.hint) ? 600 : 400,
+                    fontFamily: row.mono ? fonts.mono : undefined,
+                  }}
+                >
+                  {row.dot ? (
+                    <span
+                      style={{
+                        color: (tone ?? tones.neutral).dot,
+                        fontFamily: fonts.sans,
+                      }}
+                    >
+                      ●&nbsp;&nbsp;
+                    </span>
+                  ) : null}
+                  {row.value}
+                  {row.hint ? (
+                    <span
+                      style={{
+                        color: colors.muted,
+                        fontWeight: 400,
+                        fontFamily: fonts.sans,
+                      }}
+                    >
+                      {" · "}
+                      {row.hint}
+                    </span>
+                  ) : null}
+                </td>
+              ) : null}
             </tr>
           );
         })}

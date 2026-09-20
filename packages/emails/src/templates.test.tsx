@@ -164,6 +164,7 @@ describe("markdown", () => {
     const html = renderMarkdown("| a |\n|--|\n| 1 |\n\n- [x] done");
     expect(html).toContain("<td style=");
     expect(html).toContain("<th style=");
+    expect(html).toContain("width:100%;table-layout:fixed");
     expect(html).toContain("☑ done");
     expect(html).not.toContain("<input");
   });
@@ -417,11 +418,12 @@ describe("status report", () => {
     }
   });
 
-  test("unknown impact leaves the value out", async () => {
+  test("unknown impact drops the value cell", async () => {
     const html = await render(
       <StatusReportEmail {...report} componentImpacts={undefined} />,
     );
     expect(html).toContain("Runners");
+    expect(html).toContain('colSpan="2"');
     expect(html).not.toContain("Operational");
     expect(html).not.toContain("Partial outage");
   });
