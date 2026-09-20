@@ -205,16 +205,16 @@ describe("reminderScheduledAt", () => {
 });
 
 describe("send plumbing", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: stubs over the Resend client
-  let send: Stub<any>, batch: Stub<any>, cancel: Stub<any>, enabled: Stub<any>;
-  // biome-ignore lint/suspicious/noExplicitAny: Resend result double
-  const ok = { data: { id: "email_123" }, error: null } as any;
+  let send: Stub, batch: Stub, cancel: Stub, enabled: Stub;
+  // safe because the verbs only read `data.id` and `error.name`
+  const result = (value: unknown) => Promise.resolve(value as never);
+  const ok = { data: { id: "email_123" }, error: null };
 
   beforeEach(() => {
     enabled = stub(delivery, "enabled", () => true);
-    send = stub(resend.emails, "send", () => Promise.resolve(ok));
-    batch = stub(resend.batch, "send", () => Promise.resolve(ok));
-    cancel = stub(resend.emails, "cancel", () => Promise.resolve(ok));
+    send = stub(resend.emails, "send", () => result(ok));
+    batch = stub(resend.batch, "send", () => result(ok));
+    cancel = stub(resend.emails, "cancel", () => result(ok));
   });
 
   afterEach(() => {
@@ -256,8 +256,7 @@ describe("send plumbing", () => {
     for (const name of ["invalid_idempotent_request", "application_error"]) {
       send.restore();
       send = stub(resend.emails, "send", () =>
-        // biome-ignore lint/suspicious/noExplicitAny: Resend error double
-        Promise.resolve({ data: null, error: { name } } as any),
+        result({ data: null, error: { name } }),
       );
       expect(await sendEmail(email, { idempotencyKey: "k" })).toBeUndefined();
       assertSpyCalls(send, 1);
