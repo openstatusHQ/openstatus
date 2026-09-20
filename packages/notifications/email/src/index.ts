@@ -28,7 +28,8 @@ export const sendAlert = async ({
     monitorId: monitor.id,
     name: monitor.name,
     type: "alert",
-    method: monitor.method ?? undefined,
+    method:
+      monitor.jobType === "http" ? (monitor.method ?? undefined) : undefined,
     degradedAfter: monitor.degradedAfter ?? undefined,
     retry: monitor.retry ?? undefined,
     firstSeen: incident?.startedAt?.toISOString(),
@@ -63,7 +64,8 @@ export const sendRecovery = async ({
     monitorId: monitor.id,
     name: monitor.name,
     type: "recovery",
-    method: monitor.method ?? undefined,
+    method:
+      monitor.jobType === "http" ? (monitor.method ?? undefined) : undefined,
     degradedAfter: monitor.degradedAfter ?? undefined,
     retry: monitor.retry ?? undefined,
     firstSeen: incident?.startedAt?.toISOString(),
@@ -97,7 +99,8 @@ export const sendDegraded = async ({
     monitorId: monitor.id,
     name: monitor.name,
     type: "degraded",
-    method: monitor.method ?? undefined,
+    method:
+      monitor.jobType === "http" ? (monitor.method ?? undefined) : undefined,
     degradedAfter: monitor.degradedAfter ?? undefined,
     retry: monitor.retry ?? undefined,
     firstSeen: incident?.startedAt?.toISOString(),

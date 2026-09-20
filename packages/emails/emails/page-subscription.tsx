@@ -34,8 +34,8 @@ const PageSubscriptionEmail = ({ page, link, img }: PageSubscriptionProps) => {
       }
     >
       <Heading title={`Confirm your subscription to ${page}`}>
-        Once confirmed, you get an email for every status report and maintenance
-        on this status page. The link is valid for 7 days.
+        Once confirmed, you get email updates from this status page. The link is
+        valid for 7 days.
       </Heading>
       <Actions primary={{ label: "Confirm subscription", href: link }} />
     </Layout>

@@ -2,7 +2,7 @@
 
 import { Button, Link } from "react-email";
 
-import { colors } from "./styles";
+import { colors, styles } from "./styles";
 
 interface Action {
   label: string;
@@ -45,11 +45,7 @@ export function Actions({
             <td style={{ paddingLeft: "18px" }}>
               <Link
                 href={secondary.href}
-                style={{
-                  color: colors.body,
-                  fontSize: "15px",
-                  textDecoration: "underline",
-                }}
+                style={{ ...styles.link, fontSize: "15px" }}
               >
                 {secondary.label}
               </Link>

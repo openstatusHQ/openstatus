@@ -14,8 +14,9 @@ export const colors = {
   subtle: "#fafafa",
   foreground: "#171717",
   body: "#3f3f46",
-  muted: "#6b6b6b",
-  faint: "#a3a3a3",
+  muted: "#525252",
+  // 4.5:1 on both the card and the page background
+  faint: "#6e6e6e",
 };
 
 // The only colour axis: pill, breached value, status dot.

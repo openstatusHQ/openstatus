@@ -80,9 +80,9 @@ const markdownStyles = {
 };
 
 // Markdown passes raw HTML through to the email; subscribers must never
-// receive author-controlled markup.
+// receive author-controlled markup. Autolinks (<https://…>) stay intact.
 function escapeHtml(markdown: string) {
-  return markdown.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  return markdown.replace(/<(?!https?:\/\/[^\s<>]+>)/g, "&lt;");
 }
 
 function isDate(value: string) {

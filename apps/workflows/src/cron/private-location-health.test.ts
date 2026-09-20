@@ -104,12 +104,14 @@ describe("runPrivateLocationHealth", () => {
 
   test("passes the number of monitors scheduled on the location", async () => {
     await seedLocation("active", STALE);
-    const linked = await createMonitor(TEST_WORKSPACE_ID);
-    const unlinked = await createMonitor(TEST_WORKSPACE_ID);
+    const linked = await createMonitor(TEST_WORKSPACE_ID, { active: true });
+    const unlinked = await createMonitor(TEST_WORKSPACE_ID, { active: true });
+    const paused = await createMonitor(TEST_WORKSPACE_ID, { active: false });
     await db
       .insert(privateLocationToMonitors)
       .values([
         { privateLocationId: TEST_LOCATION_ID, monitorId: linked.id },
+        { privateLocationId: TEST_LOCATION_ID, monitorId: paused.id },
         {
           privateLocationId: TEST_LOCATION_ID,
           monitorId: unlinked.id,
@@ -124,6 +126,7 @@ describe("runPrivateLocationHealth", () => {
     } finally {
       await db.delete(monitor).where(eq(monitor.id, linked.id));
       await db.delete(monitor).where(eq(monitor.id, unlinked.id));
+      await db.delete(monitor).where(eq(monitor.id, paused.id));
     }
   });
 

@@ -16,7 +16,7 @@ const SsoDisabledEmail = () => {
       footer={<Footer reason="Sent to workspace owners." />}
     >
       <Heading title="SAML single sign-on has been turned off">
-        Your subscription ended, and SSO is part of the Scale plan.
+        Your subscription ended, and SSO is a paid add-on.
       </Heading>
       <Callout title="Your setup is kept">
         You can still sign in with GitHub or Google. Your identity provider

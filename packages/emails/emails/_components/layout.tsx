@@ -29,10 +29,20 @@ const openstatus = {
   logo: "https://www.openstatus.dev/assets/logos/OpenStatus.png",
 } satisfies Brand;
 
+// Tokenized links (verify, magic link) are one-time: a mail scanner following
+// the header link would consume them, so the brand points at the page origin.
+function origin(href: string) {
+  try {
+    return new URL(href).origin;
+  } catch {
+    return href;
+  }
+}
+
 export function statusPageBrand(page: string, href: string, logo?: string) {
   return {
     name: /\bstatus$/i.test(page) ? page : `${page} Status`,
-    href,
+    href: origin(href),
     logo,
   } satisfies Brand;
 }
@@ -73,15 +83,13 @@ export function Layout({
                   <tr>
                     {brand.logo ? (
                       <td width={40} valign="middle">
-                        <Link href={brand.href}>
-                          <Img
-                            src={brand.logo}
-                            width="28"
-                            height="28"
-                            alt=""
-                            style={{ display: "block", borderRadius: "999px" }}
-                          />
-                        </Link>
+                        <Img
+                          src={brand.logo}
+                          width="28"
+                          height="28"
+                          alt=""
+                          style={{ display: "block", borderRadius: "999px" }}
+                        />
                       </td>
                     ) : null}
                     <td valign="middle">

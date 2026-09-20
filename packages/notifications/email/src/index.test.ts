@@ -170,6 +170,7 @@ describe("Email Notifications", () => {
       incident: { startedAt },
     });
 
+    assertSpyCalls(sendMonitorAlertMock, 1);
     const callArgs = sendMonitorAlertMock.calls[0].args[0];
     expect(callArgs.degradedAfter).toBe(250);
     expect(callArgs.retry).toBe(3);

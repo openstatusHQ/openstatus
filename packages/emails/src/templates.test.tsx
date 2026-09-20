@@ -358,6 +358,31 @@ describe("status report", () => {
     expect(html).toContain("&lt;script&gt;");
   });
 
+  test("autolinks and entities in the message survive escaping", async () => {
+    const html = await render(
+      <StatusReportEmail
+        {...report}
+        message="See <https://status.acme.dev/x> — R&amp;D"
+      />,
+    );
+    expect(html).toContain('href="https://status.acme.dev/x"');
+    expect(html).toContain("R&amp;D");
+    expect(html).not.toContain("&amp;amp;");
+  });
+
+  test("maintenance without eyebrow items renders no empty eyebrow", async () => {
+    const html = await render(
+      <StatusReportEmail
+        {...report}
+        status="maintenance"
+        date="Mon 21 Sep, 10:00 - 12:00"
+        updateIndex={undefined}
+        reportStartedAt={undefined}
+      />,
+    );
+    expect(html).not.toMatch(/<p[^>]*letter-spacing:0\.12em[^>]*><\/p>/);
+  });
+
   test("preheader never repeats the subject", () => {
     expect(statusReportPreheader(report)).toBe("Monitoring: API, Runners.");
     expect(statusReportPreheader({ ...report, status: "resolved" })).toBe(
@@ -465,6 +490,26 @@ describe("account and status page mail", () => {
     expect(html).toContain("Acme Status");
     expect(html).toContain("https://acme.dev/logo.png");
     expect(html).toContain('href="https://acme.openstatus.dev/verify/t"');
+    expect(html).not.toContain("every status report");
+  });
+
+  test("one-time links appear once, on the CTA only", async () => {
+    const link = "https://acme.openstatus.dev/verify/t";
+    for (const el of [
+      <PageSubscriptionEmail key="s" page="Acme" link={link} />,
+      <StatusPageMagicLinkEmail key="m" page="Acme" link={link} />,
+    ]) {
+      const html = await render(el);
+      expect(html.split(`href="${link}"`).length - 1).toBe(1);
+      expect(html).toContain('href="https://acme.openstatus.dev"');
+    }
+  });
+
+  test("team invitation falls back on an empty workspace name", async () => {
+    const html = await render(
+      <TeamInvitationEmail token="t" workspaceName="" invitedBy="a@b.c" />,
+    );
+    expect(html).toContain("Join openstatus on openstatus");
   });
 
   test("magic link", async () => {
@@ -509,7 +554,7 @@ describe("every transactional template", () => {
       expect(html).not.toContain("OpenStatus<");
       expect(html).not.toMatch(/>[^<]*OpenStatus[^<]*</);
       expect(html).not.toContain("data:image/svg");
-      expect(html).not.toMatch(/display:\s?(flex|grid)/);
+      expect(html).not.toMatch(/display:\s?(-webkit-)?(inline-)?(flex|grid)/);
       expect(html).toContain("max-width:600px");
       expect(html).toContain(POSTAL_ADDRESS);
     });

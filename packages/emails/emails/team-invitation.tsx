@@ -25,7 +25,7 @@ const TeamInvitationEmail = ({
   invitedBy,
   baseUrl = BASE_URL,
 }: TeamInvitationProps) => {
-  const workspace = workspaceName ?? "openstatus";
+  const workspace = workspaceName || "openstatus";
   return (
     <Layout
       preview={`${invitedBy} invited you. The link is valid for 7 days.`}
