@@ -34,6 +34,7 @@ const SUPPORT_EMAIL = "ping@openstatus.dev";
 const DAY_MS = 86_400_000;
 export const REMINDER_LEAD_DAYS = 3;
 const RESEND_MAX_SCHEDULE_DAYS = 30;
+const RESEND_BATCH_SIZE = 100;
 
 /** `stripe:<event.id>:<template>` — a Stripe redelivery reuses the event id. */
 export function stripeIdempotencyKey(eventId: string, template: string) {
@@ -75,9 +76,24 @@ export function planLossLines(loss: PlanLoss): string[] {
     const n = loss.membersRemoved;
     lines.push(`${plural(n, "member")} ${n === 1 ? "loses" : "lose"} access`);
   }
-  if (loss.customDomains.length > 0) {
+  if (loss.invitationsDeleted > 0) {
+    const n = loss.invitationsDeleted;
     lines.push(
-      `the custom domain ${loss.customDomains.join(", ")} is released`,
+      `${plural(n, "pending invitation")} ${n === 1 ? "gets" : "get"} deleted`,
+    );
+  }
+  if (loss.notificationsDeleted > 0) {
+    const n = loss.notificationsDeleted;
+    lines.push(
+      `${plural(n, "notification channel")} ${n === 1 ? "gets" : "get"} removed`,
+    );
+  }
+  if (loss.customDomains.length > 0) {
+    const many = loss.customDomains.length > 1;
+    lines.push(
+      `the custom domain${many ? "s" : ""} ${loss.customDomains.join(", ")} ${
+        many ? "are" : "is"
+      } released`,
     );
   }
   if (loss.sso) lines.push("SAML SSO turns off");
@@ -120,16 +136,23 @@ export async function sendMemberRemoved(
   if (req.to.length === 0) return;
   const { to, idempotencyKey, ...props } = req;
   const html = await render(<MemberRemovedEmail {...props} />);
-  await sendBatchEmailHtml(
-    to.map((email) => ({
-      from: SYSTEM_FROM,
-      reply_to: SUPPORT_EMAIL,
-      to: email,
-      subject: memberRemovedSubject(props),
-      html,
-    })),
-    { idempotencyKey },
-  );
+  // Resend's batch API takes at most 100 emails.
+  for (let i = 0; i < to.length; i += RESEND_BATCH_SIZE) {
+    await sendBatchEmailHtml(
+      to.slice(i, i + RESEND_BATCH_SIZE).map((email) => ({
+        from: SYSTEM_FROM,
+        reply_to: SUPPORT_EMAIL,
+        to: email,
+        subject: memberRemovedSubject(props),
+        html,
+      })),
+      {
+        idempotencyKey: idempotencyKey
+          ? `${idempotencyKey}:${i / RESEND_BATCH_SIZE}`
+          : undefined,
+      },
+    );
+  }
 }
 
 export async function sendCancellationScheduled(req: {

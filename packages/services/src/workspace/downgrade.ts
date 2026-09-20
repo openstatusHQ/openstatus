@@ -277,9 +277,13 @@ export async function previewWorkspaceDowngrade(args: {
     membersRemoved: members
       .map((m) => m.email)
       .filter((email): email is string => !!email && email.trim() !== ""),
-    customDomains: pages
-      .map((p) => p.customDomain)
-      .filter((domain): domain is string => !!domain && domain !== ""),
+    customDomains: [
+      ...new Set(
+        pages
+          .map((p) => p.customDomain)
+          .filter((domain): domain is string => !!domain && domain !== ""),
+      ),
+    ],
     ssoEnabled: ctx.workspace.ssoEnabled,
   };
 }

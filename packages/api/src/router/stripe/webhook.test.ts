@@ -85,7 +85,7 @@ describe("stripe webhook emails", () => {
     cancelEmail = stub(resend.emails, "cancel", () => Promise.resolve(ok));
     updateSubscription = stub(stripe.subscriptions, "update", () =>
       // biome-ignore lint/suspicious/noExplicitAny: Stripe response double
-      Promise.resolve({} as any),
+      Promise.resolve({ cancel_at_period_end: true } as any),
     );
     stubs = [
       send,
@@ -115,11 +115,15 @@ describe("stripe webhook emails", () => {
 
   function failSends() {
     send.restore();
-    stubs = stubs.filter((s) => s !== send);
+    batch.restore();
+    stubs = stubs.filter((s) => s !== send && s !== batch);
     send = stub(resend.emails, "send", () =>
       Promise.reject(new Error("resend is down")),
     );
-    stubs.push(send);
+    batch = stub(resend.batch, "send", () =>
+      Promise.reject(new Error("resend is down")),
+    );
+    stubs.push(send, batch);
   }
 
   async function seed() {
@@ -197,7 +201,7 @@ describe("stripe webhook emails", () => {
       expect(emails.map((e: { to: string }) => e.to)).toEqual([memberEmail]);
       expect(emails[0].html).toContain(s.ownerEmail);
       expect(batchOptions).toEqual({
-        idempotencyKey: `stripe:${evt.event.id}:member-removed`,
+        idempotencyKey: `stripe:${evt.event.id}:member-removed:0`,
       });
 
       const pages = await db
@@ -210,6 +214,12 @@ describe("stripe webhook emails", () => {
 
     test("a mail failure never fails the handler; the downgrade is committed", async () => {
       const s = await seed();
+      const member = await createUser();
+      await db
+        .update(user)
+        .set({ email: `member-${member.id}@example.test` })
+        .where(eq(user.id, member.id));
+      await addUserToWorkspace(member.id, s.workspace.id, "member");
       failSends();
 
       await caller().customerSubscriptionDeleted(
@@ -225,6 +235,8 @@ describe("stripe webhook emails", () => {
         .where(eq(workspace.id, s.workspace.id))
         .get();
       expect(ws?.plan).toBe("free");
+      assertSpyCalls(send, 1);
+      assertSpyCalls(batch, 1);
       const members = await db
         .select()
         .from(usersToWorkspaces)
@@ -239,8 +251,13 @@ describe("stripe webhook emails", () => {
       const s = await seed();
       const sub = subscription(s.stripeId, { cancel_at_period_end: true });
       live = [sub];
+      // The raw payload's period end is not trustworthy; only live state is.
+      const raw = subscription(s.stripeId, {
+        cancel_at_period_end: true,
+        current_period_end: now() + 25 * DAY,
+      });
 
-      const evt = event("customer.subscription.updated", sub, {
+      const evt = event("customer.subscription.updated", raw, {
         cancel_at_period_end: false,
       });
       await caller().customerSubscriptionUpdated(evt);
@@ -310,6 +327,103 @@ describe("stripe webhook emails", () => {
         sub.id,
         { metadata: { reminder_email_id: "" } },
       ]);
+    });
+
+    test("a stale cancel event after a resume sends nothing", async () => {
+      const s = await seed();
+      live = [subscription(s.stripeId, { cancel_at_period_end: false })];
+
+      await caller().customerSubscriptionUpdated(
+        event(
+          "customer.subscription.updated",
+          subscription(s.stripeId, { cancel_at_period_end: true }),
+          { cancel_at_period_end: false },
+        ),
+      );
+
+      assertSpyCalls(send, 0);
+      assertSpyCalls(updateSubscription, 0);
+    });
+
+    test("a resume racing the metadata write cancels the fresh reminder", async () => {
+      const s = await seed();
+      const sub = subscription(s.stripeId, { cancel_at_period_end: true });
+      live = [sub];
+      updateSubscription.restore();
+      stubs = stubs.filter((x) => x !== updateSubscription);
+      updateSubscription = stub(stripe.subscriptions, "update", () =>
+        // biome-ignore lint/suspicious/noExplicitAny: Stripe response double
+        Promise.resolve({ cancel_at_period_end: false } as any),
+      );
+      stubs.push(updateSubscription);
+
+      await caller().customerSubscriptionUpdated(
+        event("customer.subscription.updated", sub, {
+          cancel_at_period_end: false,
+        }),
+      );
+
+      expect(cancelEmail.calls[0].args[0]).toBe("email_reminder_1");
+      expect(updateSubscription.calls.map((c) => c.args[1])).toEqual([
+        { metadata: { reminder_email_id: "email_reminder_1" } },
+        { metadata: { reminder_email_id: "" } },
+      ]);
+    });
+
+    test("a failed reminder cancel keeps the id for a retry", async () => {
+      const s = await seed();
+      const sub = subscription(s.stripeId, {
+        metadata: { reminder_email_id: "email_reminder_1" },
+      });
+      live = [sub];
+      cancelEmail.restore();
+      stubs = stubs.filter((x) => x !== cancelEmail);
+      cancelEmail = stub(resend.emails, "cancel", () =>
+        Promise.resolve({
+          data: null,
+          error: { name: "application_error" },
+          // biome-ignore lint/suspicious/noExplicitAny: Resend error double
+        } as any),
+      );
+      stubs.push(cancelEmail);
+
+      await caller().customerSubscriptionUpdated(
+        event("customer.subscription.updated", sub, {
+          cancel_at_period_end: true,
+        }),
+      );
+
+      assertSpyCalls(cancelEmail, 1);
+      assertSpyCalls(updateSubscription, 0);
+    });
+
+    test("a failed confirmation does not suppress the reminder", async () => {
+      const s = await seed();
+      const sub = subscription(s.stripeId, { cancel_at_period_end: true });
+      live = [sub];
+      send.restore();
+      stubs = stubs.filter((x) => x !== send);
+      let calls = 0;
+      send = stub(resend.emails, "send", () =>
+        calls++ === 0
+          ? Promise.reject(new Error("resend is down"))
+          : // biome-ignore lint/suspicious/noExplicitAny: Resend result double
+            Promise.resolve({
+              data: { id: "email_reminder_1" },
+              error: null,
+            } as any),
+      );
+      stubs.push(send);
+
+      await caller().customerSubscriptionUpdated(
+        event("customer.subscription.updated", sub, {
+          cancel_at_period_end: false,
+        }),
+      );
+
+      assertSpyCalls(send, 2);
+      expect(send.calls[1].args[0].scheduledAt).toBeDefined();
+      assertSpyCalls(updateSubscription, 1);
     });
 
     test("metadata-only update and unrelated updates send nothing", async () => {

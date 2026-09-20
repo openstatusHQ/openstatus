@@ -51,7 +51,9 @@ export function planLossRows(loss: PlanLoss, past: boolean): KeyValueRow[] {
   }
   if (loss.customDomains.length > 0) {
     rows.push({
-      label: past ? "Custom domain released" : "Custom domain",
+      label: `Custom domain${loss.customDomains.length === 1 ? "" : "s"}${
+        past ? " released" : ""
+      }`,
       value: loss.customDomains.join(", "),
       mono: true,
     });

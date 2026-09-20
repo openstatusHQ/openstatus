@@ -168,6 +168,42 @@ describe("billing templates", () => {
       "1 member loses access",
     ]);
   });
+
+  test("loss lines cover every destructive change", () => {
+    expect(
+      planLossLines({
+        ...nothing,
+        invitationsDeleted: 2,
+        notificationsDeleted: 1,
+        customDomains: ["a.dev", "b.dev"],
+        sso: true,
+      }),
+    ).toEqual([
+      "2 pending invitations get deleted",
+      "1 notification channel gets removed",
+      "the custom domains a.dev, b.dev are released",
+      "SAML SSO turns off",
+    ]);
+  });
+
+  test("custom domain label follows the count", async () => {
+    const one = await render(
+      <PlanDowngradedEmail
+        workspaceSlug="a"
+        previousPlan="team"
+        loss={{ ...nothing, customDomains: ["a.dev"] }}
+      />,
+    );
+    expect(one).toContain("Custom domain released");
+    const two = await render(
+      <PlanDowngradedEmail
+        workspaceSlug="a"
+        previousPlan="team"
+        loss={{ ...nothing, customDomains: ["a.dev", "b.dev"] }}
+      />,
+    );
+    expect(two).toContain("Custom domains released");
+  });
 });
 
 describe("billingRecipients", () => {
@@ -263,9 +299,46 @@ describe("send plumbing", () => {
     }
   });
 
-  test("cancelScheduledEmail wraps emails.cancel", async () => {
-    await cancelScheduledEmail("email_123");
+  test("cancelScheduledEmail wraps emails.cancel and reports success", async () => {
+    expect(await cancelScheduledEmail("email_123")).toBe(true);
     expect(cancel.calls[0].args[0]).toBe("email_123");
+
+    cancel.restore();
+    cancel = stub(resend.emails, "cancel", () =>
+      result({ data: null, error: { name: "application_error" } }),
+    );
+    expect(await cancelScheduledEmail("email_123")).toBe(false);
+  });
+
+  test("sendMemberRemoved chunks at Resend's 100-email batch limit", async () => {
+    await sendMemberRemoved({
+      to: Array.from({ length: 250 }, (_, i) => `m${i}@acme.dev`),
+      idempotencyKey: "stripe:evt_1:member-removed",
+      workspaceName: "Acme",
+      reason: "downgrade",
+      owners: [],
+    });
+    assertSpyCalls(batch, 3);
+    expect(batch.calls.map((c) => c.args[0].length)).toEqual([100, 100, 50]);
+    expect(batch.calls.map((c) => c.args[1].idempotencyKey)).toEqual([
+      "stripe:evt_1:member-removed:0",
+      "stripe:evt_1:member-removed:1",
+      "stripe:evt_1:member-removed:2",
+    ]);
+  });
+
+  test("a batch error is swallowed, not thrown", async () => {
+    batch.restore();
+    batch = stub(resend.batch, "send", () =>
+      result({ data: null, error: { name: "application_error" } }),
+    );
+    await sendMemberRemoved({
+      to: ["a@acme.dev"],
+      workspaceName: "Acme",
+      reason: "downgrade",
+      owners: [],
+    });
+    assertSpyCalls(batch, 1);
   });
 
   test("sendPlanDowngraded", async () => {
@@ -309,7 +382,9 @@ describe("send plumbing", () => {
       "You no longer have access to Acme on openstatus",
     );
     expect(emails[0].html).toContain("max@acme.dev");
-    expect(options).toEqual({ idempotencyKey: "stripe:evt_1:member-removed" });
+    expect(options).toEqual({
+      idempotencyKey: "stripe:evt_1:member-removed:0",
+    });
   });
 
   test("sendCancellationScheduled is raw, from the root domain", async () => {

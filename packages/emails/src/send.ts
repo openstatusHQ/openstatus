@@ -54,10 +54,12 @@ export const sendEmail = async (
   return data?.id;
 };
 
+/** True when the email is cancelled, so the caller may forget its id. */
 export const cancelScheduledEmail = async (id: string) => {
-  if (!delivery.enabled()) return;
+  if (!delivery.enabled()) return false;
   const { error } = await resend.emails.cancel(id);
   if (error) console.error(`Error cancelling scheduled email ${id}:`, error);
+  return !error;
 };
 
 export const sendBatchEmailHtml = async (
@@ -65,13 +67,16 @@ export const sendBatchEmailHtml = async (
   opts: Pick<SendOptions, "idempotencyKey"> = {},
 ) => {
   if (!delivery.enabled() || emails.length === 0) return;
-  await resend.batch.send(
+  const { error } = await resend.batch.send(
     emails.map(({ reply_to, ...email }) => ({
       ...email,
       ...(reply_to ? { replyTo: reply_to } : {}),
     })),
     opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : undefined,
   );
+  if (error && error.name !== "invalid_idempotent_request") {
+    console.error(`Error sending batch of ${emails.length} emails:`, error);
+  }
 };
 
 // TODO: delete in favor of sendBatchEmailHtml

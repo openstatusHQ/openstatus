@@ -81,6 +81,63 @@ async function getBillingRecipients(
   return billingRecipients(owners, customer.deleted ? null : customer.email);
 }
 
+async function sendCancellationEmails(args: {
+  db: NonNullable<Db>;
+  ws: NonNullable<Awaited<ReturnType<typeof getWorkspaceByStripeId>>>;
+  customerId: string;
+  current: Stripe.Subscription;
+  plan: string;
+  eventId: string;
+}) {
+  const { db, ws, customerId, current, plan, eventId } = args;
+  const endsAt = new Date(current.current_period_end * 1000);
+  const to = await getBillingRecipients(db, ws.id, customerId);
+  const { membersRemoved, ssoEnabled, ...preview } =
+    await previewWorkspaceDowngrade({
+      ctx: {
+        workspace: ws,
+        actor: { type: "system", job: "stripe-subscription-updated" },
+        db,
+      },
+    });
+  const loss = {
+    ...preview,
+    membersRemoved: membersRemoved.length,
+    sso: ssoEnabled,
+  };
+
+  // Independent: a failed confirmation must not suppress the reminder.
+  try {
+    await sendCancellationScheduled({ to, eventId, plan, endsAt, loss });
+  } catch (err) {
+    console.error("Failed to send cancellation confirmation:", err);
+  }
+
+  const reminderId = await schedulePlanEndingSoon({
+    to,
+    eventId,
+    workspaceSlug: ws.slug,
+    plan,
+    endsAt,
+    loss,
+  });
+  if (!reminderId) return;
+
+  const updated = await stripe.subscriptions.update(current.id, {
+    metadata: { [REMINDER_METADATA_KEY]: reminderId },
+  });
+  // A resume handled while we were scheduling found no id to cancel. The
+  // update response is the state after our write, so undo the reminder here.
+  if (
+    !updated.cancel_at_period_end &&
+    (await cancelScheduledEmail(reminderId))
+  ) {
+    await stripe.subscriptions.update(current.id, {
+      metadata: { [REMINDER_METADATA_KEY]: "" },
+    });
+  }
+}
+
 export const webhookRouter = createTRPCRouter({
   customerSubscriptionUpdated: webhookProcedure.mutation(async (opts) => {
     const eventSubscription = opts.input.event.data
@@ -163,54 +220,29 @@ export const webhookRouter = createTRPCRouter({
     // only `metadata`, so it is ignored here.
     const wasCancelling =
       opts.input.event.data.previous_attributes?.cancel_at_period_end;
-    const isCancelling = eventSubscription.cancel_at_period_end;
+    const isCancelling = current.cancel_at_period_end;
+    // The event must carry a real flip, and live state must agree with it: a
+    // late cancel event after a resume (or the reverse) is stale and ignored.
     if (
       eventSubscription.id === current.id &&
       typeof wasCancelling === "boolean" &&
-      wasCancelling !== isCancelling
+      wasCancelling !== eventSubscription.cancel_at_period_end &&
+      eventSubscription.cancel_at_period_end === isCancelling
     ) {
       try {
         if (isCancelling) {
-          const endsAt = new Date(current.current_period_end * 1000);
-          const to = await getBillingRecipients(opts.ctx.db, ws.id, customerId);
-          const { membersRemoved, ssoEnabled, ...preview } =
-            await previewWorkspaceDowngrade({
-              ctx: {
-                workspace: ws,
-                actor: { type: "system", job: "stripe-subscription-updated" },
-                db: opts.ctx.db,
-              },
-            });
-          const loss = {
-            ...preview,
-            membersRemoved: membersRemoved.length,
-            sso: ssoEnabled,
-          };
-          const eventId = opts.input.event.id;
-          await sendCancellationScheduled({
-            to,
-            eventId,
+          await sendCancellationEmails({
+            db: opts.ctx.db,
+            ws,
+            customerId,
+            current,
             plan: built.plan,
-            endsAt,
-            loss,
+            eventId: opts.input.event.id,
           });
-          const reminderId = await schedulePlanEndingSoon({
-            to,
-            eventId,
-            workspaceSlug: ws.slug,
-            plan: built.plan,
-            endsAt,
-            loss,
-          });
-          if (reminderId) {
-            await stripe.subscriptions.update(current.id, {
-              metadata: { [REMINDER_METADATA_KEY]: reminderId },
-            });
-          }
         } else {
           const reminderId = current.metadata?.[REMINDER_METADATA_KEY];
-          if (reminderId) {
-            await cancelScheduledEmail(reminderId);
+          // Keep the id when the cancel fails, so a retry can still cancel it.
+          if (reminderId && (await cancelScheduledEmail(reminderId))) {
             await stripe.subscriptions.update(current.id, {
               metadata: { [REMINDER_METADATA_KEY]: "" },
             });
@@ -410,10 +442,11 @@ export const webhookRouter = createTRPCRouter({
 
     // Best-effort after commit: owners must know what the cascade removed, and
     // removed members that they lost access, but a mail failure must not fail
-    // the webhook into Stripe retries.
+    // the webhook into Stripe retries — nor one mail suppress the other.
+    const eventId = opts.input.event.id;
+    let owners: Array<string | null> = [];
     try {
-      const eventId = opts.input.event.id;
-      const owners = await getOwnerEmails(opts.ctx.db, ws.id);
+      owners = await getOwnerEmails(opts.ctx.db, ws.id);
       const customer = await stripe.customers.retrieve(customerId);
       await sendPlanDowngraded({
         to: billingRecipients(owners, customer.deleted ? null : customer.email),
@@ -427,6 +460,10 @@ export const webhookRouter = createTRPCRouter({
           sso: ssoDisabled,
         },
       });
+    } catch (err) {
+      console.error("Failed to send plan-downgraded email:", err);
+    }
+    try {
       await sendMemberRemoved({
         to: trimmed.membersRemoved,
         idempotencyKey: stripeIdempotencyKey(eventId, "member-removed"),
@@ -435,7 +472,7 @@ export const webhookRouter = createTRPCRouter({
         owners: billingRecipients(owners),
       });
     } catch (err) {
-      console.error("Failed to send downgrade emails:", err);
+      console.error("Failed to send member-removed emails:", err);
     }
 
     // Free plan has no custom-domain feature — release each domain on Vercel
