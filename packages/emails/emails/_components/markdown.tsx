@@ -14,8 +14,8 @@ const code = `font-family:${mono};font-size:13px;background-color:${colors.subtl
 const tagStyles: Record<string, string> = {
   p: text,
   li: `margin:0 0 6px;font-size:15px;line-height:24px;color:${colors.body}`,
-  ul: "margin:0 0 16px;padding-left:20px",
-  ol: "margin:0 0 16px;padding-left:20px",
+  ul: "margin:0 0 16px;padding-left:20px;list-style-type:disc",
+  ol: "margin:0 0 16px;padding-left:20px;list-style-type:decimal",
   h1: heading,
   h2: heading,
   h3: heading,
