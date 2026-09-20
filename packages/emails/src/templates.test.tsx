@@ -59,6 +59,10 @@ const report = {
   updateIndex: 3,
   message: "We are on it.",
   pageComponents: ["API", "Runners"],
+  componentImpacts: [
+    { name: "API", impact: "partial_outage" },
+    { name: "Runners", impact: "operational" },
+  ],
   statusPageUrl: "https://acme.openstatus.dev",
   unsubscribeUrl: "https://acme.openstatus.dev/unsubscribe/t",
   manageUrl: "https://acme.openstatus.dev/manage/t",
@@ -361,7 +365,9 @@ describe("status report", () => {
     expect(html).toContain("Update 3 · 18 Sep, 12:37 UTC · 2h 14m in");
     expect(html).toContain("API unavailable");
     expect(html).toContain("Runners");
-    expect(html).toContain(tones.warning.dot);
+    expect(html).toContain("Partial outage");
+    expect(html).toContain("Operational");
+    expect(html).not.toContain("●");
     expect(html).toContain("We are on it.");
     expect(html).toContain('href="https://acme.openstatus.dev"');
     expect(html).toContain(`href="${report.unsubscribeUrl}"`);
@@ -373,9 +379,9 @@ describe("status report", () => {
     const expected = {
       investigating: tones.danger,
       identified: tones.warning,
-      monitoring: tones.warning,
+      monitoring: tones.info,
       resolved: tones.success,
-      maintenance: tones.neutral,
+      maintenance: tones.info,
     };
     for (const [status, tone] of Object.entries(expected)) {
       const html = await render(
@@ -387,6 +393,15 @@ describe("status report", () => {
       expect(html).toContain(status.toUpperCase());
       expect(html).toContain(tone.bg);
     }
+  });
+
+  test("unknown impact leaves the value out", async () => {
+    const html = await render(
+      <StatusReportEmail {...report} componentImpacts={undefined} />,
+    );
+    expect(html).toContain("Runners");
+    expect(html).not.toContain("Operational");
+    expect(html).not.toContain("Partial outage");
   });
 
   test("optional blocks disappear", async () => {

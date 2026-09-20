@@ -26,6 +26,20 @@ export const StatusReportSchema = z.object({
   message: z.string(),
   reportTitle: z.string(),
   pageComponents: z.array(z.string()),
+  // pageComponentImpact from db; absent for maintenance and legacy reports
+  componentImpacts: z
+    .array(
+      z.object({
+        name: z.string(),
+        impact: z.enum([
+          "operational",
+          "degraded_performance",
+          "partial_outage",
+          "major_outage",
+        ]),
+      }),
+    )
+    .optional(),
   unsubscribeUrl: z.url(),
   manageUrl: z.url(),
   statusPageUrl: z.url().optional(),
@@ -39,10 +53,21 @@ export type StatusReportProps = z.infer<typeof StatusReportSchema>;
 const statusTone = {
   investigating: "danger",
   identified: "warning",
-  monitoring: "warning",
+  monitoring: "info",
   resolved: "success",
-  maintenance: "neutral",
+  maintenance: "info",
 } satisfies Record<StatusReportProps["status"], Tone>;
+
+type Impact = NonNullable<
+  StatusReportProps["componentImpacts"]
+>[number]["impact"];
+
+const impactRow = {
+  operational: { label: "Operational", tone: "success" },
+  degraded_performance: { label: "Degraded performance", tone: "warning" },
+  partial_outage: { label: "Partial outage", tone: "warning" },
+  major_outage: { label: "Major outage", tone: "danger" },
+} satisfies Record<Impact, { label: string; tone: Tone }>;
 
 const componentLabel = {
   investigating: "Affected",
@@ -75,6 +100,7 @@ function StatusReportEmail({
   reportTitle,
   pageTitle,
   pageComponents,
+  componentImpacts,
   unsubscribeUrl,
   manageUrl,
   statusPageUrl,
@@ -116,12 +142,14 @@ function StatusReportEmail({
       {!dated ? <KeyValue rows={[{ label: "Window", value: date }]} /> : null}
       {pageComponents.length > 0 ? (
         <KeyValue
-          rows={pageComponents.map((name) => ({
-            label: name,
-            value: componentLabel[status],
-            tone,
-            dot: true,
-          }))}
+          rows={pageComponents.map((name) => {
+            const impact = componentImpacts?.find((c) => c.name === name);
+            return {
+              label: name,
+              value: impact ? impactRow[impact.impact].label : null,
+              tone: impact ? impactRow[impact.impact].tone : undefined,
+            };
+          })}
         />
       ) : null}
       <Markdown>{message}</Markdown>
@@ -153,6 +181,11 @@ StatusReportEmail.PreviewProps = {
 Nothing. Pin the previous action version if your pipeline is blocked — next update by **14:00 UTC**.
   `,
   pageComponents: ["openstatus API", "GitHub Runners", "Cache Action"],
+  componentImpacts: [
+    { name: "openstatus API", impact: "operational" },
+    { name: "GitHub Runners", impact: "degraded_performance" },
+    { name: "Cache Action", impact: "partial_outage" },
+  ],
   statusPageUrl: "https://status.openstatus.dev",
   unsubscribeUrl:
     "https://status.openstatus.dev/unsubscribe/550e8400-e29b-41d4-a716-446655440000",

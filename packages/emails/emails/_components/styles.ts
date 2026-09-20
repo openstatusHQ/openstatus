@@ -1,6 +1,6 @@
 import type * as React from "react";
 
-export type Tone = "danger" | "warning" | "success" | "neutral";
+export type Tone = "danger" | "warning" | "info" | "success" | "neutral";
 
 export const fonts = {
   sans: '-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
@@ -28,6 +28,7 @@ export const tones = {
     border: "#f5dfa0",
     dot: "#f08c2e",
   },
+  info: { text: "#1d4ed8", bg: "#eff6ff", border: "#cfe0fb", dot: "#3b82f6" },
   success: {
     text: "#1f6b3a",
     bg: "#f3fbf5",

@@ -54,11 +54,15 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
       componentImpacts: u.statusReportUpdateToPageComponents,
     })),
   );
-  const componentsWithImpact = pageComponents.map((c) => ({
-    id: c.id,
-    name: c.name,
-    impact: currentImpacts.get(c.id) ?? "operational",
-  }));
+  // legacy report (no impact rows): channels fall back to bare names
+  const componentsWithImpact =
+    currentImpacts.size > 0
+      ? pageComponents.map((c) => ({
+          id: c.id,
+          name: c.name,
+          impact: currentImpacts.get(c.id) ?? ("operational" as const),
+        }))
+      : undefined;
 
   await dispatchPageUpdate({
     id: update.statusReport.id,
