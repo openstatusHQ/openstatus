@@ -1,6 +1,5 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
-import { Markdown } from "react-email";
 import { z } from "zod";
 
 import { Actions } from "./_components/actions";
@@ -10,7 +9,8 @@ import { formatDateTime, formatElapsed } from "./_components/format";
 import { Heading } from "./_components/heading";
 import { KeyValue } from "./_components/key-value";
 import { Layout, statusPageBrand } from "./_components/layout";
-import { colors, fonts, styles, type Tone } from "./_components/styles";
+import { Markdown } from "./_components/markdown";
+import type { Tone } from "./_components/styles";
 
 export const StatusReportSchema = z.object({
   pageTitle: z.string(),
@@ -51,39 +51,6 @@ const componentLabel = {
   resolved: "Resolved",
   maintenance: "Maintenance",
 } satisfies Record<StatusReportProps["status"], string>;
-
-const heading = {
-  margin: "20px 0 8px",
-  padding: 0,
-  fontFamily: fonts.mono,
-  fontSize: "12px",
-  lineHeight: "16px",
-  fontWeight: 400,
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-  color: colors.faint,
-} as const;
-
-const markdownStyles = {
-  h1: heading,
-  h2: heading,
-  h3: heading,
-  h4: heading,
-  p: styles.text,
-  li: { ...styles.text, margin: "0 0 6px" },
-  ul: { margin: "0 0 16px", paddingLeft: "20px" },
-  ol: { margin: "0 0 16px", paddingLeft: "20px" },
-  link: styles.link,
-  bold: { fontWeight: 600, color: colors.foreground },
-  hr: { margin: "20px 0", borderColor: colors.border },
-  codeInline: { ...styles.mono, backgroundColor: colors.subtle },
-};
-
-// Markdown passes raw HTML through to the email; subscribers must never
-// receive author-controlled markup. Autolinks (<https://…>) stay intact.
-function escapeHtml(markdown: string) {
-  return markdown.replace(/<(?!https?:\/\/[^\s<>]+>)/g, "&lt;");
-}
 
 function isDate(value: string) {
   return !Number.isNaN(new Date(value).getTime());
@@ -157,12 +124,7 @@ function StatusReportEmail({
           }))}
         />
       ) : null}
-      <Markdown
-        markdownCustomStyles={markdownStyles}
-        markdownContainerStyles={{ margin: "0 0 24px" }}
-      >
-        {escapeHtml(message)}
-      </Markdown>
+      <Markdown>{message}</Markdown>
       {statusPageUrl ? (
         <Actions
           primary={{ label: "Follow on the status page", href: statusPageUrl }}

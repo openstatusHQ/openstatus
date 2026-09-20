@@ -21,8 +21,13 @@ export type EmailHtml = {
   from: string;
   reply_to?: string;
 };
+// Indirection so tests can enable delivery against a stubbed Resend client.
+export const delivery = {
+  enabled: () => env.NODE_ENV === "production",
+};
+
 export const sendEmail = async (email: Emails) => {
-  if (env.NODE_ENV !== "production") return;
+  if (!delivery.enabled()) return;
   await resend.emails.send(email);
 };
 

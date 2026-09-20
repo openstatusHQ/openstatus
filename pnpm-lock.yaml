@@ -2220,6 +2220,9 @@ importers:
       effect:
         specifier: 'catalog:'
         version: 4.0.0-rc.112
+      marked:
+        specifier: 15.0.12
+        version: 15.0.12
       react:
         specifier: 'catalog:'
         version: 19.2.6

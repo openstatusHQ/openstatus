@@ -9,6 +9,7 @@ import { Callout } from "../emails/_components/callout";
 import { Footer, POSTAL_ADDRESS } from "../emails/_components/footer";
 import { KeyValue } from "../emails/_components/key-value";
 import { Layout, statusPageBrand } from "../emails/_components/layout";
+import { renderMarkdown } from "../emails/_components/markdown";
 import { Pill } from "../emails/_components/pill";
 import { Steps } from "../emails/_components/steps";
 import { tones } from "../emails/_components/styles";
@@ -151,6 +152,81 @@ describe("primitives", () => {
     expect(statusPageBrand("Acme Status", "https://a.dev").name).toBe(
       "Acme Status",
     );
+  });
+});
+
+describe("markdown", () => {
+  test("raw HTML is escaped, block and inline", () => {
+    const html = renderMarkdown(
+      '<script>alert(1)</script>\n\ntext <img src=x onerror=alert(1)> <p style="position:fixed">x</p>',
+    );
+    expect(html).not.toMatch(/<(script|img|p style="position)/);
+    expect(html).toContain("&lt;script&gt;");
+    expect(html).toContain("&lt;img src=x onerror=alert(1)&gt;");
+  });
+
+  test("quotes in a link destination cannot break out of href", () => {
+    for (const source of [
+      '<https://evil.com/x"onmouseover=alert(1)>',
+      '[x](https://evil.com/x"onmouseover="alert(1))',
+      '![a"onerror=alert(1)](https://ok.dev/i.png"onerror="alert(1))',
+    ]) {
+      const html = renderMarkdown(source);
+      expect(html).not.toMatch(/\son\w+=/);
+      expect(html).toContain("&quot;");
+    }
+  });
+
+  test("only http(s) and mailto links survive; the label stays as text", () => {
+    for (const source of [
+      "[label](javascript:alert(1))",
+      "[label](JaVaScRiPt:alert(1))",
+      "[label](&#106;avascript:alert(1))",
+      "[label](data:text/html,x)",
+      "[label](vbscript:x)",
+      "[label]: javascript:alert(1)\n\n[label]",
+    ]) {
+      const html = renderMarkdown(source);
+      expect(html).not.toContain("<a ");
+      expect(html).toContain("label");
+    }
+    expect(renderMarkdown("<https://a.dev/x>")).toContain(
+      'href="https://a.dev/x"',
+    );
+    expect(renderMarkdown("<mailto:a@b.dev>")).toContain(
+      'href="mailto:a@b.dev"',
+    );
+  });
+
+  test("backslash-escaped backticks do not smuggle HTML", () => {
+    const html = renderMarkdown("\\`<img src=x onerror=alert(1)>\\`");
+    expect(html).not.toContain("<img");
+  });
+
+  test("code keeps its content readable and is escaped once", () => {
+    const html = renderMarkdown('`<div class="a">` and R&amp;D');
+    expect(html).toContain("&lt;div class=&quot;a&quot;&gt;");
+    expect(html).not.toContain("&amp;lt;");
+    expect(html).toContain("R&amp;D");
+    expect(html).not.toContain("&amp;amp;");
+  });
+
+  test("generated tags get inline styles with a well-formed style attribute", () => {
+    const html = renderMarkdown(
+      "### Doing\n\n3. third\n\n- **bold**\n\n`code`",
+    );
+    expect(html).toMatch(/<h3 style="[^"]*text-transform:uppercase[^"]*">/);
+    expect(html).toMatch(/<ol start="3" style="[^"]+">/);
+    expect(html).toMatch(/<li style="[^"]+">/);
+    expect(html).toMatch(/<strong style="[^"]+">bold/);
+    expect(html).toMatch(/<code style="[^"]+">code<\/code>/);
+  });
+
+  test("images need https", () => {
+    expect(renderMarkdown("![alt](https://a.dev/i.png)")).toContain(
+      'src="https://a.dev/i.png"',
+    );
+    expect(renderMarkdown("![alt](http://a.dev/i.png)")).not.toContain("<img");
   });
 });
 
@@ -356,6 +432,22 @@ describe("status report", () => {
     expect(html).not.toContain("<script>");
     expect(html).not.toContain("<img src=x");
     expect(html).toContain("&lt;script&gt;");
+  });
+
+  test("a crafted autolink cannot inject an attribute into the email", async () => {
+    const html = await render(
+      <StatusReportEmail
+        {...report}
+        message={
+          '<https://evil.com/x"onmouseover=alert(1)> [x](javascript:alert(1))'
+        }
+      />,
+    );
+    expect(html).not.toMatch(/\sonmouseover=/);
+    expect(html).not.toContain("javascript:");
+    expect(html).toContain(
+      'href="https://evil.com/x&quot;onmouseover=alert(1)"',
+    );
   });
 
   test("autolinks and entities in the message survive escaping", async () => {
