@@ -11,10 +11,28 @@ In August 2024 I started a data table for openstatus and we secured the [logs.ru
 
 It took us **two years** of constant improvements, on the UI/UX and on the DX side. It took us **one day** to migrate it.
 
+<Grid>
+<div>
+
+**Filters and table**
+
 <Image
   src="/assets/changelog/dashboard-response-logs.png"
-  alt="The new Logs tab in the openstatus dashboard."
+  alt="The new Logs tab in the openstatus dashboard: sidebar filters, faceted counts and the response timing column."
 />
+
+
+</div>
+<div>
+
+**Row details**
+
+<Image src="/assets/posts/logs-view-filters-two-years-one-day/logs-sheet-open.png" alt="A selected log row opened in the sheet, showing request metadata and response headers." />
+
+</div>
+
+</Grid>
+
 
 ## Why it lived outside openstatus
 
@@ -34,7 +52,7 @@ We recently upgraded everything (TanStack Table v9, date-fns v4, Recharts v3), s
 
 ## How it grew
 
-The first iterations were _hand-crafted_, including the design of how you configure a data table. 
+The first iterations were _hand-crafted_, including the design of how you configure a data table. The main source of inspiration was the Datadog dashboard, where you can work a log stream without ever touching the mouse.
 
 Then it grew: first the **sidebar**, then the **command palette**, then the **infinite data table** (the hero), the **zoomable timeline chart**, **live mode**, and more on top.
 
@@ -42,11 +60,11 @@ Then it grew: first the **sidebar**, then the **command palette**, then the **in
 
 So now with AI, you can go _a lot further_:
 
-- `DataTableAuto` infers the columns from your row types. [Docs](https://data-table.openstatus.dev/docs/builder?referrer=openstatus)
-- `createDrizzleHandler` gives you filtering, sorting and cursor pagination for the infinite table without rebuilding that logic yourself. [Docs](https://data-table.openstatus.dev/docs/drizzle-orm?referrer=openstatus)
-- `createTableMCPHandler` exposes your table schema as an MCP endpoint. [Docs](https://data-table.openstatus.dev/docs/mcp?referrer=openstatus)
-- `DataTableFilterAICommand` and `createAIFilterHandler` turn natural language in the command palette into filters. [Docs](https://data-table.openstatus.dev/docs/ai-filters?referrer=openstatus)
-- `DataTableRemote` renders a headless table from an endpoint that returns the schema and the data, so the server decides how the table looks. [Docs](https://data-table.openstatus.dev/docs/headless?referrer=openstatus)
+- [`DataTableAuto`](https://data-table.openstatus.dev/docs/builder?referrer=openstatus) infers the columns from your row types.
+- [`createDrizzleHandler`](https://data-table.openstatus.dev/docs/drizzle-orm?referrer=openstatus) gives you filtering, sorting and cursor pagination for the infinite table without rebuilding that logic yourself.
+- [`createTableMCPHandler`](https://data-table.openstatus.dev/docs/mcp?referrer=openstatus) exposes your table schema as an MCP endpoint.
+- [`DataTableFilterAICommand` and `createAIFilterHandler`](https://data-table.openstatus.dev/docs/ai-filters?referrer=openstatus) turn natural language in the command palette into filters.
+- [`DataTableRemote`](https://data-table.openstatus.dev/docs/headless?referrer=openstatus) renders a headless table from an endpoint that returns the schema and the data, so the server decides how the table looks.
 
 There's so much you can do with it. I'm a bit _obsessed_ with this repo. I care a lot about it, and I also know it **doesn't bring openstatus any money**. Awareness is always good, but devs often do not pay for open-source work.
 
@@ -56,6 +74,8 @@ What makes me really proud: bigger companies picked it up as a reference for the
 
 - **Supabase** gave us a shoutout in their [new observability features](https://supabase.com/blog/new-observability-features-in-supabase?referrer=openstatus) post, and it served as the reference for their [Unified Logs](https://supabase.com/blog/unified-logs-open-beta?referrer=openstatus).
 - **Langfuse** took inspiration from it for their tables.
+
+And away from the big names, people fork it and build their own logs UI on it. Every now and then I stumble on a repo crediting us in the README, which is really nice to see.
 
 Built something with it? Let us know and we'll add it to the list.
 
@@ -84,6 +104,8 @@ Already have a project?
 ```bash
 npx shadcn@latest add @data-table-filters/data-table
 ```
+
+---
 
 While you're here, don't forget to [star it on GitHub](https://github.com/openstatusHQ/data-table-filters).
 
