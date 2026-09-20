@@ -99,6 +99,16 @@ describe("primitives", () => {
     expect(html).toContain("threshold 250 ms");
   });
 
+  test("key-value drops the value cell for null and undefined", async () => {
+    for (const value of [null, undefined]) {
+      const html = await render(<KeyValue rows={[{ label: "API", value }]} />);
+      expect(html).toContain('colSpan="2"');
+      expect(html).not.toContain('align="right"');
+    }
+    const html = await render(<KeyValue rows={[{ label: "API", value: 0 }]} />);
+    expect(html).toContain('align="right"');
+  });
+
   test("footer renders the reason, links only when given, and the address", async () => {
     const bare = await render(<Footer reason="Sent to workspace owners." />);
     expect(bare).toContain("Sent to workspace owners.");

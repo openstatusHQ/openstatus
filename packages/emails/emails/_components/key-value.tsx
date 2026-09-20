@@ -41,7 +41,7 @@ export function KeyValue({ rows }: { rows: KeyValueRow[] }) {
         {rows.map((row, i) => {
           const tone = row.tone ? tones[row.tone] : undefined;
           const borderTop = i === 0 ? undefined : `1px solid ${colors.border}`;
-          const hasValue = row.value !== null;
+          const hasValue = row.value !== null && row.value !== undefined;
           return (
             <tr
               key={row.label}
