@@ -27,7 +27,6 @@ const MonitorAlertSchema = z.object({
   message: z.string().optional(),
   /** Latency threshold in ms (`monitor.degradedAfter`). */
   degradedAfter: z.number().optional(),
-  retry: z.number().optional(),
   /** Incident `startedAt`, ISO string. */
   firstSeen: z.string().optional(),
 });
@@ -76,9 +75,7 @@ export function monitorAlertSubject(props: MonitorAlertProps): string {
 export function monitorAlertPreheader(props: MonitorAlertProps): string {
   switch (props.type) {
     case "alert":
-      return props.retry
-        ? `Failed after ${props.retry} retries. Open the monitor for the full response.`
-        : "Open the monitor for the full response.";
+      return "Open the monitor for the full response.";
     case "degraded":
       return props.degradedAfter
         ? `Above your ${props.degradedAfter} ms threshold.`
@@ -98,8 +95,8 @@ function title(props: MonitorAlertProps) {
 function lede(props: MonitorAlertProps) {
   if (props.type === "alert") {
     return `A check${from(props)} failed${
-      props.retry ? ` after ${props.retry} retries` : ""
-    }${props.status ? ` with status ${props.status}` : ""}.`;
+      props.status ? ` with status ${props.status}` : ""
+    }.`;
   }
   if (props.type === "degraded") {
     return `Latency crossed your ${
@@ -220,7 +217,6 @@ MonitorAlertEmail.PreviewProps = {
   timestamp: "2026-10-13T17:32:00Z",
   firstSeen: "2026-10-13T17:29:00Z",
   degradedAfter: 250,
-  retry: 3,
   message: "upstream response time 0.302s, cache: MISS",
 } satisfies MonitorAlertProps;
 

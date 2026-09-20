@@ -46,7 +46,6 @@ const alert = {
   timestamp: "2026-10-13T17:32:00Z",
   firstSeen: "2026-10-13T17:29:00Z",
   degradedAfter: 250,
-  retry: 3,
   message: "upstream response time 0.302s",
 } satisfies MonitorAlertProps;
 
@@ -262,7 +261,7 @@ describe("monitor alert", () => {
     const html = await render(<MonitorAlertEmail {...alert} />);
     expect(html).toContain("Ping Pong is down");
     expect(html).toContain("DOWN");
-    expect(html).toContain("after 3 retries");
+    expect(html).not.toContain("retries");
     expect(html).toContain("503");
     expect(html).toContain("GET https://openstatus.dev/ping");
     expect(html).toContain("Amsterdam, Netherlands");
@@ -640,7 +639,9 @@ describe("account and status page mail", () => {
     const html = await render(
       <TeamInvitationEmail token="t" workspaceName="" invitedBy="a@b.c" />,
     );
-    expect(html).toContain("Join openstatus on openstatus");
+    expect(html).toContain("Join openstatus");
+    expect(html).not.toContain("on openstatus");
+    expect(html).not.toContain("Workspace");
   });
 
   test("magic link", async () => {

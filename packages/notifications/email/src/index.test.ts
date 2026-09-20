@@ -152,8 +152,8 @@ describe("Email Notifications", () => {
     expect(callArgs.region).toBe("Los Angeles, California, USA");
   });
 
-  test("Send Degraded passes the threshold, retries and incident start", async () => {
-    const monitor = { ...createMockMonitor(), degradedAfter: 250, retry: 3 };
+  test("Send Degraded passes the threshold and incident start", async () => {
+    const monitor = { ...createMockMonitor(), degradedAfter: 250 };
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
@@ -173,7 +173,6 @@ describe("Email Notifications", () => {
     assertSpyCalls(sendMonitorAlertMock, 1);
     const callArgs = sendMonitorAlertMock.calls[0].args[0];
     expect(callArgs.degradedAfter).toBe(250);
-    expect(callArgs.retry).toBe(3);
     expect(callArgs.firstSeen).toBe(startedAt.toISOString());
   });
 

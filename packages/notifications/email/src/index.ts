@@ -31,7 +31,6 @@ export const sendAlert = async ({
     method:
       monitor.jobType === "http" ? (monitor.method ?? undefined) : undefined,
     degradedAfter: monitor.degradedAfter ?? undefined,
-    retry: monitor.retry ?? undefined,
     firstSeen: incident?.startedAt?.toISOString(),
     to: config.data.email,
     url: monitor.url,
@@ -69,7 +68,6 @@ export const sendRecovery = async ({
     method:
       monitor.jobType === "http" ? (monitor.method ?? undefined) : undefined,
     degradedAfter: monitor.degradedAfter ?? undefined,
-    retry: monitor.retry ?? undefined,
     firstSeen: incident?.startedAt?.toISOString(),
     to: config.data.email,
     url: monitor.url,
@@ -106,7 +104,6 @@ export const sendDegraded = async ({
     method:
       monitor.jobType === "http" ? (monitor.method ?? undefined) : undefined,
     degradedAfter: monitor.degradedAfter ?? undefined,
-    retry: monitor.retry ?? undefined,
     firstSeen: incident?.startedAt?.toISOString(),
     to: config.data.email,
     url: monitor.url,

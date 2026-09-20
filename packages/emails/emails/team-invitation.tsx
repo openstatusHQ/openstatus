@@ -25,7 +25,6 @@ const TeamInvitationEmail = ({
   invitedBy,
   baseUrl = BASE_URL,
 }: TeamInvitationProps) => {
-  const workspace = workspaceName || "openstatus";
   return (
     <Layout
       preview={`${invitedBy} invited you. The link is valid for 7 days.`}
@@ -34,13 +33,21 @@ const TeamInvitationEmail = ({
         <Footer reason="You get this because a workspace member invited this address. If that is a mistake, ignore this email." />
       }
     >
-      <Heading title={`Join ${workspace} on openstatus`}>
+      <Heading
+        title={
+          workspaceName
+            ? `Join ${workspaceName} on openstatus`
+            : "Join openstatus"
+        }
+      >
         {invitedBy} invited you to their workspace. If you don’t have an account
         yet, accepting creates one.
       </Heading>
       <KeyValue
         rows={[
-          { label: "Workspace", value: workspace },
+          ...(workspaceName
+            ? [{ label: "Workspace", value: workspaceName }]
+            : []),
           { label: "Invited by", value: invitedBy },
           { label: "Expires", value: "In 7 days" },
         ]}
