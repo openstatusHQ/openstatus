@@ -33,6 +33,11 @@ export async function POST(req: NextRequest) {
           event,
         });
         break;
+      case "customer.subscription.trial_will_end":
+        await caller.stripeRouter.webhooks.customerSubscriptionTrialWillEnd({
+          event,
+        });
+        break;
       case "customer.subscription.deleted":
         await caller.stripeRouter.webhooks.customerSubscriptionDeleted({
           event,

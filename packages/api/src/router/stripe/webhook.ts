@@ -1,11 +1,21 @@
 import { Events, setupAnalytics } from "@openstatus/analytics";
 import { and, eq } from "@openstatus/db";
 import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
-import { SsoDisabledEmail, sendEmail } from "@openstatus/emails";
+import {
+  billingRecipients,
+  cancelScheduledEmail,
+  schedulePlanEndingSoon,
+  sendCancellationScheduled,
+  sendMemberRemoved,
+  sendPlanDowngraded,
+  sendTrialEnding,
+  stripeIdempotencyKey,
+} from "@openstatus/emails";
 import type { ServiceContext } from "@openstatus/services";
 import {
   downgradeWorkspaceToFree,
   getWorkspaceByStripeId,
+  previewWorkspaceDowngrade,
   updateWorkspacePlan,
 } from "@openstatus/services/workspace";
 import { TRPCError } from "@trpc/server";
@@ -32,11 +42,44 @@ const webhookProcedure = publicProcedure.input(
       created: z.number(),
       data: z.object({
         object: z.record(z.string(), z.any()),
+        previous_attributes: z.record(z.string(), z.any()).optional(),
       }),
       type: z.string(),
     }),
   }),
 );
+
+// Stripe subscription metadata key holding the Resend id of the scheduled
+// "plan ends in 3 days" reminder, so a resume can cancel it without a schema
+// change.
+const REMINDER_METADATA_KEY = "reminder_email_id";
+
+type Db = Parameters<typeof getWorkspaceByStripeId>[0]["db"];
+
+async function getOwnerEmails(db: NonNullable<Db>, workspaceId: number) {
+  const owners = await db
+    .select({ email: user.email })
+    .from(usersToWorkspaces)
+    .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
+    .where(
+      and(
+        eq(usersToWorkspaces.workspaceId, workspaceId),
+        eq(usersToWorkspaces.role, "owner"),
+      ),
+    )
+    .all();
+  return owners.map((owner) => owner.email);
+}
+
+async function getBillingRecipients(
+  db: NonNullable<Db>,
+  workspaceId: number,
+  customerId: string,
+) {
+  const owners = await getOwnerEmails(db, workspaceId);
+  const customer = await stripe.customers.retrieve(customerId);
+  return billingRecipients(owners, customer.deleted ? null : customer.email);
+}
 
 export const webhookRouter = createTRPCRouter({
   customerSubscriptionUpdated: webhookProcedure.mutation(async (opts) => {
@@ -113,6 +156,70 @@ export const webhookRouter = createTRPCRouter({
         limits: built.limits,
       },
     });
+
+    // Best-effort: the one place the raw event is read instead of live state.
+    // The mail is keyed by event id, so a replay cannot re-send, and our own
+    // metadata write below fires an update whose `previous_attributes` holds
+    // only `metadata`, so it is ignored here.
+    const wasCancelling =
+      opts.input.event.data.previous_attributes?.cancel_at_period_end;
+    const isCancelling = eventSubscription.cancel_at_period_end;
+    if (
+      eventSubscription.id === current.id &&
+      typeof wasCancelling === "boolean" &&
+      wasCancelling !== isCancelling
+    ) {
+      try {
+        if (isCancelling) {
+          const endsAt = new Date(current.current_period_end * 1000);
+          const to = await getBillingRecipients(opts.ctx.db, ws.id, customerId);
+          const { membersRemoved, ssoEnabled, ...preview } =
+            await previewWorkspaceDowngrade({
+              ctx: {
+                workspace: ws,
+                actor: { type: "system", job: "stripe-subscription-updated" },
+                db: opts.ctx.db,
+              },
+            });
+          const loss = {
+            ...preview,
+            membersRemoved: membersRemoved.length,
+            sso: ssoEnabled,
+          };
+          const eventId = opts.input.event.id;
+          await sendCancellationScheduled({
+            to,
+            eventId,
+            plan: built.plan,
+            endsAt,
+            loss,
+          });
+          const reminderId = await schedulePlanEndingSoon({
+            to,
+            eventId,
+            workspaceSlug: ws.slug,
+            plan: built.plan,
+            endsAt,
+            loss,
+          });
+          if (reminderId) {
+            await stripe.subscriptions.update(current.id, {
+              metadata: { [REMINDER_METADATA_KEY]: reminderId },
+            });
+          }
+        } else {
+          const reminderId = current.metadata?.[REMINDER_METADATA_KEY];
+          if (reminderId) {
+            await cancelScheduledEmail(reminderId);
+            await stripe.subscriptions.update(current.id, {
+              metadata: { [REMINDER_METADATA_KEY]: "" },
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to handle cancellation emails:", err);
+      }
+    }
 
     const newPlan = built.plan;
     if (newPlan !== oldPlan) {
@@ -229,6 +336,35 @@ export const webhookRouter = createTRPCRouter({
       await analytics.track(Events.UpgradeWorkspace);
     }
   }),
+  customerSubscriptionTrialWillEnd: webhookProcedure.mutation(async (opts) => {
+    const subscription = opts.input.event.data.object as Stripe.Subscription;
+    const customerId =
+      typeof subscription.customer === "string"
+        ? subscription.customer
+        : subscription.customer.id;
+    if (!subscription.trial_end) return;
+
+    const ws = await getWorkspaceByStripeId({
+      input: { stripeId: customerId },
+      db: opts.ctx.db,
+    });
+    if (!ws) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Workspace not found",
+      });
+    }
+
+    try {
+      await sendTrialEnding({
+        to: await getBillingRecipients(opts.ctx.db, ws.id, customerId),
+        eventId: opts.input.event.id,
+        trialEnd: new Date(subscription.trial_end * 1000),
+      });
+    } catch (err) {
+      console.error("Failed to send trial ending email:", err);
+    }
+  }),
   customerSubscriptionDeleted: webhookProcedure.mutation(async (opts) => {
     const subscription = opts.input.event.data.object as Stripe.Subscription;
     const customerId =
@@ -269,41 +405,37 @@ export const webhookRouter = createTRPCRouter({
       db: opts.ctx.db,
     };
 
-    const { customDomains, ssoDisabled } = await downgradeWorkspaceToFree({
-      ctx,
-    });
+    const { customDomains, ssoDisabled, trimmed } =
+      await downgradeWorkspaceToFree({ ctx });
 
-    // Best-effort after commit: owners must know SSO stopped working, but a
-    // mail failure must not fail the webhook into Stripe retries.
-    if (ssoDisabled) {
-      try {
-        const owners = await opts.ctx.db
-          .select({ email: user.email })
-          .from(usersToWorkspaces)
-          .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
-          .where(
-            and(
-              eq(usersToWorkspaces.workspaceId, ws.id),
-              eq(usersToWorkspaces.role, "owner"),
-            ),
-          )
-          .all();
-
-        const to = owners
-          .map((owner) => owner.email)
-          .filter((email): email is string => Boolean(email));
-
-        if (to.length > 0) {
-          await sendEmail({
-            from: "Thibault from openstatus <thibault@openstatus.dev>",
-            subject: "SSO has been disabled for your workspace",
-            to,
-            react: SsoDisabledEmail(),
-          });
-        }
-      } catch (err) {
-        console.error("Failed to notify owners about SSO being disabled:", err);
-      }
+    // Best-effort after commit: owners must know what the cascade removed, and
+    // removed members that they lost access, but a mail failure must not fail
+    // the webhook into Stripe retries.
+    try {
+      const eventId = opts.input.event.id;
+      const owners = await getOwnerEmails(opts.ctx.db, ws.id);
+      const customer = await stripe.customers.retrieve(customerId);
+      await sendPlanDowngraded({
+        to: billingRecipients(owners, customer.deleted ? null : customer.email),
+        eventId,
+        workspaceSlug: ws.slug,
+        previousPlan: ws.plan ?? "paid",
+        loss: {
+          ...trimmed,
+          membersRemoved: trimmed.membersRemoved.length,
+          customDomains,
+          sso: ssoDisabled,
+        },
+      });
+      await sendMemberRemoved({
+        to: trimmed.membersRemoved,
+        idempotencyKey: stripeIdempotencyKey(eventId, "member-removed"),
+        workspaceName: ws.name || ws.slug,
+        reason: "downgrade",
+        owners: billingRecipients(owners),
+      });
+    } catch (err) {
+      console.error("Failed to send downgrade emails:", err);
     }
 
     // Free plan has no custom-domain feature — release each domain on Vercel
