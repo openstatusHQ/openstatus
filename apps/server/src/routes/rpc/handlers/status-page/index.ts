@@ -70,10 +70,9 @@ import {
 } from "@openstatus/services/page-component-group";
 import {
   createPageSubscriber,
+  subscribeSelfSignupSubscriber,
   unsubscribePageSubscriber,
-  upsertSelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
-import { getChannel } from "@openstatus/subscriptions";
 import {
   THEME_KEYS,
   type ThemeKey,
@@ -1297,49 +1296,27 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw statusPageNotFoundError(req.pageId);
     }
 
-    const result = await upsertSelfSignupSubscriber({
-      input: {
-        email: req.email,
-        pageId: pageData.id,
-      },
-    });
+    const email = req.email.toLowerCase();
+    try {
+      await subscribeSelfSignupSubscriber({
+        input: { email, pageId: pageData.id },
+        allowAccepted: true,
+      });
+    } catch (error) {
+      toConnectError(error);
+    }
 
-    const row = await db
-      .select()
-      .from(pageSubscriber)
-      .where(eq(pageSubscriber.id, result.id))
-      .get();
+    const row = await db.query.pageSubscriber.findFirst({
+      where: and(
+        eq(pageSubscriber.email, email),
+        eq(pageSubscriber.pageId, pageData.id),
+        eq(pageSubscriber.channelType, "email"),
+        isNull(pageSubscriber.unsubscribedAt),
+      ),
+    });
 
     if (!row) {
       throw subscriberCreateFailedError();
-    }
-
-    if (!result.acceptedAt) {
-      const verifyUrl = pageData.customDomain
-        ? `https://${pageData.customDomain}/verify/${result.token}`
-        : `https://${pageData.slug}.openstatus.dev/verify/${result.token}`;
-
-      const channel = getChannel("email");
-      if (channel?.sendVerification) {
-        try {
-          await channel.sendVerification(
-            {
-              id: result.id,
-              pageId: pageData.id,
-              pageName: pageData.title,
-              pageSlug: pageData.slug,
-              customDomain: pageData.customDomain,
-              componentIds: [],
-              channelType: "email",
-              email: result.email,
-              token: result.token ?? undefined,
-            },
-            verifyUrl,
-          );
-        } catch (err) {
-          console.error("Failed to send verification email:", err);
-        }
-      }
     }
 
     return {
