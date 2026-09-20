@@ -494,6 +494,9 @@ catalogs:
     lucide-react:
       specifier: 0.525.0
       version: 0.525.0
+    marked:
+      specifier: 15.0.12
+      version: 15.0.12
     nanoid:
       specifier: 5.1.11
       version: 5.1.11
@@ -2221,7 +2224,7 @@ importers:
         specifier: 'catalog:'
         version: 4.0.0-rc.112
       marked:
-        specifier: 15.0.12
+        specifier: 'catalog:'
         version: 15.0.12
       react:
         specifier: 'catalog:'

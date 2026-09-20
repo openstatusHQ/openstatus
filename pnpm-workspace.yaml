@@ -176,6 +176,7 @@ catalog:
   knip: 5.88.1
   limiter: 3.0.0
   lucide-react: 0.525.0
+  marked: 15.0.12
   nanoid: 5.1.11
   nanoid-dictionary: 5.0.0
   next: 16.3.0
