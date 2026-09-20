@@ -168,6 +168,9 @@ describe("stripe webhook emails", () => {
         .set({ email: memberEmail })
         .where(eq(user.id, member.id));
       await addUserToWorkspace(member.id, s.workspace.id, "member");
+      // no email on file: cannot be notified, but still counts as removed
+      const silent = await createUser({ email: null });
+      await addUserToWorkspace(silent.id, s.workspace.id, "member");
       await createPage(s.workspace.id, {
         title: "Kept",
         createdAt: new Date("2020-01-01T00:00:00Z"),
@@ -195,6 +198,7 @@ describe("stripe webhook emails", () => {
       expect(options).toEqual({
         idempotencyKey: `stripe:${evt.event.id}:plan-downgraded`,
       });
+      expect(payload.react.props.loss.membersRemoved).toBe(2);
 
       assertSpyCalls(batch, 1);
       const [emails, batchOptions] = batch.calls[0].args;

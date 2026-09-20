@@ -55,7 +55,7 @@ const PlanDowngradedEmail = (props: PlanDowngradedProps) => {
           invite your team again.
         </Callout>
       ) : (
-        <Callout title="Nothing was deleted for good">
+        <Callout title="No status page was deleted">
           Paused monitors keep their history and resume when you switch them
           back on, and re-subscribing lets you invite your team again.
         </Callout>

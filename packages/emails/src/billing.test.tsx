@@ -82,7 +82,7 @@ describe("billing templates", () => {
       loss: nothing,
     };
     const html = await render(<PlanDowngradedEmail {...props} />);
-    expect(html).toContain("Nothing was deleted for good");
+    expect(html).toContain("No status page was deleted");
     expect(html).not.toContain("Status pages deleted");
     expect(html).not.toContain("Members removed");
     expect(html).not.toContain("SAML SSO");

@@ -13,6 +13,7 @@ import {
 } from "@openstatus/emails";
 import type { ServiceContext } from "@openstatus/services";
 import {
+  type DowngradeTrim,
   downgradeWorkspaceToFree,
   getWorkspaceByStripeId,
   previewWorkspaceDowngrade,
@@ -81,6 +82,24 @@ async function getBillingRecipients(
   return billingRecipients(owners, customer.deleted ? null : customer.email);
 }
 
+function toPlanLoss(
+  trim: DowngradeTrim,
+  customDomains: string[],
+  sso: boolean,
+) {
+  return {
+    monitorsDeactivated: trim.monitorsDeactivated,
+    pagesDeleted: trim.pagesDeleted,
+    keptPageTitle: trim.keptPageTitle,
+    notificationsDeleted: trim.notificationsDeleted,
+    invitationsDeleted: trim.invitationsDeleted,
+    // the count, not the notifiable emails: members without one still left
+    membersRemoved: trim.membersRemovedCount,
+    customDomains,
+    sso,
+  };
+}
+
 async function sendCancellationEmails(args: {
   db: NonNullable<Db>;
   ws: NonNullable<Awaited<ReturnType<typeof getWorkspaceByStripeId>>>;
@@ -92,19 +111,14 @@ async function sendCancellationEmails(args: {
   const { db, ws, customerId, current, plan, eventId } = args;
   const endsAt = new Date(current.current_period_end * 1000);
   const to = await getBillingRecipients(db, ws.id, customerId);
-  const { membersRemoved, ssoEnabled, ...preview } =
-    await previewWorkspaceDowngrade({
-      ctx: {
-        workspace: ws,
-        actor: { type: "system", job: "stripe-subscription-updated" },
-        db,
-      },
-    });
-  const loss = {
-    ...preview,
-    membersRemoved: membersRemoved.length,
-    sso: ssoEnabled,
-  };
+  const preview = await previewWorkspaceDowngrade({
+    ctx: {
+      workspace: ws,
+      actor: { type: "system", job: "stripe-subscription-updated" },
+      db,
+    },
+  });
+  const loss = toPlanLoss(preview, preview.customDomains, preview.ssoEnabled);
 
   // Independent: a failed confirmation must not suppress the reminder.
   try {
@@ -453,12 +467,7 @@ export const webhookRouter = createTRPCRouter({
         eventId,
         workspaceSlug: ws.slug,
         previousPlan: ws.plan ?? "paid",
-        loss: {
-          ...trimmed,
-          membersRemoved: trimmed.membersRemoved.length,
-          customDomains,
-          sso: ssoDisabled,
-        },
+        loss: toPlanLoss(trimmed, customDomains, ssoDisabled),
       });
     } catch (err) {
       console.error("Failed to send plan-downgraded email:", err);

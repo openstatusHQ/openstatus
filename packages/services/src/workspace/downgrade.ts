@@ -52,7 +52,9 @@ export type DowngradeTrim = {
   keptPageTitle: string | null;
   notificationsDeleted: number;
   invitationsDeleted: number;
-  /** Emails of removed non-owner members; members without one are skipped. */
+  /** Every removed non-owner member, with or without an email on file. */
+  membersRemovedCount: number;
+  /** Emails of the removed members that can be notified. */
   membersRemoved: string[];
 };
 
@@ -214,6 +216,7 @@ export async function downgradeWorkspaceToFree(args: {
           (n) => n.id !== keepNotification?.id,
         ).length,
         invitationsDeleted: pendingInvitations.length,
+        membersRemovedCount: nonOwnerMembers.length,
         membersRemoved: nonOwnerMembers
           .map((m) => m.email)
           .filter((email): email is string => !!email && email.trim() !== ""),
@@ -274,6 +277,7 @@ export async function previewWorkspaceDowngrade(args: {
     keptPageTitle: pages[0]?.title ?? null,
     notificationsDeleted: Math.max(0, notifications - 1),
     invitationsDeleted: invitations,
+    membersRemovedCount: members.length,
     membersRemoved: members
       .map((m) => m.email)
       .filter((email): email is string => !!email && email.trim() !== ""),

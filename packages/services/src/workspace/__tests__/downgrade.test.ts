@@ -434,6 +434,7 @@ describe("downgradeWorkspaceToFree", () => {
         keptPageTitle: "Kept Page",
         notificationsDeleted: 1,
         invitationsDeleted: 1,
+        membersRemovedCount: 2,
         // member B has no email on file and cannot be notified
         membersRemoved: ["svc-downgrade-member-a@example.test"],
       });
@@ -492,6 +493,7 @@ describe("downgradeWorkspaceToFree", () => {
         keptPageTitle: null,
         notificationsDeleted: 0,
         invitationsDeleted: 0,
+        membersRemovedCount: 0,
         membersRemoved: [],
       });
     });
