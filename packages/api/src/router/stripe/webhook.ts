@@ -295,7 +295,7 @@ export const webhookRouter = createTRPCRouter({
 
         if (to.length > 0) {
           await sendEmail({
-            from: "Thibault from OpenStatus <thibault@openstatus.dev>",
+            from: "Thibault from openstatus <thibault@openstatus.dev>",
             subject: "SSO has been disabled for your workspace",
             to,
             react: SsoDisabledEmail(),

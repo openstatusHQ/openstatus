@@ -1,7 +1,8 @@
 import { getLogger } from "@logtape/logtape";
-import { db, eq, isNotNull } from "@openstatus/db";
+import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
 import {
   privateLocation,
+  privateLocationToMonitors,
   selectWorkspaceSchema,
   user,
   usersToWorkspaces,
@@ -80,8 +81,17 @@ export async function runPrivateLocationHealth(
     if (nextStatus === "error") summary.toError++;
     else summary.toActive++;
 
+    const monitorCount = await db.$count(
+      privateLocationToMonitors,
+      and(
+        eq(privateLocationToMonitors.privateLocationId, location.id),
+        isNull(privateLocationToMonitors.deletedAt),
+      ),
+    );
+
     await notifyMembers({
       workspaceId: location.workspaceId,
+      monitorCount,
       locationName: location.name,
       status: nextStatus === "error" ? "error" : "recovered",
       lastSeenAt: location.lastSeenAt,
@@ -96,6 +106,7 @@ async function notifyMembers(args: {
   locationName: string;
   status: "error" | "recovered";
   lastSeenAt: Date;
+  monitorCount: number;
 }) {
   const members = await db
     .select({ email: user.email })
@@ -116,6 +127,7 @@ async function notifyMembers(args: {
       locationName: args.locationName,
       status: args.status,
       lastSeenAt: args.lastSeenAt,
+      monitorCount: args.monitorCount,
     });
   } catch (error) {
     logger.error("Failed to send private location alert", {

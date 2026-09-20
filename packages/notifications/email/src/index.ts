@@ -14,6 +14,7 @@ export const sendAlert = async ({
   cronTimestamp,
   latency,
   regions,
+  incident,
 }: NotificationContext) => {
   // Convert regions array to single region for backwards compatibility
   const region = regions?.[0] as Region | undefined;
@@ -24,12 +25,17 @@ export const sendAlert = async ({
   if (!config.success) return;
 
   await emailClient.sendMonitorAlert({
+    monitorId: monitor.id,
     name: monitor.name,
     type: "alert",
+    method: monitor.method ?? undefined,
+    degradedAfter: monitor.degradedAfter ?? undefined,
+    retry: monitor.retry ?? undefined,
+    firstSeen: incident?.startedAt?.toISOString(),
     to: config.data.email,
     url: monitor.url,
     status: statusCode?.toString(),
-    latency: latency ? `${latency}ms` : "N/A",
+    latency: latency ? `${latency} ms` : "N/A",
     region: region ? regionDict[region].location : "N/A",
     timestamp: new Date(cronTimestamp).toISOString(),
     message,
@@ -43,6 +49,7 @@ export const sendRecovery = async ({
   cronTimestamp,
   regions,
   latency,
+  incident,
 }: NotificationContext) => {
   // Convert regions array to single region for backwards compatibility
   const region = regions?.[0] as Region | undefined;
@@ -53,12 +60,17 @@ export const sendRecovery = async ({
   if (!config.success) return;
 
   await emailClient.sendMonitorAlert({
+    monitorId: monitor.id,
     name: monitor.name,
     type: "recovery",
+    method: monitor.method ?? undefined,
+    degradedAfter: monitor.degradedAfter ?? undefined,
+    retry: monitor.retry ?? undefined,
+    firstSeen: incident?.startedAt?.toISOString(),
     to: config.data.email,
     url: monitor.url,
     status: statusCode?.toString(),
-    latency: latency ? `${latency}ms` : "N/A",
+    latency: latency ? `${latency} ms` : "N/A",
     region: region ? regionDict[region].location : "N/A",
     timestamp: new Date(cronTimestamp).toISOString(),
   });
@@ -71,6 +83,7 @@ export const sendDegraded = async ({
   cronTimestamp,
   regions,
   latency,
+  incident,
 }: NotificationContext) => {
   // Convert regions array to single region for backwards compatibility
   const region = regions?.[0] as Region | undefined;
@@ -81,12 +94,17 @@ export const sendDegraded = async ({
   if (!config.success) return;
 
   await emailClient.sendMonitorAlert({
+    monitorId: monitor.id,
     name: monitor.name,
     type: "degraded",
+    method: monitor.method ?? undefined,
+    degradedAfter: monitor.degradedAfter ?? undefined,
+    retry: monitor.retry ?? undefined,
+    firstSeen: incident?.startedAt?.toISOString(),
     to: config.data.email,
     url: monitor.url,
     status: statusCode?.toString(),
-    latency: latency ? `${latency}ms` : "N/A",
+    latency: latency ? `${latency} ms` : "N/A",
     region: region ? regionDict[region].location : "N/A",
     timestamp: new Date(cronTimestamp).toISOString(),
   });

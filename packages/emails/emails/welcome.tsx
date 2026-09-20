@@ -6,7 +6,7 @@ const WelcomeEmail = () => {
   return (
     <Html>
       <Head>
-        <title>Welcome to OpenStatus</title>
+        <title>Welcome to openstatus</title>
       </Head>
       <Preview>Set up your status page in under 5 minutes</Preview>
 
@@ -14,7 +14,7 @@ const WelcomeEmail = () => {
         Hey 👋
         <br />
         <br />
-        Thanks for signing up for OpenStatus.
+        Thanks for signing up for openstatus.
         <br />
         <br />
         The fastest way to get started: create your status page. It takes under
@@ -37,7 +37,7 @@ const WelcomeEmail = () => {
         Hit reply if you get stuck — I read every response.
         <br />
         <br />
-        Thibault Le Ouay Ducasse, co-founder of OpenStatus
+        Thibault Le Ouay Ducasse, co-founder of openstatus
         <br />
       </Body>
     </Html>

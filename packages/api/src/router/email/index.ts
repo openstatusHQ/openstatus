@@ -138,7 +138,7 @@ export const emailRouter = createTRPCRouter({
           to: _invitation.email,
           token: _invitation.token,
           invitedBy: `${opts.ctx.user.email}`,
-          workspaceName: opts.ctx.workspace.name || "OpenStatus",
+          workspaceName: opts.ctx.workspace.name || "openstatus",
           baseUrl: opts.input.baseUrl,
         });
       }

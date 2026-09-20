@@ -11,8 +11,7 @@ export { default as PrivateLocationAlertEmail } from "../emails/private-location
 export { default as StatusPageMagicLinkEmail } from "../emails/status-page-magic-link";
 export { default as SsoDisabledEmail } from "../emails/sso-disabled";
 
-export { monitorDeactivationEmail } from "../hotfix/monitor-deactivation";
-export { monitorPausedEmail } from "../hotfix/monitor-paused";
+export { monitorDeactivationEmail, monitorPausedEmail } from "./render";
 export { sendEmail, sendEmailHtml, sendBatchEmailHtml } from "./send";
 
 export { EmailClient } from "./client";
