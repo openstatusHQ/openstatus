@@ -160,6 +160,14 @@ describe("primitives", () => {
 });
 
 describe("markdown", () => {
+  test("tables are styled, task lists render without inputs", () => {
+    const html = renderMarkdown("| a |\n|--|\n| 1 |\n\n- [x] done");
+    expect(html).toContain("<td style=");
+    expect(html).toContain("<th style=");
+    expect(html).toContain("☑ done");
+    expect(html).not.toContain("<input");
+  });
+
   test("raw HTML is escaped, block and inline", () => {
     const html = renderMarkdown(
       '<script>alert(1)</script>\n\ntext <img src=x onerror=alert(1)> <p style="position:fixed">x</p>',
@@ -235,6 +243,20 @@ describe("markdown", () => {
 });
 
 describe("monitor alert", () => {
+  test("region count replaces the single region", async () => {
+    const many = { ...alert, affectedRegions: 5, totalRegions: 6 };
+    const html = await render(<MonitorAlertEmail {...many} />);
+    expect(html).toContain("5/6");
+    expect(html).toContain("from 5/6 regions");
+    expect(monitorAlertSubject(many)).toContain("from 5/6 regions");
+
+    const one = await render(
+      <MonitorAlertEmail {...alert} affectedRegions={1} totalRegions={6} />,
+    );
+    expect(one).toContain("1/6");
+    expect(one).toContain(`from ${alert.region}`);
+  });
+
   test("alert", async () => {
     const html = await render(<MonitorAlertEmail {...alert} />);
     expect(html).toContain("Ping Pong is down");
@@ -318,7 +340,7 @@ describe("monitor alert", () => {
 
 describe("private location alert", () => {
   const base = {
-    locationName: "eu-west-agent",
+    locationName: "eu-west-private",
     lastSeenAt: "2026-07-23T10:00:00Z",
   };
 
@@ -327,7 +349,7 @@ describe("private location alert", () => {
       <PrivateLocationAlertEmail {...base} status="error" monitorCount={4} />,
     );
     expect(html).toContain("UNHEALTHY");
-    expect(html).toContain("eu-west-agent");
+    expect(html).toContain("eu-west-private");
     expect(html).toContain("are paused");
     expect(html).toContain("23 Jul, 10:00 UTC");
     expect(html).toContain("Checks skipped");
@@ -349,10 +371,10 @@ describe("private location alert", () => {
 
   test("subject", () => {
     expect(privateLocationAlertSubject({ ...base, status: "error" })).toBe(
-      'Checks paused — "eu-west-agent" stopped reporting',
+      'Checks paused — "eu-west-private" stopped reporting',
     );
     expect(privateLocationAlertSubject({ ...base, status: "recovered" })).toBe(
-      'Checks resumed — "eu-west-agent" is reporting again',
+      'Checks resumed — "eu-west-private" is reporting again',
     );
   });
 });

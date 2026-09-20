@@ -205,7 +205,7 @@ describe("EmailClient.sendPrivateLocationAlert", () => {
 
   const req = {
     to: ["a@example.com", "b@example.com"],
-    locationName: "eu-west-agent",
+    locationName: "eu-west-private",
     status: "error" as const,
     lastSeenAt: new Date("2026-07-23T10:00:00Z"),
     monitorCount: 4,
@@ -221,7 +221,7 @@ describe("EmailClient.sendPrivateLocationAlert", () => {
       "openstatus <notifications@notifications.openstatus.dev>",
     );
     expect(emails[0].subject).toBe(
-      'Checks paused — "eu-west-agent" stopped reporting',
+      'Checks paused — "eu-west-private" stopped reporting',
     );
     expect(emails[0].html).toContain("4 monitors");
     expect(emails[0].html).toContain("23 Jul, 10:00 UTC");

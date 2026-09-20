@@ -70,15 +70,15 @@ const PrivateLocationAlertEmail = (props: PrivateLocationAlertProps) => {
         }
       >
         {isError
-          ? "The agent hasn’t sent a result for over 15 minutes. Until it reconnects, every check scheduled on this private location is skipped — no data, no alerts."
-          : "The agent is reporting again and every check scheduled on this private location has resumed. No action needed."}
+          ? "This private location hasn’t sent a result for over 15 minutes. Until it reconnects, every check scheduled on it is skipped — no data, no alerts."
+          : "This private location is reporting again and every check scheduled on it has resumed. No action needed."}
       </Heading>
       <KeyValue rows={rows} />
       {isError ? (
         <Steps
           label="Check, in this order"
           items={[
-            "The agent container is still running.",
+            "The private location container is still running.",
             <>
               It can reach openstatus outbound over HTTPS (port <Mono>443</Mono>
               ).
@@ -95,7 +95,7 @@ const PrivateLocationAlertEmail = (props: PrivateLocationAlertProps) => {
 };
 
 PrivateLocationAlertEmail.PreviewProps = {
-  locationName: "eu-west-agent",
+  locationName: "eu-west-private",
   status: "error",
   lastSeenAt: "2026-07-23T10:00:00Z",
   monitorCount: 4,

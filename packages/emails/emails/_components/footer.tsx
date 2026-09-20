@@ -40,13 +40,12 @@ export function Footer({
           Alert rule: <span style={styles.mono}>{rule}</span>
         </Text>
       ) : null}
-      {reason || links.length > 0 ? (
+      {reason ? <Text style={line}>{reason}</Text> : null}
+      {links.length > 0 ? (
         <Text style={line}>
-          {reason}
           {links.map((l, i) => (
             <span key={l.href}>
-              {reason || i > 0 ? " " : null}
-              {i > 0 ? "· " : null}
+              {i > 0 ? " · " : null}
               <Link href={l.href} style={link}>
                 {l.label}
               </Link>

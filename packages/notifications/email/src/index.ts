@@ -38,6 +38,8 @@ export const sendAlert = async ({
     status: statusCode?.toString(),
     latency: latency ? `${latency} ms` : "N/A",
     region: region ? regionDict[region].location : "N/A",
+    affectedRegions: regions?.length,
+    totalRegions: monitor.regions?.length,
     timestamp: new Date(cronTimestamp).toISOString(),
     message,
   });
@@ -74,6 +76,8 @@ export const sendRecovery = async ({
     status: statusCode?.toString(),
     latency: latency ? `${latency} ms` : "N/A",
     region: region ? regionDict[region].location : "N/A",
+    affectedRegions: regions?.length,
+    totalRegions: monitor.regions?.length,
     timestamp: new Date(cronTimestamp).toISOString(),
   });
 };
@@ -109,6 +113,8 @@ export const sendDegraded = async ({
     status: statusCode?.toString(),
     latency: latency ? `${latency} ms` : "N/A",
     region: region ? regionDict[region].location : "N/A",
+    affectedRegions: regions?.length,
+    totalRegions: monitor.regions?.length,
     timestamp: new Date(cronTimestamp).toISOString(),
   });
 };

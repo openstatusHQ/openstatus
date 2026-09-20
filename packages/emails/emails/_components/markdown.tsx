@@ -26,6 +26,9 @@ const tagStyles: Record<string, string> = {
   hr: `margin:20px 0;border:none;border-top:1px solid ${colors.border}`,
   code,
   pre: `margin:0 0 16px;padding:12px 14px;border-radius:8px;white-space:pre-wrap;word-break:break-word;${code}`,
+  table: `margin:0 0 16px;border-collapse:collapse;font-size:14px;line-height:22px;color:${colors.body}`,
+  th: `padding:6px 10px;border:1px solid ${colors.border};background-color:${colors.subtle};font-weight:600;color:${colors.foreground}`,
+  td: `padding:6px 10px;border:1px solid ${colors.border}`,
   blockquote: `margin:0 0 16px;padding:0 0 0 14px;border-left:3px solid ${colors.border}`,
 };
 
@@ -43,7 +46,10 @@ const SAFE_URL = /^(https?:\/\/|mailto:)/i;
 
 const renderer = new Renderer();
 // Subscribers must never receive author-controlled markup.
-renderer.html = ({ text }) => escapeHtml(text);
+renderer.html = ({ text, block }) =>
+  block ? `<p>${escapeHtml(text.trim())}</p>\n` : escapeHtml(text);
+// mail clients strip <input>
+renderer.checkbox = ({ checked }) => (checked ? "☑" : "☐");
 renderer.link = function ({ href, tokens }) {
   const label = this.parser.parseInline(tokens);
   if (!SAFE_URL.test(href.trim())) return label;

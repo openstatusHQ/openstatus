@@ -20,6 +20,9 @@ const MonitorAlertSchema = z.object({
   status: z.string().optional(),
   latency: z.string().optional(),
   region: z.string().optional(),
+  /** Regions in this state / regions the monitor runs in. */
+  affectedRegions: z.number().optional(),
+  totalRegions: z.number().optional(),
   timestamp: z.string().optional(),
   message: z.string().optional(),
   /** Latency threshold in ms (`monitor.degradedAfter`). */
@@ -43,8 +46,16 @@ function hasValue(value?: string): value is string {
   return Boolean(value) && value !== "N/A";
 }
 
-function from(region?: string) {
-  return hasValue(region) ? ` from ${region}` : "";
+function regionCount(props: MonitorAlertProps) {
+  return props.affectedRegions && props.totalRegions
+    ? `${props.affectedRegions}/${props.totalRegions}`
+    : undefined;
+}
+
+function from(props: MonitorAlertProps) {
+  const count = regionCount(props);
+  if (count && props.affectedRegions !== 1) return ` from ${count} regions`;
+  return hasValue(props.region) ? ` from ${props.region}` : "";
 }
 
 export function monitorAlertSubject(props: MonitorAlertProps): string {
@@ -54,11 +65,11 @@ export function monitorAlertSubject(props: MonitorAlertProps): string {
     case "alert":
       return `${name} is down — ${
         props.status ? `status ${props.status}` : "check failed"
-      }${from(props.region)}`;
+      }${from(props)}`;
     case "degraded":
-      return `${name} is slow — ${latency ?? "degraded"}${from(props.region)}`;
+      return `${name} is slow — ${latency ?? "degraded"}${from(props)}`;
     case "recovery":
-      return `${name} recovered — ${latency ?? "passing"}${from(props.region)}`;
+      return `${name} recovered — ${latency ?? "passing"}${from(props)}`;
   }
 }
 
@@ -86,18 +97,18 @@ function title(props: MonitorAlertProps) {
 
 function lede(props: MonitorAlertProps) {
   if (props.type === "alert") {
-    return `A check${from(props.region)} failed${
+    return `A check${from(props)} failed${
       props.retry ? ` after ${props.retry} retries` : ""
     }${props.status ? ` with status ${props.status}` : ""}.`;
   }
   if (props.type === "degraded") {
     return `Latency crossed your ${
       props.degradedAfter ? `${props.degradedAfter} ms ` : ""
-    }threshold${from(props.region)}.${
+    }threshold${from(props)}.${
       props.status ? ` The endpoint is still returning ${props.status}.` : ""
     }`;
   }
-  return `Checks${from(props.region)} are passing again. No action needed.`;
+  return `Checks${from(props)} are passing again. No action needed.`;
 }
 
 const MonitorAlertEmail = (props: MonitorAlertProps) => {
@@ -134,8 +145,19 @@ const MonitorAlertEmail = (props: MonitorAlertProps) => {
       mono: true,
     });
   }
-  if (hasValue(props.region))
+  const count = regionCount(props);
+  if (count) {
+    rows.push({
+      label: "Regions",
+      value: count,
+      hint:
+        props.affectedRegions === 1 && hasValue(props.region)
+          ? props.region
+          : undefined,
+    });
+  } else if (hasValue(props.region)) {
     rows.push({ label: "Region", value: props.region });
+  }
   if (props.firstSeen) {
     rows.push({ label: "First seen", value: formatDateTime(props.firstSeen) });
   }
@@ -193,6 +215,8 @@ MonitorAlertEmail.PreviewProps = {
   status: "200",
   latency: "300 ms",
   region: "Amsterdam, Netherlands",
+  affectedRegions: 5,
+  totalRegions: 6,
   timestamp: "2026-10-13T17:32:00Z",
   firstSeen: "2026-10-13T17:29:00Z",
   degradedAfter: 250,
