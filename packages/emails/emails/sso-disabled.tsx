@@ -1,40 +1,46 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
-import { Body, Button, Head, Html, Preview, Text } from "react-email";
-
+import { Actions } from "./_components/actions";
+import { Callout } from "./_components/callout";
+import { Footer } from "./_components/footer";
+import { Heading } from "./_components/heading";
+import { KeyValue } from "./_components/key-value";
 import { Layout } from "./_components/layout";
-import { styles } from "./_components/styles";
+import { Signature } from "./_components/signature";
 
 const SsoDisabledEmail = () => {
   return (
-    <Html>
-      <Head />
-      <Preview>Single sign-on has been turned off for your workspace</Preview>
-      <Body style={styles.main}>
-        <Layout>
-          <Text>Hello 👋</Text>
-          <Text>
-            Your subscription ended, so SAML single sign-on has been turned off
-            for your workspace. SSO is part of the Scale plan.
-          </Text>
-          <Text>
-            Nobody has lost access — everyone can still sign in with GitHub or
-            Google. Your identity provider configuration has been kept, so
-            re-subscribing to Scale restores SSO without reconnecting it.
-          </Text>
-          <Text style={{ textAlign: "center" }}>
-            <Button
-              style={styles.button}
-              href="https://app.openstatus.dev/settings/billing"
-            >
-              View billing
-            </Button>
-          </Text>
-          <Text>If you have any questions, please reply to this email.</Text>
-          <Text>Thibault</Text>
-        </Layout>
-      </Body>
-    </Html>
+    <Layout
+      preview="Owners can still sign in with GitHub or Google. Re-subscribing restores SSO."
+      pill={{ tone: "neutral", label: "Account change" }}
+      footer={<Footer reason="Sent to workspace owners." />}
+    >
+      <Heading title="SAML single sign-on has been turned off">
+        Your subscription ended, and SSO is a paid add-on.
+      </Heading>
+      <Callout title="Your setup is kept">
+        You can still sign in with GitHub or Google. Your identity provider
+        configuration is kept, so re-subscribing restores SSO without
+        reconnecting anything.
+      </Callout>
+      <KeyValue
+        rows={[
+          { label: "Sign-in methods left", value: "GitHub, Google" },
+          { label: "IdP configuration", value: "Kept", tone: "success" },
+        ]}
+      />
+      <Actions
+        primary={{
+          label: "View billing",
+          href: "https://app.openstatus.dev/settings/billing",
+        }}
+        secondary={{
+          label: "Compare plans",
+          href: "https://www.openstatus.dev/pricing",
+        }}
+      />
+      <Signature />
+    </Layout>
   );
 };
 
