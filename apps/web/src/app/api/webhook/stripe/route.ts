@@ -33,6 +33,11 @@ export async function POST(req: NextRequest) {
           event,
         });
         break;
+      case "customer.subscription.trial_will_end":
+        await caller.customerSubscriptionTrialWillEnd({
+          event,
+        });
+        break;
       case "customer.subscription.deleted":
         await caller.customerSubscriptionDeleted({
           event,

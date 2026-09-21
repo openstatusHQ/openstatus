@@ -9,9 +9,22 @@ export { default as MonitorPausedEmail } from "../emails/monitor-paused";
 export { default as MonitorDeactivationEmail } from "../emails/monitor-deactivation";
 export { default as PrivateLocationAlertEmail } from "../emails/private-location-alert";
 export { default as StatusPageMagicLinkEmail } from "../emails/status-page-magic-link";
-export { default as SsoDisabledEmail } from "../emails/sso-disabled";
 
 export { monitorDeactivationEmail, monitorPausedEmail } from "./render";
-export { sendEmail, sendEmailHtml, sendBatchEmailHtml } from "./send";
+export {
+  cancelScheduledEmail,
+  sendEmail,
+  sendEmailHtml,
+  sendBatchEmailHtml,
+} from "./send";
+export {
+  billingRecipients,
+  schedulePlanEndingSoon,
+  sendCancellationScheduled,
+  sendMemberRemoved,
+  sendPlanDowngraded,
+  sendTrialEnding,
+  stripeIdempotencyKey,
+} from "./billing";
 
 export { EmailClient } from "./client";

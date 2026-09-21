@@ -15,10 +15,10 @@ effective: |
     install:
       fromImage:
         path: node
-        digest: sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
+        digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
       label:
         org.opencontainers.image.base.name: docker.io/node:24-slim
-        org.opencontainers.image.base.digest: sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
+        org.opencontainers.image.base.digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
         org.opencontainers.image.stage: install
       workdir: /app/
       run:
@@ -133,11 +133,11 @@ effective: |
   label:
     org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.title: OpenStatus Workflows
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
-    io.dofigen.version: 2.8.0
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+    io.dofigen.version: 2.8.0
   user:
     user: '1000'
     group: '1000'
@@ -167,7 +167,7 @@ images:
     library:
       node:
         24-slim:
-          digest: sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
+          digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
     denoland:
       deno:
         2.9.6:
