@@ -1064,7 +1064,9 @@ export const statusPageRouter = createTRPCRouter({
   }),
 
   getMonitors: publicProcedure
-    .input(z.object({ slug: z.string().toLowerCase() }))
+    .input(
+      z.object({ slug: z.string().toLowerCase(), pw: queryPasswordSchema }),
+    )
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
@@ -1082,7 +1084,7 @@ export const statusPageRouter = createTRPCRouter({
 
       if (!_page) return null;
 
-      assertPageAccess(opts.ctx, _page);
+      assertPageAccess(opts.ctx, _page, opts.input.pw);
 
       const pageComponents = selectPageComponentWithMonitorRelation
         .array()
@@ -1367,6 +1369,8 @@ export const statusPageRouter = createTRPCRouter({
       // Guard against email spam: reject if a pending (unverified, unexpired) subscription exists
       const isPending = await hasPendingSubscriber({
         input: { email: opts.input.email, pageId: _page.id },
+        // gated by `assertPageAccess` above
+        visitor: null,
       });
       if (isPending) {
         throw new TRPCError({

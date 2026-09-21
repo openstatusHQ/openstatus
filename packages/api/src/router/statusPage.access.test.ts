@@ -108,18 +108,23 @@ function httpCall(path: string, input: unknown, headers?: HeadersInit) {
 describe("statusPage over HTTP", () => {
   test("anonymous callers get no protected content by slug", async () => {
     const slug = slugs.password;
-    const calls: [string, unknown][] = [
-      ["statusPage.get", { slug }],
-      ["statusPage.get", { slug: slug.toUpperCase() }],
-      ["statusPage.get", { slug, pw: "guess" }],
-      ["statusPage.getLight", { slug }],
-      ["statusPage.getGate", { slug }],
-      ["statusPage.getReport", { slug, id: reportIds.password }],
-      ["statusPage.getMonitors", { slug }],
-      ["statusPage.getUptime", { slug, pageComponentIds: [] }],
+    // chrome-only procedures answer 200 with a redacted page, the rest deny
+    const calls: [string, unknown, number][] = [
+      ["statusPage.get", { slug }, 200],
+      ["statusPage.get", { slug: slug.toUpperCase() }, 200],
+      ["statusPage.get", { slug, pw: "guess" }, 200],
+      ["statusPage.get", { slug, pw: "" }, 200],
+      ["statusPage.getLight", { slug }, 200],
+      ["statusPage.getGate", { slug }, 200],
+      ["statusPage.getReport", { slug, id: reportIds.password }, 401],
+      ["statusPage.getMonitors", { slug }, 401],
+      ["statusPage.getMonitors", { slug, pw: "guess" }, 401],
+      ["statusPage.getUptime", { slug, pageComponentIds: [] }, 401],
     ];
-    for (const [path, input] of calls) {
-      const body = await (await httpCall(path, input)).text();
+    for (const [path, input, status] of calls) {
+      const res = await httpCall(path, input);
+      expect(res.status).toBe(status);
+      const body = await res.text();
       expect(body).not.toContain("confidential");
       expect(body).not.toContain(PASSWORD);
       expect(body).not.toContain("test-component-");
@@ -133,8 +138,10 @@ describe("statusPage over HTTP", () => {
       { slug, id: reportIds.password },
       { cookie: `secured-${slug}=${PASSWORD}` },
     );
+    expect(viaCookie.status).toBe(200);
     expect(await viaCookie.text()).toContain("confidential");
     const viaPw = await httpCall("statusPage.get", { slug, pw: PASSWORD });
+    expect(viaPw.status).toBe(200);
     expect(await viaPw.text()).toContain("confidential");
   });
 });

@@ -43,6 +43,8 @@ export function postWebhookWithRetry(opts: {
         headers: opts.headers,
         body: opts.body,
         signal,
+        // A 3xx is a non-retryable failure: never follow it to a private host.
+        redirect: "manual",
       }),
     catch: (cause) => new WebhookSendError("Webhook request failed", { cause }),
   }).pipe(

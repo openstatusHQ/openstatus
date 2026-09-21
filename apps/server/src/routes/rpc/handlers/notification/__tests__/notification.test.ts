@@ -859,6 +859,8 @@ describe("NotificationService.SendTestNotification", () => {
     );
 
     expect(res.status).toBe(429);
+    const data = await res.json();
+    expect(data.message).toContain("pagerduty");
   });
 
   test("returns error for unsupported SMS provider", async () => {

@@ -112,13 +112,16 @@ export const sendTest = async ({
     : undefined;
   const url = serverUrl ? `${serverUrl}/${topic}` : `https://ntfy.sh/${topic}`;
   try {
-    await safeFetch(url, {
+    const res = await safeFetch(url, {
       method: "post",
       body: "This is a test message from OpenStatus",
       headers: {
         ...authorization,
       },
     });
+    if (!res.ok) {
+      throw new Error(`Failed to send test: ${res.status} ${res.statusText}`);
+    }
   } catch (err) {
     console.log(err);
     return false;

@@ -27,7 +27,7 @@ import {
   readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
-import { ForbiddenError } from "../../errors";
+import { ForbiddenError, UnauthorizedError } from "../../errors";
 import {
   createPageSubscriber,
   getSubscriberByToken,
@@ -67,6 +67,7 @@ const EMAILS = {
   unsubWorkspaceId: "svc-unsub-ws-id-test@example.com",
   unsubWorkspaceDenied: "svc-unsub-ws-denied-test@example.com",
   hasPending: "svc-has-pending-test@example.com",
+  visitorGate: "svc-visitor-gate-test@example.com",
 };
 
 async function cleanAll() {
@@ -730,6 +731,7 @@ describe("hasPendingSubscriber", () => {
 
   test("returns false when no row exists", async () => {
     const result = await hasPendingSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     expect(result).toBe(false);
@@ -741,6 +743,7 @@ describe("hasPendingSubscriber", () => {
       input: { email, pageId: PAGE_ID },
     });
     const result = await hasPendingSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     expect(result).toBe(true);
@@ -758,6 +761,7 @@ describe("hasPendingSubscriber", () => {
       .run();
 
     const result = await hasPendingSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     expect(result).toBe(false);
@@ -775,6 +779,7 @@ describe("hasPendingSubscriber", () => {
       .run();
 
     const result = await hasPendingSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     expect(result).toBe(false);
@@ -792,6 +797,7 @@ describe("hasPendingSubscriber", () => {
       .run();
 
     const result = await hasPendingSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     expect(result).toBe(false);
@@ -1016,5 +1022,66 @@ describe("unsubscribePageSubscriber by id", () => {
     expect(rows).toHaveLength(0);
 
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+  });
+});
+
+describe("self-signup visitor gate", () => {
+  const email = EMAILS.visitorGate;
+  const password = "svc-gate-pw";
+  let gatedPageId: number;
+  let gatedSlug: string;
+
+  beforeAll(async () => {
+    const p = await createPage(WORKSPACE_ID, {
+      accessType: "password",
+      password,
+    });
+    gatedPageId = p.id;
+    gatedSlug = p.slug;
+  });
+
+  test("rejects a visitor without the page password", async () => {
+    await expect(
+      upsertSelfSignupSubscriber({
+        visitor: {},
+        input: { email, pageId: gatedPageId },
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+    await expect(
+      hasPendingSubscriber({
+        visitor: { queryPassword: "wrong" },
+        input: { email, pageId: gatedPageId },
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+
+    const rows = await db
+      .select()
+      .from(pageSubscriber)
+      .where(eq(pageSubscriber.email, email));
+    expect(rows.length).toBe(0);
+  });
+
+  test("an empty query password does not fall through to a valid cookie", async () => {
+    await expect(
+      upsertSelfSignupSubscriber({
+        visitor: { queryPassword: "", getCookie: () => password },
+        input: { email, pageId: gatedPageId },
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+
+  test("accepts a visitor holding the password cookie", async () => {
+    const seen: string[] = [];
+    const result = await upsertSelfSignupSubscriber({
+      visitor: {
+        getCookie: (name) => {
+          seen.push(name);
+          return password;
+        },
+      },
+      input: { email, pageId: gatedPageId },
+    });
+    expect(result.email).toBe(email);
+    expect(seen).toEqual([`secured-${gatedSlug}`]);
   });
 });

@@ -46,7 +46,7 @@ export function resolvePageAccess(
       _page.accessType === "password" &&
       isPasswordAuthorized({
         stored: _page.password,
-        queryPassword: visitor.queryPassword || null,
+        queryPassword: visitor.queryPassword,
         cookiePassword: visitor.getCookie?.(pageAccessCookieKey(_page.slug)),
       }),
     authEmail: visitor.email,

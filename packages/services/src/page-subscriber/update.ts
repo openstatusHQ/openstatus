@@ -38,7 +38,7 @@ export async function updatePageSubscriberChannel(args: {
   const input = UpdatePageSubscriberChannelInput.parse(args.input);
 
   // String-only check (no DNS resolution) — a public name pointing at a
-  // private address still passes; delivery refuses redirects via `safeFetch`.
+  // private address still passes. Delivery and test sends never follow redirects.
   if (input.webhookUrl !== undefined) {
     await assertSafeUrl(input.webhookUrl);
   }

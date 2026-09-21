@@ -66,7 +66,8 @@ export const pageSubscriberRouter = createTRPCRouter({
     .mutation(async (opts) => {
       const isPending = await hasPendingSubscriber({
         input: { email: opts.input.email, pageId: opts.input.pageId },
-      });
+        visitor: visitorFromCtx(opts.ctx),
+      }).catch((error) => throwFromException(error, "Failed to subscribe"));
       if (isPending) {
         throw new TRPCError({
           code: "BAD_REQUEST",

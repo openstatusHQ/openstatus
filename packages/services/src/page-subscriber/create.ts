@@ -59,7 +59,7 @@ export async function createPageSubscriber(args: {
   const componentIds = input.componentIds ?? [];
 
   // String-only check (no DNS resolution) — a public name pointing at a
-  // private address still passes; delivery refuses redirects via `safeFetch`.
+  // private address still passes. Delivery and test sends never follow redirects.
   if (input.channelType === "webhook") {
     await assertSafeUrl(input.webhookUrl);
   }
