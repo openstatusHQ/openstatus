@@ -26,7 +26,6 @@ import PageSubscriptionEmail from "../emails/page-subscription";
 import PrivateLocationAlertEmail, {
   privateLocationAlertSubject,
 } from "../emails/private-location-alert";
-import SsoDisabledEmail from "../emails/sso-disabled";
 import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
 import StatusReportEmail, {
   type StatusReportProps,
@@ -592,14 +591,6 @@ describe("inactivity pause", () => {
 });
 
 describe("account and status page mail", () => {
-  test("sso disabled never claims nobody lost access", async () => {
-    const html = await render(<SsoDisabledEmail />);
-    expect(html).toContain("ACCOUNT CHANGE");
-    expect(html).toContain("IdP configuration");
-    expect(html).not.toContain("Nobody lost access");
-    expect(html).not.toContain("Nobody has lost access");
-  });
-
   test("team invitation", async () => {
     const html = await render(
       <TeamInvitationEmail
@@ -684,7 +675,6 @@ describe("every transactional template", () => {
       <MonitorDeactivationEmail deactivateAt={new Date("2026-09-25")} />
     ),
     paused: <MonitorPausedEmail />,
-    sso: <SsoDisabledEmail />,
     invitation: <TeamInvitationEmail token="t" invitedBy="a@b.c" />,
     subscription: <PageSubscriptionEmail page="Acme" link="https://a.dev" />,
     magicLink: <StatusPageMagicLinkEmail page="Acme" link="https://a.dev" />,
