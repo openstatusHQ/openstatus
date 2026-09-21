@@ -1,7 +1,12 @@
 import { expect } from "@std/expect";
 import { describe, it } from "@std/testing/bdd";
 
-import { assertSafeUrl, assertSafeUrlSync, safeUrlSchema } from "./ssrf";
+import {
+  assertSafeUrl,
+  assertSafeUrlSync,
+  safeFetch,
+  safeUrlSchema,
+} from "./ssrf";
 
 // --- assertSafeUrlSync (no DNS, used in Zod schemas) ---
 
@@ -138,7 +143,7 @@ describe("assertSafeUrlSync", () => {
   });
 });
 
-// --- assertSafeUrl (async, with DNS resolution) ---
+// --- assertSafeUrl (async, same string-only checks) ---
 
 describe("assertSafeUrl", () => {
   it("allows a valid public URL", async () => {
@@ -212,5 +217,47 @@ describe("safeUrlSchema", () => {
   it("rejects IPv4-mapped IPv6 in hex form", () => {
     const result = safeUrlSchema.safeParse("http://[::ffff:7f00:1]/");
     expect(result.success).toBe(false);
+  });
+});
+
+describe("safeFetch", () => {
+  it("rejects a private target without fetching", async () => {
+    const original = globalThis.fetch;
+    let called = false;
+    globalThis.fetch = () => {
+      called = true;
+      return Promise.resolve(new Response());
+    };
+    try {
+      await expect(
+        safeFetch("http://169.254.169.254/latest/meta-data"),
+      ).rejects.toThrow();
+      expect(called).toBe(false);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it("never follows redirects", async () => {
+    const original = globalThis.fetch;
+    let seen: RequestInit | undefined;
+    globalThis.fetch = (_input, init) => {
+      seen = init;
+      return Promise.resolve(
+        new Response(null, {
+          status: 302,
+          headers: { location: "http://169.254.169.254/" },
+        }),
+      );
+    };
+    try {
+      const res = await safeFetch("https://example.com/hook", {
+        method: "POST",
+      });
+      expect(seen?.redirect).toBe("manual");
+      expect(res.ok).toBe(false);
+    } finally {
+      globalThis.fetch = original;
+    }
   });
 });

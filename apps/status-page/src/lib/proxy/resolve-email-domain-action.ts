@@ -1,6 +1,6 @@
 import type { Page } from "@openstatus/db/src/schema";
+import { isEmailDomainAuthorized } from "@openstatus/services/page-access";
 
-import { isEmailDomainAuthorized } from "./access-predicates";
 import { buildExternalPath } from "./build-external-path";
 import type { Action, ComposeInput } from "./types";
 

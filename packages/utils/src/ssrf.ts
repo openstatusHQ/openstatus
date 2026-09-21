@@ -112,6 +112,18 @@ export async function assertSafeUrl(urlString: string): Promise<void> {
 }
 
 /**
+ * `fetch` for customer-supplied URLs. Redirects are never followed — a 3xx
+ * comes back as a non-ok response — so a safe URL can't bounce to a private one.
+ */
+export async function safeFetch(
+  url: string,
+  init?: Omit<RequestInit, "redirect">,
+): Promise<Response> {
+  await assertSafeUrl(url);
+  return fetch(url, { ...init, redirect: "manual" });
+}
+
+/**
  * Synchronous URL safety check for use in Zod schemas.
  * Checks protocol and hostname/IP without DNS resolution.
  */
