@@ -238,7 +238,7 @@ describe("safeFetch", () => {
     }
   });
 
-  it("never follows redirects", async () => {
+  it("does not follow a 302", async () => {
     const original = globalThis.fetch;
     let seen: RequestInit | undefined;
     globalThis.fetch = (_input, init) => {
@@ -258,6 +258,77 @@ describe("safeFetch", () => {
       expect(res.ok).toBe(false);
     } finally {
       globalThis.fetch = original;
+    }
+  });
+
+  function redirecting(hops: Record<string, [number, string]>) {
+    const seen: string[] = [];
+    const original = globalThis.fetch;
+    globalThis.fetch = (input) => {
+      const url = String(input);
+      seen.push(url);
+      const hop = hops[url];
+      return Promise.resolve(
+        hop
+          ? new Response(null, {
+              status: hop[0],
+              headers: { location: hop[1] },
+            })
+          : new Response("ok"),
+      );
+    };
+    return { seen, restore: () => (globalThis.fetch = original) };
+  }
+
+  it("follows a same-host 307/308, e.g. an http to https upgrade", async () => {
+    const { seen, restore } = redirecting({
+      "http://example.com/hook": [308, "https://example.com/hook"],
+      "https://example.com/hook": [307, "/v2/hook"],
+    });
+    try {
+      const res = await safeFetch("http://example.com/hook", {
+        method: "POST",
+      });
+      expect(res.ok).toBe(true);
+      expect(seen).toEqual([
+        "http://example.com/hook",
+        "https://example.com/hook",
+        "https://example.com/v2/hook",
+      ]);
+    } finally {
+      restore();
+    }
+  });
+
+  it("does not follow a 307 to another host or a private address", async () => {
+    for (const location of [
+      "https://evil.example/hook",
+      "http://169.254.169.254/latest/meta-data",
+    ]) {
+      const { seen, restore } = redirecting({
+        "https://example.com/hook": [307, location],
+      });
+      try {
+        const res = await safeFetch("https://example.com/hook");
+        expect(res.ok).toBe(false);
+        expect(seen).toEqual(["https://example.com/hook"]);
+      } finally {
+        restore();
+      }
+    }
+  });
+
+  it("stops after a bounded number of hops", async () => {
+    const { seen, restore } = redirecting({
+      "https://example.com/a": [307, "/b"],
+      "https://example.com/b": [307, "/a"],
+    });
+    try {
+      const res = await safeFetch("https://example.com/a");
+      expect(res.ok).toBe(false);
+      expect(seen.length).toBe(4);
+    } finally {
+      restore();
     }
   });
 });

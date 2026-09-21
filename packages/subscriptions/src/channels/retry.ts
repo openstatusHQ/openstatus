@@ -1,3 +1,4 @@
+import { safeFetch } from "@openstatus/utils";
 import { Effect, Schedule } from "effect";
 
 export class WebhookSendError extends Error {
@@ -20,6 +21,11 @@ const isRetryable = (err: WebhookSendError): boolean =>
   err.httpStatus >= 500 ||
   err.httpStatus === 429;
 
+const describeFailure = (status: number) =>
+  status >= 300 && status < 400
+    ? `Webhook redirected (${status}); only 307/308 to the same host are followed`
+    : `Webhook returned ${status}`;
+
 const retryPolicy = {
   schedule: Schedule.exponential("200 millis").pipe(Schedule.jittered),
   times: 3,
@@ -38,13 +44,11 @@ export function postWebhookWithRetry(opts: {
 }): Promise<void> {
   const send = Effect.tryPromise({
     try: (signal) =>
-      fetch(opts.url, {
+      safeFetch(opts.url, {
         method: "POST",
         headers: opts.headers,
         body: opts.body,
         signal,
-        // A 3xx is a non-retryable failure: never follow it to a private host.
-        redirect: "manual",
       }),
     catch: (cause) => new WebhookSendError("Webhook request failed", { cause }),
   }).pipe(
@@ -59,7 +63,7 @@ export function postWebhookWithRetry(opts: {
       response.ok
         ? Effect.void
         : Effect.fail(
-            new WebhookSendError(`Webhook returned ${response.status}`, {
+            new WebhookSendError(describeFailure(response.status), {
               httpStatus: response.status,
             }),
           ),

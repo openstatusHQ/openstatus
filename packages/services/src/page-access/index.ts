@@ -5,6 +5,7 @@ export {
   isPasswordAuthorized,
 } from "./access-predicates";
 export { resolveClientIp } from "./client-ip";
+export { pageAccessCookieKey } from "./cookie-key";
 export {
   evaluateMarkdownGate,
   type MarkdownGateResult,
@@ -12,7 +13,6 @@ export {
 export { isIpAllowed } from "./is-ip-allowed";
 export {
   assertPageAccess,
-  pageAccessCookieKey,
   type PageVisitor,
   resolvePageAccess,
 } from "./resolve-page-access";

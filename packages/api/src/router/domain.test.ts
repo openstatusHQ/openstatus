@@ -1,6 +1,9 @@
 import { db, eq } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
-import { createTestWorkspace } from "@openstatus/db/src/test/factories";
+import {
+  createPage,
+  createTestWorkspace,
+} from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
@@ -32,17 +35,9 @@ beforeAll(async () => {
   ownUserId = own.user.id;
   const other = await createTestWorkspace();
 
-  const row = await db
-    .insert(page)
-    .values({
-      workspaceId: other.workspace.id,
-      title: "domain idor test",
-      description: "",
-      slug: `domain-idor-test-${other.workspace.id}`,
-      customDomain: otherDomain,
-    })
-    .returning()
-    .get();
+  const row = await createPage(other.workspace.id, {
+    customDomain: otherDomain,
+  });
   otherPageId = row.id;
 });
 
@@ -63,28 +58,50 @@ for (const procedure of [
     expect((error as TRPCError).code).toBe("NOT_FOUND");
   });
 
-  test(`domain.${procedure} rejects a traversal payload`, async () => {
+  test(`domain.${procedure} input schema rejects a leading-dot payload`, async () => {
     const error = await getCaller()
       .domain[procedure]({ domain: "../../../../v2/user#" })
       .catch((e) => e);
     expect(error).toBeInstanceOf(TRPCError);
-    expect(["BAD_REQUEST", "NOT_FOUND"]).toContain((error as TRPCError).code);
+    expect((error as TRPCError).code).toBe("BAD_REQUEST");
+  });
+}
+
+// `customDomainSchema` ends in `.*`, so this passes input validation; owning it
+// passes the ownership check. Only the path encoding keeps it inside /domains/.
+for (const procedure of [
+  "getDomainResponse",
+  "getConfigResponse",
+  "verifyDomain",
+] as const) {
+  test(`domain.${procedure} cannot escape the domains path with an owned traversal domain`, async () => {
+    const traversal = `evil-${ownWorkspaceId}.example/../../../../v2/user#`;
+    const own = await createPage(ownWorkspaceId, { customDomain: traversal });
+
+    const original = globalThis.fetch;
+    const requested: string[] = [];
+    globalThis.fetch = (input) => {
+      requested.push(String(input));
+      return Promise.resolve(Response.json({}));
+    };
+    try {
+      await getCaller().domain[procedure]({ domain: traversal });
+      expect(requested.length).toBe(1);
+      const url = new URL(requested[0]);
+      expect(url.pathname).toContain("/domains/");
+      expect(url.pathname).toContain(encodeURIComponent(traversal));
+      expect(url.pathname).not.toContain("/v2/user");
+      expect(url.searchParams.has("teamId")).toBe(true);
+    } finally {
+      globalThis.fetch = original;
+      await db.delete(page).where(eq(page.id, own.id));
+    }
   });
 }
 
 test("domain.getDomainResponse reaches Vercel for the workspace's own domain", async () => {
   const ownDomain = `own-${ownWorkspaceId}.openstatus.dev`;
-  const own = await db
-    .insert(page)
-    .values({
-      workspaceId: ownWorkspaceId,
-      title: "own domain test",
-      description: "",
-      slug: `domain-own-test-${ownWorkspaceId}`,
-      customDomain: ownDomain,
-    })
-    .returning()
-    .get();
+  const own = await createPage(ownWorkspaceId, { customDomain: ownDomain });
 
   const original = globalThis.fetch;
   let requested = "";

@@ -2,6 +2,7 @@ import { type page, selectPageSchema } from "@openstatus/db/src/schema";
 
 import { ForbiddenError, UnauthorizedError } from "../errors";
 import { isPasswordAuthorized } from "./access-predicates";
+import { pageAccessCookieKey } from "./cookie-key";
 import {
   evaluateMarkdownGate,
   type MarkdownGateResult,
@@ -28,9 +29,6 @@ export type PageVisitor = {
   email?: string | null;
   clientIp?: string | null;
 };
-
-// Same key the proxy and login form use: the `[domain]` segment is the slug.
-export const pageAccessCookieKey = (slug: string) => `secured-${slug}`;
 
 export function resolvePageAccess(
   row: AccessRow,

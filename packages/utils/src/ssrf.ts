@@ -111,16 +111,33 @@ export async function assertSafeUrl(urlString: string): Promise<void> {
   }
 }
 
+const MAX_REDIRECTS = 3;
+
 /**
- * `fetch` for customer-supplied URLs. Redirects are never followed — a 3xx
- * comes back as a non-ok response — so a safe URL can't bounce to a private one.
+ * `fetch` for customer-supplied URLs. Follows only 307/308 (the redirects that
+ * keep method and body) to the same hostname, re-checking every hop; any other
+ * 3xx comes back as a non-ok response. `init.body` must be replayable.
  */
 export async function safeFetch(
   url: string,
   init?: Omit<RequestInit, "redirect">,
 ): Promise<Response> {
-  await assertSafeUrl(url);
-  return fetch(url, { ...init, redirect: "manual" });
+  let target = url;
+  for (let hop = 0; ; hop++) {
+    await assertSafeUrl(target);
+    const res = await fetch(target, { ...init, redirect: "manual" });
+
+    const location = res.headers.get("location");
+    if ((res.status !== 307 && res.status !== 308) || !location) return res;
+
+    // Another host would receive the caller's auth headers — never follow.
+    const next = new URL(location, target);
+    if (next.hostname !== new URL(target).hostname || hop >= MAX_REDIRECTS) {
+      return res;
+    }
+    await res.body?.cancel();
+    target = next.href;
+  }
 }
 
 /**

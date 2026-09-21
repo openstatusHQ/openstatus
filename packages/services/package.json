@@ -117,6 +117,10 @@
       "import": "./src/page-access/index.ts",
       "types": "./src/page-access/index.ts"
     },
+    "./page-access/cookie-key": {
+      "import": "./src/page-access/cookie-key.ts",
+      "types": "./src/page-access/cookie-key.ts"
+    },
     "./page-subscriber": {
       "import": "./src/page-subscriber/index.ts",
       "types": "./src/page-subscriber/index.ts"
