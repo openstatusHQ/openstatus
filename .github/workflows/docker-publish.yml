@@ -171,10 +171,12 @@ jobs:
 
   # Combine the per-arch digests into a multi-arch manifest list carrying the
   # real tags, then generate the SBOM from that manifest.
+  # Runs even if some `build` legs failed so one broken service does not block
+  # publishing the others; a service missing a digest fails its own merge below.
   merge:
     runs-on: ubuntu-latest
     needs: [prepare, build]
-    if: needs.prepare.outputs.services != '[]'
+    if: ${{ !cancelled() && needs.prepare.outputs.services != '[]' }}
     timeout-minutes: 15
     permissions:
       contents: read
@@ -224,6 +226,13 @@ jobs:
         id: manifest
         working-directory: /tmp/digests
         run: |
+          # Never publish a partial (single-arch) manifest under the real tags.
+          count=$(ls | wc -l)
+          if [ "$count" -ne 2 ]; then
+            echo "::error::expected 2 digests (amd64 + arm64) for ${{ matrix.service }}, found $count"
+            ls -la
+            exit 1
+          fi
           docker buildx imagetools create \
             $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ env.IMAGE }}@sha256:%s ' *)
