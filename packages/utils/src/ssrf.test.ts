@@ -300,10 +300,14 @@ describe("safeFetch", () => {
     }
   });
 
-  it("does not follow a 307 to another host or a private address", async () => {
+  it("does not follow a 307 that would replay headers elsewhere", async () => {
     for (const location of [
       "https://evil.example/hook",
       "http://169.254.169.254/latest/meta-data",
+      // downgrade to plaintext
+      "http://example.com/hook",
+      // same host, different service
+      "https://example.com:8443/hook",
     ]) {
       const { seen, restore } = redirecting({
         "https://example.com/hook": [307, location],
