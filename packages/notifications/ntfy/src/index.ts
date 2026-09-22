@@ -1,6 +1,6 @@
 import { ntfyDataSchema } from "@openstatus/db/src/schema";
 import type { NotificationContext } from "@openstatus/notification-base";
-import { assertSafeUrl } from "@openstatus/utils";
+import { safeFetch } from "@openstatus/utils";
 
 export const sendAlert = async ({
   monitor,
@@ -23,8 +23,7 @@ export const sendAlert = async ({
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
-  await assertSafeUrl(url);
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     method: "post",
     body,
     headers: {
@@ -54,8 +53,7 @@ export const sendRecovery = async ({
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
-  await assertSafeUrl(url);
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     method: "post",
     body,
     headers: {
@@ -86,8 +84,7 @@ export const sendDegraded = async ({
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
-  await assertSafeUrl(url);
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     method: "post",
     body,
     headers: {
@@ -114,15 +111,17 @@ export const sendTest = async ({
     ? { Authorization: `Bearer ${token}` }
     : undefined;
   const url = serverUrl ? `${serverUrl}/${topic}` : `https://ntfy.sh/${topic}`;
-  await assertSafeUrl(url);
   try {
-    await fetch(url, {
+    const res = await safeFetch(url, {
       method: "post",
       body: "This is a test message from OpenStatus",
       headers: {
         ...authorization,
       },
     });
+    if (!res.ok) {
+      throw new Error(`Failed to send test: ${res.status} ${res.statusText}`);
+    }
   } catch (err) {
     console.log(err);
     return false;

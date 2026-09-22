@@ -1324,6 +1324,9 @@ importers:
       '@openstatus/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@openstatus/services':
+        specifier: workspace:*
+        version: link:../../packages/services
       '@openstatus/theme-store':
         specifier: workspace:*
         version: link:../../packages/theme-store
@@ -2917,6 +2920,9 @@ importers:
       effect:
         specifier: 'catalog:'
         version: 4.0.0-rc.112
+      ip-cidr:
+        specifier: 'catalog:'
+        version: 4.0.2
       zod:
         specifier: 'catalog:'
         version: 4.1.13

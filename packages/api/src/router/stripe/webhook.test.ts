@@ -17,10 +17,10 @@ import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
 import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 import type Stripe from "stripe";
 
-import { lambdaRouter } from "../../lambda";
 import { createInnerTRPCContext } from "../../trpc";
 import { stripe } from "./shared";
 import { PLANS } from "./utils";
+import { webhookRouter } from "./webhook";
 
 const TEAM_PRICE = PLANS.find((p) => p.plan === "team")?.price.monthly.priceIds
   .test;
@@ -65,8 +65,7 @@ function event(
 }
 
 const caller = () =>
-  lambdaRouter.createCaller(createInnerTRPCContext({ session: null }))
-    .stripeRouter.webhooks;
+  webhookRouter.createCaller(createInnerTRPCContext({ session: null }));
 
 describe("stripe webhook emails", () => {
   let live: Stripe.Subscription[];

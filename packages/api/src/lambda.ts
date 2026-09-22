@@ -18,3 +18,4 @@ export const lambdaRouter = createTRPCRouter({
 });
 
 export { stripe } from "./router/stripe/shared";
+export { webhookRouter } from "./router/stripe/webhook";

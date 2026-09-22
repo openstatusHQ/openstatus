@@ -152,6 +152,8 @@ async function sendCancellationEmails(args: {
   }
 }
 
+// Never mount this on an app router: the procedures trust `event`, and only
+// the signature-verifying HTTP route may call them.
 export const webhookRouter = createTRPCRouter({
   customerSubscriptionUpdated: webhookProcedure.mutation(async (opts) => {
     const eventSubscription = opts.input.event.data

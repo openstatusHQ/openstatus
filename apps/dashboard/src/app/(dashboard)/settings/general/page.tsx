@@ -16,8 +16,6 @@ import { FormSlug } from "@/components/forms/settings/form-slug";
 import { FormWorkspace } from "@/components/forms/settings/form-workspace";
 import { useTRPC } from "@/lib/trpc/client";
 
-const BASE_URL = "https://app.openstatus.dev/invite";
-
 export default function Page() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -40,7 +38,7 @@ export default function Page() {
   const createInvitationMutation = useMutation(
     trpc.invitation.create.mutationOptions({
       onSuccess: (data) => {
-        sendInvitationMutation.mutate({ id: data.id, baseUrl: BASE_URL });
+        sendInvitationMutation.mutate({ id: data.id });
         queryClient.invalidateQueries({
           queryKey: trpc.invitation.list.queryKey(),
         });
