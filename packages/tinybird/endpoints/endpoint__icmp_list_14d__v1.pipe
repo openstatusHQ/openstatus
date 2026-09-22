@@ -1,0 +1,52 @@
+TOKEN "endpoint__icmp_list_14d__v1_endpoint_read_7110" READ
+
+NODE endpoint
+SQL >
+
+%
+SELECT
+    time,
+    id,
+    latency,
+    latencyMin,
+    latencyMax,
+    packetsSent,
+    packetsReceived,
+    error,
+    region,
+    trigger,
+    timestamp,
+    cronTimestamp,
+    monitorId,
+    requestStatus
+FROM mv__icmp_14d__v0
+WHERE
+    monitorId = {{ String(monitorId, '4433', required=True) }}
+    {% if defined(fromDate) %}
+        AND time >= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(fromDate) }})))
+        AND cronTimestamp >= toInt64({{ String(fromDate) }})
+    {% end %}
+    {% if defined(toDate) %}
+        AND time <= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(toDate) }})))
+        AND cronTimestamp <= toInt64({{ String(toDate) }})
+    {% end %}
+    {% if defined(cursor) %}
+        {% if String(direction, 'next') == 'prev' %}
+            AND time >= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(cursor) }})))
+            AND cronTimestamp > toInt64({{ String(cursor) }})
+        {% else %}
+            AND time <= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(cursor) }})))
+            AND cronTimestamp < toInt64({{ String(cursor) }})
+        {% end %}
+    {% end %}
+    {% if regions %} AND region IN {{ Array(regions, 'String') }} {% end %}
+    {% if status %} AND requestStatus IN {{ Array(status, 'String') }} {% end %}
+    {% if trigger %} AND trigger IN {{ Array(trigger, 'String') }} {% end %}
+    {% if defined(latencyMin) %} AND latency >= toInt64({{ String(latencyMin) }}) {% end %}
+    {% if defined(latencyMax) %} AND latency <= toInt64({{ String(latencyMax) }}) {% end %}
+ORDER BY
+    time {% if String(direction, 'next') == 'prev' %} ASC {% else %} DESC {% end %},
+    cronTimestamp {% if String(direction, 'next') == 'prev' %} ASC {% else %} DESC {% end %}
+LIMIT {{ Int32(limit, 50, required=True) }}
+
+TYPE endpoint

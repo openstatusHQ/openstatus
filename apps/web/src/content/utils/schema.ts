@@ -36,6 +36,9 @@ export const metadataSchema = z.object({
   // from the canonical `title` used for SEO, breadcrumbs, search, and nav.
   hero: z.string().optional(),
   publishedAt: z.coerce.date(),
+  // Last meaningful content edit. Feeds og:article:modified_time and JSON-LD
+  // dateModified; falls back to `publishedAt` when absent.
+  updatedAt: z.coerce.date().optional(),
   description: z.string(),
   category: z.string(),
   author: z.string(),

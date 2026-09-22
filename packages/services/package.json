@@ -37,6 +37,10 @@
       "import": "./src/page-component/index.ts",
       "types": "./src/page-component/index.ts"
     },
+    "./page-component-group": {
+      "import": "./src/page-component-group/index.ts",
+      "types": "./src/page-component-group/index.ts"
+    },
     "./page": {
       "import": "./src/page/index.ts",
       "types": "./src/page/index.ts"
@@ -65,6 +69,10 @@
       "import": "./src/api-key/index.ts",
       "types": "./src/api-key/index.ts"
     },
+    "./oauth": {
+      "import": "./src/oauth/index.ts",
+      "types": "./src/oauth/index.ts"
+    },
     "./chat-session": {
       "import": "./src/chat-session/index.ts",
       "types": "./src/chat-session/index.ts"
@@ -89,6 +97,10 @@
       "import": "./src/member/index.ts",
       "types": "./src/member/index.ts"
     },
+    "./sso": {
+      "import": "./src/sso/index.ts",
+      "types": "./src/sso/index.ts"
+    },
     "./monitor-tag": {
       "import": "./src/monitor-tag/index.ts",
       "types": "./src/monitor-tag/index.ts"
@@ -100,6 +112,14 @@
     "./private-location": {
       "import": "./src/private-location/index.ts",
       "types": "./src/private-location/index.ts"
+    },
+    "./page-access": {
+      "import": "./src/page-access/index.ts",
+      "types": "./src/page-access/index.ts"
+    },
+    "./page-access/cookie-key": {
+      "import": "./src/page-access/cookie-key.ts",
+      "types": "./src/page-access/cookie-key.ts"
     },
     "./page-subscriber": {
       "import": "./src/page-subscriber/index.ts",
@@ -145,7 +165,9 @@
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@workos-inc/node": "catalog:",
     "effect": "catalog:",
+    "ip-cidr": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

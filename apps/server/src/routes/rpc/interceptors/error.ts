@@ -20,8 +20,24 @@ const ERROR_CODE_MAP: Record<ErrorCode, Code> = {
   METHOD_NOT_ALLOWED: Code.Unimplemented,
   CONFLICT: Code.AlreadyExists,
   UNPROCESSABLE_ENTITY: Code.InvalidArgument,
+  TOO_MANY_REQUESTS: Code.ResourceExhausted,
   INTERNAL_SERVER_ERROR: Code.Internal,
+  SERVICE_UNAVAILABLE: Code.Unavailable,
 };
+
+/**
+ * Opaque `Internal` error for anything we didn't classify. The request id is
+ * the only detail that crosses the wire — it's the handle support needs to
+ * find the real cause in the logs.
+ */
+export function internalError(requestId?: string): ConnectError {
+  return new ConnectError(
+    requestId
+      ? `Internal server error (request id: ${requestId})`
+      : "Internal server error",
+    Code.Internal,
+  );
+}
 
 /**
  * Error mapping interceptor for ConnectRPC.
@@ -68,10 +84,10 @@ export function errorInterceptor(): Interceptor {
         requestId: rpcCtx?.requestId,
       });
 
-      throw new ConnectError(
-        error instanceof Error ? error.message : "Internal server error",
-        Code.Internal,
-      );
+      // Never forward the raw message: drizzle's `DrizzleQueryError` embeds
+      // the full SQL and bound params, which would leak schema and other
+      // rows' ids to the API client.
+      throw internalError(rpcCtx?.requestId);
     }
   };
 }

@@ -14,6 +14,7 @@ import {
 import { findByThread, replace, store } from "./confirmation-store";
 import type { PendingPayload } from "./confirmation-store";
 import { publishHomeView } from "./home";
+import { toMrkdwn } from "./mrkdwn";
 import { getComponentNames, getPageDashboardLink } from "./page-urls";
 import { getRegistryTool, isSlackToolDraft } from "./registry-runner";
 import { resolveWorkspace } from "./workspace-resolver";
@@ -81,6 +82,25 @@ const slackPlatformErrorSchema = z.object({
 function isSlackPlatformError(err: unknown, errorCode: string): boolean {
   const parsed = slackPlatformErrorSchema.safeParse(err);
   return parsed.success && parsed.data.data.error === errorCode;
+}
+
+// Asking permission to run a write tool ("shall I go ahead and publish this?").
+const PERMISSION_QUESTION =
+  /\b(shall i|should i|do you want me to|would you like me to|want me to|ready for me to|can i)\b[^?]*\b(go ahead|proceed|publish|create|post|send|schedule|submit|add|resolve|update)\b/i;
+
+// A change written out as message text rather than passed to a tool.
+const PROSE_DRAFT_FIELDS =
+  /\*{0,2}(title|status|message|impact|components?|from|to)\*{0,2}\s*:/gi;
+
+/**
+ * Heuristic for the "model drafted in prose instead of calling the tool" failure
+ * — logging only, so false positives are cheap. Both signals are required: a
+ * plain answer can end in a question, and a list of reports can look tabular.
+ */
+export function looksLikeUncardedDraft(text: string): boolean {
+  if (!text) return false;
+  if (!PERMISSION_QUESTION.test(text)) return false;
+  return (text.match(PROSE_DRAFT_FIELDS) ?? []).length >= 2;
 }
 
 export async function handleSlackEvent(c: Context) {
@@ -281,6 +301,9 @@ async function processEvent(body: SlackEvent) {
       channel: event.channel,
       threadTs,
       toolCalls: result.toolResults.map((tr) => tr.toolName),
+      finishReason: result.finishReason,
+      stepCount: result.stepCount,
+      hitStepLimit: result.hitStepLimit,
     });
 
     // One pending action per thread (see findByThread/replace below).
@@ -310,10 +333,24 @@ async function processEvent(body: SlackEvent) {
         confirmationResult,
       );
     } else {
+      // No draft means no card. Distinguish a legitimate text answer from the
+      // model drafting a change in prose and asking for permission instead of
+      // calling the tool — the latter strands the user with nothing to click.
+      if (looksLikeUncardedDraft(result.text)) {
+        logger.warn("slack draft proposed without a card", {
+          teamId,
+          channel: event.channel,
+          threadTs,
+          finishReason: result.finishReason,
+          stepCount: result.stepCount,
+          hitStepLimit: result.hitStepLimit,
+          readToolCalls: result.toolResults.map((tr) => tr.toolName),
+        });
+      }
       await slack.chat.update({
         channel: event.channel,
         ts: thinkingTs,
-        text: result.text || "Done!",
+        text: result.text ? toMrkdwn(result.text) : "Done!",
       });
       logger.info("slack response sent", {
         teamId,

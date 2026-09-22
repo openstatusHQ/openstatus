@@ -35,7 +35,7 @@ const homepageLinkHeader = [
   '</.well-known/agent-skills/index.json>; rel="agent-skills"; type="application/json"',
   '</.well-known/mcp.json>; rel="mcp-server"; type="application/json"',
   '<https://www.openstatus.dev/docs>; rel="service-doc"; type="text/html"',
-  '<https://api.openstatus.dev/openapi>; rel="service-desc"; type="application/json"',
+  '<https://www.openstatus.dev/openapi.json>; rel="service-desc"; type="application/json"',
   '<https://www.openstatus.dev/llms.txt>; rel="describedby"; type="text/plain"',
   '<https://www.openstatus.dev/llms-full.txt>; rel="alternate"; type="text/plain"; title="llms-full"',
   '<https://www.openstatus.dev/terms>; rel="terms-of-service"',
@@ -49,10 +49,22 @@ const agentDiscoveryHeaders = [
   },
 ];
 
+// ICON_SET=nucleo swaps the icon set at resolution time (see packages/icons)
+const useNucleoIcons = process.env.ICON_SET === "nucleo";
+
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@openstatus/ui", "@openstatus/api", "next-mdx-remote"],
+  turbopack: useNucleoIcons
+    ? { resolveAlias: { "@openstatus/icons": "@openstatus/icons/nucleo" } }
+    : undefined,
+  webpack: (config) => {
+    if (useNucleoIcons) {
+      config.resolve.alias["@openstatus/icons$"] = "@openstatus/icons/nucleo";
+    }
+    return config;
+  },
   env: {
     OPENSTATUS_MCP_SERVER_VERSION: readMcpServerVersion(),
   },
@@ -68,6 +80,8 @@ const nextConfig: NextConfig = {
   experimental: {
     turbopackScopeHoisting: false,
     // serverMinification:false,
+    // barrel-optimize only when unaliased — the rewrite would bypass the nucleo alias
+    optimizePackageImports: useNucleoIcons ? [] : ["@openstatus/icons"],
   },
   serverExternalPackages: ["@google-cloud/tasks"],
   expireTime: 180, // 3 minutes
@@ -104,6 +118,11 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         has: [{ type: "host", value: "docs.openstatus.dev" }],
         destination: "https://www.openstatus.dev/docs/:path*",
+        permanent: true,
+      },
+      {
+        source: "/docs/guides/how-to-connect-openstatus-to-claude-code",
+        destination: "/docs/guides/how-to-connect-openstatus-to-your-agent",
         permanent: true,
       },
       {
@@ -188,7 +207,27 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/docs/tutorial/how-to-connect-openstatus-to-claude-code",
-        destination: "/docs/guides/how-to-connect-openstatus-to-claude-code",
+        destination: "/docs/guides/how-to-connect-openstatus-to-your-agent",
+        permanent: true,
+      },
+      {
+        source: "/compare/atlassian-statuspage",
+        destination: "/guides/top-five-atlassian-statuspage-alternatives",
+        permanent: true,
+      },
+      {
+        source: "/compare/instatus",
+        destination: "/guides/top-five-instatus-alternatives",
+        permanent: true,
+      },
+      {
+        source: "/compare/pingdom",
+        destination: "/guides/top-five-pingdom-alternatives",
+        permanent: true,
+      },
+      {
+        source: "/compare/uptime-kuma",
+        destination: "/guides/hosted-uptime-kuma-alternative",
         permanent: true,
       },
     ];
@@ -196,6 +235,22 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        // `/openapi.json` is the path agents probe for an API description, and
+        // they probe it on the site they were pointed at. The spec is generated
+        // in apps/server, so proxy rather than keep a second copy in sync.
+        // Host-scoped and ahead of the status-page rules below: those catch
+        // every path on any host once `sp_mode=new` is set, and a customer's
+        // custom domain has no business serving the openstatus API spec.
+        {
+          source: "/openapi.json",
+          has: [{ type: "host", value: "(www\\.)?openstatus\\.dev" }],
+          destination: "https://api.openstatus.dev/openapi.json",
+        },
+        {
+          source: "/openapi.yaml",
+          has: [{ type: "host", value: "(www\\.)?openstatus\\.dev" }],
+          destination: "https://api.openstatus.dev/openapi.yaml",
+        },
         {
           source: "/status-page/themes/:path*",
           destination: "https://www.stpg.dev/:path*",

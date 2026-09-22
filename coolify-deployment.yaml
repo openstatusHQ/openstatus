@@ -141,6 +141,24 @@ services:
         reservations:
           memory: 256M
 
+  # One-shot schema migration. Runs before any app service starts; drizzle
+  # skips already-applied migrations, so it is safe on every deploy.
+  db-migrate:
+    image: ghcr.io/openstatushq/openstatus-db-migrate:latest
+    container_name: openstatus-db-migrate
+    networks:
+      - openstatus
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-http://libsql:8080}
+      - DATABASE_AUTH_TOKEN=${DATABASE_AUTH_TOKEN:-}
+    depends_on:
+      libsql:
+        condition: service_healthy
+    # retries absorb transient DB races; exits 0 once migrations are applied
+    restart: on-failure:3
+    # pull on every deploy so a stale :latest image never skips new migrations
+    pull_policy: always
+
   tinybird:
     image: tinybirdco/tinybird-local:latest
     container_name: openstatus-tinybird
@@ -179,6 +197,8 @@ services:
       - DATABASE_AUTH_TOKEN=${DATABASE_AUTH_TOKEN:-}
       - PORT=${WORKFLOWS_PORT:-3000}
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       libsql:
         condition: service_healthy
     healthcheck:
@@ -207,6 +227,8 @@ services:
       - DATABASE_AUTH_TOKEN=${DATABASE_AUTH_TOKEN:-}
       - PORT=${SERVER_PORT:-3000}
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       workflows:
         condition: service_healthy
       libsql:
@@ -296,6 +318,8 @@ services:
       - HOSTNAME=${DASHBOARD_HOSTNAME:-0.0.0.0}
       - AUTH_TRUST_HOST=${DASHBOARD_AUTH_TRUST_HOST:-true}
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       workflows:
         condition: service_healthy
       libsql:
@@ -329,7 +353,10 @@ services:
       - PORT=${STATUS_PAGE_PORT:-3000}
       - HOSTNAME=${STATUS_PAGE_HOSTNAME:-0.0.0.0}
       - AUTH_TRUST_HOST=${STATUS_PAGE_AUTH_TRUST_HOST:-true}
+      - OPENSTATUS_API_URL=${OPENSTATUS_API_URL:-http://server:3000}
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       workflows:
         condition: service_healthy
       libsql:

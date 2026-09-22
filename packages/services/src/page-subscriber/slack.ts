@@ -41,6 +41,9 @@ function channelLabel(channelId: string, channelName?: string): string {
  * authenticated workspace at the call site — both workspace and audit actor
  * are resolved from the page. Auto-accepted (the slash command is consent).
  */
+// Token-addressed self-service by an anonymous visitor: the audit actor is
+// `subscriber`, for which `requireScope` is a documented no-op.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function createSlackSubscriber(args: {
   input: CreateSlackSubscriberInput;
   db?: DB;
@@ -164,6 +167,9 @@ export async function createSlackSubscriber(args: {
   });
 }
 
+// Token-addressed self-service by an anonymous visitor: the audit actor is
+// `subscriber`, for which `requireScope` is a documented no-op.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function removeSlackSubscriber(args: {
   input: RemoveSlackSubscriberInput;
   db?: DB;

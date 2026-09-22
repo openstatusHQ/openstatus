@@ -7,7 +7,11 @@ import { BasicLayout } from "../_components/basic-layout";
 import { Tracker } from "../_components/tracker";
 import { SIZE, calSemiBold, interLight, interRegular } from "../utils";
 
-const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
+const tb = new OSTinybird({
+  token: env.TINY_BIRD_API_KEY,
+  baseUrl: env.TINYBIRD_URL,
+  noop: env.TINYBIRD_NOOP,
+});
 
 export const runtime = "edge";
 

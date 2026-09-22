@@ -6,6 +6,10 @@
 app = 'openstatus-workflows'
 primary_region = 'ams'
 
+# Long enough for shutdownOutbox to wait out an in-flight provider call
+# (NOTIFICATION_TIMEOUT_MS + 5s) before Fly SIGKILLs.
+kill_timeout = "25s"
+
 [build]
   dockerfile = "./Dockerfile"
 

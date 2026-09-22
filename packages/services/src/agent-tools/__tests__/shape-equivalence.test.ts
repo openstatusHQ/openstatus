@@ -1,17 +1,20 @@
+import { createMonitor } from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
-import { loadSeededWorkspace, makeUserCtx } from "../../../test/helpers";
+import { createWorkspaceFixture, makeUserCtx } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { agentTools } from "../index";
 import type { AnyAgentTool } from "../types";
 
 let teamCtx: ServiceContext;
+let monitorId: number;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  teamCtx = makeUserCtx(team, { userId: 1 });
+  const { workspace, userId } = await createWorkspaceFixture("team");
+  teamCtx = makeUserCtx(workspace, { userId });
+  const monitor = await createMonitor(workspace.id);
+  monitorId = monitor.id;
 });
 
 describe("agent-tool shape equivalence", () => {
@@ -69,15 +72,11 @@ describe("agent-tool shape equivalence", () => {
     expect(parsed.success, parsed.error?.message).toBe(true);
   });
 
-  // Monitor-bound reads need an actual monitor id. The seeded team
-  // workspace has monitor #1 (`OpenStatus`) — see packages/db/src/seed.mts.
-  const SEEDED_TEAM_MONITOR_ID = 1;
-
   test("get_monitor output matches schema", async () => {
     const tool = agentTools.get_monitor;
     const result = await tool.run({
       ctx: teamCtx,
-      input: { monitorId: SEEDED_TEAM_MONITOR_ID },
+      input: { monitorId },
     });
     const parsed = tool.outputSchema.safeParse(result);
     expect(parsed.success, parsed.error?.message).toBe(true);
@@ -87,7 +86,7 @@ describe("agent-tool shape equivalence", () => {
     const tool = agentTools.get_monitor_status;
     const result = await tool.run({
       ctx: teamCtx,
-      input: { monitorId: SEEDED_TEAM_MONITOR_ID },
+      input: { monitorId },
     });
     const parsed = tool.outputSchema.safeParse(result);
     expect(parsed.success, parsed.error?.message).toBe(true);
@@ -97,7 +96,7 @@ describe("agent-tool shape equivalence", () => {
     const tool = agentTools.get_monitor_summary;
     const result = await tool.run({
       ctx: teamCtx,
-      input: { monitorId: SEEDED_TEAM_MONITOR_ID, timeRange: "1d" },
+      input: { monitorId, timeRange: "1d" },
     });
     const parsed = tool.outputSchema.safeParse(result);
     expect(parsed.success, parsed.error?.message).toBe(true);
@@ -108,7 +107,7 @@ describe("agent-tool shape equivalence", () => {
     const result = await tool.run({
       ctx: teamCtx,
       input: {
-        monitorId: SEEDED_TEAM_MONITOR_ID,
+        monitorId,
         timeRange: "1d",
         limit: 10,
         offset: 0,

@@ -155,7 +155,7 @@ describe("sendEmailNotifications", () => {
     await sendEmailNotifications([sub], makeUpdate({ updateId: 77 }));
 
     const [args] = sendStatusReportUpdateMock.calls[0].args;
-    expect(args.idempotencyKey).toBe("status-report-update:77");
+    expect(args.idempotencyKey).toMatch(/^status-report-update:77:[0-9a-z]+$/);
   });
 
   test("falls back to a page-update key when there is no update id (maintenance)", async () => {
@@ -166,6 +166,50 @@ describe("sendEmailNotifications", () => {
     );
 
     const [args] = sendStatusReportUpdateMock.calls[0].args;
-    expect(args.idempotencyKey).toBe("page-update:17:maintenance");
+    expect(args.idempotencyKey).toMatch(
+      /^page-update:17:maintenance:[0-9a-z]+$/,
+    );
+  });
+
+  test("keeps the same key for an identical re-dispatch", async () => {
+    const update = makeUpdate({ updateId: 77, date: "2026-07-16T11:00:00Z" });
+    await sendEmailNotifications([makeSub()], update);
+    await sendEmailNotifications([makeSub()], update);
+
+    const keys = sendStatusReportUpdateMock.calls.map(
+      (c) => c.args[0].idempotencyKey,
+    );
+    expect(keys[0]).toBe(keys[1]);
+  });
+
+  test("changes the key when the subscriber list changes", async () => {
+    const update = makeUpdate({ updateId: 77, date: "2026-07-16T11:00:00Z" });
+    await sendEmailNotifications([makeSub()], update);
+    await sendEmailNotifications(
+      [makeSub(), makeSub({ id: 2, email: "b@example.com", token: "token-b" })],
+      update,
+    );
+
+    const keys = sendStatusReportUpdateMock.calls.map(
+      (c) => c.args[0].idempotencyKey,
+    );
+    expect(keys[0]).not.toBe(keys[1]);
+  });
+
+  test("changes the key when the update content changes", async () => {
+    const date = "2026-07-16T11:00:00Z";
+    await sendEmailNotifications(
+      [makeSub()],
+      makeUpdate({ updateId: 77, date, message: "We are investigating." }),
+    );
+    await sendEmailNotifications(
+      [makeSub()],
+      makeUpdate({ updateId: 77, date, message: "Root cause identified." }),
+    );
+
+    const keys = sendStatusReportUpdateMock.calls.map(
+      (c) => c.args[0].idempotencyKey,
+    );
+    expect(keys[0]).not.toBe(keys[1]);
   });
 });

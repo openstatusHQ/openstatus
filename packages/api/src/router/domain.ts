@@ -1,6 +1,10 @@
+import { customDomainSchema } from "@openstatus/db/src/schema/pages/validation";
+import { assertCustomDomainInWorkspace } from "@openstatus/services/page";
 import { z } from "zod";
 
 import { env } from "../env";
+import { vercelFetch } from "../lib/vercel";
+import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const domainConfigResponseSchema = z.object({
@@ -50,22 +54,32 @@ export type DomainVerificationStatusProps =
   | "Domain Not Found"
   | "Unknown Error";
 
+async function assertOwned(
+  ctx: Parameters<typeof toServiceCtx>[0],
+  domain: string,
+) {
+  try {
+    await assertCustomDomainInWorkspace({
+      ctx: toServiceCtx(ctx),
+      input: { domain },
+    });
+  } catch (err) {
+    toTRPCError(err);
+  }
+}
+
+const domainInput = z.object({ domain: customDomainSchema.optional() });
+
 export const domainRouter = createTRPCRouter({
   getDomainResponse: protectedProcedure
-    .input(z.object({ domain: z.string().optional() }))
+    .input(domainInput)
     .query(async (opts) => {
       if (!opts.input.domain) {
         return null;
       }
-      const data = await fetch(
-        `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${opts.input.domain}?teamId=${env.TEAM_ID_VERCEL}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        },
+      await assertOwned(opts.ctx, opts.input.domain);
+      const data = await vercelFetch(
+        `/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${encodeURIComponent(opts.input.domain)}?teamId=${env.TEAM_ID_VERCEL}`,
       );
       const json = await data.json();
       const result = domainResponseSchema
@@ -78,47 +92,33 @@ export const domainRouter = createTRPCRouter({
             .optional(),
         })
         .parse(json);
-      console.log({ result });
       return result;
     }),
   getConfigResponse: protectedProcedure
-    .input(z.object({ domain: z.string().optional() }))
+    .input(domainInput)
     .query(async (opts) => {
       if (!opts.input.domain) {
         return null;
       }
-      const data = await fetch(
-        `https://api.vercel.com/v6/domains/${opts.input.domain}/config?teamId=${env.TEAM_ID_VERCEL}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        },
+      await assertOwned(opts.ctx, opts.input.domain);
+      const data = await vercelFetch(
+        `/v6/domains/${encodeURIComponent(opts.input.domain)}/config?teamId=${env.TEAM_ID_VERCEL}`,
       );
       const json = await data.json();
       const result = domainConfigResponseSchema.parse(json);
       return result;
     }),
-  verifyDomain: protectedProcedure
-    .input(z.object({ domain: z.string().optional() }))
-    .query(async (opts) => {
-      if (!opts.input.domain) {
-        return null;
-      }
-      const data = await fetch(
-        `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${opts.input.domain}/verify?teamId=${env.TEAM_ID_VERCEL}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-      const json = await data.json();
-      const result = domainResponseSchema.parse(json);
-      return result;
-    }),
+  verifyDomain: protectedProcedure.input(domainInput).query(async (opts) => {
+    if (!opts.input.domain) {
+      return null;
+    }
+    await assertOwned(opts.ctx, opts.input.domain);
+    const data = await vercelFetch(
+      `/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${encodeURIComponent(opts.input.domain)}/verify?teamId=${env.TEAM_ID_VERCEL}`,
+      { method: "POST" },
+    );
+    const json = await data.json();
+    const result = domainResponseSchema.parse(json);
+    return result;
+  }),
 });

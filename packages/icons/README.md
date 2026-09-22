@@ -1,186 +1,23 @@
-# Lucide React Icons Used in Dashboard
+# @openstatus/icons
 
-This document lists all the lucide-react icons currently used in the OpenStatus dashboard application.
+Single import surface for icons across the openstatus apps.
 
-## Complete Icon List
+- `@openstatus/icons` — the app icon set (lucide-backed by default)
+- `@openstatus/icons/nucleo` — same names, Nucleo-backed where vendored; selected
+  at build time by setting `ICON_SET=nucleo` (aliased in each app's `next.config.ts`)
+- `@openstatus/icons/brand` — third-party brand/logo icons (GitHub, Slack, …)
 
-- Activity
-- AlertCircle
-- ArrowUpRight
-- AudioLines
-- Bell
-- Book
-- Bookmark
-- Braces
-- CalendarClock
-- CalendarIcon
-- Check
-- CheckCircle2
-- CheckIcon
-- ChevronDown
-- ChevronDownIcon
-- ChevronLeft
-- ChevronRight
-- ChevronRightIcon
-- ChevronUp
-- ChevronUpIcon
-- ChevronsUpDown
-- CircleCheck
-- CircleDashed
-- CircleIcon
-- Clock
-- ClockIcon
-- Cog
-- Copy
-- CopyPlus
-- CreditCard
-- ExternalLink
-- Eye
-- FileDown
-- FileJson
-- Filter
-- Globe
-- GripVertical
-- Hammer
-- HelpCircle
-- Info
-- Inbox
-- Key
-- Laptop
-- LayoutGrid
-- LifeBuoy
-- List
-- Loader
-- LoaderCircle
-- Lock
-- LogOut
-- Logs
-- Megaphone
-- Mic
-- Moon
-- MoreHorizontal
-- Network
-- PanelLeftIcon
-- PanelRight
-- PanelTop
-- Pencil
-- Plus
-- PlusCircle
-- Rocket
-- Search
-- SearchCheck
-- SearchIcon
-- Settings
-- Settings2
-- Siren
-- Sparkles
-- Sun
-- TableProperties
-- Terminal
-- Trash2
-- User
-- Users
-- Workflow
-- X
-- XCircle
-- XIcon
+Both sets must export identical names — enforced by `src/parity.ts` at compile time.
 
-## Usage Statistics
+Nucleo icons are used under the [Nucleo license](https://nucleoapp.com/license)
+(max 100 icons in open-source projects, with copyright notice). With the approval from [Sebastiano Guerriero](https://x.com/guerriero_se), we have the authorization to add up to 140-150 icons.
 
-- **Total Icons**: 75 unique icons
-- **Most Common**: Check, Plus, X, ChevronRight, ChevronDown, ChevronUp
-- **Categories**: 
-  - Navigation (Chevron*, Arrow*, MoreHorizontal)
-  - Actions (Plus, X, Trash2, Copy, Pencil)
-  - Status (Check, AlertCircle, CheckCircle2, XCircle)
-  - UI Elements (Settings, Search, Bell, Lock)
-  - Content (Book, Braces, TableProperties, Globe)
+## Licensing
 
-## Icon Categories
+This package is `private` and not published to npm.
 
-### Navigation & Direction
-- ArrowUpRight
-- ChevronDown, ChevronDownIcon
-- ChevronLeft
-- ChevronRight, ChevronRightIcon
-- ChevronUp, ChevronUpIcon
-- ChevronsUpDown
-
-### Actions & Operations
-- Check, CheckIcon
-- Copy, CopyPlus
-- Eye
-- Pencil
-- Plus, PlusCircle
-- Trash2
-- X, XIcon
-
-### Status & Feedback
-- AlertCircle
-- CheckCircle2
-- CircleCheck
-- CircleDashed
-- Loader, LoaderCircle
-- XCircle
-
-### UI & Interface
-- Bell
-- Lock
-- MoreHorizontal
-- PanelLeftIcon, PanelRight, PanelTop
-- Search, SearchIcon
-- Settings, Settings2
-
-### Content & Data
-- Book
-- Braces
-- TableProperties
-- Globe
-- Network
-- Terminal
-
-### Time & Calendar
-- CalendarClock
-- CalendarIcon
-- Clock, ClockIcon
-
-### User & Account
-- CreditCard
-- LogOut
-- User
-- Users
-
-### System & Technical
-- Activity
-- Cog
-- FileDown, FileJson
-- Key
-- Logs
-- Workflow
-
-### Theme & Appearance
-- Laptop
-- Moon
-- Sun
-
-### Communication
-- AudioLines
-- Inbox
-- Mic
-- Megaphone
-
-### Miscellaneous
-- Bookmark
-- ExternalLink
-- Filter
-- GripVertical
-- Hammer
-- HelpCircle
-- Info
-- LayoutGrid
-- LifeBuoy
-- List
-- Rocket
-- SearchCheck
-- Siren
-- Sparkles
+- Package source, `src/lucide/` and `src/brand/`: MIT (lucide re-exports remain
+  under the [lucide ISC license](https://lucide.dev/license)).
+- `src/nucleo/`: vendored [Nucleo](https://nucleoapp.com) icons, copyright Nucleo,
+  used under the [Nucleo license](https://nucleoapp.com/license) — see `src/nucleo/NOTICE`.
+  These icons may **not** be extracted, redistributed, or resold outside of openstatus.

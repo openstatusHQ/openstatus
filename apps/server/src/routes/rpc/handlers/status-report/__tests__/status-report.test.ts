@@ -9,6 +9,7 @@ import {
   statusReportsToPageComponents,
   workspace,
 } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { createWorkspace } from "@openstatus/db/src/test/factories";
 import {
   PageComponentImpact,
@@ -64,7 +65,14 @@ let testSubscriberId: number;
 let testPage2Id: number;
 let testPage2ComponentId: number;
 
+// A second, free-plan workspace: used both for cross-workspace isolation
+// assertions and for the plan-limit rejections. Private to this suite because
+// sibling suites assert the seeded free workspace owns nothing.
+let OTHER_WORKSPACE_ID: number;
+
 beforeAll(async () => {
+  OTHER_WORKSPACE_ID = (await createTestWorkspace({ plan: "free" })).workspace
+    .id;
   // Clean up any existing test data
   await db
     .delete(statusReport)
@@ -364,6 +372,55 @@ describe("StatusReportService.CreateStatusReport", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  // `Number("")` is 0 and `Number.parseInt("1.5")` is 1, so a malformed id used
+  // to be coerced into a real component id rather than rejected — an empty
+  // string silently targeted component 0.
+  test("rejects malformed page component ids", async () => {
+    for (const bad of ["", " ", "1.5", "1e3", "-1", "abc", "1abc"]) {
+      const res = await connectRequest(
+        "CreateStatusReport",
+        {
+          title: `${TEST_PREFIX}-bad-component-id`,
+          status: "STATUS_REPORT_STATUS_INVESTIGATING",
+          message: "Test message",
+          date: new Date().toISOString(),
+          pageId: "1",
+          pageComponentIds: [bad],
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.message).toContain("Invalid page component id");
+    }
+  });
+
+  test("rejects a malformed component impact id", async () => {
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-bad-impact-id`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Test message",
+        date: new Date().toISOString(),
+        pageId: "1",
+        pageComponentIds: [String(testPageComponentId)],
+        componentImpacts: [
+          {
+            pageComponentId: "",
+            impact: "PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE",
+          },
+        ],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("Invalid page component id");
   });
 
   test("returns error when page components are from different pages", async () => {
@@ -683,7 +740,7 @@ describe("StatusReportService.GetStatusReport", () => {
     const otherReport = await db
       .insert(statusReport)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace`,
         status: "investigating",
       })
@@ -865,7 +922,7 @@ describe("StatusReportService.ListStatusReports", () => {
     const otherReport = await db
       .insert(statusReport)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace-list`,
         status: "investigating",
       })
@@ -1070,7 +1127,7 @@ describe("StatusReportService.UpdateStatusReport", () => {
     const otherReport = await db
       .insert(statusReport)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace-update`,
         status: "investigating",
       })
@@ -1102,6 +1159,22 @@ describe("StatusReportService.UpdateStatusReport", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  test("rejects a malformed page component id on update", async () => {
+    const res = await connectRequest(
+      "UpdateStatusReport",
+      {
+        id: String(testStatusReportToUpdateId),
+        pageComponentIds: [""],
+        updatePageComponentIds: true,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("Invalid page component id");
   });
 
   test("returns error when updating with components from different pages", async () => {
@@ -1376,7 +1449,7 @@ describe("StatusReportService.DeleteStatusReport", () => {
     const otherReport = await db
       .insert(statusReport)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace-delete`,
         status: "investigating",
       })
@@ -1521,7 +1594,7 @@ describe("StatusReportService.AddStatusReportUpdate", () => {
     const otherReport = await db
       .insert(statusReport)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace-add-update`,
         status: "investigating",
       })

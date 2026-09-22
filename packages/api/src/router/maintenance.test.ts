@@ -21,7 +21,7 @@ let otherWorkspaceComponentId: number;
 // the `maintenance.create` / `maintenance.update` audit rows outlive
 // the row itself and — because INTEGER PRIMARY KEY recycles — a later
 // test inserting into `maintenance` can land on the orphan's id and
-// inherit its actor attribution. See docs/adr/test-audit-cleanup.md.
+// inherit its actor attribution. See packages/services/AGENTS.md.
 const createdMaintenanceIds: number[] = [];
 const updatedMaintenanceIds: number[] = [];
 

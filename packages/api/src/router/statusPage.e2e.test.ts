@@ -934,6 +934,312 @@ describe("statusPage.get endpoint validation", () => {
   });
 });
 
+describe("statusPage.get monitors sorting", () => {
+  const sortingTestSlug = "monitors-sorting-test-page";
+  let sortingTestPageId: number;
+  let sortingTestWorkspaceId: number;
+  let group1Id: number;
+  let group2Id: number;
+
+  beforeAll(async () => {
+    // Clean up any existing test data
+    await db.delete(page).where(eq(page.slug, sortingTestSlug));
+
+    // Use workspace id 1 from seed data
+    const existingWorkspace = await db.query.workspace.findFirst({
+      where: eq(workspace.id, 1),
+    });
+
+    if (!existingWorkspace) {
+      throw new Error("Test workspace not found");
+    }
+
+    sortingTestWorkspaceId = existingWorkspace.id;
+
+    // Create test page
+    const testPage = await db
+      .insert(page)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        title: "Monitors Sorting Test Page",
+        description: "Test page for monitors sorting",
+        slug: sortingTestSlug,
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    sortingTestPageId = testPage.id;
+
+    // Import pageComponentGroup schema
+    const { pageComponentGroup } = await import("@openstatus/db/src/schema");
+
+    // Create two monitor groups
+    const group1 = await db
+      .insert(pageComponentGroup)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        pageId: sortingTestPageId,
+        name: "Group 1",
+        defaultOpen: true,
+      })
+      .returning()
+      .get();
+    group1Id = group1.id;
+
+    const group2 = await db
+      .insert(pageComponentGroup)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        pageId: sortingTestPageId,
+        name: "Group 2",
+        defaultOpen: true,
+      })
+      .returning()
+      .get();
+    group2Id = group2.id;
+
+    // Create monitors with specific order/groupOrder values for testing sorting
+    // Group 1 should appear first (min order = 1)
+    // Group 2 should appear second (min order = 5)
+    // Ungrouped monitors interspersed based on their order values
+
+    // Monitor 1: Ungrouped, order = 0 (should be first)
+    const monitor1 = await db
+      .insert(monitor)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        url: "https://monitor1.test",
+        name: "Monitor 1 Ungrouped",
+        periodicity: "30s",
+        active: true,
+      })
+      .returning()
+      .get();
+
+    await db.insert(pageComponent).values({
+      workspaceId: sortingTestWorkspaceId,
+      pageId: sortingTestPageId,
+      monitorId: monitor1.id,
+      name: monitor1.name,
+      type: "monitor",
+      order: 0,
+      groupId: null,
+      groupOrder: null,
+    });
+
+    // Monitor 2: Group 1, order = 1, groupOrder = 1 (group should be second)
+    const monitor2 = await db
+      .insert(monitor)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        url: "https://monitor2.test",
+        name: "Monitor 2 Group 1 First",
+        periodicity: "30s",
+        active: true,
+      })
+      .returning()
+      .get();
+
+    await db.insert(pageComponent).values({
+      workspaceId: sortingTestWorkspaceId,
+      pageId: sortingTestPageId,
+      monitorId: monitor2.id,
+      name: monitor2.name,
+      type: "monitor",
+      order: 1,
+      groupId: group1Id,
+      groupOrder: 1,
+    });
+
+    // Monitor 3: Group 1, order = 3, groupOrder = 2 (should be second in group 1)
+    const monitor3 = await db
+      .insert(monitor)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        url: "https://monitor3.test",
+        name: "Monitor 3 Group 1 Second",
+        periodicity: "30s",
+        active: true,
+      })
+      .returning()
+      .get();
+
+    await db.insert(pageComponent).values({
+      workspaceId: sortingTestWorkspaceId,
+      pageId: sortingTestPageId,
+      monitorId: monitor3.id,
+      name: monitor3.name,
+      type: "monitor",
+      order: 3,
+      groupId: group1Id,
+      groupOrder: 2,
+    });
+
+    // Monitor 4: Ungrouped, order = 4 (should come after Group 1, before Group 2)
+    const monitor4 = await db
+      .insert(monitor)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        url: "https://monitor4.test",
+        name: "Monitor 4 Ungrouped",
+        periodicity: "30s",
+        active: true,
+      })
+      .returning()
+      .get();
+
+    await db.insert(pageComponent).values({
+      workspaceId: sortingTestWorkspaceId,
+      pageId: sortingTestPageId,
+      monitorId: monitor4.id,
+      name: monitor4.name,
+      type: "monitor",
+      order: 4,
+      groupId: null,
+      groupOrder: null,
+    });
+
+    // Monitor 5: Group 2, order = 5, groupOrder = 1 (group should be fourth)
+    const monitor5 = await db
+      .insert(monitor)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        url: "https://monitor5.test",
+        name: "Monitor 5 Group 2 First",
+        periodicity: "30s",
+        active: true,
+      })
+      .returning()
+      .get();
+
+    await db.insert(pageComponent).values({
+      workspaceId: sortingTestWorkspaceId,
+      pageId: sortingTestPageId,
+      monitorId: monitor5.id,
+      name: monitor5.name,
+      type: "monitor",
+      order: 5,
+      groupId: group2Id,
+      groupOrder: 1,
+    });
+
+    // Monitor 6: Group 2, order = 6, groupOrder = 0 (should be first in group 2)
+    const monitor6 = await db
+      .insert(monitor)
+      .values({
+        workspaceId: sortingTestWorkspaceId,
+        url: "https://monitor6.test",
+        name: "Monitor 6 Group 2 Zero",
+        periodicity: "30s",
+        active: true,
+      })
+      .returning()
+      .get();
+
+    await db.insert(pageComponent).values({
+      workspaceId: sortingTestWorkspaceId,
+      pageId: sortingTestPageId,
+      monitorId: monitor6.id,
+      name: monitor6.name,
+      type: "monitor",
+      order: 6,
+      groupId: group2Id,
+      groupOrder: 0,
+    });
+  });
+
+  afterAll(async () => {
+    // Clean up test data
+    await db.delete(page).where(eq(page.slug, sortingTestSlug));
+  });
+
+  test("Monitors are sorted correctly by group and order", async () => {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+
+    const caller = edgeRouter.createCaller(ctx);
+    const result = await caller.statusPage.get({ slug: sortingTestSlug });
+
+    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
+
+    if (!result) {
+      throw new Error("Result should not be null");
+    }
+
+    expect(result.monitors.length).toBe(6);
+
+    // Expected order based on sorting logic:
+    // 1. Monitor 1 (ungrouped, order=0)
+    // 2. Monitor 2 (group1, order=1, groupOrder=1) - group1 min order = 1
+    // 3. Monitor 3 (group1, order=3, groupOrder=2)
+    // 4. Monitor 4 (ungrouped, order=4)
+    // 5. Monitor 6 (group2, order=6, groupOrder=0) - group2 min order = 5
+    // 6. Monitor 5 (group2, order=5, groupOrder=1)
+
+    expect(result.monitors[0].name).toBe("Monitor 1 Ungrouped");
+    expect(result.monitors[0].monitorGroupId).toBeNull();
+
+    expect(result.monitors[1].name).toBe("Monitor 2 Group 1 First");
+    expect(result.monitors[1].monitorGroupId).toBe(group1Id);
+
+    expect(result.monitors[2].name).toBe("Monitor 3 Group 1 Second");
+    expect(result.monitors[2].monitorGroupId).toBe(group1Id);
+
+    expect(result.monitors[3].name).toBe("Monitor 4 Ungrouped");
+    expect(result.monitors[3].monitorGroupId).toBeNull();
+
+    expect(result.monitors[4].name).toBe("Monitor 6 Group 2 Zero");
+    expect(result.monitors[4].monitorGroupId).toBe(group2Id);
+
+    expect(result.monitors[5].name).toBe("Monitor 5 Group 2 First");
+    expect(result.monitors[5].monitorGroupId).toBe(group2Id);
+  });
+
+  test("Grouped monitors are sorted by groupOrder within their group", async () => {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+
+    const caller = edgeRouter.createCaller(ctx);
+    const result = await caller.statusPage.get({ slug: sortingTestSlug });
+
+    if (!result) {
+      throw new Error("Result should not be null");
+    }
+
+    // Find all monitors in group 1
+    const group1Monitors = result.monitors.filter(
+      (m) => m.monitorGroupId === group1Id,
+    );
+
+    expect(group1Monitors.length).toBe(2);
+    expect(group1Monitors[0].groupOrder).toBe(1);
+    expect(group1Monitors[1].groupOrder).toBe(2);
+
+    // Find all monitors in group 2
+    const group2Monitors = result.monitors.filter(
+      (m) => m.monitorGroupId === group2Id,
+    );
+
+    expect(group2Monitors.length).toBe(2);
+    expect(group2Monitors[0].groupOrder).toBe(0);
+    expect(group2Monitors[1].groupOrder).toBe(1);
+  });
+});
+
 describe("statusPage.get gates incidents by barType (calendar manual mode)", () => {
   const barTypeSlug = "bar-type-incident-gating-test-page";
   let barTypePageId: number;
@@ -1055,5 +1361,336 @@ describe("statusPage.get gates incidents by barType (calendar manual mode)", () 
     const result = await getPage();
 
     expect(monitorIncidents(result)).toEqual([]);
+  });
+});
+
+describe("statusPage exposes page component names, not internal monitor names", () => {
+  const publicNameSlug = "public-component-name-test-page";
+  let publicNamePageId: number;
+  let publicNameMonitorId: number;
+  let publicNameComponentId: number;
+  let noDescriptionMonitorId: number;
+  let noDescriptionComponentId: number;
+  let clearedDescriptionMonitorId: number;
+  let clearedDescriptionComponentId: number;
+  let grpcMonitorId: number;
+  let grpcComponentId: number;
+
+  const internalName = "Internal Monitor Name";
+  const internalDescription = "Internal monitor description";
+  const legacyExternalName = "Legacy External Name";
+  const componentName = "Public Component Name";
+  const componentDescription = "Public component description";
+  const fallbackDescription = "Monitor description used as fallback";
+
+  async function createCaller() {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+    return edgeRouter.createCaller(ctx);
+  }
+
+  beforeAll(async () => {
+    await db.delete(page).where(eq(page.slug, publicNameSlug));
+
+    const testPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: "Public Component Name Page",
+        description: "Verifies public naming in statusPage procedures",
+        slug: publicNameSlug,
+        customDomain: "",
+      })
+      .returning()
+      .get();
+    publicNamePageId = testPage.id;
+
+    // externalName is set on purpose: the legacy `externalName || name`
+    // schema transform must not override the page component name.
+    const testMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: internalName,
+        externalName: legacyExternalName,
+        description: internalDescription,
+        periodicity: "1m",
+        url: "https://example.com",
+        active: true,
+        public: true,
+      })
+      .returning()
+      .get();
+    publicNameMonitorId = testMonitor.id;
+
+    const testComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: publicNamePageId,
+        type: "monitor",
+        monitorId: publicNameMonitorId,
+        name: componentName,
+        description: componentDescription,
+        order: 0,
+      })
+      .returning()
+      .get();
+    publicNameComponentId = testComponent.id;
+
+    // mirrors pre-existing components: description was never backfilled (NULL)
+    const noDescriptionMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: "No Description Component Monitor",
+        description: fallbackDescription,
+        periodicity: "1m",
+        url: "https://example.com",
+        active: true,
+        public: true,
+      })
+      .returning()
+      .get();
+    noDescriptionMonitorId = noDescriptionMonitor.id;
+
+    const noDescriptionComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: publicNamePageId,
+        type: "monitor",
+        monitorId: noDescriptionMonitorId,
+        name: "No Description Component",
+        order: 1,
+      })
+      .returning()
+      .get();
+    noDescriptionComponentId = noDescriptionComponent.id;
+
+    // mirrors a deliberately cleared field: the dashboard stores ""
+    const clearedDescriptionMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: "Cleared Description Component Monitor",
+        description: "Internal description that must stay hidden",
+        periodicity: "1m",
+        url: "https://example.com",
+        active: true,
+        public: true,
+      })
+      .returning()
+      .get();
+    clearedDescriptionMonitorId = clearedDescriptionMonitor.id;
+
+    const clearedDescriptionComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: publicNamePageId,
+        type: "monitor",
+        monitorId: clearedDescriptionMonitorId,
+        name: "Cleared Description Component",
+        description: "",
+        order: 2,
+      })
+      .returning()
+      .get();
+    clearedDescriptionComponentId = clearedDescriptionComponent.id;
+
+    // getMonitor dispatches its Tinybird reads on jobType; a gRPC monitor must
+    // find a matching entry like every other supported type.
+    const grpcMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: "gRPC monitor",
+        jobType: "grpc",
+        periodicity: "1m",
+        url: "api.example.com:443",
+        active: true,
+        public: true,
+      })
+      .returning()
+      .get();
+    grpcMonitorId = grpcMonitor.id;
+
+    const grpcComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: publicNamePageId,
+        type: "monitor",
+        monitorId: grpcMonitorId,
+        name: "gRPC component",
+        order: 3,
+      })
+      .returning()
+      .get();
+    grpcComponentId = grpcComponent.id;
+  });
+
+  afterAll(async () => {
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, publicNameComponentId));
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, noDescriptionComponentId));
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, clearedDescriptionComponentId));
+    await db.delete(pageComponent).where(eq(pageComponent.id, grpcComponentId));
+    await db.delete(monitor).where(eq(monitor.id, grpcMonitorId));
+    await db.delete(monitor).where(eq(monitor.id, publicNameMonitorId));
+    await db.delete(monitor).where(eq(monitor.id, noDescriptionMonitorId));
+    await db.delete(monitor).where(eq(monitor.id, clearedDescriptionMonitorId));
+    await db.delete(page).where(eq(page.id, publicNamePageId));
+  });
+
+  test("get returns the page component name and description", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.get({ slug: publicNameSlug });
+
+    const monitorItem = result?.monitors.find(
+      (m) => m.id === publicNameMonitorId,
+    );
+
+    expect(monitorItem?.name).toBe(componentName);
+    expect(monitorItem?.description).toBe(componentDescription);
+    expect(monitorItem?.name).not.toBe(internalName);
+    expect(monitorItem?.name).not.toBe(legacyExternalName);
+
+    // the nested monitor relation must agree with the flat monitors array
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === publicNameMonitorId,
+    );
+    expect(component?.monitor?.name).toBe(componentName);
+    expect(component?.monitor?.description).toBe(componentDescription);
+  });
+
+  test("getLight returns the page component name and description", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.getLight({ slug: publicNameSlug });
+
+    const monitorItem = result?.monitors.find(
+      (m) => m.id === publicNameMonitorId,
+    );
+
+    expect(monitorItem?.name).toBe(componentName);
+    expect(monitorItem?.description).toBe(componentDescription);
+
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === publicNameMonitorId,
+    );
+    expect(component?.monitor?.name).toBe(componentName);
+    expect(component?.monitor?.description).toBe(componentDescription);
+  });
+
+  test("falls back to the monitor description when the component has none", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.get({ slug: publicNameSlug });
+
+    const monitorItem = result?.monitors.find(
+      (m) => m.id === noDescriptionMonitorId,
+    );
+    expect(monitorItem?.description).toBe(fallbackDescription);
+
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === noDescriptionMonitorId,
+    );
+    expect(component?.monitor?.description).toBe(fallbackDescription);
+
+    const light = await caller.statusPage.getLight({ slug: publicNameSlug });
+    const lightItem = light?.monitors.find(
+      (m) => m.id === noDescriptionMonitorId,
+    );
+    expect(lightItem?.description).toBe(fallbackDescription);
+  });
+
+  test("keeps a deliberately cleared component description blank", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.get({ slug: publicNameSlug });
+
+    const monitorItem = result?.monitors.find(
+      (m) => m.id === clearedDescriptionMonitorId,
+    );
+    expect(monitorItem?.description).toBe("");
+
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === clearedDescriptionMonitorId,
+    );
+    expect(component?.monitor?.description).toBe("");
+
+    const light = await caller.statusPage.getLight({ slug: publicNameSlug });
+    const lightItem = light?.monitors.find(
+      (m) => m.id === clearedDescriptionMonitorId,
+    );
+    expect(lightItem?.description).toBe("");
+  });
+
+  test("getUptime returns the page component name on the nested monitor", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.getUptime({
+      slug: publicNameSlug,
+      pageComponentIds: [String(publicNameComponentId)],
+    });
+
+    const component = result?.find(
+      (c) => c.pageComponentId === publicNameComponentId,
+    );
+
+    expect(component?.name).toBe(componentName);
+    expect(component?.monitor?.name).toBe(componentName);
+    expect(component?.monitor?.description).toBe(componentDescription);
+  });
+
+  test("getMonitor resolves metrics procedures for a gRPC monitor", async () => {
+    const caller = await createCaller();
+
+    // Tinybird is noop under test, so a resolved dispatch and a missing one both
+    // end up with empty chart data. What separates them is the TypeError that
+    // indexing proceduresByType with an absent job type throws — which
+    // withTinybirdFallback catches and files as a Tinybird outage rather than
+    // surfacing. Assert it never happens.
+    const logged: string[] = [];
+    const originalError = console.error;
+    console.error = (...args: unknown[]) => {
+      logged.push(args.map(String).join(" "));
+    };
+
+    let result: Awaited<ReturnType<typeof caller.statusPage.getMonitor>>;
+    try {
+      result = await caller.statusPage.getMonitor({
+        slug: publicNameSlug,
+        id: grpcMonitorId,
+      });
+    } finally {
+      console.error = originalError;
+    }
+
+    expect(result?.name).toBe("gRPC component");
+    expect(
+      logged.filter((line) =>
+        line.includes("Cannot read properties of undefined"),
+      ),
+    ).toEqual([]);
+  });
+
+  test("getMonitor returns the page component name and description", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.getMonitor({
+      slug: publicNameSlug,
+      id: publicNameMonitorId,
+    });
+
+    expect(result?.name).toBe(componentName);
+    expect(result?.description).toBe(componentDescription);
   });
 });

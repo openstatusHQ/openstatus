@@ -2,18 +2,39 @@
 title: "Global Speed Checker"
 publishedAt: "2025-11-10"
 author: "Thibault Le Ouay Ducasse"
-description: "Free website speed checker. Test your site's load time and latency from multiple regions across the globe in seconds - no signup required."
+description: "Free website speed test. Check your site's load time and response time from 28 regions worldwide in seconds - no signup, no install required."
 category: "Product"
 hero: Website Speed Test - Check Load Time Worldwide
-seo: 
-  title: Website Speed Test - Check Load Time Worldwide
+seo:
+  title: "Website Speed Test - Check Load Time from 28 Global Regions"
+howto:
+  totalTime: "PT20S"
+  steps:
+    - name: "Enter your URL"
+      text: "Paste the full URL you want to test, including the scheme - https://example.com. Any public HTTP endpoint works, whether it serves a web page or a JSON API."
+      url: "#how-to-test-your-website-speed"
+    - name: "Run the speed test"
+      text: "openstatus sends one request from each of its 28 regions in parallel. The whole run takes about 20 seconds, bounded by the slowest region rather than the sum of all of them."
+      url: "#how-to-test-your-website-speed"
+    - name: "Read the per-region results"
+      text: "Each row is one region, sorted by total response time. Click a row to expand the timing phases - DNS, TCP connection, TLS handshake, TTFB, and transfer - plus the response headers and status code."
+      url: "#how-to-test-your-website-speed"
+    - name: "Compare regions and share"
+      text: "Look for regions several times slower than your fastest, which usually points at missing CDN coverage or a single-region origin. Share the result with a link that expires after 7 days."
+      url: "#how-to-test-your-website-speed"
 faq:
   - question: "What Is a Website Speed Checker?"
     answer: "A Website Speed Checker is an online tool that measures how fast your website or API responds when someone visits it. It analyzes various website performance metrics including client-side performance (FCP, LCP, CLS) and server-side performance (DNS lookup, TCP connection, TLS handshake, server response time)."
   - question: "What Is a Global Speed Checker?"
-    answer: "A Global Speed Checker measures your website or API's latency and response time from multiple locations around the world. OpenStatus runs checks from 28 global regions across 3 cloud providers, giving you a complete picture of your site's real-world performance."
+    answer: "A Global Speed Checker measures your website or API's latency and response time from multiple locations around the world. openstatus runs checks from 28 global regions across 3 cloud providers, giving you a complete picture of your site's real-world performance."
   - question: "What can I do with openstatus Global Speed Checker?"
     answer: "You can test how fast your API or website responds worldwide, compare latency across different regions, identify network bottlenecks, and monitor uptime and availability in real time from distributed locations across Europe, Asia, North America, and beyond."
+  - question: "What is a good website load time?"
+    answer: "For the server-side response this tool measures, under 200ms is fast, 200-500ms is acceptable, 500ms-1s is slow enough that users notice, and over 1s needs attention. Judge it per region rather than on the average - a site that answers in 80ms from Frankfurt and 900ms from Sydney has a distribution problem, not a speed problem."
+  - question: "How many regions does the speed test run from?"
+    answer: "28 regions across 3 cloud providers - 18 on Fly, 6 on Koyeb, and 4 on Railway - spanning Europe, North America, Asia, South America, Africa, and Oceania. Every region runs on each test, so you get the full spread rather than a sample."
+  - question: "Why is my website fast in one region and slow in another?"
+    answer: "Almost always because the request is travelling to a single origin. A visitor in Sydney hitting a server in Virginia pays roughly 200ms in round-trip time before your application does any work. Large gaps between your fastest and slowest region point at missing CDN coverage, no edge caching, or a single-region database."
 ---
 
 ## Start monitoring your services
@@ -56,9 +77,62 @@ Understanding both sides helps you identify whether slowdowns are caused by your
 
 A Global Speed Checker measures your website or API's latency and response time from multiple locations around the world. Instead of testing from just one data center, it runs checks from 28 global regions across 3 cloud providers, giving you a complete picture of your site's real-world performance.
 
+## How to Test Your Website Speed
+
+1. **Enter your URL.** Paste the full address including the scheme — `https://example.com`. Any public HTTP endpoint works, whether it serves a web page or a JSON API.
+2. **Run the speed test.** openstatus sends one request from each of its 28 regions in parallel. The run takes about 20 seconds, bounded by the slowest region rather than the sum of all of them.
+3. **Read the per-region results.** Each row is one region, sorted by total response time. Click a row to expand the timing phases — DNS, TCP connection, TLS handshake, TTFB, and transfer — along with the response headers and status code.
+4. **Compare regions and share.** Look for regions several times slower than your fastest. Share the result with a link that expires after 7 days.
+
+No account, no install, and nothing to configure. If you want the same check to keep running after you close the tab, that is [uptime monitoring](/uptime-monitoring) rather than a one-off test.
+
+## What a Good Website Load Time Looks Like
+
+This tool measures **server-side** load time — how long your infrastructure takes to answer, not how long a browser takes to paint the page. Read your result against these bands:
+
+| Response time | Verdict | What it usually means |
+| --- | --- | --- |
+| Under 200ms | Fast | Served from an edge or a nearby origin. Nothing to fix. |
+| 200–500ms | Acceptable | Normal for a single-region origin answering a distant request. |
+| 500ms–1s | Slow | Users notice this. Usually an origin round trip plus unoptimised work per request. |
+| Over 1s | Needs attention | Something is wrong — cold starts, an N+1 query, or no caching anywhere in the path. |
+
+The important number is not the average — it is the **spread**. A site answering in 80ms from Frankfurt and 900ms from Sydney does not have a speed problem, it has a distribution problem, and the fix is a CDN or an edge deployment rather than a faster server.
+
+Browser metrics like LCP, INP, and CLS are a separate question. They measure rendering, and they sit downstream of the numbers here — a slow server makes every one of them worse, but a fast server does not guarantee they are good.
+
+For the target numbers on both halves — server response bands, Core Web Vitals thresholds, and why to judge them at the 75th percentile rather than the average — see [what is a good response time](/guides/what-is-a-good-response-time).
+
+## Where the Speed Test Runs From
+
+All 28 regions run on every test, so you see the full spread rather than a sample:
+
+| Continent | Regions | Locations |
+| --- | --- | --- |
+| North America | 11 | Ashburn, Chicago, Dallas, Los Angeles, San Francisco, San Jose, Secaucus, Toronto, Washington, California, Virginia |
+| Europe | 8 | Amsterdam ×2, Frankfurt ×2, Paris ×2, London, Stockholm |
+| Asia | 6 | Singapore ×3, Tokyo ×2, Mumbai |
+| South America | 1 | São Paulo |
+| Africa | 1 | Johannesburg |
+| Oceania | 1 | Sydney |
+
+Several cities appear more than once because they are covered by different cloud providers — 18 regions run on Fly, 6 on Koyeb, and 4 on Railway. Testing the same city across providers is often how you tell a network problem apart from a provider problem.
+
+## How We Measure
+
+Each region opens its own connection and records the request in phases rather than as a single number:
+
+- **DNS** — resolving the hostname. A slow figure here is a nameserver or TTL problem, not an application one.
+- **TCP connect** — the round trip to open the socket. This is mostly distance, and it is the number a CDN improves.
+- **TLS handshake** — negotiating HTTPS. Usually one extra round trip, more if the certificate chain is long.
+- **TTFB** — time to first byte, from request sent to the first byte back. This is where your application's own work shows up.
+- **Transfer** — streaming the rest of the response body.
+
+Two caveats worth knowing. Connections are not reused between runs, so every test pays full DNS, TCP, and TLS cost — closer to a first-time visitor than a returning one. And each region contributes a single sample, which is enough to compare regions against each other but not enough to establish a baseline. Latency moves with traffic, deploys, and time of day, so one number from one moment is a snapshot, not a trend.
+
 ---
 
-With OpenStatus, you can:
+With openstatus, you can:
 
 - Test how fast your API or website responds worldwide.
 - Compare latency across different regions.
@@ -67,4 +141,53 @@ With OpenStatus, you can:
 
 Whether you want to test your website speed from Europe, Asia, North America, or beyond, our Global Speed Checker gives accurate, consistent data from distributed locations.
 
+### Keep testing after the tab closes
+
+This page runs one test, right now. A single sample tells you very little about a
+slow endpoint — latency moves with traffic, deploys, and time of day.
+[openstatus uptime monitoring](/uptime-monitoring) re-runs this exact check on a
+schedule from the same 28 regions, keeps the history, and alerts you when response
+time degrades rather than when the site is already down.
+
+For the vocabulary behind the numbers above, see
+[latency vs response time](/docs/concept/latency-vs-response-time).
+
 If you'd like to request additional test regions or providers, feel free to contact us at [ping@openstatus.dev](mailto:ping@openstatus.dev).
+
+## Frequently asked questions
+
+<Details summary="What Is a Website Speed Checker?">
+
+A Website Speed Checker is an online tool that measures how fast your website or API responds when someone visits it. It analyzes various website performance metrics including client-side performance (FCP, LCP, CLS) and server-side performance (DNS lookup, TCP connection, TLS handshake, server response time).
+
+</Details>
+
+<Details summary="What Is a Global Speed Checker?">
+
+A Global Speed Checker measures your website or API's latency and response time from multiple locations around the world. openstatus runs checks from 28 global regions across 3 cloud providers, giving you a complete picture of your site's real-world performance.
+
+</Details>
+
+<Details summary="What can I do with openstatus Global Speed Checker?">
+
+You can test how fast your API or website responds worldwide, compare latency across different regions, identify network bottlenecks, and monitor uptime and availability in real time from distributed locations across Europe, Asia, North America, and beyond.
+
+</Details>
+
+<Details summary="What is a good website load time?">
+
+For the server-side response this tool measures, under 200ms is fast, 200-500ms is acceptable, 500ms-1s is slow enough that users notice, and over 1s needs attention. Judge it per region rather than on the average - a site that answers in 80ms from Frankfurt and 900ms from Sydney has a distribution problem, not a speed problem.
+
+</Details>
+
+<Details summary="How many regions does the speed test run from?">
+
+28 regions across 3 cloud providers - 18 on Fly, 6 on Koyeb, and 4 on Railway - spanning Europe, North America, Asia, South America, Africa, and Oceania. Every region runs on each test, so you get the full spread rather than a sample.
+
+</Details>
+
+<Details summary="Why is my website fast in one region and slow in another?">
+
+Almost always because the request is travelling to a single origin. A visitor in Sydney hitting a server in Virginia pays roughly 200ms in round-trip time before your application does any work. Large gaps between your fastest and slowest region point at missing CDN coverage, no edge caching, or a single-region database.
+
+</Details>

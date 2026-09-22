@@ -1,12 +1,11 @@
-import { and, db, desc, eq } from "@openstatus/db";
+import { and, desc, eq } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, test } from "@std/testing/bdd";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   clearAuditLog,
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeApiKeyCtx,
   makeSlackCtx,
   readAuditLog,
@@ -21,30 +20,12 @@ const SLACK_USER_ID = "U_FIXTURE";
 
 let ctx: ServiceContext;
 
-async function clearSlackAgentRows() {
-  await db
-    .delete(integration)
-    .where(
-      and(
-        eq(integration.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
-        eq(integration.name, "slack-agent"),
-      ),
-    )
-    .catch(() => undefined);
-}
-
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  ctx = makeSlackCtx(team, { teamId: TEAM_ID, slackUserId: SLACK_USER_ID });
-  // Wipe leftover slack-agent rows from prior aborted runs — a stale
-  // committed row would block fresh installs (one slack-agent per workspace).
-  await clearSlackAgentRows();
-  await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID);
-});
-
-afterAll(async () => {
-  await clearSlackAgentRows();
-  await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID);
+  const team = await createWorkspaceFixture("team");
+  ctx = makeSlackCtx(team.workspace, {
+    teamId: TEAM_ID,
+    slackUserId: SLACK_USER_ID,
+  });
 });
 
 const baseInput = {
@@ -68,11 +49,11 @@ describe("installSlackAgent", () => {
       });
 
       expect(created.name).toBe("slack-agent");
-      expect(created.workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
+      expect(created.workspaceId).toBe(ctx.workspace.id);
       expect(created.externalId).toBe(TEAM_ID);
 
       const rows = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: ctx.workspace.id,
         entityType: "integration",
         entityId: created.id,
         db: tx,
@@ -92,7 +73,7 @@ describe("installSlackAgent", () => {
     await withTestTransaction(async (tx) => {
       const ctxTx = { ...ctx, db: tx };
       const created = await installSlackAgent({ ctx: ctxTx, input: baseInput });
-      await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID, { db: tx });
+      await clearAuditLog(ctx.workspace.id, { db: tx });
 
       const reinstalled = await installSlackAgent({
         ctx: ctxTx,
@@ -106,7 +87,7 @@ describe("installSlackAgent", () => {
       expect(reinstalled.id).toBe(created.id);
 
       const rows = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: ctx.workspace.id,
         entityType: "integration",
         entityId: created.id,
         db: tx,
@@ -125,7 +106,7 @@ describe("installSlackAgent", () => {
     await withTestTransaction(async (tx) => {
       const ctxTx = { ...ctx, db: tx };
       const created = await installSlackAgent({ ctx: ctxTx, input: baseInput });
-      await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID, { db: tx });
+      await clearAuditLog(ctx.workspace.id, { db: tx });
 
       await installSlackAgent({
         ctx: ctxTx,
@@ -136,7 +117,7 @@ describe("installSlackAgent", () => {
       });
 
       const rows = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: ctx.workspace.id,
         entityType: "integration",
         entityId: created.id,
         db: tx,
@@ -151,12 +132,12 @@ describe("installSlackAgent", () => {
     await withTestTransaction(async (tx) => {
       const ctxTx = { ...ctx, db: tx };
       const created = await installSlackAgent({ ctx: ctxTx, input: baseInput });
-      await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID, { db: tx });
+      await clearAuditLog(ctx.workspace.id, { db: tx });
 
       await installSlackAgent({ ctx: ctxTx, input: baseInput });
 
       const rows = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: ctx.workspace.id,
         entityType: "integration",
         entityId: created.id,
         db: tx,
@@ -190,7 +171,7 @@ describe("installSlackAgent", () => {
         .insert(integration)
         .values({
           name: "slack-agent",
-          workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+          workspaceId: ctx.workspace.id,
           externalId: "T_OLD_1",
           credential: { botToken: "xoxb-old-1", botUserId: "B_OLD_1" },
           data: { ...baseInput.data, teamId: "T_OLD_1" },
@@ -200,13 +181,13 @@ describe("installSlackAgent", () => {
         .insert(integration)
         .values({
           name: "slack-agent",
-          workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+          workspaceId: ctx.workspace.id,
           externalId: "T_OLD_2",
           credential: { botToken: "xoxb-old-2", botUserId: "B_OLD_2" },
           data: { ...baseInput.data, teamId: "T_OLD_2" },
         })
         .returning();
-      await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID, { db: tx });
+      await clearAuditLog(ctx.workspace.id, { db: tx });
 
       await installSlackAgent({ ctx: ctxTx, input: baseInput });
 
@@ -216,7 +197,7 @@ describe("installSlackAgent", () => {
         .where(
           and(
             eq(integration.name, "slack-agent"),
-            eq(integration.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+            eq(integration.workspaceId, ctx.workspace.id),
           ),
         )
         .orderBy(desc(integration.id))
@@ -225,7 +206,7 @@ describe("installSlackAgent", () => {
       expect(remaining[0].id).toBe(second.id);
 
       const all = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: ctx.workspace.id,
         entityType: "integration",
         db: tx,
       });
@@ -280,7 +261,7 @@ describe("installSlackAgent", () => {
       });
 
       const rows = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: ctx.workspace.id,
         entityType: "integration",
         entityId: created.id,
         db: tx,

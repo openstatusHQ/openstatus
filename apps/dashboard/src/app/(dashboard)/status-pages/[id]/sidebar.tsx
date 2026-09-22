@@ -1,5 +1,6 @@
 "use client";
 
+import { ExternalLink } from "@openstatus/icons";
 import {
   Tooltip,
   TooltipContent,
@@ -8,7 +9,6 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink } from "lucide-react";
 import { useParams } from "next/navigation";
 
 import { Link } from "@/components/common/link";
@@ -26,7 +26,9 @@ export function Sidebar() {
 
   if (!statusPage) return null;
 
-  const BADGE_URL = `https://${statusPage.slug}.openstatus.dev/badge/v2`;
+  const BADGE_URL = `https://${
+    statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
+  }/badge/v2`;
 
   return (
     <SidebarRight

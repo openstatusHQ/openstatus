@@ -3,6 +3,8 @@ import type { ServiceContext } from "@openstatus/services";
 import { generateText, stepCountIs } from "ai";
 import type { ModelMessage } from "ai";
 
+import { tb } from "@/libs/clients";
+
 import { buildSlackTools } from "./registry-runner";
 import { buildSystemPrompt } from "./system-prompt";
 
@@ -20,9 +22,17 @@ interface SlackThreadMessage {
   text?: string;
 }
 
+// A mention needs list_status_pages + list_page_components before it can draft,
+// and the model is told to check monitor status first — 5 left no headroom.
+const MAX_STEPS = 10;
+
 interface AgentResult {
   text: string;
   toolResults: Array<{ toolName: string; result: unknown }>;
+  finishReason: string;
+  stepCount: number;
+  /** True when the model used every allowed step — a draft may have been cut off. */
+  hitStepLimit: boolean;
 }
 
 function convertThreadToMessages(
@@ -60,6 +70,7 @@ export async function runAgent(
       teamId: origin?.teamId ?? "",
       slackUserId: origin?.slackUserId ?? "",
     },
+    tb,
   };
   const tools = buildSlackTools(ctx);
   let messages = convertThreadToMessages(thread, botUserId);
@@ -72,6 +83,9 @@ export async function runAgent(
     return {
       text: "I couldn't read your message. Please try again.",
       toolResults: [],
+      finishReason: "unknown",
+      stepCount: 0,
+      hitStepLimit: false,
     };
   }
 
@@ -80,7 +94,7 @@ export async function runAgent(
     system: buildSystemPrompt(workspace.name ?? "Unknown"),
     messages,
     tools,
-    stopWhen: stepCountIs(5),
+    stopWhen: stepCountIs(MAX_STEPS),
   });
 
   const toolResults: AgentResult["toolResults"] = [];
@@ -90,5 +104,11 @@ export async function runAgent(
     }
   }
 
-  return { text: result.text, toolResults };
+  return {
+    text: result.text,
+    toolResults,
+    finishReason: result.finishReason,
+    stepCount: result.steps.length,
+    hitStepLimit: result.steps.length >= MAX_STEPS,
+  };
 }

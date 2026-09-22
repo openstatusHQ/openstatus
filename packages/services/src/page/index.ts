@@ -1,6 +1,13 @@
 export { createPage, newPage } from "./create";
 export { deletePage } from "./delete";
 export {
+  type MaintenanceContent,
+  type StatusPageContent,
+  type StatusReportContent,
+  getStatusPageContent,
+} from "./get-content";
+export {
+  assertCustomDomainInWorkspace,
   getPage,
   getPageBySlug,
   getPageCustomDomain,

@@ -12,10 +12,12 @@ import type {
   StatusResult,
 } from "../types";
 import { SEVERITY_LEVELS } from "../types";
-import { inferStatus, urlHostnameEndsWith } from "../utils";
+import { urlHostnameEndsWith } from "../utils";
+import { normalizeAtlassianSummary } from "./atlassian";
 
 // incident.io status pages expose an Atlassian Statuspage-compatible API, so the
-// summary endpoint returns the same shape AtlassianFetcher consumes.
+// summary endpoint returns the same shape AtlassianFetcher consumes. Kept as
+// its own schema so the two can drift independently.
 const incidentioResponseSchema = z.object({
   page: z.object({
     id: z.string(),
@@ -25,7 +27,7 @@ const incidentioResponseSchema = z.object({
     updated_at: z.string().datetime({ offset: true }),
   }),
   status: z.object({
-    indicator: z.enum(SEVERITY_LEVELS),
+    indicator: z.enum([...SEVERITY_LEVELS, "maintenance"]),
     description: z.string(),
   }),
 });
@@ -52,19 +54,7 @@ export class IncidentioFetcher implements StatusFetcher {
       schema: incidentioResponseSchema,
       fetcherName: this.name,
       entryId: entry.id,
-    }).pipe(
-      Effect.map((data) => {
-        const severity = data.status.indicator;
-        const description = data.status.description;
-        return {
-          severity,
-          status: inferStatus(description, severity),
-          description,
-          updated_at: new Date(data.page.updated_at).getTime(),
-          timezone: data.page.timezone,
-        };
-      }),
-    );
+    }).pipe(Effect.map(normalizeAtlassianSummary));
   }
 
   fetchIncidents(

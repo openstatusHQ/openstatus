@@ -1,12 +1,12 @@
 "use client";
 
+import { ArrowUpRight, Check, Copy } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   ButtonGroup,
   ButtonGroupText,
 } from "@openstatus/ui/components/ui/button-group";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
-import { ArrowUpRight, Check, Copy } from "lucide-react";
 
 import {
   SHELL_CONTENT_COLUMN,
@@ -118,7 +118,7 @@ export function OnboardingFormColumn({
   return (
     <section
       className={cn(
-        "col-span-1 flex w-full flex-col gap-6 px-4 py-8 md:min-h-0 md:overflow-y-auto md:px-8 md:py-32",
+        "col-span-1 flex w-full flex-col gap-6 px-4 py-8 md:min-h-0 md:overflow-y-auto md:px-8 md:py-16",
         SHELL_FORM_COLUMN,
         className,
       )}

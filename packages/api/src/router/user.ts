@@ -1,19 +1,14 @@
-import { deleteAccount, getUser } from "@openstatus/services/user";
+import { deleteAccount } from "@openstatus/services/user";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
-  get: protectedProcedure.query(async ({ ctx }) => {
-    try {
-      return await getUser({
-        ctx: toServiceCtx(ctx),
-        input: { userId: ctx.user.id },
-      });
-    } catch (err) {
-      toTRPCError(err);
-    }
-  }),
+  // The authed middleware already loaded this row; re-selecting it would be
+  // the same query. `undefined` for a soft-deleted user matches `getUser`.
+  get: protectedProcedure.query(({ ctx }) =>
+    ctx.user.deletedAt ? undefined : ctx.user,
+  ),
 
   deleteAccount: protectedProcedure.mutation(async ({ ctx }) => {
     try {

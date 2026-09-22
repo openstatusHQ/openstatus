@@ -1,8 +1,8 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Lock } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Lock } from "lucide-react";
 import { useState } from "react";
 
 import { Link } from "@/components/common/link";

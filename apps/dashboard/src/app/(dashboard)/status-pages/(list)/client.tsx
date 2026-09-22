@@ -1,7 +1,7 @@
 "use client";
 
+import { Theme } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Palette } from "lucide-react";
 import Link from "next/link";
 
 import { NoteButton } from "@/components/common/note";
@@ -27,7 +27,7 @@ export function Client() {
   return (
     <SectionGroup>
       <NoteDismissible cookieKey="note_status_pages_themes">
-        <Palette />
+        <Theme />
         Create your own custom themes for your status pages.
         <NoteButton variant="default" asChild>
           <Link href="https://themes.openstatus.dev" target="_blank">

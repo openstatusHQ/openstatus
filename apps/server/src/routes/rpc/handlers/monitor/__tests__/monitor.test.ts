@@ -7,7 +7,9 @@ import {
   privateLocationToMonitors,
   workspace,
 } from "@openstatus/db/src/schema";
+import { monitorRun } from "@openstatus/db/src/schema/monitor_run/monitor_run";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import {
   createMonitor,
   createWorkspace,
@@ -43,10 +45,12 @@ async function connectRequest(
 }
 
 const TEST_PREFIX = "rpc-monitor-test";
-const FREE_PLAN_KEY = "2";
+let FREE_PLAN_KEY: string;
 let testHttpMonitorId: number;
 let testTcpMonitorId: number;
 let testDnsMonitorId: number;
+let testIcmpMonitorId: number;
+let testGrpcMonitorId: number;
 let testMonitorToDeleteId: number;
 let testMonitorWithStatusId: number;
 
@@ -105,11 +109,20 @@ beforeEach(() => {
   calls.httpGetBiweekly = [];
 });
 
+// A second, free-plan workspace: used both for cross-workspace isolation
+// assertions and for the plan-limit rejections. Private to this suite because
+// sibling suites assert the seeded free workspace owns nothing.
+let OTHER_WORKSPACE_ID: number;
+
 beforeAll(async () => {
+  OTHER_WORKSPACE_ID = (await createTestWorkspace({ plan: "free" })).workspace
+    .id;
+  FREE_PLAN_KEY = String(OTHER_WORKSPACE_ID);
   // Clean up any existing test data
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-http`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-dns`));
+  await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-icmp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
   await db
     .delete(monitor)
@@ -181,6 +194,41 @@ beforeAll(async () => {
     .get();
   testDnsMonitorId = dnsMon.id;
 
+  // Create test ICMP monitor
+  const icmpMon = await db
+    .insert(monitor)
+    .values({
+      workspaceId: 1,
+      name: `${TEST_PREFIX}-icmp`,
+      url: "1.1.1.1",
+      periodicity: "10m",
+      active: true,
+      regions: "ams",
+      jobType: "icmp",
+      timeout: 5000,
+    })
+    .returning()
+    .get();
+  testIcmpMonitorId = icmpMon.id;
+
+  const grpcMon = await db
+    .insert(monitor)
+    .values({
+      workspaceId: 1,
+      name: `${TEST_PREFIX}-grpc`,
+      url: "api.example.com:443",
+      periodicity: "10m",
+      active: true,
+      regions: "ams",
+      jobType: "grpc",
+      timeout: 5000,
+      grpcService: "checkout.v1.CheckoutService",
+      grpcTls: "tls",
+    })
+    .returning()
+    .get();
+  testGrpcMonitorId = grpcMon.id;
+
   // Create monitor to be deleted
   const deleteMon = await db
     .insert(monitor)
@@ -232,6 +280,7 @@ afterAll(async () => {
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-http`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-dns`));
+  await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-icmp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
   await db
     .delete(monitor)
@@ -334,6 +383,28 @@ describe("MonitorService.ListMonitors", () => {
     expect(dnsMon.recordAssertions).toBeDefined();
   });
 
+  test("returns ICMP monitors with correct structure", async () => {
+    const res = await connectRequest(
+      "ListMonitors",
+      { limit: 100 },
+      {
+        "x-openstatus-key": "1",
+      },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    const icmpMonitors = data.icmpMonitors || [];
+    const icmpMon = icmpMonitors.find(
+      (m: { id: string }) => m.id === String(testIcmpMonitorId),
+    );
+
+    expect(icmpMon).toBeDefined();
+    expect(icmpMon.uri).toBe("1.1.1.1");
+    expect(icmpMon.periodicity).toBe("PERIODICITY_10M");
+  });
+
   test("returns 401 when no auth key provided", async () => {
     const res = await connectRequest("ListMonitors", {});
 
@@ -354,7 +425,8 @@ describe("MonitorService.ListMonitors", () => {
     const totalMonitors =
       (data.httpMonitors?.length || 0) +
       (data.tcpMonitors?.length || 0) +
-      (data.dnsMonitors?.length || 0);
+      (data.dnsMonitors?.length || 0) +
+      (data.icmpMonitors?.length || 0);
 
     // Should return at most 2 monitors total
     expect(totalMonitors).toBeLessThanOrEqual(2);
@@ -423,7 +495,7 @@ describe("MonitorService.ListMonitors", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-other-workspace`,
         url: "https://other-workspace.example.com",
         periodicity: "1m",
@@ -833,6 +905,150 @@ describe("MonitorService.CreateDNSMonitor", () => {
   });
 });
 
+describe("MonitorService.CreateICMPMonitor", () => {
+  test("successfully creates ICMP monitor", async () => {
+    const res = await connectRequest(
+      "CreateICMPMonitor",
+      {
+        monitor: {
+          name: "test-create-icmp",
+          uri: "8.8.8.8",
+          periodicity: "PERIODICITY_5M",
+          timeout: "5000",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.uri).toBe("8.8.8.8");
+    expect(data.monitor.periodicity).toBe("PERIODICITY_5M");
+
+    // The row must carry the icmp job type so the cron dispatches a ping.
+    const row = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, Number(data.monitor.id)))
+      .get();
+    expect(row?.jobType).toBe("icmp");
+
+    // Clean up
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+
+  test("returns error when monitor is missing", async () => {
+    const res = await connectRequest(
+      "CreateICMPMonitor",
+      {},
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("MonitorService.CreateGRPCMonitor", () => {
+  test("successfully creates gRPC monitor", async () => {
+    const res = await connectRequest(
+      "CreateGRPCMonitor",
+      {
+        monitor: {
+          name: "test-create-grpc",
+          uri: "api.example.com:443",
+          periodicity: "PERIODICITY_5M",
+          timeout: "5000",
+          service: "checkout.v1.CheckoutService",
+          tlsMode: "GRPC_TLS_MODE_TLS_INSECURE",
+          metadata: [{ key: "authorization", value: "Bearer token" }],
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.uri).toBe("api.example.com:443");
+    expect(data.monitor.service).toBe("checkout.v1.CheckoutService");
+    expect(data.monitor.tlsMode).toBe("GRPC_TLS_MODE_TLS_INSECURE");
+
+    const row = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, Number(data.monitor.id)))
+      .get();
+    expect(row?.jobType).toBe("grpc");
+    expect(row?.grpcService).toBe("checkout.v1.CheckoutService");
+    expect(row?.grpcTls).toBe("tls_insecure");
+
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+
+  // The column default only applies on insert, and an omitted enum arrives as
+  // UNSPECIFIED — it must resolve to verified TLS, not to plaintext.
+  test("defaults the TLS mode to tls when omitted", async () => {
+    const res = await connectRequest(
+      "CreateGRPCMonitor",
+      {
+        monitor: {
+          name: "test-create-grpc-default-tls",
+          uri: "api.example.com:443",
+          periodicity: "PERIODICITY_5M",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    const row = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, Number(data.monitor.id)))
+      .get();
+    expect(row?.grpcTls).toBe("tls");
+
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+
+  test("rejects a target that is not host:port", async () => {
+    const res = await connectRequest(
+      "CreateGRPCMonitor",
+      {
+        monitor: {
+          name: "test-create-grpc-bad-target",
+          uri: "api.example.com",
+          periodicity: "PERIODICITY_5M",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns error when monitor is missing", async () => {
+    const res = await connectRequest(
+      "CreateGRPCMonitor",
+      {},
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+});
+
 describe("MonitorService.UpdateHTTPMonitor", () => {
   test("successfully updates HTTP monitor with partial data", async () => {
     const res = await connectRequest(
@@ -978,6 +1194,88 @@ describe("MonitorService.UpdateHTTPMonitor", () => {
     });
 
     expect(res.status).toBe(401);
+  });
+
+  test("partial update preserves active, public and description", async () => {
+    const mon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-preserve`,
+        url: "https://preserve.example.com",
+        periodicity: "1m",
+        active: true,
+        public: true,
+        description: "keep me",
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { name: `${TEST_PREFIX}-preserve-renamed` },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.monitor.name).toBe(`${TEST_PREFIX}-preserve-renamed`);
+      expect(data.monitor.active).toBe(true);
+      expect(data.monitor.public).toBe(true);
+      expect(data.monitor.description).toBe("keep me");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("update applies explicit false for active and public", async () => {
+    const mon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-explicit-false`,
+        url: "https://explicit-false.example.com",
+        periodicity: "1m",
+        active: true,
+        public: true,
+        description: "clear me",
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { active: false, public: false, description: "" },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const updated = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, mon.id))
+        .get();
+
+      expect(updated?.active).toBe(false);
+      expect(updated?.public).toBe(false);
+      expect(updated?.description).toBe("");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
   });
 });
 
@@ -1252,6 +1550,417 @@ describe("MonitorService.UpdateDNSMonitor", () => {
   });
 });
 
+describe("MonitorService.UpdateICMPMonitor", () => {
+  test("successfully updates ICMP monitor with partial data", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: {
+          name: "updated-icmp-name",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.name).toBe("updated-icmp-name");
+    // Original URI should be preserved
+    expect(data.monitor.uri).toBe("1.1.1.1");
+
+    // Restore original name
+    await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: {
+          name: `${TEST_PREFIX}-icmp`,
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("successfully updates ICMP monitor URI", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: {
+          uri: "9.9.9.9",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.uri).toBe("9.9.9.9");
+
+    // Restore original URI
+    await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: {
+          uri: "1.1.1.1",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("leaves active untouched when the patch omits it", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: { name: `${TEST_PREFIX}-icmp` },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.active).toBe(true);
+  });
+
+  test("returns current monitor when no monitor data provided", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.id).toBe(String(testIcmpMonitorId));
+  });
+
+  test("returns 404 for non-existent monitor", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: "99999",
+        monitor: { name: "test" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns error when trying to update HTTP monitor as ICMP", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: { name: "test" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("type mismatch");
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("UpdateICMPMonitor", {
+      id: String(testIcmpMonitorId),
+      monitor: { name: "test" },
+    });
+
+    expect(res.status).toBe(401);
+  });
+
+  // This method is in SKIP_VALIDATION_METHODS, so protovalidate never sees the
+  // patch — the bounds it would have applied are enforced in the handler, and
+  // nothing downstream re-checks them.
+  test("enforces the proto bounds the validation interceptor skips", async () => {
+    for (const [field, monitor] of [
+      ["retry above max", { retry: "11" }],
+      ["negative retry", { retry: "-1" }],
+      ["timeout above max", { timeout: "120001" }],
+      ["degradedAt above max", { degradedAt: "120001" }],
+      ["over-long description", { description: "d".repeat(1025) }],
+      ["over-long name", { name: "n".repeat(257) }],
+      ["over-long uri", { uri: "u".repeat(2049) }],
+    ] as const) {
+      const res = await connectRequest(
+        "UpdateICMPMonitor",
+        { id: String(testIcmpMonitorId), monitor },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(400);
+    }
+  });
+
+  test("leaves the stored monitor untouched when a patch is rejected", async () => {
+    const before = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testIcmpMonitorId))
+      .get();
+
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        // A valid name alongside an out-of-range retry: the whole patch must be
+        // refused, not partially applied.
+        monitor: { name: "should-not-be-written", retry: "99" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+
+    const after = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testIcmpMonitorId))
+      .get();
+    expect(after?.name).toBe(before?.name);
+    expect(after?.retry).toBe(before?.retry);
+  });
+
+  test("still accepts values at the documented limits", async () => {
+    const res = await connectRequest(
+      "UpdateICMPMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: { retry: "10", timeout: "120000" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    // Restore
+    await connectRequest(
+      "UpdateICMPMonitor",
+      { id: String(testIcmpMonitorId), monitor: { timeout: "5000" } },
+      { "x-openstatus-key": "1" },
+    );
+  });
+});
+
+describe("MonitorService.UpdateGRPCMonitor", () => {
+  test("successfully updates gRPC monitor with partial data", async () => {
+    const res = await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testGrpcMonitorId),
+        monitor: { name: "updated-grpc-name" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.name).toBe("updated-grpc-name");
+    expect(data.monitor.uri).toBe("api.example.com:443");
+
+    await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testGrpcMonitorId),
+        monitor: { name: `${TEST_PREFIX}-grpc` },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  // `tlsMode` has explicit presence, so an omitted one means "leave as-is".
+  // Resolving UNSPECIFIED to TLS here would silently break a plaintext monitor.
+  test("leaves the TLS mode untouched when the patch omits it", async () => {
+    await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testGrpcMonitorId),
+        monitor: { tlsMode: "GRPC_TLS_MODE_PLAINTEXT" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testGrpcMonitorId),
+        monitor: { name: `${TEST_PREFIX}-grpc` },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    const row = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testGrpcMonitorId))
+      .get();
+    expect(row?.grpcTls).toBe("plaintext");
+
+    await db
+      .update(monitor)
+      .set({ grpcTls: "tls" })
+      .where(eq(monitor.id, testGrpcMonitorId));
+  });
+
+  // An empty service is a real value: it means "check overall server health".
+  test("clears the service name when the patch sends an empty string", async () => {
+    const res = await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testGrpcMonitorId),
+        monitor: { service: "" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const row = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testGrpcMonitorId))
+      .get();
+    expect(row?.grpcService).toBe("");
+
+    await db
+      .update(monitor)
+      .set({ grpcService: "checkout.v1.CheckoutService" })
+      .where(eq(monitor.id, testGrpcMonitorId));
+  });
+
+  test("rejects a target that is not host:port", async () => {
+    const res = await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testGrpcMonitorId),
+        monitor: { uri: "api.example.com" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns error for a monitor of another job type", async () => {
+    const res = await connectRequest(
+      "UpdateGRPCMonitor",
+      {
+        id: String(testIcmpMonitorId),
+        monitor: { name: "nope" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("MonitorService - private and internal URLs", () => {
+  // Valid URIs, so protovalidate passes them through to the service guard.
+  const BLOCKED = [
+    "http://localhost:3000",
+    "http://127.0.0.1/health",
+    "http://192.168.1.10/",
+    "http://169.254.169.254/latest/meta-data/",
+  ];
+
+  for (const url of BLOCKED) {
+    test(`CreateHTTPMonitor rejects ${url}`, async () => {
+      const res = await connectRequest(
+        "CreateHTTPMonitor",
+        {
+          monitor: {
+            name: `${TEST_PREFIX}-ssrf`,
+            url,
+            periodicity: "PERIODICITY_5M",
+            method: "HTTP_METHOD_GET",
+          },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(400);
+
+      const data = await res.json();
+      expect(data.message).toContain("private or internal");
+
+      const leaked = await db
+        .select()
+        .from(monitor)
+        .where(and(eq(monitor.workspaceId, 1), eq(monitor.url, url)))
+        .get();
+      expect(leaked).toBeUndefined();
+    });
+  }
+
+  test("UpdateHTTPMonitor rejects a private URL and leaves the stored one intact", async () => {
+    const before = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testHttpMonitorId))
+      .get();
+
+    const res = await connectRequest(
+      "UpdateHTTPMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: { url: "http://127.0.0.1:8080" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+
+    const data = await res.json();
+    expect(data.message).toContain("private or internal");
+
+    const after = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, testHttpMonitorId))
+      .get();
+    expect(after?.url).toBe(before?.url);
+  });
+
+  test("CreateTCPMonitor accepts a private target", async () => {
+    const res = await connectRequest(
+      "CreateTCPMonitor",
+      {
+        monitor: {
+          name: `${TEST_PREFIX}-ssrf-tcp`,
+          uri: "192.168.1.10:8080",
+          periodicity: "PERIODICITY_10M",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.uri).toBe("192.168.1.10:8080");
+
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+});
+
 describe("MonitorService.TriggerMonitor", () => {
   test("returns 404 for non-existent monitor", async () => {
     const res = await connectRequest(
@@ -1267,6 +1976,47 @@ describe("MonitorService.TriggerMonitor", () => {
     const res = await connectRequest("TriggerMonitor", { id: "1" });
 
     expect(res.status).toBe(401);
+  });
+
+  test("dispatches an ICMP monitor to the icmp checker endpoint", async () => {
+    // A throwaway monitor: triggering records a monitorRun that references it,
+    // and the suite's afterAll deletes monitors without clearing runs.
+    const icmpMon = await createMonitor(1, {
+      name: `${TEST_PREFIX}-icmp-trigger`,
+      url: "1.1.1.1",
+      jobType: "icmp",
+      periodicity: "10m",
+      active: true,
+      regions: "ams",
+    });
+
+    // Scoped to this test so the surrounding suite keeps the real fetch.
+    const realFetch = globalThis.fetch;
+    const calls: { url: string; body: string }[] = [];
+    globalThis.fetch = ((url: string | URL | Request, init?: RequestInit) => {
+      calls.push({ url: String(url), body: String(init?.body ?? "") });
+      return Promise.resolve(new Response(null, { status: 200 }));
+    }) as typeof fetch;
+
+    try {
+      const res = await connectRequest(
+        "TriggerMonitor",
+        { id: String(icmpMon.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+      expect(calls.length).toBeGreaterThan(0);
+      expect(calls[0].url).toContain("/checker/icmp?");
+      expect(JSON.parse(calls[0].body)).toMatchObject({
+        uri: "1.1.1.1",
+        monitorId: String(icmpMon.id),
+      });
+    } finally {
+      globalThis.fetch = realFetch;
+      await db.delete(monitorRun).where(eq(monitorRun.monitorId, icmpMon.id));
+      await db.delete(monitor).where(eq(monitor.id, icmpMon.id));
+    }
   });
 });
 
@@ -1666,7 +2416,6 @@ describe("MonitorService - Default Values", () => {
 });
 
 describe("MonitorService - Limits", () => {
-  // Workspace 2 has free plan with limited periodicity (10m, 30m, 1h) and max 6 regions
   test("returns error when periodicity is not allowed by plan", async () => {
     // Free plan only allows 10m, 30m, 1h - PERIODICITY_30S is not allowed
     const res = await connectRequest(
@@ -1778,6 +2527,100 @@ describe("MonitorService - Limits", () => {
     expect(res.status).toBe(403);
     const data = await res.json();
     expect(data.message).toContain("periodicity");
+  });
+
+  // The free plan allows a single monitor, so one row puts workspace 2 at its
+  // cap — which is the normal state for any workspace on its plan limit.
+  async function seedFreePlanMonitorAtCap(suffix: string) {
+    return db
+      .insert(monitor)
+      .values({
+        workspaceId: OTHER_WORKSPACE_ID,
+        name: `${TEST_PREFIX}-at-cap-${suffix}`,
+        url: `https://at-cap-${suffix}.example.com`,
+        periodicity: "10m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+  }
+
+  // Regression: the row-count cap is a create-time check. A workspace sitting
+  // at its monitor limit must still be able to edit the monitors it has.
+  test("workspace at its monitor cap can still update an existing monitor", async () => {
+    const mon = await seedFreePlanMonitorAtCap("update");
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { periodicity: "PERIODICITY_30M" },
+        },
+        { "x-openstatus-key": FREE_PLAN_KEY },
+      );
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.monitor.periodicity).toBe("PERIODICITY_30M");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("update still enforces the plan's periodicity limit", async () => {
+    const mon = await seedFreePlanMonitorAtCap("periodicity");
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { periodicity: "PERIODICITY_30S" },
+        },
+        { "x-openstatus-key": FREE_PLAN_KEY },
+      );
+
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.message).toContain("periodicity");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("update still enforces the plan's max-regions limit", async () => {
+    const mon = await seedFreePlanMonitorAtCap("regions");
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: {
+            regions: [
+              "REGION_FLY_AMS",
+              "REGION_FLY_IAD",
+              "REGION_FLY_SIN",
+              "REGION_FLY_LHR",
+              "REGION_FLY_SYD",
+              "REGION_FLY_NRT",
+              "REGION_FLY_FRA",
+              "REGION_FLY_GRU",
+            ],
+          },
+        },
+        { "x-openstatus-key": FREE_PLAN_KEY },
+      );
+
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.message).toContain("region");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
   });
 });
 
@@ -2033,7 +2876,7 @@ describe("MonitorService.GetMonitorStatus", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-status-other-ws`,
         url: "https://other-ws-status.example.com",
         periodicity: "1m",
@@ -2179,7 +3022,7 @@ describe("MonitorService.GetMonitor", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-get-other-ws`,
         url: "https://other-ws-get.example.com",
         periodicity: "1m",
@@ -2242,6 +3085,174 @@ describe("MonitorService.GetMonitor", () => {
       expect(res.status).toBe(500);
     } finally {
       await db.delete(monitor).where(eq(monitor.id, corruptedMon.id));
+    }
+  });
+});
+
+describe("MonitorService - Private Locations", () => {
+  async function seedMonitorWithPrivateLocation(
+    suffix: string,
+    jobType: "http" | "icmp" = "http",
+  ) {
+    const mon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-pl-${suffix}`,
+        url:
+          jobType === "icmp" ? "1.1.1.1" : `https://pl-${suffix}.example.com`,
+        periodicity: "1m",
+        active: true,
+        regions: "ams",
+        jobType,
+      })
+      .returning()
+      .get();
+    const pl = await db
+      .insert(privateLocation)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-pl-loc-${suffix}`,
+        token: `${TEST_PREFIX}-pl-token-${suffix}-${mon.id}`,
+      })
+      .returning()
+      .get();
+    await db
+      .insert(privateLocationToMonitors)
+      .values({ privateLocationId: pl.id, monitorId: mon.id });
+    return { mon, pl };
+  }
+
+  async function cleanupMonitorWithPrivateLocation(
+    monitorId: number,
+    privateLocationId: number,
+  ) {
+    await db
+      .delete(privateLocationToMonitors)
+      .where(
+        eq(privateLocationToMonitors.privateLocationId, privateLocationId),
+      );
+    await db
+      .delete(privateLocation)
+      .where(eq(privateLocation.id, privateLocationId));
+    await db.delete(monitor).where(eq(monitor.id, monitorId));
+  }
+
+  test("GetMonitor returns the attached private location id", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation("get");
+    try {
+      const res = await connectRequest(
+        "GetMonitor",
+        { id: String(mon.id) },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.monitor.http.privateLocationIds).toEqual([String(pl.id)]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+
+  test("GetMonitor omits private_location_ids when none attached", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: String(testHttpMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    // proto3 JSON omits empty repeated fields
+    expect(data.monitor.http.privateLocationIds ?? []).toEqual([]);
+  });
+
+  test("ListMonitors returns private_location_ids per monitor", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation("list");
+    try {
+      const res = await connectRequest(
+        "ListMonitors",
+        { limit: 100 },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      const httpMonitors = (data.httpMonitors ?? []) as Array<{
+        id: string;
+        privateLocationIds?: string[];
+      }>;
+
+      const attached = httpMonitors.find((m) => m.id === String(mon.id));
+      expect(attached?.privateLocationIds).toEqual([String(pl.id)]);
+
+      const unattached = httpMonitors.find(
+        (m) => m.id === String(testHttpMonitorId),
+      );
+      expect(unattached?.privateLocationIds ?? []).toEqual([]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+
+  test("GetMonitor returns the attached private location id for ICMP", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation(
+      "get-icmp",
+      "icmp",
+    );
+    try {
+      const res = await connectRequest(
+        "GetMonitor",
+        { id: String(mon.id) },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.monitor.icmp.privateLocationIds).toEqual([String(pl.id)]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+
+  test("ListMonitors returns private_location_ids for ICMP monitors", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation(
+      "list-icmp",
+      "icmp",
+    );
+    try {
+      const res = await connectRequest(
+        "ListMonitors",
+        { limit: 100 },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      const icmpMonitors = (data.icmpMonitors ?? []) as Array<{
+        id: string;
+        privateLocationIds?: string[];
+      }>;
+
+      const attached = icmpMonitors.find((m) => m.id === String(mon.id));
+      expect(attached?.privateLocationIds).toEqual([String(pl.id)]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+
+  test("UpdateHTTPMonitor keeps the attached private location id", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation("update");
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { name: `${TEST_PREFIX}-pl-update-renamed` },
+        },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.monitor.privateLocationIds).toEqual([String(pl.id)]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
     }
   });
 });
@@ -2403,7 +3414,7 @@ describe("MonitorService.GetMonitorSummary", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-summary-other-ws`,
         url: "https://other-ws-summary.example.com",
         periodicity: "1m",
@@ -2516,7 +3527,7 @@ describe("MonitorService.ListMonitorHTTPResponseLogs", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-response-logs-other-ws`,
         url: "https://other-ws-response-logs.example.com",
         periodicity: "1m",
@@ -2625,7 +3636,7 @@ describe("MonitorService.GetMonitorHTTPResponseLog", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-response-log-detail-other-ws`,
         url: "https://other-ws-response-log-detail.example.com",
         periodicity: "1m",

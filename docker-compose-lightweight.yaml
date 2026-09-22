@@ -32,25 +32,34 @@ services:
             retries: 5
             start_period: 10s
         restart: unless-stopped
+        memswap_limit: 512M
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 256M
 
+    # Idempotent: drizzle skips already-applied migrations on every up
     db-migrate:
         container_name: openstatus-db-migrate
-        image: oven/bun:1.3.6
+        build:
+            context: .
+            dockerfile: packages/db/Dockerfile
+        image: openstatus/db-migrate:latest
+        # rebuild on every up so a stale image never skips new migrations
+        pull_policy: build
         networks:
             - openstatus
-        working_dir: /app/packages/db
-        volumes:
-            - .:/app
         env_file:
             - .env.docker
         environment:
             - DATABASE_URL=http://libsql:8080
-        command: ["sh", "-c", "bun install && bun run migrate"]
         depends_on:
             libsql:
                 condition: service_healthy
-        restart: "no"
-
+        # retries absorb transient DB races; still settles to failure for the gates
+        restart: on-failure:3
 
     dashboard:
         container_name: openstatus-dashboard
@@ -81,6 +90,13 @@ services:
             retries: 3
             start_period: 45s
         restart: unless-stopped
+        memswap_limit: 512M
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 256M
 
     status-page:
         container_name: openstatus-status-page
@@ -111,3 +127,10 @@ services:
             retries: 3
             start_period: 45s
         restart: unless-stopped
+        memswap_limit: 512M
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                reservations:
+                    memory: 256M

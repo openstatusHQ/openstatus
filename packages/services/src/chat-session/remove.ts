@@ -10,6 +10,10 @@ import { UnauthorizedError } from "../errors";
 import { getChatSessionInWorkspace } from "./internal";
 import { DeleteChatSessionInput } from "./schemas";
 
+// Per-user UI state, not workspace configuration: only user actors get past
+// `tryGetActorUserId`, so `requireScope` could never fire, and the audit action
+// union has no `chat_session` verb.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function deleteChatSession(args: {
   ctx: ServiceContext;
   input: DeleteChatSessionInput;

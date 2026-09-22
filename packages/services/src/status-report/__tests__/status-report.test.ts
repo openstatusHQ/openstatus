@@ -4,9 +4,9 @@ import {
   pageComponent,
   pageSubscriber,
   statusReport,
+  statusReportsToPageComponents,
   statusReportUpdate,
   statusReportUpdateToPageComponents,
-  statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import {
@@ -18,12 +18,8 @@ import {
 } from "@std/testing/bdd";
 
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
+  createWorkspaceFixture,
   expectAuditRow,
-  loadSeededWorkspace,
   makeApiKeyCtx,
   makeSlackCtx,
   makeUserCtx,
@@ -69,8 +65,8 @@ let otherPageId: number;
 let otherPageComponentId: number;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
+  const team = (await createWorkspaceFixture("team")).workspace;
+  const free = (await createWorkspaceFixture("free")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
   freeCtx = makeUserCtx(free, { userId: 2 });
 
@@ -539,6 +535,69 @@ describe("updateStatusReportUpdate", () => {
 });
 
 describe("listStatusReports / getStatusReport", () => {
+  test("returns equal-date updates by descending id after sorting by date", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const date = new Date("2026-01-02T00:00:00Z");
+      const { statusReport: report, initialUpdate } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-equal-date`,
+          status: "investigating",
+          message: "investigating",
+          date,
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+      const { statusReportUpdate: resolved } = await addStatusReportUpdate({
+        ctx,
+        input: {
+          statusReportId: report.id,
+          status: "resolved",
+          message: "all clear",
+          date,
+        },
+      });
+      const { statusReportUpdate: older } = await addStatusReportUpdate({
+        ctx,
+        input: {
+          statusReportId: report.id,
+          status: "identified",
+          message: "backfilled update",
+          date: new Date("2026-01-01T00:00:00Z"),
+        },
+      });
+
+      const full = await getStatusReport({ ctx, input: { id: report.id } });
+      const { items } = await listStatusReports({
+        ctx,
+        input: {
+          limit: 100,
+          offset: 0,
+          statuses: [],
+          order: "desc",
+          pageId: testPageId,
+        },
+      });
+      for (const result of [
+        full,
+        items.find((item) => item.id === report.id),
+      ]) {
+        expect(result?.updates.map((update) => update.id)).toEqual([
+          resolved.id,
+          initialUpdate.id,
+          older.id,
+        ]);
+        expect(result?.status).toBe("resolved");
+        expect(result?.updates[0]).toMatchObject({
+          status: "resolved",
+          message: "all clear",
+        });
+      }
+    });
+  });
+
   test("respects workspace isolation", async () => {
     await withTestTransaction(async (tx) => {
       const teamCtxTx = { ...teamCtx, db: tx };
@@ -622,6 +681,73 @@ describe("notifyStatusReport", () => {
           input: { statusReportUpdateId: initialUpdate.id },
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+});
+
+// Same derivation as `listMonitors` — a second copy of the logic, so it gets
+// its own regression coverage rather than relying on the monitor suite.
+describe("listStatusReports totalSize", () => {
+  const seed = async (tx: DB, ctx: ServiceContext, n: number) => {
+    for (let i = 0; i < n; i++) {
+      await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-total-${i}`,
+          status: "investigating",
+          message: "m",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+    }
+    const rows = await tx
+      .select({ id: statusReport.id })
+      .from(statusReport)
+      .where(eq(statusReport.workspaceId, ctx.workspace.id))
+      .all();
+    return rows.length;
+  };
+
+  const listPage = (ctx: ServiceContext, limit: number, offset: number) =>
+    listStatusReports({
+      ctx,
+      input: { limit, offset, statuses: [], order: "desc" },
+    });
+
+  test("a short page derives the total from offset + rows", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const total = await seed(tx, ctx, 3);
+
+      const { items, totalSize } = await listPage(ctx, total + 10, 0);
+      expect(items).toHaveLength(total);
+      expect(totalSize).toBe(total);
+    });
+  });
+
+  test("a full page falls back to count(*)", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const total = await seed(tx, ctx, 3);
+
+      const { items, totalSize } = await listPage(ctx, 1, 0);
+      expect(items).toHaveLength(1);
+      expect(totalSize).toBe(total);
+    });
+  });
+
+  test("an offset past the end still reports the true total", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const total = await seed(tx, ctx, 3);
+
+      const { items, totalSize } = await listPage(ctx, 10, total + 50);
+      expect(items).toHaveLength(0);
+      // Regression: deriving `offset + rows.length` here would report the
+      // offset itself as the total.
+      expect(totalSize).toBe(total);
     });
   });
 });

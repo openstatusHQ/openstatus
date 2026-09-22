@@ -46,6 +46,14 @@ service StatusPageService {
   // UpdateComponent updates an existing component.
   rpc UpdateComponent(UpdateComponentRequest) returns (UpdateComponentResponse);
 
+  // GetPageComponent retrieves a single component by ID.
+  rpc GetPageComponent(GetPageComponentRequest) returns (GetPageComponentResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+    option (gnostic.openapi.v3.operation) = {
+      description: "Returns a single status-page component by its ID, scoped to the authenticated workspace. Use this to resolve a component id to its name (and other fields) instead of fetching the whole page via GetStatusPageContent and filtering .components."
+    };
+  }
+
   // CreateComponentGroup creates a new component group.
   rpc CreateComponentGroup(CreateComponentGroupRequest) returns (CreateComponentGroupResponse);
 
@@ -108,6 +116,16 @@ service StatusPageService {
     option idempotency_level = NO_SIDE_EFFECTS;
     option (gnostic.openapi.v3.operation) = {
       description: "Returns the overall status of a status page along with individual component statuses. The overall status is computed from active status reports and maintenances with the following priority: degraded (from active status reports) > maintenance (from active maintenance windows) > operational."
+    };
+  }
+
+  // GetStatusPageOverview returns everything about a single status page in one
+  // authenticated call: page, rich configuration, components, groups, active
+  // reports, maintenances, and computed statuses.
+  rpc GetStatusPageOverview(GetStatusPageOverviewRequest) returns (GetStatusPageOverviewResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+    option (gnostic.openapi.v3.operation) = {
+      description: "Returns everything about a single status page in one authenticated call: the page, its rich rendering configuration, components, component groups, active/recent status reports, maintenances, and the computed overall + per-component statuses. Workspace-scoped by id; there is no public slug access path. Does not include uptime time-series — use GetPageComponentDailySummary for that."
     };
   }
 
@@ -186,6 +204,10 @@ message CreateStatusPageRequest {
 
   // Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
   optional string allowed_ip_ranges = 15;
+
+  // Per-mode CSS variable overrides merged over the theme (optional).
+  // Only supported variable names are accepted. Requires the custom-theme plan feature.
+  optional CustomTheme custom_theme = 16;
 }
 
 // CreateStatusPageResponse is the response after creating a status page.
@@ -286,6 +308,10 @@ message UpdateStatusPageRequest {
 
   // Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
   optional string allowed_ip_ranges = 16;
+
+  // New per-mode CSS variable overrides (optional). Omit to keep the current
+  // value; send an empty message to clear. Requires the custom-theme plan feature.
+  optional CustomTheme custom_theme = 17;
 }
 
 // UpdateStatusPageResponse is the response after updating a status page.
@@ -400,6 +426,18 @@ message UpdateComponentRequest {
 // UpdateComponentResponse is the response after updating a component.
 message UpdateComponentResponse {
   // The updated component.
+  PageComponent component = 1;
+}
+
+// GetPageComponentRequest is the request to fetch a single component by ID.
+message GetPageComponentRequest {
+  // ID of the component to retrieve (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// GetPageComponentResponse is the response containing the component.
+message GetPageComponentResponse {
+  // The requested component.
   PageComponent component = 1;
 }
 
@@ -641,6 +679,39 @@ message GetOverallStatusResponse {
 
   // Status of individual components.
   repeated ComponentStatus component_statuses = 2;
+}
+
+// GetStatusPageOverviewRequest requests the full overview of a status page by id.
+message GetStatusPageOverviewRequest {
+  // ID of the status page (required, workspace-scoped).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// GetStatusPageOverviewResponse bundles all data for a single status page.
+message GetStatusPageOverviewResponse {
+  // The status page details.
+  StatusPage status_page = 1;
+
+  // Rich rendering configuration of the page.
+  PageConfiguration configuration = 2;
+
+  // Components on the status page.
+  repeated PageComponent components = 3;
+
+  // Component groups on the status page.
+  repeated PageComponentGroup groups = 4;
+
+  // Active and recent status reports.
+  repeated openstatus.status_report.v1.StatusReport status_reports = 5;
+
+  // Scheduled maintenances.
+  repeated openstatus.maintenance.v1.MaintenanceSummary maintenances = 6;
+
+  // Aggregated status across all components.
+  OverallStatus overall_status = 7;
+
+  // Status of individual components.
+  repeated ComponentStatus component_statuses = 8;
 }
 
 // =============================================================================

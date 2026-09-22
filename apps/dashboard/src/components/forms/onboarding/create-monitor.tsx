@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Close } from "@openstatus/icons";
 import {
   Form,
   FormControl,
@@ -17,7 +18,6 @@ import {
   InputGroupInput,
 } from "@openstatus/ui/components/ui/input-group";
 import { isTRPCClientError } from "@trpc/client";
-import { X } from "lucide-react";
 import { useRef, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -99,7 +99,7 @@ export function CreateMonitorForm({
                           inputRef.current?.focus();
                         }}
                       >
-                        <X />
+                        <Close />
                       </InputGroupButton>
                     </InputGroupAddon>
                   ) : null}

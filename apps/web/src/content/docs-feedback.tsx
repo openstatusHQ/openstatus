@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Inbox, Loading } from "@openstatus/icons";
 import {
   Form,
   FormControl,
@@ -15,7 +16,6 @@ import {
   PopoverTrigger,
 } from "@openstatus/ui/components/ui/popover";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
-import { Inbox, LoaderCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -185,7 +185,7 @@ function DocsFeedbackBar({ path }: { path: string }) {
                   disabled={form.formState.isSubmitting}
                 >
                   {form.formState.isSubmitting ? (
-                    <LoaderCircle className="size-4 animate-spin" />
+                    <Loading className="size-4 animate-spin" />
                   ) : (
                     <>
                       Send

@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, isNull, sql } from "@openstatus/db";
+import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
 import {
   type pageAccessTypes,
@@ -29,19 +29,6 @@ export async function getPageInWorkspace(args: {
     .get();
   if (!row) throw new NotFoundError("page", id);
   return row;
-}
-
-/** Count the workspace's pages. */
-export async function countPagesInWorkspace(
-  tx: DB,
-  workspaceId: number,
-): Promise<number> {
-  const res = await tx
-    .select({ count: count() })
-    .from(page)
-    .where(eq(page.workspaceId, workspaceId))
-    .get();
-  return res?.count ?? 0;
 }
 
 /**
@@ -159,19 +146,5 @@ export function assertAccessTypeAllowed(
   }
   if (args.allowIndex === false && limits["no-index"] === false) {
     throw new LimitExceededError("no-index", 0);
-  }
-}
-
-/** Plan gate on the workspace's `status-pages` cap. */
-export async function assertStatusPageQuota(
-  tx: DB,
-  workspace: Workspace,
-): Promise<void> {
-  const current = await countPagesInWorkspace(tx, workspace.id);
-  if (current >= workspace.limits["status-pages"]) {
-    throw new LimitExceededError(
-      "status-pages",
-      workspace.limits["status-pages"],
-    );
   }
 }

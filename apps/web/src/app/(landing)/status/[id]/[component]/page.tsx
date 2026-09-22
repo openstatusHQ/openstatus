@@ -118,7 +118,12 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           Looking for a status page?
         </ContentBoxTitle>
         <ContentBoxDescription className="m-0! text-sm">
-          Every service needs a status page. Run yours with OpenStatus.
+          Every service needs a status page. Run yours with OpenStatus — see
+          what a{" "}
+          <CustomLink href="/status-page" className="underline-offset-4">
+            hosted status page
+          </CustomLink>{" "}
+          includes.
         </ContentBoxDescription>
         <ButtonLink href={`${APP_URL}?ref=status-component-bottom`}>
           Create your status page

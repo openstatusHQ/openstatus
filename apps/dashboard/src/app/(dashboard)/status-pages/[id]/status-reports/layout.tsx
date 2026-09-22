@@ -1,4 +1,5 @@
 import { SidebarProvider } from "@openstatus/ui/components/ui/sidebar";
+import { notFound } from "next/navigation";
 
 import {
   RIGHT_SIDEBAR_COOKIE,
@@ -17,8 +18,10 @@ export default async function Layout({
 }) {
   const queryClient = getQueryClient();
   const { id } = await params;
+  const pageId = Number.parseInt(id);
+  if (Number.isNaN(pageId)) notFound();
   await queryClient.prefetchQuery(
-    trpc.statusReport.list.queryOptions({ pageId: Number.parseInt(id) }),
+    trpc.statusReport.list.queryOptions({ pageId }),
   );
   const defaultOpen = await getSidebarDefaultOpen(RIGHT_SIDEBAR_COOKIE, false);
 

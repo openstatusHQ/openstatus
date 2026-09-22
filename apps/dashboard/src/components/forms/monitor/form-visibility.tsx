@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -11,7 +12,6 @@ import {
   FormLabel,
 } from "@openstatus/ui/components/ui/form";
 import { Switch } from "@openstatus/ui/components/ui/switch";
-import { Lock } from "lucide-react";
 import NextLink from "next/link";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";

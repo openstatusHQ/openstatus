@@ -1,5 +1,6 @@
 "use client";
 
+import { Globe } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Tooltip,
@@ -8,7 +9,6 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Globe } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/gin-gonic/gin"
 	"github.com/openstatushq/openstatus/apps/checker/checker"
 	"github.com/openstatushq/openstatus/apps/checker/request"
@@ -85,7 +85,7 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 
 	var res checker.Response
 
-	op := func() error {
+	op := func() (struct{}, error) {
 
 		headers := make([]struct {
 			Key   string `json:"key"`
@@ -109,17 +109,17 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 		r, err := checker.Http(c.Request.Context(), requestClient, input)
 
 		if err != nil {
-			return fmt.Errorf("unable to ping: %w", err)
+			return struct{}{}, fmt.Errorf("unable to ping: %w", err)
 		}
 
 		timingAsString, err := json.Marshal(r.Timing)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URL, err)
+			return struct{}{}, fmt.Errorf("error while parsing timing data %s: %w", req.URL, err)
 		}
 
 		headersAsString, err := json.Marshal(r.Headers)
 		if err != nil {
-			return nil
+			return struct{}{}, nil
 		}
 
 		tbData := PingResponse{
@@ -143,9 +143,9 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 			}
 		}
 
-		return nil
+		return struct{}{}, nil
 	}
-	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
+	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(3)); err != nil {
 		c.JSON(http.StatusOK, gin.H{"message": "url not reachable"})
 
 		return

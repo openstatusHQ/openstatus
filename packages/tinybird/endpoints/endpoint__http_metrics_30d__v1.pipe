@@ -1,9 +1,9 @@
-TAGS "http"
+TOKEN "endpoint__http_metrics_30d__v1_endpoint_read_7611" READ
 
 NODE endpoint
 SQL >
 
-    %
+%
         SELECT
             round(quantile(0.50)(latency)) as p50Latency,
             round(quantile(0.75)(latency)) as p75Latency,
@@ -39,4 +39,6 @@ SQL >
             AND time < toDateTime64(now() - INTERVAL 30 DAY, 3)
             {% if regions %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
 
-TYPE ENDPOINT
+TYPE endpoint
+
+

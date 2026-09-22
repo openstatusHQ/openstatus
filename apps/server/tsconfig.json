@@ -1,5 +1,5 @@
 {
-  "extends": "@openstatus/tsconfig/base.json",
+  "extends": "../../packages/tsconfig/base.json",
   "include": ["src", "*.ts", "**/*.ts"],
   "compilerOptions": {
     "jsx": "react-jsx",

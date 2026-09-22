@@ -43,6 +43,10 @@ type Response struct {
 	Timing    Timing            `json:"timing"`
 }
 
+// maxResponseBodyBytes caps the read of a probed response body so a large body
+// cannot OOM the 512 MB checker machines (exit 137 waves).
+const maxResponseBodyBytes = 10 << 20 // 10 MiB
+
 // decodeBase64Body decodes a data URL base64 body if needed
 func decodeBase64Body(body string) ([]byte, error) {
 	data := strings.Split(body, ",")
@@ -122,25 +126,32 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	latency := time.Since(start).Milliseconds()
 
 	if err != nil {
+		errorMsg := err.Error()
 
 		var urlErr *url.Error
 		if errors.As(err, &urlErr) && urlErr.Timeout() {
-			return Response{
-				Latency:   latency,
-				Timing:    timing,
-				Timestamp: start.UTC().UnixMilli(),
-				Error:     fmt.Sprintf("Timeout after %d ms", latency),
-			}, nil
+			errorMsg = fmt.Sprintf("Timeout after %d ms", latency)
 		}
 
 		logger.Error().Err(err).Msg("error while pinging")
 
-		return Response{}, err
+		// Return Response with error field instead of returning a Go error
+		// This ensures all failures (timeouts, connection refused, DNS failures, etc.)
+		// are properly ingested and displayed in the dashboard
+		return Response{
+			Latency:   latency,
+			Timing:    timing,
+			Timestamp: start.UTC().UnixMilli(),
+			Error:     errorMsg,
+			Status:    0,
+		}, nil
 	}
 
 	defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
+	// Cap the response body: an endpoint returning a large body would
+	// otherwise OOM these 512 MB machines (fleet-wide exit 137 waves).
+	body, err := io.ReadAll(io.LimitReader(response.Body, maxResponseBodyBytes))
 
 	timing.TransferDone = time.Now().UTC().UnixMilli()
 

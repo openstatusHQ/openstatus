@@ -117,6 +117,50 @@ Because entitlement is managed in the dashboard, these changes do not require co
 
 Routing status updates into the Slack Connect channels you already share with enterprise customers turns customer notifications from an ongoing engineering task into a configuration workflow. No per-customer integration code, no new channels to create, no cleanup when people leave - just the same updates you already publish to your status page, delivered where your customers are already working with you.
 
+## Frequently asked questions
+
+<Details summary="Do customers need an openstatus account to receive updates?">
+
+No. Updates arrive in the Slack Connect channel you already share with the customer. They never sign into openstatus and do not manage their own subscription.
+
+</Details>
+
+<Details summary="What is Slack Connect?">
+
+Slack Connect is Slack's native feature for sharing a channel between two separate workspaces. Both sides see the channel in their own Slack, with no guest accounts, no third-party apps, and no shared admin seats.
+
+</Details>
+
+<Details summary="Do we need to create a new channel for each customer?">
+
+No. If you already run a Slack Connect channel with a customer for support or account management, point the subscription at that channel. A new dedicated channel only makes sense if you want to separate status updates from other conversations.
+
+</Details>
+
+<Details summary="Can customers change the components they are subscribed to?">
+
+No. The page owner controls component scope. This keeps customers from seeing components they are not entitled to, and keeps entitlement decisions auditable on your side.
+
+</Details>
+
+<Details summary="What if a customer's entitlement changes?">
+
+Update their subscription from the dashboard. Add or remove components and the change takes effect on the next event - no code change or redeploy required.
+
+</Details>
+
+<Details summary="Does Slack Connect cost customers anything?">
+
+No. Slack Connect is free for both sides as long as at least one of the two workspaces is on a paid Slack plan.
+
+</Details>
+
+<Details summary="What about email or webhook subscriptions?">
+
+Openstatus supports both in addition to Slack. Pick the channel that matches how each customer prefers to receive incident updates.
+
+</Details>
+
 ---
 
 Start free. No credit card required. Configure your first Slack subscription in under 5 minutes.

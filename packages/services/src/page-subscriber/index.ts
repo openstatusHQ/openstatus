@@ -18,6 +18,7 @@ export {
   type SlackSubscriptionSummary,
 } from "./slack";
 export { unsubscribeSubscriber } from "./unsubscribe";
+export { unsubscribePageSubscriber } from "./unsubscribe-in-workspace";
 export { updatePageSubscriberChannel } from "./update";
 export { updateSubscriberScope } from "./update-scope";
 export {
@@ -35,6 +36,7 @@ export {
   ListSlackSubscribersInput,
   RemoveSlackSubscriberInput,
   SendPageSubscriberTestWebhookInput,
+  UnsubscribePageSubscriberInput,
   UnsubscribeSubscriberInput,
   UpdatePageSubscriberChannelInput,
   UpdateSubscriberScopeInput,

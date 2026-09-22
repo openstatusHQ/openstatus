@@ -1,5 +1,5 @@
 import { type Locale, defaultLocale, locales } from "../i18n/config";
-import { getValidSubdomain } from "./domain";
+import { getValidSubdomain, stripHostPort } from "./domain";
 
 export type RouteType = "hostname" | "pathname";
 
@@ -53,6 +53,10 @@ export function resolveRoute({
 
   if (subdomain !== null) {
     prefix = subdomain.toLowerCase();
+    // Host-keyed: the path carries no slug. Apex (`acme.com`) and `www.` custom
+    // domains fail the label check above, and reading their first segment as the
+    // slug would drop it (`/events/report/1` → `/{slug}/{locale}/report/1`).
+    type = "hostname";
   }
 
   // Root path on non-hostname type — no page to resolve
@@ -69,12 +73,21 @@ export function resolveRoute({
 
   // Resolve locale based on routing type
   if (type === "hostname") {
-    const firstSegment = pathnames[1]?.toLowerCase();
+    // apps/web proxies custom domains as `https://www.stpg.dev/{host}/{rest}`
+    // and forwards the original host, so drop a leading segment that repeats
+    // the prefix — keeping it duplicates the domain inside the rewrite path.
+    const hostSegment = stripHostPort(host ?? urlHost)?.toLowerCase();
+    const segments =
+      pathnames[1]?.toLowerCase() === hostSegment
+        ? pathnames.slice(1)
+        : pathnames;
+
+    const firstSegment = segments[1]?.toLowerCase();
     const locale: Locale = isLocale(firstSegment)
       ? firstSegment
       : defaultLocale;
     const hasLocale = isLocale(firstSegment);
-    const rest = (hasLocale ? pathnames.slice(2) : pathnames.slice(1))
+    const rest = (hasLocale ? segments.slice(2) : segments.slice(1))
       .filter(Boolean)
       .join("/");
 

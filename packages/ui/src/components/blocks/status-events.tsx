@@ -837,7 +837,7 @@ export function StatusEventTimelineDot({
     <div
       data-slot="status-event-timeline-dot"
       className={cn(
-        "bg-muted size-2.5 shrink-0 rounded-full",
+        "bg-muted size-2.5 shrink-0 rounded-lg",
         "group-data-[variant=resolved]:bg-success",
         "group-data-[variant=monitoring]:bg-info",
         "group-data-[variant=identified]:bg-warning",

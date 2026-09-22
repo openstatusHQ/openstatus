@@ -1,6 +1,7 @@
 import type { z } from "zod";
 
 import { getAuditLogTool, listAuditLogsTool } from "./audit";
+import { getContentPageTool, searchContentTool } from "./content";
 import { getDocPageTool, searchDocsTool } from "./docs";
 import { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
 import {
@@ -14,6 +15,7 @@ import {
 import { listNotificationsTool } from "./notification";
 import { listStatusPagesTool } from "./page";
 import { listPageComponentsTool } from "./page-component";
+import { listPrivateLocationsTool } from "./private-location";
 import {
   addStatusReportUpdateTool,
   createStatusReportTool,
@@ -24,6 +26,7 @@ import {
 import type { AnyAgentTool } from "./types";
 
 export { getAuditLogTool, listAuditLogsTool } from "./audit";
+export { getContentPageTool, searchContentTool } from "./content";
 export { getDocPageTool, searchDocsTool } from "./docs";
 export { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
 export {
@@ -37,6 +40,7 @@ export {
 export { listNotificationsTool } from "./notification";
 export { listStatusPagesTool } from "./page";
 export { listPageComponentsTool } from "./page-component";
+export { listPrivateLocationsTool } from "./private-location";
 export {
   addStatusReportUpdateTool,
   createStatusReportTool,
@@ -87,10 +91,13 @@ export const agentTools = {
   list_response_logs: listResponseLogsTool,
   get_response_log: getResponseLogTool,
   list_notifications: listNotificationsTool,
+  list_private_locations: listPrivateLocationsTool,
   list_audit_logs: listAuditLogsTool,
   get_audit_log: getAuditLogTool,
   search_docs: searchDocsTool,
   get_doc_page: getDocPageTool,
+  search_content: searchContentTool,
+  get_content_page: getContentPageTool,
 } satisfies Record<string, AnyAgentTool>;
 
 // Multi-flag confirmation UX should be a modal, not 2^N buttons. Fail

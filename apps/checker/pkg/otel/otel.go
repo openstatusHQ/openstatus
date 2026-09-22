@@ -80,10 +80,25 @@ func withMeter(ctx context.Context, endpoint string, headers map[string]string, 
 	fn(otel.Meter("OpenStatus"))
 }
 
-// recordGauge creates a Float64Gauge and records a value.
+// UCUM unit codes, as OpenTelemetry expects them.
+const (
+	unitMilliseconds = "ms"
+	unitPercent      = "%"
+)
+
+// recordGauge creates a Float64Gauge for a duration in milliseconds and records
+// a value. Use recordGaugeWithUnit for anything that is not a duration —
+// backends render a gauge according to its unit, so a mislabelled one is read
+// as a time span.
 func recordGauge(ctx context.Context, meter metric.Meter, name, description string, value float64, att metric.MeasurementOption) error {
+	return recordGaugeWithUnit(ctx, meter, name, description, unitMilliseconds, value, att)
+}
+
+// recordGaugeWithUnit creates a Float64Gauge carrying an explicit unit and
+// records a value.
+func recordGaugeWithUnit(ctx context.Context, meter metric.Meter, name, description, unit string, value float64, att metric.MeasurementOption) error {
 	gauge, err := meter.Float64Gauge(name,
-		metric.WithDescription(description), metric.WithUnit("ms"))
+		metric.WithDescription(description), metric.WithUnit(unit))
 	if err != nil {
 		return err
 	}
@@ -167,6 +182,101 @@ func RecordDNSMetrics(ctx context.Context, req request.DNSCheckerRequest, latenc
 			log.Ctx(ctx).Error().Err(err).Str("metric", "openstatus.dns.request.duration").Msg("Error creating gauge")
 		}
 	})
+}
+
+func RecordICMPMetrics(ctx context.Context, req request.ICMPCheckerRequest, result checker.ICMPResponse, region string) {
+	withMeter(ctx, req.OtelConfig.Endpoint, req.OtelConfig.Headers, func(meter metric.Meter) {
+		att := metric.WithAttributes(
+			attribute.String("openstatus.probes", region),
+			attribute.String("openstatus.target", req.URI),
+		)
+		recordICMPInstruments(ctx, meter, result, att)
+	})
+}
+
+// recordICMPInstruments is split out of RecordICMPMetrics so tests can supply a
+// collectable meter: withMeter installs a real OTLP provider globally, which
+// leaves nothing to assert against.
+func recordICMPInstruments(ctx context.Context, meter metric.Meter, result checker.ICMPResponse, att metric.MeasurementOption) {
+	if result.Error == 1 {
+		recordErrorCounter(ctx, meter, att)
+		return
+	}
+
+	recordStatusCounter(ctx, meter, att)
+
+	if err := recordGauge(ctx, meter, "openstatus.icmp.request.duration", "Duration of the check", float64(result.Latency), att); err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("metric", "openstatus.icmp.request.duration").Msg("Error creating gauge")
+	}
+
+	packetLoss := float64(result.PacketsSent-result.PacketsReceived) / float64(result.PacketsSent) * 100
+	if err := recordGaugeWithUnit(ctx, meter, "openstatus.icmp.packet.loss", "Packet loss percentage", unitPercent, packetLoss, att); err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("metric", "openstatus.icmp.packet.loss").Msg("Error creating gauge")
+	}
+}
+
+func RecordGRPCMetrics(ctx context.Context, req request.GRPCCheckerRequest, result checker.GRPCResponse, region string) {
+	withMeter(ctx, req.OtelConfig.Endpoint, req.OtelConfig.Headers, func(meter metric.Meter) {
+		att := metric.WithAttributes(
+			attribute.String("openstatus.probes", region),
+			attribute.String("openstatus.target", req.URI),
+		)
+		recordGRPCInstruments(ctx, meter, result, att)
+	})
+}
+
+// recordGRPCInstruments branches on whether the RPC completed, not on the error
+// flag: a NOT_SERVING answer sets the flag but did complete, and gating the
+// gauges on the flag would leave openstatus.grpc.serving_status able to emit
+// only 1. Split out of RecordGRPCMetrics so tests can supply a collectable meter.
+func recordGRPCInstruments(ctx context.Context, meter metric.Meter, result checker.GRPCResponse, att metric.MeasurementOption) {
+	if !result.Completed {
+		recordErrorCounter(ctx, meter, att)
+		return
+	}
+
+	gauges := []struct {
+		name        string
+		description string
+		value       float64
+	}{
+		{"openstatus.grpc.request.duration", "Duration of the check", float64(result.Latency)},
+		{"openstatus.grpc.dns.duration", "Duration of the DNS lookup", grpcPhase(result.Timing.DnsStart, result.Timing.DnsDone)},
+		{"openstatus.grpc.connection.duration", "Duration of the connection", grpcPhase(result.Timing.ConnectStart, result.Timing.ConnectDone)},
+		{"openstatus.grpc.tls.duration", "Duration of the TLS handshake", grpcPhase(result.Timing.TlsHandshakeStart, result.Timing.TlsHandshakeDone)},
+		{"openstatus.grpc.ttfb.duration", "Duration of the TTFB", grpcPhase(result.Timing.FirstByteStart, result.Timing.FirstByteDone)},
+	}
+
+	for _, g := range gauges {
+		if err := recordGauge(ctx, meter, g.name, g.description, g.value, att); err != nil {
+			log.Ctx(ctx).Error().Err(err).Str("metric", g.name).Msg("Error creating gauge")
+		}
+	}
+
+	serving := float64(0)
+	if result.ServingStatus == checker.ServingStatusServing {
+		serving = 1
+	}
+
+	if err := recordGauge(ctx, meter, "openstatus.grpc.serving_status", "Serving status of the target", serving, att); err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("metric", "openstatus.grpc.serving_status").Msg("Error creating gauge")
+	}
+
+	if serving == 1 {
+		recordStatusCounter(ctx, meter, att)
+	} else {
+		recordErrorCounter(ctx, meter, att)
+	}
+}
+
+// grpcPhase mirrors calculateTiming: a phase whose hook never fired leaves a
+// zero behind, and subtracting absolute epoch stamps would report a huge value.
+func grpcPhase(start, done int64) float64 {
+	if start == 0 || done == 0 {
+		return 0
+	}
+
+	return float64(done - start)
 }
 
 func RecordTCPMetrics(ctx context.Context, req request.TCPCheckerRequest, result checker.TCPResponse, region string) {

@@ -1,6 +1,4 @@
-import { eq } from "@openstatus/db";
 import {
-  statusReport,
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
@@ -10,6 +8,7 @@ import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError, InternalServiceError } from "../errors";
 import type { StatusReport, StatusReportUpdate } from "../types";
+import { recomputeReportStatus } from "./derive-status";
 import {
   getCurrentImpactsForReport,
   getReportInWorkspace,
@@ -106,12 +105,10 @@ export async function addStatusReportUpdate(args: {
       componentImpacts: writtenImpacts,
     });
 
-    const updatedReport = await tx
-      .update(statusReport)
-      .set({ status: input.status, updatedAt: new Date() })
-      .where(eq(statusReport.id, report.id))
-      .returning()
-      .get();
+    // derived, not assigned — a back-dated update must not win
+    const updatedReport = await recomputeReportStatus(tx, report.id, {
+      touchIfLatestIs: newUpdate.id,
+    });
 
     if (!updatedReport) {
       throw new InternalServiceError(

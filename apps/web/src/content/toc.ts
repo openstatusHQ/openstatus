@@ -5,7 +5,8 @@ export type TocItem = { depth: 2 | 3; text: string; slug: string };
 // Extract h2/h3 headings from raw MDX for the table of contents. Slugs are
 // produced with the same `slugify` that `createHeading` uses at render time, so
 // the TOC links resolve to the real heading ids. Fenced code blocks are skipped
-// so `## comment` lines inside code don't leak into the TOC.
+// so `## comment` lines inside code don't leak into the TOC. Inline-code
+// backticks are dropped to match the label `createHeading` renders.
 export function extractHeadings(source: string): TocItem[] {
   const items: TocItem[] = [];
   let inFence = false;
@@ -22,7 +23,7 @@ export function extractHeadings(source: string): TocItem[] {
     if (!heading) continue;
 
     const depth = heading[1].length as 2 | 3;
-    const text = heading[2].trim();
+    const text = heading[2].trim().replace(/`/g, "");
     items.push({ depth, text, slug: slugify(text) });
   }
 

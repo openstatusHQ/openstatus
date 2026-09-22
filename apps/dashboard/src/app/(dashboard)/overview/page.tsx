@@ -1,7 +1,7 @@
 "use client";
 
+import { Agent } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Bot } from "lucide-react";
 import Link from "next/link";
 
 import { NoteButton } from "@/components/common/note";
@@ -60,7 +60,7 @@ export default function Page() {
   return (
     <SectionGroup>
       <NoteDismissible cookieKey="note_overview_slack_agent">
-        <Bot />
+        <Agent />
         Use our Slack agent to manage your status pages and incidents.
         <NoteButton variant="default" asChild>
           <Link href="/agents">Learn more</Link>
@@ -84,7 +84,7 @@ export default function Page() {
                   <MetricCardTitle className="truncate">
                     {metric.title}
                   </MetricCardTitle>
-                  <metric.icon className="size-4" />
+                  <metric.icon className="size-4 shrink-0" />
                 </MetricCardHeader>
                 <MetricCardValue>{metric.value}</MetricCardValue>
               </>

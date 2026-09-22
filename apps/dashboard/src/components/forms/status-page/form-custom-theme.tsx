@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Collapse, Expand, Lock } from "@openstatus/icons";
 import {
   type CustomTheme,
   formatThemeVars,
@@ -25,7 +26,6 @@ import {
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { ChevronsDownUp, ChevronsUpDown, Lock } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -140,9 +140,9 @@ export function FormCustomTheme({
                   onClick={() => setExtended((v) => !v)}
                 >
                   {extended ? (
-                    <ChevronsDownUp className="size-4" />
+                    <Collapse className="size-4" />
                   ) : (
-                    <ChevronsUpDown className="size-4" />
+                    <Expand className="size-4" />
                   )}
                   {extended ? "Collapse" : "Extend"}
                 </Button>

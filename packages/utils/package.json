@@ -7,7 +7,8 @@
   "author": "",
   "main": "src/index.ts",
   "scripts": {
-    "check": "deno check --sloppy-imports ."
+    "check": "deno check --sloppy-imports .",
+    "test": "deno test --parallel -A --no-check --sloppy-imports"
   },
   "dependencies": {
     "@openstatus/assertions": "workspace:*",

@@ -1,16 +1,27 @@
 import type { PageComponentImpact } from "@openstatus/db/src/schema";
-import { impactToStatusType, worstImpact } from "@openstatus/db/src/schema";
 import {
+  impactToStatusType,
+  impactUptimeWeight,
+  LEGACY_IMPACT_WEIGHT,
+  worstImpact,
+} from "@openstatus/db/src/schema";
+import {
+  clipToCoverage,
+  type CoverageSegment,
+  downtimeIntervals,
   type Event,
   MS_PER_DAY,
+  probeDowntimeIntervals,
   type StatusData,
   type UptimeWindow,
+  type WeightedInterval,
   dayCoverage,
   durationDowntimeMs,
   floorPct,
   getHighestPriorityStatus,
   getWorstVariant,
   isDateWithinEvent,
+  mergedDowntimeMs,
   reportEventDayImpact,
   reportEventDayStatus,
   reportsOnlyDowntimeMs,
@@ -84,9 +95,9 @@ function formatNumber(num: number): string {
 function isToday(date: Date): boolean {
   const today = new Date();
   return (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
+    date.getUTCDate() === today.getUTCDate() &&
+    date.getUTCMonth() === today.getUTCMonth() &&
+    date.getUTCFullYear() === today.getUTCFullYear()
   );
 }
 
@@ -532,14 +543,37 @@ export function setDataByType({
           cardData = entries
             .map((entry) => {
               // Map each entry status to its corresponding events
-              const eventMap = {
+              const eventByStatus: Record<string, Event[]> = {
                 error: incidents,
                 degraded: reports,
                 info: maintenances,
                 success: [], // Success is calculated differently
               };
+              const events = eventByStatus[entry.status];
 
-              const events = eventMap[entry.status as keyof typeof eventMap];
+              // When there are no events for this status but the data shows a
+              // non-zero count, calculate a proportional duration from the data
+              // so the card reflects actual probe-based status, not just events.
+              if (
+                events.length === 0 &&
+                (entry.status === "error" || entry.status === "degraded") &&
+                entry.count > 0
+              ) {
+                const totalMinutes = getAdjustedTotalMinutesInDay(
+                  date,
+                  maintenances,
+                );
+                const statusMinutes = Math.round(
+                  (entry.count / total) * totalMinutes,
+                );
+                if (statusMinutes === 0) return null;
+                durationMap.set(entry.status, statusMinutes);
+                return {
+                  status: entry.status,
+                  value: formatDuration(statusMinutes),
+                };
+              }
+
               return createDurationCardEntry(
                 entry.status,
                 events,
@@ -662,10 +696,22 @@ export function getUptime({
       end: windowEndDate.getTime(),
       now: Date.now(),
     };
-    const duration =
-      barType === "manual"
-        ? reportsOnlyDowntimeMs(events, window, coverage)
-        : durationDowntimeMs(events, window, coverage);
+
+    let duration: number;
+    if (barType === "manual") {
+      // Manual mode: only count manually created reports
+      duration = reportsOnlyDowntimeMs(events, window, coverage);
+    } else {
+      // Duration mode: merge both event-based and probe-based downtime
+      // to capture both manual incidents/reports AND automated probe failures
+      const eventIntervals = downtimeIntervals(events, window, false);
+      const probeIntervals = probeDowntimeIntervals(data, window);
+      const allIntervals = [...eventIntervals, ...probeIntervals];
+      duration = mergedDowntimeMs(
+        coverage ? clipToCoverage(allIntervals, coverage) : allIntervals,
+      );
+    }
+
     return `${floorPct((total - duration) / total)}%`;
   }
 

@@ -12,6 +12,7 @@ import {
 } from "./internal";
 import {
   BulkUpdateMonitorsInput,
+  UpdateMonitorConfigInput,
   UpdateMonitorFollowRedirectsInput,
   UpdateMonitorGeneralInput,
   UpdateMonitorOtelInput,
@@ -19,6 +20,83 @@ import {
   UpdateMonitorResponseTimeInput,
   UpdateMonitorRetryInput,
 } from "./schemas";
+import { assertMonitorUrlSafe } from "./url-safety";
+
+/**
+ * Apply a whole-object patch in a single UPDATE. `undefined` fields are
+ * left untouched; `degradedAfter: null` clears the column.
+ */
+export async function updateMonitorConfig(args: {
+  ctx: ServiceContext;
+  input: UpdateMonitorConfigInput;
+}): Promise<Monitor> {
+  const { ctx } = args;
+  requireScope(ctx, "write");
+  const input = UpdateMonitorConfigInput.parse(args.input);
+
+  return withTransaction(ctx, async (tx) => {
+    const existing = await getMonitorInWorkspace({
+      tx,
+      id: input.id,
+      workspaceId: ctx.workspace.id,
+    });
+
+    if (input.url !== undefined) {
+      // `jobType` is absent from this patch, so the stored type decides.
+      assertMonitorUrlSafe({ jobType: existing.jobType, url: input.url });
+    }
+
+    const values: Record<string, unknown> = { updatedAt: new Date() };
+    if (input.name !== undefined) values.name = input.name;
+    if (input.url !== undefined) values.url = input.url;
+    if (input.method !== undefined) values.method = input.method;
+    if (input.headers !== undefined) {
+      values.headers = headersToDbJson(input.headers);
+    }
+    if (input.body !== undefined) values.body = input.body;
+    if (input.assertions !== undefined) {
+      values.assertions = serialiseAssertions(input.assertions);
+    }
+    if (input.active !== undefined) values.active = input.active;
+    if (input.periodicity !== undefined) values.periodicity = input.periodicity;
+    if (input.regions !== undefined) values.regions = input.regions.join(",");
+    if (input.description !== undefined) values.description = input.description;
+    if (input.public !== undefined) values.public = input.public;
+    if (input.timeout !== undefined) values.timeout = input.timeout;
+    if (input.degradedAfter !== undefined) {
+      values.degradedAfter = input.degradedAfter;
+    }
+    if (input.retry !== undefined) values.retry = input.retry;
+    if (input.followRedirects !== undefined) {
+      values.followRedirects = input.followRedirects;
+    }
+    if (input.grpcService !== undefined) values.grpcService = input.grpcService;
+    if (input.grpcTls !== undefined) values.grpcTls = input.grpcTls;
+    if (input.otelEndpoint !== undefined) {
+      values.otelEndpoint = input.otelEndpoint;
+    }
+    if (input.otelHeaders !== undefined) {
+      values.otelHeaders = headersToDbJson(input.otelHeaders);
+    }
+
+    const updated = await tx
+      .update(monitor)
+      .set(values)
+      .where(eq(monitor.id, existing.id))
+      .returning()
+      .get();
+
+    await emitAudit(tx, ctx, {
+      action: "monitor.update",
+      entityType: "monitor",
+      entityId: existing.id,
+      before: existing,
+      after: updated,
+    });
+
+    return selectMonitorSchema.parse(updated);
+  });
+}
 
 /**
  * Update a monitor's "general" fields — name / endpoint / method / headers /
@@ -33,6 +111,7 @@ export async function updateMonitorGeneral(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = UpdateMonitorGeneralInput.parse(args.input);
+  assertMonitorUrlSafe({ jobType: input.jobType, url: input.url });
 
   return withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -52,6 +131,10 @@ export async function updateMonitorGeneral(args: {
         body: input.body,
         active: input.active,
         assertions: serialiseAssertions(input.assertions),
+        ...(input.grpcService !== undefined
+          ? { grpcService: input.grpcService }
+          : {}),
+        ...(input.grpcTls !== undefined ? { grpcTls: input.grpcTls } : {}),
         updatedAt: new Date(),
       })
       .where(eq(monitor.id, existing.id))

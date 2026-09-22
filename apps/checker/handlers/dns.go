@@ -26,6 +26,7 @@ type DNSResponse struct {
 	URI           string `json:"uri"`
 	RequestStatus string `json:"requestStatus,omitempty"`
 	Assertions    string `json:"assertions"`
+	Timing        string `json:"timing"`
 
 	Records map[string][]string `json:"records"`
 
@@ -169,7 +170,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
 	data.Latency = latency
 	if result != nil {
-		data.Records = FormatDNSResult(result)
+		data.Records = checker.FormatDNSRecords(result)
 	}
 
 	if len(req.RawAssertions) > 0 {
@@ -245,7 +246,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 
 func (h Handler) DNSHandlerRegion(c *gin.Context) {
 	ctx := c.Request.Context()
-	dataSourceName := "check_dns_response__v0"
+	dataSourceName := "check_response_dns__v0"
 	const defaultRetry = 3
 
 	// Authorization check
@@ -356,7 +357,7 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		return
 	}
 
-	data.Records = FormatDNSResult(result)
+	data.Records = checker.FormatDNSRecords(result)
 	if req.RequestId != 0 {
 		if tbEvent, err := data.tinybirdEvent(); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to marshal dns records")
@@ -367,40 +368,6 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 
 	c.JSON(http.StatusOK, data)
 
-}
-
-func FormatDNSResult(result *checker.DnsResponse) map[string][]string {
-	r := make(map[string][]string)
-	a := make([]string, 0)
-	aaaa := make([]string, 0)
-	mx := make([]string, 0)
-	ns := make([]string, 0)
-	txt := make([]string, 0)
-
-	for _, v := range result.A {
-		a = append(a, v)
-	}
-	r["A"] = a
-
-	for _, v := range result.AAAA {
-		aaaa = append(aaaa, v)
-	}
-	r["AAAA"] = aaaa
-
-	r["CNAME"] = []string{result.CNAME}
-	for _, v := range result.MX {
-		mx = append(mx, v)
-	}
-	r["MX"] = mx
-	for _, v := range result.NS {
-		ns = append(ns, v)
-	}
-	r["NS"] = ns
-	for _, v := range result.TXT {
-		txt = append(txt, v)
-	}
-	r["TXT"] = txt
-	return r
 }
 
 func EvaluateDNSAssertions(rawAssertions []json.RawMessage, response *checker.DnsResponse) (bool, error) {

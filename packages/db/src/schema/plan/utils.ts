@@ -2,6 +2,8 @@ import type { WorkspacePlan } from "../workspaces/validation";
 import { allPlans } from "./config";
 import {
   type Addons,
+  type AddonQuantityKey,
+  addonQuantityConfig,
   type BillingInterval,
   type Limits,
   limitsSchema,
@@ -66,6 +68,24 @@ export function getPriceConfig(
   return resolvePriceConfig(planConfig.price[interval], currency);
 }
 
+export function isAddonQuantityKey(
+  addon: keyof Addons,
+): addon is AddonQuantityKey {
+  return addon in addonQuantityConfig;
+}
+
+export function getAddonQuantityConfig(addon: keyof Addons) {
+  return isAddonQuantityKey(addon) ? addonQuantityConfig[addon] : null;
+}
+
+export function getAddonPackSize(addon: keyof Addons): number {
+  return getAddonQuantityConfig(addon)?.packSize ?? 1;
+}
+
+export function getAddonMaxQuantity(addon: keyof Addons): number | null {
+  return getAddonQuantityConfig(addon)?.maxQuantity ?? null;
+}
+
 export function getAddonPriceConfig(
   plan: WorkspacePlan,
   addon: keyof Addons,
@@ -96,9 +116,10 @@ export function getPlansForLimit(
   return availablePlans.filter((plan) => {
     const planLimitValue = allPlans[plan].limits[limit];
 
-    // For boolean limits, only show plans where the feature is enabled
+    // For boolean limits, only show plans where the feature is enabled — either
+    // bundled or purchasable as an addon (e.g. SSO on every paid plan).
     if (typeof currentLimitValue === "boolean") {
-      return planLimitValue === true;
+      return planLimitValue === true || limit in allPlans[plan].addons;
     }
 
     // For numeric limits, show plans with higher values

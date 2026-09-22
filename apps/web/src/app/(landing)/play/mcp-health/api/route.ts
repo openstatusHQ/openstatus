@@ -10,14 +10,18 @@ import {
   storeHealthReport,
   toPersistedReport,
 } from "../../../../../lib/mcp/health-check";
-import { getClientIP, ratelimit } from "../../../../../lib/ratelimit";
+import {
+  PLAY_RATE_LIMIT_TIERS,
+  getClientIP,
+  rateLimitMessage,
+  ratelimitTiers,
+  retryAfterHeader,
+  tieredRateLimitHeaders,
+} from "../../../../../lib/ratelimit";
 
 export const runtime = "edge";
 // Worst-case 16s of step time + metadata fetch + analytics; give some slack.
 export const maxDuration = 30;
-
-const RATE_LIMIT_WINDOW = 60;
-const MAX_REQUESTS_PER_WINDOW = 3;
 
 const requestSchema = z.object({
   url: z.url("Invalid URL format"),
@@ -124,22 +128,17 @@ export async function POST(request: Request) {
     );
   }
 
-  const rl = await ratelimit(`play-mcp-health:${clientIP}`, {
-    window: RATE_LIMIT_WINDOW,
-    limit: MAX_REQUESTS_PER_WINDOW,
-  });
+  const rl = await ratelimitTiers(
+    `play-mcp-health:${clientIP}`,
+    PLAY_RATE_LIMIT_TIERS,
+  );
   if (!rl.success) {
     return errorResponse(
       "RATE_LIMIT_EXCEEDED",
-      `You have exceeded the rate limit of ${MAX_REQUESTS_PER_WINDOW} requests per ${RATE_LIMIT_WINDOW} seconds`,
+      rateLimitMessage(rl.tier),
       429,
       { limit: rl.limit, remaining: rl.remaining, reset: rl.reset },
-      {
-        "X-RateLimit-Limit": rl.limit.toString(),
-        "X-RateLimit-Remaining": rl.remaining.toString(),
-        "X-RateLimit-Reset": rl.reset.toString(),
-        "Retry-After": Math.ceil((rl.reset - Date.now()) / 1000).toString(),
-      },
+      { ...tieredRateLimitHeaders(rl), ...retryAfterHeader(rl) },
     );
   }
 
@@ -183,12 +182,6 @@ export async function POST(request: Request) {
 
   return Response.json(
     { id, report: persisted },
-    {
-      headers: {
-        "X-RateLimit-Limit": rl.limit.toString(),
-        "X-RateLimit-Remaining": rl.remaining.toString(),
-        "X-RateLimit-Reset": rl.reset.toString(),
-      },
-    },
+    { headers: tieredRateLimitHeaders(rl) },
   );
 }

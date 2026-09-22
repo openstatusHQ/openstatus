@@ -9,6 +9,7 @@ import {
   statusReport,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { mock } from "@openstatus/test-utils";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
@@ -53,7 +54,14 @@ let testSubscriberId: number;
 let testPasswordPageId: number;
 let testPasswordPageSlug: string;
 
+// A second, free-plan workspace: used both for cross-workspace isolation
+// assertions and for the plan-limit rejections. Private to this suite because
+// sibling suites assert the seeded free workspace owns nothing.
+let OTHER_WORKSPACE_ID: number;
+
 beforeAll(async () => {
+  OTHER_WORKSPACE_ID = (await createTestWorkspace({ plan: "free" })).workspace
+    .id;
   // Enable plan features needed for tests
   await db.run(
     sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."email-domain-protection"', json('true')) WHERE id = 1`,
@@ -66,6 +74,9 @@ beforeAll(async () => {
   );
   await db.run(
     sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."status-subscribers"', json('true')) WHERE id = 1`,
+  );
+  await db.run(
+    sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."custom-theme"', json('true')) WHERE id = 1`,
   );
 
   // Clean up any existing test data
@@ -392,12 +403,11 @@ describe("StatusPageService.CreateStatusPage", () => {
   });
 
   test("returns 403 when status page limit is exceeded", async () => {
-    // Workspace 2 is on free plan with status-pages limit of 1
     // First, create a page for workspace 2 to hit the limit
     const firstPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-limit-test`,
         slug: `${TEST_PREFIX}-limit-test-slug`,
         description: "First page for limit test",
@@ -415,7 +425,7 @@ describe("StatusPageService.CreateStatusPage", () => {
           description: "Should fail due to limit",
           slug: `${TEST_PREFIX}-limit-exceeded-slug`,
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).toBe(403); // PermissionDenied
@@ -426,6 +436,45 @@ describe("StatusPageService.CreateStatusPage", () => {
       // Clean up
       await db.delete(page).where(eq(page.id, firstPage.id));
     }
+  });
+
+  test("creates a status page with a custom theme", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-custom-theme`,
+        slug: `${TEST_PREFIX}-custom-theme-slug`,
+        customTheme: { light: { "--primary": "hsl(24 94% 50%)" } },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.customTheme?.light).toEqual({
+      "--primary": "hsl(24 94% 50%)",
+    });
+
+    // Clean up
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("returns 403 when creating with custom theme on free plan", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-custom-theme-denied`,
+        slug: `${TEST_PREFIX}-custom-theme-denied-slug`,
+        customTheme: { light: { "--primary": "red" } },
+      },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
+    );
+
+    expect(res.status).toBe(403);
+
+    const data = await res.json();
+    expect(data.message).toContain("Upgrade for custom theme");
   });
 });
 
@@ -478,7 +527,7 @@ describe("StatusPageService.GetStatusPage", () => {
     const otherPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace`,
         slug: `${TEST_PREFIX}-other-workspace-slug`,
         description: "Other workspace page",
@@ -496,6 +545,98 @@ describe("StatusPageService.GetStatusPage", () => {
 
       expect(res.status).toBe(404);
     } finally {
+      await db.delete(page).where(eq(page.id, otherPage.id));
+    }
+  });
+});
+
+describe("StatusPageService.GetPageComponent", () => {
+  test("returns component by ID", async () => {
+    const res = await connectRequest(
+      "GetPageComponent",
+      { id: String(testComponentId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("component");
+    expect(data.component.id).toBe(String(testComponentId));
+    expect(data.component.name).toBe(`${TEST_PREFIX}-component`);
+    expect(data.component.pageId).toBe(String(testPageId));
+    expect(data.component.type).toBe("PAGE_COMPONENT_TYPE_STATIC");
+    // proto3 omits default-valued scalars from JSON, so an unset monitor
+    // arrives as either "" or undefined.
+    expect(data.component.monitorId ?? "").toBe("");
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("GetPageComponent", {
+      id: String(testComponentId),
+    });
+
+    expect(res.status).toBe(401);
+  });
+
+  test("returns 404 for non-existent component", async () => {
+    const res = await connectRequest(
+      "GetPageComponent",
+      { id: "99999" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns error when ID is empty", async () => {
+    const res = await connectRequest(
+      "GetPageComponent",
+      { id: "" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 404 for component in different workspace", async () => {
+    const otherPage = await db
+      .insert(page)
+      .values({
+        workspaceId: OTHER_WORKSPACE_ID,
+        title: `${TEST_PREFIX}-other-workspace-component`,
+        slug: `${TEST_PREFIX}-other-workspace-component-slug`,
+        description: "Other workspace page",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    const otherComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: OTHER_WORKSPACE_ID,
+        pageId: otherPage.id,
+        type: "static",
+        name: `${TEST_PREFIX}-other-workspace-component`,
+        description: "Other workspace component",
+        order: 100,
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetPageComponent",
+        { id: String(otherComponent.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+    } finally {
+      await db
+        .delete(pageComponent)
+        .where(eq(pageComponent.id, otherComponent.id));
       await db.delete(page).where(eq(page.id, otherPage.id));
     }
   });
@@ -644,14 +785,15 @@ describe("StatusPageService.UpdateStatusPage", () => {
       .where(eq(page.id, testPageToUpdateId));
   });
 
-  test("clears locales when field is omitted", async () => {
-    // Set some locales
+  // `locales` is `repeated`, so an omitted field is indistinguishable from an
+  // empty one — both have to mean "keep", or every partial update would drop
+  // the page's languages.
+  test("keeps locales when field is omitted", async () => {
     await db
       .update(page)
       .set({ defaultLocale: "en", locales: ["en", "fr"] })
       .where(eq(page.id, testPageToUpdateId));
 
-    // Omitting locales clears them (same as sending [])
     const res = await connectRequest(
       "UpdateStatusPage",
       {
@@ -664,7 +806,8 @@ describe("StatusPageService.UpdateStatusPage", () => {
     expect(res.status).toBe(200);
 
     const data = await res.json();
-    expect(data.statusPage.locales ?? []).toEqual([]);
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_FR"]);
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_EN");
 
     // Restore defaults
     await db
@@ -677,14 +820,12 @@ describe("StatusPageService.UpdateStatusPage", () => {
       .where(eq(page.id, testPageToUpdateId));
   });
 
-  test("resets locales to null when empty list is sent", async () => {
-    // First set some locales
+  test("keeps locales when an empty list is sent", async () => {
     await db
       .update(page)
       .set({ defaultLocale: "en", locales: ["en", "fr"] })
       .where(eq(page.id, testPageToUpdateId));
 
-    // Send empty locales to clear them
     const res = await connectRequest(
       "UpdateStatusPage",
       {
@@ -697,13 +838,222 @@ describe("StatusPageService.UpdateStatusPage", () => {
     expect(res.status).toBe(200);
 
     const data = await res.json();
-    expect(data.statusPage.locales ?? []).toEqual([]);
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_FR"]);
 
     // Restore defaults
     await db
       .update(page)
       .set({ defaultLocale: "en", locales: null })
       .where(eq(page.id, testPageToUpdateId));
+  });
+
+  test("keeps the default locale when LOCALE_UNSPECIFIED is sent", async () => {
+    await db
+      .update(page)
+      .set({ defaultLocale: "fr", locales: ["en", "fr"] })
+      .where(eq(page.id, testPageToUpdateId));
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        defaultLocale: "LOCALE_UNSPECIFIED",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    // Must not silently fall back to "en"
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_FR");
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_FR"]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageToUpdateId));
+  });
+
+  test("still replaces locales when a non-empty list is sent", async () => {
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: ["en", "fr"] })
+      .where(eq(page.id, testPageToUpdateId));
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        defaultLocale: "LOCALE_DE",
+        locales: ["LOCALE_DE", "LOCALE_EN"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_DE");
+    expect(data.statusPage.locales).toEqual(["LOCALE_DE", "LOCALE_EN"]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageToUpdateId));
+  });
+
+  test("updates and clears the custom theme", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        customTheme: {
+          light: { "--primary": "hsl(24 94% 50%)" },
+          dark: { "--background": "oklch(0.2 0 0)" },
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.customTheme?.light).toEqual({
+      "--primary": "hsl(24 94% 50%)",
+    });
+    expect(data.statusPage.customTheme?.dark).toEqual({
+      "--background": "oklch(0.2 0 0)",
+    });
+
+    // Empty message clears the stored overrides
+    const clearRes = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        customTheme: {},
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(clearRes.status).toBe(200);
+
+    const clearData = await clearRes.json();
+    expect(clearData.statusPage.customTheme).toBeUndefined();
+  });
+
+  test("keeps the custom theme when the field is omitted or null", async () => {
+    await db
+      .update(page)
+      .set({ customTheme: { light: { "--primary": "red" } } })
+      .where(eq(page.id, testPageToUpdateId));
+
+    try {
+      // Omitted field — unrelated update must not touch the stored theme
+      const omitRes = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(testPageToUpdateId),
+          title: `${TEST_PREFIX}-page-to-update`,
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(omitRes.status).toBe(200);
+
+      const omitData = await omitRes.json();
+      expect(omitData.statusPage.customTheme?.light).toEqual({
+        "--primary": "red",
+      });
+
+      // Explicit null — proto3 JSON treats null as absent, so it keeps too
+      const nullRes = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(testPageToUpdateId),
+          customTheme: null,
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(nullRes.status).toBe(200);
+
+      const nullData = await nullRes.json();
+      expect(nullData.statusPage.customTheme?.light).toEqual({
+        "--primary": "red",
+      });
+    } finally {
+      await db
+        .update(page)
+        .set({ customTheme: null })
+        .where(eq(page.id, testPageToUpdateId));
+    }
+  });
+
+  test("rejects unsafe custom theme values", async () => {
+    for (const value of [
+      "</style><script>alert(1)</script>",
+      "red;} body { background: red",
+      "",
+    ]) {
+      const res = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(testPageToUpdateId),
+          customTheme: { light: { "--primary": value } },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(400);
+    }
+  });
+
+  test("rejects unknown custom theme variables", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        customTheme: { light: { "--not-a-var": "red" } },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 403 when updating custom theme on free plan", async () => {
+    const freePage = await db
+      .insert(page)
+      .values({
+        workspaceId: OTHER_WORKSPACE_ID,
+        title: `${TEST_PREFIX}-free-theme`,
+        slug: `${TEST_PREFIX}-free-theme-slug`,
+        description: "",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(freePage.id),
+          customTheme: { light: { "--primary": "red" } },
+        },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
+      );
+
+      expect(res.status).toBe(403);
+
+      const data = await res.json();
+      expect(data.message).toContain("Upgrade for custom theme");
+    } finally {
+      await db.delete(page).where(eq(page.id, freePage.id));
+    }
   });
 });
 
@@ -888,6 +1238,74 @@ describe("StatusPageService locale fields", () => {
       .set({ defaultLocale: "en", locales: null })
       .where(eq(page.id, testPageToUpdateId));
   });
+
+  test("returns distinct enum values for tr, hi, ko and ja", async () => {
+    await db
+      .update(page)
+      .set({ defaultLocale: "ja", locales: ["en", "tr", "hi", "ko", "ja"] })
+      .where(eq(page.id, testPageId));
+
+    const res = await connectRequest(
+      "GetStatusPage",
+      { id: String(testPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_JA");
+    expect(data.statusPage.locales).toEqual([
+      "LOCALE_EN",
+      "LOCALE_TR",
+      "LOCALE_HI",
+      "LOCALE_KO",
+      "LOCALE_JA",
+    ]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageId));
+  });
+
+  test("round-trips tr, hi, ko and ja through update", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        defaultLocale: "LOCALE_TR",
+        locales: ["LOCALE_TR", "LOCALE_HI", "LOCALE_KO", "LOCALE_JA"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_TR");
+    expect(data.statusPage.locales).toEqual([
+      "LOCALE_TR",
+      "LOCALE_HI",
+      "LOCALE_KO",
+      "LOCALE_JA",
+    ]);
+
+    const stored = await db
+      .select()
+      .from(page)
+      .where(eq(page.id, testPageToUpdateId))
+      .get();
+    expect(stored?.defaultLocale).toBe("tr");
+    expect(stored?.locales).toEqual(["tr", "hi", "ko", "ja"]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageToUpdateId));
+  });
 });
 
 // ==========================================================================
@@ -903,7 +1321,7 @@ describe("StatusPageService i18n plan limits", () => {
         slug: `${TEST_PREFIX}-i18n-limit-create-slug`,
         defaultLocale: "LOCALE_DE",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -920,7 +1338,7 @@ describe("StatusPageService i18n plan limits", () => {
         slug: `${TEST_PREFIX}-i18n-limit-create-slug`,
         locales: ["LOCALE_EN", "LOCALE_FR"],
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -934,7 +1352,7 @@ describe("StatusPageService i18n plan limits", () => {
     const testPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-i18n-limit-update`,
         slug: `${TEST_PREFIX}-i18n-limit-update-slug`,
         description: "",
@@ -950,7 +1368,7 @@ describe("StatusPageService i18n plan limits", () => {
           id: String(testPage.id),
           defaultLocale: "LOCALE_FR",
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).toBe(403);
@@ -967,7 +1385,7 @@ describe("StatusPageService i18n plan limits", () => {
     const testPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-i18n-limit-update`,
         slug: `${TEST_PREFIX}-i18n-limit-update-slug`,
         description: "",
@@ -983,7 +1401,7 @@ describe("StatusPageService i18n plan limits", () => {
           id: String(testPage.id),
           locales: ["LOCALE_EN", "LOCALE_FR"],
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).toBe(403);
@@ -1176,7 +1594,7 @@ describe("StatusPageService.AddMonitorComponent", () => {
     const limitTestPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-component-limit-test`,
         slug: `${TEST_PREFIX}-component-limit-test-slug`,
         description: "Page for component limit test",
@@ -1189,7 +1607,7 @@ describe("StatusPageService.AddMonitorComponent", () => {
     const limitTestMonitor = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-limit-monitor`,
         url: "https://example.com",
         periodicity: "1m",
@@ -1205,7 +1623,7 @@ describe("StatusPageService.AddMonitorComponent", () => {
       const component = await db
         .insert(pageComponent)
         .values({
-          workspaceId: 2,
+          workspaceId: OTHER_WORKSPACE_ID,
           pageId: limitTestPage.id,
           type: "static",
           name: `${TEST_PREFIX}-limit-component-${i}`,
@@ -1225,7 +1643,7 @@ describe("StatusPageService.AddMonitorComponent", () => {
           monitorId: String(limitTestMonitor.id),
           name: `${TEST_PREFIX}-limit-exceeded-component`,
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).toBe(403); // PermissionDenied
@@ -1298,7 +1716,7 @@ describe("StatusPageService.AddStaticComponent", () => {
     const limitTestPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-static-limit-test`,
         slug: `${TEST_PREFIX}-static-limit-test-slug`,
         description: "Page for static component limit test",
@@ -1313,7 +1731,7 @@ describe("StatusPageService.AddStaticComponent", () => {
       const component = await db
         .insert(pageComponent)
         .values({
-          workspaceId: 2,
+          workspaceId: OTHER_WORKSPACE_ID,
           pageId: limitTestPage.id,
           type: "static",
           name: `${TEST_PREFIX}-static-limit-component-${i}`,
@@ -1333,7 +1751,7 @@ describe("StatusPageService.AddStaticComponent", () => {
           name: `${TEST_PREFIX}-static-limit-exceeded`,
           description: "Should fail due to limit",
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).toBe(403); // PermissionDenied
@@ -1515,6 +1933,123 @@ describe("StatusPageService.UpdateComponent", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+});
+
+// A group belongs to exactly one page. Workspace scope alone would let a
+// component be filed under a group from a sibling page.
+describe("StatusPageService — component group must be on the same page", () => {
+  let otherPageId: number;
+  let otherGroupId: number;
+
+  beforeAll(async () => {
+    await db
+      .delete(pageComponentGroup)
+      .where(eq(pageComponentGroup.name, `${TEST_PREFIX}-other-group`));
+    await db
+      .delete(page)
+      .where(eq(page.slug, `${TEST_PREFIX}-other-page-slug`));
+
+    const otherPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-other-page`,
+        slug: `${TEST_PREFIX}-other-page-slug`,
+        description: "Second page, owns a group of its own",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+    otherPageId = otherPage.id;
+
+    const otherGroup = await db
+      .insert(pageComponentGroup)
+      .values({
+        workspaceId: 1,
+        pageId: otherPageId,
+        name: `${TEST_PREFIX}-other-group`,
+      })
+      .returning()
+      .get();
+    otherGroupId = otherGroup.id;
+  });
+
+  afterAll(async () => {
+    await db
+      .delete(pageComponentGroup)
+      .where(eq(pageComponentGroup.id, otherGroupId));
+    await db.delete(page).where(eq(page.id, otherPageId));
+  });
+
+  test("AddMonitorComponent rejects a group from another page", async () => {
+    const res = await connectRequest(
+      "AddMonitorComponent",
+      {
+        pageId: String(testPageId),
+        monitorId: String(testMonitorId),
+        name: `${TEST_PREFIX}-cross-page-monitor`,
+        groupId: String(otherGroupId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("AddStaticComponent rejects a group from another page", async () => {
+    const res = await connectRequest(
+      "AddStaticComponent",
+      {
+        pageId: String(testPageId),
+        name: `${TEST_PREFIX}-cross-page-static`,
+        groupId: String(otherGroupId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("UpdateComponent rejects a group from another page", async () => {
+    const res = await connectRequest(
+      "UpdateComponent",
+      {
+        id: String(testComponentToUpdateId),
+        groupId: String(otherGroupId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+
+    const stored = await db
+      .select()
+      .from(pageComponent)
+      .where(eq(pageComponent.id, testComponentToUpdateId))
+      .get();
+    expect(stored?.groupId ?? null).toBe(null);
+  });
+
+  test("a group on the same page is still accepted", async () => {
+    const res = await connectRequest(
+      "AddStaticComponent",
+      {
+        pageId: String(testPageId),
+        name: `${TEST_PREFIX}-same-page-static`,
+        groupId: String(testGroupId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.component.groupId).toBe(String(testGroupId));
+
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, Number(data.component.id)));
   });
 });
 
@@ -1800,7 +2335,7 @@ describe("StatusPageService.SubscribeToPage", () => {
         pageId: "1",
         email: "test@example.com",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -2218,7 +2753,7 @@ describe("StatusPageService.CreatePageSubscription", () => {
     const freePage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-plan-gate`,
         slug: `${TEST_PREFIX}-plan-gate`,
         description: "Test page for plan gate",
@@ -2235,7 +2770,7 @@ describe("StatusPageService.CreatePageSubscription", () => {
             email: `${TEST_PREFIX}-plan-gate@example.com`,
           },
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
       expect(res.status).toBe(403);
     } finally {
@@ -2651,6 +3186,246 @@ describe("StatusPageService.GetOverallStatus", () => {
         .delete(statusReportsToPageComponents)
         .where(eq(statusReportsToPageComponents.statusReportId, report.id));
       await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    }
+  });
+});
+
+describe("StatusPageService.GetStatusPageOverview", () => {
+  test("returns full overview by id", async () => {
+    const res = await connectRequest(
+      "GetStatusPageOverview",
+      { id: String(testPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.id).toBe(String(testPageId));
+    expect(data).toHaveProperty("configuration");
+    expect(data).toHaveProperty("components");
+    expect(data).toHaveProperty("overallStatus");
+    expect(data).toHaveProperty("componentStatuses");
+  });
+
+  test("returns configuration defaults when unset", async () => {
+    const createdPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-overview-default-config`,
+        slug: `${TEST_PREFIX}-overview-default-config-slug`,
+        description: "",
+        customDomain: "",
+        published: true,
+        accessType: "public",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(createdPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_REQUESTS");
+      expect(data.configuration.barType).toBe("PAGE_BAR_TYPE_ABSOLUTE");
+      expect(data.configuration.showUptime).toBe(true);
+      expect(data.configuration.themeKey).toBe("default");
+    } finally {
+      await db.delete(page).where(eq(page.id, createdPage.id));
+    }
+  });
+
+  test("maps stored configuration values", async () => {
+    const createdPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-overview-custom-config`,
+        slug: `${TEST_PREFIX}-overview-custom-config-slug`,
+        description: "",
+        customDomain: "",
+        published: true,
+        accessType: "public",
+        configuration: {
+          value: "duration",
+          type: "manual",
+          uptime: false,
+          theme: "dracula",
+        },
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(createdPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_DURATION");
+      expect(data.configuration.barType).toBe("PAGE_BAR_TYPE_MANUAL");
+      // proto3 JSON omits a false bool (the default), so it reads back as undefined
+      expect(data.configuration.showUptime ?? false).toBe(false);
+      expect(data.configuration.themeKey).toBe("dracula");
+    } finally {
+      await db.delete(page).where(eq(page.id, createdPage.id));
+    }
+  });
+
+  test("falls back to default configuration for invalid stored values", async () => {
+    const createdPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-overview-bad-config`,
+        slug: `${TEST_PREFIX}-overview-bad-config-slug`,
+        description: "",
+        customDomain: "",
+        published: true,
+        accessType: "public",
+        configuration: { value: "latency", theme: "removed-theme-xyz" },
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(createdPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_REQUESTS");
+      expect(data.configuration.themeKey).toBe("default");
+    } finally {
+      await db.delete(page).where(eq(page.id, createdPage.id));
+    }
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("GetStatusPageOverview", {
+      id: String(testPageId),
+    });
+
+    expect(res.status).toBe(401);
+  });
+
+  test("returns 404 for non-existent page", async () => {
+    const res = await connectRequest(
+      "GetStatusPageOverview",
+      { id: "99999" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns 404 for a page in another workspace", async () => {
+    const otherPage = await db
+      .insert(page)
+      .values({
+        workspaceId: OTHER_WORKSPACE_ID,
+        title: `${TEST_PREFIX}-overview-other-ws`,
+        slug: `${TEST_PREFIX}-overview-other-ws-slug`,
+        description: "",
+        customDomain: "",
+        published: true,
+        accessType: "public",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(otherPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+    } finally {
+      await db.delete(page).where(eq(page.id, otherPage.id));
+    }
+  });
+
+  test("rejects slug identifier (id required)", async () => {
+    const res = await connectRequest(
+      "GetStatusPageOverview",
+      { slug: testPageSlug },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("reflects degraded status from an active report", async () => {
+    const report = await db
+      .insert(statusReport)
+      .values({
+        workspaceId: 1,
+        pageId: testPageId,
+        title: `${TEST_PREFIX}-overview-report`,
+        status: "investigating",
+      })
+      .returning()
+      .get();
+
+    await db.insert(statusReportsToPageComponents).values({
+      statusReportId: report.id,
+      pageComponentId: testComponentId,
+    });
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(testPageId) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.overallStatus).toBe("OVERALL_STATUS_DEGRADED");
+      const reported = data.statusReports.find(
+        (r: { title: string }) => r.title === `${TEST_PREFIX}-overview-report`,
+      );
+      expect(reported).toBeDefined();
+    } finally {
+      await db
+        .delete(statusReportsToPageComponents)
+        .where(eq(statusReportsToPageComponents.statusReportId, report.id));
+      await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    }
+  });
+
+  test("excludes uptime time-series buckets", async () => {
+    const res = await connectRequest(
+      "GetStatusPageOverview",
+      { id: String(testPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(Array.isArray(data.components)).toBe(true);
+    expect(data.components.length).toBeGreaterThan(0);
+    for (const component of data.components) {
+      expect(component).not.toHaveProperty("buckets");
     }
   });
 });
@@ -3129,8 +3904,6 @@ describe("StatusPageService.UpdateStatusPage — new fields", () => {
 });
 
 describe("StatusPageService — new fields limit enforcement (workspace 2 / free plan)", () => {
-  let ws2PageId: number;
-
   test("returns 403 when creating with custom_domain on free plan", async () => {
     const res = await connectRequest(
       "CreateStatusPage",
@@ -3139,7 +3912,7 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
         slug: `${TEST_PREFIX}-limit-ws2-slug`,
         customDomain: "status.freeplan.com",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -3154,7 +3927,7 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
         accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
         password: "secret",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -3169,66 +3942,98 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
         accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
         authEmailDomains: ["example.com"],
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
   });
 
+  // Each update test creates and deletes its OWN page rather than sharing a
+  // `ws2PageId` across the block: the services suites clear workspace-2 pages
+  // (`cleanQuotaGatedTables(SEEDED_WORKSPACE_FREE_ID)`) on committed rows in
+  // parallel, so a page persisted across several tests can vanish mid-block
+  // and turn the expected 403 into a 404. Mirrors the IP-restriction block.
   test("returns 403 when updating with custom_domain on free plan", async () => {
     const ws2Page = await db
       .insert(page)
       .values({
-        workspaceId: 2,
-        title: `${TEST_PREFIX}-limit-update-ws2`,
-        slug: `${TEST_PREFIX}-limit-update-ws2-slug`,
+        workspaceId: OTHER_WORKSPACE_ID,
+        title: `${TEST_PREFIX}-limit-update-ws2-cd`,
+        slug: `${TEST_PREFIX}-limit-update-ws2-cd-slug`,
         description: "Free plan page",
         customDomain: "",
       })
       .returning()
       .get();
-    ws2PageId = ws2Page.id;
 
     const res = await connectRequest(
       "UpdateStatusPage",
       {
-        id: String(ws2PageId),
+        id: String(ws2Page.id),
         customDomain: "status.freeplan.com",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
+
+    await db.delete(page).where(eq(page.id, ws2Page.id));
   });
 
   test("returns 403 when updating with PASSWORD_PROTECTED on free plan", async () => {
+    const ws2Page = await db
+      .insert(page)
+      .values({
+        workspaceId: OTHER_WORKSPACE_ID,
+        title: `${TEST_PREFIX}-limit-update-ws2-pw`,
+        slug: `${TEST_PREFIX}-limit-update-ws2-pw-slug`,
+        description: "Free plan page",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
     const res = await connectRequest(
       "UpdateStatusPage",
       {
-        id: String(ws2PageId),
+        id: String(ws2Page.id),
         accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
         password: "secret",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
+
+    await db.delete(page).where(eq(page.id, ws2Page.id));
   });
 
   test("returns 403 when updating with AUTHENTICATED on free plan", async () => {
+    const ws2Page = await db
+      .insert(page)
+      .values({
+        workspaceId: OTHER_WORKSPACE_ID,
+        title: `${TEST_PREFIX}-limit-update-ws2-auth`,
+        slug: `${TEST_PREFIX}-limit-update-ws2-auth-slug`,
+        description: "Free plan page",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
     const res = await connectRequest(
       "UpdateStatusPage",
       {
-        id: String(ws2PageId),
+        id: String(ws2Page.id),
         accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
         authEmailDomains: ["example.com"],
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
 
-    await db.delete(page).where(eq(page.id, ws2PageId));
+    await db.delete(page).where(eq(page.id, ws2Page.id));
   });
 });
 
@@ -3510,7 +4315,7 @@ describe("StatusPageService — allow_index", () => {
     const freePage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-no-index`,
         slug: `${TEST_PREFIX}-no-index`,
         description: "Test page for no-index gate",
@@ -3525,7 +4330,7 @@ describe("StatusPageService — allow_index", () => {
           id: String(freePage.id),
           allowIndex: false,
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).not.toBe(200);
@@ -3786,7 +4591,7 @@ describe("StatusPageService — IP restriction limit enforcement (workspace 2 / 
         accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
         allowedIpRanges: "10.0.0.0/8",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -3796,7 +4601,7 @@ describe("StatusPageService — IP restriction limit enforcement (workspace 2 / 
     const ws2Page = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-ip-limit-update-ws2`,
         slug: `${TEST_PREFIX}-ip-limit-ws2-slug`,
         description: "Free plan page",
@@ -3812,7 +4617,7 @@ describe("StatusPageService — IP restriction limit enforcement (workspace 2 / 
         accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
         allowedIpRanges: "10.0.0.0/8",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);

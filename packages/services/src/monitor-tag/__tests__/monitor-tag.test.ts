@@ -1,12 +1,11 @@
-import { db, eq } from "@openstatus/db";
-import { monitorTag } from "@openstatus/db/src/schema";
+import { eq } from "@openstatus/db";
+import { monitorTag, workspace } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, test } from "@std/testing/bdd";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   clearAuditLog,
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeApiKeyCtx,
   makeUserCtx,
   readAuditLog,
@@ -18,23 +17,9 @@ import { listMonitorTags, syncMonitorTags } from "../index.ts";
 
 let teamCtx: ServiceContext;
 
-async function clearWorkspaceTags() {
-  await db
-    .delete(monitorTag)
-    .where(eq(monitorTag.workspaceId, SEEDED_WORKSPACE_TEAM_ID))
-    .catch(() => undefined);
-}
-
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  teamCtx = makeUserCtx(team, { userId: 1 });
-  // Wipe rows from prior aborted runs so tests can assert exact counts.
-  await clearWorkspaceTags();
-  await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID);
-});
-
-afterAll(async () => {
-  await clearWorkspaceTags();
+  const team = await createWorkspaceFixture("team");
+  teamCtx = makeUserCtx(team.workspace, { userId: team.userId });
 });
 
 describe("syncMonitorTags", () => {
@@ -55,7 +40,7 @@ describe("syncMonitorTags", () => {
       expect(result.map((r) => r.name).sort()).toEqual(["alpha", "beta"]);
 
       const auditRows = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: teamCtx.workspace.id,
         entityType: "monitor_tag",
         db: tx,
       });
@@ -73,7 +58,7 @@ describe("syncMonitorTags", () => {
         ctx,
         input: { tags: [{ name: "alpha", color: "red" }] },
       });
-      await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID, { db: tx });
+      await clearAuditLog(teamCtx.workspace.id, { db: tx });
 
       await syncMonitorTags({
         ctx,
@@ -90,7 +75,7 @@ describe("syncMonitorTags", () => {
       expect(row?.name).toBe("alpha-renamed");
 
       const auditRows = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: teamCtx.workspace.id,
         entityType: "monitor_tag",
         entityId: existingId,
         db: tx,
@@ -109,7 +94,7 @@ describe("syncMonitorTags", () => {
         ctx,
         input: { tags: [{ name: "alpha", color: "red" }] },
       });
-      await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID, { db: tx });
+      await clearAuditLog(teamCtx.workspace.id, { db: tx });
 
       await syncMonitorTags({
         ctx,
@@ -117,7 +102,7 @@ describe("syncMonitorTags", () => {
       });
 
       const auditRows = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: teamCtx.workspace.id,
         entityType: "monitor_tag",
         entityId: existingId,
         db: tx,
@@ -143,7 +128,7 @@ describe("syncMonitorTags", () => {
           ],
         },
       });
-      await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID, { db: tx });
+      await clearAuditLog(teamCtx.workspace.id, { db: tx });
 
       const keep = created.find((t) => t.name === "alpha");
       if (!keep) throw new Error("seed setup failed");
@@ -157,7 +142,7 @@ describe("syncMonitorTags", () => {
       expect(remaining.map((r) => r.name)).toEqual(["alpha"]);
 
       const auditRows = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: teamCtx.workspace.id,
         entityType: "monitor_tag",
         db: tx,
       });
@@ -199,7 +184,7 @@ describe("syncMonitorTags", () => {
           ],
         },
       });
-      await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID, { db: tx });
+      await clearAuditLog(teamCtx.workspace.id, { db: tx });
 
       const stays = seed.find((t) => t.name === "stays");
       if (!stays) throw new Error("seed setup failed");
@@ -215,7 +200,7 @@ describe("syncMonitorTags", () => {
       });
 
       const auditRows = await readAuditLog({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: teamCtx.workspace.id,
         entityType: "monitor_tag",
         db: tx,
       });
@@ -226,6 +211,57 @@ describe("syncMonitorTags", () => {
       expect(byAction["monitor_tag.create"]).toBe(1);
       expect(byAction["monitor_tag.update"]).toBe(1);
       expect(byAction["monitor_tag.delete"]).toBe(1);
+    });
+  });
+});
+
+describe("listMonitorTags", () => {
+  test("returns flat tag rows, without the monitor join", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await syncMonitorTags({
+        ctx,
+        input: { tags: [{ name: "flat", color: "red" }] },
+      });
+
+      const rows = await listMonitorTags({ ctx });
+      const row = rows.find((r) => r.name === "flat");
+      expect(row).toBeDefined();
+      // The join used to ship a full second copy of the monitor table in the
+      // same batch as `monitor.list`; no consumer ever read it.
+      expect(row && "monitor" in row).toBe(false);
+      expect(row?.color).toBe("red");
+      expect(row?.workspaceId).toBe(teamCtx.workspace.id);
+    });
+  });
+
+  test("is scoped to the caller's workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await syncMonitorTags({
+        ctx,
+        input: { tags: [{ name: "scoped", color: "green" }] },
+      });
+
+      const [foreign] = await tx
+        .insert(workspace)
+        .values({
+          slug: `svc-tag-foreign-${teamCtx.workspace.id}`,
+          name: "Foreign",
+          stripeId: `svc-tag-stripe-${teamCtx.workspace.id}`,
+          plan: "team",
+        })
+        .returning();
+      if (!foreign) throw new Error("workspace insert returned no row");
+      await tx.insert(monitorTag).values({
+        workspaceId: foreign.id,
+        name: "foreign-tag",
+        color: "blue",
+      });
+
+      const rows = await listMonitorTags({ ctx });
+      expect(rows.some((r) => r.name === "scoped")).toBe(true);
+      expect(rows.some((r) => r.name === "foreign-tag")).toBe(false);
     });
   });
 });

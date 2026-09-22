@@ -5,12 +5,20 @@ import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { monitor } from "../monitors/monitor";
 import { workspace } from "../workspaces";
 
+export const privateLocationStatus = ["active", "error"] as const;
+
 export const privateLocation = sqliteTable(
   "private_location",
   {
     id: integer("id").primaryKey(),
     name: text("name").notNull(),
     token: text("token").notNull(),
+    status: text("status", { enum: privateLocationStatus })
+      .default("error")
+      .notNull(),
+    metadata: text("metadata", { mode: "json" }).$type<
+      Record<string, string>
+    >(),
     lastSeenAt: integer("last_seen_at", { mode: "timestamp" }),
     workspaceId: integer("workspace_id").references(() => workspace.id),
     createdAt: integer("created_at", { mode: "timestamp" }).default(

@@ -4,6 +4,8 @@ import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { type ServiceContext, ServiceError } from "@openstatus/services";
 import { ZodError } from "zod";
 
+import { tb } from "@/libs/clients";
+
 /**
  * Build a `ServiceContext` for an MCP-originated request.
  *
@@ -31,6 +33,7 @@ export function toServiceCtx(args: {
       scopes: args.apiKey.scopes,
     },
     requestId: args.requestId,
+    tb,
   };
 }
 

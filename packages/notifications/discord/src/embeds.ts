@@ -63,7 +63,7 @@ export function buildAlertEmbed(data: FormattedMessageData): DiscordEmbed {
       : data.monitorUrl;
 
   return {
-    title: `${data.monitorName} is failing`,
+    title: buildTitle(data.monitorName, " is failing"),
     description: `\`${description}\``,
     color: COLOR_DECIMALS.red,
     fields: [
@@ -172,7 +172,7 @@ export function buildRecoveryEmbed(data: FormattedMessageData): DiscordEmbed {
   );
 
   return {
-    title: `${data.monitorName} is recovered`,
+    title: buildTitle(data.monitorName, " is recovered"),
     description: `\`${description}\``,
     color: COLOR_DECIMALS.green,
     fields,
@@ -255,7 +255,7 @@ export function buildDegradedEmbed(data: FormattedMessageData): DiscordEmbed {
   );
 
   return {
-    title: `${data.monitorName} is degraded`,
+    title: buildTitle(data.monitorName, " is degraded"),
     description: `\`${description}\``,
     color: COLOR_DECIMALS.yellow,
     fields,
@@ -265,4 +265,12 @@ export function buildDegradedEmbed(data: FormattedMessageData): DiscordEmbed {
     },
     url: data.dashboardUrl,
   };
+}
+
+function buildTitle(name: string, suffix: string): string {
+  const shortenedName = name
+    .slice(0, 256 - suffix.length)
+    // Keep surrogate pairs complete at the title limit.
+    .replace(/[\uD800-\uDBFF]$/, "");
+  return `${shortenedName}${suffix}`;
 }

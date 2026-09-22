@@ -29,7 +29,8 @@ The endpoint of the TCP service you want to monitor. This includes the hostname 
 
 ### Regions
 
-**Type:** Array of strings (required)
+**Type:** Array of strings (optional)
+**Default:** a plan-based selection (4 regions on the free plan, 6 on paid plans)
 **Format:** Region identifiers (e.g., `iad`, `jnb`)
 
 The geographical regions from which the TCP connection attempt will be initiated. This allows for verification of service availability and network latency across different global locations. See the [Location Reference](/docs/reference/location) for the full list of regions and the IPs to allowlist.
@@ -46,6 +47,12 @@ The interval at which the TCP monitor will attempt to connect to the target URI.
 - `10 minutes`
 - `30 minutes`
 - `1 hour`
+
+<Aside>
+Which frequencies you can select depends on your plan: **Hobby** offers `10m`, `30m` and `1h`;
+**Starter** adds `1m` and `5m`; `30s` is **Pro** and **Scale** only. See
+[pricing](https://www.openstatus.dev/pricing) for the full breakdown.
+</Aside>
 
 ### Response time thresholds
 

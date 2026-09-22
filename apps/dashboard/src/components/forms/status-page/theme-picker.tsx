@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, Expand } from "@openstatus/icons";
 import { THEMES, THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -17,7 +18,6 @@ import {
   PopoverTrigger,
 } from "@openstatus/ui/components/ui/popover";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Check, ChevronsUpDown } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
@@ -84,7 +84,7 @@ export function ThemePickerPopover({
                 {THEMES[value]?.name ?? "Select a theme"}
               </span>
             </div>
-            <ChevronsUpDown className="shrink-0 opacity-50" />
+            <Expand className="shrink-0 opacity-50" />
           </Button>
         </FormControl>
       </PopoverTrigger>

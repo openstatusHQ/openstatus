@@ -44,6 +44,12 @@ export {
 
 export { matchesScope, requireScope } from "./auth";
 
-export { assertWithinLimit, getPlanLimits, type LimitKey } from "./limits";
+export {
+  LIMIT_KEYS,
+  assertWithinLimit,
+  countWorkspaceUsage,
+  getPlanLimits,
+  type LimitKey,
+} from "./limits";
 
 export * from "./types";

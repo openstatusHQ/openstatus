@@ -1,12 +1,12 @@
 import type { RouterOutputs } from "@openstatus/api";
 import {
-  Activity,
-  type LucideIcon,
-  Megaphone,
-  PanelTop,
-  Siren,
-  Wrench,
-} from "lucide-react";
+  Monitor,
+  type IconType,
+  Report,
+  StatusPage,
+  Incident as IncidentIcon,
+  Maintenance as MaintenanceIcon,
+} from "@openstatus/icons";
 
 type Incident = RouterOutputs["incident"]["list"][number];
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
@@ -18,9 +18,9 @@ export type OverviewEvent =
   | { type: "maintenance"; maintenance: Maintenance };
 
 export const eventTypeConfig = {
-  incident: { label: "Incident", icon: Siren },
-  report: { label: "Status Report", icon: Megaphone },
-  maintenance: { label: "Maintenance", icon: Wrench },
+  incident: { label: "Incident", icon: IncidentIcon },
+  report: { label: "Status Report", icon: Report },
+  maintenance: { label: "Maintenance", icon: MaintenanceIcon },
 } as const;
 
 export type OverviewEventType = keyof typeof eventTypeConfig;
@@ -111,7 +111,7 @@ export type OverviewMetric = {
   value: number;
   href?: string;
   variant: "default" | "destructive" | "warning" | "info";
-  icon: LucideIcon;
+  icon: IconType;
 };
 
 export function buildOverviewData(
@@ -164,14 +164,14 @@ export function buildOverviewData(
       value: monitors.length,
       href: "/monitors",
       variant: "default",
-      icon: Activity,
+      icon: Monitor,
     },
     {
       title: "Status Pages",
       value: pages.length,
       href: "/status-pages",
       variant: "default",
-      icon: PanelTop,
+      icon: StatusPage,
     },
     {
       title: "Open Incidents",

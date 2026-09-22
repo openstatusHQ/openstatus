@@ -38,9 +38,11 @@ function fromToken(value: string): CacheStatus | null {
   return null;
 }
 
-// RFC 9211, e.g. `"Netlify Edge"; hit` or `ExampleCache; fwd=miss; stored`
+// RFC 9211 lists the cache closest to the user last.
 function fromCacheStatusHeader(value: string): CacheStatus | null {
-  const lower = value.toLowerCase();
+  // Quoted strings can contain commas and text that resembles parameters.
+  const unquoted = value.replace(/"(?:[^"\\]|\\.)*"/g, '""');
+  const lower = unquoted.slice(unquoted.lastIndexOf(",") + 1).toLowerCase();
   if (/;\s*hit/.test(lower)) return "HIT";
   const fwd = lower.match(/fwd=([a-z-]+)/)?.[1];
   if (!fwd) return null;

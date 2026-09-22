@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "check": "tsc --noEmit",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
@@ -31,6 +32,11 @@
     "@openstatus/emails": "workspace:*",
     "@openstatus/error": "workspace:*",
     "@openstatus/header-analysis": "workspace:*",
+    "@openstatus/health": "catalog:",
+    "@openstatus/health-tinybird": "catalog:",
+    "@openstatus/health-turso": "catalog:",
+    "@openstatus/health-upstash": "catalog:",
+    "@openstatus/health-vercel": "catalog:",
     "@openstatus/icons": "workspace:*",
     "@openstatus/importers": "workspace:*",
     "@openstatus/locales": "workspace:*",

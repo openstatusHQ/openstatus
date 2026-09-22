@@ -1,5 +1,5 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
-import type { google } from "@google-cloud/tasks/build/protos/protos";
+import type { google } from "@google-cloud/tasks/build/protos";
 import {
   and,
   db,
@@ -29,20 +29,53 @@ import { env } from "../env";
 
 const redis = Redis.fromEnv();
 
-const client = new CloudTasksClient({
-  projectId: env().GCP_PROJECT_ID,
-  fallback: "rest",
-  credentials: {
-    client_email: env().GCP_CLIENT_EMAIL,
-    private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
-  },
-});
+const PAUSE_FROM =
+  "Thibault from openstatus <thibault@notifications.openstatus.dev>";
+const PAUSE_REPLY_TO = "thibault@openstatus.dev";
 
-const parent = client.queuePath(
-  env().GCP_PROJECT_ID,
-  env().GCP_LOCATION,
-  "workflow",
-);
+// Check if GCP is properly configured (not empty and not placeholder values)
+const isGcpConfigured = () => {
+  const gcpProjectId = env().GCP_PROJECT_ID;
+  const gcpLocation = env().GCP_LOCATION;
+  const gcpClientEmail = env().GCP_CLIENT_EMAIL;
+  const gcpPrivateKey = env().GCP_PRIVATE_KEY;
+
+  return (
+    gcpProjectId &&
+    gcpLocation &&
+    gcpClientEmail &&
+    gcpPrivateKey &&
+    gcpProjectId !== "" &&
+    gcpLocation !== "" &&
+    gcpClientEmail !== "" &&
+    gcpPrivateKey !== "" &&
+    gcpProjectId !== "your-value" &&
+    gcpLocation !== "your-value" &&
+    gcpClientEmail !== "your-value" &&
+    gcpPrivateKey !== "your-value"
+  );
+};
+
+// Only initialize Cloud Tasks client if GCP is properly configured
+let client: CloudTasksClient | null = null;
+let parent: string | null = null;
+
+if (isGcpConfigured()) {
+  client = new CloudTasksClient({
+    projectId: env().GCP_PROJECT_ID,
+    fallback: "rest",
+    credentials: {
+      client_email: env().GCP_CLIENT_EMAIL,
+      private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+    },
+  });
+
+  parent = client.queuePath(
+    env().GCP_PROJECT_ID,
+    env().GCP_LOCATION,
+    "workflow",
+  );
+}
 
 const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "second" });
 
@@ -184,6 +217,15 @@ async function workflowInit({
     return;
   }
   const initialRun = new Date().getTime();
+
+  // Only create GCP Cloud Tasks if GCP is configured
+  if (!client || !parent) {
+    console.log(
+      `Skipping workflow for user ${user.userId} - GCP not configured`,
+    );
+    return;
+  }
+
   await CreateTask({
     parent,
     client: client,
@@ -191,6 +233,7 @@ async function workflowInit({
     userId: user.userId,
     initialRun,
   });
+
   await redis.set(`workflow:user:${user.userId}`, initialRun, {
     ex: 30 * 86400,
   });
@@ -211,31 +254,37 @@ export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
   const user = await getUser(userId);
 
   if (user.email) {
+    const email = await monitorDeactivationEmail({
+      deactivateAt: new Date(new Date().setDate(new Date().getDate() + 14)),
+      ...(await getPauseContext(userId)),
+    });
     await sendWorkflowEmail({
       userId,
       step: "14days",
       initialRun: workFlowRunTimestamp,
       email: {
         to: user.email,
-        subject: "Your OpenStatus monitors will be paused in 14 days",
-        from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-        reply_to: "thibault@openstatus.dev",
-        html: monitorDeactivationEmail({
-          date: new Date(
-            new Date().setDate(new Date().getDate() + 14),
-          ).toDateString(),
-        }),
+        from: PAUSE_FROM,
+        reply_to: PAUSE_REPLY_TO,
+        ...email,
       },
     });
   }
 
-  await CreateTask({
-    parent,
-    client: client,
-    step: "3days",
-    userId: user.id,
-    initialRun: workFlowRunTimestamp,
-  });
+  // Only create GCP Cloud Tasks if GCP is configured
+  if (client && parent) {
+    await CreateTask({
+      parent,
+      client: client,
+      step: "3days",
+      userId: user.id,
+      initialRun: workFlowRunTimestamp,
+    });
+  } else {
+    console.log(
+      `Skipping Cloud Tasks creation for user ${user.id} - GCP not configured`,
+    );
+  }
 }
 
 export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
@@ -252,31 +301,37 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
   const user = await getUser(userId);
 
   if (user.email) {
+    const email = await monitorDeactivationEmail({
+      deactivateAt: new Date(new Date().setDate(new Date().getDate() + 3)),
+      ...(await getPauseContext(userId)),
+    });
     await sendWorkflowEmail({
       userId,
       step: "3days",
       initialRun: workFlowRunTimestamp,
       email: {
         to: user.email,
-        subject: "Your OpenStatus monitors will be paused in 3 days",
-        from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-        reply_to: "thibault@openstatus.dev",
-        html: monitorDeactivationEmail({
-          date: new Date(
-            new Date().setDate(new Date().getDate() + 3),
-          ).toDateString(),
-        }),
+        from: PAUSE_FROM,
+        reply_to: PAUSE_REPLY_TO,
+        ...email,
       },
     });
   }
 
-  await CreateTask({
-    client,
-    parent,
-    step: "paused",
-    userId,
-    initialRun: workFlowRunTimestamp,
-  });
+  // Only create GCP Cloud Tasks if GCP is configured
+  if (client && parent) {
+    await CreateTask({
+      client,
+      parent,
+      step: "paused",
+      userId,
+      initialRun: workFlowRunTimestamp,
+    });
+  } else {
+    console.log(
+      `Skipping Cloud Tasks creation for user ${userId} - GCP not configured`,
+    );
+  }
 }
 
 export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
@@ -291,6 +346,7 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
     }
 
     const workspace = await getUserWorkspace(userId);
+    let pausedCount = 0;
     if (workspace) {
       const activeMonitors = await db
         .select({ id: schema.monitor.id })
@@ -303,6 +359,7 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
           ),
         )
         .all();
+      pausedCount = activeMonitors.length;
       if (activeMonitors.length > 0) {
         await bulkUpdateMonitors({
           ctx: {
@@ -316,16 +373,19 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
 
     const currentUser = await getUser(userId);
     if (currentUser.email) {
+      const email = await monitorPausedEmail({
+        monitorCount: pausedCount || undefined,
+        workspaceSlug: workspace?.slug,
+      });
       await sendWorkflowEmail({
         userId,
         step: "paused",
         initialRun: workFlowRunTimestamp,
         email: {
           to: currentUser.email,
-          subject: "Your monitors have been paused",
-          from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-          reply_to: "thibault@openstatus.dev",
-          html: monitorPausedEmail(),
+          from: PAUSE_FROM,
+          reply_to: PAUSE_REPLY_TO,
+          ...email,
         },
       });
     }
@@ -453,6 +513,23 @@ async function sendWorkflowEmail({
   }
   await sendBatchEmailHtml([email]);
   await redis.set(key, 1, { ex: 30 * 86400 });
+}
+
+async function getPauseContext(userId: number) {
+  const workspace = await getUserWorkspace(userId);
+  if (!workspace) return {};
+  const monitorCount = await db.$count(
+    schema.monitor,
+    and(
+      eq(schema.monitor.workspaceId, workspace.id),
+      eq(schema.monitor.active, true),
+      isNull(schema.monitor.deletedAt),
+    ),
+  );
+  return {
+    monitorCount: monitorCount || undefined,
+    workspaceSlug: workspace.slug,
+  };
 }
 
 async function getUserWorkspace(userId: number) {

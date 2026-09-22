@@ -38,6 +38,10 @@ export const getJsonLDWebPage = (
     "@type": "WebPage",
     name: `${input.metadata.title} | openstatus`,
     headline: input.metadata.description,
+    datePublished: input.metadata.publishedAt.toISOString(),
+    dateModified: (
+      input.metadata.updatedAt ?? input.metadata.publishedAt
+    ).toISOString(),
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": BASE_URL,
@@ -66,7 +70,9 @@ export const getJsonLDBlogPosting = (
     "@type": "BlogPosting",
     headline: post.metadata.title,
     datePublished: post.metadata.publishedAt.toISOString(),
-    dateModified: post.metadata.publishedAt.toISOString(),
+    dateModified: (
+      post.metadata.updatedAt ?? post.metadata.publishedAt
+    ).toISOString(),
     description: post.metadata.description,
     image: post.metadata.image
       ? `${BASE_URL}${post.metadata.image}`
@@ -92,7 +98,9 @@ export const getJsonLDTechArticle = (
     headline: doc.metadata.title,
     description: doc.metadata.description,
     datePublished: doc.metadata.publishedAt.toISOString(),
-    dateModified: doc.metadata.publishedAt.toISOString(),
+    dateModified: (
+      doc.metadata.updatedAt ?? doc.metadata.publishedAt
+    ).toISOString(),
     url: `${BASE_URL}${doc.href}`,
     author: {
       "@type": "Organization",
@@ -123,6 +131,15 @@ export const getJsonLDOrganization = (): WithContext<Organization> => {
       "https://bsky.app/profile/openstatus.dev",
       "https://x.com/openstatushq",
     ],
+    // Same address the contact page and every email footer already carry —
+    // it is what lets an assistant tie the entity to the registered company.
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "122 Rue Amelot",
+      postalCode: "75011",
+      addressLocality: "Paris",
+      addressCountry: "FR",
+    },
     contactPoint: [
       {
         "@type": "ContactPoint",
@@ -168,7 +185,7 @@ export const getJsonLDProduct = (): WithContext<Product> => {
     "@type": "Product",
     name: "openstatus",
     description:
-      "The open-source status page and uptime monitoring platform trusted by growing teams.",
+      "The open-source status page and uptime monitoring platform built for infra as code. Declare monitors in code and let your agents update them.",
     image: `${BASE_URL}/assets/logos/OpenStatus-Logo.svg`,
     url: BASE_URL,
     brand: {
@@ -196,7 +213,7 @@ export const getJsonLDSoftwareApplication =
       name: "openstatus",
       url: BASE_URL,
       description:
-        "The open-source status page and uptime monitoring platform trusted by growing teams.",
+        "The open-source status page and uptime monitoring platform built for infra as code. Declare monitors in code and let your agents update them.",
       applicationCategory: "BusinessApplication",
       applicationSubCategory: "Status Pages & Uptime Monitoring",
       operatingSystem: "Web, Self-hosted",

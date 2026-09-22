@@ -1,6 +1,7 @@
 // Single source of truth for docs section order, page order, and sidebar labels.
-// Labels mirror each page's `title`, except section-landing pages which keep a
-// short label (e.g. title "Foundational Concepts" → label "Overview"). Page→section
+// Labels mirror each page's `title` in title case, except: section-landing pages
+// keep a short label (e.g. title "Foundational Concepts" → label "Overview"), and
+// Guides entries carry a "How to " prefix the page title may omit. Page→section
 // membership is mirrored by each doc's `category` frontmatter and cross-checked
 // at build time (see `validateDocsNav`).
 
@@ -134,7 +135,7 @@ export const docsNav: DocsNavSection[] = [
       },
       {
         slug: "guides/how-to-monitor-mcp-server",
-        label: "How to Monitor Your Model Context Provider (MCP) Server",
+        label: "How to Monitor an MCP Server",
       },
       {
         slug: "guides/how-to-run-synthetic-test-github-action",
@@ -153,8 +154,8 @@ export const docsNav: DocsNavSection[] = [
         label: "How to Auto-Post Status Updates to X and Bluesky",
       },
       {
-        slug: "guides/how-to-connect-openstatus-to-claude-code",
-        label: "How to Connect openstatus to Claude Code",
+        slug: "guides/how-to-connect-openstatus-to-your-agent",
+        label: "How to Connect openstatus to Your Coding Agent",
       },
       {
         slug: "guides/how-to-manage-openstatus-with-terraform",
@@ -167,6 +168,10 @@ export const docsNav: DocsNavSection[] = [
       {
         slug: "guides/how-to-deploy-probes-cloudflare-containers",
         label: "How to Deploy a Private Probe on Cloudflare Containers",
+      },
+      {
+        slug: "guides/how-to-set-up-saml-sso",
+        label: "How to Set Up SAML Single Sign-On",
       },
       {
         slug: "guides/self-hosting-openstatus",
@@ -210,6 +215,10 @@ export const docsNav: DocsNavSection[] = [
             slug: "sdk/nodejs/notification-service",
             label: "Notification Service",
           },
+          {
+            slug: "sdk/nodejs/private-location-service",
+            label: "Private Location Service",
+          },
           { slug: "sdk/nodejs/health-service", label: "Health Service" },
           { slug: "sdk/nodejs/error-handling", label: "Error Handling" },
           { slug: "sdk/nodejs/typescript-tips", label: "TypeScript Tips" },
@@ -235,16 +244,19 @@ export const docsNav: DocsNavSection[] = [
         label: "API Reference V2",
         external: true,
       },
+      { slug: "reference/api-rate-limits", label: "API Rate Limits" },
       { slug: "reference/cli-reference", label: "CLI Reference" },
       { slug: "reference/mcp-server", label: "MCP Server" },
       { slug: "reference/dns-monitor", label: "DNS Monitor Reference" },
+      { slug: "reference/grpc-monitor", label: "gRPC Monitor Reference" },
       { slug: "reference/http-monitor", label: "HTTP Monitor Reference" },
-      { slug: "reference/incident", label: "Incident Reference" },
+      { slug: "reference/icmp-monitor", label: "ICMP Monitor Reference" },
       { slug: "reference/tcp-monitor", label: "TCP Monitor Reference" },
       {
         slug: "reference/notification",
         label: "Notification Channels Reference",
       },
+      { slug: "reference/incident", label: "Incident Reference" },
       { slug: "reference/location", label: "Location Reference" },
       {
         slug: "reference/private-location",
@@ -336,7 +348,7 @@ export function docsNavTree(): DocsNavNode {
     label: "openstatus documentation",
     href: "/docs",
     description:
-      "Learn how to create your status page, monitor your endpoints, and configure notifications.",
+      "Infra as code for uptime monitoring and status pages. Let your agents update them. Learn how to monitor your endpoints, create your status page, configure notifications, and drive it all from the CLI, Terraform, API, or MCP.",
     children: docsNav.map((section) => {
       const parent = sectionParentSlug(section);
       return {

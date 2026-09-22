@@ -5,6 +5,7 @@ import {
   type Region,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema/constants";
+import { Error, Globe, Info } from "@openstatus/icons";
 import {
   formatRegionCode,
   groupByContinent,
@@ -24,7 +25,6 @@ import { Slider } from "@openstatus/ui/components/ui/slider";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { CircleX, Globe, Info } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -174,7 +174,7 @@ export function FormSchedulingRegions({
             />
             {!periodicity.includes(watchPeriodicity) ? (
               <Note color="error">
-                <CircleX />
+                <Error />
                 The periodicity you are selecting is not allowed for your plan.
                 <NoteButton type="button" onClick={() => setOpenDialog(true)}>
                   Upgrade your plan

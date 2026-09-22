@@ -1,0 +1,179 @@
+---
+title: "DORA Incident Reporting Requirements"
+hero: "DORA Incident Reporting: The 4h/24h/72h Clock and the Duty to Inform Clients"
+description: "DORA's 4h/24h/72h reporting clock, how classification starts it, and the Article 19(3) duty to inform clients."
+author: "openstatus"
+publishedAt: "2026-07-26"
+category: "compliance"
+faq:
+  - question: "What are the DORA incident reporting deadlines?"
+    answer: "Three stages. An initial notification no later than 4 hours after classifying an incident as major, and in any case no later than 24 hours from becoming aware of it. An intermediate report within 72 hours of the initial notification, submitted even if there is no change in status. A final report no later than one month after the most recent intermediate report. The detail sits in Commission Delegated Regulation 2025/301, with reporting templates in Implementing Regulation 2025/302."
+  - question: "Does DORA require me to tell clients about incidents?"
+    answer: "Yes, where client interests are affected. Article 19(3) requires financial entities to inform clients without undue delay when a major ICT-related incident has an impact on their financial interests, including the measures taken to mitigate adverse effects. Article 14 separately requires crisis communication plans providing for responsible disclosure of major incidents to clients, counterparts, and the public."
+  - question: "When does the 4-hour clock start?"
+    answer: "At classification, not at detection. You have up to 24 hours from becoming aware of an incident, and once you classify it as major you have 4 hours from that moment — whichever comes first binds. This makes your classification decision and its timestamp a regulated artifact, and it means a slow classification does not buy you time."
+  - question: "Who does DORA apply to?"
+    answer: "Financial entities across the EU — credit institutions, payment and e-money institutions, investment firms, crypto-asset service providers, insurers and intermediaries, trading venues, central counterparties, fund managers, and more — plus ICT third-party service providers designated as critical. If you sell software to financial entities, DORA reaches you contractually through Chapter V rather than directly."
+  - question: "Can a status page satisfy DORA reporting?"
+    answer: "It can serve the Article 19(3) client information duty and support the Article 14 communication plan. It cannot serve the regulator reports — those go to your competent authority on prescribed templates through a designated channel. The two are different audiences with different content and different clocks."
+---
+
+DORA — [Regulation (EU) 2022/2554](https://eur-lex.europa.eu/eli/reg/2022/2554/oj) — has applied since 17 January 2025. Unlike NIS2 it is a regulation, not a directive: it is directly applicable across the EU without national transposition, so the text itself binds you, supplemented by the technical standards.
+
+Like NIS2, its incident obligations split into two that are frequently conflated:
+
+- **Reporting to your competent authority**, on prescribed templates, on a tight clock.
+- **Informing your clients**, under Article 19(3), where their financial interests are affected.
+
+The second is where a status page belongs. The first is a regulatory filing, and no status page discharges it.
+
+## Who is in scope
+
+Chapter I lists twenty categories of financial entity — credit institutions, payment institutions, account information service providers, electronic money institutions, investment firms, **crypto-asset service providers and issuers of asset-referenced tokens**, central securities depositories, central counterparties, trading venues, trade repositories, alternative investment fund managers, management companies, data reporting service providers, insurance and reinsurance undertakings and intermediaries, institutions for occupational retirement provision, credit rating agencies, administrators of critical benchmarks, crowdfunding service providers, and securitisation repositories.
+
+Plus **ICT third-party service providers designated as critical**, who fall under a direct EU oversight framework.
+
+<Aside type="note" title="If you are a vendor, not a financial entity">
+You are most likely reached through Chapter V. Financial entities must have contractual arrangements with ICT providers covering service levels, incident notification to the entity, audit and access rights, exit strategies, and data location. In practice this arrives as contract terms and due-diligence questionnaires, not as a direct DORA obligation on you — unless you are designated critical, which is a small set of large providers.
+</Aside>
+
+## Classification comes first
+
+You cannot report until you have classified, and classification is what starts the tightest clock. The criteria in [Commission Delegated Regulation (EU) 2024/1772](https://eur-lex.europa.eu/eli/reg_del/2024/1772/oj) cover:
+
+- Clients, financial counterparts, and transactions affected
+- Reputational impact
+- Duration and service downtime
+- Geographical spread
+- Data losses — availability, authenticity, integrity, confidentiality
+- Criticality of services affected
+- Economic impact
+
+Two of those — **duration and service downtime**, and **criticality of services affected** — are the ones monitoring data speaks to directly. Being able to state precisely when a service became unavailable, from where, and for how long is an input to classification, not merely a nicety after the fact.
+
+## The reporting clock
+
+| Stage | Deadline | Notes |
+| --- | --- | --- |
+| Initial notification | No later than 4 hours after classification as major, and no later than 24 hours from becoming aware | Whichever binds first applies |
+| Intermediate report | Within 72 hours of the initial notification | Required even if status is unchanged |
+| Final report | No later than one month after the most recent intermediate report | Root cause, remediation, impact |
+
+<Aside type="caution" title="Slow classification does not buy time">
+The 24-hour outer limit runs from awareness regardless of when you classify. Deferring the classification decision compresses the window rather than extending it. Where an incident is resolved quickly, the intermediate and final reports may be combined into a single submission.
+</Aside>
+
+The stage deadlines and report contents are set by [Commission Delegated Regulation (EU) 2025/301](https://eur-lex.europa.eu/eli/reg_del/2025/301/oj); the templates and submission formats by [Commission Implementing Regulation (EU) 2025/302](https://eur-lex.europa.eu/eli/reg_impl/2025/302/oj). Voluntary notification of significant cyber threats is also provided for under Article 19(2).
+
+## The client-facing duty — Article 19(3)
+
+> Where a major ICT-related incident has an impact on the financial interests of clients, financial entities shall, without undue delay as soon as they become aware of it, inform their clients about the major ICT-related incident and about the measures that have been taken to mitigate the adverse effects of such incident.
+
+Two conditions worth reading precisely: the incident must be **major**, and it must have an **impact on financial interests**. Not every major incident triggers client notification, and not every client-visible degradation is a major incident.
+
+Article 14 sits alongside it, requiring communication plans that enable responsible disclosure of major incidents to clients, counterparts, and the public, with a designated person or role responsible for implementing the strategy.
+
+Article 11(2) also requires response and recovery procedures that include communication actions toward staff, external stakeholders, and the media.
+
+<Aside type="tip" title="Have the channel before you need it">
+Article 14 asks for a plan, not improvisation. A status page that already exists, is already branded, and already has clients subscribed is what turns "we have a communication plan" from a document into a capability. Standing one up during a major incident is the failure mode the article exists to prevent.
+</Aside>
+
+## What a status page serves, and what it does not
+
+**Serves:**
+
+- Article 19(3) client information, with a timestamped record of what was said and when.
+- Article 14 crisis communication, as the channel the plan names.
+- Article 11(2) communication toward external stakeholders during response and recovery.
+- Duration and downtime evidence feeding the classification criteria.
+- Article 10 detection, as one input — DORA requires mechanisms to promptly detect anomalous activities, explicitly including ICT network performance issues.
+
+**Does not serve:**
+
+- The initial, intermediate, or final regulator reports. Prescribed templates, designated channel, different audience.
+- Classification itself. That is your process and your judgement.
+- **Chapter IV — digital operational resilience testing.** Vulnerability assessments, scenario-based testing, and threat-led penetration testing for entities that meet the criteria.
+- **Chapter V — ICT third-party risk.** The register of information, concentration risk analysis, contractual requirements, exit strategies.
+- **Most of Chapter II — ICT risk management.** Governance, the risk framework, protection, backup and recovery policies, learning and evolving.
+- Board accountability. Article 5 places ultimate responsibility on the management body, which cannot be delegated to a tool.
+
+The honest summary: DORA has five pillars, and a status page is one implementation detail inside part of one of them.
+
+## Retention
+
+DORA expects records sufficient to support reporting and supervisory review, and Article 13 requires post-incident reviews that feed back into your risk framework. Your ability to reconstruct an incident months later — including the availability record behind classification — depends on what you retained.
+
+Openstatus retention runs 14 days on Hobby, 3 months on Starter, 12 months on Pro, and 24 months on Scale. For a financial entity, the two short tiers are unlikely to be adequate; supervisory questions rarely arrive within a fortnight.
+
+## A practical setup
+
+1. Confirm your category and your competent authority. Know the submission channel before you need it — the [ESMA DORA hub](https://www.esma.europa.eu/esmas-activities/digital-finance-and-innovation/digital-operational-resilience-act-dora) collects the joint ESA material if you are unsure where to start.
+2. Write the classification procedure against the 2024/1772 criteria, with a named decision-maker and a recorded timestamp for the decision.
+3. Pre-fill what you can of the 2025/302 templates. Four hours is not long to compose a filing from scratch.
+4. Define what "impact on the financial interests of clients" means for your business, so the Article 19(3) trigger is decided in advance rather than under pressure.
+5. Name the status page in your Article 14 communication plan and keep clients subscribed to it.
+6. Retain monitoring and incident data long enough to answer supervisory questions.
+7. Drill the whole path. The 4-hour clock does not accommodate a first attempt.
+
+Openstatus covers steps 5 and 6, and contributes evidence to step 2 through its availability record — 28 monitoring regions, timestamped incident history, email and RSS/Atom/JSON subscriber notification, and a full in-transaction audit log on Pro and Scale. Steps 1, 3, 4, and 7 are yours, and that is where supervisory exposure concentrates.
+
+## Primary sources
+
+DORA is a regulation, so the EUR-Lex text is the operative law — there is no national act to chase. The technical standards carry most of the detail.
+
+- [Regulation (EU) 2022/2554 (DORA)](https://eur-lex.europa.eu/eli/reg/2022/2554/oj) — Article 11 for response and recovery, Article 14 for communication, Articles 17–20 for incident management and reporting, Chapter V for third-party risk.
+- [Commission Delegated Regulation (EU) 2024/1772](https://eur-lex.europa.eu/eli/reg_del/2024/1772/oj) — classification criteria and materiality thresholds for major incidents and significant cyber threats.
+- [Commission Delegated Regulation (EU) 2025/301](https://eur-lex.europa.eu/eli/reg_del/2025/301/oj) — content of the initial, intermediate, and final reports, and the time limits.
+- [Commission Implementing Regulation (EU) 2025/302](https://eur-lex.europa.eu/eli/reg_impl/2025/302/oj) — the standard forms, templates, and reporting procedures.
+- [ESMA's DORA hub](https://www.esma.europa.eu/esmas-activities/digital-finance-and-innovation/digital-operational-resilience-act-dora) — joint ESA guidance, Q&As, and implementation material.
+
+<Aside type="caution" title="Background, not advice">
+Financial services regulation carries supervisory consequences that a guide cannot scope for your entity. Use this to orient yourself in the texts, then work it through with your compliance function.
+</Aside>
+
+## Related reading
+
+- [NIS2 incident reporting](/guides/nis2-incident-reporting-requirements) — the general regime; where both apply, reporting under DORA can satisfy the NIS2 duty
+- [SOC 2 and your status page](/guides/soc-2-status-page-requirements) — what customers ask for alongside the regulator
+- [Incident severity matrix](/guides/incident-severity-matrix) — a starting point for the classification procedure
+- [What is MTTR](/guides/what-is-mttr) — duration and downtime feed the classification criteria
+- [Status pages for crypto exchanges and DeFi protocols](/use-case/crypto) — if you are a CASP or token issuer
+
+## Frequently asked questions
+
+<Details summary="What are the DORA incident reporting deadlines?">
+
+Three stages. An initial notification no later than 4 hours after classifying an incident as major, and in any case no later than 24 hours from becoming aware of it. An intermediate report within 72 hours of the initial notification, submitted even if there is no change in status. A final report no later than one month after the most recent intermediate report. The detail sits in Commission Delegated Regulation 2025/301, with reporting templates in Implementing Regulation 2025/302.
+
+</Details>
+
+<Details summary="Does DORA require me to tell clients about incidents?">
+
+Yes, where client interests are affected. Article 19(3) requires financial entities to inform clients without undue delay when a major ICT-related incident has an impact on their financial interests, including the measures taken to mitigate adverse effects. Article 14 separately requires crisis communication plans providing for responsible disclosure of major incidents to clients, counterparts, and the public.
+
+</Details>
+
+<Details summary="When does the 4-hour clock start?">
+
+At classification, not at detection. You have up to 24 hours from becoming aware of an incident, and once you classify it as major you have 4 hours from that moment — whichever comes first binds. This makes your classification decision and its timestamp a regulated artifact, and it means a slow classification does not buy you time.
+
+</Details>
+
+<Details summary="Who does DORA apply to?">
+
+Financial entities across the EU — credit institutions, payment and e-money institutions, investment firms, crypto-asset service providers, insurers and intermediaries, trading venues, central counterparties, fund managers, and more — plus ICT third-party service providers designated as critical. If you sell software to financial entities, DORA reaches you contractually through Chapter V rather than directly.
+
+</Details>
+
+<Details summary="Can a status page satisfy DORA reporting?">
+
+It can serve the Article 19(3) client information duty and support the Article 14 communication plan. It cannot serve the regulator reports — those go to your competent authority on prescribed templates through a designated channel. The two are different audiences with different content and different clocks.
+
+</Details>
+
+---
+
+<ButtonLink href="https://app.openstatus.dev">Start your status page</ButtonLink>
+
+---

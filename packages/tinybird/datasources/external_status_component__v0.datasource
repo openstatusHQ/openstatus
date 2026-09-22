@@ -1,6 +1,3 @@
-# `external_service_id` is denormalised for raw-row traceability only: in raw
-# rows `component_id` is an opaque PK, so this lets ops trace a snapshot back to
-# its service without a Turso join. Pipes/MV key on `component_id`.
 
 SCHEMA >
     `component_id` String `json:$.component_id`,
@@ -11,4 +8,4 @@ SCHEMA >
 
 ENGINE "MergeTree"
 ENGINE_SORTING_KEY "component_id, fetched_at"
-ENGINE_TTL "toDateTime(fromUnixTimestamp64Milli(fetched_at)) + INTERVAL 60 DAY"
+ENGINE_TTL "toDateTime(fromUnixTimestamp64Milli(fetched_at)) + toIntervalDay(60)"

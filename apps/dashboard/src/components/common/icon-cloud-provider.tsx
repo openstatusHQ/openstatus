@@ -1,4 +1,5 @@
-import { Fly, Koyeb, Railway } from "@openstatus/icons";
+import { Globe } from "@openstatus/icons";
+import { Fly, Koyeb, Railway } from "@openstatus/icons/brand";
 import {
   Tooltip,
   TooltipContent,
@@ -6,7 +7,6 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Globe } from "lucide-react";
 
 export function IconCloudProvider({
   provider,

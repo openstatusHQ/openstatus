@@ -9,7 +9,7 @@ import { trackMiddleware } from "@/libs/middlewares";
 
 import type { monitorsApi } from "./index";
 import { HTTPMonitorSchema, MonitorSchema, ParamsSchema } from "./schema";
-import { getAssertionNew } from "./utils";
+import { assertSafeMonitorUrl, getAssertionNew } from "./utils";
 
 const putRoute = createRoute({
   method: "put",
@@ -91,6 +91,8 @@ export function registerPutHTTPMonitor(api: typeof monitorsApi) {
         message: `Monitor ${id} not found`,
       });
     }
+
+    assertSafeMonitorUrl({ jobType: "http", url: input.request.url });
 
     const { request, regions, assertions, openTelemetry, ...rest } = input;
 

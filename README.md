@@ -26,7 +26,9 @@
 
 ## About openstatus
 
-openstatus is an open-source platform that combines **status pages** and **uptime monitoring** in a single tool. Keep your users informed and your services reliable. Available as a managed service or self-hosted.
+openstatus is the open-source **uptime monitoring** and **status page** platform built for **infra as code**. Declare monitors and status pages in code. Let your agents update them.
+
+Monitors, status pages, and notification channels are declared in YAML or Terraform, applied from the CLI or CI, and operable from Claude, ChatGPT, or Cursor over MCP. Available as a managed service or self-hosted.
 
 <p align="center">
   <img src="https://www.openstatus.dev/assets/landing/statuspage-meow.png" alt="openstatus status page" width="720" />
@@ -34,11 +36,12 @@ openstatus is an open-source platform that combines **status pages** and **uptim
 
 ## Why openstatus?
 
+- **Infra as code** — monitors, status pages, and notifications in YAML or Terraform, applied from the CLI or CI
+- **Built for humans and agents** — MCP server, `--json` CLI, typed API, read-only or read-write key scopes, every mutation in the audit log
 - **Status pages + monitoring in one tool** — no need to wire up a separate monitoring service
 - **28 global regions** checking in parallel across 3 cloud providers
 - **Flat pricing, unlimited members** — no per-seat or per-subscriber charges
 - **Open source & self-hostable** — AGPL-3.0, private-locations run in a single 8.5MB Docker image
-- **Monitoring as code** — YAML config, CLI, GitHub Actions, Terraform
 - **Incident communication** — subscriber notifications via email, RSS, and webhooks
 
 ### Status pages
@@ -54,6 +57,15 @@ Monitor your servers, websites and APIs from 28 regions across multiple cloud pr
 <a href="https://trendshift.io/repositories/1780" target="_blank"><img src="https://trendshift.io/api/badge/repositories/1780" alt="openstatus | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 <a href="https://news.ycombinator.com/item?id=37740870"><img alt="Featured on Hacker News" src="https://hackerbadge.now.sh/api?id=37740870" style="width: 250px; height: 55px;" width="250" height="55" /></a>
 <a href="https://www.producthunt.com/posts/openstatus-2?utm_source=badge-top-post-badge&utm_medium=badge" target="_blank"><img alt="openstatus - #2 Product of the Day on Product Hunt" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=openstatus-2&theme=light&period=daily" style="width: 250px; height: 55px;" width="250" height="55" /></a>
+
+## Tooling
+
+Everything the dashboard does is reachable from your terminal, your infrastructure code, and your AI assistant — all sharing a single API key.
+
+- **[API](https://www.openstatus.dev/tooling/api)** — typed JSON-over-HTTP (ConnectRPC) with a [Node SDK](https://github.com/openstatusHQ/sdk-node)
+- **[CLI](https://www.openstatus.dev/tooling/cli)** — interactive for humans, `--json` for agents, YAML monitoring as code
+- **[Terraform](https://www.openstatus.dev/tooling/terraform)** — monitors, notifications, and status pages as HCL
+- **[MCP server](https://www.openstatus.dev/tooling/mcp-server)** — connect Claude, ChatGPT, Cursor, or any MCP client to your workspace
 
 ## Getting Started
 
@@ -90,56 +102,48 @@ ghcr.io/openstatushq/openstatus-checker:latest
 
 [Complete Coolify Deployment Guide](./COOLIFY_DEPLOYMENT.md)
 
+### Self-Hosting with Railway
+
+Deploy the full stack (dashboard, status pages, API, workflows, probes, libSQL, and Tinybird Local) to one Railway project with one click:
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template/openstatus?utm_medium=integration&utm_source=button&utm_campaign=openstatus)
+
+The template source and the setup instructions are in [ephraimduncan/openstatus-railway](https://github.com/ephraimduncan/openstatus-railway).
+
 ### Manual Setup
 
 #### Requirements
 
 - [Node.js](https://nodejs.org/en/) >= 20.0.0
-- [pnpm](https://pnpm.io/) >= 8.6.2
+- [pnpm](https://pnpm.io/) >= 10.26.0
 - [Bun](https://bun.sh/)
-- [Turso CLI](https://docs.turso.tech/quickstart)
+- [Deno](https://deno.com/)
+- [Turso CLI](https://docs.turso.tech/quickstart).
 
-#### Setup
+#### Dashboard
 
-1. Clone the repository
+See [apps/dashboard/README.md](apps/dashboard/README.md) for full steps (env, db, login, troubleshooting).
 
-```sh
-git clone https://github.com/openstatushq/openstatus.git
-```
+#### Status page
 
-2. Install dependencies
+1. Install dependencies
 
-```sh
-pnpm install
-```
+`pnpm install`
 
-3. Initialize the development environment
+2. Run the server
 
-Launch the database in one terminal:
+`pnpm -w dev:status-page`.
 
-```sh
-turso dev --db-file openstatus-dev.db
-```
+#### Web (marketing site)
 
-In another terminal, run the following command:
+1. Install dependencies
 
-```sh
-pnpm dx
-```
+`pnpm install`
 
-4. Launch whatever app you wish to:
+2. Run the server
 
-```sh
-pnpm dev:web
-pnpm dev:status-page
-pnpm dev:dashboard
-```
+`pnpm -w dev:web`.
 
-The above commands will automatically run the libSQL client on `8080` so you might want to kill the turso command from step 3.
-
-5. See the results:
-
-- open [http://localhost:3000](http://localhost:3000) (default port)
 
 ## Tech Stack
 
@@ -154,7 +158,7 @@ The above commands will automatically run the libSQL client on `8080` so you mig
 
 ## Contributing
 
-If you want to help us build the best status page and monitoring platform, check our [contributing guidelines](https://github.com/openstatusHQ/openstatus/blob/main/CONTRIBUTING.MD).
+If you want to help us build the best status page and monitoring platform, check our [contributing guidelines](CONTRIBUTING.md).
 
 <a href="https://github.com/openstatushq/openstatus/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=openstatushq/openstatus" />

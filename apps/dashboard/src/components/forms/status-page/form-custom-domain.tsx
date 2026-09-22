@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -8,17 +9,19 @@ import {
   FormItem,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { isTRPCClientError } from "@trpc/client";
-import { Lock } from "lucide-react";
 import type React from "react";
 import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// FIXME: use input-group instead
-import { InputWithAddons } from "@/components/common/input-with-addons";
 import { Link } from "@/components/common/link";
 import DomainConfiguration from "@/components/domains/domain-configuration";
 import { useDomainStatus } from "@/components/domains/use-domain-status";
@@ -106,12 +109,16 @@ export function FormCustomDomain({
               render={({ field }) => (
                 <FormItem>
                   <Label>Domain</Label>
-                  <InputWithAddons
-                    placeholder="status.openstatus.dev"
-                    leading="https://"
-                    disabled={locked}
-                    {...field}
-                  />
+                  <InputGroup>
+                    <InputGroupAddon align="inline-start">
+                      https://
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      placeholder="status.openstatus.dev"
+                      disabled={locked}
+                      {...field}
+                    />
+                  </InputGroup>
                   <FormMessage />
                 </FormItem>
               )}

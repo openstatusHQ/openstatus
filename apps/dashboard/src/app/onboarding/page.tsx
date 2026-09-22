@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { SearchParams } from "nuqs";
 
-import { getQueryClient, trpc } from "@/lib/trpc/server";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
 import { Client } from "./client";
 import { searchParamsCache } from "./search-params";
@@ -55,6 +55,7 @@ export default async function Page({
   const [monitors, pages] = await Promise.all([
     queryClient.fetchQuery(trpc.monitor.list.queryOptions()),
     queryClient.fetchQuery(trpc.page.list.queryOptions()),
+    queryClient.fetchQuery(trpc.apiKey.list.queryOptions()),
   ]);
 
   const updates: {
@@ -89,5 +90,9 @@ export default async function Page({
     redirect(`/onboarding?${next.toString()}`);
   }
 
-  return <Client />;
+  return (
+    <HydrateClient>
+      <Client />
+    </HydrateClient>
+  );
 }

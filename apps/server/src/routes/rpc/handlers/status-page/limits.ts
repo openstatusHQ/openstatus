@@ -86,6 +86,16 @@ export function checkNoIndexLimit(limits: Limits): void {
   }
 }
 
+/**
+ * Check if the custom theme feature is available on the workspace plan.
+ * Throws ConnectError with PermissionDenied if not available.
+ */
+export function checkCustomThemeLimit(limits: Limits): void {
+  if (!limits["custom-theme"]) {
+    throw new ConnectError("Upgrade for custom theme", Code.PermissionDenied);
+  }
+}
+
 export function checkStatusSubscribersLimit(limits: Limits): void {
   if (!limits["status-subscribers"]) {
     throw new ConnectError(

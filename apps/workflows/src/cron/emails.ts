@@ -1,3 +1,4 @@
+import { getLogger } from "@logtape/logtape";
 import { and, eq, gte, inArray, lte } from "@openstatus/db";
 import { db } from "@openstatus/db";
 import {
@@ -9,6 +10,7 @@ import { EmailClient } from "@openstatus/emails";
 
 import { env } from "../env";
 
+const logger = getLogger(["workflow", "emails"]);
 const email = new EmailClient({ apiKey: env().RESEND_API_KEY });
 
 export async function sendFollowUpEmails() {
@@ -26,8 +28,6 @@ export async function sendFollowUpEmails() {
     .innerJoin(usersToWorkspaces, eq(user.id, usersToWorkspaces.userId))
     .where(and(gte(user.createdAt, date1), lte(user.createdAt, date2)))
     .all();
-
-  console.log(`Found ${users.length} users to send follow ups.`);
 
   const workspaceIds = [
     ...new Set(users.map((u) => u.workspaceId).filter(Boolean)),
@@ -71,22 +71,26 @@ export async function sendFollowUpEmails() {
 
   for (let i = 0; i < noSlackEmails.length; i += batchSize) {
     const batch = noSlackEmails.slice(i, i + batchSize);
-    console.log(`Sending follow-up batch with ${batch.length} emails...`);
     try {
       await email.sendFollowUpBatched({ to: batch });
-    } catch {
-      console.error("Rate limit exceeded. Stopping further sends.");
+    } catch (error) {
+      logger.error("Follow-up email batch failed", {
+        batch_size: batch.length,
+        error_name: error instanceof Error ? error.name : typeof error,
+      });
       break;
     }
   }
 
   for (let i = 0; i < slackEmails.length; i += batchSize) {
     const batch = slackEmails.slice(i, i + batchSize);
-    console.log(`Sending slack feedback batch with ${batch.length} emails...`);
     try {
       await email.sendSlackFeedbackBatched({ to: batch });
-    } catch {
-      console.error("Rate limit exceeded. Stopping further sends.");
+    } catch (error) {
+      logger.error("Slack feedback email batch failed", {
+        batch_size: batch.length,
+        error_name: error instanceof Error ? error.name : typeof error,
+      });
       break;
     }
   }

@@ -7,7 +7,7 @@ export const codesDict = {
   "2xx": {
     prefix: 2,
     label: "2xx",
-    name: "Successfull",
+    name: "Successful",
   },
   "3xx": {
     prefix: 3,

@@ -77,6 +77,8 @@ describe("Microsoft Teams Notifications", () => {
     otelHeaders: [],
     retry: 3,
     followRedirects: false,
+    grpcService: null,
+    grpcTls: null,
   });
 
   const createMockNotification = () => ({

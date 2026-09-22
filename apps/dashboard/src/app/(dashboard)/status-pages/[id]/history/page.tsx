@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import type { SearchParams } from "nuqs";
 
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
@@ -13,12 +14,14 @@ export default async function Page({
   searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
+  const pageId = Number.parseInt(id);
+  if (Number.isNaN(pageId)) notFound();
   const queryClient = getQueryClient();
 
   // NOTE: store in cache to avoid flicker on clients first render
   await searchParamsCache.parse(searchParams);
   await queryClient.prefetchQuery(
-    trpc.page.getUptimeHistory.queryOptions({ id: Number.parseInt(id) }),
+    trpc.page.getUptimeHistory.queryOptions({ id: pageId }),
   );
 
   return (

@@ -14,11 +14,22 @@ A status report is a chronological update or event associated with an ongoing in
 
 ## Relationship to incidents
 
-Each status report is directly linked to a specific incident. As an incident progresses through its resolution process, new status reports are added to provide updates, often accompanied by a change in the incident's overall status.
+Status reports are independent of [incidents](/docs/reference/incident). An incident is the automatic, internal record opened by the checker when a monitor fails; a status report is the manual, public narrative you publish on a status page. There is no database link between the two — you decide what to communicate and when.
+
+A status report belongs to a status page and optionally to a set of page components. As a situation evolves you append updates to the same report, each carrying its own status and message.
 
 ## Configuration and properties
 
 A status report consists of several key properties that define its content and context.
+
+### Title
+
+**Type:** String (required)
+**Length:** 1–256 characters
+
+The headline of the report, shown on the public status page, in the events feed, and in subscriber notifications.
+
+**Example:** `"Database connectivity issues"`
 
 ### Status
 

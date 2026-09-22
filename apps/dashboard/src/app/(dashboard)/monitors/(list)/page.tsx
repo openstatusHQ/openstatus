@@ -12,9 +12,12 @@ export default async function Page({
 }) {
   const queryClient = getQueryClient();
 
-  await searchParamsCache.parse(searchParams);
-  await queryClient.prefetchQuery(trpc.monitor.list.queryOptions());
-  await queryClient.prefetchQuery(trpc.monitorTag.list.queryOptions());
+  // `monitor.list` is prefetched by the root layout for the sidebar — the
+  // client cache already holds it on every route.
+  await Promise.all([
+    searchParamsCache.parse(searchParams),
+    queryClient.prefetchQuery(trpc.monitorTag.list.queryOptions()),
+  ]);
 
   return (
     <HydrateClient>

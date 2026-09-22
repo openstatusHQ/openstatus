@@ -1,8 +1,7 @@
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../test/fixtures";
-import { loadSeededWorkspace } from "../../test/helpers";
+import { createWorkspaceFixture } from "../../test/helpers";
 import type { DB, ServiceContext } from "../context";
 import { isTx, withTransaction } from "../context";
 
@@ -10,7 +9,7 @@ describe("withTransaction", () => {
   let ctx: ServiceContext;
 
   beforeAll(async () => {
-    const workspace = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+    const workspace = (await createWorkspaceFixture("team")).workspace;
     ctx = {
       workspace,
       actor: { type: "user", userId: 1 },

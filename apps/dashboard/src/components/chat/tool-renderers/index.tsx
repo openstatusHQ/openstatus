@@ -24,11 +24,13 @@ import { listMaintenancesTable } from "./list-maintenances";
 import { listMonitorsTable } from "./list-monitors";
 import { listNotificationsTable } from "./list-notifications";
 import { listPageComponentsTable } from "./list-page-components";
+import { listPrivateLocationsTable } from "./list-private-locations";
 import { listResponseLogsTable } from "./list-response-logs";
 import { listStatusPagesTable } from "./list-status-pages";
 import { listStatusReportsTable } from "./list-status-reports";
 import { resolveStatusReportChanges } from "./resolve-status-report";
 import { ResultTable } from "./result-table";
+import { searchContentTable } from "./search-content";
 import { searchDocsTable } from "./search-docs";
 import { updateStatusReportChanges } from "./update-status-report";
 
@@ -151,6 +153,12 @@ export const toolRenderers: ToolRendererRegistry = {
     ),
     summary: (o) => itemsCountSummary(o.items),
   },
+  list_private_locations: {
+    renderResult: ({ output }) => (
+      <ResultTable {...listPrivateLocationsTable(output)} />
+    ),
+    summary: (o) => itemsCountSummary(o.items),
+  },
   list_response_logs: {
     renderResult: ({ output }) => (
       <ResultTable {...listResponseLogsTable(output)} />
@@ -203,6 +211,16 @@ export const toolRenderers: ToolRendererRegistry = {
   // No renderResult — a full markdown page in the transcript is noise; the
   // summary line plus the model's cited answer is the UX.
   get_doc_page: {
+    summary: (o) =>
+      o.error ? o.error : `read ${o.url}${o.truncated ? " (truncated)" : ""}`,
+  },
+  search_content: {
+    renderResult: ({ output }) => (
+      <ResultTable {...searchContentTable(output)} />
+    ),
+    summary: (o) => (o.error ? o.error : itemsCountSummary(o.results)),
+  },
+  get_content_page: {
     summary: (o) =>
       o.error ? o.error : `read ${o.url}${o.truncated ? " (truncated)" : ""}`,
   },

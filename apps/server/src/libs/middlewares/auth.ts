@@ -11,6 +11,7 @@ import {
   verifyApiKeyHash,
 } from "@openstatus/db/src/utils/api-key";
 import { retryRead } from "@openstatus/services";
+import { isAccessToken, verifyAccessToken } from "@openstatus/services/oauth";
 import { UnkeyCore } from "@unkey/api/core";
 import { keysVerifyKey } from "@unkey/api/funcs/keysVerifyKey";
 import type { Context, Next } from "hono";
@@ -18,6 +19,8 @@ import type { Context, Next } from "hono";
 import { env } from "@/env";
 import { OpenStatusApiError } from "@/libs/errors";
 import type { Variables } from "@/types";
+
+import { MISSING_CREDENTIALS_MESSAGE, extractCredential } from "./credentials";
 
 const logger = getLogger("api-server");
 
@@ -49,14 +52,14 @@ export async function authMiddleware(
   c: Context<{ Variables: Variables }, "/*">,
   next: Next,
 ) {
-  const key = c.req.header("x-openstatus-key");
-  if (!key)
+  const credential = extractCredential(c.req.raw.headers);
+  if (!credential)
     throw new OpenStatusApiError({
       code: "UNAUTHORIZED",
-      message: "Missing 'x-openstatus-key' header",
+      message: MISSING_CREDENTIALS_MESSAGE,
     });
 
-  const { error, result } = await validateKey(key);
+  const { error, result } = await validateKey(credential.token);
 
   if (error) {
     throw new OpenStatusApiError({
@@ -146,6 +149,29 @@ export async function validateKey(key: string): Promise<{
   };
   error?: { message: string };
 }> {
+  // Before the production gate so the OAuth flow works locally. `keyId`
+  // carries the grant id so audit rows attribute to the grant, and
+  // `createdById` is the consenting user.
+  if (isAccessToken(key)) {
+    const grant = await verifyAccessToken(key);
+    if (!grant) {
+      return {
+        result: { valid: false },
+        error: { message: "Invalid or expired access token" },
+      };
+    }
+    return {
+      result: {
+        valid: true,
+        ownerId: String(grant.workspaceId),
+        authMethod: "oauth",
+        keyId: `oat_${grant.grantId}`,
+        createdById: grant.userId,
+        scopes: grant.scopes,
+      },
+    };
+  }
+
   if (env.NODE_ENV === "production") {
     /**
      * Both custom and Unkey API keys use the `os_` prefix for seamless transition.

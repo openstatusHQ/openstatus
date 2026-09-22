@@ -1,3 +1,4 @@
+import { Enter, Stop, Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   InputGroup,
@@ -5,7 +6,6 @@ import {
   InputGroupTextarea,
 } from "@openstatus/ui/components/ui/input-group";
 import { Spinner } from "@openstatus/ui/components/ui/spinner";
-import { CornerDownLeftIcon, SquareIcon, XIcon } from "lucide-react";
 import {
   type FormEvent,
   type KeyboardEvent,
@@ -85,11 +85,11 @@ export function ChatPromptInput({ onSubmit, onStop, status }: Props) {
                 {status === "submitted" ? (
                   <Spinner />
                 ) : status === "streaming" ? (
-                  <SquareIcon className="size-4" />
+                  <Stop className="size-4" />
                 ) : status === "error" ? (
-                  <XIcon className="size-4" />
+                  <Close className="size-4" />
                 ) : (
-                  <CornerDownLeftIcon className="size-4" />
+                  <Enter className="size-4" />
                 )}
               </Button>
             </InputGroupAddon>

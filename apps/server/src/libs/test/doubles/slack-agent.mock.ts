@@ -4,5 +4,11 @@ import { slackTestState } from "./slack-test-state.ts";
 
 export const runAgent = () => {
   if (slackTestState.runAgentOverride) return slackTestState.runAgentOverride();
-  return Promise.resolve({ text: "Here is my response", toolResults: [] });
+  return Promise.resolve({
+    text: "Here is my response",
+    toolResults: [],
+    finishReason: "stop",
+    stepCount: 1,
+    hitStepLimit: false,
+  });
 };

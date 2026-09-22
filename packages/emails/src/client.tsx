@@ -1,13 +1,21 @@
-/** @jsxImportSource react */
+/** @jsxRuntime automatic @jsxImportSource react */
 
+import { statusLabel } from "@openstatus/utils";
 import { type Duration, Effect, Schedule } from "effect";
 import { render } from "react-email";
 import { Resend } from "resend";
 
 import FollowUpEmail from "../emails/followup";
+import MonitorAlertEmail, {
+  monitorAlertSubject,
+} from "../emails/monitor-alert";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
 import PageSubscriptionEmail from "../emails/page-subscription";
 import type { PageSubscriptionProps } from "../emails/page-subscription";
+import PrivateLocationAlertEmail, {
+  privateLocationAlertSubject,
+} from "../emails/private-location-alert";
+import type { PrivateLocationAlertProps } from "../emails/private-location-alert";
 import SlackFeedbackEmail from "../emails/slack-feedback";
 import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
 import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link";
@@ -15,15 +23,32 @@ import StatusReportEmail from "../emails/status-report";
 import type { StatusReportProps } from "../emails/status-report";
 import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
-import { monitorAlertEmail } from "../hotfix/monitor-alert";
+import { env } from "./env";
 
 export function statusReportSubject(req: {
   status: StatusReportProps["status"];
   reportTitle: string;
 }): string {
-  return req.status === "resolved"
-    ? `RESOLVED: ${req.reportTitle}`
-    : req.reportTitle;
+  if (req.status === "resolved") return `RESOLVED: ${req.reportTitle}`;
+  if (req.status === "maintenance")
+    return `${statusLabel("maintenance")}: ${req.reportTitle}`;
+  return req.reportTitle;
+}
+
+const SYSTEM_FROM = "openstatus <notifications@notifications.openstatus.dev>";
+const SUPPORT_EMAIL = "ping@openstatus.dev";
+
+// Deterministic Resend rejections: retrying the identical request can never
+// succeed (e.g. 409 invalid_idempotent_request when a key is reused with a
+// different body), it only burns the backoff and re-logs the error.
+const NON_RETRYABLE_RESEND_ERRORS = new Set<string>([
+  "invalid_idempotent_request",
+  "invalid_idempotency_key",
+  "validation_error",
+]);
+
+function isRetryableSendError(error: { name: string }): boolean {
+  return !NON_RETRYABLE_RESEND_ERRORS.has(error.name);
 }
 
 // split an array into chunks of a given size.
@@ -39,15 +64,15 @@ export class EmailClient {
   public readonly client: Resend;
   // Base delay for the per-batch send retry. Overridable so tests can run the
   // retry path without the real ~1s exponential sleep.
-  private readonly retryBackoff: Duration.DurationInput;
+  private readonly retryBackoff: Duration.Input;
 
-  constructor(opts: { apiKey: string; retryBackoff?: Duration.DurationInput }) {
+  constructor(opts: { apiKey: string; retryBackoff?: Duration.Input }) {
     this.client = new Resend(opts.apiKey);
     this.retryBackoff = opts.retryBackoff ?? "1000 millis";
   }
 
   public async sendFollowUp(req: { to: string }) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending follow up email to ${req.to}`);
       return;
     }
@@ -57,7 +82,7 @@ export class EmailClient {
       const result = await this.client.emails.send({
         from: "Thibault Le Ouay Ducasse <welcome@openstatus.dev>",
         replyTo: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-        subject: "How's it going with OpenStatus?",
+        subject: "How's it going with openstatus?",
         to: req.to,
         html,
       });
@@ -74,7 +99,7 @@ export class EmailClient {
   }
 
   public async sendFollowUpBatched(req: { to: string[] }) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending follow up emails to ${req.to.join(", ")}`);
       return;
     }
@@ -83,7 +108,7 @@ export class EmailClient {
     const result = await this.client.batch.send(
       req.to.map((subscriber) => ({
         from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-        subject: "How's it going with OpenStatus?",
+        subject: "How's it going with openstatus?",
         to: subscriber,
         html,
       })),
@@ -105,7 +130,7 @@ export class EmailClient {
   }
 
   public async sendSlackFeedback(req: { to: string }) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending slack feedback email to ${req.to}`);
       return;
     }
@@ -132,7 +157,7 @@ export class EmailClient {
   }
 
   public async sendSlackFeedbackBatched(req: { to: string[] }) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending slack feedback emails to ${req.to.join(", ")}`);
       return;
     }
@@ -161,7 +186,10 @@ export class EmailClient {
   }
 
   public async sendStatusReportUpdate(
-    req: Omit<StatusReportProps, "unsubscribeUrl" | "manageUrl"> & {
+    req: Omit<
+      StatusReportProps,
+      "unsubscribeUrl" | "manageUrl" | "statusPageUrl"
+    > & {
       subscribers: Array<{ email: string; token: string }>;
       pageSlug: string;
       customDomain?: string | null;
@@ -175,7 +203,7 @@ export class EmailClient {
       ? `https://${req.customDomain}`
       : `https://${req.pageSlug}.openstatus.dev`;
 
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(
         `Sending status report update emails to ${req.subscribers
           .map((s) => s.email)
@@ -205,6 +233,7 @@ export class EmailClient {
                 react: (
                   <StatusReportEmail
                     {...req}
+                    statusPageUrl={statusPageBaseUrl}
                     unsubscribeUrl={unsubscribeUrl}
                     manageUrl={manageUrl}
                   />
@@ -226,6 +255,7 @@ export class EmailClient {
         Effect.retry({
           times: 3,
           schedule: Schedule.exponential(this.retryBackoff),
+          while: isRetryableSendError,
         }),
       );
       await Effect.runPromise(sendEmail).catch(console.error);
@@ -237,7 +267,7 @@ export class EmailClient {
   }
 
   public async sendTeamInvitation(req: TeamInvitationProps & { to: string }) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending team invitation email to ${req.to}`);
       return;
     }
@@ -246,10 +276,11 @@ export class EmailClient {
       const html = await render(<TeamInvitationEmail {...req} />);
       const result = await this.client.emails.send({
         from: `${
-          req.workspaceName ?? "OpenStatus"
+          req.workspaceName || "openstatus"
         } <notifications@notifications.openstatus.dev>`,
+        replyTo: SUPPORT_EMAIL,
         subject: `You've been invited to join ${
-          req.workspaceName ?? "OpenStatus"
+          req.workspaceName || "openstatus"
         }`,
         to: req.to,
         html,
@@ -267,17 +298,18 @@ export class EmailClient {
   }
 
   public async sendMonitorAlert(req: MonitorAlertProps & { to: string }) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending monitor alert email to ${req.to}`);
       return;
     }
 
     try {
-      // const html = await render(<MonitorAlertEmail {...req} />);
-      const html = monitorAlertEmail(req);
+      const { to: _to, ...props } = req;
+      const html = await render(<MonitorAlertEmail {...props} />);
       const result = await this.client.emails.send({
-        from: "OpenStatus <notifications@notifications.openstatus.dev>",
-        subject: `${req.name}: ${req.type.toUpperCase()}`,
+        from: SYSTEM_FROM,
+        replyTo: SUPPORT_EMAIL,
+        subject: monitorAlertSubject(props),
         to: req.to,
         html,
       });
@@ -297,7 +329,7 @@ export class EmailClient {
   public async sendPageSubscription(
     req: PageSubscriptionProps & { to: string },
   ) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending page subscription email to ${req.to}`);
       return;
     }
@@ -325,7 +357,7 @@ export class EmailClient {
   public async sendStatusPageMagicLink(
     req: StatusPageMagicLinkProps & { to: string },
   ) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(`Sending status page magic link email to ${req.to}`);
       console.log(`>>> Magic Link: ${req.link}`);
       return;
@@ -367,7 +399,7 @@ export class EmailClient {
       ? `https://${req.customDomain}`
       : `https://${req.pageSlug}.openstatus.dev`;
 
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(
         `Sending maintenance notification emails to ${req.subscribers
           .map((s) => s.email)
@@ -400,6 +432,7 @@ export class EmailClient {
                     date={`${req.from} - ${req.to}`}
                     message={req.message}
                     pageComponents={req.pageComponents}
+                    statusPageUrl={statusPageBaseUrl}
                     unsubscribeUrl={unsubscribeUrl}
                     manageUrl={manageUrl}
                   />
@@ -421,6 +454,7 @@ export class EmailClient {
         Effect.retry({
           times: 3,
           schedule: Schedule.exponential(this.retryBackoff),
+          while: isRetryableSendError,
         }),
       );
       await Effect.runPromise(sendEmail).catch(console.error);
@@ -429,5 +463,59 @@ export class EmailClient {
     console.log(
       `Sent maintenance notification email to ${req.subscribers.length} subscribers`,
     );
+  }
+
+  public async sendPrivateLocationAlert(
+    req: Omit<PrivateLocationAlertProps, "lastSeenAt"> & {
+      to: string[];
+      lastSeenAt: Date;
+    },
+  ) {
+    if (req.to.length === 0) return;
+
+    const subject = privateLocationAlertSubject(req);
+
+    if (env.NODE_ENV === "development") {
+      console.log(
+        `Sending private location ${req.status} email to ${req.to.join(", ")}`,
+      );
+      return;
+    }
+
+    try {
+      const html = await render(
+        <PrivateLocationAlertEmail
+          locationName={req.locationName}
+          status={req.status}
+          lastSeenAt={req.lastSeenAt.toISOString()}
+          monitorCount={req.monitorCount}
+        />,
+      );
+      const result = await this.client.batch.send(
+        req.to.map((to) => ({
+          from: SYSTEM_FROM,
+          replyTo: SUPPORT_EMAIL,
+          subject,
+          to,
+          html,
+        })),
+      );
+
+      if (result.error) {
+        if (result.error?.name === "rate_limit_exceeded") {
+          throw result.error;
+        }
+        console.error(
+          `Error sending private location alert to ${req.to}: ${result.error}`,
+        );
+        return;
+      }
+
+      console.log(`Sent private location ${req.status} email to ${req.to}`);
+    } catch (err) {
+      console.error(
+        `Error sending private location alert to ${req.to}: ${err}`,
+      );
+    }
   }
 }

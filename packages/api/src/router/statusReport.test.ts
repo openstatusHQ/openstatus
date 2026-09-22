@@ -24,7 +24,7 @@ let otherWorkspaceComponentId: number;
 // reached the parent — leaving an orphan report and an orphan audit row.
 // SQLite recycles INTEGER PRIMARY KEY ids on delete, so a later test
 // inserting a status_report could land on the orphan's id and inherit
-// its `actor_type=user` attribution. See docs/adr/test-audit-cleanup.md.
+// its `actor_type=user` attribution. See packages/services/AGENTS.md.
 const createdReportIds: number[] = [];
 const updatedReportIds: number[] = [];
 

@@ -24,7 +24,7 @@ export function ChartTooltipNumber({
   return (
     <>
       <div
-        className="h-2.5 w-2.5 shrink-0 rounded-(--radius-xs) bg-(--color-bg)"
+        className="h-2.5 w-2.5 shrink-0 rounded-xs bg-(--color-bg)"
         style={
           {
             "--color-bg": `var(--color-${name})`,

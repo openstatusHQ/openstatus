@@ -1,23 +1,22 @@
-TAGS "http"
+TOKEN "endpoint__http_list_14d__v1_endpoint_read_5685" READ
 
 NODE endpoint
 SQL >
 
-    %
-        SELECT * FROM mv__http_14d__v1
-        WHERE
-            monitorId = {{ String(monitorId, '1', required=True) }}
-            {% if defined(fromDate) %}
-                AND time >= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(fromDate) }})))
-            {% end %}
-            {% if defined(toDate) %}
-                AND time <= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(toDate) }})))
-            {% end %}
-        ORDER BY time DESC
-        {% if defined(limit) %}
-          LIMIT {{ Int32(limit) }}
-          OFFSET {{ Int32(offset, 0) }}
-        {% end %}
+%
+SELECT *
+FROM mv__http_14d__v1
+WHERE
+    monitorId = {{ String(monitorId, '1', required=True) }}
+    {% if defined(fromDate) %}
+        AND time >= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(fromDate) }})))
+    {% end %}
+    {% if defined(toDate) %}
+        AND time <= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(toDate) }})))
+    {% end %}
+ORDER BY time DESC
+{% if defined(limit) %} LIMIT {{ Int32(limit) }} OFFSET {{ Int32(offset, 0) }} {% end %}
+
+TYPE endpoint
 
 
-TYPE ENDPOINT

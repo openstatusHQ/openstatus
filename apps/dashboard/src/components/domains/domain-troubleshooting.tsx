@@ -1,5 +1,6 @@
 "use client";
 
+import { ExternalLink } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Card,
@@ -13,7 +14,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
-import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 
 import { Link } from "@/components/common/link";

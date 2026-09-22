@@ -2,6 +2,7 @@
 
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, Expand, DragHandle, Add, Delete } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,13 +43,6 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import {
-  Check,
-  ChevronsUpDown,
-  GripVertical,
-  Plus,
-  Trash2,
-} from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -371,7 +365,7 @@ export function FormMonitors({
                           {field.value.length > 0
                             ? `${field.value.length} monitors selected`
                             : "Select monitors"}
-                          <ChevronsUpDown className="opacity-50" />
+                          <Expand className="opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
@@ -447,7 +441,7 @@ export function FormMonitors({
                         className="w-full"
                         disabled={legacy}
                       >
-                        <Plus />
+                        <Add />
                         Add Group
                       </Button>
                     </span>
@@ -466,7 +460,7 @@ export function FormMonitors({
                 className="w-full"
                 onClick={handleAddGroup}
               >
-                <Plus />
+                <Add />
                 Add Group
               </Button>
             )}
@@ -549,7 +543,7 @@ function MonitorRow({ monitor, className, ...props }: MonitorRowProps) {
       <div className="grid h-9 grid-cols-3 gap-2">
         <div className="flex flex-row items-center gap-4 self-center">
           <SortableItemHandle>
-            <GripVertical
+            <DragHandle
               size={16}
               aria-hidden="true"
               className="text-muted-foreground"
@@ -641,7 +635,7 @@ function MonitorGroup({
       <div className="grid grid-cols-3 gap-2 px-2 pt-2">
         <div className="flex flex-row items-center gap-1 self-center">
           <SortableItemHandle>
-            <GripVertical
+            <DragHandle
               size={16}
               aria-hidden="true"
               className="text-muted-foreground"
@@ -687,7 +681,7 @@ function MonitorGroup({
                       {Array.isArray(field.value) && field.value.length > 0
                         ? `${field.value.length} monitors selected`
                         : "Select monitors"}
-                      <ChevronsUpDown className="opacity-50" />
+                      <Expand className="opacity-50" />
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
@@ -764,7 +758,7 @@ function MonitorGroup({
                   ? { onClick: () => onDeleteGroup(group.id) }
                   : {})}
               >
-                <Trash2 />
+                <Delete />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

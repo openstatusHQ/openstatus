@@ -6,6 +6,8 @@ import "@openstatus/db/env.mjs";
 export const env = createEnv({
   server: {
     TINY_BIRD_API_KEY: z.string().min(1),
+    TINYBIRD_URL: z.string().default("https://api.tinybird.co"),
+    TINYBIRD_NOOP: z.stringbool().catch(false),
     RESEND_API_KEY: z.string().min(1),
     QSTASH_CURRENT_SIGNING_KEY: z.string().min(1),
     QSTASH_NEXT_SIGNING_KEY: z.string().min(1),
@@ -18,9 +20,6 @@ export const env = createEnv({
     GCP_CLIENT_EMAIL: z.string(),
     GCP_PRIVATE_KEY: z.string(),
     CRON_SECRET: z.string(),
-    CLICKHOUSE_URL: z.string(),
-    CLICKHOUSE_USERNAME: z.string(),
-    CLICKHOUSE_PASSWORD: z.string(),
     PAGERDUTY_APP_ID: z.string().optional(),
     SLACK_FEEDBACK_WEBHOOK_URL: z.string().optional(),
   },
@@ -34,6 +33,8 @@ export const env = createEnv({
     NEXT_PUBLIC_OPENPANEL_CLIENT_ID:
       process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
     TINY_BIRD_API_KEY: process.env.TINY_BIRD_API_KEY,
+    TINYBIRD_URL: process.env.TINYBIRD_URL,
+    TINYBIRD_NOOP: process.env.TINYBIRD_NOOP,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,
     QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
@@ -50,9 +51,6 @@ export const env = createEnv({
     GCP_CLIENT_EMAIL: process.env.GCP_CLIENT_EMAIL,
     GCP_PRIVATE_KEY: process.env.GCP_PRIVATE_KEY,
     CRON_SECRET: process.env.CRON_SECRET,
-    CLICKHOUSE_URL: process.env.CLICKHOUSE_URL,
-    CLICKHOUSE_USERNAME: process.env.CLICKHOUSE_USERNAME,
-    CLICKHOUSE_PASSWORD: process.env.CLICKHOUSE_PASSWORD,
     PAGERDUTY_APP_ID: process.env.PAGERDUTY_APP_ID,
     SLACK_FEEDBACK_WEBHOOK_URL: process.env.SLACK_FEEDBACK_WEBHOOK_URL,
   },

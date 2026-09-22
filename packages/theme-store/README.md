@@ -18,6 +18,7 @@ Community themes are predefined color schemes that users can apply to their stat
 - **Openstatus (Rounded)** - The rounded openstatus theme (similar to the legacy page)
 - **Supabase** - Theme matching Supabase's brand colors
 - **GitHub (High Contrast)** - High contrast theme inspired by GitHub's design
+- **Probo** - Theme matching Probo's brand colors
 
 ## Creating a New Theme
 

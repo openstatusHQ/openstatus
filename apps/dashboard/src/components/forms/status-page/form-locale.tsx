@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "@openstatus/icons";
 import { type Locale, localeDetails, locales } from "@openstatus/locales";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
@@ -19,7 +20,6 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { isTRPCClientError } from "@trpc/client";
-import { Lock } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";

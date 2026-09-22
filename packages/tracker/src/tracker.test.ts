@@ -109,9 +109,9 @@ describe("Tracker", () => {
       expect(tracker.totalUptime).toBe(75);
     });
 
-    test("rounds to two decimal places", () => {
+    test("rounds to three decimal places", () => {
       const tracker = new Tracker({ data: [day("2024-01-01", 3, 2)] });
-      expect(tracker.totalUptime).toBe(66.67);
+      expect(tracker.totalUptime).toBe(66.667);
     });
 
     test("aggregates across multiple days", () => {

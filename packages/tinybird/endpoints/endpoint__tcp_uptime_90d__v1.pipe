@@ -1,21 +1,23 @@
-TAGS "tcp"
+TOKEN "endpoint__tcp_uptime_90d__v1_endpoint_read_5414" READ
 
 NODE endpoint
 SQL >
 
-    %
-    SELECT
-        toStartOfInterval(time, INTERVAL {{ String(interval, '1440', required=True) }}  minute) AS interval,
-        countIf(requestStatus = 'success') AS success,
-        countIf(requestStatus = 'degraded') AS degraded,
-        countIf(requestStatus = 'error') AS error
-    FROM mv__tcp_uptime_90d__v1
-    WHERE
-        monitorId = {{ String(monitorId, '4433', required=True) }}
-        {% if fromDate %} AND time >= parseDateTimeBestEffortOrNull({{ String(fromDate) }}) {% end %}
-        {% if toDate %} AND time <= parseDateTimeBestEffortOrNull({{ String(toDate) }}) {% end %}
-        {% if regions %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
-    GROUP BY interval
-    ORDER BY interval DESC
+%
+SELECT 
+    toStartOfInterval(time, INTERVAL {{ String(interval, '30', required=True) }}  minute) AS interval,
+    countIf(requestStatus = 'success') AS success,
+    countIf(requestStatus = 'degraded') AS degraded,
+    countIf(requestStatus = 'error') AS error
+FROM mv__tcp_uptime_90d__v1
+WHERE
+    monitorId = {{ String(monitorId, '4433', required=True) }}
+    {% if fromDate %} AND time >= parseDateTimeBestEffortOrNull({{ String(fromDate) }}) {% end %}
+    {% if toDate %} AND time <= parseDateTimeBestEffortOrNull({{ String(toDate) }}) {% end %}
+    {% if regions %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
+GROUP BY interval
+ORDER BY interval DESC
 
-TYPE ENDPOINT
+TYPE endpoint
+
+

@@ -1,18 +1,20 @@
 import { db, eq, inArray } from "@openstatus/db";
 import { pageSubscriber } from "@openstatus/db/src/schema";
+import { createPage } from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
-import { expectAuditRow } from "../../../test/helpers";
+import { createWorkspaceFixture, expectAuditRow } from "../../../test/helpers";
 import {
   createSlackSubscriber,
   listSlackSubscribersForChannel,
   removeSlackSubscriber,
 } from "../index";
 
-// page 1 = slug "status", workspace 1 (team plan, status-subscribers=true).
-const PAGE_ID = 1;
+// Own workspace + page: this suite writes committed rows and asserts on the
+// workspace's audit trail, which siblings would otherwise clear.
+let PAGE_ID: number;
+let WORKSPACE_ID: number;
 const TEAM_ID = "T_SLACK_TEST";
 const CHANNELS = {
   create: "C_SLACK_CREATE",
@@ -22,17 +24,18 @@ const CHANNELS = {
   list: "C_SLACK_LIST",
 };
 
-// Scope cleanup to this suite's own slack channels. A workspace-wide
-// clearAuditLog would race sibling suites that share workspace 1 under
-// `deno test --parallel`; our assertions filter by unique entityId, so
-// stale audit rows can't match anyway.
 async function cleanAll() {
   await db
     .delete(pageSubscriber)
     .where(inArray(pageSubscriber.slackChannelId, Object.values(CHANNELS)));
 }
 
-beforeAll(cleanAll);
+beforeAll(async () => {
+  const team = await createWorkspaceFixture("team");
+  WORKSPACE_ID = team.workspace.id;
+  PAGE_ID = (await createPage(WORKSPACE_ID)).id;
+  await cleanAll();
+});
 afterAll(cleanAll);
 
 describe("createSlackSubscriber", () => {
@@ -59,7 +62,7 @@ describe("createSlackSubscriber", () => {
     expect(row?.name).toBe("#incidents");
 
     await expectAuditRow({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       action: "page_subscriber.create",
       entityType: "page_subscriber",
       entityId: result.id,
@@ -132,7 +135,7 @@ describe("removeSlackSubscriber", () => {
     expect(row?.unsubscribedAt).not.toBeNull();
 
     await expectAuditRow({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       action: "page_subscriber.update",
       entityType: "page_subscriber",
       entityId: created.id,

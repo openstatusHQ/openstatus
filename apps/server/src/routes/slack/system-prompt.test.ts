@@ -25,6 +25,17 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain('workspace "Acme Corp"');
   });
 
+  test("tells the model a write call drafts a card instead of executing", () => {
+    const prompt = buildSystemPrompt("Acme Corp");
+    expect(prompt).toContain("does NOT execute");
+    expect(prompt).toContain("Approve/Cancel");
+    // The two ways the model strands the user without a card.
+    expect(prompt).toContain("NEVER write the draft out as message text");
+    expect(prompt).toContain("shall I go ahead?");
+    // notify is a button, so the model must not spend a turn asking.
+    expect(prompt).toContain("NEVER ask whether to notify subscribers");
+  });
+
   test("guides the model on componentImpacts", () => {
     const prompt = buildSystemPrompt("Acme Corp");
     expect(prompt).toContain("componentImpacts");

@@ -1,0 +1,16 @@
+---
+title: "gRPC Monitoring"
+description: "Monitor your gRPC services with health checks from openstatus."
+publishedAt: "2026-08-27"
+author: "openstatus"
+category: "monitoring"
+---
+
+gRPC monitoring is now available in openstatus. Point a monitor at any service that implements the [gRPC Health Checking Protocol](https://grpc.io/docs/guides/health-checking/) and we'll call `grpc.health.v1.Health/Check` on the schedule you choose — the same check Kubernetes and Envoy already make, so most services need no new endpoint.
+
+You can check the server's overall health or a single named service, connect over TLS, TLS without certificate verification, or plaintext h2c, and send metadata with the request when your health endpoint sits behind an authenticating proxy.
+
+Because a gRPC monitor speaks HTTP/2, every check reports the same phase breakdown as an HTTP monitor: DNS, connection, TLS handshake and time to first byte. A service that reports `NOT_SERVING` keeps its measured latency, so you can see it slow down before it drains.
+
+####  Get Started 🚀
+Add a new monitor, select "gRPC" as your monitor type, and enter the target as `host:port`.

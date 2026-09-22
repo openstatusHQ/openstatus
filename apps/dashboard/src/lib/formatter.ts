@@ -15,12 +15,12 @@ export function formatMilliseconds(ms: number) {
   }).format(ms)}`;
 }
 
-export function formatPercentage(value: number) {
+export function formatPercentage(value: number, fractionDigits = 2) {
   if (Number.isNaN(value)) return "100%";
   return `${Intl.NumberFormat("en-US", {
     style: "percent",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(value)}`;
 }
 
@@ -81,6 +81,17 @@ export function formatDateRange(from?: Date, to?: Date) {
   }
 
   return "All time";
+}
+
+export function formatDistanceToNowShort(date: Date): string {
+  const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
 }
 
 export function formatDateForInput(date: Date): string {

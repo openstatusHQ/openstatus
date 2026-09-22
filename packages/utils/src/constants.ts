@@ -16,6 +16,7 @@ export const MONITOR_JOB_TYPES = [
   "http",
   "tcp",
   "icmp",
+  "grpc",
   "udp",
   "dns",
   "ssl",

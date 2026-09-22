@@ -103,6 +103,10 @@ func TestHeaderTarget_HeaderEvaluate(t *testing.T) {
 		{name: "Header 1", fields: fields{Comparator: request.StringEmpty, Target: "", Key: "headers1"}, args: args{s: `{"Content-Type":"text/plain;charset=UTF-8","Strict-Transport-Security":"max-age=3153600000","Vary":"Accept-Encoding"}`}, want: false},
 		{name: "Header 2", fields: fields{Comparator: request.StringNotEmpty, Target: "", Key: "headers1"}, args: args{s: `{"Content-Type":"text/plain;charset=UTF-8","Strict-Transport-Security":"max-age=3153600000","headers1":"Accept-Encoding"}`}, want: true},
 		{name: "it should return false if it can not decode the headers", fields: fields{Comparator: request.StringContains, Target: "Accept-Encoding", Key: "Vary"}, args: args{s: `}`}, want: false},
+		{name: "Lowercase assertion key", fields: fields{Comparator: request.StringEquals, Target: "application/json", Key: "content-type"}, args: args{s: `{"Content-Type":"application/json"}`}, want: true},
+		{name: "Mixed-case assertion and lowercase header", fields: fields{Comparator: request.StringEquals, Target: "application/json", Key: "CoNtEnT-TyPe"}, args: args{s: `{"content-type":"application/json"}`}, want: true},
+		{name: "Case-sensitive header value", fields: fields{Comparator: request.StringEquals, Target: "application/json", Key: "content-type"}, args: args{s: `{"Content-Type":"application/JSON"}`}, want: false},
+		{name: "Negative assertion uses actual header value", fields: fields{Comparator: request.StringNotEquals, Target: "application/json", Key: "content-type"}, args: args{s: `{"Content-Type":"application/json"}`}, want: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -59,6 +59,7 @@ export const limitsSchema = z.object({
    */
   members: z.literal("Unlimited").or(z.number()).prefault(1),
   "audit-log": z.boolean().prefault(false),
+  sso: z.boolean().prefault(false), // add-on but required in limits
 
   /**
    * Other limits
@@ -91,8 +92,26 @@ export const addons = [
   "email-domain-protection",
   "ip-restriction",
   "white-label",
+  "custom-theme",
   "status-pages",
+  "monitors",
+  "sso",
 ] as const satisfies Partial<keyof Limits>[];
+
+// Declares which add-ons are sold by quantity, what one subscription unit grants
+// and the self-serve ceiling. Both keys are also service `LimitKey`s, which is
+// what lets the purchase guard count current usage for them.
+export const addonQuantityConfig = {
+  "status-pages": { packSize: 1, maxQuantity: null },
+  monitors: { packSize: 10, maxQuantity: 10 },
+} as const satisfies Partial<
+  Record<
+    (typeof addons)[number],
+    { packSize: number; maxQuantity: number | null }
+  >
+>;
+
+export type AddonQuantityKey = keyof typeof addonQuantityConfig;
 
 export const addonsSchema = z.partialRecord(
   z.enum(addons),

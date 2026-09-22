@@ -51,7 +51,7 @@ export default function Page() {
         <SectionHeader>
           <SectionTitle>Account</SectionTitle>
         </SectionHeader>
-        <FormCard>
+        <FormCard id="personal-information">
           <FormCardUpgrade />
           <FormCardHeader>
             <FormCardTitle>Personal Information</FormCardTitle>
@@ -77,7 +77,7 @@ export default function Page() {
             </FormCardFooterInfo>
           </FormCardFooter>
         </FormCard>
-        <FormCard>
+        <FormCard id="appearance">
           <FormCardHeader>
             <FormCardTitle>Appearance</FormCardTitle>
             <FormCardDescription>
@@ -88,7 +88,7 @@ export default function Page() {
             <ThemeToggle />
           </FormCardContent>
         </FormCard>
-        <FormCard variant="destructive">
+        <FormCard id="delete-account" variant="destructive">
           <FormCardHeader>
             <FormCardTitle>Delete Account</FormCardTitle>
             <FormCardDescription>

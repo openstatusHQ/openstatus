@@ -1,5 +1,6 @@
 "use client";
 
+import { Trend } from "@openstatus/icons";
 import {
   Status,
   StatusContent,
@@ -9,7 +10,6 @@ import {
 } from "@openstatus/ui/components/blocks/status-layout";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
@@ -254,12 +254,14 @@ export default function Page() {
                 <StatusMonitorTabsTriggerValueSkeleton />
               ) : (
                 <StatusMonitorTabsTriggerValue>
-                  {tempMonitor?.regions.length} {t("regions")}{" "}
+                  {(tempMonitor?.regions.length ?? 0) +
+                    (tempMonitor?.privateLocationCount ?? 0)}{" "}
+                  {t("regions")}{" "}
                   <Badge
                     variant="outline"
                     className="py-px font-mono text-[10px]"
                   >
-                    {slowestRegion} <TrendingUp className="size-3" />
+                    {slowestRegion} <Trend className="size-3" />
                   </Badge>
                 </StatusMonitorTabsTriggerValue>
               )}

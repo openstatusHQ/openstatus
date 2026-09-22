@@ -11,7 +11,7 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import {
   EmptyStateContainer,
@@ -37,10 +37,19 @@ import { useTRPC } from "@/lib/trpc/client";
  */
 export function FormSheetStatusReportCreate({
   children,
+  open: controlledOpen,
+  onOpenChange,
+  defaultPageId,
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Pre-scopes the sheet to a page and hides the selector. */
+  defaultPageId?: number;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [selectedPageId, setSelectedPageId] = useState<number | null>(null);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -50,7 +59,8 @@ export function FormSheetStatusReportCreate({
   );
 
   const pageId =
-    pages?.length === 1 ? pages[0].id : (selectedPageId ?? undefined);
+    defaultPageId ??
+    (pages?.length === 1 ? pages[0].id : (selectedPageId ?? undefined));
 
   const { data: page } = useQuery(
     trpc.page.get.queryOptions(
@@ -88,7 +98,9 @@ export function FormSheetStatusReportCreate({
 
   return (
     <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>
-      <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      {children ? (
+        <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      ) : null}
       <FormSheetContent className="sm:max-w-lg">
         <FormSheetHeader>
           <FormSheetTitle>Status Report</FormSheetTitle>
@@ -96,7 +108,7 @@ export function FormSheetStatusReportCreate({
             Configure and update the status of your report.
           </FormSheetDescription>
         </FormSheetHeader>
-        {pages && pages.length > 1 ? (
+        {defaultPageId === undefined && pages && pages.length > 1 ? (
           <>
             <div className="grid gap-1.5 px-4 py-4">
               <Label htmlFor="status-page-select">Status Page</Label>

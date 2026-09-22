@@ -1,16 +1,12 @@
 import type { AppRouter } from "@openstatus/api";
-import { createTRPCClient, loggerLink } from "@trpc/client";
+import { createTRPCClient } from "@trpc/client";
 import { headers } from "next/headers";
 
-import { endingLink } from "./shared";
+import { endingLink, sentryLoggerLink } from "./shared";
 
 export const api = createTRPCClient<AppRouter>({
   links: [
-    loggerLink({
-      enabled: (opts) =>
-        process.env.NODE_ENV === "development" ||
-        (opts.direction === "down" && opts.result instanceof Error),
-    }),
+    sentryLoggerLink(),
     endingLink({
       headers: async () => {
         const h = new Map(await headers());

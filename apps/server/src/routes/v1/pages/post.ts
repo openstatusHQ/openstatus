@@ -134,30 +134,36 @@ export function registerPostPage(api: typeof pagesApi) {
 
     const { monitors, ...rest } = input;
 
-    if (monitors?.length) {
-      const monitorIds = isNumberArray(monitors)
+    const monitorIds = monitors
+      ? isNumberArray(monitors)
         ? monitors
-        : monitors.map((m) => m.monitorId);
+        : monitors.map((m) => m.monitorId)
+      : [];
 
-      const _monitors = await db
-        .select()
-        .from(monitor)
-        .where(
-          and(
-            inArray(monitor.id, monitorIds),
-            eq(monitor.workspaceId, workspaceId),
-            isNull(monitor.deletedAt),
-          ),
-        )
-        .all();
+    const monitorsData = monitors?.length
+      ? await db
+          .select()
+          .from(monitor)
+          .where(
+            and(
+              inArray(monitor.id, monitorIds),
+              eq(monitor.workspaceId, workspaceId),
+              isNull(monitor.deletedAt),
+            ),
+          )
+          .all()
+      : [];
 
-      if (_monitors.length !== monitors.length) {
+    if (monitors?.length) {
+      if (monitorsData.length !== monitors.length) {
         throw new OpenStatusApiError({
           code: "BAD_REQUEST",
           message: `Some of the monitors ${monitorIds.join(", ")} not found`,
         });
       }
     }
+
+    const monitorsById = new Map(monitorsData.map((m) => [m.id, m]));
 
     const _page = await db
       .insert(page)
@@ -177,13 +183,7 @@ export function registerPostPage(api: typeof pagesApi) {
       for (const [index, m] of monitors.entries()) {
         const values = typeof m === "number" ? { monitorId: m } : m;
 
-        const _monitor = await db.query.monitor.findFirst({
-          where: and(
-            eq(monitor.id, values.monitorId),
-            eq(monitor.workspaceId, workspaceId),
-            isNull(monitor.deletedAt),
-          ),
-        });
+        const _monitor = monitorsById.get(values.monitorId);
 
         if (!_monitor) {
           throw new OpenStatusApiError({

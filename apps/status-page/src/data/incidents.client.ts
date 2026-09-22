@@ -1,10 +1,10 @@
-import { Bookmark, Check, Trash2 } from "lucide-react";
+import { Acknowledge, Check, Delete } from "@openstatus/icons";
 
 export const actions = [
   {
     id: "acknowledge",
     label: "Acknowledge",
-    icon: Bookmark,
+    icon: Acknowledge,
     variant: "default" as const,
   },
   {
@@ -16,7 +16,7 @@ export const actions = [
   {
     id: "delete",
     label: "Delete",
-    icon: Trash2,
+    icon: Delete,
     variant: "destructive" as const,
   },
 ] as const;

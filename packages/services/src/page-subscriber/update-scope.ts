@@ -23,6 +23,9 @@ import { UpdateSubscriberScopeInput } from "./schemas";
  * them via `metadata` to keep the audit row from being dropped by the
  * empty-diff guard in `emitAudit`.
  */
+// Token-addressed self-service by an anonymous visitor: the audit actor is
+// `subscriber`, for which `requireScope` is a documented no-op.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function updateSubscriberScope(args: {
   input: UpdateSubscriberScopeInput;
   db?: DB;

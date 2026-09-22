@@ -8,13 +8,13 @@ import {
   getServiceReportDaily,
   getServiceReportWindows,
 } from "@openstatus/services/external-service-report";
-import { OSTinybird, safePipeData } from "@openstatus/tinybird";
+import { safePipeData } from "@openstatus/tinybird";
 
-import { env } from "../env";
 import {
   cachedGetExternalServiceBySlug,
   cachedListExternalServices,
 } from "../lib/external-service-cache";
+import { tb } from "../lib/tb";
 
 type LatestRow = {
   id: string;
@@ -138,7 +138,6 @@ async function generateReportsMarkdown(args: {
 
 export async function generateStatusIndexMarkdown(): Promise<string> {
   const services = await cachedListExternalServices();
-  const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
   const latestRes = await safePipeData(
     tb.externalStatusLatest({}),
     "externalStatusLatest (markdown index)",
@@ -179,7 +178,6 @@ export async function generateStatusDetailMarkdown(
   const aliasSlugs = Array.isArray(service.aliases) ? service.aliases : [];
   const slugChain = [service.slug, ...aliasSlugs];
 
-  const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
   const [latestRes, historyRes] = await Promise.all([
     safePipeData(
       tb.externalStatusLatest({ ids: slugChain }),

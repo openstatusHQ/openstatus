@@ -136,6 +136,18 @@ export const Events = {
     name: "notification_deleted",
     channel: "notification",
   },
+  CreatePrivateLocation: {
+    name: "private_location_created",
+    channel: "private_location",
+  },
+  UpdatePrivateLocation: {
+    name: "private_location_updated",
+    channel: "private_location",
+  },
+  DeletePrivateLocation: {
+    name: "private_location_deleted",
+    channel: "private_location",
+  },
   AcknowledgeIncident: {
     name: "incident_acknowledged",
     channel: "incident",
@@ -207,5 +219,9 @@ export const Events = {
   CdnChecker: {
     name: "cdn_checker",
     channel: "checker",
+  },
+  McpRequest: {
+    name: "mcp_request",
+    channel: "mcp",
   },
 } as const satisfies Record<string, EventProps>;

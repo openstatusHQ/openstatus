@@ -1,5 +1,6 @@
 import type { Interceptor } from "@connectrpc/connect";
 import { Events } from "@openstatus/analytics";
+import { MonitorService } from "@openstatus/proto/monitor/v1";
 // @ts-nocheck — ConnectRPC's deep generic types (AnyFn, UnaryResponse, etc.)
 // are incompatible with the test mocks. All runtime behavior is correct.
 import {
@@ -115,12 +116,12 @@ describe("trackingInterceptor", () => {
     });
   });
 
-  test("extracts additional props from message", async () => {
+  test("extracts additional props from nested create message", async () => {
     const interceptor = trackingInterceptor();
     const req = createMockRequest(
       "openstatus.monitor.v1.MonitorService",
       "CreateHTTPMonitor",
-      { url: "https://example.com", jobType: "http", name: "my-monitor" },
+      { monitor: { url: "https://example.com", name: "my-monitor" } },
     );
     const next = mockNext({});
 
@@ -130,6 +131,24 @@ describe("trackingInterceptor", () => {
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.CreateMonitor,
       additionalProps: { url: "https://example.com", jobType: "http" },
+    });
+  });
+
+  test("maps icmp uri to url and stamps jobType", async () => {
+    const interceptor = trackingInterceptor();
+    const req = createMockRequest(
+      "openstatus.monitor.v1.MonitorService",
+      "CreateICMPMonitor",
+      { monitor: { name: "ping", uri: "example.com" } },
+    );
+    const next = mockNext({});
+
+    await interceptor(next)(req as never);
+    await Promise.resolve();
+
+    expect(mockTrack).toHaveBeenCalledWith({
+      ...Events.CreateMonitor,
+      additionalProps: { url: "example.com", jobType: "icmp" },
     });
   });
 
@@ -236,5 +255,52 @@ describe("RPC_EVENT_MAP", () => {
       expect(validEventNames.has(mapping.event.name)).toBe(true);
       expect(mapping.event.channel).toBeDefined();
     }
+  });
+
+  // Derived from the service definition rather than a hand-written list, so a
+  // newly added Create*/Update*/Delete* RPC fails here instead of silently
+  // going untracked — which is how ICMP was missed.
+  test("every mutating MonitorService RPC is tracked", () => {
+    const mutating = Object.values(MonitorService.method)
+      .map((m) => m.name)
+      .filter((name) => /^(Create|Update|Delete)/.test(name));
+
+    expect(mutating.length).toBeGreaterThan(0);
+
+    const untracked = mutating.filter(
+      (name) =>
+        !(`openstatus.monitor.v1.MonitorService/${name}` in RPC_EVENT_MAP),
+    );
+
+    expect(untracked).toEqual([]);
+  });
+
+  test("gRPC monitor mutations are tracked like the other monitor types", () => {
+    const create =
+      RPC_EVENT_MAP["openstatus.monitor.v1.MonitorService/CreateGRPCMonitor"];
+    const update =
+      RPC_EVENT_MAP["openstatus.monitor.v1.MonitorService/UpdateGRPCMonitor"];
+
+    expect(create?.event).toEqual(Events.CreateMonitor);
+    expect(update?.event).toEqual(Events.UpdateMonitor);
+    expect(create?.eventProps).toEqual(
+      RPC_EVENT_MAP["openstatus.monitor.v1.MonitorService/CreateDNSMonitor"]
+        ?.eventProps,
+    );
+  });
+
+  test("ICMP monitor mutations are tracked like the other monitor types", () => {
+    const create =
+      RPC_EVENT_MAP["openstatus.monitor.v1.MonitorService/CreateICMPMonitor"];
+    const update =
+      RPC_EVENT_MAP["openstatus.monitor.v1.MonitorService/UpdateICMPMonitor"];
+
+    expect(create?.event).toEqual(Events.CreateMonitor);
+    expect(update?.event).toEqual(Events.UpdateMonitor);
+    // Same props as the sibling create entries.
+    expect(create?.eventProps).toEqual(
+      RPC_EVENT_MAP["openstatus.monitor.v1.MonitorService/CreateDNSMonitor"]
+        ?.eventProps,
+    );
   });
 });

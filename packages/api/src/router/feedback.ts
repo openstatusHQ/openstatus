@@ -12,7 +12,7 @@ export const feedbackRouter = createTRPCRouter({
   submit: protectedProcedure
     .input(
       z.object({
-        message: z.string().min(1, "Message required"),
+        message: z.string().trim().min(1, "Message required"),
         source: z.enum(feedbackSource),
         path: z.string(),
         isMobile: z.boolean().optional(),

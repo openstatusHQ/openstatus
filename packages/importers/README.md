@@ -9,6 +9,7 @@ Migrate monitors, status pages, components, incidents, and subscribers from thir
 | **Atlassian Statuspage** | Status pages, components, component groups, incidents (as status reports), scheduled maintenances, email subscribers | OAuth API key |
 | **Better Stack Uptime** | Monitors (HTTP checks), status pages, component groups (from sections + monitor groups), incidents (as status reports), maintenances | Bearer API token |
 | **Instatus** | Status pages, component groups, components, incidents (as status reports), maintenances, email subscribers | API key |
+| **Checkly** | Monitors (from checks), status pages, cards (as component groups), services (as static components), incidents (as status reports), maintenance windows | API key + account ID |
 
 ## Architecture
 
@@ -50,7 +51,7 @@ type ImportProvider<TConfig extends ImportConfig> = {
 
 A `run()` call returns an `ImportSummary` containing sequential `PhaseResult` entries. Each phase (e.g. `"monitors"`, `"page"`, `"components"`, `"incidents"`) contains an array of `ResourceResult` items with a `status` of `"created"`, `"skipped"`, or `"failed"` and an opaque `data` payload that the service layer writes to the database.
 
-The importers package is **read-only** -- it fetches data from external APIs and maps it into OpenStatus shapes. The actual database writes happen in `packages/api/src/service/import.ts`.
+The importers package is **read-only** -- it fetches data from external APIs and maps it into OpenStatus shapes. The actual database writes happen in `packages/services/src/import/phase-writers.ts`.
 
 ## How the Import Pipeline Works
 
@@ -63,7 +64,7 @@ API Router (packages/api/src/router/import.ts)
   |
   | Calls previewImport() or runImport()
   v
-Service Layer (packages/api/src/service/import.ts)
+Service Layer (packages/services/src/import/)
   |
   | 1. Creates provider via createProvider(name)
   | 2. Validates API key via provider.validate()
@@ -169,15 +170,15 @@ Implement `ImportProvider<TConfig>`:
 
 Each phase produces `ResourceResult[]` with the mapped data in `data`. The service layer reads `data` to write to the database.
 
-The `data` shape must match what the corresponding phase writer in `packages/api/src/service/import.ts` casts it to. For incidents, this means the mapper must return `{ report, updates, sourceComponentIds }` -- even if `sourceComponentIds` is empty.
+The `data` shape must match what the corresponding phase writer in `packages/services/src/import/phase-writers.ts` casts it to. For incidents, this means the mapper must return `{ report, updates, sourceComponentIds }` -- even if `sourceComponentIds` is empty.
 
 ### 6. Register the provider
 
 1. Create `index.ts` with barrel exports
 2. Add to `IMPORT_PROVIDERS` in `src/index.ts`
 3. Add export paths in `package.json`
-4. Add a case in `createProvider()` in `packages/api/src/service/import.ts`
-5. Add the provider name to the `z.enum` in `packages/api/src/router/import.ts`
+4. Add a case in `createProvider()` in `packages/services/src/import/provider.ts`
+5. Add the provider name to `importProviders` in `packages/services/src/import/schemas.ts`
 6. Add a radio button in `apps/dashboard/src/components/forms/components/form-import.tsx`
 
 ### 7. Write tests

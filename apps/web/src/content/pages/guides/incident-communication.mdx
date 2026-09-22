@@ -1,0 +1,184 @@
+---
+title: "Incident Communication"
+seo:
+  title: "Incident Communication: Templates, Cadence, and What to Say"
+description: "What to write during an outage, at which severity, and how often. The four update stages, a cadence table by severity, copy-paste templates by scenario, and the phrases that make incidents worse."
+author: "openstatus"
+publishedAt: "2026-08-15"
+category: "education"
+faq:
+  - question: "What should you say in an incident update?"
+    answer: "What is broken in user terms, who it affects, what you are doing, and when you will next post. Never speculate on cause in the first update - you will be wrong, and the correction costs more trust than the delay would have. If you know nothing yet, say that you are investigating and give a next-update time. 'We are investigating reports of elevated error rates on the API. Next update in 30 minutes' is a complete first update."
+  - question: "How often should you post incident updates?"
+    answer: "Match cadence to severity: every 30 minutes for a full outage, every hour for major degradation, and at meaningful change only for minor issues. Post on schedule even when there is nothing new - silence reads as abandonment, and 'still investigating, next update in 30 minutes' is a real update. Missing a promised update does more damage than the outage itself in most cases."
+  - question: "Should you admit fault in an incident update?"
+    answer: "Say what happened plainly, without either minimising it or performing contrition. 'A configuration change caused 40 minutes of failed logins' is better than both 'some users may have experienced intermittent issues' and a paragraph of apology. Customers are deciding whether to trust your future updates, and precision is what earns that."
+  - question: "What is the difference between an incident update and a postmortem?"
+    answer: "An update is written during the incident for people who are currently blocked - short, factual, and focused on impact and next update time. A postmortem is written afterwards for people deciding whether to keep trusting you - it covers timeline, root cause, and what changes so it does not recur. Updates buy patience; postmortems buy trust back."
+  - question: "Who should write incident updates?"
+    answer: "Someone who is not fixing the incident. The responder deep in the problem is the worst-placed person to write clearly about it, and asking them to context-switch slows recovery. Assign a communications role at the start of any SEV1 or SEV0 - usually the incident commander or a support lead working from what responders report."
+---
+
+Most teams treat incident communication as something that happens to them. The
+outage starts, someone asks "should we post something?", and a paragraph gets
+written by whoever is least busy — usually the person who should be fixing it.
+
+It is worth doing better, because the communication is what customers actually
+experience. They do not see your remediation. They see whether you told them, how
+fast, and whether the update was honest. A well-run incident with silent comms reads
+as incompetence; a bad incident with clear comms often ends with customers thanking
+you.
+
+This is the hub for how to do it: the update stages, cadence by severity, templates
+per scenario, and the phrases to avoid.
+
+## The Four Stages of an Incident Update
+
+Nearly every status page convention — and every template on this site — uses the same
+four stages. They exist because they answer different questions.
+
+| Stage | The question it answers | What goes in it |
+| --- | --- | --- |
+| **Investigating** | Do you know? | Confirm the symptom in user terms and commit to a next update time. No cause, no ETA. |
+| **Identified** | Do you know why? | What is broken and who it affects. A fix is underway. Still no promised ETA unless you are certain. |
+| **Monitoring** | Is it fixed? | The fix is deployed and you are watching. Say what recovery looks like so users can verify. |
+| **Resolved** | Is it over? | Confirm normal service, state duration and scope, and say whether a postmortem follows. |
+
+The stage most teams get wrong is **Investigating**. It feels empty to post "we are
+looking into it" — so they wait until they have something substantial, and by then
+customers have been guessing for forty minutes. The first update is not there to
+inform. It is there to tell people they do not need to open a support ticket.
+
+The other common error is skipping **Monitoring** and jumping to Resolved. If the fix
+regresses, you now have to reopen an incident you declared over, which costs
+disproportionate credibility.
+
+## Cadence by Severity
+
+Cadence is the promise you are actually making. The content of an update matters less
+than posting when you said you would.
+
+| Severity | Impact | Update every | Where |
+| --- | --- | --- | --- |
+| **SEV0 / SEV1** | Full outage or critical feature down for everyone | 30 minutes | Status page, email subscribers, in-app |
+| **SEV2** | Major degradation, or a subset of users fully broken | 1 hour | Status page, subscribers |
+| **SEV3** | Minor degradation, workaround exists | On meaningful change | Status page |
+| **SEV4** | Cosmetic or single-customer | Direct to affected customer | Support channel, not the status page |
+
+Two rules make this work.
+
+**Post on schedule even with nothing new.** "Still investigating, no change, next
+update in 30 minutes" is a complete update. Silence is read as abandonment, and the
+gap between your last update and now is the number customers remember.
+
+**Never promise an ETA you are not certain of.** A missed ETA converts a technical
+problem into a trust problem. Promise the *next update time* instead — that is
+entirely within your control.
+
+If you have not agreed on what SEV1 means with your team, do that before the next
+incident: the [incident severity matrix](/guides/incident-severity-matrix) explains
+the tiers, and the [severity matrix builder](/play/severity-matrix) generates one you
+can adapt.
+
+## Templates by Scenario
+
+Copy-paste starting points for the incidents that actually recur, each with wording
+for all four stages:
+
+- **[API service disruption](/guides/api-service-disruption)** — outages and third-party service failures.
+- **[Database performance degradation](/guides/database-performance-degradation)** — slow queries and connection exhaustion.
+- **[Deployment rollback](/guides/deployment-rollback)** — a release you had to reverse.
+- **[Feature degradation](/guides/feature-degradation)** — one capability broken while the product works.
+- **[Network connectivity issues](/guides/network-connectivity-issues)** — regional and routing problems.
+- **[Scheduled maintenance](/guides/scheduled-maintenance)** — planned work, announced in advance.
+- **[Security incident response](/guides/security-incident-response)** — the one with legal and disclosure constraints attached.
+
+Adapt them rather than pasting verbatim. A template's value is that it stops you
+composing prose at 3am, not that the exact sentences are optimal for your product.
+
+## What Not to Say
+
+**"Some users may be experiencing intermittent issues."** This is four hedges in one
+sentence. If logins are failing, say logins are failing.
+
+**Cause in the first update.** Early theories are usually wrong. Correcting a public
+diagnosis costs more than the twenty minutes of not naming one.
+
+**Blaming a provider as an explanation.** Naming a dependency is fine as fact.
+Presenting it as absolution is not — customers bought availability from you, and your
+provider's outage is your architecture's problem.
+
+**Apologies in place of information.** One sentence of apology, then facts. A long
+apology with no detail reads as a company that would rather manage feelings than tell
+you what is happening.
+
+**Marketing voice.** No "we're working hard to deliver the best possible experience".
+Plain, specific, slightly boring — which is
+[what status pages should be](/guides/boring-is-better-for-status-pages).
+
+## After the Incident
+
+Resolved is not finished. For anything at SEV2 or above, publish a postmortem:
+timeline, what actually broke, and what changes so it does not recur. Customers who
+lost an hour of work want evidence you understand why. Done well it is also
+[surprisingly good marketing](/guides/public-postmortem-underrated-marketing) — few
+companies do it, and it demonstrates engineering maturity better than any landing
+page.
+
+Track [MTTR](/guides/what-is-mttr) alongside it, but do not confuse the two: MTTR
+measures how fast you recovered, not how well you communicated while recovering. A
+team can halve MTTR and still lose customers by saying nothing for an hour.
+
+If you operate under a compliance regime, incident communication is frequently a
+control rather than a courtesy — see
+[SOC 2](/guides/soc-2-status-page-requirements),
+[ISO 27001](/guides/iso-27001-incident-communication),
+[DORA](/guides/dora-incident-reporting-requirements), and
+[NIS2](/guides/nis2-incident-reporting-requirements) for what each expects, including
+notification deadlines measured in hours.
+
+## Where It Gets Published
+
+All of this needs somewhere to land. A [status page](/status-page) is the
+canonical location — one URL customers can check without asking, hosted away from the
+infrastructure that is failing. Subscribers get updates pushed by email, and you can
+[deliver them into customer Slack channels](/guides/slack-status-page-subscriptions)
+for the accounts that ask.
+
+Whether that page is public or private is a real decision with different tradeoffs —
+[public vs private status pages](/guides/public-vs-private-status-pages) covers it.
+And the updates only get written if something tells you to write them, which is what
+[uptime monitoring](/uptime-monitoring) is for: the alternative is
+[finding out from a customer](/blog/your-customer-found-out-first).
+
+## Frequently asked questions
+
+<Details summary="What should you say in an incident update?">
+
+What is broken in user terms, who it affects, what you are doing, and when you will next post. Never speculate on cause in the first update — you will be wrong, and the correction costs more trust than the delay would have. If you know nothing yet, say that you are investigating and give a next-update time. "We are investigating reports of elevated error rates on the API. Next update in 30 minutes" is a complete first update.
+
+</Details>
+
+<Details summary="How often should you post incident updates?">
+
+Match cadence to severity: every 30 minutes for a full outage, every hour for major degradation, and at meaningful change only for minor issues. Post on schedule even when there is nothing new — silence reads as abandonment, and "still investigating, next update in 30 minutes" is a real update. Missing a promised update does more damage than the outage itself in most cases.
+
+</Details>
+
+<Details summary="Should you admit fault in an incident update?">
+
+Say what happened plainly, without either minimising it or performing contrition. "A configuration change caused 40 minutes of failed logins" is better than both "some users may have experienced intermittent issues" and a paragraph of apology. Customers are deciding whether to trust your future updates, and precision is what earns that.
+
+</Details>
+
+<Details summary="What is the difference between an incident update and a postmortem?">
+
+An update is written during the incident for people who are currently blocked — short, factual, and focused on impact and next update time. A postmortem is written afterwards for people deciding whether to keep trusting you — it covers timeline, root cause, and what changes so it does not recur. Updates buy patience; postmortems buy trust back.
+
+</Details>
+
+<Details summary="Who should write incident updates?">
+
+Someone who is not fixing the incident. The responder deep in the problem is the worst-placed person to write clearly about it, and asking them to context-switch slows recovery. Assign a communications role at the start of any SEV1 or SEV0 — usually the incident commander or a support lead working from what responders report.
+
+</Details>

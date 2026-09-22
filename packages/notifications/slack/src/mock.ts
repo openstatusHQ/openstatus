@@ -33,6 +33,8 @@ const monitor: Monitor = {
   retry: 3,
   followRedirects: false,
   externalName: null,
+  grpcService: null,
+  grpcTls: null,
 };
 
 const notification: Notification = {

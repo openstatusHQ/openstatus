@@ -1,5 +1,6 @@
-/** @jsxImportSource react */
+/** @jsxRuntime automatic @jsxImportSource react */
 
+import "./test-preload.ts";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 import { render } from "react-email";
@@ -45,7 +46,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
     );
 
     // Should not contain the unsubscribe text when no URL provided
-    expect(html).not.toContain("from these notifications");
+    expect(html).not.toContain("Unsubscribe");
   });
 
   test("should render unsubscribe link as clickable", async () => {
@@ -66,7 +67,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
     expect(html).toContain(`href="${unsubscribeUrl}"`);
   });
 
-  test("should display unsubscribe link with proper styling", async () => {
+  test("should render the unsubscribe link in the footer, outside the card", async () => {
     const html = await render(
       <StatusReportEmail
         pageTitle="Test Page"
@@ -80,8 +81,10 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
       />,
     );
 
-    // Check for muted styling (gray color for footer)
-    expect(html).toContain("#6b7280");
+    expect(html.indexOf("Test message")).toBeLessThan(
+      html.indexOf(unsubscribeUrl),
+    );
+    expect(html).toContain("Manage notifications");
   });
 });
 
@@ -94,26 +97,27 @@ describe("Status Report Email - Subject Line", () => {
     );
   });
 
-  test('does not prepend "RESOLVED:" for any non-resolved status', () => {
-    const nonResolved = [
-      "investigating",
-      "identified",
-      "monitoring",
-      "maintenance",
-    ] as const;
+  test("uses the bare report title for ongoing report statuses", () => {
+    const ongoing = ["investigating", "identified", "monitoring"] as const;
 
-    for (const status of nonResolved) {
+    for (const status of ongoing) {
       const subject = statusReportSubject({ status, reportTitle });
       expect(subject).toBe(reportTitle);
       expect(subject).not.toContain("RESOLVED:");
     }
+  });
+
+  test('prepends "Planned Maintenance:" when status is "maintenance"', () => {
+    expect(statusReportSubject({ status: "maintenance", reportTitle })).toBe(
+      `Planned Maintenance: ${reportTitle}`,
+    );
   });
 });
 
 describe("Status Report Email - Email Content Validation", () => {
   test("should include all required email fields", async () => {
     const props = {
-      pageTitle: "OpenStatus",
+      pageTitle: "openstatus",
       reportTitle: "API Outage",
       status: "investigating" as const,
       date: "2024-01-15T10:00:00.000Z",
@@ -156,9 +160,7 @@ describe("Status Report Email - Email Content Validation", () => {
         />,
       );
 
-      // Should render without errors and contain the status
-      // Note: status is rendered lowercase in HTML with text-transform: uppercase CSS
-      expect(html).toContain(status);
+      expect(html).toContain(status.toUpperCase());
     }
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
+import { Info } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Info } from "lucide-react";
 import { useParams } from "next/navigation";
 
 import { Link } from "@/components/common/link";

@@ -201,3 +201,33 @@ test("privateLocation.update rejects monitors from another workspace", async () 
     expect((e as TRPCError).code).toBe("FORBIDDEN");
   }
 });
+
+test("privateLocation.new persists metadata and defaults status", async () => {
+  const caller = callerFor();
+
+  const result = await caller.privateLocation.new({
+    name: "Metadata Location",
+    token: "test-token-metadata",
+    monitors: [],
+    metadata: { datacenter: "eu-west" },
+  });
+
+  expect(result.metadata).toEqual({ datacenter: "eu-west" });
+  expect(result.status).toBe("error");
+
+  await db.delete(privateLocation).where(eq(privateLocation.id, result.id));
+});
+
+test("privateLocation.update replaces metadata", async () => {
+  const caller = callerFor();
+
+  const result = await caller.privateLocation.update({
+    id: ownWorkspaceLocationId,
+    name: "Metadata Update",
+    monitors: [ownMonitorId],
+    metadata: { env: "prod" },
+  });
+
+  expect(result.metadata).toEqual({ env: "prod" });
+  expect(result.status).toBe("error");
+});

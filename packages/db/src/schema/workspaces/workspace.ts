@@ -7,6 +7,7 @@ import { page } from "../pages";
 import { statusReport } from "../status_reports";
 import { usersToWorkspaces } from "../users";
 import { workspacePlans } from "./constants";
+import { workspaceSsoDomain } from "./sso_domain";
 
 export const workspace = sqliteTable(
   "workspace",
@@ -21,6 +22,14 @@ export const workspace = sqliteTable(
     endsAt: integer("ends_at", { mode: "timestamp" }),
     paidUntil: integer("paid_until", { mode: "timestamp" }),
     limits: text("limits").default("{}").notNull(),
+
+    workosOrganizationId: text("workos_organization_id").unique(),
+    // Our own permission switch, never mirrored from WorkOS: the downgrade
+    // cascade clears it, and a later connection webhook must not resurrect it.
+    ssoEnabled: integer("sso_enabled", { mode: "boolean" })
+      .default(false)
+      .notNull(),
+
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
@@ -37,6 +46,7 @@ export const workspace = sqliteTable(
 
 export const workspaceRelations = relations(workspace, ({ many }) => ({
   usersToWorkspaces: many(usersToWorkspaces),
+  ssoDomains: many(workspaceSsoDomain),
   pages: many(page),
   monitors: many(monitor),
   notifications: many(notification),

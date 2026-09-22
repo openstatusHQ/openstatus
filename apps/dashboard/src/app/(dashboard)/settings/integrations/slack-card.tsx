@@ -1,9 +1,9 @@
 "use client";
 
+import { Lock } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Link } from "@/components/common/link";

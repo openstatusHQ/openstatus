@@ -49,7 +49,7 @@ export class Tracker {
   private calculateUptime(data: { ok: number; count: number }[]) {
     const { count, ok } = this.aggregatedData(data);
     if (count === 0) return 100; // starting with 100% uptime
-    return Math.round((ok / count) * 10_000) / 100; // round to 2 decimal places
+    return Math.round((ok / count) * 100_000) / 1_000; // round to 3 decimal places
   }
 
   private aggregatedData(data: { ok: number; count: number }[]) {

@@ -18,11 +18,17 @@ import { ContactForm, type FormValues } from "./form";
 export function FormDialogSupportContact({
   children,
   defaultValues,
+  open: controlledOpen,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof DialogTrigger> & {
   defaultValues?: FormValues;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const isMobile = useIsMobile();
   const trpc = useTRPC();
   const { data: user } = useQuery(trpc.user.get.queryOptions());
@@ -30,9 +36,11 @@ export function FormDialogSupportContact({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger {...props} asChild>
-        {children}
-      </DialogTrigger>
+      {children ? (
+        <DialogTrigger {...props} asChild>
+          {children}
+        </DialogTrigger>
+      ) : null}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Support</DialogTitle>

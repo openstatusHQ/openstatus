@@ -1,6 +1,7 @@
 "use client";
 
 import { UTCDate } from "@date-fns/utc";
+import { Check, Copy } from "@openstatus/icons";
 import {
   HoverCard,
   HoverCardContent,
@@ -14,7 +15,6 @@ import {
 } from "@radix-ui/react-hover-card";
 import { format } from "date-fns";
 import { formatDistanceToNowStrict } from "date-fns";
-import { Check, Copy } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useEffect, useState } from "react";
 

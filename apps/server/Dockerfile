@@ -3,9 +3,9 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM node@sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc AS install
+FROM node@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc" \
+    org.opencontainers.image.base.digest="sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6" \
     org.opencontainers.image.base.name="docker.io/node:24-slim" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
@@ -48,14 +48,14 @@ RUN \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
 corepack enable pnpm
-pnpm install --prod --frozen-lockfile --filter=@openstatus/server... --verbose
+pnpm install --prod --frozen-lockfile --filter=@openstatus/server... --loglevel debug
 EOF
 
 # build
-FROM denoland/deno@sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29 AS build
+FROM denoland/deno@sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d AS build
 LABEL \
-    org.opencontainers.image.base.digest="sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29" \
-    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.0" \
+    org.opencontainers.image.base.digest="sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d" \
+    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.6" \
     org.opencontainers.image.stage="build"
 ENV NODE_ENV="production"
 WORKDIR /app/apps/server
@@ -75,8 +75,8 @@ COPY \
     --link \
     "/app/packages" "/app/packages"
 RUN <<EOF
-deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
-deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi-v1.json --output app src/_serve.bundle.mjs
+deno bundle --platform=deno --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
+deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi.json --include static/openapi-v1.json --output app src/_serve.bundle.mjs
 EOF
 
 # runtime

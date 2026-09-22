@@ -12,7 +12,7 @@ const getRoute = createRoute({
   method: "get",
   tags: ["whoami"],
   path: "/",
-  summary: "Get your informations",
+  summary: "Get your information",
   description: "Get the current workspace information attached to the API key.",
   responses: {
     200: {

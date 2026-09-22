@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "openstatus:last-login-provider";
 
-type Provider = "github" | "google" | "email";
+type Provider = "github" | "google" | "oidc" | "email";
 
 export function LoginButton({
   provider,

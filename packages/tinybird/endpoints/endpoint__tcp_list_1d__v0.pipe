@@ -1,0 +1,12 @@
+NODE endpoint
+SQL >
+
+%
+    SELECT * FROM mv__tcp_1d__v0
+    WHERE
+        monitorId = {{ String(monitorId, '4433', required=True) }}
+    ORDER BY cronTimestamp DESC
+
+TYPE endpoint
+
+

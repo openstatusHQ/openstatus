@@ -1,6 +1,6 @@
 "use client";
 
-import { Laptop, Moon, Sun } from "lucide-react";
+import { System, Dark, Light } from "@openstatus/icons";
 import { useTheme } from "next-themes";
 import type * as React from "react";
 import { useEffect, useState } from "react";
@@ -28,13 +28,13 @@ export function ThemeToggle({
         {...props}
       >
         <div>
-          <Sun className="h-6 w-6" />
+          <Light className="h-6 w-6" />
         </div>
         <div>
-          <Moon className="h-6 w-6" />
+          <Dark className="h-6 w-6" />
         </div>
         <div>
-          <Laptop className="h-6 w-6" />
+          <System className="h-6 w-6" />
         </div>
       </div>
     );

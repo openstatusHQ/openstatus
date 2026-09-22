@@ -154,31 +154,6 @@ export function pageComponentNotFoundError(componentId: string): ConnectError {
 }
 
 /**
- * Creates a "failed to create page component" error.
- */
-export function pageComponentCreateFailedError(): ConnectError {
-  return createError(
-    "Failed to create page component",
-    Code.Internal,
-    ErrorReason.PAGE_COMPONENT_CREATE_FAILED,
-  );
-}
-
-/**
- * Creates a "failed to update page component" error.
- */
-export function pageComponentUpdateFailedError(
-  componentId: string,
-): ConnectError {
-  return createError(
-    "Failed to update page component",
-    Code.Internal,
-    ErrorReason.PAGE_COMPONENT_UPDATE_FAILED,
-    { "component-id": componentId },
-  );
-}
-
-/**
  * Creates a "component group not found" error.
  */
 export function componentGroupNotFoundError(groupId: string): ConnectError {
@@ -186,29 +161,6 @@ export function componentGroupNotFoundError(groupId: string): ConnectError {
     "Component group not found",
     Code.NotFound,
     ErrorReason.COMPONENT_GROUP_NOT_FOUND,
-    { "group-id": groupId },
-  );
-}
-
-/**
- * Creates a "failed to create component group" error.
- */
-export function componentGroupCreateFailedError(): ConnectError {
-  return createError(
-    "Failed to create component group",
-    Code.Internal,
-    ErrorReason.COMPONENT_GROUP_CREATE_FAILED,
-  );
-}
-
-/**
- * Creates a "failed to update component group" error.
- */
-export function componentGroupUpdateFailedError(groupId: string): ConnectError {
-  return createError(
-    "Failed to update component group",
-    Code.Internal,
-    ErrorReason.COMPONENT_GROUP_UPDATE_FAILED,
     { "group-id": groupId },
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
+import { Add } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 
 import {
@@ -127,7 +127,7 @@ export default function Page() {
             }}
           >
             <Button size="sm">
-              <Plus />
+              <Add />
               Create Status Update
             </Button>
           </FormSheetStatusReportUpdate>

@@ -2,12 +2,20 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Check,
+  More,
+  Blog,
+  Search as SearchIcon,
+  AI,
+  Team,
+} from "@openstatus/icons";
+import {
   BlueskyIcon,
   GitHubIcon,
   LinkedInIcon,
   XIcon,
   YouTubeIcon,
-} from "@openstatus/icons";
+} from "@openstatus/icons/brand";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -24,14 +32,6 @@ import {
   RadioGroupItem,
 } from "@openstatus/ui/components/ui/radio-group";
 import { cn } from "@openstatus/ui/lib/utils";
-import {
-  Check,
-  MoreHorizontal,
-  Newspaper,
-  Search,
-  Sparkles,
-  Users,
-} from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -40,16 +40,16 @@ import { z } from "zod";
 import { Note } from "@/components/common/note";
 
 const sources = [
-  { id: "search-engine", title: "Search Engine", icon: Search },
+  { id: "search-engine", title: "Search Engine", icon: SearchIcon },
   { id: "github", title: "GitHub", icon: GitHubIcon },
   { id: "linkedin", title: "LinkedIn", icon: LinkedInIcon },
   { id: "bluesky", title: "Bluesky", icon: BlueskyIcon },
   { id: "twitter", title: "X / Twitter", icon: XIcon },
-  { id: "ai-chat", title: "AI Chat", icon: Sparkles },
-  { id: "recommendation", title: "Friend / Colleague", icon: Users },
+  { id: "ai-chat", title: "AI Chat", icon: AI },
+  { id: "recommendation", title: "Friend / Colleague", icon: Team },
   { id: "youtube", title: "YouTube", icon: YouTubeIcon },
-  { id: "blog", title: "Blog / Article", icon: Newspaper },
-  { id: "other", title: "Other", icon: MoreHorizontal },
+  { id: "blog", title: "Blog / Article", icon: Blog },
+  { id: "other", title: "Other", icon: More },
 ] as const;
 
 const schema = z.object({

@@ -7,12 +7,10 @@ import {
   getComponentReportWindows,
   getServiceReportWindows,
 } from "@openstatus/services/external-service-report";
-import { OSTinybird, safePipeData } from "@openstatus/tinybird";
+import { safePipeData } from "@openstatus/tinybird";
 import { unstable_cache } from "next/cache";
 
-import { env } from "../env";
-
-const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
+import { tb } from "./tb";
 
 const REPORTS_REVALIDATE_SECONDS = 30;
 // Distinct from the "external-services" tag on service-lookup caches so that

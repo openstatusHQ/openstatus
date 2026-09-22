@@ -56,13 +56,13 @@ message TCPMonitor {
   }];
 
   // Description of the monitor (optional).
-  string description = 8 [(buf.validate.field).string.max_len = 1024];
+  optional string description = 8 [(buf.validate.field).string.max_len = 1024];
 
   // Whether the monitor is active (defaults to false).
-  bool active = 9;
+  optional bool active = 9;
 
   // Whether the monitor is publicly visible (defaults to false).
-  bool public = 10;
+  optional bool public = 10;
 
   // Geographic regions to run checks from.
   repeated Region regions = 11 [(buf.validate.field).repeated = {
@@ -79,4 +79,9 @@ message TCPMonitor {
 
   // Current operational status of the monitor.
   MonitorStatus status = 13;
+
+  // IDs of private locations that run this monitor. Read-only.
+  repeated string private_location_ids = 14 [
+    (gnostic.openapi.v3.property) = {read_only: true}
+  ];
 }

@@ -1,4 +1,4 @@
-import { Filter, Zap } from "lucide-react";
+import { Filter, Speed } from "@openstatus/icons";
 
 export const actions = [
   {
@@ -10,7 +10,7 @@ export const actions = [
   {
     id: "trigger",
     label: "Trigger",
-    icon: Zap,
+    icon: Speed,
     variant: "default" as const,
   },
 ] as const;

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { System, Dark, Add, Light, Close } from "@openstatus/icons";
 import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -14,6 +15,11 @@ import {
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -23,15 +29,12 @@ import {
 import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { Laptop, Moon, Plus, Sun, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// FIXME: use input-group instead
-import { InputWithAddons } from "@/components/common/input-with-addons";
 import { ThemePickerPopover } from "@/components/forms/status-page/theme-picker";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -47,9 +50,9 @@ const SLUG_PATTERN_MESSAGE =
   "Only use digits (0-9), hyphen (-) or lowercase characters (a-z).";
 
 const FORCE_THEME_OPTIONS = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Laptop },
+  { value: "light", label: "Light", icon: Light },
+  { value: "dark", label: "Dark", icon: Dark },
+  { value: "system", label: "System", icon: System },
 ] as const;
 
 const schema = z.object({
@@ -59,7 +62,7 @@ const schema = z.object({
   components: z
     .array(
       z.object({
-        name: z.string().min(1, "Component name is required"),
+        name: z.string().trim().min(1, "Component name is required"),
       }),
     )
     .optional(),
@@ -171,13 +174,14 @@ export function CreatePageForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Slug</FormLabel>
-              <FormControl>
-                <InputWithAddons
-                  placeholder="status"
-                  trailing=".openstatus.dev"
-                  {...field}
-                />
-              </FormControl>
+              <InputGroup>
+                <FormControl>
+                  <InputGroupInput placeholder="status" {...field} />
+                </FormControl>
+                <InputGroupAddon align="inline-end">
+                  .openstatus.dev
+                </InputGroupAddon>
+              </InputGroup>
               <FormMessage />
               <FormDescription>
                 Choose a unique subdomain for your status page (minimum 3
@@ -264,7 +268,7 @@ export function CreatePageForm({
                             className="shrink-0"
                             onClick={() => remove(index)}
                           >
-                            <X className="size-4" />
+                            <Close className="size-4" />
                           </Button>
                         )}
                       </div>
@@ -281,7 +285,7 @@ export function CreatePageForm({
                 size="sm"
                 onClick={() => append({ name: "" })}
               >
-                <Plus className="mr-1 size-4" />
+                <Add className="mr-1 size-4" />
                 Add another
               </Button>
             )}

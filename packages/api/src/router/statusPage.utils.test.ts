@@ -59,10 +59,10 @@ function createStatusData(
 function createIncident(id: number, daysAgo: number, durationHours = 1): Event {
   const from = new Date();
   from.setDate(from.getDate() - daysAgo);
-  from.setHours(from.getHours() - durationHours);
+  from.setUTCHours(0, 0, 0, 0); // Set to midnight UTC for full-day coverage
 
   const to = new Date(from);
-  to.setHours(to.getHours() + durationHours);
+  to.setUTCHours(from.getUTCHours() + durationHours);
 
   return {
     id,
@@ -77,10 +77,10 @@ function createIncident(id: number, daysAgo: number, durationHours = 1): Event {
 function createReport(id: number, daysAgo: number, durationHours = 2): Event {
   const from = new Date();
   from.setDate(from.getDate() - daysAgo);
-  from.setHours(from.getHours() - durationHours);
+  from.setUTCHours(0, 0, 0, 0); // Set to midnight UTC for full-day coverage
 
   const to = new Date(from);
-  to.setHours(to.getHours() + durationHours);
+  to.setUTCHours(from.getUTCHours() + durationHours);
 
   return {
     id,
@@ -99,10 +99,10 @@ function createMaintenance(
 ): Event {
   const from = new Date();
   from.setDate(from.getDate() - daysAgo);
-  from.setHours(from.getHours() - durationHours);
+  from.setUTCHours(0, 0, 0, 0); // Set to midnight UTC for full-day coverage
 
   const to = new Date(from);
-  to.setHours(to.getHours() + durationHours);
+  to.setUTCHours(from.getUTCHours() + durationHours);
 
   return {
     id,

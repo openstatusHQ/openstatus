@@ -1,6 +1,16 @@
 "use client";
 
 import {
+  Expand,
+  Billing,
+  System,
+  Logout,
+  Dark,
+  AI,
+  Light,
+  Account,
+} from "@openstatus/icons";
+import {
   Avatar,
   AvatarFallback,
   AvatarImage,
@@ -25,16 +35,6 @@ import {
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ChevronsUpDown,
-  CreditCard,
-  Laptop,
-  LogOut,
-  Moon,
-  Sparkles,
-  Sun,
-  User,
-} from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -78,7 +78,7 @@ export function NavUser() {
                   {user?.email}
                 </span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              <Expand className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -115,7 +115,7 @@ export function NavUser() {
                     onClick={() => setOpenMobile(false)}
                     className="font-commit-mono tracking-tight"
                   >
-                    <Sparkles />
+                    <AI />
                     Upgrade Workspace
                   </Link>
                 </DropdownMenuItem>
@@ -128,31 +128,31 @@ export function NavUser() {
                   href="/settings/account"
                   onClick={() => setOpenMobile(false)}
                 >
-                  <User />
+                  <Account />
                   Account
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="[&_svg:not([class*='text-'])]:text-muted-foreground gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
                   {theme === "dark" ? (
-                    <Moon />
+                    <Dark />
                   ) : theme === "light" ? (
-                    <Sun />
+                    <Light />
                   ) : (
-                    <Laptop />
+                    <System />
                   )}
                   Theme
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent className="font-commit-mono tracking-tight">
                     <DropdownMenuItem onClick={() => setTheme("light")}>
-                      <Sun /> Light
+                      <Light /> Light
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setTheme("dark")}>
-                      <Moon /> Dark
+                      <Dark /> Dark
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setTheme("system")}>
-                      <Laptop /> System
+                      <System /> System
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
@@ -162,7 +162,7 @@ export function NavUser() {
                   href="/settings/billing"
                   onClick={() => setOpenMobile(false)}
                 >
-                  <CreditCard />
+                  <Billing />
                   Billing
                 </Link>
               </DropdownMenuItem>
@@ -172,7 +172,7 @@ export function NavUser() {
               onClick={() => signOut()}
               className="font-commit-mono tracking-tight"
             >
-              <LogOut />
+              <Logout />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

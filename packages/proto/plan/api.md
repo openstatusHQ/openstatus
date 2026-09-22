@@ -71,6 +71,7 @@ service StatusPageService {
   // Full Content & Status
   rpc GetStatusPageContent(GetStatusPageContentRequest) returns (GetStatusPageContentResponse);
   rpc GetOverallStatus(GetOverallStatusRequest) returns (GetOverallStatusResponse);
+  rpc GetStatusPageOverview(GetStatusPageOverviewRequest) returns (GetStatusPageOverviewResponse);
 }
 ```
 
@@ -107,11 +108,12 @@ service StatusPageService {
 | `UnsubscribeFromPage` | page_id, email or token | success |
 | `ListSubscribers` | page_id, limit?, offset?, include_unsubscribed? | PageSubscriber[], total_size |
 
-### Full Content & Status (2 methods)
+### Full Content & Status (3 methods)
 | Method | Request Fields | Response |
 |--------|---------------|----------|
 | `GetStatusPageContent` | id or slug | StatusPage, components[], groups[], status_reports[], maintenances[] |
 | `GetOverallStatus` | id or slug | overall_status, component_statuses[] |
+| `GetStatusPageOverview` | id (auth only) | StatusPage, configuration, components[], groups[], status_reports[], maintenances[], overall_status, component_statuses[] |
 
 ## Validation Rules (using buf.validate)
 

@@ -1,23 +1,11 @@
 import { and, eq } from "@openstatus/db";
 import { usersToWorkspaces } from "@openstatus/db/src/schema";
-import { z } from "zod";
 
-import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError, PreconditionFailedError } from "../errors";
+import { removeMemberInWorkspace } from "./internal";
 import { DeleteMemberInput } from "./schemas";
-
-// Composite-PK rows: drizzle's createSelectSchema would flatten the join,
-// but the membership row has no auto-generated columns we'd want to drop
-// from a snapshot. Inline parser keeps the audit `before` shape stable
-// even if a column is added to `users_to_workspaces` later.
-const memberRowSnapshot = z.object({
-  userId: z.number(),
-  workspaceId: z.number(),
-  role: z.string(),
-  createdAt: z.coerce.date().nullable(),
-});
 
 /**
  * Delete a member's workspace association. Idempotent on the target row —
@@ -38,6 +26,9 @@ const memberRowSnapshot = z.object({
  * Only fires when the actor is an openstatus user: removing another user is
  * not something a system / apiKey / webhook actor should do today.
  */
+// The delete and its `member.delete` audit row live in
+// `removeMemberInWorkspace`; this verb only adds the owner / self-removal guards.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function deleteMember(args: {
   ctx: ServiceContext;
   input: DeleteMemberInput;
@@ -77,23 +68,6 @@ export async function deleteMember(args: {
       );
     }
 
-    const [removed] = await tx
-      .delete(usersToWorkspaces)
-      .where(
-        and(
-          eq(usersToWorkspaces.workspaceId, ctx.workspace.id),
-          eq(usersToWorkspaces.userId, input.userId),
-        ),
-      )
-      .returning();
-
-    if (!removed) return;
-
-    await emitAudit(tx, ctx, {
-      action: "member.delete",
-      entityType: "member",
-      entityId: input.userId,
-      before: memberRowSnapshot.parse(removed),
-    });
+    await removeMemberInWorkspace({ tx, ctx, userId: input.userId });
   });
 }

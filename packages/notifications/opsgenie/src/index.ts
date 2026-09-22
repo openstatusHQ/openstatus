@@ -1,6 +1,10 @@
 import type { NotificationContext } from "@openstatus/notification-base";
 
-import { OpsGeniePayloadAlert, OpsGenieSchema } from "./schema";
+import {
+  OpsGenieCloseAlert,
+  OpsGeniePayloadAlert,
+  OpsGenieSchema,
+} from "./schema";
 
 export const sendAlert = async ({
   monitor,
@@ -84,37 +88,27 @@ export const sendDegraded = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
-  statusCode,
-  message,
 }: NotificationContext) => {
   const { opsgenie } = OpsGenieSchema.parse(JSON.parse(notification.data));
 
   const url =
     opsgenie.region === "eu"
-      ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}/close`
-      : `https://api.opsgenie.com/v2/alerts/${monitor.id}/close`;
+      ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}/close?identifierType=alias`
+      : `https://api.opsgenie.com/v2/alerts/${monitor.id}/close?identifierType=alias`;
 
-  const event = OpsGeniePayloadAlert.parse({
-    alias: `${monitor.id}`,
-    message: `${monitor.name} has recovered`,
-    description: message,
-    details: {
-      message,
-      status: statusCode,
+  const event = OpsGenieCloseAlert.parse({});
+  const res = await fetch(url, {
+    method: "POST",
+    body: JSON.stringify(event),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `GenieKey ${opsgenie.apiKey}`,
     },
   });
-  try {
-    await fetch(url, {
-      method: "POST",
-      body: JSON.stringify(event),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `GenieKey ${opsgenie.apiKey}`,
-      },
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
+  if (!res.ok) {
+    throw new Error(
+      `Failed to close OpsGenie alert: ${res.status} ${res.statusText}`,
+    );
   }
 };
 export const sendTest = async (props: {

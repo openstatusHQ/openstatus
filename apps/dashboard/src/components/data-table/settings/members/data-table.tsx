@@ -15,6 +15,7 @@ import { useTRPC } from "@/lib/trpc/client";
 export function DataTable() {
   const trpc = useTRPC();
   const { data: members, refetch } = useQuery(trpc.member.list.queryOptions());
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const deleteMemberMutation = useMutation(
     trpc.member.delete.mutationOptions({
       onSuccess: () => refetch(),
@@ -54,6 +55,9 @@ export function DataTable() {
                 <QuickActions
                   deleteAction={{
                     confirmationValue: item.user.email ?? "user",
+                    description: workspace?.ssoEnabled
+                      ? "This workspace uses SSO. They can sign in again and rejoin automatically unless you also remove them from your identity provider."
+                      : undefined,
                     // FIXME: when deleting myself, throws an error, should have been caught by the toast.error
                     submitAction: async () =>
                       await deleteMemberMutation.mutateAsync({

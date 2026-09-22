@@ -76,9 +76,20 @@ func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Re
 		Trigger:       "cron",
 		RequestStatus: req.Msg.RequestStatus,
 		Assertions:    ic.Monitor.Assertions.String,
+		Message:       req.Msg.Message,
+		Error:         uint8(req.Msg.Error),
 	}
 
 	h.sendEventAndUpdateLastSeen(ctx, data, tinybird.DatasourceHTTP, ic.Region.ID)
+
+	h.forwardStatusUpdate(ctx, ic, statusUpdateInput{
+		RequestStatus: data.RequestStatus,
+		Message:       data.Message,
+		Latency:       data.Latency,
+		CronTimestamp: data.CronTimestamp,
+		StatusCode:    data.StatusCode,
+		ErrorFlag:     data.Error,
+	})
 
 	return connect.NewResponse(&private_locationv1.IngestHTTPResponse{}), nil
 }

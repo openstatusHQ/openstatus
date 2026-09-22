@@ -7,6 +7,7 @@ import { Card, CardGrid, LinkCard } from "./card";
 import { Code } from "./code";
 import { CustomImage } from "./custom-image";
 import { CustomLink } from "./custom-link";
+import { CustomerLogos } from "./customer-logos";
 import { Details } from "./details";
 import { Grid } from "./grid";
 import { createHeading } from "./heading";
@@ -33,6 +34,7 @@ export const components = {
   pre: Pre,
   table: Table,
   Grid,
+  CustomerLogos,
   Aside,
   Card,
   CardGrid,

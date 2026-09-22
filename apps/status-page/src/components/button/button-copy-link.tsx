@@ -1,9 +1,9 @@
 "use client";
 
+import { Check, Copy } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Check, Copy } from "lucide-react";
 import { useExtracted } from "next-intl";
 
 export function ButtonCopyLink({

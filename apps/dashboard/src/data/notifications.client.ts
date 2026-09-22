@@ -1,22 +1,22 @@
 import {
+  Notification,
+  Settings,
+  Email,
+  Chat,
+  Delete,
+  Webhook,
+} from "@openstatus/icons";
+import {
   DiscordIcon,
   GoogleIcon,
   GrafanaIcon,
   MicrosoftTeamsIcon,
   TelegramIcon,
   WhatsappIcon,
-} from "@openstatus/icons";
-import { OpsGenieIcon } from "@openstatus/icons";
-import { PagerDutyIcon } from "@openstatus/icons";
-import { SlackIcon } from "@openstatus/icons";
-import {
-  BellIcon,
-  Cog,
-  Mail,
-  MessageCircle,
-  Trash2,
-  Webhook,
-} from "lucide-react";
+} from "@openstatus/icons/brand";
+import { OpsGenieIcon } from "@openstatus/icons/brand";
+import { PagerDutyIcon } from "@openstatus/icons/brand";
+import { SlackIcon } from "@openstatus/icons/brand";
 
 import { FormDiscord } from "@/components/forms/notifications/form-discord";
 import { FormEmail } from "@/components/forms/notifications/form-email";
@@ -36,13 +36,13 @@ export const actions = [
   {
     id: "edit",
     label: "Settings",
-    icon: Cog,
+    icon: Settings,
     variant: "default" as const,
   },
   {
     id: "delete",
     label: "Delete",
-    icon: Trash2,
+    icon: Delete,
     variant: "destructive" as const,
   },
 ] as const;
@@ -77,12 +77,12 @@ export const config = {
     form: FormDiscord,
   },
   email: {
-    icon: Mail,
+    icon: Email,
     label: "Email",
     form: FormEmail,
   },
   sms: {
-    icon: MessageCircle,
+    icon: Chat,
     label: "SMS",
     form: FormSms,
   },
@@ -112,7 +112,7 @@ export const config = {
     form: FormPagerDuty,
   },
   ntfy: {
-    icon: BellIcon, // TODO: add svg icon
+    icon: Notification, // TODO: add svg icon
     label: "Ntfy",
     form: FormNtfy,
   },

@@ -7,11 +7,12 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { LimitExceededError } from "../errors";
+import { assertWithinLimit } from "../limits";
 import type { Page } from "../types";
 import {
   assertAccessTypeAllowed,
   assertSlugAvailable,
-  assertStatusPageQuota,
   validateMonitorIdsActive,
 } from "./internal";
 import { CreatePageInput, NewPageInput } from "./schemas";
@@ -25,8 +26,23 @@ export async function createPage(args: {
   requireScope(ctx, "write");
   const input = CreatePageInput.parse(args.input);
 
+  if (input.customTheme && !ctx.workspace.limits["custom-theme"]) {
+    throw new LimitExceededError("custom-theme", 0);
+  }
+  if (
+    !ctx.workspace.limits.i18n &&
+    (input.defaultLocale !== "en" ||
+      input.locales?.some((locale) => locale !== "en"))
+  ) {
+    throw new LimitExceededError("i18n", 0);
+  }
+
   return withTransaction(ctx, async (tx) => {
-    await assertStatusPageQuota(tx, ctx.workspace);
+    await assertWithinLimit({
+      tx,
+      workspaceId: ctx.workspace.id,
+      limit: "status-pages",
+    });
     await assertSlugAvailable({ tx, slug: input.slug });
     assertAccessTypeAllowed(ctx.workspace, {
       accessType: input.accessType ?? "public",
@@ -84,6 +100,12 @@ export async function createPage(args: {
         })
         .filter((v): v is NonNullable<typeof v> => v !== null);
       if (pageComponentValues.length > 0) {
+        await assertWithinLimit({
+          tx,
+          workspaceId: ctx.workspace.id,
+          limit: "page-components",
+          delta: pageComponentValues.length,
+        });
         await tx.insert(pageComponent).values(pageComponentValues).run();
       }
     }
@@ -115,7 +137,11 @@ export async function newPage(args: {
   const input = NewPageInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
-    await assertStatusPageQuota(tx, ctx.workspace);
+    await assertWithinLimit({
+      tx,
+      workspaceId: ctx.workspace.id,
+      limit: "status-pages",
+    });
     await assertSlugAvailable({ tx, slug: input.slug });
 
     const defaultConfiguration = {

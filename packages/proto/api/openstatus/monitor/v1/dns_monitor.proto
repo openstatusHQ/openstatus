@@ -60,13 +60,13 @@ message DNSMonitor {
   repeated RecordAssertion record_assertions = 8 [(buf.validate.field).repeated.max_items = 10];
 
   // Description of the monitor (optional).
-  string description = 9 [(buf.validate.field).string.max_len = 1024];
+  optional string description = 9 [(buf.validate.field).string.max_len = 1024];
 
   // Whether the monitor is active (defaults to false).
-  bool active = 10;
+  optional bool active = 10;
 
   // Whether the monitor is publicly visible (defaults to false).
-  bool public = 11;
+  optional bool public = 11;
 
   // Geographic regions to run checks from.
   repeated Region regions = 12 [(buf.validate.field).repeated = {
@@ -83,4 +83,9 @@ message DNSMonitor {
 
   // Current operational status of the monitor.
   MonitorStatus status = 14;
+
+  // IDs of private locations that run this monitor. Read-only.
+  repeated string private_location_ids = 15 [
+    (gnostic.openapi.v3.property) = {read_only: true}
+  ];
 }

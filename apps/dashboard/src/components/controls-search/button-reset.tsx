@@ -1,7 +1,7 @@
 "use client";
 
+import { Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export function ButtonReset({ only }: { only?: string[] }) {
@@ -38,7 +38,7 @@ export function ButtonReset({ only }: { only?: string[] }) {
 
   return (
     <Button variant="ghost" size="sm" onClick={handleClick}>
-      <X />
+      <Close />
       Reset
     </Button>
   );

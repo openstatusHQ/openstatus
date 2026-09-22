@@ -1,6 +1,8 @@
 "use client";
 
+import { Sidebar as SidebarIcon } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
 import {
   Sidebar,
   SidebarContent,
@@ -19,10 +21,8 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
-import { PanelRight } from "lucide-react";
 import * as React from "react";
 
-import { Kbd } from "../common/kbd";
 import { SidebarMetadata, type SidebarMetadataProps } from "./sidebar-metadata";
 
 const SIDEBAR_KEYBOARD_SHORTCUT = "]";
@@ -54,16 +54,12 @@ export function SidebarRight({
               <TooltipTrigger asChild>
                 <SidebarTrigger />
               </TooltipTrigger>
-              <TooltipContent side="left">
-                <p className="mr-px inline-flex items-center">
-                  Toggle Sidebar{" "}
-                  <Kbd className="border-muted-foreground bg-primary text-background font-mono">
-                    ⌘
-                  </Kbd>
-                  <Kbd className="border-muted-foreground bg-primary text-background font-mono">
-                    {SIDEBAR_KEYBOARD_SHORTCUT}
-                  </Kbd>
-                </p>
+              <TooltipContent side="left" className="flex items-center gap-2">
+                Toggle Sidebar
+                <KbdGroup>
+                  <Kbd>⌘</Kbd>
+                  <Kbd>{SIDEBAR_KEYBOARD_SHORTCUT}</Kbd>
+                </KbdGroup>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -123,7 +119,7 @@ export function SidebarTrigger({
       }}
       {...props}
     >
-      <PanelRight />
+      <SidebarIcon />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

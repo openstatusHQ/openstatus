@@ -32,6 +32,9 @@ export type VerifyResult = {
  * `acceptedAt` and writes one `page_subscriber.update` audit row with
  * actor `subscriber:{id}`.
  */
+// Token-addressed self-service by an anonymous visitor: the audit actor is
+// `subscriber`, for which `requireScope` is a documented no-op.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function verifySelfSignupSubscriber(args: {
   input: VerifySelfSignupSubscriberInput;
   db?: DB;

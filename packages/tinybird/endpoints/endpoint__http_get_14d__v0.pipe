@@ -1,15 +1,16 @@
-TAGS "http"
+TOKEN "endpoint__http_get_14d__v0_endpoint_read_1831" READ
 
 NODE endpoint
 SQL >
 
-    %
-    SELECT *
-    FROM mv__http_full_14d__v0
-    WHERE
-        monitorId = {{ String(monitorId, '1', required=True) }}
-        AND id = {{ String(id, '', required=True) }}
-    ORDER BY time DESC
+%
+SELECT *
+FROM mv__http_full_14d__v0
+WHERE
+    monitorId = {{ String(monitorId, '1', required=True) }}
+    AND id = {{ String(id, '', required=True) }}
+ORDER BY time DESC
+
+TYPE endpoint
 
 
-TYPE ENDPOINT

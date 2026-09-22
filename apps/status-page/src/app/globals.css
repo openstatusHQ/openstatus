@@ -13,7 +13,6 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-commit-mono, var(--font-geist-mono));
-  --radius-xs: calc(var(--radius) - 8px);
 }
 
 :root {
@@ -33,13 +32,5 @@
   /* NOTE: allows us to --radius: 0px and avoid rounding issues - otherwise it is 'infinite * 1px' */
   .rounded-full {
     border-radius: calc(var(--radius) * 99999999);
-  }
-  .rounded-b-full {
-    border-bottom-left-radius: calc(var(--radius) * 99999999);
-    border-bottom-right-radius: calc(var(--radius) * 99999999);
-  }
-  .rounded-t-full {
-    border-top-left-radius: calc(var(--radius) * 99999999);
-    border-top-right-radius: calc(var(--radius) * 99999999);
   }
 }

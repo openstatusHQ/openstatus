@@ -18,7 +18,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/dns_monitor.proto.
  */
 export const file_openstatus_monitor_v1_dns_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvZG5zX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSLxBAoKRE5TTW9uaXRvchIKCgJpZBgBIAEoCRIzCgRuYW1lGAIgASgJQiW6Rxg6FhIURE5TIFJlc29sdXRpb24gQ2hlY2u6SAdyBRABGIACEikKA3VyaRgDIAEoCUIcukcPOg0SC2V4YW1wbGUuY29tukgHcgUQARiAEBJBCgtwZXJpb2RpY2l0eRgEIAEoDjIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5QZXJpb2RpY2l0eUIIukgFggECIAASHAoHdGltZW91dBgFIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYBiABKANCC7pICCIGGMCpBygASACIAQESGAoFcmV0cnkYByABKANCCbpIBiIEGAooABJLChFyZWNvcmRfYXNzZXJ0aW9ucxgIIAMoCzImLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZWNvcmRBc3NlcnRpb25CCLpIBZIBAhAKEh0KC2Rlc2NyaXB0aW9uGAkgASgJQgi6SAVyAxiACBIOCgZhY3RpdmUYCiABKAgSDgoGcHVibGljGAsgASgIEj8KB3JlZ2lvbnMYDCADKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uQg+6SAySAQkQHCIFggECIAASQgoOb3Blbl90ZWxlbWV0cnkYDSABKAsyKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuT3BlblRlbGVtZXRyeUNvbmZpZxI0CgZzdGF0dXMYDiABKA4yJC5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvclN0YXR1c0IOCgxfZGVncmFkZWRfYXRCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_assertions, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor]);
+  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvZG5zX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSLLBQoKRE5TTW9uaXRvchIKCgJpZBgBIAEoCRIzCgRuYW1lGAIgASgJQiW6Rxg6FhIURE5TIFJlc29sdXRpb24gQ2hlY2u6SAdyBRABGIACEikKA3VyaRgDIAEoCUIcukcPOg0SC2V4YW1wbGUuY29tukgHcgUQARiAEBJBCgtwZXJpb2RpY2l0eRgEIAEoDjIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5QZXJpb2RpY2l0eUIIukgFggECIAASHAoHdGltZW91dBgFIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYBiABKANCC7pICCIGGMCpBygASACIAQESGAoFcmV0cnkYByABKANCCbpIBiIEGAooABJLChFyZWNvcmRfYXNzZXJ0aW9ucxgIIAMoCzImLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZWNvcmRBc3NlcnRpb25CCLpIBZIBAhAKEiIKC2Rlc2NyaXB0aW9uGAkgASgJQgi6SAVyAxiACEgBiAEBEhMKBmFjdGl2ZRgKIAEoCEgCiAEBEhMKBnB1YmxpYxgLIAEoCEgDiAEBEj8KB3JlZ2lvbnMYDCADKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uQg+6SAySAQkQHCIFggECIAASQgoOb3Blbl90ZWxlbWV0cnkYDSABKAsyKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuT3BlblRlbGVtZXRyeUNvbmZpZxI0CgZzdGF0dXMYDiABKA4yJC5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvclN0YXR1cxIjChRwcml2YXRlX2xvY2F0aW9uX2lkcxgPIAMoCUIFukcCGAFCDgoMX2RlZ3JhZGVkX2F0Qg4KDF9kZXNjcmlwdGlvbkIJCgdfYWN0aXZlQgkKB19wdWJsaWNCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_assertions, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor]);
 
 /**
  * DNSMonitor defines the configuration for a DNS monitor.
@@ -85,23 +85,23 @@ export type DNSMonitor = Message<"openstatus.monitor.v1.DNSMonitor"> & {
   /**
    * Description of the monitor (optional).
    *
-   * @generated from field: string description = 9;
+   * @generated from field: optional string description = 9;
    */
-  description: string;
+  description?: string | undefined;
 
   /**
    * Whether the monitor is active (defaults to false).
    *
-   * @generated from field: bool active = 10;
+   * @generated from field: optional bool active = 10;
    */
-  active: boolean;
+  active?: boolean | undefined;
 
   /**
    * Whether the monitor is publicly visible (defaults to false).
    *
-   * @generated from field: bool public = 11;
+   * @generated from field: optional bool public = 11;
    */
-  public: boolean;
+  public?: boolean | undefined;
 
   /**
    * Geographic regions to run checks from.
@@ -123,6 +123,13 @@ export type DNSMonitor = Message<"openstatus.monitor.v1.DNSMonitor"> & {
    * @generated from field: openstatus.monitor.v1.MonitorStatus status = 14;
    */
   status: MonitorStatus;
+
+  /**
+   * IDs of private locations that run this monitor. Read-only.
+   *
+   * @generated from field: repeated string private_location_ids = 15;
+   */
+  privateLocationIds: string[];
 };
 
 /**

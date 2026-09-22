@@ -187,6 +187,14 @@ describe("API Key Utilities", () => {
       expect(shouldUpdateLastUsed(oneSecondAgo, 0)).toBe(true);
     });
 
+    it("should measure against an injected clock when provided", () => {
+      const lastUsed = new Date("2026-01-01T00:00:00Z");
+      const twoMinutesLater = new Date("2026-01-01T00:02:00Z");
+      const tenMinutesLater = new Date("2026-01-01T00:10:00Z");
+      expect(shouldUpdateLastUsed(lastUsed, 5, twoMinutesLater)).toBe(false);
+      expect(shouldUpdateLastUsed(lastUsed, 5, tenMinutesLater)).toBe(true);
+    });
+
     it("should handle very long debounce periods", () => {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
       expect(shouldUpdateLastUsed(oneHourAgo, 120)).toBe(false); // 2 hours

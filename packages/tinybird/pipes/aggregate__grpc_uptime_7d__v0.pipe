@@ -1,0 +1,13 @@
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        region,
+        requestStatus,
+        monitorId,
+        workspaceId
+    FROM grpc_response__v0
+
+TYPE materialized
+DATASOURCE mv__grpc_uptime_7d__v0

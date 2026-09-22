@@ -1,4 +1,4 @@
-# Data Source created from Pipe 'mv__external_status_component_daily__v0'
+# Data Source created from Pipe 'aggregate__external_status_component__daily__v0'
 
 SCHEMA >
     `day` Date,

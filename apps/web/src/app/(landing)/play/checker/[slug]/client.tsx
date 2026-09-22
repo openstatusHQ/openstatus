@@ -28,6 +28,10 @@ import {
 } from "../../../../../lib/checker/utils";
 import { cn } from "../../../../../lib/utils";
 import { handleExportCSV } from "../utils";
+import { Chart } from "./chart";
+
+const views = ["table", "chart"] as const;
+type View = (typeof views)[number];
 
 const STATUS_CODES = {
   "1": "text-muted-foreground",
@@ -37,16 +41,17 @@ const STATUS_CODES = {
   "5": "text-destructive",
 };
 
-interface TableProps {
+interface ResultsProps {
   data: CachedRegionChecker;
 }
 
-export function Table({ data }: TableProps) {
+export function Results({ data }: ResultsProps) {
+  const [view, setView] = useState<View>("table");
   const [input, setInput] = useState("");
   const [sort, setSort] = useState<{
     value: "latency" | "status" | "region";
     desc: boolean;
-  }>({ value: "latency", desc: false });
+  }>({ value: "latency", desc: true });
 
   // Filter successful checks and calculate timing phases
   const checks = data.checks
@@ -59,160 +64,180 @@ export function Table({ data }: TableProps) {
       };
     });
 
-  const filteredAndSorted = checks
-    .filter((check) => {
-      const regionInfo = regionDict[check.region as Region];
-      if (!regionInfo) return false;
-      return [
-        regionInfo.code,
-        regionInfo.location,
-        regionInfo.flag,
-        regionInfo.continent,
-        regionInfo.provider,
-      ].some((value) => value?.toLowerCase().includes(input.toLowerCase()));
-    })
-    .sort((a, b) => {
-      if (sort.value === "status") {
-        return sort.desc ? b.status - a.status : a.status - b.status;
-      }
-      if (sort.value === "latency") {
-        return sort.desc ? b.latency - a.latency : a.latency - b.latency;
-      }
-      return sort.desc
-        ? b.region.localeCompare(a.region)
-        : a.region.localeCompare(b.region);
-    });
+  const sorted = checks.sort((a, b) => {
+    if (sort.value === "status") {
+      return sort.desc ? b.status - a.status : a.status - b.status;
+    }
+    if (sort.value === "latency") {
+      return sort.desc ? b.latency - a.latency : a.latency - b.latency;
+    }
+    return sort.desc
+      ? b.region.localeCompare(a.region)
+      : a.region.localeCompare(b.region);
+  });
+
+  const filteredAndSorted = sorted.filter((check) => {
+    const regionInfo = regionDict[check.region as Region];
+    if (!regionInfo) return false;
+    return [
+      regionInfo.code,
+      regionInfo.location,
+      regionInfo.flag,
+      regionInfo.continent,
+      regionInfo.provider,
+    ].some((value) => value?.toLowerCase().includes(input.toLowerCase()));
+  });
 
   return (
-    <div>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Search by region, flag, location code, cloud provider or continent"
-          className="h-auto! flex-1 rounded-none p-4 text-base md:text-base"
-        />
-        <Button
-          variant="outline"
-          className="h-auto! rounded-none p-4 text-base"
-          onClick={() => handleExportCSV(checks, data.url)}
-        >
-          Export to CSV
-        </Button>
-      </div>
-      <div className="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th className="w-12" />
-              <th>Region</th>
-              <th>Status</th>
-              <th>DNS</th>
-              <th>Connect</th>
-              <th>TLS</th>
-              <th>TTFB</th>
-              <th className="p-0! text-right!">
-                <TableSort
-                  onClick={() =>
-                    setSort({ value: "latency", desc: !sort.desc })
-                  }
-                  direction={
-                    sort.value === "latency"
-                      ? sort.desc
-                        ? "desc"
-                        : "asc"
-                      : undefined
-                  }
-                >
-                  Latency
-                </TableSort>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredAndSorted.length === 0 ? (
+    <Tabs value={view} onValueChange={(value) => setView(value as View)}>
+      <TabsList className="h-auto w-full rounded-none">
+        {views.map((value) => (
+          <TabsTrigger
+            key={value}
+            value={value}
+            className="h-auto w-full truncate rounded-none p-4 text-base capitalize"
+          >
+            {value}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      <TabsContent value="table" className="rounded-none">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Search by region, flag, location code, cloud provider or continent"
+            className="h-auto! flex-1 rounded-none p-4 text-base md:text-base"
+          />
+          <Button
+            variant="outline"
+            className="h-auto! rounded-none p-4 text-base"
+            onClick={() => handleExportCSV(checks, data.url)}
+          >
+            Export to CSV
+          </Button>
+        </div>
+        <div className="table-wrapper">
+          <table>
+            <thead>
               <tr>
-                <td
-                  colSpan={8}
-                  className="border-border border border-dashed text-center"
-                >
-                  No data available
-                </td>
+                <th className="w-12" />
+                <th>Region</th>
+                <th>Status</th>
+                <th>DNS</th>
+                <th>Connect</th>
+                <th>TLS</th>
+                <th>TTFB</th>
+                <th className="p-0! text-right!">
+                  <TableSort
+                    onClick={() =>
+                      setSort({ value: "latency", desc: !sort.desc })
+                    }
+                    direction={
+                      sort.value === "latency"
+                        ? sort.desc
+                          ? "desc"
+                          : "asc"
+                        : undefined
+                    }
+                  >
+                    Latency
+                  </TableSort>
+                </th>
               </tr>
-            ) : (
-              filteredAndSorted.map((check) => {
-                const regionInfo = regionDict[check.region as Region];
-                if (!regionInfo) return null;
+            </thead>
+            <tbody>
+              {filteredAndSorted.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="border-border border border-dashed text-center"
+                  >
+                    No data available
+                  </td>
+                </tr>
+              ) : (
+                filteredAndSorted.map((check) => {
+                  const regionInfo = regionDict[check.region as Region];
+                  if (!regionInfo) return null;
 
-                const { dns, connection, tls, ttfb } = check.timingPhases;
+                  const { dns, connection, tls, ttfb } = check.timingPhases;
 
-                return (
-                  <InfoDialog key={check.region} check={check}>
-                    <tr className="hover:bg-muted/50">
-                      <td>
-                        <IconCloudProvider
-                          provider={regionInfo.provider}
-                          className="size-4"
-                        />
-                      </td>
-                      <td>
-                        {regionInfo.flag} {regionInfo.code}{" "}
-                        <span className="text-muted-foreground">
-                          {regionInfo.location}
-                        </span>
-                      </td>
-                      <td
-                        className={cn(
-                          STATUS_CODES[
-                            check.status.toString()[0] as keyof typeof STATUS_CODES
-                          ],
-                        )}
-                      >
-                        {check.status}
-                      </td>
-                      <td>
-                        {Intl.NumberFormat("en-US", {
-                          maximumFractionDigits: 0,
-                        }).format(dns)}
-                        ms
-                      </td>
-                      <td>
-                        {Intl.NumberFormat("en-US", {
-                          maximumFractionDigits: 0,
-                        }).format(connection)}
-                        ms
-                      </td>
-                      <td>
-                        {Intl.NumberFormat("en-US", {
-                          maximumFractionDigits: 0,
-                        }).format(tls)}
-                        ms
-                      </td>
-                      <td>
-                        {Intl.NumberFormat("en-US", {
-                          maximumFractionDigits: 0,
-                        }).format(ttfb)}
-                        ms
-                      </td>
-                      <td className="text-right!">
-                        {Intl.NumberFormat("en-US", {
-                          maximumFractionDigits: 0,
-                        }).format(check.latency)}
-                        ms
-                      </td>
-                    </tr>
-                  </InfoDialog>
-                );
-              })
-            )}
-          </tbody>
-          <caption>
-            Results of your check ({filteredAndSorted.length} / {checks.length}{" "}
-            regions)
-          </caption>
-        </table>
-      </div>
-    </div>
+                  return (
+                    <InfoDialog key={check.region} check={check}>
+                      <tr className="hover:bg-muted/50">
+                        <td>
+                          <IconCloudProvider
+                            provider={regionInfo.provider}
+                            className="size-4"
+                          />
+                        </td>
+                        <td>
+                          {regionInfo.flag} {regionInfo.code}{" "}
+                          <span className="text-muted-foreground">
+                            {regionInfo.location}
+                          </span>
+                        </td>
+                        <td
+                          className={cn(
+                            STATUS_CODES[
+                              check.status.toString()[0] as keyof typeof STATUS_CODES
+                            ],
+                          )}
+                        >
+                          {check.status}
+                        </td>
+                        <td>
+                          {Intl.NumberFormat("en-US", {
+                            maximumFractionDigits: 0,
+                          }).format(dns)}
+                          ms
+                        </td>
+                        <td>
+                          {Intl.NumberFormat("en-US", {
+                            maximumFractionDigits: 0,
+                          }).format(connection)}
+                          ms
+                        </td>
+                        <td>
+                          {Intl.NumberFormat("en-US", {
+                            maximumFractionDigits: 0,
+                          }).format(tls)}
+                          ms
+                        </td>
+                        <td>
+                          {Intl.NumberFormat("en-US", {
+                            maximumFractionDigits: 0,
+                          }).format(ttfb)}
+                          ms
+                        </td>
+                        <td className="text-right!">
+                          {Intl.NumberFormat("en-US", {
+                            maximumFractionDigits: 0,
+                          }).format(check.latency)}
+                          ms
+                        </td>
+                      </tr>
+                    </InfoDialog>
+                  );
+                })
+              )}
+            </tbody>
+            <caption>
+              Results of your check ({filteredAndSorted.length} /{" "}
+              {checks.length} regions)
+            </caption>
+          </table>
+        </div>
+      </TabsContent>
+      <TabsContent value="chart" className="rounded-none">
+        <Chart
+          checks={checks}
+          desc={sort.desc}
+          onToggleSort={() => setSort({ ...sort, desc: !sort.desc })}
+        />
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -276,7 +301,7 @@ function InfoDialog({
         <DialogHeader>
           <DialogTitle>Response Details</DialogTitle>
           <DialogDescription>
-            Basic informations like header and latency about the response.
+            Basic information like header and latency about the response.
           </DialogDescription>
         </DialogHeader>
         <div className="prose dark:prose-invert max-w-none min-w-0">

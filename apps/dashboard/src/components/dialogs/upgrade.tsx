@@ -2,6 +2,7 @@ import type { WorkspacePlan } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Addons, Limits } from "@openstatus/db/src/schema/plan/schema";
 import { getPlansForLimit } from "@openstatus/db/src/schema/plan/utils";
+import { Schedule } from "@openstatus/icons";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +13,6 @@ import {
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import type { DialogProps } from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarClock } from "lucide-react";
 
 import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
@@ -83,7 +83,7 @@ export function UpgradeDialog(
         ) : null}
         {restrictTo.length === 0 ? (
           <Note>
-            <CalendarClock />
+            <Schedule />
             Please contact us to upgrade your plan.
             <NoteButton variant="outline" asChild>
               <a

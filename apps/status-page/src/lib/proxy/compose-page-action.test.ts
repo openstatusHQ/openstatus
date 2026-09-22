@@ -113,19 +113,32 @@ describe("composePageAction — priority ordering", () => {
     expect(action.reason).toBe("ip-restriction-gate-in");
   });
 
-  test("custom-domain rewrite fires before default rewrite", () => {
+  // The route is slug-normalised by applyPageSlugPrefix before it reaches the
+  // composer, so a custom domain is served by one internal rewrite.
+  test("custom domain: default rewrite targets the slug-normalised path", () => {
     const action = composePageAction(
       buildInput({
         page: {
           ...basePage,
           customDomain: "status.acme.com",
         } as Page,
+        route: {
+          type: "hostname",
+          prefix: "acme",
+          locale: "en",
+          localeExplicit: false,
+          rewritePath: "/acme/en/events",
+        },
         host: "status.acme.com",
-        urlHost: "localhost:3000",
-        pathname: "/status.acme.com/en/events",
+        urlHost: "status.acme.com",
+        pathname: "/events",
+        requestUrl: "https://status.acme.com/events",
       }),
     );
-    expect(action.reason).toBe("custom-domain-rewrite-path-strip");
+    expect(action.type).toBe("rewrite");
+    expect(action.reason).toBe("default-rewrite");
+    expect(action.url?.pathname).toBe("/acme/en/events");
+    expect(action.url?.host).toBe("status.acme.com");
   });
 
   test("default rewrite fires when paths differ and no other stage matches", () => {

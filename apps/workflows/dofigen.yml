@@ -53,13 +53,13 @@ builders:
     # Install dependencies (scoped to the workflows subgraph so node_modules — and the binary that embeds it — stays small)
     run:
       - corepack enable pnpm
-      - pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --verbose
+      - pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --loglevel debug
     cache:
       - /root/.local/share/pnpm/store
 
   # Stage 4: Build application (compile to binary with Deno)
   build:
-    fromImage: denoland/deno:2.9.0
+    fromImage: denoland/deno:2.9.6
     workdir: /app/apps/workflows
     labels:
       org.opencontainers.image.stage: build

@@ -1,0 +1,19 @@
+
+SCHEMA >
+    `assertions` String `json:$.assertions`,
+    `cronTimestamp` Int64 `json:$.cronTimestamp`,
+    `error` Int16 `json:$.error`,
+    `errorMessage` String `json:$.errorMessage`,
+    `id` String `json:$.id`,
+    `latency` Int16 `json:$.latency`,
+    `monitorId` Int16 `json:$.monitorId`,
+    `records` String `json:$.records`,
+    `region` String `json:$.region`,
+    `requestStatus` String `json:$.requestStatus`,
+    `timestamp` Int64 `json:$.timestamp`,
+    `trigger` String `json:$.trigger`,
+    `uri` String `json:$.uri`,
+    `workspaceId` Int16 `json:$.workspaceId`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "trigger, uri, workspaceId"
