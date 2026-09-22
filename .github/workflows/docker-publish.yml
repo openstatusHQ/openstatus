@@ -34,6 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       services: ${{ steps.set-services.outputs.services }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -62,16 +63,46 @@ jobs:
               done
             fi
 
-            SERVICES=$(printf '%s\n' "${SERVICES_LIST[@]}" | jq -R . | jq -sc .)
+            SERVICES=$(printf '%s\n' "${SERVICES_LIST[@]}" | jq -R . | jq -sc 'map(select(. != ""))')
           fi
 
           echo "services=$SERVICES" >> "$GITHUB_OUTPUT"
           echo "Building services: $SERVICES"
 
+      # Expand the selected services into explicit build legs (service × platform).
+      # Done here rather than with matrix `include`: an include entry whose `service`
+      # is not in the selected list is not merged but becomes a new combination,
+      # which used to make every push build all seven images (and now would leave
+      # legs without a runner).
+      - name: Build matrix
+        id: set-matrix
+        env:
+          SERVICES: ${{ steps.set-services.outputs.services }}
+        run: |
+          MATRIX=$(jq -c --argjson services "$SERVICES" '
+            {
+              "server":           {context: ".",                     dockerfile: "apps/server/Dockerfile"},
+              "dashboard":        {context: ".",                     dockerfile: "apps/dashboard/Dockerfile"},
+              "workflows":        {context: ".",                     dockerfile: "apps/workflows/Dockerfile"},
+              "private-location": {context: "apps/private-location", dockerfile: "apps/private-location/Dockerfile"},
+              "status-page":      {context: ".",                     dockerfile: "apps/status-page/Dockerfile"},
+              "checker":          {context: "apps/checker",          dockerfile: "apps/checker/Dockerfile"},
+              "db-migrate":       {context: ".",                     dockerfile: "packages/db/Dockerfile"}
+            } as $defs
+            | [
+                {platform: "linux/amd64", arch: "amd64", runner: "ubuntu-latest"},
+                {platform: "linux/arm64", arch: "arm64", runner: "ubuntu-24.04-arm"}
+              ] as $platforms
+            | [ $services[] as $svc | $platforms[] | . + {service: $svc} + $defs[$svc] ]
+          ' <<< 'null')
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "$MATRIX" | jq .
+
   # One job per service × platform. arm64 runs on a native arm runner instead of
   # QEMU emulation on x86 (7× slower). Each job pushes its single-arch image by
   # digest; `merge` below stitches the digests into one multi-arch manifest.
   build:
+    name: build (${{ matrix.service }}, ${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     needs: [prepare]
     if: needs.prepare.outputs.services != '[]'
@@ -83,36 +114,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: ${{ fromJson(needs.prepare.outputs.services) }}
-        platform: [linux/amd64, linux/arm64]
-        include:
-          - platform: linux/amd64
-            arch: amd64
-            runner: ubuntu-latest
-          - platform: linux/arm64
-            arch: arm64
-            runner: ubuntu-24.04-arm
-          - service: server
-            context: .
-            dockerfile: apps/server/Dockerfile
-          - service: dashboard
-            context: .
-            dockerfile: apps/dashboard/Dockerfile
-          - service: workflows
-            context: .
-            dockerfile: apps/workflows/Dockerfile
-          - service: private-location
-            context: apps/private-location
-            dockerfile: apps/private-location/Dockerfile
-          - service: status-page
-            context: .
-            dockerfile: apps/status-page/Dockerfile
-          - service: checker
-            context: apps/checker
-            dockerfile: apps/checker/Dockerfile
-          - service: db-migrate
-            context: .
-            dockerfile: packages/db/Dockerfile
+        include: ${{ fromJson(needs.prepare.outputs.matrix) }}
 
     steps:
       - name: Checkout repository
