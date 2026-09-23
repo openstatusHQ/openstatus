@@ -28,11 +28,13 @@ import { createTRPCRouter, publicProcedure } from "../../trpc";
 import {
   buildFromSubscriptionOrThrow,
   cancelSupersededSubscriptions,
+  customerIdOf,
   getCurrentPeriodEnd,
   getCurrentSubscription,
   isNewerSubscription,
   listLiveSubscriptions,
   stripe,
+  trialEndsAtOf,
 } from "./shared";
 
 const webhookProcedure = publicProcedure.input(
@@ -153,6 +155,37 @@ async function sendCancellationEmails(args: {
   }
 }
 
+async function attachSetupPaymentMethod(session: Stripe.Checkout.Session) {
+  if (typeof session.setup_intent !== "string" || !session.customer) return;
+  const customerId =
+    typeof session.customer === "string"
+      ? session.customer
+      : session.customer.id;
+
+  const setupIntent = await stripe.setupIntents.retrieve(session.setup_intent);
+  const paymentMethod =
+    typeof setupIntent.payment_method === "string"
+      ? setupIntent.payment_method
+      : setupIntent.payment_method?.id;
+  if (!paymentMethod) return;
+
+  await stripe.customers.update(customerId, {
+    invoice_settings: { default_payment_method: paymentMethod },
+  });
+
+  const subscriptionId =
+    setupIntent.metadata?.subscriptionId ||
+    (await getCurrentSubscription(customerId)).current?.id;
+  if (!subscriptionId) return;
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  if (customerIdOf(subscription) !== customerId) return;
+
+  await stripe.subscriptions.update(subscriptionId, {
+    default_payment_method: paymentMethod,
+  });
+}
+
 // Never mount this on an app router: the procedures trust `event`, and only
 // the signature-verifying HTTP route may call them.
 export const webhookRouter = createTRPCRouter({
@@ -227,6 +260,7 @@ export const webhookRouter = createTRPCRouter({
         subscriptionId: current.id,
         endsAt: getCurrentPeriodEnd(current),
         paidUntil: getCurrentPeriodEnd(current),
+        trialEndsAt: trialEndsAtOf(current),
         limits: built.limits,
       },
     });
@@ -270,6 +304,33 @@ export const webhookRouter = createTRPCRouter({
       }
     }
 
+    const wasTrialing =
+      opts.input.event.data.previous_attributes?.status === "trialing";
+    if (
+      eventSubscription.id === current.id &&
+      wasTrialing &&
+      current.status === "active"
+    ) {
+      const owner = await opts.ctx.db
+        .select({ id: user.id, email: user.email })
+        .from(usersToWorkspaces)
+        .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
+        .where(
+          and(
+            eq(usersToWorkspaces.workspaceId, ws.id),
+            eq(usersToWorkspaces.role, "owner"),
+          ),
+        )
+        .get();
+      const analytics = await setupAnalytics({
+        userId: owner ? `usr_${owner.id}` : undefined,
+        email: owner?.email ?? undefined,
+        workspaceId: String(ws.id),
+        plan: built.plan,
+      });
+      await analytics.track(Events.ConvertTrial);
+    }
+
     const newPlan = built.plan;
     if (newPlan !== oldPlan) {
       const customer = await stripe.customers.retrieve(customerId);
@@ -302,6 +363,10 @@ export const webhookRouter = createTRPCRouter({
   }),
   sessionCompleted: webhookProcedure.mutation(async (opts) => {
     const session = opts.input.event.data.object as Stripe.Checkout.Session;
+    if (session.mode === "setup") {
+      await attachSetupPaymentMethod(session);
+      return;
+    }
     if (typeof session.subscription !== "string") {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -362,6 +427,7 @@ export const webhookRouter = createTRPCRouter({
         subscriptionId: subscription.id,
         endsAt: getCurrentPeriodEnd(subscription),
         paidUntil: getCurrentPeriodEnd(subscription),
+        trialEndsAt: trialEndsAtOf(subscription),
         limits: built.limits,
         reason: "checkout_session_completed",
       },
@@ -442,6 +508,11 @@ export const webhookRouter = createTRPCRouter({
         code: "BAD_REQUEST",
         message: "Workspace not found",
       });
+    }
+
+    // Already downgraded, e.g. a trial cancelled by an account deletion.
+    if (ws.plan === "free" && !ws.subscriptionId) {
+      return;
     }
 
     // System actor — no user is attributable to an involuntary Stripe

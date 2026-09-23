@@ -610,6 +610,13 @@
       "when": 1788721405307,
       "tag": "0086_robust_quicksilver",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "6",
+      "when": 1790175988767,
+      "tag": "0087_narrow_black_tarantula",
+      "breakpoints": true
     }
   ]
 }

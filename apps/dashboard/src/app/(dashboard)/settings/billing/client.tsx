@@ -3,7 +3,7 @@
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useEffect, useMemo, useTransition } from "react";
@@ -34,6 +34,9 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import { usePaymentMethodSetup } from "@/hooks/use-payment-method-setup";
+import { formatDate } from "@/lib/formatter";
+import { getTrialDaysLeft } from "@/lib/trial";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
@@ -79,8 +82,11 @@ export function Client() {
   const trpc = useTRPC();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [{ success }, setSearchParams] = useQueryStates(searchParamsParsers);
+  const queryClient = useQueryClient();
+  const [{ success, setup }, setSearchParams] =
+    useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const paymentMethodSetup = usePaymentMethodSetup(workspace?.slug);
   const { data: usage } = useQuery(trpc.workspace.usage.queryOptions());
   const customerPortalMutation = useMutation(
     trpc.stripeRouter.getUserCustomerPortal.mutationOptions({
@@ -116,6 +122,22 @@ export function Client() {
     }
   }, [success, setSearchParams]);
 
+  useEffect(() => {
+    if (setup) {
+      queryClient.invalidateQueries({
+        queryKey: trpc.workspace.get.queryKey(),
+      });
+      setTimeout(() => {
+        toast.success("Payment method added", {
+          description: "Your plan continues after the trial.",
+          duration: 5_000,
+          onAutoClose: () => setSearchParams({ setup: null }),
+          onDismiss: () => setSearchParams({ setup: null }),
+        });
+      }, 500);
+    }
+  }, [setup, setSearchParams, queryClient, trpc]);
+
   const totalRequests = useMemo(() => {
     const httpRequests = httpWorkspace30d?.data?.reduce(
       (acc, curr) => acc + curr.count,
@@ -131,6 +153,7 @@ export function Client() {
   if (!workspace) return null;
 
   const planAddons = allPlans[workspace.plan].addons;
+  const trialDaysLeft = getTrialDaysLeft(workspace.trialEndsAt);
 
   return (
     <SectionGroup>
@@ -142,6 +165,32 @@ export function Client() {
           </SectionDescription>
         </SectionHeader>
         <FormCardGroup>
+          {workspace.trialEndsAt && trialDaysLeft ? (
+            <FormCard>
+              <FormCardHeader>
+                <FormCardTitle>Starter trial</FormCardTitle>
+                <FormCardDescription>
+                  {trialDaysLeft === 1 ? "1 day" : `${trialDaysLeft} days`}{" "}
+                  left. Your trial ends on {formatDate(workspace.trialEndsAt)}.
+                </FormCardDescription>
+              </FormCardHeader>
+              <FormCardFooter>
+                <FormCardFooterInfo>
+                  Add a payment method to keep Starter after the trial. Without
+                  one, the workspace moves to the free plan.
+                </FormCardFooterInfo>
+                <Button
+                  size="sm"
+                  onClick={paymentMethodSetup.start}
+                  disabled={paymentMethodSetup.isPending}
+                >
+                  {paymentMethodSetup.isPending
+                    ? "Loading..."
+                    : "Add payment method"}
+                </Button>
+              </FormCardFooter>
+            </FormCard>
+          ) : null}
           <FormCard>
             <FormCardHeader>
               <FormCardTitle>Usage</FormCardTitle>

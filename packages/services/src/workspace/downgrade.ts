@@ -82,6 +82,7 @@ export async function downgradeWorkspaceToFree(args: {
         subscriptionId: null,
         paidUntil: null,
         endsAt: null,
+        trialEndsAt: null,
         limits: getLimits("free"),
         reason: "subscription_deleted",
       },

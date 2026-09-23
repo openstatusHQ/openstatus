@@ -6,6 +6,7 @@ export {
   type InvitationWithWorkspace,
   listInvitations,
 } from "./list";
+export { hasPendingInvitation } from "./pending";
 export {
   AcceptInvitationInput,
   CreateInvitationInput,

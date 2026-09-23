@@ -32,6 +32,7 @@ import StatusReportEmail, {
   statusReportPreheader,
 } from "../emails/status-report";
 import TeamInvitationEmail from "../emails/team-invitation";
+import WelcomeEmail from "../emails/welcome";
 
 const alert = {
   type: "alert",
@@ -691,4 +692,17 @@ describe("every transactional template", () => {
       expect(html).toContain(POSTAL_ADDRESS);
     });
   }
+});
+
+describe("WelcomeEmail", () => {
+  test("mentions the trial only when one started", async () => {
+    const withTrial = await render(
+      <WelcomeEmail trialEndsAt={new Date("2026-10-07T00:00:00Z")} />,
+      { plainText: true },
+    );
+    expect(withTrial).toContain("14-day Starter trial until Wed 7 Oct 2026");
+
+    const withoutTrial = await render(<WelcomeEmail />, { plainText: true });
+    expect(withoutTrial).not.toContain("trial");
+  });
 });

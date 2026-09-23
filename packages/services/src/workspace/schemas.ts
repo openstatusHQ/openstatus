@@ -36,6 +36,7 @@ export const UpdateWorkspacePlanInput = z.object({
   subscriptionId: z.string().nullable(),
   paidUntil: z.date().nullable(),
   endsAt: z.date().nullable(),
+  trialEndsAt: z.date().nullable().optional(),
   limits: limitsSchema,
   reason: z.string().optional(),
 });

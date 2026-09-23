@@ -28,6 +28,8 @@ import { isTRPCClientError } from "@trpc/client";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import { usePaymentMethodSetup } from "@/hooks/use-payment-method-setup";
+import { getTrialDaysLeft } from "@/lib/trial";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Workspace = RouterOutputs["workspace"]["get"];
@@ -70,6 +72,8 @@ export function BillingAddons({
       },
     }),
   );
+  const paymentMethodSetup = usePaymentMethodSetup(workspace.slug);
+  const isTrialing = getTrialDaysLeft(workspace.trialEndsAt) !== null;
   const plan = workspace.plan;
   const packSize = getAddonPackSize(addon);
   const maxPacks = getAddonMaxQuantity(addon);
@@ -109,10 +113,18 @@ export function BillingAddons({
             return "Billing information updated";
           },
           error: (error) => {
-            if (isTRPCClientError(error)) {
-              return error.message;
+            if (!isTRPCClientError(error))
+              return { message: "Failed to update" };
+            if (error.data?.code === "PRECONDITION_FAILED") {
+              return {
+                message: error.message,
+                action: {
+                  label: "Add payment method",
+                  onClick: paymentMethodSetup.start,
+                },
+              };
             }
-            return "Failed to update";
+            return { message: error.message };
           },
         });
         await promise;
@@ -170,6 +182,9 @@ export function BillingAddons({
               packSize,
               unitLabel,
             )}
+            {isTrialing
+              ? " Adding it ends your Starter trial and charges your card today."
+              : null}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {isQuantity && typeof value === "number" ? (

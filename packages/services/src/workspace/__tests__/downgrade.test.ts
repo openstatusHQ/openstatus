@@ -189,6 +189,10 @@ describe("downgradeWorkspaceToFree", () => {
         actor: { type: "system", job: "stripe-subscription-deleted" },
         db: tx,
       };
+      await tx
+        .update(workspace)
+        .set({ trialEndsAt: new Date("2027-01-01T00:00:00Z") })
+        .where(eq(workspace.id, s.ws.id));
 
       await downgradeWorkspaceToFree({ ctx });
 
@@ -201,6 +205,7 @@ describe("downgradeWorkspaceToFree", () => {
       expect(after?.subscriptionId).toBeNull();
       expect(after?.paidUntil).toBeNull();
       expect(after?.endsAt).toBeNull();
+      expect(after?.trialEndsAt).toBeNull();
       // Compare parsed content, not the raw string — the verb persists
       // `limitsSchema`-canonicalised JSON (key order differs from the
       // config object returned by `getLimits`).

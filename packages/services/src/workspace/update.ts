@@ -77,6 +77,9 @@ export async function updateWorkspacePlan(args: {
         subscriptionId: input.subscriptionId,
         paidUntil: input.paidUntil,
         endsAt: input.endsAt,
+        ...(input.trialEndsAt !== undefined && {
+          trialEndsAt: input.trialEndsAt,
+        }),
         limits: JSON.stringify(input.limits),
         updatedAt: new Date(),
       })
