@@ -49,8 +49,10 @@ export function PrivateLocationMetadata({
     return null;
   }
 
-  const visibleEntries = maxEntries ? entries.slice(0, maxEntries) : entries;
-  const remainingCount = maxEntries ? entries.length - maxEntries : 0;
+  const visibleEntries =
+    maxEntries !== undefined ? entries.slice(0, maxEntries) : entries;
+  const remainingCount =
+    maxEntries !== undefined ? Math.max(0, entries.length - maxEntries) : 0;
 
   return (
     <div className={cn("flex flex-wrap items-center gap-1", className)}>
@@ -71,7 +73,9 @@ export function PrivateLocationMetadata({
           return (
             <TooltipProvider key={key}>
               <Tooltip>
-                <TooltipTrigger asChild>{pillElement}</TooltipTrigger>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">{pillElement}</span>
+                </TooltipTrigger>
                 <TooltipContent className="font-mono text-xs">
                   {key}: {value}
                 </TooltipContent>

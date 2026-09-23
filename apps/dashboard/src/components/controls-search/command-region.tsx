@@ -182,7 +182,10 @@ export function CommandRegion({
                       <span className="truncate font-mono">
                         {location.name}
                       </span>
-                      <PrivateLocationMetadata metadata={location.metadata} />
+                      <PrivateLocationMetadata
+                        metadata={location.metadata}
+                        maxEntries={2}
+                      />
                       <Check
                         className={cn(
                           "ml-auto",
