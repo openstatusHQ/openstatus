@@ -19,26 +19,30 @@ async function freeWorkspace() {
   return createTestWorkspace({ plan: "free", stripeId: null });
 }
 
+function customer(id: string, metadata: Record<string, string> = {}) {
+  return { id, metadata } as unknown as Stripe.Customer;
+}
+
 describe("maybeStartSignupTrial", () => {
   let customerId: string;
-  let searchResult: Stripe.Customer[];
+  let customers: Stripe.Customer[];
   let price: Partial<Stripe.Price>;
   let stubs: Stub[];
-  let search: Stub;
+  let list: Stub;
   let createCustomer: Stub;
   let createSubscription: Stub;
 
   beforeEach(() => {
     customerId = `cus_${crypto.randomUUID()}`;
-    searchResult = [];
+    customers = [];
     price = { currency: "usd", currency_options: {} };
-    search = stub(
+    list = stub(
       stripe.customers,
-      "search",
+      "list",
       () =>
-        Promise.resolve({ data: searchResult } as Stripe.Response<
-          Stripe.ApiSearchResult<Stripe.Customer>
-        >) as Stripe.ApiSearchResultPromise<Stripe.Customer>,
+        Promise.resolve({ data: customers } as Stripe.Response<
+          Stripe.ApiList<Stripe.Customer>
+        >) as Stripe.ApiListPromise<Stripe.Customer>,
     );
     createCustomer = stub(stripe.customers, "create", () =>
       Promise.resolve({ id: customerId } as Stripe.Response<Stripe.Customer>),
@@ -60,7 +64,7 @@ describe("maybeStartSignupTrial", () => {
       } as Stripe.Response<Stripe.Subscription>),
     );
     stubs = [
-      search,
+      list,
       createCustomer,
       createSubscription,
       stub(stripe.prices, "retrieve", () =>
@@ -183,12 +187,12 @@ describe("maybeStartSignupTrial", () => {
     });
 
     expect(result).toEqual({ started: false, reason: "disposable" });
-    assertSpyCalls(search, 0);
+    assertSpyCalls(list, 0);
   });
 
   test("skips emails that already had a trial", async () => {
     const { user } = await freeWorkspace();
-    searchResult = [{ id: "cus_old" } as Stripe.Customer];
+    customers = [customer("cus_paid"), customer("cus_old", { trialed: "true" })];
 
     const result = await maybeStartSignupTrial({
       userId: user.id,
@@ -197,11 +201,25 @@ describe("maybeStartSignupTrial", () => {
     });
 
     expect(result).toEqual({ started: false, reason: "already_trialed" });
-    expect(search.calls[0]?.args[0]).toEqual({
-      query: "email:'o\\'brien@example.com' AND metadata['trialed']:'true'",
-      limit: 1,
+    expect(list.calls[0]?.args[0]).toEqual({
+      email: "o'brien@example.com",
+      limit: 100,
     });
     assertSpyCalls(createCustomer, 0);
+  });
+
+  test("ignores customers for the email that never trialed", async () => {
+    const { user } = await freeWorkspace();
+    customers = [customer("cus_paid")];
+
+    const result = await maybeStartSignupTrial({
+      userId: user.id,
+      email: user.email ?? "",
+      currency: "USD",
+    });
+
+    expect(result).toMatchObject({ started: true });
+    assertSpyCalls(createCustomer, 1);
   });
 
   test("leaves an already-billed workspace alone", async () => {

@@ -32,16 +32,11 @@ export type SignupTrialResult =
   | { started: true; trialEndsAt: Date }
   | { started: false; reason: TrialSkipReason };
 
-function escapeSearchValue(value: string) {
-  return value.replaceAll("\\", "\\\\").replaceAll("'", "\\'");
-}
-
+// `customers.list` is read-after-write consistent; the Search API is not, so
+// a re-signup right after a trial could slip past it.
 async function hasTrialedBefore(email: string) {
-  const result = await stripe.customers.search({
-    query: `email:'${escapeSearchValue(email)}' AND metadata['trialed']:'true'`,
-    limit: 1,
-  });
-  return result.data.length > 0;
+  const result = await stripe.customers.list({ email, limit: 100 });
+  return result.data.some((c) => c.metadata.trialed === "true");
 }
 
 async function resolveCurrency(priceId: string, requested: "USD" | "EUR") {

@@ -334,7 +334,9 @@ export const stripeRouter = createTRPCRouter({
       }
 
       const isTrialing = current.status === "trialing";
-      if (isTrialing && !(await hasPaymentMethod(current))) {
+      const isRemoval = opts.input.value === false || opts.input.value === 0;
+      // Removing an addon never ends the trial, so it needs no card.
+      if (isTrialing && !isRemoval && !(await hasPaymentMethod(current))) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: "Add a payment method first.",
@@ -410,7 +412,6 @@ export const stripeRouter = createTRPCRouter({
       }
 
       const item = items.data.find((item) => item.price.id === priceId);
-      const isRemoval = opts.input.value === false || quantity === 0;
 
       // Charge the plan before granting the addon, so a declined card leaves
       // the trial and the limits untouched.

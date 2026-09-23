@@ -18,7 +18,9 @@ export const userRouter = createTRPCRouter({
     try {
       // A trial is not a paid plan the user has to cancel first — but a paid
       // workspace elsewhere aborts the delete, so check before touching any
-      // trial or the user loses it for nothing.
+      // trial or the user loses it for nothing. The trial itself must go
+      // before `deleteAccount`, which refuses any non-free plan; it is not
+      // rolled back if the delete fails, the user simply retries.
       const owned = await listOwnedWorkspaces({
         input: { userId: ctx.user.id },
         db: ctx.db,
