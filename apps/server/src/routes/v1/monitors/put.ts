@@ -8,7 +8,7 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 
 import type { monitorsApi } from "./index";
-import { MonitorSchema, ParamsSchema } from "./schema";
+import { MonitorSchema, ParamsSchema, UpdateMonitorSchema } from "./schema";
 import { assertSafeMonitorUrl, getAssertions } from "./utils";
 
 const putRoute = createRoute({
@@ -23,7 +23,7 @@ const putRoute = createRoute({
       description: "The monitor to update",
       content: {
         "application/json": {
-          schema: MonitorSchema.omit({ id: true }).partial(),
+          schema: UpdateMonitorSchema,
         },
       },
     },
@@ -116,7 +116,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         description: input.description ?? undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
-        timeout: input.timeout || 45000,
+        timeout: input.timeout === null ? 45000 : input.timeout,
         updatedAt: new Date(),
       })
       .where(eq(monitor.id, Number(_monitor.id)))
