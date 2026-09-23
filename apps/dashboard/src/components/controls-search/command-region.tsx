@@ -24,6 +24,10 @@ import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
 import { Link } from "@/components/common/link";
 import {
+  PrivateLocationMetadata,
+  getPrivateLocationMetadataKeywords,
+} from "@/components/common/private-location-metadata";
+import {
   BillingOverlay,
   BillingOverlayButton,
   BillingOverlayDescription,
@@ -36,7 +40,11 @@ export function CommandRegion({
   privateLocations,
 }: {
   regions: (typeof REGIONS)[number][];
-  privateLocations?: { id: number; name: string }[];
+  privateLocations?: {
+    id: number;
+    name: string;
+    metadata?: Record<string, string> | null;
+  }[];
 }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -151,31 +159,41 @@ export function CommandRegion({
             )}
             {privateLocations && privateLocations.length > 0 ? (
               <CommandGroup heading="Private Locations">
-                {privateLocations.map((location) => (
-                  <CommandItem
-                    key={location.id}
-                    keywords={[location.name]}
-                    value={location.id.toString()}
-                    onSelect={() => {
-                      setSelectedRegions((prev) =>
-                        prev.includes(location.id.toString())
-                          ? prev.filter((r) => r !== location.id.toString())
-                          : [...prev, location.id.toString()],
-                      );
-                    }}
-                  >
-                    <Globe className="size-3" />
-                    <span className="truncate font-mono">{location.name}</span>
-                    <Check
-                      className={cn(
-                        "ml-auto",
-                        selectedRegions.includes(location.id.toString())
-                          ? "opacity-100"
-                          : "opacity-0",
-                      )}
-                    />
-                  </CommandItem>
-                ))}
+                {privateLocations.map((location) => {
+                  const keywords = [
+                    location.name,
+                    ...getPrivateLocationMetadataKeywords(location.metadata),
+                  ];
+
+                  return (
+                    <CommandItem
+                      key={location.id}
+                      keywords={keywords}
+                      value={location.id.toString()}
+                      onSelect={() => {
+                        setSelectedRegions((prev) =>
+                          prev.includes(location.id.toString())
+                            ? prev.filter((r) => r !== location.id.toString())
+                            : [...prev, location.id.toString()],
+                        );
+                      }}
+                    >
+                      <Globe className="size-3 shrink-0" />
+                      <span className="truncate font-mono">
+                        {location.name}
+                      </span>
+                      <PrivateLocationMetadata metadata={location.metadata} />
+                      <Check
+                        className={cn(
+                          "ml-auto",
+                          selectedRegions.includes(location.id.toString())
+                            ? "opacity-100"
+                            : "opacity-0",
+                        )}
+                      />
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             ) : null}
             <CommandEmpty>No region found.</CommandEmpty>

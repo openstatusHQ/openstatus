@@ -4,6 +4,7 @@ import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
+import { PrivateLocationMetadata } from "@/components/common/private-location-metadata";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,20 @@ export const columns: ColumnDef<PrivateLocation>[] = [
         />
       );
     },
+  },
+  {
+    accessorKey: "metadata",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Metadata" />
+    ),
+    enableSorting: false,
+    enableHiding: true,
+    cell: ({ row }) => (
+      <PrivateLocationMetadata
+        metadata={row.original.metadata}
+        emptyFallback="dash"
+      />
+    ),
   },
   {
     accessorKey: "lastSeenAt",
