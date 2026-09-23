@@ -1302,6 +1302,8 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         email: req.email,
         pageId: pageData.id,
       },
+      // API-key caller, page already resolved inside its own workspace.
+      visitor: null,
     });
 
     const row = await db

@@ -37,6 +37,7 @@
     "@openstatus/icons": "workspace:*",
     "@openstatus/locales": "workspace:*",
     "@openstatus/react": "workspace:*",
+    "@openstatus/services": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/tracker": "workspace:*",

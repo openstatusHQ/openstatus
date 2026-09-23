@@ -1,5 +1,5 @@
 import { COLORS, COLOR_DECIMALS } from "@openstatus/notification-base";
-import { assertSafeUrl, statusLabel } from "@openstatus/utils";
+import { assertSafeUrl, safeFetch, statusLabel } from "@openstatus/utils";
 import { z } from "zod";
 
 import { WEBHOOK_PAYLOAD_VERSION } from "../payload";
@@ -104,8 +104,7 @@ export async function sendWebhookVerification(
     throw new Error("Webhook URL is required for webhook channel");
   }
 
-  await assertSafeUrl(subscription.webhookUrl);
-  const response = await fetch(subscription.webhookUrl, {
+  const response = await safeFetch(subscription.webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -477,7 +476,6 @@ export async function sendTestWebhookRequest(input: {
   headers?: Record<string, string>;
 }) {
   const { url, flavor, headers: extraHeaders = {} } = input;
-  await assertSafeUrl(url);
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -485,7 +483,7 @@ export async function sendTestWebhookRequest(input: {
     ...extraHeaders,
   };
 
-  const response = await fetch(url, {
+  const response = await safeFetch(url, {
     method: "POST",
     headers,
     body: JSON.stringify(buildTestPayload(flavor)),

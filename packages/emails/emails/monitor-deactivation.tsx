@@ -1,70 +1,93 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
-import { Body, Button, Head, Html, Preview, Text } from "react-email";
 import { z } from "zod";
 
+import { Actions } from "./_components/actions";
+import { Callout } from "./_components/callout";
+import { Footer } from "./_components/footer";
+import {
+  formatDay,
+  formatLongDay,
+  formatShortDay,
+  plural,
+} from "./_components/format";
+import { Heading } from "./_components/heading";
+import { KeyValue, type KeyValueRow } from "./_components/key-value";
 import { Layout } from "./_components/layout";
-import { styles } from "./_components/styles";
+import { Signature } from "./_components/signature";
 
 export const MonitorDeactivationSchema = z.object({
-  // lastLogin: z.coerce.date(),
   deactivateAt: z.coerce.date(),
+  monitorCount: z.number().optional(),
+  workspaceSlug: z.string().optional(),
+  lastSignIn: z.coerce.date().optional(),
 });
 
 export type MonitorDeactivationProps = z.infer<
   typeof MonitorDeactivationSchema
 >;
 
+export function monitorDeactivationSubject(
+  props: Pick<MonitorDeactivationProps, "deactivateAt">,
+): string {
+  return `Your monitors pause on ${formatShortDay(props.deactivateAt)} — one sign-in stops it`;
+}
+
 const MonitorDeactivationEmail = ({
-  // lastLogin,
   deactivateAt,
+  monitorCount,
+  workspaceSlug,
+  lastSignIn,
 }: MonitorDeactivationProps) => {
+  const rows: KeyValueRow[] = [];
+  if (workspaceSlug) {
+    rows.push({ label: "Workspace", value: workspaceSlug, mono: true });
+  }
+  if (lastSignIn)
+    rows.push({ label: "Last sign-in", value: formatDay(lastSignIn) });
+  rows.push({ label: "Pauses on", value: formatDay(deactivateAt), bold: true });
+
   return (
-    <Html>
-      <Head />
-      <Preview>
-        Login to your OpenStatus account to keep your monitors active.
-      </Preview>
-      <Body style={styles.main}>
-        <Layout>
-          <Text>Hello 👋</Text>
-          {/* <Heading as="h3">Deactivation of the your monitor(s)</Heading> */}
-          <Text>
-            To save on cloud resources and avoid having stale monitors. We are
-            deactivating monitors for free account if you have not logged in for
-            the last 2 months.
-          </Text>
-          {/* <Text>Your last login was {lastLogin.toDateString()}.</Text> */}
-          <Text>
-            Your monitor(s) will be deactivated on {deactivateAt.toDateString()}
-            .
-          </Text>
-          <Text>
-            If you would like to keep your monitor(s) active, please login to
-            your account or upgrade to a paid plan.
-          </Text>
-          <Text style={{ textAlign: "center" }}>
-            <Button style={styles.button} href="https://www.openstatus.dev/app">
-              Login
-            </Button>
-          </Text>
-          <Text>If you have any questions, please reply to this email.</Text>
-          <Text>Thibault </Text>
-          <Text>
-            Check out our latest update{" "}
-            <a href="https://www.openstatus.dev/changelog?ref=paused-email">
-              here
-            </a>
-          </Text>
-        </Layout>
-      </Body>
-    </Html>
+    <Layout
+      preview="Nothing is deleted. History and status pages stay."
+      pill={{ tone: "neutral", label: "Action needed" }}
+      footer={
+        <Footer reason="You get this because you own a free workspace with active monitors." />
+      }
+    >
+      <Heading
+        title={`${
+          monitorCount ? plural(monitorCount, "monitor") : "Your monitors"
+        } will pause on ${formatLongDay(deactivateAt)}`}
+      >
+        Nobody has signed in to this free workspace for two months, so we pause
+        its monitors to keep capacity for active accounts.
+      </Heading>
+      <Callout title="Nothing gets deleted">
+        Monitors, check history and status pages stay exactly as they are. If
+        they do pause, you can switch them back on at any time.
+      </Callout>
+      <KeyValue rows={rows} />
+      <Actions
+        primary={{
+          label: "Sign in to keep them running",
+          href: "https://app.openstatus.dev",
+        }}
+        secondary={{
+          label: "Upgrade instead",
+          href: "https://app.openstatus.dev/settings/billing",
+        }}
+      />
+      <Signature />
+    </Layout>
   );
 };
 
 MonitorDeactivationEmail.PreviewProps = {
-  // lastLogin: new Date(new Date().setDate(new Date().getDate() - 100)),
-  deactivateAt: new Date(new Date().setDate(new Date().getDate() + 7)),
+  deactivateAt: new Date("2026-09-25T00:00:00Z"),
+  monitorCount: 3,
+  workspaceSlug: "acme-dev",
+  lastSignIn: new Date("2026-07-21T00:00:00Z"),
 } satisfies MonitorDeactivationProps;
 
 export default MonitorDeactivationEmail;

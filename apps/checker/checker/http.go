@@ -43,6 +43,10 @@ type Response struct {
 	Timing    Timing            `json:"timing"`
 }
 
+// maxResponseBodyBytes caps the read of a probed response body so a large body
+// cannot OOM the 512 MB checker machines (exit 137 waves).
+const maxResponseBodyBytes = 10 << 20 // 10 MiB
+
 // decodeBase64Body decodes a data URL base64 body if needed
 func decodeBase64Body(body string) ([]byte, error) {
 	data := strings.Split(body, ",")
@@ -145,7 +149,9 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 
 	defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
+	// Cap the response body: an endpoint returning a large body would
+	// otherwise OOM these 512 MB machines (fleet-wide exit 137 waves).
+	body, err := io.ReadAll(io.LimitReader(response.Body, maxResponseBodyBytes))
 
 	timing.TransferDone = time.Now().UTC().UnixMilli()
 

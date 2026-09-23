@@ -1,23 +1,16 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
-import { statusLabel } from "@openstatus/utils";
-import {
-  Body,
-  Column,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Markdown,
-  Preview,
-  Row,
-  Section,
-  Text,
-} from "react-email";
 import { z } from "zod";
 
-import { Layout } from "./_components/layout";
-import { colors, styles } from "./_components/styles";
+import { Actions } from "./_components/actions";
+import { Eyebrow } from "./_components/eyebrow";
+import { Footer } from "./_components/footer";
+import { formatDateTime, formatElapsed } from "./_components/format";
+import { Heading } from "./_components/heading";
+import { KeyValue } from "./_components/key-value";
+import { Layout, statusPageBrand } from "./_components/layout";
+import { Markdown } from "./_components/markdown";
+import type { Tone } from "./_components/styles";
 
 export const StatusReportSchema = z.object({
   pageTitle: z.string(),
@@ -33,27 +26,71 @@ export const StatusReportSchema = z.object({
   message: z.string(),
   reportTitle: z.string(),
   pageComponents: z.array(z.string()),
+  // pageComponentImpact from db; absent for maintenance and legacy reports
+  componentImpacts: z
+    .array(
+      z.object({
+        name: z.string(),
+        impact: z.enum([
+          "operational",
+          "degraded_performance",
+          "partial_outage",
+          "major_outage",
+        ]),
+      }),
+    )
+    .optional(),
   unsubscribeUrl: z.url(),
   manageUrl: z.url(),
+  statusPageUrl: z.url().optional(),
+  /** 1-based position of this update within the report. */
+  updateIndex: z.number().optional(),
+  reportStartedAt: z.string().optional(),
 });
 
 export type StatusReportProps = z.infer<typeof StatusReportSchema>;
 
-function getStatusColor(status: string) {
-  switch (status) {
-    case "investigating":
-      return colors.danger;
-    case "identified":
-      return colors.warning;
-    case "resolved":
-      return colors.success;
-    case "monitoring":
-      return colors.info;
-    case "maintenance":
-      return colors.info;
-    default:
-      return colors.success;
-  }
+const statusTone = {
+  investigating: "danger",
+  identified: "warning",
+  monitoring: "info",
+  resolved: "success",
+  maintenance: "info",
+} satisfies Record<StatusReportProps["status"], Tone>;
+
+type Impact = NonNullable<
+  StatusReportProps["componentImpacts"]
+>[number]["impact"];
+
+const impactRow = {
+  operational: { label: "Operational", tone: "success" },
+  degraded_performance: { label: "Degraded performance", tone: "warning" },
+  partial_outage: { label: "Partial outage", tone: "warning" },
+  major_outage: { label: "Major outage", tone: "danger" },
+} satisfies Record<Impact, { label: string; tone: Tone }>;
+
+const componentLabel = {
+  investigating: "Affected",
+  identified: "Affected",
+  monitoring: "Monitoring",
+  resolved: "Resolved",
+  maintenance: "Maintenance",
+} satisfies Record<StatusReportProps["status"], string>;
+
+function isDate(value: string) {
+  return !Number.isNaN(new Date(value).getTime());
+}
+
+export function statusReportPreheader(
+  props: Pick<StatusReportProps, "status" | "pageTitle" | "pageComponents">,
+): string {
+  const components =
+    props.pageComponents.length > 0
+      ? props.pageComponents.slice(0, 3).join(", ")
+      : props.pageTitle;
+  if (props.status === "resolved") return `Resolved for ${components}.`;
+  if (props.status === "maintenance") return `Planned work on ${components}.`;
+  return `${componentLabel[props.status]}: ${components}.`;
 }
 
 function StatusReportEmail({
@@ -63,113 +100,97 @@ function StatusReportEmail({
   reportTitle,
   pageTitle,
   pageComponents,
+  componentImpacts,
   unsubscribeUrl,
   manageUrl,
+  statusPageUrl,
+  updateIndex,
+  reportStartedAt,
 }: StatusReportProps) {
+  const tone = statusTone[status];
+  const dated = isDate(date);
+  const elapsed =
+    dated && reportStartedAt && isDate(reportStartedAt)
+      ? formatElapsed(reportStartedAt, date)
+      : undefined;
+
+  const links = [];
+  if (unsubscribeUrl)
+    links.push({ label: "Unsubscribe", href: unsubscribeUrl });
+  if (manageUrl) links.push({ label: "Manage notifications", href: manageUrl });
+
   return (
-    <Html>
-      <Head />
-      <Preview>There are new updates on "{pageTitle}" page</Preview>
-      <Body style={styles.main}>
-        <Layout>
-          <Row>
-            <Column>
-              <Heading as="h3">{pageTitle}</Heading>
-            </Column>
-            <Column style={{ textAlign: "right" }}>
-              <Text style={{ color: getStatusColor(status) }}>
-                {statusLabel(status)}
-              </Text>
-            </Column>
-          </Row>
-          <Row style={styles.row}>
-            <Column>
-              <Text style={styles.bold}>Title</Text>
-            </Column>
-            <Column style={{ textAlign: "right" }}>
-              <Text>{reportTitle}</Text>
-            </Column>
-          </Row>
-          <Row style={styles.row}>
-            <Column>
-              <Text style={styles.bold}>Date</Text>
-            </Column>
-            <Column style={{ textAlign: "right" }}>
-              <Text>{date}</Text>
-            </Column>
-          </Row>
-          <Row style={styles.row}>
-            <Column>
-              <Text style={styles.bold}>Affected</Text>
-            </Column>
-            <Column style={{ textAlign: "right" }}>
-              <Text style={{ flexWrap: "wrap", wordWrap: "break-word" }}>
-                {pageComponents.length > 0 ? pageComponents.join(", ") : "N/A"}
-              </Text>
-            </Column>
-          </Row>
-          <Row style={styles.row}>
-            <Column>
-              <Markdown>{message}</Markdown>
-            </Column>
-          </Row>
-          {unsubscribeUrl && (
-            <Section style={{ marginTop: "24px", textAlign: "center" }}>
-              <Text style={{ fontSize: "12px", color: "#6b7280" }}>
-                <Link
-                  href={unsubscribeUrl}
-                  style={{ color: "#6b7280", textDecoration: "underline" }}
-                >
-                  Unsubscribe
-                </Link>{" "}
-                ・{" "}
-                <Link
-                  href={manageUrl}
-                  style={{ color: "#6b7280", textDecoration: "underline" }}
-                >
-                  Manage notifications
-                </Link>
-              </Text>
-            </Section>
-          )}
-        </Layout>
-      </Body>
-    </Html>
+    <Layout
+      preview={statusReportPreheader({ status, pageTitle, pageComponents })}
+      brand={statusPageBrand(pageTitle, statusPageUrl ?? manageUrl)}
+      pill={{ tone, label: status }}
+      footer={
+        <Footer
+          reason={`You get this because you subscribed to updates from ${pageTitle}.`}
+          links={links}
+        />
+      }
+    >
+      <Eyebrow
+        items={[
+          updateIndex ? `Update ${updateIndex}` : undefined,
+          dated ? formatDateTime(date) : undefined,
+          elapsed && elapsed !== "0m" ? `${elapsed} in` : undefined,
+        ]}
+      />
+      <Heading title={reportTitle} />
+      {!dated ? <KeyValue rows={[{ label: "Window", value: date }]} /> : null}
+      {pageComponents.length > 0 ? (
+        <KeyValue
+          rows={pageComponents.map((name) => {
+            const impact = componentImpacts?.find((c) => c.name === name);
+            return {
+              label: name,
+              value: impact ? impactRow[impact.impact].label : null,
+              tone: impact ? impactRow[impact.impact].tone : undefined,
+            };
+          })}
+        />
+      ) : null}
+      <Markdown>{message}</Markdown>
+      {statusPageUrl ? (
+        <Actions
+          primary={{ label: "Follow on the status page", href: statusPageUrl }}
+        />
+      ) : null}
+    </Layout>
   );
 }
 
 StatusReportEmail.PreviewProps = {
-  pageTitle: "OpenStatus Status",
-  reportTitle: "API Unavaible",
-  status: "investigating",
-  date: new Date().toISOString(),
-  message: `
-**Status**: Partial Service Restored
+  pageTitle: "openstatus",
+  reportTitle: "API unavailable — service partially restored",
+  status: "monitoring",
+  date: "2026-09-18T12:37:00Z",
+  reportStartedAt: "2026-09-18T10:23:00Z",
+  updateIndex: 3,
+  message: `Queued workflows have drained and jobs are running normally again. One piece is still broken: publishing our GitHub Action returns 500s upstream, so new versions can't go live.
 
-**GitHub Runners**: Operational
+### What we're doing
 
-**Cache Action**: Degraded
+- Working with GitHub Support on the Marketplace 500s.
+- Retrying the publish job every 15 minutes.
 
----
+### What you need to do
 
-### What's Changed
-
-- All queued workflows are now being picked up and completed successfully.
-- Jobs are running normally on our GitHub App. ### Current Issue: Cache Action Unavailable Attempts to re-publish our action to GitHub Marketplace are returning 500 Internal Server Errors. This prevents the updated versions from going live.
-
-### Mitigation In Progress
-
-- Collaborating with GitHub Support to resolve any upstream issues.
-
-### Next Update
-
-We'll post another update by **19:00 UTC** today or sooner if critical developments occur. We apologize for the inconvenience and appreciate your patience as we restore full cache functionality.
+Nothing. Pin the previous action version if your pipeline is blocked — next update by **14:00 UTC**.
   `,
-  pageComponents: ["OpenStatus API", "OpenStatus Webhook"],
+  pageComponents: ["openstatus API", "GitHub Runners", "Cache Action"],
+  componentImpacts: [
+    { name: "openstatus API", impact: "operational" },
+    { name: "GitHub Runners", impact: "degraded_performance" },
+    { name: "Cache Action", impact: "partial_outage" },
+  ],
+  statusPageUrl: "https://status.openstatus.dev",
   unsubscribeUrl:
     "https://status.openstatus.dev/unsubscribe/550e8400-e29b-41d4-a716-446655440000",
   manageUrl:
     "https://status.openstatus.dev/manage/550e8400-e29b-41d4-a716-446655440000",
-};
+} satisfies StatusReportProps;
 
 export default StatusReportEmail;

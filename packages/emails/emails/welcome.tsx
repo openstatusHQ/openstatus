@@ -1,46 +1,71 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
-import { Body, Head, Html, Preview } from "react-email";
+import { Link, Text } from "react-email";
+
+import { Footer } from "./_components/footer";
+import { Heading } from "./_components/heading";
+import { Layout } from "./_components/layout";
+import { Signature } from "./_components/signature";
+import { Steps } from "./_components/steps";
+import { styles } from "./_components/styles";
+
+const REF = "ref=email-onboarding";
+
+const links = [
+  {
+    label: "Agents",
+    href: `https://app.openstatus.dev/agents?${REF}`,
+    description:
+      "manage incidents from Slack, your editor via MCP, or the CLI.",
+  },
+  {
+    label: "Docs",
+    href: `https://www.openstatus.dev/docs?${REF}`,
+    description: "tutorials, guides and the full reference.",
+  },
+  {
+    label: "Discord",
+    href: `https://www.openstatus.dev/discord?${REF}`,
+    description: "ask questions and talk to us and other users.",
+  },
+  {
+    label: "Changelog",
+    href: `https://www.openstatus.dev/changelog?${REF}`,
+    description: "what we shipped recently.",
+  },
+];
 
 const WelcomeEmail = () => {
   return (
-    <Html>
-      <Head>
-        <title>Welcome to OpenStatus</title>
-      </Head>
-      <Preview>Set up your status page in under 5 minutes</Preview>
-
-      <Body>
-        Hey 👋
-        <br />
-        <br />
-        Thanks for signing up for OpenStatus.
-        <br />
-        <br />
-        The fastest way to get started: create your status page. It takes under
-        5 minutes and your users will have a single place to check if your
-        services are up.
-        <br />
-        <br />👉{" "}
-        <a href="https://app.openstatus.dev/status-pages/create?ref=email-onboarding">
-          Create your status page
-        </a>
-        <br />
-        <br />
-        Want full control? Use our{" "}
-        <a href="https://www.openstatus.dev/registry?ref=email-onboarding">
-          open source
-        </a>{" "}
-        to build your own status page and host it anywhere.
-        <br />
-        <br />
-        Hit reply if you get stuck — I read every response.
-        <br />
-        <br />
-        Thibault Le Ouay Ducasse, co-founder of OpenStatus
-        <br />
-      </Body>
-    </Html>
+    <Layout
+      preview="Agents, docs and where to find us"
+      pill={{ tone: "neutral", label: "Welcome" }}
+      footer={
+        <Footer reason="You get this because you signed up for openstatus." />
+      }
+    >
+      <Heading title="Welcome to openstatus">
+        Thanks for signing up. A few places worth knowing about while you get
+        set up.
+      </Heading>
+      <Steps
+        label="Links"
+        variant="dashed"
+        items={links.map((l) => (
+          <>
+            <Link href={l.href} style={styles.link}>
+              {l.label}
+            </Link>
+            {": "}
+            {l.description}
+          </>
+        ))}
+      />
+      <Text style={{ ...styles.text, margin: 0 }}>
+        Hit reply if you get stuck. I read every response.
+      </Text>
+      <Signature />
+    </Layout>
   );
 };
 

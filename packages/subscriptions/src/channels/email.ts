@@ -95,6 +95,7 @@ export async function sendEmailNotifications(
       pageUpdate.message,
       pageUpdate.date,
       pageUpdate.pageComponents,
+      pageUpdate.componentsWithImpact?.map((c) => c.impact),
     ]),
   );
 
@@ -112,6 +113,7 @@ export async function sendEmailNotifications(
     message: pageUpdate.message,
     date: pageUpdate.date,
     pageComponents: pageUpdate.pageComponents,
+    componentImpacts: pageUpdate.componentsWithImpact,
     idempotencyKey: `${idempotencyKeyFor(pageUpdate)}:${payloadHash}`,
   });
 }
