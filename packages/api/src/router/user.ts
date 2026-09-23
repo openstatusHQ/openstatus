@@ -1,4 +1,6 @@
+import { PreconditionFailedError } from "@openstatus/services";
 import { deleteAccount } from "@openstatus/services/user";
+import { listOwnedWorkspaces } from "@openstatus/services/workspace";
 
 import { removeDomainFromVercelIfUnused } from "../lib/vercel";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
@@ -14,7 +16,18 @@ export const userRouter = createTRPCRouter({
 
   deleteAccount: protectedProcedure.mutation(async ({ ctx }) => {
     try {
-      // A trial is not a paid plan the user has to cancel first.
+      // A trial is not a paid plan the user has to cancel first — but a paid
+      // workspace elsewhere aborts the delete, so check before touching any
+      // trial or the user loses it for nothing.
+      const owned = await listOwnedWorkspaces({
+        input: { userId: ctx.user.id },
+        db: ctx.db,
+      });
+      if (owned.some((ws) => ws.plan !== "free" && !ws.trialEndsAt)) {
+        throw new PreconditionFailedError(
+          "You must cancel your subscription before deleting your account.",
+        );
+      }
       const customDomains = await cancelOwnedTrials({
         userId: ctx.user.id,
         db: ctx.db,

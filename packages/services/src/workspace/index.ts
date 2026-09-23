@@ -3,6 +3,7 @@ export {
   getWorkspaceByStripeId,
   getWorkspaceForMember,
   getWorkspaceUsage,
+  listOwnedWorkspaces,
   listWorkspaceOwners,
   listWorkspaces,
   type WorkspaceUsage,

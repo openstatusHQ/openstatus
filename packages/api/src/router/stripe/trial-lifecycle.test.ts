@@ -6,7 +6,11 @@ import {
   user,
   workspace,
 } from "@openstatus/db/src/schema";
-import { createTestWorkspace } from "@openstatus/db/src/test/factories";
+import {
+  addUserToWorkspace,
+  createTestWorkspace,
+  createWorkspace,
+} from "@openstatus/db/src/test/factories";
 import { delivery, resend } from "@openstatus/emails/src/send";
 import { expect } from "@std/expect";
 import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
@@ -354,6 +358,22 @@ describe("trial lifecycle", () => {
         .where(eq(user.id, s.user.id))
         .get();
       expect(deleted?.deletedAt).not.toBeNull();
+    });
+
+    test("a paid workspace elsewhere rejects the delete and keeps the trial", async () => {
+      const s = await seedTrial();
+      live = [subscription(s.stripeId)];
+      const paid = await createWorkspace({ plan: "team", trialEndsAt: null });
+      await addUserToWorkspace(s.user.id, paid.id, "owner");
+
+      await expect(
+        edgeRouter.createCaller(asCaller(s)).user.deleteAccount(),
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+
+      assertSpyCalls(cancelStripeSubscription, 0);
+      const after = await readWorkspace(s.ws.id);
+      expect(after?.plan).toBe("starter");
+      expect(after?.trialEndsAt).toEqual(s.trialEndsAt);
     });
   });
 

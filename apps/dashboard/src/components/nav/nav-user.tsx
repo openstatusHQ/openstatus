@@ -38,6 +38,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { toast } from "sonner";
 
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -52,6 +53,7 @@ export function NavUser() {
       onSuccess: (url) => {
         if (url) window.location.assign(url);
       },
+      onError: (error) => toast.error(error.message),
     }),
   );
 

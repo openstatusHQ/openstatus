@@ -75,6 +75,7 @@ export function BillingAddons({
       onSuccess: (url) => {
         if (url) window.location.assign(url);
       },
+      onError: (error) => toast.error(error.message),
     }),
   );
   const isTrialing = workspace.trialDaysLeft !== null;
@@ -147,6 +148,8 @@ export function BillingAddons({
       ? defaultValue > 0
       : defaultValue !== defaultLimit;
   const isQuantity = typeof value === "number";
+  // Mirrors the server: a boolean submit toggles, so `true` means removing.
+  const isRemoval = typeof value === "boolean" ? value : value === 0;
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
@@ -191,7 +194,7 @@ export function BillingAddons({
               packSize,
               unitLabel,
             )}
-            {isTrialing
+            {isTrialing && !isRemoval
               ? " Adding it ends your Starter trial and charges your card today."
               : null}
           </AlertDialogDescription>

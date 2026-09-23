@@ -10,6 +10,7 @@ import {
   SidebarMenuItem,
 } from "@openstatus/ui/components/ui/sidebar";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -28,6 +29,7 @@ export function NavBannerTrial({
       onSuccess: (url) => {
         if (url) window.location.assign(url);
       },
+      onError: (error) => toast.error(error.message),
     }),
   );
 
@@ -40,6 +42,7 @@ export function NavBannerTrial({
         <SidebarMenuAction
           onClick={handleClose}
           className="relative top-0 right-0"
+          aria-label="Dismiss trial banner"
         >
           <Close className="text-muted-foreground" size={16} />
         </SidebarMenuAction>

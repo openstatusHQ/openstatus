@@ -39,11 +39,6 @@ import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
 
-const BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://app.openstatus.dev"
-    : "http://localhost:3000";
-
 function calculateTotalRequests(limits: Limits) {
   const monitors = limits.monitors;
   const maxRegions = limits["max-regions"];
@@ -90,6 +85,7 @@ export function Client() {
       onSuccess: (url) => {
         if (url) window.location.assign(url);
       },
+      onError: (error) => toast.error(error.message),
     }),
   );
   const customerPortalMutation = useMutation(
@@ -191,8 +187,8 @@ export function Client() {
                   onClick={() =>
                     paymentMethodSetupMutation.mutate({
                       workspaceSlug: workspace.slug,
-                      successUrl: `${BASE_URL}/settings/billing?setup=true`,
-                      cancelUrl: `${BASE_URL}/settings/billing`,
+                      successUrl: `${window.location.origin}/settings/billing?setup=true`,
+                      cancelUrl: `${window.location.origin}/settings/billing`,
                     })
                   }
                   disabled={paymentMethodSetupMutation.isPending}
@@ -327,7 +323,7 @@ export function Client() {
                   startTransition(async () => {
                     await customerPortalMutation.mutateAsync({
                       workspaceSlug: workspace.slug,
-                      returnUrl: `${BASE_URL}/settings/billing`,
+                      returnUrl: `${window.location.origin}/settings/billing`,
                     });
                   });
                 }}

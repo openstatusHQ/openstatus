@@ -679,6 +679,7 @@ describe("every transactional template", () => {
     invitation: <TeamInvitationEmail token="t" invitedBy="a@b.c" />,
     subscription: <PageSubscriptionEmail page="Acme" link="https://a.dev" />,
     magicLink: <StatusPageMagicLinkEmail page="Acme" link="https://a.dev" />,
+    welcome: <WelcomeEmail trialEndsAt={new Date("2026-10-07T00:00:00Z")} />,
   };
 
   for (const [name, element] of Object.entries(all)) {

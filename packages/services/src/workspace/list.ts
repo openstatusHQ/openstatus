@@ -20,6 +20,7 @@ import {
   type GetWorkspaceUsageInput,
   ListWorkspaceOwnersInput,
   ListWorkspacesInput,
+  OwnedWorkspacesInput,
 } from "./schemas";
 
 /**
@@ -190,6 +191,29 @@ export async function getWorkspaceForMember(args: {
     workspace: selectWorkspaceSchema.parse(row.workspace),
     email: row.email,
   };
+}
+
+/** Workspaces the user owns. Account deletion checks these for a paid plan. */
+export async function listOwnedWorkspaces(args: {
+  input: OwnedWorkspacesInput;
+  db?: DB;
+}): Promise<Workspace[]> {
+  const input = OwnedWorkspacesInput.parse(args.input);
+  const db = args.db ?? defaultDb;
+
+  const rows = await db
+    .select({ workspace })
+    .from(usersToWorkspaces)
+    .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
+    .where(
+      and(
+        eq(usersToWorkspaces.userId, input.userId),
+        eq(usersToWorkspaces.role, "owner"),
+      ),
+    )
+    .all();
+
+  return selectWorkspaceSchema.array().parse(rows.map((r) => r.workspace));
 }
 
 /** Owners of a workspace — billing mail recipients and trial attribution. */
