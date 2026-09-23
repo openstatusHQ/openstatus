@@ -1666,32 +1666,26 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
               ? String(component.monitorId)
               : undefined,
           name: component.name,
-          buckets: component.buckets.map(
-            (bucket): ComponentDayBucket => ({
-              $typeName: "openstatus.status_page.v1.ComponentDayBucket",
-              day: bucket.day,
-              count: BigInt(bucket.count),
-              ok: BigInt(bucket.ok),
-              degraded: BigInt(bucket.degraded),
-              error: BigInt(bucket.error),
-              status: dayStatusToProto(bucket.status),
-              impact: bucket.impact
-                ? dbImpactToProto(bucket.impact)
-                : undefined,
-            }),
-          ),
-          events: component.events.map(
-            (event): ComponentEvent => ({
-              $typeName: "openstatus.status_page.v1.ComponentEvent",
-              id: String(event.id),
-              name: event.name,
-              type: eventTypeToProto(event.type),
-              status: eventStatusToProto(event.status),
-              from: event.from.toISOString(),
-              to: event.to ? event.to.toISOString() : undefined,
-              impact: event.impact ? dbImpactToProto(event.impact) : undefined,
-            }),
-          ),
+          buckets: component.buckets.map((bucket): ComponentDayBucket => ({
+            $typeName: "openstatus.status_page.v1.ComponentDayBucket",
+            day: bucket.day,
+            count: BigInt(bucket.count),
+            ok: BigInt(bucket.ok),
+            degraded: BigInt(bucket.degraded),
+            error: BigInt(bucket.error),
+            status: dayStatusToProto(bucket.status),
+            impact: bucket.impact ? dbImpactToProto(bucket.impact) : undefined,
+          })),
+          events: component.events.map((event): ComponentEvent => ({
+            $typeName: "openstatus.status_page.v1.ComponentEvent",
+            id: String(event.id),
+            name: event.name,
+            type: eventTypeToProto(event.type),
+            status: eventStatusToProto(event.status),
+            from: event.from.toISOString(),
+            to: event.to ? event.to.toISOString() : undefined,
+            impact: event.impact ? dbImpactToProto(event.impact) : undefined,
+          })),
         }),
       );
 

@@ -51,7 +51,7 @@ export const PageSchema = z
         description: "The icon of the page",
         example: "https://example.com/icon.png",
       }),
-    passwordProtected: z.boolean().optional().prefault(false).openapi({
+    passwordProtected: z.boolean().prefault(false).openapi({
       description:
         "Deprecated in favor of `accessType`. Used to set the password protection type. Returns true if `accessType` is set to 'password' and false otherwise.",
       example: true,

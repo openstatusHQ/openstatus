@@ -103,7 +103,7 @@ const schema = z.object({
       value: z.string(),
     }),
   ),
-  active: z.boolean().optional().prefault(true),
+  active: z.boolean().prefault(true),
   assertions: z.array(
     z.discriminatedUnion("type", [
       statusAssertion,
@@ -115,9 +115,9 @@ const schema = z.object({
   ),
   body: z.string().optional(),
   grpcService: z.string().optional(),
-  grpcTls: z.enum(grpcTlsModes).optional().prefault("tls"),
-  skipCheck: z.boolean().optional().prefault(false),
-  saveCheck: z.boolean().optional().prefault(false),
+  grpcTls: z.enum(grpcTlsModes).prefault("tls"),
+  skipCheck: z.boolean().prefault(false),
+  saveCheck: z.boolean().prefault(false),
 });
 
 type FormValues = z.input<typeof schema>;

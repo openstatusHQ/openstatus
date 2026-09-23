@@ -79,10 +79,10 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   otelHeaders: headersSchema.prefault([]),
 }).extend({
   method: monitorMethodsSchema.prefault("GET"),
-  notifications: z.array(z.number()).optional().prefault([]),
-  pages: z.array(z.number()).optional().prefault([]),
+  notifications: z.array(z.number()).prefault([]),
+  pages: z.array(z.number()).prefault([]),
   body: z.string().prefault("").optional(),
-  tags: z.array(z.number()).optional().prefault([]),
+  tags: z.array(z.number()).prefault([]),
   statusAssertions: z.array(assertions.statusAssertion).optional(),
   headerAssertions: z.array(assertions.headerAssertion).optional(),
   textBodyAssertions: z.array(assertions.textBodyAssertion).optional(),
