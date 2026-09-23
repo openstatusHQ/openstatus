@@ -53,6 +53,15 @@ read. `requireScope` is a no-op for `user` / `system` / `slack` / `webhook` /
 `scope` and register through `registerScopedTool`, so read-only keys never see
 write tools.
 
+## Status-page visitor access
+
+`src/page-access` decides whether an anonymous visitor may see a gated page
+(password, email domain, IP range). It is pure — the transport builds a
+`PageVisitor` — and the status-page proxy imports it, so keep it Edge-safe.
+A verb reachable by visitors takes a `visitor` argument and calls
+`assertPageAccess`; `null` is only for callers that already authorized the
+request inside their own workspace.
+
 ## Runtime constraints
 
 - **No `node:*` imports.** `apps/workflows` runs this code on Deno, and the

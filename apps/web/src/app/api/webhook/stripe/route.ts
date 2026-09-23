@@ -1,5 +1,5 @@
 import { createTRPCContext } from "@openstatus/api";
-import { lambdaRouter, stripe } from "@openstatus/api/src/lambda";
+import { stripe, webhookRouter } from "@openstatus/api/src/lambda";
 import { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 import type { NextRequest } from "next/server";
@@ -22,19 +22,24 @@ export async function POST(req: NextRequest) {
      * Forward to tRPC API to handle the webhook event
      */
     const ctx = await createTRPCContext({ req });
-    const caller = lambdaRouter.createCaller(ctx);
+    const caller = webhookRouter.createCaller(ctx);
 
     switch (event.type) {
       case "checkout.session.completed":
-        await caller.stripeRouter.webhooks.sessionCompleted({ event });
+        await caller.sessionCompleted({ event });
         break;
       case "customer.subscription.updated":
-        await caller.stripeRouter.webhooks.customerSubscriptionUpdated({
+        await caller.customerSubscriptionUpdated({
+          event,
+        });
+        break;
+      case "customer.subscription.trial_will_end":
+        await caller.customerSubscriptionTrialWillEnd({
           event,
         });
         break;
       case "customer.subscription.deleted":
-        await caller.stripeRouter.webhooks.customerSubscriptionDeleted({
+        await caller.customerSubscriptionDeleted({
           event,
         });
         break;

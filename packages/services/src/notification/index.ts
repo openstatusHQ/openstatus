@@ -1,5 +1,6 @@
 export { createNotification } from "./create";
 export { deleteNotification } from "./delete";
+export { assertProviderAllowed } from "./internal";
 export {
   getNotification,
   type ListNotificationsResult,

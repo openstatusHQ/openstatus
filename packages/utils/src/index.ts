@@ -1,4 +1,9 @@
-export { assertSafeUrl, assertSafeUrlSync, safeUrlSchema } from "./ssrf";
+export {
+  assertSafeUrl,
+  assertSafeUrlSync,
+  safeFetch,
+  safeUrlSchema,
+} from "./ssrf";
 export {
   type DNSPayload,
   DNSPayloadSchema,

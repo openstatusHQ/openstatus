@@ -74,7 +74,8 @@ describe("Email Notifications", () => {
     expect(callArgs.to).toBe("ping@openstatus.dev");
     expect(callArgs.url).toBe("https://api.example.com/health");
     expect(callArgs.status).toBe("500");
-    expect(callArgs.latency).toBe("1500ms");
+    expect(callArgs.latency).toBe("1500 ms");
+    expect(callArgs.monitorId).toBe("monitor-1");
     expect(callArgs.region).toBe("Ashburn, Virginia, USA");
     expect(callArgs.message).toBe("Something went wrong");
     expect(callArgs.timestamp).toBeDefined();
@@ -122,7 +123,7 @@ describe("Email Notifications", () => {
     expect(callArgs.name).toBe("API Health Check");
     expect(callArgs.to).toBe("ping@openstatus.dev");
     expect(callArgs.status).toBe("200");
-    expect(callArgs.latency).toBe("100ms");
+    expect(callArgs.latency).toBe("100 ms");
     expect(callArgs.region).toBe("Amsterdam, Netherlands");
   });
 
@@ -147,8 +148,32 @@ describe("Email Notifications", () => {
     expect(callArgs.type).toBe("degraded");
     expect(callArgs.name).toBe("API Health Check");
     expect(callArgs.status).toBe("503");
-    expect(callArgs.latency).toBe("2000ms");
+    expect(callArgs.latency).toBe("2000 ms");
     expect(callArgs.region).toBe("Los Angeles, California, USA");
+  });
+
+  test("Send Degraded passes the threshold and incident start", async () => {
+    const monitor = { ...createMockMonitor(), degradedAfter: 250 };
+    const notification = selectNotificationSchema.parse(
+      createMockNotification(),
+    );
+    const startedAt = new Date("2026-10-13T17:29:00Z");
+
+    await sendDegraded({
+      // @ts-expect-error
+      monitor,
+      notification,
+      latency: 300,
+      regions: ["ams"],
+      cronTimestamp: Date.now(),
+      // @ts-expect-error
+      incident: { startedAt },
+    });
+
+    assertSpyCalls(sendMonitorAlertMock, 1);
+    const callArgs = sendMonitorAlertMock.calls[0].args[0];
+    expect(callArgs.degradedAfter).toBe(250);
+    expect(callArgs.firstSeen).toBe(startedAt.toISOString());
   });
 
   test("Handles invalid notification data gracefully", async () => {
