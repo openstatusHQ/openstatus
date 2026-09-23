@@ -1,3 +1,9 @@
+import { db, eq } from "@openstatus/db";
+import { monitorRun } from "@openstatus/db/src/schema";
+import {
+  createMonitor,
+  createTestWorkspace,
+} from "@openstatus/db/src/test/factories";
 import { afterEach, expect, mock, test } from "@openstatus/test-utils";
 
 import { app } from "@/index";
@@ -56,6 +62,7 @@ test("run monitor with valid id should return 200", async () => {
 });
 
 test("run monitor with no-wait parameter should return empty array", async () => {
+  mockFetch.mockResolvedValue(Response.json({}));
   const res = await app.request("/v1/monitor/1/run?no-wait=true", {
     method: "POST",
     headers: {
@@ -68,6 +75,67 @@ test("run monitor with no-wait parameter should return empty array", async () =>
 
   const json = await res.json();
   expect(json).toEqual([]);
+});
+
+for (const [query, waits] of [
+  ["?no-wait=false", true],
+  ["?no-wait=true", false],
+  ["", true],
+] as const) {
+  test(`run monitor ${query || "without no-wait"} returns the requested results`, async () => {
+    const { workspace } = await createTestWorkspace();
+    const monitor = await createMonitor(workspace.id, {
+      jobType: "tcp",
+      url: "example.com:443",
+      regions: "ams",
+    });
+    const result = {
+      jobType: "tcp",
+      latency: 50,
+      region: "ams",
+      timestamp: 1234567890,
+      timing: { tcpStart: 1, tcpDone: 2 },
+    };
+    mockFetch.mockResolvedValue(Response.json(result));
+
+    const res = await app.request(`/v1/monitor/${monitor.id}/run${query}`, {
+      method: "POST",
+      headers: { "x-openstatus-key": String(workspace.id) },
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual(waits ? [result] : []);
+  });
+}
+
+test("run monitor rejects invalid no-wait values before starting a run", async () => {
+  const { workspace } = await createTestWorkspace();
+  const monitor = await createMonitor(workspace.id, {
+    jobType: "tcp",
+    url: "example.com:443",
+    regions: "ams",
+  });
+  mockFetch.mockResolvedValue(Response.json({}));
+
+  for (const value of ["invalid", "1", ""]) {
+    const res = await app.request(
+      `/v1/monitor/${monitor.id}/run?no-wait=${value}`,
+      {
+        method: "POST",
+        headers: { "x-openstatus-key": String(workspace.id) },
+      },
+    );
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ code: "BAD_REQUEST" });
+  }
+
+  expect(
+    await db
+      .select()
+      .from(monitorRun)
+      .where(eq(monitorRun.workspaceId, workspace.id)),
+  ).toEqual([]);
 });
 
 test("run monitor with invalid id should return 404", async () => {

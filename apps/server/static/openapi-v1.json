@@ -5271,9 +5271,9 @@
           },
           {
             "schema": {
-              "type": "boolean",
-              "nullable": true,
-              "default": false,
+              "type": "string",
+              "enum": ["true", "false"],
+              "default": "false",
               "description": "Don't wait for the result"
             },
             "required": false,
