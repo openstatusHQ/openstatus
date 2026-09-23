@@ -16,7 +16,7 @@ import {
   readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
-import { ForbiddenError } from "../../errors";
+import { ConflictError, ForbiddenError } from "../../errors";
 import {
   getWorkspaceForMember,
   listWorkspaceOwners,
@@ -71,15 +71,33 @@ describe("listWorkspaceOwners", () => {
 
     expect(owners).toEqual([{ id: owner.id, email: owner.email }]);
   });
+
+  test("skips owners whose account was deleted", async () => {
+    await withTestTransaction(async (tx) => {
+      const { workspace: ws, user: owner } = await createTestWorkspace(
+        { plan: "free" },
+        tx,
+      );
+      const gone = await createUser({ deletedAt: new Date() }, tx);
+      await addUserToWorkspace(gone.id, ws.id, "owner", tx);
+
+      const owners = await listWorkspaceOwners({
+        input: { workspaceId: ws.id },
+        db: tx,
+      });
+
+      expect(owners).toEqual([{ id: owner.id, email: owner.email }]);
+    });
+  });
 });
 
 describe("updateWorkspaceStripeId", () => {
   test("links the customer and audits the change", async () => {
     await withTestTransaction(async (tx) => {
-      const { workspace: ws, user } = await createTestWorkspace({
-        plan: "free",
-        stripeId: null,
-      });
+      const { workspace: ws, user } = await createTestWorkspace(
+        { plan: "free", stripeId: null },
+        tx,
+      );
       const ctx = {
         ...makeUserCtx(selectWorkspaceSchema.parse(ws), { userId: user.id }),
         db: tx,
@@ -112,9 +130,59 @@ describe("updateWorkspaceStripeId", () => {
     });
   });
 
+  test("refuses to replace a customer linked by a concurrent request", async () => {
+    await withTestTransaction(async (tx) => {
+      const { workspace: ws, user } = await createTestWorkspace(
+        { plan: "free", stripeId: "cus_first" },
+        tx,
+      );
+      // Snapshot from before the other request linked its customer.
+      const ctx = {
+        ...makeUserCtx(selectWorkspaceSchema.parse({ ...ws, stripeId: null }), {
+          userId: user.id,
+        }),
+        db: tx,
+      };
+
+      await expect(
+        updateWorkspaceStripeId({ ctx, input: { stripeId: "cus_second" } }),
+      ).rejects.toBeInstanceOf(ConflictError);
+
+      const after = await tx
+        .select({ stripeId: workspace.stripeId })
+        .from(workspace)
+        .where(eq(workspace.id, ws.id))
+        .get();
+      expect(after?.stripeId).toBe("cus_first");
+    });
+  });
+
+  test("re-linking the same customer is a no-op", async () => {
+    await withTestTransaction(async (tx) => {
+      const { workspace: ws, user } = await createTestWorkspace(
+        { plan: "free", stripeId: "cus_same" },
+        tx,
+      );
+      const ctx = {
+        ...makeUserCtx(selectWorkspaceSchema.parse(ws), { userId: user.id }),
+        db: tx,
+      };
+
+      await updateWorkspaceStripeId({ ctx, input: { stripeId: "cus_same" } });
+
+      const audits = await readAuditLog({
+        workspaceId: ws.id,
+        entityType: "workspace",
+        entityId: ws.id,
+        db: tx,
+      });
+      expect(audits).toHaveLength(0);
+    });
+  });
+
   test("rejects a read-only api key actor", async () => {
     await withTestTransaction(async (tx) => {
-      const { workspace: ws } = await createTestWorkspace({ plan: "free" });
+      const { workspace: ws } = await createTestWorkspace({ plan: "free" }, tx);
       const ctx = {
         ...makeApiKeyCtx(selectWorkspaceSchema.parse(ws), {
           keyId: "k-read",
@@ -131,22 +199,30 @@ describe("updateWorkspaceStripeId", () => {
 });
 
 describe("updateWorkspaceLimits", () => {
-  test("replaces limits, clears the trial when told, and stamps the reason", async () => {
+  test("applies the addon, clears the trial when told, and stamps the reason", async () => {
     await withTestTransaction(async (tx) => {
       const trialEndsAt = new Date("2027-01-15T00:00:00Z");
-      const { workspace: ws, user } = await createTestWorkspace({
-        plan: "starter",
-        trialEndsAt,
-      });
+      const { workspace: ws, user } = await createTestWorkspace(
+        {
+          plan: "starter",
+          trialEndsAt,
+          limits: JSON.stringify(getLimits("starter")),
+        },
+        tx,
+      );
       const ctx = {
         ...makeUserCtx(selectWorkspaceSchema.parse(ws), { userId: user.id }),
         db: tx,
       };
-      const limits = { ...getLimits("starter"), monitors: 99 };
 
       await updateWorkspaceLimits({
         ctx,
-        input: { limits, trialEndsAt: null, reason: "trial_converted" },
+        input: {
+          addon: "monitors",
+          value: 99,
+          trialEndsAt: null,
+          reason: "trial_converted",
+        },
       });
 
       const after = await tx
@@ -154,7 +230,10 @@ describe("updateWorkspaceLimits", () => {
         .from(workspace)
         .where(eq(workspace.id, ws.id))
         .get();
-      expect(JSON.parse(after?.limits ?? "{}")).toEqual(limits);
+      expect(JSON.parse(after?.limits ?? "{}")).toEqual({
+        ...getLimits("starter"),
+        monitors: 99,
+      });
       expect(after?.trialEndsAt).toBeNull();
 
       const [audit] = await readAuditLog({
@@ -169,13 +248,13 @@ describe("updateWorkspaceLimits", () => {
     });
   });
 
-  test("leaves trialEndsAt alone when not given", async () => {
+  test("merges into the current limits, not the caller's snapshot", async () => {
     await withTestTransaction(async (tx) => {
-      const trialEndsAt = new Date("2027-01-15T00:00:00Z");
-      const { workspace: ws, user } = await createTestWorkspace({
-        plan: "starter",
-        trialEndsAt,
-      });
+      const { workspace: ws, user } = await createTestWorkspace(
+        { plan: "starter", limits: JSON.stringify(getLimits("starter")) },
+        tx,
+      );
+      // Both calls carry the same pre-change workspace snapshot.
       const ctx = {
         ...makeUserCtx(selectWorkspaceSchema.parse(ws), { userId: user.id }),
         db: tx,
@@ -183,7 +262,45 @@ describe("updateWorkspaceLimits", () => {
 
       await updateWorkspaceLimits({
         ctx,
-        input: { limits: { ...getLimits("starter"), monitors: 5 } },
+        input: { addon: "white-label", value: true },
+      });
+      await updateWorkspaceLimits({
+        ctx,
+        input: { addon: "monitors", value: 42 },
+      });
+
+      const after = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, ws.id))
+        .get();
+      expect(JSON.parse(after?.limits ?? "{}")).toEqual({
+        ...getLimits("starter"),
+        "white-label": true,
+        monitors: 42,
+      });
+    });
+  });
+
+  test("leaves trialEndsAt alone when not given", async () => {
+    await withTestTransaction(async (tx) => {
+      const trialEndsAt = new Date("2027-01-15T00:00:00Z");
+      const { workspace: ws, user } = await createTestWorkspace(
+        {
+          plan: "starter",
+          trialEndsAt,
+          limits: JSON.stringify(getLimits("starter")),
+        },
+        tx,
+      );
+      const ctx = {
+        ...makeUserCtx(selectWorkspaceSchema.parse(ws), { userId: user.id }),
+        db: tx,
+      };
+
+      await updateWorkspaceLimits({
+        ctx,
+        input: { addon: "monitors", value: 5 },
       });
 
       const after = await tx
@@ -197,7 +314,7 @@ describe("updateWorkspaceLimits", () => {
 
   test("rejects a read-only api key actor", async () => {
     await withTestTransaction(async (tx) => {
-      const { workspace: ws } = await createTestWorkspace({ plan: "free" });
+      const { workspace: ws } = await createTestWorkspace({ plan: "free" }, tx);
       const ctx = {
         ...makeApiKeyCtx(selectWorkspaceSchema.parse(ws), {
           keyId: "k-read",
@@ -207,7 +324,10 @@ describe("updateWorkspaceLimits", () => {
         db: tx,
       };
       await expect(
-        updateWorkspaceLimits({ ctx, input: { limits: getLimits("free") } }),
+        updateWorkspaceLimits({
+          ctx,
+          input: { addon: "white-label", value: true },
+        }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });

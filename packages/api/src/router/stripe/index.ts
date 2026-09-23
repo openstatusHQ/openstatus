@@ -5,12 +5,14 @@ import {
   addons,
   billingIntervals,
 } from "@openstatus/db/src/schema/plan/schema";
+import { isAddonQuantityKey } from "@openstatus/db/src/schema/plan/utils";
 import {
-  isAddonQuantityKey,
-  updateAddonInLimits,
-} from "@openstatus/db/src/schema/plan/utils";
-import { type ServiceContext, countWorkspaceUsage } from "@openstatus/services";
+  ConflictError,
+  type ServiceContext,
+  countWorkspaceUsage,
+} from "@openstatus/services";
 import {
+  getWorkspace,
   getWorkspaceForMember,
   updateWorkspaceLimits,
   updateWorkspacePlan,
@@ -72,7 +74,16 @@ async function ensureStripeCustomer(ctx: ServiceContext, email: string | null) {
     email: email || "",
   });
 
-  await updateWorkspaceStripeId({ ctx, input: { stripeId: customer.id } });
+  try {
+    await updateWorkspaceStripeId({ ctx, input: { stripeId: customer.id } });
+  } catch (err) {
+    if (!(err instanceof ConflictError)) throw err;
+    // A concurrent request linked its customer first; ours would orphan.
+    await stripe.customers.del(customer.id).catch(() => undefined);
+    const linked = await getWorkspace({ ctx });
+    if (!linked.stripeId) throw err;
+    return linked.stripeId;
+  }
 
   return customer.id;
 }
@@ -439,16 +450,11 @@ export const stripeRouter = createTRPCRouter({
         });
       }
 
-      const newLimits = updateAddonInLimits(
-        ws.limits,
-        opts.input.feature,
-        newValue,
-      );
-
       await updateWorkspaceLimits({
         ctx: resolved.ctx,
         input: {
-          limits: newLimits,
+          addon: opts.input.feature,
+          value: newValue,
           ...(endsTrial && { trialEndsAt: null }),
           reason: endsTrial ? "trial_converted" : "addon_changed",
         },

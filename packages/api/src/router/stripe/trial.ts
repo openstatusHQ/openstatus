@@ -1,4 +1,8 @@
-import type { DB, ServiceContext } from "@openstatus/services";
+import {
+  ConflictError,
+  type DB,
+  type ServiceContext,
+} from "@openstatus/services";
 import { hasPendingInvitation } from "@openstatus/services/invitation";
 import {
   downgradeWorkspaceToFree,
@@ -98,7 +102,16 @@ export async function maybeStartSignupTrial(args: {
     { idempotencyKey: `trial-customer:ws_${ws.id}` },
   );
 
-  await updateWorkspaceStripeId({ ctx, input: { stripeId: customer.id } });
+  try {
+    await updateWorkspaceStripeId({ ctx, input: { stripeId: customer.id } });
+  } catch (err) {
+    if (!(err instanceof ConflictError)) throw err;
+    // Another request (a checkout, say) linked a customer since the
+    // eligibility read. Drop ours so its `trialed` flag doesn't block a
+    // later trial for this email.
+    await stripe.customers.del(customer.id).catch(() => undefined);
+    return { started: false, reason: "not_eligible" };
+  }
 
   const subscription = await stripe.subscriptions.create(
     {

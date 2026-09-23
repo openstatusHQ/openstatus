@@ -1,5 +1,5 @@
 import { workspacePlanSchema } from "@openstatus/db/src/schema";
-import { limitsSchema } from "@openstatus/db/src/schema/plan/schema";
+import { addons, limitsSchema } from "@openstatus/db/src/schema/plan/schema";
 import { z } from "zod";
 
 export const GetWorkspaceInput = z.object({}).strict();
@@ -42,12 +42,13 @@ export type UpdateWorkspaceStripeIdInput = z.infer<
 >;
 
 /**
- * Replace the workspace's feature limits without touching the plan — an
- * addon bought or removed. `trialEndsAt: null` records that buying the
- * addon ended the trial; `reason` lands in the audit metadata.
+ * One addon bought or removed, applied to the current limits without
+ * touching the plan. `trialEndsAt: null` records that buying the addon
+ * ended the trial; `reason` lands in the audit metadata.
  */
 export const UpdateWorkspaceLimitsInput = z.object({
-  limits: limitsSchema,
+  addon: z.enum(addons),
+  value: z.union([z.boolean(), z.number()]),
   trialEndsAt: z.date().nullable().optional(),
   reason: z.string().optional(),
 });

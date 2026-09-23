@@ -61,6 +61,20 @@ const REMINDER_METADATA_KEY = "reminder_email_id";
 
 type Db = Parameters<typeof getWorkspaceByStripeId>[0]["db"];
 
+// Stripe cancels a trial without a card at `trial_end`, but its cycle
+// processing can lag behind that timestamp by a little.
+const TRIAL_END_SLACK_S = 60 * 60;
+
+function endedDuringTrial(
+  subscription: Stripe.Subscription,
+  eventCreated: number,
+) {
+  if (!subscription.trial_end) return false;
+  const endedAt =
+    subscription.ended_at ?? subscription.canceled_at ?? eventCreated;
+  return endedAt <= subscription.trial_end + TRIAL_END_SLACK_S;
+}
+
 async function getOwnerEmails(db: NonNullable<Db>, workspaceId: number) {
   const owners = await listWorkspaceOwners({ input: { workspaceId }, db });
   return owners.map((owner) => owner.email);
@@ -510,12 +524,14 @@ export const webhookRouter = createTRPCRouter({
     };
 
     // A trial that ran out without a card, or was cancelled mid-trial, is
-    // not a paying customer churning — keep the audit trail honest.
-    const reason = !ws.trialEndsAt
-      ? "subscription_deleted"
-      : subscription.cancellation_details?.reason === "cancellation_requested"
+    // not a paying customer churning — keep the audit trail honest. Read
+    // off the subscription rather than `ws.trialEndsAt`: a delayed
+    // trial-to-active webhook leaves that marker stale on a paying customer.
+    const reason = endedDuringTrial(subscription, opts.input.event.created)
+      ? subscription.cancellation_details?.reason === "cancellation_requested"
         ? "trial_cancelled"
-        : "trial_ended";
+        : "trial_ended"
+      : "subscription_deleted";
 
     const { customDomains, ssoDisabled, trimmed } =
       await downgradeWorkspaceToFree({ ctx, input: { reason } });

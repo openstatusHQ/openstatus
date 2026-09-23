@@ -503,6 +503,32 @@ describe("trial lifecycle", () => {
       expect(await lastPlanAuditReason(s.ws.id)).toBe("trial_cancelled");
     });
 
+    test("a converted trial cancelled later is churn even if the marker is stale", async () => {
+      const send = stub(resend.emails, "send");
+      const enabled = stub(delivery, "enabled", () => true);
+      stubs.push(send, enabled);
+      // The trial-to-active webhook never landed, so `trialEndsAt` is set.
+      const s = await seedTrial();
+      live = [];
+      const trialEnd = now() - 30 * DAY;
+
+      await caller().customerSubscriptionDeleted(
+        event(
+          "customer.subscription.deleted",
+          subscription(s.stripeId, {
+            status: "canceled",
+            trial_end: trialEnd,
+            ended_at: now(),
+            cancellation_details: {
+              reason: "cancellation_requested",
+            } as Stripe.Subscription.CancellationDetails,
+          }),
+        ),
+      );
+
+      expect(await lastPlanAuditReason(s.ws.id)).toBe("subscription_deleted");
+    });
+
     test("deleted on an already-free workspace → nothing happens", async () => {
       const send = stub(resend.emails, "send");
       const enabled = stub(delivery, "enabled", () => true);

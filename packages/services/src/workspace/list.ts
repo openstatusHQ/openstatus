@@ -216,7 +216,11 @@ export async function listOwnedWorkspaces(args: {
   return selectWorkspaceSchema.array().parse(rows.map((r) => r.workspace));
 }
 
-/** Owners of a workspace — billing mail recipients and trial attribution. */
+/**
+ * Owners of a workspace — billing mail recipients and trial attribution.
+ * Account deletion keeps the owner membership and only soft-deletes the
+ * user, so those rows are filtered out here.
+ */
 export async function listWorkspaceOwners(args: {
   input: ListWorkspaceOwnersInput;
   db?: DB;
@@ -232,6 +236,7 @@ export async function listWorkspaceOwners(args: {
       and(
         eq(usersToWorkspaces.workspaceId, input.workspaceId),
         eq(usersToWorkspaces.role, "owner"),
+        isNull(user.deletedAt),
       ),
     )
     .all();

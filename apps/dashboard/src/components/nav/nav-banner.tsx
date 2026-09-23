@@ -11,10 +11,17 @@ import { NavBannerTrial } from "./nav-banner-trial";
 import { NavBannerUpgrade } from "./nav-banner-upgrade";
 
 const EXPIRES_IN = 7 * 24 * 60 * 60 * 1000; // in 7 days
+const TRIAL_REFETCH_MS = 60 * 60 * 1000;
 
 export function NavBanner() {
   const trpc = useTRPC();
-  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: workspace } = useQuery({
+    ...trpc.workspace.get.queryOptions(),
+    // `trialDaysLeft` is computed server-side, so a sidebar left open would
+    // otherwise keep yesterday's count and miss the banner threshold.
+    refetchInterval: (query) =>
+      query.state.data?.trialDaysLeft != null ? TRIAL_REFETCH_MS : false,
+  });
   const [openChecklist, setOpenChecklist] = useCookieState<"true" | "false">(
     "sidebar_banner_checklist",
     "true",

@@ -25,7 +25,10 @@ export const userRouter = createTRPCRouter({
         input: { userId: ctx.user.id },
         db: ctx.db,
       });
-      if (owned.some((ws) => ws.plan !== "free" && !ws.trialEndsAt)) {
+      // A signup workspace has no plan column yet — that is free.
+      if (
+        owned.some((ws) => ws.plan && ws.plan !== "free" && !ws.trialEndsAt)
+      ) {
         throw new PreconditionFailedError(
           "You must cancel your subscription before deleting your account.",
         );

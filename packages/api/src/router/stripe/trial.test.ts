@@ -31,10 +31,13 @@ describe("maybeStartSignupTrial", () => {
   let list: Stub;
   let createCustomer: Stub;
   let createSubscription: Stub;
+  // Runs inside `customers.create`, to interleave work with the Stripe call.
+  let onCreateCustomer: (() => Promise<void>) | undefined;
 
   beforeEach(() => {
     customerId = `cus_${crypto.randomUUID()}`;
     customers = [];
+    onCreateCustomer = undefined;
     price = { currency: "usd", currency_options: {} };
     list = stub(
       stripe.customers,
@@ -44,9 +47,10 @@ describe("maybeStartSignupTrial", () => {
           Stripe.ApiList<Stripe.Customer>
         >) as Stripe.ApiListPromise<Stripe.Customer>,
     );
-    createCustomer = stub(stripe.customers, "create", () =>
-      Promise.resolve({ id: customerId } as Stripe.Response<Stripe.Customer>),
-    );
+    createCustomer = stub(stripe.customers, "create", async () => {
+      await onCreateCustomer?.();
+      return { id: customerId } as Stripe.Response<Stripe.Customer>;
+    });
     createSubscription = stub(stripe.subscriptions, "create", () =>
       Promise.resolve({
         id: "sub_trial",
@@ -223,6 +227,38 @@ describe("maybeStartSignupTrial", () => {
 
     expect(result).toMatchObject({ started: true });
     assertSpyCalls(createCustomer, 1);
+  });
+
+  test("drops its customer when another request linked one first", async () => {
+    const { workspace: ws, user } = await freeWorkspace();
+    const linked = `cus_${crypto.randomUUID()}`;
+    // Simulate the race: a checkout links its customer while ours is created.
+    onCreateCustomer = async () => {
+      await db
+        .update(workspace)
+        .set({ stripeId: linked })
+        .where(eq(workspace.id, ws.id));
+    };
+    const delCustomer = stub(stripe.customers, "del", () =>
+      Promise.resolve({} as Stripe.Response<Stripe.DeletedCustomer>),
+    );
+    stubs.push(delCustomer);
+
+    const result = await maybeStartSignupTrial({
+      userId: user.id,
+      email: user.email ?? "",
+      currency: "USD",
+    });
+
+    expect(result).toEqual({ started: false, reason: "not_eligible" });
+    expect(delCustomer.calls[0]?.args[0]).toBe(customerId);
+    assertSpyCalls(createSubscription, 0);
+    const after = await db
+      .select({ stripeId: workspace.stripeId })
+      .from(workspace)
+      .where(eq(workspace.id, ws.id))
+      .get();
+    expect(after?.stripeId).toBe(linked);
   });
 
   test("leaves an already-billed workspace alone", async () => {

@@ -1,10 +1,12 @@
-import { eq } from "@openstatus/db";
+import { and, eq, isNull } from "@openstatus/db";
 import { workspace } from "@openstatus/db/src/schema";
+import { limitsSchema } from "@openstatus/db/src/schema/plan/schema";
+import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { NotFoundError } from "../errors";
+import { ConflictError, NotFoundError } from "../errors";
 import {
   UpdateWorkspaceLimitsInput,
   UpdateWorkspaceNameInput,
@@ -111,7 +113,12 @@ export async function updateWorkspacePlan(args: {
   });
 }
 
-/** Link the workspace to its Stripe customer. Set once; never cleared. */
+/**
+ * Link the workspace to its Stripe customer. Set once; never cleared. The
+ * write is gated on `stripe_id IS NULL`, so two requests that both saw no
+ * customer cannot both link: the loser gets a `ConflictError` and must
+ * discard the customer it created. Re-linking the same id is a no-op.
+ */
 export async function updateWorkspaceStripeId(args: {
   ctx: ServiceContext;
   input: UpdateWorkspaceStripeIdInput;
@@ -127,13 +134,21 @@ export async function updateWorkspaceStripeId(args: {
       .where(eq(workspace.id, ctx.workspace.id))
       .get();
     if (!existing) throw new NotFoundError("workspace", ctx.workspace.id);
+    if (existing.stripeId === input.stripeId) return;
 
     const updated = await tx
       .update(workspace)
       .set({ stripeId: input.stripeId, updatedAt: new Date() })
-      .where(eq(workspace.id, ctx.workspace.id))
+      .where(
+        and(eq(workspace.id, ctx.workspace.id), isNull(workspace.stripeId)),
+      )
       .returning()
       .get();
+    if (!updated) {
+      throw new ConflictError(
+        `Workspace ${ctx.workspace.id} is already linked to a Stripe customer`,
+      );
+    }
 
     await emitAudit(tx, ctx, {
       action: "workspace.update",
@@ -145,6 +160,11 @@ export async function updateWorkspaceStripeId(args: {
   });
 }
 
+/**
+ * Apply one addon change to the workspace's limits. The addon is merged into
+ * the limits read inside the transaction, not into the caller's snapshot,
+ * so two concurrent addon changes cannot overwrite each other.
+ */
 export async function updateWorkspaceLimits(args: {
   ctx: ServiceContext;
   input: UpdateWorkspaceLimitsInput;
@@ -161,10 +181,16 @@ export async function updateWorkspaceLimits(args: {
       .get();
     if (!existing) throw new NotFoundError("workspace", ctx.workspace.id);
 
+    const limits = updateAddonInLimits(
+      limitsSchema.parse(JSON.parse(existing.limits)),
+      input.addon,
+      input.value,
+    );
+
     const updated = await tx
       .update(workspace)
       .set({
-        limits: JSON.stringify(input.limits),
+        limits: JSON.stringify(limits),
         ...(input.trialEndsAt !== undefined && {
           trialEndsAt: input.trialEndsAt,
         }),
