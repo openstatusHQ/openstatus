@@ -39,11 +39,6 @@ catalog:
   "@ai-sdk/anthropic": 1.2.12
   "@ai-sdk/openai-compatible": 2.0.54
   "@ai-sdk/react": 3.0.190
-  "@astrojs/check": 0.9.9
-  "@astrojs/react": 4.4.2
-  "@astrojs/sitemap": 3.7.2
-  "@astrojs/starlight": 0.37.7
-  "@astrojs/starlight-tailwind": 4.0.2
   "@auth/core": 0.41.2
   "@auth/drizzle-adapter": 1.11.2
   "@aws-sdk/client-s3": 3.1051.0
@@ -61,7 +56,6 @@ catalog:
   "@dnd-kit/modifiers": 9.0.0
   "@dnd-kit/sortable": 10.0.0
   "@dnd-kit/utilities": 3.2.2
-  "@fontsource-variable/inter": 5.2.8
   "@google-cloud/tasks": 6.2.3
   "@hono/mcp": 0.2.5
   "@hono/sentry": 1.2.2
@@ -69,13 +63,11 @@ catalog:
   "@hono/zod-validator": 0.8.0
   "@hookform/devtools": 4.4.0
   "@hookform/resolvers": 5.2.2
-  "@iconify-json/lucide": 1.2.109
   "@libsql/client": 0.17.4
   "@logtape/logtape": 2.1.1
   "@logtape/otel": 2.1.1
   "@logtape/sentry": 2.1.1
   "@modelcontextprotocol/sdk": 1.29.0
-  "@openpanel/astro": 1.4.1
   "@openpanel/nextjs": 1.5.1
   "@openpanel/sdk": 1.3.1
   "@openstatus/health": 0.1.2
@@ -117,7 +109,6 @@ catalog:
   "@radix-ui/react-tooltip": 1.2.8
   "@react-email/ui": 6.1.5
   "@scalar/hono-api-reference": 0.8.10
-  "@sentry/bun": 10.53.1
   "@sentry/deno": 10.61.0
   "@sentry/nextjs": 10.53.1
   "@slack/web-api": 7.16.0
@@ -128,7 +119,6 @@ catalog:
   "@tailwindcss/container-queries": 0.1.1
   "@tailwindcss/postcss": 4.3.0
   "@tailwindcss/typography": 0.5.19
-  "@tailwindcss/vite": 4.3.0
   "@tanstack/react-query": 5.100.11
   "@tanstack/react-query-devtools": 5.100.11
   "@tanstack/react-table": 8.21.3
@@ -152,7 +142,6 @@ catalog:
   "@vercel/blob": 0.23.4
   "@workos-inc/node": 10.8.0
   ai: 6.0.188
-  astro: 5.18.1
   bcryptjs: 3.0.3
   bun-types: 1.3.14
   class-variance-authority: 0.7.1
@@ -214,15 +203,9 @@ catalog:
   sanitize-html: 2.17.4
   schema-dts: 1.1.5
   shadcn: 3.8.5
-  sharp: 0.33.5
   shiki: 3.23.0
   slugify: 1.6.9
   sonner: 2.0.7
-  starlight-image-zoom: 0.13.2
-  starlight-links-validator: 0.19.2
-  starlight-llms-txt: 0.7.0
-  starlight-showcases: 0.3.2
-  starlight-sidebar-topics: 0.6.2
   stripe: 13.11.0
   sugar-high: 0.9.5
   superjson: 2.2.6
@@ -233,7 +216,6 @@ catalog:
   tw-animate-css: 1.4.0
   typescript: 7.0.2
   unified: 11.0.5
-  unplugin-icons: 22.5.0
   validator: 13.15.35
   vaul: 1.1.2
   zod: 4.1.13
