@@ -8,6 +8,7 @@ import {
 } from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
+import { ZodError } from "zod";
 
 import {
   expectAuditRow,
@@ -309,6 +310,39 @@ describe("updateWorkspaceLimits", () => {
         .where(eq(workspace.id, ws.id))
         .get();
       expect(after?.trialEndsAt).toEqual(trialEndsAt);
+    });
+  });
+
+  test("rejects a value of the wrong kind instead of persisting unchanged limits", async () => {
+    await withTestTransaction(async (tx) => {
+      const { workspace: ws, user } = await createTestWorkspace(
+        { plan: "starter", limits: JSON.stringify(getLimits("starter")) },
+        tx,
+      );
+      const ctx = {
+        ...makeUserCtx(selectWorkspaceSchema.parse(ws), { userId: user.id }),
+        db: tx,
+      };
+
+      await expect(
+        updateWorkspaceLimits({
+          ctx,
+          input: { addon: "monitors", value: false },
+        }),
+      ).rejects.toBeInstanceOf(ZodError);
+      await expect(
+        updateWorkspaceLimits({
+          ctx,
+          input: { addon: "white-label", value: 3 },
+        }),
+      ).rejects.toBeInstanceOf(ZodError);
+
+      const after = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, ws.id))
+        .get();
+      expect(JSON.parse(after?.limits ?? "{}")).toEqual(getLimits("starter"));
     });
   });
 

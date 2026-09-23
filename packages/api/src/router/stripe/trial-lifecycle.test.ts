@@ -313,6 +313,26 @@ describe("trial lifecycle", () => {
       expect(after?.trialEndsAt).toBeNull();
       expect(JSON.parse(after?.limits ?? "{}")["white-label"]).toBe(true);
     });
+
+    test("a boolean on a quantity addon is rejected before Stripe is touched", async () => {
+      const s = await seedTrial();
+      withCard();
+      live = [subscription(s.stripeId)];
+      const delItem = stub(stripe.subscriptionItems, "del", () =>
+        Promise.resolve({} as Stripe.Response<Stripe.DeletedSubscriptionItem>),
+      );
+      stubs.push(delItem);
+
+      await expect(
+        stripeRouter.createCaller(asCaller(s)).addAddon({
+          workspaceSlug: s.ws.slug,
+          feature: "monitors",
+          value: false,
+        }),
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+      assertSpyCalls(delItem, 0);
+      assertSpyCalls(updateSubscription, 0);
+    });
   });
 
   describe("cancelSubscription", () => {
@@ -500,6 +520,9 @@ describe("trial lifecycle", () => {
         ),
       );
 
+      const after = await readWorkspace(s.ws.id);
+      expect(after?.plan).toBe("free");
+      expect(after?.trialEndsAt).toBeNull();
       expect(await lastPlanAuditReason(s.ws.id)).toBe("trial_cancelled");
     });
 
@@ -526,6 +549,9 @@ describe("trial lifecycle", () => {
         ),
       );
 
+      const after = await readWorkspace(s.ws.id);
+      expect(after?.plan).toBe("free");
+      expect(after?.trialEndsAt).toBeNull();
       expect(await lastPlanAuditReason(s.ws.id)).toBe("subscription_deleted");
     });
 

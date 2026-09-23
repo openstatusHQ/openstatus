@@ -1,5 +1,6 @@
 import { workspacePlanSchema } from "@openstatus/db/src/schema";
 import { addons, limitsSchema } from "@openstatus/db/src/schema/plan/schema";
+import { isAddonQuantityKey } from "@openstatus/db/src/schema/plan/utils";
 import { z } from "zod";
 
 export const GetWorkspaceInput = z.object({}).strict();
@@ -46,12 +47,19 @@ export type UpdateWorkspaceStripeIdInput = z.infer<
  * touching the plan. `trialEndsAt: null` records that buying the addon
  * ended the trial; `reason` lands in the audit metadata.
  */
-export const UpdateWorkspaceLimitsInput = z.object({
-  addon: z.enum(addons),
-  value: z.union([z.boolean(), z.number()]),
-  trialEndsAt: z.date().nullable().optional(),
-  reason: z.string().optional(),
-});
+export const UpdateWorkspaceLimitsInput = z
+  .object({
+    addon: z.enum(addons),
+    value: z.union([z.boolean(), z.number()]),
+    trialEndsAt: z.date().nullable().optional(),
+    reason: z.string().optional(),
+  })
+  // `updateAddonInLimits` ignores a value of the wrong kind, which would
+  // record the change in Stripe but never in the limits.
+  .refine(
+    (i) => (typeof i.value === "number") === isAddonQuantityKey(i.addon),
+    { message: "Value does not match the addon type", path: ["value"] },
+  );
 export type UpdateWorkspaceLimitsInput = z.infer<
   typeof UpdateWorkspaceLimitsInput
 >;

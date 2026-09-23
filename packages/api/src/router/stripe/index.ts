@@ -313,11 +313,19 @@ export const stripeRouter = createTRPCRouter({
   addAddon: protectedProcedure
     .meta({ track: Events.AddFeature, trackProps: ["feature"] })
     .input(
-      z.object({
-        workspaceSlug: z.string(),
-        feature: z.enum(addons),
-        value: z.union([z.boolean(), z.number()]),
-      }),
+      z
+        .object({
+          workspaceSlug: z.string(),
+          feature: z.enum(addons),
+          value: z.union([z.boolean(), z.number()]),
+        })
+        // A boolean on a quantity addon (or a number on a toggle) would change
+        // the Stripe item but leave the limit untouched, so reject it up front.
+        .refine(
+          (i) =>
+            (typeof i.value === "number") === isAddonQuantityKey(i.feature),
+          { message: "Value does not match the addon type", path: ["value"] },
+        ),
     )
     .mutation(async (opts) => {
       const resolved = await resolveWorkspaceCtx(opts);
