@@ -170,14 +170,17 @@ export function Client() {
               <FormCardHeader>
                 <FormCardTitle>Starter trial</FormCardTitle>
                 <FormCardDescription>
-                  {trialDaysLeft === 1 ? "1 day" : `${trialDaysLeft} days`}{" "}
-                  left. Your trial ends on {formatDate(workspace.trialEndsAt)}.
+                  <span className="text-foreground font-medium">
+                    {trialDaysLeft}
+                  </span>{" "}
+                  {trialDaysLeft === 1 ? "day" : "days"} left. Your trial ends
+                  on {formatDate(workspace.trialEndsAt)}.
                 </FormCardDescription>
               </FormCardHeader>
               <FormCardFooter>
                 <FormCardFooterInfo>
-                  Add a payment method to keep Starter after the trial. Without
-                  one, the workspace moves to the free plan.
+                  Add a payment method to keep Starter, or move to the free plan
+                  after the trial.
                 </FormCardFooterInfo>
                 <Button
                   size="sm"

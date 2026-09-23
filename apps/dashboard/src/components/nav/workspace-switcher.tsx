@@ -19,7 +19,7 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
 import { Link } from "@/components/common/link";
-import { getTrialDaysLeft } from "@/lib/trial";
+import { TRIAL_BANNER_DAYS, getTrialDaysLeft } from "@/lib/trial";
 import { useTRPC } from "@/lib/trpc/client";
 import { switchWorkspace } from "@/lib/workspace-cookie";
 
@@ -66,15 +66,22 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
                   <span className="font-commit-mono tracking-tight">
                     {workspace.slug}
                   </span>{" "}
-                  <span className="text-muted-foreground">
-                    {workspace.plan === "team" ? "pro" : workspace.plan}
-                  </span>
                   {trialDaysLeft ? (
-                    <span className="text-warning">
-                      {" "}
-                      · trial, {trialDaysLeft}d left
+                    <span
+                      className={cn(
+                        "tabular-nums",
+                        trialDaysLeft <= TRIAL_BANNER_DAYS
+                          ? "text-warning"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      trial · {trialDaysLeft}d
                     </span>
-                  ) : null}
+                  ) : (
+                    <span className="text-muted-foreground">
+                      {workspace.plan === "team" ? "pro" : workspace.plan}
+                    </span>
+                  )}
                 </div>
               </div>
               <Expand className="ml-auto" />

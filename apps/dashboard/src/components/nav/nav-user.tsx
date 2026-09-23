@@ -39,6 +39,8 @@ import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 
+import { usePaymentMethodSetup } from "@/hooks/use-payment-method-setup";
+import { getTrialDaysLeft } from "@/lib/trial";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function NavUser() {
@@ -47,10 +49,12 @@ export function NavUser() {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: user } = useQuery(trpc.user.get.queryOptions());
+  const paymentMethodSetup = usePaymentMethodSetup(workspace?.slug);
 
   if (!user || !workspace) return null;
 
   const userName = user?.name ?? `${user?.firstName} ${user?.lastName}`.trim();
+  const isTrialing = getTrialDaysLeft(workspace.trialEndsAt) !== null;
 
   return (
     <SidebarMenu>
@@ -107,7 +111,19 @@ export function NavUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {workspace.plan === "free" ? (
+            {isTrialing ? (
+              <>
+                <DropdownMenuItem
+                  onClick={paymentMethodSetup.start}
+                  disabled={paymentMethodSetup.isPending}
+                  className="font-commit-mono tracking-tight"
+                >
+                  <Billing />
+                  Add payment method
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            ) : workspace.plan === "free" ? (
               <>
                 <DropdownMenuItem asChild>
                   <Link
