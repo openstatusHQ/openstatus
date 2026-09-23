@@ -31,7 +31,6 @@ import { Fragment, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { config as featureGroups, plans } from "@/data/plans";
-import { getStripe } from "@/lib/stripe";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
@@ -70,8 +69,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
           return;
         }
 
-        const stripe = await getStripe();
-        stripe?.redirectToCheckout({ sessionId: data.session.id });
+        if (data.session.url) window.location.assign(data.session.url);
       },
     }),
   );
