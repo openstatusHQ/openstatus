@@ -19,6 +19,8 @@
         "name": "next"
       }
     ],
+    // TS7 defaults `types` to [] instead of every @types package.
+    "types": ["dom-speech-recognition"],
     "paths": {
       "@/*": ["./src/*"]
     }

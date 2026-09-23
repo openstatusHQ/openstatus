@@ -1,11 +1,11 @@
 ---
 title: "Uptime Monitoring"
 publishedAt: "2025-11-10"
-updatedAt: "2026-08-26"
+updatedAt: "2026-09-17"
 seo:
-  title: "API & Service Uptime Monitoring for Developers"
-  description: "Monitor API and service uptime from 28 regions. Instant alerts via Slack, Discord, PagerDuty and email. Monitoring as code with YAML, CLI and Terraform."
-hero: "Uptime monitoring for websites, APIs and services"
+  title: "Open Source Uptime Monitoring — Free, 28 Regions, Alerts in Seconds"
+  description: "Free & open source uptime monitoring for websites and APIs. Checks from 28 regions every 30s, alerts to Slack, Discord, PagerDuty and email. Monitoring as code with Terraform."
+hero: "Open source uptime monitoring for websites, APIs and services"
 author: "Thibault Le Ouay Ducasse"
 description: "Monitor your websites, APIs and services from 28 regions. Get alerted the moment a check fails an assertion or exceeds your threshold."
 category: "Product"
@@ -33,9 +33,9 @@ faq:
   - question: "How do thresholds and assertions work together?"
     answer: "Assertions validate response correctness (status code, headers, body content) while thresholds define performance boundaries (degraded latency, timeout). Both can trigger alerts - assertions catch functional failures, thresholds catch performance degradation."
   - question: "What types of API endpoints can I monitor?"
-    answer: "You can monitor any HTTP/HTTPS endpoint including REST APIs, GraphQL APIs, webhooks, and third-party service endpoints. Openstatus supports all HTTP methods (GET, POST, PUT, DELETE, etc.) and custom headers for authentication."
-  - question: "Should I use YAML with CLI or Terraform for monitoring as code?"
-    answer: "Use YAML + CLI for simplicity and if you're not already using Terraform. It's lightweight and easy to get started. Choose Terraform if you're managing infrastructure as code and want to integrate monitoring into your existing Terraform workflows for unified state management."
+    answer: "You can monitor any HTTP/HTTPS endpoint including REST APIs, GraphQL APIs, webhooks, and third-party service endpoints. openstatus supports all HTTP methods (GET, POST, PUT, DELETE, etc.) and custom headers for authentication."
+  - question: "Can I manage monitors with Terraform?"
+    answer: "Yes. The openstatus Terraform provider manages HTTP, TCP, DNS and ICMP monitors — with headers, assertions and thresholds — plus notification channels, status pages and private locations. Monitors live in HCL next to the rest of your infrastructure and go through the same plan-and-apply lifecycle. Run `openstatus terraform generate` to bootstrap an HCL file from an existing workspace."
   - question: "Can I run private monitoring locations in different networks?"
     answer: "Yes, you can deploy as many private location probes as needed across different networks, VPCs, or regions. Each gets its own API key and appears as a separate monitoring region in your dashboard. The Docker image is only 8.5MB and supports ARM64 and AMD64."
 ---
@@ -56,9 +56,9 @@ That external vantage point is the whole point. If your service runs on the same
   <ButtonLink href="https://app.openstatus.dev?ref=uptime-monitoring-top" children="Start Monitoring Free" variant="default" />
 </div>
 
-Free to start. Paid plans from $30/mo.
+Free to start. Paid plans from $30/mo. Open source and self-hostable.
 
-## Trusted by teams who ship transparency
+## Trusted by teams who ship reliability
 
 <CustomerLogos />
 
@@ -134,7 +134,7 @@ You should avoid monitoring your services from the same cloud providers you use 
 
 ### API Monitoring
 
-Monitor any HTTP/HTTPS endpoint including REST APIs, GraphQL APIs, webhooks, and third-party service endpoints. Openstatus supports all HTTP methods and custom headers for authentication.
+Monitor any HTTP/HTTPS endpoint including REST APIs, GraphQL APIs, webhooks, and third-party service endpoints. openstatus supports all HTTP methods and custom headers for authentication.
 
 #### Assertions
 
@@ -165,42 +165,39 @@ Automatically update your status page based on your uptime monitoring results. P
 
 ### Monitoring as Code
 
-The best way to **version** your monitor changes is via the openstatus CLI and its **`YAML` config**. Additionally, we provide a [Terraform Provider](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest).
+Declare your monitors in HCL with the [openstatus Terraform provider](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest) and roll them out in the same plan-and-apply lifecycle as the rest of your infrastructure. Monitor changes get code-reviewed in the PR that ships the service they watch.
 
-```yaml
-# yaml-language-server: $schema=https://www.openstatus.dev/schema.json
-uptime-monitor:
-  name: "Graphql"
-  description: "GitHub GraphQL API"
-  frequency: "10m"
-  active: true
-  regions:
-    - iad
-    - ams
-    - syd
-    - jnb
-    - gru
-  retry: 3
-  kind: http
-  request:
-    url: https://api.github.com/graphql
-    method: POST
-    headers:
-      User-Agent: OpenStatus
-      Authorization: Bearer YOUR_TOKEN_HERE
-    body: |
-      {
-        "query": "query { viewer { login }}"
-      }
+```terraform
+resource "openstatus_http_monitor" "api" {
+  name        = "API Health Check"
+  url         = "https://api.example.com/health"
+  periodicity = "1m"
+  active      = true
+  regions     = ["fly-iad", "fly-ams", "fly-syd"]
+
+  headers {
+    key   = "Authorization"
+    value = "Bearer ${var.api_token}"
+  }
+
+  status_code_assertions {
+    target     = 200
+    comparator = "eq"
+  }
+}
 ```
-
-Once set, apply your changes via [CLI](https://www.openstatus.dev/docs/tutorial/get-started-with-openstatus-cli/):
 
 ```bash
-openstatus monitors apply
+terraform init
+terraform plan
+terraform apply
 ```
 
-Check our [GitHub repository](https://github.com/openstatusHQ/cli-template) to see the `YAML` templates of how to monitor **MCP**, **GraphQL**,... endpoints. We also provide a simple [GitHub Action](https://github.com/marketplace/actions/openstatus-synthetics-ci) to run it in your **CI/CD**.
+Already have monitors in the dashboard? Run `openstatus terraform generate` to bootstrap an HCL file from your existing workspace. Read the [Terraform reference](/docs/reference/terraform) for every resource and argument.
+
+### Open Source & Self-Hostable
+
+openstatus is open source under AGPL-3.0. Run the hosted version, or [self-host the full stack](/docs/guides/self-hosting-openstatus) on your own infrastructure with Docker. If you are coming from Uptime Kuma, read [how openstatus compares as a hosted alternative](/guides/hosted-uptime-kuma-alternative).
 
 ### Private Locations
 
@@ -306,13 +303,13 @@ Assertions validate response correctness (status code, headers, body content) wh
 
 <Details summary="What types of API endpoints can I monitor?">
 
-You can monitor any HTTP/HTTPS endpoint including REST APIs, GraphQL APIs, webhooks, and third-party service endpoints. Openstatus supports all HTTP methods (GET, POST, PUT, DELETE, etc.) and custom headers for authentication.
+You can monitor any HTTP/HTTPS endpoint including REST APIs, GraphQL APIs, webhooks, and third-party service endpoints. openstatus supports all HTTP methods (GET, POST, PUT, DELETE, etc.) and custom headers for authentication.
 
 </Details>
 
-<Details summary="Should I use YAML with CLI or Terraform for monitoring as code?">
+<Details summary="Can I manage monitors with Terraform?">
 
-Use YAML + CLI for simplicity and if you're not already using Terraform. It's lightweight and easy to get started. Choose Terraform if you're managing infrastructure as code and want to integrate monitoring into your existing Terraform workflows for unified state management.
+Yes. The openstatus Terraform provider manages HTTP, TCP, DNS and ICMP monitors — with headers, assertions and thresholds — plus notification channels, status pages and private locations. Monitors live in HCL next to the rest of your infrastructure and go through the same plan-and-apply lifecycle. Run `openstatus terraform generate` to bootstrap an HCL file from an existing workspace.
 
 </Details>
 

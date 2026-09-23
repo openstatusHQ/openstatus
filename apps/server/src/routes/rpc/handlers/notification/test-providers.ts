@@ -71,7 +71,11 @@ export async function sendTestNotification(
             "Expected grafana_oncall data for Grafana OnCall provider",
           );
         }
-        await sendGrafanaTest({ webhookUrl: data.data.value.webhookUrl });
+        if (
+          !(await sendGrafanaTest({ webhookUrl: data.data.value.webhookUrl }))
+        ) {
+          throw testNotificationFailedError("Failed to send test");
+        }
         return { success: true };
       }
 
@@ -111,11 +115,12 @@ export async function sendTestNotification(
             "Expected ntfy data for Ntfy provider",
           );
         }
-        await sendNtfyTest({
+        const sent = await sendNtfyTest({
           topic: data.data.value.topic,
           serverUrl: data.data.value.serverUrl || undefined,
           token: data.data.value.token,
         });
+        if (!sent) throw testNotificationFailedError("Failed to send test");
         return { success: true };
       }
 

@@ -33,7 +33,6 @@ import {
   getPriceIdForPlan,
   resolveAddonQuantity,
 } from "./utils";
-import { webhookRouter } from "./webhook";
 
 // The addon `title` reads wrong in the "you already have N ..." sentence.
 const LIMIT_LABEL: Record<AddonQuantityKey, string> = {
@@ -47,8 +46,6 @@ const url =
     : "http://localhost:3000";
 
 export const stripeRouter = createTRPCRouter({
-  webhooks: webhookRouter,
-
   getUserCustomerPortal: protectedProcedure
     .input(
       z.object({ workspaceSlug: z.string(), returnUrl: z.string().optional() }),

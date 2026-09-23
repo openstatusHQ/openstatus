@@ -3,18 +3,18 @@ effective: |
     builder:
       fromImage:
         path: golang
-        digest: sha256:d4c4845f5d60c6a974c6000ce58ae079328d03ab7f721a0734277e69905473e5
+        digest: sha256:51a7c389a5ddaf82f527191a1e9bff9928655130a44e4975dd1d7e0acf59f1ae
       label:
         org.opencontainers.image.base.name: docker.io/golang:1.26-alpine
-        org.opencontainers.image.base.digest: sha256:d4c4845f5d60c6a974c6000ce58ae079328d03ab7f721a0734277e69905473e5
         org.opencontainers.image.stage: builder
+        org.opencontainers.image.base.digest: sha256:51a7c389a5ddaf82f527191a1e9bff9928655130a44e4975dd1d7e0acf59f1ae
       workdir: /go/src/app
       arg:
-        TARGETARCH: ''
         TARGETOS: ''
+        TARGETARCH: ''
       env:
-        TZ: UTC
         CGO_ENABLED: '0'
+        TZ: UTC
       copy:
       - paths:
         - .
@@ -25,24 +25,24 @@ effective: |
       - GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
   fromImage:
     path: alpine
-    digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
+    digest: sha256:ce64758a109eb420d874a118f87920e625e12d3634e03b4a5573fd9f6e5d3507
   label:
-    org.opencontainers.image.description: Private location orchestrator for OpenStatus
-    org.opencontainers.image.vendor: OpenStatus
-    io.dofigen.version: 2.6.0
-    org.opencontainers.image.title: OpenStatus Private Location
-    org.opencontainers.image.base.digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
-    org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.base.name: docker.io/alpine:3.21
+    io.dofigen.version: 2.8.0
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.base.name: docker.io/alpine:3.21
+    org.opencontainers.image.base.digest: sha256:ce64758a109eb420d874a118f87920e625e12d3634e03b4a5573fd9f6e5d3507
+    org.opencontainers.image.description: Private location orchestrator for OpenStatus
+    org.opencontainers.image.title: OpenStatus Private Location
+    org.opencontainers.image.authors: OpenStatus Team
   user:
     user: '1000'
     group: '1000'
   workdir: /opt/bin
   env:
-    GIN_MODE: release
     TZ: UTC
     USER: '1000'
+    GIN_MODE: release
   copy:
   - fromBuilder: builder
     paths:
@@ -71,10 +71,10 @@ images:
     library:
       alpine:
         '3.21':
-          digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
+          digest: sha256:ce64758a109eb420d874a118f87920e625e12d3634e03b4a5573fd9f6e5d3507
       golang:
         1.26-alpine:
-          digest: sha256:d4c4845f5d60c6a974c6000ce58ae079328d03ab7f721a0734277e69905473e5
+          digest: sha256:51a7c389a5ddaf82f527191a1e9bff9928655130a44e4975dd1d7e0acf59f1ae
 resources:
   dofigen.yml:
     hash: acc14b01834402aab4f21cd4a168169eb464731acaa35ab27f1eaa2fd2cbdd28
