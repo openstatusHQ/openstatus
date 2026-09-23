@@ -112,8 +112,7 @@
         "packageJson": {
           "dependencies": [
             "npm:@jsr/std__expect@^1.0.19",
-            "npm:@jsr/std__testing@^1.0.19",
-            "npm:marked@15.0.12"
+            "npm:@jsr/std__testing@^1.0.19"
           ]
         }
       },
