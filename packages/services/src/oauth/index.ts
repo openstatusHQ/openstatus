@@ -11,8 +11,12 @@ export {
 export { type ConnectedApp, listGrants } from "./list";
 export { revokeGrant, revokeGrantsForUser, revokeToken } from "./revoke";
 export { type PruneExpiredResult, pruneExpired } from "./prune";
-export { OAuthError, type OAuthErrorCode } from "./errors";
-export { isAllowedRedirectUri } from "./redirect-allowlist";
+export {
+  OAuthError,
+  type OAuthErrorCode,
+  RedirectUriRejectedError,
+} from "./errors";
+export { isAllowedRedirectUri, redirectUriOrigin } from "./redirect-allowlist";
 export { pkceChallenge } from "./crypto";
 export {
   type ClientMetadataDocument,
