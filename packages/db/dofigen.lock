@@ -5,11 +5,11 @@ effective: |
     install:
       fromImage:
         path: node
-        digest: sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
+        digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
       label:
-        org.opencontainers.image.base.digest: sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
-        org.opencontainers.image.base.name: docker.io/node:24-slim
         org.opencontainers.image.stage: install
+        org.opencontainers.image.base.digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+        org.opencontainers.image.base.name: docker.io/node:24-slim
       workdir: /app/
       run:
       - corepack enable pnpm
@@ -39,14 +39,14 @@ effective: |
     path: denoland/deno
     digest: sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d
   label:
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.description: One-shot database migration runner for OpenStatus
     org.opencontainers.image.title: OpenStatus DB Migrate
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.base.digest: sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d
-    org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.6
     io.dofigen.version: 2.8.0
+    org.opencontainers.image.base.digest: sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.description: One-shot database migration runner for OpenStatus
+    org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.6
   workdir: /app/packages/db
   env:
     DENO_DIR: /tmp/deno-dir
@@ -83,14 +83,14 @@ effective: |
   - migrate
 images:
   docker.io:
+    library:
+      node:
+        24-slim:
+          digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
     denoland:
       deno:
         2.9.6:
           digest: sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d
-    library:
-      node:
-        24-slim:
-          digest: sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
 resources:
   dofigen.yml:
     hash: b1986271c968bdb2d3e6a3a72b718f67e15c83f2230e4094c8454dba5acb8203

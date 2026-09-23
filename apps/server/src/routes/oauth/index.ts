@@ -22,6 +22,9 @@ const logger = getLogger("api-server");
 
 const NO_STORE = { "Cache-Control": "no-store", Pragma: "no-cache" };
 
+const OPENAI_APPS_CHALLENGE_TOKEN =
+  "BY-vA_tzfuXZeVpuYKsUlluq9td0nTuyt-bTJXblZlw";
+
 type Body = Record<string, string | undefined>;
 
 /** Token and revoke accept form-encoded (RFC 6749) and JSON bodies. */
@@ -151,6 +154,11 @@ export function createOAuthRoutes(config: OAuthConfig) {
   // RFC 9728, path-suffixed for the `/mcp` resource.
   app.get("/.well-known/oauth-protected-resource/mcp", (c) =>
     c.json(protectedResourceMetadata(config.issuer)),
+  );
+
+  // ChatGPT app submission domain proof; the token is public, not a secret.
+  app.get("/.well-known/openai-apps-challenge", (c) =>
+    c.text(OPENAI_APPS_CHALLENGE_TOKEN),
   );
 
   // RFC 7591

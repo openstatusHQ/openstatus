@@ -7,6 +7,7 @@ export {
   getStatusPageContent,
 } from "./get-content";
 export {
+  assertCustomDomainInWorkspace,
   getPage,
   getPageBySlug,
   getPageCustomDomain,

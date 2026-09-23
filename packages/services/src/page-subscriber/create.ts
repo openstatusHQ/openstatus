@@ -58,9 +58,8 @@ export async function createPageSubscriber(args: {
   const input = CreatePageSubscriberInput.parse(args.input);
   const componentIds = input.componentIds ?? [];
 
-  // Webhook URL pre-checks happen outside the tx. `assertSafeUrl` does
-  // a DNS resolution to block private/internal targets — keeping it
-  // outside avoids holding the SQLite write lock across a network call.
+  // String-only check (no DNS resolution) — a public name pointing at a
+  // private address still passes. Delivery and test sends never follow redirects.
   if (input.channelType === "webhook") {
     await assertSafeUrl(input.webhookUrl);
   }

@@ -29,6 +29,10 @@ import { env } from "../env";
 
 const redis = Redis.fromEnv();
 
+const PAUSE_FROM =
+  "Thibault from openstatus <thibault@notifications.openstatus.dev>";
+const PAUSE_REPLY_TO = "thibault@openstatus.dev";
+
 // Check if GCP is properly configured (not empty and not placeholder values)
 const isGcpConfigured = () => {
   const gcpProjectId = env().GCP_PROJECT_ID;
@@ -250,20 +254,19 @@ export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
   const user = await getUser(userId);
 
   if (user.email) {
+    const email = await monitorDeactivationEmail({
+      deactivateAt: new Date(new Date().setDate(new Date().getDate() + 14)),
+      ...(await getPauseContext(userId)),
+    });
     await sendWorkflowEmail({
       userId,
       step: "14days",
       initialRun: workFlowRunTimestamp,
       email: {
         to: user.email,
-        subject: "Your OpenStatus monitors will be paused in 14 days",
-        from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-        reply_to: "thibault@openstatus.dev",
-        html: monitorDeactivationEmail({
-          date: new Date(
-            new Date().setDate(new Date().getDate() + 14),
-          ).toDateString(),
-        }),
+        from: PAUSE_FROM,
+        reply_to: PAUSE_REPLY_TO,
+        ...email,
       },
     });
   }
@@ -298,20 +301,19 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
   const user = await getUser(userId);
 
   if (user.email) {
+    const email = await monitorDeactivationEmail({
+      deactivateAt: new Date(new Date().setDate(new Date().getDate() + 3)),
+      ...(await getPauseContext(userId)),
+    });
     await sendWorkflowEmail({
       userId,
       step: "3days",
       initialRun: workFlowRunTimestamp,
       email: {
         to: user.email,
-        subject: "Your OpenStatus monitors will be paused in 3 days",
-        from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-        reply_to: "thibault@openstatus.dev",
-        html: monitorDeactivationEmail({
-          date: new Date(
-            new Date().setDate(new Date().getDate() + 3),
-          ).toDateString(),
-        }),
+        from: PAUSE_FROM,
+        reply_to: PAUSE_REPLY_TO,
+        ...email,
       },
     });
   }
@@ -344,6 +346,7 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
     }
 
     const workspace = await getUserWorkspace(userId);
+    let pausedCount = 0;
     if (workspace) {
       const activeMonitors = await db
         .select({ id: schema.monitor.id })
@@ -356,6 +359,7 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
           ),
         )
         .all();
+      pausedCount = activeMonitors.length;
       if (activeMonitors.length > 0) {
         await bulkUpdateMonitors({
           ctx: {
@@ -369,16 +373,19 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
 
     const currentUser = await getUser(userId);
     if (currentUser.email) {
+      const email = await monitorPausedEmail({
+        monitorCount: pausedCount || undefined,
+        workspaceSlug: workspace?.slug,
+      });
       await sendWorkflowEmail({
         userId,
         step: "paused",
         initialRun: workFlowRunTimestamp,
         email: {
           to: currentUser.email,
-          subject: "Your monitors have been paused",
-          from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-          reply_to: "thibault@openstatus.dev",
-          html: monitorPausedEmail(),
+          from: PAUSE_FROM,
+          reply_to: PAUSE_REPLY_TO,
+          ...email,
         },
       });
     }
@@ -506,6 +513,23 @@ async function sendWorkflowEmail({
   }
   await sendBatchEmailHtml([email]);
   await redis.set(key, 1, { ex: 30 * 86400 });
+}
+
+async function getPauseContext(userId: number) {
+  const workspace = await getUserWorkspace(userId);
+  if (!workspace) return {};
+  const monitorCount = await db.$count(
+    schema.monitor,
+    and(
+      eq(schema.monitor.workspaceId, workspace.id),
+      eq(schema.monitor.active, true),
+      isNull(schema.monitor.deletedAt),
+    ),
+  );
+  return {
+    monitorCount: monitorCount || undefined,
+    workspaceSlug: workspace.slug,
+  };
 }
 
 async function getUserWorkspace(userId: number) {

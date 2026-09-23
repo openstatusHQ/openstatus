@@ -1,6 +1,14 @@
 import { db, eq } from "@openstatus/db";
-import { auditLog, privateLocation } from "@openstatus/db/src/schema";
-import { createTestWorkspace } from "@openstatus/db/src/test/factories";
+import {
+  auditLog,
+  monitor,
+  privateLocation,
+  privateLocationToMonitors,
+} from "@openstatus/db/src/schema";
+import {
+  createMonitor,
+  createTestWorkspace,
+} from "@openstatus/db/src/test/factories";
 import {
   afterEach,
   assertSpyCalls,
@@ -91,6 +99,35 @@ describe("runPrivateLocationHealth", () => {
     expect(mockEmail.calls[0].args[0].locationName).toBe(
       "health-test-location",
     );
+    expect(mockEmail.calls[0].args[0].monitorCount).toBe(0);
+  });
+
+  test("passes the number of monitors scheduled on the location", async () => {
+    await seedLocation("active", STALE);
+    const linked = await createMonitor(TEST_WORKSPACE_ID, { active: true });
+    const unlinked = await createMonitor(TEST_WORKSPACE_ID, { active: true });
+    const paused = await createMonitor(TEST_WORKSPACE_ID, { active: false });
+    await db
+      .insert(privateLocationToMonitors)
+      .values([
+        { privateLocationId: TEST_LOCATION_ID, monitorId: linked.id },
+        { privateLocationId: TEST_LOCATION_ID, monitorId: paused.id },
+        {
+          privateLocationId: TEST_LOCATION_ID,
+          monitorId: unlinked.id,
+          deletedAt: new Date(),
+        },
+      ])
+      .run();
+
+    try {
+      await runPrivateLocationHealth(NOW);
+      expect(mockEmail.calls[0].args[0].monitorCount).toBe(1);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, linked.id));
+      await db.delete(monitor).where(eq(monitor.id, unlinked.id));
+      await db.delete(monitor).where(eq(monitor.id, paused.id));
+    }
   });
 
   test("error + fresh → active + email", async () => {

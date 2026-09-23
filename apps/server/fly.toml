@@ -23,6 +23,9 @@ primary_region = "ams"
   min_machines_running = 1
   processes = ["app"]
 
+# Keep `soft_limit` < `API_MAX_IN_FLIGHT` (see `[env]`) <= `hard_limit`. If the
+# app's cap sits below `soft_limit` the two guards fight: the app sheds 503s
+# while Fly still reads the machine as having room and never starts a peer.
 [http_service.concurrency]
     type = "requests"
     hard_limit = 1000
@@ -41,6 +44,9 @@ primary_region = "ams"
 [env]
   NODE_ENV = "production"
   PORT = "3000"
+  # Backstop only. Fly stops routing here at `hard_limit`, so the in-flight
+  # guard should fire only once that has already failed to protect the machine.
+  API_MAX_IN_FLIGHT = "1000"
 
 
 # [checks]
