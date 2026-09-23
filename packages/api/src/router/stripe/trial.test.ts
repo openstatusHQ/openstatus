@@ -192,7 +192,10 @@ describe("maybeStartSignupTrial", () => {
 
   test("skips emails that already had a trial", async () => {
     const { user } = await freeWorkspace();
-    customers = [customer("cus_paid"), customer("cus_old", { trialed: "true" })];
+    customers = [
+      customer("cus_paid"),
+      customer("cus_old", { trialed: "true" }),
+    ];
 
     const result = await maybeStartSignupTrial({
       userId: user.id,
