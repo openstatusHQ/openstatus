@@ -8,10 +8,8 @@ import { isIpAllowed } from "./is-ip-allowed";
  */
 
 // Length-independent comparison so a wrong guess can't be timed by length or
-// character. Pure JS (no node:crypto): must be Edge-safe for the proxy, so it
-// can't import the twin in packages/api (not in the middleware bundle) — hence
-// the duplication; keep both implementations in sync.
-function constantTimeEqual(
+// character. Pure JS (no node:crypto): the status-page proxy imports this.
+export function constantTimeEqual(
   a: string | null | undefined,
   b: string | null | undefined,
 ): boolean {

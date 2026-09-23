@@ -22,7 +22,7 @@
     "dev": "tsup --watch && pnpm run dev:tailwind",
     "dev:tailwind": "npx @tailwindcss/cli -i ./src/styles.css -o ./dist/styles.css --watch",
     "build:tailwind": "npx @tailwindcss/cli -i ./src/styles.css -o ./dist/styles.css --minify",
-    "build": "tsup && pnpm run build:tailwind"
+    "build": "tsup && tsc --emitDeclarationOnly && pnpm run build:tailwind"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

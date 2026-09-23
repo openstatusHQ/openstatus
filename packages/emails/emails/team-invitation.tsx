@@ -1,10 +1,12 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
-import { Body, Head, Heading, Html, Link, Preview, Text } from "react-email";
 import { z } from "zod";
 
+import { Actions } from "./_components/actions";
+import { Footer } from "./_components/footer";
+import { Heading } from "./_components/heading";
+import { KeyValue } from "./_components/key-value";
 import { Layout } from "./_components/layout";
-import { styles } from "./_components/styles";
 
 const BASE_URL = "https://app.openstatus.dev/invite";
 
@@ -24,34 +26,45 @@ const TeamInvitationEmail = ({
   baseUrl = BASE_URL,
 }: TeamInvitationProps) => {
   return (
-    <Html>
-      <Head />
-      <Preview>You have been invited to join OpenStatus.dev</Preview>
-      <Body style={styles.main}>
-        <Layout>
-          <Heading as="h3">
-            You have been invited to join{" "}
-            {workspaceName ? `"${workspaceName}" workspace` : "OpenStatus.dev"}{" "}
-            by {invitedBy}
-          </Heading>
-          <Text>
-            Click here to access the workspace:{" "}
-            <Link style={styles.link} href={`${baseUrl}?token=${token}`}>
-              accept invitation
-            </Link>
-          </Text>
-          <Text>
-            If you don't have an account yet, it will require you to create one.
-          </Text>
-        </Layout>
-      </Body>
-    </Html>
+    <Layout
+      preview={`${invitedBy} invited you. The link is valid for 7 days.`}
+      pill={{ tone: "neutral", label: "Invitation" }}
+      footer={
+        <Footer reason="You get this because a workspace member invited this address. If that is a mistake, ignore this email." />
+      }
+    >
+      <Heading
+        title={
+          workspaceName
+            ? `Join ${workspaceName} on openstatus`
+            : "Join openstatus"
+        }
+      >
+        {invitedBy} invited you to their workspace. If you don’t have an account
+        yet, accepting creates one.
+      </Heading>
+      <KeyValue
+        rows={[
+          ...(workspaceName
+            ? [{ label: "Workspace", value: workspaceName }]
+            : []),
+          { label: "Invited by", value: invitedBy },
+          { label: "Expires", value: "In 7 days" },
+        ]}
+      />
+      <Actions
+        primary={{
+          label: "Accept invitation",
+          href: `${baseUrl}?token=${token}`,
+        }}
+      />
+    </Layout>
   );
 };
 
 TeamInvitationEmail.PreviewProps = {
   token: "token",
-  workspaceName: "OpenStatus",
+  workspaceName: "acme",
   invitedBy: "max@openstatus.dev",
 } satisfies TeamInvitationProps;
 

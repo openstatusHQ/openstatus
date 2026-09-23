@@ -192,7 +192,12 @@ export const notificationRouter = createTRPCRouter({
           });
         }
 
-        await sendGrafanaTest(_data.data["grafana-oncall"]);
+        if (!(await sendGrafanaTest(_data.data["grafana-oncall"]))) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Failed to send test",
+          });
+        }
         return;
       }
       if (opts.input.provider === "ms-teams") {
@@ -269,7 +274,12 @@ export const notificationRouter = createTRPCRouter({
           });
         }
 
-        await sendNtfyTest(_data.data.ntfy);
+        if (!(await sendNtfyTest(_data.data.ntfy))) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Failed to send test",
+          });
+        }
         return;
       }
       if (opts.input.provider === "pagerduty") {

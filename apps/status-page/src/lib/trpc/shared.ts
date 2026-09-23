@@ -37,7 +37,8 @@ export const sentryLoggerLink = (): TRPCLink<AppRouter> =>
  * Filter out requests that don't come from our tRPC clients.
  * Our server and client links always set `x-trpc-source`.
  * This is a convention filter for bots/crawlers, not a security boundary —
- * the header is trivially spoofable. Auth is enforced by protectedProcedure.
+ * the header is trivially spoofable. Auth is enforced by protectedProcedure,
+ * and page gating by the statusPage procedures themselves.
  */
 export function guardTRPCSource(req: Request): Response | null {
   const source = req.headers.get("x-trpc-source");

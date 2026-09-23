@@ -167,6 +167,26 @@ export async function getPageCustomDomain(args: {
   return row.customDomain;
 }
 
+/** NotFound rather than Forbidden so a miss is no existence oracle. */
+export async function assertCustomDomainInWorkspace(args: {
+  ctx: ServiceContext;
+  input: { domain: string };
+}): Promise<void> {
+  const { ctx, input } = args;
+  const row = await getReadDb(ctx)
+    .select({ id: page.id })
+    .from(page)
+    .where(
+      and(
+        sql`lower(${page.customDomain}) = ${input.domain.toLowerCase()}`,
+        eq(page.workspaceId, ctx.workspace.id),
+      ),
+    )
+    .get();
+
+  if (!row) throw new NotFoundError("domain");
+}
+
 /**
  * Cross-workspace lookup of a page by slug. Returns the raw row (not parsed
  * via `selectPageSchema`) because callers in the public status-page render
