@@ -28,6 +28,7 @@ import { createTRPCRouter, publicProcedure } from "../../trpc";
 import {
   buildFromSubscriptionOrThrow,
   cancelSupersededSubscriptions,
+  getCurrentPeriodEnd,
   getCurrentSubscription,
   isNewerSubscription,
   listLiveSubscriptions,
@@ -109,7 +110,7 @@ async function sendCancellationEmails(args: {
   eventId: string;
 }) {
   const { db, ws, customerId, current, plan, eventId } = args;
-  const endsAt = new Date(current.current_period_end * 1000);
+  const endsAt = getCurrentPeriodEnd(current);
   const to = await getBillingRecipients(db, ws.id, customerId);
   const preview = await previewWorkspaceDowngrade({
     ctx: {
@@ -224,8 +225,8 @@ export const webhookRouter = createTRPCRouter({
       input: {
         plan: built.plan,
         subscriptionId: current.id,
-        endsAt: new Date(current.current_period_end * 1000),
-        paidUntil: new Date(current.current_period_end * 1000),
+        endsAt: getCurrentPeriodEnd(current),
+        paidUntil: getCurrentPeriodEnd(current),
         limits: built.limits,
       },
     });
@@ -359,8 +360,8 @@ export const webhookRouter = createTRPCRouter({
       input: {
         plan: built.plan,
         subscriptionId: subscription.id,
-        endsAt: new Date(subscription.current_period_end * 1000),
-        paidUntil: new Date(subscription.current_period_end * 1000),
+        endsAt: getCurrentPeriodEnd(subscription),
+        paidUntil: getCurrentPeriodEnd(subscription),
         limits: built.limits,
         reason: "checkout_session_completed",
       },

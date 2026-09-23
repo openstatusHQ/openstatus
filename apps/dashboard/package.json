@@ -69,7 +69,6 @@
     "@radix-ui/react-slot": "catalog:",
     "@radix-ui/react-tooltip": "catalog:",
     "@sentry/nextjs": "catalog:",
-    "@stripe/stripe-js": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-table": "catalog:",
     "@trpc/client": "catalog:",

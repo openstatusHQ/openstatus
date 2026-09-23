@@ -335,9 +335,6 @@ catalogs:
     '@slack/web-api':
       specifier: 7.19.0
       version: 7.19.0
-    '@stripe/stripe-js':
-      specifier: 2.4.0
-      version: 2.4.0
     '@t3-oss/env-core':
       specifier: 0.13.11
       version: 0.13.11
@@ -615,8 +612,8 @@ catalogs:
       specifier: 2.0.8
       version: 2.0.8
     stripe:
-      specifier: 13.11.0
-      version: 13.11.0
+      specifier: 22.6.2
+      version: 22.6.2
     sugar-high:
       specifier: 0.9.5
       version: 0.9.5
@@ -859,9 +856,6 @@ importers:
       '@sentry/nextjs':
         specifier: 'catalog:'
         version: 10.75.1(@opentelemetry/core@2.11.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(next@16.3.5(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)(supports-color@8.1.1)(webpack@5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.23))(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28)(sharp@0.35.4(@types/node@26.6.2)))
-      '@stripe/stripe-js':
-        specifier: 'catalog:'
-        version: 2.4.0
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.103.2(react@19.3.0)
@@ -951,7 +945,7 @@ importers:
         version: 2.0.8(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       stripe:
         specifier: 'catalog:'
-        version: 13.11.0
+        version: 22.6.2(@types/node@26.6.2)
       superjson:
         specifier: 'catalog:'
         version: 2.2.6
@@ -1348,9 +1342,6 @@ importers:
       '@sentry/nextjs':
         specifier: 'catalog:'
         version: 10.75.1(@opentelemetry/core@2.11.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(next@16.3.5(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)(supports-color@8.1.1)(webpack@5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.23))(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28)(sharp@0.35.4(@types/node@26.6.2)))
-      '@stripe/stripe-js':
-        specifier: 'catalog:'
-        version: 2.4.0
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.103.2(react@19.3.0)
@@ -1589,9 +1580,6 @@ importers:
       '@sentry/nextjs':
         specifier: 'catalog:'
         version: 10.75.1(@opentelemetry/core@2.11.0(@opentelemetry/api@1.9.1))(next@16.3.5(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)(supports-color@8.1.1)(webpack@5.111.1(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28)(sharp@0.35.4(@types/node@26.6.2)))
-      '@stripe/stripe-js':
-        specifier: 'catalog:'
-        version: 2.4.0
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.11(typescript@7.0.2)(zod@4.6.5)
@@ -1726,7 +1714,7 @@ importers:
         version: 2.0.8(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       stripe:
         specifier: 'catalog:'
-        version: 13.11.0
+        version: 22.6.2(@types/node@26.6.2)
       sugar-high:
         specifier: 'catalog:'
         version: 0.9.5
@@ -2105,7 +2093,7 @@ importers:
         version: 19.3.0
       stripe:
         specifier: 'catalog:'
-        version: 13.11.0
+        version: 22.6.2(@types/node@26.6.2)
       superjson:
         specifier: 'catalog:'
         version: 2.2.6
@@ -7549,9 +7537,6 @@ packages:
   '@standard-schema/utils@0.3.0':
     resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
 
-  '@stripe/stripe-js@2.4.0':
-    resolution: {integrity: sha512-WFkQx1mbs2b5+7looI9IV1BLa3bIApuN3ehp9FP58xGg7KL9hCHDECgW3BwO9l9L+xBPVAD7Yjn1EhGe6EDTeA==}
-
   '@swc/core-darwin-arm64@1.16.2':
     resolution: {integrity: sha512-i/j0HNbnn79qnTVPicvay92Nark8fW8NQqn1e2mGERjUXNpBV0+SwQxlRpk2zBhn6laJ8PDI6Kn1nHZhnz3LCA==}
     engines: {node: '>=10'}
@@ -11486,9 +11471,14 @@ packages:
     resolution: {integrity: sha512-1tB5mhVo7U+ETBKNf92xT4hrQa3pm0MZ0PQvuDnWgAAGHDsfp4lPSpiS6psrSiet87wyGPh9ft6wmhOMQ0hDiw==}
     engines: {node: '>=14.16'}
 
-  stripe@13.11.0:
-    resolution: {integrity: sha512-yPxVJxUzP1QHhHeFnYjJl48QwDS1+5befcL7ju7+t+i88D5r0rbsL+GkCCS6zgcU+TiV5bF9eMGcKyJfLf8BZQ==}
-    engines: {node: '>=12.*'}
+  stripe@22.6.2:
+    resolution: {integrity: sha512-PwRE2scocvXqDKPiskMa5vRJEAEkq46W69XyUYmAwrNSLr675lQnfqLwnsndAWizwgihOWw/irLmoFRo3ez7ew==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@types/node': '>=18'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
 
   stubborn-fs@2.0.0:
     resolution: {integrity: sha512-Y0AvSwDw8y+nlSNFXMm2g6L51rBGdAQT20J3YSOqxC53Lo3bjWRtr2BKcfYoAf352WYpsZSTURrA0tqhfgudPA==}
@@ -15841,8 +15831,6 @@ snapshots:
   '@standard-schema/spec@1.1.0': {}
 
   '@standard-schema/utils@0.3.0': {}
-
-  '@stripe/stripe-js@2.4.0': {}
 
   '@swc/core-darwin-arm64@1.16.2':
     optional: true
@@ -20310,10 +20298,9 @@ snapshots:
 
   strip-json-comments@5.0.3: {}
 
-  stripe@13.11.0:
-    dependencies:
+  stripe@22.6.2(@types/node@26.6.2):
+    optionalDependencies:
       '@types/node': 26.6.2
-      qs: 6.16.0
 
   stubborn-fs@2.0.0:
     dependencies:

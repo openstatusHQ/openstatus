@@ -30,9 +30,13 @@ const now = () => Math.floor(Date.now() / 1000);
 // biome-ignore lint/suspicious/noExplicitAny: stubs over the Stripe and Resend clients
 type AnyStub = Stub<any>;
 
+// `current_period_end` lives on the items since API version 2025-03-31.
 function subscription(
   customer: string,
-  overrides: Partial<Stripe.Subscription> = {},
+  {
+    current_period_end = now() + 10 * DAY,
+    ...overrides
+  }: Partial<Stripe.Subscription> & { current_period_end?: number } = {},
 ) {
   return {
     id: "sub_test_1",
@@ -40,9 +44,10 @@ function subscription(
     status: "active",
     created: now() - 30 * DAY,
     cancel_at_period_end: false,
-    current_period_end: now() + 10 * DAY,
     metadata: {},
-    items: { data: [{ price: { id: TEAM_PRICE }, quantity: 1 }] },
+    items: {
+      data: [{ price: { id: TEAM_PRICE }, quantity: 1, current_period_end }],
+    },
     ...overrides,
   } as unknown as Stripe.Subscription;
 }
@@ -278,7 +283,7 @@ describe("stripe webhook emails", () => {
 
       const [reminder, reminderOptions] = send.calls[1].args;
       expect(new Date(reminder.scheduledAt).getTime()).toBe(
-        (sub.current_period_end - 3 * DAY) * 1000,
+        (sub.items.data[0].current_period_end - 3 * DAY) * 1000,
       );
       expect(reminderOptions).toEqual({
         idempotencyKey: `stripe:${evt.event.id}:plan-ending-soon`,

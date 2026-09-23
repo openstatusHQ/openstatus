@@ -5,7 +5,7 @@ import { env } from "../../env";
 import { buildLimitsFromSubscription } from "./utils";
 
 export const stripe = new Stripe(env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2023-08-16",
+  apiVersion: "2026-08-26.dahlia",
   appInfo: {
     name: "OpenStatus",
     version: "0.1.0",
@@ -94,6 +94,20 @@ export async function getCurrentSubscription(customerId: string) {
   );
 
   return { live, current };
+}
+
+/**
+ * When the subscription's current period ends. Since API version 2025-03-31
+ * the period lives on each item rather than on the subscription. Items share
+ * one billing cycle here (add-ons are monthly-only and blocked on yearly
+ * plans), so the latest end is the date everything is paid through.
+ */
+export function getCurrentPeriodEnd(subscription: Stripe.Subscription) {
+  const ends = subscription.items.data.map((item) => item.current_period_end);
+  if (ends.length === 0) {
+    throw new Error(`Subscription ${subscription.id} has no items`);
+  }
+  return new Date(Math.max(...ends) * 1000);
 }
 
 /**

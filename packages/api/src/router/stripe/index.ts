@@ -24,6 +24,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import {
   buildFromSubscriptionOrThrow,
+  getCurrentPeriodEnd,
   getCurrentSubscription,
   stripe,
 } from "./shared";
@@ -246,8 +247,8 @@ export const stripeRouter = createTRPCRouter({
           input: {
             plan: built.plan,
             subscriptionId: updated.id,
-            endsAt: new Date(updated.current_period_end * 1000),
-            paidUntil: new Date(updated.current_period_end * 1000),
+            endsAt: getCurrentPeriodEnd(updated),
+            paidUntil: getCurrentPeriodEnd(updated),
             limits: built.limits,
             reason: "plan_changed",
           },

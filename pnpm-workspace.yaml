@@ -112,7 +112,6 @@ catalog:
   "@sentry/deno": 10.75.1
   "@sentry/nextjs": 10.75.1
   "@slack/web-api": 7.19.0
-  "@stripe/stripe-js": 2.4.0
   "@t3-oss/env-core": 0.13.11
   "@t3-oss/env-nextjs": 0.13.11
   "@tailwindcss/cli": 4.3.3
@@ -205,7 +204,7 @@ catalog:
   shiki: 3.23.0
   slugify: 1.6.9
   sonner: 2.0.8
-  stripe: 13.11.0
+  stripe: 22.6.2
   sugar-high: 0.9.5
   superjson: 2.2.6
   tailwind-merge: 3.7.0
