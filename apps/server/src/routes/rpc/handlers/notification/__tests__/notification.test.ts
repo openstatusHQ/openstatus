@@ -848,6 +848,21 @@ describe("NotificationService.SendTestNotification", () => {
     expect(data.message).toContain("not supported");
   });
 
+  test("rejects a plan-gated provider on the free plan before sending", async () => {
+    const res = await connectRequest(
+      "SendTestNotification",
+      {
+        provider: "NOTIFICATION_PROVIDER_PAGERDUTY",
+        data: { pagerduty: { integrationKey: "free-plan-key" } },
+      },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
+    );
+
+    expect(res.status).toBe(429);
+    const data = await res.json();
+    expect(data.message).toContain("pagerduty");
+  });
+
   test("returns error for unsupported SMS provider", async () => {
     const res = await connectRequest(
       "SendTestNotification",

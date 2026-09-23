@@ -1,11 +1,11 @@
 ---
 title: "Status Page"
 seo:
-  title: "Create a Status Page — Hosted, Branded, Public or Private"
-  description: "Launch a branded status page on your own domain in minutes. Public or private, with password protection, IP allowlists, maintenance windows and RSS alerts."
+  title: "Free Status Page — Open Source, Custom Domain, Public or Private"
+  description: "Create a free status page on your own domain in minutes. Open source and self-hostable. Public or private (password, magic link, IP allowlist), subscribers, maintenance windows, Slack agent."
 hero: "Status pages your users actually trust"
 publishedAt: "2025-11-10"
-updatedAt: "2026-08-26"
+updatedAt: "2026-09-17"
 author: "Maximilian Kaske"
 description: "Create a public or private status page in minutes. Show real-time uptime, incidents and maintenance on a fully branded page with a custom domain."
 category: "Product"
@@ -13,21 +13,19 @@ faq:
   - question: "What is a status page?"
     answer: "A status page is a dedicated webpage where companies communicate the real-time health of their services to users. It shows which systems are operational, degraded, or experiencing outages, and provides timestamped incident updates. Status pages reduce support tickets during incidents, build user trust through transparency, and satisfy compliance requirements like SOC 2."
   - question: "When should I use a public vs private status page?"
-    answer: "Use public status pages for customer-facing services where transparency builds trust. Use private status pages (password-protected, magic link, or IP-restricted) for internal tools, client-specific deployments, or when you need to control who receives status updates."
+    answer: "A public status page is customer-facing and indexed — it deflects support tickets and answers vendor questionnaires. A private (internal) status page is for staff, contractors, or a single client, with access controlled by password protection, magic link authentication, or an IP allowlist. You can run both from the same workspace."
   - question: "What's the difference between monitors and external services in page components?"
-    answer: "Monitors are automatically synced with your OpenStatus uptime monitoring data and update in real-time. External services are manually managed components for third-party dependencies or systems you don't directly monitor but want to report status for."
+    answer: "Monitors are automatically synced with your openstatus uptime monitoring data and update in real-time. External services are manually managed components for third-party dependencies or systems you don't directly monitor but want to report status for."
   - question: "Can I translate my status page into other languages?"
     answer: "Yes, status pages support multiple languages (currently English, French, German, Turkish, Hindi, Korean, and Japanese). You can set a default locale and enable a locale switcher so visitors choose their preferred language. Translations are open source — you can contribute new languages by adding a locale to the shared registry and running the dev server to generate the translation file."
   - question: "Can I use my own domain for the status page?"
-    answer: "Yes, you can configure custom domains to host your status page on your own domain (e.g., status.yourcompany.com) instead of the default OpenStatus subdomain. This keeps the experience consistent with your brand."
+    answer: "Yes, you can configure custom domains to host your status page on your own domain (e.g., status.yourcompany.com) instead of the default openstatus subdomain. This keeps the experience consistent with your brand."
   - question: "How do status page subscriptions work?"
     answer: "Users can subscribe to receive updates when you post status reports or maintenance notices. We support email notifications, RSS/Atom feeds for feed readers, and JSON feeds for programmatic consumption. Subscribers are automatically notified when you publish updates."
   - question: "Can I customize the appearance of my status page?"
-    answer: "Yes, use the Theme Store to apply community themes or create your own. Themes control colors, fonts, and layout. For private custom themes, contact us. You can also define which data to share (uptime percentages, response times, or manual reports only)."
+    answer: "Yes. Pick a community theme from the Theme Store or contribute your own. For a private look, the Custom Theme editor lets you override any CSS variable of the base theme for light and dark mode — included on Pro and Scale, or a $20/mo add-on on Starter. You can also define which data to share (uptime percentages, response times, or manual reports only)."
   - question: "How do I create a status page?"
     answer: "Sign up, create a status page, give it a name and a slug, then add page components — either monitors synced from your uptime monitoring or external services you manage by hand. Point a custom domain at it if you want status.yourcompany.com, pick a theme, and publish. Most teams are live in under ten minutes on the free plan."
-  - question: "Public vs internal status page?"
-    answer: "A public status page is customer-facing and indexed — it deflects support tickets and answers vendor questionnaires. An internal or private status page is for staff, contractors, or a single client, and access is controlled with password protection, magic link authentication, or an IP allowlist. You can run both from the same workspace."
   - question: "How much does a status page cost?"
     answer: "The free Hobby plan includes one status page with three components and no credit card. Paid plans start at $30/month for Starter (one status page, 20 components, custom domain, subscribers), $100/month for Pro, and $500/month for Scale. Annual billing gives you two months free. Extra status pages are $20/month each."
   - question: "What is the Slack agent and what can it do?"
@@ -98,13 +96,13 @@ You can **group page components** by their services, locations, or any logical g
 
 ### Links
 
-Add a **Get in touch** in touch button and add a specific **website** link or a **`mailto:`** address.
+Add a **Get in touch** button that points to a specific **website** link or a **`mailto:`** address.
 
 Include a **homepage** link to redirect the user to your page on clicking on the left-hand nav icon.
 
 ### Subscriptions
 
-Allow your users **subscribe** to your status page, to automatically receive **updates** whenever you add a status report or maintenance to your status page.
+Allow your users to **subscribe** to your status page and automatically receive **updates** whenever you add a status report or maintenance.
 
 We support following communication channels:
 
@@ -112,7 +110,7 @@ We support following communication channels:
 - **RSS/Atom feeds**
 - **JSON**
 
-[Contact us](mailto:ping@openstatus.dev) if you are looking for specific a channel.
+[Contact us](mailto:ping@openstatus.dev) if you are looking for a specific channel.
 
 ### Translations
 
@@ -136,9 +134,11 @@ Read the [migration guides](/blog/import-from-statuspage-betterstack-instatus) f
 
 ## Branded status pages
 
-Match your brand **appearance** by contributing your own theme to the community. We have build a **[Theme Store](https://themes.openstatus.dev)** that helps you create and use custom themes on your status page. Contribute your own theme. If you a private custom theme let us know via [email](mailto:ping@openstatus.dev?subject=Private%20Theme).
+Match your brand **appearance** with a theme from the **[Theme Store](https://themes.openstatus.dev)**, or contribute your own to the community.
 
-You can **define the values** you want to share with your users. If can decide between duration values/uptime ping values or purely based on manual status report updates.
+Need something that stays private? The **Custom Theme** editor lets you override any CSS variable of the selected theme with your own values — separately for **light and dark mode**. Every variable you leave unset falls back to the base theme, so you can change a single color or restyle the entire page. Custom themes are included on Pro and Scale, and available as a **$20/mo add-on** on Starter. See the [supported variables](/docs/reference/status-page/#custom-theme).
+
+You can **define the values** you want to share with your users: response times and uptime from your monitors, or purely manual status report updates.
 
 You can create **custom domains** to keep the domain your users are used to.
 
@@ -162,13 +162,13 @@ A status page is a dedicated webpage where companies communicate the real-time h
 
 <Details summary="When should I use a public vs private status page?">
 
-Use public status pages for customer-facing services where transparency builds trust. Use private status pages (password-protected, magic link, or IP-restricted) for internal tools, client-specific deployments, or when you need to control who receives status updates.
+A public status page is customer-facing and indexed — it deflects support tickets and answers vendor questionnaires. A private (internal) status page is for staff, contractors, or a single client, with access controlled by password protection, magic link authentication, or an IP allowlist. You can run both from the same workspace.
 
 </Details>
 
 <Details summary="What's the difference between monitors and external services in page components?">
 
-Monitors are automatically synced with your OpenStatus uptime monitoring data and update in real-time. External services are manually managed components for third-party dependencies or systems you don't directly monitor but want to report status for.
+Monitors are automatically synced with your openstatus uptime monitoring data and update in real-time. External services are manually managed components for third-party dependencies or systems you don't directly monitor but want to report status for.
 
 </Details>
 
@@ -180,7 +180,7 @@ Yes, status pages support multiple languages (currently English, French, German,
 
 <Details summary="Can I use my own domain for the status page?">
 
-Yes, you can configure custom domains to host your status page on your own domain (e.g., status.yourcompany.com) instead of the default OpenStatus subdomain. This keeps the experience consistent with your brand.
+Yes, you can configure custom domains to host your status page on your own domain (e.g., status.yourcompany.com) instead of the default openstatus subdomain. This keeps the experience consistent with your brand.
 
 </Details>
 
@@ -192,19 +192,13 @@ Users can subscribe to receive updates when you post status reports or maintenan
 
 <Details summary="Can I customize the appearance of my status page?">
 
-Yes, use the Theme Store to apply community themes or create your own. Themes control colors, fonts, and layout. For private custom themes, contact us. You can also define which data to share (uptime percentages, response times, or manual reports only).
+Yes. Pick a community theme from the Theme Store or contribute your own. For a private look, the Custom Theme editor lets you override any CSS variable of the base theme for light and dark mode — included on Pro and Scale, or a $20/mo add-on on Starter. You can also define which data to share (uptime percentages, response times, or manual reports only).
 
 </Details>
 
 <Details summary="How do I create a status page?">
 
 Sign up, create a status page, give it a name and a slug, then add page components — either monitors synced from your uptime monitoring or external services you manage by hand. Point a custom domain at it if you want status.yourcompany.com, pick a theme, and publish. Most teams are live in under ten minutes on the free plan.
-
-</Details>
-
-<Details summary="Public vs internal status page?">
-
-A public status page is customer-facing and indexed — it deflects support tickets and answers vendor questionnaires. An internal or private status page is for staff, contractors, or a single client, and access is controlled with password protection, magic link authentication, or an IP allowlist. You can run both from the same workspace.
 
 </Details>
 
@@ -219,4 +213,3 @@ The free Hobby plan includes one status page with three components and no credit
 The Slack agent lets you manage your status page directly from Slack using natural language. @mention @openstatus in any channel or thread to create incidents, post updates, and resolve reports — without leaving Slack. No slash commands required.
 
 </Details>
-

@@ -7,6 +7,7 @@ import { endTime, setMetric, startTime } from "hono/timing";
 const logger = getLogger("api-server");
 import { Status, Tracker } from "@openstatus/tracker";
 
+import { cacheKeys } from "../../libs/cache-keys";
 import { redis } from "../../libs/clients";
 
 // TODO: include ratelimiting
@@ -17,7 +18,9 @@ status.get("/:slug", async (c) => {
   try {
     const { slug } = c.req.param();
 
-    const cache = await redis.get(slug);
+    // Only public pages are ever written under this prefix, so a hit needs no
+    // access check; a page made private can stay cached for up to the 60s TTL.
+    const cache = await redis.get(cacheKeys.pageStatus(slug));
 
     if (cache) {
       setMetric(c, "OpenStatus-Cache", "HIT");
@@ -87,7 +90,7 @@ status.get("/:slug", async (c) => {
     });
 
     const status = tracker.currentStatus;
-    await redis.set(slug, status, { ex: 60 }); // 1m cache
+    await redis.set(cacheKeys.pageStatus(slug), status, { ex: 60 }); // 1m cache
 
     return c.json({ status });
   } catch (e) {

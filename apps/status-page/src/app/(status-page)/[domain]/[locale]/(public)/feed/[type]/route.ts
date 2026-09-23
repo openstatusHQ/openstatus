@@ -44,7 +44,10 @@ export async function GET(
     }
 
     const page = await queryClient.fetchQuery(
-      trpc.statusPage.get.queryOptions({ slug: domain }),
+      trpc.statusPage.get.queryOptions({
+        slug: domain,
+        pw: new URL(_request.url).searchParams.get("pw"),
+      }),
     );
     if (!page) return notFound();
 

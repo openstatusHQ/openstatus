@@ -4,7 +4,7 @@ import {
   type NotificationContext,
   buildCommonMessageData,
 } from "@openstatus/notification-base";
-import { assertSafeUrl } from "@openstatus/utils";
+import { safeFetch } from "@openstatus/utils";
 
 import {
   buildAlertBlocks,
@@ -20,8 +20,7 @@ const postToWebhook = async (
     throw new Error("Slack webhook URL is required");
   }
 
-  await assertSafeUrl(webhookUrl);
-  const res = await fetch(webhookUrl, {
+  const res = await safeFetch(webhookUrl, {
     method: "POST",
     body: JSON.stringify(body),
   });

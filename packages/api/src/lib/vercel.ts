@@ -6,8 +6,21 @@ import { env } from "../env";
 
 // Vercel domain helpers — transport-layer external integrations that
 // don't belong in the service layer.
+const VERCEL_API_ORIGIN = "https://api.vercel.com";
+
 export async function vercelFetch(path: string, init?: RequestInit) {
-  return fetch(`https://api.vercel.com${path}`, {
+  // URL parsing resolves `..` segments and `#` cuts the query — refuse any
+  // path that doesn't survive normalization unchanged.
+  const url = new URL(path, VERCEL_API_ORIGIN);
+  if (
+    url.origin !== VERCEL_API_ORIGIN ||
+    url.hash ||
+    `${url.pathname}${url.search}` !== path
+  ) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid path." });
+  }
+
+  return fetch(url, {
     ...init,
     headers: {
       Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,

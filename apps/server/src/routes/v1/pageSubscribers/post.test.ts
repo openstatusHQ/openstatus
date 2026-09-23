@@ -1,7 +1,9 @@
 import { and, db, eq, isNull } from "@openstatus/db";
 import { pageSubscriber } from "@openstatus/db/src/schema";
+import { delivery, resend } from "@openstatus/emails/src/send";
 import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
+import { assertSpyCalls, stub } from "@std/testing/mock";
 
 import { app } from "@/index";
 
@@ -27,6 +29,45 @@ test("create a page subscription", async () => {
     await db
       .delete(pageSubscriber)
       .where(eq(pageSubscriber.id, result.data.id));
+  }
+});
+
+test("sends the same redesigned verification email as the status page form", async () => {
+  const enabled = stub(delivery, "enabled", () => true);
+  const send = stub(resend.emails, "send", () =>
+    Promise.resolve({ data: { id: "email_1" }, error: null } as never),
+  );
+
+  const email = "verify-mail@openstatus.dev";
+  const cleanup = () =>
+    db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+
+  try {
+    await cleanup();
+    const res = await app.request("/v1/page_subscriber/1/update", {
+      method: "POST",
+      headers: {
+        "x-openstatus-key": "1",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+    expect(res.status).toBe(200);
+
+    assertSpyCalls(send, 1);
+    const payload = send.calls[0].args[0];
+    expect(payload.to).toEqual([email]);
+    expect(payload.from).toBe(
+      "Status Page <notifications@notifications.openstatus.dev>",
+    );
+    expect(payload.subject).toMatch(/^Confirm your subscription to /);
+    // the route calls the template as a function, so this is its <Layout>
+    expect(payload.react.props.brand.name).toMatch(/Status$/);
+    expect(payload.react.props.pill.label).toBe("Confirm");
+  } finally {
+    await cleanup();
+    send.restore();
+    enabled.restore();
   }
 });
 

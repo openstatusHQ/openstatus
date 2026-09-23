@@ -15,6 +15,7 @@ import {
   withTransaction,
 } from "../context";
 import { NotFoundError, ValidationError } from "../errors";
+import { type PageVisitor, assertPageAccess } from "../page-access";
 import { assertSubscribersAllowed, parseWorkspaceForContext } from "./internal";
 import { UpsertSelfSignupSubscriberInput } from "./schemas";
 
@@ -54,6 +55,8 @@ export type UpsertSelfSignupResult = {
 // oxlint-disable-next-line openstatus/services-mutation-guards
 export async function upsertSelfSignupSubscriber(args: {
   input: UpsertSelfSignupSubscriberInput;
+  /** `null` only when the caller already authorized the request (workspace API). */
+  visitor: PageVisitor | null;
   db?: DB;
 }): Promise<UpsertSelfSignupResult> {
   const input = UpsertSelfSignupSubscriberInput.parse(args.input);
@@ -67,6 +70,7 @@ export async function upsertSelfSignupSubscriber(args: {
   if (!pageData) {
     throw new NotFoundError("page", input.pageId);
   }
+  if (args.visitor) assertPageAccess(pageData, args.visitor);
   const workspace = parseWorkspaceForContext(pageData.workspace);
   // Plan-gate before any DB writes — same upsell semantics as the
   // dashboard `createPageSubscriber` path. Free-plan pages don't
