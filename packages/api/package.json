@@ -67,7 +67,6 @@
     "@std/testing": "jsr:^1.0.19",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "bun-types": "catalog:",
     "typescript": "catalog:"
   }
 }
