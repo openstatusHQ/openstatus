@@ -5,7 +5,12 @@ export {
   listWorkspaces,
   type WorkspaceUsage,
 } from "./list";
-export { downgradeWorkspaceToFree } from "./downgrade";
+export {
+  type DowngradePreview,
+  type DowngradeTrim,
+  downgradeWorkspaceToFree,
+  previewWorkspaceDowngrade,
+} from "./downgrade";
 export { updateWorkspaceName, updateWorkspacePlan } from "./update";
 export {
   GetWorkspaceByStripeIdInput,

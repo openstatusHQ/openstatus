@@ -157,8 +157,8 @@ const {
       if (params.user.tenantId) return;
 
       await sendEmail({
-        from: "Thibault from OpenStatus <thibault@openstatus.dev>",
-        subject: "Welcome to OpenStatus.",
+        from: "Thibault from openstatus <thibault@openstatus.dev>",
+        subject: "Welcome to openstatus.",
         to: [params.user.email],
         react: WelcomeEmail(),
       });

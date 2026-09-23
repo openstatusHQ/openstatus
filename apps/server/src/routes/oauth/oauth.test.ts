@@ -205,6 +205,15 @@ describe("well-known metadata", () => {
     });
   });
 
+  test("openai apps domain challenge", async () => {
+    const res = await app.request("/.well-known/openai-apps-challenge");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/plain");
+    expect(await res.text()).toBe(
+      "BY-vA_tzfuXZeVpuYKsUlluq9td0nTuyt-bTJXblZlw",
+    );
+  });
+
   test("answers CORS preflight", async () => {
     const res = await app.request("/oauth/token", {
       method: "OPTIONS",

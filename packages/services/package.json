@@ -113,6 +113,14 @@
       "import": "./src/private-location/index.ts",
       "types": "./src/private-location/index.ts"
     },
+    "./page-access": {
+      "import": "./src/page-access/index.ts",
+      "types": "./src/page-access/index.ts"
+    },
+    "./page-access/cookie-key": {
+      "import": "./src/page-access/cookie-key.ts",
+      "types": "./src/page-access/cookie-key.ts"
+    },
     "./page-subscriber": {
       "import": "./src/page-subscriber/index.ts",
       "types": "./src/page-subscriber/index.ts"
@@ -159,6 +167,7 @@
     "@openstatus/utils": "workspace:*",
     "@workos-inc/node": "catalog:",
     "effect": "catalog:",
+    "ip-cidr": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
