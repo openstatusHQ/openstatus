@@ -86,7 +86,7 @@ const httpTestInput = z.object({
     .prefault("GET"),
   headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
   body: z.string().optional(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  region: monitorRegionSchema.prefault("ams"),
   assertions: z
     .array(
       z.discriminatedUnion("type", [
@@ -102,12 +102,12 @@ const httpTestInput = z.object({
 
 const tcpTestInput = z.object({
   url: z.string(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  region: monitorRegionSchema.prefault("ams"),
 });
 
 const dnsTestInput = z.object({
   url: z.string(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  region: monitorRegionSchema.prefault("ams"),
   assertions: z
     .array(
       z.discriminatedUnion("type", [
@@ -123,15 +123,15 @@ const dnsTestInput = z.object({
 
 const icmpTestInput = z.object({
   url: z.string(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  region: monitorRegionSchema.prefault("ams"),
 });
 
 const grpcTestInput = z.object({
   url: z.string(),
   service: z.string().optional(),
-  tls: z.enum(GRPC_TLS_MODES).optional().prefault("tls"),
+  tls: z.enum(GRPC_TLS_MODES).prefault("tls"),
   headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  region: monitorRegionSchema.prefault("ams"),
 });
 
 export const grpcOutput = z

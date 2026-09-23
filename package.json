@@ -34,7 +34,7 @@
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "turbo": "2.9.14",
+    "turbo": "2.11.2",
     "typescript": "catalog:"
   },
   "packageManager": "pnpm@12.3.4"

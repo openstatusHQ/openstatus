@@ -75,7 +75,7 @@ export const insertPageSchema = createInsertSchema(page, {
   slug: slugSchema,
 })
   .extend({
-    password: z.string().nullable().optional().prefault(""),
+    password: z.string().nullable().prefault(""),
     monitors: z
       .array(
         z.object({
@@ -84,7 +84,7 @@ export const insertPageSchema = createInsertSchema(page, {
           order: z.number().prefault(0).optional(),
         }),
       )
-      .optional()
+
       .prefault([]),
     authEmailDomains: z.array(z.string()).nullish(),
     allowedIpRanges: z
@@ -98,7 +98,7 @@ export const insertPageSchema = createInsertSchema(page, {
           .pipe(z.cidrv4()),
       )
       .nullish(),
-    defaultLocale: z.enum(locales).optional().prefault("en"),
+    defaultLocale: z.enum(locales).prefault("en"),
     locales: z.array(z.enum(locales)).nullable().optional(),
     customTheme: customThemeWriteSchema,
   })
@@ -147,7 +147,7 @@ export const pageConfigurationSchema = z.object({
 export type PageConfiguration = z.infer<typeof pageConfigurationSchema>;
 
 export const selectPageSchema = createSelectSchema(page).extend({
-  password: z.string().optional().nullable().prefault(""),
+  password: z.string().nullable().prefault(""),
   customTheme: customThemeSchema.nullish().catch(null),
   configuration: pageConfigurationSchema.nullish().prefault({}),
   accessType: z.enum(pageAccessTypes).prefault("public"),
