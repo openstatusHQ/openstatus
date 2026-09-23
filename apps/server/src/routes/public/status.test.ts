@@ -514,3 +514,66 @@ describe("Status Route: Cache functionality", () => {
     await db.delete(page).where(eq(page.id, cachePage.id));
   });
 });
+
+describe("Status Route: cache key isolation", () => {
+  test("never serves a foreign redis key as a status", async () => {
+    for (const key of ["1-daily-stats", "telegram:workspace_token:1"]) {
+      testRedisStore?.set(key, JSON.stringify("leaked"));
+      const res = await app.request(
+        `/public/status/${encodeURIComponent(key)}`,
+      );
+      expect(await res.json()).toEqual({ status: "unknown" });
+    }
+  });
+
+  test("a page slug shaped like a stats key leaves that key untouched", async () => {
+    const slug = "987654-daily-stats";
+    await db.delete(page).where(eq(page.slug, slug));
+    const collidingPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: "Collision Test Page",
+        description: "",
+        slug,
+        customDomain: "",
+        accessType: "public",
+      })
+      .returning()
+      .get();
+
+    const statsKey = "stats:monitor:987654:daily";
+    testRedisStore?.set(statsKey, "cached-stats");
+
+    const res = await app.request(`/public/status/${slug}`);
+    expect((await res.json()).status).toBe("operational");
+    expect(testRedisStore?.has(slug)).toBe(false);
+    expect(testRedisStore?.get(statsKey)).toBe("cached-stats");
+
+    await db.delete(page).where(eq(page.id, collidingPage.id));
+  });
+
+  test("a protected page is never written to the cache", async () => {
+    const slug = `${TEST_PREFIX}-uncached-private`;
+    await db.delete(page).where(eq(page.slug, slug));
+    const privatePage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: "Uncached Private Page",
+        description: "",
+        slug,
+        customDomain: "",
+        accessType: "password",
+        password: "secret",
+      })
+      .returning()
+      .get();
+
+    const res = await app.request(`/public/status/${slug}`);
+    expect(await res.json()).toEqual({ status: "unknown" });
+    expect(testRedisStore?.has(`status:page:${slug}`)).toBe(false);
+
+    await db.delete(page).where(eq(page.id, privatePage.id));
+  });
+});

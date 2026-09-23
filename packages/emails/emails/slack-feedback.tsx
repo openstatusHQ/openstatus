@@ -8,11 +8,11 @@ const SlackFeedbackEmail = () => {
       <Head>
         <title>How's the Slack app working for you?</title>
       </Head>
-      <Preview>We'd love your feedback on the OpenStatus Slack app</Preview>
+      <Preview>We'd love your feedback on the openstatus Slack app</Preview>
       <Body>
         Hey
         <br />
-        <br />I saw you installed the OpenStatus Slack app — thanks for trying
+        <br />I saw you installed the openstatus Slack app — thanks for trying
         it out!
         <br />
         <br />
@@ -26,7 +26,7 @@ const SlackFeedbackEmail = () => {
         Just hit reply — I read every response.
         <br />
         <br />
-        Thibault Le Ouay Ducasse, co-founder of OpenStatus
+        Thibault Le Ouay Ducasse, co-founder of openstatus
         <br />
       </Body>
     </Html>

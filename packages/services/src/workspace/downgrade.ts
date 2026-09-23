@@ -1,9 +1,10 @@
-import { and, asc, eq, isNull, ne } from "@openstatus/db";
+import { and, asc, db as defaultDb, eq, isNull, ne } from "@openstatus/db";
 import {
   invitation,
   monitor,
   notification,
   page,
+  user,
   usersToWorkspaces,
 } from "@openstatus/db/src/schema";
 import { getLimits } from "@openstatus/db/src/schema/plan/utils";
@@ -41,14 +42,32 @@ import { updateWorkspacePlan } from "./update";
  *
  * Returns the set of custom domains that were attached to any page, so the
  * caller can release them on Vercel *after* the transaction commits —
- * that cleanup is best-effort and must not roll the downgrade back.
+ * that cleanup is best-effort and must not roll the downgrade back. `trimmed`
+ * is what the cascade actually removed, for the emails sent after commit.
  */
+export type DowngradeTrim = {
+  monitorsDeactivated: number;
+  /** Titles of hard-deleted pages — the one irreversible loss. */
+  pagesDeleted: string[];
+  keptPageTitle: string | null;
+  notificationsDeleted: number;
+  invitationsDeleted: number;
+  /** Every removed non-owner member, with or without an email on file. */
+  membersRemovedCount: number;
+  /** Emails of the removed members that can be notified. */
+  membersRemoved: string[];
+};
+
 // Every trim step routes through an audited entity verb, so the cascade is
 // fully attributable; the plan flip itself is audited by `updateWorkspacePlan`.
 // oxlint-disable-next-line openstatus/services-mutation-guards
 export async function downgradeWorkspaceToFree(args: {
   ctx: ServiceContext;
-}): Promise<{ customDomains: string[]; ssoDisabled: boolean }> {
+}): Promise<{
+  customDomains: string[];
+  ssoDisabled: boolean;
+  trimmed: DowngradeTrim;
+}> {
   const { ctx } = args;
   requireScope(ctx, "write");
   const workspaceId = ctx.workspace.id;
@@ -99,7 +118,11 @@ export async function downgradeWorkspaceToFree(args: {
     }
 
     const statusPages = await tx
-      .select({ id: page.id, customDomain: page.customDomain })
+      .select({
+        id: page.id,
+        title: page.title,
+        customDomain: page.customDomain,
+      })
       .from(page)
       .where(eq(page.workspaceId, workspaceId))
       .orderBy(asc(page.createdAt));
@@ -154,8 +177,9 @@ export async function downgradeWorkspaceToFree(args: {
     }
 
     const nonOwnerMembers = await tx
-      .select({ userId: usersToWorkspaces.userId })
+      .select({ userId: usersToWorkspaces.userId, email: user.email })
       .from(usersToWorkspaces)
+      .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
       .where(
         and(
           eq(usersToWorkspaces.workspaceId, workspaceId),
@@ -181,6 +205,89 @@ export async function downgradeWorkspaceToFree(args: {
       await deleteInvitation({ ctx: txCtx, input: { id: inv.id } });
     }
 
-    return { customDomains, ssoDisabled: ssoWasEnabled };
+    return {
+      customDomains,
+      ssoDisabled: ssoWasEnabled,
+      trimmed: {
+        monitorsDeactivated: monitorIdsToDeactivate.length,
+        pagesDeleted: statusPages.slice(1).map((p) => p.title),
+        keptPageTitle: keptPage?.title ?? null,
+        notificationsDeleted: notifications.filter(
+          (n) => n.id !== keepNotification?.id,
+        ).length,
+        invitationsDeleted: pendingInvitations.length,
+        membersRemovedCount: nonOwnerMembers.length,
+        membersRemoved: nonOwnerMembers
+          .map((m) => m.email)
+          .filter((email): email is string => !!email && email.trim() !== ""),
+      },
+    };
   });
+}
+
+export type DowngradePreview = DowngradeTrim & {
+  customDomains: string[];
+  ssoEnabled: boolean;
+};
+
+/** What `downgradeWorkspaceToFree` would trim right now. Read-only. */
+export async function previewWorkspaceDowngrade(args: {
+  ctx: ServiceContext;
+}): Promise<DowngradePreview> {
+  const { ctx } = args;
+  requireScope(ctx, "read");
+  const db = ctx.db ?? defaultDb;
+  const workspaceId = ctx.workspace.id;
+
+  const activeMonitors = await db.$count(
+    monitor,
+    and(
+      eq(monitor.workspaceId, workspaceId),
+      eq(monitor.active, true),
+      isNull(monitor.deletedAt),
+    ),
+  );
+  const pages = await db
+    .select({ title: page.title, customDomain: page.customDomain })
+    .from(page)
+    .where(eq(page.workspaceId, workspaceId))
+    .orderBy(asc(page.createdAt));
+  const notifications = await db.$count(
+    notification,
+    eq(notification.workspaceId, workspaceId),
+  );
+  const invitations = await db.$count(
+    invitation,
+    and(eq(invitation.workspaceId, workspaceId), isNull(invitation.acceptedAt)),
+  );
+  const members = await db
+    .select({ email: user.email })
+    .from(usersToWorkspaces)
+    .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
+    .where(
+      and(
+        eq(usersToWorkspaces.workspaceId, workspaceId),
+        ne(usersToWorkspaces.role, "owner"),
+      ),
+    );
+
+  return {
+    monitorsDeactivated: Math.max(0, activeMonitors - 1),
+    pagesDeleted: pages.slice(1).map((p) => p.title),
+    keptPageTitle: pages[0]?.title ?? null,
+    notificationsDeleted: Math.max(0, notifications - 1),
+    invitationsDeleted: invitations,
+    membersRemovedCount: members.length,
+    membersRemoved: members
+      .map((m) => m.email)
+      .filter((email): email is string => !!email && email.trim() !== ""),
+    customDomains: [
+      ...new Set(
+        pages
+          .map((p) => p.customDomain)
+          .filter((domain): domain is string => !!domain && domain !== ""),
+      ),
+    ],
+    ssoEnabled: ctx.workspace.ssoEnabled,
+  };
 }

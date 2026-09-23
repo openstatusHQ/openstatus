@@ -1,7 +1,8 @@
 import type { ServiceImpl } from "@connectrpc/connect";
 import type { NotificationService } from "@openstatus/proto/notification/v1";
-import { ForbiddenError } from "@openstatus/services";
+import { ForbiddenError, requireScope } from "@openstatus/services";
 import {
+  assertProviderAllowed,
   createNotification,
   deleteNotification,
   getNotification,
@@ -209,13 +210,17 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
       }
     },
 
-    async sendTestNotification(req, _ctx) {
+    async sendTestNotification(req, ctx) {
       // Wrapped in `toConnectError` for symmetry with the CRUD handlers
       // above — any `ServiceError` / `ZodError` thrown from within
       // `test-providers.ts` (or a future helper it grows) gets mapped
       // to the right gRPC status instead of falling through to the
       // interceptor's generic catch.
       try {
+        // Sends from platform credentials to a caller-chosen destination.
+        const sCtx = toServiceCtx(getRpcContext(ctx));
+        requireScope(sCtx, "write");
+        assertProviderAllowed(sCtx.workspace, protoProviderToDb(req.provider));
         return await sendTestNotification(req.provider, req.data);
       } catch (err) {
         toConnectError(err);

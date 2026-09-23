@@ -1,7 +1,7 @@
 export { default as FeedbackEmail } from "../emails/feedback";
 export { default as FollowUpEmail } from "../emails/followup";
 export { default as SlackFeedbackEmail } from "../emails/slack-feedback";
-export { default as SubscribeEmail } from "../emails/subscribe";
+export { default as PageSubscriptionEmail } from "../emails/page-subscription";
 export { default as TeamInviteReminderEmail } from "../emails/team-invite-reminder";
 export { default as WelcomeEmail } from "../emails/welcome";
 export { default as TeamInvitationEmail } from "../emails/team-invitation";
@@ -9,10 +9,22 @@ export { default as MonitorPausedEmail } from "../emails/monitor-paused";
 export { default as MonitorDeactivationEmail } from "../emails/monitor-deactivation";
 export { default as PrivateLocationAlertEmail } from "../emails/private-location-alert";
 export { default as StatusPageMagicLinkEmail } from "../emails/status-page-magic-link";
-export { default as SsoDisabledEmail } from "../emails/sso-disabled";
 
-export { monitorDeactivationEmail } from "../hotfix/monitor-deactivation";
-export { monitorPausedEmail } from "../hotfix/monitor-paused";
-export { sendEmail, sendEmailHtml, sendBatchEmailHtml } from "./send";
+export { monitorDeactivationEmail, monitorPausedEmail } from "./render";
+export {
+  cancelScheduledEmail,
+  sendEmail,
+  sendEmailHtml,
+  sendBatchEmailHtml,
+} from "./send";
+export {
+  billingRecipients,
+  schedulePlanEndingSoon,
+  sendCancellationScheduled,
+  sendMemberRemoved,
+  sendPlanDowngraded,
+  sendTrialEnding,
+  stripeIdempotencyKey,
+} from "./billing";
 
 export { EmailClient } from "./client";

@@ -1,76 +1,104 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
-import { Body, Button, Head, Heading, Html, Preview, Text } from "react-email";
 import { z } from "zod";
 
+import { Actions } from "./_components/actions";
+import { Footer } from "./_components/footer";
+import { formatDateTime, plural } from "./_components/format";
+import { Heading, Mono } from "./_components/heading";
+import { KeyValue, type KeyValueRow } from "./_components/key-value";
 import { Layout } from "./_components/layout";
-import { colors, styles } from "./_components/styles";
+import { Steps } from "./_components/steps";
 
 const PrivateLocationAlertSchema = z.object({
   locationName: z.string(),
   status: z.enum(["error", "recovered"]),
   lastSeenAt: z.string(),
+  /** Monitors scheduled on this location. */
+  monitorCount: z.number().optional(),
 });
 
 export type PrivateLocationAlertProps = z.infer<
   typeof PrivateLocationAlertSchema
 >;
 
+const LOCATIONS_URL = "https://app.openstatus.dev/settings/private-locations";
+
+export function privateLocationAlertSubject(
+  props: Pick<PrivateLocationAlertProps, "locationName" | "status">,
+): string {
+  return props.status === "error"
+    ? `Checks paused — "${props.locationName}" stopped reporting`
+    : `Checks resumed — "${props.locationName}" is reporting again`;
+}
+
 const PrivateLocationAlertEmail = (props: PrivateLocationAlertProps) => {
   const isError = props.status === "error";
-  const preview = isError
-    ? `Your private location "${props.locationName}" is unhealthy`
-    : `Your private location "${props.locationName}" is healthy again`;
+  const rows: KeyValueRow[] = [
+    { label: "Location", value: props.locationName, mono: true },
+    { label: "Last result", value: formatDateTime(props.lastSeenAt) },
+  ];
+  if (props.monitorCount) {
+    rows.push({
+      label: isError ? "Checks skipped" : "Checks resumed",
+      value: plural(props.monitorCount, "monitor"),
+    });
+  }
 
   return (
-    <Html>
-      <Head />
-      <Preview>{preview}</Preview>
-      <Body style={styles.main}>
-        <Layout>
-          <Heading
-            as="h4"
-            style={{ color: isError ? colors.danger : colors.success }}
-          >
-            {preview}
-          </Heading>
-          {isError ? (
-            <Text>
-              The agent for <strong>{props.locationName}</strong> has not
-              reported a result in over 15 minutes, so checks scheduled on this
-              location are not running. It was last seen at {props.lastSeenAt}.
-            </Text>
-          ) : (
-            <Text>
-              The agent for <strong>{props.locationName}</strong> is reporting
-              again and checks on this location have resumed. It was last seen
-              at {props.lastSeenAt}.
-            </Text>
-          )}
-          <Text>
-            {isError
-              ? "Check that the agent is running and can reach OpenStatus, then verify its token and network access."
-              : "No action is needed."}
-          </Text>
-          <Text style={{ textAlign: "center" }}>
-            <Button
-              style={styles.button}
-              href="https://www.openstatus.dev/app/settings/private-locations"
-            >
-              View private locations
-            </Button>
-          </Text>
-          <Text>If you have any questions, please reply to this email.</Text>
-        </Layout>
-      </Body>
-    </Html>
+    <Layout
+      preview={
+        isError
+          ? `Last result ${formatDateTime(props.lastSeenAt)}. Three things to check.`
+          : "Checks on this private location are running again."
+      }
+      pill={
+        isError
+          ? { tone: "danger", label: "Unhealthy" }
+          : { tone: "success", label: "Recovered" }
+      }
+      footer={
+        <Footer reason="You get this because you are a member of this workspace." />
+      }
+    >
+      <Heading
+        title={
+          <>
+            Checks on <Mono>{props.locationName}</Mono>{" "}
+            {isError ? "are paused" : "are running again"}
+          </>
+        }
+      >
+        {isError
+          ? "This private location hasn’t sent a result for over 15 minutes. Until it reconnects, every check scheduled on it is skipped — no data, no alerts."
+          : "This private location is reporting again and every check scheduled on it has resumed. No action needed."}
+      </Heading>
+      <KeyValue rows={rows} />
+      {isError ? (
+        <Steps
+          label="Check, in this order"
+          items={[
+            "The private location container is still running.",
+            <>
+              It can reach openstatus outbound over HTTPS (port <Mono>443</Mono>
+              ).
+            </>,
+            "Its token hasn’t been rotated or revoked.",
+          ]}
+        />
+      ) : null}
+      <Actions
+        primary={{ label: "View private location", href: LOCATIONS_URL }}
+      />
+    </Layout>
   );
 };
 
 PrivateLocationAlertEmail.PreviewProps = {
-  locationName: "eu-west-agent",
+  locationName: "eu-west-private",
   status: "error",
   lastSeenAt: "2026-07-23T10:00:00Z",
+  monitorCount: 4,
 } satisfies PrivateLocationAlertProps;
 
 export default PrivateLocationAlertEmail;
