@@ -268,7 +268,9 @@ export class EmailClient {
 
   public async sendTeamInvitation(req: TeamInvitationProps & { to: string }) {
     if (env.NODE_ENV === "development") {
+      const inviteUrl = `${req.baseUrl ?? "http://localhost:3000/invite"}?token=${req.token}`;
       console.log(`Sending team invitation email to ${req.to}`);
+      console.log(`>>> Team Invitation Link: ${inviteUrl}`);
       return;
     }
 

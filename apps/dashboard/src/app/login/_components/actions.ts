@@ -9,7 +9,12 @@ import { SSO_ORG_COOKIE } from "@/lib/sso-cookie";
 
 export async function signInWithResendAction(formData: FormData) {
   try {
-    await signIn("resend", formData);
+    const redirectToRaw = formData.get("redirectTo");
+    const redirectTo =
+      typeof redirectToRaw === "string" && redirectToRaw
+        ? redirectToRaw
+        : undefined;
+    await signIn("resend", formData, redirectTo ? { redirectTo } : undefined);
   } catch (e) {
     console.error(e);
   }

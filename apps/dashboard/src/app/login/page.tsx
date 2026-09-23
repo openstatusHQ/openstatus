@@ -8,7 +8,7 @@ import type { SearchParams } from "nuqs/server";
 import { signIn } from "@/lib/auth";
 
 import { LoginButton } from "./_components/login-button";
-import MagicLinkForm from "./_components/magic-link-form";
+import { MagicLinkForm } from "./_components/magic-link-form";
 import { SsoForm } from "./_components/sso-form";
 import { searchParamsCache } from "./search-params";
 
@@ -53,7 +53,7 @@ export default async function Page(props: {
         {process.env.NODE_ENV === "development" ||
         process.env.SELF_HOST === "true" ? (
           <div className="grid gap-4">
-            <MagicLinkForm />
+            <MagicLinkForm redirectTo={redirectTo ?? undefined} />
             <Separator />
           </div>
         ) : null}

@@ -8,10 +8,14 @@ import { toast } from "sonner";
 import { signInWithResendAction } from "./actions";
 import { LoginButton } from "./login-button";
 
+interface MagicLinkFormProps {
+  redirectTo?: string;
+}
+
 /**
  * @deprecated - only to be used in development mode
  */
-export default function MagicLinkForm() {
+export function MagicLinkForm({ redirectTo }: MagicLinkFormProps) {
   const { pending } = useFormStatus();
 
   return (
@@ -27,6 +31,9 @@ export default function MagicLinkForm() {
       }}
       className="grid gap-2"
     >
+      {redirectTo ? (
+        <input type="hidden" name="redirectTo" value={redirectTo} />
+      ) : null}
       <div className="grid gap-1.5">
         <Label htmlFor="email">Email</Label>
         <Input id="email" name="email" type="email" required />
