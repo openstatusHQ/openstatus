@@ -234,6 +234,40 @@ describe("downgradeWorkspaceToFree", () => {
     });
   });
 
+  test("stamps the given reason instead of the default", async () => {
+    await withTestTransaction(async (tx) => {
+      const s = await seedTeamWorkspace(tx);
+      const withSso = await tx
+        .update(workspace)
+        .set({ workosOrganizationId: "org_downgrade_reason", ssoEnabled: true })
+        .where(eq(workspace.id, s.ws.id))
+        .returning()
+        .get();
+      const ctx: ServiceContext = {
+        workspace: selectWorkspaceSchema.parse(withSso),
+        actor: { type: "system", job: "stripe-subscription-deleted" },
+        db: tx,
+      };
+
+      await downgradeWorkspaceToFree({ ctx, input: { reason: "trial_ended" } });
+
+      const [wsAudit] = await readAuditLog({
+        workspaceId: s.ws.id,
+        entityType: "workspace",
+        entityId: s.ws.id,
+        db: tx,
+      });
+      expect(wsAudit?.metadata).toMatchObject({ reason: "trial_ended" });
+      const [ssoAudit] = await readAuditLog({
+        workspaceId: s.ws.id,
+        entityType: "workspace_sso",
+        entityId: s.ws.id,
+        db: tx,
+      });
+      expect(ssoAudit?.metadata).toMatchObject({ reason: "trial_ended" });
+    });
+  });
+
   test("deactivates all but the oldest active monitor", async () => {
     await withTestTransaction(async (tx) => {
       const s = await seedTeamWorkspace(tx);

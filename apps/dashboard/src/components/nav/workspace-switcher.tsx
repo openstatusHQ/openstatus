@@ -19,7 +19,7 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
 import { Link } from "@/components/common/link";
-import { TRIAL_BANNER_DAYS, getTrialDaysLeft } from "@/lib/trial";
+import { TRIAL_BANNER_DAYS } from "@/lib/trial";
 import { useTRPC } from "@/lib/trpc/client";
 import { switchWorkspace } from "@/lib/workspace-cookie";
 
@@ -36,7 +36,7 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
 
   if (!workspace) return null;
 
-  const trialDaysLeft = getTrialDaysLeft(workspace.trialEndsAt);
+  const trialDaysLeft = workspace.trialDaysLeft;
 
   return (
     <SidebarMenu>

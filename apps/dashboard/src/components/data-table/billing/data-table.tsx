@@ -31,7 +31,6 @@ import { Fragment, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { config as featureGroups, plans } from "@/data/plans";
-import { getTrialDaysLeft } from "@/lib/trial";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
@@ -86,7 +85,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
 
   if (!workspace) return null;
 
-  const isTrialing = getTrialDaysLeft(workspace.trialEndsAt) !== null;
+  const isTrialing = workspace.trialDaysLeft !== null;
   const filteredPlans = Object.values(plans).filter((plan) =>
     restrictTo ? restrictTo.includes(plan.id) : true,
   );

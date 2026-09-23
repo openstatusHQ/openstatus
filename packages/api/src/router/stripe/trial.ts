@@ -1,14 +1,11 @@
-import { and, db as defaultDb, eq, isNotNull } from "@openstatus/db";
-import {
-  selectWorkspaceSchema,
-  usersToWorkspaces,
-  workspace,
-} from "@openstatus/db/src/schema";
-import type { DB } from "@openstatus/services";
+import type { DB, ServiceContext } from "@openstatus/services";
 import { hasPendingInvitation } from "@openstatus/services/invitation";
 import {
   downgradeWorkspaceToFree,
+  findTrialEligibleWorkspace,
+  listOwnedTrialWorkspaces,
   updateWorkspacePlan,
+  updateWorkspaceStripeId,
 } from "@openstatus/services/workspace";
 import MailChecker from "mailchecker";
 
@@ -64,7 +61,7 @@ export async function maybeStartSignupTrial(args: {
   currency: "USD" | "EUR";
   db?: DB;
 }): Promise<SignupTrialResult> {
-  const db = args.db ?? defaultDb;
+  const { db } = args;
   const email = args.email.trim().toLowerCase();
 
   if (
@@ -85,28 +82,17 @@ export async function maybeStartSignupTrial(args: {
     return { started: false, reason: "already_trialed" };
   }
 
-  const row = await db
-    .select({ workspace })
-    .from(usersToWorkspaces)
-    .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
-    .where(
-      and(
-        eq(usersToWorkspaces.userId, args.userId),
-        eq(usersToWorkspaces.role, "owner"),
-      ),
-    )
-    .get();
+  const ws = await findTrialEligibleWorkspace({
+    input: { userId: args.userId },
+    db,
+  });
+  if (!ws) return { started: false, reason: "not_eligible" };
 
-  if (
-    !row ||
-    row.workspace.stripeId ||
-    row.workspace.subscriptionId ||
-    (row.workspace.plan && row.workspace.plan !== "free")
-  ) {
-    return { started: false, reason: "not_eligible" };
-  }
-
-  const ws = selectWorkspaceSchema.parse(row.workspace);
+  const ctx: ServiceContext = {
+    workspace: ws,
+    actor: { type: "system", job: "signup-trial" },
+    db,
+  };
 
   const priceId = getPriceIdForPlan("starter", "monthly");
   if (!priceId) throw new Error("Missing Starter monthly price");
@@ -117,11 +103,7 @@ export async function maybeStartSignupTrial(args: {
     { idempotencyKey: `trial-customer:ws_${ws.id}` },
   );
 
-  await db
-    .update(workspace)
-    .set({ stripeId: customer.id })
-    .where(eq(workspace.id, ws.id))
-    .run();
+  await updateWorkspaceStripeId({ ctx, input: { stripeId: customer.id } });
 
   const subscription = await stripe.subscriptions.create(
     {
@@ -146,11 +128,7 @@ export async function maybeStartSignupTrial(args: {
   const trialEndsAt = new Date(subscription.trial_end * 1000);
 
   await updateWorkspacePlan({
-    ctx: {
-      workspace: { ...ws, stripeId: customer.id },
-      actor: { type: "system", job: "signup-trial" },
-      db,
-    },
+    ctx,
     input: {
       plan: built.plan,
       subscriptionId: subscription.id,
@@ -169,30 +147,18 @@ export async function cancelOwnedTrials(args: {
   userId: number;
   db?: DB;
 }): Promise<string[]> {
-  const db = args.db ?? defaultDb;
-
-  const rows = await db
-    .select({ workspace })
-    .from(usersToWorkspaces)
-    .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
-    .where(
-      and(
-        eq(usersToWorkspaces.userId, args.userId),
-        eq(usersToWorkspaces.role, "owner"),
-        isNotNull(workspace.trialEndsAt),
-      ),
-    )
-    .all();
+  const { db } = args;
+  const trials = await listOwnedTrialWorkspaces({
+    input: { userId: args.userId },
+    db,
+  });
 
   const customDomains: string[] = [];
-  for (const row of rows) {
-    await cancelSubscription(row.workspace.stripeId ?? undefined);
+  for (const ws of trials) {
+    await cancelSubscription(ws.stripeId ?? undefined);
     const result = await downgradeWorkspaceToFree({
-      ctx: {
-        workspace: selectWorkspaceSchema.parse(row.workspace),
-        actor: { type: "user", userId: args.userId },
-        db,
-      },
+      ctx: { workspace: ws, actor: { type: "user", userId: args.userId }, db },
+      input: { reason: "account_deleted" },
     });
     customDomains.push(...result.customDomains);
   }

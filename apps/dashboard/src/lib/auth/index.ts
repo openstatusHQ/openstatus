@@ -45,6 +45,9 @@ async function syncUser(
     .run();
 }
 
+// Runs from the `signIn` event, not `createUser`: only `signIn` carries the
+// account, and the trial must know the provider to skip SSO signups. It also
+// fires after the account row is linked, so nothing races the adapter.
 async function onNewUser(newUser: Partial<User>, provider?: string) {
   if (!newUser.id || !newUser.email) {
     throw new Error("User id & email is required");

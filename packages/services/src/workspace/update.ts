@@ -5,7 +5,12 @@ import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError } from "../errors";
-import { UpdateWorkspaceNameInput, UpdateWorkspacePlanInput } from "./schemas";
+import {
+  UpdateWorkspaceLimitsInput,
+  UpdateWorkspaceNameInput,
+  UpdateWorkspacePlanInput,
+  UpdateWorkspaceStripeIdInput,
+} from "./schemas";
 
 /**
  * Rename the caller's workspace. No conflict check — workspace names are
@@ -102,6 +107,80 @@ export async function updateWorkspacePlan(args: {
       before: existing,
       after: updated,
       metadata,
+    });
+  });
+}
+
+/** Link the workspace to its Stripe customer. Set once; never cleared. */
+export async function updateWorkspaceStripeId(args: {
+  ctx: ServiceContext;
+  input: UpdateWorkspaceStripeIdInput;
+}): Promise<void> {
+  const { ctx } = args;
+  requireScope(ctx, "write");
+  const input = UpdateWorkspaceStripeIdInput.parse(args.input);
+
+  await withTransaction(ctx, async (tx) => {
+    const existing = await tx
+      .select()
+      .from(workspace)
+      .where(eq(workspace.id, ctx.workspace.id))
+      .get();
+    if (!existing) throw new NotFoundError("workspace", ctx.workspace.id);
+
+    const updated = await tx
+      .update(workspace)
+      .set({ stripeId: input.stripeId, updatedAt: new Date() })
+      .where(eq(workspace.id, ctx.workspace.id))
+      .returning()
+      .get();
+
+    await emitAudit(tx, ctx, {
+      action: "workspace.update",
+      entityType: "workspace",
+      entityId: ctx.workspace.id,
+      before: existing,
+      after: updated,
+    });
+  });
+}
+
+export async function updateWorkspaceLimits(args: {
+  ctx: ServiceContext;
+  input: UpdateWorkspaceLimitsInput;
+}): Promise<void> {
+  const { ctx } = args;
+  requireScope(ctx, "write");
+  const input = UpdateWorkspaceLimitsInput.parse(args.input);
+
+  await withTransaction(ctx, async (tx) => {
+    const existing = await tx
+      .select()
+      .from(workspace)
+      .where(eq(workspace.id, ctx.workspace.id))
+      .get();
+    if (!existing) throw new NotFoundError("workspace", ctx.workspace.id);
+
+    const updated = await tx
+      .update(workspace)
+      .set({
+        limits: JSON.stringify(input.limits),
+        ...(input.trialEndsAt !== undefined && {
+          trialEndsAt: input.trialEndsAt,
+        }),
+        updatedAt: new Date(),
+      })
+      .where(eq(workspace.id, ctx.workspace.id))
+      .returning()
+      .get();
+
+    await emitAudit(tx, ctx, {
+      action: "workspace.update",
+      entityType: "workspace",
+      entityId: ctx.workspace.id,
+      before: existing,
+      after: updated,
+      ...(input.reason ? { metadata: { reason: input.reason } } : {}),
     });
   });
 }

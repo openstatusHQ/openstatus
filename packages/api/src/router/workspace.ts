@@ -1,5 +1,6 @@
 import { Events } from "@openstatus/analytics";
 import {
+  getTrialDaysLeft,
   getWorkspaceUsage,
   updateWorkspaceName,
 } from "@openstatus/services/workspace";
@@ -12,7 +13,11 @@ export const workspaceRouter = createTRPCRouter({
   // The authed middleware already resolved and parsed this row; re-selecting
   // it would be the same query. Counts live in `usage` — the shell reads
   // `limits` on every route, the counts only on two surfaces.
-  get: protectedProcedure.query(({ ctx }) => ctx.workspace),
+  // `trialDaysLeft` is derived here, not stored: it depends on "now".
+  get: protectedProcedure.query(({ ctx }) => ({
+    ...ctx.workspace,
+    trialDaysLeft: getTrialDaysLeft(ctx.workspace.trialEndsAt),
+  })),
 
   usage: protectedProcedure.query(async ({ ctx }) => {
     try {

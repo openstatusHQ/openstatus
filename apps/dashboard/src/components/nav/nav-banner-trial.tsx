@@ -9,8 +9,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@openstatus/ui/components/ui/sidebar";
+import { useMutation } from "@tanstack/react-query";
 
-import { usePaymentMethodSetup } from "@/hooks/use-payment-method-setup";
+import { useTRPC } from "@/lib/trpc/client";
 
 export function NavBannerTrial({
   workspaceSlug,
@@ -21,7 +22,14 @@ export function NavBannerTrial({
   daysLeft: number;
   handleClose: () => void;
 }) {
-  const paymentMethodSetup = usePaymentMethodSetup(workspaceSlug);
+  const trpc = useTRPC();
+  const paymentMethodSetupMutation = useMutation(
+    trpc.stripeRouter.getPaymentMethodSetupSession.mutationOptions({
+      onSuccess: (url) => {
+        if (url) window.location.assign(url);
+      },
+    }),
+  );
 
   return (
     <SidebarGroup className="bg-background rounded-lg border px-2 py-1.5 group-data-[collapsible=icon]:hidden">
@@ -45,8 +53,14 @@ export function NavBannerTrial({
           <SidebarMenuButton
             className="justify-center border"
             data-active="true"
-            disabled={paymentMethodSetup.isPending}
-            onClick={paymentMethodSetup.start}
+            disabled={paymentMethodSetupMutation.isPending}
+            onClick={() =>
+              paymentMethodSetupMutation.mutate({
+                workspaceSlug,
+                successUrl: `${window.location.origin}/settings/billing?setup=true`,
+                cancelUrl: `${window.location.origin}/settings/billing`,
+              })
+            }
           >
             Add payment method
           </SidebarMenuButton>

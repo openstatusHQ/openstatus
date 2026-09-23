@@ -18,6 +18,53 @@ export type GetWorkspaceByStripeIdInput = z.infer<
   typeof GetWorkspaceByStripeIdInput
 >;
 
+export const GetWorkspaceForMemberInput = z.object({
+  slug: z.string().min(1),
+  userId: z.number().int(),
+});
+export type GetWorkspaceForMemberInput = z.infer<
+  typeof GetWorkspaceForMemberInput
+>;
+
+export const ListWorkspaceOwnersInput = z.object({
+  workspaceId: z.number().int(),
+});
+export type ListWorkspaceOwnersInput = z.infer<typeof ListWorkspaceOwnersInput>;
+
+export const OwnedWorkspacesInput = z.object({ userId: z.number().int() });
+export type OwnedWorkspacesInput = z.infer<typeof OwnedWorkspacesInput>;
+
+export const UpdateWorkspaceStripeIdInput = z.object({
+  stripeId: z.string().min(1),
+});
+export type UpdateWorkspaceStripeIdInput = z.infer<
+  typeof UpdateWorkspaceStripeIdInput
+>;
+
+/**
+ * Replace the workspace's feature limits without touching the plan — an
+ * addon bought or removed. `trialEndsAt: null` records that buying the
+ * addon ended the trial; `reason` lands in the audit metadata.
+ */
+export const UpdateWorkspaceLimitsInput = z.object({
+  limits: limitsSchema,
+  trialEndsAt: z.date().nullable().optional(),
+  reason: z.string().optional(),
+});
+export type UpdateWorkspaceLimitsInput = z.infer<
+  typeof UpdateWorkspaceLimitsInput
+>;
+
+/**
+ * `reason` is stamped on the plan-flip audit row (and the SSO one) so a
+ * trial that ran out reads differently from a paying customer churning.
+ * Defaults to `subscription_deleted`.
+ */
+export const DowngradeWorkspaceInput = z.object({
+  reason: z.string().optional(),
+});
+export type DowngradeWorkspaceInput = z.infer<typeof DowngradeWorkspaceInput>;
+
 export const UpdateWorkspaceNameInput = z.object({
   name: z.string().trim().min(1),
 });

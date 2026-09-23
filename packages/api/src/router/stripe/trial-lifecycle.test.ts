@@ -1,5 +1,6 @@
-import { db, eq } from "@openstatus/db";
+import { and, db, desc, eq } from "@openstatus/db";
 import {
+  auditLog,
   selectUserSchema,
   selectWorkspaceSchema,
   user,
@@ -84,6 +85,22 @@ function customerWith(defaultPaymentMethod: string | null) {
 
 async function readWorkspace(id: number) {
   return db.select().from(workspace).where(eq(workspace.id, id)).get();
+}
+
+async function lastPlanAuditReason(workspaceId: number) {
+  const row = await db
+    .select({ metadata: auditLog.metadata })
+    .from(auditLog)
+    .where(
+      and(
+        eq(auditLog.workspaceId, workspaceId),
+        eq(auditLog.entityType, "workspace"),
+        eq(auditLog.action, "workspace.update"),
+      ),
+    )
+    .orderBy(desc(auditLog.id))
+    .get();
+  return (row?.metadata as { reason?: string } | null)?.reason;
 }
 
 function asCaller(fixture: Awaited<ReturnType<typeof seedTrial>>) {
@@ -330,6 +347,7 @@ describe("trial lifecycle", () => {
       const after = await readWorkspace(s.ws.id);
       expect(after?.plan).toBe("free");
       expect(after?.trialEndsAt).toBeNull();
+      expect(await lastPlanAuditReason(s.ws.id)).toBe("account_deleted");
       const deleted = await db
         .select()
         .from(user)
@@ -421,6 +439,48 @@ describe("trial lifecycle", () => {
 
       const after = await readWorkspace(s.ws.id);
       expect(after?.trialEndsAt).toEqual(new Date((sub.trial_end ?? 0) * 1000));
+    });
+
+    test("a trial that ran out is audited as trial_ended, not churn", async () => {
+      const send = stub(resend.emails, "send");
+      const enabled = stub(delivery, "enabled", () => true);
+      stubs.push(send, enabled);
+      const s = await seedTrial();
+      live = [];
+
+      await caller().customerSubscriptionDeleted(
+        event(
+          "customer.subscription.deleted",
+          subscription(s.stripeId, { status: "canceled" }),
+        ),
+      );
+
+      const after = await readWorkspace(s.ws.id);
+      expect(after?.plan).toBe("free");
+      expect(after?.trialEndsAt).toBeNull();
+      expect(await lastPlanAuditReason(s.ws.id)).toBe("trial_ended");
+    });
+
+    test("a trial the customer cancelled is audited as trial_cancelled", async () => {
+      const send = stub(resend.emails, "send");
+      const enabled = stub(delivery, "enabled", () => true);
+      stubs.push(send, enabled);
+      const s = await seedTrial();
+      live = [];
+
+      await caller().customerSubscriptionDeleted(
+        event(
+          "customer.subscription.deleted",
+          subscription(s.stripeId, {
+            status: "canceled",
+            cancellation_details: {
+              reason: "cancellation_requested",
+            } as Stripe.Subscription.CancellationDetails,
+          }),
+        ),
+      );
+
+      expect(await lastPlanAuditReason(s.ws.id)).toBe("trial_cancelled");
     });
 
     test("deleted on an already-free workspace → nothing happens", async () => {

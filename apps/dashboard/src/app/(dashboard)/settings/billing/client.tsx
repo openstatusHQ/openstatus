@@ -34,9 +34,7 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { usePaymentMethodSetup } from "@/hooks/use-payment-method-setup";
 import { formatDate } from "@/lib/formatter";
-import { getTrialDaysLeft } from "@/lib/trial";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
@@ -86,8 +84,14 @@ export function Client() {
   const [{ success, setup }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const paymentMethodSetup = usePaymentMethodSetup(workspace?.slug);
   const { data: usage } = useQuery(trpc.workspace.usage.queryOptions());
+  const paymentMethodSetupMutation = useMutation(
+    trpc.stripeRouter.getPaymentMethodSetupSession.mutationOptions({
+      onSuccess: (url) => {
+        if (url) window.location.assign(url);
+      },
+    }),
+  );
   const customerPortalMutation = useMutation(
     trpc.stripeRouter.getUserCustomerPortal.mutationOptions({
       onSuccess: (url) => {
@@ -153,7 +157,7 @@ export function Client() {
   if (!workspace) return null;
 
   const planAddons = allPlans[workspace.plan].addons;
-  const trialDaysLeft = getTrialDaysLeft(workspace.trialEndsAt);
+  const trialDaysLeft = workspace.trialDaysLeft;
 
   return (
     <SectionGroup>
@@ -184,10 +188,16 @@ export function Client() {
                 </FormCardFooterInfo>
                 <Button
                   size="sm"
-                  onClick={paymentMethodSetup.start}
-                  disabled={paymentMethodSetup.isPending}
+                  onClick={() =>
+                    paymentMethodSetupMutation.mutate({
+                      workspaceSlug: workspace.slug,
+                      successUrl: `${BASE_URL}/settings/billing?setup=true`,
+                      cancelUrl: `${BASE_URL}/settings/billing`,
+                    })
+                  }
+                  disabled={paymentMethodSetupMutation.isPending}
                 >
-                  {paymentMethodSetup.isPending
+                  {paymentMethodSetupMutation.isPending
                     ? "Loading..."
                     : "Add payment method"}
                 </Button>

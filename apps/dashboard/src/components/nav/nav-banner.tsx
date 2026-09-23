@@ -3,7 +3,7 @@
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useQuery } from "@tanstack/react-query";
 
-import { TRIAL_BANNER_DAYS, getTrialDaysLeft } from "@/lib/trial";
+import { TRIAL_BANNER_DAYS } from "@/lib/trial";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { NavBannerChecklist } from "./nav-banner-checklist";
@@ -33,7 +33,7 @@ export function NavBanner() {
 
   if (!workspace) return null;
 
-  const trialDaysLeft = getTrialDaysLeft(workspace.trialEndsAt);
+  const trialDaysLeft = workspace.trialDaysLeft;
   if (
     openTrial === "true" &&
     trialDaysLeft !== null &&

@@ -6,6 +6,7 @@ import {
   pageComponent,
   selectWorkspaceSchema,
   statusReport,
+  user,
   usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
@@ -15,7 +16,9 @@ import { NotFoundError } from "../errors";
 import type { Workspace } from "../types";
 import {
   GetWorkspaceByStripeIdInput,
+  GetWorkspaceForMemberInput,
   type GetWorkspaceUsageInput,
+  ListWorkspaceOwnersInput,
   ListWorkspacesInput,
 } from "./schemas";
 
@@ -155,4 +158,57 @@ export async function listWorkspaces(args: {
   return selectWorkspaceSchema
     .array()
     .parse(rows.map(({ workspace }) => workspace));
+}
+
+/**
+ * A workspace by slug, only if the user is a member. Billing procedures take
+ * the slug as input, so this runs before a `ctx.workspace` exists for it.
+ * Returns the member's email alongside for the Stripe customer record.
+ */
+export async function getWorkspaceForMember(args: {
+  input: GetWorkspaceForMemberInput;
+  db?: DB;
+}): Promise<{ workspace: Workspace; email: string | null } | null> {
+  const input = GetWorkspaceForMemberInput.parse(args.input);
+  const db = args.db ?? defaultDb;
+
+  const row = await db
+    .select({ workspace, email: user.email })
+    .from(usersToWorkspaces)
+    .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
+    .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
+    .where(
+      and(
+        eq(workspace.slug, input.slug),
+        eq(usersToWorkspaces.userId, input.userId),
+      ),
+    )
+    .get();
+
+  if (!row) return null;
+  return {
+    workspace: selectWorkspaceSchema.parse(row.workspace),
+    email: row.email,
+  };
+}
+
+/** Owners of a workspace — billing mail recipients and trial attribution. */
+export async function listWorkspaceOwners(args: {
+  input: ListWorkspaceOwnersInput;
+  db?: DB;
+}): Promise<{ id: number; email: string | null }[]> {
+  const input = ListWorkspaceOwnersInput.parse(args.input);
+  const db = args.db ?? defaultDb;
+
+  return db
+    .select({ id: user.id, email: user.email })
+    .from(usersToWorkspaces)
+    .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
+    .where(
+      and(
+        eq(usersToWorkspaces.workspaceId, input.workspaceId),
+        eq(usersToWorkspaces.role, "owner"),
+      ),
+    )
+    .all();
 }

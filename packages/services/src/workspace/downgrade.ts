@@ -21,6 +21,7 @@ import {
   updatePagePasswordProtection,
 } from "../page";
 import { disableSso } from "../sso";
+import { DowngradeWorkspaceInput } from "./schemas";
 import { updateWorkspacePlan } from "./update";
 
 /**
@@ -63,6 +64,7 @@ export type DowngradeTrim = {
 // oxlint-disable-next-line openstatus/services-mutation-guards
 export async function downgradeWorkspaceToFree(args: {
   ctx: ServiceContext;
+  input?: DowngradeWorkspaceInput;
 }): Promise<{
   customDomains: string[];
   ssoDisabled: boolean;
@@ -70,11 +72,17 @@ export async function downgradeWorkspaceToFree(args: {
 }> {
   const { ctx } = args;
   requireScope(ctx, "write");
+  const input = DowngradeWorkspaceInput.parse(args.input ?? {});
+  const reason = input.reason ?? "subscription_deleted";
   const workspaceId = ctx.workspace.id;
 
   return withTransaction(ctx, async (tx) => {
     const txCtx: ServiceContext = { ...ctx, db: tx };
 
+    // `trialEndsAt` means "the trial in effect ends at", not trial history:
+    // the dashboard derives "is trialing" from it, so a cancelled trial must
+    // clear it or a free workspace keeps showing trial banners until the date
+    // passes. History lives in the audit row and the Stripe customer metadata.
     await updateWorkspacePlan({
       ctx: txCtx,
       input: {
@@ -84,7 +92,7 @@ export async function downgradeWorkspaceToFree(args: {
         endsAt: null,
         trialEndsAt: null,
         limits: getLimits("free"),
-        reason: "subscription_deleted",
+        reason,
       },
     });
 
@@ -92,10 +100,7 @@ export async function downgradeWorkspaceToFree(args: {
     // otherwise re-add the members this downgrade is about to trim.
     const ssoWasEnabled = ctx.workspace.ssoEnabled;
     if (ssoWasEnabled) {
-      await disableSso({
-        ctx: txCtx,
-        input: { reason: "subscription_deleted" },
-      });
+      await disableSso({ ctx: txCtx, input: { reason } });
     }
 
     const activeMonitors = await tx

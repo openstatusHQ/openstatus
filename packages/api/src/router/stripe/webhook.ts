@@ -1,6 +1,6 @@
 import { Events, setupAnalytics } from "@openstatus/analytics";
-import { and, eq } from "@openstatus/db";
-import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
+import { eq } from "@openstatus/db";
+import { user } from "@openstatus/db/src/schema";
 import {
   billingRecipients,
   cancelScheduledEmail,
@@ -16,6 +16,7 @@ import {
   type DowngradeTrim,
   downgradeWorkspaceToFree,
   getWorkspaceByStripeId,
+  listWorkspaceOwners,
   previewWorkspaceDowngrade,
   updateWorkspacePlan,
 } from "@openstatus/services/workspace";
@@ -61,17 +62,7 @@ const REMINDER_METADATA_KEY = "reminder_email_id";
 type Db = Parameters<typeof getWorkspaceByStripeId>[0]["db"];
 
 async function getOwnerEmails(db: NonNullable<Db>, workspaceId: number) {
-  const owners = await db
-    .select({ email: user.email })
-    .from(usersToWorkspaces)
-    .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
-    .where(
-      and(
-        eq(usersToWorkspaces.workspaceId, workspaceId),
-        eq(usersToWorkspaces.role, "owner"),
-      ),
-    )
-    .all();
+  const owners = await listWorkspaceOwners({ input: { workspaceId }, db });
   return owners.map((owner) => owner.email);
 }
 
@@ -311,17 +302,10 @@ export const webhookRouter = createTRPCRouter({
       wasTrialing &&
       current.status === "active"
     ) {
-      const owner = await opts.ctx.db
-        .select({ id: user.id, email: user.email })
-        .from(usersToWorkspaces)
-        .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
-        .where(
-          and(
-            eq(usersToWorkspaces.workspaceId, ws.id),
-            eq(usersToWorkspaces.role, "owner"),
-          ),
-        )
-        .get();
+      const [owner] = await listWorkspaceOwners({
+        input: { workspaceId: ws.id },
+        db: opts.ctx.db,
+      });
       const analytics = await setupAnalytics({
         userId: owner ? `usr_${owner.id}` : undefined,
         email: owner?.email ?? undefined,
@@ -525,8 +509,16 @@ export const webhookRouter = createTRPCRouter({
       db: opts.ctx.db,
     };
 
+    // A trial that ran out without a card, or was cancelled mid-trial, is
+    // not a paying customer churning — keep the audit trail honest.
+    const reason = !ws.trialEndsAt
+      ? "subscription_deleted"
+      : subscription.cancellation_details?.reason === "cancellation_requested"
+        ? "trial_cancelled"
+        : "trial_ended";
+
     const { customDomains, ssoDisabled, trimmed } =
-      await downgradeWorkspaceToFree({ ctx });
+      await downgradeWorkspaceToFree({ ctx, input: { reason } });
 
     // Best-effort after commit: owners must know what the cascade removed, and
     // removed members that they lost access, but a mail failure must not fail

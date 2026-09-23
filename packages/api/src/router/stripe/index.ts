@@ -1,12 +1,5 @@
 import { Events } from "@openstatus/analytics";
-import { and, eq } from "@openstatus/db";
-import {
-  selectWorkspaceSchema,
-  user,
-  usersToWorkspaces,
-  workspace,
-  workspacePlans,
-} from "@openstatus/db/src/schema";
+import { workspacePlans } from "@openstatus/db/src/schema";
 import type { AddonQuantityKey } from "@openstatus/db/src/schema/plan/schema";
 import {
   addons,
@@ -16,8 +9,13 @@ import {
   isAddonQuantityKey,
   updateAddonInLimits,
 } from "@openstatus/db/src/schema/plan/utils";
-import { type DB, countWorkspaceUsage } from "@openstatus/services";
-import { updateWorkspacePlan } from "@openstatus/services/workspace";
+import { type ServiceContext, countWorkspaceUsage } from "@openstatus/services";
+import {
+  getWorkspaceForMember,
+  updateWorkspaceLimits,
+  updateWorkspacePlan,
+  updateWorkspaceStripeId,
+} from "@openstatus/services/workspace";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -48,53 +46,33 @@ const url =
     ? "https://www.openstatus.dev"
     : "http://localhost:3000";
 
-async function getAccessibleWorkspace(
-  db: DB,
-  userId: number,
-  workspaceSlug: string,
-) {
-  const result = await db
-    .select()
-    .from(workspace)
-    .where(eq(workspace.slug, workspaceSlug))
-    .get();
-
-  if (!result) return;
-
-  const member = await db
-    .select({ email: user.email })
-    .from(usersToWorkspaces)
-    .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
-    .where(
-      and(
-        eq(usersToWorkspaces.workspaceId, result.id),
-        eq(usersToWorkspaces.userId, userId),
-      ),
-    )
-    .get();
-
-  if (!member) return;
-
-  return { workspace: result, email: member.email };
+// The slug is input, so the target may differ from the active `ctx.workspace`.
+async function resolveWorkspaceCtx(opts: {
+  ctx: { db: ServiceContext["db"]; user: { id: number } };
+  input: { workspaceSlug: string };
+}) {
+  const access = await getWorkspaceForMember({
+    input: { slug: opts.input.workspaceSlug, userId: opts.ctx.user.id },
+    db: opts.ctx.db,
+  });
+  if (!access) return;
+  const ctx: ServiceContext = {
+    workspace: access.workspace,
+    actor: { type: "user", userId: opts.ctx.user.id },
+    db: opts.ctx.db,
+  };
+  return { ctx, email: access.email };
 }
 
-async function ensureStripeCustomer(
-  db: DB,
-  ws: { id: number; stripeId: string | null },
-  email: string | null,
-) {
-  if (ws.stripeId) return ws.stripeId;
+async function ensureStripeCustomer(ctx: ServiceContext, email: string | null) {
+  if (ctx.workspace.stripeId) return ctx.workspace.stripeId;
 
   const customer = await stripe.customers.create({
-    metadata: { workspaceId: String(ws.id) },
+    metadata: { workspaceId: String(ctx.workspace.id) },
     email: email || "",
   });
 
-  await db
-    .update(workspace)
-    .set({ stripeId: customer.id })
-    .where(eq(workspace.id, ws.id))
-    .run();
+  await updateWorkspaceStripeId({ ctx, input: { stripeId: customer.id } });
 
   return customer.id;
 }
@@ -121,18 +99,10 @@ export const stripeRouter = createTRPCRouter({
       z.object({ workspaceSlug: z.string(), returnUrl: z.string().optional() }),
     )
     .mutation(async (opts) => {
-      const access = await getAccessibleWorkspace(
-        opts.ctx.db,
-        opts.ctx.user.id,
-        opts.input.workspaceSlug,
-      );
-      if (!access) return;
-      const result = access.workspace;
-      const stripeId = await ensureStripeCustomer(
-        opts.ctx.db,
-        result,
-        access.email,
-      );
+      const resolved = await resolveWorkspaceCtx(opts);
+      if (!resolved) return;
+      const result = resolved.ctx.workspace;
+      const stripeId = await ensureStripeCustomer(resolved.ctx, resolved.email);
 
       const session = await stripe.billingPortal.sessions.create({
         customer: stripeId,
@@ -155,18 +125,10 @@ export const stripeRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      const access = await getAccessibleWorkspace(
-        opts.ctx.db,
-        opts.ctx.user.id,
-        opts.input.workspaceSlug,
-      );
-      if (!access) return;
-      const result = access.workspace;
-      const stripeId = await ensureStripeCustomer(
-        opts.ctx.db,
-        result,
-        access.email,
-      );
+      const resolved = await resolveWorkspaceCtx(opts);
+      if (!resolved) return;
+      const result = resolved.ctx.workspace;
+      const stripeId = await ensureStripeCustomer(resolved.ctx, resolved.email);
 
       const priceId = getPriceIdForPlan(opts.input.plan, opts.input.interval);
       if (!priceId) {
@@ -199,7 +161,7 @@ export const stripeRouter = createTRPCRouter({
         const session = await createPaymentMethodSetupSession({
           customer: stripeId,
           subscriptionId: current.id,
-          successUrl: opts.input.successUrl || `${billingUrl}?setup=success`,
+          successUrl: opts.input.successUrl || `${billingUrl}?setup=true`,
           cancelUrl: opts.input.cancelUrl || billingUrl,
         });
         return { type: "setup" as const, session };
@@ -270,11 +232,7 @@ export const stripeRouter = createTRPCRouter({
         // rebuilds the same state from the same subscription, so applying it
         // again is a no-op.
         await updateWorkspacePlan({
-          ctx: {
-            workspace: selectWorkspaceSchema.parse(result),
-            actor: { type: "user", userId: opts.ctx.user.id },
-            db: opts.ctx.db,
-          },
+          ctx: resolved.ctx,
           input: {
             plan: built.plan,
             subscriptionId: updated.id,
@@ -323,23 +281,18 @@ export const stripeRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      const access = await getAccessibleWorkspace(
-        opts.ctx.db,
-        opts.ctx.user.id,
-        opts.input.workspaceSlug,
-      );
-      if (!access?.workspace.stripeId) return;
+      const resolved = await resolveWorkspaceCtx(opts);
+      const ws = resolved?.ctx.workspace;
+      if (!ws?.stripeId) return;
 
-      const { current } = await getCurrentSubscription(
-        access.workspace.stripeId,
-      );
+      const { current } = await getCurrentSubscription(ws.stripeId);
       if (!current) return;
 
-      const billingUrl = `${url}/app/${access.workspace.slug}/settings/billing`;
+      const billingUrl = `${url}/app/${ws.slug}/settings/billing`;
       const session = await createPaymentMethodSetupSession({
-        customer: access.workspace.stripeId,
+        customer: ws.stripeId,
         subscriptionId: current.id,
-        successUrl: opts.input.successUrl || `${billingUrl}?setup=success`,
+        successUrl: opts.input.successUrl || `${billingUrl}?setup=true`,
         cancelUrl: opts.input.cancelUrl || billingUrl,
       });
 
@@ -356,16 +309,11 @@ export const stripeRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      const access = await getAccessibleWorkspace(
-        opts.ctx.db,
-        opts.ctx.user.id,
-        opts.input.workspaceSlug,
-      );
-      if (!access) return;
-      const result = access.workspace;
-      const ws = selectWorkspaceSchema.parse(result);
+      const resolved = await resolveWorkspaceCtx(opts);
+      if (!resolved) return;
+      const ws = resolved.ctx.workspace;
 
-      const stripeId = result.stripeId;
+      const stripeId = ws.stripeId;
       if (!stripeId) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -450,7 +398,7 @@ export const stripeRouter = createTRPCRouter({
 
         const current = await countWorkspaceUsage(
           opts.ctx.db,
-          result.id,
+          ws.id,
           opts.input.feature,
         );
         if (current > resolved.newLimit) {
@@ -496,14 +444,14 @@ export const stripeRouter = createTRPCRouter({
         newValue,
       );
 
-      await opts.ctx.db
-        .update(workspace)
-        .set({
-          limits: JSON.stringify(newLimits),
+      await updateWorkspaceLimits({
+        ctx: resolved.ctx,
+        input: {
+          limits: newLimits,
           ...(endsTrial && { trialEndsAt: null }),
-        })
-        .where(eq(workspace.id, result.id))
-        .run();
+          reason: endsTrial ? "trial_converted" : "addon_changed",
+        },
+      });
 
       // TODO: send email to user notifying about the change if not already from stripe
 

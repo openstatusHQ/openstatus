@@ -28,8 +28,6 @@ import { isTRPCClientError } from "@trpc/client";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { usePaymentMethodSetup } from "@/hooks/use-payment-method-setup";
-import { getTrialDaysLeft } from "@/lib/trial";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Workspace = RouterOutputs["workspace"]["get"];
@@ -72,8 +70,14 @@ export function BillingAddons({
       },
     }),
   );
-  const paymentMethodSetup = usePaymentMethodSetup(workspace.slug);
-  const isTrialing = getTrialDaysLeft(workspace.trialEndsAt) !== null;
+  const paymentMethodSetupMutation = useMutation(
+    trpc.stripeRouter.getPaymentMethodSetupSession.mutationOptions({
+      onSuccess: (url) => {
+        if (url) window.location.assign(url);
+      },
+    }),
+  );
+  const isTrialing = workspace.trialDaysLeft !== null;
   const plan = workspace.plan;
   const packSize = getAddonPackSize(addon);
   const maxPacks = getAddonMaxQuantity(addon);
@@ -120,7 +124,12 @@ export function BillingAddons({
                 message: error.message,
                 action: {
                   label: "Add payment method",
-                  onClick: paymentMethodSetup.start,
+                  onClick: () =>
+                    paymentMethodSetupMutation.mutate({
+                      workspaceSlug: workspace.slug,
+                      successUrl: `${window.location.origin}/settings/billing?setup=true`,
+                      cancelUrl: `${window.location.origin}/settings/billing`,
+                    }),
                 },
               };
             }
