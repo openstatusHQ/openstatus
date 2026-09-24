@@ -435,13 +435,11 @@ export const statusPageRouter = createTRPCRouter({
         .flatMap((group): Tracker[] => {
           if (group.groupId === null) {
             // Ungrouped components - return as individual trackers
-            return group.components.map(
-              (component): PageComponentTracker => ({
-                type: "component",
-                component,
-                order: component.order ?? 0,
-              }),
-            );
+            return group.components.map((component): PageComponentTracker => ({
+              type: "component",
+              component,
+              order: component.order ?? 0,
+            }));
           }
           // Grouped components - return as single group tracker
           const sortedComponents = group.components.sort(

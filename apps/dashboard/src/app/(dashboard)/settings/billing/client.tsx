@@ -3,7 +3,7 @@
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useEffect, useMemo, useTransition } from "react";
@@ -34,14 +34,10 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
-
-const BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://app.openstatus.dev"
-    : "http://localhost:3000";
 
 function calculateTotalRequests(limits: Limits) {
   const monitors = limits.monitors;
@@ -79,9 +75,19 @@ export function Client() {
   const trpc = useTRPC();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [{ success }, setSearchParams] = useQueryStates(searchParamsParsers);
+  const queryClient = useQueryClient();
+  const [{ success, setup }, setSearchParams] =
+    useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: usage } = useQuery(trpc.workspace.usage.queryOptions());
+  const paymentMethodSetupMutation = useMutation(
+    trpc.stripeRouter.getPaymentMethodSetupSession.mutationOptions({
+      onSuccess: (url) => {
+        if (url) window.location.assign(url);
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
   const customerPortalMutation = useMutation(
     trpc.stripeRouter.getUserCustomerPortal.mutationOptions({
       onSuccess: (url) => {
@@ -116,6 +122,22 @@ export function Client() {
     }
   }, [success, setSearchParams]);
 
+  useEffect(() => {
+    if (setup) {
+      queryClient.invalidateQueries({
+        queryKey: trpc.workspace.get.queryKey(),
+      });
+      setTimeout(() => {
+        toast.success("Payment method added", {
+          description: "Your plan continues after the trial.",
+          duration: 5_000,
+          onAutoClose: () => setSearchParams({ setup: null }),
+          onDismiss: () => setSearchParams({ setup: null }),
+        });
+      }, 500);
+    }
+  }, [setup, setSearchParams, queryClient, trpc]);
+
   const totalRequests = useMemo(() => {
     const httpRequests = httpWorkspace30d?.data?.reduce(
       (acc, curr) => acc + curr.count,
@@ -131,6 +153,7 @@ export function Client() {
   if (!workspace) return null;
 
   const planAddons = allPlans[workspace.plan].addons;
+  const trialDaysLeft = workspace.trialDaysLeft;
 
   return (
     <SectionGroup>
@@ -142,6 +165,41 @@ export function Client() {
           </SectionDescription>
         </SectionHeader>
         <FormCardGroup>
+          {workspace.trialEndsAt && trialDaysLeft ? (
+            <FormCard>
+              <FormCardHeader>
+                <FormCardTitle>Starter trial</FormCardTitle>
+                <FormCardDescription>
+                  <span className="text-foreground font-medium">
+                    {trialDaysLeft}
+                  </span>{" "}
+                  {trialDaysLeft === 1 ? "day" : "days"} left. Your trial ends
+                  on {formatDate(workspace.trialEndsAt)}.
+                </FormCardDescription>
+              </FormCardHeader>
+              <FormCardFooter>
+                <FormCardFooterInfo>
+                  Add a payment method to keep Starter, or move to the free plan
+                  after the trial.
+                </FormCardFooterInfo>
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    paymentMethodSetupMutation.mutate({
+                      workspaceSlug: workspace.slug,
+                      successUrl: `${window.location.origin}/settings/billing?setup=true`,
+                      cancelUrl: `${window.location.origin}/settings/billing`,
+                    })
+                  }
+                  disabled={paymentMethodSetupMutation.isPending}
+                >
+                  {paymentMethodSetupMutation.isPending
+                    ? "Loading..."
+                    : "Add payment method"}
+                </Button>
+              </FormCardFooter>
+            </FormCard>
+          ) : null}
           <FormCard>
             <FormCardHeader>
               <FormCardTitle>Usage</FormCardTitle>
@@ -265,7 +323,7 @@ export function Client() {
                   startTransition(async () => {
                     await customerPortalMutation.mutateAsync({
                       workspaceSlug: workspace.slug,
-                      returnUrl: `${BASE_URL}/settings/billing`,
+                      returnUrl: `${window.location.origin}/settings/billing`,
                     });
                   });
                 }}

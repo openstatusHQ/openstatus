@@ -29,7 +29,7 @@ const postRoute = createRoute({
             id: true,
             statusReportUpdateIds: true,
           }).extend({
-            date: z.coerce.date().optional().prefault(new Date()).openapi({
+            date: z.coerce.date().prefault(new Date()).openapi({
               description:
                 "The date of the report in ISO8601 format, defaults to now",
             }),

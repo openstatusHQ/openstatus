@@ -56,7 +56,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:turbo@2.9.14"
+        "npm:turbo@2.11.2"
       ]
     },
     "members": {

@@ -1,5 +1,6 @@
 import { workspacePlanSchema } from "@openstatus/db/src/schema";
-import { limitsSchema } from "@openstatus/db/src/schema/plan/schema";
+import { addons, limitsSchema } from "@openstatus/db/src/schema/plan/schema";
+import { isAddonQuantityKey } from "@openstatus/db/src/schema/plan/utils";
 import { z } from "zod";
 
 export const GetWorkspaceInput = z.object({}).strict();
@@ -17,6 +18,61 @@ export const GetWorkspaceByStripeIdInput = z.object({
 export type GetWorkspaceByStripeIdInput = z.infer<
   typeof GetWorkspaceByStripeIdInput
 >;
+
+export const GetWorkspaceForMemberInput = z.object({
+  slug: z.string().min(1),
+  userId: z.number().int(),
+});
+export type GetWorkspaceForMemberInput = z.infer<
+  typeof GetWorkspaceForMemberInput
+>;
+
+export const ListWorkspaceOwnersInput = z.object({
+  workspaceId: z.number().int(),
+});
+export type ListWorkspaceOwnersInput = z.infer<typeof ListWorkspaceOwnersInput>;
+
+export const OwnedWorkspacesInput = z.object({ userId: z.number().int() });
+export type OwnedWorkspacesInput = z.infer<typeof OwnedWorkspacesInput>;
+
+export const UpdateWorkspaceStripeIdInput = z.object({
+  stripeId: z.string().min(1),
+});
+export type UpdateWorkspaceStripeIdInput = z.infer<
+  typeof UpdateWorkspaceStripeIdInput
+>;
+
+/**
+ * One addon bought or removed, applied to the current limits without
+ * touching the plan. `trialEndsAt: null` records that buying the addon
+ * ended the trial; `reason` lands in the audit metadata.
+ */
+export const UpdateWorkspaceLimitsInput = z
+  .object({
+    addon: z.enum(addons),
+    value: z.union([z.boolean(), z.number()]),
+    trialEndsAt: z.date().nullable().optional(),
+    reason: z.string().optional(),
+  })
+  // `updateAddonInLimits` ignores a value of the wrong kind, which would
+  // record the change in Stripe but never in the limits.
+  .refine(
+    (i) => (typeof i.value === "number") === isAddonQuantityKey(i.addon),
+    { message: "Value does not match the addon type", path: ["value"] },
+  );
+export type UpdateWorkspaceLimitsInput = z.infer<
+  typeof UpdateWorkspaceLimitsInput
+>;
+
+/**
+ * `reason` is stamped on the plan-flip audit row (and the SSO one) so a
+ * trial that ran out reads differently from a paying customer churning.
+ * Defaults to `subscription_deleted`.
+ */
+export const DowngradeWorkspaceInput = z.object({
+  reason: z.string().optional(),
+});
+export type DowngradeWorkspaceInput = z.infer<typeof DowngradeWorkspaceInput>;
 
 export const UpdateWorkspaceNameInput = z.object({
   name: z.string().trim().min(1),
@@ -36,6 +92,7 @@ export const UpdateWorkspacePlanInput = z.object({
   subscriptionId: z.string().nullable(),
   paidUntil: z.date().nullable(),
   endsAt: z.date().nullable(),
+  trialEndsAt: z.date().nullable().optional(),
   limits: limitsSchema,
   reason: z.string().optional(),
 });

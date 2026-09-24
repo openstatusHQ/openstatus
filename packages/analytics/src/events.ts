@@ -208,6 +208,18 @@ export const Events = {
     name: "workspace_downgraded",
     channel: "billing",
   },
+  StartTrial: {
+    name: "trial_started",
+    channel: "billing",
+  },
+  SkipTrial: {
+    name: "trial_skipped",
+    channel: "billing",
+  },
+  ConvertTrial: {
+    name: "trial_converted",
+    channel: "billing",
+  },
   GlobalSpeedChecker: {
     name: "global_speed_checker",
     channel: "checker",

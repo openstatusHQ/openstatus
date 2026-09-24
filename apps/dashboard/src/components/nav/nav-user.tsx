@@ -34,10 +34,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { toast } from "sonner";
 
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -47,10 +48,19 @@ export function NavUser() {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: user } = useQuery(trpc.user.get.queryOptions());
+  const paymentMethodSetupMutation = useMutation(
+    trpc.stripeRouter.getPaymentMethodSetupSession.mutationOptions({
+      onSuccess: (url) => {
+        if (url) window.location.assign(url);
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
 
   if (!user || !workspace) return null;
 
   const userName = user?.name ?? `${user?.firstName} ${user?.lastName}`.trim();
+  const isTrialing = workspace.trialDaysLeft !== null;
 
   return (
     <SidebarMenu>
@@ -107,7 +117,25 @@ export function NavUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {workspace.plan === "free" ? (
+            {isTrialing ? (
+              <>
+                <DropdownMenuItem
+                  onClick={() =>
+                    paymentMethodSetupMutation.mutate({
+                      workspaceSlug: workspace.slug,
+                      successUrl: `${window.location.origin}/settings/billing?setup=true`,
+                      cancelUrl: `${window.location.origin}/settings/billing`,
+                    })
+                  }
+                  disabled={paymentMethodSetupMutation.isPending}
+                  className="font-commit-mono tracking-tight"
+                >
+                  <Billing />
+                  Add payment method
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            ) : workspace.plan === "free" ? (
               <>
                 <DropdownMenuItem asChild>
                   <Link
