@@ -89,8 +89,10 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	}
 	req.Header.Set("User-Agent", "OpenStatus/1.0")
 	for _, header := range inputData.Headers {
-		if header.Key != "" {
-			req.Header.Set(header.Key, header.Value)
+		// Monitors saved before names were validated may carry " Content-Type".
+		key := strings.TrimSpace(header.Key)
+		if key != "" {
+			req.Header.Set(key, strings.TrimSpace(header.Value))
 		}
 	}
 

@@ -23,6 +23,7 @@ export {
   MONITOR_STATUSES,
 } from "./constants";
 export { buildCurlCommand, type CurlRequest } from "./curl";
+export { type HeaderPair, headerPairSchema } from "./headers";
 export { iteratorToStream, yieldMany } from "./stream";
 export { type PageUpdateStatus, statusLabel } from "./status";
 

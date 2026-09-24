@@ -65,6 +65,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
+import { headerPairSchema } from "@openstatus/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -97,12 +98,7 @@ const schema = z.object({
   type: z.enum(TYPES),
   method: z.enum(monitorMethods),
   url: z.string().min(1, "URL is required"),
-  headers: z.array(
-    z.object({
-      key: z.string(),
-      value: z.string(),
-    }),
-  ),
+  headers: z.array(headerPairSchema),
   active: z.boolean().prefault(true),
   assertions: z.array(
     z.discriminatedUnion("type", [
@@ -456,6 +452,12 @@ export function FormGeneral({
                           >
                             <Close />
                           </Button>
+                          <p className="text-destructive col-span-full text-sm empty:hidden">
+                            {
+                              form.formState.errors.headers?.[index]?.key
+                                ?.message
+                            }
+                          </p>
                         </div>
                       ))}
                       <div>
@@ -908,6 +910,9 @@ export function FormGeneral({
                         >
                           <Close />
                         </Button>
+                        <p className="text-destructive col-span-full text-sm empty:hidden">
+                          {form.formState.errors.headers?.[index]?.key?.message}
+                        </p>
                       </div>
                     ))}
                     <div>

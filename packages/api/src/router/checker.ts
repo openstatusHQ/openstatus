@@ -16,6 +16,7 @@ import {
   type grpcPayloadSchema,
   type icmpPayloadSchema,
   GRPC_TLS_MODES,
+  headerPairSchema,
   safeUrlSchema,
   type tpcPayloadSchema,
   transformHeaders,
@@ -84,7 +85,7 @@ const httpTestInput = z.object({
       "TRACE",
     ])
     .prefault("GET"),
-  headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
+  headers: z.array(headerPairSchema).optional(),
   body: z.string().optional(),
   region: monitorRegionSchema.prefault("ams"),
   assertions: z
@@ -130,7 +131,7 @@ const grpcTestInput = z.object({
   url: z.string(),
   service: z.string().optional(),
   tls: z.enum(GRPC_TLS_MODES).prefault("tls"),
-  headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
+  headers: z.array(headerPairSchema).optional(),
   region: monitorRegionSchema.prefault("ams"),
 });
 

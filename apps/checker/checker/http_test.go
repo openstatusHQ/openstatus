@@ -117,3 +117,33 @@ func Test_ping(t *testing.T) {
 		})
 	}
 }
+
+func Test_HttpTrimsHeaderWhitespace(t *testing.T) {
+	var sent http.Header
+	client := NewTestClient(func(req *http.Request) *http.Response {
+		sent = req.Header.Clone()
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(nil)),
+			Header:     make(http.Header),
+		}
+	})
+
+	input := request.HttpCheckerRequest{URL: "https://openstat.us", Method: http.MethodPost, CronTimestamp: 1}
+	input.Headers = append(input.Headers,
+		struct {
+			Key   string `json:"key"`
+			Value string `json:"value"`
+		}{Key: " Content-Type", Value: " text/plain "},
+		struct {
+			Key   string `json:"key"`
+			Value string `json:"value"`
+		}{Key: "  ", Value: "ignored"},
+	)
+
+	if _, err := checker.Http(context.Background(), client, input); err != nil {
+		t.Fatalf("Http() error = %v", err)
+	}
+	assert.Equal(t, "text/plain", sent.Get("Content-Type"))
+	assert.Len(t, sent, 2, "only User-Agent and the trimmed header should be sent")
+}

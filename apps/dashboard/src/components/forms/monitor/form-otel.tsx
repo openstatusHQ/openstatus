@@ -12,6 +12,7 @@ import {
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
+import { headerPairSchema } from "@openstatus/utils";
 import NextLink from "next/link";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -34,9 +35,7 @@ import {
 
 const schema = z.object({
   endpoint: z.url("Please enter a valid URL"),
-  headers: z
-    .array(z.object({ key: z.string(), value: z.string() }))
-    .prefault([]),
+  headers: z.array(headerPairSchema).prefault([]),
 });
 
 type FormValues = z.input<typeof schema>;
@@ -153,6 +152,9 @@ export function FormOtel({
                       >
                         <Close />
                       </Button>
+                      <p className="text-destructive col-span-full text-sm empty:hidden">
+                        {form.formState.errors.headers?.[index]?.key?.message}
+                      </p>
                     </div>
                   ))}
                   <div>
