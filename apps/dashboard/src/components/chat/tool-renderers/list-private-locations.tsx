@@ -2,6 +2,7 @@ import type { AgentToolOutput } from "@openstatus/services/agent-tools";
 
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { TableCellMetadata } from "@/components/data-table/table-cell-metadata";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
 
@@ -11,13 +12,14 @@ type Output = AgentToolOutput<"list_private_locations">;
 
 export function listPrivateLocationsTable(
   output: Output,
-): ResultTableData<"name" | "monitors" | "lastSeenAt" | "id"> {
+): ResultTableData<"name" | "monitors" | "metadata" | "lastSeenAt" | "id"> {
   const items = output?.items ?? [];
   return {
     empty: "No private locations.",
     columns: [
       { key: "name", header: "Name" },
       { key: "monitors", header: "Monitors" },
+      { key: "metadata", header: "Metadata" },
       { key: "lastSeenAt", header: "Last seen" },
       { key: "id", header: "ID" },
     ],
@@ -40,6 +42,7 @@ export function listPrivateLocationsTable(
             className="text-muted-foreground font-mono"
           />
         ),
+        metadata: <TableCellMetadata value={location.metadata} />,
         lastSeenAt: location.lastSeenAt ? (
           <TableCellDate value={new Date(location.lastSeenAt)} />
         ) : (

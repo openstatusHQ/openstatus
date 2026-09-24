@@ -114,9 +114,8 @@ The template source and the setup instructions are in [ephraimduncan/openstatus-
 
 #### Requirements
 
-- [Node.js](https://nodejs.org/en/) >= 20.0.0
-- [pnpm](https://pnpm.io/) >= 10.26.0
-- [Bun](https://bun.sh/)
+- [Node.js](https://nodejs.org/en/)
+- [pnpm](https://pnpm.io/)
 - [Deno](https://deno.com/)
 - [Turso CLI](https://docs.turso.tech/quickstart).
 

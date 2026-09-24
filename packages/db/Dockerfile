@@ -26,12 +26,12 @@ pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --loglevel debu
 EOF
 
 # runtime
-FROM denoland/deno@sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d AS runtime
+FROM denoland/deno@sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432 AS runtime
 LABEL \
     io.dofigen.version="2.8.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:2014dc167ece617ef7e7ba40631ac2234c59e75ce693e7cc2dc2602b3c87859d" \
-    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.6" \
+    org.opencontainers.image.base.digest="sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432" \
+    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.7" \
     org.opencontainers.image.description="One-shot database migration runner for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
     org.opencontainers.image.title="OpenStatus DB Migrate" \

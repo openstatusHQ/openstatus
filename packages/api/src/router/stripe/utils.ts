@@ -15,6 +15,8 @@ import {
 } from "@openstatus/db/src/schema/plan/utils";
 import type Stripe from "stripe";
 
+type PriceIds = { priceIds: { test: string; production: string } };
+
 /**
  * Rebuild a workspace's limits from the full set of subscription line items.
  * The plan item sets the baseline; each addon item then re-applies its flag or
@@ -126,13 +128,46 @@ export const getPriceIdForPlan = (
   return PLANS.find((p) => p.plan === plan)?.price[interval].priceIds[env];
 };
 
-export const getPriceIdForFeature = (feature: keyof Addons) => {
+export const getPriceIdForFeature = (
+  feature: keyof Addons,
+  interval: BillingInterval = "monthly",
+) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
-  return FEATURES.find((f) => f.feature === feature)?.price.monthly.priceIds[
+  return FEATURES.find((f) => f.feature === feature)?.price[interval].priceIds[
     env
   ];
 };
+
+/**
+ * The item list for a plan or interval change. Every item already on the
+ * subscription is listed by id so Stripe re-prices it in place instead of
+ * dropping it: the plan item takes the new plan price, and each addon moves to
+ * its price for the target interval with its quantity kept — Stripe rejects
+ * mixed intervals on one subscription, so a yearly plan takes yearly addons.
+ * Throws on an addon item whose price is unknown rather than dropping it.
+ */
+export function buildPlanChangeItems(args: {
+  subscription: Stripe.Subscription;
+  planItemId: string;
+  planPriceId: string;
+  interval: BillingInterval;
+}): Stripe.SubscriptionUpdateParams.Item[] {
+  const { subscription, planItemId, planPriceId, interval } = args;
+  return subscription.items.data.map((item) => {
+    if (item.id === planItemId) return { id: item.id, price: planPriceId };
+    const feature = getFeatureFromPriceId(item.price.id);
+    const price = feature
+      ? getPriceIdForFeature(feature.feature, interval)
+      : undefined;
+    if (!price) {
+      throw new Error(
+        `Unsupported Stripe price on subscription: ${item.price.id}`,
+      );
+    }
+    return { id: item.id, price, quantity: item.quantity ?? 1 };
+  });
+}
 
 export const PLANS = [
   {
@@ -140,13 +175,13 @@ export const PLANS = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1OVHQDBXJcTfzsyJjfiXl10Y",
+          test: "price_1UJ8dWBXJcTfzsyJYUgMY5Z5",
           production: "price_1RxsLNBXJcTfzsyJ7La5Jn5y",
         },
       },
       yearly: {
         priceIds: {
-          test: "XXX",
+          test: "price_1UJ8dcBXJcTfzsyJYKursvVr",
           production: "price_1TDlHxBXJcTfzsyJygJw92nU",
         },
       },
@@ -157,13 +192,13 @@ export const PLANS = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1OVHPlBXJcTfzsyJvPlB1kNb",
+          test: "price_1UJ8dVBXJcTfzsyJcZsQ2AuH",
           production: "price_1RxsJzBXJcTfzsyJBOztaKlR",
         },
       },
       yearly: {
         priceIds: {
-          test: "XXX",
+          test: "price_1UJ8daBXJcTfzsyJXf50tUL5",
           production: "price_1TDlGSBXJcTfzsyJMsDV4DRQ",
         },
       },
@@ -174,13 +209,13 @@ export const PLANS = [
     price: {
       monthly: {
         priceIds: {
-          test: "XXXX",
+          test: "price_1UJ8deBXJcTfzsyJauf9uGPO",
           production: "price_1Te9BLBXJcTfzsyJlXLsuyFP",
         },
       },
       yearly: {
         priceIds: {
-          test: "XXXX",
+          test: "price_1UJ8dfBXJcTfzsyJy8Hm8aha",
           production: "price_1Te9BLBXJcTfzsyJliabl2ou",
         },
       },
@@ -200,8 +235,14 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1Sl4xqBXJcTfzsyJlzpD1DDm",
+          test: "price_1UJ8dXBXJcTfzsyJdd7OVDe7",
           production: "price_1Sl6oqBXJcTfzsyJCxtzDIx5",
+        },
+      },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ8dsBXJcTfzsyJSnyEZXOi",
+          production: "price_1UJ7bhBXJcTfzsyJhHuuQjr2",
         },
       },
     },
@@ -211,8 +252,14 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1TMpxlBXJcTfzsyJ1woQtafW",
-          production: "price_1TMq0GBXJcTfzsyJrIVx9KPL",
+          test: "price_1UJ8ddBXJcTfzsyJNffp8pmE",
+          production: "price_1TMpxlBXJcTfzsyJ1woQtafW",
+        },
+      },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ8drBXJcTfzsyJED62IVFg",
+          production: "price_1UJ7akBXJcTfzsyJzDrC8hdK",
         },
       },
     },
@@ -222,8 +269,14 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1SlbQsBXJcTfzsyJ1awtpOno",
+          test: "price_1UJ8dYBXJcTfzsyJXQx2FMhh",
           production: "price_1SlbSdBXJcTfzsyJahJiFE8D",
+        },
+      },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ8dmBXJcTfzsyJdmH60moK",
+          production: "price_1UJ74MBXJcTfzsyJ17ksU7wm",
         },
       },
     },
@@ -233,8 +286,14 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1TwKPqBXJcTfzsyJqAu4Wqwh",
+          test: "price_1UJ8dhBXJcTfzsyJcw93020n",
           production: "price_1Tvv0zBXJcTfzsyJseLIjNnz",
+        },
+      },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ8dnBXJcTfzsyJmLIOAGEa",
+          production: "price_1UJ76GBXJcTfzsyJ6BGJ3ZJd",
         },
       },
     },
@@ -244,8 +303,14 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1Slrk8BXJcTfzsyJXQxshFU4",
+          test: "price_1UJ8dZBXJcTfzsyJYZ1An6s1",
           production: "price_1SlrkHBXJcTfzsyJIxHeKUYe",
+        },
+      },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ8dlBXJcTfzsyJ386lE7yh",
+          production: "price_1UJ70tBXJcTfzsyJRDDnbXcP",
         },
       },
     },
@@ -255,10 +320,14 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          // TODO: create the "Monitor Pack" product and its monthly
-          // multi-currency price (USD 15 / EUR 15) in Stripe, then paste the ids.
-          test: "price_1UChsCBXJcTfzsyJgomhUtYY",
+          test: "price_1UJ8dkBXJcTfzsyJEZUYk2ji",
           production: "price_1UChsCBXJcTfzsyJgomhUtYY",
+        },
+      },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ8doBXJcTfzsyJLyp84Hof",
+          production: "price_1UJ7YkBXJcTfzsyJdklvON8r",
         },
       },
     },
@@ -268,15 +337,24 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1TySGYBXJcTfzsyJQFVFJi6N",
+          test: "price_1UJ8djBXJcTfzsyJ8I9r51Nz",
           production: "price_1TySGYBXJcTfzsyJQFVFJi6N",
+        },
+      },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ8dqBXJcTfzsyJFfAEZuZk",
+          production: "price_1UJ7ZcBXJcTfzsyJ78fA9RFp",
         },
       },
     },
   },
 ] satisfies Array<{
   feature: keyof Addons;
+  // Stripe rejects mixed intervals on one subscription, so every addon needs a
+  // price on each interval a plan is sold on.
   price: {
-    monthly: { priceIds: { test: string; production: string } };
+    monthly: PriceIds;
+    yearly: PriceIds;
   };
 }>;

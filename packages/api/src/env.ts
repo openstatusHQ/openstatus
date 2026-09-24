@@ -21,6 +21,7 @@ export const env = createEnv({
     SLACK_FEEDBACK_WEBHOOK_URL: z.string().optional(),
     EXTERNAL_REPORT_SALT: z.string().optional(),
     SELF_HOST: z.stringbool().prefault("false"),
+    NODE_ENV: z.enum(["development", "test", "production"]).optional(),
   },
 
   runtimeEnv: {
@@ -39,6 +40,7 @@ export const env = createEnv({
     SLACK_FEEDBACK_WEBHOOK_URL: process.env.SLACK_FEEDBACK_WEBHOOK_URL,
     EXTERNAL_REPORT_SALT: process.env.EXTERNAL_REPORT_SALT,
     SELF_HOST: process.env.SELF_HOST,
+    NODE_ENV: process.env.NODE_ENV,
   },
   skipValidation: process.env.NODE_ENV === "test",
 });

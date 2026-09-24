@@ -33,6 +33,10 @@ import { z } from "zod";
 import { IconCloudProviderTooltip } from "@/components/common/icon-cloud-provider";
 import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
+import {
+  TableCellMetadata,
+  getMetadataEntries,
+} from "@/components/data-table/table-cell-metadata";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import {
   FormCard,
@@ -49,7 +53,11 @@ import { useTRPC } from "@/lib/trpc/client";
 const DEFAULT_PERIODICITY = "10m";
 const DEFAULT_REGIONS = ["ams", "fra", "iad", "syd", "jnb", "gru"];
 const PERIODICITY = monitorPeriodicity.filter((p) => p !== "other");
-const DEFAULT_PRIVATE_LOCATIONS = [] satisfies { id: number; name: string }[];
+const DEFAULT_PRIVATE_LOCATIONS = [] satisfies {
+  id: number;
+  name: string;
+  metadata?: Record<string, string> | null;
+}[];
 
 const schema = z.object({
   regions: z.array(z.string()),
@@ -67,7 +75,11 @@ export function FormSchedulingRegions({
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
-  privateLocations: { id: number; name: string }[];
+  privateLocations: {
+    id: number;
+    name: string;
+    metadata?: Record<string, string> | null;
+  }[];
 }) {
   const trpc = useTRPC();
   const [openDialog, setOpenDialog] = useState(false);
@@ -402,6 +414,7 @@ export function FormSchedulingRegions({
                               >
                                 <FormControl>
                                   <Checkbox
+                                    id={`private-location-${item.id}`}
                                     checked={
                                       field.value?.includes(item.id) || false
                                     }
@@ -419,8 +432,17 @@ export function FormSchedulingRegions({
                                     }}
                                   />
                                 </FormControl>
-                                <FormLabel className="w-full truncate font-mono text-sm font-normal">
-                                  {item.name}
+                                <FormLabel
+                                  htmlFor={`private-location-${item.id}`}
+                                  className="w-full truncate font-mono text-sm font-normal"
+                                >
+                                  <span className="text-nowrap">
+                                    {item.name}
+                                  </span>
+                                  {getMetadataEntries(item.metadata).length >
+                                  0 ? (
+                                    <TableCellMetadata value={item.metadata} />
+                                  ) : null}
                                   <Globe className="size-3" />
                                 </FormLabel>
                               </FormItem>

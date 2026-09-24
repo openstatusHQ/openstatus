@@ -1,6 +1,6 @@
 import { Events, setupAnalytics } from "@openstatus/analytics";
-import { and, eq } from "@openstatus/db";
-import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
+import { eq } from "@openstatus/db";
+import { user } from "@openstatus/db/src/schema";
 import {
   billingRecipients,
   cancelScheduledEmail,
@@ -16,6 +16,7 @@ import {
   type DowngradeTrim,
   downgradeWorkspaceToFree,
   getWorkspaceByStripeId,
+  listWorkspaceOwners,
   previewWorkspaceDowngrade,
   updateWorkspacePlan,
 } from "@openstatus/services/workspace";
@@ -28,10 +29,13 @@ import { createTRPCRouter, publicProcedure } from "../../trpc";
 import {
   buildFromSubscriptionOrThrow,
   cancelSupersededSubscriptions,
+  customerIdOf,
+  getCurrentPeriodEnd,
   getCurrentSubscription,
   isNewerSubscription,
   listLiveSubscriptions,
   stripe,
+  trialEndsAtOf,
 } from "./shared";
 
 const webhookProcedure = publicProcedure.input(
@@ -57,18 +61,22 @@ const REMINDER_METADATA_KEY = "reminder_email_id";
 
 type Db = Parameters<typeof getWorkspaceByStripeId>[0]["db"];
 
+// Stripe cancels a trial without a card at `trial_end`, but its cycle
+// processing can lag behind that timestamp by a little.
+const TRIAL_END_SLACK_S = 60 * 60;
+
+function endedDuringTrial(
+  subscription: Stripe.Subscription,
+  eventCreated: number,
+) {
+  if (!subscription.trial_end) return false;
+  const endedAt =
+    subscription.ended_at ?? subscription.canceled_at ?? eventCreated;
+  return endedAt <= subscription.trial_end + TRIAL_END_SLACK_S;
+}
+
 async function getOwnerEmails(db: NonNullable<Db>, workspaceId: number) {
-  const owners = await db
-    .select({ email: user.email })
-    .from(usersToWorkspaces)
-    .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
-    .where(
-      and(
-        eq(usersToWorkspaces.workspaceId, workspaceId),
-        eq(usersToWorkspaces.role, "owner"),
-      ),
-    )
-    .all();
+  const owners = await listWorkspaceOwners({ input: { workspaceId }, db });
   return owners.map((owner) => owner.email);
 }
 
@@ -109,7 +117,7 @@ async function sendCancellationEmails(args: {
   eventId: string;
 }) {
   const { db, ws, customerId, current, plan, eventId } = args;
-  const endsAt = new Date(current.current_period_end * 1000);
+  const endsAt = getCurrentPeriodEnd(current);
   const to = await getBillingRecipients(db, ws.id, customerId);
   const preview = await previewWorkspaceDowngrade({
     ctx: {
@@ -150,6 +158,37 @@ async function sendCancellationEmails(args: {
       metadata: { [REMINDER_METADATA_KEY]: "" },
     });
   }
+}
+
+async function attachSetupPaymentMethod(session: Stripe.Checkout.Session) {
+  if (typeof session.setup_intent !== "string" || !session.customer) return;
+  const customerId =
+    typeof session.customer === "string"
+      ? session.customer
+      : session.customer.id;
+
+  const setupIntent = await stripe.setupIntents.retrieve(session.setup_intent);
+  const paymentMethod =
+    typeof setupIntent.payment_method === "string"
+      ? setupIntent.payment_method
+      : setupIntent.payment_method?.id;
+  if (!paymentMethod) return;
+
+  await stripe.customers.update(customerId, {
+    invoice_settings: { default_payment_method: paymentMethod },
+  });
+
+  const subscriptionId =
+    setupIntent.metadata?.subscriptionId ||
+    (await getCurrentSubscription(customerId)).current?.id;
+  if (!subscriptionId) return;
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  if (customerIdOf(subscription) !== customerId) return;
+
+  await stripe.subscriptions.update(subscriptionId, {
+    default_payment_method: paymentMethod,
+  });
 }
 
 // Never mount this on an app router: the procedures trust `event`, and only
@@ -224,8 +263,9 @@ export const webhookRouter = createTRPCRouter({
       input: {
         plan: built.plan,
         subscriptionId: current.id,
-        endsAt: new Date(current.current_period_end * 1000),
-        paidUntil: new Date(current.current_period_end * 1000),
+        endsAt: getCurrentPeriodEnd(current),
+        paidUntil: getCurrentPeriodEnd(current),
+        trialEndsAt: trialEndsAtOf(current),
         limits: built.limits,
       },
     });
@@ -269,6 +309,26 @@ export const webhookRouter = createTRPCRouter({
       }
     }
 
+    const wasTrialing =
+      opts.input.event.data.previous_attributes?.status === "trialing";
+    if (
+      eventSubscription.id === current.id &&
+      wasTrialing &&
+      current.status === "active"
+    ) {
+      const [owner] = await listWorkspaceOwners({
+        input: { workspaceId: ws.id },
+        db: opts.ctx.db,
+      });
+      const analytics = await setupAnalytics({
+        userId: owner ? `usr_${owner.id}` : undefined,
+        email: owner?.email ?? undefined,
+        workspaceId: String(ws.id),
+        plan: built.plan,
+      });
+      await analytics.track(Events.ConvertTrial);
+    }
+
     const newPlan = built.plan;
     if (newPlan !== oldPlan) {
       const customer = await stripe.customers.retrieve(customerId);
@@ -301,6 +361,10 @@ export const webhookRouter = createTRPCRouter({
   }),
   sessionCompleted: webhookProcedure.mutation(async (opts) => {
     const session = opts.input.event.data.object as Stripe.Checkout.Session;
+    if (session.mode === "setup") {
+      await attachSetupPaymentMethod(session);
+      return;
+    }
     if (typeof session.subscription !== "string") {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -359,8 +423,9 @@ export const webhookRouter = createTRPCRouter({
       input: {
         plan: built.plan,
         subscriptionId: subscription.id,
-        endsAt: new Date(subscription.current_period_end * 1000),
-        paidUntil: new Date(subscription.current_period_end * 1000),
+        endsAt: getCurrentPeriodEnd(subscription),
+        paidUntil: getCurrentPeriodEnd(subscription),
+        trialEndsAt: trialEndsAtOf(subscription),
         limits: built.limits,
         reason: "checkout_session_completed",
       },
@@ -443,6 +508,11 @@ export const webhookRouter = createTRPCRouter({
       });
     }
 
+    // Already downgraded, e.g. a trial cancelled by an account deletion.
+    if (ws.plan === "free" && !ws.subscriptionId) {
+      return;
+    }
+
     // System actor — no user is attributable to an involuntary Stripe
     // cancellation. The service verb runs the whole trim in one audited
     // transaction; a failed audit insert rolls the downgrade back and the
@@ -453,8 +523,18 @@ export const webhookRouter = createTRPCRouter({
       db: opts.ctx.db,
     };
 
+    // A trial that ran out without a card, or was cancelled mid-trial, is
+    // not a paying customer churning — keep the audit trail honest. Read
+    // off the subscription rather than `ws.trialEndsAt`: a delayed
+    // trial-to-active webhook leaves that marker stale on a paying customer.
+    const reason = endedDuringTrial(subscription, opts.input.event.created)
+      ? subscription.cancellation_details?.reason === "cancellation_requested"
+        ? "trial_cancelled"
+        : "trial_ended"
+      : "subscription_deleted";
+
     const { customDomains, ssoDisabled, trimmed } =
-      await downgradeWorkspaceToFree({ ctx });
+      await downgradeWorkspaceToFree({ ctx, input: { reason } });
 
     // Best-effort after commit: owners must know what the cascade removed, and
     // removed members that they lost access, but a mail failure must not fail

@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 import { TableCellBadge } from "../table-cell-badge";
 import { TableCellDate } from "../table-cell-date";
+import { TableCellMetadata } from "../table-cell-metadata";
 import { TableCellText } from "../table-cell-text";
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -42,6 +43,15 @@ export const columns: ColumnDef<PrivateLocation>[] = [
         />
       );
     },
+  },
+  {
+    accessorKey: "metadata",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Metadata" />
+    ),
+    enableSorting: false,
+    enableHiding: true,
+    cell: ({ row }) => <TableCellMetadata value={row.original.metadata} />,
   },
   {
     accessorKey: "lastSeenAt",

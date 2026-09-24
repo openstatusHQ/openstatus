@@ -22,7 +22,7 @@ export const selectNotificationSchema = createSelectSchema(notification).extend(
 export const insertNotificationSchema = createInsertSchema(notification).extend(
   {
     data: z.string().prefault("{}"),
-    monitors: z.array(z.number()).optional().prefault([]),
+    monitors: z.array(z.number()).prefault([]),
   },
 );
 

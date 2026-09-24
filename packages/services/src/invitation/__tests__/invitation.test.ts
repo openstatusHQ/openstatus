@@ -12,7 +12,7 @@ import {
   readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { ServiceContext } from "../../context";
+import type { DB, ServiceContext } from "../../context";
 import {
   ForbiddenError,
   LimitExceededError,
@@ -23,6 +23,7 @@ import {
   createInvitation,
   deleteInvitation,
   getInvitationByToken,
+  hasPendingInvitation,
   listInvitations,
 } from "../index.ts";
 
@@ -266,5 +267,65 @@ describe("acceptInvitation", () => {
         }),
       ).rejects.toBeInstanceOf(NotFoundError);
     });
+  });
+});
+
+describe("hasPendingInvitation", () => {
+  async function insertInvitation(
+    tx: DB,
+    values: { email: string; expiresAt: Date; acceptedAt?: Date },
+  ) {
+    await tx.insert(invitation).values({
+      workspaceId: teamCtx.workspace.id,
+      token: crypto.randomUUID(),
+      ...values,
+    });
+  }
+
+  test("true for a pending invitation, ignoring case", async () => {
+    await withTestTransaction(async (tx) => {
+      const email = `${TEST_PREFIX}-pending-${Date.now()}@example.com`;
+      await insertInvitation(tx, {
+        email,
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+
+      expect(
+        await hasPendingInvitation({ email: email.toUpperCase(), db: tx }),
+      ).toBe(true);
+    });
+  });
+
+  test("false for an expired invitation", async () => {
+    await withTestTransaction(async (tx) => {
+      const email = `${TEST_PREFIX}-expired-${Date.now()}@example.com`;
+      await insertInvitation(tx, {
+        email,
+        expiresAt: new Date(Date.now() - 60_000),
+      });
+
+      expect(await hasPendingInvitation({ email, db: tx })).toBe(false);
+    });
+  });
+
+  test("false for an accepted invitation", async () => {
+    await withTestTransaction(async (tx) => {
+      const email = `${TEST_PREFIX}-accepted-${Date.now()}@example.com`;
+      await insertInvitation(tx, {
+        email,
+        expiresAt: new Date(Date.now() + 60_000),
+        acceptedAt: new Date(),
+      });
+
+      expect(await hasPendingInvitation({ email, db: tx })).toBe(false);
+    });
+  });
+
+  test("false without any invitation", async () => {
+    expect(
+      await hasPendingInvitation({
+        email: `${TEST_PREFIX}-none-${Date.now()}@example.com`,
+      }),
+    ).toBe(false);
   });
 });

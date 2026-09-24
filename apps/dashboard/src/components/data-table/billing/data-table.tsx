@@ -31,7 +31,6 @@ import { Fragment, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { config as featureGroups, plans } from "@/data/plans";
-import { getStripe } from "@/lib/stripe";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
@@ -40,9 +39,14 @@ const BASE_URL =
     ? "https://app.openstatus.dev"
     : "http://localhost:3000";
 
-function getQuantitySuffix(addon: keyof Addons) {
+function getPeriodSuffix(interval: BillingInterval) {
+  return interval === "yearly" ? "/yr." : "/mo.";
+}
+
+function getQuantitySuffix(addon: keyof Addons, interval: BillingInterval) {
   const packSize = getAddonPackSize(addon);
-  return packSize > 1 ? `/mo./${packSize}` : "/mo./each";
+  const period = getPeriodSuffix(interval);
+  return packSize > 1 ? `${period}/${packSize}` : `${period}/each`;
 }
 
 export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
@@ -53,6 +57,10 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
   const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const intervalQuery = useQuery(
+    trpc.stripeRouter.getBillingInterval.queryOptions(),
+  );
+  const currentInterval = intervalQuery.data;
 
   const checkoutSessionMutation = useMutation(
     trpc.stripeRouter.getCheckoutSession.mutationOptions({
@@ -63,15 +71,19 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
         // already have, so there is no checkout to redirect to — only the
         // refreshed workspace to pick up.
         if (data.type === "updated") {
-          await queryClient.invalidateQueries({
-            queryKey: trpc.workspace.get.queryKey(),
-          });
+          await Promise.all([
+            queryClient.invalidateQueries({
+              queryKey: trpc.workspace.get.queryKey(),
+            }),
+            queryClient.invalidateQueries({
+              queryKey: trpc.stripeRouter.getBillingInterval.queryKey(),
+            }),
+          ]);
           toast.success("Your plan has been updated");
           return;
         }
 
-        const stripe = await getStripe();
-        stripe?.redirectToCheckout({ sessionId: data.session.id });
+        if (data.session.url) window.location.assign(data.session.url);
       },
     }),
   );
@@ -87,6 +99,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
 
   if (!workspace) return null;
 
+  const isTrialing = workspace.trialDaysLeft !== null;
   const filteredPlans = Object.values(plans).filter((plan) =>
     restrictTo ? restrictTo.includes(plan.id) : true,
   );
@@ -106,7 +119,9 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
       </Tabs>
       <Table className="relative table-fixed">
         <TableCaption>
-          A list to compare the different features by plan.
+          {isTrialing
+            ? "Upgrading ends your trial and charges your card today."
+            : "A list to compare the different features by plan."}
         </TableCaption>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -114,9 +129,27 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
               Features comparison
             </TableHead>
             {filteredPlans.map(({ id, ...plan }) => {
-              const isCurrentPlan = workspace.plan === id;
-              const price = getPriceConfig(id, currency, interval);
               const isFreePlan = id === "free";
+              const isSamePlan = workspace.plan === id;
+              // Hold the paid plan's button until the interval is known, so it
+              // never flashes "Current Plan" on the wrong tab.
+              const isIntervalLoading =
+                isSamePlan && !isFreePlan && intervalQuery.isPending;
+              // A resolved `null` (no subscription, legacy price) matches on the
+              // plan alone. A failed fetch leaves both intervals selectable:
+              // re-applying the price the customer already pays is a no-op.
+              const isCurrentPlan =
+                isSamePlan &&
+                (isFreePlan ||
+                  (intervalQuery.isSuccess &&
+                    (currentInterval === null ||
+                      currentInterval === interval)));
+              const isIntervalSwitch =
+                isSamePlan &&
+                intervalQuery.isSuccess &&
+                currentInterval !== null &&
+                currentInterval !== interval;
+              const price = getPriceConfig(id, currency, interval);
               return (
                 <TableHead
                   key={id}
@@ -180,13 +213,21 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                           }
                         });
                       }}
-                      disabled={isPending || isCurrentPlan}
+                      disabled={isPending || isCurrentPlan || isIntervalLoading}
                     >
-                      {isCurrentPlan
-                        ? "Current Plan"
-                        : isPending
-                          ? "Choosing..."
-                          : "Choose"}
+                      {isIntervalLoading
+                        ? "Loading..."
+                        : isCurrentPlan
+                          ? isTrialing
+                            ? "On Trial"
+                            : "Current Plan"
+                          : isPending
+                            ? "Choosing..."
+                            : isIntervalSwitch
+                              ? `Switch to ${interval}`
+                              : isTrialing && !isFreePlan
+                                ? "Upgrade now"
+                                : "Choose"}
                     </Button>
                   </div>
                 </TableHead>
@@ -228,6 +269,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                               plan.id,
                               value as keyof typeof plan.addons,
                               currency,
+                              interval,
                             );
                             if (!price) return null;
 
@@ -253,8 +295,9 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                                     {isNumber
                                       ? getQuantitySuffix(
                                           value as keyof typeof plan.addons,
+                                          interval,
                                         )
-                                      : "/mo."}
+                                      : getPeriodSuffix(interval)}
                                   </span>
                                 </span>
                               </div>

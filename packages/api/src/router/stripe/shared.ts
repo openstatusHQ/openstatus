@@ -5,7 +5,7 @@ import { env } from "../../env";
 import { buildLimitsFromSubscription } from "./utils";
 
 export const stripe = new Stripe(env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2023-08-16",
+  apiVersion: "2026-08-26.dahlia",
   appInfo: {
     name: "OpenStatus",
     version: "0.1.0",
@@ -97,6 +97,20 @@ export async function getCurrentSubscription(customerId: string) {
 }
 
 /**
+ * When the subscription's current period ends. Since API version 2025-03-31
+ * the period lives on each item rather than on the subscription. Items share
+ * one billing cycle here (add-ons are monthly-only and blocked on yearly
+ * plans), so the latest end is the date everything is paid through.
+ */
+export function getCurrentPeriodEnd(subscription: Stripe.Subscription) {
+  const ends = subscription.items.data.map((item) => item.current_period_end);
+  if (ends.length === 0) {
+    throw new Error(`Subscription ${subscription.id} has no items`);
+  }
+  return new Date(Math.max(...ends) * 1000);
+}
+
+/**
  * A customer carries exactly one subscription. `current` is the one to keep;
  * every subscription that predates it is a leftover that would otherwise keep
  * billing. Best-effort — a Stripe failure here must not fail the caller, which
@@ -132,15 +146,14 @@ export async function cancelSubscription(customer?: string) {
   if (!customer) return;
 
   try {
-    const subscriptionId = await stripe.subscriptions
-      .list({
-        customer,
-      })
-      .then((res) => res.data[0]?.id);
+    const { current } = await getCurrentSubscription(customer);
+    if (!current) return;
 
-    if (!subscriptionId) return;
+    if (current.status === "trialing") {
+      return await stripe.subscriptions.cancel(current.id);
+    }
 
-    return await stripe.subscriptions.update(subscriptionId, {
+    return await stripe.subscriptions.update(current.id, {
       cancel_at_period_end: true,
       cancellation_details: {
         comment: "Customer deleted their OpenStatus project.",
@@ -150,4 +163,25 @@ export async function cancelSubscription(customer?: string) {
     console.log("Error cancelling Stripe subscription", error);
     return;
   }
+}
+
+export function customerIdOf(subscription: Stripe.Subscription) {
+  return typeof subscription.customer === "string"
+    ? subscription.customer
+    : subscription.customer.id;
+}
+
+export async function hasPaymentMethod(subscription: Stripe.Subscription) {
+  if (subscription.default_payment_method) return true;
+  const customer = await stripe.customers.retrieve(customerIdOf(subscription));
+  return (
+    !customer.deleted &&
+    Boolean(customer.invoice_settings.default_payment_method)
+  );
+}
+
+export function trialEndsAtOf(subscription: Stripe.Subscription) {
+  return subscription.status === "trialing" && subscription.trial_end
+    ? new Date(subscription.trial_end * 1000)
+    : null;
 }

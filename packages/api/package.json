@@ -52,6 +52,7 @@
     "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
     "isomorphic-dompurify": "catalog:",
+    "mailchecker": "catalog:",
     "nanoid": "catalog:",
     "nanoid-dictionary": "catalog:",
     "next": "catalog:",
@@ -67,7 +68,6 @@
     "@std/testing": "jsr:^1.0.19",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "bun-types": "catalog:",
     "typescript": "catalog:"
   }
 }
