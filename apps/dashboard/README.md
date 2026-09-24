@@ -63,7 +63,7 @@ pnpm -w dev:dashboard
 
 Turbo runs the dashboard (`apps/dashboard`) and `@openstatus/db` together.
 
-6. Open [http://localhost:3000](http://localhost:3000)
+6. Open [http://localhost:3001](http://localhost:3001)
 
 ## Logging in
 
@@ -73,7 +73,7 @@ In `NODE_ENV=development` or `SELF_HOST=true`, `src/lib/auth/providers.ts` confi
 
 To log in:
 
-1. Open [http://localhost:3000/login](http://localhost:3000/login)
+1. Open [http://localhost:3001/login](http://localhost:3001/login)
 2. Enter `ping@openstatus.dev` (the seeded user, bound to workspace 1) in the magic-link form
 3. Watch the dashboard terminal — the magic link is logged there. Open it in your browser.
 

@@ -13,7 +13,7 @@ export function buildHomeBlocks(): KnownBlock[] {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: "Manage incidents and status pages without leaving Slack. Mention *@openstatus* in any channel or thread and it drafts a status update from the conversation — nothing is published until you approve it.",
+        text: "Your incident communication agent. Open *openstatus* from the Slack top bar to chat with it, or mention *@openstatus* in any channel or thread — it drafts status updates from the conversation, and nothing is published until you approve it.",
       },
     },
     { type: "divider" },
@@ -21,7 +21,7 @@ export function buildHomeBlocks(): KnownBlock[] {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: '*Create & update incidents*\nMention `@openstatus` describing the issue. It reads the thread, drafts a report, and you click *Approve*, *Approve & Notify*, or *Cancel*. Say _"we found the cause"_ or _"it\'s fixed"_ and it moves the incident to Identified or Resolved.',
+        text: '*Create & update incidents*\nDescribe the issue in the agent pane, or mention `@openstatus` in any channel or thread. It reads the thread, drafts a report, and you click *Approve*, *Approve & Notify*, or *Cancel*. Say _"we found the cause"_ or _"it\'s fixed"_ and it moves the incident to Identified or Resolved.',
       },
     },
     {

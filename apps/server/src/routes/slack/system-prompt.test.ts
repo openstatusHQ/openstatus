@@ -45,4 +45,14 @@ describe("buildSystemPrompt", () => {
     // partial recovery before resolve IS reported manually, as operational.
     expect(prompt).toContain("Recovery counts as a change");
   });
+
+  test("forbids guessing monitor and notification ids", () => {
+    const prompt = buildSystemPrompt("Acme Corp");
+    expect(prompt).toContain("call list_monitors FIRST");
+    expect(prompt).toContain("call list_notifications FIRST");
+  });
+
+  test("tells the model not to show internal ids", () => {
+    expect(buildSystemPrompt("Acme Corp")).toContain("NEVER show internal ids");
+  });
 });

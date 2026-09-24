@@ -1,12 +1,12 @@
 /**
  * MCP tool-selection eval. Standalone bun script — `pnpm eval:mcp`.
  *
- * Runs each case in `cases.ts` against Claude Haiku 4.5 (via the AI
+ * Runs each case in `cases.ts` against Claude Opus 5 (via the AI
  * Gateway), asserting the model picks the expected tool and includes
  * the required args. Fails the run if fewer than `PASS_THRESHOLD` of
  * `cases.length` succeed.
  *
- * Not in default CI. Cost: a handful of cents per run.
+ * Not in default CI — every run bills Opus tokens.
  *
  * --------------------------------------------------------------------
  * TODO: deduplicate tool catalogue.
@@ -37,7 +37,7 @@ import { type EvalCase, cases } from "./cases";
 // Resolved through the AI Gateway (`AI_GATEWAY_API_KEY` env). Using
 // `gateway(...)` instead of a bare string makes the routing path
 // explicit and gives a clearer error if the gateway is unconfigured.
-const MODEL = gateway("anthropic/claude-haiku-4-5");
+const MODEL = gateway("anthropic/claude-opus-5");
 // Lenient bar (10/12) accommodates model non-determinism even at
 // `temperature: 0` — a single flaky tool selection shouldn't tank
 // the run. Tighten if descriptions stabilize and runs trend toward

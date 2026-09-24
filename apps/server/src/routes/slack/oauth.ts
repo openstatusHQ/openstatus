@@ -18,6 +18,7 @@ const SLACK_TOKEN_URL = "https://slack.com/api/oauth.v2.access";
 
 const BOT_SCOPES = [
   "app_mentions:read",
+  "assistant:write",
   "channels:history",
   "channels:join",
   "chat:write",
@@ -25,6 +26,7 @@ const BOT_SCOPES = [
   "groups:history",
   "groups:read",
   "groups:write",
+  "im:history",
 ].join(",");
 
 interface OAuthState {

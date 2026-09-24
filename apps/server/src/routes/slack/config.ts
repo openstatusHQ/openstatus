@@ -36,6 +36,6 @@ export function slackConfigFromEnv(): SlackConfig {
     dashboardUrl:
       env.NODE_ENV === "production"
         ? "https://app.openstatus.dev"
-        : "http://localhost:3000",
+        : "http://localhost:3001",
   };
 }

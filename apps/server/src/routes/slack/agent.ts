@@ -8,10 +8,9 @@ import { tb } from "@/libs/clients";
 import { buildSlackTools } from "./registry-runner";
 import { buildSystemPrompt } from "./system-prompt";
 
-// Vercel AI Gateway model id. Override via SLACK_AGENT_MODEL when rolling
-// out a new Sonnet version. Dotted format (`4.6`, not `4-6`) is what the
-// gateway accepts — see `apps/dashboard/src/app/api/chat/route.ts`.
-const DEFAULT_MODEL = "anthropic/claude-sonnet-4.6";
+// Vercel AI Gateway model id (`anthropic/<model>`). Override via
+// SLACK_AGENT_MODEL when rolling out a new model version.
+const DEFAULT_MODEL = "anthropic/claude-opus-5";
 // `||` (not `??`) so empty / whitespace-only env values fall back to the
 // default rather than being passed through to `generateText`.
 const MODEL = process.env.SLACK_AGENT_MODEL?.trim() || DEFAULT_MODEL;

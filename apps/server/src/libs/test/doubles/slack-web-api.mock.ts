@@ -23,6 +23,27 @@ export class WebClient {
   conversations = {
     replies: () => s.repliesImpl(),
   };
+  agents = {
+    sessions: {
+      setStatus: (args: Record<string, unknown>) => {
+        if (s.sessionStatusOverride) return s.sessionStatusOverride(args);
+        s.calls.push({ method: "agents.sessions.setStatus", args });
+        return Promise.resolve({ ok: true });
+      },
+    },
+  };
+  assistant = {
+    threads: {
+      setStatus: (args: Record<string, unknown>) => {
+        s.calls.push({ method: "assistant.threads.setStatus", args });
+        return Promise.resolve({ ok: true });
+      },
+      setSuggestedPrompts: (args: Record<string, unknown>) => {
+        s.calls.push({ method: "assistant.threads.setSuggestedPrompts", args });
+        return Promise.resolve({ ok: true });
+      },
+    },
+  };
   views = {
     publish: (args: Record<string, unknown>) => {
       s.calls.push({ method: "views.publish", args });
