@@ -19,15 +19,18 @@ import {
   type FormValues,
 } from "@/components/forms/maintenance/form";
 import type { CheckboxTreeItem } from "@/components/ui/checkbox-tree";
+import { formatDateTime } from "@/lib/formatter";
 
 export function FormSheetMaintenance({
   children,
   defaultValues,
+  updatedAt,
   onSubmit,
   items,
   ...props
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
+  updatedAt?: Date | null;
   items: CheckboxTreeItem[];
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
@@ -60,10 +63,12 @@ export function FormSheetMaintenance({
           </FormCard>
         </FormCardGroup>
         <FormSheetFooter>
-          {defaultValues ? (
+          {updatedAt ? (
             <FormSheetFooterInfo>
-              Last Updated {/* TODO: use updatedAt */}
-              <time>{defaultValues.startDate.toLocaleString()}</time>
+              Last Updated{" "}
+              <time dateTime={updatedAt.toISOString()}>
+                {formatDateTime(updatedAt)}
+              </time>
             </FormSheetFooterInfo>
           ) : null}
           <Button type="submit" form="maintenance-form">
