@@ -4,6 +4,8 @@ import type {
   SummaryLine,
 } from "@openstatus/services/agent-tools";
 
+import { toMrkdwn } from "./mrkdwn";
+
 interface TextObject {
   type: "plain_text" | "mrkdwn";
   text: string;
@@ -29,6 +31,16 @@ interface ContextBlock {
   elements: TextObject[];
 }
 
+/**
+ * Renders standard markdown — the dialect the model actually writes — rather
+ * than Slack's mrkdwn, so tables, ordered lists and fenced code survive
+ * instead of being flattened by `toMrkdwn`.
+ */
+interface MarkdownBlock {
+  type: "markdown";
+  text: string;
+}
+
 interface ButtonElement {
   type: "button";
   text: TextObject;
@@ -37,7 +49,31 @@ interface ButtonElement {
   style?: "primary" | "danger";
 }
 
-export type Block = SectionBlock | ActionsBlock | DividerBlock | ContextBlock;
+export type Block =
+  | SectionBlock
+  | ActionsBlock
+  | DividerBlock
+  | ContextBlock
+  | MarkdownBlock;
+
+/** Slack caps all `markdown` blocks in one payload at 12,000 characters. */
+const MARKDOWN_BLOCK_LIMIT = 12_000;
+
+/**
+ * The agent's free-text answer as a Slack message. `text` carries the
+ * mrkdwn-converted copy — it is what notifications and screen readers use, and
+ * the fallback when the answer is too long for a `markdown` block.
+ */
+export function buildAnswerMessage(text: string): {
+  text: string;
+  blocks?: Block[];
+} {
+  const fallback = toMrkdwn(text);
+  if (!text.trim() || text.length > MARKDOWN_BLOCK_LIMIT) {
+    return { text: fallback };
+  }
+  return { text: fallback, blocks: [{ type: "markdown", text }] };
+}
 
 /**
  * Action-id encoding. We need to round-trip both the pending action's id

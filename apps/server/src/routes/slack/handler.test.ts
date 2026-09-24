@@ -16,7 +16,9 @@ import {
   handleSlackEvent,
   isAnswerToAgent,
   looksLikeUncardedDraft,
+  toolTaskTitle,
 } from "./handler";
+import { abortTurn, endTurn, startTurn } from "./running-turns";
 import { verifySlackSignature } from "./verify";
 
 function createTestApp() {
@@ -48,45 +50,54 @@ function signAndPost(
   });
 }
 
+function resetSlackTestState() {
+  slackTestState.calls = [];
+  slackTestState.postMessageOverride = null;
+  slackTestState.updateOverride = null;
+  slackTestState.runAgentOverride = null;
+  slackTestState.renameOverride = null;
+  slackTestState.chatStreamEnabled = true;
+  slackTestState.historyImpl = () =>
+    Promise.resolve({
+      messages: [{ user: "U1", text: "channel message", ts: "1.1" }],
+    });
+  slackTestState.streamAppendFailAfter = null;
+  slackTestState.repliesImpl = () =>
+    Promise.resolve({
+      messages: [{ user: "U1", text: "test message", ts: "1.1" }],
+    });
+  // Default to a workspace without agent sessions so the tests below cover
+  // the fallback indicators; the session path opts back in explicitly.
+  slackTestState.sessionStatusOverride = () => {
+    const err = new Error("An API error occurred: feature_disabled");
+    Object.assign(err, {
+      code: "slack_webapi_platform_error",
+      data: { ok: false, error: "feature_disabled" },
+    });
+    return Promise.reject(err);
+  };
+  slackTestState.resolveWorkspace = (teamId: string) => {
+    if (teamId === "T_KNOWN") {
+      return Promise.resolve({
+        workspace: {
+          id: 1,
+          name: "Test Workspace",
+          slug: "test",
+          plan: "free",
+          limits: {},
+        },
+        botToken: "xoxb-test",
+        botUserId: "UBOT",
+      });
+    }
+    return Promise.resolve(null);
+  };
+}
+
 describe("handleSlackEvent", () => {
   const app = createTestApp();
 
-  beforeEach(() => {
-    slackTestState.calls = [];
-    slackTestState.postMessageOverride = null;
-    slackTestState.updateOverride = null;
-    slackTestState.runAgentOverride = null;
-    slackTestState.repliesImpl = () =>
-      Promise.resolve({
-        messages: [{ user: "U1", text: "test message", ts: "1.1" }],
-      });
-    // Default to a workspace without agent sessions so the tests below cover
-    // the fallback indicators; the session path opts back in explicitly.
-    slackTestState.sessionStatusOverride = () => {
-      const err = new Error("An API error occurred: feature_disabled");
-      Object.assign(err, {
-        code: "slack_webapi_platform_error",
-        data: { ok: false, error: "feature_disabled" },
-      });
-      return Promise.reject(err);
-    };
-    slackTestState.resolveWorkspace = (teamId: string) => {
-      if (teamId === "T_KNOWN") {
-        return Promise.resolve({
-          workspace: {
-            id: 1,
-            name: "Test Workspace",
-            slug: "test",
-            plan: "free",
-            limits: {},
-          },
-          botToken: "xoxb-test",
-          botUserId: "UBOT",
-        });
-      }
-      return Promise.resolve(null);
-    };
-  });
+  beforeEach(resetSlackTestState);
 
   test("responds to url_verification challenge", async () => {
     const res = await signAndPost(app, {
@@ -542,7 +553,7 @@ describe("handleSlackEvent", () => {
     expect(errorPost).toBeDefined();
   });
 
-  test("sets suggested prompts on assistant_thread_started", async () => {
+  test("greets in the thread on the legacy assistant_thread_started", async () => {
     const res = await signAndPost(app, {
       type: "event_callback",
       team_id: "T_KNOWN",
@@ -561,12 +572,14 @@ describe("handleSlackEvent", () => {
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
 
-    const prompts = slackTestState.calls.find(
-      (m) => m.method === "assistant.threads.setSuggestedPrompts",
+    // The greeting lands in the thread that was just opened, and states the
+    // approval guarantee where it matters rather than only in App Home.
+    const welcome = slackTestState.calls.find(
+      (m) => m.method === "postMessage",
     );
-    expect(prompts?.args).toMatchObject({ channel_id: "D1", thread_ts: "2.2" });
-    expect(prompts?.args.prompts).toBeDefined();
-    expect((prompts?.args.prompts as unknown[]).length).toBeGreaterThan(0);
+    expect(welcome?.args).toMatchObject({ channel: "D1", thread_ts: "2.2" });
+    expect(welcome?.args.text as string).toContain("Approve");
+    expect((welcome?.args.blocks as unknown[]).length).toBeGreaterThan(0);
   });
 
   test("ignores events without channel", async () => {
@@ -780,13 +793,15 @@ describe("handleSlackEvent", () => {
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 100));
 
-    const errorUpdate = slackTestState.calls.find(
+    // Delivered as a fresh message when streaming, or by overwriting the
+    // "Thinking..." placeholder when it isn't — either way the user sees it.
+    const errorMessage = slackTestState.calls.find(
       (m) =>
-        m.method === "update" &&
+        (m.method === "update" || m.method === "postMessage") &&
         typeof m.args.text === "string" &&
         m.args.text.includes("Something went wrong"),
     );
-    expect(errorUpdate).toBeDefined();
+    expect(errorMessage).toBeDefined();
   });
 
   test("does not throw when both runAgent and error update fail", async () => {
@@ -914,5 +929,615 @@ describe("isAnswerToAgent", () => {
     expect(isAnswerToAgent(thread, { ts: "3", user: "U1" }, "UBOT")).toBe(
       false,
     );
+  });
+});
+
+describe("streaming the agent's answer", () => {
+  const app = createTestApp();
+
+  beforeEach(resetSlackTestState);
+
+  /** Drives the agent mock's `events` so the handler sees a real stream. */
+  function streamTurn(
+    drive: (events: {
+      onTextDelta(delta: string): Promise<void>;
+      onToolCall(c: { id: string; toolName: string }): Promise<void>;
+      onToolResult(r: { id: string; toolName: string }): Promise<void>;
+    }) => Promise<void>,
+    text = "All five monitors are healthy.",
+  ) {
+    slackTestState.runAgentOverride = async (options: unknown) => {
+      // biome-ignore lint/suspicious/noExplicitAny: test double plumbing
+      await drive((options as any).events);
+      return {
+        text,
+        toolResults: [],
+        finishReason: "stop",
+        stepCount: 1,
+        hitStepLimit: false,
+        aborted: false,
+      };
+    };
+  }
+
+  function mention(suffix: string) {
+    return signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_stream_${suffix}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> what's broken?",
+        user: "U1",
+        channel: "C1",
+        ts: `${Date.now()}.${suffix}`,
+      },
+    });
+  }
+
+  test("streams the answer instead of posting it", async () => {
+    streamTurn(async (events) => {
+      await events.onTextDelta("All five monitors ");
+      await events.onTextDelta("are healthy.");
+    });
+
+    const res = await mention("1");
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 100));
+
+    const appended = slackTestState.calls
+      .filter((m) => m.method === "stream.append")
+      .map((m) => m.args.markdown_text);
+    expect(appended).toEqual(["All five monitors ", "are healthy."]);
+
+    // The stream carried the answer, so it is finalized rather than re-posted.
+    expect(slackTestState.calls.some((m) => m.method === "stream.stop")).toBe(
+      true,
+    );
+    expect(slackTestState.calls.some((m) => m.method === "postMessage")).toBe(
+      false,
+    );
+  });
+
+  test("reports each tool call as a task", async () => {
+    streamTurn(async (events) => {
+      await events.onToolCall({ id: "t1", toolName: "list_status_pages" });
+      await events.onToolResult({ id: "t1", toolName: "list_status_pages" });
+      await events.onTextDelta("Done.");
+    });
+
+    await mention("2");
+    await new Promise((r) => setTimeout(r, 100));
+
+    const tasks = slackTestState.calls
+      .filter((m) => m.method === "stream.append" && m.args.chunks)
+      .flatMap((m) => m.args.chunks as Record<string, unknown>[]);
+    expect(tasks).toEqual([
+      {
+        type: "task_update",
+        id: "t1",
+        title: "Reading status pages",
+        status: "in_progress",
+      },
+      {
+        type: "task_update",
+        id: "t1",
+        title: "Reading status pages",
+        status: "complete",
+      },
+    ]);
+  });
+
+  test("falls back to the placeholder when the workspace has no streaming", async () => {
+    slackTestState.chatStreamEnabled = false;
+    streamTurn(async () => {});
+
+    await mention("3");
+    await new Promise((r) => setTimeout(r, 100));
+
+    // No agent session and no stream leaves the oldest path: a "Thinking..."
+    // message posted up front and overwritten with the answer.
+    const placeholder = slackTestState.calls.find(
+      (m) => m.method === "postMessage",
+    );
+    expect(placeholder?.args.text).toContain("Thinking...");
+    const answer = slackTestState.calls.find((m) => m.method === "update");
+    expect(answer?.args.text).toBe("All five monitors are healthy.");
+    expect(slackTestState.calls.some((m) => m.method === "chatStream")).toBe(
+      false,
+    );
+  });
+
+  test("rewrites the partial message when the stream breaks mid-turn", async () => {
+    // The first append lands, the second fails — Slack is left holding half
+    // an answer, so the whole answer has to replace it.
+    slackTestState.streamAppendFailAfter = 1;
+    streamTurn(async (events) => {
+      await events.onTextDelta("All five ");
+      await events.onTextDelta("monitors are healthy.");
+    });
+
+    await mention("4");
+    await new Promise((r) => setTimeout(r, 100));
+
+    const rewrite = slackTestState.calls.find((m) => m.method === "update");
+    expect(rewrite?.args).toMatchObject({
+      channel: "C1",
+      ts: "stream.ts",
+      text: "All five monitors are healthy.",
+    });
+    // Nothing is posted alongside it: one message, one answer.
+    expect(slackTestState.calls.some((m) => m.method === "postMessage")).toBe(
+      false,
+    );
+  });
+
+  test("names tasks after the tool's verb", () => {
+    expect(toolTaskTitle("list_status_pages")).toBe("Reading status pages");
+    expect(toolTaskTitle("get_monitor_status")).toBe("Reading monitor status");
+    expect(toolTaskTitle("create_status_report")).toBe(
+      "Drafting status report",
+    );
+    expect(toolTaskTitle("search_docs")).toBe("Searching docs");
+    // An unknown verb still reads as words rather than a tool name.
+    expect(toolTaskTitle("frobnicate_widgets")).toBe("frobnicate widgets");
+    expect(toolTaskTitle("ping")).toBe("ping");
+  });
+});
+
+describe("running turns", () => {
+  test("aborts only the thread it was asked about", () => {
+    const turn = startTurn("C_RT", "1.1");
+    expect(abortTurn("C_RT", "9.9")).toBe(false);
+    expect(turn.signal.aborted).toBe(false);
+
+    expect(abortTurn("C_RT", "1.1")).toBe(true);
+    expect(turn.signal.aborted).toBe(true);
+
+    endTurn("C_RT", "1.1", turn);
+    expect(abortTurn("C_RT", "1.1")).toBe(false);
+  });
+
+  test("a finished turn does not deregister the one that replaced it", () => {
+    const first = startTurn("C_RT2", "2.2");
+    const second = startTurn("C_RT2", "2.2");
+    endTurn("C_RT2", "2.2", first);
+
+    expect(abortTurn("C_RT2", "2.2")).toBe(true);
+    expect(second.signal.aborted).toBe(true);
+    endTurn("C_RT2", "2.2", second);
+  });
+});
+
+describe("stopping a turn", () => {
+  const app = createTestApp();
+
+  beforeEach(() => {
+    resetSlackTestState();
+    // A workspace with agent sessions — the surface the stop button lives on.
+    slackTestState.sessionStatusOverride = null;
+  });
+
+  function stopEvent(channel: string, threadTs: string) {
+    return signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_stop_${channel}_${threadTs}`,
+      event: {
+        type: "agent_session_stopped",
+        channel,
+        thread_ts: threadTs,
+        user: "U1",
+        streaming_message_ts: [],
+        event_ts: "1.1",
+      },
+    });
+  }
+
+  function activeStatusCalls() {
+    return slackTestState.calls.filter(
+      (m) =>
+        m.method === "agents.sessions.setStatus" && m.args.status === "active",
+    );
+  }
+
+  test("aborts the run, confirms the stop, and clears the status", async () => {
+    let signal: AbortSignal | undefined;
+    slackTestState.runAgentOverride = (options: unknown) => {
+      signal = (options as { signal: AbortSignal }).signal;
+      return new Promise((resolve) => {
+        signal?.addEventListener("abort", () =>
+          resolve({
+            text: "Looking at the API monit",
+            toolResults: [],
+            finishReason: "abort",
+            stepCount: 0,
+            hitStepLimit: false,
+            aborted: true,
+          }),
+        );
+      });
+    };
+
+    const ts = "6001.1";
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_stopme_${ts}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> what's broken?",
+        user: "U1",
+        channel: "C_STOP",
+        ts,
+      },
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(signal).toBeDefined();
+    expect(signal?.aborted).toBe(false);
+
+    await stopEvent("C_STOP", ts);
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(signal?.aborted).toBe(true);
+    expect(activeStatusCalls().length).toBeGreaterThan(0);
+
+    const notice = slackTestState.calls.find(
+      (m) =>
+        m.method === "postMessage" &&
+        typeof m.args.text === "string" &&
+        m.args.text.includes("Stopped"),
+    );
+    expect(notice).toBeDefined();
+
+    // The half-written answer is never delivered as if it were finished.
+    const answer = slackTestState.calls.find(
+      (m) =>
+        typeof m.args.text === "string" &&
+        m.args.text.includes("Looking at the API monit"),
+    );
+    expect(answer).toBeUndefined();
+  });
+
+  test("clears the status even when no turn is running here", async () => {
+    await stopEvent("C_STOP2", "7001.1");
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Nothing to abort — another instance may hold the turn — but the user
+    // still has to get out of the loading state.
+    expect(activeStatusCalls()).toHaveLength(1);
+    expect(activeStatusCalls()[0].args).toMatchObject({
+      channel_id: "C_STOP2",
+      thread_ts: "7001.1",
+    });
+  });
+});
+
+describe("titling a thread", () => {
+  const app = createTestApp();
+  const redisStore = (globalThis as Record<string, unknown>)
+    .__testRedisStore as Map<string, string>;
+
+  beforeEach(() => {
+    resetSlackTestState();
+    redisStore.clear();
+  });
+
+  function renameCalls() {
+    return slackTestState.calls.filter(
+      (m) => m.method === "agents.sessions.rename",
+    );
+  }
+
+  function paneMessage(ts: string, text: string, threadTs?: string) {
+    return signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_title_${ts}`,
+      event: {
+        type: "message",
+        channel_type: "im",
+        text,
+        user: "U1",
+        channel: "D_TITLE",
+        ts,
+        ...(threadTs ? { thread_ts: threadTs } : {}),
+      },
+    });
+  }
+
+  test("names the pane thread after what the user asked", async () => {
+    await paneMessage("8001.1", "which reports are currently open?");
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(renameCalls()).toHaveLength(1);
+    expect(renameCalls()[0].args).toMatchObject({
+      channel_id: "D_TITLE",
+      thread_ts: "8001.1",
+      title: "which reports are currently open?",
+    });
+  });
+
+  test("names it once and leaves it alone after that", async () => {
+    await paneMessage("8002.1", "is the checkout monitor healthy?");
+    await new Promise((r) => setTimeout(r, 100));
+    expect(renameCalls()).toHaveLength(1);
+
+    // A second turn on the same thread: the subject hasn't changed, and the
+    // name shouldn't follow whatever was asked next.
+    await paneMessage("8002.2", "and what about billing?", "8002.1");
+    await new Promise((r) => setTimeout(r, 100));
+    expect(renameCalls()).toHaveLength(1);
+  });
+
+  test("stops renaming once a person has named it", async () => {
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: "evt_renamed_8003",
+      event: {
+        type: "agent_session_title_changed",
+        channel: "D_TITLE",
+        thread_ts: "8003.1",
+        user: "U1",
+        title: "Tuesday's Stripe outage",
+        event_ts: "1.1",
+      },
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    await paneMessage("8003.2", "any update on this?", "8003.1");
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(renameCalls()).toHaveLength(0);
+  });
+
+  test("leaves channel threads alone", async () => {
+    // `agents.sessions.rename` also renames the channel for session channels —
+    // not worth risking on a shared incident channel for a name nobody lists.
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: "evt_title_channel",
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> what's broken?",
+        user: "U1",
+        channel: "C_TITLE",
+        ts: "8004.1",
+      },
+    });
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(renameCalls()).toHaveLength(0);
+  });
+
+  test("keeps the answer when renaming fails", async () => {
+    slackTestState.renameOverride = () =>
+      Promise.reject(new Error("feature_disabled"));
+
+    await paneMessage("8005.1", "which reports are open?");
+    await new Promise((r) => setTimeout(r, 100));
+
+    const answered = slackTestState.calls.some(
+      (m) =>
+        typeof m.args.text === "string" &&
+        m.args.text.includes("Here is my response"),
+    );
+    expect(answered).toBe(true);
+    // A failed rename must not mark the thread as named.
+    expect(redisStore.has("slack:title:D_TITLE:8005.1")).toBe(false);
+  });
+});
+
+describe("greeting on first contact", () => {
+  const app = createTestApp();
+  const redisStore = (globalThis as Record<string, unknown>)
+    .__testRedisStore as Map<string, string>;
+
+  beforeEach(() => {
+    resetSlackTestState();
+    redisStore.clear();
+  });
+
+  function homeOpened(tab: string, userId = "U1") {
+    return signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_home_${tab}_${userId}_${Math.random()}`,
+      event: {
+        type: "app_home_opened",
+        user: userId,
+        channel: "D_WELCOME",
+        tab,
+        event_ts: "1.1",
+      },
+    });
+  }
+
+  function welcomes() {
+    return slackTestState.calls.filter(
+      (m) =>
+        m.method === "postMessage" &&
+        typeof m.args.text === "string" &&
+        m.args.text.includes("Approve"),
+    );
+  }
+
+  test("greets when the Messages tab is opened", async () => {
+    await homeOpened("messages");
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(welcomes()).toHaveLength(1);
+    // Top-level in the DM: the agent experience has no thread to greet into.
+    expect(welcomes()[0].args.thread_ts).toBeUndefined();
+  });
+
+  test("greets a person once, however often they open it", async () => {
+    await homeOpened("messages");
+    await new Promise((r) => setTimeout(r, 50));
+    await homeOpened("messages");
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(welcomes()).toHaveLength(1);
+  });
+
+  test("greets each person separately", async () => {
+    await homeOpened("messages", "U1");
+    await new Promise((r) => setTimeout(r, 50));
+    await homeOpened("messages", "U2");
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(welcomes()).toHaveLength(2);
+  });
+
+  test("publishes the home view on the Home tab without greeting", async () => {
+    await homeOpened("home");
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(slackTestState.calls.some((m) => m.method === "views.publish")).toBe(
+      true,
+    );
+    expect(welcomes()).toHaveLength(0);
+  });
+
+  test("does not mark someone greeted when the greeting fails", async () => {
+    slackTestState.postMessageOverride = () =>
+      Promise.reject(new Error("channel_not_found"));
+
+    await homeOpened("messages");
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Otherwise a transient failure costs them the greeting permanently.
+    expect(redisStore.has("slack:greeted:T_KNOWN:U1")).toBe(false);
+  });
+});
+
+describe("the channel the user is viewing", () => {
+  const app = createTestApp();
+  const redisStore = (globalThis as Record<string, unknown>)
+    .__testRedisStore as Map<string, string>;
+
+  beforeEach(() => {
+    resetSlackTestState();
+    redisStore.clear();
+  });
+
+  function contextChanged(
+    entities: Array<Record<string, string>> | undefined,
+    userId = "U1",
+  ) {
+    return signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_ctx_${userId}_${Math.random()}`,
+      event: {
+        type: "app_context_changed",
+        context: entities ? { entities } : {},
+      },
+      authorizations: [
+        { user_id: "B0", is_bot: true },
+        { user_id: userId, is_bot: false },
+      ],
+    });
+  }
+
+  /** Captures what the handler handed the agent for this turn. */
+  function captureAgentOptions() {
+    const seen: { tools?: Record<string, unknown>; contextNote?: string }[] =
+      [];
+    slackTestState.runAgentOverride = (options: unknown) => {
+      seen.push(options as { contextNote?: string });
+      return Promise.resolve({
+        text: "Here is my response",
+        toolResults: [],
+        finishReason: "stop",
+        stepCount: 1,
+        hitStepLimit: false,
+        aborted: false,
+      });
+    };
+    return seen;
+  }
+
+  test("remembers it for the authorizing human", async () => {
+    await contextChanged([
+      { type: "slack#/types/channel_id", value: "C_INCIDENT" },
+    ]);
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(redisStore.get("slack:context:T_KNOWN:U1")).toBe("C_INCIDENT");
+    // Never attributed to the bot authorization.
+    expect(redisStore.has("slack:context:T_KNOWN:B0")).toBe(false);
+  });
+
+  test("forgets it when the context empties", async () => {
+    await contextChanged([
+      { type: "slack#/types/channel_id", value: "C_INCIDENT" },
+    ]);
+    await new Promise((r) => setTimeout(r, 50));
+    await contextChanged(undefined);
+    await new Promise((r) => setTimeout(r, 50));
+
+    // A channel they left is worse than no context at all.
+    expect(redisStore.has("slack:context:T_KNOWN:U1")).toBe(false);
+  });
+
+  test("offers the channel to the agent on a pane turn", async () => {
+    await contextChanged([
+      { type: "slack#/types/channel_id", value: "C_INCIDENT" },
+    ]);
+    await new Promise((r) => setTimeout(r, 50));
+
+    const seen = captureAgentOptions();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: "evt_ctx_turn",
+      event: {
+        type: "message",
+        channel_type: "im",
+        text: "draft an update for this",
+        user: "U1",
+        channel: "D_CTX",
+        ts: "9101.1",
+      },
+    });
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(seen).toHaveLength(1);
+    expect(seen[0].contextNote).toContain("<#C_INCIDENT>");
+    expect(Object.keys(seen[0].tools ?? {})).toContain("read_slack_channel");
+    // Nothing is read until the model decides the request calls for it.
+    expect(
+      slackTestState.calls.some((m) => m.method === "conversations.history"),
+    ).toBe(false);
+  });
+
+  test("leaves channel turns alone", async () => {
+    await contextChanged([
+      { type: "slack#/types/channel_id", value: "C_INCIDENT" },
+    ]);
+    await new Promise((r) => setTimeout(r, 50));
+
+    const seen = captureAgentOptions();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: "evt_ctx_channel_turn",
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> what's broken?",
+        user: "U1",
+        channel: "C_OTHER",
+        ts: "9102.1",
+      },
+    });
+    await new Promise((r) => setTimeout(r, 100));
+
+    // In a channel the agent already has the thread it was called into.
+    expect(seen).toHaveLength(1);
+    expect(seen[0].contextNote).toBeUndefined();
+    expect(seen[0].tools).toBeUndefined();
   });
 });

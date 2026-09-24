@@ -1,6 +1,9 @@
 // dependency-free leaf so the prompt test doesn't link the agent's module
 // graph (ai + services) — bun test flakes on concurrent linking of large graphs.
-export function buildSystemPrompt(workspaceName: string): string {
+export function buildSystemPrompt(
+  workspaceName: string,
+  contextNote?: string,
+): string {
   // Intentional: a per-call ISO timestamp defeats Anthropic/Gateway
   // prompt caching, but the agent needs minute-level precision to parse
   // relative times like "next Friday from 2-3 PM". Slack agent volume is
@@ -104,5 +107,5 @@ Maintenance scheduling:
 - Parse natural language dates into ISO 8601 format. Convert relative dates like "next Friday from 2-3 PM" into proper ISO 8601 timestamps.
 - If the user doesn't specify a timezone, default to UTC and mention that in your response.
 - The "from" time must be before the "to" time.
-- Write a professional maintenance message describing what will happen during the window.`;
+- Write a professional maintenance message describing what will happen during the window.${contextNote ?? ""}`;
 }

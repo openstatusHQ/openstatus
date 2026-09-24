@@ -1,14 +1,18 @@
+import { getLogger } from "@logtape/logtape";
 import { ServiceError } from "@openstatus/services";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 
-import { parseActionId } from "./blocks";
+import { runInBackground } from "./background";
+import { type ParsedActionId, parseActionId } from "./blocks";
 import { consume, get } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
 import { renderToolResult } from "./presenters";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
 import { toServiceCtx } from "./service-adapter";
 import { resolveWorkspace } from "./workspace-resolver";
+
+const logger = getLogger("api-server");
 
 interface SlackInteractionPayload {
   type: string;
@@ -19,7 +23,7 @@ interface SlackInteractionPayload {
   actions: Array<{ action_id: string; value?: string }>;
 }
 
-export async function handleSlackInteraction(c: Context) {
+export function handleSlackInteraction(c: Context) {
   const payload = c.get("slackBody") as SlackInteractionPayload;
 
   if (payload.type !== "block_actions" || !payload.actions?.length) {
@@ -29,22 +33,39 @@ export async function handleSlackInteraction(c: Context) {
   const parsed = parseActionId(payload.actions[0].action_id);
   if (!parsed) return c.json({ ok: true });
 
+  // Executing the action writes to the DB and can notify every subscriber of
+  // the status page — well past Slack's 3s ack window, which would mark the
+  // click as failed even though it worked. Ack now; the card is updated with
+  // the outcome when the work finishes.
+  runInBackground("interaction", () => processInteraction(parsed, payload), {
+    actionId: payload.actions[0].action_id,
+    teamId: payload.team?.id,
+  });
+
+  return c.json({ ok: true });
+}
+
+async function processInteraction(
+  parsed: ParsedActionId,
+  payload: SlackInteractionPayload,
+) {
   const channelId = payload.channel.id;
   const messageTs = payload.message.ts;
   const userId = payload.user.id;
   const teamId = payload.team?.id;
 
-  // Non-atomic read for botToken resolution and authorization checks
+  // Non-atomic read, for the authorization checks below.
   const pending = await get(parsed.pendingId);
 
-  let botToken: string | undefined = pending?.botToken;
-  if (!botToken && teamId) {
-    const resolved = await resolveWorkspace(teamId);
-    botToken = resolved?.botToken;
-  }
-  if (!botToken) return c.json({ ok: true });
+  // Resolved at click time, never stored: the token that made the card may
+  // have been revoked since. The payload's team is authoritative for who
+  // clicked; the pending's is the fallback when Slack omits it.
+  const workspaceTeamId = teamId ?? pending?.teamId;
+  if (!workspaceTeamId) return;
+  const resolved = await resolveWorkspace(workspaceTeamId);
+  if (!resolved?.botToken) return;
 
-  const slack = new WebClient(botToken);
+  const slack = new WebClient(resolved.botToken);
 
   if (!pending) {
     await slack.chat.update({
@@ -53,7 +74,7 @@ export async function handleSlackInteraction(c: Context) {
       text: ":x: This action has expired. Please try again.",
       blocks: [],
     });
-    return c.json({ ok: true });
+    return;
   }
 
   if (pending.userId !== userId) {
@@ -62,13 +83,13 @@ export async function handleSlackInteraction(c: Context) {
       user: userId,
       text: "Only the person who initiated this action can approve or cancel it.",
     });
-    return c.json({ ok: true });
+    return;
   }
 
   // Atomic consume — prevents double execution from concurrent requests
   // (e.g. double-click). If another request already won, return.
   const consumed = await consume(parsed.pendingId);
-  if (!consumed) return c.json({ ok: true });
+  if (!consumed) return;
 
   if (parsed.kind === "cancel") {
     await slack.chat.update({
@@ -77,7 +98,7 @@ export async function handleSlackInteraction(c: Context) {
       text: ":no_entry_sign: Cancelled.",
       blocks: [],
     });
-    return c.json({ ok: true });
+    return;
   }
 
   try {
@@ -91,7 +112,12 @@ export async function handleSlackInteraction(c: Context) {
       teamId,
     });
   } catch (err) {
-    console.error("[slack] action execution error:", err);
+    logger.error("slack action execution error", {
+      error: err,
+      channel: channelId,
+      teamId,
+      toolName: consumed.payload.toolName,
+    });
     await slack.chat.update({
       channel: channelId,
       ts: messageTs,
@@ -99,8 +125,6 @@ export async function handleSlackInteraction(c: Context) {
       blocks: [],
     });
   }
-
-  return c.json({ ok: true });
 }
 
 async function runAndPresent(args: {

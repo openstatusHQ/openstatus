@@ -14,7 +14,11 @@ export type PendingPayload = z.infer<typeof pendingPayloadSchema>;
 const pendingActionSchema = z.object({
   id: z.string(),
   workspaceId: z.number(),
-  botToken: z.string(),
+  // The workspace to resolve a bot token from when the card is clicked. The
+  // token itself is deliberately not stored: a pending action outlives the
+  // turn that made it, and `app_uninstalled` cleans up the integration row,
+  // not these keys — a stored token would outlive its own install.
+  teamId: z.string(),
   channelId: z.string(),
   threadTs: z.string(),
   messageTs: z.string(),
@@ -39,7 +43,13 @@ export interface CarrierStore {
   replace(id: string, payload: PendingPayload): Promise<void>;
 }
 
-const TTL_SECONDS = 5 * 60;
+/**
+ * A storage backstop, not a deadline. Approving is the user's call and a draft
+ * stays clickable for as long as they need — the card is a Slack message, so
+ * its age is visible next to it. This only stops abandoned drafts from
+ * accumulating forever.
+ */
+const TTL_SECONDS = 30 * 24 * 60 * 60;
 const ACTION_PREFIX = "slack:action:";
 const THREAD_PREFIX = "slack:thread:";
 

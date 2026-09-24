@@ -11,6 +11,7 @@ import {
   withSlackConfig,
 } from "@/libs/test/slack-config";
 
+import { settleBackgroundTasks } from "./background";
 import type { SlackEnv } from "./config";
 import { handleSlackInteraction } from "./interactions";
 import { verifySlackSignature } from "./verify";
@@ -21,7 +22,7 @@ const redisStore = (globalThis as Record<string, unknown>)
 const basePending = {
   id: "pending-123",
   workspaceId: 1,
-  botToken: "xoxb-test",
+  teamId: "T_KNOWN",
   channelId: "C1",
   threadTs: "1.1",
   messageTs: "1.2",
@@ -91,7 +92,9 @@ function seedCreateMaintenance(
   return data;
 }
 
-function signAndPost(
+// The route acks Slack immediately and finishes the work in the background,
+// so every test waits for that work before asserting on its side effects.
+async function signAndPost(
   app: ReturnType<typeof createTestApp>,
   payload: Record<string, unknown>,
 ) {
@@ -104,7 +107,7 @@ function signAndPost(
     .update(basestring)
     .digest("hex");
 
-  return app.request("/slack/interactions", {
+  const res = await app.request("/slack/interactions", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -113,6 +116,8 @@ function signAndPost(
     },
     body,
   });
+  await settleBackgroundTasks();
+  return res;
 }
 
 describe("handleSlackInteraction (dispatch)", () => {
@@ -222,6 +227,49 @@ describe("handleSlackInteraction (dispatch)", () => {
       actions: [{ action_id: "approve_flag_pending-123" }],
     });
     expect(res.status).toBe(200);
+  });
+
+  test("resolves the bot token on click, not from the stored action", async () => {
+    seedCreateStatusReport();
+    let resolveCalls = 0;
+    slackTestState.resolveWorkspace = (teamId: string) => {
+      resolveCalls++;
+      return teamId === "T_KNOWN"
+        ? Promise.resolve({ botToken: "xoxb-fresh" })
+        : Promise.resolve(null);
+    };
+
+    await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "1.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "cancel_pending-123" }],
+    });
+
+    // A card outlives the turn that made it, so the token that made it may
+    // have been revoked by now — it is never persisted, only resolved here.
+    expect(resolveCalls).toBe(1);
+    expect(slackTestState.calls.some((c) => c.method === "update")).toBe(true);
+  });
+
+  test("does nothing when the workspace no longer resolves", async () => {
+    seedCreateStatusReport();
+    slackTestState.resolveWorkspace = () => Promise.resolve(null);
+
+    await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "1.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "approve_pending-123" }],
+    });
+
+    expect(slackTestState.calls).toHaveLength(0);
+    // The action survives an uninstall rather than being silently burned.
+    expect(redisStore.has("slack:action:pending-123")).toBe(true);
   });
 
   test("cancel consumes pending from redis", async () => {
