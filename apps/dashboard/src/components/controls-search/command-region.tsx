@@ -28,6 +28,10 @@ import {
   BillingOverlayButton,
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
+import {
+  TableCellMetadata,
+  getMetadataEntries,
+} from "@/components/data-table/table-cell-metadata";
 import type { REGIONS } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -36,7 +40,11 @@ export function CommandRegion({
   privateLocations,
 }: {
   regions: (typeof REGIONS)[number][];
-  privateLocations?: { id: number; name: string }[];
+  privateLocations?: {
+    id: number;
+    name: string;
+    metadata?: Record<string, string> | null;
+  }[];
 }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -151,31 +159,44 @@ export function CommandRegion({
             )}
             {privateLocations && privateLocations.length > 0 ? (
               <CommandGroup heading="Private Locations">
-                {privateLocations.map((location) => (
-                  <CommandItem
-                    key={location.id}
-                    keywords={[location.name]}
-                    value={location.id.toString()}
-                    onSelect={() => {
-                      setSelectedRegions((prev) =>
-                        prev.includes(location.id.toString())
-                          ? prev.filter((r) => r !== location.id.toString())
-                          : [...prev, location.id.toString()],
-                      );
-                    }}
-                  >
-                    <Globe className="size-3" />
-                    <span className="truncate font-mono">{location.name}</span>
-                    <Check
-                      className={cn(
-                        "ml-auto",
-                        selectedRegions.includes(location.id.toString())
-                          ? "opacity-100"
-                          : "opacity-0",
-                      )}
-                    />
-                  </CommandItem>
-                ))}
+                {privateLocations.map((location) => {
+                  const metadata = getMetadataEntries(location.metadata);
+                  const keywords = [location.name, ...metadata.flat()];
+
+                  return (
+                    <CommandItem
+                      key={location.id}
+                      keywords={keywords}
+                      value={location.id.toString()}
+                      onSelect={() => {
+                        setSelectedRegions((prev) =>
+                          prev.includes(location.id.toString())
+                            ? prev.filter((r) => r !== location.id.toString())
+                            : [...prev, location.id.toString()],
+                        );
+                      }}
+                    >
+                      <Globe className="size-3 shrink-0" />
+                      <span className="truncate font-mono">
+                        {location.name}
+                      </span>
+                      {metadata.length > 0 ? (
+                        <TableCellMetadata
+                          value={location.metadata}
+                          maxEntries={2}
+                        />
+                      ) : null}
+                      <Check
+                        className={cn(
+                          "ml-auto",
+                          selectedRegions.includes(location.id.toString())
+                            ? "opacity-100"
+                            : "opacity-0",
+                        )}
+                      />
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             ) : null}
             <CommandEmpty>No region found.</CommandEmpty>
