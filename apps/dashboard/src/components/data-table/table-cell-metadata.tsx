@@ -80,7 +80,7 @@ function MetadataPill({ label, value }: { label: string; value: string }) {
     if (ref.current) {
       setIsTruncated(ref.current.scrollWidth > ref.current.clientWidth);
     }
-  }, []);
+  }, [value]);
 
   const pill = (
     <Pill
@@ -99,7 +99,7 @@ function MetadataPill({ label, value }: { label: string; value: string }) {
   return (
     <Tooltip>
       <TooltipTrigger onPointerDown={(event) => event.preventDefault()} asChild>
-        <span className="inline-flex">{pill}</span>
+        <div className="inline-flex">{pill}</div>
       </TooltipTrigger>
       <TooltipContent className="font-mono text-xs">
         {label}: {value}
