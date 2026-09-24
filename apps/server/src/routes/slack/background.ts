@@ -42,6 +42,6 @@ export function runInBackground(
  */
 export async function settleBackgroundTasks(): Promise<void> {
   while (inFlight.size > 0) {
-    await Promise.all([...inFlight]);
+    await Promise.all(inFlight);
   }
 }
