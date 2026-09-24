@@ -7,7 +7,7 @@
   },
   "features": {
     "assistant_view": {
-      "assistant_description": "Drafts, updates and resolves status reports and maintenance windows from your conversations. Nothing is published until you approve it.",
+      "assistant_description": "Drafts, updates and resolves status reports and maintenance windows. Nothing is published until you approve it.",
       "suggested_prompts": [
         {
           "title": "Create a status report",
@@ -16,6 +16,14 @@
         {
           "title": "Open status reports",
           "message": "Which status reports are currently open?"
+        },
+        {
+          "title": "Schedule maintenance",
+          "message": "Schedule a maintenance window next Tuesday from 2-3 PM UTC."
+        },
+        {
+          "title": "Upcoming maintenance",
+          "message": "What maintenance windows are coming up?"
         }
       ]
     },

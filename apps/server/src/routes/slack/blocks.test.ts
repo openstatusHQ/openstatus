@@ -73,7 +73,7 @@ describe("buildConfirmationBlocks", () => {
     expect(text).not.toContain("Page ID");
   });
 
-  test("create_status_report falls back to page id when the page can't be resolved", async () => {
+  test("create_status_report hides the page line when the page can't be resolved", async () => {
     const tool = agentTools.create_status_report;
     const blocks = await buildConfirmationBlocks({
       actionId: "link2",

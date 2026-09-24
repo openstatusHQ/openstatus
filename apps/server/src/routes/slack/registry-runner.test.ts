@@ -381,7 +381,7 @@ describe("buildSystemPrompt coverage", () => {
   test("mentions every tool the Slack agent is given", () => {
     const prompt = buildSystemPrompt("Acme Corp");
     const missing = Object.keys(agentTools).filter(
-      (name) => !prompt.includes(name),
+      (name) => !new RegExp(`\\b${name}\\b`).test(prompt),
     );
     expect(missing).toEqual([]);
   });

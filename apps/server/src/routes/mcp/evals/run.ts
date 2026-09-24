@@ -1,12 +1,12 @@
 /**
  * MCP tool-selection eval. Standalone bun script — `pnpm eval:mcp`.
  *
- * Runs each case in `cases.ts` against Claude Haiku 4.5 (via the AI
+ * Runs each case in `cases.ts` against Claude Opus 5 (via the AI
  * Gateway), asserting the model picks the expected tool and includes
  * the required args. Fails the run if fewer than `PASS_THRESHOLD` of
  * `cases.length` succeed.
  *
- * Not in default CI. Cost: a handful of cents per run.
+ * Not in default CI — every run bills Opus tokens.
  *
  * --------------------------------------------------------------------
  * TODO: deduplicate tool catalogue.

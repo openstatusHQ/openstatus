@@ -52,7 +52,7 @@ const getBaseUrl = () => {
   // Note: dashboard has its own tRPC API routes
   if (process.env.VERCEL_URL) return "https://app.openstatus.dev"; // Vercel
   // Dev runs on 3001 (`PORT` in the dev script), Docker on 3000.
-  return `http://localhost:${process.env.PORT ?? 3000}`; // Local dev and Docker (internal calls)
+  return `http://localhost:${process.env.PORT || 3000}`; // Local dev and Docker (internal calls)
 };
 
 // The whole tRPC surface is served from a single Node.js endpoint — there is

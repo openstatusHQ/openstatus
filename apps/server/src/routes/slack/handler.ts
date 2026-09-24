@@ -121,17 +121,30 @@ export function looksLikeUncardedDraft(text: string): boolean {
   return (text.match(PROSE_DRAFT_FIELDS) ?? []).length >= 2;
 }
 
+// Bounds the Slack calls (and the agent's context) on very long threads.
+const MAX_THREAD_PAGES = 5;
+
+// Replies come oldest first, so a single page would miss the latest messages
+// of a long thread — the ones the agent is being asked about.
 async function fetchThread(
   slack: WebClient,
   channel: string,
   threadTs: string,
 ): Promise<ThreadMessage[]> {
-  const replies = await slack.conversations.replies({
-    channel,
-    ts: threadTs,
-    limit: 100,
-  });
-  return (replies.messages ?? []) as ThreadMessage[];
+  const messages: ThreadMessage[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < MAX_THREAD_PAGES; page++) {
+    const replies = await slack.conversations.replies({
+      channel,
+      ts: threadTs,
+      limit: 100,
+      cursor,
+    });
+    messages.push(...((replies.messages ?? []) as ThreadMessage[]));
+    cursor = replies.response_metadata?.next_cursor || undefined;
+    if (!replies.has_more || !cursor) break;
+  }
+  return messages;
 }
 
 /**

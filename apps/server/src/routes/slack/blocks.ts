@@ -109,6 +109,11 @@ function escapeLinkText(text: string): string {
   return escapeText(text).replace(/\|/g, "❘");
 }
 
+/** Escape a URL for use as the target of a Slack mrkdwn link (`<url|text>`). */
+function escapeLinkUrl(url: string): string {
+  return escapeText(url).replace(/\|/g, "%7C");
+}
+
 /**
  * Data resolvers the Slack surface injects so `buildConfirmationBlocks` can
  * turn `SummaryLineRef` descriptors into names. Resolution needs DB access,
@@ -274,7 +279,9 @@ export async function buildConfirmationBlocks(args: {
   if (report?.url) {
     blocks.push({
       type: "context",
-      elements: [{ type: "mrkdwn", text: `<${report.url}|View report>` }],
+      elements: [
+        { type: "mrkdwn", text: `<${escapeLinkUrl(report.url)}|View report>` },
+      ],
     });
   }
   blocks.push({ type: "divider" }, { type: "actions", elements: buttons });

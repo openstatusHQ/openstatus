@@ -21,7 +21,7 @@ export function buildHomeBlocks(): KnownBlock[] {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: '*Create & update incidents*\nDescribe the issue in the agent pane, or mention `@openstatus` in the incident thread. It reads the thread, drafts a report, and you click *Approve*, *Approve & Notify*, or *Cancel*. Say _"we found the cause"_ or _"it\'s fixed"_ and it moves the incident to Identified or Resolved.',
+        text: '*Create & update incidents*\nDescribe the issue in the agent pane, or mention `@openstatus` in any channel or thread. It reads the thread, drafts a report, and you click *Approve*, *Approve & Notify*, or *Cancel*. Say _"we found the cause"_ or _"it\'s fixed"_ and it moves the incident to Identified or Resolved.',
       },
     },
     {

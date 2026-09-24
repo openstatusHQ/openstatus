@@ -8,7 +8,7 @@ export async function GET(request: Request) {
 
   const APP_URL = `${
     process.env.NODE_ENV === "development" // FIXME: This sucks
-      ? "http://localhost:3000"
+      ? "http://localhost:3001"
       : "https://app.openstatus.dev"
   }/notifications?${searchParams}&channel=pagerduty`;
 
