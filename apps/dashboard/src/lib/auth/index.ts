@@ -6,6 +6,7 @@ import { WelcomeEmail, sendEmail } from "@openstatus/emails";
 import type { DefaultSession } from "next-auth";
 import NextAuth from "next-auth";
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { cache } from "react";
 
 import { adapter } from "./adapter";
@@ -48,7 +49,13 @@ async function syncUser(
 // Runs from the `signIn` event, not `createUser`: only `signIn` carries the
 // account, and the trial must know the provider to skip SSO signups. It also
 // fires after the account row is linked, so nothing races the adapter.
-async function onNewUser(newUser: Partial<User>, provider?: string) {
+// Scheduled with `after()`: the Stripe calls take seconds and would otherwise
+// hold the sign-in redirect. Headers are read up front, before the response.
+async function onNewUser(
+  newUser: Partial<User>,
+  provider: string | undefined,
+  requestHeaders: Headers,
+) {
   if (!newUser.id || !newUser.email) {
     throw new Error("User id & email is required");
   }
@@ -56,7 +63,6 @@ async function onNewUser(newUser: Partial<User>, provider?: string) {
   // this means the user has already been created with clerk
   if (newUser.tenantId) return;
 
-  const requestHeaders = await headers();
   const currency = getCurrency({
     continent: requestHeaders.get("x-vercel-ip-continent") || "NA",
     country: requestHeaders.get("x-vercel-ip-country") || "US",
@@ -214,9 +220,13 @@ const {
       }
 
       if (params.isNewUser) {
-        await onNewUser(
-          { ...params.user, id: Number(params.user.id) },
-          params.account?.provider,
+        const newUser = { ...params.user, id: Number(params.user.id) };
+        const provider = params.account?.provider;
+        const requestHeaders = new Headers(await headers());
+        after(() =>
+          onNewUser(newUser, provider, requestHeaders).catch((error) => {
+            console.error("onNewUser failed", { userId: newUser.id, error });
+          }),
         );
         return;
       }
