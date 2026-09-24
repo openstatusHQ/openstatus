@@ -93,6 +93,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
 
   if (!workspace) return null;
 
+  const isTrialing = workspace.trialDaysLeft !== null;
   const filteredPlans = Object.values(plans).filter((plan) =>
     restrictTo ? restrictTo.includes(plan.id) : true,
   );
@@ -112,7 +113,9 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
       </Tabs>
       <Table className="relative table-fixed">
         <TableCaption>
-          A list to compare the different features by plan.
+          {isTrialing
+            ? "Upgrading ends your trial and charges your card today."
+            : "A list to compare the different features by plan."}
         </TableCaption>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -197,12 +200,16 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                       disabled={isPending || isCurrentPlan}
                     >
                       {isCurrentPlan
-                        ? "Current Plan"
+                        ? isTrialing
+                          ? "On Trial"
+                          : "Current Plan"
                         : isPending
                           ? "Choosing..."
                           : isIntervalSwitch
                             ? `Switch to ${interval}`
-                            : "Choose"}
+                            : isTrialing && !isFreePlan
+                              ? "Upgrade now"
+                              : "Choose"}
                     </Button>
                   </div>
                 </TableHead>

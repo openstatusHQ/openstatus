@@ -18,7 +18,9 @@ import {
 } from "../schema";
 import { TEAM_WORKSPACE_LIMITS } from "../seed/limits";
 
-type Db = typeof defaultDb;
+type Db =
+  | typeof defaultDb
+  | Parameters<Parameters<typeof defaultDb.transaction>[0]>[0];
 type WorkspaceInsert = typeof workspace.$inferInsert;
 type MonitorInsert = typeof monitor.$inferInsert;
 type UserInsert = typeof user.$inferInsert;

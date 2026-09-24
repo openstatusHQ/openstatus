@@ -146,15 +146,14 @@ export async function cancelSubscription(customer?: string) {
   if (!customer) return;
 
   try {
-    const subscriptionId = await stripe.subscriptions
-      .list({
-        customer,
-      })
-      .then((res) => res.data[0]?.id);
+    const { current } = await getCurrentSubscription(customer);
+    if (!current) return;
 
-    if (!subscriptionId) return;
+    if (current.status === "trialing") {
+      return await stripe.subscriptions.cancel(current.id);
+    }
 
-    return await stripe.subscriptions.update(subscriptionId, {
+    return await stripe.subscriptions.update(current.id, {
       cancel_at_period_end: true,
       cancellation_details: {
         comment: "Customer deleted their OpenStatus project.",
@@ -164,4 +163,25 @@ export async function cancelSubscription(customer?: string) {
     console.log("Error cancelling Stripe subscription", error);
     return;
   }
+}
+
+export function customerIdOf(subscription: Stripe.Subscription) {
+  return typeof subscription.customer === "string"
+    ? subscription.customer
+    : subscription.customer.id;
+}
+
+export async function hasPaymentMethod(subscription: Stripe.Subscription) {
+  if (subscription.default_payment_method) return true;
+  const customer = await stripe.customers.retrieve(customerIdOf(subscription));
+  return (
+    !customer.deleted &&
+    Boolean(customer.invoice_settings.default_payment_method)
+  );
+}
+
+export function trialEndsAtOf(subscription: Stripe.Subscription) {
+  return subscription.status === "trialing" && subscription.trial_end
+    ? new Date(subscription.trial_end * 1000)
+    : null;
 }

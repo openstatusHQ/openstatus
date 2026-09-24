@@ -70,6 +70,15 @@ export function BillingAddons({
       },
     }),
   );
+  const paymentMethodSetupMutation = useMutation(
+    trpc.stripeRouter.getPaymentMethodSetupSession.mutationOptions({
+      onSuccess: (url) => {
+        if (url) window.location.assign(url);
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
+  const isTrialing = workspace.trialDaysLeft !== null;
   const plan = workspace.plan;
   const packSize = getAddonPackSize(addon);
   const maxPacks = getAddonMaxQuantity(addon);
@@ -109,10 +118,23 @@ export function BillingAddons({
             return "Billing information updated";
           },
           error: (error) => {
-            if (isTRPCClientError(error)) {
-              return error.message;
+            if (!isTRPCClientError(error))
+              return { message: "Failed to update" };
+            if (error.data?.code === "PRECONDITION_FAILED") {
+              return {
+                message: error.message,
+                action: {
+                  label: "Add payment method",
+                  onClick: () =>
+                    paymentMethodSetupMutation.mutate({
+                      workspaceSlug: workspace.slug,
+                      successUrl: `${window.location.origin}/settings/billing?setup=true`,
+                      cancelUrl: `${window.location.origin}/settings/billing`,
+                    }),
+                },
+              };
             }
-            return "Failed to update";
+            return { message: error.message };
           },
         });
         await promise;
@@ -126,6 +148,8 @@ export function BillingAddons({
       ? defaultValue > 0
       : defaultValue !== defaultLimit;
   const isQuantity = typeof value === "number";
+  // Mirrors the server: a boolean submit toggles, so `true` means removing.
+  const isRemoval = typeof value === "boolean" ? value : value === 0;
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
@@ -170,6 +194,9 @@ export function BillingAddons({
               packSize,
               unitLabel,
             )}
+            {isTrialing && !isRemoval
+              ? " Adding it ends your Starter trial and charges your card today."
+              : null}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {isQuantity && typeof value === "number" ? (

@@ -189,6 +189,10 @@ describe("downgradeWorkspaceToFree", () => {
         actor: { type: "system", job: "stripe-subscription-deleted" },
         db: tx,
       };
+      await tx
+        .update(workspace)
+        .set({ trialEndsAt: new Date("2027-01-01T00:00:00Z") })
+        .where(eq(workspace.id, s.ws.id));
 
       await downgradeWorkspaceToFree({ ctx });
 
@@ -201,6 +205,7 @@ describe("downgradeWorkspaceToFree", () => {
       expect(after?.subscriptionId).toBeNull();
       expect(after?.paidUntil).toBeNull();
       expect(after?.endsAt).toBeNull();
+      expect(after?.trialEndsAt).toBeNull();
       // Compare parsed content, not the raw string — the verb persists
       // `limitsSchema`-canonicalised JSON (key order differs from the
       // config object returned by `getLimits`).
@@ -226,6 +231,40 @@ describe("downgradeWorkspaceToFree", () => {
         from: "team",
         to: "free",
       });
+    });
+  });
+
+  test("stamps the given reason instead of the default", async () => {
+    await withTestTransaction(async (tx) => {
+      const s = await seedTeamWorkspace(tx);
+      const withSso = await tx
+        .update(workspace)
+        .set({ workosOrganizationId: "org_downgrade_reason", ssoEnabled: true })
+        .where(eq(workspace.id, s.ws.id))
+        .returning()
+        .get();
+      const ctx: ServiceContext = {
+        workspace: selectWorkspaceSchema.parse(withSso),
+        actor: { type: "system", job: "stripe-subscription-deleted" },
+        db: tx,
+      };
+
+      await downgradeWorkspaceToFree({ ctx, input: { reason: "trial_ended" } });
+
+      const [wsAudit] = await readAuditLog({
+        workspaceId: s.ws.id,
+        entityType: "workspace",
+        entityId: s.ws.id,
+        db: tx,
+      });
+      expect(wsAudit?.metadata).toMatchObject({ reason: "trial_ended" });
+      const [ssoAudit] = await readAuditLog({
+        workspaceId: s.ws.id,
+        entityType: "workspace_sso",
+        entityId: s.ws.id,
+        db: tx,
+      });
+      expect(ssoAudit?.metadata).toMatchObject({ reason: "trial_ended" });
     });
   });
 
