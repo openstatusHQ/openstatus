@@ -1,6 +1,7 @@
 import { Events, setupAnalytics } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
-import { user } from "@openstatus/db/src/schema";
+import { type User, user } from "@openstatus/db/src/schema";
+import { getCurrency } from "@openstatus/db/src/schema/plan/utils";
 import { WelcomeEmail, sendEmail } from "@openstatus/emails";
 import type { DefaultSession } from "next-auth";
 import NextAuth from "next-auth";
@@ -42,6 +43,60 @@ async function syncUser(
     .set({ ...fields, updatedAt: new Date() })
     .where(eq(user.id, userId))
     .run();
+}
+
+// Runs from the `signIn` event, not `createUser`: only `signIn` carries the
+// account, and the trial must know the provider to skip SSO signups. It also
+// fires after the account row is linked, so nothing races the adapter.
+async function onNewUser(newUser: Partial<User>, provider?: string) {
+  if (!newUser.id || !newUser.email) {
+    throw new Error("User id & email is required");
+  }
+
+  // this means the user has already been created with clerk
+  if (newUser.tenantId) return;
+
+  const requestHeaders = await headers();
+  const currency = getCurrency({
+    continent: requestHeaders.get("x-vercel-ip-continent") || "NA",
+    country: requestHeaders.get("x-vercel-ip-country") || "US",
+  });
+
+  // Imported lazily to keep Stripe out of the proxy bundle, which also loads this module.
+  const { maybeStartSignupTrial } =
+    await import("@openstatus/api/src/router/stripe/trial");
+  const trial = await maybeStartSignupTrial({
+    userId: newUser.id,
+    email: newUser.email,
+    provider,
+    currency,
+  }).catch((error: Error) => {
+    console.error("signup trial failed", { userId: newUser.id, error });
+    return { started: false, reason: "stripe_error" } as const;
+  });
+
+  await sendEmail({
+    from: "Thibault from openstatus <thibault@openstatus.dev>",
+    subject: "Welcome to openstatus.",
+    to: [newUser.email],
+    react: WelcomeEmail({
+      trialEndsAt: trial.started ? trial.trialEndsAt : undefined,
+    }),
+  });
+
+  const analytics = await setupAnalytics({
+    userId: `usr_${newUser.id}`,
+    email: newUser.email,
+    location: requestHeaders.get("x-forwarded-for") ?? undefined,
+    userAgent: requestHeaders.get("user-agent") ?? undefined,
+  });
+
+  await analytics.track(Events.CreateUser);
+  if (trial.started) {
+    await analytics.track({ ...Events.StartTrial, currency });
+  } else if (trial.reason !== "disabled") {
+    await analytics.track({ ...Events.SkipTrial, reason: trial.reason });
+  }
 }
 
 const {
@@ -147,32 +202,6 @@ const {
     },
   },
   events: {
-    // That should probably done in the callback method instead
-    async createUser(params) {
-      if (!params.user.id || !params.user.email) {
-        throw new Error("User id & email is required");
-      }
-
-      // this means the user has already been created with clerk
-      if (params.user.tenantId) return;
-
-      await sendEmail({
-        from: "Thibault from openstatus <thibault@openstatus.dev>",
-        subject: "Welcome to openstatus.",
-        to: [params.user.email],
-        react: WelcomeEmail(),
-      });
-
-      const analytics = await setupAnalytics({
-        userId: `usr_${params.user.id}`,
-        email: params.user.email,
-        location: (await headers()).get("x-forwarded-for") ?? undefined,
-        userAgent: (await headers()).get("user-agent") ?? undefined,
-      });
-
-      await analytics.track(Events.CreateUser);
-    },
-
     async signIn(params) {
       if (params.account?.provider === "workos") {
         const { organization_id: organizationId } = readWorkOSProfile(
@@ -184,7 +213,13 @@ const {
         }
       }
 
-      if (params.isNewUser) return;
+      if (params.isNewUser) {
+        await onNewUser(
+          { ...params.user, id: Number(params.user.id) },
+          params.account?.provider,
+        );
+        return;
+      }
       if (!params.user.id || !params.user.email) return;
 
       const analytics = await setupAnalytics({

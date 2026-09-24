@@ -1,23 +1,23 @@
 import { Events } from "@openstatus/analytics";
-import { eq } from "@openstatus/db";
-import {
-  selectWorkspaceSchema,
-  user,
-  usersToWorkspaces,
-  workspace,
-  workspacePlans,
-} from "@openstatus/db/src/schema";
+import { workspacePlans } from "@openstatus/db/src/schema";
 import type { AddonQuantityKey } from "@openstatus/db/src/schema/plan/schema";
 import {
   addons,
   billingIntervals,
 } from "@openstatus/db/src/schema/plan/schema";
+import { isAddonQuantityKey } from "@openstatus/db/src/schema/plan/utils";
 import {
-  isAddonQuantityKey,
-  updateAddonInLimits,
-} from "@openstatus/db/src/schema/plan/utils";
-import { countWorkspaceUsage } from "@openstatus/services";
-import { updateWorkspacePlan } from "@openstatus/services/workspace";
+  ConflictError,
+  type ServiceContext,
+  countWorkspaceUsage,
+} from "@openstatus/services";
+import {
+  getWorkspace,
+  getWorkspaceForMember,
+  updateWorkspaceLimits,
+  updateWorkspacePlan,
+  updateWorkspaceStripeId,
+} from "@openstatus/services/workspace";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -26,7 +26,9 @@ import {
   buildFromSubscriptionOrThrow,
   getCurrentPeriodEnd,
   getCurrentSubscription,
+  hasPaymentMethod,
   stripe,
+  trialEndsAtOf,
 } from "./shared";
 import {
   getPlanFromPriceId,
@@ -46,54 +48,72 @@ const url =
     ? "https://www.openstatus.dev"
     : "http://localhost:3000";
 
+// The slug is input, so the target may differ from the active `ctx.workspace`.
+async function resolveWorkspaceCtx(opts: {
+  ctx: { db: ServiceContext["db"]; user: { id: number } };
+  input: { workspaceSlug: string };
+}) {
+  const access = await getWorkspaceForMember({
+    input: { slug: opts.input.workspaceSlug, userId: opts.ctx.user.id },
+    db: opts.ctx.db,
+  });
+  if (!access) return;
+  const ctx: ServiceContext = {
+    workspace: access.workspace,
+    actor: { type: "user", userId: opts.ctx.user.id },
+    db: opts.ctx.db,
+  };
+  return { ctx, email: access.email };
+}
+
+async function ensureStripeCustomer(ctx: ServiceContext, email: string | null) {
+  if (ctx.workspace.stripeId) return ctx.workspace.stripeId;
+
+  const customer = await stripe.customers.create({
+    metadata: { workspaceId: String(ctx.workspace.id) },
+    email: email || "",
+  });
+
+  try {
+    await updateWorkspaceStripeId({ ctx, input: { stripeId: customer.id } });
+  } catch (err) {
+    if (!(err instanceof ConflictError)) throw err;
+    // A concurrent request linked its customer first; ours would orphan.
+    await stripe.customers.del(customer.id).catch(() => undefined);
+    const linked = await getWorkspace({ ctx });
+    if (!linked.stripeId) throw err;
+    return linked.stripeId;
+  }
+
+  return customer.id;
+}
+
+async function createPaymentMethodSetupSession(args: {
+  customer: string;
+  subscriptionId: string;
+  successUrl: string;
+  cancelUrl: string;
+}) {
+  return stripe.checkout.sessions.create({
+    mode: "setup",
+    payment_method_types: ["card"],
+    customer: args.customer,
+    setup_intent_data: { metadata: { subscriptionId: args.subscriptionId } },
+    success_url: args.successUrl,
+    cancel_url: args.cancelUrl,
+  });
+}
+
 export const stripeRouter = createTRPCRouter({
   getUserCustomerPortal: protectedProcedure
     .input(
       z.object({ workspaceSlug: z.string(), returnUrl: z.string().optional() }),
     )
     .mutation(async (opts) => {
-      const result = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.slug, opts.input.workspaceSlug))
-        .get();
-
-      if (!result) return;
-
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.id, opts.ctx.user.id))
-        .as("currentUser");
-      const userHasAccess = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, result.id))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
-
-      if (!userHasAccess || !userHasAccess.users_to_workspaces) return;
-      let stripeId = result.stripeId;
-      if (!stripeId) {
-        const customerData: {
-          metadata: { workspaceId: string };
-          email?: string;
-        } = {
-          metadata: {
-            workspaceId: String(result.id),
-          },
-          email: userHasAccess.currentUser.email || "",
-        };
-
-        const stripeUser = await stripe.customers.create(customerData);
-
-        stripeId = stripeUser.id;
-        await opts.ctx.db
-          .update(workspace)
-          .set({ stripeId })
-          .where(eq(workspace.id, result.id))
-          .run();
-      }
+      const resolved = await resolveWorkspaceCtx(opts);
+      if (!resolved) return;
+      const result = resolved.ctx.workspace;
+      const stripeId = await ensureStripeCustomer(resolved.ctx, resolved.email);
 
       const session = await stripe.billingPortal.sessions.create({
         customer: stripeId,
@@ -116,53 +136,10 @@ export const stripeRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      // The following code is duplicated we should extract it
-      const result = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.slug, opts.input.workspaceSlug))
-        .get();
-
-      if (!result) return;
-
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.id, opts.ctx.user.id))
-        .as("currentUser");
-      const userHasAccess = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, result.id))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
-
-      if (!userHasAccess || !userHasAccess.users_to_workspaces) return;
-      let stripeId = result.stripeId;
-      if (!stripeId) {
-        const currentUser = await opts.ctx.db
-          .select()
-          .from(user)
-          .where(eq(user.id, opts.ctx.user.id))
-          .get();
-        const customerData: {
-          metadata: { workspaceId: string };
-          email?: string;
-        } = {
-          metadata: {
-            workspaceId: String(result.id),
-          },
-          email: currentUser?.email || "",
-        };
-        const stripeUser = await stripe.customers.create(customerData);
-
-        stripeId = stripeUser.id;
-        await opts.ctx.db
-          .update(workspace)
-          .set({ stripeId })
-          .where(eq(workspace.id, result.id))
-          .run();
-      }
+      const resolved = await resolveWorkspaceCtx(opts);
+      if (!resolved) return;
+      const result = resolved.ctx.workspace;
+      const stripeId = await ensureStripeCustomer(resolved.ctx, resolved.email);
 
       const priceId = getPriceIdForPlan(opts.input.plan, opts.input.interval);
       if (!priceId) {
@@ -180,7 +157,30 @@ export const stripeRouter = createTRPCRouter({
       // dropping every addon they bought.
       const { current } = await getCurrentSubscription(stripeId);
 
-      if (current) {
+      const billingUrl = `${url}/app/${result.slug}/settings/billing`;
+      const isTrialing = current?.status === "trialing";
+      const trialWithoutCard =
+        current !== undefined &&
+        isTrialing &&
+        !(await hasPaymentMethod(current));
+
+      if (
+        trialWithoutCard &&
+        opts.input.plan === "starter" &&
+        opts.input.interval === "monthly"
+      ) {
+        const session = await createPaymentMethodSetupSession({
+          customer: stripeId,
+          subscriptionId: current.id,
+          successUrl: opts.input.successUrl || `${billingUrl}?setup=true`,
+          cancelUrl: opts.input.cancelUrl || billingUrl,
+        });
+        return { type: "setup" as const, session };
+      }
+
+      // A trial without a card cannot be charged in place, so it goes through
+      // a regular checkout; `sessionCompleted` retires the trial subscription.
+      if (current && !trialWithoutCard) {
         const planItem = current.items.data.find((item) =>
           getPlanFromPriceId(item.price.id),
         );
@@ -223,6 +223,10 @@ export const stripeRouter = createTRPCRouter({
           items: [{ id: planItem.id, price: priceId }],
           proration_behavior: "create_prorations",
           cancel_at_period_end: false,
+          ...(isTrialing && {
+            trial_end: "now",
+            payment_behavior: "error_if_incomplete",
+          }),
         });
 
         const built = buildFromSubscriptionOrThrow(updated);
@@ -239,16 +243,13 @@ export const stripeRouter = createTRPCRouter({
         // rebuilds the same state from the same subscription, so applying it
         // again is a no-op.
         await updateWorkspacePlan({
-          ctx: {
-            workspace: selectWorkspaceSchema.parse(result),
-            actor: { type: "user", userId: opts.ctx.user.id },
-            db: opts.ctx.db,
-          },
+          ctx: resolved.ctx,
           input: {
             plan: built.plan,
             subscriptionId: updated.id,
             endsAt: getCurrentPeriodEnd(updated),
             paidUntil: getCurrentPeriodEnd(updated),
+            trialEndsAt: trialEndsAtOf(updated),
             limits: built.limits,
             reason: "plan_changed",
           },
@@ -275,51 +276,63 @@ export const stripeRouter = createTRPCRouter({
           enabled: true,
         },
         mode: "subscription",
-        success_url:
-          opts.input.successUrl ||
-          `${url}/app/${result.slug}/settings/billing?success=true`,
-        cancel_url:
-          opts.input.cancelUrl || `${url}/app/${result.slug}/settings/billing`,
+        success_url: opts.input.successUrl || `${billingUrl}?success=true`,
+        cancel_url: opts.input.cancelUrl || billingUrl,
       });
 
       return { type: "checkout" as const, session };
     }),
 
-  addAddon: protectedProcedure
-    .meta({ track: Events.AddFeature, trackProps: ["feature"] })
+  getPaymentMethodSetupSession: protectedProcedure
     .input(
       z.object({
         workspaceSlug: z.string(),
-        feature: z.enum(addons),
-        value: z.union([z.boolean(), z.number()]),
+        successUrl: z.string().optional(),
+        cancelUrl: z.string().optional(),
       }),
     )
     .mutation(async (opts) => {
-      // The following code is duplicated we should extract it
-      const result = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.slug, opts.input.workspaceSlug))
-        .get();
+      const resolved = await resolveWorkspaceCtx(opts);
+      const ws = resolved?.ctx.workspace;
+      if (!ws?.stripeId) return;
 
-      if (!result) return;
+      const { current } = await getCurrentSubscription(ws.stripeId);
+      if (!current) return;
 
-      const ws = selectWorkspaceSchema.parse(result);
+      const billingUrl = `${url}/app/${ws.slug}/settings/billing`;
+      const session = await createPaymentMethodSetupSession({
+        customer: ws.stripeId,
+        subscriptionId: current.id,
+        successUrl: opts.input.successUrl || `${billingUrl}?setup=true`,
+        cancelUrl: opts.input.cancelUrl || billingUrl,
+      });
 
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.id, opts.ctx.user.id))
-        .as("currentUser");
-      const userHasAccess = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, result.id))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
+      return session.url;
+    }),
 
-      if (!userHasAccess || !userHasAccess.users_to_workspaces) return;
-      const stripeId = result.stripeId;
+  addAddon: protectedProcedure
+    .meta({ track: Events.AddFeature, trackProps: ["feature"] })
+    .input(
+      z
+        .object({
+          workspaceSlug: z.string(),
+          feature: z.enum(addons),
+          value: z.union([z.boolean(), z.number()]),
+        })
+        // A boolean on a quantity addon (or a number on a toggle) would change
+        // the Stripe item but leave the limit untouched, so reject it up front.
+        .refine(
+          (i) =>
+            (typeof i.value === "number") === isAddonQuantityKey(i.feature),
+          { message: "Value does not match the addon type", path: ["value"] },
+        ),
+    )
+    .mutation(async (opts) => {
+      const resolved = await resolveWorkspaceCtx(opts);
+      if (!resolved) return;
+      const ws = resolved.ctx.workspace;
+
+      const stripeId = ws.stripeId;
       if (!stripeId) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -337,6 +350,16 @@ export const stripeRouter = createTRPCRouter({
 
       if (!current) {
         return;
+      }
+
+      const isTrialing = current.status === "trialing";
+      const isRemoval = opts.input.value === false || opts.input.value === 0;
+      // Removing an addon never ends the trial, so it needs no card.
+      if (isTrialing && !isRemoval && !(await hasPaymentMethod(current))) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Add a payment method first.",
+        });
       }
 
       const priceId = getPriceIdForFeature(opts.input.feature);
@@ -396,7 +419,7 @@ export const stripeRouter = createTRPCRouter({
 
         const current = await countWorkspaceUsage(
           opts.ctx.db,
-          result.id,
+          ws.id,
           opts.input.feature,
         );
         if (current > resolved.newLimit) {
@@ -408,7 +431,16 @@ export const stripeRouter = createTRPCRouter({
       }
 
       const item = items.data.find((item) => item.price.id === priceId);
-      const isRemoval = opts.input.value === false || quantity === 0;
+
+      // Charge the plan before granting the addon, so a declined card leaves
+      // the trial and the limits untouched.
+      const endsTrial = isTrialing && !isRemoval;
+      if (endsTrial) {
+        await stripe.subscriptions.update(current.id, {
+          trial_end: "now",
+          payment_behavior: "error_if_incomplete",
+        });
+      }
 
       if (isRemoval) {
         if (item) {
@@ -426,17 +458,15 @@ export const stripeRouter = createTRPCRouter({
         });
       }
 
-      const newLimits = updateAddonInLimits(
-        ws.limits,
-        opts.input.feature,
-        newValue,
-      );
-
-      await opts.ctx.db
-        .update(workspace)
-        .set({ limits: JSON.stringify(newLimits) })
-        .where(eq(workspace.id, result.id))
-        .run();
+      await updateWorkspaceLimits({
+        ctx: resolved.ctx,
+        input: {
+          addon: opts.input.feature,
+          value: newValue,
+          ...(endsTrial && { trialEndsAt: null }),
+          reason: endsTrial ? "trial_converted" : "addon_changed",
+        },
+      });
 
       // TODO: send email to user notifying about the change if not already from stripe
 
