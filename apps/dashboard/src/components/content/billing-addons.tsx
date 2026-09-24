@@ -1,6 +1,9 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
-import type { Addons } from "@openstatus/db/src/schema/plan/schema";
+import type {
+  Addons,
+  BillingInterval,
+} from "@openstatus/db/src/schema/plan/schema";
 import {
   getAddonMaxQuantity,
   getAddonPackSize,
@@ -23,7 +26,7 @@ import { ButtonGroup } from "@openstatus/ui/components/ui/button-group";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -61,6 +64,14 @@ export function BillingAddons({
   const [currency] = useCookieState("x-currency", "USD");
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  // Addons are billed on the plan's interval, so a yearly plan pays the
+  // yearly addon price.
+  // Until it resolves the price is unknown: showing the monthly one to a
+  // yearly customer would misstate what they are charged.
+  const intervalQuery = useQuery(
+    trpc.stripeRouter.getBillingInterval.queryOptions(),
+  );
+  const interval: BillingInterval = intervalQuery.data ?? "monthly";
   const checkoutSessionMutation = useMutation(
     trpc.stripeRouter.addAddon.mutationOptions({
       onSuccess: () => {
@@ -92,7 +103,9 @@ export function BillingAddons({
         Math.floor((workspaceLimit - defaultLimit) / packSize)
       : workspaceLimit;
   const [value, setValue] = useState<number | boolean>(defaultValue);
-  const price = getAddonPriceConfig(plan, addon, currency);
+  const price = intervalQuery.isSuccess
+    ? getAddonPriceConfig(plan, addon, currency, interval)
+    : null;
 
   // Reset value when modal opens
   useEffect(() => {
@@ -161,8 +174,11 @@ export function BillingAddons({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-foreground font-mono text-sm">
-              {formatPrice(price)}
-              {getPriceSuffix(isQuantity, packSize)}
+              {price
+                ? `${formatPrice(price)}${getPriceSuffix(isQuantity, packSize, interval)}`
+                : intervalQuery.isPending
+                  ? "Loading..."
+                  : "N/A"}
             </span>
             {hasAddon && !isQuantity ? (
               <Check className="text-success size-4" />
@@ -175,7 +191,7 @@ export function BillingAddons({
           </div>
           <div className="col-span-2 flex items-center justify-end gap-1.5 lg:col-span-1">
             <AlertDialogTrigger asChild>
-              <Button size="sm" variant="secondary">
+              <Button size="sm" variant="secondary" disabled={!price}>
                 {getButtonLabel(hasAddon, value)}
               </Button>
             </AlertDialogTrigger>
@@ -193,6 +209,7 @@ export function BillingAddons({
               hasAddon,
               packSize,
               unitLabel,
+              interval,
             )}
             {isTrialing && !isRemoval
               ? " Adding it ends your Starter trial and charges your card today."
@@ -263,9 +280,18 @@ function getButtonLabel(
   return null;
 }
 
-function getPriceSuffix(isQuantity: boolean, packSize: number) {
-  if (!isQuantity) return "/mo.";
-  return packSize > 1 ? `/mo./pack of ${packSize}` : "/mo./each";
+function getPeriodSuffix(interval: BillingInterval) {
+  return interval === "yearly" ? "/yr." : "/mo.";
+}
+
+function getPriceSuffix(
+  isQuantity: boolean,
+  packSize: number,
+  interval: BillingInterval,
+) {
+  const period = getPeriodSuffix(interval);
+  if (!isQuantity) return period;
+  return packSize > 1 ? `${period}/pack of ${packSize}` : `${period}/each`;
 }
 
 function getDialogDescription(
@@ -275,11 +301,12 @@ function getDialogDescription(
   hasAddon: boolean,
   packSize: number,
   unitLabel: string,
+  interval: BillingInterval,
 ) {
   const formattedPrice = formatPrice(price);
   const isBoolean = typeof value === "boolean";
   const isQuantity = typeof value === "number";
-  const priceSuffix = getPriceSuffix(isQuantity, packSize);
+  const priceSuffix = getPriceSuffix(isQuantity, packSize, interval);
 
   if (isBoolean) {
     if (hasAddon) {
@@ -293,7 +320,7 @@ function getDialogDescription(
       return `${label} will be removed from your subscription. You will stop being charged for it on your next billing cycle.`;
     }
     const total = formatAmount(price, price ? price.value * value : 0);
-    return `Your workspace will get ${value * packSize} extra ${unitLabel}. You will be charged ${total}/mo., starting on your next billing cycle.`;
+    return `Your workspace will get ${value * packSize} extra ${unitLabel}. You will be charged ${total}${getPeriodSuffix(interval)}, starting on your next billing cycle.`;
   }
 }
 
