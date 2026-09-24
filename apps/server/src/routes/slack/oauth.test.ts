@@ -91,11 +91,13 @@ describe("handleSlackInstall", () => {
 
     const expectedScopes = [
       "app_mentions:read",
+      "assistant:write",
       "channels:history",
       "chat:write",
       "groups:history",
       "groups:read",
       "groups:write",
+      "im:history",
     ];
 
     for (const s of expectedScopes) {

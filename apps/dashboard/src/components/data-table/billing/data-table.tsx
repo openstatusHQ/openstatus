@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
 const BASE_URL =
   process.env.NODE_ENV === "production"
     ? "https://app.openstatus.dev"
-    : "http://localhost:3000";
+    : "http://localhost:3001";
 
 function getPeriodSuffix(interval: BillingInterval) {
   return interval === "yearly" ? "/yr." : "/mo.";

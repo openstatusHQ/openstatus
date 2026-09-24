@@ -90,7 +90,8 @@ describe("buildConfirmationBlocks", () => {
     const text = (
       blocks.find((b) => b.type === "section") as { text: { text: string } }
     ).text.text;
-    expect(text).toContain("*Page ID:* 2705");
+    expect(text).not.toContain("Page");
+    expect(text).not.toContain("2705");
   });
 
   test("create_status_report shows component names when resolvers resolve", async () => {
@@ -115,7 +116,7 @@ describe("buildConfirmationBlocks", () => {
     expect(text).toContain("*Impacts:* Svc 101 → major_outage");
   });
 
-  test("component line falls back to raw id when a name is missing", async () => {
+  test("component line shows unknown when a name is missing", async () => {
     const tool = agentTools.create_status_report;
     const blocks = await buildConfirmationBlocks({
       actionId: "cn2",
@@ -135,7 +136,8 @@ describe("buildConfirmationBlocks", () => {
     const text = (
       blocks.find((b) => b.type === "section") as { text: { text: string } }
     ).text.text;
-    expect(text).toContain("*Components:* Svc 101, 999");
+    expect(text).toContain("*Components:* Svc 101, _unknown_");
+    expect(text).not.toContain("999");
   });
 
   test("degrades to raw page id (card intact) when the page resolver rejects", async () => {
@@ -158,7 +160,8 @@ describe("buildConfirmationBlocks", () => {
     const text = (
       blocks.find((b) => b.type === "section") as { text: { text: string } }
     ).text.text;
-    expect(text).toContain("*Page ID:* 2705");
+    expect(text).not.toContain("Page");
+    expect(text).not.toContain("2705");
     // The rest of the card must still build — a flaky lookup degrades one line.
     const actions = blocks.find((b) => b.type === "actions") as {
       elements: unknown[];
@@ -166,7 +169,7 @@ describe("buildConfirmationBlocks", () => {
     expect(actions.elements).toHaveLength(3);
   });
 
-  test("degrades to raw component ids when the component resolver rejects", async () => {
+  test("drops component lines when the component resolver rejects", async () => {
     const tool = agentTools.create_status_report;
     const blocks = await buildConfirmationBlocks({
       actionId: "rej2",
@@ -187,8 +190,9 @@ describe("buildConfirmationBlocks", () => {
     const text = (
       blocks.find((b) => b.type === "section") as { text: { text: string } }
     ).text.text;
-    expect(text).toContain("*Components:* 101, 102");
-    expect(text).toContain("*Impacts:* 101 → major_outage");
+    expect(text).not.toContain("Components");
+    expect(text).not.toContain("Impacts");
+    expect(text).not.toContain("101");
   });
 
   test("escapes mrkdwn-significant chars in the page link text", async () => {
@@ -346,11 +350,12 @@ describe("buildConfirmationBlocks", () => {
         pageId: 1,
         pageComponentIds: [101, 102],
       },
+      resolvers: stubResolvers,
     });
     const section = blocks.find((b) => b.type === "section") as {
       text: { text: string };
     };
-    expect(section.text.text).toContain("101, 102");
+    expect(section.text.text).toContain("Svc 101, Svc 102");
   });
 
   test("create_status_report shows impacts when provided", async () => {
@@ -369,13 +374,14 @@ describe("buildConfirmationBlocks", () => {
           { pageComponentId: 102, impact: "degraded_performance" },
         ],
       },
+      resolvers: stubResolvers,
     });
     const section = blocks.find((b) => b.type === "section") as {
       text: { text: string };
     };
     expect(section.text.text).toContain("Impacts");
-    expect(section.text.text).toContain("101 → major_outage");
-    expect(section.text.text).toContain("102 → degraded_performance");
+    expect(section.text.text).toContain("Svc 101 → major_outage");
+    expect(section.text.text).toContain("Svc 102 → degraded_performance");
   });
 
   test("add_status_report_update shows impacts when provided", async () => {
@@ -389,12 +395,13 @@ describe("buildConfirmationBlocks", () => {
         message: "recovering",
         componentImpacts: [{ pageComponentId: 7, impact: "partial_outage" }],
       },
+      resolvers: stubResolvers,
     });
     const section = blocks.find((b) => b.type === "section") as {
       text: { text: string };
     };
     expect(section.text.text).toContain("Impacts");
-    expect(section.text.text).toContain("7 → partial_outage");
+    expect(section.text.text).toContain("Svc 7 → partial_outage");
   });
 
   test("add_status_report_update has 3 buttons", async () => {
@@ -407,12 +414,13 @@ describe("buildConfirmationBlocks", () => {
         status: "identified",
         message: "Root cause found",
       },
+      resolvers: stubResolvers,
     });
 
     const section = blocks.find((b) => b.type === "section") as {
       text: { text: string };
     };
-    expect(section.text.text).toContain("42");
+    expect(section.text.text).not.toContain("Report ID");
     expect(section.text.text).toContain("identified");
 
     const actions = blocks.find((b) => b.type === "actions") as {
@@ -429,6 +437,7 @@ describe("buildConfirmationBlocks", () => {
       actionId: "u1",
       tool,
       input: { statusReportId: 10, title: "X" },
+      resolvers: stubResolvers,
     });
     const noChangeText = (
       noChange.find((b) => b.type === "section") as {
@@ -442,6 +451,7 @@ describe("buildConfirmationBlocks", () => {
       actionId: "u2",
       tool,
       input: { statusReportId: 10, pageComponentIds: [] },
+      resolvers: stubResolvers,
     });
     const clearAllText = (
       clearAll.find((b) => b.type === "section") as {
@@ -455,13 +465,14 @@ describe("buildConfirmationBlocks", () => {
       actionId: "u3",
       tool,
       input: { statusReportId: 10, pageComponentIds: [1, 2] },
+      resolvers: stubResolvers,
     });
     const withIdsText = (
       withIds.find((b) => b.type === "section") as {
         text: { text: string };
       }
     ).text.text;
-    expect(withIdsText).toContain("1, 2");
+    expect(withIdsText).toContain("Svc 1, Svc 2");
   });
 
   test("update_status_report has 2 buttons (no notify flag)", async () => {
@@ -485,7 +496,7 @@ describe("buildConfirmationBlocks", () => {
     expect(actions.elements[1].action_id).toBe("cancel_xyz");
   });
 
-  test("create_maintenance card shows pageId", async () => {
+  test("create_maintenance card hides the page id without resolvers", async () => {
     const tool = agentTools.create_maintenance;
     const blocks = await buildConfirmationBlocks({
       actionId: "m1",
@@ -504,8 +515,8 @@ describe("buildConfirmationBlocks", () => {
         text: { text: string };
       }
     ).text.text;
-    expect(text).toContain("Page ID");
-    expect(text).toContain("7");
+    // No resolvers: the page line is dropped rather than showing the id.
+    expect(text).not.toContain("Page");
   });
 
   test("resolve_status_report has 3 buttons", async () => {
@@ -514,12 +525,14 @@ describe("buildConfirmationBlocks", () => {
       actionId: "res1",
       tool,
       input: { statusReportId: 5, message: "Issue has been resolved" },
+      resolvers: stubResolvers,
     });
 
     const section = blocks.find((b) => b.type === "section") as {
       text: { text: string };
     };
-    expect(section.text.text).toContain("5");
+    expect(section.text.text).not.toContain("Report ID");
+    expect(section.text.text).not.toContain("5");
     expect(section.text.text).toContain("Issue has been resolved");
 
     const actions = blocks.find((b) => b.type === "actions") as {
@@ -634,5 +647,89 @@ describe("parseActionId", () => {
   });
   test("unknown prefix returns undefined", () => {
     expect(parseActionId("foo_abc")).toBeUndefined();
+  });
+});
+
+describe("buildConfirmationBlocks report line", () => {
+  const withReport: RefResolvers = {
+    page: () => Promise.resolve(null),
+    statusReport: (id) =>
+      Promise.resolve(
+        id === 42
+          ? {
+              title: "API <outage>",
+              url: "https://acme.openstatus.dev/events/report/42",
+            }
+          : null,
+      ),
+    componentNames: () => Promise.resolve(new Map()),
+  };
+
+  async function card(input: unknown, resolvers: RefResolvers = withReport) {
+    const blocks = await buildConfirmationBlocks({
+      actionId: "rep",
+      tool: agentTools.add_status_report_update,
+      input,
+      resolvers,
+    });
+    const section = (
+      blocks.find((b) => b.type === "section") as { text: { text: string } }
+    ).text.text;
+    const context = blocks.find((b) => b.type === "context") as
+      | { elements: { text: string }[] }
+      | undefined;
+    return { blocks, section, context };
+  }
+
+  test("shows the report title and a link to view it", async () => {
+    const { blocks, section, context } = await card({
+      statusReportId: 42,
+      status: "monitoring",
+      message: "Watching",
+    });
+    expect(section).toContain("*Report:* API &lt;outage&gt;");
+    expect(section).not.toContain("42");
+    expect(context?.elements[0].text).toBe(
+      "<https://acme.openstatus.dev/events/report/42|View report>",
+    );
+    // The link sits between the details and the buttons.
+    expect(blocks.map((b) => b.type)).toEqual([
+      "section",
+      "context",
+      "divider",
+      "actions",
+    ]);
+  });
+
+  test("omits the report line and link when the report isn't found", async () => {
+    const { section, context } = await card({
+      statusReportId: 9031,
+      status: "monitoring",
+      message: "Watching",
+    });
+    expect(section).not.toContain("*Report:*");
+    expect(section).not.toContain("9031");
+    expect(context).toBeUndefined();
+  });
+
+  test("shows the title without a link when the report has no page", async () => {
+    const { section, context } = await card(
+      { statusReportId: 42, status: "monitoring", message: "Watching" },
+      {
+        ...withReport,
+        statusReport: () => Promise.resolve({ title: "Orphan", url: null }),
+      },
+    );
+    expect(section).toContain("*Report:* Orphan");
+    expect(context).toBeUndefined();
+  });
+
+  test("keeps the card when the report lookup fails", async () => {
+    const { blocks, section } = await card(
+      { statusReportId: 42, status: "monitoring", message: "Watching" },
+      { ...withReport, statusReport: () => Promise.reject(new Error("down")) },
+    );
+    expect(section).not.toContain("*Report:*");
+    expect(blocks.some((b) => b.type === "actions")).toBe(true);
   });
 });

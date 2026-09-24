@@ -12,7 +12,11 @@ import {
 } from "@/libs/test/slack-config";
 
 import type { SlackEnv } from "./config";
-import { handleSlackEvent, looksLikeUncardedDraft } from "./handler";
+import {
+  handleSlackEvent,
+  isAnswerToAgent,
+  looksLikeUncardedDraft,
+} from "./handler";
 import { verifySlackSignature } from "./verify";
 
 function createTestApp() {
@@ -52,6 +56,20 @@ describe("handleSlackEvent", () => {
     slackTestState.postMessageOverride = null;
     slackTestState.updateOverride = null;
     slackTestState.runAgentOverride = null;
+    slackTestState.repliesImpl = () =>
+      Promise.resolve({
+        messages: [{ user: "U1", text: "test message", ts: "1.1" }],
+      });
+    // Default to a workspace without agent sessions so the tests below cover
+    // the fallback indicators; the session path opts back in explicitly.
+    slackTestState.sessionStatusOverride = () => {
+      const err = new Error("An API error occurred: feature_disabled");
+      Object.assign(err, {
+        code: "slack_webapi_platform_error",
+        data: { ok: false, error: "feature_disabled" },
+      });
+      return Promise.reject(err);
+    };
     slackTestState.resolveWorkspace = (teamId: string) => {
       if (teamId === "T_KNOWN") {
         return Promise.resolve({
@@ -292,24 +310,263 @@ describe("handleSlackEvent", () => {
     expect(slackTestState.calls.length).toBe(0);
   });
 
-  test("ignores DM messages", async () => {
+  test("marks the agent session as processing instead of posting Thinking", async () => {
+    slackTestState.sessionStatusOverride = null;
+    const ts = `${Date.now()}.60`;
+
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_session_${ts}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> which reports are open?",
+        user: "U1",
+        channel: "C1",
+        ts,
+      },
+    });
+    await new Promise((r) => setTimeout(r, 100));
+
+    const statuses = slackTestState.calls
+      .filter((m) => m.method === "agents.sessions.setStatus")
+      .map((m) => m.args);
+    expect(statuses).toEqual([
+      {
+        channel_id: "C1",
+        thread_ts: ts,
+        status: "processing",
+        initiator_user_id: "U1",
+      },
+      { channel_id: "C1", thread_ts: ts, status: "active" },
+    ]);
+
+    const posts = slackTestState.calls.filter(
+      (m) => m.method === "postMessage",
+    );
+    expect(posts.length).toBe(1);
+    expect(posts[0].args).toMatchObject({
+      channel: "C1",
+      thread_ts: ts,
+      text: "Here is my response",
+    });
+    expect(slackTestState.calls.some((m) => m.method === "update")).toBe(false);
+  });
+
+  test("hands the agent session back as active when runAgent throws", async () => {
+    slackTestState.sessionStatusOverride = null;
+    slackTestState.runAgentOverride = () =>
+      Promise.reject(new Error("agent exploded"));
+    const ts = `${Date.now()}.61`;
+
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_session_err_${ts}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hello",
+        user: "U1",
+        channel: "C1",
+        ts,
+      },
+    });
+    await new Promise((r) => setTimeout(r, 100));
+
+    const errorPost = slackTestState.calls.find(
+      (m) =>
+        m.method === "postMessage" &&
+        typeof m.args.text === "string" &&
+        m.args.text.includes("Something went wrong"),
+    );
+    expect(errorPost).toBeDefined();
+    const last = slackTestState.calls
+      .filter((m) => m.method === "agents.sessions.setStatus")
+      .at(-1);
+    expect(last?.args.status).toBe("active");
+  });
+
+  test("answers an untagged reply to its own question", async () => {
+    const ts = `${Date.now()}.70`;
+    slackTestState.repliesImpl = () =>
+      Promise.resolve({
+        messages: [
+          { user: "U1", text: "<@UBOT> update my status page", ts: "5.1" },
+          { user: "UBOT", bot_id: "B1", text: "Which page?", ts: "5.2" },
+          { user: "U1", text: "acme, id 1", ts },
+        ],
+      });
+
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_untagged_${ts}`,
+      event: {
+        type: "message",
+        text: "acme, id 1",
+        user: "U1",
+        channel: "C1",
+        channel_type: "channel",
+        ts,
+        thread_ts: "5.1",
+      },
+    });
+    await new Promise((r) => setTimeout(r, 100));
+
+    const answer = slackTestState.calls.find(
+      (m) =>
+        (m.method === "update" || m.method === "postMessage") &&
+        m.args.text === "Here is my response",
+    );
+    expect(answer).toBeDefined();
+  });
+
+  test("ignores an untagged thread reply that isn't answering the agent", async () => {
+    const ts = `${Date.now()}.71`;
+    slackTestState.repliesImpl = () =>
+      Promise.resolve({
+        messages: [
+          { user: "U1", text: "<@UBOT> update my status page", ts: "6.1" },
+          { user: "UBOT", bot_id: "B1", text: "Which page?", ts: "6.2" },
+          { user: "U2", text: "I'll check the logs", ts },
+        ],
+      });
+
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_untagged_other_${ts}`,
+      event: {
+        type: "message",
+        text: "I'll check the logs",
+        user: "U2",
+        channel: "C1",
+        channel_type: "channel",
+        ts,
+        thread_ts: "6.1",
+      },
+    });
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(slackTestState.calls.length).toBe(0);
+  });
+
+  test("replies in the agent pane without a mention", async () => {
+    const ts = `${Date.now()}.5`;
     const res = await signAndPost(app, {
       type: "event_callback",
       team_id: "T_KNOWN",
-      event_id: `evt_dm_${Date.now()}`,
+      event_id: `evt_dm_${ts}`,
       event: {
         type: "message",
-        text: "hello in DM",
+        text: "which reports are open?",
         user: "U1",
         channel: "D1",
         channel_type: "im",
-        ts: `${Date.now()}.5`,
+        ts,
+        thread_ts: "1.1",
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 100));
+
+    const status = slackTestState.calls.find(
+      (m) => m.method === "assistant.threads.setStatus",
+    );
+    expect(status?.args).toMatchObject({ channel_id: "D1", thread_ts: "1.1" });
+
+    // Native status replaces the "Thinking..." placeholder: the answer is
+    // a single fresh message in the thread, never an update.
+    const posts = slackTestState.calls.filter(
+      (m) => m.method === "postMessage",
+    );
+    expect(posts.length).toBe(1);
+    expect(posts[0].args).toMatchObject({
+      channel: "D1",
+      thread_ts: "1.1",
+      text: "Here is my response",
+    });
+    expect(slackTestState.calls.some((m) => m.method === "update")).toBe(false);
+  });
+
+  test("ignores the agent pane thread root and edits", async () => {
+    for (const subtype of ["assistant_app_thread", "message_changed"]) {
+      const res = await signAndPost(app, {
+        type: "event_callback",
+        team_id: "T_KNOWN",
+        event_id: `evt_dm_${subtype}_${Date.now()}`,
+        event: {
+          type: "message",
+          subtype,
+          text: "hello",
+          user: "U1",
+          channel: "D1",
+          channel_type: "im",
+          ts: `${Date.now()}.6`,
+        },
+      });
+      expect(res.status).toBe(200);
+    }
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackTestState.calls.length).toBe(0);
+  });
+
+  test("posts the error in the agent pane when runAgent throws", async () => {
+    slackTestState.runAgentOverride = () =>
+      Promise.reject(new Error("agent exploded"));
+
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_dm_err_${Date.now()}`,
+      event: {
+        type: "message",
+        text: "hello",
+        user: "U1",
+        channel: "D1",
+        channel_type: "im",
+        ts: `${Date.now()}.7`,
+        thread_ts: "1.1",
+      },
+    });
+    await new Promise((r) => setTimeout(r, 100));
+
+    const errorPost = slackTestState.calls.find(
+      (m) =>
+        m.method === "postMessage" &&
+        typeof m.args.text === "string" &&
+        m.args.text.includes("Something went wrong"),
+    );
+    expect(errorPost).toBeDefined();
+  });
+
+  test("sets suggested prompts on assistant_thread_started", async () => {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_thread_started_${Date.now()}`,
+      event: {
+        type: "assistant_thread_started",
+        assistant_thread: {
+          user_id: "U1",
+          channel_id: "D1",
+          thread_ts: "2.2",
+          context: {},
+        },
       },
     });
 
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
-    expect(slackTestState.calls.length).toBe(0);
+
+    const prompts = slackTestState.calls.find(
+      (m) => m.method === "assistant.threads.setSuggestedPrompts",
+    );
+    expect(prompts?.args).toMatchObject({ channel_id: "D1", thread_ts: "2.2" });
+    expect(prompts?.args.prompts).toBeDefined();
+    expect((prompts?.args.prompts as unknown[]).length).toBeGreaterThan(0);
   });
 
   test("ignores events without channel", async () => {
@@ -606,5 +863,56 @@ Shall I go ahead and publish this, or would you like to adjust anything?`,
 
   test("ignores empty text", () => {
     expect(looksLikeUncardedDraft("")).toBe(false);
+  });
+});
+
+describe("isAnswerToAgent", () => {
+  const starter = { user: "U1", text: "<@UBOT> open an incident", ts: "1" };
+  const question = { user: "UBOT", bot_id: "B1", text: "Which page?", ts: "2" };
+
+  test("answers the session starter replying right after the agent", () => {
+    const thread = [starter, question, { user: "U1", text: "API", ts: "3" }];
+    expect(isAnswerToAgent(thread, { ts: "3", user: "U1" }, "UBOT")).toBe(true);
+  });
+
+  test("ignores someone other than the session starter", () => {
+    const thread = [starter, question, { user: "U2", text: "API", ts: "3" }];
+    expect(isAnswerToAgent(thread, { ts: "3", user: "U2" }, "UBOT")).toBe(
+      false,
+    );
+  });
+
+  test("ignores the starter once a human spoke after the agent", () => {
+    const thread = [
+      starter,
+      question,
+      { user: "U2", text: "it's the API", ts: "3" },
+      { user: "U1", text: "yes, the API", ts: "4" },
+    ];
+    expect(isAnswerToAgent(thread, { ts: "4", user: "U1" }, "UBOT")).toBe(
+      false,
+    );
+  });
+
+  test("ignores threads where the agent was never mentioned", () => {
+    const thread = [
+      { user: "U1", text: "anyone seeing errors?", ts: "1" },
+      question,
+      { user: "U1", text: "API", ts: "3" },
+    ];
+    expect(isAnswerToAgent(thread, { ts: "3", user: "U1" }, "UBOT")).toBe(
+      false,
+    );
+  });
+
+  test("ignores other bots' messages as the previous message", () => {
+    const thread = [
+      starter,
+      { user: "UOTHER", bot_id: "B2", text: "Deploy finished", ts: "2" },
+      { user: "U1", text: "API", ts: "3" },
+    ];
+    expect(isAnswerToAgent(thread, { ts: "3", user: "U1" }, "UBOT")).toBe(
+      false,
+    );
   });
 });

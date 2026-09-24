@@ -1,5 +1,5 @@
 import { and, db, eq, inArray } from "@openstatus/db";
-import { page, pageComponent } from "@openstatus/db/src/schema";
+import { page, pageComponent, statusReport } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
 
@@ -26,7 +26,7 @@ export async function getPageUrl(pageId: number): Promise<string | null> {
 function getDashboardBaseUrl(): string {
   return env.NODE_ENV === "production"
     ? "https://app.openstatus.dev"
-    : "http://localhost:3000";
+    : "http://localhost:3001";
 }
 
 /**
@@ -97,4 +97,31 @@ export async function getReportUrl(
     ? `https://${statusPage.customDomain}`
     : `https://${statusPage.slug}.openstatus.dev`;
   return `${baseUrl}/events/report/${reportId}`;
+}
+
+/**
+ * Resolve a status report id to its title and public URL for the approval
+ * card, scoped to the workspace so a spoofed id from another workspace never
+ * leaks its title. Returns null when the report doesn't exist in the workspace.
+ */
+export async function getStatusReportLink(
+  workspaceId: number,
+  statusReportId: number,
+): Promise<{ title: string; url: string | null } | null> {
+  const report = await db
+    .select({ title: statusReport.title, pageId: statusReport.pageId })
+    .from(statusReport)
+    .where(
+      and(
+        eq(statusReport.workspaceId, workspaceId),
+        eq(statusReport.id, statusReportId),
+      ),
+    )
+    .get();
+
+  if (!report) return null;
+  const url = report.pageId
+    ? await getReportUrl(report.pageId, statusReportId)
+    : null;
+  return { title: report.title, url };
 }

@@ -23,3 +23,12 @@ export const getComponentNames = (
   ids: number[],
 ): Promise<Map<number, string>> =>
   Promise.resolve(new Map(ids.map((id) => [id, `Component ${id}`])));
+
+export const getStatusReportLink = (
+  _workspaceId: number,
+  statusReportId: number,
+): Promise<{ title: string; url: string | null } | null> =>
+  Promise.resolve({
+    title: `Report ${statusReportId}`,
+    url: `https://example.openstatus.dev/events/report/${statusReportId}`,
+  });

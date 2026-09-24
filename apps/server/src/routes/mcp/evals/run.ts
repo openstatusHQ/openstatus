@@ -37,7 +37,7 @@ import { type EvalCase, cases } from "./cases";
 // Resolved through the AI Gateway (`AI_GATEWAY_API_KEY` env). Using
 // `gateway(...)` instead of a bare string makes the routing path
 // explicit and gives a clearer error if the gateway is unconfigured.
-const MODEL = gateway("anthropic/claude-haiku-4-5");
+const MODEL = gateway("anthropic/claude-opus-5");
 // Lenient bar (10/12) accommodates model non-determinism even at
 // `temperature: 0` — a single flaky tool selection shouldn't tank
 // the run. Tighten if descriptions stabilize and runs trend toward

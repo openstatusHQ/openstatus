@@ -1,15 +1,28 @@
 {
   "display_information": {
     "name": "openstatus",
-    "description": "Manage incidents and status pages directly from Slack.",
+    "description": "The incident communication agent for your status pages.",
     "background_color": "#000000",
-    "long_description": "openstatus brings incident management into your team's Slack workspace. Mention the bot in any channel to create, update, and resolve status reports — no context switching required.\n\n  How it works:\n  :one: Describe the issue by mentioning @openstatus in any channel or thread\n  :two: The assistant reads the conversation, queries your status pages, and drafts a status update\n  :three: Review the proposed action and click Approve, Approve & Notify, or Cancel\n\n  What you can do:\n  :white_check_mark: Create status reports from natural conversation\n  :white_check_mark: Post progress updates as incidents evolve\n  :white_check_mark: Resolve incidents when the issue is fixed\n  :white_check_mark: Notify your status page subscribers with one click\n  :white_check_mark: Edit report titles and affected components\n\n  The assistant understands context — tag it in an ongoing thread and it will synthesize the discussion into a clear, public-facing status update. It infers incident status automatically: \"we found the root cause\" becomes Identified, \"it's fixed\" becomes Resolved.\n\n  AI disclaimer: openstatus uses large language models (LLMs) to summarize conversations, draft status updates, and infer incident status. AI-generated content may sometimes be inaccurate, incomplete, or misleading. Always review every draft before approving it — nothing is posted to your status page until you explicitly confirm. Only the person who triggered the action can approve it, and you can edit or cancel any draft."
+    "long_description": "openstatus is an agent for incident communication. Open it from the Slack top bar, or mention @openstatus in any channel, and it turns the conversation into status page updates — no context switching required.\n\n  How it works:\n  :one: Open openstatus in the agent pane and describe the issue, or mention @openstatus in an incident channel or thread\n  :two: The agent reads the conversation, queries your status pages, and drafts a status update\n  :three: Review the proposed action and click Approve, Approve & Notify, or Cancel\n\n  What you can do:\n  :white_check_mark: Create status reports from natural conversation\n  :white_check_mark: Post progress updates as incidents evolve\n  :white_check_mark: Resolve incidents when the issue is fixed\n  :white_check_mark: Schedule maintenance windows in plain language\n  :white_check_mark: Notify your status page subscribers with one click\n\n  The agent understands context — tag it in an ongoing thread and it will synthesize the discussion into a clear, public-facing status update. It infers incident status automatically: \"we found the root cause\" becomes Identified, \"it's fixed\" becomes Resolved.\n\n  AI disclaimer: openstatus uses large language models (LLMs) to summarize conversations, draft status updates, and infer incident status. AI-generated content may sometimes be inaccurate, incomplete, or misleading. Always review every draft before approving it — nothing is posted to your status page until you explicitly confirm. Only the person who triggered the action can approve it, and you can edit or cancel any draft."
   },
   "features": {
+    "assistant_view": {
+      "assistant_description": "Drafts, updates and resolves status reports and maintenance windows from your conversations. Nothing is published until you approve it.",
+      "suggested_prompts": [
+        {
+          "title": "Create a status report",
+          "message": "We're seeing elevated errors on the API — create a status report."
+        },
+        {
+          "title": "Open status reports",
+          "message": "Which status reports are currently open?"
+        }
+      ]
+    },
     "app_home": {
       "home_tab_enabled": true,
-      "messages_tab_enabled": false,
-      "messages_tab_read_only_enabled": true
+      "messages_tab_enabled": true,
+      "messages_tab_read_only_enabled": false
     },
     "bot_user": {
       "display_name": "openstatus",
@@ -32,13 +45,15 @@
       "user_optional": ["groups:write"],
       "bot": [
         "app_mentions:read",
+        "assistant:write",
         "channels:history",
         "channels:join",
         "chat:write",
         "commands",
         "groups:history",
         "groups:read",
-        "groups:write"
+        "groups:write",
+        "im:history"
       ]
     },
     "pkce_enabled": false
@@ -49,8 +64,10 @@
       "bot_events": [
         "app_home_opened",
         "app_mention",
+        "assistant_thread_started",
         "message.channels",
-        "message.groups"
+        "message.groups",
+        "message.im"
       ]
     },
     "interactivity": {
