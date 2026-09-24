@@ -52,6 +52,9 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
   const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: currentInterval } = useQuery(
+    trpc.stripeRouter.getBillingInterval.queryOptions(),
+  );
 
   const checkoutSessionMutation = useMutation(
     trpc.stripeRouter.getCheckoutSession.mutationOptions({
@@ -62,9 +65,14 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
         // already have, so there is no checkout to redirect to — only the
         // refreshed workspace to pick up.
         if (data.type === "updated") {
-          await queryClient.invalidateQueries({
-            queryKey: trpc.workspace.get.queryKey(),
-          });
+          await Promise.all([
+            queryClient.invalidateQueries({
+              queryKey: trpc.workspace.get.queryKey(),
+            }),
+            queryClient.invalidateQueries({
+              queryKey: trpc.stripeRouter.getBillingInterval.queryKey(),
+            }),
+          ]);
           toast.success("Your plan has been updated");
           return;
         }
@@ -112,9 +120,17 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
               Features comparison
             </TableHead>
             {filteredPlans.map(({ id, ...plan }) => {
-              const isCurrentPlan = workspace.plan === id;
-              const price = getPriceConfig(id, currency, interval);
               const isFreePlan = id === "free";
+              const isSamePlan = workspace.plan === id;
+              // Without a known interval (free plan, legacy price) fall back to
+              // matching on the plan alone.
+              const isCurrentPlan =
+                isSamePlan &&
+                (isFreePlan ||
+                  !currentInterval ||
+                  currentInterval === interval);
+              const isIntervalSwitch = isSamePlan && !isCurrentPlan;
+              const price = getPriceConfig(id, currency, interval);
               return (
                 <TableHead
                   key={id}
@@ -184,7 +200,9 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                         ? "Current Plan"
                         : isPending
                           ? "Choosing..."
-                          : "Choose"}
+                          : isIntervalSwitch
+                            ? `Switch to ${interval}`
+                            : "Choose"}
                     </Button>
                   </div>
                 </TableHead>
