@@ -47,6 +47,9 @@ export class WebClient {
       stop: (a?: Record<string, unknown>) => {
         ts = "stream.ts";
         s.calls.push({ method: "stream.stop", args: a ?? {} });
+        if (s.streamStopFail) {
+          return Promise.reject(new Error("stream already closed"));
+        }
         return Promise.resolve({ ok: true, ts });
       },
     };

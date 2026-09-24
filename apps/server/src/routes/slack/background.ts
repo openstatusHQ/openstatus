@@ -22,7 +22,10 @@ export function runInBackground(
   work: () => Promise<void>,
   context: Record<string, unknown> = {},
 ): void {
-  const task: Promise<void> = work()
+  // `Promise.resolve().then` so a synchronous throw takes the same path as a
+  // rejection instead of escaping into the request handler.
+  const task: Promise<void> = Promise.resolve()
+    .then(work)
     .catch((error: unknown) => {
       logger.error(`slack background task failed: ${label}`, {
         error,

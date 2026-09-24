@@ -90,7 +90,16 @@ export function handleSlackCommand(c: Context) {
   runInBackground(
     `command ${sub}`,
     async () => {
-      const text = await runCommand(command);
+      // The 200 above is the only other thing the user gets: without this the
+      // command fails silently on their side.
+      const text = await runCommand(command).catch((err: unknown) => {
+        logger.error("slack command failed", {
+          error: err,
+          teamId: command.team_id,
+          channelId: command.channel_id,
+        });
+        return ":x: Something went wrong. Please try again.";
+      });
       await respondLater(responseUrl, text);
     },
     { teamId: command.team_id, channelId: command.channel_id },

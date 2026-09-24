@@ -21,22 +21,24 @@ const MAX_TITLE = 60;
 const TITLE_PREFIX = "slack:title:";
 const TITLE_TTL_SECONDS = 30 * 24 * 60 * 60;
 
-function titleKey(channel: string, threadTs: string): string {
-  return `${TITLE_PREFIX}${channel}:${threadTs}`;
+function titleKey(teamId: string, channel: string, threadTs: string): string {
+  return `${TITLE_PREFIX}${teamId}:${channel}:${threadTs}`;
 }
 
 export async function isThreadTitled(
+  teamId: string,
   channel: string,
   threadTs: string,
 ): Promise<boolean> {
-  return (await redis.get(titleKey(channel, threadTs))) !== null;
+  return (await redis.get(titleKey(teamId, channel, threadTs))) !== null;
 }
 
 export async function markThreadTitled(
+  teamId: string,
   channel: string,
   threadTs: string,
 ): Promise<void> {
-  await redis.set(titleKey(channel, threadTs), "1", {
+  await redis.set(titleKey(teamId, channel, threadTs), "1", {
     ex: TITLE_TTL_SECONDS,
   });
 }
@@ -106,8 +108,8 @@ function strippedUserText(text: string | undefined): string | undefined {
 }
 
 /**
- * Names the thread, once. Two turns racing here would both rename to the same
- * subject, so the check-then-set is left unguarded.
+ * Names the thread, once. The marker is claimed before the rename so two turns
+ * racing on one thread can't name it twice, and released when Slack refuses.
  */
 export async function renameThread(args: {
   slack: WebClient;
@@ -117,6 +119,13 @@ export async function renameThread(args: {
   teamId: string;
 }): Promise<void> {
   const { slack, channel, threadTs, title, teamId } = args;
+  const key = titleKey(teamId, channel, threadTs);
+  const claimed = await redis.set(key, "1", {
+    nx: true,
+    ex: TITLE_TTL_SECONDS,
+  });
+  if (!claimed) return;
+
   try {
     await slack.agents.sessions.rename({
       channel_id: channel,
@@ -125,7 +134,8 @@ export async function renameThread(args: {
     });
   } catch (err) {
     // Workspaces without agent sessions throw here; the thread simply keeps
-    // the name Slack gives it.
+    // the name Slack gives it, and stays eligible for a later turn.
+    await redis.del(key);
     logger.info("slack could not rename the thread", {
       error: err,
       channel,
@@ -133,6 +143,5 @@ export async function renameThread(args: {
     });
     return;
   }
-  await markThreadTitled(channel, threadTs);
   logger.info("slack thread titled", { channel, threadTs, teamId, title });
 }

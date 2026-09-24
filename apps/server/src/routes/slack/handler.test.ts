@@ -54,6 +54,7 @@ function resetSlackTestState() {
   slackTestState.calls = [];
   slackTestState.postMessageOverride = null;
   slackTestState.updateOverride = null;
+  slackTestState.postEphemeralOverride = null;
   slackTestState.runAgentOverride = null;
   slackTestState.renameOverride = null;
   slackTestState.chatStreamEnabled = true;
@@ -62,6 +63,7 @@ function resetSlackTestState() {
       messages: [{ user: "U1", text: "channel message", ts: "1.1" }],
     });
   slackTestState.streamAppendFailAfter = null;
+  slackTestState.streamStopFail = false;
   slackTestState.repliesImpl = () =>
     Promise.resolve({
       messages: [{ user: "U1", text: "test message", ts: "1.1" }],
@@ -1066,10 +1068,34 @@ describe("streaming the agent's answer", () => {
       ts: "stream.ts",
       text: "All five monitors are healthy.",
     });
+    // A stream that was opened is closed even though a later append failed —
+    // otherwise Slack shows that message as streaming for good.
+    expect(slackTestState.calls.some((m) => m.method === "stream.stop")).toBe(
+      true,
+    );
     // Nothing is posted alongside it: one message, one answer.
     expect(slackTestState.calls.some((m) => m.method === "postMessage")).toBe(
       false,
     );
+  });
+
+  test("rewrites the message when the stream cannot be closed", async () => {
+    // Slack has closed the stream on its side, so `stop` rejects — the
+    // half-written message is ours to finish.
+    slackTestState.streamStopFail = true;
+    streamTurn(async (events) => {
+      await events.onTextDelta("All five monitors are healthy.");
+    });
+
+    await mention("5");
+    await new Promise((r) => setTimeout(r, 100));
+
+    const rewrite = slackTestState.calls.find((m) => m.method === "update");
+    expect(rewrite?.args).toMatchObject({
+      channel: "C1",
+      ts: "stream.ts",
+      text: "All five monitors are healthy.",
+    });
   });
 
   test("names tasks after the tool's verb", () => {
@@ -1106,6 +1132,21 @@ describe("running turns", () => {
     expect(abortTurn("C_RT2", "2.2")).toBe(true);
     expect(second.signal.aborted).toBe(true);
     endTurn("C_RT2", "2.2", second);
+  });
+
+  test("stops every turn running on the thread", () => {
+    // Two messages sent in quick succession overlap; stop means stop the
+    // thread, not only its newest turn.
+    const first = startTurn("C_RT3", "3.3");
+    const second = startTurn("C_RT3", "3.3");
+
+    expect(abortTurn("C_RT3", "3.3")).toBe(true);
+    expect(first.signal.aborted).toBe(true);
+    expect(second.signal.aborted).toBe(true);
+
+    endTurn("C_RT3", "3.3", first);
+    endTurn("C_RT3", "3.3", second);
+    expect(abortTurn("C_RT3", "3.3")).toBe(false);
   });
 });
 
@@ -1180,7 +1221,12 @@ describe("stopping a turn", () => {
     await new Promise((r) => setTimeout(r, 100));
 
     expect(signal?.aborted).toBe(true);
-    expect(activeStatusCalls().length).toBeGreaterThan(0);
+    // Twice over: the aborted turn's own cleanup, and the stop branch, which
+    // can't rely on that turn — it may be running on another instance.
+    const cleared = activeStatusCalls().filter(
+      (m) => m.args.channel_id === "C_STOP" && m.args.thread_ts === ts,
+    );
+    expect(cleared.length).toBeGreaterThanOrEqual(2);
 
     const notice = slackTestState.calls.find(
       (m) =>

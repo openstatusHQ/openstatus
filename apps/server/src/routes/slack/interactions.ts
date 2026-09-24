@@ -77,6 +77,25 @@ async function processInteraction(
     return;
   }
 
+  // A reinstall, or a second Slack workspace linked to the account, can resolve
+  // this click to a workspace other than the one the card was drafted against —
+  // executing it would mutate that other workspace's status page.
+  if (resolved.workspace.id !== pending.workspaceId) {
+    logger.warn("slack action workspace mismatch", {
+      channel: channelId,
+      teamId: workspaceTeamId,
+      pendingWorkspaceId: pending.workspaceId,
+      resolvedWorkspaceId: resolved.workspace.id,
+    });
+    await slack.chat.update({
+      channel: channelId,
+      ts: messageTs,
+      text: ":x: This action belongs to a different workspace. Please try again.",
+      blocks: [],
+    });
+    return;
+  }
+
   if (pending.userId !== userId) {
     await slack.chat.postEphemeral({
       channel: channelId,
@@ -109,7 +128,7 @@ async function processInteraction(
       channelId,
       messageTs,
       slackUserId: userId,
-      teamId,
+      teamId: workspaceTeamId,
     });
   } catch (err) {
     logger.error("slack action execution error", {
@@ -134,7 +153,7 @@ async function runAndPresent(args: {
   channelId: string;
   messageTs: string;
   slackUserId: string;
-  teamId: string | undefined;
+  teamId: string;
 }) {
   const { pending, flag, slack, channelId, messageTs, slackUserId, teamId } =
     args;

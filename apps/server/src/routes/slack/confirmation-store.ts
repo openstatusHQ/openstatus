@@ -18,7 +18,11 @@ const pendingActionSchema = z.object({
   // token itself is deliberately not stored: a pending action outlives the
   // turn that made it, and `app_uninstalled` cleans up the integration row,
   // not these keys — a stored token would outlive its own install.
-  teamId: z.string(),
+  //
+  // Optional only for the cards written before this field existed: requiring it
+  // would parse them as invalid and show "expired" for the rest of their TTL.
+  // Drop the `.optional()` once 30 days have passed since the deploy.
+  teamId: z.string().optional(),
   channelId: z.string(),
   threadTs: z.string(),
   messageTs: z.string(),

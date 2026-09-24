@@ -345,8 +345,8 @@ async function processEvent(body: SlackEvent) {
   // A person renamed the thread, so the name is theirs now — record it so no
   // later turn overwrites it.
   if (event.type === "agent_session_title_changed") {
-    if (!event.channel || !event.thread_ts) return;
-    await markThreadTitled(event.channel, event.thread_ts);
+    if (!body.team_id || !event.channel || !event.thread_ts) return;
+    await markThreadTitled(body.team_id, event.channel, event.thread_ts);
     logger.info("slack thread renamed by user", {
       teamId: body.team_id,
       channel: event.channel,
@@ -471,26 +471,39 @@ async function processEvent(body: SlackEvent) {
     agentThread: isAgentThread,
   });
 
-  const reply = await createReply({
-    slack,
-    channel: event.channel,
-    threadTs,
-    teamId,
-    userId: event.user,
-    isAgentThread,
-  });
-  if (!reply) return;
-
+  // Registered before the session is marked `processing`: a stop landing in
+  // that window has to find a controller, or the turn runs on unstoppable.
   const turn = startTurn(event.channel, threadTs);
+  let reply: Reply | undefined;
 
   try {
+    reply = await createReply({
+      slack,
+      channel: event.channel,
+      threadTs,
+      teamId,
+      userId: event.user,
+      isAgentThread,
+    });
+    if (!reply) return;
+
+    if (turn.signal.aborted) {
+      logger.info("slack turn stopped before it started", {
+        teamId,
+        channel: event.channel,
+        threadTs,
+      });
+      await reply.stopped();
+      return;
+    }
+
     let thread: ThreadMessage[] = [];
     if (prefetchedThread) {
       thread = prefetchedThread;
     } else if (event.thread_ts) {
       thread = (
         await fetchThread(slack, event.channel, event.thread_ts)
-      ).filter((msg) => msg.ts !== reply.placeholderTs);
+      ).filter((msg) => msg.ts !== reply?.placeholderTs);
     } else {
       thread = [{ user: event.user, text: event.text, ts: event.ts }];
     }
@@ -621,7 +634,7 @@ async function processEvent(body: SlackEvent) {
       threadTs,
     });
     await reply
-      .send({ text: ":x: Something went wrong. Please try again." })
+      ?.send({ text: ":x: Something went wrong. Please try again." })
       .catch((sendErr: unknown) => {
         logger.error("slack failed to send error message", {
           error: sendErr,
@@ -631,7 +644,7 @@ async function processEvent(body: SlackEvent) {
       });
   } finally {
     endTurn(event.channel, threadTs, turn);
-    await reply.finish?.();
+    await reply?.finish?.();
   }
 }
 
@@ -674,7 +687,7 @@ async function titleThread(args: {
   if (!isAgentThread) return;
 
   try {
-    if (await isThreadTitled(channel, threadTs)) return;
+    if (await isThreadTitled(teamId, channel, threadTs)) return;
 
     // Only looked up once, and only for a draft that acts on an existing
     // report — `add_update` and `resolve` carry an id but no title.
@@ -837,9 +850,12 @@ function streamingReply(args: {
     }
   };
 
-  /** Finalizes the streamed message, if one was ever opened. */
+  /**
+   * Finalizes the streamed message, if one was ever opened — including after a
+   * later append failed, or Slack leaves that message streaming for good.
+   */
   const closeStream = async (): Promise<string | undefined> => {
-    if (streamClosed || broken || !appended) return streamer.ts;
+    if (streamClosed || !appended) return streamer.ts;
     streamClosed = true;
     try {
       await streamer.stop();
@@ -894,7 +910,7 @@ function streamingReply(args: {
       return post(message);
     },
     async stopped() {
-      if (streamClosed || broken || !appended) {
+      if (streamClosed || !appended) {
         await post({ text: STOPPED_NOTICE });
         return;
       }

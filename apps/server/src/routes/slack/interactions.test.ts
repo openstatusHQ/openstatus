@@ -34,7 +34,7 @@ function configureSlackDoubles() {
   slackTestState.calls = [];
   slackTestState.resolveWorkspace = (teamId: string) =>
     teamId === "T_KNOWN"
-      ? Promise.resolve({ botToken: "xoxb-fallback" })
+      ? Promise.resolve({ botToken: "xoxb-fallback", workspace: { id: 1 } })
       : Promise.resolve(null);
 }
 
@@ -235,7 +235,7 @@ describe("handleSlackInteraction (dispatch)", () => {
     slackTestState.resolveWorkspace = (teamId: string) => {
       resolveCalls++;
       return teamId === "T_KNOWN"
-        ? Promise.resolve({ botToken: "xoxb-fresh" })
+        ? Promise.resolve({ botToken: "xoxb-fresh", workspace: { id: 1 } })
         : Promise.resolve(null);
     };
 
@@ -252,6 +252,28 @@ describe("handleSlackInteraction (dispatch)", () => {
     // have been revoked by now — it is never persisted, only resolved here.
     expect(resolveCalls).toBe(1);
     expect(slackTestState.calls.some((c) => c.method === "update")).toBe(true);
+  });
+
+  test("refuses an action drafted against another workspace", async () => {
+    seedCreateStatusReport();
+    // A reinstall can point the team at a different workspace than the one the
+    // card was drafted for; executing it there would hit the wrong status page.
+    slackTestState.resolveWorkspace = () =>
+      Promise.resolve({ botToken: "xoxb-other", workspace: { id: 2 } });
+
+    await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "1.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "approve_pending-123" }],
+    });
+
+    const update = slackTestState.calls.find((c) => c.method === "update");
+    expect(update?.args.text).toContain("different workspace");
+    // Not consumed: the action is still there for the right workspace.
+    expect(redisStore.has("slack:action:pending-123")).toBe(true);
   });
 
   test("does nothing when the workspace no longer resolves", async () => {

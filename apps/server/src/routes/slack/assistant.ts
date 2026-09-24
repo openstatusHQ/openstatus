@@ -52,13 +52,6 @@ function greetedKey(teamId: string, userId: string): string {
   return `${GREETED_PREFIX}${teamId}:${userId}`;
 }
 
-export async function hasBeenGreeted(
-  teamId: string,
-  userId: string,
-): Promise<boolean> {
-  return (await redis.get(greetedKey(teamId, userId))) !== null;
-}
-
 /**
  * Greets someone the first time they open the agent, and never again.
  *
@@ -73,18 +66,25 @@ export async function greetOnce(args: {
   threadTs?: string;
 }): Promise<void> {
   const { slack, teamId, userId, channel, threadTs } = args;
-  if (await hasBeenGreeted(teamId, userId)) return;
-
-  await slack.chat.postMessage({
-    channel,
-    ...(threadTs ? { thread_ts: threadTs } : {}),
-    text: WELCOME_TEXT,
-    blocks: WELCOME_BLOCKS,
-  });
-
-  await redis.set(greetedKey(teamId, userId), "1", {
+  // Claimed before posting, not after: opening the Messages tab twice fires two
+  // events, and a check-then-set greets on both. Released if the post fails.
+  const claimed = await redis.set(greetedKey(teamId, userId), "1", {
+    nx: true,
     ex: GREETED_TTL_SECONDS,
   });
+  if (!claimed) return;
+
+  try {
+    await slack.chat.postMessage({
+      channel,
+      ...(threadTs ? { thread_ts: threadTs } : {}),
+      text: WELCOME_TEXT,
+      blocks: WELCOME_BLOCKS,
+    });
+  } catch (err) {
+    await redis.del(greetedKey(teamId, userId));
+    throw err;
+  }
   logger.info("slack greeted user", { teamId, userId, channel });
 }
 

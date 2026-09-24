@@ -16,6 +16,8 @@ export interface SlackTestState {
   chatStreamEnabled: boolean;
   /** Make appends start throwing once this many have succeeded. */
   streamAppendFailAfter: number | null;
+  /** Make `stop` reject, as Slack does once it has closed the stream itself. */
+  streamStopFail: boolean;
   /** Receives runAgent's options, so a test can drive the stream or abort. */
   runAgentOverride: ((options?: unknown) => Promise<unknown>) | null;
   repliesImpl: () => Promise<unknown>;
@@ -34,6 +36,7 @@ if (!g.__slackTestState) {
     renameOverride: null,
     chatStreamEnabled: true,
     streamAppendFailAfter: null,
+    streamStopFail: false,
     runAgentOverride: null,
     repliesImpl: () =>
       Promise.resolve({

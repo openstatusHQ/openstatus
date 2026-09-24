@@ -55,4 +55,15 @@ describe("buildSystemPrompt", () => {
   test("tells the model not to show internal ids", () => {
     expect(buildSystemPrompt("Acme Corp")).toContain("NEVER show internal ids");
   });
+
+  test("appends the context note as a section of its own", () => {
+    const prompt = buildSystemPrompt("Acme Corp", "\nSlack context:\n- note");
+    expect(prompt).toContain("\n\nSlack context:\n- note");
+    // Never glued onto the last bullet of the section above it.
+    expect(prompt).not.toContain("window.Slack context:");
+  });
+
+  test("appends nothing when there is no context note", () => {
+    expect(buildSystemPrompt("Acme Corp")).not.toContain("Slack context:");
+  });
 });

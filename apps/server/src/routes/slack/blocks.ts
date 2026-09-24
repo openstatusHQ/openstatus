@@ -58,6 +58,9 @@ export type Block =
 
 /** Slack caps all `markdown` blocks in one payload at 12,000 characters. */
 const MARKDOWN_BLOCK_LIMIT = 12_000;
+/** And a message's `text` at 40,000 — past it the post is rejected outright. */
+const MESSAGE_TEXT_LIMIT = 40_000;
+const TRUNCATION_NOTICE = "\n\n_Answer truncated._";
 
 /**
  * The agent's free-text answer as a Slack message. `text` carries the
@@ -70,9 +73,16 @@ export function buildAnswerMessage(text: string): {
 } {
   const fallback = toMrkdwn(text);
   if (!text.trim() || text.length > MARKDOWN_BLOCK_LIMIT) {
-    return { text: fallback };
+    return { text: capMessageText(fallback) };
   }
   return { text: fallback, blocks: [{ type: "markdown", text }] };
+}
+
+/** Nothing bounds the agent's answer, and an over-long post is rejected. */
+function capMessageText(text: string): string {
+  if (text.length <= MESSAGE_TEXT_LIMIT) return text;
+  const kept = MESSAGE_TEXT_LIMIT - TRUNCATION_NOTICE.length;
+  return `${text.slice(0, kept)}${TRUNCATION_NOTICE}`;
 }
 
 /**

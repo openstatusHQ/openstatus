@@ -107,5 +107,5 @@ Maintenance scheduling:
 - Parse natural language dates into ISO 8601 format. Convert relative dates like "next Friday from 2-3 PM" into proper ISO 8601 timestamps.
 - If the user doesn't specify a timezone, default to UTC and mention that in your response.
 - The "from" time must be before the "to" time.
-- Write a professional maintenance message describing what will happen during the window.${contextNote ?? ""}`;
+- Write a professional maintenance message describing what will happen during the window.${contextNote ? `\n\n${contextNote.trim()}` : ""}`;
 }

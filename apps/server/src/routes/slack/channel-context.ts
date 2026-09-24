@@ -66,6 +66,10 @@ export function contextChannelId(
 }
 
 const MAX_CONTEXT_MESSAGES = 50;
+// A Slack message can be 40k characters on its own; 50 of them would crowd out
+// the rest of the turn. Newest messages win the budget, oldest are dropped.
+const MAX_MESSAGE_CHARS = 2_000;
+const MAX_TOTAL_CHARS = 20_000;
 
 const readChannelInput = z.object({
   limit: z
@@ -102,16 +106,22 @@ export function channelContextTooling(args: {
           channel: channelId,
           limit: limit ?? MAX_CONTEXT_MESSAGES,
         });
-        const messages = (res.messages ?? [])
-          .map((m) => ({
+        // Slack returns newest first, which is also budget order — the
+        // discussion reads forwards once what fits has been kept.
+        const messages: Array<{ user: string; text: string; ts: string }> = [];
+        let budget = MAX_TOTAL_CHARS;
+        for (const m of res.messages ?? []) {
+          if (!m.text) continue;
+          if (budget <= 0) break;
+          const text = m.text.slice(0, Math.min(MAX_MESSAGE_CHARS, budget));
+          budget -= text.length;
+          messages.push({
             user: m.user ?? m.bot_id ?? "unknown",
-            text: m.text ?? "",
+            text,
             ts: m.ts ?? "",
-          }))
-          .filter((m) => m.text)
-          // Slack returns newest first; the discussion reads forwards.
-          .reverse();
-        return { channelId, messages };
+          });
+        }
+        return { channelId, messages: messages.reverse() };
       } catch (err) {
         const error = errorCode(err);
         logger.info("slack could not read the context channel", {

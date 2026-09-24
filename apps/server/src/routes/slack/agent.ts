@@ -151,7 +151,10 @@ export async function runAgent(
             toolName: part.toolName,
           });
           break;
+        // A failed tool still has a task on the Slack timeline; without this it
+        // stays "in progress" for the rest of the thread's life.
         case "tool-result":
+        case "tool-error":
           await events?.onToolResult({
             id: part.toolCallId,
             toolName: part.toolName,
@@ -172,16 +175,16 @@ export async function runAgent(
     aborted = true;
   }
 
-  if (aborted) {
-    return {
-      text,
-      toolResults: [],
-      finishReason: "abort",
-      stepCount: 0,
-      hitStepLimit: false,
-      aborted: true,
-    };
-  }
+  const stoppedResult = (): AgentResult => ({
+    text,
+    toolResults: [],
+    finishReason: "abort",
+    stepCount: 0,
+    hitStepLimit: false,
+    aborted: true,
+  });
+
+  if (aborted) return stoppedResult();
 
   const steps = await result.steps;
   const toolResults: AgentResult["toolResults"] = [];
@@ -190,6 +193,10 @@ export async function runAgent(
       toolResults.push({ toolName: tc.toolName, result: tc.output });
     }
   }
+
+  // Rechecked here: a stop arriving while the promises above settle would
+  // otherwise deliver an answer Slack has already stopped the turn on.
+  if (signal?.aborted) return stoppedResult();
 
   return {
     text: await result.text,

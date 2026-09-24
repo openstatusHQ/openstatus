@@ -58,6 +58,8 @@ describe("confirmation-store", () => {
       const stored = JSON.parse(redisStore.get(actionKey) as string);
       expect(stored.id).toBe(id);
       expect(stored.workspaceId).toBe(1);
+      // The click resolves its bot token from this, so it has to round-trip.
+      expect(stored.teamId).toBe("T_KNOWN");
       expect(stored.payload.toolName).toBe("create_status_report");
 
       expect(redisStore.get(threadKey)).toBe(id);
