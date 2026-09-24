@@ -175,13 +175,13 @@ export const PLANS = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1OVHQDBXJcTfzsyJjfiXl10Y",
+          test: "price_1UJ8dWBXJcTfzsyJYUgMY5Z5",
           production: "price_1RxsLNBXJcTfzsyJ7La5Jn5y",
         },
       },
       yearly: {
         priceIds: {
-          test: "XXX",
+          test: "price_1UJ8dcBXJcTfzsyJYKursvVr",
           production: "price_1TDlHxBXJcTfzsyJygJw92nU",
         },
       },
@@ -192,13 +192,13 @@ export const PLANS = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1OVHPlBXJcTfzsyJvPlB1kNb",
+          test: "price_1UJ8dVBXJcTfzsyJcZsQ2AuH",
           production: "price_1RxsJzBXJcTfzsyJBOztaKlR",
         },
       },
       yearly: {
         priceIds: {
-          test: "XXX",
+          test: "price_1UJ8daBXJcTfzsyJXf50tUL5",
           production: "price_1TDlGSBXJcTfzsyJMsDV4DRQ",
         },
       },
@@ -209,13 +209,13 @@ export const PLANS = [
     price: {
       monthly: {
         priceIds: {
-          test: "XXXX",
+          test: "price_1UJ8deBXJcTfzsyJauf9uGPO",
           production: "price_1Te9BLBXJcTfzsyJlXLsuyFP",
         },
       },
       yearly: {
         priceIds: {
-          test: "XXXX",
+          test: "price_1UJ8dfBXJcTfzsyJy8Hm8aha",
           production: "price_1Te9BLBXJcTfzsyJliabl2ou",
         },
       },
@@ -235,13 +235,13 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1Sl4xqBXJcTfzsyJlzpD1DDm",
+          test: "price_1UJ8dXBXJcTfzsyJdd7OVDe7",
           production: "price_1Sl6oqBXJcTfzsyJCxtzDIx5",
         },
       },
       yearly: {
         priceIds: {
-          test: "price_1UJ7bhBXJcTfzsyJhHuuQjr2",
+          test: "price_1UJ8dsBXJcTfzsyJSnyEZXOi",
           production: "price_1UJ7bhBXJcTfzsyJhHuuQjr2",
         },
       },
@@ -252,13 +252,13 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1TMpxlBXJcTfzsyJ1woQtafW",
+          test: "price_1UJ8ddBXJcTfzsyJNffp8pmE",
           production: "price_1TMpxlBXJcTfzsyJ1woQtafW",
         },
       },
       yearly: {
         priceIds: {
-          test: "price_1UJ7akBXJcTfzsyJzDrC8hdK",
+          test: "price_1UJ8drBXJcTfzsyJED62IVFg",
           production: "price_1UJ7akBXJcTfzsyJzDrC8hdK",
         },
       },
@@ -269,13 +269,13 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1SlbQsBXJcTfzsyJ1awtpOno",
+          test: "price_1UJ8dYBXJcTfzsyJXQx2FMhh",
           production: "price_1SlbSdBXJcTfzsyJahJiFE8D",
         },
       },
       yearly: {
         priceIds: {
-          test: "price_1UJ74MBXJcTfzsyJ17ksU7wm",
+          test: "price_1UJ8dmBXJcTfzsyJdmH60moK",
           production: "price_1UJ74MBXJcTfzsyJ17ksU7wm",
         },
       },
@@ -286,13 +286,13 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1TwKPqBXJcTfzsyJqAu4Wqwh",
+          test: "price_1UJ8dhBXJcTfzsyJcw93020n",
           production: "price_1Tvv0zBXJcTfzsyJseLIjNnz",
         },
       },
       yearly: {
         priceIds: {
-          test: "price_1UJ76GBXJcTfzsyJ6BGJ3ZJd",
+          test: "price_1UJ8dnBXJcTfzsyJmLIOAGEa",
           production: "price_1UJ76GBXJcTfzsyJ6BGJ3ZJd",
         },
       },
@@ -303,13 +303,13 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1Slrk8BXJcTfzsyJXQxshFU4",
+          test: "price_1UJ8dZBXJcTfzsyJYZ1An6s1",
           production: "price_1SlrkHBXJcTfzsyJIxHeKUYe",
         },
       },
       yearly: {
         priceIds: {
-          test: "price_1UJ70tBXJcTfzsyJRDDnbXcP",
+          test: "price_1UJ8dlBXJcTfzsyJ386lE7yh",
           production: "price_1UJ70tBXJcTfzsyJRDDnbXcP",
         },
       },
@@ -320,15 +320,13 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          // TODO: create the "Monitor Pack" product and its monthly
-          // multi-currency price (USD 15 / EUR 15) in Stripe, then paste the ids.
-          test: "price_1UChsCBXJcTfzsyJgomhUtYY",
+          test: "price_1UJ8dkBXJcTfzsyJEZUYk2ji",
           production: "price_1UChsCBXJcTfzsyJgomhUtYY",
         },
       },
       yearly: {
         priceIds: {
-          test: "price_1UJ7YkBXJcTfzsyJdklvON8r",
+          test: "price_1UJ8doBXJcTfzsyJLyp84Hof",
           production: "price_1UJ7YkBXJcTfzsyJdklvON8r",
         },
       },
@@ -339,13 +337,13 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_1TySGYBXJcTfzsyJQFVFJi6N",
+          test: "price_1UJ8djBXJcTfzsyJ8I9r51Nz",
           production: "price_1TySGYBXJcTfzsyJQFVFJi6N",
         },
       },
       yearly: {
         priceIds: {
-          test: "price_1UJ7ZcBXJcTfzsyJ78fA9RFp",
+          test: "price_1UJ8dqBXJcTfzsyJFfAEZuZk",
           production: "price_1UJ7ZcBXJcTfzsyJ78fA9RFp",
         },
       },
