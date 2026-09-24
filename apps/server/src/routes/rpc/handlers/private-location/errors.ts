@@ -1,59 +1,27 @@
-import { Code, ConnectError } from "@connectrpc/connect";
+import { Code, type ConnectError } from "@connectrpc/connect";
 
-export const ErrorReason = {
-  PRIVATE_LOCATION_NOT_FOUND: "PRIVATE_LOCATION_NOT_FOUND",
-  PRIVATE_LOCATION_ID_REQUIRED: "PRIVATE_LOCATION_ID_REQUIRED",
-  INVALID_MONITOR_ID: "INVALID_MONITOR_ID",
-} as const;
-
-export type ErrorReason = (typeof ErrorReason)[keyof typeof ErrorReason];
-
-const DOMAIN = "openstatus.dev";
-
-function createError(
-  message: string,
-  code: Code,
-  reason: ErrorReason,
-  metadata?: Record<string, string>,
-): ConnectError {
-  const headers = new Headers({
-    "error-domain": DOMAIN,
-    "error-reason": reason,
-  });
-
-  if (metadata) {
-    for (const [key, value] of Object.entries(metadata)) {
-      headers.set(`error-${key}`, value);
-    }
-  }
-
-  return new ConnectError(message, code, headers);
-}
+import { ErrorReason, idRequiredError, rpcError } from "../../errors";
 
 export function privateLocationNotFoundError(
   privateLocationId: string,
 ): ConnectError {
-  return createError(
-    "Private location not found",
-    Code.NotFound,
-    ErrorReason.PRIVATE_LOCATION_NOT_FOUND,
-    { "private-location-id": privateLocationId },
-  );
+  return rpcError({
+    code: Code.NotFound,
+    reason: ErrorReason.PRIVATE_LOCATION_NOT_FOUND,
+    message: "Private location not found",
+    metadata: { privateLocationId },
+  });
 }
 
 export function privateLocationIdRequiredError(): ConnectError {
-  return createError(
-    "Private location ID is required",
-    Code.InvalidArgument,
-    ErrorReason.PRIVATE_LOCATION_ID_REQUIRED,
-  );
+  return idRequiredError("Private location");
 }
 
 export function invalidMonitorIdError(monitorId: string): ConnectError {
-  return createError(
-    `Invalid monitor id: "${monitorId}"`,
-    Code.InvalidArgument,
-    ErrorReason.INVALID_MONITOR_ID,
-    { "monitor-id": monitorId },
-  );
+  return rpcError({
+    code: Code.InvalidArgument,
+    reason: ErrorReason.INVALID_MONITOR_ID,
+    message: `Invalid monitor id: "${monitorId}"`,
+    metadata: { monitorId },
+  });
 }

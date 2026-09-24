@@ -423,7 +423,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://www.openstatus.dev/docs/api-references/errors/code/BAD_REQUEST"
+            "example": "https://www.openstatus.dev/docs/reference/api-errors#bad-request"
           },
           "requestId": {
             "type": "string",
@@ -462,7 +462,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://www.openstatus.dev/docs/api-references/errors/code/UNAUTHORIZED"
+            "example": "https://www.openstatus.dev/docs/reference/api-errors#unauthorized"
           },
           "requestId": {
             "type": "string",
@@ -501,7 +501,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://www.openstatus.dev/docs/api-references/errors/code/PAYMENT_REQUIRED"
+            "example": "https://www.openstatus.dev/docs/reference/api-errors#payment-required"
           },
           "requestId": {
             "type": "string",
@@ -540,7 +540,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://www.openstatus.dev/docs/api-references/errors/code/FORBIDDEN"
+            "example": "https://www.openstatus.dev/docs/reference/api-errors#forbidden"
           },
           "requestId": {
             "type": "string",
@@ -579,7 +579,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://www.openstatus.dev/docs/api-references/errors/code/NOT_FOUND"
+            "example": "https://www.openstatus.dev/docs/reference/api-errors#not-found"
           },
           "requestId": {
             "type": "string",
@@ -618,7 +618,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://www.openstatus.dev/docs/api-references/errors/code/CONFLICT"
+            "example": "https://www.openstatus.dev/docs/reference/api-errors#conflict"
           },
           "requestId": {
             "type": "string",
@@ -657,7 +657,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://www.openstatus.dev/docs/api-references/errors/code/TOO_MANY_REQUESTS"
+            "example": "https://www.openstatus.dev/docs/reference/api-errors#too-many-requests"
           },
           "requestId": {
             "type": "string",
@@ -696,7 +696,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://www.openstatus.dev/docs/api-references/errors/code/INTERNAL_SERVER_ERROR"
+            "example": "https://www.openstatus.dev/docs/reference/api-errors#internal-server-error"
           },
           "requestId": {
             "type": "string",
@@ -735,7 +735,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://www.openstatus.dev/docs/api-references/errors/code/SERVICE_UNAVAILABLE"
+            "example": "https://www.openstatus.dev/docs/reference/api-errors#service-unavailable"
           },
           "requestId": {
             "type": "string",
@@ -928,7 +928,7 @@
             "type": "string",
             "nullable": true,
             "format": "date-time",
-            "default": "2026-09-10T07:58:20.617Z",
+            "default": "2026-09-24T07:47:08.268Z",
             "description": "The date of the update in ISO8601 format"
           },
           "message": {
@@ -6584,7 +6584,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-09-10T07:58:20.617Z",
+                    "default": "2026-09-24T07:47:08.268Z",
                     "description": "The date of the report in ISO8601 format, defaults to now"
                   },
                   "message": {
@@ -7039,7 +7039,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-09-10T07:58:20.617Z",
+                    "default": "2026-09-24T07:47:08.268Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
@@ -7340,7 +7340,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-09-10T07:58:20.617Z",
+                    "default": "2026-09-24T07:47:08.268Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
