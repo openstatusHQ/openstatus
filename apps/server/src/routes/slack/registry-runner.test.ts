@@ -347,7 +347,10 @@ describe("buildTool draft split", () => {
   async function runExecute(t: AnyAgentTool) {
     const built = buildTool(t, fakeCtx);
     if (!built.execute) throw new Error("expected an execute fn");
-    return built.execute({ value: 7 }, { toolCallId: "t", messages: [] });
+    return built.execute(
+      { value: 7 },
+      { toolCallId: "t", messages: [], context: {} },
+    );
   }
 
   test("persists raw input but enriches a separate displayInput", async () => {
