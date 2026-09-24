@@ -33,7 +33,10 @@ import { z } from "zod";
 import { IconCloudProviderTooltip } from "@/components/common/icon-cloud-provider";
 import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
-import { PrivateLocationMetadata } from "@/components/common/private-location-metadata";
+import {
+  TableCellMetadata,
+  getMetadataEntries,
+} from "@/components/data-table/table-cell-metadata";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import {
   FormCard,
@@ -436,9 +439,10 @@ export function FormSchedulingRegions({
                                   <span className="text-nowrap">
                                     {item.name}
                                   </span>
-                                  <PrivateLocationMetadata
-                                    metadata={item.metadata}
-                                  />
+                                  {getMetadataEntries(item.metadata).length >
+                                  0 ? (
+                                    <TableCellMetadata value={item.metadata} />
+                                  ) : null}
                                   <Globe className="size-3" />
                                 </FormLabel>
                               </FormItem>

@@ -4,12 +4,12 @@ import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
-import { PrivateLocationMetadata } from "@/components/common/private-location-metadata";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { cn } from "@/lib/utils";
 
 import { TableCellBadge } from "../table-cell-badge";
 import { TableCellDate } from "../table-cell-date";
+import { TableCellMetadata } from "../table-cell-metadata";
 import { TableCellText } from "../table-cell-text";
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -51,12 +51,7 @@ export const columns: ColumnDef<PrivateLocation>[] = [
     ),
     enableSorting: false,
     enableHiding: true,
-    cell: ({ row }) => (
-      <PrivateLocationMetadata
-        metadata={row.original.metadata}
-        emptyFallback="dash"
-      />
-    ),
+    cell: ({ row }) => <TableCellMetadata value={row.original.metadata} />,
   },
   {
     accessorKey: "lastSeenAt",

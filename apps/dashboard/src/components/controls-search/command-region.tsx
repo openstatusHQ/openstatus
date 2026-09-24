@@ -24,14 +24,14 @@ import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
 import { Link } from "@/components/common/link";
 import {
-  PrivateLocationMetadata,
-  getPrivateLocationMetadataKeywords,
-} from "@/components/common/private-location-metadata";
-import {
   BillingOverlay,
   BillingOverlayButton,
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
+import {
+  TableCellMetadata,
+  getMetadataEntries,
+} from "@/components/data-table/table-cell-metadata";
 import type { REGIONS } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -160,10 +160,8 @@ export function CommandRegion({
             {privateLocations && privateLocations.length > 0 ? (
               <CommandGroup heading="Private Locations">
                 {privateLocations.map((location) => {
-                  const keywords = [
-                    location.name,
-                    ...getPrivateLocationMetadataKeywords(location.metadata),
-                  ];
+                  const metadata = getMetadataEntries(location.metadata);
+                  const keywords = [location.name, ...metadata.flat()];
 
                   return (
                     <CommandItem
@@ -182,10 +180,12 @@ export function CommandRegion({
                       <span className="truncate font-mono">
                         {location.name}
                       </span>
-                      <PrivateLocationMetadata
-                        metadata={location.metadata}
-                        maxEntries={2}
-                      />
+                      {metadata.length > 0 ? (
+                        <TableCellMetadata
+                          value={location.metadata}
+                          maxEntries={2}
+                        />
+                      ) : null}
                       <Check
                         className={cn(
                           "ml-auto",
