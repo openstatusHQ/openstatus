@@ -1,6 +1,9 @@
 import { Events } from "@openstatus/analytics";
 import { workspacePlans } from "@openstatus/db/src/schema";
-import type { AddonQuantityKey } from "@openstatus/db/src/schema/plan/schema";
+import type {
+  AddonQuantityKey,
+  BillingInterval,
+} from "@openstatus/db/src/schema/plan/schema";
 import {
   addons,
   billingIntervals,
@@ -19,6 +22,7 @@ import {
   updateWorkspaceStripeId,
 } from "@openstatus/services/workspace";
 import { TRPCError } from "@trpc/server";
+import type Stripe from "stripe";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
@@ -31,6 +35,7 @@ import {
   trialEndsAtOf,
 } from "./shared";
 import {
+  buildPlanChangeItems,
   getPlanFromPriceId,
   getPriceIdForFeature,
   getPriceIdForPlan,
@@ -105,6 +110,24 @@ async function createPaymentMethodSetupSession(args: {
 }
 
 export const stripeRouter = createTRPCRouter({
+  // The workspace only stores the plan, not the interval it is billed on, so
+  // the plan table asks Stripe to tell "Pro monthly" apart from "Pro yearly".
+  getBillingInterval: protectedProcedure.query(
+    async ({ ctx }): Promise<BillingInterval | null> => {
+      const stripeId = ctx.workspace.stripeId;
+      if (!stripeId) return null;
+
+      const { current } = await getCurrentSubscription(stripeId);
+      const planItem = current?.items.data.find((item) =>
+        getPlanFromPriceId(item.price.id),
+      );
+      const interval = planItem?.price.recurring?.interval;
+      if (interval === "year") return "yearly";
+      if (interval === "month") return "monthly";
+      return null;
+    },
+  ),
+
   getUserCustomerPortal: protectedProcedure
     .input(
       z.object({ workspaceSlug: z.string(), returnUrl: z.string().optional() }),
@@ -193,17 +216,19 @@ export const stripeRouter = createTRPCRouter({
           });
         }
 
-        // Stripe rejects mixed billing intervals on one subscription and every
-        // addon price is monthly, so a yearly plan cannot hold the addon items.
-        const hasAddons = current.items.data.some(
-          (item) => item.id !== planItem.id,
-        );
-
-        if (opts.input.interval === "yearly" && hasAddons) {
+        let items: Stripe.SubscriptionUpdateParams.Item[];
+        try {
+          items = buildPlanChangeItems({
+            subscription: current,
+            planItemId: planItem.id,
+            planPriceId: priceId,
+            interval: opts.input.interval,
+          });
+        } catch {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message:
-              "Add-ons are billed monthly. Remove them before switching to a yearly plan, or contact us.",
+              "Your subscription has an add-on that cannot be moved to this billing interval. Contact us and we will switch it for you.",
           });
         }
 
@@ -214,13 +239,13 @@ export const stripeRouter = createTRPCRouter({
         // same item.
         buildFromSubscriptionOrThrow(current);
 
-        // Only the plan item is listed, so Stripe leaves every other item
-        // untouched and the addons survive the plan change. Clearing
+        // Every existing item is listed by id, so Stripe re-prices it in place
+        // instead of dropping it, and the addons survive the change. Clearing
         // `cancel_at_period_end` resumes a subscription the customer had
         // scheduled to cancel — choosing a paid plan says they mean to keep
         // paying.
         const updated = await stripe.subscriptions.update(current.id, {
-          items: [{ id: planItem.id, price: priceId }],
+          items,
           proration_behavior: "create_prorations",
           cancel_at_period_end: false,
           ...(isTrialing && {
@@ -362,30 +387,26 @@ export const stripeRouter = createTRPCRouter({
         });
       }
 
-      const priceId = getPriceIdForFeature(opts.input.feature);
-
-      if (!priceId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid feature",
-        });
-      }
-
       const items = await stripe.subscriptionItems.list({
         subscription: current.id,
         limit: 100,
       });
 
-      // Stripe rejects mixed billing intervals on one subscription and every
-      // addon price is monthly, so a yearly plan cannot hold one.
+      // Stripe rejects mixed billing intervals on one subscription, so the
+      // addon is billed on the same interval as the plan.
       const planItem = items.data.find((item) =>
         getPlanFromPriceId(item.price.id),
       );
-      if (planItem?.price.recurring?.interval === "year") {
+      const isYearly = planItem?.price.recurring?.interval === "year";
+      const priceId = getPriceIdForFeature(
+        opts.input.feature,
+        isYearly ? "yearly" : "monthly",
+      );
+
+      if (!priceId) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message:
-            "Add-ons are billed monthly. Contact us to add them to a yearly plan.",
+          message: "Invalid feature",
         });
       }
 

@@ -15,6 +15,8 @@ import {
 } from "@openstatus/db/src/schema/plan/utils";
 import type Stripe from "stripe";
 
+type PriceIds = { priceIds: { test: string; production: string } };
+
 /**
  * Rebuild a workspace's limits from the full set of subscription line items.
  * The plan item sets the baseline; each addon item then re-applies its flag or
@@ -126,13 +128,46 @@ export const getPriceIdForPlan = (
   return PLANS.find((p) => p.plan === plan)?.price[interval].priceIds[env];
 };
 
-export const getPriceIdForFeature = (feature: keyof Addons) => {
+export const getPriceIdForFeature = (
+  feature: keyof Addons,
+  interval: BillingInterval = "monthly",
+) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
-  return FEATURES.find((f) => f.feature === feature)?.price.monthly.priceIds[
+  return FEATURES.find((f) => f.feature === feature)?.price[interval].priceIds[
     env
   ];
 };
+
+/**
+ * The item list for a plan or interval change. Every item already on the
+ * subscription is listed by id so Stripe re-prices it in place instead of
+ * dropping it: the plan item takes the new plan price, and each addon moves to
+ * its price for the target interval with its quantity kept — Stripe rejects
+ * mixed intervals on one subscription, so a yearly plan takes yearly addons.
+ * Throws on an addon item whose price is unknown rather than dropping it.
+ */
+export function buildPlanChangeItems(args: {
+  subscription: Stripe.Subscription;
+  planItemId: string;
+  planPriceId: string;
+  interval: BillingInterval;
+}): Stripe.SubscriptionUpdateParams.Item[] {
+  const { subscription, planItemId, planPriceId, interval } = args;
+  return subscription.items.data.map((item) => {
+    if (item.id === planItemId) return { id: item.id, price: planPriceId };
+    const feature = getFeatureFromPriceId(item.price.id);
+    const price = feature
+      ? getPriceIdForFeature(feature.feature, interval)
+      : undefined;
+    if (!price) {
+      throw new Error(
+        `Unsupported Stripe price on subscription: ${item.price.id}`,
+      );
+    }
+    return { id: item.id, price, quantity: item.quantity ?? 1 };
+  });
+}
 
 export const PLANS = [
   {
@@ -204,6 +239,12 @@ export const FEATURES = [
           production: "price_1Sl6oqBXJcTfzsyJCxtzDIx5",
         },
       },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ7bhBXJcTfzsyJhHuuQjr2",
+          production: "price_1UJ7bhBXJcTfzsyJhHuuQjr2",
+        },
+      },
     },
   },
   {
@@ -212,7 +253,13 @@ export const FEATURES = [
       monthly: {
         priceIds: {
           test: "price_1TMpxlBXJcTfzsyJ1woQtafW",
-          production: "price_1TMq0GBXJcTfzsyJrIVx9KPL",
+          production: "price_1TMpxlBXJcTfzsyJ1woQtafW",
+        },
+      },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ7akBXJcTfzsyJzDrC8hdK",
+          production: "price_1UJ7akBXJcTfzsyJzDrC8hdK",
         },
       },
     },
@@ -226,6 +273,12 @@ export const FEATURES = [
           production: "price_1SlbSdBXJcTfzsyJahJiFE8D",
         },
       },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ74MBXJcTfzsyJ17ksU7wm",
+          production: "price_1UJ74MBXJcTfzsyJ17ksU7wm",
+        },
+      },
     },
   },
   {
@@ -237,6 +290,12 @@ export const FEATURES = [
           production: "price_1Tvv0zBXJcTfzsyJseLIjNnz",
         },
       },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ76GBXJcTfzsyJ6BGJ3ZJd",
+          production: "price_1UJ76GBXJcTfzsyJ6BGJ3ZJd",
+        },
+      },
     },
   },
   {
@@ -246,6 +305,12 @@ export const FEATURES = [
         priceIds: {
           test: "price_1Slrk8BXJcTfzsyJXQxshFU4",
           production: "price_1SlrkHBXJcTfzsyJIxHeKUYe",
+        },
+      },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ70tBXJcTfzsyJRDDnbXcP",
+          production: "price_1UJ70tBXJcTfzsyJRDDnbXcP",
         },
       },
     },
@@ -261,6 +326,12 @@ export const FEATURES = [
           production: "price_1UChsCBXJcTfzsyJgomhUtYY",
         },
       },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ7YkBXJcTfzsyJdklvON8r",
+          production: "price_1UJ7YkBXJcTfzsyJdklvON8r",
+        },
+      },
     },
   },
   {
@@ -272,11 +343,20 @@ export const FEATURES = [
           production: "price_1TySGYBXJcTfzsyJQFVFJi6N",
         },
       },
+      yearly: {
+        priceIds: {
+          test: "price_1UJ7ZcBXJcTfzsyJ78fA9RFp",
+          production: "price_1UJ7ZcBXJcTfzsyJ78fA9RFp",
+        },
+      },
     },
   },
 ] satisfies Array<{
   feature: keyof Addons;
+  // Stripe rejects mixed intervals on one subscription, so every addon needs a
+  // price on each interval a plan is sold on.
   price: {
-    monthly: { priceIds: { test: string; production: string } };
+    monthly: PriceIds;
+    yearly: PriceIds;
   };
 }>;
