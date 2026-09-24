@@ -1,4 +1,5 @@
 import { Buffer } from "node:buffer";
+import { readFile } from "node:fs/promises";
 
 import { defaultLocale, locales } from "@openstatus/locales";
 import { expect } from "@std/expect";
@@ -16,7 +17,7 @@ async function messageId(message: string) {
 
 async function readCatalog(locale: string): Promise<Record<string, string>> {
   const path = `${import.meta.dirname}/../../messages/${locale}.json`;
-  return JSON.parse(await Deno.readTextFile(path));
+  return JSON.parse(await readFile(path, "utf8"));
 }
 
 describe("message catalogs", () => {
