@@ -18,9 +18,15 @@ describe("headerPairSchema", () => {
     }
   });
 
-  test("keeps an empty row so the form can hold an unfilled header", () => {
-    expect(headerPairSchema.parse({ key: "", value: "" })).toEqual({
-      key: "",
+  test("rejects an empty name so a placeholder row is never persisted", () => {
+    const result = headerPairSchema.safeParse({ key: "", value: "" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe("Header name is required");
+  });
+
+  test("allows an empty value", () => {
+    expect(headerPairSchema.parse({ key: "X-Empty", value: "" })).toEqual({
+      key: "X-Empty",
       value: "",
     });
   });

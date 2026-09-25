@@ -15,7 +15,7 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import { headerPairSchema } from "@openstatus/utils";
 import NextLink from "next/link";
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -54,6 +54,12 @@ export function FormOtel({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? { endpoint: "", headers: [] },
   });
+  // Stable row ids so removing a row remounts the shifted controllers.
+  const {
+    fields: headerFields,
+    append: appendHeader,
+    remove: removeHeader,
+  } = useFieldArray({ control: form.control, name: "headers" });
   const [isPending, startTransition] = useTransition();
 
   function submitAction(values: FormValues) {
@@ -103,81 +109,67 @@ export function FormOtel({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="headers"
-              disabled={locked}
-              render={({ field }) => (
-                <FormItem className="col-span-full">
-                  <FormLabel>Request Headers</FormLabel>
-                  {field.value?.map((_, index) => (
-                    <div key={index} className="grid gap-2 sm:grid-cols-5">
-                      <FormField
-                        control={form.control}
-                        name={`headers.${index}.key`}
-                        render={({ field }) => (
-                          <FormItem className="col-span-2">
-                            <FormControl>
-                              <Input
-                                placeholder="Key"
-                                {...field}
-                                disabled={locked}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`headers.${index}.value`}
-                        render={({ field }) => (
-                          <FormItem className="col-span-2">
-                            <FormControl>
-                              <Input
-                                placeholder="Value"
-                                {...field}
-                                disabled={locked}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          const newHeaders = field.value?.filter(
-                            (_, i) => i !== index,
-                          );
-                          field.onChange(newHeaders);
-                        }}
-                      >
-                        <Close />
-                      </Button>
-                    </div>
-                  ))}
-                  <div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      type="button"
-                      disabled={locked}
-                      onClick={() => {
-                        field.onChange([
-                          ...(field.value ?? []),
-                          { key: "", value: "" },
-                        ]);
-                      }}
-                    >
-                      <Add />
-                      Add Header
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormItem className="col-span-full">
+              <FormLabel>Request Headers</FormLabel>
+              {headerFields.map((row, index) => (
+                <div key={row.id} className="grid gap-2 sm:grid-cols-5">
+                  <FormField
+                    control={form.control}
+                    name={`headers.${index}.key`}
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormControl>
+                          <Input
+                            placeholder="Key"
+                            {...field}
+                            disabled={locked}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`headers.${index}.value`}
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormControl>
+                          <Input
+                            placeholder="Value"
+                            {...field}
+                            disabled={locked}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    type="button"
+                    aria-label="Remove header"
+                    disabled={locked}
+                    onClick={() => removeHeader(index)}
+                  >
+                    <Close />
+                  </Button>
+                </div>
+              ))}
+              <div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  disabled={locked}
+                  onClick={() => appendHeader({ key: "", value: "" })}
+                >
+                  <Add />
+                  Add Header
+                </Button>
+              </div>
+              <FormMessage />
+            </FormItem>
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
