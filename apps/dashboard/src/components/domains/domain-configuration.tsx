@@ -8,6 +8,7 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useEffect, useRef } from "react";
 
 import {
   StepCard,
@@ -48,7 +49,17 @@ const A_RECORD_VALUE =
   process.env.NEXT_PUBLIC_VERCEL_PROJECT_DNS_A || "76.76.21.21";
 
 export default function DomainConfiguration({ domain }: { domain: string }) {
-  const { status, domainJson, steps, isLoading } = useDomainStatus(domain);
+  const { status, domainJson, steps, isLoading, issueCertificateMutation } =
+    useDomainStatus(domain);
+  const certificateRequested = useRef(false);
+
+  // Vercel's own retry can leave the order idle for a long time; nudge it once per visit.
+  useEffect(() => {
+    if (status !== "Generating SSL Certificate") return;
+    if (certificateRequested.current) return;
+    certificateRequested.current = true;
+    issueCertificateMutation.mutate({ domain });
+  }, [status, domain, issueCertificateMutation]);
 
   if (isLoading && !domainJson)
     return (
@@ -212,6 +223,22 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
               record values will appear here once DNS is configured.
             </p>
           )}
+        </StepCardContent>
+      </StepCard>
+
+      {/* Step 3: SSL Certificate */}
+      <StepCard variant={steps.certificate}>
+        <StepCardHeader>
+          <StepCardIndicator step={3} />
+          <StepCardTitle>Generate SSL certificate</StepCardTitle>
+          <StepCardBadge>Done</StepCardBadge>
+        </StepCardHeader>
+        <StepCardContent>
+          <p className="text-muted-foreground text-sm">
+            Once DNS is configured, we request an SSL certificate for{" "}
+            <InlineSnippet>{domain}</InlineSnippet>. This usually takes a few
+            minutes; the status updates automatically.
+          </p>
         </StepCardContent>
       </StepCard>
 

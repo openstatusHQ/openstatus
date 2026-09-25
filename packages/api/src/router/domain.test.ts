@@ -49,6 +49,8 @@ for (const procedure of [
   "getDomainResponse",
   "getConfigResponse",
   "verifyDomain",
+  "getCertificateStatus",
+  "issueCertificate",
 ] as const) {
   test(`domain.${procedure} rejects another workspace's domain`, async () => {
     const error = await getCaller()
@@ -73,6 +75,8 @@ for (const procedure of [
   "getDomainResponse",
   "getConfigResponse",
   "verifyDomain",
+  "getCertificateStatus",
+  "issueCertificate",
 ] as const) {
   test(`domain.${procedure} cannot escape the domains path with an owned traversal domain`, async () => {
     const traversal = `evil-${ownWorkspaceId}.example/../../../../v2/user#`;
@@ -123,6 +127,83 @@ test("domain.getDomainResponse reaches Vercel for the workspace's own domain", a
     globalThis.fetch = original;
     await db.delete(page).where(eq(page.id, own.id));
   }
+});
+
+async function withOwnDomain(
+  vercelResponses: Record<string, unknown>,
+  run: (domain: string, requests: Request[]) => Promise<void>,
+) {
+  // `.invalid` never resolves, so the TLS probe reports no trusted certificate.
+  const domain = `ssl-${ownWorkspaceId}-${crypto.randomUUID()}.example.invalid`;
+  const own = await createPage(ownWorkspaceId, { customDomain: domain });
+  const original = globalThis.fetch;
+  const requests: Request[] = [];
+  globalThis.fetch = (input, init) => {
+    const request = new Request(input, init);
+    requests.push(request);
+    const prefix = new URL(request.url).pathname.split("/")[2];
+    return Promise.resolve(Response.json(vercelResponses[prefix] ?? {}));
+  };
+  try {
+    await run(domain, requests);
+  } finally {
+    globalThis.fetch = original;
+    await db.delete(page).where(eq(page.id, own.id));
+  }
+}
+
+test("domain.issueCertificate orders a cert once DNS points at Vercel", async () => {
+  await withOwnDomain(
+    { domains: { misconfigured: false }, certs: { id: "cert_1" } },
+    async (domain, requests) => {
+      const result = await getCaller().domain.issueCertificate({ domain });
+      expect(result).toEqual({ issued: true });
+      const order = requests.find((r) => r.url.includes("/v8/certs"));
+      expect(order?.method).toBe("POST");
+      expect(await order?.json()).toEqual({ cns: [domain] });
+    },
+  );
+});
+
+test("domain.issueCertificate skips the order while DNS is misconfigured", async () => {
+  await withOwnDomain(
+    { domains: { misconfigured: true } },
+    async (domain, requests) => {
+      const result = await getCaller().domain.issueCertificate({ domain });
+      expect(result).toEqual({ issued: false });
+      expect(requests.some((r) => r.url.includes("/v8/certs"))).toBe(false);
+    },
+  );
+});
+
+test("domain.getCertificateStatus is not ready without a trusted certificate", async () => {
+  await withOwnDomain({ domains: { misconfigured: false } }, async (domain) => {
+    const result = await getCaller().domain.getCertificateStatus({ domain });
+    expect(result).toEqual({ ready: false });
+  });
+});
+
+test("domain.getCertificateStatus surfaces a Vercel config failure instead of reading it as misconfigured", async () => {
+  await withOwnDomain({}, async (domain) => {
+    const original = globalThis.fetch;
+    globalThis.fetch = () =>
+      Promise.resolve(
+        Response.json(
+          { error: { code: "internal", message: "boom" } },
+          { status: 500 },
+        ),
+      );
+    try {
+      const error = await getCaller()
+        .domain.getCertificateStatus({ domain })
+        .catch((e) => e);
+      expect(error).toBeInstanceOf(TRPCError);
+      expect((error as TRPCError).code).toBe("INTERNAL_SERVER_ERROR");
+      expect((error as TRPCError).message).not.toContain("boom");
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
 });
 
 for (const path of [
