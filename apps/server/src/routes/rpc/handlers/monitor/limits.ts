@@ -1,4 +1,3 @@
-import { Code, ConnectError } from "@connectrpc/connect";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
@@ -6,6 +5,10 @@ import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { Periodicity, Region } from "@openstatus/proto/monitor/v1";
 import { z } from "zod";
 
+import {
+  planFeatureNotAvailableError,
+  planLimitReachedError,
+} from "../../errors";
 import { periodicityToString, regionsToStrings } from "./converters";
 
 /**
@@ -22,9 +25,10 @@ export function checkMonitorConfigLimits(
   if (periodicity) {
     const periodicityStr = periodicityToString(periodicity);
     if (!limits.periodicity.includes(periodicityStr)) {
-      throw new ConnectError(
+      throw planFeatureNotAvailableError(
         "Upgrade for more periodicity options",
-        Code.PermissionDenied,
+        "periodicity",
+        { periodicity: periodicityStr },
       );
     }
   }
@@ -37,15 +41,21 @@ export function checkMonitorConfigLimits(
 
     // Check max regions limit
     if (regionStrings.length > limits["max-regions"]) {
-      throw new ConnectError("Upgrade for more regions", Code.PermissionDenied);
+      throw planLimitReachedError(
+        "Upgrade for more regions",
+        "max-regions",
+        limits["max-regions"],
+        regionStrings.length,
+      );
     }
 
     // Check if each region is allowed
     for (const region of regionStrings) {
       if (!limits.regions.includes(region)) {
-        throw new ConnectError(
+        throw planFeatureNotAvailableError(
           `Region '${region}' is not available on your plan. Upgrade for more regions`,
-          Code.PermissionDenied,
+          "region",
+          { region },
         );
       }
     }
@@ -73,7 +83,12 @@ export async function checkMonitorLimits(
 
   const count = countResult?.count ?? 0;
   if (count >= limits.monitors) {
-    throw new ConnectError("Upgrade for more monitors", Code.PermissionDenied);
+    throw planLimitReachedError(
+      "Upgrade for more monitors",
+      "monitors",
+      limits.monitors,
+      count,
+    );
   }
 
   checkMonitorConfigLimits(limits, periodicity, regions);

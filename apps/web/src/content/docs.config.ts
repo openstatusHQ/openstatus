@@ -245,6 +245,7 @@ export const docsNav: DocsNavSection[] = [
         external: true,
       },
       { slug: "reference/api-rate-limits", label: "API Rate Limits" },
+      { slug: "reference/api-errors", label: "API Errors" },
       { slug: "reference/cli-reference", label: "CLI Reference" },
       { slug: "reference/mcp-server", label: "MCP Server" },
       { slug: "reference/dns-monitor", label: "DNS Monitor Reference" },

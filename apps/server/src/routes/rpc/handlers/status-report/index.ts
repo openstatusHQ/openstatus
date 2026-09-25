@@ -1,4 +1,4 @@
-import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
+import { Code, type ServiceImpl } from "@connectrpc/connect";
 import type {
   ComponentImpact,
   StatusReportService,
@@ -15,6 +15,7 @@ import {
 } from "@openstatus/services/status-report";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
+import { ErrorReason, rpcError } from "../../errors";
 import { getRpcContext } from "../../interceptors";
 import {
   dbReportToProto,
@@ -41,10 +42,17 @@ function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
   return ids.map((id) => {
     const trimmed = id.trim();
     if (!PAGE_COMPONENT_ID.test(trimmed)) {
-      throw new ConnectError(
-        `Invalid page component id: "${id}"`,
-        Code.InvalidArgument,
-      );
+      throw rpcError({
+        code: Code.InvalidArgument,
+        reason: ErrorReason.VALIDATION_FAILED,
+        message: `Invalid page component id: "${id}"`,
+        fieldViolations: [
+          {
+            field: "pageComponentIds",
+            description: `Invalid page component id: "${id}"`,
+          },
+        ],
+      });
     }
     return Number(trimmed);
   });

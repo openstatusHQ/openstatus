@@ -125,6 +125,13 @@ const nextConfig: NextConfig = {
         destination: "/docs/guides/how-to-connect-openstatus-to-your-agent",
         permanent: true,
       },
+      // Old per-code error pages from the Mintlify docs; the `docs` link in
+      // every v1 error envelope shipped before 2026-09 points here.
+      {
+        source: "/docs/api-references/errors/code/:code",
+        destination: "/docs/reference/api-errors",
+        permanent: true,
+      },
       {
         source: "/legal/terms",
         destination: "/terms",

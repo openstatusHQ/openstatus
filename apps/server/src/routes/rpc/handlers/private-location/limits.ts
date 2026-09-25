@@ -1,5 +1,6 @@
-import { Code, ConnectError } from "@connectrpc/connect";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+
+import { planFeatureNotAvailableError } from "../../errors";
 
 /**
  * `private-locations` is a boolean entitlement, not a row-count cap — there is
@@ -7,9 +8,9 @@ import type { Limits } from "@openstatus/db/src/schema/plan/schema";
  */
 export function checkPrivateLocationsEnabled(limits: Limits): void {
   if (!limits["private-locations"]) {
-    throw new ConnectError(
+    throw planFeatureNotAvailableError(
       "Upgrade to use private locations",
-      Code.PermissionDenied,
+      "private-locations",
     );
   }
 }

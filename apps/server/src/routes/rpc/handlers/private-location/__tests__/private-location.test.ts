@@ -313,7 +313,16 @@ describe("PrivateLocationService.GetPrivateLocation", () => {
     );
 
     expect(res.status).toBe(404);
-    expect(res.headers.get("error-reason")).toBe("PRIVATE_LOCATION_NOT_FOUND");
+    const body = await res.json();
+    expect(body.code).toBe("not_found");
+    const info = body.details.find(
+      (d: { type: string }) => d.type === "google.rpc.ErrorInfo",
+    );
+    expect(info.debug).toMatchObject({
+      reason: "PRIVATE_LOCATION_NOT_FOUND",
+      domain: "openstatus.dev",
+      metadata: { privateLocationId: "99999999" },
+    });
   });
 
   test("returns 404 for a location in another workspace", async () => {
