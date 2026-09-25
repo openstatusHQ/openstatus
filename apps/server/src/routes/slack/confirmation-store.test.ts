@@ -3,6 +3,7 @@ import { beforeEach, describe, test } from "@std/testing/bdd";
 
 import {
   consume,
+  draftKey,
   findByThread,
   get,
   replace,
@@ -50,7 +51,7 @@ describe("confirmation-store", () => {
       const id = await store(input);
 
       const actionKey = `slack:action:${id}`;
-      const threadKey = `slack:thread:${input.threadTs}`;
+      const threadKey = `slack:thread:${input.threadTs}:create_status_report`;
 
       expect(redisStore.has(actionKey)).toBe(true);
       expect(redisStore.has(threadKey)).toBe(true);
@@ -77,7 +78,9 @@ describe("confirmation-store", () => {
       expect(result?.payload.toolName).toBe("create_status_report");
 
       expect(redisStore.has(`slack:action:${id}`)).toBe(true);
-      expect(redisStore.has(`slack:thread:${input.threadTs}`)).toBe(true);
+      expect(
+        redisStore.has(`slack:thread:${input.threadTs}:create_status_report`),
+      ).toBe(true);
     });
 
     test("returns undefined for unknown id", async () => {
@@ -104,7 +107,9 @@ describe("confirmation-store", () => {
       expect(result?.payload.toolName).toBe("create_status_report");
 
       expect(redisStore.has(`slack:action:${id}`)).toBe(false);
-      expect(redisStore.has(`slack:thread:${input.threadTs}`)).toBe(false);
+      expect(
+        redisStore.has(`slack:thread:${input.threadTs}:create_status_report`),
+      ).toBe(false);
     });
 
     test("returns undefined for unknown id", async () => {
@@ -125,22 +130,72 @@ describe("confirmation-store", () => {
       const input = makePendingInput();
       const id = await store(input);
 
-      const result = await findByThread(input.threadTs);
+      const result = await findByThread(input.threadTs, input.payload);
       expect(result).toBeDefined();
       expect(result?.id).toBe(id);
     });
 
     test("returns undefined for unknown thread", async () => {
-      const result = await findByThread("unknown.thread");
+      const result = await findByThread(
+        "unknown.thread",
+        makePendingInput().payload,
+      );
       expect(result).toBeUndefined();
     });
 
     test("cleans up orphaned thread index", async () => {
-      redisStore.set("slack:thread:orphan.ts", "missing-id");
+      redisStore.set(
+        "slack:thread:orphan.ts:create_status_report",
+        "missing-id",
+      );
 
-      const result = await findByThread("orphan.ts");
+      const result = await findByThread(
+        "orphan.ts",
+        makePendingInput().payload,
+      );
       expect(result).toBeUndefined();
-      expect(redisStore.has("slack:thread:orphan.ts")).toBe(false);
+      expect(
+        redisStore.has("slack:thread:orphan.ts:create_status_report"),
+      ).toBe(false);
+    });
+
+    test("keeps separate drafts in one thread apart", async () => {
+      const input = makePendingInput();
+      const rename = {
+        toolName: "update_status_report",
+        input: { statusReportId: 7, title: "Elevated API error rate" },
+      };
+      const update = {
+        toolName: "add_status_report_update",
+        input: { statusReportId: 7, status: "investigating", message: "500s" },
+      };
+      const renameId = await store({ ...input, payload: rename });
+      const updateId = await store({ ...input, payload: update });
+
+      expect((await findByThread(input.threadTs, rename))?.id).toBe(renameId);
+      expect((await findByThread(input.threadTs, update))?.id).toBe(updateId);
+
+      // Approving one card leaves the other clickable.
+      await consume(renameId);
+      expect(await findByThread(input.threadTs, rename)).toBeUndefined();
+      expect((await findByThread(input.threadTs, update))?.id).toBe(updateId);
+    });
+
+    test("narrows the draft to the report it acts on", () => {
+      expect(
+        draftKey({
+          toolName: "add_status_report_update",
+          input: { statusReportId: 1 },
+        }),
+      ).not.toBe(
+        draftKey({
+          toolName: "add_status_report_update",
+          input: { statusReportId: 2 },
+        }),
+      );
+      expect(draftKey({ toolName: "create_maintenance", input: {} })).toBe(
+        "create_maintenance",
+      );
     });
   });
 

@@ -34,6 +34,8 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain("shall I go ahead?");
     // notify is a button, so the model must not spend a turn asking.
     expect(prompt).toContain("NEVER ask whether to notify subscribers");
+    // The card lands after the answer; "card's up 👆" points at nothing.
+    expect(prompt).toContain("Cards are posted BELOW your message");
   });
 
   test("guides the model on componentImpacts", () => {

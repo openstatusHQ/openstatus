@@ -1587,3 +1587,71 @@ describe("the channel the user is viewing", () => {
     expect(seen[0].tools).toBeUndefined();
   });
 });
+
+describe("confirmation cards", () => {
+  const app = createTestApp();
+
+  beforeEach(resetSlackTestState);
+
+  test("posts a card for every draft in the turn", async () => {
+    const draft = (toolName: string, input: Record<string, unknown>) => ({
+      toolName,
+      result: { needsConfirmation: true, toolName, input, displayInput: input },
+    });
+    slackTestState.runAgentOverride = () =>
+      Promise.resolve({
+        text: "Two cards for you.",
+        toolResults: [
+          draft("update_status_report", {
+            statusReportId: 7,
+            title: "Elevated API error rate",
+          }),
+          draft("add_status_report_update", {
+            statusReportId: 7,
+            status: "investigating",
+            message: "Some requests return 500s.",
+          }),
+        ],
+        finishReason: "stop",
+        stepCount: 2,
+        hitStepLimit: false,
+        aborted: false,
+      });
+
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_two_cards_${Date.now()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> rename it and post an update",
+        user: "U1",
+        channel: "C1",
+        ts: `${Date.now()}.30`,
+      },
+    });
+    await new Promise((r) => setTimeout(r, 100));
+
+    const actionIds = slackTestState.calls
+      .filter((m) => m.method === "update" && Array.isArray(m.args.blocks))
+      .flatMap((m) =>
+        (
+          m.args.blocks as {
+            type: string;
+            elements?: { action_id: string }[];
+          }[]
+        )
+          .filter((b) => b.type === "actions")
+          .flatMap((b) => b.elements?.map((e) => e.action_id) ?? []),
+      );
+    // Rename: approve + cancel. Update: approve, approve & notify, cancel.
+    expect(actionIds.filter((id) => id.startsWith("cancel_"))).toHaveLength(2);
+    expect(
+      actionIds.filter((id) => id.startsWith("approve_flag_")),
+    ).toHaveLength(1);
+    // The second card is a message of its own, not an overwrite of the first.
+    expect(
+      slackTestState.calls.filter((m) => m.method === "postMessage").length,
+    ).toBeGreaterThanOrEqual(2);
+  });
+});

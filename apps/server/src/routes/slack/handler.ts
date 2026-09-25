@@ -22,7 +22,7 @@ import {
   recallContext,
   rememberContext,
 } from "./channel-context";
-import { findByThread, replace, store } from "./confirmation-store";
+import { draftKey, findByThread, replace, store } from "./confirmation-store";
 import type { PendingPayload } from "./confirmation-store";
 import { publishHomeView } from "./home";
 import {
@@ -30,7 +30,11 @@ import {
   getPageDashboardLink,
   getStatusReportLink,
 } from "./page-urls";
-import { getRegistryTool, isSlackToolDraft } from "./registry-runner";
+import {
+  getRegistryTool,
+  isSlackToolDraft,
+  type SlackToolDraft,
+} from "./registry-runner";
 import { abortTurn, endTurn, startTurn } from "./running-turns";
 import {
   buildThreadTitle,
@@ -560,32 +564,41 @@ async function processEvent(body: SlackEvent) {
       hitStepLimit: result.hitStepLimit,
     });
 
-    // One pending action per thread (see findByThread/replace below).
-    // If the model emits multiple destructive drafts in a single step we
-    // only honour the first; the carrier's thread index can't represent
-    // a queue, and forcing the user to confirm twice in a row is worse
-    // UX than asking them to re-issue the second request.
-    const confirmationResult = result.toolResults.find((tr) =>
-      isSlackToolDraft(tr.result),
-    );
-
-    if (confirmationResult) {
-      logger.info("slack confirmation requested", {
-        teamId,
-        channel: event.channel,
-        threadTs,
-        toolName: confirmationResult.toolName,
+    // One card per draft. A turn can draft several changes (rename a report
+    // *and* post an update to it); dropping all but the first would leave the
+    // user with nothing to click for the rest. When the model drafts the same
+    // thing twice, its last draft is the one it meant.
+    const drafts = new Map<string, SlackToolDraft>();
+    for (const tr of result.toolResults) {
+      if (!isSlackToolDraft(tr.result)) continue;
+      const key = draftKey({
+        toolName: tr.result.toolName,
+        input: tr.result.input,
       });
-      await handleConfirmation(
-        slack,
-        reply,
-        event.channel,
-        threadTs,
-        event.user ?? "",
-        resolved.workspace.id,
-        teamId,
-        confirmationResult,
-      );
+      drafts.delete(key);
+      drafts.set(key, tr.result);
+    }
+    const firstDraft = drafts.values().next().value;
+
+    if (firstDraft) {
+      for (const draft of drafts.values()) {
+        logger.info("slack confirmation requested", {
+          teamId,
+          channel: event.channel,
+          threadTs,
+          toolName: draft.toolName,
+        });
+        await handleConfirmation(
+          slack,
+          reply,
+          event.channel,
+          threadTs,
+          event.user ?? "",
+          resolved.workspace.id,
+          teamId,
+          draft,
+        );
+      }
     } else {
       // No draft means no card. Distinguish a legitimate text answer from the
       // model drafting a change in prose and asking for permission instead of
@@ -620,10 +633,7 @@ async function processEvent(body: SlackEvent) {
       teamId,
       workspaceId: resolved.workspace.id,
       isAgentThread,
-      draft:
-        confirmationResult && isSlackToolDraft(confirmationResult.result)
-          ? confirmationResult.result
-          : undefined,
+      draft: firstDraft,
       userText: event.text,
     });
   } catch (err) {
@@ -1132,7 +1142,13 @@ async function acknowledgeInChannel(
   }
 
   const ts = thinkingTs;
+  const postNew = postInThread(slack, channel, threadTs);
+  let placeholderUsed = false;
+  // The first message takes over "Thinking..."; any after it (a second
+  // confirmation card) is a message of its own, or it would overwrite the first.
   const send: Reply["send"] = async ({ text, blocks }) => {
+    if (placeholderUsed) return postNew({ text, blocks });
+    placeholderUsed = true;
     await slack.chat.update({ channel, ts, text, blocks });
     return ts;
   };
@@ -1155,10 +1171,8 @@ async function handleConfirmation(
   userId: string,
   workspaceId: number,
   teamId: string,
-  confirmationResult: { toolName: string; result: unknown },
+  draft: SlackToolDraft,
 ) {
-  if (!isSlackToolDraft(confirmationResult.result)) return;
-  const draft = confirmationResult.result;
   const tool = getRegistryTool(draft.toolName);
   if (!tool) {
     logger.error("slack: registry tool not found", {
@@ -1180,7 +1194,7 @@ async function handleConfirmation(
   // file suppressing duplicate event_ids, plus Slack's own per-thread
   // event throttling. Cross-process dedup is *not* covered; see note in
   // processedEvents.
-  const existing = await findByThread(threadTs);
+  const existing = await findByThread(threadTs, payload);
   if (existing) {
     await replace(existing.id, payload);
 
