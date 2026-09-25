@@ -11,11 +11,12 @@ import {
   monitorJobTypes,
   monitorMethods,
 } from "@openstatus/db/src/schema/monitors/constants";
+import { headerPairSchema } from "@openstatus/utils";
 import { z } from "zod";
 
 export { grpcTlsModes, monitorJobTypes, monitorMethods, monitorPeriodicity };
 
-const headerPair = z.object({ key: z.string(), value: z.string() });
+const headerPair = headerPairSchema;
 const assertion = z.discriminatedUnion("type", [
   statusAssertion,
   headerAssertion,
