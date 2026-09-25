@@ -168,7 +168,6 @@ export function FormOtel({
                   Add Header
                 </Button>
               </div>
-              <FormMessage />
             </FormItem>
           </FormCardContent>
           <FormCardFooter>

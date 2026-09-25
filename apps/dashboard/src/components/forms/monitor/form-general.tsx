@@ -466,7 +466,6 @@ export function FormGeneral({
                       Add Header
                     </Button>
                   </div>
-                  <FormMessage />
                 </FormItem>
                 {["POST", "PUT", "PATCH", "DELETE"].includes(watchMethod) && (
                   <FormField
@@ -668,7 +667,6 @@ export function FormGeneral({
                       Add Body Assertion
                     </Button>
                   </div>
-                  <FormMessage />
                 </FormItem>
               </FormCardContent>
             </>
@@ -1063,7 +1061,6 @@ export function FormGeneral({
                       Add DNS Record Assertion
                     </Button>
                   </div>
-                  <FormMessage />
                 </FormItem>
               </FormCardContent>
             </>
