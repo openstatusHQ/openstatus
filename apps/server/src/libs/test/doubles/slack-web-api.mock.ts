@@ -20,8 +20,46 @@ export class WebClient {
       return Promise.resolve();
     },
   };
+  // Mirrors ChatStreamer: `ts` is undefined until the first append or stop.
+  chatStream = (args: Record<string, unknown>) => {
+    if (!s.chatStreamEnabled) {
+      throw new Error("chat streaming is not enabled for this workspace");
+    }
+    s.calls.push({ method: "chatStream", args });
+    let ts: string | undefined;
+    let appends = 0;
+    return {
+      get ts() {
+        return ts;
+      },
+      append: (a: Record<string, unknown>) => {
+        if (
+          s.streamAppendFailAfter !== null &&
+          appends >= s.streamAppendFailAfter
+        ) {
+          return Promise.reject(new Error("stream append failed"));
+        }
+        appends++;
+        ts = "stream.ts";
+        s.calls.push({ method: "stream.append", args: a });
+        return Promise.resolve(null);
+      },
+      stop: (a?: Record<string, unknown>) => {
+        ts = "stream.ts";
+        s.calls.push({ method: "stream.stop", args: a ?? {} });
+        if (s.streamStopFail) {
+          return Promise.reject(new Error("stream already closed"));
+        }
+        return Promise.resolve({ ok: true, ts });
+      },
+    };
+  };
   conversations = {
     replies: () => s.repliesImpl(),
+    history: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.history", args });
+      return s.historyImpl();
+    },
   };
   agents = {
     sessions: {
@@ -30,16 +68,17 @@ export class WebClient {
         s.calls.push({ method: "agents.sessions.setStatus", args });
         return Promise.resolve({ ok: true });
       },
+      rename: (args: Record<string, unknown>) => {
+        if (s.renameOverride) return s.renameOverride(args);
+        s.calls.push({ method: "agents.sessions.rename", args });
+        return Promise.resolve({ ok: true });
+      },
     },
   };
   assistant = {
     threads: {
       setStatus: (args: Record<string, unknown>) => {
         s.calls.push({ method: "assistant.threads.setStatus", args });
-        return Promise.resolve({ ok: true });
-      },
-      setSuggestedPrompts: (args: Record<string, unknown>) => {
-        s.calls.push({ method: "assistant.threads.setSuggestedPrompts", args });
         return Promise.resolve({ ok: true });
       },
     },

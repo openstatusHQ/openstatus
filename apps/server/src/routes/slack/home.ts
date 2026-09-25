@@ -1,7 +1,7 @@
 import type { WebClient } from "@slack/web-api";
 import type { KnownBlock } from "@slack/web-api";
 
-const DOCS_URL = "https://www.openstatus.dev/docs";
+export const DOCS_URL = "https://www.openstatus.dev/docs";
 
 export function buildHomeBlocks(): KnownBlock[] {
   return [
