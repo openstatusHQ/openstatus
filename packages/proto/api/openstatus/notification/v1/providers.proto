@@ -27,8 +27,8 @@ enum NotificationProvider {
   NOTIFICATION_PROVIDER_OPSGENIE = 7;
   // Slack webhook.
   NOTIFICATION_PROVIDER_SLACK = 8;
-  // SMS notification.
-  NOTIFICATION_PROVIDER_SMS = 9;
+  // Deprecated: SMS is no longer offered; use WHATSAPP. Kept for existing channels.
+  NOTIFICATION_PROVIDER_SMS = 9 [deprecated = true];
   // Telegram bot.
   NOTIFICATION_PROVIDER_TELEGRAM = 10;
   // Custom webhook.
@@ -118,8 +118,11 @@ message SlackData {
   ];
 }
 
-// SmsData contains configuration for SMS notifications.
+// Deprecated: SMS is no longer offered; use WhatsappData. Kept for existing channels.
 message SmsData {
+  option deprecated = true;
+  // protoc-gen-connect-openapi only maps field/method deprecation; the message-level flag needs the gnostic option.
+  option (gnostic.openapi.v3.schema) = {deprecated: true};
   // Phone number to send SMS to.
   string phone_number = 1 [
     (buf.validate.field).string.min_len = 1,
@@ -189,8 +192,8 @@ message NotificationData {
     OpsgenieData opsgenie = 7;
     // Slack configuration.
     SlackData slack = 8;
-    // SMS configuration.
-    SmsData sms = 9;
+    // Deprecated: SMS is no longer offered; use whatsapp.
+    SmsData sms = 9 [deprecated = true];
     // Telegram configuration.
     TelegramData telegram = 10;
     // Webhook configuration.
