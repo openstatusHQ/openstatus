@@ -7,9 +7,7 @@ import { YEARLY_ADDON_MULTIPLIER, getAddonPriceConfig } from "./utils";
 describe("getAddonPriceConfig", () => {
   it("defaults to the monthly price", () => {
     const monthly = getAddonPriceConfig("team", "white-label", "USD");
-    expect(monthly?.value).toBe(
-      allPlans.team.addons["white-label"]?.price.USD,
-    );
+    expect(monthly?.value).toBe(allPlans.team.addons["white-label"]?.price.USD);
   });
 
   it("charges the yearly price on a yearly plan", () => {
