@@ -5,6 +5,7 @@ import {
   page,
   pageComponent,
   pageConfigurationSchema,
+  pageSubscriber,
   privateLocationToMonitors,
   selectMaintenancePageSchema,
   selectPageComponentWithMonitorRelation,
@@ -25,6 +26,7 @@ import {
   upsertSelfSignupSubscriber,
   verifySelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
+import { sendEmailVerification } from "@openstatus/subscriptions";
 import { TRPCError } from "@trpc/server";
 import { endOfDay, startOfDay, subDays } from "date-fns";
 import { z } from "zod";
@@ -1394,6 +1396,61 @@ export const statusPageRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Email already subscribed",
+        });
+      }
+
+      if (!subscription.token) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Subscription verification token was not generated",
+        });
+      }
+
+      const baseUrl = _page.customDomain
+        ? `https://${_page.customDomain}`
+        : `https://${_page.slug}.openstatus.dev`;
+      const verifyUrl = `${baseUrl}/verify/${subscription.token}`;
+
+      try {
+        await sendEmailVerification(
+          {
+            id: subscription.id,
+            pageId: _page.id,
+            pageName: _page.title || _page.slug,
+            pageSlug: _page.slug,
+            channelType: "email",
+            email: opts.input.email,
+            token: subscription.token,
+            componentIds: opts.input.subscribeComponents
+              ? opts.input.pageComponents
+              : [],
+            customDomain: _page.customDomain,
+          },
+          verifyUrl,
+        );
+      } catch (err) {
+        console.error("Failed to send subscription verification email:", err);
+        // Clean up pending subscriber record so send failures don't permanently strand subscribers
+        await opts.ctx.db
+          .delete(pageSubscriber)
+          .where(
+            and(
+              eq(pageSubscriber.id, subscription.id),
+              eq(pageSubscriber.token, subscription.token),
+              isNull(pageSubscriber.acceptedAt),
+              isNull(pageSubscriber.unsubscribedAt),
+            ),
+          )
+          .catch((cleanupErr) => {
+            console.error(
+              "Failed to clean up pending subscriber record on send failure:",
+              cleanupErr,
+            );
+          });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to send verification email. Please try again later.",
+          cause: err,
         });
       }
 
