@@ -3,22 +3,15 @@ import { assertCustomDomainInWorkspace } from "@openstatus/services/page";
 import { z } from "zod";
 
 import { env } from "../env";
-import { hasTrustedCertificate } from "../lib/tls";
-import { issueCertificateOnVercel, vercelFetch } from "../lib/vercel";
+import {
+  type domainConfigResponseSchema,
+  fetchDomainConfig,
+  getCertificateReadiness,
+  issueCertificateOnVercel,
+  vercelFetch,
+} from "../lib/vercel";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-
-export const domainConfigResponseSchema = z.object({
-  configuredBy: z
-    .union([z.literal("CNAME"), z.literal("A"), z.literal("http")])
-    .optional()
-    .nullable(),
-  acceptedChallenges: z
-    .array(z.union([z.literal("dns-01"), z.literal("http-01")]))
-    .optional()
-    .nullable(),
-  misconfigured: z.boolean().prefault(true).optional(),
-});
 
 export const domainResponseSchema = z.object({
   name: z.string().optional(),
@@ -71,23 +64,6 @@ async function assertOwned(
 }
 
 const domainInput = z.object({ domain: customDomainSchema.optional() });
-
-async function fetchDomainConfig(domain: string) {
-  const data = await vercelFetch(
-    `/v6/domains/${encodeURIComponent(domain)}/config?teamId=${env.TEAM_ID_VERCEL}`,
-  );
-  const json = await data.json();
-  return domainConfigResponseSchema.parse(json);
-}
-
-// Only probe hosts Vercel confirms point at us, so the TLS handshake never
-// targets an arbitrary customer-controlled address.
-async function getCertificateReadiness(domain: string) {
-  const config = await fetchDomainConfig(domain);
-  if (config.misconfigured !== false)
-    return { configured: false, ready: false };
-  return { configured: true, ready: await hasTrustedCertificate(domain) };
-}
 
 export const domainRouter = createTRPCRouter({
   getDomainResponse: protectedProcedure

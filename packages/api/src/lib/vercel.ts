@@ -1,8 +1,10 @@
 import { and, db as defaultDb, ne, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 import { env } from "../env";
+import { hasTrustedCertificate } from "./tls";
 
 // Vercel domain helpers — transport-layer external integrations that
 // don't belong in the service layer.
@@ -47,6 +49,35 @@ export async function addDomainToVercel(domain: string) {
   }
 
   return response.json();
+}
+
+export const domainConfigResponseSchema = z.object({
+  configuredBy: z
+    .union([z.literal("CNAME"), z.literal("A"), z.literal("http")])
+    .optional()
+    .nullable(),
+  acceptedChallenges: z
+    .array(z.union([z.literal("dns-01"), z.literal("http-01")]))
+    .optional()
+    .nullable(),
+  misconfigured: z.boolean().prefault(true).optional(),
+});
+
+export async function fetchDomainConfig(domain: string) {
+  const data = await vercelFetch(
+    `/v6/domains/${encodeURIComponent(domain)}/config?teamId=${env.TEAM_ID_VERCEL}`,
+  );
+  const json = await data.json();
+  return domainConfigResponseSchema.parse(json);
+}
+
+// Only probe hosts Vercel confirms point at us, so the TLS handshake never
+// targets an arbitrary customer-controlled address.
+export async function getCertificateReadiness(domain: string) {
+  const config = await fetchDomainConfig(domain);
+  if (config.misconfigured !== false)
+    return { configured: false, ready: false };
+  return { configured: true, ready: await hasTrustedCertificate(domain) };
 }
 
 // Vercel retries certificate orders on its own backoff, which can leave a

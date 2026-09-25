@@ -1,5 +1,5 @@
 import type { DomainVerificationStatusProps } from "@openstatus/api/src/router/domain";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 
 import type { StepCardVariant } from "@/components/forms/step-card";
@@ -43,6 +43,10 @@ export function useDomainStatus(domain?: string) {
       { domain },
       { enabled: dnsReady },
     ),
+  );
+
+  const issueCertificateMutation = useMutation(
+    trpc.domain.issueCertificate.mutationOptions(),
   );
 
   const refreshAll = useCallback(() => {
@@ -124,6 +128,7 @@ export function useDomainStatus(domain?: string) {
     domainJson,
     steps,
     refresh: refreshAll,
+    issueCertificateMutation,
     isLoading,
   };
 }

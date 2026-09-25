@@ -8,7 +8,6 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
-import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 import {
@@ -20,7 +19,6 @@ import {
   StepCardTitle,
 } from "@/components/forms/step-card";
 import { getSubdomain } from "@/lib/domains";
-import { useTRPC } from "@/lib/trpc/client";
 
 import { DomainStatusIcon } from "./domain-status-icon";
 import { DomainTroubleshooting } from "./domain-troubleshooting";
@@ -51,11 +49,8 @@ const A_RECORD_VALUE =
   process.env.NEXT_PUBLIC_VERCEL_PROJECT_DNS_A || "76.76.21.21";
 
 export default function DomainConfiguration({ domain }: { domain: string }) {
-  const trpc = useTRPC();
-  const { status, domainJson, steps, isLoading } = useDomainStatus(domain);
-  const { mutate: issueCertificate } = useMutation(
-    trpc.domain.issueCertificate.mutationOptions(),
-  );
+  const { status, domainJson, steps, isLoading, issueCertificateMutation } =
+    useDomainStatus(domain);
   const certificateRequested = useRef(false);
 
   // Vercel's own retry can leave the order idle for a long time; nudge it once per visit.
@@ -63,8 +58,8 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
     if (status !== "Generating SSL Certificate") return;
     if (certificateRequested.current) return;
     certificateRequested.current = true;
-    issueCertificate({ domain });
-  }, [status, domain, issueCertificate]);
+    issueCertificateMutation.mutate({ domain });
+  }, [status, domain, issueCertificateMutation]);
 
   if (isLoading && !domainJson)
     return (
