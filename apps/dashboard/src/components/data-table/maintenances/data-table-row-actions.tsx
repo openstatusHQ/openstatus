@@ -74,6 +74,7 @@ export function MaintenanceRowActions({
           endDate: maintenance.to,
           pageComponents: maintenance.pageComponents?.map((c) => c.id) ?? [],
         }}
+        updatedAt={maintenance.updatedAt ?? maintenance.createdAt}
         onSubmit={async (values) => {
           await updateMaintenanceMutation.mutateAsync({
             id: maintenance.id,
