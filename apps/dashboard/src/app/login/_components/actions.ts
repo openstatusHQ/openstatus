@@ -7,9 +7,20 @@ import { signIn } from "@/lib/auth";
 import { ssoLookupRateLimit } from "@/lib/rate-limit/sso-lookup";
 import { SSO_ORG_COOKIE } from "@/lib/sso-cookie";
 
+// Same-origin paths only; the Auth.js `redirect` callback is the second line
+// of defense, not the first.
+function sanitizeRedirectTo(raw: FormDataEntryValue | null) {
+  const value = String(raw ?? "");
+  return value.startsWith("/") && !value.startsWith("//") ? value : undefined;
+}
+
 export async function signInWithResendAction(formData: FormData) {
   try {
-    await signIn("resend", formData);
+    // next-auth lifts `redirectTo` into the magic link's `callbackUrl` itself.
+    await signIn("resend", {
+      email: String(formData.get("email") ?? ""),
+      redirectTo: sanitizeRedirectTo(formData.get("redirectTo")),
+    });
   } catch (e) {
     console.error(e);
   }
@@ -28,11 +39,8 @@ export async function startSsoSignIn(
   formData: FormData,
 ): Promise<SsoFormState> {
   const email = String(formData.get("email") ?? "");
-  const redirectToRaw = String(formData.get("redirectTo") ?? "");
   const redirectTo =
-    redirectToRaw.startsWith("/") && !redirectToRaw.startsWith("//")
-      ? redirectToRaw
-      : "/overview";
+    sanitizeRedirectTo(formData.get("redirectTo")) ?? "/overview";
 
   if (!email.includes("@")) return { error: GENERIC_ERROR };
 
