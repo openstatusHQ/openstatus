@@ -3,7 +3,8 @@ import { assertCustomDomainInWorkspace } from "@openstatus/services/page";
 import { z } from "zod";
 
 import { env } from "../env";
-import { vercelFetch } from "../lib/vercel";
+import { hasTrustedCertificate } from "../lib/tls";
+import { issueCertificateOnVercel, vercelFetch } from "../lib/vercel";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -51,6 +52,7 @@ export type DomainVerificationStatusProps =
   | "Valid Configuration"
   | "Invalid Configuration"
   | "Pending Verification"
+  | "Generating SSL Certificate"
   | "Domain Not Found"
   | "Unknown Error";
 
@@ -69,6 +71,23 @@ async function assertOwned(
 }
 
 const domainInput = z.object({ domain: customDomainSchema.optional() });
+
+async function fetchDomainConfig(domain: string) {
+  const data = await vercelFetch(
+    `/v6/domains/${encodeURIComponent(domain)}/config?teamId=${env.TEAM_ID_VERCEL}`,
+  );
+  const json = await data.json();
+  return domainConfigResponseSchema.parse(json);
+}
+
+// Only probe hosts Vercel confirms point at us, so the TLS handshake never
+// targets an arbitrary customer-controlled address.
+async function getCertificateReadiness(domain: string) {
+  const config = await fetchDomainConfig(domain);
+  if (config.misconfigured !== false)
+    return { configured: false, ready: false };
+  return { configured: true, ready: await hasTrustedCertificate(domain) };
+}
 
 export const domainRouter = createTRPCRouter({
   getDomainResponse: protectedProcedure
@@ -101,12 +120,33 @@ export const domainRouter = createTRPCRouter({
         return null;
       }
       await assertOwned(opts.ctx, opts.input.domain);
-      const data = await vercelFetch(
-        `/v6/domains/${encodeURIComponent(opts.input.domain)}/config?teamId=${env.TEAM_ID_VERCEL}`,
+      return fetchDomainConfig(opts.input.domain);
+    }),
+  getCertificateStatus: protectedProcedure
+    .input(domainInput)
+    .query(async (opts) => {
+      if (!opts.input.domain) {
+        return null;
+      }
+      await assertOwned(opts.ctx, opts.input.domain);
+      const { ready } = await getCertificateReadiness(opts.input.domain);
+      return { ready };
+    }),
+  issueCertificate: protectedProcedure
+    .input(domainInput)
+    .mutation(async (opts) => {
+      if (!opts.input.domain) {
+        return { issued: false };
+      }
+      await assertOwned(opts.ctx, opts.input.domain);
+      const { configured, ready } = await getCertificateReadiness(
+        opts.input.domain,
       );
-      const json = await data.json();
-      const result = domainConfigResponseSchema.parse(json);
-      return result;
+      if (!configured || ready) {
+        return { issued: false };
+      }
+      await issueCertificateOnVercel(opts.input.domain);
+      return { issued: true };
     }),
   verifyDomain: protectedProcedure.input(domainInput).query(async (opts) => {
     if (!opts.input.domain) {

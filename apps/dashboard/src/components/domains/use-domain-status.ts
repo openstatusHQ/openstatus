@@ -31,11 +31,32 @@ export function useDomainStatus(domain?: string) {
     ),
   );
 
+  const dnsReady =
+    !!domainJson?.verified && configJson?.misconfigured === false;
+  const {
+    data: certificateJson,
+    refetch: refetchCertificate,
+    isLoading: isLoadingCertificate,
+    isRefetching: isRefetchingCertificate,
+  } = useQuery(
+    trpc.domain.getCertificateStatus.queryOptions(
+      { domain },
+      { enabled: dnsReady },
+    ),
+  );
+
   const refreshAll = useCallback(() => {
     refetchDomain();
     refetchConfig();
     refetchVerification();
-  }, [refetchDomain, refetchConfig, refetchVerification]);
+    if (dnsReady) refetchCertificate();
+  }, [
+    refetchDomain,
+    refetchConfig,
+    refetchVerification,
+    refetchCertificate,
+    dnsReady,
+  ]);
 
   let status: DomainVerificationStatusProps = "Valid Configuration";
 
@@ -57,6 +78,8 @@ export function useDomainStatus(domain?: string) {
     }
   } else if (configJson?.misconfigured) {
     status = "Invalid Configuration";
+  } else if (certificateJson && !certificateJson.ready) {
+    status = "Generating SSL Certificate";
   } else {
     status = "Valid Configuration";
   }
@@ -65,17 +88,22 @@ export function useDomainStatus(domain?: string) {
     isLoadingDomain ||
     isLoadingConfig ||
     isLoadingVerification ||
+    (dnsReady && isLoadingCertificate) ||
     isRefetchingDomain ||
     isRefetchingConfig ||
-    isRefetchingVerification;
+    isRefetchingVerification ||
+    isRefetchingCertificate;
 
   const steps = {
     dns:
-      status === "Valid Configuration" || status === "Pending Verification"
+      status === "Valid Configuration" ||
+      status === "Pending Verification" ||
+      status === "Generating SSL Certificate"
         ? "completed"
         : "active",
     verification:
-      status === "Valid Configuration"
+      status === "Valid Configuration" ||
+      status === "Generating SSL Certificate"
         ? "completed"
         : status === "Pending Verification"
           ? "active"
@@ -83,7 +111,12 @@ export function useDomainStatus(domain?: string) {
             status === "Invalid Configuration"
             ? "completed"
             : "upcoming",
-    ready: status === "Valid Configuration" ? "completed" : "upcoming",
+    certificate:
+      status === "Valid Configuration"
+        ? "completed"
+        : status === "Generating SSL Certificate"
+          ? "active"
+          : "upcoming",
   } satisfies Record<string, StepCardVariant>;
 
   return {

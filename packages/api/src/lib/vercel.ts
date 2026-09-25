@@ -49,6 +49,27 @@ export async function addDomainToVercel(domain: string) {
   return response.json();
 }
 
+// Vercel retries certificate orders on its own backoff, which can leave a
+// correctly configured domain on "Generating SSL" for a long time.
+export async function issueCertificateOnVercel(domain: string) {
+  const response = await vercelFetch(`/v8/certs?teamId=${env.TEAM_ID_VERCEL}`, {
+    body: JSON.stringify({ cns: [domain] }),
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    console.error("Failed to issue certificate on Vercel:", { domain, error });
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message:
+        "Failed to issue the SSL certificate. Please try again later. If it continues, contact support.",
+    });
+  }
+
+  return response.json();
+}
+
 // Vercel messages leak internal project details, so map known codes to our own copy.
 function toDomainError(domain: string, code?: string): TRPCError {
   switch (code) {
