@@ -200,13 +200,18 @@ describe("createNotification", () => {
     });
   });
 
-  test("throws ValidationError for deprecated sms even when the plan flag is on", async () => {
+  test("throws ValidationError for deprecated sms before quota and plan gates", async () => {
     await withTestTransaction(async (tx) => {
       const grandfathered = {
         ...teamCtx,
         workspace: {
           ...teamCtx.workspace,
-          limits: { ...teamCtx.workspace.limits, sms: true },
+          // quota 0 proves the guard runs before assertWithinLimit
+          limits: {
+            ...teamCtx.workspace.limits,
+            sms: true,
+            "notification-channels": 0,
+          },
         },
         db: tx,
       };
