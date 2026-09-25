@@ -23,7 +23,6 @@ import (
 	"github.com/openstatushq/openstatus/apps/private-location/internal/database"
 )
 
-
 type Server struct {
 	port        int
 	db          *sqlx.DB
@@ -121,7 +120,7 @@ func setupLogger() (*slog.Logger, *sdklog.LoggerProvider) {
 	// Create log provider with resource and batch processor
 	logProvider := sdklog.NewLoggerProvider(
 		sdklog.WithResource(res),
-		sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)),
+		sdklog.WithProcessor(sdklog.NewBatchProcessor(withReporting(exporter))),
 	)
 
 	global.SetLoggerProvider(logProvider)
