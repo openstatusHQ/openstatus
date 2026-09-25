@@ -30,7 +30,7 @@ export const plans = [
       members: Number.POSITIVE_INFINITY,
       "notification-channels": 10,
       "custom-domain": true,
-      "password-protection": true,
+      "password-protection": false,
       "status-subscribers": true,
       "audit-log": false,
     },

@@ -97,15 +97,6 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
           EUR: 100,
         },
       },
-      "white-label": {
-        title: "White Label",
-        description:
-          "Remove the 'powered by openstatus.dev' footer from your status pages.",
-        price: {
-          USD: 300,
-          EUR: 300,
-        },
-      },
       "custom-theme": {
         title: "Custom Theme",
         description: "Customize your status page colors and appearance.",
@@ -159,7 +150,7 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       "status-subscribers": true,
       "custom-domain": true,
       i18n: true,
-      "password-protection": true,
+      "password-protection": false,
       "email-domain-protection": false,
       "ip-restriction": false,
       "white-label": false,
