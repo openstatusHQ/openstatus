@@ -110,35 +110,38 @@ export function FormOtel({
               render={({ field }) => (
                 <FormItem className="col-span-full">
                   <FormLabel>Request Headers</FormLabel>
-                  {field.value?.map((header, index) => (
+                  {field.value?.map((_, index) => (
                     <div key={index} className="grid gap-2 sm:grid-cols-5">
-                      <Input
-                        placeholder="Key"
-                        className="col-span-2"
-                        value={header.key}
-                        disabled={locked}
-                        onChange={(e) => {
-                          const newHeaders = [...(field.value ?? [])];
-                          newHeaders[index] = {
-                            ...newHeaders[index],
-                            key: e.target.value,
-                          };
-                          field.onChange(newHeaders);
-                        }}
+                      <FormField
+                        control={form.control}
+                        name={`headers.${index}.key`}
+                        render={({ field }) => (
+                          <FormItem className="col-span-2">
+                            <FormControl>
+                              <Input
+                                placeholder="Key"
+                                {...field}
+                                disabled={locked}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                      <Input
-                        placeholder="Value"
-                        className="col-span-2"
-                        value={header.value}
-                        disabled={locked}
-                        onChange={(e) => {
-                          const newHeaders = [...(field.value ?? [])];
-                          newHeaders[index] = {
-                            ...newHeaders[index],
-                            value: e.target.value,
-                          };
-                          field.onChange(newHeaders);
-                        }}
+                      <FormField
+                        control={form.control}
+                        name={`headers.${index}.value`}
+                        render={({ field }) => (
+                          <FormItem className="col-span-2">
+                            <FormControl>
+                              <Input
+                                placeholder="Value"
+                                {...field}
+                                disabled={locked}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
                       />
                       <Button
                         size="icon"
@@ -152,9 +155,6 @@ export function FormOtel({
                       >
                         <Close />
                       </Button>
-                      <p className="text-destructive col-span-full text-sm empty:hidden">
-                        {form.formState.errors.headers?.[index]?.key?.message}
-                      </p>
                     </div>
                   ))}
                   <div>

@@ -412,33 +412,30 @@ export function FormGeneral({
                   render={({ field }) => (
                     <FormItem className="col-span-full">
                       <FormLabel>Request Headers</FormLabel>
-                      {field.value.map((header, index) => (
+                      {field.value.map((_, index) => (
                         <div key={index} className="grid gap-2 sm:grid-cols-5">
-                          <Input
-                            placeholder="Key"
-                            className="col-span-2"
-                            value={header.key}
-                            onChange={(e) => {
-                              const newHeaders = [...field.value];
-                              newHeaders[index] = {
-                                ...newHeaders[index],
-                                key: e.target.value,
-                              };
-                              field.onChange(newHeaders);
-                            }}
+                          <FormField
+                            control={form.control}
+                            name={`headers.${index}.key`}
+                            render={({ field }) => (
+                              <FormItem className="col-span-2">
+                                <FormControl>
+                                  <Input placeholder="Key" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
-                          <Input
-                            placeholder="Value"
-                            className="col-span-2"
-                            value={header.value}
-                            onChange={(e) => {
-                              const newHeaders = [...field.value];
-                              newHeaders[index] = {
-                                ...newHeaders[index],
-                                value: e.target.value,
-                              };
-                              field.onChange(newHeaders);
-                            }}
+                          <FormField
+                            control={form.control}
+                            name={`headers.${index}.value`}
+                            render={({ field }) => (
+                              <FormItem className="col-span-2">
+                                <FormControl>
+                                  <Input placeholder="Value" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
                           />
                           <Button
                             size="icon"
@@ -452,12 +449,6 @@ export function FormGeneral({
                           >
                             <Close />
                           </Button>
-                          <p className="text-destructive col-span-full text-sm empty:hidden">
-                            {
-                              form.formState.errors.headers?.[index]?.key
-                                ?.message
-                            }
-                          </p>
                         </div>
                       ))}
                       <div>
@@ -871,33 +862,30 @@ export function FormGeneral({
                 render={({ field }) => (
                   <FormItem className="col-span-full">
                     <FormLabel>Metadata</FormLabel>
-                    {field.value.map((header, index) => (
+                    {field.value.map((_, index) => (
                       <div key={index} className="grid gap-2 sm:grid-cols-5">
-                        <Input
-                          placeholder="Key"
-                          className="col-span-2"
-                          value={header.key}
-                          onChange={(e) => {
-                            const newHeaders = [...field.value];
-                            newHeaders[index] = {
-                              ...newHeaders[index],
-                              key: e.target.value,
-                            };
-                            field.onChange(newHeaders);
-                          }}
+                        <FormField
+                          control={form.control}
+                          name={`headers.${index}.key`}
+                          render={({ field }) => (
+                            <FormItem className="col-span-2">
+                              <FormControl>
+                                <Input placeholder="Key" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                        <Input
-                          placeholder="Value"
-                          className="col-span-2"
-                          value={header.value}
-                          onChange={(e) => {
-                            const newHeaders = [...field.value];
-                            newHeaders[index] = {
-                              ...newHeaders[index],
-                              value: e.target.value,
-                            };
-                            field.onChange(newHeaders);
-                          }}
+                        <FormField
+                          control={form.control}
+                          name={`headers.${index}.value`}
+                          render={({ field }) => (
+                            <FormItem className="col-span-2">
+                              <FormControl>
+                                <Input placeholder="Value" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
                         />
                         <Button
                           size="icon"
@@ -910,9 +898,6 @@ export function FormGeneral({
                         >
                           <Close />
                         </Button>
-                        <p className="text-destructive col-span-full text-sm empty:hidden">
-                          {form.formState.errors.headers?.[index]?.key?.message}
-                        </p>
                       </div>
                     ))}
                     <div>
