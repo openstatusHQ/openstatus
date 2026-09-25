@@ -129,3 +129,6 @@ export const config = {
 };
 
 export type NotifierProvider = keyof typeof config;
+
+// Still renderable for existing channels, no longer offered for creation.
+export const hiddenProviders = new Set<NotifierProvider>(["sms"]);

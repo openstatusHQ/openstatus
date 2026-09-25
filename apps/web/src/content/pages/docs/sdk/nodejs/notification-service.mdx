@@ -4,7 +4,7 @@ title: Notification Service
 description: "Manage notification channels and providers with the openstatus Node.js SDK"
 ---
 
-Manage notification channels for monitor alerts. Supports 13 providers. The Notification Service provides 7 RPC methods.
+Manage notification channels for monitor alerts. Supports 12 providers. The Notification Service provides 7 RPC methods.
 
 ## Create Notification
 
@@ -213,23 +213,6 @@ const { notification } = await client.notification.v1.NotificationService
           serverUrl: "https://ntfy.sh",
           token: "tk_...",
         },
-      },
-    },
-    monitorIds: ["123456"],
-  });
-```
-
-### SMS
-
-```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
-    name: "SMS Alerts",
-    provider: NotificationProvider.SMS,
-    data: {
-      data: {
-        case: "sms",
-        value: { phoneNumber: "+1234567890" },
       },
     },
     monitorIds: ["123456"],

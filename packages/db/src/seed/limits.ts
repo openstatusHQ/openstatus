@@ -19,7 +19,7 @@ export const TEAM_WORKSPACE_LIMITS = JSON.stringify({
   "email-domain-protection": true,
   "white-label": true,
   notifications: true,
-  sms: true,
+  sms: false,
   pagerduty: true,
   "notification-channels": 50,
   members: "Unlimited",

@@ -382,7 +382,7 @@ terraform import openstatus_icmp_monitor.gateway <monitor_id>
 
 ### `openstatus_notification`
 
-Manages a notification channel. Supports 13 provider types: Discord, Email, Slack, PagerDuty, OpsGenie, Webhook, Telegram, SMS, WhatsApp, Google Chat, Grafana OnCall, Microsoft Teams, and ntfy.
+Manages a notification channel. Supports 12 provider types: Discord, Email, Slack, PagerDuty, OpsGenie, Webhook, Telegram, WhatsApp, Google Chat, Grafana OnCall, Microsoft Teams, and ntfy.
 
 **Arguments:**
 
@@ -392,7 +392,7 @@ Manages a notification channel. Supports 13 provider types: Discord, Email, Slac
 | `provider_type` | `string`      | Yes      | Provider type (see supported values below).             |
 | `monitor_ids`   | `set(string)` | No       | Set of monitor IDs to associate with this notification. |
 
-**Supported `provider_type` values:** `discord`, `email`, `slack`, `pagerduty`, `opsgenie`, `webhook`, `telegram`, `sms`, `whatsapp`, `google_chat`, `grafana_oncall`, `ntfy`.
+**Supported `provider_type` values:** `discord`, `email`, `slack`, `pagerduty`, `opsgenie`, `webhook`, `telegram`, `whatsapp`, `google_chat`, `grafana_oncall`, `ntfy`.
 
 **Provider-specific blocks** — use exactly one block matching your `provider_type`:
 
@@ -405,7 +405,6 @@ Manages a notification channel. Supports 13 provider types: Discord, Email, Slac
 | `opsgenie`      | `api_key` (string, required, sensitive), `region` (string, required: `us` or `eu`)                     |
 | `webhook`       | `endpoint` (string, required), `headers` (optional list of `key`/`value` objects)                      |
 | `telegram`      | `chat_id` (string, required)                                                                           |
-| `sms`           | `phone_number` (string, required)                                                                      |
 | `whatsapp`      | `phone_number` (string, required)                                                                      |
 | `google_chat`   | `webhook_url` (string, required, sensitive)                                                            |
 | `grafana_oncall` | `webhook_url` (string, required, sensitive)                                                           |

@@ -28,7 +28,7 @@ const features = [
   { icon: Globe, title: "Custom domain & subscribers" },
   { icon: Team, title: "Unlimited team members" },
   { icon: SlackIcon, title: "Slack integration" },
-  { icon: Notification, title: "PagerDuty, Opsgenie & SMS" },
+  { icon: Notification, title: "PagerDuty, Opsgenie & WhatsApp" },
 ];
 
 export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {

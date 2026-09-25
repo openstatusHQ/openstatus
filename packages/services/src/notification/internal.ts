@@ -95,6 +95,9 @@ function isPlanGated(provider: string): provider is PlanGatedProvider {
   return (PLAN_GATED_PROVIDERS as ReadonlyArray<string>).includes(provider);
 }
 
+// Creation is closed by plan flags; existing channels must stay editable.
+export const DEPRECATED_PROVIDERS = new Set<NotificationProvider>(["sms"]);
+
 export function assertProviderAllowed(
   workspace: Workspace,
   provider: NotificationProvider,

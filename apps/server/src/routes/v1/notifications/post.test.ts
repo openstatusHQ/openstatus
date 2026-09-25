@@ -33,6 +33,23 @@ test("create a notification", async () => {
   }
 });
 
+test("create a deprecated sms notification should return a 400", async () => {
+  const res = await app.request("/v1/notification", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      name: "OpenStatus",
+      provider: "sms",
+      payload: { sms: "+10000000000" },
+    }),
+  });
+
+  expect(res.status).toBe(400);
+});
+
 test("create a notification with invalid monitor ids should return a 400", async () => {
   const res = await app.request("/v1/notification", {
     method: "POST",

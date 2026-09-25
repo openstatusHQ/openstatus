@@ -2867,7 +2867,8 @@
             "properties": {
               "sms": {
                 "title": "sms",
-                "description": "SMS configuration.",
+                "description": "Deprecated: SMS is no longer offered; use whatsapp.",
+                "deprecated": true,
                 "$ref": "#/components/schemas/openstatus.notification.v1.SmsData"
               }
             },
@@ -3112,7 +3113,8 @@
         },
         "title": "SmsData",
         "additionalProperties": false,
-        "description": "SmsData contains configuration for SMS notifications."
+        "description": "Deprecated: SMS is no longer offered; use WhatsappData. Kept for existing channels.",
+        "deprecated": true
       },
       "openstatus.notification.v1.TelegramData": {
         "type": "object",

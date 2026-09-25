@@ -47,14 +47,13 @@ const postRoute = createRoute({
 export function registerPostNotification(api: typeof notificationsApi) {
   return api.openapi(postRoute, async (c) => {
     const workspaceId = c.get("workspace").id;
-    const workspacePlan = c.get("workspace").plan;
     const limits = c.get("workspace").limits;
     const input = c.req.valid("json");
 
-    if (input.provider === "sms" && workspacePlan === "free") {
+    if (input.provider === "sms" && !limits.sms) {
       throw new OpenStatusApiError({
-        code: "PAYMENT_REQUIRED",
-        message: "Upgrade for SMS",
+        code: "BAD_REQUEST",
+        message: "SMS notifications are deprecated, use whatsapp instead",
       });
     }
 

@@ -1069,7 +1069,7 @@
               "webhook",
               "whatsapp"
             ],
-            "description": "The provider of the notification",
+            "description": "The provider of the notification. `sms` is deprecated, use `whatsapp` instead.",
             "example": "discord"
           },
           "payload": {
@@ -8698,7 +8698,7 @@
                       "webhook",
                       "whatsapp"
                     ],
-                    "description": "The provider of the notification",
+                    "description": "The provider of the notification. `sms` is deprecated, use `whatsapp` instead.",
                     "example": "discord"
                   },
                   "payload": {

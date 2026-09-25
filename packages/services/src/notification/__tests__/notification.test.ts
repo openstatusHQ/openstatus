@@ -374,6 +374,33 @@ describe("updateNotification", () => {
       ).rejects.toBeInstanceOf(LimitExceededError);
     });
   });
+
+  test("keeps a deprecated sms channel editable when the plan flag is off", async () => {
+    await withTestTransaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(notification)
+        .values({
+          workspaceId: freeCtx.workspace.id,
+          name: `${TEST_PREFIX}-deprecated-sms`,
+          provider: "sms",
+          data: JSON.stringify({ sms: "+10000000000" }),
+        })
+        .returning();
+      if (!inserted) throw new Error("direct insert failed");
+
+      const updated = await updateNotification({
+        ctx: { ...freeCtx, db: tx },
+        input: {
+          id: inserted.id,
+          name: `${TEST_PREFIX}-deprecated-sms-renamed`,
+          data: { sms: "+10000000000" },
+          monitors: [],
+        },
+      });
+
+      expect(updated.name).toBe(`${TEST_PREFIX}-deprecated-sms-renamed`);
+    });
+  });
 });
 
 describe("deleteNotification", () => {
