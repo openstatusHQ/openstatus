@@ -7,9 +7,11 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { ValidationError } from "../errors";
 import { assertWithinLimit } from "../limits";
 import type { Notification } from "../types";
 import {
+  DEPRECATED_PROVIDERS,
   assertProviderAllowed,
   validateMonitorIds,
   validateNotificationData,
@@ -40,7 +42,13 @@ export async function createNotification(args: {
       limit: "notification-channels",
     });
 
-    // Plan gate on provider (sms / pagerduty / opsgenie / …).
+    if (DEPRECATED_PROVIDERS.has(input.provider)) {
+      throw new ValidationError(
+        `The provider ${input.provider} is deprecated, use whatsapp instead`,
+      );
+    }
+
+    // Plan gate on provider (pagerduty / opsgenie / …).
     assertProviderAllowed(ctx.workspace, input.provider);
 
     validateNotificationData(input.provider, input.data);

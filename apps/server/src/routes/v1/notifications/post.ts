@@ -50,7 +50,8 @@ export function registerPostNotification(api: typeof notificationsApi) {
     const limits = c.get("workspace").limits;
     const input = c.req.valid("json");
 
-    if (input.provider === "sms" && !limits.sms) {
+    // Unconditional: a per-workspace `sms: true` limit override must not reopen creation.
+    if (input.provider === "sms") {
       throw new OpenStatusApiError({
         code: "BAD_REQUEST",
         message: "SMS notifications are deprecated, use whatsapp instead",

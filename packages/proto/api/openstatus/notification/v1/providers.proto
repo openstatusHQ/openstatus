@@ -121,6 +121,8 @@ message SlackData {
 // Deprecated: SMS is no longer offered; use WhatsappData. Kept for existing channels.
 message SmsData {
   option deprecated = true;
+  // protoc-gen-connect-openapi only maps field/method deprecation; the message-level flag needs the gnostic option.
+  option (gnostic.openapi.v3.schema) = {deprecated: true};
   // Phone number to send SMS to.
   string phone_number = 1 [
     (buf.validate.field).string.min_len = 1,

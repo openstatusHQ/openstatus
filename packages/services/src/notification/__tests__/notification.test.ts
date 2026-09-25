@@ -200,6 +200,30 @@ describe("createNotification", () => {
     });
   });
 
+  test("throws ValidationError for deprecated sms even when the plan flag is on", async () => {
+    await withTestTransaction(async (tx) => {
+      const grandfathered = {
+        ...teamCtx,
+        workspace: {
+          ...teamCtx.workspace,
+          limits: { ...teamCtx.workspace.limits, sms: true },
+        },
+        db: tx,
+      };
+      await expect(
+        createNotification({
+          ctx: grandfathered,
+          input: {
+            name: `${TEST_PREFIX}-deprecated-sms`,
+            provider: "sms",
+            data: { sms: "+10000000000" },
+            monitors: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
   test("rejects read-only actor", async () => {
     await withTestTransaction(async (tx) => {
       const readOnlyCtx = {

@@ -392,7 +392,7 @@ Manages a notification channel. Supports 12 provider types: Discord, Email, Slac
 | `provider_type` | `string`      | Yes      | Provider type (see supported values below).             |
 | `monitor_ids`   | `set(string)` | No       | Set of monitor IDs to associate with this notification. |
 
-**Supported `provider_type` values:** `discord`, `email`, `slack`, `pagerduty`, `opsgenie`, `webhook`, `telegram`, `whatsapp`, `google_chat`, `grafana_oncall`, `ntfy`.
+**Supported `provider_type` values:** `discord`, `email`, `slack`, `pagerduty`, `opsgenie`, `webhook`, `telegram`, `whatsapp`, `google_chat`, `grafana_oncall`, `ms_teams`, `ntfy`.
 
 **Provider-specific blocks** — use exactly one block matching your `provider_type`:
 
@@ -408,6 +408,7 @@ Manages a notification channel. Supports 12 provider types: Discord, Email, Slac
 | `whatsapp`      | `phone_number` (string, required)                                                                      |
 | `google_chat`   | `webhook_url` (string, required, sensitive)                                                            |
 | `grafana_oncall` | `webhook_url` (string, required, sensitive)                                                           |
+| `ms_teams`      | `webhook_url` (string, required, sensitive)                                                            |
 | `ntfy`          | `topic` (string, required), `server_url` (string, optional), `token` (string, optional, sensitive)     |
 
 **Read-only attributes:** `id` (string), `created_at` (string), `updated_at` (string).
