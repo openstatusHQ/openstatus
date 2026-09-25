@@ -67,6 +67,18 @@ export async function fetchDomainConfig(domain: string) {
   const data = await vercelFetch(
     `/v6/domains/${encodeURIComponent(domain)}/config?teamId=${env.TEAM_ID_VERCEL}`,
   );
+  if (!data.ok) {
+    const error = await data.json().catch(() => ({}));
+    console.error("Failed to fetch domain config from Vercel:", {
+      domain,
+      error,
+    });
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message:
+        "Failed to check the domain configuration. Please try again later.",
+    });
+  }
   const json = await data.json();
   return domainConfigResponseSchema.parse(json);
 }

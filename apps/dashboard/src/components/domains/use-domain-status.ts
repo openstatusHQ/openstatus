@@ -16,6 +16,7 @@ export function useDomainStatus(domain?: string) {
   const {
     data: configJson,
     refetch: refetchConfig,
+    isError: isConfigError,
     isLoading: isLoadingConfig,
     isRefetching: isRefetchingConfig,
   } = useQuery(trpc.domain.getConfigResponse.queryOptions({ domain }));
@@ -36,6 +37,7 @@ export function useDomainStatus(domain?: string) {
   const {
     data: certificateJson,
     refetch: refetchCertificate,
+    isError: isCertificateError,
     isLoading: isLoadingCertificate,
     isRefetching: isRefetchingCertificate,
   } = useQuery(
@@ -46,7 +48,9 @@ export function useDomainStatus(domain?: string) {
   );
 
   const issueCertificateMutation = useMutation(
-    trpc.domain.issueCertificate.mutationOptions(),
+    trpc.domain.issueCertificate.mutationOptions({
+      onSuccess: () => refetchCertificate(),
+    }),
   );
 
   const refreshAll = useCallback(() => {
@@ -80,9 +84,12 @@ export function useDomainStatus(domain?: string) {
     if (verificationJson?.verified) {
       status = "Valid Configuration";
     }
-  } else if (configJson?.misconfigured) {
+  } else if (configJson?.misconfigured || isConfigError) {
     status = "Invalid Configuration";
-  } else if (certificateJson && !certificateJson.ready) {
+  } else if (
+    isCertificateError ||
+    (certificateJson && !certificateJson.ready)
+  ) {
     status = "Generating SSL Certificate";
   } else {
     status = "Valid Configuration";

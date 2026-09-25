@@ -183,6 +183,29 @@ test("domain.getCertificateStatus is not ready without a trusted certificate", a
   });
 });
 
+test("domain.getCertificateStatus surfaces a Vercel config failure instead of reading it as misconfigured", async () => {
+  await withOwnDomain({}, async (domain) => {
+    const original = globalThis.fetch;
+    globalThis.fetch = () =>
+      Promise.resolve(
+        Response.json(
+          { error: { code: "internal", message: "boom" } },
+          { status: 500 },
+        ),
+      );
+    try {
+      const error = await getCaller()
+        .domain.getCertificateStatus({ domain })
+        .catch((e) => e);
+      expect(error).toBeInstanceOf(TRPCError);
+      expect((error as TRPCError).code).toBe("INTERNAL_SERVER_ERROR");
+      expect((error as TRPCError).message).not.toContain("boom");
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+});
+
 for (const path of [
   "/v9/projects/p/domains/../../../../v2/user",
   "/v9/projects/p/domains/%2e%2e/%2e%2e/x",
