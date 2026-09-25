@@ -1,10 +1,10 @@
 export { createNotification } from "./create";
 export { deleteNotification } from "./delete";
-export { assertProviderAllowed } from "./internal";
+export { assertProviderAllowed, validateNotificationData } from "./internal";
 export {
   getNotification,
-  type ListNotificationsResult,
   listNotifications,
+  type ListNotificationsResult,
   type NotificationWithRelations,
 } from "./list";
 export { updateNotification } from "./update";
