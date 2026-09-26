@@ -17,7 +17,6 @@ import {
   StatusPageHeaderActions,
   StatusPageHeaderBrand,
   StatusPageHeaderBrandButton,
-  StatusPageHeaderBrandFallback,
   StatusPageHeaderContent,
   StatusPageHeaderNav,
   StatusPageHeaderNavItem,
@@ -41,6 +40,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
+import Image from "next/image";
 
 import { demo, getStatusBarData } from "@/data/demo-data";
 
@@ -91,7 +91,13 @@ export function StatusPageDemo() {
             <StatusPageHeaderBrand className="w-auto">
               <StatusPageHeaderBrandButton>
                 <span>
-                  <StatusPageHeaderBrandFallback title={demo.company.name} />
+                  <Image
+                    src={demo.company.icon}
+                    alt={demo.company.name}
+                    width={32}
+                    height={32}
+                    className="size-8"
+                  />
                 </span>
               </StatusPageHeaderBrandButton>
             </StatusPageHeaderBrand>

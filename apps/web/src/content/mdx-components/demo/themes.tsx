@@ -76,33 +76,38 @@ export function ThemesDemo() {
             </DropdownMenuContent>
           </DropdownMenu>
         </CellHeader>
-        <CellBody
-          data-demo-theme={theme}
-          className="text-foreground flex flex-col gap-4"
-        >
-          <StatusBannerContainer
-            status={monitor.status}
-            className="flex items-center gap-3 px-3 py-2"
+        <CellBody>
+          {/* Scope the theme below the body so the Cell's own rule keeps the page border color. */}
+          <div
+            data-demo-theme={theme}
+            className="text-foreground flex flex-col gap-4"
           >
-            <StatusBannerIcon className="shrink-0" />
-            <StatusBannerMessage className="font-semibold" />
-          </StatusBannerContainer>
-          <StatusComponent variant={monitor.status}>
-            <StatusComponentHeader>
-              <StatusComponentHeaderLeft>
-                <StatusComponentIcon />
-                <StatusComponentTitle>{monitor.name}</StatusComponentTitle>
-              </StatusComponentHeaderLeft>
-              <StatusComponentHeaderRight>
-                <StatusComponentUptime>{monitor.uptime}</StatusComponentUptime>
-                <StatusComponentStatus />
-              </StatusComponentHeaderRight>
-            </StatusComponentHeader>
-            <StatusComponentBody>
-              <StatusBar data={data} />
-              <StatusComponentFooter data={data} />
-            </StatusComponentBody>
-          </StatusComponent>
+            <StatusBannerContainer
+              status={monitor.status}
+              className="flex items-center gap-3 px-3 py-2"
+            >
+              <StatusBannerIcon className="shrink-0" />
+              <StatusBannerMessage className="font-semibold" />
+            </StatusBannerContainer>
+            <StatusComponent variant={monitor.status}>
+              <StatusComponentHeader>
+                <StatusComponentHeaderLeft>
+                  <StatusComponentIcon />
+                  <StatusComponentTitle>{monitor.name}</StatusComponentTitle>
+                </StatusComponentHeaderLeft>
+                <StatusComponentHeaderRight>
+                  <StatusComponentUptime>
+                    {monitor.uptime}
+                  </StatusComponentUptime>
+                  <StatusComponentStatus />
+                </StatusComponentHeaderRight>
+              </StatusComponentHeader>
+              <StatusComponentBody>
+                <StatusBar data={data} />
+                <StatusComponentFooter data={data} />
+              </StatusComponentBody>
+            </StatusComponent>
+          </div>
         </CellBody>
         <CellFooter>
           <span>Domain {demo.company.domain} · verified</span>

@@ -28,11 +28,11 @@ terraform {
   }
 }
 
-resource "openstatus_monitor" "api" {
-  name      = "API"
-  url       = "https://api.example.com/health"
-  frequency = "1m"
-  regions   = ["iad", "ams", "syd"]
+resource "openstatus_http_monitor" "api" {
+  name        = "API"
+  url         = "https://api.example.com/health"
+  periodicity = "1m"
+  regions     = ["fly-iad", "fly-ams", "fly-syd"]
 }
 ```
 
@@ -74,7 +74,7 @@ Every mutation through the provider lands in the audit log under `actor_type = '
 
 ## Reference
 
-Full resource list and schema in the [Terraform reference](https://www.openstatus.dev/docs/reference/terraform/).
+Full resource list and schema in the [Terraform reference](/docs/reference/terraform).
 
 ## Frequently asked questions
 

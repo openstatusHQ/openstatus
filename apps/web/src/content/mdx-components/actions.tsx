@@ -1,6 +1,6 @@
 import React from "react";
 
-import { APP_URL } from "../../lib/metadata/shared-metadata";
+import { APP_URL } from "@/lib/metadata/shared-metadata";
 
 /** Adds `ref=<source>` to app links so OpenPanel can attribute the click. */
 export function withRef(href: string, source: string) {

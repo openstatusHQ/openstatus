@@ -38,10 +38,10 @@ export function SlackAgentDemo() {
       </CellHeader>
       <CellBody className="space-y-4">
         <SlackMessage>
-          <SlackAvatar>MK</SlackAvatar>
+          <SlackAvatar>BG</SlackAvatar>
           <SlackMessageContent>
             <SlackMessageMeta>
-              <SlackAuthor>Marie K.</SlackAuthor>
+              <SlackAuthor>Bertram G.</SlackAuthor>
               <SlackTime>09:44</SlackTime>
             </SlackMessageMeta>
             <SlackMessageBody>

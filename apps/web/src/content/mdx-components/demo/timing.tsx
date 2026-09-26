@@ -10,6 +10,7 @@ import {
 } from "./cell";
 
 const total = demo.timing.reduce((sum, t) => sum + t.ms, 0);
+const slowPhase = demo.timing.find((t) => t.ms > demo.monitor.degradedAfter);
 
 /** Where the 4 seconds went: one request, phase by phase. */
 export function TimingDemo() {
@@ -50,7 +51,9 @@ export function TimingDemo() {
         })}
       </CellBody>
       <CellFooter>
-        <span>TLS above the degraded threshold</span>
+        <span>
+          {slowPhase?.phase ?? "Nothing"} above the degraded threshold
+        </span>
         <span>
           degraded after {demo.monitor.degradedAfter.toLocaleString("en-US")} ms
         </span>

@@ -37,8 +37,7 @@ export function NotifyDemo() {
     <Cell>
       <CellHeader>
         <CellTitle>
-          # {demo.company.name.toLowerCase()}-
-          {demo.company.customer.toLowerCase()}
+          # {demo.company.slug}-{demo.company.customer.toLowerCase()}
         </CellTitle>
         <CellDescription>
           Slack Connect · shared with {demo.company.customer}

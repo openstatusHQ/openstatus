@@ -1,7 +1,7 @@
 ---
 title: "Uptime Monitoring"
 publishedAt: "2025-11-10"
-updatedAt: "2026-09-25"
+updatedAt: "2026-09-26"
 seo:
   title: "Open Source Uptime Monitoring — Free, 28 Regions, Alerts in Seconds"
   description: "Free & open source uptime monitoring for websites and APIs. Checks from 28 regions every 30s, alerts to Slack, Discord, PagerDuty and email. Monitoring as code with Terraform."
@@ -45,7 +45,9 @@ faq:
   <ButtonLink href="/play/checker" variant="ghost">Global speed checker</ButtonLink>
 </Actions>
 
-<Subtle>Free to start. Paid plans from $30/mo. Open source and self-hostable.</Subtle>
+<p>
+<Subtle>Free to start, with a 14-day Starter trial and no card needed. Paid plans from $30/mo.</Subtle>
+</p>
 
 <Demo type="monitor" />
 
@@ -129,6 +131,8 @@ A failed assertion from one region is noise; from half your regions it is an ale
 
 Also: Telegram, Google Chat, Microsoft Teams, WhatsApp, Grafana OnCall and ntfy.
 
+- [Notification channels](/docs/reference/notification)
+
 </div>
 <div>
 
@@ -172,10 +176,10 @@ Already have monitors in the dashboard? Run `openstatus terraform generate` to b
 ```terraform
 resource "openstatus_http_monitor" "checkout" {
   name        = "Checkout API"
-  url         = "https://api.northwind.dev/v1/checkout"
+  url         = "https://api.piedpiper.dev/v1/checkout"
   method      = "POST"
   periodicity = "1m"
-  regions     = ["fly-lhr", "fly-ams", "koyeb_fra", "fly-iad"]
+  regions     = ["fly-lhr", "fly-ams", "koyeb-fra", "fly-iad"]
 
   status_code_assertions {
     target     = 200
@@ -213,6 +217,8 @@ Some services are not reachable from the internet. Run the probe in your VPC or 
 
 Response logs with the timing breakdown, headers and body per region, for as long as your plan retains data.
 
+- [Response logs and retention](/docs/concept/response-logs-and-retention)
+
 <Demo type="logs" />
 
 <Actions source="uptime-monitoring-bottom">
@@ -220,7 +226,7 @@ Response logs with the timing breakdown, headers and body per region, for as lon
   <ButtonLink href="/play/checker">Global speed checker</ButtonLink>
 </Actions>
 
-<Subtle>Free to start. Paid plans from $30/mo.</Subtle>
+<Subtle>Free to start, with a 14-day Starter trial and no card needed. Paid plans from $30/mo.</Subtle>
 
 ## Frequently asked questions
 

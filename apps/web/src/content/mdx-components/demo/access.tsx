@@ -71,7 +71,7 @@ export function AccessDemo() {
                 <Input
                   id="demo-access-password"
                   type="password"
-                  defaultValue="northwind-internal"
+                  defaultValue="pied-piper-internal"
                   readOnly
                 />
               </div>

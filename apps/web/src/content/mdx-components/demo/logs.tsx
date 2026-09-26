@@ -10,18 +10,15 @@ const rows = demo.regions.slice(0, 6).map((r, i) => ({
   time: `09:41:${String(12 - (i % 3)).padStart(2, "0")}`,
 }));
 
-// Fixed handshake cost; the failing regions spend the rest waiting on TTFB.
-const PHASES = { dns: 12, connect: 38, tls: 61, transfer: 12 };
+// Same handshake cost in every region; the failing ones spend the rest on TTFB.
+const fixed = demo.timing
+  .filter((t) => t.phase !== "TTFB")
+  .reduce((sum, t) => sum + t.ms, 0);
 
 function phasesOf(ms: number) {
-  const fixed = Object.values(PHASES).reduce((a, b) => a + b, 0);
-  return [
-    PHASES.dns,
-    PHASES.connect,
-    PHASES.tls,
-    Math.max(ms - fixed, 0),
-    PHASES.transfer,
-  ];
+  return demo.timing.map((t) =>
+    t.phase === "TTFB" ? Math.max(ms - fixed, 0) : t.ms,
+  );
 }
 
 // Columns of the dashboard's Logs table: dot, time, status, latency, region, timing.

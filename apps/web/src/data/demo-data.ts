@@ -12,18 +12,19 @@ import type {
  */
 export const demo = {
   company: {
-    name: "Northwind",
-    slug: "northwind",
-    domain: "status.northwind.dev",
-    internalDomain: "internal.northwind.dev",
+    name: "Pied Piper",
+    slug: "pied-piper",
+    domain: "status.piedpiper.dev",
+    icon: "/assets/landing/pied-piper.png",
+    internalDomain: "internal.piedpiper.dev",
     ipAllowlist: "203.0.113.0/24",
     // One enterprise customer, for the shared Slack Connect channel.
-    customer: "Acme",
+    customer: "Hooli",
   },
   monitor: {
     name: "Checkout API",
     method: "POST",
-    url: "https://api.northwind.dev/v1/checkout",
+    url: "https://api.piedpiper.dev/v1/checkout",
     periodicity: "1m",
     degradedAfter: 1_000,
     timeout: 5_000,
@@ -156,11 +157,13 @@ export const demo = {
     { code: "iad", city: "Virginia", cloud: "Fly", ms: 231, status: 200 },
     { code: "sjc", city: "San Jose", cloud: "Fly", ms: 244, status: 200 },
   ],
+  // The lhr check, phase by phase. The handshake is fine; the edge holds the
+  // request before answering 503, so the wait shows up as TTFB.
   timing: [
     { phase: "DNS", ms: 12 },
     { phase: "Connect", ms: 38 },
-    { phase: "TLS", ms: 3_968 },
-    { phase: "TTFB", ms: 72 },
+    { phase: "TLS", ms: 61 },
+    { phase: "TTFB", ms: 4_265 },
     { phase: "Transfer", ms: 12 },
   ],
   channels: [
@@ -179,13 +182,13 @@ export const demo = {
       time: "10:36:00",
       action: "status_report.update",
       detail: "→ resolved",
-      actor: "marie@northwind.dev · slack",
+      actor: "gilfoyle@piedpiper.dev · slack",
     },
     {
       time: "10:14:03",
       action: "status_report.update",
       detail: "→ monitoring",
-      actor: "marie@northwind.dev · slack",
+      actor: "gilfoyle@piedpiper.dev · slack",
     },
     {
       time: "09:52:41",
@@ -197,7 +200,7 @@ export const demo = {
       time: "09:52:40",
       action: "status_report.create",
       detail: "identified · Checkout API",
-      actor: "marie@northwind.dev · slack",
+      actor: "gilfoyle@piedpiper.dev · slack",
     },
     {
       time: "09:41:12",

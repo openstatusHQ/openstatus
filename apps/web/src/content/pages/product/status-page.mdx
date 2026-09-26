@@ -5,7 +5,7 @@ seo:
   description: "Create a free status page on your own domain in minutes. Open source and self-hostable. Public or private (password, magic link, IP allowlist), subscribers, maintenance windows, Slack agent."
 hero: "Status pages your users actually trust"
 publishedAt: "2025-11-10"
-updatedAt: "2026-09-25"
+updatedAt: "2026-09-26"
 author: "Maximilian Kaske"
 description: "Create a public or private status page in minutes. Show real-time uptime, incidents and maintenance on a fully branded page with a custom domain."
 category: "Product"
@@ -37,7 +37,9 @@ faq:
   <ButtonLink href="https://themes.openstatus.dev" variant="ghost">Theme explorer</ButtonLink>
 </Actions>
 
-<Subtle>Free to start. Paid plans from $30/mo.</Subtle>
+<p>
+<Subtle>Free to start, with a 14-day Starter trial and no card needed. Paid plans from $30/mo.</Subtle>
+</p>
 
 <Demo type="status-page" />
 
@@ -78,7 +80,7 @@ SOC 2 CC2.3 asks you to prove external communication. Every report is timestampe
 
 Attach monitors and the uptime fills in from your checks. Add the services you depend on but do not run, and group everything the way your customers think about it.
 
-- [Uptime monitoring](/uptime-monitoring)
+- [Page components reference](/docs/reference/page-components)
 - [Status page reference](/docs/reference/status-page)
 
 </div>
@@ -101,6 +103,7 @@ Attach monitors and the uptime fills in from your checks. Add the services you d
 
 Users subscribe once and get every status report and maintenance by email, RSS, Atom or JSON. Teams pull the same feed into Slack. No per-subscriber fee.
 
+- [All subscription methods](/docs/reference/subscriber)
 - [Slack Connect updates](/guides/slack-status-page-subscriptions)
 
 </div>
@@ -114,6 +117,8 @@ Users subscribe once and get every status report and maintenance by email, RSS, 
 Set a default locale and turn on the switcher. The page chrome and the canonical status copy are translated; your updates stay in the language you wrote them.
 
 English, French, German, Turkish, Hindi, Korean and Japanese today, with more from community contributions.
+
+- [Translate your status page](/docs/guides/how-to-translate-status-page)
 
 </div>
 <div>
@@ -137,6 +142,8 @@ Mention @openstatus in any thread. It drafts the report, you approve, it publish
 
 Every action asks for confirmation before anything goes public, and every action is written to the audit log.
 
+- [Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)
+
 </div>
 </Grid>
 
@@ -148,7 +155,7 @@ Every action asks for confirmation before anything goes public, and every action
 Pick a theme from the store or override any CSS variable, separately for light and dark. Point status.yourdomain.com at it; the "Powered by" line goes away on Scale.
 
 - [Theme Store](https://themes.openstatus.dev)
-- [Custom theme variables](/docs/reference/status-page/#custom-theme)
+- [Custom theme variables](/docs/reference/status-page#custom-theme)
 
 </div>
 <div>
@@ -170,6 +177,7 @@ Pick a theme from the store or override any CSS variable, separately for light a
 
 Public by default. Protect a page with a password, magic-link login, or a CIDR allowlist so internal teams and named clients see more than the public does.
 
+- [Password, magic link and IP restriction](/docs/reference/status-page#password-basic-auth)
 - [Status pages for enterprise sales](/use-case/enterprise-sales)
 
 </div>
@@ -182,7 +190,7 @@ Public by default. Protect a page with a password, magic-link login, or a CIDR a
 
 Schedule the window ahead of time. Subscribers are told when it is planned, the banner flips to maintenance while it runs, and affected components stop counting against uptime.
 
-- [Status page reference](/docs/reference/status-page)
+- [Maintenance reference](/docs/reference/maintenance)
 
 </div>
 <div>
@@ -204,7 +212,7 @@ Schedule the window ahead of time. Subscribers are told when it is planned, the 
 
 Paste an API key from Atlassian Statuspage, Better Stack or Instatus. Preview components, incidents, maintenances and subscribers before anything is written.
 
-- [Migration guides](/blog/import-from-statuspage-betterstack-instatus)
+- [Import guide](/docs/guides/how-to-import-status-page)
 
 </div>
 </Grid>
@@ -216,6 +224,7 @@ Paste an API key from Atlassian Statuspage, Better Stack or Instatus. Preview co
 
 The same page over SSH for people in a terminal, and as markdown for the agents and LLMs your customers point at it. No screenshots, no scraping.
 
+- [SSH command](/docs/reference/status-page#ssh-command)
 - [Shadcn component registry](/registry)
 
 </div>
@@ -230,7 +239,7 @@ The same page over SSH for people in a terminal, and as markdown for the agents 
   <ButtonLink href="https://app.openstatus.dev" variant="default">Create your status page</ButtonLink>
 </Actions>
 
-<Subtle>Free to start. Paid plans from $30/mo.</Subtle>
+<Subtle>Free to start, with a 14-day Starter trial and no card needed. Paid plans from $30/mo.</Subtle>
 
 ## Frequently asked questions
 

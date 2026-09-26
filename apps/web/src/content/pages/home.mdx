@@ -2,7 +2,7 @@
 title: "Free & Open Source Status Page and Uptime Monitoring"
 hero: "The status page that just works."
 publishedAt: "2026-04-07"
-updatedAt: "2026-09-25"
+updatedAt: "2026-09-26"
 author: "openstatus"
 description: "Your monitors update it. Your subscribers hear it from you first. Your auditor gets the trail. Open source, on your own domain, live in five minutes."
 category: "product"
@@ -24,7 +24,9 @@ faq:
   <ButtonLink href="https://github.com/openstatusHQ/openstatus" variant="ghost">GitHub 9k+</ButtonLink>
 </Actions>
 
-<Subtle>Free to start. Paid plans from $30/mo. Open source and self-hostable.</Subtle>
+<p>
+<Subtle>Free to start, with a 14-day Starter trial and no card needed. Paid plans from $30/mo.</Subtle>
+</p>
 
 <Demo type="status-page" />
 
@@ -34,16 +36,16 @@ faq:
 
 ## One incident, start to finish
 
-At 09:41 the Checkout API at Northwind starts returning 503s from Europe. Here is what openstatus does before the team has finished reading the first alert, and what is left behind six months later.
+At 09:41 the Checkout API at Pied Piper starts returning 503s from Europe. Here is what openstatus does before the team has finished reading the first alert, and what is left behind six months later.
 
 ## Your monitor catches it first
 
 <Grid variant="borderless">
 <div>
 
-09:41. Four of the six regions the monitor runs from confirm the 503s, so the alert fires before the first support ticket arrives. It lands in Slack and PagerDuty with a link to the failing checks.
+<Subtle>09:41.</Subtle> Four of the six regions the monitor runs from confirm the 503s, so the alert fires before the first support ticket arrives. It lands in Slack and PagerDuty with a link to the failing checks.
 
-- [Uptime monitoring](/uptime-monitoring)
+- [Notification channels](/docs/reference/notification)
 - [Check any URL from 28 regions](/play/checker)
 
 </div>
@@ -64,23 +66,25 @@ At 09:41 the Checkout API at Northwind starts returning 503s from Europe. Here i
 </div>
 <div>
 
-09:42. Open the failing checks. The European regions spend four seconds waiting on the edge while DNS and TLS are fine, and the US regions return 200 in under 250 ms. That is the sentence the status report needs, and the headers and body are kept in case the postmortem needs more.
+<Subtle>09:42.</Subtle> Open the failing checks. The European regions spend four seconds waiting on the edge while DNS and TLS are fine, and the US regions return 200 in under 250 ms. That is the sentence the status report needs, and the headers and body are kept in case the postmortem needs more.
 
-- [Every request, kept](/uptime-monitoring#every-request-kept)
-- [Where the time went](/uptime-monitoring#where-the-time-went)
+- [Response logs and retention](/docs/concept/response-logs-and-retention)
+- [Request phases: DNS, TCP, TLS, TTFB](/docs/concept/latency-vs-response-time#the-request-in-phases-dns-tcp-tls-ttfb-transfer)
 
 </div>
 </Grid>
 
-## Declare it from Slack
+## Declare it in Slack, or with your favorite agent
 
 <Grid variant="borderless">
 <div>
 
-09:44. Ask the openstatus agent in the incident thread. It drafts the status report, you approve it, and it goes live without anyone opening the dashboard.
+<Subtle>09:44.</Subtle> Ask the openstatus agent in the incident thread. It drafts the status report, you approve it, and it goes live without anyone opening the dashboard. The same agent runs wherever you work: connect the MCP server to Claude, ChatGPT or Cursor and declare it from there.
 
-- [Slack agent](/status-page#slack-agent)
-- [Every other way in: CLI, API, MCP, Terraform](/tooling)
+- [Slack agent](/docs/guides/how-to-setup-slack-agent)
+- [MCP server](/tooling/mcp-server)
+- [CLI](/tooling/cli)
+- [API](/tooling/api)
 
 </div>
 <div>
@@ -100,9 +104,9 @@ At 09:41 the Checkout API at Northwind starts returning 503s from Europe. Here i
 </div>
 <div>
 
-09:52. Subscribers get the update by email, RSS and Slack Connect the moment it is approved. Support stops answering "is it down?" because the answer is already in the inbox.
+<Subtle>09:52.</Subtle> Subscribers get the update by email, RSS and Slack Connect the moment it is approved. Support stops answering "is it down?" because the answer is already in the inbox.
 
-- [Subscriptions](/status-page#subscriptions)
+- [Subscriptions](/docs/reference/subscriber)
 - [Reducing support tickets](/use-case/reduce-support-tickets)
 
 </div>
@@ -113,9 +117,9 @@ At 09:41 the Checkout API at Northwind starts returning 503s from Europe. Here i
 <Grid variant="borderless">
 <div>
 
-09:53. The public page shows the Checkout API as degraded. The internal page, behind a password and the office IP range, shows the failing regions and the rollback progress.
+<Subtle>09:53.</Subtle> The public page shows the Checkout API as degraded. The internal page, behind a password and the office IP range, shows the failing regions and the rollback progress.
 
-- [Internal and private pages](/status-page#internal-and-private-pages)
+- [Password, magic link and IP restriction](/docs/reference/status-page#password-basic-auth)
 - [Status pages for enterprise sales](/use-case/enterprise-sales)
 
 </div>
@@ -166,79 +170,21 @@ Six months later. Every step is logged: who declared it, from where, when each u
 
 Every action in the dashboard is reachable programmatically. One API key, four ways in.
 
-<Grid cols={4}>
-<div>
-
-**[CLI](/tooling/cli)**
-
-<Subtle>manage from your terminal</Subtle>
-
-</div>
-<div>
-
-**[API](/tooling/api)**
-
-<Subtle>typed endpoints, OpenAPI spec</Subtle>
-
-</div>
-<div>
-
-**[MCP server](/tooling/mcp-server)**
-
-<Subtle>Claude, ChatGPT or Cursor run it</Subtle>
-
-</div>
-<div>
-
-**[Terraform](/tooling/terraform)**
-
-<Subtle>version monitors, status pages, notifications as HCL</Subtle>
-
-</div>
-</Grid>
+- [CLI](/tooling/cli) for the terminal and CI, with `--json` output for scripts.
+- [API](/tooling/api) with typed endpoints, an OpenAPI spec and a Node SDK.
+- [MCP server](/tooling/mcp-server) so Claude, ChatGPT or Cursor can run it for you.
+- [Terraform](/tooling/terraform) to keep monitors, status pages and notifications as HCL.
 
 ## Flat pricing
 
-No per-seat fees, no per-subscriber fees. Open source and self-hostable under AGPL-3.0.
+No per-seat fees, no per-subscriber fees. Every new workspace starts with a 14-day Starter trial, no card needed. [Open source](/github) and self-hostable under AGPL-3.0.
 
-<Grid cols={4}>
-<div>
-
-**Free**
-
-$0
-
-<Subtle>1 monitor · 1 status page · checks every 10 min</Subtle>
-
-</div>
-<div>
-
-**Starter**
-
-$30/mo
-
-<Subtle>20 monitors · 1-min checks · custom domain · subscribers</Subtle>
-
-</div>
-<div>
-
-**Pro**
-
-$100/mo
-
-<Subtle>50 monitors · 30-sec checks · all 28 regions · custom theme</Subtle>
-
-</div>
-<div>
-
-**Scale**
-
-$500/mo
-
-<Subtle>500 components · white label · email auth and IP restriction included</Subtle>
-
-</div>
-</Grid>
+| Plan | Price | Includes |
+| --- | --- | --- |
+| Free | $0 | 1 monitor, 1 status page, checks every 10 min |
+| Starter | $30/mo | 20 monitors, 1-min checks, custom domain, subscribers |
+| Pro | $100/mo | 50 monitors, 30-sec checks, all 28 regions, custom theme |
+| Scale | $500/mo | 500 components, white label, email auth and IP restriction |
 
 <Actions source="home-bottom">
   <ButtonLink href="https://app.openstatus.dev" variant="default">Get started free</ButtonLink>

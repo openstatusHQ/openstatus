@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { cn } from "../../lib/utils";
+import { cn } from "@/lib/utils";
 
 export function Grid({
   cols = 2,
@@ -44,7 +44,7 @@ export function Grid({
     return (
       <div
         className={cn(
-          "my-8 grid grid-cols-1 items-center gap-8 md:gap-12",
+          "my-8 grid grid-cols-1 items-start gap-8 md:gap-12",
           "[&>*>*:first-child]:!mt-0 [&>*>*:last-child]:!mb-0",
           colsClass[cols],
           className,

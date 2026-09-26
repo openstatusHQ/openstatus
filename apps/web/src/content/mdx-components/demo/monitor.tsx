@@ -54,6 +54,7 @@ const metrics: { label: string; value: string; tone?: Tone }[] = [
   { label: "Degraded", value: "0", tone: "warning" },
   { label: "P50", value: "231 ms" },
   { label: "P95", value: "4.21 s" },
+  { label: "Last checked", value: "1 min ago" },
 ];
 
 const W = 480;
@@ -133,7 +134,7 @@ export function MonitorDemo() {
           {monitor.periodicity}
         </CellDescription>
       </CellHeader>
-      <CellGrid cols={3} sm={5}>
+      <CellGrid cols={3} sm={6}>
         {metrics.map((m) => (
           <CellGridItem key={m.label}>
             <CellLabel>{m.label}</CellLabel>

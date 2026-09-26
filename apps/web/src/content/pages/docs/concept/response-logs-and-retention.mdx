@@ -1,0 +1,63 @@
+---
+title: Response Logs and Data Retention
+description: What openstatus stores for every check, when the response body is kept, and how long each plan retains the data.
+category: Concepts
+---
+
+Every check a monitor runs produces one response log per region. The log is what you open when an alert fires and you need to know what the probe actually saw. This page describes what a log contains, when the response body is kept, and how long logs stay available.
+
+## What a response log contains
+
+| Field | Description |
+| --- | --- |
+| **Status** | `success`, `degraded` or `error`, as evaluated against your assertions and thresholds. |
+| **Status code** | The HTTP status code returned, when a response was received. |
+| **Latency** | Total request time in milliseconds. |
+| **Region** | The probe location the check ran from. |
+| **Timing** | Per-phase breakdown: DNS, connect, TLS, time to first byte, transfer. |
+| **Headers** | Every response header, as received. |
+| **Assertions** | The result of each configured assertion. |
+| **Message** | The error the probe hit, for example a timeout or a TLS failure. |
+| **Body** | The response body, kept only for failed and degraded checks (see below). |
+| **Trigger** | `cron` for scheduled checks, `api` for runs started from the dashboard, CLI or API. |
+
+The timing breakdown is the part worth reading first. It tells you whether the slowness came from DNS, the handshake or the server itself. The phases are explained in [latency vs response time](/docs/concept/latency-vs-response-time#the-request-in-phases-dns-tcp-tls-ttfb-transfer).
+
+## When the body is kept
+
+Headers, timing and assertion results are stored for every check. The response body is stored only when the check was not healthy:
+
+- **Failed checks** keep the body, so you can see the error page or JSON the endpoint returned.
+- **Degraded checks** keep the body, when the response was successful but slower than the [degraded threshold](/docs/reference/http-monitor#degraded).
+- **Healthy checks** drop the body. Storing it for every successful run would multiply the data without adding anything the status code and headers do not already say.
+
+The probe reads at most 10 MiB of the body. Anything beyond that is cut off and never stored. If you need the full body of every request, healthy or not, export the checks to your own backend with the [OpenTelemetry exporter](/docs/guides/how-to-export-metrics-to-otlp-endpoint).
+
+## Where to find logs
+
+- **Dashboard**: open a monitor and switch to the **Logs** tab. Filter by region, status, status code, trigger and time window, then click a row for the headers, timing, body and assertions.
+- **CLI**: `openstatus monitors logs <id>` lists recent logs. See the [CLI reference](/docs/reference/cli-reference).
+- **API and MCP**: list and fetch logs programmatically, or ask an agent connected through the [MCP server](/docs/reference/mcp-server).
+
+The Logs tab is available on paid plans. On the Hobby plan the monitor overview still shows per-region latency and uptime metrics, but individual logs cannot be browsed.
+
+## Retention
+
+Logs are kept for a fixed window per plan and then deleted. Retention counts from the time of the check.
+
+| Plan | Retention |
+| --- | --- |
+| Hobby | 14 days |
+| Starter | 3 months |
+| Pro | 12 months |
+| Scale | 24 months |
+
+Uptime percentages and status history on your status page are not affected by log retention. Those are computed and kept separately, so a status page can show a full year of uptime while the raw logs behind it have already aged out. See [uptime calculation](/docs/concept/uptime-calculation-and-values).
+
+To keep logs longer than your plan retains them, stream them to your own storage with the [OpenTelemetry exporter](/docs/guides/how-to-export-metrics-to-otlp-endpoint) as they happen. Retention cannot be extended retroactively.
+
+## Related resources
+
+- [HTTP monitor reference](/docs/reference/http-monitor): assertions, thresholds and retry settings that decide a check's status.
+- [Probes, locations and regions](/docs/concept/probes-and-locations): where checks run from.
+- [Export metrics to an OTLP endpoint](/docs/guides/how-to-export-metrics-to-otlp-endpoint): keep every request in your own observability stack.

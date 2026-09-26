@@ -1,4 +1,5 @@
-import { getCustomer } from "../../data/customers";
+import { getCustomer } from "@/data/customers";
+
 import { CustomLink } from "./custom-link";
 import { Subtle } from "./subtle";
 
@@ -11,15 +12,12 @@ export function Quote({ customer }: { customer: string }) {
       <blockquote className="text-foreground text-balance">
         “{quote.text}”
       </blockquote>
-      <figcaption className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+      <figcaption className="flex flex-col gap-1 text-sm">
         <span>
           <span className="text-foreground font-medium">{quote.name}</span>{" "}
           <Subtle>{quote.role}</Subtle>
         </span>
-        <CustomLink
-          href={story ?? href}
-          className="text-muted-foreground hover:text-foreground underline underline-offset-2"
-        >
+        <CustomLink href={story ?? href}>
           {story ? "Read the story" : name}
         </CustomLink>
       </figcaption>
