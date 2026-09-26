@@ -25,7 +25,7 @@ const allPosts = getBlogPosts();
 const allChangelogs = getChangelogPosts();
 const allComparisons = getComparePages();
 const allUnrelated = getUnrelatedPages().filter(
-  (page) => page.slug !== "not-found",
+  (page) => page.slug !== "not-found" && !page.metadata.seo?.noindex,
 );
 const allProducts = getProductPages();
 const allPlaygrounds = getToolsPages();

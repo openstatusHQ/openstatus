@@ -82,7 +82,7 @@ export function GET() {
     renderSection(
       "Pages",
       getUnrelatedPages()
-        .filter((p) => p.slug !== "not-found")
+        .filter((p) => p.slug !== "not-found" && !p.metadata.seo?.noindex)
         .map((p) => toItem(p, true)),
     ),
     renderSection(

@@ -58,7 +58,7 @@ await client.statusReports.create({ /* ... */ });
 
 Pass `x-openstatus-key` on every request. The token is the same one the CLI, Terraform provider, and MCP server share.
 
-Every mutation lands in the audit log under `actor_type = 'api'`, so you can trace any change back to a key, a user, and a transport.
+Every mutation lands in the audit log under `actor_type = 'apiKey'` with the key that made it, so you can trace any change back to a key and the user who created it.
 
 ## Other surfaces
 

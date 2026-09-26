@@ -43,7 +43,7 @@ export function ThemeToggle({
   return (
     <div
       className={cn(
-        "bg-border [&>*]:bg-background [&>*]:hover:bg-muted [&>*]:data-[active=true]:bg-muted flex items-center gap-px [&>*]:flex [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:p-4",
+        "bg-border [&>*]:bg-background [&>*]:hover:bg-muted [&>*]:data-[active=true]:bg-muted flex items-center gap-px [&>*]:flex [&>*]:min-w-0 [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:p-4",
         className,
       )}
       {...props}
@@ -53,21 +53,21 @@ export function ThemeToggle({
         data-active={theme === "light"}
         onClick={() => setTheme("light")}
       >
-        [light]
+        <span className="min-w-0 truncate">[light]</span>
       </button>
       <button
         type="button"
         data-active={theme === "dark"}
         onClick={() => setTheme("dark")}
       >
-        [dark]
+        <span className="min-w-0 truncate">[dark]</span>
       </button>
       <button
         type="button"
         data-active={theme === "system"}
         onClick={() => setTheme("system")}
       >
-        [system]
+        <span className="min-w-0 truncate">[system]</span>
       </button>
     </div>
   );

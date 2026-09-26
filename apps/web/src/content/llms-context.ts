@@ -35,7 +35,7 @@ Annual billing gives 2 months free (Starter $300/yr, Pro $1,000/yr, Scale $5,000
 - **OpenTelemetry** — Export synthetic check metrics to any OTLP endpoint
 - **SDK** — Node.js SDK on JSR (@openstatus/sdk-node)
 - **MCP server** — Streamable-HTTP MCP at https://api.openstatus.dev/mcp with OAuth 2.1, for status reports, maintenance windows, and monitor reads; every mutation lands in the audit log
-- **Open-source** — AGPL-3.0-licensed, self-hostable, 8k+ GitHub stars
+- **Open-source** — AGPL-3.0-licensed, self-hostable, 9k+ GitHub stars
 
 ## Key Differentiators
 
