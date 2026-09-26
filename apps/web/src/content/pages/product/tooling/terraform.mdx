@@ -64,7 +64,7 @@ The output is a valid HCL configuration with cross-references between resources 
 
 Set `OPENSTATUS_API_TOKEN` before running Terraform. The token is the same one the CLI, API, and MCP server share — generate it from **Settings > API Tokens**.
 
-Every mutation through the provider lands in the audit log under `actor_type = 'api'`, so you can trace any change back to a key, a user, and a transport.
+Every mutation through the provider lands in the audit log under `actor_type = 'apiKey'` with the key that made it, so you can trace any change back to a key and the user who created it. Give Terraform its own key to keep its changes separable from other API callers.
 
 ## Other surfaces
 

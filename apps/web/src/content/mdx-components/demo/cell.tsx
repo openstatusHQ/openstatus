@@ -21,7 +21,7 @@ export function Cell({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="cell"
       className={cn(
-        "not-prose border-border bg-background text-foreground border text-sm",
+        "not-prose border-border bg-background text-foreground min-w-0 border text-sm",
         "[&>*+*]:border-border [&>*+*]:border-t",
         className,
       )}
@@ -39,6 +39,7 @@ export function CellHeader({
       data-slot="cell-header"
       className={cn(
         "flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-2",
+        "[&>*]:min-w-0",
         className,
       )}
       {...props}
@@ -53,7 +54,7 @@ export function CellTitle({
   return (
     <span
       data-slot="cell-title"
-      className={cn("text-foreground font-medium", className)}
+      className={cn("text-foreground truncate font-medium", className)}
       {...props}
     />
   );
@@ -66,7 +67,7 @@ export function CellDescription({
   return (
     <span
       data-slot="cell-description"
-      className={cn("text-muted-foreground text-xs", className)}
+      className={cn("text-muted-foreground truncate text-xs", className)}
       {...props}
     />
   );
@@ -90,7 +91,7 @@ export function CellBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="cell-body"
-      className={cn("px-4 py-3", className)}
+      className={cn("min-w-0 px-4 py-3 break-words", className)}
       {...props}
     />
   );
@@ -102,6 +103,7 @@ export function CellRow({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="cell-row"
       className={cn(
         "flex items-center justify-between gap-4 px-4 py-2",
+        "[&>*]:min-w-0",
         className,
       )}
       {...props}
@@ -118,6 +120,7 @@ export function CellFooter({
       data-slot="cell-footer"
       className={cn(
         "text-muted-foreground flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-2 text-xs",
+        "[&>*]:min-w-0 [&>*]:truncate",
         className,
       )}
       {...props}
@@ -216,7 +219,7 @@ export function CellGridItem({
   return (
     <div
       data-slot="cell-grid-item"
-      className={cn("bg-background px-4 py-2", className)}
+      className={cn("bg-background min-w-0 px-4 py-2", className)}
       {...props}
     />
   );
@@ -250,5 +253,11 @@ export function CellKey({ className, ...props }: React.ComponentProps<"dt">) {
 }
 
 export function CellValue({ className, ...props }: React.ComponentProps<"dd">) {
-  return <dd data-slot="cell-value" className={className} {...props} />;
+  return (
+    <dd
+      data-slot="cell-value"
+      className={cn("min-w-0 break-words", className)}
+      {...props}
+    />
+  );
 }

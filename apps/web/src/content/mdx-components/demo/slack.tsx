@@ -118,7 +118,7 @@ export function SlackMessageBody({
   return (
     <div
       data-slot="slack-message-body"
-      className={cn("text-foreground/80 text-pretty", className)}
+      className={cn("text-foreground/80 text-pretty break-words", className)}
       {...props}
     />
   );
@@ -143,7 +143,7 @@ export function SlackAttachment({
       data-slot="slack-attachment"
       data-tone={tone}
       className={cn(
-        "space-y-3 border-l-2 pl-3",
+        "min-w-0 space-y-3 border-l-2 pl-3",
         attachmentBorder[tone],
         className,
       )}
@@ -173,7 +173,10 @@ export function SlackFields({
   return (
     <div
       data-slot="slack-fields"
-      className={cn("grid grid-cols-2 gap-x-4 gap-y-2 text-xs", className)}
+      className={cn(
+        "grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-4 gap-y-2 text-xs",
+        className,
+      )}
       {...props}
     />
   );
@@ -203,7 +206,13 @@ export function SlackFieldValue({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  return <div data-slot="slack-field-value" className={className} {...props} />;
+  return (
+    <div
+      data-slot="slack-field-value"
+      className={cn("break-words", className)}
+      {...props}
+    />
+  );
 }
 
 /** Inline link or @mention. */
@@ -214,7 +223,7 @@ export function SlackLink({
   return (
     <span
       data-slot="slack-link"
-      className={cn("text-info", className)}
+      className={cn("text-info break-all", className)}
       {...props}
     />
   );
@@ -227,7 +236,10 @@ export function SlackCode({
   return (
     <code
       data-slot="slack-code"
-      className={cn("bg-muted text-warning px-1 py-0.5 text-xs", className)}
+      className={cn(
+        "bg-muted text-warning px-1 py-0.5 text-xs break-all",
+        className,
+      )}
       {...props}
     />
   );
