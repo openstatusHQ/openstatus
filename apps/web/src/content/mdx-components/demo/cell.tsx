@@ -120,7 +120,7 @@ export function CellFooter({
       data-slot="cell-footer"
       className={cn(
         "text-muted-foreground flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-2 text-xs",
-        "[&>*]:min-w-0 [&>*]:truncate",
+        "[&>*]:min-w-0 [&>*]:break-words",
         className,
       )}
       {...props}

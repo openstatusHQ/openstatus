@@ -85,7 +85,7 @@ export function AlertDemo() {
                 </SlackFields>
                 <SlackField className="text-xs">
                   <SlackFieldLabel className="mb-1">Error</SlackFieldLabel>
-                  <CellPre className="border-border border">
+                  <CellPre className="border-border border break-words whitespace-pre-wrap">
                     Expected status code 200, received 503
                   </CellPre>
                 </SlackField>
