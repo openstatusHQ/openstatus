@@ -1,0 +1,246 @@
+---
+title: "Kitchen sink"
+publishedAt: "2026-09-25"
+author: "openstatus"
+description: "Every content-page component rendered once, so drift is visible. Not indexed."
+category: "internal"
+seo:
+  noindex: true
+---
+
+Every component the home and product pages are built from, in the order they appear on a page. Compare against the page you are editing; if a cell here looks different from the same cell there, something forked.
+
+## Actions
+
+<Actions source="kitchen-sink">
+  <ButtonLink href="https://app.openstatus.dev" variant="default">Get started free</ButtonLink>
+  <ButtonLink href="/play/checker">Try the speed checker</ButtonLink>
+</Actions>
+
+## Demo
+
+Every `type` in `mdx-components/demo/index.tsx`, one per grid cell.
+
+<Grid cols={1}>
+<div>
+
+**status-page**
+
+<Demo type="status-page" />
+
+</div>
+</Grid>
+
+<Grid>
+<div>
+
+**monitor**
+
+<Demo type="monitor" />
+
+</div>
+<div>
+
+**alert**
+
+<Demo type="alert" />
+
+</div>
+<div>
+
+**slack-agent**
+
+<Demo type="slack-agent" />
+
+</div>
+<div>
+
+**notify**
+
+<Demo type="notify" />
+
+</div>
+<div>
+
+**access**
+
+<Demo type="access" />
+
+</div>
+<div>
+
+**status-report**
+
+<Demo type="status-report" />
+
+</div>
+<div>
+
+**audit**
+
+<Demo type="audit" />
+
+</div>
+<div>
+
+**components**
+
+<Demo type="components" />
+
+</div>
+<div>
+
+**subscriptions**
+
+<Demo type="subscriptions" />
+
+</div>
+<div>
+
+**translations**
+
+<Demo type="translations" />
+
+</div>
+<div>
+
+**themes**
+
+<Demo type="themes" />
+
+</div>
+<div>
+
+**import**
+
+<Demo type="import" />
+
+</div>
+<div>
+
+**maintenance**
+
+<Demo type="maintenance" />
+
+</div>
+<div>
+
+**terminal**
+
+<Demo type="terminal" />
+
+</div>
+<div>
+
+**regions**
+
+<Demo type="regions" />
+
+</div>
+<div>
+
+**assertions**
+
+<Demo type="assertions" />
+
+</div>
+<div>
+
+**private-location**
+
+<Demo type="private-location" />
+
+</div>
+<div>
+
+**timing**
+
+<Demo type="timing" />
+
+</div>
+<div>
+
+**logs**
+
+<Demo type="logs" />
+
+</div>
+</Grid>
+
+## Section pattern
+
+<Grid variant="borderless">
+<div>
+
+Two sentences. The first says what happens, the second what it saves you.
+
+- [One internal link](/status-page)
+- [At most two](/uptime-monitoring)
+
+</div>
+<div>
+
+<Demo type="notify" />
+
+</div>
+</Grid>
+
+## LogoCloud
+
+<LogoCloud />
+
+## Quote
+
+<Grid>
+<div>
+
+<Quote customer="twenty" />
+
+</div>
+<div>
+
+<Quote customer="traefik" />
+
+</div>
+</Grid>
+
+## Cards
+
+<Grid cols={4}>
+<div>
+
+**CLI**
+
+<Subtle>manage from your terminal</Subtle>
+
+</div>
+<div>
+
+**API**
+
+<Subtle>typed endpoints, OpenAPI spec</Subtle>
+
+</div>
+<div>
+
+**MCP server**
+
+<Subtle>Claude, ChatGPT or Cursor run it</Subtle>
+
+</div>
+<div>
+
+**Terraform**
+
+<Subtle>version monitors, status pages, notifications as HCL</Subtle>
+
+</div>
+</Grid>
+
+## Details
+
+<Details summary="A question" headingLevel={3}>
+
+An answer.
+
+</Details>

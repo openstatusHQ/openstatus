@@ -1,11 +1,11 @@
 ---
 title: "Uptime Monitoring"
 publishedAt: "2025-11-10"
-updatedAt: "2026-09-17"
+updatedAt: "2026-09-25"
 seo:
   title: "Open Source Uptime Monitoring — Free, 28 Regions, Alerts in Seconds"
   description: "Free & open source uptime monitoring for websites and APIs. Checks from 28 regions every 30s, alerts to Slack, Discord, PagerDuty and email. Monitoring as code with Terraform."
-hero: "Open source uptime monitoring for websites, APIs and services"
+hero: "Uptime monitoring for websites, APIs and services"
 author: "Thibault Le Ouay Ducasse"
 description: "Monitor your websites, APIs and services from 28 regions. Get alerted the moment a check fails an assertion or exceeds your threshold."
 category: "Product"
@@ -40,198 +40,187 @@ faq:
     answer: "Yes, you can deploy as many private location probes as needed across different networks, VPCs, or regions. Each gets its own API key and appears as a separate monitoring region in your dashboard. The Docker image is only 8.5MB and supports ARM64 and AMD64."
 ---
 
-## Why is uptime monitoring important?
+<Actions source="uptime-monitoring-hero">
+  <ButtonLink href="https://app.openstatus.dev" variant="default">Start monitoring free</ButtonLink>
+  <ButtonLink href="/play/checker" variant="ghost">Global speed checker</ButtonLink>
+</Actions>
 
-Uptime monitoring is the practice of continuously asking one question on your users' behalf: is this service working right now? Instead of waiting for a customer to report a problem, checks run on a schedule from outside your own network and tell you the moment the answer changes.
+<Subtle>Free to start. Paid plans from $30/mo. Open source and self-hostable.</Subtle>
 
-It answers three things a dashboard inside your own infrastructure cannot:
-
-1. **Is my service reachable?** Can users actually get to it, from where they are?
-2. **Is it fast enough?** Are response times inside the range you promised?
-3. **Is it correct?** Is it returning the data you expect, not just a 200?
-
-That external vantage point is the whole point. If your service runs on the same infrastructure as your monitoring, an outage that takes down one takes down the other — and you find out from your customers instead.
-
-<div className="space-x-2">
-  <ButtonLink href="https://app.openstatus.dev?ref=uptime-monitoring-top" children="Start Monitoring Free" variant="default" />
-</div>
-
-Free to start. Paid plans from $30/mo. Open source and self-hostable.
+<Demo type="monitor" />
 
 ## Trusted by teams who ship reliability
 
-<CustomerLogos />
+<LogoCloud />
 
-## How uptime monitoring works
+## How it works
 
-```
-+----------------+
-| Service to be  |
-| Monitored      |
-+----------------+
-      ▲
-      |
-      |   (Network Latency/Failures)
-      |
-+-----+-------+   +-----+-------+   +-----+-------+
-| Monitoring  |   | Monitoring  |   | Monitoring  |
-| Node (USA)  |   | Node (EU)   |   | Node (Asia) |
-+-----+-------+   +-----+-------+   +-----+-------+
-      |               |                 |
-      |---------------|-----------------|
-      ▼               ▼                 ▼
-+------------------------------------------------+
-|                 openstatus                     |
-|                                                |
-| - Sends automated requests (e.g., pings or     |
-|   HTTP checks) from all nodes at set intervals |
-| - Records response time and success/failure    |
-| - Compares results from different nodes        |
-| - If a failure or a slow response is detected, |
-|   it triggers an alert.                        |
-+------------------------------------------------+
-      |
-      | (Alerts: Email, Slack, etc.) 🔔
-      |
-+-----+-----+
-| Your Team |
-+-----------+
-```
-
-
-<Grid>
+<Grid cols={4}>
 <div>
 
-**Uptime Dashboard**
+**1. Declare**
 
-<Image src="/assets/landing/dashboard.png" alt="dashboard monitor charts" />
+<Subtle>URL, method, headers, body and schedule. In the dashboard, the CLI or Terraform.</Subtle>
 
 </div>
 <div>
 
-**Response Logs**
+**2. Probe**
 
-<Image src="/assets/landing/dashboard-logs.png" alt="dashboard monitor logs" />
+<Subtle>Checkers in 28 regions run the request and record status, timing and body.</Subtle>
+
+</div>
+<div>
+
+**3. Assert**
+
+<Subtle>Status code, headers, body and latency thresholds decide success, degraded or failed.</Subtle>
+
+</div>
+<div>
+
+**4. Alert and publish**
+
+<Subtle>Notify Slack, PagerDuty or email. The status page reflects it without manual work.</Subtle>
 
 </div>
 </Grid>
 
-## Why choose openstatus for uptime monitoring?
+## 28 regions, three clouds
 
-### Global Monitoring
+<Grid variant="borderless">
+<div>
 
-You can monitor your services from multiple regions around the world. We currently have our probes deployed in **28 regions**.
+Probes run on Fly.io, Koyeb and Railway, so a provider incident never blinds you. Pick the regions your customers are in and see latency per region, not an average.
 
-Check all regions in the [global speed checker](/play/checker).
+- [Check any URL from every region](/play/checker)
 
-### Multi Cloud
+</div>
+<div>
 
-You should avoid monitoring your services from the same cloud providers you use for those services. That's why our probes are deployed across three different cloud providers:
+<Demo type="regions" />
 
-- **Fly.io**
-- **Koyeb**
-- **Railway**
+</div>
+</Grid>
 
-### API Monitoring
+## API monitoring with assertions
 
-Monitor any HTTP/HTTPS endpoint including REST APIs, GraphQL APIs, webhooks, and third-party service endpoints. openstatus supports all HTTP methods and custom headers for authentication.
+<Grid variant="borderless">
+<div>
 
-#### Assertions
+<Demo type="assertions" />
 
-Validating your response can be important. You can do **status code**, **header** or **body text** assertions. Read more [in the docs](https://www.openstatus.dev/docs/reference/http-monitor/#assertions).
+</div>
+<div>
 
-#### Thresholds
+Any method, custom headers, a request body. Assert on status code, header and body, and set degraded and timeout thresholds so slow counts as a problem before down does.
 
-You can set a **degraded at** and **timeout** threshold whenever required. We will send you a notification whenever the responses exceed the thresholds.
+- [HTTP monitor reference](/docs/reference/http-monitor)
 
-#### Open Telemetry
+</div>
+</Grid>
 
-When needed, you can export to your **OTLP endpoint** the metrics for every request we do. Access the data and set yourself an **alert channel** in Grafana, Honeycomb etc. Read more [in our guide](https://www.openstatus.dev/docs/guides/how-to-export-metrics-to-otlp-endpoint/).
+## Alerts where you already are
 
-### Notification channels
+<Grid variant="borderless">
+<div>
 
-Set different notification channels and **get notified** whenever a response fails your assertions or exceeds your thresholds.
+A failed assertion from one region is noise; from half your regions it is an alert. Route it to Slack, Discord, PagerDuty, Opsgenie, email, SMS or a webhook, with the failing requests attached.
 
-We support:
+Also: Telegram, Google Chat, Microsoft Teams, WhatsApp, Grafana OnCall and ntfy.
 
-- Socials: Slack, Discord, Telegram Bot, Google Chat, Microsoft Teams
-- Direct: Email, WhatsApp
-- Incident Management: OpsGenie, PagerDuty, Grafana OnCall
-- Custom: Webhook, Ntfy
+</div>
+<div>
 
-### Status Pages
+<Demo type="alert" />
 
-Automatically update your status page based on your uptime monitoring results. Push reports and communicate with your users during incidents. You can choose to **share response details** on your status page. Read more [about status pages](/status-page).
+</div>
+</Grid>
 
-### Monitoring as Code
+## Where the time went
 
-Declare your monitors in HCL with the [openstatus Terraform provider](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest) and roll them out in the same plan-and-apply lifecycle as the rest of your infrastructure. Monitor changes get code-reviewed in the PR that ships the service they watch.
+<Grid variant="borderless">
+<div>
+
+<Demo type="timing" />
+
+</div>
+<div>
+
+Every check records DNS, connect, TLS, time to first byte and transfer separately. A slow origin and a slow certificate handshake look the same in a total; they do not look the same here.
+
+- [Export every request to your OTLP endpoint](/docs/guides/how-to-export-metrics-to-otlp-endpoint)
+
+</div>
+</Grid>
+
+## Monitoring as code
+
+<Grid variant="borderless">
+<div>
+
+Declare monitors in HCL with the Terraform provider, or from the CLI in CI. Monitor changes get code-reviewed in the PR that ships the service they watch.
+
+Already have monitors in the dashboard? Run `openstatus terraform generate` to bootstrap an HCL file from your workspace.
+
+- [Terraform provider](/tooling/terraform)
+- [CLI](/tooling/cli)
+
+</div>
+<div>
 
 ```terraform
-resource "openstatus_http_monitor" "api" {
-  name        = "API Health Check"
-  url         = "https://api.example.com/health"
+resource "openstatus_http_monitor" "checkout" {
+  name        = "Checkout API"
+  url         = "https://api.northwind.dev/v1/checkout"
+  method      = "POST"
   periodicity = "1m"
-  active      = true
-  regions     = ["fly-iad", "fly-ams", "fly-syd"]
-
-  headers {
-    key   = "Authorization"
-    value = "Bearer ${var.api_token}"
-  }
+  regions     = ["fly-lhr", "fly-ams", "koyeb_fra", "fly-iad"]
 
   status_code_assertions {
     target     = 200
     comparator = "eq"
   }
+
+  degraded_after = 1000
+  timeout        = 5000
 }
 ```
 
-```bash
-terraform init
-terraform plan
-terraform apply
-```
+</div>
+</Grid>
 
-Already have monitors in the dashboard? Run `openstatus terraform generate` to bootstrap an HCL file from your existing workspace. Read the [Terraform reference](/docs/reference/terraform) for every resource and argument.
+## Private locations
 
-### Open Source & Self-Hostable
-
-openstatus is open source under AGPL-3.0. Run the hosted version, or [self-host the full stack](/docs/guides/self-hosting-openstatus) on your own infrastructure with Docker. If you are coming from Uptime Kuma, read [how openstatus compares as a hosted alternative](/guides/hosted-uptime-kuma-alternative).
-
-### Private Locations
-
-Sometimes the services you want to monitor are not accessible from the outside. Simply **deploy our probes** to your favorite **cloud provider**, your own **server** or on your own **virtual private cloud** (VPC).
-
-The docker image is only **8.5MB** small and should easily fit on your infrastructure whether ARM64 or AMD64.
-
-```bash
-docker pull ghcr.io/openstatushq/private-location:latest
-```
-
-```bash
-docker run -d \
-  --name openstatus-private-location \
-  --restart=always \
-  -e OPENSTATUS_KEY=$OPENSTATUS_KEY \
-  ghcr.io/openstatushq/private-location:latest
-```
-
-You can read more here:
-
-- [Cloudflare Containers guide](https://www.openstatus.dev/docs/guides/how-to-deploy-probes-cloudflare-containers/)
-- [Raspberry Pi deployment](/blog/deploy-private-locations-raspberry-pi)
-- [Private location docs](https://www.openstatus.dev/docs/guides/how-to-create-private-location/)
-
-<Grid>
+<Grid variant="borderless">
 <div>
 
-**Status Page Monitors**
+<Demo type="private-location" />
 
-<Image src="/assets/landing/statuspage-monitor.png" alt="status page monitor details" />
+</div>
+<div>
+
+Some services are not reachable from the internet. Run the probe in your VPC or office network with one container; results land in the same dashboard and status page. The probe dials out, so no inbound firewall rule is needed.
+
+- [Private location docs](/docs/guides/how-to-create-private-location)
+- [Cloudflare Containers guide](/docs/guides/how-to-deploy-probes-cloudflare-containers)
+- [Raspberry Pi deployment](/blog/deploy-private-locations-raspberry-pi)
 
 </div>
 </Grid>
+
+## Every request, kept
+
+Response logs with the timing breakdown, headers and body per region, for as long as your plan retains data.
+
+<Demo type="logs" />
+
+<Actions source="uptime-monitoring-bottom">
+  <ButtonLink href="https://app.openstatus.dev" variant="default">Start monitoring free</ButtonLink>
+  <ButtonLink href="/play/checker">Global speed checker</ButtonLink>
+</Actions>
+
+<Subtle>Free to start. Paid plans from $30/mo.</Subtle>
 
 ## Frequently asked questions
 
@@ -318,19 +307,3 @@ Yes. The openstatus Terraform provider manages HTTP, TCP, DNS and ICMP monitors 
 Yes, you can deploy as many private location probes as needed across different networks, VPCs, or regions. Each gets its own API key and appears as a separate monitoring region in your dashboard. The Docker image is only 8.5MB and supports ARM64 and AMD64.
 
 </Details>
-
----
-
-<div className="space-x-2">
-  <ButtonLink href="https://app.openstatus.dev?ref=uptime-monitoring-bottom" children="Start Monitoring Free" variant="default" />
-</div>
-
-Free to start. Paid plans from $30/mo.
-
----
-
-Check your website's latency
-
-<ButtonLink href="/play/checker">Global Speed Checker</ButtonLink>
-
----

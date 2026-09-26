@@ -4,10 +4,13 @@ import { cn } from "../../lib/utils";
 
 export function Grid({
   cols = 2,
+  variant = "bordered",
   children,
   className,
 }: {
   cols?: 1 | 2 | 3 | 4 | 5;
+  /** `borderless` for a text + visual pair; the visual carries its own border. */
+  variant?: "bordered" | "borderless";
   children: React.ReactNode;
   className?: string;
 }) {
@@ -36,6 +39,21 @@ export function Grid({
     4: "md:[&>*]:border-l-0 md:[&>*:nth-child(4n+1)]:border-l",
     5: "md:[&>*]:border-l-0 md:[&>*:nth-child(5n+1)]:border-l",
   };
+
+  if (variant === "borderless") {
+    return (
+      <div
+        className={cn(
+          "my-8 grid grid-cols-1 items-center gap-8 md:gap-12",
+          "[&>*>*:first-child]:!mt-0 [&>*>*:last-child]:!mb-0",
+          colsClass[cols],
+          className,
+        )}
+      >
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div

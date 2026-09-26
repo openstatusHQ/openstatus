@@ -5,7 +5,7 @@ seo:
   description: "Create a free status page on your own domain in minutes. Open source and self-hostable. Public or private (password, magic link, IP allowlist), subscribers, maintenance windows, Slack agent."
 hero: "Status pages your users actually trust"
 publishedAt: "2025-11-10"
-updatedAt: "2026-09-17"
+updatedAt: "2026-09-25"
 author: "Maximilian Kaske"
 description: "Create a public or private status page in minutes. Show real-time uptime, incidents and maintenance on a fully branded page with a custom domain."
 category: "Product"
@@ -32,125 +32,205 @@ faq:
     answer: "The Slack agent lets you manage your status page directly from Slack using natural language. @mention @openstatus in any channel or thread to create incidents, post updates, and resolve reports — without leaving Slack. No slash commands required."
 ---
 
-## What is a status page?
+<Actions source="status-page-hero">
+  <ButtonLink href="https://app.openstatus.dev" variant="default">Create your status page</ButtonLink>
+  <ButtonLink href="https://themes.openstatus.dev" variant="ghost">Theme explorer</ButtonLink>
+</Actions>
 
-A status page is a dedicated webpage where companies communicate the real-time health of their services to users. It shows which systems are operational, degraded, or experiencing outages and provides timestamped incident updates so users don't flood your support queue. Status pages build trust through transparency and satisfy compliance requirements like SOC 2 CC2.3.
+<Subtle>Free to start. Paid plans from $30/mo.</Subtle>
 
-Status pages can be **public** (customer-facing) or **private** (internal teams or specific clients).
-
-A typical status page includes:
-
-- **Real-time operational status** for each service or component
-- **Timestamped incident updates** from investigating through resolution
-- **Subscriber notifications** via email, RSS, or webhook
-- **Uptime history** showing reliability over time
-
-<div className="space-x-2">
-  <ButtonLink href="https://app.openstatus.dev?ref=status-page-top" children="Create Your Status Page" variant="default" />
-</div>
-
-Free to start. Paid plans from $30/mo.
+<Demo type="status-page" />
 
 ## Trusted by teams who ship transparency
 
-<CustomerLogos />
+<LogoCloud />
 
-## Why do you need a status page?
+## Why you need one
 
-**It deflects support load.** During an outage, every user asks the same question: is it down, or is it me? Without somewhere to point them, that question arrives one ticket at a time while your team is already busy fixing the thing. A status page answers it once, for everyone. See [reducing support tickets](/use-case/reduce-support-tickets).
-
-**Enterprise buyers ask for one.** Security questionnaires and vendor reviews routinely ask how you notify customers during an incident. "We email the affected accounts" is a weaker answer than a public URL with a year of incident history behind it. See [status pages for enterprise sales](/use-case/enterprise-sales).
-
-**Auditors want the evidence.** SOC 2's CC2.3 criteria asks you to demonstrate that you communicate incidents to external parties. Every status report on openstatus is timestamped and archived automatically, so the trail already exists when the auditor asks for it. See [status pages for compliance](/use-case/compliance).
-
-<Grid>
+<Grid cols={3}>
 <div>
 
-**Uptime Status Page**
+**It deflects support load**
 
-<Image src="/assets/landing/statuspage.png" alt="status page overview" />
+During an outage every user asks the same question. A status page answers it once, for everyone, while your team fixes the thing. See [reducing support tickets](/use-case/reduce-support-tickets).
 
 </div>
 <div>
 
-**Events Page**
+**Enterprise buyers ask for one**
 
-<Image src="/assets/landing/statuspage-events.png" alt="status page events list" />
+Security questionnaires ask how you notify customers during an incident. A public URL with a year of history is the strongest answer. See [status pages for enterprise sales](/use-case/enterprise-sales).
+
+</div>
+<div>
+
+**Auditors want the evidence**
+
+SOC 2 CC2.3 asks you to prove external communication. Every report is timestamped and archived, so the trail exists before they ask. See [status pages for compliance](/use-case/compliance).
 
 </div>
 </Grid>
 
-## Why choose openstatus for your status pages?
+## Components, groups and external services
 
-We provide you with a good **mix of customization and opinionated options**.
+<Grid variant="borderless">
+<div>
 
-### Page Components
+Attach monitors and the uptime fills in from your checks. Add the services you depend on but do not run, and group everything the way your customers think about it.
 
-You can attach specific monitors to a status page. You can either populate the data from the **aggregated uptime** data **or manually** manage them. Read more [about uptime monitoring](/uptime-monitoring).
+- [Uptime monitoring](/uptime-monitoring)
+- [Status page reference](/docs/reference/status-page)
 
-Page components provide a **flexible structure** that supports both:
-- **Monitors**: Automatically synced with your uptime monitoring data
-- **External Services**: Manually managed components for third-party services or systems you don't directly monitor
-
-You can **group page components** by their services, locations, or any logical grouping, and they will be collapsible for better organization.
-
-### Links
-
-Add a **Get in touch** button that points to a specific **website** link or a **`mailto:`** address.
-
-Include a **homepage** link to redirect the user to your page on clicking on the left-hand nav icon.
-
-### Subscriptions
-
-Allow your users to **subscribe** to your status page and automatically receive **updates** whenever you add a status report or maintenance.
-
-We support following communication channels:
-
-- **Emails**
-- **RSS/Atom feeds**
-- **JSON**
-
-[Contact us](mailto:ping@openstatus.dev) if you are looking for a specific channel.
-
-### Translations
-
-Offer your status page in **multiple languages**. Set a default locale and enable a **locale switcher** so visitors can read updates in their preferred language. Currently supports English, French, German, Turkish, Hindi, Korean, and Japanese — with more languages coming from community contributions.
-
-### Slack Agent
-
-Manage incidents without leaving Slack. Install the **@openstatus** Slack agent and @mention it in any channel or thread to create, update, and resolve status reports using plain language - no slash commands, no tab switching.
-
-> **@openstatus** our API is returning 500 errors for about 10% of requests. Can you create an incident on the status page?
-
-The agent reads the conversation, looks up your status pages and components, and drafts a status report. Before anything goes public it posts a confirmation card so you can review the title, status, and message. Choose to **Approve**, **Approve & Notify** (sends notifications to all subscribers), or **Cancel**.
-
-The agent is **thread-aware**: when you follow up in the same thread (_"we found the root cause"_ or _"it's fixed"_), it picks up the context and drafts the next update automatically. The entire incident lifecycle - from creation to resolution - can happen in a single Slack thread.
-
-### Import from Another Provider
-
-Already using Atlassian Statuspage, Better Stack, or Instatus? Import your entire setup -- components, component groups, incidents, maintenances, subscribers, and monitors -- in minutes. Open a status page, go to the **Components** tab, scroll down to the **Import** section, paste your API key, preview what will be imported, and confirm.
-
-Read the [migration guides](/blog/import-from-statuspage-betterstack-instatus) for details on each provider.
-
-## Branded status pages
-
-Match your brand **appearance** with a theme from the **[Theme Store](https://themes.openstatus.dev)**, or contribute your own to the community.
-
-Need something that stays private? The **Custom Theme** editor lets you override any CSS variable of the selected theme with your own values — separately for **light and dark mode**. Every variable you leave unset falls back to the base theme, so you can change a single color or restyle the entire page. Custom themes are included on Pro and Scale, and available as a **$20/mo add-on** on Starter. See the [supported variables](/docs/reference/status-page/#custom-theme).
-
-You can **define the values** you want to share with your users: response times and uptime from your monitors, or purely manual status report updates.
-
-You can create **custom domains** to keep the domain your users are used to.
-
-## Internal & private status pages
-
-By default, your status page is public. For internal or client-specific pages, you can protect access using **password protection**, **magic link** authentication, or **IP restriction** (CIDR-based network allowlist) to control who can view your updates.
-
-<div className="space-x-2">
-  <ButtonLink href="https://app.openstatus.dev?ref=status-page-bottom" children="Create Your Status Page" variant="default" />
 </div>
+<div>
 
-Free to start. Paid plans from $30/mo.
+<Demo type="components" />
+
+</div>
+</Grid>
+
+## Subscriptions
+
+<Grid variant="borderless">
+<div>
+
+<Demo type="subscriptions" />
+
+</div>
+<div>
+
+Users subscribe once and get every status report and maintenance by email, RSS, Atom or JSON. Teams pull the same feed into Slack. No per-subscriber fee.
+
+- [Slack Connect updates](/guides/slack-status-page-subscriptions)
+
+</div>
+</Grid>
+
+## Translations
+
+<Grid variant="borderless">
+<div>
+
+Set a default locale and turn on the switcher. The page chrome and the canonical status copy are translated; your updates stay in the language you wrote them.
+
+English, French, German, Turkish, Hindi, Korean and Japanese today, with more from community contributions.
+
+</div>
+<div>
+
+<Demo type="translations" />
+
+</div>
+</Grid>
+
+## Slack agent
+
+<Grid variant="borderless">
+<div>
+
+<Demo type="slack-agent" />
+
+</div>
+<div>
+
+Mention @openstatus in any thread. It drafts the report, you approve, it publishes. Follow up in the same thread with "it's fixed" and it drafts the next update.
+
+Every action asks for confirmation before anything goes public, and every action is written to the audit log.
+
+</div>
+</Grid>
+
+## Branded, on your domain
+
+<Grid variant="borderless">
+<div>
+
+Pick a theme from the store or override any CSS variable, separately for light and dark. Point status.yourdomain.com at it; the "Powered by" line goes away on Scale.
+
+- [Theme Store](https://themes.openstatus.dev)
+- [Custom theme variables](/docs/reference/status-page/#custom-theme)
+
+</div>
+<div>
+
+<Demo type="themes" />
+
+</div>
+</Grid>
+
+## Internal and private pages
+
+<Grid variant="borderless">
+<div>
+
+<Demo type="access" />
+
+</div>
+<div>
+
+Public by default. Protect a page with a password, magic-link login, or a CIDR allowlist so internal teams and named clients see more than the public does.
+
+- [Status pages for enterprise sales](/use-case/enterprise-sales)
+
+</div>
+</Grid>
+
+## Maintenance windows
+
+<Grid variant="borderless">
+<div>
+
+Schedule the window ahead of time. Subscribers are told when it is planned, the banner flips to maintenance while it runs, and affected components stop counting against uptime.
+
+- [Status page reference](/docs/reference/status-page)
+
+</div>
+<div>
+
+<Demo type="maintenance" />
+
+</div>
+</Grid>
+
+## Import from another provider
+
+<Grid variant="borderless">
+<div>
+
+<Demo type="import" />
+
+</div>
+<div>
+
+Paste an API key from Atlassian Statuspage, Better Stack or Instatus. Preview components, incidents, maintenances and subscribers before anything is written.
+
+- [Migration guides](/blog/import-from-statuspage-betterstack-instatus)
+
+</div>
+</Grid>
+
+## For terminals and agents
+
+<Grid variant="borderless">
+<div>
+
+The same page over SSH for people in a terminal, and as markdown for the agents and LLMs your customers point at it. No screenshots, no scraping.
+
+- [Shadcn component registry](/registry)
+
+</div>
+<div>
+
+<Demo type="terminal" />
+
+</div>
+</Grid>
+
+<Actions source="status-page-bottom">
+  <ButtonLink href="https://app.openstatus.dev" variant="default">Create your status page</ButtonLink>
+</Actions>
+
+<Subtle>Free to start. Paid plans from $30/mo.</Subtle>
 
 ## Frequently asked questions
 

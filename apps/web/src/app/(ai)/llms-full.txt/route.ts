@@ -26,7 +26,9 @@ export function GET() {
     getHomePage(),
     ...getProductPages(),
     ...getToolingPages(),
-    ...getUnrelatedPages().filter((p) => p.slug !== "not-found"),
+    ...getUnrelatedPages().filter(
+      (p) => p.slug !== "not-found" && !p.metadata.seo?.noindex,
+    ),
   ];
 
   const chunks = pages.map(renderPage);
