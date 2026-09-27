@@ -1,4 +1,5 @@
 export * from "./custom-theme";
+export * from "./theme-io";
 export * from "./types";
 import {
   type CustomTheme,
