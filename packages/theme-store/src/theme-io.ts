@@ -13,7 +13,7 @@ export type ThemeExportFormat = "ts" | "json" | "css";
 export type ParsedThemeInput = {
   info: Partial<ThemeInfo>;
   definition: ThemeDefinition;
-  /** Bare declarations for one mode — merge them instead of replacing the theme. */
+  /** Merge into the current theme instead of replacing it (bare declarations, a lone CSS block). */
   partial: boolean;
   /** Dropped vars / values — the rest of the input still applied. */
   warnings: string[];
@@ -36,11 +36,14 @@ export function parseThemeInput(
   const source = text.trim();
   if (source.length === 0) return { ok: false, error: "Nothing to paste." };
 
-  const parsed = /(?::root|\.dark|\.light)\s*\{/.test(source)
-    ? parseCssBlocks(source)
-    : source.includes("{")
-      ? parseObjectLiteral(source, fallbackMode)
-      : parseDeclarations(source, fallbackMode);
+  const light = cssBlock(source, [":root", ".light"]);
+  const dark = cssBlock(source, [".dark"]);
+  const parsed =
+    light !== undefined || dark !== undefined
+      ? parseCssBlocks(light, dark)
+      : source.includes("{")
+        ? parseObjectLiteral(source, fallbackMode)
+        : parseDeclarations(source, fallbackMode);
 
   if (!parsed.ok) return parsed;
 
@@ -64,20 +67,32 @@ function parseDeclarations(
   return { ok: true, info: {}, definition, partial: true, warnings: errors };
 }
 
-function parseCssBlocks(source: string): ParseThemeInputResult {
-  const block = (selector: RegExp) => {
-    const match = selector.exec(source);
-    return match?.[1] ?? "";
-  };
-  const light = block(/(?::root|\.light)\s*\{([^}]*)\}/);
-  const dark = block(/\.dark\s*\{([^}]*)\}/);
-  const lightResult = parseThemeVarsText(light);
-  const darkResult = parseThemeVarsText(dark);
+/** Body of the first `selector { … }`; indexOf instead of a regex (CodeQL js/polynomial-redos). */
+function cssBlock(source: string, selectors: string[]) {
+  for (const selector of selectors) {
+    const start = source.indexOf(selector);
+    if (start === -1) continue;
+    const open = source.indexOf("{", start + selector.length);
+    const close = open === -1 ? -1 : source.indexOf("}", open);
+    if (close === -1) continue;
+    if (source.slice(start + selector.length, open).trim().length > 0) continue;
+    return source.slice(open + 1, close);
+  }
+  return undefined;
+}
+
+function parseCssBlocks(
+  light: string | undefined,
+  dark: string | undefined,
+): ParseThemeInputResult {
+  const lightResult = parseThemeVarsText(light ?? "");
+  const darkResult = parseThemeVarsText(dark ?? "");
   return {
     ok: true,
     info: {},
     definition: { light: lightResult.vars, dark: darkResult.vars },
-    partial: false,
+    // a lone block must not wipe the other mode
+    partial: light === undefined || dark === undefined,
     warnings: [...lightResult.errors, ...darkResult.errors],
   };
 }
@@ -86,10 +101,10 @@ function parseObjectLiteral(
   source: string,
   fallbackMode: ThemeMode,
 ): ParseThemeInputResult {
-  // drop what precedes the object literal — `import type { Theme }`, code
-  // fences and prose would otherwise be read as keys, strings or the first `{`
-  const stripped = source
-    .replace(/^\s*import\b[^\n]*$/gm, "")
+  // drop what precedes the object literal — `import type { Theme }`, comments,
+  // code fences and prose would otherwise be read as keys, strings or the first `{`
+  const stripped = stripBlockComments(source)
+    .replace(/^\s*(?:import\b|\/\/)[^\n]*$/gm, "")
     .replace(/^\s*```[^\n]*$/gm, "")
     .replace(/\bas const\b/g, "");
   const json = toJson(stripped.slice(stripped.indexOf("{")));
@@ -118,6 +133,8 @@ function parseObjectLiteral(
   let partial = false;
 
   if (isRecord(value.light) || isRecord(value.dark)) {
+    // `{ light }` alone must not wipe dark (and vice versa)
+    partial = value.light === undefined || value.dark === undefined;
     for (const mode of ["light", "dark"] as const) {
       const vars = value[mode];
       if (vars === undefined) continue;
@@ -172,6 +189,20 @@ function pickVars(
   return vars;
 }
 
+function stripBlockComments(source: string) {
+  let out = "";
+  let i = 0;
+  while (i < source.length) {
+    const start = source.indexOf("/*", i);
+    if (start === -1) break;
+    const end = source.indexOf("*/", start + 2);
+    out += source.slice(i, start);
+    if (end === -1) return out;
+    i = end + 2;
+  }
+  return out + source.slice(i);
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -185,7 +216,7 @@ function toJson(source: string): string {
   let out = "";
   let i = 0;
   while (i < source.length) {
-    const ch = source[i];
+    const ch = source.charAt(i);
 
     if (ch === '"' || ch === "'" || ch === "`") {
       let j = i + 1;
@@ -196,7 +227,7 @@ function toJson(source: string): string {
           j += 2;
           continue;
         }
-        str += source[j];
+        str += source.charAt(j);
         j++;
       }
       out += JSON.stringify(str);
@@ -216,10 +247,10 @@ function toJson(source: string): string {
 
     if (/[A-Za-z_$]/.test(ch)) {
       let j = i;
-      while (j < source.length && /[\w$]/.test(source[j])) j++;
+      while (j < source.length && /[\w$]/.test(source.charAt(j))) j++;
       const word = source.slice(i, j);
       let k = j;
-      while (k < source.length && /\s/.test(source[k])) k++;
+      while (k < source.length && /\s/.test(source.charAt(k))) k++;
       if (source[k] === ":") {
         out += `${JSON.stringify(word)}:`;
         i = k + 1;

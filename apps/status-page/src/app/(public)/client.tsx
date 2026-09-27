@@ -258,12 +258,12 @@ export function Client() {
             </li>
           </ul>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={toggleSidebar}>
+            <ThemePromptButton variant="default" />
+            <ThemePasteDialog variant="outline" />
+            <Button variant="outline" onClick={toggleSidebar}>
               <SidebarIcon className="size-4" />
               Toggle Sidebar
             </Button>
-            <ThemePasteDialog />
-            <ThemePromptButton />
           </div>
           <p>
             Or install the skill so your agent knows the whole workflow, from

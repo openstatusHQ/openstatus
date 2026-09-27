@@ -24,15 +24,13 @@ import { toast } from "sonner";
 
 import { useThemeBuilder } from "./theme-builder-provider";
 
-function applyParsedTheme(
-  theme: Theme,
-  parsed: ParsedThemeInput,
-  mode: ThemeMode,
-): Theme {
+function applyParsedTheme(theme: Theme, parsed: ParsedThemeInput): Theme {
   if (parsed.partial) {
     return {
       ...theme,
-      [mode]: { ...theme[mode], ...parsed.definition[mode] },
+      ...parsed.info,
+      light: { ...theme.light, ...parsed.definition.light },
+      dark: { ...theme.dark, ...parsed.definition.dark },
     };
   }
   return { ...theme, ...parsed.info, ...parsed.definition };
@@ -52,7 +50,7 @@ export function ThemePasteDialog(props: React.ComponentProps<typeof Button>) {
       toast.error(result.error);
       return;
     }
-    setTheme((prev) => applyParsedTheme(prev, result, mode));
+    setTheme((prev) => applyParsedTheme(prev, result));
     if (result.warnings.length > 0) {
       toast.warning(
         `Applied with ${result.warnings.length} skipped ${
@@ -64,11 +62,15 @@ export function ThemePasteDialog(props: React.ComponentProps<typeof Button>) {
       toast.success("Theme applied");
     }
     setOpen(false);
-    setText("");
+  }
+
+  function onOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) setText("");
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button {...props}>
           <Code className="size-4" />

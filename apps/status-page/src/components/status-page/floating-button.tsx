@@ -39,6 +39,7 @@ import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 
+import { clearThemeDraft } from "../../lib/theme-draft";
 import { ThemeSelect } from "../themes/theme-select";
 
 export const IS_DEV = process.env.NODE_ENV === "development";
@@ -106,10 +107,17 @@ export function StatusPageProvider({
   const [showUptime, setShowUptime] = useState<boolean>(defaultShowUptime);
   const [numberOfDays, setNumberOfDays] =
     useState<NumberOfDays>(defaultNumberOfDays);
-  const [communityTheme, setCommunityTheme] = useState<CommunityTheme>(
+  const [communityTheme, setCommunityThemeState] = useState<CommunityTheme>(
     defaultCommunityTheme,
   );
   const [draftTheme, setDraftTheme] = useState<Theme | null>(null);
+
+  // a draft shadows the community theme, so picking one discards the draft
+  function setCommunityTheme(theme: CommunityTheme) {
+    clearThemeDraft();
+    setDraftTheme(null);
+    setCommunityThemeState(theme);
+  }
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {

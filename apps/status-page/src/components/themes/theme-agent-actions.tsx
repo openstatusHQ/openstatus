@@ -21,18 +21,22 @@ import {
 import { useThemeBuilder } from "./theme-builder-provider";
 
 /** Copies a prompt carrying the builder theme for the user's own agent. */
-export function ThemePromptButton(props: React.ComponentProps<typeof Button>) {
+export function ThemePromptButton({
+  onClick,
+  ...props
+}: React.ComponentProps<typeof Button>) {
   const { theme } = useThemeBuilder();
   const { copy } = useCopyToClipboard();
   return (
     <Button
       variant="outline"
       {...props}
-      onClick={() =>
+      onClick={(e) => {
         copy(generateThemePrompt(theme), {
           withToast: "Prompt copied, paste it into your agent",
-        })
-      }
+        });
+        onClick?.(e);
+      }}
     >
       <Agent className="size-4" />
       Copy prompt

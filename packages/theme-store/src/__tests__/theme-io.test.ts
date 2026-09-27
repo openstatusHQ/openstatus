@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
@@ -39,31 +39,37 @@ describe("parseThemeInput", () => {
   });
 
   test("parses the theme source files as they are checked in", () => {
-    const files: Record<string, string> = {
-      default: "openstatus",
-      "github-contrast": "github",
-    };
-    for (const key of THEME_KEYS) {
-      if (key === "default-rounded") continue; // shares openstatus.ts
-      const theme = THEMES[key];
-      const file = files[key] ?? key;
-      const source = readFileSync(
-        new URL(`../${file}.ts`, import.meta.url),
-        "utf8",
-      );
-      // openstatus.ts holds two themes; the first object literal is the plain one
-      const single =
-        key === "default"
-          ? source.slice(0, source.indexOf("OPENSTATUS_ROUNDED_THEME"))
-          : source;
-      const result = expectOk(parseThemeInput(single));
-      expect(result.info.id).toBe(theme.id);
-      expect(result.definition).toEqual({
-        light: theme.light,
-        dark: theme.dark,
-      });
-      expect(result.warnings).toEqual([]);
+    const dir = new URL("../", import.meta.url);
+    const skip = [
+      "custom-theme.ts",
+      "index.ts",
+      "theme-io.ts",
+      "types.ts",
+      "utils.ts",
+    ];
+    const parsedIds: string[] = [];
+    for (const file of readdirSync(dir)) {
+      if (!file.endsWith(".ts") || skip.includes(file)) continue;
+      const source = readFileSync(new URL(file, dir), "utf8");
+      // one literal per `export const`; spreads (default-rounded) aren't parseable
+      for (const chunk of source.split(/^export const /m).slice(1)) {
+        if (chunk.includes("...")) continue;
+        const result = expectOk(parseThemeInput(chunk));
+        const theme = THEMES[result.info.id ?? ""];
+        expect(
+          theme,
+          `${file}: unregistered id ${result.info.id}`,
+        ).toBeDefined();
+        expect(result.definition).toEqual({
+          light: theme.light,
+          dark: theme.dark,
+        });
+        expect(result.warnings).toEqual([]);
+        parsedIds.push(theme.id);
+      }
     }
+    expect(parsedIds).toContain("default");
+    expect(parsedIds.length).toBeGreaterThanOrEqual(THEME_KEYS.length - 1);
   });
 
   test("accepts a bare { light, dark } definition", () => {
@@ -90,6 +96,15 @@ describe("parseThemeInput", () => {
     expect(result.definition.light).toEqual({ "--primary": "#5e81ac" });
   });
 
+  test("ignores a leading comment that contains a brace", () => {
+    const result = expectOk(
+      parseThemeInput(
+        '/** see {@link Theme} */\n// shape: { light, dark }\nexport const X = { light: { "--primary": "red" }, dark: {} } as const satisfies Theme;',
+      ),
+    );
+    expect(result.definition.light).toEqual({ "--primary": "red" });
+  });
+
   test("applies bare declarations and flat objects to the fallback mode", () => {
     const declarations = expectOk(
       parseThemeInput("--primary: red;\n--radius: 0.5rem", "dark"),
@@ -108,12 +123,28 @@ describe("parseThemeInput", () => {
     });
   });
 
+  test("merges a lone mode instead of wiping the other one", () => {
+    const css = expectOk(parseThemeInput(":root {\n  --primary: red;\n}"));
+    expect(css.partial).toBe(true);
+    expect(css.definition).toEqual({ light: { "--primary": "red" }, dark: {} });
+
+    const json = expectOk(
+      parseThemeInput('{ "dark": { "--primary": "red" } }'),
+    );
+    expect(json.partial).toBe(true);
+    expect(json.definition).toEqual({
+      light: {},
+      dark: { "--primary": "red" },
+    });
+  });
+
   test("reads :root / .dark CSS blocks", () => {
     const result = expectOk(
       parseThemeInput(
         ":root {\n  --primary: oklch(0.6 0.1 250);\n}\n.dark {\n  --primary: oklch(0.8 0.1 250);\n}",
       ),
     );
+    expect(result.partial).toBe(false);
     expect(result.definition).toEqual({
       light: { "--primary": "oklch(0.6 0.1 250)" },
       dark: { "--primary": "oklch(0.8 0.1 250)" },
