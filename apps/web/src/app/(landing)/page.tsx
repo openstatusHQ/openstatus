@@ -14,11 +14,15 @@ import {
   getJsonLDWebPage,
 } from "../../lib/metadata/structured-data";
 
-const homePage = getHomePage();
+// Demos derive "today" from `new Date()`; re-render so their dates keep moving.
+export const revalidate = 3600;
 
-export const metadata: Metadata = getHomeMetadata(homePage);
+export function generateMetadata(): Metadata {
+  return getHomeMetadata(getHomePage());
+}
 
 export default function Page() {
+  const homePage = getHomePage();
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
     getJsonLDProduct(),

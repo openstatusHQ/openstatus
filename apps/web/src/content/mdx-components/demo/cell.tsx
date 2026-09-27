@@ -12,10 +12,7 @@ export const toneClass: Record<Tone, string> = {
   muted: "text-muted-foreground",
 };
 
-/**
- * The one visual grammar every demo is built from: a bordered mono box whose
- * direct children stack with a 1px rule between them. No radius, no shadow.
- */
+/** The box every demo is built from; direct children stack with a 1px rule between them. */
 export function Cell({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -136,7 +133,7 @@ export function CellLabel({
     <div
       data-slot="cell-label"
       className={cn(
-        "text-muted-foreground text-[11px] tracking-widest uppercase",
+        "text-muted-foreground text-xs tracking-widest uppercase",
         className,
       )}
       {...props}
@@ -257,6 +254,69 @@ export function CellValue({ className, ...props }: React.ComponentProps<"dd">) {
     <dd
       data-slot="cell-value"
       className={cn("min-w-0 break-words", className)}
+      {...props}
+    />
+  );
+}
+
+/** One class per chart phase, in the order the phases are drawn. */
+export const chartClass = [
+  "bg-chart-1",
+  "bg-chart-2",
+  "bg-chart-3",
+  "bg-chart-4",
+  "bg-chart-5",
+] as const;
+
+/** Square legend swatch; pass the colour as a `bg-*` class. */
+export function CellSwatch({
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="cell-swatch"
+      className={cn("inline-block size-2 shrink-0", className)}
+      {...props}
+    />
+  );
+}
+
+/** Proportional strip of the request phases, one `chartClass` band each. */
+export function CellPhaseBar({
+  phases,
+  className,
+  ...props
+}: React.ComponentProps<"span"> & {
+  phases: readonly { phase: string; ms: number }[];
+}) {
+  const total = phases.reduce((sum, p) => sum + p.ms, 0);
+  return (
+    <span
+      data-slot="cell-phase-bar"
+      className={cn("bg-muted flex h-3 min-w-0", className)}
+      {...props}
+    >
+      {phases.map((p, i) => (
+        <span
+          key={p.phase}
+          className={cn("block h-3", chartClass[i % chartClass.length])}
+          style={{ width: `${(p.ms / total) * 100}%` }}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** A borderless `Cell` inside a `CellGrid`, for side-by-side panes. */
+export function CellPane({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="cell-pane"
+      className={cn(
+        "bg-background [&>*+*]:border-border min-w-0 [&>*+*]:border-t",
+        className,
+      )}
       {...props}
     />
   );

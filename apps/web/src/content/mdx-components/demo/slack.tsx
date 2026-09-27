@@ -18,9 +18,11 @@ export function SlackMessage({
   );
 }
 
+/** The app avatar reads "os" unless told otherwise. */
 export function SlackAvatar({
   variant = "user",
   className,
+  children = variant === "app" ? "os" : undefined,
   ...props
 }: React.ComponentProps<"div"> & { variant?: "user" | "app" }) {
   return (
@@ -28,14 +30,16 @@ export function SlackAvatar({
       data-slot="slack-avatar"
       data-variant={variant}
       className={cn(
-        "flex size-7 items-center justify-center text-[11px] font-semibold",
+        "flex size-7 items-center justify-center text-xs font-semibold",
         variant === "app"
           ? "bg-foreground text-background"
           : "bg-muted text-foreground",
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
 }
 
@@ -87,10 +91,7 @@ export function SlackAppBadge({
   return (
     <span
       data-slot="slack-app-badge"
-      className={cn(
-        "bg-muted text-muted-foreground px-1 text-[10px]",
-        className,
-      )}
+      className={cn("bg-muted text-muted-foreground px-1 text-xs", className)}
       {...props}
     >
       {children}
@@ -186,7 +187,7 @@ export function SlackField({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  return <div data-slot="slack-field" className={className} {...props} />;
+  return <div data-slot="slack-field" className={cn(className)} {...props} />;
 }
 
 export function SlackFieldLabel({

@@ -1,4 +1,4 @@
-import { demo } from "@/data/demo-data";
+import { demo, formatNumber } from "@/data/demo-data";
 
 import {
   Cell,
@@ -52,13 +52,13 @@ export function AssertionsDemo() {
         <span>
           degraded after{" "}
           <span className={toneClass.warning}>
-            {monitor.degradedAfter.toLocaleString("en-US")} ms
+            {formatNumber(monitor.degradedAfter)} ms
           </span>
         </span>
         <span>
           timeout{" "}
           <span className={toneClass.destructive}>
-            {monitor.timeout.toLocaleString("en-US")} ms
+            {formatNumber(monitor.timeout)} ms
           </span>
         </span>
       </CellRow>

@@ -112,14 +112,14 @@ The components list: Checkout API, Webhooks, Dashboard and Docs synced from moni
 
 <SrOnly>
 
-The Get updates popover with 1,204 email subscribers: an email form, the RSS URL for Slack's feed app, RSS and Atom URLs, and the JSON feed at status.piedpiper.dev/feed/json.
+The Get updates popover with 1,204 email subscribers: an email form, the RSS URL for Slack's feed app, RSS and Atom URLs, the JSON feed at status.piedpiper.dev/feed/json and the SSH command.
 
 </SrOnly>
 
 </div>
 <div>
 
-Users subscribe once and get every status report and maintenance by email, RSS, Atom or JSON. Teams pull the same feed into Slack. No per-subscriber fee.
+Users subscribe once and get every status report and maintenance by email, RSS, Atom or JSON. Teams pull the same feed into Slack.
 
 - [All subscription methods](/docs/reference/subscriber)
 - [Slack Connect updates](/guides/slack-status-page-subscriptions)
@@ -257,7 +257,7 @@ A scheduled maintenance banner, "Database upgrade": a two-hour window three days
 
 <SrOnly>
 
-The import preview for Atlassian Statuspage: 4 components, 2 groups, 37 status reports, 3 maintenances, 1,204 subscribers and 4 monitors, shown before anything is written.
+The import preview for Atlassian Statuspage: 5 components, 2 groups, 37 status reports, 3 maintenances, 1,204 subscribers and 4 monitors, shown before anything is written.
 
 </SrOnly>
 
@@ -305,61 +305,61 @@ The page over SSH, `ssh pied-piper@ssh.openstatus.dev`, printing "Degraded Perfo
 
 ## Frequently asked questions
 
-<Details summary="What is a status page?">
+<Details summary="What is a status page?" headingLevel={3}>
 
 A status page is a dedicated webpage where companies communicate the real-time health of their services to users. It shows which systems are operational, degraded, or experiencing outages, and provides timestamped incident updates. Status pages reduce support tickets during incidents, build user trust through transparency, and satisfy compliance requirements like SOC 2.
 
 </Details>
 
-<Details summary="When should I use a public vs private status page?">
+<Details summary="When should I use a public vs private status page?" headingLevel={3}>
 
 A public status page is customer-facing and indexed — it deflects support tickets and answers vendor questionnaires. A private (internal) status page is for staff, contractors, or a single client, with access controlled by password protection, magic link authentication, or an IP allowlist. You can run both from the same workspace.
 
 </Details>
 
-<Details summary="What's the difference between monitors and external services in page components?">
+<Details summary="What's the difference between monitors and external services in page components?" headingLevel={3}>
 
 Monitors are automatically synced with your openstatus uptime monitoring data and update in real-time. External services are manually managed components for third-party dependencies or systems you don't directly monitor but want to report status for.
 
 </Details>
 
-<Details summary="Can I translate my status page into other languages?">
+<Details summary="Can I translate my status page into other languages?" headingLevel={3}>
 
 Yes, status pages support multiple languages (currently English, French, German, Turkish, Hindi, Korean, and Japanese). You can set a default locale and enable a locale switcher so visitors choose their preferred language. Translations are open source — you can contribute new languages by adding a locale to the shared registry and running the dev server to generate the translation file.
 
 </Details>
 
-<Details summary="Can I use my own domain for the status page?">
+<Details summary="Can I use my own domain for the status page?" headingLevel={3}>
 
 Yes, you can configure custom domains to host your status page on your own domain (e.g., status.yourcompany.com) instead of the default openstatus subdomain. This keeps the experience consistent with your brand.
 
 </Details>
 
-<Details summary="How do status page subscriptions work?">
+<Details summary="How do status page subscriptions work?" headingLevel={3}>
 
 Users can subscribe to receive updates when you post status reports or maintenance notices. We support email notifications, RSS/Atom feeds for feed readers, and JSON feeds for programmatic consumption. Subscribers are automatically notified when you publish updates.
 
 </Details>
 
-<Details summary="Can I customize the appearance of my status page?">
+<Details summary="Can I customize the appearance of my status page?" headingLevel={3}>
 
 Yes. Pick a community theme from the Theme Store or contribute your own. For a private look, the Custom Theme editor lets you override any CSS variable of the base theme for light and dark mode — included on Pro and Scale, or a $20/mo add-on on Starter. You can also define which data to share (uptime percentages, response times, or manual reports only).
 
 </Details>
 
-<Details summary="How do I create a status page?">
+<Details summary="How do I create a status page?" headingLevel={3}>
 
 Sign up, create a status page, give it a name and a slug, then add page components — either monitors synced from your uptime monitoring or external services you manage by hand. Point a custom domain at it if you want status.yourcompany.com, pick a theme, and publish. Most teams are live in under ten minutes on the free plan.
 
 </Details>
 
-<Details summary="How much does a status page cost?">
+<Details summary="How much does a status page cost?" headingLevel={3}>
 
 The free Hobby plan includes one status page with three components and no credit card. Paid plans start at $30/month for Starter (one status page, 20 components, custom domain, subscribers), $100/month for Pro, and $500/month for Scale. Annual billing gives you two months free. Extra status pages are $20/month each.
 
 </Details>
 
-<Details summary="What is the Slack agent and what can it do?">
+<Details summary="What is the Slack agent and what can it do?" headingLevel={3}>
 
 The Slack agent lets you manage your status page directly from Slack using natural language. @mention @openstatus in any channel or thread to create incidents, post updates, and resolve reports — without leaving Slack. No slash commands required.
 

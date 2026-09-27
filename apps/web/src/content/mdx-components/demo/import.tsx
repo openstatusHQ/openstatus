@@ -1,6 +1,7 @@
 import { Button } from "@openstatus/ui/components/ui/button";
+import { Input } from "@openstatus/ui/components/ui/input";
 
-import { demo } from "@/data/demo-data";
+import { demo, formatNumber } from "@/data/demo-data";
 
 import {
   Cell,
@@ -23,23 +24,24 @@ export function ImportDemo() {
       </CellHeader>
       <CellRow className="justify-start gap-2 text-xs">
         <span className="text-muted-foreground">API key</span>
-        <span className="border-input flex-1 border px-2 py-1">
-          ••••••••••••••••7f2a
-        </span>
+        <Input
+          readOnly
+          defaultValue={demo.import.apiKey}
+          aria-label="API key"
+          className="h-7 flex-1 text-xs"
+        />
       </CellRow>
       <CellGrid cols={2} sm={3} className="text-xs">
         {demo.import.counts.map((row) => (
           <CellGridItem key={row.label} className="flex justify-between gap-2">
             <span>{row.label}</span>
-            <span className="text-foreground">
-              {row.value.toLocaleString("en-US")}
-            </span>
+            <span className="text-foreground">{formatNumber(row.value)}</span>
           </CellGridItem>
         ))}
       </CellGrid>
       <CellFooter>
         <span>Nothing is written until you confirm.</span>
-        <Button size="sm" className="rounded-none">
+        <Button type="button" size="sm">
           Import
         </Button>
       </CellFooter>

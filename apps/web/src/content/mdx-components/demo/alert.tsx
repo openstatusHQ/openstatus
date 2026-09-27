@@ -1,4 +1,13 @@
-import { atTime, demo, getIncidentDay } from "@/data/demo-data";
+import { Button } from "@openstatus/ui/components/ui/button";
+
+import {
+  atTime,
+  auditRow,
+  demo,
+  formatNumber,
+  getIncidentDay,
+  hhmm,
+} from "@/data/demo-data";
 
 import {
   Cell,
@@ -29,29 +38,31 @@ import {
 } from "./slack";
 
 const failingRegions = demo.regions.filter((r) => r.status !== 200);
-const [slowest] = failingRegions;
+const slowest = failingRegions.reduce((a, b) => (b.ms > a.ms ? b : a));
 const alsoSent = demo.channels.filter(
   (c) => c.name !== "Slack" && c.state !== "off",
 );
-// The check the audit log records as `monitor.alert`.
-const cronTimestamp = atTime(getIncidentDay(), "09:41:12").toISOString();
 
 /** Four regions confirm the 503; the alert lands in Slack, mirroring `buildAlertBlocks`. */
 export function AlertDemo() {
+  const alert = auditRow("monitor.alert");
+  const cronTimestamp = atTime(getIncidentDay(), alert.time).toISOString();
+  const failed = demo.monitor.assertions.find((a) => !a.pass && "got" in a);
+  if (!failed) throw new Error("No failed assertion with a response");
   return (
     <Cell>
       <CellHeader>
-        <CellTitle># incidents</CellTitle>
+        <CellTitle>{demo.company.slackChannel}</CellTitle>
         <CellDescription>openstatus · alert</CellDescription>
       </CellHeader>
       <CellBody>
         <SlackMessage>
-          <SlackAvatar variant="app">os</SlackAvatar>
+          <SlackAvatar variant="app" />
           <SlackMessageContent>
             <SlackMessageMeta>
               <SlackAuthor>openstatus</SlackAuthor>
               <SlackAppBadge />
-              <SlackTime>09:41</SlackTime>
+              <SlackTime>{hhmm(alert.time)}</SlackTime>
             </SlackMessageMeta>
             <SlackMessageBody>
               <SlackAttachment tone="destructive">
@@ -65,7 +76,7 @@ export function AlertDemo() {
                   <SlackField>
                     <SlackFieldLabel>Status</SlackFieldLabel>
                     <SlackFieldValue className={toneClass.destructive}>
-                      503 Service Unavailable
+                      {failed.got}
                     </SlackFieldValue>
                   </SlackField>
                   <SlackField>
@@ -77,7 +88,7 @@ export function AlertDemo() {
                   <SlackField>
                     <SlackFieldLabel>Latency</SlackFieldLabel>
                     <SlackFieldValue>
-                      {slowest.ms.toLocaleString("en-US")} ms
+                      {formatNumber(slowest.ms)} ms
                     </SlackFieldValue>
                   </SlackField>
                   <SlackField>
@@ -88,12 +99,12 @@ export function AlertDemo() {
                 <SlackField className="text-xs">
                   <SlackFieldLabel className="mb-1">Error</SlackFieldLabel>
                   <CellPre className="border-border border break-words whitespace-pre-wrap">
-                    Expected status code 200, received 503
+                    {`Expected status code ${failed.value}, received ${failed.got}`}
                   </CellPre>
                 </SlackField>
-                <span className="border-border text-foreground inline-block border px-2 py-1 text-xs font-medium">
+                <Button size="sm" variant="outline" type="button">
                   View Dashboard
-                </span>
+                </Button>
               </SlackAttachment>
             </SlackMessageBody>
           </SlackMessageContent>

@@ -10,7 +10,7 @@ faq:
   - question: "What is openstatus?"
     answer: "Openstatus is an open-source status page and uptime monitoring platform. Monitor from 28 regions, publish a branded status page on your own domain, and manage it from the dashboard, Slack, CLI, API, Terraform or an AI agent. It is used by teams like Cal.com, WhiteBIT, and Documenso, and can be self-hosted."
   - question: "What does the free plan include?"
-    answer: "The free plan includes one monitor, one status page with three page components, and a minimum check interval of 10 minutes. No credit card is required, and you can upgrade or cancel at any time."
+    answer: "The free Hobby plan includes one monitor, one status page with three page components, and a minimum check interval of 10 minutes. No credit card is required, and you can upgrade or cancel at any time."
   - question: "Do I need a status page for SOC 2?"
     answer: "SOC 2's CC2.3 criteria asks you to demonstrate incident communication with external parties. A public status page with timestamped, audited incident history is the shortest answer. Every status report on openstatus is timestamped and documented automatically, and every mutation is written to the audit log."
   - question: "Can I self-host openstatus?"
@@ -21,7 +21,7 @@ faq:
 
 <Actions source="home-hero">
   <ButtonLink href="https://app.openstatus.dev" variant="default">Get started free</ButtonLink>
-  <ButtonLink href="https://github.com/openstatusHQ/openstatus" variant="ghost">GitHub 9k+</ButtonLink>
+  <ButtonLink href="/github" variant="ghost">GitHub 9k+</ButtonLink>
 </Actions>
 
 <p>
@@ -82,7 +82,7 @@ The Slack alert at 09:41: Checkout API returned 503 from lhr, ams, cdg and koyeb
 
 <SrOnly>
 
-Response logs at 09:42, one row per region: the four European regions returned 503 in about 4 seconds, almost all of it TTFB, while Virginia and San Jose returned 200 in about 230 ms.
+Response logs for the 09:41 check, one row per region: the four European regions returned 503 in about 4 seconds, almost all of it TTFB, while Virginia and San Jose returned 200 in about 230 ms.
 
 </SrOnly>
 
@@ -189,8 +189,6 @@ Every step is logged: who declared it, from where, when each update shipped. Whe
 
 - [Status pages for compliance](/use-case/compliance)
 
-<br></br>
-
 <Demo type="audit" />
 
 <SrOnly>
@@ -243,7 +241,7 @@ No per-seat fees. Every new workspace starts with a 14-day Starter trial, no car
 
 | Plan | Price | Includes |
 | --- | --- | --- |
-| Free | $0 | 1 monitor, 1 status page, checks every 10 min |
+| Hobby | $0 | 1 monitor, 1 status page, checks every 10 min |
 | Starter | $30/mo | 20 monitors, 1-min checks, custom domain, subscribers |
 | Pro | $100/mo | 50 monitors, 30-sec checks, all 28 regions, custom theme |
 | Scale | $500/mo | 500 components, white label, email auth and IP restriction |
@@ -263,13 +261,13 @@ No per-seat fees. Every new workspace starts with a 14-day Starter trial, no car
 
 Openstatus is an open-source status page and uptime monitoring platform. Monitor from 28 regions, publish a branded status page on your own domain, and manage it from the dashboard, Slack, [CLI](/tooling/cli), [API](/tooling/api), [Terraform](/tooling/terraform) or an [AI agent](/tooling/mcp-server).
 
-It is used by teams like [Cal.com](https://status.cal.com), [WhiteBIT](https://status.whitebit.com), and [Documenso](https://status.documenso.com), and available as a [managed service](https://app.openstatus.dev) or for [self-hosting](https://github.com/openstatushq/openstatus).
+It is used by teams like [Cal.com](https://status.cal.com), [WhiteBIT](https://status.whitebit.com), and [Documenso](https://status.documenso.com), and available as a [managed service](https://app.openstatus.dev) or for [self-hosting](/github).
 
 </Details>
 
 <Details summary="What does the free plan include?" headingLevel={3}>
 
-The free plan includes **one monitor**, **one status page** (with three page components), and a minimum check interval of `10m`. See the [pricing page](/pricing) for a full comparison.
+The free Hobby plan includes **one monitor**, **one status page** (with three page components), and a minimum check interval of `10m`. See the [pricing page](/pricing) for a full comparison.
 
 No credit card required. Upgrade or cancel at any time.
 
@@ -290,7 +288,7 @@ Yes. Openstatus is AGPL-3.0 and can be self-hosted with Docker. You can also kee
 - [Self-hosting the full openstatus stack](/docs/guides/self-hosting-openstatus)
 - [Self-hosting the status page only](/docs/guides/self-host-status-page-only)
 
-The source code is on [GitHub](https://openstatus.dev/github).
+The source code is on [GitHub](/github).
 
 </Details>
 

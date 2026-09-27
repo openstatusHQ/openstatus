@@ -22,10 +22,26 @@ function registeredTags() {
     join(dirname(root), "mdx-components", "index.tsx"),
     "utf8",
   );
-  const body = source.slice(source.indexOf("export const components = {"));
-  return new Set(
-    [...body.matchAll(/^\s+([A-Za-z]\w*)\s*[,:]/gm)].map((m) => m[1]),
+  const start = source.indexOf("export const components = {");
+  if (start === -1) throw new Error("components registry not found");
+  const body = source.slice(start);
+  const tags = new Set(
+    [...body.matchAll(/^\s+([A-Z]\w*)\s*[,:]/gm)].map((m) => m[1]),
   );
+  for (const name of ["Demo", "SrOnly", "Actions", "Grid"]) {
+    if (!tags.has(name)) throw new Error(`"${name}" not parsed from index.tsx`);
+  }
+  return tags;
+}
+
+// The demo registry keys, read from source for the same reason.
+function demoTypes() {
+  const source = readFileSync(
+    join(dirname(root), "mdx-components", "demo", "index.tsx"),
+    "utf8",
+  );
+  const body = source.slice(source.indexOf("const demos = {"));
+  return [...body.matchAll(/^\s+"?([a-z-]+)"?:/gm)].map((m) => m[1]);
 }
 
 // Strip fenced code so a `<Foo>` inside a snippet is not read as JSX.
@@ -35,6 +51,17 @@ function jsxOf(mdx: string) {
 
 describe("content pages", () => {
   const tags = registeredTags();
+
+  test("kitchen-sink renders every demo type", () => {
+    const body = readFileSync(
+      join(root, "unrelated", "kitchen-sink.mdx"),
+      "utf8",
+    );
+    const missing = demoTypes().filter(
+      (type) => !body.includes(`<Demo type="${type}" />`),
+    );
+    expect(missing).toEqual([]);
+  });
 
   for (const page of pages) {
     const name = page.slice(root.length + 1);

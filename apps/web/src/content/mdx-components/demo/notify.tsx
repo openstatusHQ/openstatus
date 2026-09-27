@@ -1,4 +1,11 @@
-import { atTime, demo, getIncidentDay } from "@/data/demo-data";
+import {
+  atTime,
+  auditRow,
+  capitalize,
+  demo,
+  formatNumber,
+  getIncidentDay,
+} from "@/data/demo-data";
 
 import {
   Cell,
@@ -29,12 +36,14 @@ import {
   SlackTime,
 } from "./slack";
 
-// The 09:52 update, the one the audit log records as `status_report.update → identified`.
 const [, identified] = demo.incident.updates;
-const updatedAt = atTime(getIncidentDay(), "09:52:40").toISOString();
 
-/** One approval, three channels: email, feeds, and the shared Slack channel. */
+/** One approval, three channels; the Slack card mirrors buildStatusReportBlocks. */
 export function NotifyDemo() {
+  const updatedAt = atTime(
+    getIncidentDay(),
+    auditRow("status_report.update", "→ identified").time,
+  ).toISOString();
   return (
     <Cell>
       <CellHeader>
@@ -47,7 +56,7 @@ export function NotifyDemo() {
       </CellHeader>
       <CellBody>
         <SlackMessage>
-          <SlackAvatar variant="app">os</SlackAvatar>
+          <SlackAvatar variant="app" />
           <SlackMessageContent>
             <SlackMessageMeta>
               <SlackAuthor>openstatus</SlackAuthor>
@@ -55,15 +64,16 @@ export function NotifyDemo() {
               <SlackTime>{identified.time}</SlackTime>
             </SlackMessageMeta>
             <SlackMessageBody>
-              {/* Mirrors `buildStatusReportBlocks` in @openstatus/subscriptions. */}
               <SlackAttachment tone="warning">
                 <SlackAttachmentTitle>
-                  {demo.incident.title} — Identified
+                  {demo.incident.title} — {capitalize(identified.status)}
                 </SlackAttachmentTitle>
                 <SlackFields>
                   <SlackField>
                     <SlackFieldLabel>Status</SlackFieldLabel>
-                    <SlackFieldValue>Identified</SlackFieldValue>
+                    <SlackFieldValue>
+                      {capitalize(identified.status)}
+                    </SlackFieldValue>
                   </SlackField>
                   <SlackField>
                     <SlackFieldLabel>Page</SlackFieldLabel>
@@ -72,7 +82,7 @@ export function NotifyDemo() {
                     </SlackFieldValue>
                   </SlackField>
                 </SlackFields>
-                <div>{identified.message}</div>
+                <SlackFieldValue>{identified.message}</SlackFieldValue>
                 <SlackField className="text-xs">
                   <SlackFieldLabel>Affected</SlackFieldLabel>
                   <SlackFieldValue>
@@ -91,7 +101,7 @@ export function NotifyDemo() {
       <CellGrid cols={3} className="text-xs">
         <CellGridItem>
           <CellLabel>Email</CellLabel>
-          <div>{demo.subscribers.email.toLocaleString("en-US")} sent</div>
+          <div>{formatNumber(demo.subscribers.email)} sent</div>
         </CellGridItem>
         <CellGridItem>
           <CellLabel>RSS / Atom</CellLabel>

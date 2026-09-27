@@ -1,3 +1,5 @@
+import { demo } from "@/data/demo-data";
+
 import {
   Cell,
   CellDescription,
@@ -11,12 +13,7 @@ import {
 const command = `docker run -d --name openstatus-probe \\
   --restart=always \\
   -e OPENSTATUS_KEY=os_•••••••• \\
-  ghcr.io/openstatushq/private-location:latest`;
-
-const probes = [
-  { name: "vpc-eu-west", ip: "10.0.4.12", seen: "2s ago" },
-  { name: "office-berlin", ip: "192.168.1.40", seen: "5s ago" },
-];
+  ${demo.privateLocation.image}`;
 
 /** One container inside the network; it shows up as one more region. */
 export function PrivateLocationDemo() {
@@ -24,10 +21,12 @@ export function PrivateLocationDemo() {
     <Cell>
       <CellHeader>
         <CellTitle>terminal</CellTitle>
-        <CellDescription>8.5 MB image · arm64 and amd64</CellDescription>
+        <CellDescription>
+          {demo.privateLocation.imageSize} image · arm64 and amd64
+        </CellDescription>
       </CellHeader>
       <CellPre>{command}</CellPre>
-      {probes.map((probe) => (
+      {demo.privateLocation.probes.map((probe) => (
         <CellRow key={probe.name} className="text-xs">
           <span>
             {probe.name}{" "}

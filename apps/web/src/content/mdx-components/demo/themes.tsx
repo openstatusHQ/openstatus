@@ -1,11 +1,6 @@
 "use client";
 
 import { THEME_KEYS, THEMES } from "@openstatus/theme-store";
-import {
-  StatusBannerContainer,
-  StatusBannerIcon,
-  StatusBannerMessage,
-} from "@openstatus/ui/components/blocks/status-banner";
 import { StatusBar } from "@openstatus/ui/components/blocks/status-bar";
 import {
   StatusComponent,
@@ -29,9 +24,10 @@ import {
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import { useState } from "react";
 
-import { demo, getStatusBarData } from "@/data/demo-data";
+import { demo, getMonitors, getStatusBarData } from "@/data/demo-data";
 
 import { Cell, CellBody, CellFooter, CellHeader, CellTitle } from "./cell";
+import { DemoBanner } from "./status-blocks";
 
 // The default theme is the page above; open on a store theme instead.
 const DEFAULT_THEME = "supabase";
@@ -44,14 +40,16 @@ function scopedVars(vars: Record<string, string>) {
 
 function themeCss(id: string) {
   const theme = THEMES[id];
+  // Matches the app's @custom-variant dark (&:is(.dark *)).
   return `[data-demo-theme="${id}"]{${scopedVars(theme.light)}}.dark [data-demo-theme="${id}"]{${scopedVars(theme.dark)}}`;
 }
 
 /** Same blocks, re-skinned by the CSS tokens each store theme sets. */
 export function ThemesDemo() {
   const [theme, setTheme] = useState<string>(DEFAULT_THEME);
-  const monitor = demo.components.find((c) => !c.external);
-  if (!monitor) return null;
+  // The bar's hover card portals to body by default, outside the themed subtree.
+  const [scope, setScope] = useState<HTMLDivElement | null>(null);
+  const monitor = getMonitors()[0];
   const data = getStatusBarData(monitor);
   return (
     <>
@@ -79,16 +77,11 @@ export function ThemesDemo() {
         <CellBody>
           {/* Scope the theme below the body so the Cell's own rule keeps the page border color. */}
           <div
+            ref={setScope}
             data-demo-theme={theme}
             className="text-foreground flex flex-col gap-4"
           >
-            <StatusBannerContainer
-              status={monitor.status}
-              className="flex items-center gap-3 px-3 py-2"
-            >
-              <StatusBannerIcon className="shrink-0" />
-              <StatusBannerMessage className="font-semibold" />
-            </StatusBannerContainer>
+            <DemoBanner status={monitor.status} />
             <StatusComponent variant={monitor.status}>
               <StatusComponentHeader>
                 <StatusComponentHeaderLeft>
@@ -103,7 +96,7 @@ export function ThemesDemo() {
                 </StatusComponentHeaderRight>
               </StatusComponentHeader>
               <StatusComponentBody>
-                <StatusBar data={data} />
+                <StatusBar data={data} container={scope} />
                 <StatusComponentFooter data={data} />
               </StatusComponentBody>
             </StatusComponent>

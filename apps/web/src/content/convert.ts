@@ -136,7 +136,8 @@ export function convertMdxToMarkdown(data: MDXData): string {
 
   // Step 9b: LogoCloud and Quote take their copy from `data/customers.ts`.
   markdown = markdown.replace(/<LogoCloud\b([^>]*?)\/>/g, (_match, attrs) => {
-    const limit = Number(attrs.match(/limit=\{(\d+)\}/)?.[1]) || 8;
+    const limit =
+      Number(attrs.match(/limit=\{(\d+)\}/)?.[1]) || customers.length;
     return customers
       .slice(0, limit)
       .map((c) => `[${c.name}](${c.story ?? c.href})`)
@@ -175,7 +176,8 @@ export function convertMdxToMarkdown(data: MDXData): string {
     markdown = markdown.replace(wrapper, (_match, _tag, content) => content);
   }
 
-  markdown = markdown.replace(/<br\s*\/?>|<\/br>/g, "");
+  // A break becomes a newline so `Before<br />After` keeps its word boundary.
+  markdown = markdown.replace(/<br\s*\/?>|<\/br>/g, "\n");
 
   // Step 11: Strip generic HTML containers but extract their text
   // This handles div, span, section, article

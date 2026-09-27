@@ -26,15 +26,18 @@ donates domain authority and leaks the conversion.
 The home and product pages (`pages/home.mdx`, `pages/product/*.mdx`) follow one
 section pattern: an `h2` outside the grid, a text cell with two sentences and a
 short list of internal links, and one `<Demo type="…" />` in the other cell of
-a `<Grid variant="borderless">`. `content-lint.test.ts` enforces the rules
-below on those pages; `/kitchen-sink` (noindex) renders every component once so
-drift is visible.
+a `<Grid variant="borderless">`. `content-lint.test.ts` enforces the structural
+rules on those pages (registered tags, `SrOnly` next to every demo, no raw
+`className`, every demo type in the kitchen sink); the rest of the rules below
+are kept by hand and in review. `/kitchen-sink` (noindex) renders every
+component once so drift is visible.
 
 - Props are enums, not free JSX. `Demo` picks from `mdx-components/demo/index.tsx`;
   a new demo is a new key there, reviewed in a PR. MDX never composes status
   blocks by hand.
 - Demos are compositions, not prop bags. They nest the `Cell*` parts from
-  `demo/cell.tsx`, the `Slack*` parts from `demo/slack.tsx` and the
+  `demo/cell.tsx`, the `Slack*` parts from `demo/slack.tsx`, the block
+  compositions in `demo/status-blocks.tsx` and `demo/subscribe.tsx`, and the
   `@openstatus/ui` status blocks. A repeated visual is a new part in one of
   those files, never a `title`/`items` prop or a copied class stack.
 - A `<Demo>` is a picture, so the `<SrOnly>` block next to it says what it
@@ -46,7 +49,8 @@ drift is visible.
   (the `/customers` listing comes from `pages/customers/*.mdx`).
   `data/demo-data.ts` (one fictional company, one incident) feeds every demo,
   so every demo on every page tells the same story; `demo.audit` is the
-  timeline of record, and every timestamp in a demo has to match a row there.
+  timeline of record, and every timestamp in a demo comes from `auditRow()`.
+  `--radius` is 0 on this site, so a `rounded-*` class in a demo is dead code.
 - No raw `className` in `pages/`. A CTA row is `<Actions source="…">`, which
   appends the tracking `ref` to app links; never hand-write `?ref=`.
 - Every capitalised tag must be registered in `mdx-components/index.tsx`.

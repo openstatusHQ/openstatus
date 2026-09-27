@@ -4,8 +4,13 @@ import { APP_URL } from "@/lib/metadata/shared-metadata";
 
 /** Adds `ref=<source>` to app links so OpenPanel can attribute the click. */
 export function withRef(href: string, source: string) {
-  if (!href.startsWith(APP_URL)) return href;
-  const url = new URL(href);
+  let url: URL;
+  try {
+    url = new URL(href);
+  } catch {
+    return href;
+  }
+  if (url.origin !== new URL(APP_URL).origin) return href;
   url.searchParams.set("ref", source);
   return url.toString();
 }

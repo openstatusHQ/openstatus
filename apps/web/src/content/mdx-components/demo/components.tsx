@@ -1,5 +1,6 @@
 import {
   StatusComponent,
+  StatusComponentDescription,
   StatusComponentHeader,
   StatusComponentHeaderLeft,
   StatusComponentHeaderRight,
@@ -10,24 +11,13 @@ import {
 } from "@openstatus/ui/components/blocks/status-component";
 import { StatusComponentGroup } from "@openstatus/ui/components/blocks/status-component-group";
 
-import { demo } from "@/data/demo-data";
+import { demo, getGroups, getMonitors } from "@/data/demo-data";
 
 import { Cell, CellBody, CellDescription, CellHeader, CellTitle } from "./cell";
 
-const groups = [...new Set(demo.components.map((c) => c.group))].map((name) => {
-  const items = demo.components.filter((c) => c.group === name);
-  return {
-    name,
-    items,
-    status: items.some((c) => c.status === "degraded")
-      ? ("degraded" as const)
-      : ("success" as const),
-  };
-});
-
 /** Monitors fill in from checks; external services are set by hand; both group. */
 export function ComponentsDemo() {
-  const monitors = demo.components.filter((c) => !c.external).length;
+  const monitors = getMonitors().length;
   const external = demo.components.length - monitors;
   return (
     <Cell>
@@ -39,31 +29,37 @@ export function ComponentsDemo() {
       </CellHeader>
       {/* The group block pulls itself out by 12px; pad so it lands on the cell gutter. */}
       <CellBody className="flex flex-col gap-3 px-7">
-        {groups.map((group) => (
+        {getGroups().map((group) => (
           <StatusComponentGroup
             key={group.name}
             title={group.name}
             status={group.status}
             defaultOpen
           >
-            {group.items.map((c) => (
-              <StatusComponent key={c.name} variant={c.status}>
-                <StatusComponentHeader>
-                  <StatusComponentHeaderLeft>
-                    <StatusComponentIcon />
-                    <StatusComponentTitle>{c.name}</StatusComponentTitle>
-                  </StatusComponentHeaderLeft>
-                  <StatusComponentHeaderRight>
-                    <StatusComponentUptime className="text-muted-foreground text-xs">
-                      {c.external
-                        ? "external · manual"
-                        : `monitor · ${c.uptime}`}
-                    </StatusComponentUptime>
-                    <StatusComponentStatus />
-                  </StatusComponentHeaderRight>
-                </StatusComponentHeader>
-              </StatusComponent>
-            ))}
+            {group.items.map((c) => {
+              const external = "external" in c && c.external;
+              return (
+                <StatusComponent key={c.name} variant={c.status}>
+                  <StatusComponentHeader>
+                    <StatusComponentHeaderLeft>
+                      <StatusComponentIcon />
+                      <StatusComponentTitle>{c.name}</StatusComponentTitle>
+                      <StatusComponentDescription>
+                        {external ? "external" : "monitor"}
+                      </StatusComponentDescription>
+                    </StatusComponentHeaderLeft>
+                    <StatusComponentHeaderRight>
+                      {external ? null : (
+                        <StatusComponentUptime>
+                          {c.uptime}
+                        </StatusComponentUptime>
+                      )}
+                      <StatusComponentStatus />
+                    </StatusComponentHeaderRight>
+                  </StatusComponentHeader>
+                </StatusComponent>
+              );
+            })}
           </StatusComponentGroup>
         ))}
       </CellBody>

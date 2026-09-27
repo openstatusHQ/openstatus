@@ -76,25 +76,25 @@ Full schema and methods in the [API reference](https://api.openstatus.dev/openap
 
 ## Frequently asked questions
 
-<Details summary="Should I use the SDK or call the API directly?">
+<Details summary="Should I use the SDK or call the API directly?" headingLevel={3}>
 
 Use the Node SDK if you're writing TypeScript or JavaScript — it handles auth, retries, and types for every endpoint. Call the API directly via curl or your language's HTTP client if you're outside the JS ecosystem; ConnectRPC means responses are plain JSON over HTTP.
 
 </Details>
 
-<Details summary="Is the API REST or RPC?">
+<Details summary="Is the API REST or RPC?" headingLevel={3}>
 
 It's ConnectRPC — JSON over HTTP, but with a typed RPC contract instead of REST conventions. Every method is a POST to `/rpc/openstatus.v1.<Service>/<Method>`. You can call it from curl exactly like you'd call a REST endpoint.
 
 </Details>
 
-<Details summary="How do I authenticate?">
+<Details summary="How do I authenticate?" headingLevel={3}>
 
 Pass the x-openstatus-key header on every request. Generate a key from Settings > General > API Keys — the same key works for the CLI, Terraform provider, and MCP server.
 
 </Details>
 
-<Details summary="Do you publish an OpenAPI spec?">
+<Details summary="Do you publish an OpenAPI spec?" headingLevel={3}>
 
 Yes. The full schema is browsable at api.openstatus.dev/openapi and is the source of truth for the Node SDK and any generated clients.
 

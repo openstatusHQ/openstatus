@@ -7,11 +7,16 @@ import {
   StatusComponentHeader,
   StatusComponentHeaderLeft,
   StatusComponentHeaderRight,
-  StatusComponentStatus,
+  StatusComponentIcon,
   StatusComponentTitle,
   StatusComponentUptime,
 } from "@openstatus/ui/components/blocks/status-component";
 import { StatusComponentGroup } from "@openstatus/ui/components/blocks/status-component-group";
+import {
+  StatusPageFooter,
+  StatusPageFooterContent,
+  StatusPagePoweredBy,
+} from "@openstatus/ui/components/blocks/status-page-footer";
 import {
   StatusPageHeader,
   StatusPageHeaderActions,
@@ -28,43 +33,33 @@ import {
 import {
   StatusUpdates,
   StatusUpdatesContent,
-  StatusUpdatesJson,
-  StatusUpdatesRss,
-  StatusUpdatesSlack,
-  StatusUpdatesSsh,
   StatusUpdatesTrigger,
 } from "@openstatus/ui/components/blocks/status-updates";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
 import Image from "next/image";
 
-import { demo, getStatusBarData } from "@/data/demo-data";
+import {
+  type DemoComponent,
+  demo,
+  getGroups,
+  getMonitors,
+  getStatusBarData,
+  worstStatus,
+} from "@/data/demo-data";
 
-import { Cell, CellFooter } from "./cell";
-import { SubscribeEmailTab } from "./subscribe-email";
+import { Cell } from "./cell";
+import { SubscribeTabs } from "./subscribe";
 
-const feed = `https://${demo.company.domain}/feed`;
-
-type Monitor = (typeof demo.components)[number];
-
-const worst = (list: Monitor[]) =>
-  list.some((m) => m.status === "degraded") ? "degraded" : "success";
-
-function MonitorCard({ monitor }: { monitor: Monitor }) {
-  const data = getStatusBarData(monitor);
+function MonitorCard({ component }: { component: DemoComponent }) {
+  const data = getStatusBarData(component);
   return (
-    <StatusComponent variant={monitor.status}>
+    <StatusComponent variant={component.status}>
       <StatusComponentHeader>
         <StatusComponentHeaderLeft>
-          <StatusComponentTitle>{monitor.name}</StatusComponentTitle>
+          <StatusComponentTitle>{component.name}</StatusComponentTitle>
         </StatusComponentHeaderLeft>
         <StatusComponentHeaderRight>
-          <StatusComponentUptime>{monitor.uptime}</StatusComponentUptime>
-          <StatusComponentStatus />
+          <StatusComponentUptime>{component.uptime}</StatusComponentUptime>
+          <StatusComponentIcon />
         </StatusComponentHeaderRight>
       </StatusComponentHeader>
       <StatusComponentBody>
@@ -75,14 +70,10 @@ function MonitorCard({ monitor }: { monitor: Monitor }) {
   );
 }
 
-/** The live status page, mid-incident: real blocks, no screenshot. */
+/** The live status page while a component is degraded: real blocks, no screenshot. */
 export function StatusPageDemo() {
-  const monitors = demo.components.filter((c) => !c.external);
-  const groups = [...new Set(monitors.map((m) => m.group))].map((name) => ({
-    name,
-    monitors: monitors.filter((m) => m.group === name),
-  }));
-  const status = worst(monitors);
+  const monitors = getMonitors();
+  const groups = getGroups(monitors);
   return (
     <Cell>
       <StatusPageShell className="min-h-0 gap-0 px-4">
@@ -116,67 +107,41 @@ export function StatusPageDemo() {
               <StatusUpdates>
                 <StatusUpdatesTrigger />
                 <StatusUpdatesContent>
-                  <Tabs defaultValue="email">
-                    <TabsList className="w-full rounded-none border-b">
-                      <TabsTrigger value="email">Email</TabsTrigger>
-                      <TabsTrigger value="slack">Slack</TabsTrigger>
-                      <TabsTrigger value="rss">RSS</TabsTrigger>
-                      <TabsTrigger value="json">JSON</TabsTrigger>
-                      <TabsTrigger value="ssh">SSH</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="email" className="flex flex-col gap-2">
-                      <SubscribeEmailTab />
-                    </TabsContent>
-                    <TabsContent value="slack">
-                      <StatusUpdatesSlack rssUrl={`${feed}/rss`} />
-                    </TabsContent>
-                    <TabsContent value="rss">
-                      <StatusUpdatesRss
-                        rssUrl={`${feed}/rss`}
-                        atomUrl={`${feed}/atom`}
-                      />
-                    </TabsContent>
-                    <TabsContent value="json">
-                      <StatusUpdatesJson url={`${feed}/json`} />
-                    </TabsContent>
-                    <TabsContent value="ssh">
-                      <StatusUpdatesSsh
-                        command={`ssh ${demo.company.slug}@ssh.openstatus.dev`}
-                      />
-                    </TabsContent>
-                  </Tabs>
+                  <SubscribeTabs />
                 </StatusUpdatesContent>
               </StatusUpdates>
             </StatusPageHeaderActions>
           </StatusPageHeaderContent>
         </StatusPageHeader>
+        {/* The group block pulls itself out by 12px; pad so it lands on the cell gutter. */}
         <StatusPageMain className="max-w-none gap-6 px-3 py-4">
-          <StatusBanner status={status} />
+          <StatusBanner status={worstStatus(monitors)} />
           <div className="flex flex-col gap-5">
-            {groups.map((group) => {
-              const groupStatus = worst(group.monitors);
-              return (
-                <StatusComponentGroup
-                  key={group.name}
-                  title={group.name}
-                  status={groupStatus}
-                  defaultOpen={groupStatus !== "success"}
-                >
-                  {group.monitors.map((monitor) => (
-                    <MonitorCard key={monitor.name} monitor={monitor} />
-                  ))}
-                </StatusComponentGroup>
-              );
-            })}
+            {groups.map((group) => (
+              <StatusComponentGroup
+                key={group.name}
+                title={group.name}
+                status={group.status}
+                defaultOpen={group.status !== "success"}
+              >
+                {group.items.map((component) => (
+                  <MonitorCard key={component.name} component={component} />
+                ))}
+              </StatusComponentGroup>
+            ))}
           </div>
         </StatusPageMain>
       </StatusPageShell>
-      <CellFooter>
-        <span>
-          powered by <span className="text-foreground">openstatus</span>
-        </span>
-        <span>{demo.company.domain}</span>
-      </CellFooter>
+      <StatusPageFooter>
+        <StatusPageFooterContent className="max-w-none px-4">
+          <StatusPagePoweredBy>
+            <span className="text-foreground">openstatus</span>
+          </StatusPagePoweredBy>
+          <span className="text-muted-foreground text-xs">
+            {demo.company.domain}
+          </span>
+        </StatusPageFooterContent>
+      </StatusPageFooter>
     </Cell>
   );
 }

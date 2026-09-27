@@ -120,8 +120,8 @@ export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
   };
 };
 
-// Home sits outside `getPageMetadata`: its canonical is `/` and its title
-// skips the `%s | openstatus` template.
+// Home sits outside `getPageMetadata`: its canonical is `/`, its title skips
+// the `%s | openstatus` template and its OG card is the static one.
 export const getHomeMetadata = (page: MDXData): Metadata => {
   const { title, description, category, seo } = page.metadata;
   const metaTitle = seo?.title ?? title;
@@ -131,12 +131,16 @@ export const getHomeMetadata = (page: MDXData): Metadata => {
     ...defaultMetadata,
     title: { absolute: metaTitle },
     description: metaDescription,
+    alternates: {
+      canonical: seo?.canonical ?? "/",
+    },
+    ...(seo?.noindex ? { robots: { index: false } } : {}),
     ...getSocialMetadata({
       title: metaTitle,
       description: metaDescription,
       url: BASE_URL,
       category,
-      ogImage: seo?.ogImage,
+      ogImage: seo?.ogImage ?? `${BASE_URL}/api/og`,
     }),
   };
 };

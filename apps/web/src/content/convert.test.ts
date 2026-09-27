@@ -63,7 +63,7 @@ describe("convertMdxToMarkdown", () => {
   test("the main pages leave no JSX behind", () => {
     for (const page of [getHomePage(), ...getProductPages()]) {
       const markdown = convertMdxToMarkdown(page);
-      expect(markdown).not.toMatch(/<(?!\/?(details|summary)>)[A-Za-z]/);
+      expect(markdown).not.toMatch(/<\/?(?!(details|summary)>)[A-Za-z]/);
     }
   });
 
@@ -77,6 +77,10 @@ describe("convertMdxToMarkdown", () => {
   test("drops br and the blank lines around it", () => {
     const markdown = convert("a\n\n<br></br>\n\n<br />\n\nb");
     expect(markdown).toContain("a\n\nb");
+  });
+
+  test("an inline br keeps the word boundary", () => {
+    expect(convert("Before<br />After")).toContain("Before\nAfter");
   });
 
   test("the main pages have no runs of blank lines", () => {

@@ -13,6 +13,7 @@ import {
   getToolsPages,
   getUnrelatedPages,
   getUseCasePages,
+  isIndexable,
 } from "../content/utils";
 import type { Metadata } from "../content/utils/schema";
 import {
@@ -24,19 +25,17 @@ export const revalidate = 3600;
 
 const modified = (m: Metadata) => m.updatedAt ?? m.publishedAt;
 
-const allPosts = getBlogPosts();
-const allChangelogs = getChangelogPosts();
-const allComparisons = getComparePages();
-const allUnrelated = getUnrelatedPages().filter(
-  (page) => page.slug !== "not-found" && !page.metadata.seo?.noindex,
-);
-const allProducts = getProductPages();
-const allPlaygrounds = getToolsPages();
-const allGuides = getGuides();
-const allUseCases = getUseCasePages();
-const allTooling = getToolingPages();
-const allCustomers = getCustomerPages();
-const allDocs = getDocPages();
+const allPosts = getBlogPosts().filter(isIndexable);
+const allChangelogs = getChangelogPosts().filter(isIndexable);
+const allComparisons = getComparePages().filter(isIndexable);
+const allUnrelated = getUnrelatedPages().filter(isIndexable);
+const allProducts = getProductPages().filter(isIndexable);
+const allPlaygrounds = getToolsPages().filter(isIndexable);
+const allGuides = getGuides().filter(isIndexable);
+const allUseCases = getUseCasePages().filter(isIndexable);
+const allTooling = getToolingPages().filter(isIndexable);
+const allCustomers = getCustomerPages().filter(isIndexable);
+const allDocs = getDocPages().filter(isIndexable);
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const externalServices = await cachedListExternalServices();

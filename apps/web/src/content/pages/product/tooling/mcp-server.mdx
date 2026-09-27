@@ -77,25 +77,25 @@ Full tool schema, error codes, and per-client config in the [MCP reference](/doc
 
 ## Frequently asked questions
 
-<Details summary="What does the MCP server let an assistant do?">
+<Details summary="What does the MCP server let an assistant do?" headingLevel={3}>
 
 The MCP server exposes 19 read and write tools scoped to your workspace: list status pages, monitors, response logs, notifications, private locations, and audit logs; inspect a single monitor or response log; create, update, and resolve status reports; schedule maintenance windows. Every mutation writes to the audit log, and publishing tools require an explicit notify decision.
 
 </Details>
 
-<Details summary="Are skills different from the MCP server?">
+<Details summary="Are skills different from the MCP server?" headingLevel={3}>
 
 Skills are prompt and command bundles installed into your local agent (Claude Code, etc.) that wrap the openstatus CLI. The MCP server is a remote endpoint that any MCP-compatible client can connect to. Skills are great for terminal-shaped workflows; MCP is great for chat-shaped workflows.
 
 </Details>
 
-<Details summary="Do I need an API key to connect an MCP client?">
+<Details summary="Do I need an API key to connect an MCP client?" headingLevel={3}>
 
 No. The MCP server is an OAuth 2.1 authorization server: Claude, ChatGPT, Cursor, and other clients open a consent screen where you pick a workspace and read-only or read & write access, and tokens are issued and refreshed automatically. The `x-openstatus-key` header still works for CI and headless agents, with the same key the CLI, API, and Terraform use.
 
 </Details>
 
-<Details summary="Can the assistant accidentally notify subscribers?">
+<Details summary="Can the assistant accidentally notify subscribers?" headingLevel={3}>
 
 No. Every publishing tool requires the assistant to set notify: true | false explicitly — there's no default. Metadata-only edits like update_status_report can't notify at all. Every mutation lands in the audit log under actor_type = 'mcp', so you can see exactly what happened.
 

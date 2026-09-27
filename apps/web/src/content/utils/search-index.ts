@@ -1,5 +1,11 @@
 import "server-only";
-import { type MDXData, PAGE_TYPES, getHomePage, getPages } from ".";
+import {
+  type MDXData,
+  PAGE_TYPES,
+  getHomePage,
+  getPages,
+  isIndexable,
+} from ".";
 import { slugify } from "../mdx";
 import type { Corpus, SearchResult } from "../search-meta";
 import {
@@ -75,10 +81,7 @@ function indexDoc(doc: MDXData, type: Corpus): IndexedDoc {
 function buildCorpus(type: Corpus): IndexedDoc[] {
   const pages =
     type === "product" ? [homeDoc(), ...getPages("product")] : getPages(type);
-  // Same rule as the sitemap and llms.txt: a noindex page is not searchable either.
-  return pages
-    .filter((doc) => !doc.metadata.seo?.noindex)
-    .map((doc) => indexDoc(doc, type));
+  return pages.filter(isIndexable).map((doc) => indexDoc(doc, type));
 }
 
 function getCorpus(type: Corpus): IndexedDoc[] {

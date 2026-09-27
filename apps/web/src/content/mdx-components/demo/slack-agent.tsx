@@ -1,6 +1,6 @@
 import { Button } from "@openstatus/ui/components/ui/button";
 
-import { demo } from "@/data/demo-data";
+import { capitalize, demo, formatNumber } from "@/data/demo-data";
 
 import {
   Cell,
@@ -26,7 +26,6 @@ import {
   SlackTime,
 } from "./slack";
 
-// The first update: drafted at 09:44, published the same minute (see `demo.audit`).
 const [investigating] = demo.incident.updates;
 
 /** Declare the incident from the thread: ask, review the draft, approve. */
@@ -34,16 +33,16 @@ export function SlackAgentDemo() {
   return (
     <Cell>
       <CellHeader>
-        <CellTitle># incidents</CellTitle>
-        <CellDescription>thread · 3 replies</CellDescription>
+        <CellTitle>{demo.company.slackChannel}</CellTitle>
+        <CellDescription>thread</CellDescription>
       </CellHeader>
       <CellBody className="space-y-4">
         <SlackMessage>
-          <SlackAvatar>BG</SlackAvatar>
+          <SlackAvatar>{demo.company.oncall.initials}</SlackAvatar>
           <SlackMessageContent>
             <SlackMessageMeta>
-              <SlackAuthor>Bertram G.</SlackAuthor>
-              <SlackTime>09:44</SlackTime>
+              <SlackAuthor>{demo.company.oncall.name}</SlackAuthor>
+              <SlackTime>{investigating.time}</SlackTime>
             </SlackMessageMeta>
             <SlackMessageBody>
               <SlackLink>@openstatus</SlackLink> checkout API is returning 503s
@@ -52,12 +51,12 @@ export function SlackAgentDemo() {
           </SlackMessageContent>
         </SlackMessage>
         <SlackMessage>
-          <SlackAvatar variant="app">os</SlackAvatar>
+          <SlackAvatar variant="app" />
           <SlackMessageContent>
             <SlackMessageMeta>
               <SlackAuthor>openstatus</SlackAuthor>
               <SlackAppBadge />
-              <SlackTime>09:44</SlackTime>
+              <SlackTime>{investigating.time}</SlackTime>
             </SlackMessageMeta>
             <SlackMessageBody>
               <Cell className="mt-1">
@@ -69,7 +68,7 @@ export function SlackAgentDemo() {
                   <CellValue>{demo.incident.title}</CellValue>
                   <CellKey>Status</CellKey>
                   <CellValue className={toneClass.warning}>
-                    Investigating
+                    {capitalize(investigating.status)}
                   </CellValue>
                   <CellKey>Affected</CellKey>
                   <CellValue>{demo.incident.affected.join(", ")}</CellValue>
@@ -79,13 +78,13 @@ export function SlackAgentDemo() {
                   </CellValue>
                 </CellKeyValues>
                 <CellRow className="flex-wrap justify-start gap-2">
-                  <Button size="sm" className="rounded-none">
+                  <Button type="button" size="sm">
                     Approve
                   </Button>
-                  <Button size="sm" variant="outline" className="rounded-none">
+                  <Button type="button" size="sm" variant="outline">
                     Approve &amp; notify
                   </Button>
-                  <Button size="sm" variant="ghost" className="rounded-none">
+                  <Button type="button" size="sm" variant="ghost">
                     Cancel
                   </Button>
                 </CellRow>
@@ -94,7 +93,7 @@ export function SlackAgentDemo() {
           </SlackMessageContent>
         </SlackMessage>
         <SlackMessage>
-          <SlackAvatar variant="app">os</SlackAvatar>
+          <SlackAvatar variant="app" />
           <SlackMessageContent>
             <SlackMessageMeta>
               <SlackAuthor>openstatus</SlackAuthor>
@@ -103,8 +102,8 @@ export function SlackAgentDemo() {
             </SlackMessageMeta>
             <SlackMessageBody>
               Published to {demo.company.domain}.{" "}
-              {demo.subscribers.email.toLocaleString("en-US")} subscribers
-              notified. Reply here to post the next update.
+              {formatNumber(demo.subscribers.email)} subscribers notified. Reply
+              here to post the next update.
             </SlackMessageBody>
           </SlackMessageContent>
         </SlackMessage>

@@ -1,11 +1,6 @@
 "use client";
 
 import {
-  StatusBannerContainer,
-  StatusBannerIcon,
-  StatusBannerMessage,
-} from "@openstatus/ui/components/blocks/status-banner";
-import {
   StatusComponent,
   StatusComponentHeader,
   StatusComponentHeaderLeft,
@@ -22,11 +17,12 @@ import { StatusLocaleSwitcher } from "@openstatus/ui/components/blocks/status-lo
 import { defaultStatusBlocksLabels } from "@openstatus/ui/components/blocks/status.utils";
 import { useState } from "react";
 
-import { demo } from "@/data/demo-data";
+import { demo, getMonitors, worstStatus } from "@/data/demo-data";
 
 import { Cell, CellBody, CellHeader, CellTitle } from "./cell";
+import { DemoBanner } from "./status-blocks";
 
-const options = demo.locales.map((l) => ({ value: l.code, label: l.name }));
+const LOCALES = demo.locales.map((l) => ({ value: l.code, label: l.name }));
 // Open on a translated page, not the English default the reader already knows.
 const DEFAULT_LOCALE = "fr";
 
@@ -44,7 +40,7 @@ function labelsFor(code: string): StatusBlocksLabels {
 /** The same blocks, read through the i18n provider the status page mounts. */
 export function TranslationsDemo() {
   const [locale, setLocale] = useState<string>(DEFAULT_LOCALE);
-  const components = demo.components.filter((c) => !c.external).slice(0, 3);
+  const components = getMonitors().slice(0, 3);
   return (
     <Cell>
       <CellHeader>
@@ -52,19 +48,13 @@ export function TranslationsDemo() {
         <StatusLocaleSwitcher
           value={locale}
           onValueChange={setLocale}
-          locales={options}
+          locales={LOCALES}
           className="-my-1 size-7"
         />
       </CellHeader>
       <StatusBlocksI18nProvider value={labelsFor(locale)}>
         <CellBody className="flex flex-col gap-4">
-          <StatusBannerContainer
-            status="degraded"
-            className="flex items-center gap-3 px-3 py-2"
-          >
-            <StatusBannerIcon className="shrink-0" />
-            <StatusBannerMessage className="font-semibold" />
-          </StatusBannerContainer>
+          <DemoBanner status={worstStatus(components)} />
           {components.map((c) => (
             <StatusComponent key={c.name} variant={c.status}>
               <StatusComponentHeader>

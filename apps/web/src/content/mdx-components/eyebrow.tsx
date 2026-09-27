@@ -11,7 +11,7 @@ export function Eyebrow({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="eyebrow"
       className={cn(
-        "text-muted-foreground text-[11px] tracking-widest uppercase tabular-nums",
+        "text-muted-foreground text-xs tracking-widest uppercase tabular-nums",
         className,
       )}
       {...props}

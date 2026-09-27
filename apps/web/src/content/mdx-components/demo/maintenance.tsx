@@ -8,7 +8,7 @@ import {
   StatusEventTimelineMaintenance,
 } from "@openstatus/ui/components/blocks/status-events";
 
-import { demo, getMaintenance } from "@/data/demo-data";
+import { demo, formatNumber, getMaintenance } from "@/data/demo-data";
 
 import { Cell, CellBody, CellFooter } from "./cell";
 
@@ -39,8 +39,8 @@ export function MaintenanceDemo() {
           Scheduled {Math.round(demo.maintenance.hoursFromNow / 24)} days ahead
         </span>
         <span>
-          {demo.subscribers.email.toLocaleString("en-US")} subscribers notified
-          at scheduling
+          {formatNumber(demo.subscribers.email)} subscribers notified at
+          scheduling
         </span>
       </CellFooter>
     </Cell>

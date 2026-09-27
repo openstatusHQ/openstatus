@@ -53,7 +53,7 @@ faq:
 
 <SrOnly>
 
-The monitor overview for Checkout API, checked every minute: 99.94% uptime, 4 regions failing, P50 231 ms, P95 4.21 s, with an uptime chart per minute and a P95 latency chart stacked by phase where TTFB jumps to about 4 seconds.
+The monitor overview for Checkout API, checked every minute: 99.94% uptime, 4 of 6 regions failing, P50 231 ms, P95 4.39 s, with an uptime chart per minute and a P95 latency chart stacked by phase where TTFB jumps to about 4 seconds.
 
 </SrOnly>
 
@@ -147,7 +147,7 @@ Any method, custom headers, a request body. Assert on status code, header and bo
 
 A failed assertion from one region is noise; from half your regions it is an alert. Route it to Slack, Discord, PagerDuty, Opsgenie, email, SMS or a webhook, with the failing requests attached.
 
-Also: Telegram, Google Chat, Microsoft Teams, WhatsApp, Grafana OnCall and ntfy.
+Telegram, Google Chat, Microsoft Teams, WhatsApp, Grafana OnCall and ntfy are there too.
 
 - [Notification channels](/docs/reference/notification)
 
@@ -255,8 +255,6 @@ Response logs with the timing breakdown, headers and body per region, for as lon
 
 - [Response logs and retention](/docs/concept/response-logs-and-retention)
 
-<br></br>
-
 <Demo type="logs" />
 
 <SrOnly>
@@ -275,85 +273,85 @@ The response-logs table for the check, one row per region with status, latency a
 
 ## Frequently asked questions
 
-<Details summary="What is uptime monitoring?">
+<Details summary="What is uptime monitoring?" headingLevel={3}>
 
 Uptime monitoring is the practice of checking, on a fixed schedule and from outside your own network, whether a service is reachable and responding correctly. Checks typically run every 30 seconds to 10 minutes from probe locations around the world. Because the checks originate externally, they catch failures your internal dashboards cannot see — DNS problems, expired certificates, and regional outages.
 
 </Details>
 
-<Details summary="How often should I check my service?">
+<Details summary="How often should I check my service?" headingLevel={3}>
 
 Match the frequency to the cost of the outage. Revenue-critical endpoints justify 30-second checks; internal tooling is usually fine at 5 or 10 minutes. Higher frequency shortens the time between a failure starting and you hearing about it, but consumes more of your check quota. openstatus supports 30s, 1m, 5m and 10m intervals depending on your plan.
 
 </Details>
 
-<Details summary="What is the difference between uptime and availability?">
+<Details summary="What is the difference between uptime and availability?" headingLevel={3}>
 
 Uptime is what your monitor measures: the proportion of checks that succeeded. Availability is what your users experienced, which includes degraded performance your checks may have passed. A service returning HTTP 200 in eight seconds is up but arguably not available. This is why thresholds matter alongside assertions — they let you count slow responses as degraded rather than healthy.
 
 </Details>
 
-<Details summary="Can I monitor internal services?">
+<Details summary="Can I monitor internal services?" headingLevel={3}>
 
 Yes. Deploy a private location probe inside your network as an 8.5MB Docker container and it appears as another monitoring region in your dashboard. The probe reaches out to openstatus, so no inbound firewall rule is needed. You can run as many private locations as you like across different VPCs or networks.
 
 </Details>
 
-<Details summary="How do I monitor a REST or GraphQL API?">
+<Details summary="How do I monitor a REST or GraphQL API?" headingLevel={3}>
 
 Create an HTTP monitor pointing at the endpoint, choose the method, and add any headers your API needs for authentication. For GraphQL, send a POST with the query in the body. Then add assertions on the status code, response headers, or body content so the monitor verifies the response is correct rather than merely present, and set a threshold so slow responses register as degraded.
 
 </Details>
 
-<Details summary="How much does uptime monitoring cost?">
+<Details summary="How much does uptime monitoring cost?" headingLevel={3}>
 
 The free Hobby plan includes one monitor at a 10-minute interval with no credit card. Paid plans start at $30/month for Starter (20 monitors, 1-minute checks, 6 regions per monitor), $100/month for Pro (50 monitors, 30-second checks, all 28 regions), and $500/month for Scale. Annual billing gives you two months free.
 
 </Details>
 
-<Details summary="How many regions should I monitor from?">
+<Details summary="How many regions should I monitor from?" headingLevel={3}>
 
 Start with 3-5 regions covering your main user geographies. More regions provide better global coverage but use more check quota. For critical services, monitor from all major regions (North America, Europe, Asia) to catch regional issues quickly.
 
 </Details>
 
-<Details summary="Why monitor from multiple cloud providers instead of just one?">
+<Details summary="Why monitor from multiple cloud providers instead of just one?" headingLevel={3}>
 
 If your service runs on AWS and your monitoring also runs on AWS, you won't detect AWS-wide outages or network issues affecting AWS connectivity. Using Fly.io, Koyeb, and Railway ensures monitoring independence from your infrastructure provider.
 
 </Details>
 
-<Details summary="What's the difference between frequency settings?">
+<Details summary="What's the difference between frequency settings?" headingLevel={3}>
 
 Frequency determines how often we check your service (e.g., every 30 seconds, 1 minute, 5 minutes, 10 minutes). Higher frequency (30s) catches issues faster but uses more checks. Lower frequency (10m) is sufficient for non-critical services and conserves quota.
 
 </Details>
 
-<Details summary="Can uptime monitoring trigger my status page automatically?">
+<Details summary="Can uptime monitoring trigger my status page automatically?" headingLevel={3}>
 
 Yes, you can configure monitors to automatically update your status page based on monitoring results. When assertions fail or thresholds are exceeded, the status page can reflect degraded or down status without manual intervention.
 
 </Details>
 
-<Details summary="How do thresholds and assertions work together?">
+<Details summary="How do thresholds and assertions work together?" headingLevel={3}>
 
 Assertions validate response correctness (status code, headers, body content) while thresholds define performance boundaries (degraded latency, timeout). Both can trigger alerts - assertions catch functional failures, thresholds catch performance degradation.
 
 </Details>
 
-<Details summary="What types of API endpoints can I monitor?">
+<Details summary="What types of API endpoints can I monitor?" headingLevel={3}>
 
 You can monitor any HTTP/HTTPS endpoint including REST APIs, GraphQL APIs, webhooks, and third-party service endpoints. openstatus supports all HTTP methods (GET, POST, PUT, DELETE, etc.) and custom headers for authentication.
 
 </Details>
 
-<Details summary="Can I manage monitors with Terraform?">
+<Details summary="Can I manage monitors with Terraform?" headingLevel={3}>
 
 Yes. The openstatus Terraform provider manages HTTP, TCP, DNS and ICMP monitors — with headers, assertions and thresholds — plus notification channels, status pages and private locations. Monitors live in HCL next to the rest of your infrastructure and go through the same plan-and-apply lifecycle. Run `openstatus terraform generate` to bootstrap an HCL file from an existing workspace.
 
 </Details>
 
-<Details summary="Can I run private monitoring locations in different networks?">
+<Details summary="Can I run private monitoring locations in different networks?" headingLevel={3}>
 
 Yes, you can deploy as many private location probes as needed across different networks, VPCs, or regions. Each gets its own API key and appears as a separate monitoring region in your dashboard. The Docker image is only 8.5MB and supports ARM64 and AMD64.
 

@@ -18,7 +18,6 @@ import { ThemesDemo } from "./themes";
 import { TimingDemo } from "./timing";
 import { TranslationsDemo } from "./translations";
 
-// A new demo is a new key here, reviewed in a PR. MDX never composes blocks by hand.
 const demos = {
   "status-page": StatusPageDemo,
   alert: AlertDemo,
@@ -43,11 +42,15 @@ const demos = {
 } as const;
 
 export type DemoType = keyof typeof demos;
-export const DEMO_TYPES = Object.keys(demos) as DemoType[];
 
 /** A live product moment from `data/demo-data.ts`, picked by `type`. */
 export function Demo({ type }: { type: DemoType }) {
   const Component = demos[type];
+  // MDX passes a string, so the key is only checked here.
   if (!Component) throw new Error(`Unknown demo type "${type}"`);
-  return <Component />;
+  return (
+    <div className="not-prose my-6">
+      <Component />
+    </div>
+  );
 }
