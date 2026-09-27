@@ -81,6 +81,11 @@ tinybird:
     # Source tarball whose packages/tinybird is deployed. Pin the same commit
     # as image.tag, e.g. .../tar.gz/<sha>.
     sourceUrl: https://codeload.github.com/openstatusHQ/openstatus/tar.gz/main
+    # For a private fork: a Secret holding a GitHub token, sent as a Bearer token.
+    # Use the API form, https://api.github.com/repos/<owner>/<repo>/tarball/<sha>.
+    sourceTokenSecret:
+      name: ""
+      key: token
     backoffLimit: 6
 
 services:

@@ -43,5 +43,6 @@ ClusterIP Services only.
 | `image.tag` | `latest` | Upstream publishes `latest`, `main` and short-SHA tags. |
 | `image.digests` | `{}` | Per-image digest pins (`openstatus-server: sha256:...`). Images are rebuilt only when their app changes, so one SHA tag rarely covers every image. Third-party images take `<component>.image.digest`. |
 | `tinybird.bootstrap.sourceUrl` | `main` tarball | Pin to the same commit as `image.tag`. |
+| `tinybird.bootstrap.sourceTokenSecret` | unset | Secret with a GitHub token, for a private fork's `api.github.com/.../tarball/<sha>` URL. |
 | `tinybird.enabled` | `true` | Set `false` for Tinybird Cloud; provide `TINYBIRD_URL` and `tinybird.existingSecret`. |
 | `env.AUTH_OIDC_ISSUER` | unset | Generic OIDC login (`AUTH_OIDC_ID`, `AUTH_OIDC_NAME`; `AUTH_OIDC_SECRET` via `secrets.extra`). |
