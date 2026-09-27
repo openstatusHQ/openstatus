@@ -4,7 +4,9 @@ import Stripe from "stripe";
 import { env } from "../../env";
 import { buildLimitsFromSubscription } from "./utils";
 
-export const stripe = new Stripe(env.STRIPE_SECRET_KEY ?? "", {
+// The constructor throws on an empty key, and this module is loaded at import
+// time. Self-hosted installs leave STRIPE_SECRET_KEY unset and never call Stripe.
+export const stripe = new Stripe(env.STRIPE_SECRET_KEY || "sk_unset", {
   apiVersion: "2026-08-26.dahlia",
   appInfo: {
     name: "OpenStatus",
