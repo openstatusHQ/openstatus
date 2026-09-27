@@ -237,7 +237,7 @@ export function SlackCode({
     <code
       data-slot="slack-code"
       className={cn(
-        "bg-muted text-warning px-1 py-0.5 text-xs break-all",
+        "bg-muted text-foreground px-1 py-0.5 text-xs break-all",
         className,
       )}
       {...props}
