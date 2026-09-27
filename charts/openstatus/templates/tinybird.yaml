@@ -36,7 +36,7 @@ spec:
       {{- include "openstatus.scheduling" . | nindent 6 }}
       containers:
         - name: tinybird-local
-          image: "{{ .Values.tinybird.image.repository }}:{{ .Values.tinybird.image.tag }}"
+          image: {{ include "openstatus.externalImage" .Values.tinybird.image | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             {{- range $k, $v := .Values.tinybird.env }}

@@ -24,8 +24,18 @@ app.kubernetes.io/component: {{ .component }}
 {{- printf "%s-%s" (include "openstatus.fullname" .ctx) .component | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{/* openstatus image: call with (dict "ctx" $ "name" "openstatus-server") */}}
 {{- define "openstatus.image" -}}
-{{- printf "%s/%s:%s" .ctx.Values.image.registry .name .ctx.Values.image.tag -}}
+{{- $ref := printf "%s/%s:%s" .ctx.Values.image.registry .name .ctx.Values.image.tag -}}
+{{- with get .ctx.Values.image.digests .name -}}{{- $ref = printf "%s@%s" $ref . -}}{{- end -}}
+{{- $ref -}}
+{{- end -}}
+
+{{/* third-party image: call with an `image` values block (repository, tag, digest) */}}
+{{- define "openstatus.externalImage" -}}
+{{- $ref := printf "%s:%s" .repository .tag -}}
+{{- with .digest -}}{{- $ref = printf "%s@%s" $ref . -}}{{- end -}}
+{{- $ref -}}
 {{- end -}}
 
 {{- define "openstatus.secretName" -}}

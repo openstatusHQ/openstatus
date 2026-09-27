@@ -138,7 +138,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: bootstrap
-          image: "{{ $b.image.repository }}:{{ $b.image.tag }}"
+          image: {{ include "openstatus.externalImage" $b.image | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["sh", "/scripts/bootstrap.sh"]
           env:

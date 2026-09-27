@@ -3,9 +3,13 @@
 
 image:
   registry: ghcr.io/openstatushq
-  # Upstream publishes `latest`, `main` and short-SHA tags. Pin a SHA in production.
+  # Upstream publishes `latest`, `main` and short-SHA tags. Each image is only
+  # rebuilt when its app changes, so one SHA tag rarely exists for every image;
+  # pin per image with `digests` instead.
   tag: latest
   pullPolicy: IfNotPresent
+  # Image name -> digest, e.g. `openstatus-server: sha256:...`.
+  digests: {}
 
 imagePullSecrets: []
 
@@ -30,6 +34,7 @@ libsql:
   image:
     repository: ghcr.io/tursodatabase/libsql-server
     tag: latest
+    digest: ""
   env:
     SQLD_NODE: primary
     SQLD_MAX_CONCURRENT_CONNECTIONS: "512"
@@ -50,6 +55,7 @@ tinybird:
   image:
     repository: tinybirdco/tinybird-local
     tag: latest
+    digest: ""
   env:
     COMPATIBILITY_MODE: "1"
   persistence:
@@ -69,6 +75,7 @@ tinybird:
     image:
       repository: python
       tag: "3.12-slim"
+      digest: ""
     # Tinybird CLI version (pip package `tinybird`).
     cliVersion: "4.6.21"
     # Source tarball whose packages/tinybird is deployed. Pin the same commit
@@ -163,6 +170,7 @@ cron:
   image:
     repository: curlimages/curl
     tag: latest
+    digest: ""
   jobs:
     private-location-health:
       schedule: "*/5 * * * *"

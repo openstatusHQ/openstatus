@@ -21,7 +21,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: curl
-              image: "{{ $.Values.cron.image.repository }}:{{ $.Values.cron.image.tag }}"
+              image: {{ include "openstatus.externalImage" $.Values.cron.image | quote }}
               imagePullPolicy: {{ $.Values.image.pullPolicy }}
               env:
                 - name: CRON_SECRET

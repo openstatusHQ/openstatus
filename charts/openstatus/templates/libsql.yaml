@@ -37,7 +37,7 @@ spec:
       {{- include "openstatus.scheduling" . | nindent 6 }}
       containers:
         - name: libsql
-          image: "{{ .Values.libsql.image.repository }}:{{ .Values.libsql.image.tag }}"
+          image: {{ include "openstatus.externalImage" .Values.libsql.image | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             {{- range $k, $v := .Values.libsql.env }}
