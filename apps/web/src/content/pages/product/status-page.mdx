@@ -1,8 +1,8 @@
 ---
 title: "Status Page"
 seo:
-  title: "Free Status Page — Open Source, Custom Domain, Public or Private"
-  description: "Create a free status page on your own domain in minutes. Open source and self-hostable. Public or private (password, magic link, IP allowlist), subscribers, maintenance windows, Slack agent."
+  title: "Free Status Page — Open Source, Custom Domain, Private"
+  description: "Create a free status page on your own domain in minutes. Open source, public or private, with subscribers, maintenance windows and a Slack agent."
 hero: "Status pages your users actually trust"
 publishedAt: "2025-11-10"
 updatedAt: "2026-09-26"
@@ -45,7 +45,7 @@ faq:
 
 <SrOnly>
 
-Above the fold is a live status page built from the real status-page blocks, not a screenshot: the fictional Pied Piper page at status.piedpiper.dev, mid-incident. A "Degraded Performance" banner sits on top, followed by a Payments group (Checkout API, degraded, 99.94% uptime; Webhooks, operational, 99.99%) and a Platform group (Dashboard and Docs, 100%), each component with a 45-day uptime bar. The header has a "Get updates" menu with Email, Slack, RSS, JSON and SSH tabs.
+Pied Piper's status page during a degraded Checkout API, built from the real status-page blocks: grouped components with 45-day uptime bars and a Get updates menu offering Email, Slack, RSS, JSON and SSH.
 
 </SrOnly>
 
@@ -96,7 +96,7 @@ Attach monitors and the uptime fills in from your checks. Add the services you d
 
 <SrOnly>
 
-The demo is the components list: 4 monitors and 1 external service in two groups. Payments holds Checkout API (monitor, 99.94%, degraded), Webhooks (monitor, 99.99%) and Stripe (external, set by hand); Platform holds Dashboard and Docs (monitors, 100%). A group takes the worst status of its members.
+The components list: Checkout API, Webhooks, Dashboard and Docs synced from monitors, Stripe set by hand as an external service, grouped into Payments and Platform. A group takes the worst status of its members.
 
 </SrOnly>
 
@@ -112,7 +112,7 @@ The demo is the components list: 4 monitors and 1 external service in two groups
 
 <SrOnly>
 
-The demo is the "Get updates" popover from the status page, with 1,204 email subscribers: an Email tab with a subscribe form, a Slack tab with the RSS URL to paste into Slack's feed app, an RSS tab with the RSS and Atom URLs, and a JSON tab with the JSON feed URL (https://status.piedpiper.dev/feed/json).
+The Get updates popover with 1,204 email subscribers: an email form, the RSS URL for Slack's feed app, RSS and Atom URLs, and the JSON feed at status.piedpiper.dev/feed/json.
 
 </SrOnly>
 
@@ -145,7 +145,7 @@ English, French, German, Turkish, Hindi, Korean and Japanese today, with more fr
 
 <SrOnly>
 
-The demo is the same page in French: a "Performances dégradées" banner and three components labelled "Opérationnel" or "Dégradé", with a locale switcher offering English, Deutsch, Français and 日本語.
+The same page in French: a "Performances dégradées" banner, components labelled Opérationnel or Dégradé, and a switcher offering English, Deutsch, Français and 日本語.
 
 </SrOnly>
 
@@ -161,7 +161,7 @@ The demo is the same page in French: a "Performances dégradées" banner and thr
 
 <SrOnly>
 
-The demo is the Slack thread. An engineer writes "@openstatus checkout API is returning 503s from every EU region, US is fine. Open a status report?". The agent replies with a draft (title "Elevated errors on Checkout API", status Investigating, affected Checkout API, a one-paragraph message) and Approve, Approve & notify and Cancel buttons. After approval it confirms: published to status.piedpiper.dev, 1,204 subscribers notified, reply in the thread to post the next update.
+The Slack thread where @openstatus drafts "Elevated errors on Checkout API" with Approve, Approve & notify and Cancel buttons, then confirms it is live on status.piedpiper.dev.
 
 </SrOnly>
 
@@ -194,7 +194,7 @@ Pick a theme from the store or override any CSS variable, separately for light a
 
 <SrOnly>
 
-The demo re-skins the same status blocks with a theme picked from the Theme Store (Supabase by default): banner, component and uptime bar all follow the theme's CSS variables such as --success, --warning, --primary and --radius, separately for light and dark mode.
+The same status blocks re-skinned with a Theme Store theme: banner, component and uptime bar follow its CSS variables such as --success, --warning and --radius, in light and dark.
 
 </SrOnly>
 
@@ -210,7 +210,7 @@ The demo re-skins the same status blocks with a theme picked from the Theme Stor
 
 <SrOnly>
 
-The demo shows the two pages side by side. The public status.piedpiper.dev lists Checkout API (degraded), Webhooks, Dashboard and Docs. The internal internal.piedpiper.dev shows a password prompt instead; password protection and an IP allowlist (203.0.113.0/24) are both switched on for it.
+Public and internal pages side by side: the public one lists all four components, the internal one shows a password prompt with an IP allowlist of 203.0.113.0/24 switched on.
 
 </SrOnly>
 
@@ -241,7 +241,7 @@ Schedule the window ahead of time. Subscribers are told when it is planned, the 
 
 <SrOnly>
 
-The demo is the maintenance banner on the status page: "Database upgrade", scheduled three days ahead for a two-hour window, affecting Checkout API and Webhooks, with the message "We are upgrading the primary database. Expect up to five minutes of elevated latency on checkout and delayed webhook delivery." 1,204 subscribers were notified when it was scheduled.
+A scheduled maintenance banner, "Database upgrade": a two-hour window three days out affecting Checkout API and Webhooks, with 1,204 subscribers notified when it was scheduled.
 
 </SrOnly>
 
@@ -257,7 +257,7 @@ The demo is the maintenance banner on the status page: "Database upgrade", sched
 
 <SrOnly>
 
-The demo is the import preview for Atlassian Statuspage: paste an API key and see what would be imported (4 components, 2 groups, 37 status reports, 3 maintenances, 1,204 subscribers, 4 monitors) before confirming. Nothing is written until you do.
+The import preview for Atlassian Statuspage: 4 components, 2 groups, 37 status reports, 3 maintenances, 1,204 subscribers and 4 monitors, shown before anything is written.
 
 </SrOnly>
 
@@ -288,7 +288,7 @@ The same page over SSH for people in a terminal, and as markdown for the agents 
 
 <SrOnly>
 
-The demo shows both views. `ssh pied-piper@ssh.openstatus.dev` prints "Degraded Performance · Pied Piper Status · 5 components · 1 degraded". The same page as markdown returns the overall status, the active incidents with their affected components, and each component's uptime with a 30-day bar of + and ~ characters. This site works the same way: append .md to any URL or send `Accept: text/markdown`.
+The page over SSH, `ssh pied-piper@ssh.openstatus.dev`, printing "Degraded Performance · Pied Piper Status · 5 components · 1 degraded", and the same page as markdown with a 30-day bar of + and ~ characters.
 
 </SrOnly>
 

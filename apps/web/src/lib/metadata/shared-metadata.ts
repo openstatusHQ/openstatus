@@ -6,7 +6,7 @@ export const TITLE = "openstatus";
 export const HOMEPAGE_TITLE =
   "Free & Open Source Status Page and Uptime Monitoring";
 export const DESCRIPTION =
-  "Open source status page and uptime monitoring. Keep it in code, let your agents update it. Free to start, self-hostable.";
+  "Open source status page and uptime monitoring. Your monitors update it, your subscribers hear it from you first. Free to start, self-hostable.";
 
 export const OG_DESCRIPTION = "The status page for humans and agents";
 
@@ -117,5 +117,26 @@ export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
       modifiedTime: (updatedAt ?? publishedAt).toISOString(),
     },
     twitter,
+  };
+};
+
+// Home sits outside `getPageMetadata`: its canonical is `/` and its title
+// skips the `%s | openstatus` template.
+export const getHomeMetadata = (page: MDXData): Metadata => {
+  const { title, description, category, seo } = page.metadata;
+  const metaTitle = seo?.title ?? title;
+  const metaDescription = seo?.description ?? description;
+
+  return {
+    ...defaultMetadata,
+    title: { absolute: metaTitle },
+    description: metaDescription,
+    ...getSocialMetadata({
+      title: metaTitle,
+      description: metaDescription,
+      url: BASE_URL,
+      category,
+      ogImage: seo?.ogImage,
+    }),
   };
 };

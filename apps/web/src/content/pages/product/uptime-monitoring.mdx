@@ -3,8 +3,8 @@ title: "Uptime Monitoring"
 publishedAt: "2025-11-10"
 updatedAt: "2026-09-26"
 seo:
-  title: "Open Source Uptime Monitoring — Free, 28 Regions, Alerts in Seconds"
-  description: "Free & open source uptime monitoring for websites and APIs. Checks from 28 regions every 30s, alerts to Slack, Discord, PagerDuty and email. Monitoring as code with Terraform."
+  title: "Free Open Source Uptime Monitoring from 28 Regions"
+  description: "Free, open source uptime monitoring for websites and APIs. Checks from 28 regions every 30s, alerts to Slack, PagerDuty and email, monitoring as code."
 hero: "Uptime monitoring for websites, APIs and services"
 author: "Thibault Le Ouay Ducasse"
 description: "Monitor your websites, APIs and services from 28 regions. Get alerted the moment a check fails an assertion or exceeds your threshold."
@@ -53,7 +53,7 @@ faq:
 
 <SrOnly>
 
-Above the fold is the monitor overview from the dashboard for Checkout API (`POST api.piedpiper.dev/v1/checkout`, every 1m): uptime 99.94%, 4 regions failing, 0 degraded, P50 231 ms, P95 4.21 s, last checked 1 min ago. Below it, an uptime chart for the last hour with one bar per minute (success, error, degraded) and a P95 latency chart stacked by phase (DNS, Connect, TLS, TTFB, Transfer), where the TTFB band jumps to about 4 seconds in the last three minutes.
+The monitor overview for Checkout API, checked every minute: 99.94% uptime, 4 regions failing, P50 231 ms, P95 4.21 s, with an uptime chart per minute and a P95 latency chart stacked by phase where TTFB jumps to about 4 seconds.
 
 </SrOnly>
 
@@ -110,7 +110,7 @@ Probes run on Fly.io, Koyeb and Railway, so a provider incident never blinds you
 
 <SrOnly>
 
-The demo is the per-region latency grid for the last check: London 4,388 ms, Amsterdam 4,102 ms, Paris 4,051 ms and Frankfurt (Koyeb) 3,970 ms, all 503; Virginia 231 ms and San Jose 244 ms, both 200. 6 of the 28 regions are selected for this monitor.
+Per-region latency for the last check: London 4,388 ms, Amsterdam 4,102 ms, Paris 4,051 ms and Frankfurt 3,970 ms, all 503; Virginia 231 ms and San Jose 244 ms, both 200. 6 of the 28 regions are selected.
 
 </SrOnly>
 
@@ -126,7 +126,7 @@ The demo is the per-region latency grid for the last check: London 4,388 ms, Ams
 
 <SrOnly>
 
-The demo is the monitor's request configuration and the result of the last run. Headers: authorization (Bearer token) and content-type: application/json. Assertions: status code equals 200 (failed, got 503), header content-type contains json (passed), body contains "session_id" (failed). Thresholds: degraded after 1,000 ms, timeout at 5,000 ms.
+The request configuration and last result: a Bearer authorization header, assertions on status code 200 (failed, got 503), content-type contains json (passed) and body contains session_id (failed), degraded at 1,000 ms and timeout at 5,000 ms.
 
 </SrOnly>
 
@@ -158,7 +158,7 @@ Also: Telegram, Google Chat, Microsoft Teams, WhatsApp, Grafana OnCall and ntfy.
 
 <SrOnly>
 
-The demo is the Slack message the alert produces at 09:41 in #incidents: "Checkout API is failing", `POST https://api.piedpiper.dev/v1/checkout`, status 503 Service Unavailable, regions lhr, ams, cdg and koyeb_fra, latency 4,388 ms, the error "Expected status code 200, received 503" and a link to the dashboard. The same alert was sent to PagerDuty, email and a webhook; 4 of the 6 regions failed the assertion.
+The alert as it reaches Slack, PagerDuty, email and a webhook: "Checkout API is failing", 503 Service Unavailable from four regions, "Expected status code 200, received 503", with a link to the failing checks.
 
 </SrOnly>
 
@@ -174,7 +174,7 @@ The demo is the Slack message the alert produces at 09:41 in #incidents: "Checko
 
 <SrOnly>
 
-The demo is the phase breakdown of the London check: DNS 12 ms, Connect 38 ms, TLS 61 ms, TTFB 4,265 ms, Transfer 12 ms, 4,388 ms in total. Only TTFB is above the 1,000 ms degraded threshold, so the slowness is the origin, not the handshake.
+The phase breakdown of the London check: DNS 12 ms, Connect 38 ms, TLS 61 ms, TTFB 4,265 ms, Transfer 12 ms. Only TTFB is above the 1,000 ms degraded threshold.
 
 </SrOnly>
 
@@ -233,7 +233,7 @@ resource "openstatus_http_monitor" "checkout" {
 
 <SrOnly>
 
-The demo is the one command that starts a probe, `docker run -d --name openstatus-probe --restart=always -e OPENSTATUS_KEY=… ghcr.io/openstatushq/private-location:latest` (an 8.5 MB image for arm64 and amd64), and two probes reporting in: vpc-eu-west at 10.0.4.12 and office-berlin at 192.168.1.40, both online.
+The docker run command that starts a probe from ghcr.io/openstatushq/private-location, an 8.5 MB image for arm64 and amd64, and two probes online: vpc-eu-west at 10.0.4.12 and office-berlin at 192.168.1.40.
 
 </SrOnly>
 
@@ -261,7 +261,7 @@ Response logs with the timing breakdown, headers and body per region, for as lon
 
 <SrOnly>
 
-The demo is the response-logs table for that check: one row per region with time, status, latency and a timing bar split into DNS, connect, TLS, TTFB and transfer. London, Amsterdam, Paris and Frankfurt returned 503 in about 4 seconds, almost all of it TTFB; Virginia and San Jose returned 200 in about 230 ms. Headers and body are kept for every failed check, and every request can be exported to an OTLP endpoint.
+The response-logs table for the check, one row per region with status, latency and a DNS, connect, TLS, TTFB and transfer bar. Headers and body are kept for every failed check and every request can be exported to OTLP.
 
 </SrOnly>
 

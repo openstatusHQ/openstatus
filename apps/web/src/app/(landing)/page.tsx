@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { CustomMDX } from "../../content/mdx";
 import { getHomePage } from "../../content/utils";
 import { JsonLd } from "../../lib/metadata/json-ld";
-import { defaultMetadata } from "../../lib/metadata/shared-metadata";
+import { getHomeMetadata } from "../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDFAQPage,
@@ -14,11 +14,11 @@ import {
   getJsonLDWebPage,
 } from "../../lib/metadata/structured-data";
 
-export const metadata: Metadata = defaultMetadata;
+const homePage = getHomePage();
+
+export const metadata: Metadata = getHomeMetadata(homePage);
 
 export default function Page() {
-  const homePage = getHomePage();
-
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
     getJsonLDProduct(),

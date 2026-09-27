@@ -4,7 +4,7 @@ hero: "The status page that just works."
 publishedAt: "2026-04-07"
 updatedAt: "2026-09-26"
 author: "openstatus"
-description: "Your monitors update it. Your subscribers hear it from you first. Your auditor gets the trail. Open source, on your own domain, live in five minutes."
+description: "Open source status page and uptime monitoring. Your monitors update it, your subscribers hear it first, your auditor gets the trail. Live in five minutes."
 category: "product"
 faq:
   - question: "What is openstatus?"
@@ -32,7 +32,7 @@ faq:
 
 <SrOnly>
 
-Above the fold is a live status page built from the real status-page blocks, not a screenshot: the fictional Pied Piper page at status.piedpiper.dev, mid-incident. A "Degraded Performance" banner sits on top, followed by a Payments group (Checkout API, degraded, 99.94% uptime; Webhooks, operational, 99.99%) and a Platform group (Dashboard and Docs, 100%), each component with a 45-day uptime bar. The header has a "Get updates" menu with Email, Slack, RSS, JSON and SSH tabs.
+A live status page for the fictional Pied Piper, mid-incident: a Degraded Performance banner, Checkout API degraded at 99.94% uptime, Webhooks, Dashboard and Docs operational, each with a 45-day uptime bar.
 
 </SrOnly>
 
@@ -64,7 +64,7 @@ Four of the six regions the monitor runs from confirm the 503s, so the alert fir
 
 <SrOnly>
 
-The demo is the Slack message the alert produces at 09:41 in #incidents: "Checkout API is failing", `POST https://api.piedpiper.dev/v1/checkout`, status 503 Service Unavailable, regions lhr, ams, cdg and koyeb_fra, latency 4,388 ms, the error "Expected status code 200, received 503" and a link to the dashboard. The same alert was sent to PagerDuty, email and a webhook; 4 of the 6 regions failed the assertion.
+The Slack alert at 09:41: Checkout API returned 503 from lhr, ams, cdg and koyeb_fra at 4,388 ms, with 4 of 6 regions failing the status-code assertion.
 
 </SrOnly>
 
@@ -82,7 +82,7 @@ The demo is the Slack message the alert produces at 09:41 in #incidents: "Checko
 
 <SrOnly>
 
-The demo is the response-logs table for that check at 09:42: one row per region with time, status, latency and a timing bar split into DNS, connect, TLS, TTFB and transfer. London, Amsterdam, Paris and Frankfurt returned 503 in about 4 seconds, almost all of it TTFB; Virginia and San Jose returned 200 in about 230 ms. Headers and body are kept for every failed check.
+Response logs at 09:42, one row per region: the four European regions returned 503 in about 4 seconds, almost all of it TTFB, while Virginia and San Jose returned 200 in about 230 ms.
 
 </SrOnly>
 
@@ -118,7 +118,7 @@ Ask the openstatus agent in the incident thread. It drafts the status report, yo
 
 <SrOnly>
 
-The demo is the Slack thread at 09:44. An engineer writes "@openstatus checkout API is returning 503s from every EU region, US is fine. Open a status report?". The agent replies with a draft (title "Elevated errors on Checkout API", status Investigating, affected Checkout API, a one-paragraph message) and Approve, Approve & notify and Cancel buttons. After approval it confirms: published to status.piedpiper.dev, 1,204 subscribers notified, reply in the thread to post the next update.
+An engineer asks @openstatus in the incident thread to open a status report. The agent drafts "Elevated errors on Checkout API", the engineer approves, and 1,204 subscribers are notified.
 
 </SrOnly>
 
@@ -136,7 +136,7 @@ The demo is the Slack thread at 09:44. An engineer writes "@openstatus checkout 
 
 <SrOnly>
 
-The demo is the 09:52 "Identified" update as it arrives in a Slack Connect channel shared with a customer: title, status, a link to the page, the update message, the affected component and an unsubscribe hint. Below it, the delivery summary: 1,204 emails sent, RSS and Atom feeds updated, 3 Slack Connect workspaces notified.
+The 09:52 Identified update as it lands in a customer's Slack Connect channel, with the delivery summary: 1,204 emails sent, RSS and Atom updated, 3 Slack Connect workspaces notified.
 
 </SrOnly>
 
@@ -171,7 +171,7 @@ The public page shows the Checkout API as degraded. The internal page, behind a 
 
 <SrOnly>
 
-The demo shows the two pages side by side. The public status.piedpiper.dev lists Checkout API (degraded), Webhooks, Dashboard and Docs. The internal internal.piedpiper.dev shows a password prompt instead; password protection and an IP allowlist (203.0.113.0/24) are both switched on for it.
+Two pages side by side: the public status.piedpiper.dev shows Checkout API degraded, while internal.piedpiper.dev asks for a password and only admits the 203.0.113.0/24 range.
 
 </SrOnly>
 
@@ -195,7 +195,7 @@ Every step is logged: who declared it, from where, when each update shipped. Whe
 
 <SrOnly>
 
-The first demo is the audit log for the incident, newest first: monitor.alert from the probe at 09:41:12 (Checkout API · lhr, ams, cdg, koyeb_fra), status_report.create at 09:44:30 by gilfoyle@piedpiper.dev via Slack, notification.send at 09:44:31 by the system (email 1,204 · rss · slack-connect), then the identified, monitoring and resolved updates at 09:52, 10:14 and 10:36, each with actor and source. It exports as CSV or JSON.
+The incident's audit log, newest first: monitor.alert at 09:41:12, status_report.create at 09:44:30 by gilfoyle@piedpiper.dev via Slack, notification.send a second later, then the identified, monitoring and resolved updates. It exports as CSV or JSON.
 
 </SrOnly>
 
@@ -206,7 +206,7 @@ The first demo is the audit log for the incident, newest first: monitor.alert fr
 
 <SrOnly>
 
-The second demo is the same incident as the status page renders it in its events feed six months later: "Elevated errors on Checkout API", affected Checkout API, with the four timestamped updates from investigating (09:44) to resolved (10:36).
+The same incident six months later in the status page's events feed: four timestamped updates from investigating at 09:44 to resolved at 10:36.
 
 </SrOnly>
 
