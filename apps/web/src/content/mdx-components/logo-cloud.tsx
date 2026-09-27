@@ -51,7 +51,7 @@ function Logo({
 }
 
 /** Customer cells from `data/customers.ts`; a name in text until its logo lands. */
-export function LogoCloud({ limit = 8 }: { limit?: number }) {
+export function LogoCloud({ limit = customers.length }: { limit?: number }) {
   return (
     <Grid cols={4} className="not-prose">
       {customers.slice(0, limit).map((customer) => (

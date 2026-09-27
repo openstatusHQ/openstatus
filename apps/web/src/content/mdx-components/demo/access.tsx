@@ -11,6 +11,7 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { Switch } from "@openstatus/ui/components/ui/switch";
+import { useId } from "react";
 
 import { demo } from "@/data/demo-data";
 
@@ -26,6 +27,7 @@ import {
 
 /** Same workspace, two audiences: the public page and the gated internal one. */
 export function AccessDemo() {
+  const id = useId();
   const monitors = demo.components.filter((c) => !c.external);
   return (
     <Cell>
@@ -67,9 +69,9 @@ export function AccessDemo() {
                 </p>
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="demo-access-password">Password</Label>
+                <Label htmlFor={`${id}-password`}>Password</Label>
                 <Input
-                  id="demo-access-password"
+                  id={`${id}-password`}
                   type="password"
                   defaultValue="pied-piper-internal"
                   readOnly

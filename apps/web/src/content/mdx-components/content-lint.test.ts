@@ -1,12 +1,13 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 
 // Pages built from the section pattern (heading, text cell, `Demo` cell). Blog
 // posts and docs are prose and stay out of scope.
-const root = join(dirname(new URL(import.meta.url).pathname), "..", "pages");
+const root = join(dirname(fileURLToPath(import.meta.url)), "..", "pages");
 const pages = [
   join(root, "home.mdx"),
   join(root, "unrelated", "kitchen-sink.mdx"),
@@ -41,6 +42,14 @@ describe("content pages", () => {
 
     test(`${name} has no raw className`, () => {
       expect(body).not.toMatch(/className=/);
+    });
+
+    test(`${name} pairs every Demo section with SrOnly copy`, () => {
+      const missing = body
+        .split(/^## /m)
+        .filter((s) => s.includes("<Demo") && !s.includes("<SrOnly>"))
+        .map((s) => s.split("\n")[0]);
+      expect(missing).toEqual([]);
     });
 
     test(`${name} uses only registered components`, () => {

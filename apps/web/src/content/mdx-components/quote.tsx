@@ -17,7 +17,7 @@ export function Quote({ customer }: { customer: string }) {
           <span className="text-foreground font-medium">{quote.name}</span>{" "}
           <Subtle>{quote.role}</Subtle>
         </span>
-        <CustomLink href={story ?? href}>
+        <CustomLink href={story ?? href} className="link w-fit">
           {story ? "Read the story" : name}
         </CustomLink>
       </figcaption>

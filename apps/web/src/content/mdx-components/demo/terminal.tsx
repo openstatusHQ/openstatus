@@ -2,23 +2,31 @@ import { demo } from "@/data/demo-data";
 
 import { Cell, CellDescription, CellHeader, CellPre, CellTitle } from "./cell";
 
-const ssh = `$ ssh ${demo.company.domain.replace("status.", "")}@ssh.openstatus.dev
+const title = `${demo.company.name} Status`;
+const degraded = demo.components.filter((c) => c.status === "degraded");
 
-  ${demo.company.name} · Degraded Performance
+// Mirrors the live TUI at ssh.openstatus.dev, footer trimmed.
+const ssh = `$ ssh ${demo.company.slug}@ssh.openstatus.dev
 
-  ▲ ${demo.components[0].name}   ${demo.components[0].uptime}   degraded
-  ● ${demo.components[1].name}       ${demo.components[1].uptime}   operational
-  ● ${demo.components[3].name}      ${demo.components[3].uptime}     operational
-  ● ${demo.components[4].name}           ${demo.components[4].uptime}     operational`;
+  ▲  Degraded Performance
+  ${title}
 
-const markdown = `# ${demo.company.name} status
+  ${demo.components.length} components · ${degraded.length} degraded`;
 
-**Degraded Performance**
+// Mirrors `generateOverview` in apps/status-page/src/content/markdown,
+// cut after the first component.
+const markdown = `# ${title}
 
-## ${demo.incident.title}
+\`~\` **Degraded** · Sep 27, 2026 ${demo.incident.updates[1].time} (GMT+0)
 
-- identified · ${demo.incident.updates[1].message}
-- investigating · ${demo.incident.updates[0].message}`;
+## Active incidents
+
+- x **${demo.incident.title}** — Identified · affects: ${demo.incident.affected.join(", ")}
+
+## Components
+
+**${demo.components[0].name}** — ${demo.components[0].uptime} · \`30d ago → today\`
+\`+++++++++++++++++++++~++++++++~\``;
 
 /** The page for terminals and agents: SSH output and the markdown view. */
 export function TerminalDemo() {
@@ -30,7 +38,7 @@ export function TerminalDemo() {
       </CellHeader>
       <CellPre>{ssh}</CellPre>
       <CellHeader>
-        <CellTitle>{demo.company.domain}/status.md</CellTitle>
+        <CellTitle>{demo.company.domain}/.md</CellTitle>
         <CellDescription>markdown</CellDescription>
       </CellHeader>
       <CellPre>{markdown}</CellPre>

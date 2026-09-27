@@ -1,4 +1,4 @@
-import { demo } from "@/data/demo-data";
+import { atTime, demo, getIncidentDay } from "@/data/demo-data";
 
 import {
   Cell,
@@ -33,8 +33,10 @@ const [slowest] = failingRegions;
 const alsoSent = demo.channels.filter(
   (c) => c.name !== "Slack" && c.state !== "off",
 );
+// The check the audit log records as `monitor.alert`.
+const cronTimestamp = atTime(getIncidentDay(), "09:41:12").toISOString();
 
-/** Three regions confirm the 503; the alert lands in Slack, mirroring `buildAlertBlocks`. */
+/** Four regions confirm the 503; the alert lands in Slack, mirroring `buildAlertBlocks`. */
 export function AlertDemo() {
   return (
     <Cell>
@@ -80,7 +82,7 @@ export function AlertDemo() {
                   </SlackField>
                   <SlackField>
                     <SlackFieldLabel>Cron Timestamp</SlackFieldLabel>
-                    <SlackFieldValue>2026-09-26T09:41:12.000Z</SlackFieldValue>
+                    <SlackFieldValue>{cronTimestamp}</SlackFieldValue>
                   </SlackField>
                 </SlackFields>
                 <SlackField className="text-xs">

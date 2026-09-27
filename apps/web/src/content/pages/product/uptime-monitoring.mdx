@@ -51,6 +51,12 @@ faq:
 
 <Demo type="monitor" />
 
+<SrOnly>
+
+Above the fold is the monitor overview from the dashboard for Checkout API (`POST api.piedpiper.dev/v1/checkout`, every 1m): uptime 99.94%, 4 regions failing, 0 degraded, P50 231 ms, P95 4.21 s, last checked 1 min ago. Below it, an uptime chart for the last hour with one bar per minute (success, error, degraded) and a P95 latency chart stacked by phase (DNS, Connect, TLS, TTFB, Transfer), where the TTFB band jumps to about 4 seconds in the last three minutes.
+
+</SrOnly>
+
 ## Trusted by teams who ship reliability
 
 <LogoCloud />
@@ -102,6 +108,12 @@ Probes run on Fly.io, Koyeb and Railway, so a provider incident never blinds you
 
 <Demo type="regions" />
 
+<SrOnly>
+
+The demo is the per-region latency grid for the last check: London 4,388 ms, Amsterdam 4,102 ms, Paris 4,051 ms and Frankfurt (Koyeb) 3,970 ms, all 503; Virginia 231 ms and San Jose 244 ms, both 200. 6 of the 28 regions are selected for this monitor.
+
+</SrOnly>
+
 </div>
 </Grid>
 
@@ -111,6 +123,12 @@ Probes run on Fly.io, Koyeb and Railway, so a provider incident never blinds you
 <div>
 
 <Demo type="assertions" />
+
+<SrOnly>
+
+The demo is the monitor's request configuration and the result of the last run. Headers: authorization (Bearer token) and content-type: application/json. Assertions: status code equals 200 (failed, got 503), header content-type contains json (passed), body contains "session_id" (failed). Thresholds: degraded after 1,000 ms, timeout at 5,000 ms.
+
+</SrOnly>
 
 </div>
 <div>
@@ -138,6 +156,12 @@ Also: Telegram, Google Chat, Microsoft Teams, WhatsApp, Grafana OnCall and ntfy.
 
 <Demo type="alert" />
 
+<SrOnly>
+
+The demo is the Slack message the alert produces at 09:41 in #incidents: "Checkout API is failing", `POST https://api.piedpiper.dev/v1/checkout`, status 503 Service Unavailable, regions lhr, ams, cdg and koyeb_fra, latency 4,388 ms, the error "Expected status code 200, received 503" and a link to the dashboard. The same alert was sent to PagerDuty, email and a webhook; 4 of the 6 regions failed the assertion.
+
+</SrOnly>
+
 </div>
 </Grid>
 
@@ -147,6 +171,12 @@ Also: Telegram, Google Chat, Microsoft Teams, WhatsApp, Grafana OnCall and ntfy.
 <div>
 
 <Demo type="timing" />
+
+<SrOnly>
+
+The demo is the phase breakdown of the London check: DNS 12 ms, Connect 38 ms, TLS 61 ms, TTFB 4,265 ms, Transfer 12 ms, 4,388 ms in total. Only TTFB is above the 1,000 ms degraded threshold, so the slowness is the origin, not the handshake.
+
+</SrOnly>
 
 </div>
 <div>
@@ -186,8 +216,8 @@ resource "openstatus_http_monitor" "checkout" {
     comparator = "eq"
   }
 
-  degraded_after = 1000
-  timeout        = 5000
+  degraded_at = 1000
+  timeout     = 5000
 }
 ```
 
@@ -200,6 +230,12 @@ resource "openstatus_http_monitor" "checkout" {
 <div>
 
 <Demo type="private-location" />
+
+<SrOnly>
+
+The demo is the one command that starts a probe, `docker run -d --name openstatus-probe --restart=always -e OPENSTATUS_KEY=… ghcr.io/openstatushq/private-location:latest` (an 8.5 MB image for arm64 and amd64), and two probes reporting in: vpc-eu-west at 10.0.4.12 and office-berlin at 192.168.1.40, both online.
+
+</SrOnly>
 
 </div>
 <div>
@@ -219,8 +255,15 @@ Response logs with the timing breakdown, headers and body per region, for as lon
 
 - [Response logs and retention](/docs/concept/response-logs-and-retention)
 
+<br></br>
 
 <Demo type="logs" />
+
+<SrOnly>
+
+The demo is the response-logs table for that check: one row per region with time, status, latency and a timing bar split into DNS, connect, TLS, TTFB and transfer. London, Amsterdam, Paris and Frankfurt returned 503 in about 4 seconds, almost all of it TTFB; Virginia and San Jose returned 200 in about 230 ms. Headers and body are kept for every failed check, and every request can be exported to an OTLP endpoint.
+
+</SrOnly>
 
 ## Get started
 

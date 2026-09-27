@@ -1,4 +1,4 @@
-import { demo } from "@/data/demo-data";
+import { atTime, demo, getIncidentDay } from "@/data/demo-data";
 
 import {
   Cell,
@@ -29,7 +29,9 @@ import {
   SlackTime,
 } from "./slack";
 
-const [investigating] = demo.incident.updates;
+// The 09:52 update, the one the audit log records as `status_report.update → identified`.
+const [, identified] = demo.incident.updates;
+const updatedAt = atTime(getIncidentDay(), "09:52:40").toISOString();
 
 /** One approval, three channels: email, feeds, and the shared Slack channel. */
 export function NotifyDemo() {
@@ -50,18 +52,18 @@ export function NotifyDemo() {
             <SlackMessageMeta>
               <SlackAuthor>openstatus</SlackAuthor>
               <SlackAppBadge />
-              <SlackTime>{investigating.time}</SlackTime>
+              <SlackTime>{identified.time}</SlackTime>
             </SlackMessageMeta>
             <SlackMessageBody>
               {/* Mirrors `buildStatusReportBlocks` in @openstatus/subscriptions. */}
               <SlackAttachment tone="warning">
                 <SlackAttachmentTitle>
-                  {demo.incident.title} — Investigating
+                  {demo.incident.title} — Identified
                 </SlackAttachmentTitle>
                 <SlackFields>
                   <SlackField>
                     <SlackFieldLabel>Status</SlackFieldLabel>
-                    <SlackFieldValue>Investigating</SlackFieldValue>
+                    <SlackFieldValue>Identified</SlackFieldValue>
                   </SlackField>
                   <SlackField>
                     <SlackFieldLabel>Page</SlackFieldLabel>
@@ -70,7 +72,7 @@ export function NotifyDemo() {
                     </SlackFieldValue>
                   </SlackField>
                 </SlackFields>
-                <div>{investigating.message}</div>
+                <div>{identified.message}</div>
                 <SlackField className="text-xs">
                   <SlackFieldLabel>Affected</SlackFieldLabel>
                   <SlackFieldValue>
@@ -78,9 +80,8 @@ export function NotifyDemo() {
                   </SlackFieldValue>
                 </SlackField>
                 <div className="text-muted-foreground text-xs">
-                  Updated 2026-09-26T09:41:30.000Z ·{" "}
-                  <SlackLink>View details</SlackLink> · Manage with{" "}
-                  <SlackCode>/openstatus unsubscribe</SlackCode>
+                  Updated {updatedAt} · <SlackLink>View details</SlackLink> ·
+                  Manage with <SlackCode>/openstatus unsubscribe</SlackCode>
                 </div>
               </SlackAttachment>
             </SlackMessageBody>

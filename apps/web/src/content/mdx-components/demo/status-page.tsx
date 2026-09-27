@@ -55,7 +55,7 @@ const worst = (list: Monitor[]) =>
   list.some((m) => m.status === "degraded") ? "degraded" : "success";
 
 function MonitorCard({ monitor }: { monitor: Monitor }) {
-  const data = getStatusBarData(monitor.degradedDays);
+  const data = getStatusBarData(monitor);
   return (
     <StatusComponent variant={monitor.status}>
       <StatusComponentHeader>
@@ -108,7 +108,7 @@ export function StatusPageDemo() {
               <StatusPageHeaderNavItem>
                 <span>Events</span>
               </StatusPageHeaderNavItem>
-              <StatusPageHeaderNavItem className="hidden sm:inline-flex">
+              <StatusPageHeaderNavItem>
                 <span>Monitors</span>
               </StatusPageHeaderNavItem>
             </StatusPageHeaderNav>

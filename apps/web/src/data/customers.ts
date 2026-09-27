@@ -69,18 +69,25 @@ export const customers: Customer[] = [
   {
     name: "OpenPanel",
     href: "https://status.openpanel.dev",
+    logo: "/assets/customers/openpanel/logo.svg",
+    logoHeight: 20,
   },
   {
     name: "Probo",
     href: "https://probostatus.com",
+    logo: "/assets/customers/probo/logo.svg",
   },
   {
-    name: "StreamElements",
-    href: "https://status.streamelements.com",
+    name: "Roundtable",
+    // Their status page is password-protected, so link the company site.
+    href: "https://roundtable.eu",
+    logo: "/assets/customers/roundtable/logo.svg",
+    logoHeight: 18,
   },
   {
     name: "Smplrspace",
     href: "https://status.smplrspace.com",
+    logo: "/assets/customers/smplrspace/logo.svg",
   },
 ];
 

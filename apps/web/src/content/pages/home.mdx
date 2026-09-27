@@ -30,6 +30,12 @@ faq:
 
 <Demo type="status-page" />
 
+<SrOnly>
+
+Above the fold is a live status page built from the real status-page blocks, not a screenshot: the fictional Pied Piper page at status.piedpiper.dev, mid-incident. A "Degraded Performance" banner sits on top, followed by a Payments group (Checkout API, degraded, 99.94% uptime; Webhooks, operational, 99.99%) and a Platform group (Dashboard and Docs, 100%), each component with a 45-day uptime bar. The header has a "Get updates" menu with Email, Slack, RSS, JSON and SSH tabs.
+
+</SrOnly>
+
 ## Trusted by teams who ship transparency
 
 <LogoCloud />
@@ -56,6 +62,12 @@ Four of the six regions the monitor runs from confirm the 503s, so the alert fir
 
 <Demo type="alert" />
 
+<SrOnly>
+
+The demo is the Slack message the alert produces at 09:41 in #incidents: "Checkout API is failing", `POST https://api.piedpiper.dev/v1/checkout`, status 503 Service Unavailable, regions lhr, ams, cdg and koyeb_fra, latency 4,388 ms, the error "Expected status code 200, received 503" and a link to the dashboard. The same alert was sent to PagerDuty, email and a webhook; 4 of the 6 regions failed the assertion.
+
+</SrOnly>
+
 </div>
 </Grid>
 
@@ -67,6 +79,12 @@ Four of the six regions the monitor runs from confirm the 503s, so the alert fir
 <div>
 
 <Demo type="logs" />
+
+<SrOnly>
+
+The demo is the response-logs table for that check at 09:42: one row per region with time, status, latency and a timing bar split into DNS, connect, TLS, TTFB and transfer. London, Amsterdam, Paris and Frankfurt returned 503 in about 4 seconds, almost all of it TTFB; Virginia and San Jose returned 200 in about 230 ms. Headers and body are kept for every failed check.
+
+</SrOnly>
 
 </div>
 <div>
@@ -98,6 +116,12 @@ Ask the openstatus agent in the incident thread. It drafts the status report, yo
 
 <Demo type="slack-agent" />
 
+<SrOnly>
+
+The demo is the Slack thread at 09:44. An engineer writes "@openstatus checkout API is returning 503s from every EU region, US is fine. Open a status report?". The agent replies with a draft (title "Elevated errors on Checkout API", status Investigating, affected Checkout API, a one-paragraph message) and Approve, Approve & notify and Cancel buttons. After approval it confirms: published to status.piedpiper.dev, 1,204 subscribers notified, reply in the thread to post the next update.
+
+</SrOnly>
+
 </div>
 </Grid>
 
@@ -109,6 +133,12 @@ Ask the openstatus agent in the incident thread. It drafts the status report, yo
 <div>
 
 <Demo type="notify" />
+
+<SrOnly>
+
+The demo is the 09:52 "Identified" update as it arrives in a Slack Connect channel shared with a customer: title, status, a link to the page, the update message, the affected component and an unsubscribe hint. Below it, the delivery summary: 1,204 emails sent, RSS and Atom feeds updated, 3 Slack Connect workspaces notified.
+
+</SrOnly>
 
 </div>
 <div>
@@ -139,6 +169,12 @@ The public page shows the Checkout API as degraded. The internal page, behind a 
 
 <Demo type="access" />
 
+<SrOnly>
+
+The demo shows the two pages side by side. The public status.piedpiper.dev lists Checkout API (degraded), Webhooks, Dashboard and Docs. The internal internal.piedpiper.dev shows a password prompt instead; password protection and an IP allowlist (203.0.113.0/24) are both switched on for it.
+
+</SrOnly>
+
 </div>
 </Grid>
 
@@ -153,13 +189,26 @@ Every step is logged: who declared it, from where, when each update shipped. Whe
 
 - [Status pages for compliance](/use-case/compliance)
 
+<br></br>
 
 <Demo type="audit" />
+
+<SrOnly>
+
+The first demo is the audit log for the incident, newest first: monitor.alert from the probe at 09:41:12 (Checkout API · lhr, ams, cdg, koyeb_fra), status_report.create at 09:44:30 by gilfoyle@piedpiper.dev via Slack, notification.send at 09:44:31 by the system (email 1,204 · rss · slack-connect), then the identified, monitoring and resolved updates at 09:52, 10:14 and 10:36, each with actor and source. It exports as CSV or JSON.
+
+</SrOnly>
 
 </div>
 <div>
 
 <Demo type="status-report" />
+
+<SrOnly>
+
+The second demo is the same incident as the status page renders it in its events feed six months later: "Elevated errors on Checkout API", affected Checkout API, with the four timestamped updates from investigating (09:44) to resolved (10:36).
+
+</SrOnly>
 
 </div>
 </Grid>

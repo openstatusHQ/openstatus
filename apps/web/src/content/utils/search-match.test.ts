@@ -14,6 +14,7 @@ import {
   normalizeForMatch,
   sanitizeContent,
   scoreDoc,
+  stripSrOnly,
   withinEditDistance1,
 } from "./search-match";
 
@@ -23,6 +24,18 @@ function marks(query: string, text: string): string[] {
   const re = buildHighlightRegex(query);
   return re ? (text.match(re) ?? []) : [];
 }
+
+describe("stripSrOnly", () => {
+  test("removes every block and keeps the copy around it", () => {
+    const input =
+      "Kept.\n\n<SrOnly>\n\nHidden **one**.\n\n</SrOnly>\n\nAlso kept.\n\n<SrOnly>\nHidden two.\n</SrOnly>";
+    const out = stripSrOnly(input);
+    expect(out).toContain("Kept.");
+    expect(out).toContain("Also kept.");
+    expect(out).not.toContain("Hidden");
+    expect(sanitizeContent(out)).not.toContain("Hidden");
+  });
+});
 
 describe("makeMatcher", () => {
   test("prefix match at a word start", () => {

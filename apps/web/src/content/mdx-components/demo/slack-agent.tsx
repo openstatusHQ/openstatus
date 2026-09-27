@@ -26,7 +26,8 @@ import {
   SlackTime,
 } from "./slack";
 
-const [, identified] = demo.incident.updates;
+// The first update: drafted at 09:44, published the same minute (see `demo.audit`).
+const [investigating] = demo.incident.updates;
 
 /** Declare the incident from the thread: ask, review the draft, approve. */
 export function SlackAgentDemo() {
@@ -68,13 +69,13 @@ export function SlackAgentDemo() {
                   <CellValue>{demo.incident.title}</CellValue>
                   <CellKey>Status</CellKey>
                   <CellValue className={toneClass.warning}>
-                    Identified
+                    Investigating
                   </CellValue>
                   <CellKey>Affected</CellKey>
                   <CellValue>{demo.incident.affected.join(", ")}</CellValue>
                   <CellKey>Message</CellKey>
                   <CellValue className="text-pretty">
-                    {identified.message}
+                    {investigating.message}
                   </CellValue>
                 </CellKeyValues>
                 <CellRow className="flex-wrap justify-start gap-2">
@@ -98,7 +99,7 @@ export function SlackAgentDemo() {
             <SlackMessageMeta>
               <SlackAuthor>openstatus</SlackAuthor>
               <SlackAppBadge />
-              <SlackTime>09:52</SlackTime>
+              <SlackTime>{investigating.time}</SlackTime>
             </SlackMessageMeta>
             <SlackMessageBody>
               Published to {demo.company.domain}.{" "}

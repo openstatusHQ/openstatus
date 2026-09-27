@@ -50,9 +50,9 @@ function themeCss(id: string) {
 /** Same blocks, re-skinned by the CSS tokens each store theme sets. */
 export function ThemesDemo() {
   const [theme, setTheme] = useState<string>(DEFAULT_THEME);
-  const monitor = demo.components.find((c) => !c.external && c.degradedDays);
+  const monitor = demo.components.find((c) => !c.external);
   if (!monitor) return null;
-  const data = getStatusBarData(monitor.degradedDays);
+  const data = getStatusBarData(monitor);
   return (
     <>
       <style>{THEME_KEYS.map(themeCss).join("")}</style>

@@ -21,6 +21,12 @@ Every component the home and product pages are built from, in the order they app
 
 Every `type` in `mdx-components/demo/index.tsx`, one per grid cell.
 
+<SrOnly>
+
+A demo renders nothing in the markdown representation. The `SrOnly` block next to it is its text alternative: visually hidden here, read by screen readers, plain copy in the markdown.
+
+</SrOnly>
+
 <Grid cols={1}>
 <div>
 
@@ -181,6 +187,12 @@ Two sentences. The first says what happens, the second what it saves you.
 <div>
 
 <Demo type="notify" />
+
+<SrOnly>
+
+What the demo shows, for screen readers and the `.md` representation of the page. Every section with a demo has one.
+
+</SrOnly>
 
 </div>
 </Grid>

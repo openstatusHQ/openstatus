@@ -17,6 +17,7 @@ import { LogoCloud } from "./logo-cloud";
 import { Pre } from "./pre";
 import { PricingTabs } from "./pricing-tabs";
 import { Quote } from "./quote";
+import { SrOnly } from "./sr-only";
 import { MDXStatusPageExample } from "./status-page-example";
 import { Subtle } from "./subtle";
 import { Table } from "./table";
@@ -40,6 +41,7 @@ export const components = {
   Grid,
   LogoCloud,
   Actions,
+  SrOnly,
   Quote,
   Demo,
   Aside,

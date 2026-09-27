@@ -60,7 +60,7 @@ export const demo = {
     updates: [
       {
         status: "investigating",
-        time: "09:41",
+        time: "09:44",
         message:
           "We are investigating elevated error rates on the Checkout API from European regions. Payments outside Europe are not affected.",
       },
@@ -102,7 +102,8 @@ export const demo = {
       group: "Payments",
       status: "degraded",
       uptime: "99.94%",
-      degradedDays: [21, 44],
+      degradedDays: [21],
+      incident: true,
     },
     {
       name: "Webhooks",
@@ -139,7 +140,10 @@ export const demo = {
     status: Exclude<StatusType, "empty">;
     uptime: string;
     external?: boolean;
+    /** Degraded bars, as indices from the oldest day; the incident day is added by `getStatusBarData`. */
     degradedDays: number[];
+    /** Carries the incident event on `getIncidentDay`. */
+    incident?: boolean;
   }[],
   // The regions the Checkout API monitor runs from. An alert needs at least half
   // of them to fail the same check; the four European ones do, the failing ones first.
@@ -198,8 +202,20 @@ export const demo = {
     },
     {
       time: "09:52:40",
+      action: "status_report.update",
+      detail: "→ identified",
+      actor: "gilfoyle@piedpiper.dev · slack",
+    },
+    {
+      time: "09:44:31",
+      action: "notification.send",
+      detail: "email 1,204 · rss · slack-connect",
+      actor: "system",
+    },
+    {
+      time: "09:44:30",
       action: "status_report.create",
-      detail: "identified · Checkout API",
+      detail: "investigating · Checkout API",
       actor: "gilfoyle@piedpiper.dev · slack",
     },
     {
@@ -274,10 +290,11 @@ export function getIncidentDay(now = new Date()) {
   return day;
 }
 
-function atTime(day: Date, hhmm: string) {
-  const [h, m] = hhmm.split(":").map(Number);
+/** `HH:MM` or `HH:MM:SS` UTC on the given day. */
+export function atTime(day: Date, time: string) {
+  const [h, m, s = 0] = time.split(":").map(Number);
   const date = new Date(day);
-  date.setUTCHours(h, m, 0, 0);
+  date.setUTCHours(h, m, s, 0);
   return date;
 }
 
@@ -318,9 +335,9 @@ export function getMaintenance(now = new Date()): Maintenance {
   };
 }
 
-/** 45 days of bar data; `degradedDays` are indices from the oldest day, 44 = today. */
+/** 45 days of bar data ending today. A component with `incident` gets a degraded bar and the event on `getIncidentDay`. */
 export function getStatusBarData(
-  degradedDays: readonly number[],
+  component: { degradedDays: readonly number[]; incident?: boolean },
   now = new Date(),
 ): StatusBarData[] {
   const incident = getIncident("resolved", now);
@@ -329,8 +346,9 @@ export function getStatusBarData(
     const day = new Date(now);
     day.setUTCHours(0, 0, 0, 0);
     day.setUTCDate(day.getUTCDate() - (DAYS - 1 - i));
-    const degraded = degradedDays.includes(i);
-    const isIncidentDay = day.getTime() === incidentDay.getTime() && degraded;
+    const isIncidentDay =
+      component.incident === true && day.getTime() === incidentDay.getTime();
+    const degraded = component.degradedDays.includes(i) || isIncidentDay;
     return {
       day: day.toISOString(),
       bar: degraded

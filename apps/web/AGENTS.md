@@ -37,9 +37,16 @@ drift is visible.
   `demo/cell.tsx`, the `Slack*` parts from `demo/slack.tsx` and the
   `@openstatus/ui` status blocks. A repeated visual is a new part in one of
   those files, never a `title`/`items` prop or a copied class stack.
-- One data file per concern. `data/customers.ts` feeds `LogoCloud`, `Quote`
-  and `/customers`. `data/demo-data.ts` (one fictional company, one incident)
-  feeds every demo, so every demo on every page tells the same story.
+- A `<Demo>` is a picture, so the `<SrOnly>` block next to it says what it
+  shows: visually hidden on the page, read by screen readers, plain copy in
+  the `.md` representation (`convert.ts` unwraps it). The lint requires one in
+  every section that holds a demo. Its numbers come from `data/demo-data.ts`,
+  like the demo's do. Search skips it, since a hit would highlight nothing.
+- One data file per concern. `data/customers.ts` feeds `LogoCloud` and `Quote`
+  (the `/customers` listing comes from `pages/customers/*.mdx`).
+  `data/demo-data.ts` (one fictional company, one incident) feeds every demo,
+  so every demo on every page tells the same story; `demo.audit` is the
+  timeline of record, and every timestamp in a demo has to match a row there.
 - No raw `className` in `pages/`. A CTA row is `<Actions source="…">`, which
   appends the tracking `ref` to app links; never hand-write `?ref=`.
 - Every capitalised tag must be registered in `mdx-components/index.tsx`.
