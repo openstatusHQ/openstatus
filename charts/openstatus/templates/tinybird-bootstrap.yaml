@@ -65,12 +65,26 @@ data:
     tb --local deploy
     python3 /scripts/publish.py
   fetch.py: |
-    import io, os, sys, tarfile, urllib.request
+    import io, os, sys, tarfile, urllib.parse, urllib.request
     url, dest = sys.argv[1], sys.argv[2]
+    token = os.environ.get("SOURCE_TOKEN")
+
+    class SameOriginAuth(urllib.request.HTTPRedirectHandler):
+        # Like curl: never forward the token to another host (GitHub's codeload
+        # redirect is pre-signed and needs none).
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            new = super().redirect_request(req, fp, code, msg, headers, newurl)
+            if new and urllib.parse.urlsplit(newurl).netloc != urllib.parse.urlsplit(req.full_url).netloc:
+                new.remove_header("Authorization")
+            return new
+
     req = urllib.request.Request(url)
-    if os.environ.get("SOURCE_TOKEN"):
-        req.add_header("Authorization", "Bearer " + os.environ["SOURCE_TOKEN"])
-    tar = tarfile.open(fileobj=io.BytesIO(urllib.request.urlopen(req).read()))
+    if token:
+        if urllib.parse.urlsplit(url).scheme != "https":
+            sys.exit("sourceTokenSecret requires an https sourceUrl")
+        req.add_header("Authorization", "Bearer " + token)
+    body = urllib.request.build_opener(SameOriginAuth).open(req).read()
+    tar = tarfile.open(fileobj=io.BytesIO(body))
     members = []
     for m in tar.getmembers():
         parts = m.name.split("/", 1)

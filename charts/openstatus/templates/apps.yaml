@@ -1,5 +1,10 @@
 {{- range $svc, $cfg := .Values.services }}
 {{- if $cfg.enabled }}
+{{- range $dep := $cfg.dependsOn }}
+{{- if not (get $.Values.services $dep).enabled }}
+{{- fail (printf "services.%s depends on services.%s, which is disabled" $svc $dep) }}
+{{- end }}
+{{- end }}
 {{- $name := include "openstatus.component" (dict "ctx" $ "component" $svc) }}
 ---
 apiVersion: v1
