@@ -18,16 +18,21 @@ Themes are contributed through GitHub. We keep them in version control so every 
 If you use AI agents, install the [`openstatus-theme` skill](https://github.com/openstatusHQ/skills/tree/main/skills/openstatus-theme) with `npx skills add openstatushq/skills --skill openstatus-theme` for guided help through palette design, accessibility checks, file scaffolding, and PR submission.
 </Aside>
 
-## Two ways to build a theme
+## Three ways to build a theme
 
-<Grid cols={2}>
+<Grid cols={3}>
 <Card title="Visual builder">
-Configure a palette at [themes.openstatus.dev](https://themes.openstatus.dev/?b=true) and copy the generated configuration. Fastest way to get a starting point.
+Configure a palette at [themes.openstatus.dev](https://themes.openstatus.dev/?b=true) and copy it as a TypeScript file, JSON or CSS. Fastest way to get a starting point.
+</Card>
+<Card title="Your agent">
+Click **Copy prompt** in the builder and hand it to your agent. It receives the current configuration, the supported variables and the JSON shape to reply with. **Paste** the reply back into the builder to preview it.
 </Card>
 <Card title="Local development">
 Run the status page app locally and iterate against real, seeded content. Best for fine-tuning and final testing.
 </Card>
 </Grid>
+
+The builder accepts a theme as JSON, as the TypeScript theme file, or as `:root { }` / `.dark { }` CSS blocks, so anything an agent produces pastes right in. **Test it** on the explorer page previews the builder theme on a full status page before you touch the repository.
 
 Most contributors start in the builder, then test locally before submitting.
 
