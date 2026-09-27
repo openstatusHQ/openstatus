@@ -1,0 +1,102 @@
+{{- range $svc, $cfg := .Values.services }}
+{{- if $cfg.enabled }}
+{{- $name := include "openstatus.component" (dict "ctx" $ "component" $svc) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" $ | nindent 4 }}
+spec:
+  selector:
+    {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" $svc) | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $cfg.port }}
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $svc }}
+spec:
+  replicas: {{ $cfg.replicas | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" $svc) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" $svc) | nindent 8 }}
+      annotations:
+        checksum/env: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+    spec:
+      {{- include "openstatus.scheduling" $ | nindent 6 }}
+      {{- if eq $svc "workflows" }}
+      # compose: every app waits on the one-shot, idempotent db-migrate.
+      # Running it before workflows (which the other apps also wait on in compose)
+      # keeps that order; drizzle skips already-applied migrations.
+      initContainers:
+        - name: db-migrate
+          image: {{ include "openstatus.image" (dict "ctx" $ "name" $.Values.dbMigrate.image) }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          envFrom:
+            {{- include "openstatus.envFrom" $ | nindent 12 }}
+      {{- end }}
+      containers:
+        - name: {{ $svc }}
+          image: {{ include "openstatus.image" (dict "ctx" $ "name" $cfg.image) }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          envFrom:
+            {{- include "openstatus.envFrom" $ | nindent 12 }}
+          env:
+            {{- if eq $svc "dashboard" }}
+            # Auth.js otherwise builds callback and magic-link URLs from the bind address (0.0.0.0:3000).
+            - name: AUTH_URL
+              value: {{ $.Values.urls.dashboard | quote }}
+            {{- end }}
+            {{- range $k, $v := $cfg.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ $cfg.port }}
+          readinessProbe:
+            httpGet:
+              path: {{ $cfg.healthPath }}
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 10
+          startupProbe:
+            httpGet:
+              path: {{ $cfg.healthPath }}
+              port: http
+            periodSeconds: 5
+            failureThreshold: 36
+          livenessProbe:
+            httpGet:
+              path: {{ $cfg.healthPath }}
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            {{- toYaml $cfg.resources | nindent 12 }}
+          {{- if eq $svc "workflows" }}
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          {{- end }}
+      {{- if eq $svc "workflows" }}
+      volumes:
+        # Local libSQL replica cache; rebuilt from the primary on start.
+        - name: data
+          emptyDir: {}
+      {{- end }}
+{{- end }}
+{{- end }}

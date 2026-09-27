@@ -1,0 +1,189 @@
+# Mirrors docker-compose.github-packages.yaml and .env.docker.example.
+# Service names, ports, env and resource limits match the compose file.
+
+image:
+  registry: ghcr.io/openstatushq
+  # Upstream publishes `latest`, `main` and short-SHA tags. Pin a SHA in production.
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# Public origins. Equivalent to NEXT_PUBLIC_URL / OAUTH_ISSUER / DASHBOARD_URL in .env.docker.
+urls:
+  dashboard: http://localhost:3002
+  server: http://localhost:3001
+
+# The `.env.docker` file: shared by every app, like compose `env_file`.
+# Keys set here override the chart defaults in templates/configmap.yaml.
+env: {}
+
+# Secret half of `.env.docker`. Either reference an existing Secret holding
+# AUTH_SECRET and CRON_SECRET (plus any optional secrets such as AUTH_OIDC_SECRET),
+# or let the chart generate one. Generated values survive upgrades.
+secrets:
+  existingSecret: ""
+  # Extra keys added to the generated Secret.
+  extra: {}
+
+libsql:
+  image:
+    repository: ghcr.io/tursodatabase/libsql-server
+    tag: latest
+  env:
+    SQLD_NODE: primary
+    SQLD_MAX_CONCURRENT_CONNECTIONS: "512"
+    SQLD_MAX_CONCURRENT_REQUESTS: "1024"
+  persistence:
+    size: 5Gi
+    storageClass: ""
+  resources:
+    requests:
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+tinybird:
+  # Run the tinybird-local container. Disable to use Tinybird Cloud
+  # (set TINYBIRD_URL in `env` and provide the token via `tinybird.existingSecret`).
+  enabled: true
+  image:
+    repository: tinybirdco/tinybird-local
+    tag: latest
+  env:
+    COMPATIBILITY_MODE: "1"
+  persistence:
+    clickhouse:
+      size: 10Gi
+    redis:
+      size: 1Gi
+    storageClass: ""
+  resources: {}
+  # Secret holding TINY_BIRD_API_KEY and TINYBIRD_TOKEN. When bootstrap is
+  # enabled the chart writes this Secret itself.
+  existingSecret: ""
+  # Automates Part 2 of the self-hosting guide: `tb --local deploy`, promote,
+  # `tb --local info` -> token -> Secret, then restarts the apps that read it.
+  bootstrap:
+    enabled: true
+    image:
+      repository: python
+      tag: "3.12-slim"
+    # Tinybird CLI version (pip package `tinybird`).
+    cliVersion: "4.6.21"
+    # Source tarball whose packages/tinybird is deployed. Pin the same commit
+    # as image.tag, e.g. .../tar.gz/<sha>.
+    sourceUrl: https://codeload.github.com/openstatusHQ/openstatus/tar.gz/main
+    backoffLimit: 6
+
+services:
+  workflows:
+    enabled: true
+    image: openstatus-workflows
+    port: 3000
+    healthPath: /ping
+    env:
+      PORT: "3000"
+    resources:
+      requests:
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+  server:
+    enabled: true
+    image: openstatus-server
+    port: 3000
+    healthPath: /ping
+    env:
+      PORT: "3000"
+    resources:
+      requests:
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+  private-location:
+    enabled: true
+    image: openstatus-private-location
+    port: 8080
+    healthPath: /health
+    env:
+      GIN_MODE: release
+      PORT: "8080"
+    resources:
+      requests:
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+  checker:
+    enabled: true
+    image: openstatus-checker
+    port: 8080
+    healthPath: /health
+    env:
+      PORT: "8080"
+    resources:
+      requests:
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+  dashboard:
+    enabled: true
+    image: openstatus-dashboard
+    port: 3000
+    healthPath: /api/health
+    env:
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      AUTH_TRUST_HOST: "true"
+    resources:
+      requests:
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+  status-page:
+    enabled: true
+    image: openstatus-status-page
+    port: 3000
+    healthPath: /api/health
+    env:
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      AUTH_TRUST_HOST: "true"
+    resources:
+      requests:
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+
+dbMigrate:
+  image: openstatus-db-migrate
+
+# Part 4 of the self-hosting guide: external cron against the workflows app.
+cron:
+  image:
+    repository: curlimages/curl
+    tag: latest
+  jobs:
+    private-location-health:
+      schedule: "*/5 * * * *"
+      path: /cron/private-location-health
+
+# Optional in-cluster probe (ghcr.io/openstatushq/private-location). Create a
+# private location in the dashboard, then store its key in `probe.existingSecret`
+# under OPENSTATUS_KEY.
+probe:
+  enabled: false
+  image: private-location
+  existingSecret: ""
+  # Defaults to the in-cluster ingest service.
+  ingestUrl: ""
+  resources:
+    requests:
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podSecurityContext: {}

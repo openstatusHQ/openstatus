@@ -1,0 +1,162 @@
+{{- if and .Values.tinybird.enabled .Values.tinybird.bootstrap.enabled }}
+{{- $name := include "openstatus.component" (dict "ctx" $ "component" "tinybird-bootstrap") }}
+{{- $b := .Values.tinybird.bootstrap }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: [{{ include "openstatus.tinybirdSecretName" . | quote }}]
+    verbs: ["get", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+data:
+  bootstrap.sh: |
+    set -eu
+    pip install --quiet --root-user-action=ignore "tinybird=={{ $b.cliVersion }}"
+    # tb names the local workspace after the project path, so keep it fixed:
+    # the same path always resolves to the same workspace and token.
+    python3 /scripts/fetch.py "$SOURCE_URL" /work
+    cd /work/packages/tinybird
+    tb --local deploy
+    python3 /scripts/publish.py
+  fetch.py: |
+    import io, sys, tarfile, urllib.request
+    url, dest = sys.argv[1], sys.argv[2]
+    tar = tarfile.open(fileobj=io.BytesIO(urllib.request.urlopen(url).read()))
+    members = []
+    for m in tar.getmembers():
+        parts = m.name.split("/", 1)
+        if len(parts) == 2 and parts[1].startswith("packages/tinybird/"):
+            m.name = parts[1]
+            members.append(m)
+    tar.extractall(dest, members=members, filter="data")
+  publish.py: |
+    # Guide steps 6-7: read the workspace token with `tb --local info`, store it
+    # under both names the apps read, and restart the apps if it changed.
+    import base64, datetime, json, os, ssl, subprocess, urllib.error, urllib.request
+
+    info = subprocess.run(["tb", "--local", "info"], capture_output=True, text=True, check=True).stdout
+    section = info.split("Tinybird Local", 1)[1].split("» Project", 1)[0]
+    token = next(l.split(":", 1)[1].strip() for l in section.splitlines() if l.startswith("token:"))
+
+    sa = "/var/run/secrets/kubernetes.io/serviceaccount"
+    ns = open(f"{sa}/namespace").read().strip()
+    auth = {"Authorization": "Bearer " + open(f"{sa}/token").read().strip()}
+    tls = ssl.create_default_context(cafile=f"{sa}/ca.crt")
+    api = "https://kubernetes.default.svc"
+
+    def call(method, path, body=None, ctype="application/json"):
+        req = urllib.request.Request(api + path, method=method, headers={**auth, "Content-Type": ctype},
+                                     data=json.dumps(body).encode() if body is not None else None)
+        try:
+            with urllib.request.urlopen(req, context=tls) as r:
+                return r.status, json.load(r)
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return 404, None
+            raise
+
+    name = os.environ["SECRET_NAME"]
+    enc = base64.b64encode(token.encode()).decode()
+    secret = {"apiVersion": "v1", "kind": "Secret", "type": "Opaque",
+              "metadata": {"name": name, "labels": json.loads(os.environ["LABELS"])},
+              "data": {"TINY_BIRD_API_KEY": enc, "TINYBIRD_TOKEN": enc}}
+    status, current = call("GET", f"/api/v1/namespaces/{ns}/secrets/{name}")
+    if status == 404:
+        call("POST", f"/api/v1/namespaces/{ns}/secrets", secret)
+    elif current.get("data") == secret["data"]:
+        print("tinybird token unchanged")
+        raise SystemExit(0)
+    else:
+        secret["metadata"]["resourceVersion"] = current["metadata"]["resourceVersion"]
+        call("PUT", f"/api/v1/namespaces/{ns}/secrets/{name}", secret)
+
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    patch = {"spec": {"template": {"metadata": {"annotations": {"openstatus.dev/tinybird-token-at": now}}}}}
+    selector = urllib.request.quote(f"app.kubernetes.io/instance={os.environ['RELEASE']},app.kubernetes.io/component!=probe")
+    _, deps = call("GET", f"/apis/apps/v1/namespaces/{ns}/deployments?labelSelector={selector}")
+    for d in deps["items"]:
+        call("PATCH", f"/apis/apps/v1/namespaces/{ns}/deployments/{d['metadata']['name']}", patch,
+             "application/strategic-merge-patch+json")
+        print("restarted", d["metadata"]["name"])
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $b.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" "tinybird-bootstrap") | nindent 8 }}
+    spec:
+      {{- include "openstatus.scheduling" . | nindent 6 }}
+      serviceAccountName: {{ $name }}
+      restartPolicy: Never
+      containers:
+        - name: bootstrap
+          image: "{{ $b.image.repository }}:{{ $b.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["sh", "/scripts/bootstrap.sh"]
+          env:
+            - name: TB_LOCAL_HOST
+              value: {{ include "openstatus.component" (dict "ctx" $ "component" "tinybird-local") }}
+            - name: SOURCE_URL
+              value: {{ $b.sourceUrl | quote }}
+            - name: SECRET_NAME
+              value: {{ include "openstatus.tinybirdSecretName" . }}
+            - name: RELEASE
+              value: {{ .Release.Name }}
+            - name: LABELS
+              value: {{ include "openstatus.labels" . | fromYaml | toJson | quote }}
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: {{ $name }}
+{{- end }}

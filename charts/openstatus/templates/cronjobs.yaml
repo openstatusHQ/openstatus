@@ -1,0 +1,35 @@
+{{- $workflows := include "openstatus.url" (dict "ctx" $ "component" "workflows" "port" 3000) }}
+{{- range $job, $cfg := .Values.cron.jobs }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "openstatus.component" (dict "ctx" $ "component" $job) }}
+  labels:
+    {{- include "openstatus.labels" $ | nindent 4 }}
+spec:
+  schedule: {{ $cfg.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          {{- include "openstatus.scheduling" $ | nindent 10 }}
+          restartPolicy: Never
+          containers:
+            - name: curl
+              image: "{{ $.Values.cron.image.repository }}:{{ $.Values.cron.image.tag }}"
+              imagePullPolicy: {{ $.Values.image.pullPolicy }}
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "openstatus.secretName" $ }}
+                      key: CRON_SECRET
+              command: ["sh", "-c"]
+              args:
+                - {{ printf "curl -fsS -H \"Authorization: $CRON_SECRET\" %s%s" $workflows $cfg.path | quote }}
+{{- end }}

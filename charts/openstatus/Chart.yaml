@@ -1,0 +1,13 @@
+apiVersion: v2
+name: openstatus
+description: Self-hosted openstatus — the docker-compose.github-packages.yaml stack as a Helm chart
+type: application
+version: 0.1.0
+appVersion: "latest"
+home: https://www.openstatus.dev
+sources:
+  - https://github.com/openstatusHQ/openstatus
+keywords:
+  - monitoring
+  - uptime
+  - status-page

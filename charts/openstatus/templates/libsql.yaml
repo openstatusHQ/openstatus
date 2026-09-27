@@ -1,0 +1,76 @@
+{{- $name := include "openstatus.component" (dict "ctx" $ "component" "libsql") }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" "libsql") | nindent 4 }}
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+    - name: grpc
+      port: 5001
+      targetPort: grpc
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+    app.kubernetes.io/component: libsql
+spec:
+  serviceName: {{ $name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" "libsql") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" "libsql") | nindent 8 }}
+    spec:
+      {{- include "openstatus.scheduling" . | nindent 6 }}
+      containers:
+        - name: libsql
+          image: "{{ .Values.libsql.image.repository }}:{{ .Values.libsql.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            {{- range $k, $v := .Values.libsql.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: grpc
+              containerPort: 5001
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.libsql.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/sqld
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with .Values.libsql.persistence.storageClass }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.libsql.persistence.size }}
