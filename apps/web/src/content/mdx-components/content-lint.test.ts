@@ -40,7 +40,10 @@ function demoTypes() {
     join(dirname(root), "mdx-components", "demo", "index.tsx"),
     "utf8",
   );
-  const body = source.slice(source.indexOf("const demos = {"));
+  const start = source.indexOf("const demos = {");
+  if (start === -1) throw new Error("demo registry not found");
+  const end = source.indexOf("} as const", start);
+  const body = source.slice(start, end === -1 ? undefined : end);
   return [...body.matchAll(/^\s+"?([a-z-]+)"?:/gm)].map((m) => m[1]);
 }
 

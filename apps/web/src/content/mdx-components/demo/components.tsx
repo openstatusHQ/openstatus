@@ -44,7 +44,11 @@ export function ComponentsDemo() {
                     <StatusComponentHeaderLeft>
                       <StatusComponentIcon />
                       <StatusComponentTitle>{c.name}</StatusComponentTitle>
-                      <StatusComponentDescription>
+                      <StatusComponentDescription
+                        aria-label={
+                          external ? "External service" : "Monitored service"
+                        }
+                      >
                         {external ? "external" : "monitor"}
                       </StatusComponentDescription>
                     </StatusComponentHeaderLeft>

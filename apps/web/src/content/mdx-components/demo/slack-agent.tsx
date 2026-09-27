@@ -1,6 +1,12 @@
 import { Button } from "@openstatus/ui/components/ui/button";
 
-import { capitalize, demo, formatNumber } from "@/data/demo-data";
+import {
+  auditRow,
+  capitalize,
+  demo,
+  formatNumber,
+  hhmm,
+} from "@/data/demo-data";
 
 import {
   Cell,
@@ -27,6 +33,7 @@ import {
 } from "./slack";
 
 const [investigating] = demo.incident.updates;
+const createdAt = hhmm(auditRow("status_report.create").time);
 
 /** Declare the incident from the thread: ask, review the draft, approve. */
 export function SlackAgentDemo() {
@@ -42,7 +49,7 @@ export function SlackAgentDemo() {
           <SlackMessageContent>
             <SlackMessageMeta>
               <SlackAuthor>{demo.company.oncall.name}</SlackAuthor>
-              <SlackTime>{investigating.time}</SlackTime>
+              <SlackTime>{createdAt}</SlackTime>
             </SlackMessageMeta>
             <SlackMessageBody>
               <SlackLink>@openstatus</SlackLink> checkout API is returning 503s
@@ -56,7 +63,7 @@ export function SlackAgentDemo() {
             <SlackMessageMeta>
               <SlackAuthor>openstatus</SlackAuthor>
               <SlackAppBadge />
-              <SlackTime>{investigating.time}</SlackTime>
+              <SlackTime>{createdAt}</SlackTime>
             </SlackMessageMeta>
             <SlackMessageBody>
               <Cell className="mt-1">
@@ -98,7 +105,7 @@ export function SlackAgentDemo() {
             <SlackMessageMeta>
               <SlackAuthor>openstatus</SlackAuthor>
               <SlackAppBadge />
-              <SlackTime>{investigating.time}</SlackTime>
+              <SlackTime>{createdAt}</SlackTime>
             </SlackMessageMeta>
             <SlackMessageBody>
               Published to {demo.company.domain}.{" "}

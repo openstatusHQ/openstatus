@@ -35,6 +35,11 @@ describe("stripSrOnly", () => {
     expect(out).not.toContain("Hidden");
     expect(sanitizeContent(out)).not.toContain("Hidden");
   });
+
+  test("strips a tag that carries attributes", () => {
+    const out = stripSrOnly('Kept. <SrOnly className="x">Hidden.</SrOnly>');
+    expect(out).toBe("Kept. ");
+  });
 });
 
 describe("makeMatcher", () => {

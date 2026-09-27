@@ -19,8 +19,8 @@ const company = {
   customer: "Hooli",
   // The engineer who declares the incident from Slack.
   oncall: {
-    name: "Bertram G.",
-    initials: "BG",
+    name: "Gilfoyle",
+    initials: "G",
     email: "gilfoyle@piedpiper.dev",
   },
 } as const;
@@ -77,7 +77,7 @@ const components = [
 
 export type DemoComponent = (typeof components)[number];
 
-const subscribers = { email: 1_204, slackConnect: 3 } as const;
+const subscribers = { email: 1_337, slackConnect: 3 } as const;
 const actor = `${company.oncall.email} · slack`;
 
 /**
@@ -441,7 +441,7 @@ export function getStatusBarData(
 ): StatusBarData[] {
   const incident = getIncident("resolved", now);
   const incidentDay = getIncidentDay(now);
-  const degradedMinutes = getIncidentMinutes();
+  const incidentMinutes = getIncidentMinutes();
   return Array.from({ length: DAYS }, (_, i) => {
     const day = new Date(now);
     day.setUTCHours(0, 0, 0, 0);
@@ -449,6 +449,8 @@ export function getStatusBarData(
     const isIncidentDay =
       component.incident === true && day.getTime() === incidentDay.getTime();
     const degraded = component.degradedDays.includes(i) || isIncidentDay;
+    // Other degraded days are past blips with no report attached.
+    const degradedMinutes = isIncidentDay ? incidentMinutes : 18;
     return {
       day: day.toISOString(),
       // The band is exaggerated so a sub-hour incident stays visible at 45-day scale.

@@ -51,7 +51,7 @@ export function TerminalDemo() {
 
 ## Components
 
-**${component.name}** — ${component.uptime} · \`${days.length}d ago → today\`
+**${component.name}** — ${component.uptime} · \`${days.length - 1}d ago → today\`
 \`${bar}\``;
   return (
     <Cell>

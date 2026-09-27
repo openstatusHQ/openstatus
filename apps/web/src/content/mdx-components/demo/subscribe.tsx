@@ -55,6 +55,13 @@ export function SubscribeTabs() {
   );
 }
 
+/** Monitors start checked, external services unchecked; the group mirrors its items. */
+function groupChecked(items: readonly { name: string }[]) {
+  const checked = items.filter((c) => !("external" in c)).length;
+  if (checked === items.length) return true;
+  return checked === 0 ? false : "indeterminate";
+}
+
 function SubscribeEmailTab() {
   const id = useId();
   const [components, setComponents] = useState(false);
@@ -70,7 +77,7 @@ function SubscribeEmailTab() {
         >
           <Input
             type="email"
-            placeholder="subscribe@me.com"
+            placeholder="bighead@hooli.com"
             aria-label="Email"
           />
           <div className="flex items-center gap-2">
@@ -90,7 +97,7 @@ function SubscribeEmailTab() {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id={`${id}-${group.name}`}
-                      defaultChecked="indeterminate"
+                      defaultChecked={groupChecked(group.items)}
                     />
                     <Label htmlFor={`${id}-${group.name}`}>{group.name}</Label>
                   </div>

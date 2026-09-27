@@ -301,7 +301,7 @@ export function CellPhaseBar({
         <span
           key={p.phase}
           className={cn("block h-3", chartClass[i % chartClass.length])}
-          style={{ width: `${(p.ms / total) * 100}%` }}
+          style={{ width: `${total > 0 ? (p.ms / total) * 100 : 0}%` }}
         />
       ))}
     </span>
