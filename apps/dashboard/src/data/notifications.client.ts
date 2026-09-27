@@ -1,16 +1,10 @@
-import {
-  Notification,
-  Settings,
-  Email,
-  Chat,
-  Delete,
-  Webhook,
-} from "@openstatus/icons";
+import { Settings, Email, Chat, Delete, Webhook } from "@openstatus/icons";
 import {
   DiscordIcon,
   GoogleIcon,
   GrafanaIcon,
   MicrosoftTeamsIcon,
+  NtfyIcon,
   TelegramIcon,
   WhatsappIcon,
 } from "@openstatus/icons/brand";
@@ -112,7 +106,7 @@ export const config = {
     form: FormPagerDuty,
   },
   ntfy: {
-    icon: Notification, // TODO: add svg icon
+    icon: NtfyIcon,
     label: "Ntfy",
     form: FormNtfy,
   },
