@@ -67,6 +67,10 @@ export const docsNav: DocsNavSection[] = [
         slug: "concept/latency-vs-response-time",
         label: "Understanding Latency vs Response Time",
       },
+      {
+        slug: "concept/response-logs-and-retention",
+        label: "Response Logs and Data Retention",
+      },
     ],
   },
   {

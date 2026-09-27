@@ -1,5 +1,11 @@
 import "server-only";
-import { type MDXData, PAGE_TYPES, getHomePage, getPages } from ".";
+import {
+  type MDXData,
+  PAGE_TYPES,
+  getHomePage,
+  getPages,
+  isIndexable,
+} from ".";
 import { slugify } from "../mdx";
 import type { Corpus, SearchResult } from "../search-meta";
 import {
@@ -11,6 +17,7 @@ import {
   normalizeForMatch,
   sanitizeContent,
   scoreDoc,
+  stripSrOnly,
 } from "./search-match";
 
 type Heading = { slug: string; index: number };
@@ -43,7 +50,7 @@ function homeDoc(): MDXData {
 }
 
 function indexDoc(doc: MDXData, type: Corpus): IndexedDoc {
-  const raw = doc.content;
+  const raw = stripSrOnly(doc.content);
   const faqText = (doc.metadata.faq ?? [])
     .map((f) => `${f.question} ${f.answer}`)
     .join(" ");
@@ -74,7 +81,7 @@ function indexDoc(doc: MDXData, type: Corpus): IndexedDoc {
 function buildCorpus(type: Corpus): IndexedDoc[] {
   const pages =
     type === "product" ? [homeDoc(), ...getPages("product")] : getPages(type);
-  return pages.map((doc) => indexDoc(doc, type));
+  return pages.filter(isIndexable).map((doc) => indexDoc(doc, type));
 }
 
 function getCorpus(type: Corpus): IndexedDoc[] {

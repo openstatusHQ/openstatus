@@ -78,7 +78,7 @@ resource "openstatus_http_monitor" "api" {
   name        = "API Health Check"
   url         = "https://api.example.com/health"
   periodicity = "1m"
-  regions     = ["iad", "ams", "syd"]
+  regions     = ["fly-iad", "fly-ams", "fly-syd"]
 
   status_code_assertions {
     target     = 200

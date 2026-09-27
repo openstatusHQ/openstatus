@@ -37,7 +37,7 @@ function channelLabel(channelId: string, channelName?: string): string {
 }
 
 /**
- * Self-signup for a Slack channel via `/openstatus add <url>`. There is no
+ * Self-signup for a Slack channel via `/openstatus subscribe <url>`. There is no
  * authenticated workspace at the call site — both workspace and audit actor
  * are resolved from the page. Auto-accepted (the slash command is consent).
  */

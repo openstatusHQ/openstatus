@@ -1,3 +1,4 @@
+import { customers, getCustomer } from "../data/customers";
 import type { MDXData } from "./utils";
 import { formatDate } from "./utils";
 
@@ -133,30 +134,70 @@ export function convertMdxToMarkdown(data: MDXData): string {
     return description ? `- ${link} — ${description}` : `- ${link}`;
   });
 
-  // Step 10: Extract text from <Grid> containers (remove Grid wrapper, keep content)
+  // Step 9b: LogoCloud and Quote take their copy from `data/customers.ts`.
+  markdown = markdown.replace(/<LogoCloud\b([^>]*?)\/>/g, (_match, attrs) => {
+    const limit =
+      Number(attrs.match(/limit=\{(\d+)\}/)?.[1]) || customers.length;
+    return customers
+      .slice(0, limit)
+      .map((c) => `[${c.name}](${c.story ?? c.href})`)
+      .join(", ");
+  });
   markdown = markdown.replace(
-    /<Grid[^>]*>([\s\S]*?)<\/Grid>/g,
-    (_match, content) => {
-      return content;
+    /<Quote\s+customer="([^"]*)"[^>]*\/>/g,
+    (_match, name) => {
+      const customer = getCustomer(name);
+      const { quote } = customer;
+      if (!quote) return "";
+      const link = customer.story
+        ? `[Read the story](${customer.story})`
+        : `[${customer.name}](${customer.href})`;
+      return `> “${quote.text}”\n>\n> — ${quote.name}, ${quote.role} · ${link}`;
     },
   );
+
+  // Step 10: Unwrap layout-only wrappers. Their children are real copy
+  // (CTA links, pricing caveats, quote attributions), only the styling goes.
+  markdown = markdown.replace(
+    /<Actions\b[^>]*>([\s\S]*?)<\/Actions>/g,
+    (_match, content: string) =>
+      content
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .join("\n\n"),
+  );
+  // Eyebrow is a visual label with no meaning out of context, so it goes.
+  markdown = markdown.replace(/<Eyebrow\b[^>]*>[\s\S]*?<\/Eyebrow>/g, "");
+  // SrOnly is a demo's text alternative: hidden on the page, plain copy here.
+  // One pass skips wrappers nested inside a match, so repeat until stable.
+  const wrapper = /<(Grid|Subtle|p|SrOnly)\b[^>]*>([\s\S]*?)<\/\1>/g;
+  while (wrapper.test(markdown)) {
+    markdown = markdown.replace(wrapper, (_match, _tag, content) => content);
+  }
+
+  // A break becomes a newline so `Before<br />After` keeps its word boundary.
+  markdown = markdown.replace(/<br\s*\/?>|<\/br>/g, "\n");
 
   // Step 11: Strip generic HTML containers but extract their text
   // This handles div, span, section, article
   markdown = markdown.replace(
     /<(div|span|section|article)(?:\s+[^>]*)?>[\s\S]*?<\/\1>/g,
     (match) => {
-      // Extract text content (remove all tags)
-      return match.replace(/<[^>]*>/g, " ").trim();
+      // Extract text content (remove all tags); blank lines keep adjacent
+      // containers from merging into one paragraph.
+      return `\n\n${match.replace(/<[^>]*>/g, " ").trim()}\n\n`;
     },
   );
 
-  // Step 12: Strip remaining unknown JSX components
-  // Handle paired tags
-  markdown = markdown.replace(/<[A-Z]\w*[^>]*>[\s\S]*?<\/[A-Z]\w*>/g, "");
-  // Handle self-closing tags
-  markdown = markdown.replace(/<[A-Z]\w*\s*\/>/g, "");
+  // Step 12: Strip remaining unknown JSX components. Self-closing tags go
+  // first: a `<Demo type="x" />` left for the paired rule reads as an opening
+  // tag and swallows everything up to the next closing tag of any component.
+  markdown = markdown.replace(/<[A-Z]\w*(?:\s[^>]*?)?\/>/g, "");
+  markdown = markdown.replace(/<([A-Z]\w*)\b[^>]*>[\s\S]*?<\/\1>/g, "");
 
+  // A tag removed mid-cell leaves a line holding one space; empty it so it collapses.
+  markdown = markdown.replace(/^[ \t]+$/gm, "");
   // Clean up: Remove excessive blank lines (more than 2 consecutive)
   markdown = markdown.replace(/\n{3,}/g, "\n\n");
 

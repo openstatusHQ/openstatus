@@ -12,15 +12,27 @@ A subscriber in openstatus is an entity (typically a user or an integration) tha
 - Stay informed about service health without actively monitoring the status page.
 - Choose preferred notification channels for receiving updates.
 
-## Subscription process
+## Ways to subscribe
 
-Users typically subscribe to a status page's updates through a dedicated interface provided on the status page itself. The process involves:
+Every method delivers the same events: status report updates and scheduled maintenance. Pick the one that matches where the audience wants to receive them.
 
-1. **Entering an email address** — public self-subscription is email-only.
+| Method | Who sets it up | Where it is documented |
+| --- | --- | --- |
+| **Email** | The visitor, from the subscribe form on the status page | [Public self-subscription](#public-self-subscription) below |
+| **RSS / Atom / JSON feed** | The visitor, in a feed reader or script | [Feeds](#feeds) below |
+| **Slack channel via slash command** | Anyone in a Slack workspace with the openstatus app, from the channel itself | [Slack subscribers](#slack-subscribers) below |
+| **Email, webhook or Slack from the dashboard** | The page owner | [Adding subscribers from the dashboard](#adding-subscribers-from-the-dashboard) below |
+| **Slack Connect channel shared with a customer** | The page owner, scoped per customer | [Deliver status updates to customer Slack channels](/guides/slack-status-page-subscriptions) |
+
+## Public self-subscription
+
+Visitors subscribe through the subscribe form on the status page itself. The process involves:
+
+1. **Entering an email address** — the public form is email-only.
 2. **Opt-in confirmation** — a verification email is sent, and the subscription only activates once the recipient confirms it.
 3. **Scope selection (optional)** — where enabled, choosing which page components to be notified about instead of the whole page.
 
-Webhook and Slack subscriptions cannot be created from the public page. An operator adds those from the dashboard (see below).
+Webhook subscriptions are only created by the page owner from the dashboard. Slack channels can be subscribed either from the dashboard or from inside Slack with the slash command (see [Slack subscribers](#slack-subscribers)).
 
 ## Notification types received
 
@@ -46,7 +58,7 @@ Beyond public self-subscription, administrators can add subscribers directly fro
 
 - **Email** — delivers updates to a contact address. By adding an email here you confirm the contact has consented to receive status updates; no confirmation email is sent.
 - **Webhook** — POSTs each update to a URL. Slack and Discord URLs receive channel-native messages; any other URL receives a generic JSON payload.
-- **Slack** — posts each update straight into a Slack channel through the openstatus Slack app. The bot token is resolved from the workspace integration at send time and is never stored on the subscriber.
+- **Slack** — posts each update straight into a Slack channel through the openstatus Slack app. The bot token is resolved from the workspace integration at send time and is never stored on the subscriber. A channel can also subscribe itself with the slash command (see [Slack subscribers](#slack-subscribers)).
 
 For every channel, you can optionally:
 
@@ -54,6 +66,46 @@ For every channel, you can optionally:
 - **Scope to page components** — leave empty to notify for the entire page, or select specific components to only notify on matching reports.
 
 ![openstatus](/assets/logos/openstatus.jpeg)
+
+## Slack subscribers
+
+A Slack subscriber posts every status report update and scheduled maintenance into one channel through the openstatus Slack app. There are two ways to create one.
+
+### From the dashboard
+
+The page owner adds a Slack subscriber from the subscribers section of the status page, picks the channel, and optionally scopes it to components. This is the path for [Slack Connect channels shared with customers](/guides/slack-status-page-subscriptions), where the owner decides which components each customer sees. It requires the [Slack agent](/docs/guides/how-to-setup-slack-agent) to be installed in your workspace.
+
+### From Slack
+
+Any channel in a Slack workspace that has the openstatus app installed can subscribe itself by running the slash command in that channel:
+
+```
+/openstatus subscribe https://acme.openstatus.dev
+```
+
+The URL is the public status page address, either the `*.openstatus.dev` subdomain or a custom domain. The subscription is created immediately without a confirmation step, the bot joins the channel if it can, and the channel receives updates for the whole page. Component scoping is not available from the command; use the dashboard for that.
+
+Related commands, all run from the channel:
+
+- `/openstatus subscriptions` — list the pages this channel is subscribed to.
+- `/openstatus unsubscribe [status-page-url]` — stop updates. The URL is optional when the channel follows exactly one page. Each Slack message also ends with a *Manage with `/openstatus unsubscribe`* hint.
+- `/openstatus help` — show the command list.
+
+Re-running `subscribe` on a channel that previously unsubscribed reactivates the existing subscription instead of creating a duplicate. Subscribing from Slack works against any page whose workspace is on a plan that includes subscribers; it does not require the channel's workspace to own the page.
+
+For installation and the natural-language incident commands, see [Set up the openstatus Slack agent](/docs/guides/how-to-setup-slack-agent).
+
+## Feeds
+
+Every status page exposes read-only feeds that need no subscription at all. Feed readers and scripts poll them directly:
+
+| Path | Format |
+| --- | --- |
+| `/feed/rss` | RSS 2.0 |
+| `/feed/atom` | Atom 1.0 |
+| `/feed/json` | JSON, the full page state including components |
+
+On a password-protected page, append `?pw=your-secret-password` to read them. Formats and fields are described in the [status page reference](/docs/reference/status-page#feeds).
 
 ## Webhook subscribers
 
@@ -243,6 +295,8 @@ export type WebhookPayload = z.infer<typeof webhookPayloadSchema>;
 
 ## Related resources
 
-- **[Status page reference](/docs/reference/status-page)** — detailed information on managing and configuring status pages.
+- **[Status page reference](/docs/reference/status-page)** — detailed information on managing and configuring status pages, including the feed formats.
+- **[Set up the openstatus Slack agent](/docs/guides/how-to-setup-slack-agent)** — install the Slack app that powers Slack subscribers and the slash commands.
+- **[Deliver status updates to customer Slack channels](/guides/slack-status-page-subscriptions)** — component-scoped subscriptions for Slack Connect channels.
 - **[Notification channels reference](/docs/reference/notification)** — technical specifications for the various notification delivery methods.
 - **[Incident reference](/docs/reference/incident)** — information about incident creation and management.
