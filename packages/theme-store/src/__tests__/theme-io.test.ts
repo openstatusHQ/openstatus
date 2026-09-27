@@ -105,6 +105,27 @@ describe("parseThemeInput", () => {
     expect(result.definition.light).toEqual({ "--primary": "red" });
   });
 
+  test("keeps comment-like characters inside strings", () => {
+    const result = expectOk(
+      parseThemeInput(
+        '{ "author": { "name": "x", "url": "https://x.dev/*" }, "light": { "--primary": "red" }, "dark": {} }',
+      ),
+    );
+    expect(result.info.author?.url).toBe("https://x.dev/*");
+  });
+
+  test("matches CSS selectors exactly, not as prefixes", () => {
+    const result = expectOk(
+      parseThemeInput(
+        ".light-theme { --primary: blue; }\n.light { --primary: red; }\n.dark-mode { --primary: blue; }\n.dark { --primary: pink; }",
+      ),
+    );
+    expect(result.definition).toEqual({
+      light: { "--primary": "red" },
+      dark: { "--primary": "pink" },
+    });
+  });
+
   test("applies bare declarations and flat objects to the fallback mode", () => {
     const declarations = expectOk(
       parseThemeInput("--primary: red;\n--radius: 0.5rem", "dark"),

@@ -38,10 +38,7 @@ import {
 } from "../../components/content/section";
 import { recomputeStyles } from "../../components/status-page/floating-button";
 import { StatusComponentStatic } from "../../components/status-page/static/status-component-static";
-import {
-  ThemePromptButton,
-  ThemeSkillInstallCommand,
-} from "../../components/themes/theme-agent-actions";
+import { ThemePromptButton } from "../../components/themes/theme-agent-actions";
 import { useThemeBuilder } from "../../components/themes/theme-builder-provider";
 import { ThemePalettePicker } from "../../components/themes/theme-palette-picker";
 import { ThemePasteDialog } from "../../components/themes/theme-paste-dialog";
@@ -265,11 +262,6 @@ export function Client() {
               Toggle Sidebar
             </Button>
           </div>
-          <p>
-            Or install the skill so your agent knows the whole workflow, from
-            palette to pull request:
-          </p>
-          <ThemeSkillInstallCommand className="not-prose max-w-md" />
           <p>
             Preview the theme from the builder on a full status page (the{" "}
             <code>status</code> slug). Unchanged themes open the community theme

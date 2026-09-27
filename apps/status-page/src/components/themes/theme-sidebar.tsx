@@ -65,10 +65,7 @@ import { useEffect, useState } from "react";
 
 import { searchParamsParsers } from "../../app/(public)/search-params";
 import { recomputeStyles } from "../status-page/floating-button";
-import {
-  ThemePromptButton,
-  ThemeSkillInstallCommand,
-} from "./theme-agent-actions";
+import { ThemePromptButton } from "./theme-agent-actions";
 import { useThemeBuilder } from "./theme-builder-provider";
 import { ThemePasteDialog } from "./theme-paste-dialog";
 
@@ -226,9 +223,29 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
           </Tooltip>
         </div>
       </SidebarHeader>
-      <SidebarContent>
-        <Collapsible key="info" defaultOpen className="group/collapsible">
+      <SidebarContent className="pb-2">
+        <Collapsible key="agent" defaultOpen className="group/collapsible">
           <SidebarGroup className="pt-2 pb-0">
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger>
+                Agent
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent className="space-y-2 px-2">
+                <p className="text-muted-foreground text-xs">
+                  Let your agent design the theme. The prompt carries the
+                  current configuration and the output format you can paste back
+                  here.
+                </p>
+                <ThemePromptButton size="sm" className="w-full" />
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
+        <Collapsible key="info" defaultOpen className="group/collapsible">
+          <SidebarGroup className="py-0">
             <SidebarGroupLabel asChild>
               <CollapsibleTrigger>
                 Information
@@ -332,27 +349,6 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroup>
           </Collapsible>
         ))}
-        <Collapsible key="agent" defaultOpen className="group/collapsible">
-          <SidebarGroup className="pt-0">
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger>
-                Agent
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent className="space-y-2 px-2">
-                <p className="text-muted-foreground text-xs">
-                  Let your agent design the theme. The prompt carries the
-                  current configuration and the output format you can paste back
-                  here.
-                </p>
-                <ThemePromptButton size="sm" className="w-full" />
-                <ThemeSkillInstallCommand />
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
       </SidebarContent>
       <SidebarFooter className="border-border border-t">
         <div className="grid grid-cols-2 gap-2">

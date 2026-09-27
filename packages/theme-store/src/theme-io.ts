@@ -70,13 +70,19 @@ function parseDeclarations(
 /** Body of the first `selector { … }`; indexOf instead of a regex (CodeQL js/polynomial-redos). */
 function cssBlock(source: string, selectors: string[]) {
   for (const selector of selectors) {
-    const start = source.indexOf(selector);
-    if (start === -1) continue;
-    const open = source.indexOf("{", start + selector.length);
-    const close = open === -1 ? -1 : source.indexOf("}", open);
-    if (close === -1) continue;
-    if (source.slice(start + selector.length, open).trim().length > 0) continue;
-    return source.slice(open + 1, close);
+    let from = 0;
+    let start = source.indexOf(selector, from);
+    while (start !== -1) {
+      from = start + selector.length;
+      const open = source.indexOf("{", from);
+      if (open === -1) break;
+      // `.light-theme {` is not `.light {`
+      if (source.slice(from, open).trim().length === 0) {
+        const close = source.indexOf("}", open);
+        return close === -1 ? undefined : source.slice(open + 1, close);
+      }
+      start = source.indexOf(selector, from);
+    }
   }
   return undefined;
 }
@@ -101,13 +107,14 @@ function parseObjectLiteral(
   source: string,
   fallbackMode: ThemeMode,
 ): ParseThemeInputResult {
-  // drop what precedes the object literal — `import type { Theme }`, comments,
-  // code fences and prose would otherwise be read as keys, strings or the first `{`
-  const stripped = stripBlockComments(source)
-    .replace(/^\s*(?:import\b|\/\/)[^\n]*$/gm, "")
-    .replace(/^\s*```[^\n]*$/gm, "")
-    .replace(/\bas const\b/g, "");
-  const json = toJson(stripped.slice(stripped.indexOf("{")));
+  // `import type { Theme }` carries a brace before the literal; everything
+  // else ahead of it (comments, fences, prose) is skipped by objectStart
+  const stripped = source.replace(/^\s*import\b[^\n]*$/gm, "");
+  const from = objectStart(stripped);
+  if (from === -1) {
+    return { ok: false, error: "Expected an object with light / dark vars." };
+  }
+  const json = toJson(stripped.slice(from).replace(/\bas const\b/g, ""));
   const start = json.indexOf("{");
   const end = json.lastIndexOf("}");
   if (start === -1 || end <= start) {
@@ -189,18 +196,25 @@ function pickVars(
   return vars;
 }
 
-function stripBlockComments(source: string) {
-  let out = "";
+/** Index of the first `{` outside a comment; the body itself is left to the string-aware toJson. */
+function objectStart(source: string) {
   let i = 0;
   while (i < source.length) {
-    const start = source.indexOf("/*", i);
-    if (start === -1) break;
-    const end = source.indexOf("*/", start + 2);
-    out += source.slice(i, start);
-    if (end === -1) return out;
-    i = end + 2;
+    if (source.startsWith("//", i)) {
+      const end = source.indexOf("\n", i);
+      if (end === -1) return -1;
+      i = end + 1;
+    } else if (source.startsWith("/*", i)) {
+      const end = source.indexOf("*/", i + 2);
+      if (end === -1) return -1;
+      i = end + 2;
+    } else if (source.charAt(i) === "{") {
+      return i;
+    } else {
+      i++;
+    }
   }
-  return out + source.slice(i);
+  return -1;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
