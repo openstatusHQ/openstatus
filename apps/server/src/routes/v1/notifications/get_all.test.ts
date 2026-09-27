@@ -37,6 +37,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await db
+    .delete(notificationsToMonitors)
+    .where(eq(notificationsToMonitors.notificationId, testNotificationId));
+  await db
     .delete(notification)
     .where(eq(notification.name, `${TEST_PREFIX}-email`));
 });
