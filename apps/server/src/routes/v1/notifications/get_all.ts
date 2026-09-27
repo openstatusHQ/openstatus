@@ -50,13 +50,18 @@ export function registerGetAllNotifications(app: typeof notificationsApi) {
       )
       .all();
 
+    const monitorsByNotification = new Map<number, number[]>();
+    for (const { notificationId, monitorId } of _monitors) {
+      const monitorIds = monitorsByNotification.get(notificationId);
+      if (monitorIds) monitorIds.push(monitorId);
+      else monitorsByNotification.set(notificationId, [monitorId]);
+    }
+
     const data = NotificationSchema.array().parse(
       _notifications.map((n) => ({
         ...n,
         payload: JSON.parse(n.data || "{}"),
-        monitors: _monitors
-          .filter((m) => m.notificationId === n.id)
-          .map((m) => m.monitorId),
+        monitors: monitorsByNotification.get(n.id) ?? [],
       })),
     );
 

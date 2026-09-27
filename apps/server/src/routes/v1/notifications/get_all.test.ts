@@ -1,5 +1,8 @@
 import { db, eq } from "@openstatus/db";
-import { notification } from "@openstatus/db/src/schema";
+import {
+  notification,
+  notificationsToMonitors,
+} from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, test } from "@std/testing/bdd";
 
@@ -26,6 +29,10 @@ beforeAll(async () => {
     .returning()
     .get();
   testNotificationId = notif.id;
+  await db.insert(notificationsToMonitors).values({
+    notificationId: testNotificationId,
+    monitorId: 1,
+  });
 });
 
 afterAll(async () => {
@@ -47,6 +54,9 @@ test("return all notifications", async () => {
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
   expect(result.data?.some((n) => n.id === testNotificationId)).toBe(true);
+  expect(
+    result.data?.find((n) => n.id === testNotificationId)?.monitors,
+  ).toEqual([1]);
 });
 
 test("return empty notifications", async () => {
