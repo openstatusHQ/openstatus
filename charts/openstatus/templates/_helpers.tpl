@@ -21,7 +21,8 @@ app.kubernetes.io/component: {{ .component }}
 {{- end -}}
 
 {{- define "openstatus.component" -}}
-{{- printf "%s-%s" (include "openstatus.fullname" .ctx) .component | trunc 63 | trimSuffix "-" -}}
+{{- $base := include "openstatus.fullname" .ctx | trunc (int (sub 62 (len .component))) | trimSuffix "-" -}}
+{{- printf "%s-%s" $base .component -}}
 {{- end -}}
 
 {{/* openstatus image: call with (dict "ctx" $ "name" "openstatus-server") */}}

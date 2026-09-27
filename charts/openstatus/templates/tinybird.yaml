@@ -37,7 +37,9 @@ spec:
       containers:
         - name: tinybird-local
           image: {{ include "openstatus.externalImage" .Values.tinybird.image | quote }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
           env:
             {{- range $k, $v := .Values.tinybird.env }}
             - name: {{ $k }}

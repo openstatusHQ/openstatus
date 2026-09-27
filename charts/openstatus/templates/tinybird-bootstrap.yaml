@@ -1,6 +1,12 @@
 {{- if and .Values.tinybird.enabled .Values.tinybird.bootstrap.enabled }}
 {{- $name := include "openstatus.component" (dict "ctx" $ "component" "tinybird-bootstrap") }}
 {{- $b := .Values.tinybird.bootstrap }}
+{{- $deployments := list }}
+{{- range $svc, $cfg := .Values.services }}
+{{- if $cfg.enabled }}
+{{- $deployments = append $deployments (include "openstatus.component" (dict "ctx" $ "component" $svc)) }}
+{{- end }}
+{{- end }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -15,6 +21,7 @@ metadata:
   labels:
     {{- include "openstatus.labels" . | nindent 4 }}
 rules:
+  # `create` cannot be scoped by resourceNames; everything else is.
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["create"]
@@ -24,7 +31,8 @@ rules:
     verbs: ["get", "update"]
   - apiGroups: ["apps"]
     resources: ["deployments"]
-    verbs: ["list", "patch"]
+    resourceNames: {{ toJson $deployments }}
+    verbs: ["get", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -72,8 +80,8 @@ data:
     tar.extractall(dest, members=members, filter="data")
   publish.py: |
     # Guide steps 6-7: read the workspace token with `tb --local info`, store it
-    # under both names the apps read, and restart the apps if it changed.
-    import base64, datetime, json, os, ssl, subprocess, urllib.error, urllib.request
+    # under both names the apps read, and restart every app not yet running it.
+    import base64, hashlib, json, os, ssl, subprocess, urllib.error, urllib.request
 
     info = subprocess.run(["tb", "--local", "info"], capture_output=True, text=True, check=True).stdout
     section = info.split("Tinybird Local", 1)[1].split("» Project", 1)[0]
@@ -104,21 +112,21 @@ data:
     status, current = call("GET", f"/api/v1/namespaces/{ns}/secrets/{name}")
     if status == 404:
         call("POST", f"/api/v1/namespaces/{ns}/secrets", secret)
-    elif current.get("data") == secret["data"]:
-        print("tinybird token unchanged")
-        raise SystemExit(0)
-    else:
+    elif current.get("data") != secret["data"]:
         secret["metadata"]["resourceVersion"] = current["metadata"]["resourceVersion"]
         call("PUT", f"/api/v1/namespaces/{ns}/secrets/{name}", secret)
 
-    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    patch = {"spec": {"template": {"metadata": {"annotations": {"openstatus.dev/tinybird-token-at": now}}}}}
-    selector = urllib.request.quote(f"app.kubernetes.io/instance={os.environ['RELEASE']},app.kubernetes.io/component!=probe")
-    _, deps = call("GET", f"/apis/apps/v1/namespaces/{ns}/deployments?labelSelector={selector}")
-    for d in deps["items"]:
-        call("PATCH", f"/apis/apps/v1/namespaces/{ns}/deployments/{d['metadata']['name']}", patch,
-             "application/strategic-merge-patch+json")
-        print("restarted", d["metadata"]["name"])
+    # Each Deployment records the token it was restarted for, so a retry after a
+    # partial failure finishes the restarts instead of skipping them.
+    key = "openstatus.dev/tinybird-token-sha256"
+    digest = hashlib.sha256(token.encode()).hexdigest()
+    patch = {"spec": {"template": {"metadata": {"annotations": {key: digest}}}}}
+    for dep in json.loads(os.environ["DEPLOYMENTS"]):
+        _, d = call("GET", f"/apis/apps/v1/namespaces/{ns}/deployments/{dep}")
+        if (d["spec"]["template"]["metadata"].get("annotations") or {}).get(key) != digest:
+            call("PATCH", f"/apis/apps/v1/namespaces/{ns}/deployments/{dep}", patch,
+                 "application/strategic-merge-patch+json")
+            print("restarted", dep)
 ---
 apiVersion: batch/v1
 kind: Job
@@ -142,7 +150,9 @@ spec:
       containers:
         - name: bootstrap
           image: {{ include "openstatus.externalImage" $b.image | quote }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
           command: ["sh", "/scripts/bootstrap.sh"]
           env:
             - name: TB_LOCAL_HOST
@@ -158,8 +168,8 @@ spec:
             {{- end }}
             - name: SECRET_NAME
               value: {{ include "openstatus.tinybirdSecretName" . }}
-            - name: RELEASE
-              value: {{ .Release.Name }}
+            - name: DEPLOYMENTS
+              value: {{ toJson $deployments | quote }}
             - name: LABELS
               value: {{ include "openstatus.labels" . | fromYaml | toJson | quote }}
           volumeMounts:

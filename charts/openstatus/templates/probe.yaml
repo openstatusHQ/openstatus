@@ -23,7 +23,9 @@ spec:
       containers:
         - name: probe
           image: {{ include "openstatus.image" (dict "ctx" $ "name" .Values.probe.image) }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
           env:
             - name: OPENSTATUS_INGEST_URL
               value: {{ .Values.probe.ingestUrl | default (include "openstatus.url" (dict "ctx" $ "component" "private-location" "port" 8080)) | quote }}

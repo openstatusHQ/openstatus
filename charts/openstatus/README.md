@@ -31,7 +31,7 @@ ClusterIP Services only.
 ## After install
 
 1. Sign in. With `SELF_HOST=true` the magic link is printed in the dashboard log:
-   `kubectl logs deploy/<release>-openstatus-dashboard | grep "Magic Link"`.
+   `kubectl -n openstatus logs deploy/<release>-openstatus-dashboard | grep "Magic Link"`.
 2. Set the workspace limits (guide step 9) against the libSQL Service.
 3. Create a private location, store its key in a Secret as `OPENSTATUS_KEY`, then enable the probe:
    `--set probe.enabled=true --set probe.existingSecret=<secret>`.

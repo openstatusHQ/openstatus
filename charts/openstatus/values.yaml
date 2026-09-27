@@ -7,7 +7,8 @@ image:
   # rebuilt when its app changes, so one SHA tag rarely exists for every image;
   # pin per image with `digests` instead.
   tag: latest
-  pullPolicy: IfNotPresent
+  # Empty: Kubernetes decides (Always for `latest`, IfNotPresent for tags and digests).
+  pullPolicy: ""
   # Image name -> digest, e.g. `openstatus-server: sha256:...`.
   digests: {}
 
@@ -88,6 +89,8 @@ tinybird:
       key: token
     backoffLimit: 6
 
+# `dependsOn` mirrors compose `depends_on: service_healthy`: an init container
+# waits for each listed service's health endpoint.
 services:
   workflows:
     enabled: true
@@ -103,6 +106,7 @@ services:
         memory: 512Mi
   server:
     enabled: true
+    dependsOn: [workflows]
     image: openstatus-server
     port: 3000
     healthPath: /ping
@@ -115,6 +119,7 @@ services:
         memory: 512Mi
   private-location:
     enabled: true
+    dependsOn: [server]
     image: openstatus-private-location
     port: 8080
     healthPath: /health
@@ -128,6 +133,7 @@ services:
         memory: 256Mi
   checker:
     enabled: true
+    dependsOn: [server]
     image: openstatus-checker
     port: 8080
     healthPath: /health
@@ -140,6 +146,7 @@ services:
         memory: 256Mi
   dashboard:
     enabled: true
+    dependsOn: [workflows, server]
     image: openstatus-dashboard
     port: 3000
     healthPath: /api/health
@@ -154,6 +161,7 @@ services:
         memory: 512Mi
   status-page:
     enabled: true
+    dependsOn: [workflows, server]
     image: openstatus-status-page
     port: 3000
     healthPath: /api/health

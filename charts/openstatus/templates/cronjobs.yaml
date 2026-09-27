@@ -22,7 +22,9 @@ spec:
           containers:
             - name: curl
               image: {{ include "openstatus.externalImage" $.Values.cron.image | quote }}
-              imagePullPolicy: {{ $.Values.image.pullPolicy }}
+              {{- with $.Values.image.pullPolicy }}
+              imagePullPolicy: {{ . }}
+              {{- end }}
               env:
                 - name: CRON_SECRET
                   valueFrom:

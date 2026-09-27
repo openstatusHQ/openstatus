@@ -38,7 +38,9 @@ spec:
       containers:
         - name: libsql
           image: {{ include "openstatus.externalImage" .Values.libsql.image | quote }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
           env:
             {{- range $k, $v := .Values.libsql.env }}
             - name: {{ $k }}
