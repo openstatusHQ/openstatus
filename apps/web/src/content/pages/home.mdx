@@ -38,12 +38,14 @@ faq:
 
 At 09:41 the Checkout API at Pied Piper starts returning 503s from Europe. Here is what openstatus does before the team has finished reading the first alert, and what is left behind six months later.
 
+<Eyebrow>09:41</Eyebrow>
+
 ## Your monitor catches it first
 
 <Grid variant="borderless">
 <div>
 
-<Subtle>09:41.</Subtle> Four of the six regions the monitor runs from confirm the 503s, so the alert fires before the first support ticket arrives. It lands in Slack and PagerDuty with a link to the failing checks.
+Four of the six regions the monitor runs from confirm the 503s, so the alert fires before the first support ticket arrives. It lands in Slack and PagerDuty with a link to the failing checks.
 
 - [Uptime monitoring](/uptime-monitoring)
 - [Notification channels](/docs/reference/notification)
@@ -57,6 +59,8 @@ At 09:41 the Checkout API at Pied Piper starts returning 503s from Europe. Here 
 </div>
 </Grid>
 
+<Eyebrow>09:42</Eyebrow>
+
 ## Know what to say before you say it
 
 <Grid variant="borderless">
@@ -67,7 +71,7 @@ At 09:41 the Checkout API at Pied Piper starts returning 503s from Europe. Here 
 </div>
 <div>
 
-<Subtle>09:42.</Subtle> Open the failing checks. The European regions spend four seconds waiting on the edge while DNS and TLS are fine, and the US regions return 200 in under 250 ms. That is the sentence the status report needs, and the headers and body are kept in case the postmortem needs more.
+Open the failing checks. The European regions spend four seconds waiting on the edge while DNS and TLS are fine, and the US regions return 200 in under 250 ms. That is the sentence the status report needs, and the headers and body are kept in case the postmortem needs more.
 
 - [Response logs and retention](/docs/concept/response-logs-and-retention)
 - [Request phases: DNS, TCP, TLS, TTFB](/docs/concept/latency-vs-response-time#the-request-in-phases-dns-tcp-tls-ttfb-transfer)
@@ -75,12 +79,14 @@ At 09:41 the Checkout API at Pied Piper starts returning 503s from Europe. Here 
 </div>
 </Grid>
 
+<Eyebrow>09:44</Eyebrow>
+
 ## Declare it in Slack, or with your favorite agent
 
 <Grid variant="borderless">
 <div>
 
-<Subtle>09:44.</Subtle> Ask the openstatus agent in the incident thread. It drafts the status report, you approve it, and it goes live without anyone opening the dashboard. The same agent runs wherever you work: connect the MCP server to Claude, ChatGPT or Cursor and declare it from there.
+Ask the openstatus agent in the incident thread. It drafts the status report, you approve it, and it goes live without anyone opening the dashboard. The same agent runs wherever you work: connect the MCP server to Claude, ChatGPT or Cursor and declare it from there.
 
 - [Slack agent](/docs/guides/how-to-setup-slack-agent)
 - [MCP server](/tooling/mcp-server)
@@ -95,6 +101,8 @@ At 09:41 the Checkout API at Pied Piper starts returning 503s from Europe. Here 
 </div>
 </Grid>
 
+<Eyebrow>09:52</Eyebrow>
+
 ## Everyone hears it from you first
 
 <Grid variant="borderless">
@@ -105,7 +113,7 @@ At 09:41 the Checkout API at Pied Piper starts returning 503s from Europe. Here 
 </div>
 <div>
 
-<Subtle>09:52.</Subtle> Subscribers get the update by email, RSS and Slack Connect the moment it is approved. Support stops answering "is it down?" because the answer is already in the inbox.
+Subscribers get the update by email, RSS and Slack Connect the moment it is approved. Support stops answering "is it down?" because the answer is already in the inbox.
 
 - [Subscriptions](/docs/reference/subscriber)
 - [Reducing support tickets](/use-case/reduce-support-tickets)
@@ -113,12 +121,14 @@ At 09:41 the Checkout API at Pied Piper starts returning 503s from Europe. Here 
 </div>
 </Grid>
 
+<Eyebrow>09:53</Eyebrow>
+
 ## Only the right people see it
 
 <Grid variant="borderless">
 <div>
 
-<Subtle>09:53.</Subtle> The public page shows the Checkout API as degraded. The internal page, behind a password and the office IP range, shows the failing regions and the rollback progress.
+The public page shows the Checkout API as degraded. The internal page, behind a password and the office IP range, shows the failing regions and the rollback progress.
 
 - [Status page](/status-page)
 - [Password, magic link and IP restriction](/docs/reference/status-page#password-basic-auth)
@@ -132,12 +142,14 @@ At 09:41 the Checkout API at Pied Piper starts returning 503s from Europe. Here 
 </div>
 </Grid>
 
+<Eyebrow>+6 months</Eyebrow>
+
 ## The trail exists when the auditor asks
 
 <Grid variant="borderless">
 <div>
 
-Six months later. Every step is logged: who declared it, from where, when each update shipped. When SOC 2 asks how you notify customers during an incident, you send one link.
+Every step is logged: who declared it, from where, when each update shipped. When SOC 2 asks how you notify customers during an incident, you send one link.
 
 - [Status pages for compliance](/use-case/compliance)
 

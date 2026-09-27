@@ -10,6 +10,7 @@ import { CustomImage } from "./custom-image";
 import { CustomLink } from "./custom-link";
 import { Demo } from "./demo";
 import { Details } from "./details";
+import { Eyebrow } from "./eyebrow";
 import { Grid } from "./grid";
 import { createHeading } from "./heading";
 import { LogoCloud } from "./logo-cloud";
@@ -52,5 +53,6 @@ export const components = {
   StatusPageExample: MDXStatusPageExample,
   PricingTabs,
   Subtle,
+  Eyebrow,
   Suspense: Suspense,
 };

@@ -1,3 +1,5 @@
+import { getRegionInfo } from "@openstatus/regions";
+
 import { demo } from "@/data/demo-data";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +26,9 @@ export function RegionsDemo() {
         {demo.regions.map((region) => (
           <CellGridItem key={region.code} className="px-2">
             <div className="flex justify-between gap-1.5">
-              <span>{region.code}</span>
+              <span className="truncate">
+                {getRegionInfo(region.code).flag} {region.code}
+              </span>
               <span
                 className={cn(
                   "whitespace-nowrap",

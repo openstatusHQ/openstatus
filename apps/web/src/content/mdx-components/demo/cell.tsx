@@ -21,7 +21,7 @@ export function Cell({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="cell"
       className={cn(
-        "not-prose border-border bg-background text-foreground min-w-0 border text-sm",
+        "not-prose border-border bg-background text-foreground min-w-0 border text-sm tabular-nums",
         "[&>*+*]:border-border [&>*+*]:border-t",
         className,
       )}
