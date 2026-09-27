@@ -14,12 +14,15 @@ import {
   getUnrelatedPages,
   getUseCasePages,
 } from "../content/utils";
+import type { Metadata } from "../content/utils/schema";
 import {
   cachedListExternalComponentsBySlug,
   cachedListExternalServices,
 } from "../lib/external-service-cache";
 
 export const revalidate = 3600;
+
+const modified = (m: Metadata) => m.updatedAt ?? m.publishedAt;
 
 const allPosts = getBlogPosts();
 const allChangelogs = getChangelogPosts();
@@ -73,7 +76,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const blogs = allPosts.map((post) => ({
     url: `https://www.openstatus.dev/blog/${post.slug}`,
-    lastModified: post.metadata.publishedAt, // date format should be YYYY-MM-DD
+    lastModified: modified(post.metadata),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
@@ -89,7 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const changelogs = allChangelogs.map((post) => ({
     url: `https://www.openstatus.dev/changelog/${post.slug}`,
-    lastModified: post.metadata.publishedAt, // date format should be YYYY-MM-DD
+    lastModified: modified(post.metadata),
     changeFrequency: "weekly" as const,
     priority: 0.6,
   }));
@@ -105,7 +108,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const comparisons = allComparisons.map((comparison) => ({
     url: `https://www.openstatus.dev/compare/${comparison.slug}`,
-    lastModified: comparison.metadata.publishedAt,
+    lastModified: modified(comparison.metadata),
     changeFrequency: "monthly" as const,
     priority: 0.8,
   }));
@@ -121,21 +124,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const landings = allUnrelated.map((page) => ({
     url: `https://www.openstatus.dev/${page.slug}`,
-    lastModified: page.metadata.publishedAt,
+    lastModified: modified(page.metadata),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
 
   const products = allProducts.map((product) => ({
     url: `https://www.openstatus.dev/${product.slug}`,
-    lastModified: product.metadata.publishedAt,
+    lastModified: modified(product.metadata),
     changeFrequency: "weekly" as const,
     priority: 0.9,
   }));
 
   const playgrounds = allPlaygrounds.map((playground) => ({
     url: `https://www.openstatus.dev/play/${playground.slug}`,
-    lastModified: playground.metadata.publishedAt,
+    lastModified: modified(playground.metadata),
     changeFrequency: "monthly" as const,
     priority: 0.6,
   }));
@@ -151,7 +154,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const guides = allGuides.map((guide) => ({
     url: `https://www.openstatus.dev/guides/${guide.slug}`,
-    lastModified: guide.metadata.publishedAt,
+    lastModified: modified(guide.metadata),
     changeFrequency: "monthly" as const,
     priority: 0.6,
   }));
@@ -168,7 +171,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const home = [
     {
       url: "https://www.openstatus.dev/",
-      lastModified: getHomePage().metadata.publishedAt,
+      lastModified: modified(getHomePage().metadata),
       changeFrequency: "daily" as const,
       priority: 1.0,
     },
@@ -176,7 +179,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const useCases = allUseCases.map((useCase) => ({
     url: `https://www.openstatus.dev/use-case/${useCase.slug}`,
-    lastModified: useCase.metadata.publishedAt,
+    lastModified: modified(useCase.metadata),
     changeFrequency: "monthly" as const,
     priority: 0.8,
   }));
@@ -201,7 +204,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const toolings = allTooling.map((page) => ({
     url: `https://www.openstatus.dev/tooling/${page.slug}`,
-    lastModified: page.metadata.publishedAt,
+    lastModified: modified(page.metadata),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
@@ -217,14 +220,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const customers = allCustomers.map((page) => ({
     url: `https://www.openstatus.dev/customers/${page.slug}`,
-    lastModified: page.metadata.publishedAt,
+    lastModified: modified(page.metadata),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
 
   const docs = allDocs.map((page) => ({
     url: `https://www.openstatus.dev/docs/${page.slug}`,
-    lastModified: page.metadata.publishedAt,
+    lastModified: modified(page.metadata),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));

@@ -47,7 +47,7 @@ The same tool registry powers the [in-app assistant](/blog/from-clickops-to-chat
 
 The MCP server is an OAuth 2.1 authorization server. Connect from any client that implements the MCP authorization spec and you get a consent screen instead of a key to paste: pick the **workspace** and choose **Read-only** or **Read & write**. Tokens rotate automatically, and every connection is listed under **Settings > Integrations > Connected apps**, where it can be revoked with immediate effect.
 
-For CI and headless agents, the `x-openstatus-key` header still works — the same API key the CLI, API, and Terraform use, from **Settings > API Tokens**.
+For CI and headless agents, the `x-openstatus-key` header still works — the same API key the CLI, API, and Terraform use, from **Settings > General > API Keys**.
 
 Both credentials carry a `read` or `write` scope. Read-only connections never see write tools in `tools/list` — they don't exist for that session. Write tools throw a clean error if a read-only credential somehow attempts them.
 
