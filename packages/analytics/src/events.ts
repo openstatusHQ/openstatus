@@ -164,6 +164,34 @@ export const Events = {
     name: "incident_deleted",
     channel: "incident",
   },
+  DeclareManagedIncident: {
+    name: "incident_declared",
+    channel: "incident_management",
+  },
+  UpdateManagedIncident: {
+    name: "incident_edited",
+    channel: "incident_management",
+  },
+  ChangeManagedIncidentStatus: {
+    name: "incident_status_changed",
+    channel: "incident_management",
+  },
+  AddManagedIncidentNote: {
+    name: "incident_note_added",
+    channel: "incident_management",
+  },
+  LinkManagedIncidentReport: {
+    name: "incident_report_linked",
+    channel: "incident_management",
+  },
+  CloseManagedIncident: {
+    name: "incident_closed",
+    channel: "incident_management",
+  },
+  DeleteManagedIncident: {
+    name: "incident_removed",
+    channel: "incident_management",
+  },
   InviteUser: {
     name: "user_invited",
     channel: "team",
