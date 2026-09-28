@@ -11,22 +11,29 @@ import {
   UpdateIncidentInput,
   addIncidentNote,
   allowedTransitions,
+  announceIncidentChange,
+  announceInChannel,
   bindIncidentSlackChannel,
   closeIncident,
   declareIncident,
   deleteIncident,
+  displayName,
+  escapeMrkdwn,
   getIncident,
   getIncidentForStatusReport,
   isDeletable,
   linkIncidentStatusReport,
   listIncidentEvents,
   listIncidents,
+  openIncidentSlackChannel,
   setIncidentStatus,
   unbindIncidentSlackChannel,
   unlinkIncidentStatusReport,
   updateIncident,
 } from "@openstatus/services/incident";
+import { WebClient } from "@slack/web-api";
 import { TRPCError } from "@trpc/server";
+import { after } from "next/server.js";
 import { z } from "zod";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
@@ -37,11 +44,49 @@ const DASHBOARD_URL =
     ? "https://app.openstatus.dev"
     : "http://localhost:3001";
 
-/** Best effort: a failed email never fails the mutation that assigned them. */
-async function notifyCommander(
-  ctx: Parameters<typeof toServiceCtx>[0],
+const clientFor = (token: string) => new WebClient(token);
+
+type AuthedCtx = Parameters<typeof toServiceCtx>[0];
+
+/** Slack follow-ups run after the response; the incident is already saved. */
+function afterResponse(task: () => Promise<void>) {
+  const run = () =>
+    task().catch((err) => console.warn("incident slack follow-up failed", err));
+  try {
+    after(run);
+  } catch {
+    void run();
+  }
+}
+
+function announce(
+  ctx: AuthedCtx,
   incidentId: number,
+  text: string,
+  archive = false,
 ) {
+  afterResponse(() =>
+    announceIncidentChange({
+      ctx: toServiceCtx(ctx),
+      incidentId,
+      text,
+      clientFor,
+      dashboardUrl: DASHBOARD_URL,
+      archive,
+    }),
+  );
+}
+
+function actorName(ctx: AuthedCtx): string {
+  return escapeMrkdwn(ctx.user.name || ctx.user.email || "A teammate");
+}
+
+function quote(note: string | undefined): string {
+  return note ? `\n>${escapeMrkdwn(note).replaceAll("\n", "\n>")}` : "";
+}
+
+/** Best effort: a failed email never fails the mutation that assigned them. */
+async function notifyCommander(ctx: AuthedCtx, incidentId: number) {
   try {
     const row = await getIncident({
       ctx: toServiceCtx(ctx),
@@ -54,7 +99,7 @@ async function notifyCommander(
       incidentTitle: row.title,
       severity: row.severity,
       workspaceName: ctx.workspace.name ?? ctx.workspace.slug,
-      assignedBy: ctx.user.name || ctx.user.email || "A teammate",
+      assignedBy: actorName(ctx),
       url: `${DASHBOARD_URL}/incidents/${row.id}`,
       idempotencyKey: `incident-commander:${row.id}:${commander.id}:${row.updatedAt.getTime()}`,
     });
@@ -130,11 +175,27 @@ export const incidentRouter = createTRPCRouter({
 
   declare: protectedProcedure
     .meta({ track: Events.DeclareManagedIncident, trackProps: ["severity"] })
-    .input(DeclareIncidentInput)
+    .input(
+      DeclareIncidentInput.extend({ openSlackChannel: z.boolean().optional() }),
+    )
     .mutation(async ({ ctx, input }) => {
       try {
-        const row = await declareIncident({ ctx: toServiceCtx(ctx), input });
+        const { openSlackChannel, ...declare } = input;
+        const row = await declareIncident({
+          ctx: toServiceCtx(ctx),
+          input: declare,
+        });
         if (row.commanderId !== null) await notifyCommander(ctx, row.id);
+        if (openSlackChannel) {
+          afterResponse(async () => {
+            await openIncidentSlackChannel({
+              ctx: toServiceCtx(ctx),
+              incidentId: row.id,
+              clientFor,
+              dashboardUrl: DASHBOARD_URL,
+            });
+          });
+        }
         return row;
       } catch (err) {
         toTRPCError(err);
@@ -151,11 +212,41 @@ export const incidentRouter = createTRPCRouter({
           input: { id: input.id },
         });
         const row = await updateIncident({ ctx: toServiceCtx(ctx), input });
-        if (
-          row.commanderId !== null &&
-          row.commanderId !== before?.commanderId
-        ) {
+        const commanderChanged = row.commanderId !== before?.commanderId;
+        if (row.commanderId !== null && commanderChanged) {
           await notifyCommander(ctx, row.id);
+        }
+        const changes: string[] = [];
+        if (before && row.title !== before.title) {
+          changes.push(`title is now *${escapeMrkdwn(row.title)}*`);
+        }
+        if (before && row.summary !== before.summary) {
+          changes.push(
+            row.summary ? "summary was updated" : "summary was removed",
+          );
+        }
+        if (before && row.startedAt.getTime() !== before.startedAt.getTime()) {
+          const seconds = Math.floor(row.startedAt.getTime() / 1000);
+          changes.push(
+            `start time is now <!date^${seconds}^{date_short_pretty} {time}|${row.startedAt.toISOString()}>`,
+          );
+        }
+        if (before && row.severity !== before.severity) {
+          changes.push(`severity is now *${row.severity}*`);
+        }
+        if (before && commanderChanged) {
+          const after = await getIncident({
+            ctx: toServiceCtx(ctx),
+            input: { id: row.id },
+          });
+          changes.push(
+            after?.commander
+              ? `${escapeMrkdwn(displayName(after.commander))} is now commander`
+              : "there is no commander",
+          );
+        }
+        if (changes.length) {
+          announce(ctx, row.id, `${actorName(ctx)}: ${changes.join(", ")}.`);
         }
         return row;
       } catch (err) {
@@ -168,7 +259,14 @@ export const incidentRouter = createTRPCRouter({
     .input(SetIncidentStatusInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await setIncidentStatus({ ctx: toServiceCtx(ctx), input });
+        const row = await setIncidentStatus({ ctx: toServiceCtx(ctx), input });
+        announce(
+          ctx,
+          row.id,
+          `${actorName(ctx)} marked the incident *${row.status}*.${quote(input.note)}`,
+          row.status === "canceled",
+        );
+        return row;
       } catch (err) {
         toTRPCError(err);
       }
@@ -243,7 +341,9 @@ export const incidentRouter = createTRPCRouter({
     .input(IncidentIdInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await closeIncident({ ctx: toServiceCtx(ctx), input });
+        const row = await closeIncident({ ctx: toServiceCtx(ctx), input });
+        announce(ctx, row.id, `${actorName(ctx)} closed the incident.`, true);
+        return row;
       } catch (err) {
         toTRPCError(err);
       }
@@ -254,7 +354,20 @@ export const incidentRouter = createTRPCRouter({
     .input(IncidentIdInput)
     .mutation(async ({ ctx, input }) => {
       try {
+        const before = await getIncident({ ctx: toServiceCtx(ctx), input });
         await deleteIncident({ ctx: toServiceCtx(ctx), input });
+        if (before?.slackChannelId) {
+          afterResponse(() =>
+            announceInChannel({
+              ctx: toServiceCtx(ctx),
+              incident: before,
+              text: `${actorName(ctx)} deleted this incident: it was declared by mistake.`,
+              clientFor,
+              dashboardUrl: DASHBOARD_URL,
+              archive: true,
+            }),
+          );
+        }
       } catch (err) {
         toTRPCError(err);
       }

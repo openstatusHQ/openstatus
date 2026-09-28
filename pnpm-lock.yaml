@@ -2049,6 +2049,9 @@ importers:
       '@openstatus/utils':
         specifier: workspace:*
         version: link:../utils
+      '@slack/web-api':
+        specifier: 'catalog:'
+        version: 8.1.1
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@7.0.2)(zod@4.6.5)

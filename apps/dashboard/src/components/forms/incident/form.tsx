@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { incidentSeverity } from "@openstatus/db/src/schema/incidents/constants";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -29,6 +30,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { Link } from "@/components/common/link";
 import {
   FormCardContent,
   FormCardSeparator,
@@ -52,6 +54,7 @@ const schema = z.object({
       "Start time cannot be in the future.",
     ),
   statusReportId: z.string(),
+  openSlackChannel: z.boolean(),
 });
 
 export type FormValues = z.infer<typeof schema>;
@@ -63,6 +66,7 @@ export type DeclareIncidentValues = {
   commanderId: number | null;
   startedAt: Date;
   statusReportId?: number;
+  openSlackChannel: boolean;
 };
 
 export function toLocalInput(date: Date): string {
@@ -72,11 +76,14 @@ export function toLocalInput(date: Date): string {
 export function FormDeclareIncident({
   defaultValues,
   onSubmit,
+  slack,
   className,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit" | "defaultValues"> & {
   defaultValues?: Partial<FormValues>;
   onSubmit: (values: DeclareIncidentValues) => Promise<void>;
+  /** `ready`: connected, on the plan, fully scoped. */
+  slack: "ready" | "reconnect" | "disconnected";
 }) {
   const trpc = useTRPC();
   const { data: user } = useQuery(trpc.user.get.queryOptions());
@@ -95,6 +102,7 @@ export function FormDeclareIncident({
       commanderId: user ? String(user.id) : NONE,
       startedAt: toLocalInput(new Date()),
       statusReportId: NONE,
+      openSlackChannel: slack === "ready",
       ...defaultValues,
     },
   });
@@ -121,6 +129,7 @@ export function FormDeclareIncident({
             values.statusReportId === NONE
               ? undefined
               : Number(values.statusReportId),
+          openSlackChannel: slack === "ready" && values.openSlackChannel,
         });
         toast.promise(promise, {
           loading: "Declaring...",
@@ -276,6 +285,38 @@ export function FormDeclareIncident({
               </FormItem>
             )}
           />
+        </FormCardContent>
+        <FormCardSeparator />
+        <FormCardContent className="grid gap-4">
+          {slack === "ready" ? (
+            <FormField
+              control={form.control}
+              name="openSlackChannel"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center gap-2">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked === true)
+                      }
+                    />
+                  </FormControl>
+                  <FormLabel className="font-normal">
+                    Open a Slack channel and invite the team
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              {slack === "reconnect"
+                ? "Reconnect Slack in "
+                : "Connect Slack in "}
+              <Link href="/settings/integrations">Settings → Integrations</Link>{" "}
+              to open a channel for each incident.
+            </p>
+          )}
         </FormCardContent>
       </form>
     </Form>

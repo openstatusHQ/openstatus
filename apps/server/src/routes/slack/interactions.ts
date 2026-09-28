@@ -13,6 +13,11 @@ import {
 import type { SlackConfig, SlackEnv } from "./config";
 import { consume, get } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
+import {
+  afterIncidentTool,
+  bindChannelFromButton,
+  INCIDENT_BIND_ACTION_PREFIX,
+} from "./incident-slack";
 import { renderToolResult } from "./presenters";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
 import {
@@ -36,11 +41,37 @@ interface SlackInteractionPayload {
   actions: Array<{ action_id: string; value?: string }>;
 }
 
+async function processIncidentBind(payload: SlackInteractionPayload) {
+  const action = payload.actions[0];
+  const incidentId = Number(
+    action.action_id.slice(INCIDENT_BIND_ACTION_PREFIX.length),
+  );
+  const teamId = payload.team?.id;
+  if (!teamId || !Number.isInteger(incidentId)) return;
+  const resolved = await resolveWorkspace(teamId);
+  if (!resolved) return;
+  await bindChannelFromButton({
+    resolved,
+    teamId,
+    slackUserId: payload.user.id,
+    channelId: action.value ?? payload.channel.id,
+    messageTs: payload.message.ts,
+    incidentId,
+  });
+}
+
 export function handleSlackInteraction(c: Context<SlackEnv>) {
   const payload = c.get("slackBody") as SlackInteractionPayload;
   const config = c.get("slackConfig");
 
   if (payload.type !== "block_actions" || !payload.actions?.length) {
+    return c.json({ ok: true });
+  }
+
+  if (payload.actions[0].action_id.startsWith(INCIDENT_BIND_ACTION_PREFIX)) {
+    runInBackground("incident-bind", () => processIncidentBind(payload), {
+      teamId: payload.team?.id,
+    });
     return c.json({ ok: true });
   }
 
@@ -181,6 +212,7 @@ async function processInteraction(
       channelId,
       messageTs,
       actor,
+      config,
     });
   } catch (err) {
     logger.error("slack action execution error", {
@@ -205,8 +237,9 @@ async function runAndPresent(args: {
   channelId: string;
   messageTs: string;
   actor: SlackActor;
+  config: SlackConfig;
 }) {
-  const { pending, flag, slack, channelId, messageTs, actor } = args;
+  const { pending, flag, slack, channelId, messageTs, actor, config } = args;
   const tool = getRegistryTool(pending.payload.toolName);
   if (!tool) {
     throw new Error(
@@ -249,6 +282,20 @@ async function runAndPresent(args: {
     text,
     blocks: [],
   });
+
+  if (
+    typeof output === "object" &&
+    output !== null &&
+    typeof input === "object" &&
+    input !== null
+  ) {
+    runInBackground(
+      "incident-follow-up",
+      () =>
+        afterIncidentTool({ ctx, toolName: tool.name, input, output, config }),
+      { toolName: tool.name },
+    );
+  }
 }
 
 function errorMessage(err: unknown): string {

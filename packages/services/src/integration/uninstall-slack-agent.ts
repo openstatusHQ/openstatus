@@ -1,9 +1,10 @@
 import { and, db as defaultDb, eq, inArray } from "@openstatus/db";
-import { integration, workspace } from "@openstatus/db/src/schema";
+import { incident, integration, workspace } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type DB, type ServiceContext, withTransaction } from "../context";
+import { clearIncidentSlackChannel } from "../incident/slack-channel";
 import { parseWorkspaceForContext } from "../page-subscriber/internal";
 import { removeSlackTeamSubscribers } from "../page-subscriber/slack";
 import { deleteSlackUserMappings } from "../slack-user/internal";
@@ -47,7 +48,23 @@ export async function uninstallSlackAgent(args: {
       ctx,
       where: { slackTeamId: input.teamId },
     });
-    // TODO(incident/15-slack-channel): unbind every incident bound to this team.
+
+    const bound = await tx
+      .select({ id: incident.id })
+      .from(incident)
+      .where(
+        and(
+          eq(incident.workspaceId, ctx.workspace.id),
+          eq(incident.slackTeamId, input.teamId),
+        ),
+      )
+      .all();
+    for (const row of bound) {
+      await clearIncidentSlackChannel({
+        ctx: { ...ctx, db: tx },
+        input: { id: row.id },
+      });
+    }
   });
 }
 

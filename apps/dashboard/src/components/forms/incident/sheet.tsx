@@ -25,11 +25,13 @@ export function FormSheetDeclareIncident({
   defaultValues,
   onSubmit,
   footer,
+  slack,
 }: {
   children: React.ReactNode;
   defaultValues?: Partial<FormValues>;
   onSubmit: (values: DeclareIncidentValues) => Promise<void>;
   footer?: React.ReactNode;
+  slack: "ready" | "reconnect" | "disconnected";
 }) {
   const [open, setOpen] = useState(false);
 
@@ -50,6 +52,7 @@ export function FormSheetDeclareIncident({
               id="declare-incident-form"
               className="my-4"
               defaultValues={defaultValues}
+              slack={slack}
               onSubmit={async (values) => {
                 await onSubmit(values);
                 setOpen(false);

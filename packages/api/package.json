@@ -42,6 +42,7 @@
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@slack/web-api": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",

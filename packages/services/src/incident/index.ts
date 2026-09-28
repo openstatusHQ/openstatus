@@ -27,4 +27,17 @@ export {
   bindIncidentSlackChannel,
   unbindIncidentSlackChannel,
 } from "./slack-channel";
+export {
+  announceIncidentChange,
+  announceInChannel,
+  escapeMrkdwn,
+  headerBlocks,
+  incidentChannelName,
+  incidentSlackReady,
+  type OpenChannelResult,
+  openIncidentSlackChannel,
+  type SlackClientFactory,
+  type SlackIncidentBlock,
+  type SlackIncidentClient,
+} from "./slack-flow";
 export { updateIncident } from "./update";

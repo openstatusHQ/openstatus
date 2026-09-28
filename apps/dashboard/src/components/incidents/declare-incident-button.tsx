@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
 import type { FormValues } from "@/components/forms/incident/form";
@@ -27,6 +27,17 @@ export function DeclareIncidentButton({
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: integrations } = useQuery(
+    trpc.integrationRouter.list.queryOptions(),
+  );
+  const slackIntegration = integrations?.find((i) => i.name === "slack-agent");
+  const slack =
+    !slackIntegration || !workspace?.limits["slack-agent"]
+      ? "disconnected"
+      : slackIntegration.missingScopes.length > 0
+        ? "reconnect"
+        : "ready";
   const declare = useMutation(
     trpc.incident.declare.mutationOptions({
       onSuccess: (incident) => {
@@ -42,6 +53,7 @@ export function DeclareIncidentButton({
     <FormSheetDeclareIncident
       defaultValues={defaultValues}
       footer={footer}
+      slack={slack}
       onSubmit={async (values) => {
         await declare.mutateAsync({ ...values, source });
       }}
