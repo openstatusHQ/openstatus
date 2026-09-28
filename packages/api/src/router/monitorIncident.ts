@@ -1,24 +1,24 @@
 import { Events } from "@openstatus/analytics";
 import { NotFoundError } from "@openstatus/services";
 import {
-  acknowledgeIncident,
-  deleteIncident,
-  listIncidents,
-  resolveIncident,
-} from "@openstatus/services/incident";
+  acknowledgeMonitorIncident,
+  deleteMonitorIncident,
+  listMonitorIncidents,
+  resolveMonitorIncident,
+} from "@openstatus/services/monitor-incident";
 import { z } from "zod";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { periods } from "./utils";
 
-export const incidentRouter = createTRPCRouter({
+export const monitorIncidentRouter = createTRPCRouter({
   delete: protectedProcedure
     .meta({ track: Events.DeleteIncident })
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        await deleteIncident({
+        await deleteMonitorIncident({
           ctx: toServiceCtx(ctx),
           input: { id: input.id },
         });
@@ -42,7 +42,7 @@ export const incidentRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       try {
-        const { items } = await listIncidents({
+        const { items } = await listMonitorIncidents({
           ctx: toServiceCtx(ctx),
           input: {
             monitorId: input?.monitorId ?? undefined,
@@ -70,7 +70,7 @@ export const incidentRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        await acknowledgeIncident({
+        await acknowledgeMonitorIncident({
           ctx: toServiceCtx(ctx),
           input: { id: input.id },
         });
@@ -86,7 +86,7 @@ export const incidentRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        await resolveIncident({
+        await resolveMonitorIncident({
           ctx: toServiceCtx(ctx),
           input: { id: input.id },
         });

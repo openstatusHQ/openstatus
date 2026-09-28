@@ -1,5 +1,5 @@
 import type {
-  Incident,
+  MonitorIncident,
   Maintenance,
   PageComponent,
   PageComponentImpact,
@@ -260,7 +260,7 @@ export function getEvents({
       pageComponent: PageComponent | null;
     }[];
   })[];
-  incidents: Incident[];
+  incidents: MonitorIncident[];
   reports: (StatusReport & {
     statusReportsToPageComponents: {
       pageComponent: PageComponent | null;

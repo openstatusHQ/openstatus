@@ -10,21 +10,21 @@ import {
   sql,
 } from "@openstatus/db";
 import {
-  incidentTable,
+  monitorIncidentTable,
   monitor,
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 
 import type { DB, ServiceContext } from "../context";
-import type { Incident, Monitor } from "../types";
-import { getIncidentInWorkspace } from "./internal";
+import type { MonitorIncident, Monitor } from "../types";
+import { getMonitorIncidentInWorkspace } from "./internal";
 import {
-  GetIncidentInput,
-  type IncidentListPeriod,
-  ListIncidentsInput,
+  GetMonitorIncidentInput,
+  type MonitorIncidentListPeriod,
+  ListMonitorIncidentsInput,
 } from "./schemas";
 
-function periodToSince(period: IncidentListPeriod): Date {
+function periodToSince(period: MonitorIncidentListPeriod): Date {
   const day = 24 * 60 * 60 * 1000;
   const now = Date.now();
   switch (period) {
@@ -37,12 +37,12 @@ function periodToSince(period: IncidentListPeriod): Date {
   }
 }
 
-export type IncidentWithRelations = Incident & {
+export type MonitorIncidentWithRelations = MonitorIncident & {
   monitor: Monitor | null;
 };
 
-export type ListIncidentsResult = {
-  items: IncidentWithRelations[];
+export type ListMonitorIncidentsResult = {
+  items: MonitorIncidentWithRelations[];
   totalSize: number;
 };
 
@@ -56,9 +56,9 @@ export type ListIncidentsResult = {
  */
 async function enrichIncidentsBatch(
   db: DB,
-  rows: Incident[],
+  rows: MonitorIncident[],
   workspaceId: number,
-): Promise<IncidentWithRelations[]> {
+): Promise<MonitorIncidentWithRelations[]> {
   if (rows.length === 0) return [];
 
   const monitorIdsSet = new Set<number>();
@@ -89,37 +89,41 @@ async function enrichIncidentsBatch(
   }));
 }
 
-export async function listIncidents(args: {
+export async function listMonitorIncidents(args: {
   ctx: ServiceContext;
-  input: ListIncidentsInput;
-}): Promise<ListIncidentsResult> {
+  input: ListMonitorIncidentsInput;
+}): Promise<ListMonitorIncidentsResult> {
   const { ctx } = args;
-  const input = ListIncidentsInput.parse(args.input);
+  const input = ListMonitorIncidentsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
-  const conditions: SQL[] = [eq(incidentTable.workspaceId, ctx.workspace.id)];
+  const conditions: SQL[] = [
+    eq(monitorIncidentTable.workspaceId, ctx.workspace.id),
+  ];
   if (input.monitorId !== undefined) {
-    conditions.push(eq(incidentTable.monitorId, input.monitorId));
+    conditions.push(eq(monitorIncidentTable.monitorId, input.monitorId));
   }
   if (input.period !== undefined) {
-    conditions.push(gte(incidentTable.startedAt, periodToSince(input.period)));
+    conditions.push(
+      gte(monitorIncidentTable.startedAt, periodToSince(input.period)),
+    );
   }
   const whereClause = and(...conditions);
 
   const [countRow, rows] = await Promise.all([
     db
       .select({ count: sql<number>`count(*)` })
-      .from(incidentTable)
+      .from(monitorIncidentTable)
       .where(whereClause)
       .get(),
     db
       .select()
-      .from(incidentTable)
+      .from(monitorIncidentTable)
       .where(whereClause)
       .orderBy(
         input.order === "asc"
-          ? asc(incidentTable.startedAt)
-          : desc(incidentTable.startedAt),
+          ? asc(monitorIncidentTable.startedAt)
+          : desc(monitorIncidentTable.startedAt),
       )
       .limit(input.limit)
       .offset(input.offset)
@@ -131,14 +135,14 @@ export async function listIncidents(args: {
   return { items, totalSize };
 }
 
-export async function getIncident(args: {
+export async function getMonitorIncident(args: {
   ctx: ServiceContext;
-  input: GetIncidentInput;
-}): Promise<IncidentWithRelations> {
+  input: GetMonitorIncidentInput;
+}): Promise<MonitorIncidentWithRelations> {
   const { ctx } = args;
-  const input = GetIncidentInput.parse(args.input);
+  const input = GetMonitorIncidentInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
-  const record = await getIncidentInWorkspace({
+  const record = await getMonitorIncidentInWorkspace({
     tx: db,
     id: input.id,
     workspaceId: ctx.workspace.id,

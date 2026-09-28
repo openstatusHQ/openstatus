@@ -1,5 +1,5 @@
 import { and, eq, isNull } from "@openstatus/db";
-import { incidentTable } from "@openstatus/db/src/schema";
+import { monitorIncidentTable } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
@@ -9,20 +9,20 @@ import {
   withTransaction,
 } from "../context";
 import { ConflictError } from "../errors";
-import type { Incident } from "../types";
-import { getIncidentInWorkspace } from "./internal";
-import { ResolveIncidentInput } from "./schemas";
+import type { MonitorIncident } from "../types";
+import { getMonitorIncidentInWorkspace } from "./internal";
+import { ResolveMonitorIncidentInput } from "./schemas";
 
-export async function resolveIncident(args: {
+export async function resolveMonitorIncident(args: {
   ctx: ServiceContext;
-  input: ResolveIncidentInput;
-}): Promise<Incident> {
+  input: ResolveMonitorIncidentInput;
+}): Promise<MonitorIncident> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  const input = ResolveIncidentInput.parse(args.input);
+  const input = ResolveMonitorIncidentInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
-    const existing = await getIncidentInWorkspace({
+    const existing = await getMonitorIncidentInWorkspace({
       tx,
       id: input.id,
       workspaceId: ctx.workspace.id,
@@ -36,7 +36,7 @@ export async function resolveIncident(args: {
     // still NULL. Concurrent resolvers lose the race and get a no-row
     // return, which we translate into the same `ConflictError`.
     const updated = await tx
-      .update(incidentTable)
+      .update(monitorIncidentTable)
       .set({
         resolvedAt: now,
         resolvedBy: tryGetActorUserId(ctx.actor),
@@ -44,8 +44,8 @@ export async function resolveIncident(args: {
       })
       .where(
         and(
-          eq(incidentTable.id, existing.id),
-          isNull(incidentTable.resolvedAt),
+          eq(monitorIncidentTable.id, existing.id),
+          isNull(monitorIncidentTable.resolvedAt),
         ),
       )
       .returning()
@@ -55,8 +55,8 @@ export async function resolveIncident(args: {
     }
 
     await emitAudit(tx, ctx, {
-      action: "incident.update",
-      entityType: "incident",
+      action: "monitor_incident.update",
+      entityType: "monitor_incident",
       entityId: updated.id,
       before: existing,
       after: updated,

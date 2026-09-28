@@ -2,7 +2,7 @@ import { and, count, db, eq, isNull } from "@openstatus/db";
 import {
   monitorTransition,
   notificationOutbox,
-  incidentTable,
+  monitorIncidentTable,
   monitor,
   monitorStatusTable,
 } from "@openstatus/db/src/schema";
@@ -169,11 +169,11 @@ describe("replay", () => {
 
     const incidents = await db
       .select({ total: count() })
-      .from(incidentTable)
+      .from(monitorIncidentTable)
       .where(
         and(
-          eq(incidentTable.monitorId, monitorId),
-          isNull(incidentTable.resolvedAt),
+          eq(monitorIncidentTable.monitorId, monitorId),
+          isNull(monitorIncidentTable.resolvedAt),
         ),
       )
       .all();
@@ -234,11 +234,11 @@ describe("recovery", () => {
 
     const open = await db
       .select({ total: count() })
-      .from(incidentTable)
+      .from(monitorIncidentTable)
       .where(
         and(
-          eq(incidentTable.monitorId, monitorId),
-          isNull(incidentTable.resolvedAt),
+          eq(monitorIncidentTable.monitorId, monitorId),
+          isNull(monitorIncidentTable.resolvedAt),
         ),
       )
       .all();
@@ -271,8 +271,8 @@ describe("concurrency", () => {
 
     const incidents = await db
       .select({ total: count() })
-      .from(incidentTable)
-      .where(eq(incidentTable.monitorId, monitorId))
+      .from(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.monitorId, monitorId))
       .all();
     expect(incidents[0]?.total).toBe(1);
 
@@ -338,11 +338,11 @@ describe("degraded", () => {
 
     const open = await db
       .select({ total: count() })
-      .from(incidentTable)
+      .from(monitorIncidentTable)
       .where(
         and(
-          eq(incidentTable.monitorId, monitorId),
-          isNull(incidentTable.resolvedAt),
+          eq(monitorIncidentTable.monitorId, monitorId),
+          isNull(monitorIncidentTable.resolvedAt),
         ),
       )
       .all();

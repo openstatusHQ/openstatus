@@ -5,11 +5,11 @@ import { domainRouter } from "./router/domain";
 import { externalServiceRouter } from "./router/externalService";
 import { feedbackRouter } from "./router/feedback";
 import { importRouter } from "./router/import";
-import { incidentRouter } from "./router/incident";
 import { invitationRouter } from "./router/invitation";
 import { maintenanceRouter } from "./router/maintenance";
 import { memberRouter } from "./router/member";
 import { monitorRouter } from "./router/monitor";
+import { monitorIncidentRouter } from "./router/monitorIncident";
 import { monitorTagRouter } from "./router/monitorTag";
 import { notificationRouter } from "./router/notification";
 import { oauthRouter } from "./router/oauth";
@@ -36,7 +36,7 @@ export const edgeRouter = createTRPCRouter({
   user: userRouter,
   notification: notificationRouter,
   invitation: invitationRouter,
-  incident: incidentRouter,
+  monitorIncident: monitorIncidentRouter,
   pageSubscriber: pageSubscriberRouter,
   tinybird: tinybirdRouter,
   monitorTag: monitorTagRouter,

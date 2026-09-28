@@ -1,6 +1,6 @@
 import { db, eq } from "@openstatus/db";
 import {
-  incidentTable,
+  monitorIncidentTable,
   monitor,
   notificationOutbox,
   notificationTrigger,
@@ -72,8 +72,8 @@ afterEach(async () => {
     .where(eq(notificationOutbox.monitorId, monitorId))
     .run();
   await db
-    .delete(incidentTable)
-    .where(eq(incidentTable.monitorId, monitorId))
+    .delete(monitorIncidentTable)
+    .where(eq(monitorIncidentTable.monitorId, monitorId))
     .run();
   await db
     .update(monitor)

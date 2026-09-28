@@ -1,5 +1,5 @@
 import { db, eq } from "@openstatus/db";
-import { incidentTable, monitor } from "@openstatus/db/src/schema";
+import { monitorIncidentTable, monitor } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
@@ -12,10 +12,10 @@ import {
 } from "../../../test/helpers";
 import type { DrizzleTx, ServiceContext } from "../../context";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../errors";
-import { acknowledgeIncident } from "../acknowledge";
-import { deleteIncident } from "../delete";
-import { getIncident, listIncidents } from "../list";
-import { resolveIncident } from "../resolve";
+import { acknowledgeMonitorIncident } from "../acknowledge";
+import { deleteMonitorIncident } from "../delete";
+import { getMonitorIncident, listMonitorIncidents } from "../list";
+import { resolveMonitorIncident } from "../resolve";
 
 const TEST_PREFIX = "svc-incident-test";
 
@@ -66,7 +66,7 @@ async function insertIncident(
   nextStartedAtOffset += 1;
   const startedAt = new Date(Date.now() - nextStartedAtOffset * 60 * 1000);
   const row = await tx
-    .insert(incidentTable)
+    .insert(monitorIncidentTable)
     .values({
       workspaceId: opts.workspaceId,
       monitorId: opts.monitorId,
@@ -79,7 +79,7 @@ async function insertIncident(
   return row;
 }
 
-describe("acknowledgeIncident", () => {
+describe("acknowledgeMonitorIncident", () => {
   test("stamps acknowledgedAt + acknowledgedBy and emits audit", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
@@ -88,7 +88,7 @@ describe("acknowledgeIncident", () => {
         monitorId: testMonitorId,
       });
 
-      const updated = await acknowledgeIncident({
+      const updated = await acknowledgeMonitorIncident({
         ctx,
         input: { id: incident.id },
       });
@@ -98,8 +98,8 @@ describe("acknowledgeIncident", () => {
 
       await expectAuditRow({
         workspaceId: teamCtx.workspace.id,
-        action: "incident.update",
-        entityType: "incident",
+        action: "monitor_incident.update",
+        entityType: "monitor_incident",
         entityId: incident.id,
         db: tx,
       });
@@ -116,7 +116,7 @@ describe("acknowledgeIncident", () => {
       });
 
       await expect(
-        acknowledgeIncident({ ctx, input: { id: incident.id } }),
+        acknowledgeMonitorIncident({ ctx, input: { id: incident.id } }),
       ).rejects.toBeInstanceOf(ConflictError);
     });
   });
@@ -129,7 +129,7 @@ describe("acknowledgeIncident", () => {
       });
 
       await expect(
-        acknowledgeIncident({
+        acknowledgeMonitorIncident({
           ctx: { ...freeCtx, db: tx },
           input: { id: incident.id },
         }),
@@ -152,13 +152,13 @@ describe("acknowledgeIncident", () => {
         db: tx,
       };
       await expect(
-        acknowledgeIncident({ ctx, input: { id: incident.id } }),
+        acknowledgeMonitorIncident({ ctx, input: { id: incident.id } }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });
 
-describe("resolveIncident", () => {
+describe("resolveMonitorIncident", () => {
   test("stamps resolvedAt + resolvedBy", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
@@ -167,7 +167,7 @@ describe("resolveIncident", () => {
         monitorId: testMonitorId,
       });
 
-      const updated = await resolveIncident({
+      const updated = await resolveMonitorIncident({
         ctx,
         input: { id: incident.id },
       });
@@ -186,7 +186,7 @@ describe("resolveIncident", () => {
       });
 
       await expect(
-        resolveIncident({ ctx, input: { id: incident.id } }),
+        resolveMonitorIncident({ ctx, input: { id: incident.id } }),
       ).rejects.toBeInstanceOf(ConflictError);
     });
   });
@@ -199,7 +199,7 @@ describe("resolveIncident", () => {
       });
 
       await expect(
-        resolveIncident({
+        resolveMonitorIncident({
           ctx: { ...freeCtx, db: tx },
           input: { id: incident.id },
         }),
@@ -208,7 +208,7 @@ describe("resolveIncident", () => {
   });
 });
 
-describe("deleteIncident", () => {
+describe("deleteMonitorIncident", () => {
   test("removes the row and emits audit", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
@@ -217,19 +217,19 @@ describe("deleteIncident", () => {
         monitorId: testMonitorId,
       });
 
-      await deleteIncident({ ctx, input: { id: incident.id } });
+      await deleteMonitorIncident({ ctx, input: { id: incident.id } });
 
       const remaining = await tx
         .select()
-        .from(incidentTable)
-        .where(eq(incidentTable.id, incident.id))
+        .from(monitorIncidentTable)
+        .where(eq(monitorIncidentTable.id, incident.id))
         .all();
       expect(remaining).toHaveLength(0);
 
       await expectAuditRow({
         workspaceId: teamCtx.workspace.id,
-        action: "incident.delete",
-        entityType: "incident",
+        action: "monitor_incident.delete",
+        entityType: "monitor_incident",
         entityId: incident.id,
         db: tx,
       });
@@ -244,7 +244,7 @@ describe("deleteIncident", () => {
       });
 
       await expect(
-        deleteIncident({
+        deleteMonitorIncident({
           ctx: { ...freeCtx, db: tx },
           input: { id: incident.id },
         }),
@@ -263,17 +263,17 @@ describe("list / get", () => {
         monitorId: testMonitorId,
       });
 
-      const full = await getIncident({
+      const full = await getMonitorIncident({
         ctx: teamCtxTx,
         input: { id: incident.id },
       });
       expect(full.monitor?.id).toBe(testMonitorId);
 
       await expect(
-        getIncident({ ctx: freeCtxTx, input: { id: incident.id } }),
+        getMonitorIncident({ ctx: freeCtxTx, input: { id: incident.id } }),
       ).rejects.toBeInstanceOf(NotFoundError);
 
-      const { items } = await listIncidents({
+      const { items } = await listMonitorIncidents({
         ctx: freeCtxTx,
         input: {
           limit: 100,
@@ -293,14 +293,14 @@ describe("list / get", () => {
         monitorId: testMonitorId,
       });
       // Only one incident per monitor may be open at a time
-      // (partial unique index `incident_open_idx`), so the second is resolved.
+      // (partial unique index `monitor_incident_open_idx`), so the second is resolved.
       const b = await insertIncident(tx, {
         workspaceId: teamCtx.workspace.id,
         monitorId: testMonitorId,
         resolvedAt: new Date(),
       });
 
-      const { items } = await listIncidents({
+      const { items } = await listMonitorIncidents({
         ctx,
         input: {
           limit: 100,

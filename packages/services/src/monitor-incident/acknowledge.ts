@@ -1,5 +1,5 @@
 import { and, eq, isNull } from "@openstatus/db";
-import { incidentTable } from "@openstatus/db/src/schema";
+import { monitorIncidentTable } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
@@ -9,20 +9,20 @@ import {
   withTransaction,
 } from "../context";
 import { ConflictError } from "../errors";
-import type { Incident } from "../types";
-import { getIncidentInWorkspace } from "./internal";
-import { AcknowledgeIncidentInput } from "./schemas";
+import type { MonitorIncident } from "../types";
+import { getMonitorIncidentInWorkspace } from "./internal";
+import { AcknowledgeMonitorIncidentInput } from "./schemas";
 
-export async function acknowledgeIncident(args: {
+export async function acknowledgeMonitorIncident(args: {
   ctx: ServiceContext;
-  input: AcknowledgeIncidentInput;
-}): Promise<Incident> {
+  input: AcknowledgeMonitorIncidentInput;
+}): Promise<MonitorIncident> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  const input = AcknowledgeIncidentInput.parse(args.input);
+  const input = AcknowledgeMonitorIncidentInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
-    const existing = await getIncidentInWorkspace({
+    const existing = await getMonitorIncidentInWorkspace({
       tx,
       id: input.id,
       workspaceId: ctx.workspace.id,
@@ -37,7 +37,7 @@ export async function acknowledgeIncident(args: {
     // row, at which point we throw the same `ConflictError` the pre-read
     // would have raised.
     const updated = await tx
-      .update(incidentTable)
+      .update(monitorIncidentTable)
       .set({
         acknowledgedAt: now,
         acknowledgedBy: tryGetActorUserId(ctx.actor),
@@ -45,8 +45,8 @@ export async function acknowledgeIncident(args: {
       })
       .where(
         and(
-          eq(incidentTable.id, existing.id),
-          isNull(incidentTable.acknowledgedAt),
+          eq(monitorIncidentTable.id, existing.id),
+          isNull(monitorIncidentTable.acknowledgedAt),
         ),
       )
       .returning()
@@ -56,8 +56,8 @@ export async function acknowledgeIncident(args: {
     }
 
     await emitAudit(tx, ctx, {
-      action: "incident.update",
-      entityType: "incident",
+      action: "monitor_incident.update",
+      entityType: "monitor_incident",
       entityId: updated.id,
       before: existing,
       after: updated,
