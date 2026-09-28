@@ -19,6 +19,23 @@ export class WebClient {
       s.calls.push({ method: "postEphemeral", args });
       return Promise.resolve();
     },
+    getPermalink: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "chat.getPermalink", args });
+      return Promise.resolve({
+        ok: true,
+        permalink: `https://slack.test/archives/${args.channel}/p${args.message_ts}`,
+      });
+    },
+  };
+  reactions = {
+    get: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "reactions.get", args });
+      return s.reactionsGetImpl(args);
+    },
+    add: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "reactions.add", args });
+      return Promise.resolve({ ok: true });
+    },
   };
   // Mirrors ChatStreamer: `ts` is undefined until the first append or stop.
   chatStream = (args: Record<string, unknown>) => {
@@ -56,6 +73,10 @@ export class WebClient {
   };
   conversations = {
     replies: () => s.repliesImpl(),
+    join: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.join", args });
+      return Promise.resolve({ ok: true });
+    },
     history: (args: Record<string, unknown>) => {
       s.calls.push({ method: "conversations.history", args });
       return s.historyImpl();

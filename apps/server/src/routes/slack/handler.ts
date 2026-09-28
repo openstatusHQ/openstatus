@@ -36,6 +36,7 @@ import { makeRefResolvers } from "./confirmation-card";
 import { draftKey, findByThread, replace, store } from "./confirmation-store";
 import type { PendingPayload } from "./confirmation-store";
 import { publishHomeView, publishLinkAccountView } from "./home";
+import { handleChannelGone, handlePinReaction } from "./incident-events";
 import {
   getComponentNames,
   getPageDashboardLink,
@@ -101,6 +102,14 @@ const slackEventSchema = z.object({
       thread_ts: z.string().optional(),
       bot_id: z.string().optional(),
       tab: z.string().optional(),
+      reaction: z.string().optional(),
+      item: z
+        .object({
+          type: z.string(),
+          channel: z.string().optional(),
+          ts: z.string().optional(),
+        })
+        .optional(),
       // `tokens_revoked`: which tokens went. Only a revoked bot token matters.
       tokens: z
         .object({
@@ -329,6 +338,39 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
       job: `slack-${event.type}`,
     });
     logger.info("slack integration cleaned up", { teamId, ...result });
+    return;
+  }
+
+  if (event.type === "reaction_added") {
+    const teamId = body.team_id;
+    const { item, user, reaction } = event;
+    if (!teamId || !user || !reaction || item?.type !== "message") return;
+    if (!item.channel || !item.ts) return;
+    const resolved = await resolveWorkspace(teamId);
+    if (!resolved) return;
+    await handlePinReaction({
+      resolved,
+      config,
+      teamId,
+      slackUserId: user,
+      reaction,
+      channel: item.channel,
+      ts: item.ts,
+    });
+    return;
+  }
+
+  if (event.type === "channel_archive" || event.type === "channel_deleted") {
+    const teamId = body.team_id;
+    if (!teamId || !event.channel) return;
+    const resolved = await resolveWorkspace(teamId);
+    if (!resolved) return;
+    await handleChannelGone({
+      resolved,
+      teamId,
+      channel: event.channel,
+      slackUserId: event.user,
+    });
     return;
   }
 

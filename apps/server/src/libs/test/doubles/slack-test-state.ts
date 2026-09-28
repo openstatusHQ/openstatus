@@ -24,6 +24,8 @@ export interface SlackTestState {
   historyImpl: () => Promise<unknown>;
   /** `users.info` result; the default has no email, so no mapping is created. */
   usersInfoImpl: (args: Record<string, unknown>) => Promise<unknown>;
+  /** `reactions.get` result; the default message has no reactions. */
+  reactionsGetImpl: (args: Record<string, unknown>) => Promise<unknown>;
 }
 
 const g = globalThis as Record<string, unknown>;
@@ -49,6 +51,7 @@ if (!g.__slackTestState) {
         messages: [{ user: "U1", text: "channel message", ts: "1.1" }],
       }),
     usersInfoImpl: () => Promise.resolve({ ok: true, user: { profile: {} } }),
+    reactionsGetImpl: () => Promise.resolve({ ok: true, message: {} }),
   } satisfies SlackTestState;
 }
 

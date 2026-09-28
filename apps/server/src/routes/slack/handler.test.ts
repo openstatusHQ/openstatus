@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 import { db, eq } from "@openstatus/db";
-import { incident, integration } from "@openstatus/db/src/schema";
+import { incident, incidentEvent, integration } from "@openstatus/db/src/schema";
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import { Hono } from "hono";
@@ -2021,5 +2021,118 @@ describe("incident channel context", () => {
     } finally {
       await db.delete(incident).where(eq(incident.id, row.id));
     }
+  });
+});
+
+describe("incident channel events", () => {
+  const app = createTestApp();
+  let incidentId: number;
+  let channelId: string;
+
+  beforeEach(async () => {
+    resetSlackTestState();
+    slackTestState.reactionsGetImpl = () =>
+      Promise.resolve({ ok: true, message: {} });
+    channelId = `C_PIN_${crypto.randomUUID()}`;
+    const [row] = await db
+      .insert(incident)
+      .values({
+        workspaceId: 1,
+        title: "Pinned incident",
+        severity: "major",
+        declaredAt: new Date(),
+        startedAt: new Date(),
+        slackTeamId: "T_KNOWN",
+        slackChannelId: channelId,
+      })
+      .returning();
+    incidentId = row.id;
+  });
+
+  async function notes() {
+    return db
+      .select()
+      .from(incidentEvent)
+      .where(eq(incidentEvent.incidentId, incidentId))
+      .all();
+  }
+
+  function pin(ts: string, user = "U1") {
+    return signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_pin_${crypto.randomUUID()}`,
+      event: {
+        type: "reaction_added",
+        user,
+        reaction: "pushpin",
+        item: { type: "message", channel: channelId, ts },
+      },
+    });
+  }
+
+  test("a 📌 copies the message onto the timeline and confirms with ✅", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({
+        messages: [{ ts: "500.1", text: "Rolled back to v41", user: "U2" }],
+      });
+    await pin("500.1");
+    await waitForCall("reactions.add");
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].message).toContain("Rolled back to v41");
+    expect(rows[0].message).toContain("https://slack.test/archives/");
+  });
+
+  test("a message already confirmed is not noted twice", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({ messages: [{ ts: "501.1", text: "Twice" }] });
+    slackTestState.reactionsGetImpl = () =>
+      Promise.resolve({
+        ok: true,
+        message: {
+          reactions: [{ name: "white_check_mark", users: ["UBOT"] }],
+        },
+      });
+    await pin("501.1");
+    await new Promise((r) => setTimeout(r, 150));
+    expect(await notes()).toHaveLength(0);
+  });
+
+  test("a pinned thread reply is found through the thread", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({ messages: [{ ts: "400.0", text: "parent" }] });
+    slackTestState.repliesImpl = () =>
+      Promise.resolve({
+        messages: [
+          { ts: "400.0", text: "parent" },
+          { ts: "400.5", text: "the reply" },
+        ],
+      });
+    await pin("400.5");
+    await waitForCall("reactions.add");
+    const rows = await notes();
+    expect(rows[0]?.message).toContain("the reply");
+  });
+
+  test("archiving the channel unbinds the incident", async () => {
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_archive_${crypto.randomUUID()}`,
+      event: { type: "channel_archive", channel: channelId, user: "U1" },
+    });
+    const deadline = Date.now() + 2000;
+    let bound: string | null = channelId;
+    while (bound && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 20));
+      const row = await db
+        .select({ slackChannelId: incident.slackChannelId })
+        .from(incident)
+        .where(eq(incident.id, incidentId))
+        .get();
+      bound = row?.slackChannelId ?? null;
+    }
+    expect(bound).toBeNull();
   });
 });
