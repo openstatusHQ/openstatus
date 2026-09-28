@@ -54,6 +54,11 @@ export async function resolveSlackUserId(args: {
       };
       userId = await findMemberIdByEmail({ ctx, input: { email } });
     }
+    // Only a completed lookup is cached; a thrown call may be transient.
+    cache.set(key, {
+      userId,
+      expiresAt: Date.now() + (userId === null ? MISS_TTL_MS : HIT_TTL_MS),
+    });
   } catch (err) {
     // `missing_scope` until the workspace reinstalls with users:read.email.
     logger.warn("slack user resolution failed", {
@@ -62,9 +67,5 @@ export async function resolveSlackUserId(args: {
       error: (err as { data?: { error?: string } })?.data?.error ?? String(err),
     });
   }
-  cache.set(key, {
-    userId,
-    expiresAt: Date.now() + (userId === null ? MISS_TTL_MS : HIT_TTL_MS),
-  });
   return userId;
 }

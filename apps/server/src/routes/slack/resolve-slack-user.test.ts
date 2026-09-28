@@ -76,21 +76,20 @@ describe("resolveSlackUserId", () => {
     ).toBeNull();
   });
 
-  test("swallows Slack errors such as missing_scope", async () => {
+  test("swallows Slack errors such as missing_scope without caching them", async () => {
     slackTestState.usersInfoImpl = () =>
       Promise.reject(
         Object.assign(new Error("An API error occurred: missing_scope"), {
           data: { ok: false, error: "missing_scope" },
         }),
       );
-    expect(
-      await resolveSlackUserId({
-        workspace,
-        teamId: "T1",
-        slackUserId: "U_D",
-        slack,
-      }),
-    ).toBeNull();
+    const args = { workspace, teamId: "T1", slackUserId: "U_D", slack };
+    expect(await resolveSlackUserId(args)).toBeNull();
+    expect(infoCalls()).toBe(1);
+
+    slackTestState.usersInfoImpl = withEmail(memberEmail);
+    expect(await resolveSlackUserId(args)).toBe(memberId);
+    expect(infoCalls()).toBe(2);
   });
 
   test("skips resolution entirely without a team or user id", async () => {
@@ -99,6 +98,14 @@ describe("resolveSlackUserId", () => {
         workspace,
         teamId: "",
         slackUserId: "U_E",
+        slack,
+      }),
+    ).toBeNull();
+    expect(
+      await resolveSlackUserId({
+        workspace,
+        teamId: "T1",
+        slackUserId: "",
         slack,
       }),
     ).toBeNull();
