@@ -19,7 +19,8 @@ export function DomainStatusIcon({
     <div className="bg-success flex size-6 items-center justify-center rounded-full">
       <Check className="text-background size-3" />
     </div>
-  ) : status === "Pending Verification" ? (
+  ) : status === "Pending Verification" ||
+    status === "Generating SSL Certificate" ? (
     <div className="bg-warning flex size-6 items-center justify-center rounded-full">
       <Warning className="text-background size-3" />
     </div>

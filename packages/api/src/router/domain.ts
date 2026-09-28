@@ -3,21 +3,15 @@ import { assertCustomDomainInWorkspace } from "@openstatus/services/page";
 import { z } from "zod";
 
 import { env } from "../env";
-import { vercelFetch } from "../lib/vercel";
+import {
+  type domainConfigResponseSchema,
+  fetchDomainConfig,
+  getCertificateReadiness,
+  issueCertificateOnVercel,
+  vercelFetch,
+} from "../lib/vercel";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-
-export const domainConfigResponseSchema = z.object({
-  configuredBy: z
-    .union([z.literal("CNAME"), z.literal("A"), z.literal("http")])
-    .optional()
-    .nullable(),
-  acceptedChallenges: z
-    .array(z.union([z.literal("dns-01"), z.literal("http-01")]))
-    .optional()
-    .nullable(),
-  misconfigured: z.boolean().prefault(true).optional(),
-});
 
 export const domainResponseSchema = z.object({
   name: z.string().optional(),
@@ -51,6 +45,7 @@ export type DomainVerificationStatusProps =
   | "Valid Configuration"
   | "Invalid Configuration"
   | "Pending Verification"
+  | "Generating SSL Certificate"
   | "Domain Not Found"
   | "Unknown Error";
 
@@ -101,12 +96,33 @@ export const domainRouter = createTRPCRouter({
         return null;
       }
       await assertOwned(opts.ctx, opts.input.domain);
-      const data = await vercelFetch(
-        `/v6/domains/${encodeURIComponent(opts.input.domain)}/config?teamId=${env.TEAM_ID_VERCEL}`,
+      return fetchDomainConfig(opts.input.domain);
+    }),
+  getCertificateStatus: protectedProcedure
+    .input(domainInput)
+    .query(async (opts) => {
+      if (!opts.input.domain) {
+        return null;
+      }
+      await assertOwned(opts.ctx, opts.input.domain);
+      const { ready } = await getCertificateReadiness(opts.input.domain);
+      return { ready };
+    }),
+  issueCertificate: protectedProcedure
+    .input(domainInput)
+    .mutation(async (opts) => {
+      if (!opts.input.domain) {
+        return { issued: false };
+      }
+      await assertOwned(opts.ctx, opts.input.domain);
+      const { configured, ready } = await getCertificateReadiness(
+        opts.input.domain,
       );
-      const json = await data.json();
-      const result = domainConfigResponseSchema.parse(json);
-      return result;
+      if (!configured || ready) {
+        return { issued: false };
+      }
+      await issueCertificateOnVercel(opts.input.domain);
+      return { issued: true };
     }),
   verifyDomain: protectedProcedure.input(domainInput).query(async (opts) => {
     if (!opts.input.domain) {
