@@ -29,6 +29,12 @@ export {
   getPostmortem,
 } from "./postmortem";
 export {
+  collectChannelTranscript,
+  type GenerateText,
+  generatePostmortemDraft,
+  type SlackHistoryClient,
+} from "./postmortem-draft";
+export {
   AddIncidentNoteInput,
   ApprovePostmortemInput,
   CloseIncidentInput,

@@ -8,6 +8,7 @@ import {
 import {
   addIncidentNote,
   displayName,
+  generatePostmortemDraft,
   getIncident,
   getIncidentBySlackChannel,
   listIncidents,
@@ -18,6 +19,7 @@ import type { SlackConfig } from "./config";
 import { postConfirmationCard } from "./confirmation-card";
 import { trackSlackIncident } from "./incident-analytics";
 import { getIncidentDashboardUrl } from "./page-urls";
+import { generateWithSlackModel } from "./postmortem-generator";
 import type { SlackActor } from "./require-slack-member";
 import type { SlackWorkspace } from "./workspace-resolver";
 
@@ -29,6 +31,7 @@ export const INCIDENT_HELP = [
   "• `/openstatus incident note <text>` — add to the timeline (in an incident channel)",
   "• `/openstatus incident mitigate|resolve|cancel|reopen [#id] [note]` — change its status (approval card)",
   "• `/openstatus incident status [#id]` — where it stands",
+  "• `/openstatus incident postmortem [#id]` — draft the postmortem from the channel (approval card to approve and close)",
   "• `/openstatus incident list` — open incidents",
 ].join("\n");
 
@@ -173,6 +176,30 @@ export async function runIncidentCommand(args: {
             ...(note ? { note } : {}),
           },
         });
+      }
+      case "postmortem": {
+        const { id } = parseTarget(rest);
+        const incidentId = id ?? bound?.id;
+        if (!incidentId) {
+          return "Run this in an incident's channel, or name it: `/openstatus incident postmortem #12`.";
+        }
+        await generatePostmortemDraft({
+          ctx,
+          incidentId,
+          generate: generateWithSlackModel,
+          slackFor: (token) => new WebClient(token),
+        });
+        trackSlackIncident(ctx, "postmortem", { draftedBy: "agent" });
+        const card = await postCard({
+          slack,
+          ctx,
+          teamId,
+          channelId,
+          slackUserId: actor.slackUserId,
+          toolName: "approve_postmortem",
+          input: { id: incidentId, close: true },
+        });
+        return `Postmortem drafted: <${getIncidentDashboardUrl(incidentId)}|read and edit it in openstatus>. ${card}`;
       }
       case "status": {
         const { id } = parseTarget(rest);

@@ -193,6 +193,13 @@ export const toolRenderers: ToolRendererRegistry = {
     summary: (o) =>
       o.exists ? `${o.status} · drafted by ${o.draftedBy}` : "no postmortem",
   },
+  draft_postmortem: {
+    renderDraft: (input) => [
+      { field: "incidentId", after: input.id },
+      { field: "content", after: input.content },
+    ],
+    summary: (o) => `${o.status} · incident ${o.incidentId}`,
+  },
   approve_postmortem: {
     renderDraft: (input) => [
       { field: "incidentId", after: input.id },
