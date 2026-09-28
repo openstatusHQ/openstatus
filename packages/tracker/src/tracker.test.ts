@@ -1,5 +1,5 @@
 import type {
-  Incident,
+  MonitorIncident,
   Maintenance,
   StatusReport,
   StatusReportUpdate,
@@ -24,7 +24,9 @@ type ReportWithUpdates = StatusReport & {
   statusReportUpdates?: StatusReportUpdate[];
 };
 
-function createIncident(overrides: Partial<Incident> = {}): Incident {
+function createIncident(
+  overrides: Partial<MonitorIncident> = {},
+): MonitorIncident {
   return {
     id: 1,
     title: "",

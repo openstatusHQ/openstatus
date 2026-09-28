@@ -120,7 +120,7 @@ export const statusPageRouter = createTRPCRouter({
             with: {
               monitor: {
                 with: {
-                  incidents: true,
+                  monitorIncidents: true,
                 },
               },
               group: true,
@@ -164,7 +164,7 @@ export const statusPageRouter = createTRPCRouter({
       const components = pageComponents.map((c) => {
         const events = getEvents({
           maintenances: _page.maintenances,
-          incidents: c.monitor?.incidents ?? [],
+          incidents: c.monitor?.monitorIncidents ?? [],
           reports: _page.statusReports,
           pageComponentId: c.id,
           monitorId: c.monitorId ?? undefined,
@@ -220,7 +220,7 @@ export const statusPageRouter = createTRPCRouter({
       const monitors = monitorComponents.map((c) => {
         const events = getEvents({
           maintenances: _page.maintenances,
-          incidents: c.monitor.incidents ?? [],
+          incidents: c.monitor.monitorIncidents ?? [],
           reports: _page.statusReports,
           monitorId: c.monitor.id,
         });
@@ -337,7 +337,9 @@ export const statusPageRouter = createTRPCRouter({
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
         maintenances: _page.maintenances,
-        incidents: monitorComponents.flatMap((c) => c.monitor.incidents ?? []),
+        incidents: monitorComponents.flatMap(
+          (c) => c.monitor.monitorIncidents ?? [],
+        ),
         reports: _page.statusReports,
         // No monitorId provided, so we get all events for the page
       });
@@ -497,7 +499,7 @@ export const statusPageRouter = createTRPCRouter({
         barType === "manual"
           ? pageComponents.map((c) =>
               c.monitor
-                ? { ...c, monitor: { ...c.monitor, incidents: [] } }
+                ? { ...c, monitor: { ...c.monitor, monitorIncidents: [] } }
                 : c,
             )
           : pageComponents;
@@ -509,7 +511,8 @@ export const statusPageRouter = createTRPCRouter({
         monitorGroups,
         trackers,
         incidents:
-          monitorsWithPrivateLocationCount.flatMap((m) => m.incidents) ?? [],
+          monitorsWithPrivateLocationCount.flatMap((m) => m.monitorIncidents) ??
+          [],
         statusReports,
         maintenances,
         workspacePlan: _page.workspace.plan,
@@ -554,7 +557,7 @@ export const statusPageRouter = createTRPCRouter({
           },
           pageComponents: {
             with: {
-              monitor: { with: { incidents: true } },
+              monitor: { with: { monitorIncidents: true } },
               group: true,
             },
             orderBy: (pageComponents, { asc }) => asc(pageComponents.order),
@@ -602,7 +605,7 @@ export const statusPageRouter = createTRPCRouter({
 
       // Extract all incidents from monitor components
       const incidents = monitorComponents.flatMap(
-        (c) => c.monitor?.incidents ?? [],
+        (c) => c.monitor?.monitorIncidents ?? [],
       );
 
       const ws = selectWorkspaceSchema.safeParse(_page.workspace);
@@ -744,7 +747,7 @@ export const statusPageRouter = createTRPCRouter({
             with: {
               monitor: {
                 with: {
-                  incidents: true,
+                  monitorIncidents: true,
                 },
               },
             },
@@ -840,7 +843,7 @@ export const statusPageRouter = createTRPCRouter({
       return pageComponents.map((c) => {
         const events = getEvents({
           maintenances: _page.maintenances,
-          incidents: c.monitor?.incidents ?? [],
+          incidents: c.monitor?.monitorIncidents ?? [],
           reports: _page.statusReports,
           pageComponentId: c.id,
           monitorId: c.monitorId ?? undefined,

@@ -1,5 +1,5 @@
 import type {
-  Incident,
+  MonitorIncident,
   Maintenance,
   StatusReport,
   StatusReportUpdate,
@@ -19,7 +19,7 @@ export type Monitor = {
 type StatusReports = (StatusReport & {
   statusReportUpdates?: StatusReportUpdate[];
 })[];
-type Incidents = Incident[];
+type Incidents = MonitorIncident[];
 type Maintenances = Maintenance[];
 
 /**

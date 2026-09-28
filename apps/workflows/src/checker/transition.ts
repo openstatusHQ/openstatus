@@ -9,7 +9,7 @@ import {
   monitorTransition,
   notificationOutbox,
   notificationOutboxEventType,
-  incidentTable,
+  monitorIncidentTable,
   monitor,
   monitorStatusTable,
   notification,
@@ -123,16 +123,16 @@ function journalStatement(
 
 function createIncidentStatement(input: TransitionInput, guard: SQL) {
   return db.all<{ id: number }>(sql`
-    INSERT INTO ${incidentTable} (monitor_id, workspace_id, started_at)
+    INSERT INTO ${monitorIncidentTable} (monitor_id, workspace_id, started_at)
     SELECT ${monitor.id}, ${monitor.workspaceId}, ${Math.floor(input.cronTimestamp / 1000)}
     FROM ${monitor}
     WHERE ${monitor.id} = ${input.monitorId}
       AND ${monitor.status} <> ${input.status}
       AND ${guard}
       AND NOT EXISTS (
-        SELECT 1 FROM ${incidentTable}
-        WHERE ${incidentTable.monitorId} = ${monitor.id}
-          AND ${incidentTable.resolvedAt} IS NULL)
+        SELECT 1 FROM ${monitorIncidentTable}
+        WHERE ${monitorIncidentTable.monitorId} = ${monitor.id}
+          AND ${monitorIncidentTable.resolvedAt} IS NULL)
     ON CONFLICT DO NOTHING
     RETURNING id
   `);
@@ -140,10 +140,10 @@ function createIncidentStatement(input: TransitionInput, guard: SQL) {
 
 function resolveIncidentStatement(input: TransitionInput, guard: SQL) {
   return db.all<{ id: number }>(sql`
-    UPDATE ${incidentTable}
+    UPDATE ${monitorIncidentTable}
     SET resolved_at = ${Math.floor(input.cronTimestamp / 1000)}, auto_resolved = 1
-    WHERE ${incidentTable.monitorId} = ${input.monitorId}
-      AND ${incidentTable.resolvedAt} IS NULL
+    WHERE ${monitorIncidentTable.monitorId} = ${input.monitorId}
+      AND ${monitorIncidentTable.resolvedAt} IS NULL
       AND EXISTS (
         SELECT 1 FROM ${monitor}
         WHERE ${monitor.id} = ${input.monitorId}
@@ -174,9 +174,9 @@ function outboxStatement(
       ${monitor.id}, ${monitor.workspaceId}, ${notification.id},
       ${notification.provider}, ${EVENT_TYPE[input.status]},
       ${monitor.status}, ${input.status}, ${input.cronTimestamp},
-      (SELECT id FROM ${incidentTable}
-        WHERE ${incidentTable.monitorId} = ${monitor.id}
-          AND ${incidentTable.resolvedAt} IS NULL
+      (SELECT id FROM ${monitorIncidentTable}
+        WHERE ${monitorIncidentTable.monitorId} = ${monitor.id}
+          AND ${monitorIncidentTable.resolvedAt} IS NULL
         ORDER BY id DESC LIMIT 1),
       ${JSON.stringify(payload)},
       CASE WHEN ${owned} THEN 'pending' ELSE 'settled' END,

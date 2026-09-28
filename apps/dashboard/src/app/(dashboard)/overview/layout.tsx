@@ -17,7 +17,7 @@ export default async function Layout({
   const queryClient = getQueryClient();
 
   await Promise.all([
-    queryClient.prefetchQuery(trpc.incident.list.queryOptions()),
+    queryClient.prefetchQuery(trpc.monitorIncident.list.queryOptions()),
     queryClient.prefetchQuery(trpc.statusReport.list.queryOptions({})),
     queryClient.prefetchQuery(trpc.maintenance.list.queryOptions()),
   ]);

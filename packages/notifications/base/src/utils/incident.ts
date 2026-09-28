@@ -1,4 +1,4 @@
-import type { Incident } from "@openstatus/db/src/schema";
+import type { MonitorIncident } from "@openstatus/db/src/schema";
 
 import { formatDuration } from "./duration";
 
@@ -24,7 +24,7 @@ import { formatDuration } from "./duration";
  * @param incident - The incident object
  * @returns Formatted duration string or null if incident is not resolved
  */
-export function getIncidentDuration(incident: Incident): string | null {
+export function getIncidentDuration(incident: MonitorIncident): string | null {
   if (!incident.startedAt) {
     return null;
   }

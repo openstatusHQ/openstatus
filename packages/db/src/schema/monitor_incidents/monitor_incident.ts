@@ -12,7 +12,7 @@ import { monitor } from "../monitors";
 import { user } from "../users/user";
 import { workspace } from "../workspaces";
 
-export const statusIncident = [
+export const monitorIncidentStatus = [
   "triage",
   "investigating",
   "identified",
@@ -21,13 +21,13 @@ export const statusIncident = [
   "duplicated",
 ] as const;
 
-export const incidentTable = sqliteTable(
-  "incident",
+export const monitorIncidentTable = sqliteTable(
+  "monitor_incident",
   {
     id: integer("id").primaryKey(),
     title: text("title").default("").notNull(),
     summary: text("summary").default("").notNull(),
-    status: text("status", { enum: statusIncident })
+    status: text("status", { enum: monitorIncidentStatus })
       .default("triage")
       .notNull(),
 
@@ -64,33 +64,36 @@ export const incidentTable = sqliteTable(
   },
   (table) => [
     unique().on(table.monitorId, table.startedAt),
-    index("incident_workspace_id_started_at_idx").on(
+    index("monitor_incident_workspace_id_started_at_idx").on(
       table.workspaceId,
       table.startedAt,
     ),
     // Partial: open incidents are looked up on every check result, every region,
     // every minute. Unique so a monitor cannot hold two open incidents at once.
-    uniqueIndex("incident_open_idx")
+    uniqueIndex("monitor_incident_open_idx")
       .on(table.monitorId)
       .where(sql`${table.resolvedAt} IS NULL`),
   ],
 );
 
-export const incidentRelations = relations(incidentTable, ({ one }) => ({
-  monitor: one(monitor, {
-    fields: [incidentTable.monitorId],
-    references: [monitor.id],
+export const monitorIncidentRelations = relations(
+  monitorIncidentTable,
+  ({ one }) => ({
+    monitor: one(monitor, {
+      fields: [monitorIncidentTable.monitorId],
+      references: [monitor.id],
+    }),
+    workspace: one(workspace, {
+      fields: [monitorIncidentTable.workspaceId],
+      references: [workspace.id],
+    }),
+    acknowledgedByUser: one(user, {
+      fields: [monitorIncidentTable.acknowledgedBy],
+      references: [user.id],
+    }),
+    resolvedByUser: one(user, {
+      fields: [monitorIncidentTable.resolvedBy],
+      references: [user.id],
+    }),
   }),
-  workspace: one(workspace, {
-    fields: [incidentTable.workspaceId],
-    references: [workspace.id],
-  }),
-  acknowledgedByUser: one(user, {
-    fields: [incidentTable.acknowledgedBy],
-    references: [user.id],
-  }),
-  resolvedByUser: one(user, {
-    fields: [incidentTable.resolvedBy],
-    references: [user.id],
-  }),
-}));
+);
