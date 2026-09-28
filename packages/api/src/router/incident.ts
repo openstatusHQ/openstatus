@@ -15,6 +15,7 @@ import {
   declareIncident,
   deleteIncident,
   getIncident,
+  getIncidentForStatusReport,
   isDeletable,
   linkIncidentStatusReport,
   listIncidentEvents,
@@ -65,6 +66,21 @@ export const incidentRouter = createTRPCRouter({
           allowedTransitions: allowedTransitions(row),
           deletable: isDeletable(row),
         };
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  forStatusReport: protectedProcedure
+    .input(z.object({ statusReportId: z.number().int() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        return (
+          (await getIncidentForStatusReport({
+            ctx: toServiceCtx(ctx),
+            input,
+          })) ?? null
+        );
       } catch (err) {
         toTRPCError(err);
       }

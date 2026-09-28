@@ -6,6 +6,7 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 
+import { Link } from "@/components/common/link";
 import {
   EmptyStateContainer,
   EmptyStateDescription,
@@ -32,6 +33,7 @@ import {
   impactsEqual,
   toCreateStatusReportUpdateInput,
 } from "@/data/status-report-updates.client";
+import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
@@ -42,6 +44,14 @@ export default function Page() {
   const { data: statusReport, refetch } = useQuery(
     trpc.statusReport.get.queryOptions({ id: Number.parseInt(reportId) }),
   );
+
+  const incidentsEnabled = useFeature("incident-management");
+  const { data: linkedIncident } = useQuery({
+    ...trpc.incident.forStatusReport.queryOptions({
+      statusReportId: Number.parseInt(reportId),
+    }),
+    enabled: incidentsEnabled,
+  });
 
   const sendStatusReportUpdateMutation = useMutation(
     trpc.subscriberNotification.statusReport.mutationOptions(),
@@ -97,6 +107,16 @@ export default function Page() {
                 {affected ? affected : "zero"}
               </span>{" "}
               component(s).
+              {linkedIncident ? (
+                <>
+                  {" "}
+                  Communicates incident{" "}
+                  <Link href={`/incidents/${linkedIncident.id}`}>
+                    {linkedIncident.title}
+                  </Link>
+                  .
+                </>
+              ) : null}
             </SectionDescription>
           </SectionHeader>
         </SectionHeaderRow>
