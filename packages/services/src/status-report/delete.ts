@@ -4,6 +4,7 @@ import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { unlinkIncidentFromStatusReport } from "../incident/link-status-report";
 import { recomputeReportStatus } from "./derive-status";
 import { getReportInWorkspace, getReportUpdateInWorkspace } from "./internal";
 import {
@@ -30,6 +31,11 @@ export async function deleteStatusReport(args: {
       workspaceId: ctx.workspace.id,
     });
 
+    await unlinkIncidentFromStatusReport({
+      tx,
+      ctx,
+      statusReportId: report.id,
+    });
     await tx.delete(statusReport).where(eq(statusReport.id, report.id));
 
     await emitAudit(tx, ctx, {
