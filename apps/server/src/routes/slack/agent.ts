@@ -84,7 +84,12 @@ export async function runAgent(
   thread: SlackThreadMessage[],
   botUserId: string,
   userText?: string,
-  origin?: { slackUserId: string; teamId: string | undefined },
+  origin?: {
+    slackUserId: string;
+    teamId: string | undefined;
+    /** Member matched by Slack email; reads run without it, approvals require it. */
+    userId?: number;
+  },
   options?: AgentOptions,
 ): Promise<AgentResult> {
   const ctx: ServiceContext = {
@@ -93,6 +98,7 @@ export async function runAgent(
       type: "slack",
       teamId: origin?.teamId ?? "",
       slackUserId: origin?.slackUserId ?? "",
+      userId: origin?.userId,
     },
     tb,
   };

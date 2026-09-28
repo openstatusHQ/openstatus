@@ -1,5 +1,13 @@
 import crypto from "node:crypto";
 
+import { and, db, eq } from "@openstatus/db";
+import { auditLog } from "@openstatus/db/src/schema";
+import {
+  addUserToWorkspace,
+  createPage,
+  createTestWorkspace,
+  createUser,
+} from "@openstatus/db/src/test/factories";
 import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import { Hono } from "hono";
 
@@ -14,6 +22,7 @@ import {
 import { settleBackgroundTasks } from "./background";
 import type { SlackEnv } from "./config";
 import { handleSlackInteraction } from "./interactions";
+import { resetSlackUserCache } from "./resolve-slack-user";
 import { verifySlackSignature } from "./verify";
 
 const redisStore = (globalThis as Record<string, unknown>)
@@ -32,6 +41,9 @@ const basePending = {
 
 function configureSlackDoubles() {
   slackTestState.calls = [];
+  resetSlackUserCache();
+  slackTestState.usersInfoImpl = () =>
+    Promise.resolve({ ok: true, user: { profile: {} } });
   slackTestState.resolveWorkspace = (teamId: string) =>
     teamId === "T_KNOWN"
       ? Promise.resolve({ botToken: "xoxb-fallback", workspace: { id: 1 } })
@@ -395,6 +407,73 @@ describe("registry-runner execution paths", () => {
         (c.args.text as string).toLowerCase().includes("not found"),
     );
     expect(errCall).toBeDefined();
+  });
+
+  test("a confirmed action is attributed to the member with the Slack email", async () => {
+    const { workspace } = await createTestWorkspace();
+    const page = await createPage(workspace.id);
+    const member = await createUser();
+    await addUserToWorkspace(member.id, workspace.id, "member");
+    slackTestState.resolveWorkspace = () =>
+      Promise.resolve({
+        botToken: "xoxb-fallback",
+        workspace: { id: workspace.id },
+      });
+    slackTestState.usersInfoImpl = () =>
+      Promise.resolve({
+        ok: true,
+        user: { profile: { email: (member.email as string).toUpperCase() } },
+      });
+
+    const now = Date.now();
+    const data = {
+      ...basePending,
+      id: "maint-attr",
+      workspaceId: workspace.id,
+      threadTs: "3.1",
+      messageTs: "3.2",
+      payload: {
+        toolName: "create_maintenance",
+        input: {
+          title: "DB Maintenance",
+          message: "Scheduled database upgrade.",
+          from: new Date(now + 86400000).toISOString(),
+          to: new Date(now + 86400000 + 3600000).toISOString(),
+          pageId: page.id,
+          pageComponentIds: [],
+        },
+      },
+    };
+    redisStore.set("slack:action:maint-attr", JSON.stringify(data));
+    redisStore.set("slack:thread:3.1", "maint-attr");
+
+    try {
+      const res = await signAndPost(app, {
+        type: "block_actions",
+        user: { id: "U_OWNER" },
+        channel: { id: "C1" },
+        message: { ts: "3.2" },
+        team: { id: "T_KNOWN" },
+        actions: [{ action_id: "approve_maint-attr" }],
+      });
+      expect(res.status).toBe(200);
+
+      // The verb ran with the matched member, so its audit row carries it.
+      const created = await db
+        .select()
+        .from(auditLog)
+        .where(
+          and(
+            eq(auditLog.workspaceId, workspace.id),
+            eq(auditLog.action, "maintenance.create"),
+          ),
+        )
+        .get();
+      expect(created?.actorType).toBe("slack");
+      expect(created?.actorUserId).toBe(member.id);
+    } finally {
+      await db.delete(auditLog).where(eq(auditLog.workspaceId, workspace.id));
+    }
   });
 
   test("from after to surfaces typed validation error", async () => {

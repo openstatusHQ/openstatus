@@ -27,6 +27,9 @@ const BOT_SCOPES = [
   "groups:read",
   "groups:write",
   "im:history",
+  // users.info + profile.email: attributes Slack actions to workspace members.
+  "users:read",
+  "users:read.email",
 ].join(",");
 
 interface OAuthState {

@@ -61,7 +61,9 @@
         "groups:history",
         "groups:read",
         "groups:write",
-        "im:history"
+        "im:history",
+        "users:read",
+        "users:read.email"
       ]
     },
     "pkce_enabled": false

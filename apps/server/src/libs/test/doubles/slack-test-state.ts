@@ -22,6 +22,8 @@ export interface SlackTestState {
   runAgentOverride: ((options?: unknown) => Promise<unknown>) | null;
   repliesImpl: () => Promise<unknown>;
   historyImpl: () => Promise<unknown>;
+  /** `users.info` result; the default has no email, so no mapping is created. */
+  usersInfoImpl: (args: Record<string, unknown>) => Promise<unknown>;
 }
 
 const g = globalThis as Record<string, unknown>;
@@ -46,6 +48,7 @@ if (!g.__slackTestState) {
       Promise.resolve({
         messages: [{ user: "U1", text: "channel message", ts: "1.1" }],
       }),
+    usersInfoImpl: () => Promise.resolve({ ok: true, user: { profile: {} } }),
   } satisfies SlackTestState;
 }
 
