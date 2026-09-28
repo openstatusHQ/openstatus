@@ -15,7 +15,7 @@ import PlanDowngradedEmail, {
 import PlanEndingSoonEmail, {
   planEndingSoonSubject,
 } from "../emails/plan-ending-soon";
-import TrialEndingEmail from "../emails/trial-ending";
+import TrialEndingEmail, { trialEndingSubject } from "../emails/trial-ending";
 import {
   billingRecipients,
   planLossLines,
@@ -147,11 +147,58 @@ describe("billing templates", () => {
     expect(bare).not.toContain("moves to the free plan");
   });
 
-  test("trial-ending says what gets removed", async () => {
-    const html = await render(<TrialEndingEmail trialEnd={endsAt} />);
-    expect(html).toContain("Fri 25 Sep 2026");
-    expect(html).toContain("all but one status page are");
-    expect(html).not.toContain("max-width:600px");
+  test("trial-ending without a card lists what gets removed", async () => {
+    const props = {
+      workspaceSlug: "acme-dev",
+      plan: "starter",
+      trialEnd: endsAt,
+      hasPaymentMethod: false,
+      loss,
+    };
+    const html = await render(<TrialEndingEmail {...props} />);
+    expect(trialEndingSubject(props)).toBe(
+      "Your trial ends on 25 Sep — add a payment method to keep starter",
+    );
+    expect(html).toContain("ACTION NEEDED");
+    expect(html).toContain("Your trial ends on Friday 25 September");
+    expect(html).toContain("acme-dev");
+    expect(html).toContain("starter → free");
+    expect(html).toContain("Acme API, Acme EU");
+    expect(html).toContain("Add payment method");
+    expect(html).not.toContain("on file, so");
+  });
+
+  test("trial-ending with a card says the plan continues", async () => {
+    const props = {
+      workspaceSlug: "acme-dev",
+      plan: "starter",
+      trialEnd: endsAt,
+      hasPaymentMethod: true,
+      loss,
+    };
+    const html = await render(<TrialEndingEmail {...props} />);
+    expect(trialEndingSubject(props)).toBe(
+      "Your trial ends on 25 Sep — your starter plan continues",
+    );
+    expect(html).toContain("Nothing to do");
+    expect(html).toContain("starter, continues");
+    expect(html).toContain("Manage subscription");
+    expect(html).not.toContain("Acme API, Acme EU");
+    expect(html).not.toContain("Add payment method");
+  });
+
+  test("trial-ending without a card and nothing to trim", async () => {
+    const html = await render(
+      <TrialEndingEmail
+        workspaceSlug="acme-dev"
+        plan="starter"
+        trialEnd={endsAt}
+        hasPaymentMethod={false}
+        loss={nothing}
+      />,
+    );
+    expect(html).toContain("free plan on that day.");
+    expect(html).not.toContain("trimmed");
   });
 
   test("loss lines use singular forms", () => {
@@ -261,7 +308,14 @@ describe("send plumbing", () => {
     from: "a <a@openstatus.dev>",
     to: ["b@example.com"],
     subject: "s",
-    react: <TrialEndingEmail trialEnd={endsAt} />,
+    react: (
+      <TrialEndingEmail
+        workspaceSlug="acme-dev"
+        plan="starter"
+        trialEnd={endsAt}
+        hasPaymentMethod={false}
+      />
+    ),
   };
 
   test("sendEmail forwards idempotencyKey and scheduledAt, returns the id", async () => {
@@ -441,10 +495,20 @@ describe("send plumbing", () => {
     await sendTrialEnding({
       to: ["max@acme.dev"],
       eventId: "evt_3",
+      workspaceSlug: "acme-dev",
       trialEnd: endsAt,
+      plan: "starter",
+      hasPaymentMethod: false,
+      loss,
     });
     const [payload, options] = send.calls[0].args;
-    expect(payload.subject).toBe("Your openstatus trial ends soon");
+    expect(payload.from).toBe(
+      "Thibault from openstatus <thibault@notifications.openstatus.dev>",
+    );
+    expect(payload.replyTo).toBe("thibault@openstatus.dev");
+    expect(payload.subject).toBe(
+      "Your trial ends on 25 Sep — add a payment method to keep starter",
+    );
     expect(options).toEqual({ idempotencyKey: "stripe:evt_3:trial-ending" });
   });
 
@@ -462,7 +526,14 @@ describe("send plumbing", () => {
       reason: "downgrade",
       owners: [],
     });
-    await sendTrialEnding({ to: [], eventId: "e", trialEnd: endsAt });
+    await sendTrialEnding({
+      to: [],
+      eventId: "e",
+      workspaceSlug: "a",
+      trialEnd: endsAt,
+      plan: "starter",
+      hasPaymentMethod: false,
+    });
     assertSpyCalls(send, 0);
     assertSpyCalls(batch, 0);
   });

@@ -32,6 +32,7 @@ import {
   customerIdOf,
   getCurrentPeriodEnd,
   getCurrentSubscription,
+  hasPaymentMethod,
   isNewerSubscription,
   listLiveSubscriptions,
   stripe,
@@ -451,11 +452,16 @@ export const webhookRouter = createTRPCRouter({
   }),
   customerSubscriptionTrialWillEnd: webhookProcedure.mutation(async (opts) => {
     const subscription = opts.input.event.data.object as Stripe.Subscription;
-    const customerId =
-      typeof subscription.customer === "string"
-        ? subscription.customer
-        : subscription.customer.id;
-    if (!subscription.trial_end) return;
+    const customerId = customerIdOf(subscription);
+    // Stripe also fires this when a trial is cut short with `trial_end: now`,
+    // which is how a mid-trial upgrade starts billing — no reminder then.
+    if (
+      !subscription.trial_end ||
+      subscription.status !== "trialing" ||
+      subscription.trial_end <= opts.input.event.created
+    ) {
+      return;
+    }
 
     const ws = await getWorkspaceByStripeId({
       input: { stripeId: customerId },
@@ -469,10 +475,26 @@ export const webhookRouter = createTRPCRouter({
     }
 
     try {
+      const withCard = await hasPaymentMethod(subscription);
+      const preview = withCard
+        ? undefined
+        : await previewWorkspaceDowngrade({
+            ctx: {
+              workspace: ws,
+              actor: { type: "system", job: "stripe-trial-will-end" },
+              db: opts.ctx.db,
+            },
+          });
       await sendTrialEnding({
         to: await getBillingRecipients(opts.ctx.db, ws.id, customerId),
         eventId: opts.input.event.id,
+        workspaceSlug: ws.slug,
         trialEnd: new Date(subscription.trial_end * 1000),
+        plan: ws.plan ?? "starter",
+        hasPaymentMethod: withCard,
+        loss: preview
+          ? toPlanLoss(preview, preview.customDomains, preview.ssoEnabled)
+          : undefined,
       });
     } catch (err) {
       console.error("Failed to send trial ending email:", err);

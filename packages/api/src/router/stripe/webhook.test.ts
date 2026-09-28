@@ -488,11 +488,18 @@ describe("stripe webhook emails", () => {
   });
 
   describe("customer.subscription.trial_will_end", () => {
-    test("sends trial-ending once per event with trial_end in the body", async () => {
+    const trialEnd = now() + 3 * DAY;
+
+    test("no card → lists what the free plan trims, once per event", async () => {
       const s = await seed();
-      const trialEnd = Math.floor(
-        new Date("2026-09-25T00:00:00Z").getTime() / 1000,
-      );
+      await createPage(s.workspace.id, {
+        title: "Kept",
+        createdAt: new Date("2020-01-01T00:00:00Z"),
+      });
+      await createPage(s.workspace.id, {
+        title: "Gone",
+        createdAt: new Date("2021-01-01T00:00:00Z"),
+      });
       const evt = event(
         "customer.subscription.trial_will_end",
         subscription(s.stripeId, { status: "trialing", trial_end: trialEnd }),
@@ -502,11 +509,56 @@ describe("stripe webhook emails", () => {
 
       assertSpyCalls(send, 1);
       const [payload, options] = send.calls[0].args;
-      expect(payload.subject).toBe("Your openstatus trial ends soon");
+      expect(payload.subject).toContain("add a payment method to keep");
       expect(payload.to).toContain(s.ownerEmail);
+      expect(payload.react.props).toMatchObject({
+        workspaceSlug: s.workspace.slug,
+        plan: s.workspace.plan,
+        hasPaymentMethod: false,
+        loss: { pagesDeleted: ["Gone"], keptPageTitle: "Kept" },
+      });
       expect(options).toEqual({
         idempotencyKey: `stripe:${evt.event.id}:trial-ending`,
       });
+    });
+
+    test("card on file → plan continues, no loss lines", async () => {
+      const s = await seed();
+      await createPage(s.workspace.id, {
+        title: "Kept",
+        createdAt: new Date("2020-01-01T00:00:00Z"),
+      });
+      await createPage(s.workspace.id, {
+        title: "Gone",
+        createdAt: new Date("2021-01-01T00:00:00Z"),
+      });
+
+      await caller().customerSubscriptionTrialWillEnd(
+        event(
+          "customer.subscription.trial_will_end",
+          subscription(s.stripeId, {
+            status: "trialing",
+            trial_end: trialEnd,
+            default_payment_method: "pm_test_1",
+          }),
+        ),
+      );
+
+      assertSpyCalls(send, 1);
+      const [payload] = send.calls[0].args;
+      expect(payload.subject).toContain("plan continues");
+      expect(payload.react.props).toMatchObject({ hasPaymentMethod: true });
+      expect(payload.react.props.loss).toBeUndefined();
+    });
+
+    test("trial ended early (trial_end: now) → nothing sent", async () => {
+      const s = await seed();
+      const evt = event(
+        "customer.subscription.trial_will_end",
+        subscription(s.stripeId, { status: "active", trial_end: now() - 1 }),
+      );
+      await caller().customerSubscriptionTrialWillEnd(evt);
+      assertSpyCalls(send, 0);
     });
 
     test("no trial_end → nothing sent", async () => {

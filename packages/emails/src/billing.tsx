@@ -19,8 +19,10 @@ import PlanEndingSoonEmail, {
   type PlanEndingSoonProps,
   planEndingSoonSubject,
 } from "../emails/plan-ending-soon";
-import TrialEndingEmail from "../emails/trial-ending";
-import { TRIAL_ENDING_SUBJECT } from "../emails/trial-ending";
+import TrialEndingEmail, {
+  type TrialEndingProps,
+  trialEndingSubject,
+} from "../emails/trial-ending";
 import { sendBatchEmailHtml, sendEmail } from "./send";
 
 const RAW_FROM = "Thibault from openstatus <thibault@openstatus.dev>";
@@ -208,19 +210,19 @@ export async function schedulePlanEndingSoon(
   );
 }
 
-export async function sendTrialEnding(req: {
-  to: string[];
-  eventId: string;
-  trialEnd: Date;
-}) {
+export async function sendTrialEnding(
+  req: TrialEndingProps & { to: string[]; eventId: string },
+) {
   if (req.to.length === 0) return;
+  const { to, eventId, ...props } = req;
   return sendEmail(
     {
-      from: RAW_FROM,
-      to: req.to,
-      subject: TRIAL_ENDING_SUBJECT,
-      react: <TrialEndingEmail trialEnd={req.trialEnd} />,
+      from: SIGNED_FROM,
+      reply_to: SIGNED_REPLY_TO,
+      to,
+      subject: trialEndingSubject(props),
+      react: <TrialEndingEmail {...props} />,
     },
-    { idempotencyKey: stripeIdempotencyKey(req.eventId, "trial-ending") },
+    { idempotencyKey: stripeIdempotencyKey(eventId, "trial-ending") },
   );
 }

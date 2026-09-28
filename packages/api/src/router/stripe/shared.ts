@@ -176,7 +176,7 @@ export async function hasPaymentMethod(subscription: Stripe.Subscription) {
   const customer = await stripe.customers.retrieve(customerIdOf(subscription));
   return (
     !customer.deleted &&
-    Boolean(customer.invoice_settings.default_payment_method)
+    Boolean(customer.invoice_settings?.default_payment_method)
   );
 }
 
