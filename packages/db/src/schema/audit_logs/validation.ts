@@ -126,6 +126,24 @@ const monitorIncidentActions = [
   action("monitor_incident.delete", "monitor_incident", intId),
 ] as const;
 
+const incidentActions = [
+  action("incident.create", "incident", intId, { optionalMetadata: true }),
+  action("incident.update", "incident", intId, { optionalMetadata: true }),
+  action("incident.delete", "incident", intId),
+] as const;
+
+// Append-only timeline: events are never updated or deleted on their own.
+const incidentEventActions = [
+  action("incident_event.create", "incident_event", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
+const slackUserActions = [
+  action("slack_user.create", "slack_user", intId, { optionalMetadata: true }),
+  action("slack_user.delete", "slack_user", intId, { optionalMetadata: true }),
+] as const;
+
 const statusReportActions = [
   action("status_report.create", "status_report", intId, {
     optionalMetadata: true,
@@ -223,6 +241,9 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...workspaceActions,
   ...maintenanceActions,
   ...monitorIncidentActions,
+  ...incidentActions,
+  ...incidentEventActions,
+  ...slackUserActions,
   ...statusReportActions,
   ...statusReportUpdateActions,
   ...invitationActions,

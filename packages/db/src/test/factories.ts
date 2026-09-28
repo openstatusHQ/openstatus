@@ -7,11 +7,14 @@
 // rolled-back `withTestTransaction`); omit it to commit to the shared db.
 import { db as defaultDb } from "../db";
 import {
+  incident,
+  incidentEvent,
   monitor,
   notification,
   notificationsToMonitors,
   page,
   pageComponent,
+  slackUser,
   user,
   usersToWorkspaces,
   workspace,
@@ -27,6 +30,9 @@ type UserInsert = typeof user.$inferInsert;
 type PageInsert = typeof page.$inferInsert;
 type PageComponentInsert = typeof pageComponent.$inferInsert;
 type NotificationInsert = typeof notification.$inferInsert;
+type IncidentInsert = typeof incident.$inferInsert;
+type IncidentEventInsert = typeof incidentEvent.$inferInsert;
+type SlackUserInsert = typeof slackUser.$inferInsert;
 
 const unique = () => crypto.randomUUID().slice(0, 8);
 
@@ -136,7 +142,7 @@ export async function createUser(
 export async function addUserToWorkspace(
   userId: number,
   workspaceId: number,
-  role: "owner" | "member" = "owner",
+  role: "owner" | "admin" | "member" = "owner",
   db: Db = defaultDb,
 ) {
   const [row] = await withBusyRetry(() =>
@@ -226,6 +232,72 @@ export async function linkNotificationToMonitor(
     db
       .insert(notificationsToMonitors)
       .values({ notificationId, monitorId })
+      .returning(),
+  );
+  if (!row) throw new Error("factory insert returned no row");
+  return row;
+}
+
+export async function createIncident(
+  workspaceId: number,
+  overrides: Partial<IncidentInsert> = {},
+  db: Db = defaultDb,
+) {
+  const now = new Date();
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(incident)
+      .values({
+        workspaceId,
+        title: `test-incident-${unique()}`,
+        severity: "major",
+        declaredAt: now,
+        startedAt: now,
+        ...overrides,
+      })
+      .returning(),
+  );
+  if (!row) throw new Error("factory insert returned no row");
+  return row;
+}
+
+export async function createIncidentEvent(
+  incidentId: number,
+  overrides: Partial<IncidentEventInsert> = {},
+  db: Db = defaultDb,
+) {
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(incidentEvent)
+      .values({
+        incidentId,
+        type: "note",
+        message: "test note",
+        createdAt: new Date(),
+        ...overrides,
+      })
+      .returning(),
+  );
+  if (!row) throw new Error("factory insert returned no row");
+  return row;
+}
+
+export async function createSlackUser(
+  workspaceId: number,
+  userId: number,
+  overrides: Partial<SlackUserInsert> = {},
+  db: Db = defaultDb,
+) {
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(slackUser)
+      .values({
+        workspaceId,
+        userId,
+        slackTeamId: `T${unique()}`,
+        slackUserId: `U${unique()}`,
+        ...overrides,
+      })
       .returning(),
   );
   if (!row) throw new Error("factory insert returned no row");

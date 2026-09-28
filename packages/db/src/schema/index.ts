@@ -28,3 +28,5 @@ export * from "./chat_sessions";
 export * from "./frozen_uptime";
 export * from "./monitor_transition";
 export * from "./oauth";
+export * from "./incidents";
+export * from "./slack_users";

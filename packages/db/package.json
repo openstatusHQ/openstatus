@@ -15,6 +15,8 @@
     "./src/schema/maintenances": "./src/schema/maintenances/index.ts",
     "./src/schema/page_components": "./src/schema/page_components/index.ts",
     "./src/schema/workspaces": "./src/schema/workspaces/index.ts",
+    "./src/schema/incidents": "./src/schema/incidents/index.ts",
+    "./src/schema/slack_users": "./src/schema/slack_users/index.ts",
     "./src/*": "./src/*.ts"
   },
   "scripts": {
