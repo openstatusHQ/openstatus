@@ -1,0 +1,275 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { incidentSeverity } from "@openstatus/db/src/schema/incidents/constants";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@openstatus/ui/components/ui/select";
+import { Textarea } from "@openstatus/ui/components/ui/textarea";
+import { cn } from "@openstatus/ui/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
+import { format } from "date-fns";
+import React, { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+
+import {
+  FormCardContent,
+  FormCardSeparator,
+} from "@/components/forms/form-card";
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
+import { personName, severityConfig } from "@/data/managed-incidents.client";
+import { useTRPC } from "@/lib/trpc/client";
+
+const NONE = "none";
+
+const schema = z.object({
+  title: z.string().trim().min(1, "Title is required.").max(256),
+  severity: z.enum(incidentSeverity),
+  summary: z.string().max(4000),
+  commanderId: z.string(),
+  startedAt: z.string().min(1, "Start time is required."),
+  statusReportId: z.string(),
+});
+
+export type FormValues = z.infer<typeof schema>;
+
+export type DeclareIncidentValues = {
+  title: string;
+  severity: FormValues["severity"];
+  summary?: string;
+  commanderId: number | null;
+  startedAt: Date;
+  statusReportId?: number;
+};
+
+export function toLocalInput(date: Date): string {
+  return format(date, "yyyy-MM-dd'T'HH:mm");
+}
+
+export function FormDeclareIncident({
+  defaultValues,
+  onSubmit,
+  className,
+  ...props
+}: Omit<React.ComponentProps<"form">, "onSubmit" | "defaultValues"> & {
+  defaultValues?: Partial<FormValues>;
+  onSubmit: (values: DeclareIncidentValues) => Promise<void>;
+}) {
+  const trpc = useTRPC();
+  const { data: user } = useQuery(trpc.user.get.queryOptions());
+  const { data: members } = useQuery(trpc.member.list.queryOptions());
+  const { data: reports } = useQuery(
+    trpc.statusReport.list.queryOptions({ order: "desc" }),
+  );
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      title: "",
+      severity: "major",
+      summary: "",
+      commanderId: user ? String(user.id) : NONE,
+      startedAt: toLocalInput(new Date()),
+      statusReportId: NONE,
+      ...defaultValues,
+    },
+  });
+  const [isPending, startTransition] = useTransition();
+  const { setIsDirty } = useFormSheetDirty();
+
+  const formIsDirty = form.formState.isDirty;
+  React.useEffect(() => {
+    setIsDirty(formIsDirty);
+  }, [formIsDirty, setIsDirty]);
+
+  function submitAction(values: FormValues) {
+    if (isPending) return;
+    startTransition(async () => {
+      try {
+        const promise = onSubmit({
+          title: values.title,
+          severity: values.severity,
+          summary: values.summary || undefined,
+          commanderId:
+            values.commanderId === NONE ? null : Number(values.commanderId),
+          startedAt: new Date(values.startedAt),
+          statusReportId:
+            values.statusReportId === NONE
+              ? undefined
+              : Number(values.statusReportId),
+        });
+        toast.promise(promise, {
+          loading: "Declaring...",
+          success: () => "Incident declared",
+          error: (error) =>
+            isTRPCClientError(error) ? error.message : "Failed to declare",
+        });
+        await promise;
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  }
+
+  return (
+    <Form {...form}>
+      <form
+        className={cn("grid gap-4", className)}
+        onSubmit={form.handleSubmit(submitAction)}
+        {...props}
+      >
+        <FormCardContent className="grid gap-4">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="Checkout is failing" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="severity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Severity</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger size="sm" className="font-mono">
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {incidentSeverity.map((severity) => (
+                      <SelectItem key={severity} value={severity}>
+                        {severityConfig[severity].label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Critical: major outage or data loss. Major: significant
+                  degradation. Minor: limited impact.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="summary"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Summary</FormLabel>
+                <FormControl>
+                  <Textarea rows={3} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormCardContent>
+        <FormCardSeparator />
+        <FormCardContent className="grid gap-4">
+          <FormField
+            control={form.control}
+            name="commanderId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Commander</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger size="sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={NONE}>No commander</SelectItem>
+                    {(members ?? []).map((member) => (
+                      <SelectItem
+                        key={member.user.id}
+                        value={String(member.user.id)}
+                      >
+                        {personName(member.user) ?? `User ${member.user.id}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="startedAt"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Started at</FormLabel>
+                <FormControl>
+                  <Input type="datetime-local" {...field} />
+                </FormControl>
+                <FormDescription>
+                  When the impact began. Set it in the past to record an
+                  incident after the fact.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="statusReportId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status report</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger size="sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={NONE}>None</SelectItem>
+                    {(reports ?? [])
+                      .filter((report) => report.status !== "resolved")
+                      .map((report) => (
+                        <SelectItem key={report.id} value={String(report.id)}>
+                          {report.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Link an open status report. You can also create one from the
+                  incident later.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormCardContent>
+      </form>
+    </Form>
+  );
+}
