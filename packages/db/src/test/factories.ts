@@ -9,6 +9,7 @@ import { db as defaultDb } from "../db";
 import {
   incident,
   incidentEvent,
+  incidentPostmortem,
   monitor,
   notification,
   notificationsToMonitors,
@@ -33,6 +34,7 @@ type NotificationInsert = typeof notification.$inferInsert;
 type IncidentInsert = typeof incident.$inferInsert;
 type IncidentEventInsert = typeof incidentEvent.$inferInsert;
 type SlackUserInsert = typeof slackUser.$inferInsert;
+type IncidentPostmortemInsert = typeof incidentPostmortem.$inferInsert;
 
 const unique = () => crypto.randomUUID().slice(0, 8);
 
@@ -274,6 +276,26 @@ export async function createIncidentEvent(
         type: "note",
         message: "test note",
         createdAt: new Date(),
+        ...overrides,
+      })
+      .returning(),
+  );
+  if (!row) throw new Error("factory insert returned no row");
+  return row;
+}
+
+export async function createIncidentPostmortem(
+  incidentId: number,
+  overrides: Partial<IncidentPostmortemInsert> = {},
+  db: Db = defaultDb,
+) {
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(incidentPostmortem)
+      .values({
+        incidentId,
+        content: "## Summary\n\nTest postmortem.",
+        draftedBy: "user",
         ...overrides,
       })
       .returning(),

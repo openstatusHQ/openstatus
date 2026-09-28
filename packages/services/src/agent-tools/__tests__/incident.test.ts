@@ -76,7 +76,8 @@ describe("incident agent tools", () => {
 
   test("every incident tool is feature-gated, the rest are not", () => {
     for (const tool of Object.values(agentTools)) {
-      const isIncident = tool.name.includes("incident");
+      const isIncident =
+        tool.name.includes("incident") || tool.name.includes("postmortem");
       expect(tool.feature === "incident-management").toBe(isIncident);
     }
     expect(isAgentToolAvailable(listIncidentsTool, { id: 1 })).toBe(true);

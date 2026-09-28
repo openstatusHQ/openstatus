@@ -3,14 +3,20 @@ import { incidentStatus } from "@openstatus/db/src/schema/incidents/constants";
 import { sendIncidentCommander } from "@openstatus/emails";
 import {
   AddIncidentNoteInput,
+  ApprovePostmortemInput,
   BindIncidentSlackChannelInput,
+  CloseIncidentInput,
   DeclareIncidentInput,
+  DraftPostmortemInput,
   IncidentIdInput,
   LinkIncidentStatusReportInput,
   SetIncidentStatusInput,
   UpdateIncidentInput,
   addIncidentNote,
   allowedTransitions,
+  approvePostmortem,
+  draftPostmortem,
+  getPostmortem,
   announceIncidentChange,
   announceInChannel,
   bindIncidentSlackChannel,
@@ -336,9 +342,54 @@ export const incidentRouter = createTRPCRouter({
       }
     }),
 
+  getPostmortem: protectedProcedure
+    .input(IncidentIdInput)
+    .query(async ({ ctx, input }) => {
+      try {
+        return (await getPostmortem({ ctx: toServiceCtx(ctx), input })) ?? null;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  draftPostmortem: protectedProcedure
+    .meta({ track: Events.DraftManagedPostmortem })
+    .input(DraftPostmortemInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await draftPostmortem({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  approvePostmortem: protectedProcedure
+    .meta({ track: Events.ApproveManagedPostmortem })
+    .input(ApprovePostmortemInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const before = input.close
+          ? await getIncident({ ctx: toServiceCtx(ctx), input })
+          : undefined;
+        const row = await approvePostmortem({ ctx: toServiceCtx(ctx), input });
+        // Only announce (and archive) when this approval actually closed it.
+        if (before && !before.closedAt) {
+          announce(
+            ctx,
+            input.id,
+            `${actorName(ctx)} approved the postmortem and closed the incident.`,
+            true,
+          );
+        }
+        return row;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
   close: protectedProcedure
     .meta({ track: Events.CloseManagedIncident })
-    .input(IncidentIdInput)
+    .input(CloseIncidentInput)
     .mutation(async ({ ctx, input }) => {
       try {
         const row = await closeIncident({ ctx: toServiceCtx(ctx), input });
