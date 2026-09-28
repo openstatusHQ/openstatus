@@ -8,6 +8,6 @@ export const MONITOR_TABS: {
 }[] = [
   { value: "overview", label: "Overview", icon: Overview },
   { value: "logs", label: "Logs", icon: Logs },
-  { value: "incidents", label: "Incidents", icon: Incident },
+  { value: "incidents", label: "Downtime", icon: Incident },
   { value: "edit", label: "Settings", icon: Settings },
 ];

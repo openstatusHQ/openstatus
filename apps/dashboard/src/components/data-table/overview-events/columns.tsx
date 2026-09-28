@@ -17,6 +17,7 @@ import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-report-update/sheet-create";
+import { DeclareFromRow } from "@/components/incidents/declare-from-row";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import {
   type OverviewEvent,
@@ -70,7 +71,7 @@ function getDuration(event: OverviewEvent): string | null {
   return formatDistanceStrict(startedAt, resolvedAt);
 }
 
-export const columns: ColumnDef<OverviewEvent>[] = [
+const baseColumns: ColumnDef<OverviewEvent>[] = [
   {
     id: "type",
     accessorFn: (row) => row.type,
@@ -159,47 +160,75 @@ export const columns: ColumnDef<OverviewEvent>[] = [
     },
     enableSorting: false,
   },
-  {
-    id: "action",
-    header: () => null,
-    cell: ({ row }) => {
-      const event = row.original;
-      switch (event.type) {
-        case "incident":
-          return <IncidentActionCell incident={event.incident} />;
-        case "report":
-          if (event.report.status === "resolved") return null;
-          return (
+];
+
+const actionColumn = (declare: boolean): ColumnDef<OverviewEvent> => ({
+  id: "action",
+  header: () => null,
+  cell: ({ row }) => {
+    const event = row.original;
+    switch (event.type) {
+      case "incident":
+        return (
+          <div className="flex justify-end gap-1">
+            {!declare || event.incident.resolvedAt ? null : (
+              <DeclareFromRow
+                title={`${event.incident.monitor.name} is down`}
+                startedAt={event.incident.startedAt}
+                source={{ type: "monitor_incident", id: event.incident.id }}
+              />
+            )}
+            <IncidentActionCell incident={event.incident} />
+          </div>
+        );
+      case "report":
+        if (event.report.status === "resolved") return null;
+        return (
+          <div className="flex justify-end gap-1">
+            {declare ? (
+              <DeclareFromRow
+                title={event.report.title}
+                startedAt={getStartedAt(event)}
+                source={{ type: "status_report", id: event.report.id }}
+                statusReportId={event.report.id}
+              />
+            ) : null}
             <FormSheetStatusReportUpdateCreate report={event.report}>
               <Button variant="outline" size="sm" className="h-7">
                 Add Update
               </Button>
             </FormSheetStatusReportUpdateCreate>
-          );
-        case "maintenance":
-          return null;
-      }
-    },
-    enableSorting: false,
-    meta: {
-      cellClassName: "w-[110px] text-right",
-    },
+          </div>
+        );
+      case "maintenance":
+        return null;
+    }
   },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const event = row.original;
-      switch (event.type) {
-        case "incident":
-          return <IncidentRowActions incident={event.incident} />;
-        case "report":
-          return <StatusReportRowActions report={event.report} />;
-        case "maintenance":
-          return <MaintenanceRowActions maintenance={event.maintenance} />;
-      }
-    },
-    meta: {
-      cellClassName: "w-8",
-    },
+  enableSorting: false,
+  meta: {
+    cellClassName: cn("text-right", declare ? "w-[180px]" : "w-[110px]"),
   },
-];
+});
+
+const actionsColumn: ColumnDef<OverviewEvent> = {
+  id: "actions",
+  cell: ({ row }) => {
+    const event = row.original;
+    switch (event.type) {
+      case "incident":
+        return <IncidentRowActions incident={event.incident} />;
+      case "report":
+        return <StatusReportRowActions report={event.report} />;
+      case "maintenance":
+        return <MaintenanceRowActions maintenance={event.maintenance} />;
+    }
+  },
+  meta: {
+    cellClassName: "w-8",
+  },
+};
+
+/** `declare` adds the incident-management quick action; omit it when the feature is off. */
+export function getColumns({ declare }: { declare: boolean }) {
+  return [...baseColumns, actionColumn(declare), actionsColumn];
+}

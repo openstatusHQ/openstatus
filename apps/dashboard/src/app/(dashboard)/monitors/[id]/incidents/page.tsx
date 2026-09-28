@@ -3,6 +3,7 @@
 import { Info } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { useMemo } from "react";
 
 import { Link } from "@/components/common/link";
 import { Note } from "@/components/common/note";
@@ -18,9 +19,10 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/incidents/columns";
+import { getColumns } from "@/components/data-table/incidents/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
@@ -34,6 +36,11 @@ export default function Page() {
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
+  const incidentsEnabled = useFeature("incident-management");
+  const columns = useMemo(
+    () => getColumns({ declare: incidentsEnabled }),
+    [incidentsEnabled],
+  );
 
   if (!incidents || !monitor) return null;
 
@@ -42,8 +49,8 @@ export default function Page() {
       <Note color="info">
         <Info />
         <p>
-          Incidents are automatically created when a monitor detects downtime.
-          To communicate updates to your users, use Status Reports on a{" "}
+          Downtime is recorded automatically when a monitor fails. To tell your
+          users, use Status Reports on a{" "}
           <Link href="/status-pages">Status Page</Link>.
         </p>
       </Note>
@@ -62,9 +69,9 @@ export default function Page() {
         </SectionHeader>
         {incidents.length === 0 ? (
           <EmptyStateContainer>
-            <EmptyStateTitle>No incidents</EmptyStateTitle>
+            <EmptyStateTitle>No downtime</EmptyStateTitle>
             <EmptyStateDescription>
-              No incidents found for this monitor.
+              No downtime recorded for this monitor.
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (
