@@ -2,8 +2,6 @@ import { and, desc, eq, inArray, sql } from "@openstatus/db";
 import { incident } from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb } from "../context";
-import { isFeatureEnabled } from "../features";
-import { INCIDENT_FEATURE, requireIncidentFeature } from "./internal";
 import { IncidentIdInput, ListIncidentsInput } from "./schemas";
 
 const userColumns = {
@@ -22,7 +20,6 @@ export async function listIncidents(args: {
   input?: ListIncidentsInput;
 }) {
   const { ctx } = args;
-  requireIncidentFeature(ctx);
   const input = ListIncidentsInput.parse(args.input ?? {});
 
   const where = and(
@@ -46,7 +43,6 @@ export async function getIncident(args: {
   input: IncidentIdInput;
 }) {
   const { ctx } = args;
-  requireIncidentFeature(ctx);
   const input = IncidentIdInput.parse(args.input);
   return getReadDb(ctx).query.incident.findFirst({
     where: and(
@@ -70,7 +66,6 @@ export async function getIncidentForStatusReport(args: {
   input: { statusReportId: number };
 }) {
   const { ctx } = args;
-  requireIncidentFeature(ctx);
   return getReadDb(ctx)
     .select({ id: incident.id, title: incident.title, status: incident.status })
     .from(incident)
@@ -89,7 +84,6 @@ export async function getIncidentBySlackChannel(args: {
   input: { teamId: string; channelId: string };
 }) {
   const { ctx } = args;
-  if (!isFeatureEnabled(ctx.workspace, INCIDENT_FEATURE)) return undefined;
   return getReadDb(ctx).query.incident.findFirst({
     where: and(
       eq(incident.workspaceId, ctx.workspace.id),

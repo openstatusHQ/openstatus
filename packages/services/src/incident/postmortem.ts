@@ -16,11 +16,7 @@ import {
 } from "../context";
 import { ConflictError, NotFoundError } from "../errors";
 import { closeIncidentInTx } from "./close";
-import {
-  appendIncidentEvent,
-  getIncidentInWorkspace,
-  requireIncidentFeature,
-} from "./internal";
+import { appendIncidentEvent, getIncidentInWorkspace } from "./internal";
 import {
   ApprovePostmortemInput,
   DraftPostmortemInput,
@@ -49,7 +45,6 @@ export async function draftPostmortem(args: {
 }): Promise<IncidentPostmortem> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  requireIncidentFeature(ctx);
   const input = DraftPostmortemInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -145,7 +140,6 @@ export async function approvePostmortem(args: {
 }): Promise<IncidentPostmortem> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  requireIncidentFeature(ctx);
   const input = ApprovePostmortemInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -199,7 +193,6 @@ export async function getPostmortem(args: {
   input: IncidentIdInput;
 }): Promise<IncidentPostmortem | undefined> {
   const { ctx } = args;
-  requireIncidentFeature(ctx);
   const input = IncidentIdInput.parse(args.input);
   const db = getReadDb(ctx);
   const row = await getIncidentInWorkspace(db, ctx.workspace.id, input.id);

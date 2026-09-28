@@ -1,7 +1,6 @@
 import { getLogger } from "@logtape/logtape";
 import {
   type IncidentStatus,
-  isFeatureEnabled,
   type ServiceContext,
   ServiceError,
 } from "@openstatus/services";
@@ -117,9 +116,6 @@ export async function runIncidentCommand(args: {
 }): Promise<string> {
   const { words, teamId, channelId, resolved, actor } = args;
   const ctx: ServiceContext = { workspace: resolved.workspace, actor };
-  if (!isFeatureEnabled(resolved.workspace, "incident-management")) {
-    return "Incident management isn't available for this workspace yet.";
-  }
   const slack = new WebClient(resolved.botToken);
   const [verb = "help", ...rest] = words;
   const bound = await getIncidentBySlackChannel({

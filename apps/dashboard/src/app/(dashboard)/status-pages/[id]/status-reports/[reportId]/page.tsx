@@ -33,7 +33,6 @@ import {
   impactsEqual,
   toCreateStatusReportUpdateInput,
 } from "@/data/status-report-updates.client";
-import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
@@ -45,13 +44,11 @@ export default function Page() {
     trpc.statusReport.get.queryOptions({ id: Number.parseInt(reportId) }),
   );
 
-  const incidentsEnabled = useFeature("incident-management");
-  const { data: linkedIncident } = useQuery({
-    ...trpc.incident.forStatusReport.queryOptions({
+  const { data: linkedIncident } = useQuery(
+    trpc.incident.forStatusReport.queryOptions({
       statusReportId: Number.parseInt(reportId),
     }),
-    enabled: incidentsEnabled,
-  });
+  );
 
   const sendStatusReportUpdateMutation = useMutation(
     trpc.subscriberNotification.statusReport.mutationOptions(),

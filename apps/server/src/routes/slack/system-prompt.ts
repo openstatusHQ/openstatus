@@ -16,7 +16,6 @@ Managed incidents (internal, never published):
 export function buildSystemPrompt(
   workspaceName: string,
   contextNote?: string,
-  options: { incidentManagement?: boolean } = {},
 ): string {
   // Intentional: a per-call ISO timestamp defeats Anthropic/Gateway
   // prompt caching, but the agent needs minute-level precision to parse
@@ -122,5 +121,5 @@ Maintenance scheduling:
 - Parse natural language dates into ISO 8601 format. Convert relative dates like "next Friday from 2-3 PM" into proper ISO 8601 timestamps.
 - If the user doesn't specify a timezone, default to UTC and mention that in your response.
 - The "from" time must be before the "to" time.
-- Write a professional maintenance message describing what will happen during the window.${options.incidentManagement ? INCIDENT_SECTION : ""}${contextNote ? `\n\n${contextNote.trim()}` : ""}`;
+- Write a professional maintenance message describing what will happen during the window.${INCIDENT_SECTION}${contextNote ? `\n\n${contextNote.trim()}` : ""}`;
 }

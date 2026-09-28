@@ -14,7 +14,6 @@ import {
   appendIncidentEvent,
   assertNotClosed,
   getIncidentInWorkspace,
-  requireIncidentFeature,
 } from "./internal";
 import { CloseIncidentInput } from "./schemas";
 
@@ -73,7 +72,6 @@ export async function closeIncident(args: {
 }): Promise<Incident> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  requireIncidentFeature(ctx);
   const input = CloseIncidentInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

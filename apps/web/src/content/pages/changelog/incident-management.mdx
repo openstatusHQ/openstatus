@@ -1,0 +1,17 @@
+---
+title: "Incident management"
+description: "Declare incidents, run them with a commander and a timeline, work them from Slack, and close them with a postmortem."
+publishedAt: "2026-09-28"
+category: "incidents"
+author: "openstatus"
+---
+
+openstatus now runs the incident loop your team already runs by hand. Declare an incident from the new **Incidents** page — or straight from a downtime row, a status report, or Slack — with a severity and a commander. Everything that happens lands on its timeline: notes, status changes, the status report you linked, and who did what.
+
+Your users still see only what you publish: link a status report to the incident and post public updates from the same page. When you resolve the incident, openstatus offers to resolve the status report too, with your note as the final message.
+
+With the [Slack agent](/docs/guides/how-to-setup-slack-agent) connected, declaring an incident opens a channel for it, invites your team and pins a summary. React with 📌 to copy a message onto the timeline, run `/openstatus incident resolve` when it's over, and `/openstatus incident postmortem` to let the agent draft the postmortem from the channel. Existing installs need to **reconnect** once to grant the new permissions.
+
+Once it's resolved, write the postmortem in the incident's **Postmortem** tab (or have the agent draft it), approve it, and close the incident.
+
+Incident management is available on every plan; the Slack channel automation and agent drafting come with the Slack agent. Read [Understanding Incident Management](/docs/concept/incident-management) to get started.

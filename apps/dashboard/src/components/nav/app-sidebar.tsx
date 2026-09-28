@@ -25,7 +25,6 @@ import { NavStatusPages } from "@/components/nav/nav-status-pages";
 import { NavUser } from "@/components/nav/nav-user";
 import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
 import { NAV } from "@/config/nav";
-import { useFeature } from "@/hooks/use-feature";
 
 import { NavBanner } from "./nav-banner";
 import { NavHelp } from "./nav-help";
@@ -41,6 +40,11 @@ const data = {
   },
   overview: [
     { name: "Overview", url: NAV.overview.href, icon: NAV.overview.icon },
+    {
+      name: NAV.incidents.label,
+      url: NAV.incidents.href,
+      icon: NAV.incidents.icon,
+    },
     { name: "Assistant", url: NAV.chat.href, icon: NAV.chat.icon },
     { name: "Agents", url: NAV.agents.href, icon: NAV.agents.icon },
     {
@@ -59,26 +63,13 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const incidents = useFeature("incident-management");
-  const overview = incidents
-    ? [
-        data.overview[0],
-        {
-          name: NAV.incidents.label,
-          url: NAV.incidents.href,
-          icon: NAV.incidents.icon,
-        },
-        ...data.overview.slice(1),
-      ]
-    : data.overview;
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="flex h-14 justify-center gap-0 border-b p-0">
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavOverview items={overview} />
+        <NavOverview items={data.overview} />
         <NavStatusPages />
         <NavMonitors />
         <div className="mt-auto px-2">

@@ -74,11 +74,9 @@ describe("incident agent tools", () => {
     });
   });
 
-  test("every incident tool is feature-gated, the rest are not", () => {
+  test("incident tools are offered to every workspace", () => {
     for (const tool of Object.values(agentTools)) {
-      const isIncident =
-        tool.name.includes("incident") || tool.name.includes("postmortem");
-      expect(tool.feature === "incident-management").toBe(isIncident);
+      expect(isAgentToolAvailable(tool, { id: 987654321 })).toBe(true);
     }
     expect(isAgentToolAvailable(listIncidentsTool, { id: 1 })).toBe(true);
   });
