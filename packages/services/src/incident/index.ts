@@ -17,6 +17,7 @@ export {
   DeclareIncidentInput,
   IncidentIdInput,
   LinkIncidentStatusReportInput,
+  ListIncidentEventsInput,
   ListIncidentsInput,
   SetIncidentStatusInput,
   UpdateIncidentInput,

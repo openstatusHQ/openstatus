@@ -2,6 +2,11 @@ import type { ServiceContext } from "@openstatus/services";
 import type { AnyAgentTool } from "@openstatus/services/agent-tools";
 
 import { defaultPresenter } from "./default";
+import {
+  declareIncidentPresenter,
+  resolveIncidentPresenter,
+  updateIncidentPresenter,
+} from "./incident";
 import { createMaintenancePresenter } from "./maintenance";
 import {
   addStatusReportUpdatePresenter,
@@ -17,6 +22,9 @@ export const presenters: Record<string, Presenter> = {
   update_status_report: updateStatusReportPresenter,
   resolve_status_report: resolveStatusReportPresenter,
   create_maintenance: createMaintenancePresenter,
+  declare_incident: declareIncidentPresenter,
+  update_incident: updateIncidentPresenter,
+  resolve_incident: resolveIncidentPresenter,
 };
 
 export async function renderToolResult(args: {

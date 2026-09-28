@@ -3,7 +3,10 @@ import type {
   RegisteredTool,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ServiceContext } from "@openstatus/services";
-import type { AnyAgentTool } from "@openstatus/services/agent-tools";
+import {
+  type AnyAgentTool,
+  isAgentToolAvailable,
+} from "@openstatus/services/agent-tools";
 import { ZodObject, type ZodRawShape, type ZodType } from "zod";
 
 import { runTool } from "../adapter";
@@ -24,6 +27,7 @@ export function registerRegistryTool(
   ctx: ServiceContext,
   tool: AnyAgentTool,
 ): RegisteredTool | undefined {
+  if (!isAgentToolAvailable(tool, ctx.workspace)) return undefined;
   const inputShape = assertShape(tool.inputSchema, tool.name, "input");
   const outputShape = assertShape(tool.outputSchema, tool.name, "output");
 

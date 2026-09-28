@@ -16,6 +16,8 @@ export type AgentSystemPromptOptions = {
    * false the model passes `notify: false` and skips the yes/no prompt.
    */
   canNotifySubscribers: boolean;
+  /** Whether managed-incident tools are offered in this workspace. */
+  incidentManagement?: boolean;
 };
 
 export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
@@ -38,6 +40,18 @@ Exception: after get_doc_page or get_content_page, DO synthesize an answer from 
       : "";
 
   const preamble = opts.preamble ? `${opts.preamble}\n\n` : "";
+
+  const incidentSection = opts.incidentManagement
+    ? `
+
+Managed incidents (internal):
+- Three different things are called "incident". A managed incident (list_incidents, get_incident, declare_incident, update_incident, resolve_incident, add_incident_note) is the team's INTERNAL record: severity, commander, timeline. A status report is PUBLIC communication on a status page. Monitor downtime (activeIncidentCount on monitors) is detected automatically.
+- "declare an incident", "open an incident", "we have a SEV" → declare_incident. It publishes nothing. Offer to create a status report afterwards and pass incidentId to create_status_report to link them.
+- Before referencing a managed incident: call list_incidents. Never guess its id.
+- "note that…", "add to the timeline", "log that…" → add_incident_note (internal, runs without confirmation).
+- "the incident is fixed/resolved" with a managed incident in play → resolve_incident; if its linked status report is still open, ask whether to resolve that too (resolve_status_report).
+- severity: critical = major outage or data loss, major = significant degradation, minor = limited impact. Ask when unclear.`
+    : "";
 
   // Workspaces without subscriber notify get a different rubric — asking
   // is wasted friction when the field is a server-side no-op anyway.
@@ -86,7 +100,7 @@ Lifecycle:
 - "provide an update", "we found the cause", "still investigating" → add_status_report_update.
 - "rename the report", "add a component" → update_status_report (metadata only — does not notify).
 - "it's fixed", "incident is resolved" → resolve_status_report (publishes a final update).
-- Status progression hint: investigating → identified → monitoring → resolved.
+- Status progression hint: investigating → identified → monitoring → resolved.${incidentSection}
 
 Inferring status from conversation:
 - "we have an incident" → investigating
@@ -101,7 +115,7 @@ Component impact:
 - Recovery counts as a change: when a component is back to normal before the incident is resolved ("API is back up"), set it to operational in that update.
 - resolve_status_report clears every remaining impact back to operational automatically — never publish a manual "everything operational" update for that.
 
-Draft → Ask → Confirm rubric (MANDATORY for every write tool):
+Draft → Ask → Confirm rubric (MANDATORY for every write tool${opts.incidentManagement ? " except add_incident_note, which logs immediately" : ""}):
 1. Draft the proposed change (title, status, message, time window, affected components and their impact levels).
 2. Show the draft to the user before calling the tool.
 ${notifyStep}

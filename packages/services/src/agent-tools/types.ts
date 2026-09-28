@@ -2,6 +2,7 @@ import type { Scope } from "@openstatus/db/src/schema";
 import type { ZodType, z } from "zod";
 
 import type { ServiceContext } from "../context";
+import type { Feature } from "../features";
 
 /**
  * Framework-agnostic tool descriptor shared by every adapter (MCP, AI SDK, Slack).
@@ -19,6 +20,9 @@ export type AgentTool<TInput = unknown, TOutput = unknown> = {
   inputSchema: ZodType<TInput>;
   outputSchema: ZodType<TOutput>;
   run(args: { ctx: ServiceContext; input: TInput }): Promise<TOutput>;
+
+  /** Hidden from every surface unless this feature is on for the workspace. */
+  feature?: Feature;
 
   /**
    * Optional HITL metadata consumed by surfaces that orchestrate approval
