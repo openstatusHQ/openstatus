@@ -59,6 +59,7 @@ export default function Page() {
                     data: slackIntegration.data as {
                       teamName?: string;
                     },
+                    missingScopes: slackIntegration.missingScopes,
                   }
                 : null
             }

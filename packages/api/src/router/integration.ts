@@ -4,6 +4,7 @@ import crypto from "crypto";
 import {
   deleteIntegration,
   listIntegrations,
+  missingSlackScopes,
 } from "@openstatus/services/integration";
 import { z } from "zod";
 
@@ -31,7 +32,14 @@ function signInstallToken(args: {
 export const integrationRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
     try {
-      return await listIntegrations({ ctx: toServiceCtx(ctx) });
+      const integrations = await listIntegrations({ ctx: toServiceCtx(ctx) });
+      return integrations.map((i) => ({
+        ...i,
+        missingScopes:
+          i.name === "slack-agent" && typeof i.data.scopes === "string"
+            ? missingSlackScopes(i.data.scopes)
+            : [],
+      }));
     } catch (err) {
       toTRPCError(err);
     }

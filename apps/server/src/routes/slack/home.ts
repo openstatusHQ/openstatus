@@ -5,8 +5,23 @@ import { buildLinkAccountBlocks } from "./blocks";
 
 export const DOCS_URL = "https://www.openstatus.dev/docs";
 
-export function buildHomeBlocks(): KnownBlock[] {
+export function buildHomeBlocks(
+  opts: { reconnectUrl?: string } = {},
+): KnownBlock[] {
+  const reconnect: KnownBlock[] = opts.reconnectUrl
+    ? [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `:warning: *Reconnect openstatus to enable incident channels.* This install is missing permissions openstatus needs to open a channel per incident. <${opts.reconnectUrl}|Reconnect from the dashboard>.`,
+          },
+        },
+        { type: "divider" },
+      ]
+    : [];
   return [
+    ...reconnect,
     {
       type: "header",
       text: { type: "plain_text", text: "openstatus", emoji: true },
@@ -48,10 +63,11 @@ export function buildHomeBlocks(): KnownBlock[] {
 export async function publishHomeView(
   slack: WebClient,
   userId: string,
+  opts: { reconnectUrl?: string } = {},
 ): Promise<void> {
   await slack.views.publish({
     user_id: userId,
-    view: { type: "home", blocks: buildHomeBlocks() },
+    view: { type: "home", blocks: buildHomeBlocks(opts) },
   });
 }
 

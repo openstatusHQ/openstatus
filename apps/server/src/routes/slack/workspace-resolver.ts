@@ -5,11 +5,16 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
+import { z } from "zod";
+
+const integrationDataSchema = z.object({ scopes: z.string().optional() });
 
 export interface SlackWorkspace {
   workspace: Workspace;
   botToken: string;
   botUserId: string;
+  /** Comma list Slack granted at install; missing scopes mean "reconnect". */
+  scopes?: string;
 }
 
 interface IntegrationCredential {
@@ -24,6 +29,7 @@ export async function resolveWorkspace(
     .select({
       workspaceId: integration.workspaceId,
       credential: integration.credential,
+      data: integration.data,
     })
     .from(integration)
     .where(
@@ -58,5 +64,6 @@ export async function resolveWorkspace(
     workspace: parsed.data,
     botToken: credential.botToken,
     botUserId: credential.botUserId ?? "",
+    scopes: integrationDataSchema.safeParse(row.data).data?.scopes ?? "",
   };
 }
