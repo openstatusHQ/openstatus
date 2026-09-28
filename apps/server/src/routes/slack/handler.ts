@@ -35,6 +35,7 @@ import {
   isSlackToolDraft,
   type SlackToolDraft,
 } from "./registry-runner";
+import { resolveSlackUserId } from "./resolve-slack-user";
 import { abortTurn, endTurn, startTurn } from "./running-turns";
 import {
   buildThreadTitle,
@@ -501,6 +502,15 @@ async function processEvent(body: SlackEvent) {
       return;
     }
 
+    // Only once we answer: an ignored event must not cost a Slack call.
+    // Overlaps the thread fetch; never rejects, so an early return can drop it.
+    const slackMember = resolveSlackUserId({
+      workspace: resolved.workspace,
+      teamId,
+      slackUserId: event.user ?? "",
+      slack,
+    });
+
     let thread: ThreadMessage[] = [];
     if (prefetchedThread) {
       thread = prefetchedThread;
@@ -535,7 +545,11 @@ async function processEvent(body: SlackEvent) {
       thread,
       botUserId,
       event.text,
-      { slackUserId: event.user ?? "", teamId },
+      {
+        slackUserId: event.user ?? "",
+        teamId,
+        userId: (await slackMember) ?? undefined,
+      },
       {
         events: reply.progress,
         signal: turn.signal,

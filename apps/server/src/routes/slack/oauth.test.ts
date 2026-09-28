@@ -98,6 +98,8 @@ describe("handleSlackInstall", () => {
       "groups:read",
       "groups:write",
       "im:history",
+      "users:read",
+      "users:read.email",
     ];
 
     for (const s of expectedScopes) {

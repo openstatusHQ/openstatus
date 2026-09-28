@@ -17,6 +17,8 @@ export type Actor =
   | { type: "user"; userId: number }
   | { type: "apiKey"; keyId: string; userId?: number; scopes: Scope[] }
   | { type: "mcp"; keyId: string; userId?: number; scopes: Scope[] }
+  // `userId`: the member whose email matches the Slack profile (or the
+  // installing user during OAuth). Adapters resolve it before any write.
   | { type: "slack"; teamId: string; slackUserId: string; userId?: number }
   | { type: "system"; job: string }
   | { type: "webhook"; source: string; externalId?: string }

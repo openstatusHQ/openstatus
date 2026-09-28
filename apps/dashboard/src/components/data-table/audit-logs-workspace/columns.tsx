@@ -14,6 +14,7 @@ import {
 } from "@openstatus/ui/components/ui/avatar";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
+import type { ComponentType } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,16 @@ function getActionBadgeColor(action: string) {
     return "bg-destructive/10 text-destructive border-destructive/20";
   return "bg-muted/10 text-muted-foreground border-muted/20";
 }
+
+// Channel marker next to a resolved user; `actorType` is otherwise hidden.
+const viaSource: Record<
+  string,
+  { Icon: ComponentType<{ className?: string }>; label: string }
+> = {
+  slack: { Icon: SlackIcon, label: "Slack" },
+  apiKey: { Icon: KeyIcon, label: "API Key" },
+  mcp: { Icon: ModelContextProtocolIcon, label: "MCP Server" },
+};
 
 export const columns: ColumnDef<AuditLog>[] = [
   {
@@ -107,6 +118,7 @@ export const columns: ColumnDef<AuditLog>[] = [
         }
         return <span className="text-muted-foreground">-</span>;
       }
+      const via = viaSource[type];
       const imgSrc =
         user.photoUrl ||
         // Seed with a hash of the email — dicebear logs request
@@ -126,6 +138,15 @@ export const columns: ColumnDef<AuditLog>[] = [
           <span className="font-commit-mono truncate text-xs tracking-tight">
             {user.name ?? user.email ?? "—"}
           </span>
+          {via && (
+            <span
+              className="text-muted-foreground flex shrink-0"
+              title={`via ${via.label}`}
+              aria-label={`via ${via.label}`}
+            >
+              <via.Icon className="size-3.5" />
+            </span>
+          )}
         </div>
       );
     },

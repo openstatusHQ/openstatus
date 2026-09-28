@@ -9,6 +9,7 @@ import { consume, get } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
 import { renderToolResult } from "./presenters";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
+import { resolveSlackUserId } from "./resolve-slack-user";
 import { toServiceCtx } from "./service-adapter";
 import { resolveWorkspace } from "./workspace-resolver";
 
@@ -105,6 +106,10 @@ async function processInteraction(
     return;
   }
 
+  // TODO: refuse an unmapped approver here, before `consume`, with an ephemeral
+  // "link your openstatus account" so the card stays live. Every Slack
+  // mutation must resolve to a member (decision 2026-09-28); Cancel is exempt.
+  //
   // Atomic consume — prevents double execution from concurrent requests
   // (e.g. double-click). If another request already won, return.
   const consumed = await consume(parsed.pendingId);
@@ -120,6 +125,14 @@ async function processInteraction(
     return;
   }
 
+  // Attribution only until the gate above lands; moves up with it.
+  const memberId = await resolveSlackUserId({
+    workspace: resolved.workspace,
+    teamId: workspaceTeamId,
+    slackUserId: userId,
+    slack,
+  });
+
   try {
     await runAndPresent({
       pending: consumed,
@@ -129,6 +142,7 @@ async function processInteraction(
       messageTs,
       slackUserId: userId,
       teamId: workspaceTeamId,
+      userId: memberId ?? undefined,
     });
   } catch (err) {
     logger.error("slack action execution error", {
@@ -154,9 +168,18 @@ async function runAndPresent(args: {
   messageTs: string;
   slackUserId: string;
   teamId: string;
+  userId?: number;
 }) {
-  const { pending, flag, slack, channelId, messageTs, slackUserId, teamId } =
-    args;
+  const {
+    pending,
+    flag,
+    slack,
+    channelId,
+    messageTs,
+    slackUserId,
+    teamId,
+    userId,
+  } = args;
   const tool = getRegistryTool(pending.payload.toolName);
   if (!tool) {
     throw new Error(
@@ -164,7 +187,7 @@ async function runAndPresent(args: {
     );
   }
 
-  const ctx = await toServiceCtx({ pending, slackUserId, teamId });
+  const ctx = await toServiceCtx({ pending, slackUserId, teamId, userId });
   const flagId = tool.approval?.extraFlags?.[0]?.id;
   const flags: Record<string, boolean> = flagId ? { [flagId]: flag } : {};
 

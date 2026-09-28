@@ -1,3 +1,8 @@
 export { deleteMember } from "./delete";
+export { findMemberIdByEmail } from "./find-by-email";
 export { listMembers, type Member } from "./list";
-export { DeleteMemberInput, ListMembersInput } from "./schemas";
+export {
+  DeleteMemberInput,
+  FindMemberByEmailInput,
+  ListMembersInput,
+} from "./schemas";

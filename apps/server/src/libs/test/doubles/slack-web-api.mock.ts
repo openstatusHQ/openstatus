@@ -83,6 +83,12 @@ export class WebClient {
       },
     },
   };
+  users = {
+    info: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "users.info", args });
+      return s.usersInfoImpl(args);
+    },
+  };
   views = {
     publish: (args: Record<string, unknown>) => {
       s.calls.push({ method: "views.publish", args });
