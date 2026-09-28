@@ -56,6 +56,9 @@ export function IncidentProperties({ incident }: { incident: Incident }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: members } = useQuery(trpc.member.list.queryOptions());
+  const { data: postmortem } = useQuery(
+    trpc.incident.getPostmortem.queryOptions({ id: incident.id }),
+  );
   const [startedAt, setStartedAt] = useState(toLocalInput(incident.startedAt));
   const closed = incident.closedAt !== null;
 
@@ -202,16 +205,27 @@ export function IncidentProperties({ incident }: { incident: Incident }) {
       </Row>
       <div className="flex flex-wrap gap-2 pt-2">
         {incident.status === "resolved" && !closed ? (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={close.isPending}
-            onClick={() =>
-              close.mutate({ id: incident.id, skipPostmortem: true })
-            }
-          >
-            Close without postmortem
-          </Button>
+          postmortem?.status === "approved" ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={close.isPending}
+              onClick={() => close.mutate({ id: incident.id })}
+            >
+              Close incident
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={close.isPending}
+              onClick={() =>
+                close.mutate({ id: incident.id, skipPostmortem: true })
+              }
+            >
+              Close (skip postmortem)
+            </Button>
+          )
         ) : null}
         {incident.deletable ? (
           <FormAlertDialog
