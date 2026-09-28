@@ -17,8 +17,10 @@ import { renderToolResult } from "./presenters";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
 import {
   linkAccountUrl,
+  planRequiredMessage,
   requireSlackMember,
   type SlackActor,
+  slackAgentAllowed,
 } from "./require-slack-member";
 import { toServiceCtx } from "./service-adapter";
 import { resolveWorkspace } from "./workspace-resolver";
@@ -126,6 +128,14 @@ async function processInteraction(
   // exempt: the initiator can always dismiss their own draft.
   let actor: SlackActor | null = null;
   if (parsed.kind !== "cancel") {
+    if (!slackAgentAllowed(resolved.workspace)) {
+      await slack.chat.postEphemeral({
+        channel: channelId,
+        user: userId,
+        ...planRequiredMessage(config),
+      });
+      return;
+    }
     actor = await requireSlackMember({
       workspace: resolved.workspace,
       teamId: workspaceTeamId,

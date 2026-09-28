@@ -4,7 +4,7 @@ import { integration } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { InternalServiceError, NotFoundError } from "../errors";
+import { ForbiddenError, InternalServiceError, NotFoundError } from "../errors";
 import {
   type InstallSlackAgentInput,
   InstallSlackAgentInputSchema,
@@ -27,6 +27,9 @@ export async function installSlackAgent(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = InstallSlackAgentInputSchema.parse(args.input);
+  if (!ctx.workspace.limits["slack-agent"]) {
+    throw new ForbiddenError("The Slack agent is not included in your plan");
+  }
 
   return withTransaction(ctx, async (tx) => {
     // The DB has no `UNIQUE (workspace_id, name)` constraint, so a race

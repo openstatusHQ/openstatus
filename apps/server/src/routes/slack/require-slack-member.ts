@@ -61,10 +61,33 @@ export async function claimLinkCardWindow(
   return claimed !== null;
 }
 
+/** Claims the per-user plan-notice window, kept apart from the link card's. */
+export async function claimPlanNoticeWindow(
+  teamId: string,
+  slackUserId: string,
+): Promise<boolean> {
+  const claimed = await redis.set(
+    `slack:plannotice:${teamId}:${slackUserId}`,
+    "1",
+    { nx: true, ex: LINK_CARD_WINDOW_SECONDS },
+  );
+  return claimed !== null;
+}
+
 /** Frees the window again when the card never made it out. */
 export async function releaseLinkCardWindow(
   teamId: string,
   slackUserId: string,
 ): Promise<void> {
   await redis.del(linkCardKey(teamId, slackUserId));
+}
+
+export function slackAgentAllowed(workspace: Workspace): boolean {
+  return workspace.limits["slack-agent"] === true;
+}
+
+export function planRequiredMessage(config: SlackConfig): { text: string } {
+  return {
+    text: `openstatus in Slack isn't included in this workspace's plan. <${config.dashboardUrl}/settings/billing|Upgrade> to use it.`,
+  };
 }

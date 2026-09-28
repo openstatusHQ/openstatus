@@ -16,7 +16,12 @@ import {
   LINK_ACCOUNT_TEXT,
 } from "./blocks";
 import type { SlackConfig, SlackEnv } from "./config";
-import { linkAccountUrl, requireSlackMember } from "./require-slack-member";
+import {
+  linkAccountUrl,
+  planRequiredMessage,
+  requireSlackMember,
+  slackAgentAllowed,
+} from "./require-slack-member";
 import { resolvePageFromUrl } from "./resolve-page";
 import { resolveWorkspace } from "./workspace-resolver";
 
@@ -143,6 +148,9 @@ async function runMemberCommand(
     return {
       text: "openstatus isn't connected to this Slack workspace. Connect it from the openstatus dashboard.",
     };
+  }
+  if (!slackAgentAllowed(resolved.workspace)) {
+    return planRequiredMessage(config);
   }
   const actor = await requireSlackMember({
     workspace: resolved.workspace,

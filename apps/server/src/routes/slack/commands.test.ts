@@ -54,7 +54,7 @@ describe("handleSlackCommand (members only)", () => {
     slackTestState.resolveWorkspace = (teamId: string) =>
       teamId === "T_KNOWN"
         ? Promise.resolve({
-            workspace: { id: 1 },
+            workspace: { id: 1, limits: { "slack-agent": true } },
             botToken: "xoxb-test",
             botUserId: "UBOT",
           })
