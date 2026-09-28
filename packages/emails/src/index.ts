@@ -27,4 +27,6 @@ export {
   stripeIdempotencyKey,
 } from "./billing";
 
+export { sendIncidentCommander } from "./incident";
+
 export { EmailClient } from "./client";
