@@ -16,6 +16,7 @@ import {
   LINK_ACCOUNT_TEXT,
 } from "./blocks";
 import type { SlackConfig, SlackEnv } from "./config";
+import { runIncidentCommand } from "./incident-commands";
 import {
   linkAccountUrl,
   planRequiredMessage,
@@ -43,6 +44,7 @@ const HELP = [
   "• `/openstatus subscribe <status-page-url>` — subscribe this channel to a status page",
   "• `/openstatus unsubscribe <status-page-url>` — unsubscribe",
   "• `/openstatus subscriptions` — show this channel's subscriptions",
+  "• `/openstatus incident help` — declare and run incidents",
 ].join("\n");
 
 type CommandReply = { text: string; blocks?: Block[] };
@@ -92,7 +94,12 @@ export function handleSlackCommand(c: Context<SlackEnv>) {
 
   // `help` — and anything unrecognised, which falls through to it — needs no
   // I/O, so it is answered in the ack itself.
-  if (sub !== "subscribe" && sub !== "unsubscribe" && sub !== "subscriptions") {
+  if (
+    sub !== "subscribe" &&
+    sub !== "unsubscribe" &&
+    sub !== "subscriptions" &&
+    sub !== "incident"
+  ) {
     return ephemeral(c, { text: HELP });
   }
 
@@ -165,6 +172,19 @@ async function runMemberCommand(
       slackUserId: command.user_id,
     });
     return { text: LINK_ACCOUNT_TEXT, blocks: buildLinkAccountBlocks(url) };
+  }
+  if (subcommand(command) === "incident") {
+    const words = command.text.trim().split(/\s+/).filter(Boolean).slice(1);
+    return {
+      text: await runIncidentCommand({
+        words,
+        teamId: command.team_id,
+        channelId: command.channel_id,
+        resolved,
+        actor,
+        config,
+      }),
+    };
   }
   return { text: await runCommand(command) };
 }

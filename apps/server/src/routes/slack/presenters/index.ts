@@ -5,6 +5,7 @@ import { defaultPresenter } from "./default";
 import {
   declareIncidentPresenter,
   resolveIncidentPresenter,
+  setIncidentStatusPresenter,
   updateIncidentPresenter,
 } from "./incident";
 import { createMaintenancePresenter } from "./maintenance";
@@ -25,6 +26,7 @@ export const presenters: Record<string, Presenter> = {
   declare_incident: declareIncidentPresenter,
   update_incident: updateIncidentPresenter,
   resolve_incident: resolveIncidentPresenter,
+  set_incident_status: setIncidentStatusPresenter,
 };
 
 export async function renderToolResult(args: {

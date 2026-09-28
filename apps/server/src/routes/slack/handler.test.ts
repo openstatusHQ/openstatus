@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 import { db, eq } from "@openstatus/db";
-import { integration } from "@openstatus/db/src/schema";
+import { incident, integration } from "@openstatus/db/src/schema";
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import { Hono } from "hono";
@@ -1963,5 +1963,63 @@ describe("reconnect banner", () => {
       blocks: { type: string; text?: { text: string } }[];
     };
     expect(view.blocks[0].text?.text).toContain("Reconnect openstatus");
+  });
+});
+
+describe("incident channel context", () => {
+  const app = createTestApp();
+
+  beforeEach(resetSlackTestState);
+
+  test("a mention in a bound channel tells the agent which incident it is", async () => {
+    const channelId = `C_CTX_${crypto.randomUUID()}`;
+    const [row] = await db
+      .insert(incident)
+      .values({
+        workspaceId: 1,
+        title: "Context incident",
+        severity: "major",
+        declaredAt: new Date(),
+        startedAt: new Date(),
+        slackTeamId: "T_KNOWN",
+        slackChannelId: channelId,
+      })
+      .returning();
+    let contextNote: string | undefined;
+    slackTestState.runAgentOverride = (options) => {
+      contextNote = (options as { contextNote?: string } | undefined)
+        ?.contextNote;
+      return Promise.resolve({
+        text: "ok",
+        toolResults: [],
+        finishReason: "stop",
+        stepCount: 1,
+        hitStepLimit: false,
+        aborted: false,
+      });
+    };
+    try {
+      await signAndPost(app, {
+        type: "event_callback",
+        team_id: "T_KNOWN",
+        event_id: `evt_ctx_${Date.now()}`,
+        event: {
+          type: "app_mention",
+          text: "<@UBOT> note that we rolled back",
+          user: "U1",
+          channel: channelId,
+          channel_type: "channel",
+          ts: `${Date.now()}.71`,
+        },
+      });
+      const deadline = Date.now() + 2000;
+      while (contextNote === undefined && Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 20));
+      }
+      expect(contextNote).toContain(`id ${row.id}`);
+      expect(contextNote).toContain("Context incident");
+    } finally {
+      await db.delete(incident).where(eq(incident.id, row.id));
+    }
   });
 });

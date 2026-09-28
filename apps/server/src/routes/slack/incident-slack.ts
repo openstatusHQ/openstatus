@@ -1,9 +1,12 @@
 import { getLogger } from "@logtape/logtape";
+import { sendIncidentCommander } from "@openstatus/emails";
 import { ServiceError, type ServiceContext } from "@openstatus/services";
 import {
   announceIncidentChange,
   bindIncidentSlackChannel,
+  displayName,
   escapeMrkdwn,
+  getIncident,
   openIncidentSlackChannel,
   type SlackClientFactory,
 } from "@openstatus/services/incident";
@@ -11,6 +14,8 @@ import { WebClient } from "@slack/web-api";
 import { z } from "zod";
 
 import type { SlackConfig } from "./config";
+import { postConfirmationCard } from "./confirmation-card";
+import { trackSlackIncident } from "./incident-analytics";
 import { requireSlackMember, slackAgentAllowed } from "./require-slack-member";
 import type { SlackWorkspace } from "./workspace-resolver";
 
@@ -28,6 +33,17 @@ function who(ctx: ServiceContext): string {
   return ctx.actor.type === "slack" ? `<@${ctx.actor.slackUserId}>` : "Someone";
 }
 
+function quote(note: string | undefined): string {
+  return note ? `\n>${escapeMrkdwn(note).replaceAll("\n", "\n>")}` : "";
+}
+
+const INCIDENT_TOOLS = new Set([
+  "declare_incident",
+  "update_incident",
+  "resolve_incident",
+  "set_incident_status",
+]);
+
 /** Slack side effects of an approved incident tool call. Best effort. */
 export async function afterIncidentTool(args: {
   ctx: ServiceContext;
@@ -35,13 +51,24 @@ export async function afterIncidentTool(args: {
   input: object;
   output: object;
   config: SlackConfig;
+  slack: WebClient;
+  teamId: string;
+  channelId: string;
+  threadTs: string;
 }): Promise<void> {
   const { ctx, toolName, config } = args;
+  if (!INCIDENT_TOOLS.has(toolName)) return;
   const output = incidentOutput.safeParse(args.output);
   if (!output.success) return;
   const incidentId = output.data.id;
+  const status = output.data.status;
+  const note = incidentInput.safeParse(args.input).data?.note;
   try {
     if (toolName === "declare_incident") {
+      trackSlackIncident(ctx, "declare");
+      await notifyCommander(ctx, incidentId, config).catch((error) =>
+        logger.warn("incident commander email failed", { error, incidentId }),
+      );
       const result = await openIncidentSlackChannel({
         ctx,
         incidentId,
@@ -51,23 +78,100 @@ export async function afterIncidentTool(args: {
       logger.info("slack incident channel", { incidentId, ...result });
       return;
     }
-    if (toolName === "resolve_incident" || toolName === "update_incident") {
-      const note = incidentInput.safeParse(args.input).data?.note;
-      const text =
-        toolName === "resolve_incident"
-          ? `${who(ctx)} marked the incident *resolved*.${note ? `\n>${escapeMrkdwn(note).replaceAll("\n", "\n>")}` : ""}`
-          : `${who(ctx)} updated the incident.`;
+    if (toolName === "update_incident") {
       await announceIncidentChange({
         ctx,
         incidentId,
-        text,
+        text: `${who(ctx)} updated the incident.`,
         clientFor: slackClientFor,
         dashboardUrl: config.dashboardUrl,
+      });
+      return;
+    }
+
+    trackSlackIncident(ctx, "status", { status });
+    const closed = status === "resolved" || status === "canceled";
+    const row = closed
+      ? await getIncident({ ctx, input: { id: incidentId } })
+      : undefined;
+    const report =
+      row?.statusReport && row.statusReport.status !== "resolved"
+        ? row.statusReport
+        : undefined;
+    // An archived channel can't take the resolve card, so keep it open.
+    const cardInIncidentChannel =
+      !!report && row?.slackChannelId === args.channelId;
+    await announceIncidentChange({
+      ctx,
+      incidentId,
+      text: `${who(ctx)} marked the incident *${status}*.${quote(note)}`,
+      clientFor: slackClientFor,
+      dashboardUrl: config.dashboardUrl,
+      archive: status === "canceled" && !cardInIncidentChannel,
+    });
+    if (report) {
+      await offerStatusReportResolve({
+        ...args,
+        statusReportId: report.id,
+        note,
+        status,
       });
     }
   } catch (error) {
     logger.warn("slack incident follow-up failed", { error, incidentId });
   }
+}
+
+/** A linked status report still open gets a resolve card; never automatic. */
+async function offerStatusReportResolve(args: {
+  ctx: ServiceContext;
+  slack: WebClient;
+  teamId: string;
+  channelId: string;
+  threadTs: string;
+  statusReportId: number;
+  note: string | undefined;
+  status: string;
+}): Promise<void> {
+  if (args.ctx.actor.type !== "slack") return;
+  await postConfirmationCard({
+    slack: args.slack,
+    ctx: args.ctx,
+    teamId: args.teamId,
+    channel: args.channelId,
+    threadTs: args.threadTs,
+    slackUserId: args.ctx.actor.slackUserId,
+    toolName: "resolve_status_report",
+    input: {
+      statusReportId: args.statusReportId,
+      message:
+        args.note ??
+        (args.status === "resolved"
+          ? "This incident has been resolved."
+          : "This was a false alarm. Everything is operating normally."),
+    },
+  });
+}
+
+async function notifyCommander(
+  ctx: ServiceContext,
+  incidentId: number,
+  config: SlackConfig,
+): Promise<void> {
+  const row = await getIncident({ ctx, input: { id: incidentId } });
+  const commander = row?.commander;
+  const actorUserId = ctx.actor.type === "slack" ? ctx.actor.userId : null;
+  if (!row || !commander?.email || commander.id === actorUserId) return;
+  const declarer = row.declaredByUser ? displayName(row.declaredByUser) : null;
+  await sendIncidentCommander({
+    to: commander.email,
+    incidentTitle: row.title,
+    severity: row.severity,
+    workspaceName: ctx.workspace.name ?? ctx.workspace.slug,
+    assignedBy: declarer ?? "A teammate",
+    url: `${config.dashboardUrl}/incidents/${row.id}`,
+    idempotencyKey: `incident-commander:${row.id}:${commander.id}:${row.updatedAt.getTime()}`,
+  }).catch(() => undefined);
 }
 
 /** "Link this channel": the fallback when binding failed during declare. */

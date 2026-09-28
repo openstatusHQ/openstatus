@@ -292,7 +292,17 @@ async function runAndPresent(args: {
     runInBackground(
       "incident-follow-up",
       () =>
-        afterIncidentTool({ ctx, toolName: tool.name, input, output, config }),
+        afterIncidentTool({
+          ctx,
+          toolName: tool.name,
+          input,
+          output,
+          config,
+          slack,
+          teamId: pending.teamId ?? actor.teamId,
+          channelId,
+          threadTs: pending.threadTs,
+        }),
       { toolName: tool.name },
     );
   }

@@ -1,5 +1,6 @@
 import { getLogger } from "@logtape/logtape";
 import { isFeatureEnabled } from "@openstatus/services";
+import { getIncidentBySlackChannel } from "@openstatus/services/incident";
 import {
   missingSlackScopes,
   uninstallSlackTeam,
@@ -31,6 +32,7 @@ import {
   rememberContext,
 } from "./channel-context";
 import type { SlackConfig, SlackEnv } from "./config";
+import { makeRefResolvers } from "./confirmation-card";
 import { draftKey, findByThread, replace, store } from "./confirmation-store";
 import type { PendingPayload } from "./confirmation-store";
 import { publishHomeView, publishLinkAccountView } from "./home";
@@ -51,6 +53,7 @@ import {
   planRequiredMessage,
   releaseLinkCardWindow,
   requireSlackMember,
+  type SlackActor,
   slackAgentAllowed,
 } from "./require-slack-member";
 import { abortTurn, broadcastStop, endTurn, startTurn } from "./running-turns";
@@ -60,16 +63,7 @@ import {
   markThreadTitled,
   renameThread,
 } from "./thread-title";
-import { resolveWorkspace } from "./workspace-resolver";
-
-function makeRefResolvers(workspaceId: number): RefResolvers {
-  return {
-    page: (pageId) => getPageDashboardLink(workspaceId, pageId),
-    statusReport: (statusReportId) =>
-      getStatusReportLink(workspaceId, statusReportId),
-    componentNames: (ids) => getComponentNames(workspaceId, ids),
-  };
-}
+import { resolveWorkspace, type SlackWorkspace } from "./workspace-resolver";
 
 const logger = getLogger("api-server");
 
@@ -266,6 +260,25 @@ export async function handleSlackEvent(c: Context<SlackEnv>) {
   });
 
   return c.json({ ok: true });
+}
+
+/** Tells the agent which incident a channel belongs to, when it has one. */
+async function boundIncidentNote(args: {
+  workspace: SlackWorkspace["workspace"];
+  actor: SlackActor;
+  teamId: string;
+  channelId: string | undefined;
+}): Promise<string | undefined> {
+  if (!args.channelId) return undefined;
+  const bound = await getIncidentBySlackChannel({
+    ctx: { workspace: args.workspace, actor: args.actor },
+    input: { teamId: args.teamId, channelId: args.channelId },
+  }).catch(() => undefined);
+  if (!bound) return undefined;
+  const report = bound.statusReport
+    ? ` Its status report is "${bound.statusReport.title}" (id ${bound.statusReport.id}, ${bound.statusReport.status}).`
+    : " It has no status report yet.";
+  return `Incident channel: <#${args.channelId}> belongs to managed incident "${bound.title}" (id ${bound.id}, ${bound.severity}, ${bound.status}${bound.closedAt ? ", closed" : ""}).${report} Notes and status changes discussed here are about this incident: use id ${bound.id} without asking.`;
 }
 
 /**
@@ -680,6 +693,12 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
     const context = contextChannel
       ? channelContextTooling({ slack, channelId: contextChannel })
       : undefined;
+    const incidentNote = await boundIncidentNote({
+      workspace: resolved.workspace,
+      actor,
+      teamId,
+      channelId: isAgentThread ? contextChannel : event.channel,
+    });
 
     logger.info("slack agent invoked", {
       teamId,
@@ -699,7 +718,9 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
         events: reply.progress,
         signal: turn.signal,
         tools: context?.tools,
-        contextNote: context?.contextNote,
+        contextNote:
+          [context?.contextNote, incidentNote].filter(Boolean).join("\n\n") ||
+          undefined,
       },
     );
 
