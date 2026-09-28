@@ -7,11 +7,14 @@ import { z } from "zod";
 
 import { type AgentEvents, runAgent } from "./agent";
 import { greetOnce, setAssistantStatus, setSessionStatus } from "./assistant";
+import { runInBackground } from "./background";
 import {
   type Block,
   buildAnswerMessage,
   buildConfirmationBlocks,
+  buildLinkAccountBlocks,
   getConfirmationText,
+  LINK_ACCOUNT_TEXT,
   type RefResolvers,
 } from "./blocks";
 import {
@@ -22,9 +25,10 @@ import {
   recallContext,
   rememberContext,
 } from "./channel-context";
+import type { SlackConfig, SlackEnv } from "./config";
 import { draftKey, findByThread, replace, store } from "./confirmation-store";
 import type { PendingPayload } from "./confirmation-store";
-import { publishHomeView } from "./home";
+import { publishHomeView, publishLinkAccountView } from "./home";
 import {
   getComponentNames,
   getPageDashboardLink,
@@ -35,7 +39,12 @@ import {
   isSlackToolDraft,
   type SlackToolDraft,
 } from "./registry-runner";
-import { resolveSlackUserId } from "./resolve-slack-user";
+import {
+  claimLinkCardWindow,
+  linkAccountUrl,
+  releaseLinkCardWindow,
+  requireSlackMember,
+} from "./require-slack-member";
 import { abortTurn, endTurn, startTurn } from "./running-turns";
 import {
   buildThreadTitle,
@@ -212,8 +221,9 @@ export function isAnswerToAgent(
   return starter?.user === message.user;
 }
 
-export async function handleSlackEvent(c: Context) {
+export async function handleSlackEvent(c: Context<SlackEnv>) {
   const body = c.get("slackBody") as SlackEvent;
+  const config = c.get("slackConfig");
 
   if (body.type === "url_verification") {
     return c.json({ challenge: body.challenge });
@@ -227,19 +237,50 @@ export async function handleSlackEvent(c: Context) {
     return c.json({ ok: true });
   }
 
-  const promise = processEvent(body);
-  promise.catch((err) =>
-    logger.error("slack event processing error", {
-      error: err,
-      teamId: body.team_id,
-      eventId: body.event_id,
-    }),
-  );
+  runInBackground("event", () => processEvent(body, config), {
+    teamId: body.team_id,
+    eventId: body.event_id,
+  });
 
   return c.json({ ok: true });
 }
 
-async function processEvent(body: SlackEvent) {
+/**
+ * Tells an unlinked Slack user how to link their account. Passive surfaces
+ * (mentions, DMs) send it at most once per window, so a chatty user isn't
+ * flooded with cards.
+ */
+async function sendLinkCard(args: {
+  config: SlackConfig;
+  workspaceId: number;
+  teamId: string;
+  slackUserId: string;
+  post: (message: {
+    text: string;
+    blocks: Block[];
+  }) => Promise<{ ok?: boolean }>;
+}): Promise<void> {
+  const { config, workspaceId, teamId, slackUserId, post } = args;
+  if (!(await claimLinkCardWindow(teamId, slackUserId))) return;
+  try {
+    const url = await linkAccountUrl(config, {
+      workspaceId,
+      teamId,
+      slackUserId,
+    });
+    await post({
+      text: LINK_ACCOUNT_TEXT,
+      blocks: buildLinkAccountBlocks(url),
+    });
+  } catch (err) {
+    // Otherwise a transient failure silences the card for the whole window.
+    await releaseLinkCardWindow(teamId, slackUserId).catch(() => undefined);
+    throw err;
+  }
+  logger.info("slack link card sent", { teamId, slackUserId });
+}
+
+async function processEvent(body: SlackEvent, config: SlackConfig) {
   const event = body.event;
   if (!event) return;
 
@@ -281,15 +322,33 @@ async function processEvent(body: SlackEvent) {
     const resolved = await resolveWorkspace(teamId);
     if (!resolved) return;
     const slack = new WebClient(resolved.botToken);
+    const member = { workspace: resolved.workspace, teamId, slack };
 
     if (tab === "messages") {
-      if (!event.channel) return;
+      const channel = event.channel;
+      if (!channel) return;
+      const actor = await requireSlackMember({
+        ...member,
+        slackUserId: userId,
+      });
+      if (!actor) {
+        await sendLinkCard({
+          config,
+          workspaceId: resolved.workspace.id,
+          teamId,
+          slackUserId: userId,
+          post: (message) => slack.chat.postMessage({ channel, ...message }),
+        }).catch((error) =>
+          logger.error("slack failed to send link card", { error, teamId }),
+        );
+        return;
+      }
       try {
         await greetOnce({
           slack,
           teamId,
           userId,
-          channel: event.channel,
+          channel,
         });
       } catch (err) {
         logger.error("slack failed to greet user", { error: err, teamId });
@@ -298,7 +357,20 @@ async function processEvent(body: SlackEvent) {
     }
 
     try {
-      await publishHomeView(slack, userId);
+      const actor = await requireSlackMember({
+        ...member,
+        slackUserId: userId,
+      });
+      if (actor) {
+        await publishHomeView(slack, userId);
+      } else {
+        const url = await linkAccountUrl(config, {
+          workspaceId: resolved.workspace.id,
+          teamId,
+          slackUserId: userId,
+        });
+        await publishLinkAccountView(slack, userId, url);
+      }
     } catch (err) {
       logger.error("slack failed to publish home view", { error: err, teamId });
     }
@@ -314,11 +386,34 @@ async function processEvent(body: SlackEvent) {
     if (!teamId || !thread?.user_id) return;
     const resolved = await resolveWorkspace(teamId);
     if (!resolved) return;
+    const slack = new WebClient(resolved.botToken);
+    const slackUserId = thread.user_id;
     try {
-      await greetOnce({
-        slack: new WebClient(resolved.botToken),
+      const actor = await requireSlackMember({
+        workspace: resolved.workspace,
         teamId,
-        userId: thread.user_id,
+        slackUserId,
+        slack,
+      });
+      if (!actor) {
+        await sendLinkCard({
+          config,
+          workspaceId: resolved.workspace.id,
+          teamId,
+          slackUserId,
+          post: (message) =>
+            slack.chat.postMessage({
+              channel: thread.channel_id,
+              thread_ts: thread.thread_ts,
+              ...message,
+            }),
+        });
+        return;
+      }
+      await greetOnce({
+        slack,
+        teamId,
+        userId: slackUserId,
         channel: thread.channel_id,
         threadTs: thread.thread_ts,
       });
@@ -476,6 +571,36 @@ async function processEvent(body: SlackEvent) {
     agentThread: isAgentThread,
   });
 
+  const channel = event.channel;
+  const slackUserId = event.user;
+  if (!slackUserId) return;
+  const actor = await requireSlackMember({
+    workspace: resolved.workspace,
+    teamId,
+    slackUserId,
+    slack,
+  });
+  if (!actor) {
+    await sendLinkCard({
+      config,
+      workspaceId: resolved.workspace.id,
+      teamId,
+      slackUserId,
+      post: (message) =>
+        isAgentThread
+          ? slack.chat.postMessage({ channel, thread_ts: threadTs, ...message })
+          : slack.chat.postEphemeral({
+              channel,
+              user: slackUserId,
+              thread_ts: event.thread_ts,
+              ...message,
+            }),
+    }).catch((error) =>
+      logger.error("slack failed to send link card", { error, teamId }),
+    );
+    return;
+  }
+
   // Registered before the session is marked `processing`: a stop landing in
   // that window has to find a controller, or the turn runs on unstoppable.
   const turn = startTurn(event.channel, threadTs);
@@ -501,15 +626,6 @@ async function processEvent(body: SlackEvent) {
       await reply.stopped();
       return;
     }
-
-    // Only once we answer: an ignored event must not cost a Slack call.
-    // Overlaps the thread fetch; never rejects, so an early return can drop it.
-    const slackMember = resolveSlackUserId({
-      workspace: resolved.workspace,
-      teamId,
-      slackUserId: event.user ?? "",
-      slack,
-    });
 
     let thread: ThreadMessage[] = [];
     if (prefetchedThread) {
@@ -545,11 +661,7 @@ async function processEvent(body: SlackEvent) {
       thread,
       botUserId,
       event.text,
-      {
-        slackUserId: event.user ?? "",
-        teamId,
-        userId: (await slackMember) ?? undefined,
-      },
+      actor,
       {
         events: reply.progress,
         signal: turn.signal,

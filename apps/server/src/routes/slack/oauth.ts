@@ -8,6 +8,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { installSlackAgent } from "@openstatus/services/integration";
 import type { Context } from "hono";
+import { z } from "zod";
 
 import type { SlackConfig, SlackEnv } from "./config";
 
@@ -32,13 +33,12 @@ const BOT_SCOPES = [
   "users:read.email",
 ].join(",");
 
-interface OAuthState {
-  workspaceId: number;
-  // The openstatus user who initiated the install. Optional so in-flight
-  // installs that started before this field was added still parse.
-  userId?: number;
-  ts: number;
-}
+const oauthStateSchema = z.object({
+  workspaceId: z.number().int(),
+  userId: z.number().int(),
+  ts: z.number(),
+});
+type OAuthState = z.infer<typeof oauthStateSchema>;
 
 interface SlackOAuthResponse {
   ok: boolean;
@@ -219,7 +219,8 @@ function decodeState(config: SlackConfig, encoded: string): OAuthState | null {
 
     if (!verifyHmac(config, payload, signature)) return null;
 
-    return JSON.parse(payload) as OAuthState;
+    const parsed = oauthStateSchema.safeParse(JSON.parse(payload));
+    return parsed.success ? parsed.data : null;
   } catch {
     return null;
   }
@@ -246,7 +247,7 @@ const INSTALL_TOKEN_TTL_MS = 5 * 60 * 1000;
 function verifyInstallToken(
   config: SlackConfig,
   token: string,
-): { workspaceId: number; userId?: number } | null {
+): { workspaceId: number; userId: number } | null {
   try {
     const decoded = Buffer.from(token, "base64url").toString();
     const dotIdx = decoded.lastIndexOf(".");
@@ -257,14 +258,11 @@ function verifyInstallToken(
 
     if (!verifyHmac(config, payload, signature)) return null;
 
-    const data = JSON.parse(payload) as {
-      workspaceId: number;
-      userId?: number;
-      ts: number;
-    };
-    if (Date.now() - data.ts > INSTALL_TOKEN_TTL_MS) return null;
+    const parsed = oauthStateSchema.safeParse(JSON.parse(payload));
+    if (!parsed.success) return null;
+    if (Date.now() - parsed.data.ts > INSTALL_TOKEN_TTL_MS) return null;
 
-    return { workspaceId: data.workspaceId, userId: data.userId };
+    return { workspaceId: parsed.data.workspaceId, userId: parsed.data.userId };
   } catch {
     return null;
   }

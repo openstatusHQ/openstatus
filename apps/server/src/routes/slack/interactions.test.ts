@@ -22,7 +22,6 @@ import {
 import { settleBackgroundTasks } from "./background";
 import type { SlackEnv } from "./config";
 import { handleSlackInteraction } from "./interactions";
-import { resetSlackUserCache } from "./resolve-slack-user";
 import { verifySlackSignature } from "./verify";
 
 const redisStore = (globalThis as Record<string, unknown>)
@@ -41,9 +40,12 @@ const basePending = {
 
 function configureSlackDoubles() {
   slackTestState.calls = [];
-  resetSlackUserCache();
+  // The seeded member of workspace 1, so the clicking user is linked.
   slackTestState.usersInfoImpl = () =>
-    Promise.resolve({ ok: true, user: { profile: {} } });
+    Promise.resolve({
+      ok: true,
+      user: { profile: { email: "ping@openstatus.dev" } },
+    });
   slackTestState.resolveWorkspace = (teamId: string) =>
     teamId === "T_KNOWN"
       ? Promise.resolve({ botToken: "xoxb-fallback", workspace: { id: 1 } })
@@ -317,6 +319,62 @@ describe("handleSlackInteraction (dispatch)", () => {
       actions: [{ action_id: "cancel_pending-123" }],
     });
     expect(redisStore.has("slack:action:pending-123")).toBe(false);
+  });
+});
+
+describe("handleSlackInteraction (members only)", () => {
+  const app = createTestApp();
+
+  beforeEach(() => {
+    configureSlackDoubles();
+    redisStore.clear();
+    slackTestState.usersInfoImpl = () =>
+      Promise.resolve({ ok: true, user: { profile: {} } });
+  });
+
+  function seedUnlinked(id: string, slackUserId: string) {
+    const data = { ...seedCreateMaintenance(id), userId: slackUserId };
+    redisStore.set(`slack:action:${id}`, JSON.stringify(data));
+  }
+
+  test("an unlinked approver gets the link card and the draft stays live", async () => {
+    const slackUserId = `U_UNLINKED_${crypto.randomUUID()}`;
+    seedUnlinked("maint-unlinked", slackUserId);
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: slackUserId },
+      channel: { id: "C1" },
+      message: { ts: "2.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "approve_maint-unlinked" }],
+    });
+    expect(res.status).toBe(200);
+    expect(redisStore.has("slack:action:maint-unlinked")).toBe(true);
+    const ephemeral = slackTestState.calls.find(
+      (c) => c.method === "postEphemeral",
+    );
+    expect(ephemeral?.args.text).toContain("Link your openstatus account");
+    expect(slackTestState.calls.some((c) => c.method === "update")).toBe(false);
+  });
+
+  test("an unlinked initiator can still cancel their own draft", async () => {
+    const slackUserId = `U_UNLINKED_${crypto.randomUUID()}`;
+    seedUnlinked("maint-unlinked-cancel", slackUserId);
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: slackUserId },
+      channel: { id: "C1" },
+      message: { ts: "2.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "cancel_maint-unlinked-cancel" }],
+    });
+    expect(res.status).toBe(200);
+    expect(redisStore.has("slack:action:maint-unlinked-cancel")).toBe(false);
+    const cancelled = slackTestState.calls.find(
+      (c) =>
+        c.method === "update" && c.args.text === ":no_entry_sign: Cancelled.",
+    );
+    expect(cancelled).toBeDefined();
   });
 });
 

@@ -4,12 +4,22 @@ import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 
 import { runInBackground } from "./background";
-import { type ParsedActionId, parseActionId } from "./blocks";
+import {
+  buildLinkAccountBlocks,
+  LINK_ACCOUNT_TEXT,
+  type ParsedActionId,
+  parseActionId,
+} from "./blocks";
+import type { SlackConfig, SlackEnv } from "./config";
 import { consume, get } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
 import { renderToolResult } from "./presenters";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
-import { resolveSlackUserId } from "./resolve-slack-user";
+import {
+  linkAccountUrl,
+  requireSlackMember,
+  type SlackActor,
+} from "./require-slack-member";
 import { toServiceCtx } from "./service-adapter";
 import { resolveWorkspace } from "./workspace-resolver";
 
@@ -24,8 +34,9 @@ interface SlackInteractionPayload {
   actions: Array<{ action_id: string; value?: string }>;
 }
 
-export function handleSlackInteraction(c: Context) {
+export function handleSlackInteraction(c: Context<SlackEnv>) {
   const payload = c.get("slackBody") as SlackInteractionPayload;
+  const config = c.get("slackConfig");
 
   if (payload.type !== "block_actions" || !payload.actions?.length) {
     return c.json({ ok: true });
@@ -38,10 +49,14 @@ export function handleSlackInteraction(c: Context) {
   // the status page — well past Slack's 3s ack window, which would mark the
   // click as failed even though it worked. Ack now; the card is updated with
   // the outcome when the work finishes.
-  runInBackground("interaction", () => processInteraction(parsed, payload), {
-    actionId: payload.actions[0].action_id,
-    teamId: payload.team?.id,
-  });
+  runInBackground(
+    "interaction",
+    () => processInteraction(parsed, payload, config),
+    {
+      actionId: payload.actions[0].action_id,
+      teamId: payload.team?.id,
+    },
+  );
 
   return c.json({ ok: true });
 }
@@ -49,6 +64,7 @@ export function handleSlackInteraction(c: Context) {
 async function processInteraction(
   parsed: ParsedActionId,
   payload: SlackInteractionPayload,
+  config: SlackConfig,
 ) {
   const channelId = payload.channel.id;
   const messageTs = payload.message.ts;
@@ -106,16 +122,38 @@ async function processInteraction(
     return;
   }
 
-  // TODO: refuse an unmapped approver here, before `consume`, with an ephemeral
-  // "link your openstatus account" so the card stays live. Every Slack
-  // mutation must resolve to a member (decision 2026-09-28); Cancel is exempt.
-  //
+  // Checked before `consume` so the card stays live while they link. Cancel is
+  // exempt: the initiator can always dismiss their own draft.
+  let actor: SlackActor | null = null;
+  if (parsed.kind !== "cancel") {
+    actor = await requireSlackMember({
+      workspace: resolved.workspace,
+      teamId: workspaceTeamId,
+      slackUserId: userId,
+      slack,
+    });
+    if (!actor) {
+      const url = await linkAccountUrl(config, {
+        workspaceId: resolved.workspace.id,
+        teamId: workspaceTeamId,
+        slackUserId: userId,
+      });
+      await slack.chat.postEphemeral({
+        channel: channelId,
+        user: userId,
+        text: LINK_ACCOUNT_TEXT,
+        blocks: buildLinkAccountBlocks(url),
+      });
+      return;
+    }
+  }
+
   // Atomic consume — prevents double execution from concurrent requests
   // (e.g. double-click). If another request already won, return.
   const consumed = await consume(parsed.pendingId);
   if (!consumed) return;
 
-  if (parsed.kind === "cancel") {
+  if (parsed.kind === "cancel" || !actor) {
     await slack.chat.update({
       channel: channelId,
       ts: messageTs,
@@ -125,14 +163,6 @@ async function processInteraction(
     return;
   }
 
-  // Attribution only until the gate above lands; moves up with it.
-  const memberId = await resolveSlackUserId({
-    workspace: resolved.workspace,
-    teamId: workspaceTeamId,
-    slackUserId: userId,
-    slack,
-  });
-
   try {
     await runAndPresent({
       pending: consumed,
@@ -140,9 +170,7 @@ async function processInteraction(
       slack,
       channelId,
       messageTs,
-      slackUserId: userId,
-      teamId: workspaceTeamId,
-      userId: memberId ?? undefined,
+      actor,
     });
   } catch (err) {
     logger.error("slack action execution error", {
@@ -166,20 +194,9 @@ async function runAndPresent(args: {
   slack: WebClient;
   channelId: string;
   messageTs: string;
-  slackUserId: string;
-  teamId: string;
-  userId?: number;
+  actor: SlackActor;
 }) {
-  const {
-    pending,
-    flag,
-    slack,
-    channelId,
-    messageTs,
-    slackUserId,
-    teamId,
-    userId,
-  } = args;
+  const { pending, flag, slack, channelId, messageTs, actor } = args;
   const tool = getRegistryTool(pending.payload.toolName);
   if (!tool) {
     throw new Error(
@@ -187,7 +204,7 @@ async function runAndPresent(args: {
     );
   }
 
-  const ctx = await toServiceCtx({ pending, slackUserId, teamId, userId });
+  const ctx = await toServiceCtx({ pending, actor });
   const flagId = tool.approval?.extraFlags?.[0]?.id;
   const flags: Record<string, boolean> = flagId ? { [flagId]: flag } : {};
 

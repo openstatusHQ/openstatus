@@ -3,7 +3,7 @@
 import { Lock } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
 import { Link } from "@/components/common/link";
@@ -61,6 +61,12 @@ export function SlackIntegrationCard({
     }),
   );
 
+  const linkedAccountsQuery = useQuery({
+    ...trpc.slackUser.list.queryOptions(),
+    enabled: isConnected,
+  });
+  const linkedAccounts = linkedAccountsQuery.data;
+
   const handleInstall = () => {
     generateToken.mutate();
   };
@@ -85,10 +91,39 @@ export function SlackIntegrationCard({
       </FormCardHeader>
       <FormCardContent>
         {isConnected ? (
-          <p className="text-muted-foreground text-sm">
-            Connected to{" "}
-            <strong>{integration.data?.teamName ?? "Slack workspace"}</strong>
-          </p>
+          <div className="space-y-2">
+            <p className="text-muted-foreground text-sm">
+              Connected to{" "}
+              <strong>{integration.data?.teamName ?? "Slack workspace"}</strong>
+              . Only members with a linked Slack account can use it.
+            </p>
+            {linkedAccountsQuery.isPending ? (
+              <p className="text-muted-foreground text-sm">
+                Loading linked accounts…
+              </p>
+            ) : linkedAccountsQuery.isError ? (
+              <p className="text-destructive text-sm">
+                Could not load linked accounts. Reload the page to try again.
+              </p>
+            ) : linkedAccounts?.length ? (
+              <ul className="space-y-1 text-sm">
+                {linkedAccounts.map((account) => (
+                  <li
+                    key={account.id}
+                    className="text-muted-foreground font-mono"
+                  >
+                    Linked Slack user {account.slackUserId}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Your Slack account links itself the first time you use
+                openstatus in Slack, when its email matches your openstatus
+                email.
+              </p>
+            )}
+          </div>
         ) : (
           <p className="text-muted-foreground text-sm">
             Connect your Slack workspace to get started.

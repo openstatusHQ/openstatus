@@ -10,6 +10,13 @@ import type { Context } from "hono";
 import { z } from "zod";
 
 import { runInBackground } from "./background";
+import {
+  type Block,
+  buildLinkAccountBlocks,
+  LINK_ACCOUNT_TEXT,
+} from "./blocks";
+import type { SlackConfig, SlackEnv } from "./config";
+import { linkAccountUrl, requireSlackMember } from "./require-slack-member";
 import { resolvePageFromUrl } from "./resolve-page";
 import { resolveWorkspace } from "./workspace-resolver";
 
@@ -18,6 +25,7 @@ const logger = getLogger("api-server");
 const slashCommandSchema = z.object({
   text: z.string().optional().default(""),
   team_id: z.string(),
+  user_id: z.string(),
   channel_id: z.string(),
   channel_name: z.string().optional(),
   response_url: z.string().optional(),
@@ -32,16 +40,21 @@ const HELP = [
   "• `/openstatus subscriptions` — show this channel's subscriptions",
 ].join("\n");
 
-function ephemeral(c: Context, text: string) {
-  return c.json({ response_type: "ephemeral", text });
+type CommandReply = { text: string; blocks?: Block[] };
+
+function ephemeral(c: Context, reply: CommandReply) {
+  return c.json({ response_type: "ephemeral", ...reply });
 }
 
 /** Deliver a reply after the ack, via the command's single-use response URL. */
-async function respondLater(responseUrl: string, text: string): Promise<void> {
+async function respondLater(
+  responseUrl: string,
+  reply: CommandReply,
+): Promise<void> {
   const res = await fetch(responseUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ response_type: "ephemeral", text }),
+    body: JSON.stringify({ response_type: "ephemeral", ...reply }),
   });
   if (!res.ok) {
     logger.error("slack response_url delivery failed", {
@@ -63,10 +76,11 @@ async function joinChannel(teamId: string, channelId: string): Promise<void> {
   }
 }
 
-export function handleSlackCommand(c: Context) {
+export function handleSlackCommand(c: Context<SlackEnv>) {
+  const config = c.get("slackConfig");
   const parsed = slashCommandSchema.safeParse(c.get("slackBody"));
   if (!parsed.success) {
-    return ephemeral(c, "Could not read the command.");
+    return ephemeral(c, { text: "Could not read the command." });
   }
   const command = parsed.data;
   const sub = subcommand(command);
@@ -74,7 +88,7 @@ export function handleSlackCommand(c: Context) {
   // `help` — and anything unrecognised, which falls through to it — needs no
   // I/O, so it is answered in the ack itself.
   if (sub !== "subscribe" && sub !== "unsubscribe" && sub !== "subscriptions") {
-    return ephemeral(c, HELP);
+    return ephemeral(c, { text: HELP });
   }
 
   // The rest resolve a page, write to the DB and call the Slack API, which can
@@ -84,7 +98,9 @@ export function handleSlackCommand(c: Context) {
   if (!responseUrl) {
     // Slack always sends one; without it there is nowhere to deliver a late
     // reply, so fall back to answering inline.
-    return runCommand(command).then((text) => ephemeral(c, text));
+    return runMemberCommand(command, config).then((reply) =>
+      ephemeral(c, reply),
+    );
   }
 
   runInBackground(
@@ -92,15 +108,15 @@ export function handleSlackCommand(c: Context) {
     async () => {
       // The 200 above is the only other thing the user gets: without this the
       // command fails silently on their side.
-      const text = await runCommand(command).catch((err: unknown) => {
+      const reply = await runMemberCommand(command, config).catch((error) => {
         logger.error("slack command failed", {
-          error: err,
+          error,
           teamId: command.team_id,
           channelId: command.channel_id,
         });
-        return ":x: Something went wrong. Please try again.";
+        return { text: ":x: Something went wrong. Please try again." };
       });
-      await respondLater(responseUrl, text);
+      await respondLater(responseUrl, reply);
     },
     { teamId: command.team_id, channelId: command.channel_id },
   );
@@ -115,6 +131,34 @@ function subcommand(command: SlashCommand): string {
 
 function argument(command: SlashCommand): string | undefined {
   return command.text.trim().split(/\s+/).filter(Boolean)[1];
+}
+
+/** Only linked members of the connected workspace may run commands. */
+async function runMemberCommand(
+  command: SlashCommand,
+  config: SlackConfig,
+): Promise<CommandReply> {
+  const resolved = await resolveWorkspace(command.team_id);
+  if (!resolved) {
+    return {
+      text: "openstatus isn't connected to this Slack workspace. Connect it from the openstatus dashboard.",
+    };
+  }
+  const actor = await requireSlackMember({
+    workspace: resolved.workspace,
+    teamId: command.team_id,
+    slackUserId: command.user_id,
+    slack: new WebClient(resolved.botToken),
+  });
+  if (!actor) {
+    const url = await linkAccountUrl(config, {
+      workspaceId: resolved.workspace.id,
+      teamId: command.team_id,
+      slackUserId: command.user_id,
+    });
+    return { text: LINK_ACCOUNT_TEXT, blocks: buildLinkAccountBlocks(url) };
+  }
+  return { text: await runCommand(command) };
 }
 
 /** Runs the subcommand and returns the message to show the user. */

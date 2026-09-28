@@ -46,6 +46,7 @@ interface ButtonElement {
   text: TextObject;
   action_id: string;
   value?: string;
+  url?: string;
   style?: "primary" | "danger";
 }
 
@@ -83,6 +84,35 @@ function capMessageText(text: string): string {
   if (text.length <= MESSAGE_TEXT_LIMIT) return text;
   const kept = MESSAGE_TEXT_LIMIT - TRUNCATION_NOTICE.length;
   return `${text.slice(0, kept)}${TRUNCATION_NOTICE}`;
+}
+
+export const LINK_ACCOUNT_ACTION_ID = "link_account";
+
+export const LINK_ACCOUNT_TEXT =
+  "Link your openstatus account to use openstatus in Slack.";
+
+export function buildLinkAccountBlocks(url: string): Block[] {
+  return [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: "*Link your openstatus account*\nOnly members of this openstatus workspace can use openstatus in Slack. Link your account to continue — the link is valid for 10 minutes.",
+      },
+    },
+    {
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: { type: "plain_text", text: "Link account" },
+          action_id: LINK_ACCOUNT_ACTION_ID,
+          url,
+          style: "primary",
+        },
+      ],
+    },
+  ];
 }
 
 /**

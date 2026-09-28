@@ -1,6 +1,11 @@
-import { selectWorkspaceSchema } from "@openstatus/db/src/schema";
+import { and, db, eq } from "@openstatus/db";
+import {
+  selectWorkspaceSchema,
+  usersToWorkspaces,
+} from "@openstatus/db/src/schema";
 import {
   addUserToWorkspace,
+  createSlackUser,
   createTestWorkspace,
   createUser,
 } from "@openstatus/db/src/test/factories";
@@ -12,7 +17,7 @@ import { beforeAll, beforeEach, describe, test } from "@std/testing/bdd";
 // slackTestState.usersInfoImpl.
 import { slackTestState } from "@/libs/test/doubles/slack-test-state";
 
-import { resetSlackUserCache, resolveSlackUserId } from "./resolve-slack-user";
+import { resolveSlackMember } from "./resolve-slack-user";
 
 let workspace: ReturnType<typeof selectWorkspaceSchema.parse>;
 let memberId: number;
@@ -24,6 +29,8 @@ const withEmail = (email?: string) => () =>
 
 const infoCalls = () =>
   slackTestState.calls.filter((c) => c.method === "users.info").length;
+
+const slackId = () => `U_${crypto.randomUUID()}`;
 
 beforeAll(async () => {
   const fixture = await createTestWorkspace();
@@ -37,29 +44,34 @@ beforeAll(async () => {
 beforeEach(() => {
   slackTestState.calls = [];
   slackTestState.usersInfoImpl = withEmail(undefined);
-  resetSlackUserCache();
 });
 
-describe("resolveSlackUserId", () => {
-  test("matches the member by email and caches the hit", async () => {
+describe("resolveSlackMember", () => {
+  test("links the member by email once, then reads the stored link", async () => {
     slackTestState.usersInfoImpl = withEmail(memberEmail.toUpperCase());
-    const args = { workspace, teamId: "T1", slackUserId: "U_A", slack };
-    expect(await resolveSlackUserId(args)).toBe(memberId);
-    expect(await resolveSlackUserId(args)).toBe(memberId);
+    const args = { workspace, teamId: "T1", slackUserId: slackId(), slack };
+    expect(await resolveSlackMember(args)).toBe(memberId);
+    expect(await resolveSlackMember(args)).toBe(memberId);
     expect(infoCalls()).toBe(1);
   });
 
-  test("a miss is not retried until the cache is cleared", async () => {
-    const args = { workspace, teamId: "T1", slackUserId: "U_B", slack };
-    expect(await resolveSlackUserId(args)).toBeNull();
-    expect(infoCalls()).toBe(1);
+  test("an existing link wins without calling Slack", async () => {
+    const slackUserId = slackId();
+    await createSlackUser(workspace.id, memberId, {
+      slackTeamId: "T1",
+      slackUserId,
+    });
+    expect(
+      await resolveSlackMember({ workspace, teamId: "T1", slackUserId, slack }),
+    ).toBe(memberId);
+    expect(infoCalls()).toBe(0);
+  });
 
+  test("a miss is retried on the next interaction", async () => {
+    const args = { workspace, teamId: "T1", slackUserId: slackId(), slack };
+    expect(await resolveSlackMember(args)).toBeNull();
     slackTestState.usersInfoImpl = withEmail(memberEmail);
-    expect(await resolveSlackUserId(args)).toBeNull();
-    expect(infoCalls()).toBe(1);
-
-    resetSlackUserCache();
-    expect(await resolveSlackUserId(args)).toBe(memberId);
+    expect(await resolveSlackMember(args)).toBe(memberId);
     expect(infoCalls()).toBe(2);
   });
 
@@ -67,34 +79,56 @@ describe("resolveSlackUserId", () => {
     const outsider = await createUser();
     slackTestState.usersInfoImpl = withEmail(outsider.email as string);
     expect(
-      await resolveSlackUserId({
+      await resolveSlackMember({
         workspace,
         teamId: "T1",
-        slackUserId: "U_C",
+        slackUserId: slackId(),
         slack,
       }),
     ).toBeNull();
   });
 
-  test("swallows Slack errors such as missing_scope without caching them", async () => {
-    slackTestState.usersInfoImpl = () =>
-      Promise.reject(
-        Object.assign(new Error("An API error occurred: missing_scope"), {
-          data: { ok: false, error: "missing_scope" },
-        }),
-      );
-    const args = { workspace, teamId: "T1", slackUserId: "U_D", slack };
-    expect(await resolveSlackUserId(args)).toBeNull();
-    expect(infoCalls()).toBe(1);
+  test("a removed member's link no longer resolves", async () => {
+    const leaver = await createUser();
+    await addUserToWorkspace(leaver.id, workspace.id, "member");
+    const slackUserId = slackId();
+    await createSlackUser(workspace.id, leaver.id, {
+      slackTeamId: "T1",
+      slackUserId,
+    });
+    expect(
+      await resolveSlackMember({ workspace, teamId: "T1", slackUserId, slack }),
+    ).toBe(leaver.id);
 
-    slackTestState.usersInfoImpl = withEmail(memberEmail);
-    expect(await resolveSlackUserId(args)).toBe(memberId);
-    expect(infoCalls()).toBe(2);
+    await db
+      .delete(usersToWorkspaces)
+      .where(
+        and(
+          eq(usersToWorkspaces.userId, leaver.id),
+          eq(usersToWorkspaces.workspaceId, workspace.id),
+        ),
+      );
+    expect(
+      await resolveSlackMember({ workspace, teamId: "T1", slackUserId, slack }),
+    ).toBeNull();
+  });
+
+  test("swallows Slack errors such as missing_scope", async () => {
+    slackTestState.usersInfoImpl = () =>
+      Promise.reject(new Error("An API error occurred: missing_scope"));
+    expect(
+      await resolveSlackMember({
+        workspace,
+        teamId: "T1",
+        slackUserId: slackId(),
+        slack,
+      }),
+    ).toBeNull();
   });
 
   test("skips resolution entirely without a team or user id", async () => {
     expect(
-      await resolveSlackUserId({
+      await resolveSlackMember({
         workspace,
         teamId: "",
         slackUserId: "U_E",
@@ -102,7 +136,7 @@ describe("resolveSlackUserId", () => {
       }),
     ).toBeNull();
     expect(
-      await resolveSlackUserId({
+      await resolveSlackMember({
         workspace,
         teamId: "T1",
         slackUserId: "",
