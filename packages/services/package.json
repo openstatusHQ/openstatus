@@ -85,6 +85,10 @@
       "import": "./src/import/index.ts",
       "types": "./src/import/index.ts"
     },
+    "./incident": {
+      "import": "./src/incident/index.ts",
+      "types": "./src/incident/index.ts"
+    },
     "./audit": {
       "import": "./src/audit/index.ts",
       "types": "./src/audit/index.ts"
@@ -156,7 +160,7 @@
   },
   "scripts": {
     "check": "deno check --sloppy-imports .",
-    "test": "NODE_ENV=test RESEND_API_KEY=test-key deno test --parallel -A --no-check --sloppy-imports",
+    "test": "NODE_ENV=test RESEND_API_KEY=test-key OPENSTATUS_FEATURES=incident-management deno test --parallel -A --no-check --sloppy-imports",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {

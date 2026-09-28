@@ -34,3 +34,11 @@ export type {
 } from "@openstatus/db/src/schema";
 
 export type { ApiKey, Invitation, User } from "@openstatus/db/src/schema";
+
+export type {
+  Incident,
+  IncidentEvent,
+  IncidentEventType,
+  IncidentSeverity,
+  IncidentStatus,
+} from "@openstatus/db/src/schema";
