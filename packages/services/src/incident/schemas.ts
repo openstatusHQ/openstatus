@@ -76,3 +76,24 @@ export const ListIncidentsInput = z.object({
   offset: z.number().int().min(0).default(0),
 });
 export type ListIncidentsInput = z.input<typeof ListIncidentsInput>;
+
+export const CloseIncidentInput = z.object({
+  id,
+  /** Close without an approved postmortem. */
+  skipPostmortem: z.boolean().optional(),
+});
+export type CloseIncidentInput = z.infer<typeof CloseIncidentInput>;
+
+export const DraftPostmortemInput = z.object({
+  id,
+  content: z.string().trim().min(1).max(100_000),
+  draftedBy: z.enum(["agent", "user"]).default("user"),
+  sourceTranscript: z.string().max(2_000_000).nullish(),
+});
+export type DraftPostmortemInput = z.input<typeof DraftPostmortemInput>;
+
+export const ApprovePostmortemInput = z.object({
+  id,
+  close: z.boolean().optional(),
+});
+export type ApprovePostmortemInput = z.infer<typeof ApprovePostmortemInput>;

@@ -577,11 +577,14 @@ describe("closeIncident", () => {
         input: { id: row.id, status: "resolved" },
       });
       await expect(
-        closeIncident({ ctx: as(memberId, tx), input: { id: row.id } }),
+        closeIncident({
+          ctx: as(memberId, tx),
+          input: { id: row.id, skipPostmortem: true },
+        }),
       ).rejects.toThrow(ForbiddenError);
       const closed = await closeIncident({
         ctx: as(adminId, tx),
-        input: { id: row.id },
+        input: { id: row.id, skipPostmortem: true },
       });
       expect(closed.closedAt).not.toBeNull();
       await expectInvariant(tx, row.id);
@@ -597,7 +600,7 @@ describe("closeIncident", () => {
       });
       const closed = await closeIncident({
         ctx: as(memberId, tx),
-        input: { id: row.id },
+        input: { id: row.id, skipPostmortem: true },
       });
       expect(closed.closedAt).not.toBeNull();
     });
@@ -607,7 +610,10 @@ describe("closeIncident", () => {
     await withTestTransaction(async (tx) => {
       const row = await declare(tx);
       await expect(
-        closeIncident({ ctx: as(ownerId, tx), input: { id: row.id } }),
+        closeIncident({
+          ctx: as(ownerId, tx),
+          input: { id: row.id, skipPostmortem: true },
+        }),
       ).rejects.toThrow(ConflictError);
     });
   });
