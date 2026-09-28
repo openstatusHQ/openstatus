@@ -1,3 +1,4 @@
+import { resolveChatModel } from "@openstatus/ai";
 import { Events } from "@openstatus/analytics";
 import { incidentStatus } from "@openstatus/db/src/schema/incidents/constants";
 import { sendIncidentCommander } from "@openstatus/emails";
@@ -16,6 +17,7 @@ import {
   allowedTransitions,
   approvePostmortem,
   draftPostmortem,
+  generatePostmortemDraft,
   getPostmortem,
   announceIncidentChange,
   announceInChannel,
@@ -39,9 +41,11 @@ import {
 } from "@openstatus/services/incident";
 import { WebClient } from "@slack/web-api";
 import { TRPCError } from "@trpc/server";
+import { generateText } from "ai";
 import { after } from "next/server.js";
 import { z } from "zod";
 
+import { chatRateLimit } from "../lib/chat-rate-limit";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -347,6 +351,38 @@ export const incidentRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       try {
         return (await getPostmortem({ ctx: toServiceCtx(ctx), input })) ?? null;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  draftPostmortemWithAgent: protectedProcedure
+    .meta({ track: Events.DraftManagedPostmortem })
+    .input(IncidentIdInput)
+    .mutation(async ({ ctx, input }) => {
+      const model = resolveChatModel({ plan: ctx.workspace.plan });
+      if (!model) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "The agent is not configured on this server",
+        });
+      }
+      // Shares the chat's per-user daily budget: one draft is several calls.
+      const limit = await chatRateLimit({ ctx: toServiceCtx(ctx) });
+      if (!limit.success) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `Rate limit exceeded. Reset at ${new Date(limit.reset).toISOString()}`,
+        });
+      }
+      try {
+        return await generatePostmortemDraft({
+          ctx: toServiceCtx(ctx),
+          incidentId: input.id,
+          generate: async ({ system, prompt }) =>
+            (await generateText({ model, system, prompt })).text,
+          slackFor: (token) => new WebClient(token),
+        });
       } catch (err) {
         toTRPCError(err);
       }
