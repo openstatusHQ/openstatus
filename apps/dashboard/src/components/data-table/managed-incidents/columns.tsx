@@ -7,6 +7,7 @@ import { formatDistanceStrict } from "date-fns";
 
 import { Link } from "@/components/common/link";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
 import {
@@ -96,5 +97,19 @@ export const columns: ColumnDef<ManagedIncident>[] = [
       <TableCellText value={row.original.statusReport?.title ?? null} />
     ),
     meta: { cellClassName: "max-w-[200px] truncate" },
+  },
+  {
+    id: "slack",
+    header: "Slack",
+    cell: ({ row }) => {
+      const { slackTeamId, slackChannelId } = row.original;
+      const bound = slackTeamId && slackChannelId;
+      return (
+        <TableCellLink
+          value={bound ? "Open channel" : null}
+          href={`https://app.slack.com/client/${slackTeamId}/${slackChannelId}`}
+        />
+      );
+    },
   },
 ];

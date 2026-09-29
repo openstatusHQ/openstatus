@@ -44,7 +44,13 @@ const schema = z.object({
   severity: z.enum(incidentSeverity),
   summary: z.string().max(4000),
   commanderId: z.string(),
-  startedAt: z.string().min(1, "Start time is required."),
+  startedAt: z
+    .string()
+    .min(1, "Start time is required.")
+    .refine(
+      (value) => new Date(value) <= new Date(),
+      "Start time cannot be in the future.",
+    ),
   statusReportId: z.string(),
 });
 
@@ -84,6 +90,8 @@ export function FormDeclareIncident({
       title: "",
       severity: "major",
       summary: "",
+      // user.get is prefetched in the dashboard layout, so it is hydrated
+      // before the sheet can mount and the default is never NONE for members.
       commanderId: user ? String(user.id) : NONE,
       startedAt: toLocalInput(new Date()),
       statusReportId: NONE,
