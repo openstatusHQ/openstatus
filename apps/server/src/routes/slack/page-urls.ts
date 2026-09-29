@@ -29,6 +29,10 @@ function getDashboardBaseUrl(): string {
     : "http://localhost:3001";
 }
 
+export function getIncidentDashboardUrl(incidentId: number): string {
+  return `${getDashboardBaseUrl()}/incidents/${incidentId}`;
+}
+
 /**
  * Resolve a page id to its dashboard link — the page title plus the internal
  * dashboard URL (not the public status page). Scoped to the workspace so a

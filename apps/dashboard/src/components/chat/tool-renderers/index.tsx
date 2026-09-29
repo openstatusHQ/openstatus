@@ -19,6 +19,13 @@ import { getMonitorDetails } from "./get-monitor";
 import { getMonitorStatusTable } from "./get-monitor-status";
 import { getMonitorSummaryDetails } from "./get-monitor-summary";
 import { getResponseLogDetails } from "./get-response-log";
+import {
+  declareIncidentChanges,
+  getIncidentDetails,
+  listIncidentsTable,
+  resolveIncidentChanges,
+  updateIncidentChanges,
+} from "./incidents";
 import { listAuditLogsTable } from "./list-audit-logs";
 import { listMaintenancesTable } from "./list-maintenances";
 import { listMonitorsTable } from "./list-monitors";
@@ -140,6 +147,42 @@ export const toolRenderers: ToolRendererRegistry = {
       />
     ),
     summary: (o) => `ID ${o.id}`,
+  },
+  list_incidents: {
+    renderResult: ({ output }) => (
+      <ResultTable {...listIncidentsTable(output)} />
+    ),
+    summary: (o) => itemsCountSummary(o.items),
+  },
+  get_incident: {
+    renderResult: ({ output }) => (
+      <DetailsTable {...getIncidentDetails(output)} />
+    ),
+    summary: (o) => `${o.severity} · ${o.status}`,
+  },
+  declare_incident: {
+    renderDraft: (input) => declareIncidentChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={declareIncidentChanges(input, output)} />
+    ),
+    summary: (o) => `ID ${o.id}`,
+  },
+  update_incident: {
+    renderDraft: (input) => updateIncidentChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={updateIncidentChanges(input)} />
+    ),
+    summary: (o) => `ID ${o.id}`,
+  },
+  resolve_incident: {
+    renderDraft: (input) => resolveIncidentChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={resolveIncidentChanges(input)} />
+    ),
+    summary: (o) => `resolved · ID ${o.id}`,
+  },
+  add_incident_note: {
+    summary: (o) => `note added to incident ${o.incidentId}`,
   },
   list_monitors: {
     renderResult: ({ output }) => (

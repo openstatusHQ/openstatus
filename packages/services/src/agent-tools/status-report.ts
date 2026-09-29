@@ -205,6 +205,13 @@ const CreateStatusReportInputShape = z.object({
     .datetime()
     .optional()
     .describe("Override the initial update's date. Defaults to now."),
+  incidentId: z
+    .number()
+    .int()
+    .optional()
+    .describe(
+      "Managed incident this report communicates, from list_incidents. Links them.",
+    ),
   notify: z
     .boolean()
     .describe(
@@ -274,6 +281,9 @@ export const createStatusReportTool: AgentTool<
               },
             ]
           : []),
+        ...(input.incidentId
+          ? [{ label: "Incident", value: `#${input.incidentId}` }]
+          : []),
         { label: "Message", value: input.message },
       ],
     }),
@@ -290,6 +300,7 @@ export const createStatusReportTool: AgentTool<
         pageComponentIds: input.pageComponentIds ?? [],
         componentImpacts: input.componentImpacts,
         date: input.date ? new Date(input.date) : new Date(),
+        incidentId: input.incidentId,
       },
     });
     let notified = false;

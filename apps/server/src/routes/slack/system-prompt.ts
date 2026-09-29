@@ -1,8 +1,19 @@
 // dependency-free leaf so the prompt test doesn't link the agent's module
 // graph (ai + services) — bun test flakes on concurrent linking of large graphs.
+const INCIDENT_SECTION = `
+
+Managed incidents (internal, never published):
+- Three things are called "incident". A managed incident (list_incidents, get_incident, declare_incident, update_incident, resolve_incident, add_incident_note) is the team's internal record with a severity, a commander and a timeline. A status report is the PUBLIC communication. Monitor downtime is detected automatically.
+- declare_incident, update_incident and resolve_incident render approval cards like the other write tools: nothing changes until the user clicks Approve, so never report them as done.
+- "declare an incident", "open an incident" -> declare_incident (publishes nothing). Then offer a status report, passing incidentId to create_status_report to link them.
+- "note that…", "add to the timeline" -> add_incident_note (runs right away, no card).
+- "the incident is resolved" with a managed incident in play -> resolve_incident; if its linked status report is still open, draft resolve_status_report too.
+- Before referencing a managed incident, call list_incidents. Severity: critical = major outage or data loss, major = significant degradation, minor = limited impact.`;
+
 export function buildSystemPrompt(
   workspaceName: string,
   contextNote?: string,
+  options: { incidentManagement?: boolean } = {},
 ): string {
   // Intentional: a per-call ISO timestamp defeats Anthropic/Gateway
   // prompt caching, but the agent needs minute-level precision to parse
@@ -108,5 +119,5 @@ Maintenance scheduling:
 - Parse natural language dates into ISO 8601 format. Convert relative dates like "next Friday from 2-3 PM" into proper ISO 8601 timestamps.
 - If the user doesn't specify a timezone, default to UTC and mention that in your response.
 - The "from" time must be before the "to" time.
-- Write a professional maintenance message describing what will happen during the window.${contextNote ? `\n\n${contextNote.trim()}` : ""}`;
+- Write a professional maintenance message describing what will happen during the window.${options.incidentManagement ? INCIDENT_SECTION : ""}${contextNote ? `\n\n${contextNote.trim()}` : ""}`;
 }

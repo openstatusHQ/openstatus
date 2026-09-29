@@ -379,10 +379,16 @@ describe("buildSystemPrompt coverage", () => {
   // buildSlackTools hands the model every registry tool; a tool the prompt
   // never mentions is one the model won't reach for (or will misuse).
   test("mentions every tool the Slack agent is given", () => {
-    const prompt = buildSystemPrompt("Acme Corp");
+    const prompt = buildSystemPrompt("Acme Corp", undefined, {
+      incidentManagement: true,
+    });
     const missing = Object.keys(agentTools).filter(
       (name) => !new RegExp(`\\b${name}\\b`).test(prompt),
     );
     expect(missing).toEqual([]);
+  });
+
+  test("leaves incident tools out when the feature is off", () => {
+    expect(buildSystemPrompt("Acme Corp")).not.toContain("declare_incident");
   });
 });

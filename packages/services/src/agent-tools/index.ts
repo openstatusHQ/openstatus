@@ -1,8 +1,18 @@
 import type { z } from "zod";
 
+import { isFeatureEnabled } from "../features";
+import type { Workspace } from "../types";
 import { getAuditLogTool, listAuditLogsTool } from "./audit";
 import { getContentPageTool, searchContentTool } from "./content";
 import { getDocPageTool, searchDocsTool } from "./docs";
+import {
+  addIncidentNoteTool,
+  declareIncidentTool,
+  getIncidentTool,
+  listIncidentsTool,
+  resolveIncidentTool,
+  updateIncidentTool,
+} from "./incident";
 import { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
 import {
   getMonitorStatusTool,
@@ -28,6 +38,14 @@ import type { AnyAgentTool } from "./types";
 export { getAuditLogTool, listAuditLogsTool } from "./audit";
 export { getContentPageTool, searchContentTool } from "./content";
 export { getDocPageTool, searchDocsTool } from "./docs";
+export {
+  addIncidentNoteTool,
+  declareIncidentTool,
+  getIncidentTool,
+  listIncidentsTool,
+  resolveIncidentTool,
+  updateIncidentTool,
+} from "./incident";
 export { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
 export {
   getMonitorStatusTool,
@@ -82,6 +100,12 @@ export const agentTools = {
   add_status_report_update: addStatusReportUpdateTool,
   update_status_report: updateStatusReportTool,
   resolve_status_report: resolveStatusReportTool,
+  list_incidents: listIncidentsTool,
+  get_incident: getIncidentTool,
+  declare_incident: declareIncidentTool,
+  update_incident: updateIncidentTool,
+  resolve_incident: resolveIncidentTool,
+  add_incident_note: addIncidentNoteTool,
   list_maintenances: listMaintenancesTool,
   create_maintenance: createMaintenanceTool,
   list_monitors: listMonitorsTool,
@@ -114,6 +138,14 @@ for (const tool of Object.values(agentTools) as AnyAgentTool[]) {
       `agent-tools: "${tool.name}" declares extraFlags but no applyFlags.`,
     );
   }
+}
+
+/** Whether a tool is offered in this workspace (feature-gated tools are hidden). */
+export function isAgentToolAvailable(
+  tool: AnyAgentTool,
+  workspace: Pick<Workspace, "id">,
+): boolean {
+  return !tool.feature || isFeatureEnabled(workspace, tool.feature);
 }
 
 /**

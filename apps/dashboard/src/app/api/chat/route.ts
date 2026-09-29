@@ -3,6 +3,7 @@ import {
   type ChatStoredMessage,
   storedMessageSchema,
 } from "@openstatus/db/src/schema";
+import { isFeatureEnabled } from "@openstatus/services";
 import {
   agentTools,
   buildAgentSystemPrompt,
@@ -154,6 +155,10 @@ export async function POST(req: NextRequest) {
       workspaceName: ctx.workspace.name ?? "Unknown",
       surface: "dashboard",
       canNotifySubscribers: ctx.workspace.limits["status-subscribers"] === true,
+      incidentManagement: isFeatureEnabled(
+        ctx.workspace,
+        "incident-management",
+      ),
     }),
     messages: modelMessages,
     tools,

@@ -32,3 +32,6 @@ export const getStatusReportLink = (
     title: `Report ${statusReportId}`,
     url: `https://example.openstatus.dev/events/report/${statusReportId}`,
   });
+
+export const getIncidentDashboardUrl = (incidentId: number): string =>
+  `https://app.openstatus.dev/incidents/${incidentId}`;

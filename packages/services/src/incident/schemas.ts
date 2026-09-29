@@ -56,6 +56,11 @@ export type LinkIncidentStatusReportInput = z.infer<
 export const IncidentIdInput = z.object({ id });
 export type IncidentIdInput = z.infer<typeof IncidentIdInput>;
 
+export const ListIncidentEventsInput = IncidentIdInput.extend({
+  limit: z.number().int().min(1).optional(),
+});
+export type ListIncidentEventsInput = z.infer<typeof ListIncidentEventsInput>;
+
 export const BindIncidentSlackChannelInput = z.object({
   id,
   teamId: z.string().min(1),

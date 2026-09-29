@@ -3,6 +3,7 @@ import {
   type AgentToolName,
   type AnyAgentTool,
   agentTools,
+  isAgentToolAvailable,
 } from "@openstatus/services/agent-tools";
 import { type Tool, tool } from "ai";
 import { ZodObject, type ZodType, type z } from "zod";
@@ -45,7 +46,9 @@ export function buildSlackTools(
 ): Record<string, Tool> {
   const out: Record<string, Tool> = {};
   for (const name of Object.keys(agentTools) as AgentToolName[]) {
-    out[name] = buildTool(agentTools[name] as AnyAgentTool, ctx);
+    const t: AnyAgentTool = agentTools[name];
+    if (!isAgentToolAvailable(t, ctx.workspace)) continue;
+    out[name] = buildTool(t, ctx);
   }
   return { ...out, ...extras };
 }
