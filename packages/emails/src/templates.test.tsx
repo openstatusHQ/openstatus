@@ -683,6 +683,9 @@ describe("every transactional template", () => {
     subscription: <PageSubscriptionEmail page="Acme" link="https://a.dev" />,
     magicLink: <StatusPageMagicLinkEmail page="Acme" link="https://a.dev" />,
     welcome: <WelcomeEmail trialEndsAt={new Date("2026-10-07T00:00:00Z")} />,
+    incidentCommander: (
+      <IncidentCommanderEmail {...IncidentCommanderEmail.PreviewProps} />
+    ),
   };
 
   for (const [name, element] of Object.entries(all)) {
