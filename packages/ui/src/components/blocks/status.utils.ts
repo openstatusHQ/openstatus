@@ -341,8 +341,6 @@ export const defaultStatusBlocksLabels = {
 
   calendarTitle: "Calendar",
 
-  durationIn: (s: string) => `(in ${s})`,
-  durationEarlier: (s: string) => `(${s} earlier)`,
   durationFor: (s: string) => `(for ${s})`,
   durationAcross: (s: string) => `across ${s}`,
 
