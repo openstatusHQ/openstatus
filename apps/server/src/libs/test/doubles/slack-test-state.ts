@@ -20,7 +20,7 @@ export interface SlackTestState {
   streamStopFail: boolean;
   /** Receives runAgent's options, so a test can drive the stream or abort. */
   runAgentOverride: ((options?: unknown) => Promise<unknown>) | null;
-  repliesImpl: () => Promise<unknown>;
+  repliesImpl: (args?: Record<string, unknown>) => Promise<unknown>;
   historyImpl: () => Promise<unknown>;
   /** `users.info` result; the default has no email, so no mapping is created. */
   usersInfoImpl: (args: Record<string, unknown>) => Promise<unknown>;

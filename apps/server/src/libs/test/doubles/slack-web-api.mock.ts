@@ -23,7 +23,7 @@ export class WebClient {
       s.calls.push({ method: "chat.getPermalink", args });
       return Promise.resolve({
         ok: true,
-        permalink: `https://slack.test/archives/${args.channel}/p${args.message_ts}`,
+        permalink: `https://slack.test/archives/${args.channel}/p${String(args.message_ts).replace(".", "")}`,
       });
     },
   };
@@ -72,7 +72,7 @@ export class WebClient {
     };
   };
   conversations = {
-    replies: () => s.repliesImpl(),
+    replies: (args: Record<string, unknown>) => s.repliesImpl(args),
     join: (args: Record<string, unknown>) => {
       s.calls.push({ method: "conversations.join", args });
       return Promise.resolve({ ok: true });

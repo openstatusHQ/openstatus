@@ -1,9 +1,19 @@
 import crypto from "node:crypto";
 
 import { db, eq } from "@openstatus/db";
-import { incident, incidentEvent, integration } from "@openstatus/db/src/schema";
+import {
+  incident,
+  incidentEvent,
+  integration,
+} from "@openstatus/db/src/schema";
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
-import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "@openstatus/test-utils";
 import { Hono } from "hono";
 
 // workspace-resolver / @slack/web-api / agent are swapped for doubles via the
@@ -2049,6 +2059,13 @@ describe("incident channel events", () => {
     incidentId = row.id;
   });
 
+  afterEach(async () => {
+    await db
+      .delete(incidentEvent)
+      .where(eq(incidentEvent.incidentId, incidentId));
+    await db.delete(incident).where(eq(incident.id, incidentId));
+  });
+
   async function notes() {
     return db
       .select()
@@ -2095,24 +2112,43 @@ describe("incident channel events", () => {
         },
       });
     await pin("501.1");
-    await new Promise((r) => setTimeout(r, 150));
+    expect(await waitForCall("reactions.get")).toBeDefined();
+    // The handler returns right after reactions.get; give it a tick to settle.
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackTestState.calls.some((c) => c.method === "reactions.add")).toBe(
+      false,
+    );
     expect(await notes()).toHaveLength(0);
+  });
+
+  test("two 📌 racing on one message note it once", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({ messages: [{ ts: "502.1", text: "Once" }] });
+    await Promise.all([pin("502.1"), pin("502.1", "U3")]);
+    await waitForCall("reactions.add");
+    await new Promise((r) => setTimeout(r, 50));
+    expect(await notes()).toHaveLength(1);
   });
 
   test("a pinned thread reply is found through the thread", async () => {
     slackTestState.historyImpl = () =>
       Promise.resolve({ messages: [{ ts: "400.0", text: "parent" }] });
-    slackTestState.repliesImpl = () =>
-      Promise.resolve({
+    let repliesArgs: Record<string, unknown> | undefined;
+    slackTestState.repliesImpl = (args) => {
+      repliesArgs = args;
+      return Promise.resolve({
         messages: [
           { ts: "400.0", text: "parent" },
           { ts: "400.5", text: "the reply" },
         ],
       });
+    };
     await pin("400.5");
     await waitForCall("reactions.add");
     const rows = await notes();
     expect(rows[0]?.message).toContain("the reply");
+    // Slack returns the parent first, so the range must start at the reply.
+    expect(repliesArgs).toMatchObject({ oldest: "400.5", latest: "400.5" });
   });
 
   test("archiving the channel unbinds the incident", async () => {

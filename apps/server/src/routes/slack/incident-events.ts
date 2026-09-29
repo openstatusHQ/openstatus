@@ -46,13 +46,16 @@ async function findMessage(
   });
   const top = (history.messages ?? []).find((m) => m.ts === ts);
   if (top) return top;
-  // A thread reply is not in the channel history; ask the thread for it.
+  // A thread reply is not in the channel history; ask the thread for it. The
+  // parent always comes back first, so bound the range to the reply itself and
+  // leave room for both.
   const replies = await slack.conversations.replies({
     channel,
     ts,
+    oldest: ts,
     latest: ts,
     inclusive: true,
-    limit: 1,
+    limit: 2,
   });
   return (replies.messages ?? []).find((m) => m.ts === ts);
 }
@@ -96,45 +99,62 @@ export async function handlePinReaction(args: {
     slack,
   });
   if (!actor) {
-    const once = await redis.set(`slack:pinlink:${channel}:${ts}`, "1", {
-      nx: true,
-      ex: 24 * 60 * 60,
-    });
+    const key = `slack:pinlink:${channel}:${ts}`;
+    const once = await redis.set(key, "1", { nx: true, ex: 24 * 60 * 60 });
     if (once === null) return;
-    const url = await linkAccountUrl(config, {
-      workspaceId: resolved.workspace.id,
-      teamId,
-      slackUserId,
-    });
-    await slack.chat.postEphemeral({
-      channel,
-      user: slackUserId,
-      thread_ts: ts,
-      text: LINK_ACCOUNT_TEXT,
-      blocks: buildLinkAccountBlocks(url),
-    });
+    try {
+      const url = await linkAccountUrl(config, {
+        workspaceId: resolved.workspace.id,
+        teamId,
+        slackUserId,
+      });
+      await slack.chat.postEphemeral({
+        channel,
+        user: slackUserId,
+        thread_ts: ts,
+        text: LINK_ACCOUNT_TEXT,
+        blocks: buildLinkAccountBlocks(url),
+      });
+    } catch (err) {
+      // Otherwise a transient failure silences the card for the whole window.
+      await redis.del(key).catch(() => undefined);
+      throw err;
+    }
     return;
   }
 
-  if (await alreadyNoted(slack, channel, ts, resolved.botUserId)) return;
-  const message = await findMessage(slack, channel, ts);
-  if (!message?.text) return;
-  const permalink = await slack.chat
-    .getPermalink({ channel, message_ts: ts })
-    .then((res) => res.permalink)
-    .catch(() => undefined);
+  // Claimed before the ✅ check so two 📌 racing on one message note it once;
+  // it also stands in for the ✅ when adding the reaction fails.
+  const claim = `slack:pinned:${channel}:${ts}`;
+  const claimed = await redis.set(claim, "1", { nx: true, ex: 24 * 60 * 60 });
+  if (claimed === null) return;
+  try {
+    if (await alreadyNoted(slack, channel, ts, resolved.botUserId)) return;
+    const message = await findMessage(slack, channel, ts);
+    if (!message?.text) {
+      await redis.del(claim);
+      return;
+    }
+    const permalink = await slack.chat
+      .getPermalink({ channel, message_ts: ts })
+      .then((res) => res.permalink)
+      .catch(() => undefined);
 
-  const ctx: ServiceContext = { workspace: resolved.workspace, actor };
-  await addIncidentNote({
-    ctx,
-    input: {
-      id: bound.id,
-      message: permalink
-        ? `${message.text}\n\n[From Slack](${permalink})`
-        : message.text,
-    },
-  });
-  trackSlackIncident(ctx, "note", { via: "reaction" });
+    const ctx: ServiceContext = { workspace: resolved.workspace, actor };
+    await addIncidentNote({
+      ctx,
+      input: {
+        id: bound.id,
+        message: permalink
+          ? `${message.text}\n\n[From Slack](${permalink})`
+          : message.text,
+      },
+    });
+    trackSlackIncident(ctx, "note", { via: "reaction" });
+  } catch (err) {
+    await redis.del(claim).catch(() => undefined);
+    throw err;
+  }
   await slack.reactions
     .add({ channel, timestamp: ts, name: DONE })
     .catch((error) => logger.warn("slack failed to confirm pin", { error }));
