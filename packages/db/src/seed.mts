@@ -4,6 +4,8 @@ import { drizzle } from "drizzle-orm/libsql";
 import { env } from "../env.mjs";
 import {
   externalService,
+  incident,
+  incidentEvent,
   monitorIncidentTable,
   maintenance,
   maintenancesToPageComponents,
@@ -465,6 +467,51 @@ async function main() {
       },
     ])
     .onConflictDoNothing()
+    .run();
+
+  await db
+    .insert(incident)
+    .values({
+      id: 1,
+      workspaceId: 1,
+      title: "Elevated API error rates",
+      severity: "major",
+      status: "mitigated",
+      summary: "Increased 5xx responses on the public API.",
+      commanderId: 1,
+      declaredBy: 1,
+      declaredAt: twoHoursAgo,
+      startedAt: new Date(twoHoursAgo.getTime() - 10 * 60 * 1000),
+      mitigatedAt: new Date(twoHoursAgo.getTime() + 45 * 60 * 1000),
+      statusReportId: 2,
+    })
+    .onConflictDoNothing()
+    .run();
+  await db
+    .insert(incidentEvent)
+    .values([
+      {
+        incidentId: 1,
+        type: "declared",
+        message: "Incident declared",
+        createdBy: 1,
+        createdAt: twoHoursAgo,
+      },
+      {
+        incidentId: 1,
+        type: "note",
+        message: "Rolling back the latest API deploy.",
+        createdBy: 1,
+        createdAt: new Date(twoHoursAgo.getTime() + 20 * 60 * 1000),
+      },
+      {
+        incidentId: 1,
+        type: "mitigated",
+        message: "Rollback done, error rate back to baseline.",
+        createdBy: 1,
+        createdAt: new Date(twoHoursAgo.getTime() + 45 * 60 * 1000),
+      },
+    ])
     .run();
 
   await db
