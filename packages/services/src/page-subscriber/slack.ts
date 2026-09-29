@@ -226,6 +226,62 @@ export async function removeSlackSubscriber(args: {
   });
 }
 
+/**
+ * Unsubscribes every channel of a Slack team, on any workspace's page, when
+ * the app is removed from that team. Audited per subscriber as `system`.
+ */
+// Called by `uninstallSlackTeam` for a team, not a workspace: each row is
+// audited in its page's workspace, and a system actor has no scope to check.
+// oxlint-disable-next-line openstatus/services-mutation-guards
+export async function removeSlackTeamSubscribers(args: {
+  input: { teamId: string };
+  job: string;
+  db?: DB;
+}): Promise<number> {
+  const { teamId } = args.input;
+  return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+    const rows = await tx.query.pageSubscriber.findMany({
+      where: and(
+        eq(pageSubscriber.channelType, "slack"),
+        isNull(pageSubscriber.unsubscribedAt),
+        sql`json_extract(${pageSubscriber.channelConfig}, '$.teamId') = ${teamId}`,
+      ),
+      with: { page: { with: { workspace: true } } },
+    });
+    for (const existing of rows) {
+      const updated = await tx
+        .update(pageSubscriber)
+        .set({ unsubscribedAt: new Date(), updatedAt: new Date() })
+        .where(eq(pageSubscriber.id, existing.id))
+        .returning()
+        .get();
+      if (!existing.page?.workspace) continue;
+      const { page: _page, ...existingRow } = existing;
+      const { token: _bt, ...beforeSnap } =
+        selectPageSubscriberSchema.parse(existingRow);
+      const { token: _at, ...afterSnap } = selectPageSubscriberSchema.parse(
+        updated ?? existingRow,
+      );
+      await emitAudit(
+        tx,
+        {
+          workspace: parseWorkspaceForContext(existing.page.workspace),
+          actor: { type: "system", job: args.job },
+          db: tx,
+        },
+        {
+          action: "page_subscriber.update",
+          entityType: "page_subscriber",
+          entityId: existing.id,
+          before: beforeSnap,
+          after: afterSnap,
+        },
+      );
+    }
+    return rows.length;
+  });
+}
+
 export interface SlackSubscriptionSummary {
   id: number;
   pageId: number;

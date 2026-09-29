@@ -1,9 +1,10 @@
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq, isNull, sql } from "@openstatus/db";
-import { integration, pageSubscriber } from "@openstatus/db/src/schema";
+import { uninstallSlackTeam } from "@openstatus/services/integration";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
+
+import { redis } from "@/libs/clients";
 
 import { type AgentEvents, runAgent } from "./agent";
 import { greetOnce, setAssistantStatus, setSessionStatus } from "./assistant";
@@ -41,11 +42,14 @@ import {
 } from "./registry-runner";
 import {
   claimLinkCardWindow,
+  claimPlanNoticeWindow,
   linkAccountUrl,
+  planRequiredMessage,
   releaseLinkCardWindow,
   requireSlackMember,
+  slackAgentAllowed,
 } from "./require-slack-member";
-import { abortTurn, endTurn, startTurn } from "./running-turns";
+import { abortTurn, broadcastStop, endTurn, startTurn } from "./running-turns";
 import {
   buildThreadTitle,
   isThreadTitled,
@@ -65,16 +69,24 @@ function makeRefResolvers(workspaceId: number): RefResolvers {
 
 const logger = getLogger("api-server");
 
-const processedEvents = new Map<string, number>();
+const DEDUP_TTL_SECONDS = 10 * 60;
 
-function dedup(eventId: string): boolean {
-  const now = Date.now();
-  for (const [id, ts] of processedEvents) {
-    if (now - ts > 300_000) processedEvents.delete(id);
+/**
+ * Whether this event was already claimed, by this instance or another. If
+ * Redis is unreachable the event is processed: a duplicate turn beats a
+ * dropped one.
+ */
+async function isDuplicate(key: string): Promise<boolean> {
+  try {
+    const claimed = await redis.set(`slack:event:${key}`, "1", {
+      nx: true,
+      ex: DEDUP_TTL_SECONDS,
+    });
+    return claimed === null;
+  } catch (error) {
+    logger.warn("slack dedup unavailable", { error, key });
+    return false;
   }
-  if (processedEvents.has(eventId)) return true;
-  processedEvents.set(eventId, now);
-  return false;
 }
 
 const slackEventSchema = z.object({
@@ -91,6 +103,13 @@ const slackEventSchema = z.object({
       thread_ts: z.string().optional(),
       bot_id: z.string().optional(),
       tab: z.string().optional(),
+      // `tokens_revoked`: which tokens went. Only a revoked bot token matters.
+      tokens: z
+        .object({
+          bot: z.array(z.string()).optional(),
+          oauth: z.array(z.string()).optional(),
+        })
+        .optional(),
       assistant_thread: z
         .object({
           channel_id: z.string(),
@@ -233,7 +252,7 @@ export async function handleSlackEvent(c: Context<SlackEnv>) {
     return c.json({ ok: true });
   }
 
-  if (body.event_id && dedup(body.event_id)) {
+  if (body.event_id && (await isDuplicate(body.event_id))) {
     return c.json({ ok: true });
   }
 
@@ -286,27 +305,13 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
 
   if (event.type === "app_uninstalled" || event.type === "tokens_revoked") {
     const teamId = body.team_id;
-    if (teamId) {
-      await db
-        .delete(integration)
-        .where(
-          and(
-            eq(integration.name, "slack-agent"),
-            eq(integration.externalId, teamId),
-          ),
-        );
-      await db
-        .update(pageSubscriber)
-        .set({ unsubscribedAt: new Date(), updatedAt: new Date() })
-        .where(
-          and(
-            eq(pageSubscriber.channelType, "slack"),
-            isNull(pageSubscriber.unsubscribedAt),
-            sql`json_extract(${pageSubscriber.channelConfig}, '$.teamId') = ${teamId}`,
-          ),
-        );
-      logger.info("slack integration cleaned up", { teamId });
-    }
+    if (!teamId) return;
+    if (event.type === "tokens_revoked" && !event.tokens?.bot?.length) return;
+    const result = await uninstallSlackTeam({
+      input: { teamId },
+      job: `slack-${event.type}`,
+    });
+    logger.info("slack integration cleaned up", { teamId, ...result });
     return;
   }
 
@@ -464,6 +469,9 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
     if (!teamId || !channel || !threadTs) return;
 
     const wasRunning = abortTurn(channel, threadTs);
+    await broadcastStop(channel, threadTs).catch((error) =>
+      logger.warn("slack failed to broadcast stop", { error, teamId }),
+    );
     logger.info("slack turn stopped by user", {
       teamId,
       channel,
@@ -515,8 +523,7 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
   // A single mention arrives as BOTH an `app_mention` and a `message.*` event
   // (distinct event_ids, same message ts), so the event_id dedup above doesn't
   // catch the pair. Dedup on the message identity so we only respond once.
-  // Runs before the first `await` so concurrent deliveries can't both pass.
-  if (dedup(`msg:${event.channel}:${event.ts}`)) return;
+  if (await isDuplicate(`msg:${event.channel}:${event.ts}`)) return;
 
   const resolved = await resolveWorkspace(teamId);
   if (!resolved) {
@@ -574,6 +581,24 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
   const channel = event.channel;
   const slackUserId = event.user;
   if (!slackUserId) return;
+  if (!slackAgentAllowed(resolved.workspace)) {
+    if (await claimPlanNoticeWindow(teamId, slackUserId)) {
+      const message = planRequiredMessage(config);
+      await (
+        isAgentThread
+          ? slack.chat.postMessage({ channel, thread_ts: threadTs, ...message })
+          : slack.chat.postEphemeral({
+              channel,
+              user: slackUserId,
+              thread_ts: event.thread_ts,
+              ...message,
+            })
+      ).catch((error) =>
+        logger.error("slack failed to send plan notice", { error, teamId }),
+      );
+    }
+    return;
+  }
   const actor = await requireSlackMember({
     workspace: resolved.workspace,
     teamId,
@@ -615,7 +640,6 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
       userId: event.user,
       isAgentThread,
     });
-    if (!reply) return;
 
     if (turn.signal.aborted) {
       logger.info("slack turn stopped before it started", {
@@ -631,9 +655,7 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
     if (prefetchedThread) {
       thread = prefetchedThread;
     } else if (event.thread_ts) {
-      thread = (
-        await fetchThread(slack, event.channel, event.thread_ts)
-      ).filter((msg) => msg.ts !== reply?.placeholderTs);
+      thread = await fetchThread(slack, event.channel, event.thread_ts);
     } else {
       thread = [{ user: event.user, text: event.text, ts: event.ts }];
     }
@@ -850,8 +872,7 @@ async function titleThread(args: {
 /**
  * Where the agent's output goes, in descending order of how much the user gets
  * to see while they wait: a streamed message that fills in as the model writes,
- * with a task entry per tool call; a native "working" status on the thread; or
- * a "Thinking..." message we post up front and overwrite.
+ * with a task entry per tool call; or a native "working" status on the thread.
  */
 interface Reply {
   /**
@@ -869,8 +890,6 @@ interface Reply {
   stopped(): Promise<void>;
   /** Progress to report while the turn runs, when the surface can show it. */
   progress?: AgentEvents;
-  /** Our own "Thinking..." message, to keep it out of the agent's context. */
-  placeholderTs?: string;
   /** Runs once the turn is over, whether it succeeded or not. */
   finish?: () => Promise<void>;
 }
@@ -1083,8 +1102,8 @@ async function createReply(args: {
   teamId: string;
   userId: string | undefined;
   isAgentThread: boolean;
-}): Promise<Reply | undefined> {
-  const { slack, channel, threadTs, teamId, userId, isAgentThread } = args;
+}): Promise<Reply> {
+  const { slack, channel, threadTs, teamId, userId } = args;
 
   const session = await acknowledgeWithSession(
     slack,
@@ -1094,9 +1113,9 @@ async function createReply(args: {
     userId,
   );
 
-  // The status is the loading indicator, not the delivery: a streamed turn in
-  // the agent pane still needs it when agent sessions aren't available.
-  if (!session && isAgentThread) {
+  // The status is the loading indicator, not the delivery: a streamed turn
+  // still needs it when agent sessions aren't available.
+  if (!session) {
     // Best-effort: a missing status only loses the loading indicator.
     await setAssistantStatus(slack, channel, threadTs, "is thinking...").catch(
       (err: unknown) =>
@@ -1120,9 +1139,7 @@ async function createReply(args: {
     });
   }
 
-  if (session) return session;
-  if (isAgentThread) return acknowledgeInAgentThread(slack, channel, threadTs);
-  return acknowledgeInChannel(slack, channel, threadTs, teamId);
+  return session ?? acknowledgeWithStatus(slack, channel, threadTs);
 }
 
 function postInThread(
@@ -1201,7 +1218,7 @@ async function acknowledgeWithSession(
 
 // The status was already set by `createReply`; Slack clears it as soon as the
 // app posts in the thread, so there is no matching "clear" call.
-function acknowledgeInAgentThread(
+function acknowledgeWithStatus(
   slack: WebClient,
   channel: string,
   threadTs: string,
@@ -1210,79 +1227,6 @@ function acknowledgeInAgentThread(
   return {
     send,
     answer: (text) => send(buildAnswerMessage(text)),
-    stopped: async () => {
-      await send({ text: STOPPED_NOTICE });
-    },
-  };
-}
-
-async function acknowledgeInChannel(
-  slack: WebClient,
-  channel: string,
-  threadTs: string,
-  teamId: string,
-): Promise<Reply | undefined> {
-  let thinkingTs: string | undefined;
-  try {
-    const thinkingMsg = await slack.chat.postMessage({
-      channel,
-      thread_ts: threadTs,
-      text: ":hourglass_flowing_sand: Thinking...",
-    });
-    thinkingTs = thinkingMsg.ts;
-  } catch (err) {
-    if (isSlackPlatformError(err, "cannot_reply_to_message")) {
-      logger.warn("slack cannot reply to message, falling back to top-level", {
-        channel,
-        teamId,
-        threadTs,
-      });
-      try {
-        const fallbackMsg = await slack.chat.postMessage({
-          channel,
-          text: ":hourglass_flowing_sand: Thinking...",
-        });
-        thinkingTs = fallbackMsg.ts;
-      } catch (fallbackErr) {
-        logger.error("slack failed to post fallback thinking message", {
-          error: fallbackErr,
-          channel,
-          teamId,
-        });
-        return;
-      }
-    } else {
-      logger.error("slack failed to post thinking message", {
-        error: err,
-        channel,
-        teamId,
-        threadTs,
-      });
-      return;
-    }
-  }
-
-  if (!thinkingTs) {
-    logger.error("slack thinking message returned no ts", { channel, teamId });
-    return;
-  }
-
-  const ts = thinkingTs;
-  const postNew = postInThread(slack, channel, threadTs);
-  let placeholderUsed = false;
-  // The first message takes over "Thinking..."; any after it (a second
-  // confirmation card) is a message of its own, or it would overwrite the first.
-  const send: Reply["send"] = async ({ text, blocks }) => {
-    if (placeholderUsed) return postNew({ text, blocks });
-    placeholderUsed = true;
-    await slack.chat.update({ channel, ts, text, blocks });
-    return ts;
-  };
-  return {
-    placeholderTs: ts,
-    send,
-    answer: (text) => send(buildAnswerMessage(text)),
-    // Overwrites "Thinking...", which would otherwise stand forever.
     stopped: async () => {
       await send({ text: STOPPED_NOTICE });
     },
@@ -1316,10 +1260,8 @@ async function handleConfirmation(
 
   // findByThread + replace isn't atomic on its own — two concurrent
   // events on the same thread could both see `existing` and race on
-  // replace. Atomicity here relies on the `dedup` map at the top of this
-  // file suppressing duplicate event_ids, plus Slack's own per-thread
-  // event throttling. Cross-process dedup is *not* covered; see note in
-  // processedEvents.
+  // replace. The Redis event dedup at the top of this file suppresses
+  // duplicate deliveries across instances, and Slack throttles per thread.
   const existing = await findByThread(threadTs, payload);
   if (existing) {
     await replace(existing.id, payload);

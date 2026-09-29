@@ -1,5 +1,8 @@
 import crypto from "node:crypto";
 
+import { db, eq } from "@openstatus/db";
+import { integration } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import { Hono } from "hono";
 
@@ -19,7 +22,7 @@ import {
   looksLikeUncardedDraft,
   toolTaskTitle,
 } from "./handler";
-import { abortTurn, endTurn, startTurn } from "./running-turns";
+import { abortTurn, broadcastStop, endTurn, startTurn } from "./running-turns";
 import { verifySlackSignature } from "./verify";
 
 function createTestApp() {
@@ -104,7 +107,7 @@ function resetSlackTestState() {
           name: "Test Workspace",
           slug: "test",
           plan: "free",
-          limits: {},
+          limits: { "slack-agent": true },
         },
         botToken: "xoxb-test",
         botUserId: "UBOT",
@@ -1047,21 +1050,27 @@ describe("streaming the agent's answer", () => {
     ]);
   });
 
-  test("falls back to the placeholder when the workspace has no streaming", async () => {
+  test("falls back to the thread status when the workspace has no streaming", async () => {
     slackTestState.chatStreamEnabled = false;
     streamTurn(async () => {});
 
     await mention("3");
     await new Promise((r) => setTimeout(r, 100));
 
-    // No agent session and no stream leaves the oldest path: a "Thinking..."
-    // message posted up front and overwritten with the answer.
-    const placeholder = slackTestState.calls.find(
+    // No agent session and no stream leaves the thread status as the only
+    // loading indicator; the answer is posted as a message of its own.
+    expect(
+      slackTestState.calls.some(
+        (m) => m.method === "assistant.threads.setStatus",
+      ),
+    ).toBe(true);
+    const posts = slackTestState.calls.filter(
       (m) => m.method === "postMessage",
     );
-    expect(placeholder?.args.text).toContain("Thinking...");
-    const answer = slackTestState.calls.find((m) => m.method === "update");
-    expect(answer?.args.text).toBe("All five monitors are healthy.");
+    expect(posts.map((m) => m.args.text)).toEqual([
+      "All five monitors are healthy.",
+    ]);
+    expect(slackTestState.calls.some((m) => m.method === "update")).toBe(false);
     expect(slackTestState.calls.some((m) => m.method === "chatStream")).toBe(
       false,
     );
@@ -1781,5 +1790,145 @@ describe("members only", () => {
     const publish = await waitForCall("views.publish");
     const view = publish?.args.view as { blocks: { type: string }[] };
     expect(view.blocks.some((b) => b.type === "actions")).toBe(true);
+  });
+});
+
+describe("hardening", () => {
+  const app = createTestApp();
+  const redisStore = (globalThis as Record<string, unknown>)
+    .__testRedisStore as Map<string, string>;
+
+  beforeEach(resetSlackTestState);
+
+  test("a workspace without the Slack agent gets a plan notice", async () => {
+    slackTestState.resolveWorkspace = () =>
+      Promise.resolve({
+        workspace: {
+          id: 1,
+          name: "Free",
+          slug: "free",
+          plan: "free",
+          limits: {},
+        },
+        botToken: "xoxb-test",
+        botUserId: "UBOT",
+      });
+    const user = `U_FREE_${crypto.randomUUID()}`;
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_FREE",
+      event_id: `evt_free_${Date.now()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hi",
+        user,
+        channel: "C1",
+        channel_type: "channel",
+        ts: `${Date.now()}.61`,
+      },
+    });
+    const notice = await waitForCall("postEphemeral");
+    expect(String(notice?.args.text)).toContain("/settings/billing");
+    // The plan notice must not use up the account-link card's window.
+    expect(redisStore.has(`slack:linkcard:T_FREE:${user}`)).toBe(false);
+  });
+
+  test("the same event id is processed once, across instances", async () => {
+    const eventId = `evt_dup_${Date.now()}`;
+    const body = {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: eventId,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> status?",
+        user: "U1",
+        channel: "C1",
+        channel_type: "channel",
+        ts: `${Date.now()}.62`,
+      },
+    };
+    await signAndPost(app, body);
+    await signAndPost(app, body);
+    expect(redisStore.has(`slack:event:${eventId}`)).toBe(true);
+    await new Promise((r) => setTimeout(r, 150));
+    const thinking = slackTestState.calls.filter(
+      (c) =>
+        c.method === "chatStream" ||
+        (c.method === "postMessage" &&
+          String(c.args.text).includes("Thinking")),
+    );
+    expect(thinking).toHaveLength(1);
+  });
+
+  test("a stop from another instance aborts the running turn", async () => {
+    const turn = startTurn("C_REMOTE", "7.7");
+    await new Promise((r) => setTimeout(r, 10));
+    await broadcastStop("C_REMOTE", "7.7");
+    await new Promise((r) => setTimeout(r, 1_200));
+    expect(turn.signal.aborted).toBe(true);
+    endTurn("C_REMOTE", "7.7", turn);
+  });
+
+  test("an earlier stop does not abort a newer turn", async () => {
+    await broadcastStop("C_OLD", "8.8");
+    const turn = startTurn("C_OLD", "8.8");
+    await new Promise((r) => setTimeout(r, 1_200));
+    expect(turn.signal.aborted).toBe(false);
+    endTurn("C_OLD", "8.8", turn);
+  });
+
+  async function seedSlackInstall() {
+    const teamId = `T_REVOKED_${crypto.randomUUID()}`;
+    const { workspace } = await createTestWorkspace();
+    const row = await db
+      .insert(integration)
+      .values({
+        name: "slack-agent",
+        workspaceId: workspace.id,
+        externalId: teamId,
+        data: {},
+      })
+      .returning()
+      .get();
+    return { teamId, id: row.id };
+  }
+
+  async function revokeTokens(
+    teamId: string,
+    tokens: Record<string, string[]>,
+  ) {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: teamId,
+      event_id: `evt_revoked_${crypto.randomUUID()}`,
+      event: { type: "tokens_revoked", tokens },
+    });
+    expect(res.status).toBe(200);
+    await settleBackgroundTasks();
+  }
+
+  function findIntegration(id: number) {
+    return db.select().from(integration).where(eq(integration.id, id)).get();
+  }
+
+  test("tokens_revoked without a bot token leaves the install alone", async () => {
+    const install = await seedSlackInstall();
+    try {
+      await revokeTokens(install.teamId, { oauth: ["U1"] });
+      expect(await findIntegration(install.id)).toBeDefined();
+    } finally {
+      await db.delete(integration).where(eq(integration.id, install.id));
+    }
+  });
+
+  test("tokens_revoked with a bot token uninstalls", async () => {
+    const install = await seedSlackInstall();
+    try {
+      await revokeTokens(install.teamId, { bot: ["UBOT"] });
+      expect(await findIntegration(install.id)).toBeUndefined();
+    } finally {
+      await db.delete(integration).where(eq(integration.id, install.id));
+    }
   });
 });

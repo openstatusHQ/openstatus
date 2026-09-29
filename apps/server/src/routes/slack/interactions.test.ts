@@ -48,7 +48,10 @@ function configureSlackDoubles() {
     });
   slackTestState.resolveWorkspace = (teamId: string) =>
     teamId === "T_KNOWN"
-      ? Promise.resolve({ botToken: "xoxb-fallback", workspace: { id: 1 } })
+      ? Promise.resolve({
+          botToken: "xoxb-fallback",
+          workspace: { id: 1, limits: { "slack-agent": true } },
+        })
       : Promise.resolve(null);
 }
 
@@ -249,7 +252,10 @@ describe("handleSlackInteraction (dispatch)", () => {
     slackTestState.resolveWorkspace = (teamId: string) => {
       resolveCalls++;
       return teamId === "T_KNOWN"
-        ? Promise.resolve({ botToken: "xoxb-fresh", workspace: { id: 1 } })
+        ? Promise.resolve({
+            botToken: "xoxb-fresh",
+            workspace: { id: 1, limits: { "slack-agent": true } },
+          })
         : Promise.resolve(null);
     };
 
@@ -273,7 +279,10 @@ describe("handleSlackInteraction (dispatch)", () => {
     // A reinstall can point the team at a different workspace than the one the
     // card was drafted for; executing it there would hit the wrong status page.
     slackTestState.resolveWorkspace = () =>
-      Promise.resolve({ botToken: "xoxb-other", workspace: { id: 2 } });
+      Promise.resolve({
+        botToken: "xoxb-other",
+        workspace: { id: 2, limits: { "slack-agent": true } },
+      });
 
     await signAndPost(app, {
       type: "block_actions",
@@ -475,7 +484,7 @@ describe("registry-runner execution paths", () => {
     slackTestState.resolveWorkspace = () =>
       Promise.resolve({
         botToken: "xoxb-fallback",
-        workspace: { id: workspace.id },
+        workspace: { id: workspace.id, limits: { "slack-agent": true } },
       });
     slackTestState.usersInfoImpl = () =>
       Promise.resolve({
