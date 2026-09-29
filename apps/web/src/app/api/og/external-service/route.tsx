@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 
 import { ImageResponse } from "next/og";
 
-import { isStale } from "../../../(landing)/status/utils";
+import { getComponentFullName, isStale } from "../../../(landing)/status/utils";
 import {
   getComponentEscalation,
   getServiceEscalation,
@@ -133,6 +133,7 @@ export async function GET(req: Request) {
   if (componentResult?.service && componentResult.component) {
     const { service, component } = componentResult;
     isDetail = true;
+    const fullName = getComponentFullName(service.name, component.name);
     const esc = await getComponentEscalation({
       serviceId: service.id,
       componentId: component.id,
@@ -145,8 +146,8 @@ export async function GET(req: Request) {
     category = content.label;
     categoryDot = content.bg;
     title = esc.escalated
-      ? `Users reporting issues with ${service.name} ${component.name}`
-      : `Is ${service.name} ${component.name} down?`;
+      ? `Users reporting issues with ${fullName}`
+      : `Is ${fullName} down?`;
     description = "";
     footer = `${FOOTER}/${service.slug}/${component.slug}`;
   } else {
