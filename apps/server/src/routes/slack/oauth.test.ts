@@ -49,7 +49,8 @@ describe("slack manifest", () => {
     );
   });
 
-  test("subscribes to the events the handler acts on", () => {
+  // Subscribed ahead of their handlers so workspaces reconnect only once.
+  test("subscribes to every event the incident stack needs", () => {
     for (const event of [
       "app_uninstalled",
       "tokens_revoked",

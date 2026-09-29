@@ -13,6 +13,7 @@ describe("missingSlackScopes", () => {
       "app_mentions:read,assistant:write,channels:history,channels:join,chat:write,commands,groups:history,groups:read,groups:write,im:history,users:read,users:read.email";
     expect(missingSlackScopes(old)).toEqual([
       "channels:manage",
+      "channels:read",
       "channels:write.invites",
       "pins:write",
       "reactions:read",

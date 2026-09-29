@@ -1,4 +1,4 @@
-import { and, db, desc, eq } from "@openstatus/db";
+import { and, db, desc, eq, sql } from "@openstatus/db";
 import {
   integration,
   selectWorkspaceSchema,
@@ -17,6 +17,17 @@ export interface SlackWorkspace {
   scopes?: string;
 }
 
+function parseScopes(raw: string | null): string {
+  try {
+    return (
+      integrationDataSchema.safeParse(JSON.parse(raw ?? "{}")).data?.scopes ??
+      ""
+    );
+  } catch {
+    return "";
+  }
+}
+
 interface IntegrationCredential {
   botToken: string;
   botUserId: string;
@@ -29,7 +40,8 @@ export async function resolveWorkspace(
     .select({
       workspaceId: integration.workspaceId,
       credential: integration.credential,
-      data: integration.data,
+      // Raw text: the JSON-mode column throws on a malformed legacy row.
+      rawData: sql<string | null>`${integration.data}`,
     })
     .from(integration)
     .where(
@@ -64,6 +76,6 @@ export async function resolveWorkspace(
     workspace: parsed.data,
     botToken: credential.botToken,
     botUserId: credential.botUserId ?? "",
-    scopes: integrationDataSchema.safeParse(row.data).data?.scopes ?? "",
+    scopes: parseScopes(row.rawData),
   };
 }

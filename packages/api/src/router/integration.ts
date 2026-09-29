@@ -36,8 +36,10 @@ export const integrationRouter = createTRPCRouter({
       return integrations.map((i) => ({
         ...i,
         missingScopes:
-          i.name === "slack-agent" && typeof i.data.scopes === "string"
-            ? missingSlackScopes(i.data.scopes)
+          i.name === "slack-agent"
+            ? missingSlackScopes(
+                typeof i.data.scopes === "string" ? i.data.scopes : undefined,
+              )
             : [],
       }));
     } catch (err) {
