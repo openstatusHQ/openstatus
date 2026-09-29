@@ -32,7 +32,7 @@ describe("resolveChatModel", () => {
   test("gateway path: paid plan resolves the stronger model string", () => {
     process.env.AI_GATEWAY_API_KEY = "gw-key";
     expect(resolveChatModel({ plan: "team" })).toBe(
-      "anthropic/claude-sonnet-4.5",
+      "anthropic/claude-sonnet-5",
     );
   });
 
