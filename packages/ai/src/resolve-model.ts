@@ -6,7 +6,7 @@ import type { LanguageModel } from "ai";
 // bare model strings. Free workspaces get the cheaper model because we pay for
 // their inference; this tiering applies ONLY to the gateway path.
 const GATEWAY_MODEL_FREE = "anthropic/claude-haiku-4.5";
-const GATEWAY_MODEL_PAID = "anthropic/claude-sonnet-4.5";
+const GATEWAY_MODEL_PAID = "anthropic/claude-sonnet-5";
 
 // `||` (not `??`) so empty / whitespace-only env values fall back instead of
 // being passed through as a real value.
