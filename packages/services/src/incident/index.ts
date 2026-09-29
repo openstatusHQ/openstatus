@@ -9,6 +9,7 @@ export {
   unlinkIncidentStatusReport,
 } from "./link-status-report";
 export { listIncidentEvents } from "./list-events";
+export { clearIncidentCommander } from "./members";
 export { getIncident, listIncidents } from "./list";
 export {
   AddIncidentNoteInput,

@@ -9,6 +9,7 @@ import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError, NotFoundError } from "../errors";
+import { linkIncidentStatusReport } from "../incident/link-status-report";
 import type { StatusReport, StatusReportUpdate } from "../types";
 import {
   insertUpdateComponentImpacts,
@@ -109,6 +110,13 @@ export async function createStatusReport(args: {
       after: withComponentImpacts(initialUpdate, componentImpacts),
       metadata: { statusReportId: newReport.id },
     });
+
+    if (input.incidentId !== undefined) {
+      await linkIncidentStatusReport({
+        ctx: { ...ctx, db: tx },
+        input: { id: input.incidentId, statusReportId: newReport.id },
+      });
+    }
 
     return { statusReport: newReport, initialUpdate };
   });

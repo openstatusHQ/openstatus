@@ -22,10 +22,12 @@ import {
   PreconditionFailedError,
   UnauthorizedError,
 } from "../errors";
+import { clearIncidentCommander } from "../incident/members";
 import { deleteMonitors } from "../monitor/delete";
 import { deleteNotification } from "../notification/delete";
 import { revokeGrantsForUser } from "../oauth/revoke";
 import { deletePage } from "../page/delete";
+import { deleteSlackUserMappings } from "../slack-user/internal";
 import { DeleteAccountInput } from "./schemas";
 
 /**
@@ -166,6 +168,20 @@ export async function deleteAccount(args: {
     }
 
     await revokeGrantsForUser({ tx, ctx, userId, reason: "account_deleted" });
+
+    const memberships = await tx.query.usersToWorkspaces.findMany({
+      where: eq(usersToWorkspaces.userId, userId),
+      with: { workspace: true },
+    });
+    for (const { workspace: rawWorkspace } of memberships) {
+      const subCtx: ServiceContext = {
+        ...ctx,
+        workspace: selectWorkspaceSchema.parse(rawWorkspace),
+        db: tx,
+      };
+      await clearIncidentCommander({ tx, ctx: subCtx, userId });
+      await deleteSlackUserMappings({ tx, ctx: subCtx, where: { userId } });
+    }
 
     await tx
       .delete(usersToWorkspaces)
