@@ -9,7 +9,7 @@ export const locales = [
   "hi",
   "ko",
   "ja",
-  "zh",
+  "zh-CN",
 ] as const;
 
 export type Locale = (typeof locales)[number];
@@ -24,7 +24,7 @@ export const localeDetails: Record<Locale, { name: string; flag: string }> = {
   hi: { name: "हिंदी", flag: "🇮🇳" },
   ko: { name: "한국어", flag: "🇰🇷" },
   ja: { name: "日本語", flag: "🇯🇵" },
-  zh: { name: "简体中文", flag: "🇨🇳" },
+  "zh-CN": { name: "简体中文", flag: "🇨🇳" },
 };
 
 export const dateFnsLocales: Record<Locale, DateFnsLocale> = {
@@ -35,5 +35,5 @@ export const dateFnsLocales: Record<Locale, DateFnsLocale> = {
   hi,
   ko,
   ja,
-  zh: zhCN,
+  "zh-CN": zhCN,
 };

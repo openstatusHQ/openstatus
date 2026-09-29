@@ -1239,12 +1239,12 @@ describe("StatusPageService locale fields", () => {
       .where(eq(page.id, testPageToUpdateId));
   });
 
-  test("returns distinct enum values for tr, hi, ko, ja and zh", async () => {
+  test("returns distinct enum values for tr, hi, ko, ja and zh-CN", async () => {
     await db
       .update(page)
       .set({
         defaultLocale: "ja",
-        locales: ["en", "tr", "hi", "ko", "ja", "zh"],
+        locales: ["en", "tr", "hi", "ko", "ja", "zh-CN"],
       })
       .where(eq(page.id, testPageId));
 
@@ -1264,7 +1264,7 @@ describe("StatusPageService locale fields", () => {
       "LOCALE_HI",
       "LOCALE_KO",
       "LOCALE_JA",
-      "LOCALE_ZH",
+      "LOCALE_ZH_CN",
     ]);
 
     // Restore defaults
@@ -1274,7 +1274,7 @@ describe("StatusPageService locale fields", () => {
       .where(eq(page.id, testPageId));
   });
 
-  test("round-trips tr, hi, ko, ja and zh through update", async () => {
+  test("round-trips tr, hi, ko, ja and zh-CN through update", async () => {
     const res = await connectRequest(
       "UpdateStatusPage",
       {
@@ -1285,7 +1285,7 @@ describe("StatusPageService locale fields", () => {
           "LOCALE_HI",
           "LOCALE_KO",
           "LOCALE_JA",
-          "LOCALE_ZH",
+          "LOCALE_ZH_CN",
         ],
       },
       { "x-openstatus-key": "1" },
@@ -1300,7 +1300,7 @@ describe("StatusPageService locale fields", () => {
       "LOCALE_HI",
       "LOCALE_KO",
       "LOCALE_JA",
-      "LOCALE_ZH",
+      "LOCALE_ZH_CN",
     ]);
 
     const stored = await db
@@ -1309,7 +1309,7 @@ describe("StatusPageService locale fields", () => {
       .where(eq(page.id, testPageToUpdateId))
       .get();
     expect(stored?.defaultLocale).toBe("tr");
-    expect(stored?.locales).toEqual(["tr", "hi", "ko", "ja", "zh"]);
+    expect(stored?.locales).toEqual(["tr", "hi", "ko", "ja", "zh-CN"]);
 
     // Restore defaults
     await db
