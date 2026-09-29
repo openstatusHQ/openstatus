@@ -62,3 +62,22 @@ export async function getIncident(args: {
     },
   });
 }
+
+/** The incident a status report communicates, if any. */
+export async function getIncidentForStatusReport(args: {
+  ctx: ServiceContext;
+  input: { statusReportId: number };
+}) {
+  const { ctx } = args;
+  requireIncidentFeature(ctx);
+  return getReadDb(ctx)
+    .select({ id: incident.id, title: incident.title, status: incident.status })
+    .from(incident)
+    .where(
+      and(
+        eq(incident.workspaceId, ctx.workspace.id),
+        eq(incident.statusReportId, args.input.statusReportId),
+      ),
+    )
+    .get();
+}

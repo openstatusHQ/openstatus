@@ -32,6 +32,7 @@ const createStatusReportTRPCInput = z.object({
   date: z.coerce.date(),
   message: z.string(),
   notifySubscribers: z.boolean().nullish(),
+  incidentId: z.number().int().optional(),
 });
 
 const createStatusReportUpdateTRPCInput = z.object({
@@ -77,6 +78,7 @@ export const statusReportRouter = createTRPCRouter({
             componentImpacts: input.componentImpacts ?? undefined,
             date: input.date,
             message: input.message,
+            incidentId: input.incidentId,
           },
         });
         // Notification is a separate, client-driven step
