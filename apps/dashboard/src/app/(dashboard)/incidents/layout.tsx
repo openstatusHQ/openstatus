@@ -4,7 +4,7 @@ import {
   AppHeaderContent,
 } from "@/components/nav/app-header";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
-import { HydrateClient } from "@/lib/trpc/server";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
 import { Breadcrumb } from "./breadcrumb";
 import { NavActions } from "./nav-actions";
@@ -14,6 +14,10 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
+  const queryClient = getQueryClient();
+  // Throws FORBIDDEN without the feature; prefetchQuery swallows it.
+  await queryClient.prefetchQuery(trpc.incident.list.queryOptions());
+
   return (
     <HydrateClient>
       <AppHeader>
