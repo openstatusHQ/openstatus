@@ -31,14 +31,20 @@ describe("isFeatureEnabled", () => {
 
 describe("requireFeature", () => {
   test("throws ForbiddenError when disabled", () => {
+    // The package test script enables the feature globally; clear it here.
     const processEnv: Record<string, string | undefined> = process.env;
-    if (processEnv.OPENSTATUS_FEATURES?.includes("slack-agent")) return;
-    const workspace = { id: 987654321 } as Workspace;
-    expect(() =>
-      requireFeature(
-        { workspace, actor: { type: "system", job: "test" } },
-        "slack-agent",
-      ),
-    ).toThrow(ForbiddenError);
+    const saved = processEnv.OPENSTATUS_FEATURES;
+    delete processEnv.OPENSTATUS_FEATURES;
+    try {
+      const workspace = { id: 987654321 } as Workspace;
+      expect(() =>
+        requireFeature(
+          { workspace, actor: { type: "system", job: "test" } },
+          "incident-management",
+        ),
+      ).toThrow(ForbiddenError);
+    } finally {
+      if (saved !== undefined) processEnv.OPENSTATUS_FEATURES = saved;
+    }
   });
 });

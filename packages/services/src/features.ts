@@ -3,7 +3,6 @@ import { ForbiddenError } from "./errors";
 import type { Workspace } from "./types";
 
 const featureWorkspaces = {
-  "slack-agent": [1, 6850],
   "incident-management": [1, 6850],
 } satisfies Record<string, ReadonlyArray<number>>;
 
