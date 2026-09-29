@@ -19,7 +19,11 @@ function createTestApp() {
   return app;
 }
 
-function signToken(data: { workspaceId: number; ts: number }): string {
+function signToken(data: {
+  workspaceId: number;
+  userId?: number;
+  ts: number;
+}): string {
   const payload = JSON.stringify(data);
   const signature = crypto
     .createHmac("sha256", SIGNING_SECRET)
@@ -29,11 +33,11 @@ function signToken(data: { workspaceId: number; ts: number }): string {
 }
 
 function encodeState(state: { workspaceId: number; ts: number }): string {
-  return signToken(state);
+  return signToken({ userId: 1, ...state });
 }
 
 function makeInstallToken(workspaceId: number): string {
-  return signToken({ workspaceId, ts: Date.now() });
+  return signToken({ workspaceId, userId: 1, ts: Date.now() });
 }
 
 describe("handleSlackInstall", () => {
@@ -72,6 +76,7 @@ describe("handleSlackInstall", () => {
   test("returns 403 for expired token", async () => {
     const expired = signToken({
       workspaceId: 1,
+      userId: 1,
       ts: Date.now() - 10 * 60 * 1000,
     });
     const res = await app.request(`/slack/install?token=${expired}`);
@@ -164,7 +169,11 @@ describe("handleSlackOAuthCallback", () => {
   });
 
   test("returns 400 for tampered state", async () => {
-    const payload = JSON.stringify({ workspaceId: 1, ts: Date.now() });
+    const payload = JSON.stringify({
+      workspaceId: 1,
+      userId: 1,
+      ts: Date.now(),
+    });
     const tamperedState = Buffer.from(`${payload}.invalidsignature`).toString(
       "base64url",
     );

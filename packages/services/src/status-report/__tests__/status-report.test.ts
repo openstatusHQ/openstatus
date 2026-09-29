@@ -759,6 +759,7 @@ describe("slack actor path", () => {
         ...makeSlackCtx(teamCtx.workspace, {
           teamId: "T123",
           slackUserId: "U123",
+          userId: 1,
         }),
         db: tx,
       };

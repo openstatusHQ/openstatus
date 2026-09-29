@@ -80,6 +80,7 @@ describe("requireScope", () => {
       type: "slack",
       teamId: "T1",
       slackUserId: "U1",
+      userId: 1,
     });
     expect(() => requireScope(ctx, "write")).not.toThrow();
   });

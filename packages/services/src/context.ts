@@ -17,9 +17,9 @@ export type Actor =
   | { type: "user"; userId: number }
   | { type: "apiKey"; keyId: string; userId?: number; scopes: Scope[] }
   | { type: "mcp"; keyId: string; userId?: number; scopes: Scope[] }
-  // `userId`: the member whose email matches the Slack profile (or the
-  // installing user during OAuth). Adapters resolve it before any write.
-  | { type: "slack"; teamId: string; slackUserId: string; userId?: number }
+  // `userId`: the linked member (`slack_user`), or the installing user during
+  // OAuth. Unlinked Slack users never reach a service call.
+  | { type: "slack"; teamId: string; slackUserId: string; userId: number }
   | { type: "system"; job: string }
   | { type: "webhook"; source: string; externalId?: string }
   | { type: "subscriber"; subscriberId: number };
@@ -119,16 +119,15 @@ export function extractActorId(actor: Actor): string {
 /**
  * Return the openstatus `user.id` attributable to this actor, or `null`
  * when none is available. Used by mutations that stamp a `*_by` column.
- * `slack` and `apiKey` actors may carry an optional linked userId once
- * the corresponding mapping layers exist.
  */
 export function tryGetActorUserId(actor: Actor): number | null {
   switch (actor.type) {
     case "user":
       return actor.userId;
+    case "slack":
+      return actor.userId;
     case "apiKey":
     case "mcp":
-    case "slack":
       return actor.userId ?? null;
     case "system":
     case "webhook":

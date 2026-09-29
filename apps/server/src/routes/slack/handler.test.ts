@@ -11,6 +11,7 @@ import {
   withSlackConfig,
 } from "@/libs/test/slack-config";
 
+import { settleBackgroundTasks } from "./background";
 import type { SlackEnv } from "./config";
 import {
   handleSlackEvent,
@@ -50,8 +51,25 @@ function signAndPost(
   });
 }
 
+// Generous: the member gate hits the DB, which is slow under `--parallel`.
+async function waitForCall(method: string, timeoutMs = 5000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const call = slackTestState.calls.find((m) => m.method === method);
+    if (call) return call;
+    await new Promise((r) => setTimeout(r, 10));
+  }
+  return undefined;
+}
+
 function resetSlackTestState() {
   slackTestState.calls = [];
+  // The seeded member of workspace 1, so every test user is linked.
+  slackTestState.usersInfoImpl = () =>
+    Promise.resolve({
+      ok: true,
+      user: { profile: { email: "ping@openstatus.dev" } },
+    });
   slackTestState.postMessageOverride = null;
   slackTestState.updateOverride = null;
   slackTestState.postEphemeralOverride = null;
@@ -154,17 +172,16 @@ describe("handleSlackEvent", () => {
     });
 
     expect(res.status).toBe(200);
-    await new Promise((r) => setTimeout(r, 50));
-
-    const publish = slackTestState.calls.find(
-      (m) => m.method === "views.publish",
-    );
+    const publish = await waitForCall("views.publish");
     expect(publish).toBeDefined();
     expect((publish?.args.view as { type: string }).type).toBe("home");
     expect(publish?.args.user_id).toBe("U1");
   });
 
   test("ignores app_home_opened for the messages tab", async () => {
+    // Earlier tests' events may still be posting; only this one's calls count.
+    await settleBackgroundTasks();
+    slackTestState.calls = [];
     const res = await signAndPost(app, {
       type: "event_callback",
       team_id: "T_KNOWN",
@@ -177,7 +194,7 @@ describe("handleSlackEvent", () => {
     });
 
     expect(res.status).toBe(200);
-    await new Promise((r) => setTimeout(r, 50));
+    await settleBackgroundTasks();
     expect(slackTestState.calls.length).toBe(0);
   });
 
@@ -1412,7 +1429,7 @@ describe("greeting on first contact", () => {
 
   test("greets when the Messages tab is opened", async () => {
     await homeOpened("messages");
-    await new Promise((r) => setTimeout(r, 50));
+    await settleBackgroundTasks();
 
     expect(welcomes()).toHaveLength(1);
     // Top-level in the DM: the agent experience has no thread to greet into.
@@ -1421,25 +1438,25 @@ describe("greeting on first contact", () => {
 
   test("greets a person once, however often they open it", async () => {
     await homeOpened("messages");
-    await new Promise((r) => setTimeout(r, 50));
+    await settleBackgroundTasks();
     await homeOpened("messages");
-    await new Promise((r) => setTimeout(r, 50));
+    await settleBackgroundTasks();
 
     expect(welcomes()).toHaveLength(1);
   });
 
   test("greets each person separately", async () => {
     await homeOpened("messages", "U1");
-    await new Promise((r) => setTimeout(r, 50));
+    await settleBackgroundTasks();
     await homeOpened("messages", "U2");
-    await new Promise((r) => setTimeout(r, 50));
+    await settleBackgroundTasks();
 
     expect(welcomes()).toHaveLength(2);
   });
 
   test("publishes the home view on the Home tab without greeting", async () => {
     await homeOpened("home");
-    await new Promise((r) => setTimeout(r, 50));
+    await settleBackgroundTasks();
 
     expect(slackTestState.calls.some((m) => m.method === "views.publish")).toBe(
       true,
@@ -1452,7 +1469,7 @@ describe("greeting on first contact", () => {
       Promise.reject(new Error("channel_not_found"));
 
     await homeOpened("messages");
-    await new Promise((r) => setTimeout(r, 50));
+    await settleBackgroundTasks();
 
     // Otherwise a transient failure costs them the greeting permanently.
     expect(redisStore.has("slack:greeted:T_KNOWN:U1")).toBe(false);
@@ -1653,5 +1670,116 @@ describe("confirmation cards", () => {
     expect(
       slackTestState.calls.filter((m) => m.method === "postMessage").length,
     ).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("members only", () => {
+  const app = createTestApp();
+  const redisStore = (globalThis as Record<string, unknown>)
+    .__testRedisStore as Map<string, string>;
+
+  beforeEach(() => {
+    resetSlackTestState();
+    slackTestState.usersInfoImpl = () =>
+      Promise.resolve({ ok: true, user: { profile: {} } });
+  });
+
+  const unlinked = () => `U_UNLINKED_${crypto.randomUUID()}`;
+  let agentRuns = 0;
+
+  test("a mention from an unlinked user gets a link card, not an answer", async () => {
+    agentRuns = 0;
+    slackTestState.runAgentOverride = () => {
+      agentRuns++;
+      return Promise.resolve({
+        text: "should not run",
+        toolResults: [],
+        finishReason: "stop",
+        stepCount: 1,
+        hitStepLimit: false,
+        aborted: false,
+      });
+    };
+    const user = unlinked();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_unlinked_${Date.now()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> what is down?",
+        user,
+        channel: "C1",
+        channel_type: "channel",
+        ts: `${Date.now()}.71`,
+      },
+    });
+    const card = await waitForCall("postEphemeral");
+    expect(card?.args.user).toBe(user);
+    expect(String(card?.args.text)).toContain("Link your openstatus account");
+    const blocks = card?.args.blocks as {
+      type: string;
+      elements?: { url?: string }[];
+    }[];
+    const url = blocks.find((b) => b.type === "actions")?.elements?.[0]
+      ?.url as string;
+    expect(url).toContain("/settings/integrations/slack/link?token=");
+    expect(agentRuns).toBe(0);
+  });
+
+  test("the link card is sent once per window on passive surfaces", async () => {
+    const user = unlinked();
+    for (const suffix of ["81", "82"]) {
+      await signAndPost(app, {
+        type: "event_callback",
+        team_id: "T_KNOWN",
+        event_id: `evt_unlinked_twice_${suffix}_${Date.now()}`,
+        event: {
+          type: "app_mention",
+          text: "<@UBOT> hello",
+          user,
+          channel: "C1",
+          channel_type: "channel",
+          ts: `${Date.now()}.${suffix}`,
+        },
+      });
+      await settleBackgroundTasks();
+    }
+    expect(
+      slackTestState.calls.filter((c) => c.method === "postEphemeral"),
+    ).toHaveLength(1);
+    expect(redisStore.has(`slack:linkcard:T_KNOWN:${user}`)).toBe(true);
+  });
+
+  test("an unlinked user in the agent pane gets the card in the thread", async () => {
+    const user = unlinked();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_unlinked_im_${Date.now()}`,
+      event: {
+        type: "message",
+        text: "hi",
+        user,
+        channel: "D1",
+        channel_type: "im",
+        ts: `${Date.now()}.91`,
+      },
+    });
+    const card = await waitForCall("postMessage");
+    expect(String(card?.args.text)).toContain("Link your openstatus account");
+    expect(card?.args.channel).toBe("D1");
+  });
+
+  test("the home tab shows the link view to an unlinked user", async () => {
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_unlinked_home_${Date.now()}`,
+      event: { type: "app_home_opened", tab: "home", user: unlinked() },
+    });
+    const publish = await waitForCall("views.publish");
+    const view = publish?.args.view as { blocks: { type: string }[] };
+    expect(view.blocks.some((b) => b.type === "actions")).toBe(true);
   });
 });

@@ -6,18 +6,16 @@ import {
 import type { ServiceContext } from "@openstatus/services";
 
 import type { PendingAction } from "./confirmation-store";
+import type { SlackActor } from "./require-slack-member";
 
 /**
  * Build a `ServiceContext` for a Slack-originated action. Loads the
  * workspace fresh since `PendingAction` only stores its id, and we want
  * services to see the latest plan/limits state at execution time.
- * `userId` is the member the caller resolved from the Slack email, if any.
  */
 export async function toServiceCtx(args: {
   pending: PendingAction;
-  slackUserId: string;
-  teamId: string | undefined;
-  userId?: number;
+  actor: SlackActor;
   requestId?: string;
 }): Promise<ServiceContext> {
   const row = await db
@@ -32,12 +30,7 @@ export async function toServiceCtx(args: {
   }
   return {
     workspace: selectWorkspaceSchema.parse(row),
-    actor: {
-      type: "slack",
-      teamId: args.teamId ?? "",
-      slackUserId: args.slackUserId,
-      userId: args.userId,
-    },
+    actor: args.actor,
     requestId: args.requestId,
   };
 }

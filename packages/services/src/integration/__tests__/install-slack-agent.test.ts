@@ -25,6 +25,7 @@ beforeAll(async () => {
   ctx = makeSlackCtx(team.workspace, {
     teamId: TEAM_ID,
     slackUserId: SLACK_USER_ID,
+    userId: team.userId,
   });
 });
 

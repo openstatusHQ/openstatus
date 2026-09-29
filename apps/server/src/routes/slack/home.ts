@@ -1,6 +1,8 @@
 import type { WebClient } from "@slack/web-api";
 import type { KnownBlock } from "@slack/web-api";
 
+import { buildLinkAccountBlocks } from "./blocks";
+
 export const DOCS_URL = "https://www.openstatus.dev/docs";
 
 export function buildHomeBlocks(): KnownBlock[] {
@@ -50,5 +52,16 @@ export async function publishHomeView(
   await slack.views.publish({
     user_id: userId,
     view: { type: "home", blocks: buildHomeBlocks() },
+  });
+}
+
+export async function publishLinkAccountView(
+  slack: WebClient,
+  userId: string,
+  url: string,
+): Promise<void> {
+  await slack.views.publish({
+    user_id: userId,
+    view: { type: "home", blocks: buildLinkAccountBlocks(url) },
   });
 }

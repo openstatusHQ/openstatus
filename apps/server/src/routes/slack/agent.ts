@@ -6,6 +6,7 @@ import type { ModelMessage, Tool } from "ai";
 import { tb } from "@/libs/clients";
 
 import { buildSlackTools } from "./registry-runner";
+import type { SlackActor } from "./require-slack-member";
 import { buildSystemPrompt } from "./system-prompt";
 
 // Vercel AI Gateway model id (`anthropic/<model>`). Override via
@@ -83,25 +84,11 @@ export async function runAgent(
   workspace: Workspace,
   thread: SlackThreadMessage[],
   botUserId: string,
-  userText?: string,
-  origin?: {
-    slackUserId: string;
-    teamId: string | undefined;
-    /** Member matched by Slack email; reads run without it, approvals require it. */
-    userId?: number;
-  },
+  userText: string | undefined,
+  actor: SlackActor,
   options?: AgentOptions,
 ): Promise<AgentResult> {
-  const ctx: ServiceContext = {
-    workspace,
-    actor: {
-      type: "slack",
-      teamId: origin?.teamId ?? "",
-      slackUserId: origin?.slackUserId ?? "",
-      userId: origin?.userId,
-    },
-    tb,
-  };
+  const ctx: ServiceContext = { workspace, actor, tb };
   const tools = buildSlackTools(ctx, options?.tools);
   let messages = convertThreadToMessages(thread, botUserId);
 

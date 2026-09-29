@@ -20,6 +20,9 @@ import {
   createSlackUserMapping,
   deleteSlackUserMappings,
   getSlackUserMapping,
+  listSlackUserMappings,
+  signSlackLinkToken,
+  verifySlackLinkToken,
 } from "../index";
 
 let workspace: Workspace;
@@ -143,6 +146,74 @@ describe("slack user mapping", () => {
           input: { teamId: "T5", slackUserId: "U5" },
         }),
       ).toBeNull();
+    });
+  });
+});
+
+describe("link token", () => {
+  const secret = "test-secret";
+  const input = { workspaceId: 1, teamId: "T1", slackUserId: "U1" };
+
+  test("round-trips", async () => {
+    const token = await signSlackLinkToken(secret, input);
+    expect(await verifySlackLinkToken(secret, token)).toMatchObject(input);
+  });
+
+  test("rejects a wrong secret", async () => {
+    const token = await signSlackLinkToken(secret, input);
+    expect(await verifySlackLinkToken("other", token)).toBeNull();
+  });
+
+  test("rejects a tampered payload", async () => {
+    const token = await signSlackLinkToken(secret, input);
+    const [, sig] = token.split(".");
+    const forged = btoa(
+      JSON.stringify({
+        kind: "slack-link",
+        ...input,
+        workspaceId: 2,
+        ts: Date.now(),
+      }),
+    )
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+    expect(await verifySlackLinkToken(secret, `${forged}.${sig}`)).toBeNull();
+  });
+
+  test("expires after 10 minutes", async () => {
+    const issued = Date.now() - 11 * 60 * 1000;
+    const token = await signSlackLinkToken(secret, input, issued);
+    expect(await verifySlackLinkToken(secret, token)).toBeNull();
+  });
+
+  test("tolerates a signer clock slightly ahead, not far ahead", async () => {
+    const now = Date.now();
+    const ahead = await signSlackLinkToken(secret, input, now + 5_000);
+    expect(await verifySlackLinkToken(secret, ahead, now)).toMatchObject(input);
+    const farAhead = await signSlackLinkToken(secret, input, now + 60_000);
+    expect(await verifySlackLinkToken(secret, farAhead, now)).toBeNull();
+  });
+});
+
+describe("list", () => {
+  test("a user lists their own linked accounts, not others'", async () => {
+    const other = await createUser();
+    await addUserToWorkspace(other.id, workspace.id, "member");
+    await withTestTransaction(async (tx) => {
+      const system = { ...makeSystemCtx(workspace, { job: "test" }), db: tx };
+      const mine = await createSlackUserMapping({
+        ctx: system,
+        input: { teamId: "T6", slackUserId: "U6", userId: memberId },
+      });
+      const theirs = await createSlackUserMapping({
+        ctx: system,
+        input: { teamId: "T6", slackUserId: "U7", userId: other.id },
+      });
+      const ctx = { ...makeUserCtx(workspace, { userId: memberId }), db: tx };
+      const ids = (await listSlackUserMappings({ ctx })).map((r) => r.id);
+      expect(ids).toContain(mine.id);
+      expect(ids).not.toContain(theirs.id);
     });
   });
 });
