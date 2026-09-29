@@ -3,6 +3,7 @@
 import { Agent } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useMemo } from "react";
 
 import { NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
@@ -18,7 +19,8 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { Section } from "@/components/content/section";
-import { columns } from "@/components/data-table/overview-events/columns";
+import { columns as incidentColumns } from "@/components/data-table/managed-incidents/columns";
+import { getColumns } from "@/components/data-table/overview-events/columns";
 import {
   MetricCard,
   MetricCardGroup,
@@ -29,6 +31,7 @@ import {
 } from "@/components/metric/metric-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { buildOverviewData } from "@/data/overview-events.client";
+import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { CreateEventButtonGroup } from "./create-event-button-group";
@@ -46,6 +49,15 @@ export default function Page() {
     trpc.statusReport.list.queryOptions({}),
   );
   const { data: maintenances } = useQuery(trpc.maintenance.list.queryOptions());
+  const incidentsEnabled = useFeature("incident-management");
+  const { data: openIncidents } = useQuery({
+    ...trpc.incident.list.queryOptions({ status: ["open", "mitigated"] }),
+    enabled: incidentsEnabled,
+  });
+  const columns = useMemo(
+    () => getColumns({ declare: incidentsEnabled }),
+    [incidentsEnabled],
+  );
 
   if (!monitors || !pages || !incidents || !statusReports || !maintenances)
     return null;
@@ -107,6 +119,17 @@ export default function Page() {
           })}
         </MetricCardGroup>
       </Section>
+      {openIncidents?.length ? (
+        <Section>
+          <SectionHeader>
+            <SectionTitle>Open Incidents</SectionTitle>
+            <SectionDescription>
+              Incidents your team is responding to.
+            </SectionDescription>
+          </SectionHeader>
+          <DataTable columns={incidentColumns} data={openIncidents} />
+        </Section>
+      ) : null}
       <Section>
         <SectionHeader>
           <SectionTitle>Needs Attention</SectionTitle>
