@@ -42,7 +42,15 @@ export {
   emitAudit,
 } from "./audit";
 
-export { matchesScope, requireScope } from "./auth";
+export { matchesScope, requireRole, requireScope } from "./auth";
+
+export {
+  enabledFeatures,
+  FEATURES,
+  type Feature,
+  isFeatureEnabled,
+  requireFeature,
+} from "./features";
 
 export {
   LIMIT_KEYS,

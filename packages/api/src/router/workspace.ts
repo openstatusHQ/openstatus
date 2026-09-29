@@ -1,4 +1,5 @@
 import { Events } from "@openstatus/analytics";
+import { enabledFeatures } from "@openstatus/services";
 import {
   getTrialDaysLeft,
   getWorkspaceUsage,
@@ -17,6 +18,7 @@ export const workspaceRouter = createTRPCRouter({
   get: protectedProcedure.query(({ ctx }) => ({
     ...ctx.workspace,
     trialDaysLeft: getTrialDaysLeft(ctx.workspace.trialEndsAt),
+    features: enabledFeatures(ctx.workspace),
   })),
 
   usage: protectedProcedure.query(async ({ ctx }) => {

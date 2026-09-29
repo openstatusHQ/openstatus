@@ -113,6 +113,10 @@
       "import": "./src/private-location/index.ts",
       "types": "./src/private-location/index.ts"
     },
+    "./slack-user": {
+      "import": "./src/slack-user/index.ts",
+      "types": "./src/slack-user/index.ts"
+    },
     "./page-access": {
       "import": "./src/page-access/index.ts",
       "types": "./src/page-access/index.ts"
