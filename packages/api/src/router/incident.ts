@@ -1,5 +1,6 @@
 import { Events } from "@openstatus/analytics";
 import { incidentStatus } from "@openstatus/db/src/schema/incidents/constants";
+import { sendIncidentCommander } from "@openstatus/emails";
 import {
   AddIncidentNoteInput,
   BindIncidentSlackChannelInput,
@@ -30,6 +31,37 @@ import { z } from "zod";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+
+const DASHBOARD_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://app.openstatus.dev"
+    : "http://localhost:3001";
+
+/** Best effort: a failed email never fails the mutation that assigned them. */
+async function notifyCommander(
+  ctx: Parameters<typeof toServiceCtx>[0],
+  incidentId: number,
+) {
+  try {
+    const row = await getIncident({
+      ctx: toServiceCtx(ctx),
+      input: { id: incidentId },
+    });
+    const commander = row?.commander;
+    if (!row || !commander?.email || commander.id === ctx.user.id) return;
+    await sendIncidentCommander({
+      to: commander.email,
+      incidentTitle: row.title,
+      severity: row.severity,
+      workspaceName: ctx.workspace.name ?? ctx.workspace.slug,
+      assignedBy: ctx.user.name || ctx.user.email || "A teammate",
+      url: `${DASHBOARD_URL}/incidents/${row.id}`,
+      idempotencyKey: `incident-commander:${row.id}:${commander.id}:${row.updatedAt.getTime()}`,
+    });
+  } catch (err) {
+    console.warn("incident commander email failed", { incidentId, err });
+  }
+}
 
 export const incidentRouter = createTRPCRouter({
   list: protectedProcedure
@@ -101,7 +133,9 @@ export const incidentRouter = createTRPCRouter({
     .input(DeclareIncidentInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await declareIncident({ ctx: toServiceCtx(ctx), input });
+        const row = await declareIncident({ ctx: toServiceCtx(ctx), input });
+        if (row.commanderId !== null) await notifyCommander(ctx, row.id);
+        return row;
       } catch (err) {
         toTRPCError(err);
       }
@@ -112,7 +146,18 @@ export const incidentRouter = createTRPCRouter({
     .input(UpdateIncidentInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await updateIncident({ ctx: toServiceCtx(ctx), input });
+        const before = await getIncident({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
+        });
+        const row = await updateIncident({ ctx: toServiceCtx(ctx), input });
+        if (
+          row.commanderId !== null &&
+          row.commanderId !== before?.commanderId
+        ) {
+          await notifyCommander(ctx, row.id);
+        }
+        return row;
       } catch (err) {
         toTRPCError(err);
       }

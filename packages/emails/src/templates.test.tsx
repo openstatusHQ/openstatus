@@ -13,6 +13,9 @@ import { renderMarkdown } from "../emails/_components/markdown";
 import { Pill } from "../emails/_components/pill";
 import { Steps } from "../emails/_components/steps";
 import { tones } from "../emails/_components/styles";
+import IncidentCommanderEmail, {
+  incidentCommanderSubject,
+} from "../emails/incident-commander";
 import MonitorAlertEmail, {
   type MonitorAlertProps,
   monitorAlertPreheader,
@@ -680,6 +683,9 @@ describe("every transactional template", () => {
     subscription: <PageSubscriptionEmail page="Acme" link="https://a.dev" />,
     magicLink: <StatusPageMagicLinkEmail page="Acme" link="https://a.dev" />,
     welcome: <WelcomeEmail trialEndsAt={new Date("2026-10-07T00:00:00Z")} />,
+    incidentCommander: (
+      <IncidentCommanderEmail {...IncidentCommanderEmail.PreviewProps} />
+    ),
   };
 
   for (const [name, element] of Object.entries(all)) {
@@ -705,5 +711,24 @@ describe("WelcomeEmail", () => {
 
     const withoutTrial = await render(<WelcomeEmail />, { plainText: true });
     expect(withoutTrial).not.toContain("trial");
+  });
+});
+
+describe("IncidentCommanderEmail", () => {
+  test("names the incident, the assigner and links to it", async () => {
+    const props = {
+      incidentTitle: "Checkout is failing",
+      severity: "critical" as const,
+      workspaceName: "Acme",
+      assignedBy: "Max",
+      url: "https://app.openstatus.dev/incidents/7",
+    };
+    const html = await render(<IncidentCommanderEmail {...props} />);
+    expect(html).toContain("Checkout is failing");
+    expect(html).toContain("Max made you the commander");
+    expect(html).toContain("https://app.openstatus.dev/incidents/7");
+    expect(incidentCommanderSubject(props)).toBe(
+      "You are commander of Checkout is failing",
+    );
   });
 });
