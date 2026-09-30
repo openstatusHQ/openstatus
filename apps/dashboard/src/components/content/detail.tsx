@@ -299,8 +299,7 @@ export function DetailSectionHeader({
 const detailSectionTitleVariants = cva("", {
   variants: {
     variant: {
-      label:
-        "text-muted-foreground text-xs font-light tracking-wide uppercase",
+      label: "text-muted-foreground text-xs font-light tracking-wide uppercase",
       heading: "text-base font-medium",
     },
   },
