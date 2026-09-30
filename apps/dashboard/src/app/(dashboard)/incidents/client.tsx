@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -13,11 +12,9 @@ import {
   SectionDescription,
   SectionGroup,
   SectionHeader,
-  SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
 import { columns } from "@/components/data-table/managed-incidents/columns";
-import { DeclareIncidentButton } from "@/components/incidents/declare-incident-button";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
@@ -46,20 +43,15 @@ export function Client() {
   return (
     <SectionGroup>
       <Section>
-        <SectionHeaderRow>
-          <SectionHeader>
-            <SectionTitle>Incidents</SectionTitle>
-            <SectionDescription>
-              Declare an incident when the team is responding to an outage: a
-              severity, a commander and a timeline, resolved and closed with a
-              postmortem. Monitor downtime is detected automatically and lives
-              on each monitor.
-            </SectionDescription>
-          </SectionHeader>
-          <DeclareIncidentButton>
-            <Button size="sm">Declare incident</Button>
-          </DeclareIncidentButton>
-        </SectionHeaderRow>
+        <SectionHeader>
+          <SectionTitle>Incidents</SectionTitle>
+          <SectionDescription>
+            Declare an incident when the team is responding to an outage: a
+            severity, a commander and a timeline, resolved and closed with a
+            postmortem. Monitor downtime is detected automatically and lives on
+            each monitor.
+          </SectionDescription>
+        </SectionHeader>
         {!incidents ? null : incidents.length === 0 ? (
           <EmptyStateContainer>
             <EmptyStateTitle>No incidents declared</EmptyStateTitle>
