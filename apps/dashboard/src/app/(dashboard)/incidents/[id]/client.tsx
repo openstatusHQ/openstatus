@@ -23,6 +23,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { IncidentComposer } from "@/components/incidents/incident-composer";
+import { IncidentPostmortem } from "@/components/incidents/incident-postmortem";
 import { IncidentProperties } from "@/components/incidents/incident-properties";
 import { IncidentStatusReport } from "@/components/incidents/incident-status-report";
 import { IncidentTimeline } from "@/components/incidents/incident-timeline";
@@ -100,6 +101,7 @@ export function Client({ id }: { id: number }) {
           <Tabs defaultValue="timeline" className="min-w-0">
             <TabsList>
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
+              <TabsTrigger value="postmortem">Postmortem</TabsTrigger>
             </TabsList>
             <TabsContent value="timeline" className="grid gap-6">
               {incident.closedAt === null ? (
@@ -109,6 +111,12 @@ export function Client({ id }: { id: number }) {
                 />
               ) : null}
               <IncidentTimeline events={events ?? []} />
+            </TabsContent>
+            <TabsContent value="postmortem">
+              <IncidentPostmortem
+                incident={incident}
+                agentAllowed={workspace?.limits["slack-agent"] === true}
+              />
             </TabsContent>
           </Tabs>
           <aside className="grid content-start gap-6">
