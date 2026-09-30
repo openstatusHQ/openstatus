@@ -44,6 +44,12 @@ const INCIDENT_TOOLS = new Set([
   "set_incident_status",
 ]);
 
+const postmortemOutput = z.object({
+  incidentId: z.number().int(),
+  status: z.string(),
+});
+const approveInput = z.object({ close: z.boolean().optional() });
+
 /** Slack side effects of an approved incident tool call. Best effort. */
 export async function afterIncidentTool(args: {
   ctx: ServiceContext;
@@ -57,6 +63,28 @@ export async function afterIncidentTool(args: {
   threadTs: string;
 }): Promise<void> {
   const { ctx, toolName, config } = args;
+  if (toolName === "approve_postmortem") {
+    const out = postmortemOutput.safeParse(args.output);
+    if (!out.success) return;
+    const close = approveInput.safeParse(args.input).data?.close !== false;
+    trackSlackIncident(ctx, "approved");
+    if (close) trackSlackIncident(ctx, "closed");
+    await announceIncidentChange({
+      ctx,
+      incidentId: out.data.incidentId,
+      text: close
+        ? `${who(ctx)} approved the postmortem and closed the incident.`
+        : `${who(ctx)} approved the postmortem.`,
+      clientFor: slackClientFor,
+      dashboardUrl: config.dashboardUrl,
+      archive: close,
+    }).catch(() => undefined);
+    return;
+  }
+  if (toolName === "draft_postmortem") {
+    trackSlackIncident(ctx, "postmortem", { draftedBy: "agent" });
+    return;
+  }
   if (!INCIDENT_TOOLS.has(toolName)) return;
   const output = incidentOutput.safeParse(args.output);
   if (!output.success) return;

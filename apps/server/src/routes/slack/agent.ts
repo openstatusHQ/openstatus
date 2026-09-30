@@ -5,16 +5,10 @@ import type { ModelMessage, Tool } from "ai";
 
 import { tb } from "@/libs/clients";
 
+import { SLACK_AGENT_MODEL } from "./model";
 import { buildSlackTools } from "./registry-runner";
 import type { SlackActor } from "./require-slack-member";
 import { buildSystemPrompt } from "./system-prompt";
-
-// Vercel AI Gateway model id (`anthropic/<model>`). Override via
-// SLACK_AGENT_MODEL when rolling out a new model version.
-const DEFAULT_MODEL = "anthropic/claude-sonnet-5";
-// `||` (not `??`) so empty / whitespace-only env values fall back to the
-// default rather than being passed through to `generateText`.
-const MODEL = process.env.SLACK_AGENT_MODEL?.trim() || DEFAULT_MODEL;
 
 interface SlackThreadMessage {
   user?: string;
@@ -110,7 +104,7 @@ export async function runAgent(
   const { events, signal, contextNote } = options ?? {};
 
   const result = streamText({
-    model: MODEL,
+    model: SLACK_AGENT_MODEL,
     system: buildSystemPrompt(workspace.name ?? "Unknown", contextNote, {
       incidentManagement: isFeatureEnabled(workspace, "incident-management"),
     }),

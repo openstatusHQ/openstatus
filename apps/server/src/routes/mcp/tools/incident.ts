@@ -7,6 +7,7 @@ import {
   addIncidentNoteTool,
   approvePostmortemTool,
   declareIncidentTool,
+  draftPostmortemTool,
   getIncidentTool,
   getPostmortemTool,
   listIncidentsTool,
@@ -30,6 +31,7 @@ export function registerIncidentTools(
     setIncidentStatusTool,
     addIncidentNoteTool,
     getPostmortemTool,
+    draftPostmortemTool,
     approvePostmortemTool,
   ]);
 }

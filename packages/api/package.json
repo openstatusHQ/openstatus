@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@libsql/client": "catalog:",
+    "@openstatus/ai": "workspace:*",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
@@ -50,6 +51,7 @@
     "@trpc/tanstack-react-query": "catalog:",
     "@unkey/api": "catalog:",
     "@vercel/blob": "catalog:",
+    "ai": "catalog:",
     "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
     "isomorphic-dompurify": "catalog:",
