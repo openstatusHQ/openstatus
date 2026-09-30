@@ -17,6 +17,7 @@ import {
   FormCardTitle,
   FormCardUpgrade,
 } from "@/components/forms/form-card";
+import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 const SERVER_URL =
@@ -30,6 +31,7 @@ interface SlackIntegrationCardProps {
     id: number;
     externalId: string;
     data: { teamName?: string };
+    missingScopes: string[];
   } | null;
 }
 
@@ -41,6 +43,9 @@ export function SlackIntegrationCard({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const isConnected = !!integration;
+  const incidents = useFeature("incident-management");
+  const needsReconnect =
+    incidents && (integration?.missingScopes.length ?? 0) > 0;
 
   const deleteIntegration = useMutation(
     trpc.integrationRouter.deleteIntegration.mutationOptions({
@@ -97,6 +102,21 @@ export function SlackIntegrationCard({
               <strong>{integration.data?.teamName ?? "Slack workspace"}</strong>
               . Only members with a linked Slack account can use it.
             </p>
+            {needsReconnect ? (
+              <div className="border-warning/40 flex items-center justify-between gap-2 rounded-md border p-2 text-sm">
+                <span className="text-warning">
+                  Reconnect Slack to enable incident channels.
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleInstall}
+                  disabled={generateToken.isPending}
+                >
+                  Reconnect
+                </Button>
+              </div>
+            ) : null}
             {linkedAccountsQuery.isPending ? (
               <p className="text-muted-foreground text-sm">
                 Loading linked accounts…

@@ -6,7 +6,10 @@ import {
   selectWorkspaceSchema,
   workspace as workspaceTable,
 } from "@openstatus/db/src/schema";
-import { installSlackAgent } from "@openstatus/services/integration";
+import {
+  installSlackAgent,
+  SLACK_BOT_SCOPES,
+} from "@openstatus/services/integration";
 import type { Context } from "hono";
 import { z } from "zod";
 
@@ -17,21 +20,7 @@ const logger = getLogger(["api-server", "slack", "oauth"]);
 const SLACK_OAUTH_URL = "https://slack.com/oauth/v2/authorize";
 const SLACK_TOKEN_URL = "https://slack.com/api/oauth.v2.access";
 
-const BOT_SCOPES = [
-  "app_mentions:read",
-  "assistant:write",
-  "channels:history",
-  "channels:join",
-  "chat:write",
-  "commands",
-  "groups:history",
-  "groups:read",
-  "groups:write",
-  "im:history",
-  // users.info + profile.email: attributes Slack actions to workspace members.
-  "users:read",
-  "users:read.email",
-].join(",");
+const BOT_SCOPES = SLACK_BOT_SCOPES.join(",");
 
 const oauthStateSchema = z.object({
   workspaceId: z.number().int(),

@@ -40,8 +40,8 @@
       {
         "command": "/openstatus",
         "url": "https://api.openstatus.dev/slack/commands",
-        "description": "Manage this channel's status page subscriptions",
-        "usage_hint": "subscribe | unsubscribe | subscriptions | help",
+        "description": "Incidents and status page subscriptions from Slack",
+        "usage_hint": "incident declare | incident note | incident list | subscribe | help",
         "should_escape": false
       }
     ]
@@ -56,12 +56,18 @@
         "assistant:write",
         "channels:history",
         "channels:join",
+        "channels:manage",
+        "channels:read",
+        "channels:write.invites",
         "chat:write",
         "commands",
         "groups:history",
         "groups:read",
         "groups:write",
         "im:history",
+        "pins:write",
+        "reactions:read",
+        "reactions:write",
         "users:read",
         "users:read.email"
       ]
@@ -77,9 +83,14 @@
         "app_context_changed",
         "app_home_opened",
         "app_mention",
+        "app_uninstalled",
+        "channel_archive",
+        "channel_deleted",
         "message.channels",
         "message.groups",
-        "message.im"
+        "message.im",
+        "reaction_added",
+        "tokens_revoked"
       ]
     },
     "interactivity": {

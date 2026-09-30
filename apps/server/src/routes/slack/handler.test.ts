@@ -1932,3 +1932,36 @@ describe("hardening", () => {
     }
   });
 });
+
+describe("reconnect banner", () => {
+  const app = createTestApp();
+
+  beforeEach(resetSlackTestState);
+
+  test("the home tab asks an old install to reconnect", async () => {
+    slackTestState.resolveWorkspace = () =>
+      Promise.resolve({
+        workspace: {
+          id: 1,
+          name: "Test Workspace",
+          slug: "test",
+          plan: "team",
+          limits: { "slack-agent": true },
+        },
+        botToken: "xoxb-test",
+        botUserId: "UBOT",
+        scopes: "chat:write,users:read,users:read.email",
+      });
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_reconnect_${Date.now()}`,
+      event: { type: "app_home_opened", tab: "home", user: "U1" },
+    });
+    const publish = await waitForCall("views.publish");
+    const view = publish?.args.view as {
+      blocks: { type: string; text?: { text: string } }[];
+    };
+    expect(view.blocks[0].text?.text).toContain("Reconnect openstatus");
+  });
+});

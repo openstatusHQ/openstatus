@@ -1,5 +1,9 @@
 import { getLogger } from "@logtape/logtape";
-import { uninstallSlackTeam } from "@openstatus/services/integration";
+import { isFeatureEnabled } from "@openstatus/services";
+import {
+  missingSlackScopes,
+  uninstallSlackTeam,
+} from "@openstatus/services/integration";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
@@ -367,7 +371,14 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
         slackUserId: userId,
       });
       if (actor) {
-        await publishHomeView(slack, userId);
+        const needsReconnect =
+          isFeatureEnabled(resolved.workspace, "incident-management") &&
+          missingSlackScopes(resolved.scopes).length > 0;
+        await publishHomeView(slack, userId, {
+          reconnectUrl: needsReconnect
+            ? `${config.dashboardUrl}/settings/integrations`
+            : undefined,
+        });
       } else {
         const url = await linkAccountUrl(config, {
           workspaceId: resolved.workspace.id,

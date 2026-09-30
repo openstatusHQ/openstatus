@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 
+import { SLACK_BOT_SCOPES } from "@openstatus/services/integration";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
@@ -9,6 +10,7 @@ import {
   withSlackConfig,
 } from "@/libs/test/slack-config";
 
+import manifest from "../../../slack-manifest.json" with { type: "json" };
 import type { SlackEnv } from "./config";
 import { handleSlackInstall, handleSlackOAuthCallback } from "./oauth";
 
@@ -39,6 +41,27 @@ function encodeState(state: { workspaceId: number; ts: number }): string {
 function makeInstallToken(workspaceId: number): string {
   return signToken({ workspaceId, userId: 1, ts: Date.now() });
 }
+
+describe("slack manifest", () => {
+  test("requests exactly the bot scopes the code asks for", () => {
+    expect([...manifest.oauth_config.scopes.bot].sort()).toEqual(
+      [...SLACK_BOT_SCOPES].sort(),
+    );
+  });
+
+  // Subscribed ahead of their handlers so workspaces reconnect only once.
+  test("subscribes to every event the incident stack needs", () => {
+    for (const event of [
+      "app_uninstalled",
+      "tokens_revoked",
+      "reaction_added",
+      "channel_deleted",
+      "channel_archive",
+    ]) {
+      expect(manifest.settings.event_subscriptions.bot_events).toContain(event);
+    }
+  });
+});
 
 describe("handleSlackInstall", () => {
   const app = createTestApp();
