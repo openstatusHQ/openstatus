@@ -10,6 +10,7 @@ import {
   addIncidentNote,
   approvePostmortem,
   declareIncident,
+  draftPostmortem,
   displayName,
   getIncident,
   getPostmortem,
@@ -467,6 +468,57 @@ export const getPostmortemTool: AgentTool<
   },
 };
 
+const DraftPostmortemToolInput = PostmortemInput.extend({
+  content: z
+    .string()
+    .min(1)
+    .max(100_000)
+    .describe(
+      "The postmortem in markdown with sections Summary, Impact, Timeline, Root cause, What went well, What went wrong, Action items.",
+    ),
+});
+
+const DraftPostmortemOutput = z.object({
+  incidentId: z.number().int(),
+  status: z.enum(["draft", "approved"]),
+});
+
+export const draftPostmortemTool: AgentTool<
+  z.infer<typeof DraftPostmortemToolInput>,
+  z.infer<typeof DraftPostmortemOutput>
+> = {
+  name: "draft_postmortem",
+  description:
+    "Save a postmortem draft for a resolved managed incident. Build it from get_incident (timeline, linked status report) and the conversation; never invent facts. Replaces an existing draft; an approved postmortem can't be redrafted.",
+  scope: "write",
+  destructive: true,
+  feature: FEATURE,
+  inputSchema: DraftPostmortemToolInput,
+  outputSchema: DraftPostmortemOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Save or replace the postmortem draft of incident #${input.id}`,
+      lines: [
+        {
+          label: "Draft",
+          value:
+            input.content.length > 600
+              ? `${input.content.slice(0, 600)}…`
+              : input.content,
+        },
+      ],
+    }),
+    verb: "saved",
+  },
+  async run({ ctx, input }) {
+    const row = await draftPostmortem({
+      ctx,
+      input: { id: input.id, content: input.content, draftedBy: "agent" },
+    });
+    return { incidentId: input.id, status: row.status };
+  },
+};
+
 const ApprovePostmortemToolInput = PostmortemInput.extend({
   close: z
     .boolean()
@@ -477,6 +529,7 @@ const ApprovePostmortemToolInput = PostmortemInput.extend({
 const ApprovePostmortemOutput = z.object({
   incidentId: z.number().int(),
   status: z.enum(["draft", "approved"]),
+  closed: z.boolean().describe("Whether this call closed the incident."),
 });
 
 export const approvePostmortemTool: AgentTool<
@@ -504,11 +557,18 @@ export const approvePostmortemTool: AgentTool<
     verb: "approved",
   },
   async run({ ctx, input }) {
+    const before = input.close
+      ? await getIncident({ ctx, input: { id: input.id } })
+      : undefined;
     const row = await approvePostmortem({
       ctx,
       input: { id: input.id, close: input.close },
     });
-    return { incidentId: input.id, status: row.status };
+    return {
+      incidentId: input.id,
+      status: row.status,
+      closed: Boolean(before && !before.closedAt),
+    };
   },
 };
 

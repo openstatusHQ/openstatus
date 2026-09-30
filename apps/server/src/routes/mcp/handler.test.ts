@@ -125,6 +125,7 @@ describe("MCP transport", () => {
       "create_maintenance",
       "create_status_report",
       "declare_incident",
+      "draft_postmortem",
       "get_audit_log",
       "get_content_page",
       "get_doc_page",

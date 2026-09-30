@@ -181,6 +181,7 @@ describe("approval metadata contract", () => {
         from: new Date().toISOString(),
         to: new Date(Date.now() + 60000).toISOString(),
         pageComponentIds: [],
+        content: "c",
       };
       const summary = t.approval.summarize(placeholder);
       expect(summary.title.length, `${t.name} title empty`).toBeGreaterThan(0);

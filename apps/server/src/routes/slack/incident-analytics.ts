@@ -5,6 +5,9 @@ const EVENTS = {
   declare: Events.DeclareManagedIncident,
   status: Events.ChangeManagedIncidentStatus,
   note: Events.AddManagedIncidentNote,
+  postmortem: Events.DraftManagedPostmortem,
+  approved: Events.ApproveManagedPostmortem,
+  closed: Events.CloseManagedIncident,
 } as const;
 
 /** Fire-and-forget: analytics never fails a Slack action. */

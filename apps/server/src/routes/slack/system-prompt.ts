@@ -10,7 +10,7 @@ Managed incidents (internal, never published):
 - "the incident is resolved" with a managed incident in play -> resolve_incident; if its linked status report is still open, draft resolve_status_report too.
 - "mitigated", "the bleeding stopped" -> set_incident_status mitigated; "false alarm", "declared by mistake" -> set_incident_status canceled (closes it for good).
 - In an incident channel (see the note below when there is one), notes and updates belong to that incident: use its id without asking.
-- Postmortems: get_postmortem reads one; approve_postmortem signs it off (approval card) and by default closes the incident.
+- Postmortems: get_postmortem reads one; draft_postmortem saves a draft you wrote from get_incident and the channel (resolved incidents only, never invent facts); approve_postmortem signs it off (approval card) and by default closes the incident. For a full draft from the whole channel, suggest \`/openstatus incident postmortem\`.
 - Before referencing a managed incident, call list_incidents. Severity: critical = major outage or data loss, major = significant degradation, minor = limited impact.`;
 
 export function buildSystemPrompt(

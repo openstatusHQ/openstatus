@@ -1977,6 +1977,9 @@ importers:
       '@libsql/client':
         specifier: 'catalog:'
         version: 0.17.4
+      '@openstatus/ai':
+        specifier: workspace:*
+        version: link:../ai
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../analytics
@@ -2076,6 +2079,9 @@ importers:
       '@vercel/blob':
         specifier: 'catalog:'
         version: 2.8.0
+      ai:
+        specifier: 'catalog:'
+        version: 7.0.109(zod@4.6.5)
       date-fns:
         specifier: 'catalog:'
         version: 3.6.0
