@@ -236,6 +236,7 @@ export function IncidentProperties({
                     size="sm"
                     variant="ghost"
                     className="h-7"
+                    disabled={update.isPending}
                     onClick={() =>
                       setStartedAt(toLocalInput(incident.startedAt))
                     }

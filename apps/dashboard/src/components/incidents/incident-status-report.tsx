@@ -233,7 +233,7 @@ function UnlinkedReport({
     trpc.statusReport.list.queryOptions({ order: "desc" }),
   );
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
-  const [mode, setMode] = useState<"link" | "create" | null>(null);
+  const [draftMode, setMode] = useState<"link" | "create" | null>(null);
   const [reportId, setReportId] = useState<string>("");
   const [pageId, setPageId] = useState<string>("");
   const [title, setTitle] = useState(incident.title);
@@ -259,6 +259,8 @@ function UnlinkedReport({
     trpc.subscriberNotification.statusReport.mutationOptions(),
   );
   const closed = incident.closedAt !== null;
+  // Closing mid-edit would otherwise strand a form whose footer is gone.
+  const mode = closed ? null : draftMode;
 
   async function createReport() {
     const promise = (async () => {

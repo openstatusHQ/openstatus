@@ -53,8 +53,8 @@ export function IncidentActions({ incident }: { incident: Incident }) {
     }),
   );
 
+  if (!hasIncidentActions(incident)) return null;
   const closable = incident.status === "resolved" && incident.closedAt === null;
-  if (!closable && !incident.deletable) return null;
 
   return (
     <>

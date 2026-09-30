@@ -7,7 +7,8 @@ import { SETTINGS_TABS } from "@/config/settings";
 
 import type { CommandMenuGroup, CommandMenuItem } from "../types";
 
-// Incident entries are feature-flagged; mirrors the sidebar's insert position.
+// Incident entries are feature-flagged. Unlike the sidebar, Incidents sits
+// right below Overview: the palette is for reaching the urgent thing fast.
 export function navigationGroup({
   incidents,
 }: {

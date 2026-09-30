@@ -258,12 +258,13 @@ export function CommandMenu() {
         open={activeSheet?.sheet === "support"}
         onOpenChange={(o) => setActiveSheet(o ? { sheet: "support" } : null)}
       />
-      {data.incidentsEnabled ? (
+      {/* Mounted on demand: the sheet fetches integrations as soon as it renders. */}
+      {data.incidentsEnabled && activeSheet?.sheet === "declare-incident" ? (
         <DeclareIncidentButton
-          open={activeSheet?.sheet === "declare-incident"}
-          onOpenChange={(o) =>
-            setActiveSheet(o ? { sheet: "declare-incident" } : null)
-          }
+          open
+          onOpenChange={(o) => {
+            if (!o) setActiveSheet(null);
+          }}
         />
       ) : null}
       {reportForUpdate ? (

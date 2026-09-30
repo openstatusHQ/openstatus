@@ -122,6 +122,7 @@ export function IncidentComposer({
             >
               <SelectTrigger
                 size="sm"
+                aria-label="Set status to"
                 className="bg-background text-foreground font-mono"
               >
                 <SelectValue />

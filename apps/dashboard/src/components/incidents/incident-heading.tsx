@@ -62,6 +62,7 @@ export function IncidentHeading({
             aria-label="Title"
             required
             maxLength={256}
+            disabled={update.isPending}
             value={incident.title}
             onCommit={(title) => update.mutate({ id: incident.id, title })}
           />
@@ -74,6 +75,7 @@ export function IncidentHeading({
           aria-label="Summary"
           placeholder="Add a summary…"
           maxLength={4000}
+          disabled={update.isPending}
           value={incident.summary ?? ""}
           onCommit={(summary) =>
             update.mutate({ id: incident.id, summary: summary || null })

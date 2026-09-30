@@ -150,8 +150,10 @@ export function DetailInput({
           const next = multiline
             ? e.currentTarget.value.trim()
             : e.currentTarget.value.replace(/\s+/g, " ").trim();
-          if (!next && props.required) e.currentTarget.value = value;
-          else if (next !== value) onCommit(next);
+          if (!next && props.required) {
+            e.currentTarget.value = value;
+            setDraft({ base: value, text: value });
+          } else if (next !== value) onCommit(next);
         }}
         onKeyDown={(e) => {
           if (e.nativeEvent.isComposing) return;

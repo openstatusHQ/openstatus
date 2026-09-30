@@ -18,7 +18,7 @@ export function UserAvatar({
     <Avatar className={cn("size-5 text-[10px]", className)} {...props}>
       {src ? <AvatarImage src={src} alt={name ?? ""} /> : null}
       <AvatarFallback className="bg-foreground text-background font-sans font-medium uppercase">
-        {name?.slice(0, 1) ?? "?"}
+        {Array.from(name ?? "")[0] ?? "?"}
       </AvatarFallback>
     </Avatar>
   );
