@@ -20,10 +20,12 @@ export interface SlackTestState {
   streamStopFail: boolean;
   /** Receives runAgent's options, so a test can drive the stream or abort. */
   runAgentOverride: ((options?: unknown) => Promise<unknown>) | null;
-  repliesImpl: () => Promise<unknown>;
+  repliesImpl: (args?: Record<string, unknown>) => Promise<unknown>;
   historyImpl: () => Promise<unknown>;
   /** `users.info` result; the default has no email, so no mapping is created. */
   usersInfoImpl: (args: Record<string, unknown>) => Promise<unknown>;
+  /** `reactions.get` result; the default message has no reactions. */
+  reactionsGetImpl: (args: Record<string, unknown>) => Promise<unknown>;
 }
 
 const g = globalThis as Record<string, unknown>;
@@ -49,6 +51,7 @@ if (!g.__slackTestState) {
         messages: [{ user: "U1", text: "channel message", ts: "1.1" }],
       }),
     usersInfoImpl: () => Promise.resolve({ ok: true, user: { profile: {} } }),
+    reactionsGetImpl: () => Promise.resolve({ ok: true, message: {} }),
   } satisfies SlackTestState;
 }
 
