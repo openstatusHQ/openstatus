@@ -188,6 +188,14 @@ export const Events = {
     name: "incident_closed",
     channel: "incident_management",
   },
+  DraftManagedPostmortem: {
+    name: "postmortem_drafted",
+    channel: "incident_management",
+  },
+  ApproveManagedPostmortem: {
+    name: "postmortem_approved",
+    channel: "incident_management",
+  },
   DeleteManagedIncident: {
     name: "incident_removed",
     channel: "incident_management",

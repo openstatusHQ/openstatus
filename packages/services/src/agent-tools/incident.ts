@@ -8,9 +8,11 @@ import { tryGetActorUserId } from "../context";
 import { NotFoundError } from "../errors";
 import {
   addIncidentNote,
+  approvePostmortem,
   declareIncident,
   displayName,
   getIncident,
+  getPostmortem,
   listIncidentEvents,
   listIncidents,
   setIncidentStatus,
@@ -426,6 +428,87 @@ export const addIncidentNoteTool: AgentTool<
   async run({ ctx, input }) {
     const event = await addIncidentNote({ ctx, input });
     return { incidentId: input.id, eventId: event.id };
+  },
+};
+
+const PostmortemInput = z.object({
+  id: z.number().int().describe("Incident id, from list_incidents."),
+});
+
+const GetPostmortemOutput = z.object({
+  incidentId: z.number().int(),
+  exists: z.boolean(),
+  status: z.enum(["draft", "approved"]).nullable(),
+  content: z.string().nullable(),
+  draftedBy: z.enum(["agent", "user"]).nullable(),
+});
+
+export const getPostmortemTool: AgentTool<
+  z.infer<typeof PostmortemInput>,
+  z.infer<typeof GetPostmortemOutput>
+> = {
+  name: "get_postmortem",
+  description:
+    "Read a managed incident's postmortem (markdown), if one was drafted.",
+  scope: "read",
+  destructive: false,
+  feature: FEATURE,
+  inputSchema: PostmortemInput,
+  outputSchema: GetPostmortemOutput,
+  async run({ ctx, input }) {
+    const row = await getPostmortem({ ctx, input });
+    return {
+      incidentId: input.id,
+      exists: row !== undefined,
+      status: row?.status ?? null,
+      content: row?.content ?? null,
+      draftedBy: row?.draftedBy ?? null,
+    };
+  },
+};
+
+const ApprovePostmortemToolInput = PostmortemInput.extend({
+  close: z
+    .boolean()
+    .default(true)
+    .describe("Also close the incident (the usual last step)."),
+});
+
+const ApprovePostmortemOutput = z.object({
+  incidentId: z.number().int(),
+  status: z.enum(["draft", "approved"]),
+});
+
+export const approvePostmortemTool: AgentTool<
+  z.infer<typeof ApprovePostmortemToolInput>,
+  z.infer<typeof ApprovePostmortemOutput>
+> = {
+  name: "approve_postmortem",
+  description:
+    "Approve a managed incident's postmortem draft and, by default, close the incident. Only an admin, owner or the incident's commander can approve.",
+  scope: "write",
+  destructive: true,
+  feature: FEATURE,
+  inputSchema: ApprovePostmortemToolInput,
+  outputSchema: ApprovePostmortemOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Approve the postmortem of incident #${input.id}`,
+      lines: [
+        {
+          label: "Then",
+          value: input.close === false ? "keep it open" : "close the incident",
+        },
+      ],
+    }),
+    verb: "approved",
+  },
+  async run({ ctx, input }) {
+    const row = await approvePostmortem({
+      ctx,
+      input: { id: input.id, close: input.close },
+    });
+    return { incidentId: input.id, status: row.status };
   },
 };
 

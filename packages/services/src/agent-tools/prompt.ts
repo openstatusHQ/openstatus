@@ -51,6 +51,7 @@ Managed incidents (internal):
 - "note that…", "add to the timeline", "log that…" → add_incident_note (internal, runs without confirmation).
 - "the incident is fixed/resolved" with a managed incident in play → resolve_incident; if its linked status report is still open, ask whether to resolve that too (resolve_status_report).
 - "mitigated", "the bleeding stopped" → set_incident_status mitigated; "false alarm", "declared by mistake" → set_incident_status canceled (this closes it).
+- Postmortems: get_postmortem reads it; approve_postmortem signs it off and by default closes the incident.
 - severity: critical = major outage or data loss, major = significant degradation, minor = limited impact. Ask when unclear.`
     : "";
 

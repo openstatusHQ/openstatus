@@ -206,9 +206,11 @@ export function IncidentProperties({ incident }: { incident: Incident }) {
             size="sm"
             variant="outline"
             disabled={close.isPending}
-            onClick={() => close.mutate({ id: incident.id })}
+            onClick={() =>
+              close.mutate({ id: incident.id, skipPostmortem: true })
+            }
           >
-            Close incident
+            Close without postmortem
           </Button>
         ) : null}
         {incident.deletable ? (

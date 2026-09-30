@@ -121,6 +121,7 @@ describe("MCP transport", () => {
     expect(names).toEqual([
       "add_incident_note",
       "add_status_report_update",
+      "approve_postmortem",
       "create_maintenance",
       "create_status_report",
       "declare_incident",
@@ -131,6 +132,7 @@ describe("MCP transport", () => {
       "get_monitor",
       "get_monitor_status",
       "get_monitor_summary",
+      "get_postmortem",
       "get_response_log",
       "list_audit_logs",
       "list_incidents",

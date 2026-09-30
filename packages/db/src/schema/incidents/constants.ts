@@ -30,3 +30,9 @@ export const incidentEventType = [
 export type IncidentSeverity = (typeof incidentSeverity)[number];
 export type IncidentStatus = (typeof incidentStatus)[number];
 export type IncidentEventType = (typeof incidentEventType)[number];
+
+export const postmortemStatus = ["draft", "approved"] as const;
+export const postmortemAuthor = ["agent", "user"] as const;
+
+export type PostmortemStatus = (typeof postmortemStatus)[number];
+export type PostmortemAuthor = (typeof postmortemAuthor)[number];

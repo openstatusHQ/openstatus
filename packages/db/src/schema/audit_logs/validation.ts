@@ -139,6 +139,15 @@ const incidentEventActions = [
   }),
 ] as const;
 
+const incidentPostmortemActions = [
+  action("incident_postmortem.create", "incident_postmortem", intId, {
+    optionalMetadata: true,
+  }),
+  action("incident_postmortem.update", "incident_postmortem", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
 const slackUserActions = [
   action("slack_user.create", "slack_user", intId, { optionalMetadata: true }),
   action("slack_user.delete", "slack_user", intId, { optionalMetadata: true }),
@@ -243,6 +252,7 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...monitorIncidentActions,
   ...incidentActions,
   ...incidentEventActions,
+  ...incidentPostmortemActions,
   ...slackUserActions,
   ...statusReportActions,
   ...statusReportUpdateActions,
