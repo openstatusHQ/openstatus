@@ -300,7 +300,7 @@ const detailSectionTitleVariants = cva("", {
   variants: {
     variant: {
       label:
-        "text-muted-foreground text-xs font-medium tracking-wide uppercase",
+        "text-muted-foreground text-xs font-light tracking-wide uppercase",
       heading: "text-base font-medium",
     },
   },
