@@ -51,9 +51,9 @@ Add your locale to `packages/locales/index.ts`:
 
 ```ts
 import type { Locale as DateFnsLocale } from "date-fns/locale";
-import { de, enUS, fr, hi, ja, ko, tr } from "date-fns/locale";
+import { de, enUS, fr, hi, ja, ko, tr, zhCN } from "date-fns/locale";
 
-export const locales = ["en", "fr", "de", "tr", "hi", "ko", "ja"] as const;
+export const locales = ["en", "fr", "de", "tr", "hi", "ko", "ja", "zh-CN"] as const;
 // ...
 export const localeDetails: Record<Locale, { name: string; flag: string }> = {
   en: { name: "English", flag: "🇺🇸" },
