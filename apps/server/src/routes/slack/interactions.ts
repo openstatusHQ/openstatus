@@ -13,6 +13,7 @@ import {
 import type { SlackConfig, SlackEnv } from "./config";
 import { consume, get } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
+import { OPEN_DECLARE_INCIDENT_ACTION } from "./home";
 import {
   DECLARE_INCIDENT_CALLBACK,
   DECLARE_INCIDENT_FROM_MESSAGE_CALLBACK,
@@ -68,7 +69,7 @@ async function processIncidentBind(payload: SlackInteractionPayload) {
 }
 
 interface SlackShortcutPayload {
-  type: "shortcut" | "message_action";
+  type: "shortcut" | "message_action" | "block_actions";
   callback_id: string;
   trigger_id: string;
   user?: { id: string; team_id?: string };
@@ -124,6 +125,12 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
   }
 
   const payload = body as SlackInteractionPayload;
+  if (payload.actions?.[0]?.action_id === OPEN_DECLARE_INCIDENT_ACTION) {
+    return handleShortcut(c, {
+      ...(body as SlackShortcutPayload),
+      callback_id: DECLARE_INCIDENT_CALLBACK,
+    });
+  }
   if (payload.type !== "block_actions" || !payload.actions?.length) {
     return c.json({ ok: true });
   }

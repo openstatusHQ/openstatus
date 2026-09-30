@@ -701,6 +701,21 @@ describe("declare incident modal", () => {
     expect(JSON.stringify(view.blocks)).toContain("Link account");
   });
 
+  test("the home tab button opens the form", async () => {
+    await signAndPost(app, {
+      type: "block_actions",
+      trigger_id: "trig-home",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      actions: [{ action_id: "open_declare_incident" }],
+    });
+    const open = slackTestState.calls.find((c) => c.method === "views.open");
+    expect(open?.args.trigger_id).toBe("trig-home");
+    expect((open?.args.view as { callback_id?: string }).callback_id).toBe(
+      "declare_incident",
+    );
+  });
+
   test("a blank title is rejected on the form", async () => {
     const res = await signAndPost(
       app,

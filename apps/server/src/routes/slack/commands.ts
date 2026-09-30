@@ -43,10 +43,11 @@ type SlashCommand = z.infer<typeof slashCommandSchema>;
 
 const HELP = [
   "*openstatus*",
+  "• `/openstatus incident declare` — declare an incident (opens a form)",
+  "• `/openstatus incident help` — run incidents: notes, status, postmortem",
   "• `/openstatus subscribe <status-page-url>` — subscribe this channel to a status page",
   "• `/openstatus unsubscribe <status-page-url>` — unsubscribe",
   "• `/openstatus subscriptions` — show this channel's subscriptions",
-  "• `/openstatus incident help` — declare and run incidents",
 ].join("\n");
 
 type CommandReply = { text: string; blocks?: Block[] };
