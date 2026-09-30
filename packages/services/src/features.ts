@@ -2,9 +2,7 @@ import type { ServiceContext } from "./context";
 import { ForbiddenError } from "./errors";
 import type { Workspace } from "./types";
 
-const featureWorkspaces = {
-  "incident-management": [1, 6850],
-} satisfies Record<string, ReadonlyArray<number>>;
+const featureWorkspaces = {} satisfies Record<string, ReadonlyArray<number>>;
 
 export type Feature = keyof typeof featureWorkspaces;
 
@@ -28,7 +26,8 @@ export function isFeatureEnabled(
   feature: Feature,
   envFeatures: Set<string> = featuresFromEnv(),
 ): boolean {
-  const ids: ReadonlyArray<number> = featureWorkspaces[feature];
+  const allowlists: Record<string, ReadonlyArray<number>> = featureWorkspaces;
+  const ids = allowlists[feature] ?? [];
   return ids.includes(workspace.id) || envFeatures.has(feature);
 }
 

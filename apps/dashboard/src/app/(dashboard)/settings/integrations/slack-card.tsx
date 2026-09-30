@@ -17,7 +17,6 @@ import {
   FormCardTitle,
   FormCardUpgrade,
 } from "@/components/forms/form-card";
-import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 const SERVER_URL =
@@ -43,9 +42,7 @@ export function SlackIntegrationCard({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const isConnected = !!integration;
-  const incidents = useFeature("incident-management");
-  const needsReconnect =
-    incidents && (integration?.missingScopes.length ?? 0) > 0;
+  const needsReconnect = (integration?.missingScopes.length ?? 0) > 0;
 
   const deleteIntegration = useMutation(
     trpc.integrationRouter.deleteIntegration.mutationOptions({

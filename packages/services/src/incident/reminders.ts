@@ -10,9 +10,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import type { DB, ServiceContext } from "../context";
-import { isFeatureEnabled } from "../features";
 import { getSlackConnection } from "../integration/slack-connection";
-import { INCIDENT_FEATURE } from "./internal";
 import type { SlackClientFactory } from "./slack-flow";
 
 const HOUR = 60 * 60 * 1000;
@@ -107,7 +105,6 @@ export async function remindStaleIncidents(args: {
     const parsed = selectWorkspaceSchema.safeParse(workspaceRow);
     if (!parsed.success) continue;
     const ws = parsed.data;
-    if (!isFeatureEnabled(ws, INCIDENT_FEATURE)) continue;
     if (!ws.limits["slack-agent"]) continue;
 
     const last = await db

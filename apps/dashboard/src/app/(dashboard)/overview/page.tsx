@@ -31,7 +31,6 @@ import {
 } from "@/components/metric/metric-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { buildOverviewData } from "@/data/overview-events.client";
-import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { CreateEventButtonGroup } from "./create-event-button-group";
@@ -49,15 +48,10 @@ export default function Page() {
     trpc.statusReport.list.queryOptions({}),
   );
   const { data: maintenances } = useQuery(trpc.maintenance.list.queryOptions());
-  const incidentsEnabled = useFeature("incident-management");
-  const { data: openIncidents } = useQuery({
-    ...trpc.incident.list.queryOptions({ status: ["open", "mitigated"] }),
-    enabled: incidentsEnabled,
-  });
-  const columns = useMemo(
-    () => getColumns({ declare: incidentsEnabled }),
-    [incidentsEnabled],
+  const { data: openIncidents } = useQuery(
+    trpc.incident.list.queryOptions({ status: ["open", "mitigated"] }),
   );
+  const columns = useMemo(() => getColumns({ declare: true }), []);
 
   if (!monitors || !pages || !incidents || !statusReports || !maintenances)
     return null;

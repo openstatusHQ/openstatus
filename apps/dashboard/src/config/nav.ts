@@ -88,6 +88,7 @@ export const NAV = {
 // Command-menu "Navigation" group order.
 export const NAV_MENU_ITEMS: NavItem[] = [
   NAV.overview,
+  NAV.incidents,
   NAV.monitors,
   NAV.statusPages,
   NAV.notifications,

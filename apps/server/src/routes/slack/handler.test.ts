@@ -64,6 +64,17 @@ function signAndPost(
   });
 }
 
+/** Waits until the background turn stops making Slack calls. */
+async function settleCalls(quietMs = 150, timeoutMs = 3000) {
+  const deadline = Date.now() + timeoutMs;
+  let seen = -1;
+  while (Date.now() < deadline) {
+    if (slackTestState.calls.length === seen) return;
+    seen = slackTestState.calls.length;
+    await new Promise((r) => setTimeout(r, quietMs));
+  }
+}
+
 // Generous: the member gate hits the DB, which is slow under `--parallel`.
 async function waitForCall(method: string, timeoutMs = 5000) {
   const deadline = Date.now() + timeoutMs;
@@ -286,11 +297,11 @@ describe("handleSlackEvent", () => {
     };
 
     await signAndPost(app, body);
-    await new Promise((r) => setTimeout(r, 50));
+    await settleCalls();
 
     slackTestState.calls = [];
     await signAndPost(app, body);
-    await new Promise((r) => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 150));
 
     expect(slackTestState.calls.length).toBe(0);
   });

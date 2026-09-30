@@ -21,8 +21,6 @@ import {
 } from "../incident";
 import type { AgentTool, SummaryLine } from "./types";
 
-const FEATURE = "incident-management";
-
 const title = z.string().trim().min(1).max(256);
 const summary = z.string().trim().min(1).max(4000);
 const note = z.string().trim().min(1).max(10_000);
@@ -73,7 +71,6 @@ export const listIncidentsTool: AgentTool<
     "List managed incidents in this workspace (declared by the team, not monitor downtime), open ones first.",
   scope: "read",
   destructive: false,
-  feature: FEATURE,
   inputSchema: ListIncidentsInput,
   outputSchema: ListIncidentsOutput,
   async run({ ctx, input }) {
@@ -127,7 +124,6 @@ export const getIncidentTool: AgentTool<
     "Get one managed incident with its timeline (newest first, up to 50 events) and linked status report.",
   scope: "read",
   destructive: false,
-  feature: FEATURE,
   inputSchema: GetIncidentInput,
   outputSchema: GetIncidentOutput,
   async run({ ctx, input }) {
@@ -223,7 +219,6 @@ export const declareIncidentTool: AgentTool<
     "Declare a managed incident: the team's internal record of an outage, with a timeline and a commander. Internal only — nothing is published; use create_status_report for public communication.",
   scope: "write",
   destructive: true,
-  feature: FEATURE,
   inputSchema: DeclareIncidentInput,
   outputSchema: IncidentWriteOutput,
   approval: {
@@ -286,7 +281,6 @@ export const updateIncidentTool: AgentTool<
     "Change a managed incident's title, severity, summary, commander or start time. Internal only.",
   scope: "write",
   destructive: true,
-  feature: FEATURE,
   inputSchema: UpdateIncidentInput,
   outputSchema: IncidentWriteOutput,
   approval: {
@@ -339,7 +333,6 @@ export const resolveIncidentTool: AgentTool<
     "Mark a managed incident resolved. Does not touch its status report: resolve that separately with resolve_status_report if it is still open.",
   scope: "write",
   destructive: true,
-  feature: FEATURE,
   inputSchema: ResolveIncidentInput,
   outputSchema: IncidentWriteOutput,
   approval: {
@@ -381,7 +374,6 @@ export const setIncidentStatusTool: AgentTool<
     "Move a managed incident to mitigated, resolved, canceled (false alarm) or back to open. Canceling closes it for good. Does not touch its status report.",
   scope: "write",
   destructive: true,
-  feature: FEATURE,
   inputSchema: SetIncidentStatusInput,
   outputSchema: IncidentWriteOutput,
   approval: {
@@ -423,7 +415,6 @@ export const addIncidentNoteTool: AgentTool<
     "Append a note to a managed incident's timeline. Internal and append-only.",
   scope: "write",
   destructive: false,
-  feature: FEATURE,
   inputSchema: AddIncidentNoteInput,
   outputSchema: AddIncidentNoteOutput,
   async run({ ctx, input }) {
@@ -453,7 +444,6 @@ export const getPostmortemTool: AgentTool<
     "Read a managed incident's postmortem (markdown), if one was drafted.",
   scope: "read",
   destructive: false,
-  feature: FEATURE,
   inputSchema: PostmortemInput,
   outputSchema: GetPostmortemOutput,
   async run({ ctx, input }) {
@@ -492,7 +482,6 @@ export const draftPostmortemTool: AgentTool<
     "Save a postmortem draft for a resolved managed incident. Build it from get_incident (timeline, linked status report) and the conversation; never invent facts. Replaces an existing draft; an approved postmortem can't be redrafted.",
   scope: "write",
   destructive: true,
-  feature: FEATURE,
   inputSchema: DraftPostmortemToolInput,
   outputSchema: DraftPostmortemOutput,
   approval: {
@@ -540,7 +529,6 @@ export const approvePostmortemTool: AgentTool<
     "Approve a managed incident's postmortem draft and, by default, close the incident. Only an admin, owner or the incident's commander can approve.",
   scope: "write",
   destructive: true,
-  feature: FEATURE,
   inputSchema: ApprovePostmortemToolInput,
   outputSchema: ApprovePostmortemOutput,
   approval: {

@@ -45,7 +45,7 @@ export function buildHomeBlocks(
       type: "section",
       text: {
         type: "mrkdwn",
-        text: "*Slash commands*\n• `/openstatus subscribe <status-page-url>` — subscribe this channel to a status page\n• `/openstatus unsubscribe <status-page-url>` — unsubscribe this channel\n• `/openstatus subscriptions` — list this channel's subscriptions\n• `/openstatus help` — show these commands",
+        text: "*Slash commands*\n• `/openstatus subscribe <status-page-url>` — subscribe this channel to a status page\n• `/openstatus unsubscribe <status-page-url>` — unsubscribe this channel\n• `/openstatus subscriptions` — list this channel's subscriptions\n• `/openstatus incident help` — declare and run incidents\n• `/openstatus help` — show these commands",
       },
     },
     {

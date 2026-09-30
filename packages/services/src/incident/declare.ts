@@ -15,11 +15,7 @@ import {
   withTransaction,
 } from "../context";
 import { NotFoundError } from "../errors";
-import {
-  appendIncidentEvent,
-  assertMember,
-  requireIncidentFeature,
-} from "./internal";
+import { appendIncidentEvent, assertMember } from "./internal";
 import { assertStatusReportLinkable } from "./link-status-report";
 import { DeclareIncidentInput } from "./schemas";
 
@@ -63,7 +59,6 @@ export async function declareIncident(args: {
 }): Promise<Incident> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  requireIncidentFeature(ctx);
   const input = DeclareIncidentInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

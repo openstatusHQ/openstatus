@@ -1,0 +1,49 @@
+---
+title: Understanding Incident Management
+description: "How openstatus separates a declared incident — your team's internal record with a severity, a commander and a timeline — from monitor downtime and from the status reports your users read."
+category: Concepts
+---
+
+Three different things get called an "incident". openstatus keeps them apart, because each answers a different question:
+
+| | What it is | Who creates it | Who sees it |
+| --- | --- | --- | --- |
+| **Incident** | Your team's record of an outage: severity, commander, timeline, postmortem | A person declares it | Your workspace |
+| **Downtime** | A monitor failing its checks in enough regions | openstatus, automatically | Your workspace, and your status page if the monitor is on it |
+| **Status report** | What you tell your users | A person writes it | Everyone who reads your status page |
+
+Downtime tells you something is wrong. An incident is how your team responds to it. A status report is how you keep your users informed while you do. None of them requires the others: you can declare an incident nobody's monitor caught, or publish a status report without declaring anything.
+
+## The incident lifecycle
+
+```
+declare ──▶ open ──▶ mitigated ──▶ resolved ──▶ closed
+              │                        ▲
+              └──── (skip mitigated) ──┘
+```
+
+- **Declare** from the **Incidents** page, from a downtime row, from a status report, or from Slack. You pick a title and a severity (`critical`, `major`, `minor`) and a commander — the one person leading the response. Set **Started at** in the past to record an outage after the fact.
+- **Mitigated** means the impact stopped but the cause isn't fixed. You can go back to **open** if it wasn't.
+- **Resolved** means it's fixed. A resolved incident can still be reopened.
+- **Canceled** is for a false alarm or an incident declared by mistake. It closes the incident for good.
+- **Closed** is the end: the postmortem is approved (or you chose to close without one). A closed incident only accepts postmortem edits.
+
+An incident that was never mitigated or resolved can be deleted by an admin or owner. Anything further along is history and stays.
+
+## The timeline
+
+Every declared incident keeps a timeline: notes, status changes, severity and commander changes, the status report it's linked to, and the Slack channel it's bound to. Post a note or change the status from the composer at the top of the incident page. A status change can carry a note, which lands on the same timeline entry.
+
+The timeline is the story of the incident for your team and for the postmortem. It is separate from the audit log (**Settings** > **Audit logs**), which records who changed what across your workspace, for every change — including each timeline entry.
+
+## Linking a status report
+
+An incident can be linked to one status report, and a status report to one incident. From the incident page you can create a report or link an existing one, then post public updates without leaving the incident. When you resolve or cancel an incident whose status report is still open, openstatus offers to resolve the report too, with your note as the public message. Nothing is posted until you confirm the text.
+
+## Postmortem
+
+Once an incident is resolved, the **Postmortem** tab opens a markdown document with the usual sections: summary, impact, timeline, root cause, what went well, what went wrong, and action items. Write it yourself, or let the agent draft it from the timeline, the linked status report and, if the incident had one, the Slack channel. Approving it (an admin, an owner, or the commander) lets you close the incident. Editing an approved postmortem keeps it approved and is recorded on the timeline.
+
+## Slack
+
+With the [Slack agent](/docs/guides/how-to-setup-slack-agent) connected, declaring an incident also opens a channel for it, invites the team, and pins a summary card. Pin a message with 📌 to copy it onto the timeline, and run `/openstatus incident resolve` from the channel when it's over. Slack is optional: everything above works from the dashboard alone.

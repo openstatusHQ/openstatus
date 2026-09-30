@@ -52,6 +52,10 @@ export const docsNav: DocsNavSection[] = [
         label: "Understanding Status Reports and Incidents",
       },
       {
+        slug: "concept/incident-management",
+        label: "Understanding Incident Management",
+      },
+      {
         slug: "concept/best-practices-status-page",
         label: "Building Trust with Status Pages",
       },

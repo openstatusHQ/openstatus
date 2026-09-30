@@ -22,7 +22,6 @@ import {
 import { getColumns } from "@/components/data-table/incidents/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
-import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
@@ -36,11 +35,7 @@ export default function Page() {
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
-  const incidentsEnabled = useFeature("incident-management");
-  const columns = useMemo(
-    () => getColumns({ declare: incidentsEnabled }),
-    [incidentsEnabled],
-  );
+  const columns = useMemo(() => getColumns({ declare: true }), []);
 
   if (!incidents || !monitor) return null;
 

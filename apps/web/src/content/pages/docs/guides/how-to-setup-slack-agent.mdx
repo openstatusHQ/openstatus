@@ -96,6 +96,26 @@ Plan downtime so subscribers are informed in advance.
 @openstatus schedule a maintenance window for my database next Friday from 2–3 PM.
 ```
 
+### 6. Run incidents from Slack
+
+Declared incidents (see [Understanding Incident Management](/docs/concept/incident-management)) have their own commands:
+
+- `/openstatus incident declare <title> [--sev critical|major|minor]` — declare one. An approval card appears; once approved, openstatus opens a channel for the incident, invites everyone whose Slack account is linked, and pins a summary card.
+- `/openstatus incident note <text>` — add a note to the timeline (in the incident's channel). Or react to any message in the channel with 📌 to copy it onto the timeline.
+- `/openstatus incident mitigate|resolve|cancel|reopen [#id] [note]` — change its status. Resolving or canceling an incident whose status report is still open offers to resolve the report too.
+- `/openstatus incident postmortem [#id]` — let the agent draft the postmortem from the channel, with a card to approve it and close the incident.
+- `/openstatus incident status` and `/openstatus incident list` — where things stand.
+
+Quiet incidents get a reminder in their channel (or a DM to the commander) after 1 hour for critical, 4 hours for major and 24 hours for minor incidents.
+
+### Linked accounts
+
+Only members of your openstatus workspace can use the bot. The first time someone uses it, openstatus links their Slack account by email. If their Slack email differs from their openstatus email, the bot replies with a **Link account** button that signs them in to openstatus to finish linking. You can see and remove your linked accounts under **Settings** > **Integrations**.
+
+### Reconnect after an update
+
+Incident channels need more Slack permissions than the original install (creating channels, inviting people, pinning and reacting). If you installed the agent before, **Settings** > **Integrations** and the app's Home tab show a **Reconnect** prompt: click it and approve the new permissions.
+
 ## What you've accomplished
 
 - Installed the openstatus Slack agent in your workspace
