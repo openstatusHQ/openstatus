@@ -1,10 +1,15 @@
 import { and, eq } from "@openstatus/db";
 import {
+  incident,
   integration,
   pageSubscriber,
   slackUser,
 } from "@openstatus/db/src/schema";
-import { createPage, createSlackUser } from "@openstatus/db/src/test/factories";
+import {
+  createIncident,
+  createPage,
+  createSlackUser,
+} from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 
@@ -67,6 +72,11 @@ describe("uninstallSlackTeam", () => {
         { slackTeamId: teamId },
         tx,
       );
+      const bound = await createIncident(
+        team.workspace.id,
+        { slackTeamId: teamId, slackChannelId: "C_BOUND" },
+        tx,
+      );
       const sub = await createSlackSubscriber({
         input: { pageId: page.id, teamId, channelId: "C_UNINSTALL" },
         db: tx,
@@ -100,6 +110,12 @@ describe("uninstallSlackTeam", () => {
         .get();
       expect(subscriber).toBeDefined();
       expect(subscriber?.unsubscribedAt).not.toBeNull();
+      const unbound = await tx
+        .select()
+        .from(incident)
+        .where(eq(incident.id, bound.id))
+        .get();
+      expect(unbound?.slackChannelId).toBeNull();
 
       await expectAuditRow({
         workspaceId: team.workspace.id,

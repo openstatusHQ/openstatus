@@ -84,9 +84,20 @@ export async function unbindIncidentSlackChannel(args: {
   ctx: ServiceContext;
   input: IncidentIdInput;
 }): Promise<Incident> {
+  requireIncidentFeature(args.ctx);
+  return clearIncidentSlackChannel(args);
+}
+
+/**
+ * Unbind without the feature gate: Slack uninstall cleanup must drop every
+ * binding whatever the workspace's rollout state.
+ */
+export async function clearIncidentSlackChannel(args: {
+  ctx: ServiceContext;
+  input: IncidentIdInput;
+}): Promise<Incident> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  requireIncidentFeature(ctx);
   const input = IncidentIdInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

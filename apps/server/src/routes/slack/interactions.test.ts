@@ -1,13 +1,20 @@
 import crypto from "node:crypto";
 
 import { and, db, eq } from "@openstatus/db";
-import { auditLog } from "@openstatus/db/src/schema";
+import {
+  auditLog,
+  incident,
+  incidentEvent,
+  selectWorkspaceSchema,
+  workspace as workspaceTable,
+} from "@openstatus/db/src/schema";
 import {
   addUserToWorkspace,
   createPage,
   createTestWorkspace,
   createUser,
 } from "@openstatus/db/src/test/factories";
+import { declareIncident } from "@openstatus/services/incident";
 import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import { Hono } from "hono";
 
@@ -562,5 +569,63 @@ describe("registry-runner execution paths", () => {
       (c) => c.method === "update" && (c.args.text as string).startsWith(":x:"),
     );
     expect(errCall).toBeDefined();
+  });
+});
+
+describe("link this channel button", () => {
+  const app = createTestApp();
+
+  beforeEach(() => {
+    configureSlackDoubles();
+    redisStore.clear();
+  });
+
+  test("binds the channel to the incident as the clicking member", async () => {
+    const workspace = selectWorkspaceSchema.parse(
+      await db.query.workspace.findFirst({ where: eq(workspaceTable.id, 1) }),
+    );
+    const created = await declareIncident({
+      ctx: { workspace, actor: { type: "system", job: "test" } },
+      input: { title: "Bind me", severity: "minor" },
+    });
+    const channelId = `C_BIND_${crypto.randomUUID()}`;
+    try {
+      const res = await signAndPost(app, {
+        type: "block_actions",
+        user: { id: "U_OWNER" },
+        channel: { id: channelId },
+        message: { ts: "9.9" },
+        team: { id: "T_KNOWN" },
+        actions: [
+          { action_id: `incident_bind_${created.id}`, value: channelId },
+        ],
+      });
+      expect(res.status).toBe(200);
+      const row = await db
+        .select()
+        .from(incident)
+        .where(eq(incident.id, created.id))
+        .get();
+      expect(row?.slackChannelId).toBe(channelId);
+      expect(
+        slackTestState.calls.some(
+          (c) =>
+            c.method === "update" && String(c.args.text).includes("linked"),
+        ),
+      ).toBe(true);
+    } finally {
+      await db
+        .delete(auditLog)
+        .where(
+          and(
+            eq(auditLog.entityType, "incident"),
+            eq(auditLog.entityId, String(created.id)),
+          ),
+        );
+      await db
+        .delete(incidentEvent)
+        .where(eq(incidentEvent.incidentId, created.id));
+      await db.delete(incident).where(eq(incident.id, created.id));
+    }
   });
 });
