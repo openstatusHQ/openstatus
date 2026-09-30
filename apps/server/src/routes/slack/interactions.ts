@@ -14,6 +14,13 @@ import type { SlackConfig, SlackEnv } from "./config";
 import { consume, get } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
 import {
+  DECLARE_INCIDENT_CALLBACK,
+  DECLARE_INCIDENT_FROM_MESSAGE_CALLBACK,
+  openDeclareIncidentModal,
+  submitDeclareIncident,
+  type ViewSubmissionPayload,
+} from "./incident-modal";
+import {
   afterIncidentTool,
   bindChannelFromButton,
   INCIDENT_BIND_ACTION_PREFIX,
@@ -60,10 +67,63 @@ async function processIncidentBind(payload: SlackInteractionPayload) {
   });
 }
 
-export function handleSlackInteraction(c: Context<SlackEnv>) {
-  const payload = c.get("slackBody") as SlackInteractionPayload;
+interface SlackShortcutPayload {
+  type: "shortcut" | "message_action";
+  callback_id: string;
+  trigger_id: string;
+  user?: { id: string; team_id?: string };
+  team?: { id: string };
+  channel?: { id: string };
+  message?: { text?: string };
+}
+
+async function handleShortcut(
+  c: Context<SlackEnv>,
+  payload: SlackShortcutPayload,
+) {
+  const teamId = payload.team?.id ?? payload.user?.team_id;
+  if (
+    !teamId ||
+    !payload.user?.id ||
+    (payload.callback_id !== DECLARE_INCIDENT_CALLBACK &&
+      payload.callback_id !== DECLARE_INCIDENT_FROM_MESSAGE_CALLBACK)
+  ) {
+    return c.body(null, 200);
+  }
+  // Awaited, not backgrounded: `trigger_id` dies with the 3s ack window.
+  await openDeclareIncidentModal({
+    teamId,
+    slackUserId: payload.user.id,
+    triggerId: payload.trigger_id,
+    channelId: payload.channel?.id,
+    prefill:
+      payload.type === "message_action" && payload.message?.text
+        ? { summary: payload.message.text }
+        : undefined,
+    config: c.get("slackConfig"),
+  }).catch((error) =>
+    logger.error("slack declare modal open failed", { error, teamId }),
+  );
+  return c.body(null, 200);
+}
+
+export async function handleSlackInteraction(c: Context<SlackEnv>) {
+  const body = c.get("slackBody") as { type?: string };
   const config = c.get("slackConfig");
 
+  if (body.type === "shortcut" || body.type === "message_action") {
+    return handleShortcut(c, body as SlackShortcutPayload);
+  }
+  if (body.type === "view_submission") {
+    const submission = body as ViewSubmissionPayload;
+    if (submission.view?.callback_id !== DECLARE_INCIDENT_CALLBACK) {
+      return c.body(null, 200);
+    }
+    const response = await submitDeclareIncident(submission, config);
+    return response ? c.json(response) : c.body(null, 200);
+  }
+
+  const payload = body as SlackInteractionPayload;
   if (payload.type !== "block_actions" || !payload.actions?.length) {
     return c.json({ ok: true });
   }

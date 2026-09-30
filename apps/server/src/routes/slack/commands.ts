@@ -17,6 +17,7 @@ import {
 } from "./blocks";
 import type { SlackConfig, SlackEnv } from "./config";
 import { runIncidentCommand } from "./incident-commands";
+import { openDeclareIncidentModal } from "./incident-modal";
 import {
   linkAccountUrl,
   planRequiredMessage,
@@ -35,6 +36,7 @@ const slashCommandSchema = z.object({
   channel_id: z.string(),
   channel_name: z.string().optional(),
   response_url: z.string().optional(),
+  trigger_id: z.string().optional(),
 });
 
 type SlashCommand = z.infer<typeof slashCommandSchema>;
@@ -92,6 +94,25 @@ export function handleSlackCommand(c: Context<SlackEnv>) {
   const command = parsed.data;
   const sub = subcommand(command);
 
+  if (command.trigger_id && opensDeclareModal(command)) {
+    // Awaited, not backgrounded: `trigger_id` dies with the 3s ack window.
+    return openDeclareIncidentModal({
+      teamId: command.team_id,
+      slackUserId: command.user_id,
+      triggerId: command.trigger_id,
+      channelId: command.channel_id,
+      config,
+    }).then(
+      () => c.body(null, 200),
+      (error) => {
+        logger.error("slack declare modal open failed", { error });
+        return ephemeral(c, {
+          text: ":x: Could not open the form. Please try again.",
+        });
+      },
+    );
+  }
+
   // `help` — and anything unrecognised, which falls through to it — needs no
   // I/O, so it is answered in the ack itself.
   if (
@@ -139,6 +160,16 @@ export function handleSlackCommand(c: Context<SlackEnv>) {
 function subcommand(command: SlashCommand): string {
   const tokens = command.text.trim().split(/\s+/).filter(Boolean);
   return (tokens[0] ?? "help").toLowerCase();
+}
+
+/** `/openstatus incident declare` with no title opens the form instead. */
+function opensDeclareModal(command: SlashCommand): boolean {
+  const words = command.text.trim().split(/\s+/).filter(Boolean);
+  return (
+    words.length === 2 &&
+    words[0].toLowerCase() === "incident" &&
+    words[1].toLowerCase() === "declare"
+  );
 }
 
 function argument(command: SlashCommand): string | undefined {

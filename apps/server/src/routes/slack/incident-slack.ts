@@ -7,6 +7,7 @@ import {
   displayName,
   escapeMrkdwn,
   getIncident,
+  type OpenChannelResult,
   openIncidentSlackChannel,
   type SlackClientFactory,
 } from "@openstatus/services/incident";
@@ -93,17 +94,7 @@ export async function afterIncidentTool(args: {
   const note = incidentInput.safeParse(args.input).data?.note;
   try {
     if (toolName === "declare_incident") {
-      trackSlackIncident(ctx, "declare");
-      await notifyCommander(ctx, incidentId, config).catch((error) =>
-        logger.warn("incident commander email failed", { error, incidentId }),
-      );
-      const result = await openIncidentSlackChannel({
-        ctx,
-        incidentId,
-        clientFor: slackClientFor,
-        dashboardUrl: config.dashboardUrl,
-      });
-      logger.info("slack incident channel", { incidentId, ...result });
+      await onIncidentDeclared(ctx, incidentId, config);
       return;
     }
     if (toolName === "update_incident") {
@@ -148,6 +139,26 @@ export async function afterIncidentTool(args: {
   } catch (error) {
     logger.warn("slack incident follow-up failed", { error, incidentId });
   }
+}
+
+/** Commander email and the incident channel, after any Slack declare. */
+export async function onIncidentDeclared(
+  ctx: ServiceContext,
+  incidentId: number,
+  config: SlackConfig,
+): Promise<OpenChannelResult> {
+  trackSlackIncident(ctx, "declare");
+  await notifyCommander(ctx, incidentId, config).catch((error) =>
+    logger.warn("incident commander email failed", { error, incidentId }),
+  );
+  const result = await openIncidentSlackChannel({
+    ctx,
+    incidentId,
+    clientFor: slackClientFor,
+    dashboardUrl: config.dashboardUrl,
+  });
+  logger.info("slack incident channel", { incidentId, ...result });
+  return result;
 }
 
 /** A linked status report still open gets a resolve card; never automatic. */

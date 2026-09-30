@@ -34,12 +34,14 @@ function post(
   text: string,
   user: string,
   channelId = "C1",
+  extra: Record<string, string> = {},
 ) {
   const body = new URLSearchParams({
     text,
     team_id: "T_KNOWN",
     user_id: user,
     channel_id: channelId,
+    ...extra,
   }).toString();
   const timestamp = Math.floor(Date.now() / 1000);
   const sig = crypto
@@ -70,6 +72,23 @@ describe("handleSlackCommand (members only)", () => {
             botUserId: "UBOT",
           })
         : Promise.resolve(null);
+  });
+
+  test("`incident declare` without a title opens the form", async () => {
+    slackTestState.usersInfoImpl = () =>
+      Promise.resolve({
+        ok: true,
+        user: { profile: { email: "ping@openstatus.dev" } },
+      });
+    const res = await post(app, "incident declare", "U_OWNER", "C_HERE", {
+      trigger_id: "trig-cmd",
+    });
+    expect(res.status).toBe(200);
+    const open = slackTestState.calls.find((c) => c.method === "views.open");
+    expect(open?.args.trigger_id).toBe("trig-cmd");
+    const view = open?.args.view as Record<string, unknown>;
+    expect(view.callback_id).toBe("declare_incident");
+    expect(view.private_metadata).toBe(JSON.stringify({ channelId: "C_HERE" }));
   });
 
   test("help needs no link", async () => {

@@ -36,6 +36,20 @@
       "display_name": "openstatus",
       "always_online": true
     },
+    "shortcuts": [
+      {
+        "name": "Declare incident",
+        "type": "global",
+        "callback_id": "declare_incident",
+        "description": "Declare an incident in openstatus"
+      },
+      {
+        "name": "Declare incident",
+        "type": "message",
+        "callback_id": "declare_incident_from_message",
+        "description": "Declare an incident from this message"
+      }
+    ],
     "slash_commands": [
       {
         "command": "/openstatus",
