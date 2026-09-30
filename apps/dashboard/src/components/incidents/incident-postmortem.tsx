@@ -1,27 +1,32 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Badge } from "@openstatus/ui/components/ui/badge";
+import { AI } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-import { Textarea } from "@openstatus/ui/components/ui/textarea";
+import { InputGroupButton } from "@openstatus/ui/components/ui/input-group";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { StatusBadge } from "@/components/common/status-badge";
+import {
+  Composer,
+  ComposerFooter,
+  ComposerHeader,
+  ComposerHint,
+  ComposerPreview,
+  ComposerTabs,
+  ComposerTextarea,
+} from "@/components/content/composer";
 import {
   EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
-import { ProcessMessage } from "@/components/content/process-message";
 import { useTRPC } from "@/lib/trpc/client";
+
+import { useInvalidateIncident } from "./use-invalidate-incident";
 
 type Incident = NonNullable<RouterOutputs["incident"]["get"]>;
 
@@ -54,6 +59,7 @@ export function IncidentPostmortem({
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const invalidate = useInvalidateIncident(incident.id);
   const { data: postmortem } = useQuery(
     trpc.incident.getPostmortem.queryOptions({ id: incident.id }),
   );
@@ -68,15 +74,7 @@ export function IncidentPostmortem({
       queryClient.invalidateQueries({
         queryKey: trpc.incident.getPostmortem.queryKey({ id: incident.id }),
       }),
-      queryClient.invalidateQueries({
-        queryKey: trpc.incident.get.queryKey({ id: incident.id }),
-      }),
-      queryClient.invalidateQueries({
-        queryKey: trpc.incident.listEvents.queryKey({ id: incident.id }),
-      }),
-      queryClient.invalidateQueries({
-        queryKey: trpc.incident.list.queryKey(),
-      }),
+      invalidate(),
     ]);
   const onError = (error: { message: string }) => {
     toast.error(errorText(error));
@@ -120,92 +118,100 @@ export function IncidentPostmortem({
       </EmptyStateContainer>
     );
   }
+  // The default tab depends on the server copy; mounting earlier would pin it.
+  if (postmortem === undefined) return null;
 
   const approved = postmortem?.status === "approved";
   const dirty = draft !== null && draft !== server;
   const busy = save.isPending || draftWithAgent.isPending || approve.isPending;
+  const canSave = !busy && dirty && content.trim().length > 0;
+  const canApprove = postmortem !== null && !approved;
+
+  const hint = dirty
+    ? "Unsaved changes"
+    : approved && incident.closedAt === null
+      ? "Close the incident from the header"
+      : postmortem?.draftedBy === "agent"
+        ? "Drafted by the agent"
+        : postmortem
+          ? null
+          : "No postmortem yet";
 
   return (
-    <div className="grid gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm">
-          {postmortem ? (
-            <Badge variant="outline" className="font-mono capitalize">
-              {postmortem.status}
-            </Badge>
-          ) : (
-            <span className="text-muted-foreground">No postmortem yet</span>
-          )}
-          {postmortem?.draftedBy === "agent" ? (
-            <span className="text-muted-foreground">Drafted by the agent</span>
-          ) : null}
-        </div>
+    <Composer defaultValue={approved ? "preview" : "write"}>
+      <ComposerHeader>
+        <ComposerTabs />
         {agentAllowed && !approved ? (
-          <Button
-            size="sm"
+          <InputGroupButton
             variant="outline"
             disabled={busy}
             onClick={() => draftWithAgent.mutate({ id: incident.id })}
           >
+            <AI />
             {draftWithAgent.isPending ? "Drafting..." : "Draft with agent"}
-          </Button>
-        ) : null}
-      </div>
-      <Tabs defaultValue="write">
-        <TabsList>
-          <TabsTrigger value="write">Write</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
-        </TabsList>
-        <TabsContent value="write">
-          <Textarea
-            rows={18}
-            className="font-mono text-sm"
-            value={content}
-            onChange={(e) => setDraft(e.target.value)}
-          />
-        </TabsContent>
-        <TabsContent value="preview">
-          <div className="prose dark:prose-invert prose-sm max-w-none rounded-md border px-3 py-2">
-            <ProcessMessage value={content} />
-          </div>
-        </TabsContent>
-      </Tabs>
-      <div className="flex flex-wrap justify-end gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={busy || !dirty || !content.trim()}
-          onClick={() =>
-            save.mutate({ id: incident.id, content, draftedBy: "user" })
+          </InputGroupButton>
+        ) : (
+          <ComposerHint>Markdown</ComposerHint>
+        )}
+      </ComposerHeader>
+      <ComposerTextarea
+        aria-label="Postmortem"
+        className="min-h-96"
+        value={content}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && canSave) {
+            e.preventDefault();
+            save.mutate({ id: incident.id, content, draftedBy: "user" });
           }
-        >
-          Save
-        </Button>
-        {postmortem && !approved ? (
-          <>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy || dirty}
-              onClick={() => approve.mutate({ id: incident.id })}
+        }}
+      />
+      <ComposerPreview value={content} className="min-h-96" />
+      <ComposerFooter>
+        <div className="flex items-center gap-2">
+          {postmortem ? (
+            <StatusBadge
+              dot
+              variant={approved ? "success" : "default"}
+              className="bg-background"
             >
-              Approve
-            </Button>
-            <Button
-              size="sm"
-              disabled={busy || dirty || incident.closedAt !== null}
-              onClick={() => approve.mutate({ id: incident.id, close: true })}
-            >
-              Approve & close
-            </Button>
-          </>
-        ) : null}
-      </div>
-      {approved && incident.closedAt === null ? (
-        <p className="text-muted-foreground text-right text-xs">
-          Approved. Close the incident from the header.
-        </p>
-      ) : null}
-    </div>
+              {approved ? "Approved" : "Draft"}
+            </StatusBadge>
+          ) : null}
+          {hint ? <span className="text-xs">{hint}</span> : null}
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            size="sm"
+            variant={canApprove ? "outline" : "default"}
+            disabled={!canSave}
+            onClick={() =>
+              save.mutate({ id: incident.id, content, draftedBy: "user" })
+            }
+          >
+            Save
+          </Button>
+          {canApprove ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy || dirty}
+                onClick={() => approve.mutate({ id: incident.id })}
+              >
+                Approve
+              </Button>
+              <Button
+                size="sm"
+                disabled={busy || dirty || incident.closedAt !== null}
+                onClick={() => approve.mutate({ id: incident.id, close: true })}
+              >
+                Approve & close
+              </Button>
+            </>
+          ) : null}
+        </div>
+      </ComposerFooter>
+    </Composer>
   );
 }

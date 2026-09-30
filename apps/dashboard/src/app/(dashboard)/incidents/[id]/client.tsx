@@ -14,19 +14,14 @@ import { useState } from "react";
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { Link } from "@/components/common/link";
 import {
-  DetailActions,
   DetailAside,
   DetailContent,
-  DetailDescription,
-  DetailEyebrow,
   DetailHeader,
   DetailMain,
   DetailMeta,
   DetailMetaItem,
   DetailSection,
-  DetailSectionHeader,
   DetailSectionTitle,
-  DetailTitle,
 } from "@/components/content/detail";
 import {
   EmptyStateContainer,
@@ -39,22 +34,18 @@ import {
   PropertyValue,
 } from "@/components/content/property-list";
 import { SectionGroup } from "@/components/content/section";
-import { IncidentActions } from "@/components/incidents/incident-actions";
 import {
-  IncidentSeverityBadge,
-  IncidentStatusBadge,
-} from "@/components/incidents/incident-badge";
+  IncidentActions,
+  hasIncidentActions,
+} from "@/components/incidents/incident-actions";
 import { IncidentComposer } from "@/components/incidents/incident-composer";
+import { IncidentHeading } from "@/components/incidents/incident-heading";
 import { IncidentPostmortem } from "@/components/incidents/incident-postmortem";
 import { IncidentProperties } from "@/components/incidents/incident-properties";
 import { IncidentStatusReport } from "@/components/incidents/incident-status-report";
 import { IncidentTimeline } from "@/components/incidents/incident-timeline";
 import { ResolveReportDialog } from "@/components/incidents/resolve-report-dialog";
-import {
-  formatIncidentId,
-  incidentEndedAt,
-  personName,
-} from "@/data/managed-incidents.client";
+import { incidentEndedAt, personName } from "@/data/managed-incidents.client";
 import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -111,20 +102,14 @@ export function Client({ id }: { id: number }) {
   return (
     <SectionGroup className="max-w-6xl">
       <DetailHeader>
-        <DetailEyebrow>
-          <IncidentStatusBadge status={incident.status} closed={closed} />
-          <IncidentSeverityBadge severity={incident.severity} />
-          <span className="text-muted-foreground font-mono text-xs">
-            {formatIncidentId(incident.id)}
-          </span>
-          <DetailActions>
-            <IncidentActions incident={incident} />
-          </DetailActions>
-        </DetailEyebrow>
-        <DetailTitle>{incident.title}</DetailTitle>
-        {incident.summary ? (
-          <DetailDescription>{incident.summary}</DetailDescription>
-        ) : null}
+        <IncidentHeading
+          incident={incident}
+          actions={
+            hasIncidentActions(incident) ? (
+              <IncidentActions incident={incident} />
+            ) : null
+          }
+        />
         <DetailMeta>
           <DetailMetaItem>
             Declared by
@@ -139,19 +124,40 @@ export function Client({ id }: { id: number }) {
               </time>
             </HoverCardTimestamp>
           </DetailMetaItem>
-          <DetailMetaItem>
-            {endedAt ? "Lasted" : "Ongoing for"}
-            <span className="text-foreground font-mono">
-              {formatDistanceStrict(incident.startedAt, endedAt ?? new Date())}
-            </span>
-          </DetailMetaItem>
+          {incident.closedAt ? (
+            <DetailMetaItem>
+              Closed
+              <HoverCardTimestamp date={incident.closedAt} side="bottom">
+                <time dateTime={incident.closedAt.toISOString()}>
+                  {formatDistanceToNow(incident.closedAt, { addSuffix: true })}
+                </time>
+              </HoverCardTimestamp>
+            </DetailMetaItem>
+          ) : (
+            <DetailMetaItem>
+              {endedAt ? "Lasted" : "Ongoing for"}
+              <span className="text-foreground font-mono">
+                {formatDistanceStrict(
+                  incident.startedAt,
+                  endedAt ?? new Date(),
+                )}
+              </span>
+            </DetailMetaItem>
+          )}
         </DetailMeta>
       </DetailHeader>
       <DetailContent>
         <DetailMain>
-          <Tabs defaultValue="timeline">
+          <Tabs defaultValue="timeline" className="gap-4">
             <TabsList>
-              <TabsTrigger value="timeline">Timeline</TabsTrigger>
+              <TabsTrigger value="timeline">
+                Timeline
+                {events ? (
+                  <span className="text-muted-foreground font-mono text-xs">
+                    {events.length}
+                  </span>
+                ) : null}
+              </TabsTrigger>
               <TabsTrigger value="postmortem">Postmortem</TabsTrigger>
             </TabsList>
             <TabsContent value="timeline" className="flex flex-col gap-8">
@@ -161,19 +167,7 @@ export function Client({ id }: { id: number }) {
                   onStatusChanged={onStatusChanged}
                 />
               )}
-              <DetailSection>
-                <DetailSectionHeader>
-                  <DetailSectionTitle variant="heading">
-                    Timeline
-                  </DetailSectionTitle>
-                  {events ? (
-                    <span className="text-muted-foreground font-mono text-xs">
-                      {events.length} {events.length === 1 ? "event" : "events"}
-                    </span>
-                  ) : null}
-                </DetailSectionHeader>
-                <IncidentTimeline events={events ?? []} />
-              </DetailSection>
+              <IncidentTimeline events={events ?? []} />
             </TabsContent>
             <TabsContent value="postmortem">
               <IncidentPostmortem

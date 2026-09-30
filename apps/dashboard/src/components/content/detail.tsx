@@ -1,5 +1,9 @@
+"use client";
+
+import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
+import { useState } from "react";
 
 export function DetailHeader({
   children,
@@ -49,6 +53,23 @@ export function DetailActions({
   );
 }
 
+/** Title on the left, `DetailActions` on the right, on one line. */
+export function DetailTitleRow({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="detail-title-row"
+      className={cn("flex items-start justify-between gap-4", className)}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function DetailTitle({
   children,
   className,
@@ -58,7 +79,7 @@ export function DetailTitle({
     <h1
       data-slot="detail-title"
       className={cn(
-        "text-2xl font-semibold tracking-tight text-balance",
+        "min-w-0 flex-1 text-2xl font-semibold tracking-tight text-balance",
         className,
       )}
       {...props}
@@ -81,6 +102,74 @@ export function DetailDescription({
     >
       {children}
     </p>
+  );
+}
+
+/** Edit-in-place field for `DetailTitle` / `DetailDescription`; commits on blur. */
+export function DetailInput({
+  value,
+  onCommit,
+  multiline = false,
+  className,
+  ...props
+}: Omit<
+  React.ComponentProps<typeof Textarea>,
+  "value" | "defaultValue" | "onBlur" | "onKeyDown" | "onInput"
+> & {
+  value: string;
+  onCommit: (value: string) => void;
+  multiline?: boolean;
+}) {
+  // Keyed by the server value: a new one resets the draft as it remounts.
+  const [draft, setDraft] = useState({ base: value, text: value });
+  const text = draft.base === value ? draft.text : value;
+
+  return (
+    <span
+      data-slot="detail-input"
+      className={cn(
+        "-mx-2 -my-1 grid w-[calc(100%+1rem)] text-wrap",
+        className,
+      )}
+    >
+      {/* Invisible mirror in the same cell sizes the textarea in every browser. */}
+      <span
+        aria-hidden="true"
+        className="invisible col-start-1 row-start-1 border border-transparent px-2 py-1 break-words whitespace-pre-wrap"
+      >
+        {text}{" "}
+      </span>
+      <Textarea
+        // Uncontrolled: remounting on a new server value drops the stale draft.
+        key={value}
+        defaultValue={value}
+        rows={1}
+        onInput={(e) => setDraft({ base: value, text: e.currentTarget.value })}
+        className="hover:bg-accent dark:hover:bg-accent/50 placeholder:text-muted-foreground/60 col-start-1 row-start-1 min-h-0 resize-none overflow-hidden border-transparent bg-transparent px-2 py-1 text-[length:inherit] shadow-none md:text-[length:inherit] dark:bg-transparent"
+        onBlur={(e) => {
+          const next = multiline
+            ? e.currentTarget.value.trim()
+            : e.currentTarget.value.replace(/\s+/g, " ").trim();
+          if (!next && props.required) e.currentTarget.value = value;
+          else if (next !== value) onCommit(next);
+        }}
+        onKeyDown={(e) => {
+          if (e.nativeEvent.isComposing) return;
+          if (e.key === "Escape") {
+            e.currentTarget.value = value;
+            setDraft({ base: value, text: value });
+            e.currentTarget.blur();
+          } else if (
+            e.key === "Enter" &&
+            (!multiline || e.metaKey || e.ctrlKey)
+          ) {
+            e.preventDefault();
+            e.currentTarget.blur();
+          }
+        }}
+        {...props}
+      />
+    </span>
   );
 }
 

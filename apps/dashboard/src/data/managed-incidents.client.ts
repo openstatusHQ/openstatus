@@ -24,10 +24,6 @@ export const statusConfig = {
   { label: string; variant: StatusVariant }
 >;
 
-export function formatIncidentId(id: number): string {
-  return `INC-${String(id).padStart(3, "0")}`;
-}
-
 /** When the incident stopped being ongoing; `null` while it still is. */
 export function incidentEndedAt(incident: {
   status: IncidentStatus;

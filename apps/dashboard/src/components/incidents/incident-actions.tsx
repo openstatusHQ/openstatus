@@ -14,6 +14,14 @@ import { useInvalidateIncident } from "./use-invalidate-incident";
 
 type Incident = NonNullable<RouterOutputs["incident"]["get"]>;
 
+/** Whether `IncidentActions` renders anything; lets the page skip the row. */
+export function hasIncidentActions(incident: Incident): boolean {
+  return (
+    (incident.status === "resolved" && incident.closedAt === null) ||
+    incident.deletable
+  );
+}
+
 export function IncidentActions({ incident }: { incident: Incident }) {
   const trpc = useTRPC();
   const router = useRouter();
