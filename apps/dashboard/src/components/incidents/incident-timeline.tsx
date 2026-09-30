@@ -24,11 +24,11 @@ import {
   Unlinked,
   Warning,
 } from "@openstatus/icons";
+import { SlackIcon } from "@openstatus/icons/brand";
 
 import type { StatusVariant } from "@/components/common/status-dot";
 import { ProcessMessage } from "@/components/content/process-message";
 import {
-  Timeline,
   TimelineBody,
   TimelineContent,
   TimelineHeader,
@@ -77,6 +77,8 @@ const eventConfig: Record<
 
 const TRANSITION = /^\w+ changed from \w+ to (\w+)(?:\n\n([\s\S]+))?$/;
 const DECLARED = /^Declared as (\w+): /;
+// Slack-mirrored notes end with a permalink line appended by the bot.
+const FROM_SLACK = /\n\n\[From Slack\]\((https?:\/\/\S+)\)$/;
 
 // Events carry no structured payload, so the target of a transition is read
 // from the service's own message. An unknown shape falls back to the raw text.
@@ -84,9 +86,17 @@ function parseEvent(event: Event): {
   status?: IncidentStatus;
   severity?: IncidentSeverity;
   message: string | null;
+  slackUrl?: string;
 } {
   const message = event.message;
   if (!message) return { message: null };
+
+  if (event.type === "note") {
+    const match = FROM_SLACK.exec(message);
+    if (match) {
+      return { message: message.replace(FROM_SLACK, ""), slackUrl: match[1] };
+    }
+  }
 
   // The message only repeats the label around a raw Slack channel id.
   if (
@@ -114,46 +124,51 @@ function parseEvent(event: Event): {
   return { message };
 }
 
-export function IncidentTimeline({ events }: { events: Event[] }) {
-  if (events.length === 0) return null;
+/** One event as a `TimelineItem`; the page composes the `Timeline` around it. */
+export function IncidentTimelineItem({ event }: { event: Event }) {
+  const config = eventConfig[event.type];
+  const { status, severity, message, slackUrl } = parseEvent(event);
+  const variant = status
+    ? statusConfig[status].variant
+    : event.type === "declared" && severity
+      ? severityConfig[severity].variant
+      : config.variant;
   return (
-    <Timeline>
-      {events.map((event) => {
-        const config = eventConfig[event.type];
-        const { status, severity, message } = parseEvent(event);
-        const variant = status
-          ? statusConfig[status].variant
-          : event.type === "declared" && severity
-            ? severityConfig[severity].variant
-            : config.variant;
-        return (
-          <TimelineItem key={event.id}>
-            <TimelineIndicator variant={variant}>
-              <config.icon />
-            </TimelineIndicator>
-            <TimelineContent>
-              <TimelineHeader>
-                <TimelineTitle>
-                  {config.label}
-                  {status ? <IncidentStatusBadge status={status} /> : null}
-                  {severity ? (
-                    <IncidentSeverityBadge severity={severity} />
-                  ) : null}
-                  <TimelineMeta>
-                    {personName(event.createdByUser) ?? "System"}
-                  </TimelineMeta>
-                </TimelineTitle>
-                <TimelineTime date={event.createdAt} />
-              </TimelineHeader>
-              {message ? (
-                <TimelineBody className="prose prose-sm dark:prose-invert max-w-none">
-                  <ProcessMessage value={message} />
-                </TimelineBody>
-              ) : null}
-            </TimelineContent>
-          </TimelineItem>
-        );
-      })}
-    </Timeline>
+    <TimelineItem>
+      <TimelineIndicator variant={variant}>
+        <config.icon />
+      </TimelineIndicator>
+      <TimelineContent>
+        <TimelineHeader>
+          <TimelineTitle>
+            {config.label}
+            {status ? <IncidentStatusBadge status={status} /> : null}
+            {severity ? <IncidentSeverityBadge severity={severity} /> : null}
+            <TimelineMeta>
+              {personName(event.createdByUser) ?? "System"}
+            </TimelineMeta>
+            {slackUrl ? (
+              <TimelineMeta>
+                <a
+                  href={slackUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="decoration-muted-foreground/50 hover:text-foreground inline-flex items-center gap-1 underline decoration-dashed underline-offset-2"
+                >
+                  <SlackIcon className="size-3.5" />
+                  via Slack
+                </a>
+              </TimelineMeta>
+            ) : null}
+          </TimelineTitle>
+          <TimelineTime date={event.createdAt} />
+        </TimelineHeader>
+        {message ? (
+          <TimelineBody className="prose prose-sm dark:prose-invert max-w-none">
+            <ProcessMessage value={message} />
+          </TimelineBody>
+        ) : null}
+      </TimelineContent>
+    </TimelineItem>
   );
 }

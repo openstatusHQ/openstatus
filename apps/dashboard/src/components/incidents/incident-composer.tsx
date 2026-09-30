@@ -25,6 +25,7 @@ import {
   ComposerTabs,
   ComposerTextarea,
 } from "@/components/content/composer";
+import { TimelineItem } from "@/components/content/timeline";
 import { personName, statusConfig } from "@/data/managed-incidents.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -33,6 +34,9 @@ import { useInvalidateIncident } from "./use-invalidate-incident";
 /**
  * Posting with the status unchanged adds a note; picking a new status moves
  * the incident and carries the text on the same timeline event.
+ *
+ * Rendered as the head item of the timeline so the rail runs from the avatar
+ * down to the latest event.
  */
 export function IncidentComposer({
   incident,
@@ -88,7 +92,7 @@ export function IncidentComposer({
   }
 
   return (
-    <div className="flex gap-3">
+    <TimelineItem>
       <UserAvatar
         name={user ? personName(user) : null}
         src={user?.photoUrl}
@@ -153,6 +157,6 @@ export function IncidentComposer({
           </div>
         </ComposerFooter>
       </Composer>
-    </div>
+    </TimelineItem>
   );
 }

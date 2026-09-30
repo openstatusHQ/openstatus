@@ -12,6 +12,7 @@ const userColumns = {
   firstName: true,
   lastName: true,
   email: true,
+  photoUrl: true,
 } as const;
 
 const statusOrder = sql`case ${incident.status} when 'open' then 0 when 'mitigated' then 1 when 'resolved' then 2 else 3 end`;
