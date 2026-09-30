@@ -42,6 +42,7 @@ Monitors, status pages, and notification channels are declared in YAML or Terraf
 - **28 global regions** checking in parallel across 3 cloud providers
 - **Flat pricing, unlimited members** — no per-seat or per-subscriber charges
 - **Open source & self-hostable** — AGPL-3.0, private-locations run in a single 8.5MB Docker image
+- **Incident management** — declare and run incidents from the dashboard or Slack, with severity, commander, and a full timeline
 - **Incident communication** — subscriber notifications via email, RSS, and webhooks
 
 ### Status pages
@@ -52,7 +53,25 @@ Beautiful, customizable status pages with custom domains, password protection, m
 
 Monitor your servers, websites and APIs from 28 regions across multiple cloud providers globally. Get notified via Slack, Discord, PagerDuty, email, and more when your services are down or slow.
 
+### Incident management
+
+Declare, coordinate, and resolve incidents from the dashboard or right inside Slack.
+
+- **Dashboard** — declare an incident, set its severity (critical, major, minor), assign a commander, and move it from open → mitigated → resolved. Every change lands on the incident timeline.
+- **Slack** — mention the openstatus agent to declare, update, resolve, or add notes to an incident without leaving the conversation. Bind an incident to a Slack channel so the team coordinates in one place.
+- **Status page updates** — link a status report to an incident so your users see what your team is working on.
+- **Agents** — the same incident tools are available over MCP, so Claude, ChatGPT, or Cursor can manage incidents too.
+
 ## Recognitions
+<br />
+<br />
+<p align="center">
+  <a href="https://vercel.com/open-source-program">
+    <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge-2026.svg" />
+  </a>
+</p>
+<br />
+<br />
 
 <a href="https://trendshift.io/repositories/1780" target="_blank"><img src="https://trendshift.io/api/badge/repositories/1780" alt="openstatus | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 <a href="https://news.ycombinator.com/item?id=37740870"><img alt="Featured on Hacker News" src="https://hackerbadge.now.sh/api?id=37740870" style="width: 250px; height: 55px;" width="250" height="55" /></a>
