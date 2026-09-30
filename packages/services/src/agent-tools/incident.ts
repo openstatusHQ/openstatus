@@ -359,6 +359,48 @@ export const resolveIncidentTool: AgentTool<
   },
 };
 
+const SetIncidentStatusInput = z.object({
+  id: z.number().int().describe("Incident id, from list_incidents."),
+  status: z
+    .enum(incidentStatus)
+    .describe(
+      "mitigated: impact stopped, not fixed yet. resolved: fixed. canceled: false alarm or declared by mistake. open: reopen.",
+    ),
+  note: z.string().max(10_000).optional().describe("Why, in a sentence."),
+});
+
+export const setIncidentStatusTool: AgentTool<
+  z.infer<typeof SetIncidentStatusInput>,
+  z.infer<typeof IncidentWriteOutput>
+> = {
+  name: "set_incident_status",
+  description:
+    "Move a managed incident to mitigated, resolved, canceled (false alarm) or back to open. Canceling closes it for good. Does not touch its status report.",
+  scope: "write",
+  destructive: true,
+  feature: FEATURE,
+  inputSchema: SetIncidentStatusInput,
+  outputSchema: IncidentWriteOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Mark incident #${input.id} ${input.status}`,
+      lines: optionalLines([["Note", input.note]]),
+    }),
+    verb: "updated",
+  },
+  async run({ ctx, input }) {
+    const row = await setIncidentStatus({
+      ctx,
+      input: {
+        id: input.id,
+        status: input.status,
+        note: input.note?.trim() || undefined,
+      },
+    });
+    return writeOutput(row);
+  },
+};
+
 const AddIncidentNoteInput = z.object({
   id: z.number().int().describe("Incident id, from list_incidents."),
   message: note.describe("The note, markdown."),

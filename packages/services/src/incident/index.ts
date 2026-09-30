@@ -10,7 +10,12 @@ export {
 } from "./link-status-report";
 export { listIncidentEvents } from "./list-events";
 export { clearIncidentCommander } from "./members";
-export { getIncident, getIncidentForStatusReport, listIncidents } from "./list";
+export {
+  getIncident,
+  getIncidentBySlackChannel,
+  getIncidentForStatusReport,
+  listIncidents,
+} from "./list";
 export {
   AddIncidentNoteInput,
   BindIncidentSlackChannelInput,

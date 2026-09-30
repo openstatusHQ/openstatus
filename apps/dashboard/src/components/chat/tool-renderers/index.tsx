@@ -181,6 +181,14 @@ export const toolRenderers: ToolRendererRegistry = {
     ),
     summary: (o) => `resolved · ID ${o.id}`,
   },
+  set_incident_status: {
+    renderDraft: (input) => [
+      { field: "incidentId", after: input.id },
+      { field: "status", after: input.status },
+      ...(input.note ? [{ field: "note", after: input.note }] : []),
+    ],
+    summary: (o) => `${o.status} · ID ${o.id}`,
+  },
   add_incident_note: {
     summary: (o) => `note added to incident ${o.incidentId}`,
   },

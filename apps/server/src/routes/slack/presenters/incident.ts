@@ -25,3 +25,9 @@ export const resolveIncidentPresenter: Presenter = ({ input, output }) => {
   const o = output as AgentToolOutput<"resolve_incident">;
   return `:white_check_mark: Incident *${o.title}* resolved.${i.note ? `\n> ${i.note}` : ""}\n${link(o.id)}`;
 };
+
+export const setIncidentStatusPresenter: Presenter = ({ input, output }) => {
+  const i = input as AgentToolInput<"set_incident_status">;
+  const o = output as AgentToolOutput<"set_incident_status">;
+  return `:white_check_mark: Incident *${o.title}* is now ${o.status}.${i.note ? `\n> ${i.note}` : ""}\n${link(o.id)}`;
+};

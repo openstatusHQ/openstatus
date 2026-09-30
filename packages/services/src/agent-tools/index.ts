@@ -11,6 +11,7 @@ import {
   getIncidentTool,
   listIncidentsTool,
   resolveIncidentTool,
+  setIncidentStatusTool,
   updateIncidentTool,
 } from "./incident";
 import { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
@@ -44,6 +45,7 @@ export {
   getIncidentTool,
   listIncidentsTool,
   resolveIncidentTool,
+  setIncidentStatusTool,
   updateIncidentTool,
 } from "./incident";
 export { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
@@ -105,6 +107,7 @@ export const agentTools = {
   declare_incident: declareIncidentTool,
   update_incident: updateIncidentTool,
   resolve_incident: resolveIncidentTool,
+  set_incident_status: setIncidentStatusTool,
   add_incident_note: addIncidentNoteTool,
   list_maintenances: listMaintenancesTool,
   create_maintenance: createMaintenanceTool,

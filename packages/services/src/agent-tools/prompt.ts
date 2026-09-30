@@ -45,11 +45,12 @@ Exception: after get_doc_page or get_content_page, DO synthesize an answer from 
     ? `
 
 Managed incidents (internal):
-- Three different things are called "incident". A managed incident (list_incidents, get_incident, declare_incident, update_incident, resolve_incident, add_incident_note) is the team's INTERNAL record: severity, commander, timeline. A status report is PUBLIC communication on a status page. Monitor downtime (activeIncidentCount on monitors) is detected automatically.
+- Three different things are called "incident". A managed incident (list_incidents, get_incident, declare_incident, update_incident, resolve_incident, set_incident_status, add_incident_note) is the team's INTERNAL record: severity, commander, timeline. A status report is PUBLIC communication on a status page. Monitor downtime (activeIncidentCount on monitors) is detected automatically.
 - "declare an incident", "open an incident", "we have a SEV" → declare_incident. It publishes nothing. Offer to create a status report afterwards and pass incidentId to create_status_report to link them.
 - Before referencing a managed incident: call list_incidents. Never guess its id.
 - "note that…", "add to the timeline", "log that…" → add_incident_note (internal, runs without confirmation).
 - "the incident is fixed/resolved" with a managed incident in play → resolve_incident; if its linked status report is still open, ask whether to resolve that too (resolve_status_report).
+- "mitigated", "the bleeding stopped" → set_incident_status mitigated; "false alarm", "declared by mistake" → set_incident_status canceled (this closes it).
 - severity: critical = major outage or data loss, major = significant degradation, minor = limited impact. Ask when unclear.`
     : "";
 

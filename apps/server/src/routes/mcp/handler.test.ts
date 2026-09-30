@@ -146,6 +146,7 @@ describe("MCP transport", () => {
       "resolve_status_report",
       "search_content",
       "search_docs",
+      "set_incident_status",
       "update_incident",
       "update_status_report",
     ]);

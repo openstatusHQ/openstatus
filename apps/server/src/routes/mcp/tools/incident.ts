@@ -9,6 +9,7 @@ import {
   getIncidentTool,
   listIncidentsTool,
   resolveIncidentTool,
+  setIncidentStatusTool,
   updateIncidentTool,
 } from "@openstatus/services/agent-tools";
 
@@ -24,6 +25,7 @@ export function registerIncidentTools(
     declareIncidentTool,
     updateIncidentTool,
     resolveIncidentTool,
+    setIncidentStatusTool,
     addIncidentNoteTool,
   ]);
 }
