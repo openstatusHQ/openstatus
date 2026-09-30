@@ -16,6 +16,7 @@ import {
 } from "@/components/content/section";
 import { columns } from "@/components/data-table/managed-incidents/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -46,10 +47,7 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Incidents</SectionTitle>
           <SectionDescription>
-            Declare an incident when the team is responding to an outage: a
-            severity, a commander and a timeline, resolved and closed with a
-            postmortem. Monitor downtime is detected automatically and lives on
-            each monitor.
+            Declare and track the incidents your team is responding to.
           </SectionDescription>
         </SectionHeader>
         {!incidents ? null : incidents.length === 0 ? (
@@ -63,7 +61,11 @@ export function Client() {
           </EmptyStateContainer>
         ) : (
           // incident.list already sorts open first, then newest declared.
-          <DataTable columns={columns} data={incidents} />
+          <DataTable
+            columns={columns}
+            data={incidents}
+            paginationComponent={DataTablePaginationSimple}
+          />
         )}
       </Section>
     </SectionGroup>

@@ -12,7 +12,6 @@ import {
   IncidentSeverityBadge,
   IncidentStatusBadge,
 } from "@/components/incidents/incident-badge";
-import { personName } from "@/data/managed-incidents.client";
 
 type ManagedIncident = NonNullable<RouterOutputs["incident"]["list"]>[number];
 
@@ -49,13 +48,6 @@ export const columns: ColumnDef<ManagedIncident>[] = [
     ),
   },
   {
-    id: "commander",
-    header: "Commander",
-    cell: ({ row }) => (
-      <TableCellText value={personName(row.original.commander)} />
-    ),
-  },
-  {
     accessorKey: "declaredAt",
     header: "Declared",
     cell: ({ row }) => <TableCellDate value={row.original.declaredAt} />,
@@ -76,28 +68,6 @@ export const columns: ColumnDef<ManagedIncident>[] = [
         end,
       ).split(" ");
       return <TableCellNumber value={amount} unit={unit} />;
-    },
-  },
-  {
-    id: "statusReport",
-    header: "Status report",
-    cell: ({ row }) => (
-      <TableCellText value={row.original.statusReport?.title ?? null} />
-    ),
-    meta: { cellClassName: "max-w-[200px] truncate" },
-  },
-  {
-    id: "slack",
-    header: "Slack",
-    cell: ({ row }) => {
-      const { slackTeamId, slackChannelId } = row.original;
-      const bound = slackTeamId && slackChannelId;
-      return (
-        <TableCellLink
-          value={bound ? "Open channel" : null}
-          href={`https://app.slack.com/client/${slackTeamId}/${slackChannelId}`}
-        />
-      );
     },
   },
 ];
