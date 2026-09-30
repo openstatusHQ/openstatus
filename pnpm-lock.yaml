@@ -1890,6 +1890,9 @@ importers:
       '@sentry/deno':
         specifier: 'catalog:'
         version: 10.75.1
+      '@slack/web-api':
+        specifier: 'catalog:'
+        version: 8.1.1
       '@upstash/qstash':
         specifier: 'catalog:'
         version: 2.11.3
