@@ -160,7 +160,10 @@ export function IncidentProperties({
           {closed ? (
             commander ? (
               <>
-                <UserAvatar name={commander} />
+                <UserAvatar
+                  name={commander}
+                  src={incident.commander?.photoUrl}
+                />
                 <span className="truncate">{commander}</span>
               </>
             ) : (
@@ -192,7 +195,7 @@ export function IncidentProperties({
                       value={String(member.user.id)}
                       className="font-mono"
                     >
-                      <UserAvatar name={name} />
+                      <UserAvatar name={name} src={member.user.photoUrl} />
                       <span className="truncate">{name}</span>
                     </SelectItem>
                   );

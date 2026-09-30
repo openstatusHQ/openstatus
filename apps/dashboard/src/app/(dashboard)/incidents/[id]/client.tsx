@@ -34,6 +34,7 @@ import {
   PropertyValue,
 } from "@/components/content/property-list";
 import { SectionGroup } from "@/components/content/section";
+import { Timeline } from "@/components/content/timeline";
 import {
   IncidentActions,
   hasIncidentActions,
@@ -43,7 +44,7 @@ import { IncidentHeading } from "@/components/incidents/incident-heading";
 import { IncidentPostmortem } from "@/components/incidents/incident-postmortem";
 import { IncidentProperties } from "@/components/incidents/incident-properties";
 import { IncidentStatusReport } from "@/components/incidents/incident-status-report";
-import { IncidentTimeline } from "@/components/incidents/incident-timeline";
+import { IncidentTimelineItem } from "@/components/incidents/incident-timeline";
 import { ResolveReportDialog } from "@/components/incidents/resolve-report-dialog";
 import { incidentEndedAt, personName } from "@/data/managed-incidents.client";
 import { useFeature } from "@/hooks/use-feature";
@@ -160,14 +161,18 @@ export function Client({ id }: { id: number }) {
               </TabsTrigger>
               <TabsTrigger value="postmortem">Postmortem</TabsTrigger>
             </TabsList>
-            <TabsContent value="timeline" className="flex flex-col gap-8">
-              {closed ? null : (
-                <IncidentComposer
-                  incident={incident}
-                  onStatusChanged={onStatusChanged}
-                />
-              )}
-              <IncidentTimeline events={events ?? []} />
+            <TabsContent value="timeline">
+              <Timeline>
+                {closed ? null : (
+                  <IncidentComposer
+                    incident={incident}
+                    onStatusChanged={onStatusChanged}
+                  />
+                )}
+                {events?.map((event) => (
+                  <IncidentTimelineItem key={event.id} event={event} />
+                ))}
+              </Timeline>
             </TabsContent>
             <TabsContent value="postmortem">
               <IncidentPostmortem
