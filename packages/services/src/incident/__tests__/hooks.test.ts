@@ -66,7 +66,10 @@ describe("member removal", () => {
         ctx,
         input: { id: closed.id, status: "resolved" },
       });
-      await closeIncident({ ctx, input: { id: closed.id } });
+      await closeIncident({
+        ctx,
+        input: { id: closed.id, skipPostmortem: true },
+      });
       const link = await createSlackUser(workspace.id, leaver.id, {}, tx);
 
       await removeMemberInWorkspace({ tx, ctx, userId: leaver.id });

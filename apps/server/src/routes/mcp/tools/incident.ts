@@ -5,8 +5,10 @@ import type {
 import type { ServiceContext } from "@openstatus/services";
 import {
   addIncidentNoteTool,
+  approvePostmortemTool,
   declareIncidentTool,
   getIncidentTool,
+  getPostmortemTool,
   listIncidentsTool,
   resolveIncidentTool,
   setIncidentStatusTool,
@@ -27,5 +29,7 @@ export function registerIncidentTools(
     resolveIncidentTool,
     setIncidentStatusTool,
     addIncidentNoteTool,
+    getPostmortemTool,
+    approvePostmortemTool,
   ]);
 }

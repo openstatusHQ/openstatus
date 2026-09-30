@@ -7,8 +7,10 @@ import { getContentPageTool, searchContentTool } from "./content";
 import { getDocPageTool, searchDocsTool } from "./docs";
 import {
   addIncidentNoteTool,
+  approvePostmortemTool,
   declareIncidentTool,
   getIncidentTool,
+  getPostmortemTool,
   listIncidentsTool,
   resolveIncidentTool,
   setIncidentStatusTool,
@@ -41,8 +43,10 @@ export { getContentPageTool, searchContentTool } from "./content";
 export { getDocPageTool, searchDocsTool } from "./docs";
 export {
   addIncidentNoteTool,
+  approvePostmortemTool,
   declareIncidentTool,
   getIncidentTool,
+  getPostmortemTool,
   listIncidentsTool,
   resolveIncidentTool,
   setIncidentStatusTool,
@@ -109,6 +113,8 @@ export const agentTools = {
   resolve_incident: resolveIncidentTool,
   set_incident_status: setIncidentStatusTool,
   add_incident_note: addIncidentNoteTool,
+  get_postmortem: getPostmortemTool,
+  approve_postmortem: approvePostmortemTool,
   list_maintenances: listMaintenancesTool,
   create_maintenance: createMaintenanceTool,
   list_monitors: listMonitorsTool,

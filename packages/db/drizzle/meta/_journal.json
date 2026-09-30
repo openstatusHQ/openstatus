@@ -631,6 +631,13 @@
       "when": 1790599837204,
       "tag": "0089_hesitant_dragon_man",
       "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "6",
+      "when": 1790604809096,
+      "tag": "0090_condemned_photon",
+      "breakpoints": true
     }
   ]
 }

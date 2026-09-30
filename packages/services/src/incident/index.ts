@@ -1,5 +1,5 @@
 export { addIncidentNote } from "./add-note";
-export { closeIncident } from "./close";
+export { closeIncident, closeIncidentInTx } from "./close";
 export { declareIncident } from "./declare";
 export { deleteIncident, isDeletable } from "./delete";
 export { allowedTransitions, displayName } from "./internal";
@@ -24,7 +24,15 @@ export {
   listIncidents,
 } from "./list";
 export {
+  approvePostmortem,
+  draftPostmortem,
+  getPostmortem,
+} from "./postmortem";
+export {
   AddIncidentNoteInput,
+  ApprovePostmortemInput,
+  CloseIncidentInput,
+  DraftPostmortemInput,
   BindIncidentSlackChannelInput,
   DeclareIncidentInput,
   IncidentIdInput,
