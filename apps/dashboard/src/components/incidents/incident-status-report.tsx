@@ -20,6 +20,16 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Link } from "@/components/common/link";
+import { StatusDot } from "@/components/common/status-dot";
+import {
+  ActionCard,
+  ActionCardContent,
+  ActionCardDescription,
+  ActionCardFooter,
+  ActionCardHeader,
+  ActionCardTitle,
+} from "@/components/content/action-card";
+import { statusVariants } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { usePublicUpdate } from "./use-public-update";
@@ -49,6 +59,27 @@ export function IncidentStatusReport({
   return <UnlinkedReport incident={incident} canNotify={canNotify} />;
 }
 
+function NotifySubscribers({
+  id,
+  checked,
+  onCheckedChange,
+}: {
+  id: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(value) => onCheckedChange(value === true)}
+      />
+      <Label htmlFor={id}>Notify subscribers</Label>
+    </div>
+  );
+}
+
 function LinkedReport({
   incident,
   report,
@@ -60,6 +91,7 @@ function LinkedReport({
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const [composing, setComposing] = useState(false);
   const [status, setStatus] = useState<string>(
     report.status === "resolved" ? "monitoring" : report.status,
   );
@@ -92,78 +124,99 @@ function LinkedReport({
     });
     await promise;
     setMessage("");
+    setComposing(false);
   }
 
   return (
-    <div className="grid gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="grid gap-0.5">
+    <ActionCard>
+      <ActionCardHeader>
+        <ActionCardTitle className="flex items-center gap-2 text-sm">
+          <StatusDot variant={statusVariants[report.status]} />
+          Published
+          <span className="text-muted-foreground ml-auto font-mono text-xs font-normal capitalize">
+            {report.status}
+          </span>
+        </ActionCardTitle>
+        <ActionCardDescription>
           {report.pageId ? (
             <Link
               href={`/status-pages/${report.pageId}/status-reports/${report.id}`}
-              className="font-medium"
             >
               {report.title}
             </Link>
           ) : (
-            <span className="font-medium">{report.title}</span>
-          )}
-          <span className="text-muted-foreground font-mono text-xs capitalize">
-            {report.status}
-          </span>
-        </div>
-        {closed ? null : (
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={unlink.isPending}
-            onClick={() => unlink.mutate({ id: incident.id })}
-          >
-            Unlink
-          </Button>
-        )}
-      </div>
-      <div className="grid gap-2">
-        <Label>Post public update</Label>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger size="sm" className="font-mono capitalize">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {statusReportStatus.map((s) => (
-              <SelectItem key={s} value={s} className="capitalize">
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Textarea
-          rows={3}
-          placeholder="Message shown on your status page"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-        />
-        {canNotify ? (
-          <div className="flex items-center gap-2">
-            <Checkbox
+            <span className="text-foreground font-medium">{report.title}</span>
+          )}{" "}
+          is what customers see on your status page.
+        </ActionCardDescription>
+      </ActionCardHeader>
+      {composing ? (
+        <ActionCardContent className="grid gap-2">
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger size="sm" className="w-full font-mono capitalize">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {statusReportStatus.map((s) => (
+                <SelectItem key={s} value={s} className="font-mono capitalize">
+                  <StatusDot variant={statusVariants[s]} />
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Textarea
+            rows={3}
+            placeholder="Message shown on your status page"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+          {canNotify ? (
+            <NotifySubscribers
               id="incident-report-notify"
               checked={notifySubscribers}
-              onCheckedChange={(checked) =>
-                setNotifySubscribers(checked === true)
-              }
+              onCheckedChange={setNotifySubscribers}
             />
-            <Label htmlFor="incident-report-notify">Notify subscribers</Label>
-          </div>
-        ) : null}
-        <Button
-          size="sm"
-          disabled={!message.trim() || update.isPending}
-          onClick={() => post().catch(console.error)}
-        >
-          Post public update
-        </Button>
-      </div>
-    </div>
+          ) : null}
+        </ActionCardContent>
+      ) : null}
+      <ActionCardFooter className="flex-wrap gap-2">
+        {composing ? (
+          <>
+            <Button
+              size="sm"
+              disabled={!message.trim() || update.isPending}
+              onClick={() => post().catch(console.error)}
+            >
+              Post public update
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setComposing(false)}
+            >
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button size="sm" onClick={() => setComposing(true)}>
+              Post public update
+            </Button>
+            {closed ? null : (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={unlink.isPending}
+                onClick={() => unlink.mutate({ id: incident.id })}
+              >
+                Unlink
+              </Button>
+            )}
+          </>
+        )}
+      </ActionCardFooter>
+    </ActionCard>
   );
 }
 
@@ -180,7 +233,7 @@ function UnlinkedReport({
     trpc.statusReport.list.queryOptions({ order: "desc" }),
   );
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
-  const [mode, setMode] = useState<"link" | "create" | null>(null);
+  const [draftMode, setMode] = useState<"link" | "create" | null>(null);
   const [reportId, setReportId] = useState<string>("");
   const [pageId, setPageId] = useState<string>("");
   const [title, setTitle] = useState(incident.title);
@@ -205,12 +258,9 @@ function UnlinkedReport({
   const notify = useMutation(
     trpc.subscriberNotification.statusReport.mutationOptions(),
   );
-
-  if (incident.closedAt !== null) {
-    return (
-      <p className="text-muted-foreground text-sm">No status report linked.</p>
-    );
-  }
+  const closed = incident.closedAt !== null;
+  // Closing mid-edit would otherwise strand a form whose footer is gone.
+  const mode = closed ? null : draftMode;
 
   async function createReport() {
     const promise = (async () => {
@@ -240,30 +290,25 @@ function UnlinkedReport({
   const openReports = (reports ?? []).filter((r) => r.status !== "resolved");
 
   return (
-    <div className="grid gap-3">
-      <p className="text-muted-foreground text-sm">
-        No status report yet. Your users only see what you publish there.
-      </p>
-      <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant={mode === "create" ? "default" : "outline"}
-          onClick={() => setMode("create")}
-        >
-          Create status report
-        </Button>
-        <Button
-          size="sm"
-          variant={mode === "link" ? "default" : "outline"}
-          onClick={() => setMode("link")}
-        >
-          Link existing
-        </Button>
-      </div>
+    <ActionCard className="border-dashed">
+      <ActionCardHeader>
+        <ActionCardTitle className="flex items-center gap-2 text-sm">
+          <span
+            aria-hidden="true"
+            className="border-muted-foreground size-2 shrink-0 rounded-full border"
+          />
+          Not published
+        </ActionCardTitle>
+        <ActionCardDescription>
+          {closed
+            ? "This incident was never linked to a status report."
+            : "Nothing here is public. Customers only see what you publish on your status page."}
+        </ActionCardDescription>
+      </ActionCardHeader>
       {mode === "link" ? (
-        <div className="grid gap-2">
+        <ActionCardContent className="grid gap-2">
           <Select value={reportId} onValueChange={setReportId}>
-            <SelectTrigger size="sm">
+            <SelectTrigger size="sm" className="w-full">
               <SelectValue placeholder="Select an open report" />
             </SelectTrigger>
             <SelectContent>
@@ -274,31 +319,12 @@ function UnlinkedReport({
               ))}
             </SelectContent>
           </Select>
-          <Button
-            size="sm"
-            disabled={!reportId || link.isPending}
-            onClick={() =>
-              toast.promise(
-                link.mutateAsync({
-                  id: incident.id,
-                  statusReportId: Number(reportId),
-                }),
-                {
-                  loading: "Linking...",
-                  success: "Status report linked",
-                  error: toastError,
-                },
-              )
-            }
-          >
-            Link
-          </Button>
-        </div>
+        </ActionCardContent>
       ) : null}
       {mode === "create" ? (
-        <div className="grid gap-2">
+        <ActionCardContent className="grid gap-2">
           <Select value={pageId} onValueChange={setPageId}>
-            <SelectTrigger size="sm">
+            <SelectTrigger size="sm" className="w-full">
               <SelectValue placeholder="Select a status page" />
             </SelectTrigger>
             <SelectContent>
@@ -309,7 +335,11 @@ function UnlinkedReport({
               ))}
             </SelectContent>
           </Select>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input
+            aria-label="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
           <Textarea
             rows={3}
             placeholder="First public message"
@@ -317,28 +347,72 @@ function UnlinkedReport({
             onChange={(e) => setMessage(e.target.value)}
           />
           {canNotify ? (
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="incident-create-notify"
-                checked={notifySubscribers}
-                onCheckedChange={(checked) =>
-                  setNotifySubscribers(checked === true)
-                }
-              />
-              <Label htmlFor="incident-create-notify">Notify subscribers</Label>
-            </div>
+            <NotifySubscribers
+              id="incident-create-notify"
+              checked={notifySubscribers}
+              onCheckedChange={setNotifySubscribers}
+            />
           ) : null}
-          <Button
-            size="sm"
-            disabled={
-              !pageId || !title.trim() || !message.trim() || create.isPending
-            }
-            onClick={() => createReport().catch(console.error)}
-          >
-            Create and link
-          </Button>
-        </div>
+        </ActionCardContent>
       ) : null}
-    </div>
+      {closed ? null : (
+        <ActionCardFooter className="flex-wrap gap-2">
+          {mode === null ? (
+            <>
+              <Button size="sm" onClick={() => setMode("create")}>
+                Create status report
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setMode("link")}
+              >
+                Link existing
+              </Button>
+            </>
+          ) : (
+            <>
+              {mode === "create" ? (
+                <Button
+                  size="sm"
+                  disabled={
+                    !pageId ||
+                    !title.trim() ||
+                    !message.trim() ||
+                    create.isPending
+                  }
+                  onClick={() => createReport().catch(console.error)}
+                >
+                  Create and link
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  disabled={!reportId || link.isPending}
+                  onClick={() =>
+                    toast.promise(
+                      link.mutateAsync({
+                        id: incident.id,
+                        statusReportId: Number(reportId),
+                      }),
+                      {
+                        loading: "Linking...",
+                        success: "Status report linked",
+                        error: toastError,
+                      },
+                    )
+                  }
+                >
+                  Link
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" onClick={() => setMode(null)}>
+                Cancel
+              </Button>
+            </>
+          )}
+        </ActionCardFooter>
+      )}
+    </ActionCard>
   );
 }

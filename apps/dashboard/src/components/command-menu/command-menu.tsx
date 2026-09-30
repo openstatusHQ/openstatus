@@ -21,11 +21,13 @@ import { FormSheetMaintenanceCreate } from "@/components/forms/maintenance/sheet
 import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-report-update/sheet-create";
 import { FormSheetStatusReportCreate } from "@/components/forms/status-report/sheet-create";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
+import { DeclareIncidentButton } from "@/components/incidents/declare-incident-button";
 import { scrollToHash, useScrollToHash } from "@/hooks/use-scroll-to-hash";
 import { switchWorkspace } from "@/lib/workspace-cookie";
 
 import { GroupView } from "./group-view";
 import {
+  incidentsGroup,
   maintenancesGroup,
   monitorsGroup,
   statusPagesGroup,
@@ -146,12 +148,13 @@ export function CommandMenu() {
           maintenances: data.sortedMaintenances,
         })
     : [
+        incidentsGroup(data.incidents),
         monitorsGroup(data.monitors),
         statusPagesGroup(data.statusPages),
         statusReportsGroup(data.sortedStatusReports),
         maintenancesGroup(data.sortedMaintenances, data.pageTitleById),
-        navigationGroup(),
-        createGroup(),
+        navigationGroup({ incidents: data.incidentsEnabled }),
+        createGroup({ incidents: data.incidentsEnabled }),
         settingsGroup(),
         workspacesGroup(data.otherWorkspaces, switchWorkspace),
         helpGroup(),
@@ -255,6 +258,15 @@ export function CommandMenu() {
         open={activeSheet?.sheet === "support"}
         onOpenChange={(o) => setActiveSheet(o ? { sheet: "support" } : null)}
       />
+      {/* Mounted on demand: the sheet fetches integrations as soon as it renders. */}
+      {data.incidentsEnabled && activeSheet?.sheet === "declare-incident" ? (
+        <DeclareIncidentButton
+          open
+          onOpenChange={(o) => {
+            if (!o) setActiveSheet(null);
+          }}
+        />
+      ) : null}
       {reportForUpdate ? (
         <FormSheetStatusReportUpdateCreate
           report={reportForUpdate}

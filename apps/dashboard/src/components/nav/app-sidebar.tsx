@@ -62,13 +62,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const incidents = useFeature("incident-management");
   const overview = incidents
     ? [
-        data.overview[0],
+        ...data.overview.slice(0, 3),
         {
           name: NAV.incidents.label,
           url: NAV.incidents.href,
           icon: NAV.incidents.icon,
+          badge: "New",
         },
-        ...data.overview.slice(1),
+        ...data.overview.slice(3),
       ]
     : data.overview;
 

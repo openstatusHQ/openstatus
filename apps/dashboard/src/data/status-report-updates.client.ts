@@ -2,6 +2,7 @@ import type { StatusReportStatus } from "@openstatus/db/src/schema";
 import type { PageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
 import { Settings, Delete } from "@openstatus/icons";
 
+import type { StatusVariant } from "@/components/common/status-dot";
 import type { FormValues as StatusReportUpdateFormValues } from "@/components/forms/status-report-update/form";
 
 export const impactConfig = {
@@ -87,6 +88,13 @@ export const colors = {
   identified:
     "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
 } as const satisfies Record<StatusReportStatus, string>;
+
+export const statusVariants = {
+  resolved: "success",
+  investigating: "destructive",
+  monitoring: "info",
+  identified: "warning",
+} as const satisfies Record<StatusReportStatus, StatusVariant>;
 
 /**
  * Get the next status in the progression:
