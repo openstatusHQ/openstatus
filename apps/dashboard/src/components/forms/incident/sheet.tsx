@@ -22,22 +22,30 @@ import {
 
 export function FormSheetDeclareIncident({
   children,
+  open: controlledOpen,
+  onOpenChange,
   defaultValues,
   onSubmit,
   footer,
   slack,
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   defaultValues?: Partial<FormValues>;
   onSubmit: (values: DeclareIncidentValues) => Promise<void>;
   footer?: React.ReactNode;
   slack: "ready" | "reconnect" | "disconnected";
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
 
   return (
     <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>
-      <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      {children ? (
+        <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      ) : null}
       <FormSheetContent className="sm:max-w-lg">
         <FormSheetHeader>
           <FormSheetTitle>Declare incident</FormSheetTitle>

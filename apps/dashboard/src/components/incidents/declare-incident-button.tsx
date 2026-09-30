@@ -15,11 +15,15 @@ export type DeclareSource = {
 /** Opens the declare sheet and lands on the new incident once declared. */
 export function DeclareIncidentButton({
   children,
+  open,
+  onOpenChange,
   defaultValues,
   source,
   footer,
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   defaultValues?: Partial<FormValues>;
   source?: DeclareSource;
   footer?: React.ReactNode;
@@ -51,6 +55,8 @@ export function DeclareIncidentButton({
 
   return (
     <FormSheetDeclareIncident
+      open={open}
+      onOpenChange={onOpenChange}
       defaultValues={defaultValues}
       footer={footer}
       slack={slack}
