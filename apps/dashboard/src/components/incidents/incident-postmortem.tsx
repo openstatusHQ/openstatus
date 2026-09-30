@@ -15,6 +15,11 @@ import { isTRPCClientError } from "@trpc/client";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+  EmptyStateContainer,
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
 import { ProcessMessage } from "@/components/content/process-message";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -107,9 +112,12 @@ export function IncidentPostmortem({
 
   if (incident.status !== "resolved") {
     return (
-      <p className="text-muted-foreground text-sm">
-        The postmortem opens once the incident is resolved.
-      </p>
+      <EmptyStateContainer>
+        <EmptyStateTitle>No postmortem yet</EmptyStateTitle>
+        <EmptyStateDescription>
+          The postmortem opens once the incident is resolved.
+        </EmptyStateDescription>
+      </EmptyStateContainer>
     );
   }
 
@@ -195,7 +203,7 @@ export function IncidentPostmortem({
       </div>
       {approved && incident.closedAt === null ? (
         <p className="text-muted-foreground text-right text-xs">
-          Approved. Close the incident from the panel on the right.
+          Approved. Close the incident from the header.
         </p>
       ) : null}
     </div>

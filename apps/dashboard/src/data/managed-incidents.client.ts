@@ -3,27 +3,42 @@ import type {
   IncidentStatus,
 } from "@openstatus/db/src/schema/incidents/constants";
 
+import type { StatusVariant } from "@/components/common/status-dot";
+
 export const severityConfig = {
-  critical: {
-    label: "Critical",
-    className: "text-destructive border-destructive/40",
-  },
-  major: { label: "Major", className: "text-warning border-warning/40" },
-  minor: { label: "Minor", className: "text-info border-info/40" },
+  critical: { label: "Critical", variant: "destructive" },
+  major: { label: "Major", variant: "warning" },
+  minor: { label: "Minor", variant: "info" },
 } as const satisfies Record<
   IncidentSeverity,
-  { label: string; className: string }
+  { label: string; variant: StatusVariant }
 >;
 
 export const statusConfig = {
-  open: { label: "Open", className: "text-destructive" },
-  mitigated: { label: "Mitigated", className: "text-warning" },
-  resolved: { label: "Resolved", className: "text-success" },
-  canceled: { label: "Canceled", className: "text-muted-foreground" },
+  open: { label: "Open", variant: "destructive" },
+  mitigated: { label: "Mitigated", variant: "warning" },
+  resolved: { label: "Resolved", variant: "success" },
+  canceled: { label: "Canceled", variant: "default" },
 } as const satisfies Record<
   IncidentStatus,
-  { label: string; className: string }
+  { label: string; variant: StatusVariant }
 >;
+
+export function formatIncidentId(id: number): string {
+  return `INC-${String(id).padStart(3, "0")}`;
+}
+
+/** When the incident stopped being ongoing; `null` while it still is. */
+export function incidentEndedAt(incident: {
+  status: IncidentStatus;
+  resolvedAt: Date | null;
+  closedAt: Date | null;
+}): Date | null {
+  if (incident.status === "resolved" && incident.resolvedAt) {
+    return incident.resolvedAt;
+  }
+  return incident.closedAt;
+}
 
 export function personName(
   person: {

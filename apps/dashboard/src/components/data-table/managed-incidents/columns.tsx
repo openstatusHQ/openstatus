@@ -1,21 +1,18 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceStrict } from "date-fns";
 
-import { Link } from "@/components/common/link";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
 import {
-  personName,
-  severityConfig,
-  statusConfig,
-} from "@/data/managed-incidents.client";
-import { cn } from "@/lib/utils";
+  IncidentSeverityBadge,
+  IncidentStatusBadge,
+} from "@/components/incidents/incident-badge";
+import { personName } from "@/data/managed-incidents.client";
 
 type ManagedIncident = NonNullable<RouterOutputs["incident"]["list"]>[number];
 
@@ -24,23 +21,19 @@ export const columns: ColumnDef<ManagedIncident>[] = [
     accessorKey: "severity",
     header: "Severity",
     enableSorting: false,
-    cell: ({ row }) => {
-      const config = severityConfig[row.original.severity];
-      return (
-        <Badge variant="outline" className={cn("font-mono", config.className)}>
-          {config.label}
-        </Badge>
-      );
-    },
+    cell: ({ row }) => (
+      <IncidentSeverityBadge severity={row.original.severity} />
+    ),
   },
   {
     accessorKey: "title",
     header: "Title",
     enableSorting: false,
     cell: ({ row }) => (
-      <Link href={`/incidents/${row.original.id}`} className="font-medium">
-        {row.original.title}
-      </Link>
+      <TableCellLink
+        href={`/incidents/${row.original.id}`}
+        value={row.original.title}
+      />
     ),
     meta: { cellClassName: "max-w-[260px] truncate" },
   },
@@ -48,17 +41,12 @@ export const columns: ColumnDef<ManagedIncident>[] = [
     accessorKey: "status",
     header: "Status",
     enableSorting: false,
-    cell: ({ row }) => {
-      const config = statusConfig[row.original.status];
-      return (
-        <span className={cn("font-mono text-sm", config.className)}>
-          {config.label}
-          {row.original.closedAt && row.original.status !== "canceled"
-            ? " · closed"
-            : null}
-        </span>
-      );
-    },
+    cell: ({ row }) => (
+      <IncidentStatusBadge
+        status={row.original.status}
+        closed={row.original.closedAt !== null}
+      />
+    ),
   },
   {
     id: "commander",

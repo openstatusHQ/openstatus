@@ -1,245 +1,285 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { incidentSeverity } from "@openstatus/db/src/schema/incidents/constants";
+import {
+  type IncidentStatus,
+  incidentSeverity,
+} from "@openstatus/db/src/schema/incidents/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { Input } from "@openstatus/ui/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
-  SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { formatDistanceStrict } from "date-fns";
-import { useRouter } from "next/navigation";
+import {
+  format,
+  formatDistanceStrict,
+  formatDistanceToNowStrict,
+} from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Link } from "@/components/common/link";
-import { FormAlertDialog } from "@/components/forms/form-alert-dialog";
+import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
+import { StatusDot } from "@/components/common/status-dot";
+import { UserAvatar } from "@/components/common/user-avatar";
+import {
+  Property,
+  PropertyInput,
+  PropertyLabel,
+  PropertyList,
+  PropertySelectTrigger,
+  PropertyValue,
+} from "@/components/content/property-list";
 import { toLocalInput } from "@/components/forms/incident/form";
 import {
+  incidentEndedAt,
   personName,
   severityConfig,
   statusConfig,
 } from "@/data/managed-incidents.client";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { useInvalidateIncident } from "./use-invalidate-incident";
+
 type Incident = NonNullable<RouterOutputs["incident"]["get"]>;
 
 const NONE = "none";
 
-function Row({
-  label,
-  children,
+export function IncidentProperties({
+  incident,
+  lastUpdateAt,
+  onStatusChanged,
 }: {
-  label: string;
-  children: React.ReactNode;
+  incident: Incident;
+  lastUpdateAt?: Date;
+  onStatusChanged: (status: IncidentStatus, note: string) => void;
 }) {
-  return (
-    <div className="grid grid-cols-[110px_1fr] items-center gap-2 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <div className="min-w-0">{children}</div>
-    </div>
-  );
-}
-
-export function slackChannelUrl(teamId: string, channelId: string): string {
-  return `https://slack.com/app_redirect?team=${teamId}&channel=${channelId}`;
-}
-
-export function IncidentProperties({ incident }: { incident: Incident }) {
   const trpc = useTRPC();
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const { data: members } = useQuery(trpc.member.list.queryOptions());
-  const { data: postmortem } = useQuery(
-    trpc.incident.getPostmortem.queryOptions({ id: incident.id }),
-  );
   const [startedAt, setStartedAt] = useState(toLocalInput(incident.startedAt));
   const closed = incident.closedAt !== null;
 
-  const refresh = () =>
-    Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: trpc.incident.get.queryKey({ id: incident.id }),
-      }),
-      queryClient.invalidateQueries({
-        queryKey: trpc.incident.listEvents.queryKey({ id: incident.id }),
-      }),
-      queryClient.invalidateQueries({
-        queryKey: trpc.incident.list.queryKey(),
-      }),
-    ]);
+  const invalidate = useInvalidateIncident(incident.id);
   const onError = (error: { message: string }) => {
     toast.error(isTRPCClientError(error) ? error.message : "Failed to save");
   };
-
   const update = useMutation(
-    trpc.incident.update.mutationOptions({ onSuccess: refresh, onError }),
+    trpc.incident.update.mutationOptions({ onSuccess: invalidate, onError }),
   );
-  const close = useMutation(
-    trpc.incident.close.mutationOptions({ onSuccess: refresh, onError }),
-  );
-  const remove = useMutation(
-    trpc.incident.delete.mutationOptions({
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: trpc.incident.list.queryKey(),
-        });
-        router.push("/incidents");
+  const setStatus = useMutation(
+    trpc.incident.setStatus.mutationOptions({
+      onSuccess: async (row) => {
+        await invalidate();
+        if (row) onStatusChanged(row.status, "");
       },
+      onError,
     }),
   );
 
-  const end =
-    incident.status === "resolved" && incident.resolvedAt
-      ? incident.resolvedAt
-      : (incident.closedAt ?? new Date());
+  const severity = severityConfig[incident.severity];
+  const status = statusConfig[incident.status];
+  const commander = personName(incident.commander);
+  const endedAt = incidentEndedAt(incident);
 
   return (
-    <div className="grid gap-3">
-      <Row label="Severity">
-        <Select
-          disabled={closed}
-          value={incident.severity}
-          onValueChange={(value) => {
-            const severity = incidentSeverity.find((s) => s === value);
-            if (severity) update.mutate({ id: incident.id, severity });
-          }}
-        >
-          <SelectTrigger size="sm" className="w-full font-mono">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {incidentSeverity.map((severity) => (
-              <SelectItem key={severity} value={severity}>
-                {severityConfig[severity].label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Row>
-      <Row label="Status">
-        <span
-          className={`font-mono ${statusConfig[incident.status].className}`}
-        >
-          {statusConfig[incident.status].label}
-          {closed && incident.status !== "canceled" ? " · closed" : null}
-        </span>
-      </Row>
-      <Row label="Commander">
-        <Select
-          disabled={closed}
-          value={incident.commanderId ? String(incident.commanderId) : NONE}
-          onValueChange={(value) =>
-            update.mutate({
-              id: incident.id,
-              commanderId: value === NONE ? null : Number(value),
-            })
-          }
-        >
-          <SelectTrigger size="sm" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NONE}>No commander</SelectItem>
-            {(members ?? []).map((member) => (
-              <SelectItem key={member.user.id} value={String(member.user.id)}>
-                {personName(member.user) ?? `User ${member.user.id}`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Row>
-      <Row label="Started at">
-        <div className="flex gap-1">
-          <Input
-            type="datetime-local"
-            disabled={closed}
-            value={startedAt}
-            onChange={(e) => setStartedAt(e.target.value)}
-          />
-          {startedAt !== toLocalInput(incident.startedAt) ? (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
+    <PropertyList>
+      <Property>
+        <PropertyLabel>Severity</PropertyLabel>
+        <PropertyValue>
+          {closed ? (
+            <>
+              <StatusDot variant={severity.variant} className="rounded-xs" />
+              {severity.label}
+            </>
+          ) : (
+            <Select
+              value={incident.severity}
+              onValueChange={(value) => {
+                const next = incidentSeverity.find((s) => s === value);
+                if (next) update.mutate({ id: incident.id, severity: next });
+              }}
+            >
+              <PropertySelectTrigger aria-label="Severity">
+                <SelectValue />
+              </PropertySelectTrigger>
+              <SelectContent>
+                {incidentSeverity.map((s) => (
+                  <SelectItem key={s} value={s} className="font-mono">
+                    <StatusDot
+                      variant={severityConfig[s].variant}
+                      className="rounded-xs"
+                    />
+                    {severityConfig[s].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </PropertyValue>
+      </Property>
+      <Property>
+        <PropertyLabel>Status</PropertyLabel>
+        <PropertyValue>
+          {incident.allowedTransitions.length === 0 ? (
+            <>
+              <StatusDot variant={status.variant} />
+              {status.label}
+              {closed && incident.status !== "canceled" ? " · closed" : null}
+            </>
+          ) : (
+            <Select
+              value={incident.status}
+              onValueChange={(value) => {
+                const next = incident.allowedTransitions.find(
+                  (s) => s === value,
+                );
+                if (next) setStatus.mutate({ id: incident.id, status: next });
+              }}
+            >
+              <PropertySelectTrigger aria-label="Status">
+                <SelectValue />
+              </PropertySelectTrigger>
+              <SelectContent>
+                {[incident.status, ...incident.allowedTransitions].map((s) => (
+                  <SelectItem key={s} value={s} className="font-mono">
+                    <StatusDot variant={statusConfig[s].variant} />
+                    {statusConfig[s].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </PropertyValue>
+      </Property>
+      <Property>
+        <PropertyLabel>Commander</PropertyLabel>
+        <PropertyValue>
+          {closed ? (
+            commander ? (
+              <>
+                <UserAvatar name={commander} />
+                <span className="truncate">{commander}</span>
+              </>
+            ) : (
+              <span className="text-muted-foreground">No commander</span>
+            )
+          ) : (
+            <Select
+              value={incident.commanderId ? String(incident.commanderId) : NONE}
+              onValueChange={(value) =>
                 update.mutate({
                   id: incident.id,
-                  startedAt: new Date(startedAt),
+                  commanderId: value === NONE ? null : Number(value),
                 })
               }
             >
-              Save
-            </Button>
-          ) : null}
-        </div>
-      </Row>
-      <Row label="Duration">
-        <span className="font-mono">
-          {formatDistanceStrict(incident.startedAt, end)}
-        </span>
-      </Row>
-      <Row label="Declared by">
-        {personName(incident.declaredByUser) ?? "System"}
-      </Row>
-      <Row label="Slack">
-        {incident.slackTeamId && incident.slackChannelId ? (
-          <Link
-            href={slackChannelUrl(
-              incident.slackTeamId,
-              incident.slackChannelId,
-            )}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Open channel
-          </Link>
-        ) : (
-          <span className="text-muted-foreground">No channel</span>
-        )}
-      </Row>
-      <div className="flex flex-wrap gap-2 pt-2">
-        {incident.status === "resolved" && !closed ? (
-          postmortem?.status === "approved" ? (
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={close.isPending}
-              onClick={() => close.mutate({ id: incident.id })}
-            >
-              Close incident
-            </Button>
+              <PropertySelectTrigger aria-label="Commander">
+                <SelectValue />
+              </PropertySelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE} className="font-mono">
+                  <span className="text-muted-foreground">No commander</span>
+                </SelectItem>
+                {(members ?? []).map((member) => {
+                  const name =
+                    personName(member.user) ?? `User ${member.user.id}`;
+                  return (
+                    <SelectItem
+                      key={member.user.id}
+                      value={String(member.user.id)}
+                      className="font-mono"
+                    >
+                      <UserAvatar name={name} />
+                      <span className="truncate">{name}</span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          )}
+        </PropertyValue>
+      </Property>
+      <Property>
+        <PropertyLabel>Started at</PropertyLabel>
+        <PropertyValue className="flex-wrap">
+          {closed ? (
+            <HoverCardTimestamp date={incident.startedAt} side="left">
+              <span>{format(incident.startedAt, "LLL dd, y HH:mm")}</span>
+            </HoverCardTimestamp>
           ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={close.isPending}
-              onClick={() =>
-                close.mutate({ id: incident.id, skipPostmortem: true })
-              }
-            >
-              Close (skip postmortem)
-            </Button>
-          )
-        ) : null}
-        {incident.deletable ? (
-          <FormAlertDialog
-            confirmationValue={incident.title}
-            submitAction={async () => {
-              await remove.mutateAsync({ id: incident.id });
-            }}
-          >
-            <Button size="sm" variant="destructive">
-              Delete
-            </Button>
-          </FormAlertDialog>
-        ) : null}
-      </div>
-    </div>
+            <>
+              <PropertyInput
+                type="datetime-local"
+                aria-label="Started at"
+                value={startedAt}
+                onChange={(e) => setStartedAt(e.target.value)}
+              />
+              {startedAt !== toLocalInput(incident.startedAt) ? (
+                <div className="flex gap-1 font-sans">
+                  <Button
+                    size="sm"
+                    className="h-7"
+                    disabled={!startedAt || update.isPending}
+                    onClick={() =>
+                      update.mutate({
+                        id: incident.id,
+                        startedAt: new Date(startedAt),
+                      })
+                    }
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7"
+                    onClick={() =>
+                      setStartedAt(toLocalInput(incident.startedAt))
+                    }
+                  >
+                    Reset
+                  </Button>
+                </div>
+              ) : null}
+            </>
+          )}
+        </PropertyValue>
+      </Property>
+      <Property>
+        <PropertyLabel>Duration</PropertyLabel>
+        <PropertyValue>
+          {formatDistanceStrict(incident.startedAt, endedAt ?? new Date())}
+          {endedAt ? null : (
+            <>
+              <StatusDot variant="destructive" className="size-1.5" />
+              <span className="sr-only">ongoing</span>
+            </>
+          )}
+        </PropertyValue>
+      </Property>
+      {lastUpdateAt ? (
+        <Property>
+          <PropertyLabel>Last update</PropertyLabel>
+          <PropertyValue>
+            <HoverCardTimestamp date={lastUpdateAt} side="left">
+              <span>
+                {formatDistanceToNowStrict(lastUpdateAt, { addSuffix: true })}
+              </span>
+            </HoverCardTimestamp>
+          </PropertyValue>
+        </Property>
+      ) : null}
+      <Property>
+        <PropertyLabel>Declared by</PropertyLabel>
+        <PropertyValue>
+          <span className="truncate">
+            {personName(incident.declaredByUser) ?? "System"}
+          </span>
+        </PropertyValue>
+      </Property>
+    </PropertyList>
   );
 }

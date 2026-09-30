@@ -9,23 +9,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-import { Textarea } from "@openstatus/ui/components/ui/textarea";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { ProcessMessage } from "@/components/content/process-message";
-import { statusConfig } from "@/data/managed-incidents.client";
+import { StatusDot } from "@/components/common/status-dot";
+import { UserAvatar } from "@/components/common/user-avatar";
+import {
+  Composer,
+  ComposerFooter,
+  ComposerHeader,
+  ComposerHint,
+  ComposerPreview,
+  ComposerTabs,
+  ComposerTextarea,
+} from "@/components/content/composer";
+import { personName, statusConfig } from "@/data/managed-incidents.client";
 import { useTRPC } from "@/lib/trpc/client";
 
-const UNCHANGED = "unchanged";
+import { useInvalidateIncident } from "./use-invalidate-incident";
 
 /**
  * Posting with the status unchanged adds a note; picking a new status moves
@@ -43,23 +46,11 @@ export function IncidentComposer({
   onStatusChanged: (status: IncidentStatus, note: string) => void;
 }) {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const [status, setStatus] = useState<string>(UNCHANGED);
+  const { data: user } = useQuery(trpc.user.get.queryOptions());
+  const [selected, setSelected] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
-  const invalidate = () =>
-    Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: trpc.incident.get.queryKey({ id: incident.id }),
-      }),
-      queryClient.invalidateQueries({
-        queryKey: trpc.incident.listEvents.queryKey({ id: incident.id }),
-      }),
-      queryClient.invalidateQueries({
-        queryKey: trpc.incident.list.queryKey(),
-      }),
-    ]);
-
+  const invalidate = useInvalidateIncident(incident.id);
   const addNote = useMutation(
     trpc.incident.addNote.mutationOptions({ onSuccess: invalidate }),
   );
@@ -67,9 +58,11 @@ export function IncidentComposer({
     trpc.incident.setStatus.mutationOptions({ onSuccess: invalidate }),
   );
   const pending = addNote.isPending || setIncidentStatus.isPending;
-  const next = incident.allowedTransitions.find((s) => s === status);
+  const next = incident.allowedTransitions.find((s) => s === selected);
+  const disabled = pending || (!next && !message.trim());
 
   async function submit() {
+    if (disabled) return;
     const note = message.trim();
     const promise: Promise<void> = next
       ? setIncidentStatus
@@ -90,57 +83,75 @@ export function IncidentComposer({
     });
     await promise;
     setMessage("");
-    setStatus(UNCHANGED);
+    setSelected(null);
     if (next) onStatusChanged(next, note);
   }
 
-  const disabled = pending || (!next && !message.trim());
-
   return (
-    <div className="bg-background grid gap-2 rounded-lg border p-3">
-      <Tabs defaultValue="write">
-        <div className="flex items-center justify-between gap-2">
-          <TabsList>
-            <TabsTrigger value="write">Write</TabsTrigger>
-            <TabsTrigger value="preview">Preview</TabsTrigger>
-          </TabsList>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger size="sm" className="w-[180px] font-mono">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={UNCHANGED}>
-                {statusConfig[incident.status].label} (unchanged)
-              </SelectItem>
-              {incident.allowedTransitions.map((s) => (
-                <SelectItem key={s} value={s}>
-                  Mark {statusConfig[s].label.toLowerCase()}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <TabsContent value="write">
-          <Textarea
-            rows={4}
-            placeholder="What's happening? Markdown supported."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-        </TabsContent>
-        <TabsContent value="preview">
-          <div className="prose dark:prose-invert prose-sm min-h-24 rounded-md border px-3 py-2">
-            <ProcessMessage value={message || "_Nothing to preview._"} />
+    <div className="flex gap-3">
+      <UserAvatar
+        name={user ? personName(user) : null}
+        src={user?.photoUrl}
+        className="size-8 text-xs"
+      />
+      <Composer>
+        <ComposerHeader>
+          <ComposerTabs />
+          <ComposerHint>Markdown</ComposerHint>
+        </ComposerHeader>
+        <ComposerTextarea
+          placeholder="What's happening? Impact, what you've found, what's next."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              submit().catch(console.error);
+            }
+          }}
+        />
+        <ComposerPreview value={message} />
+        <ComposerFooter>
+          <div className="flex items-center gap-2">
+            <span>Set status to</span>
+            <Select
+              value={next ?? incident.status}
+              onValueChange={(value) =>
+                setSelected(value === incident.status ? null : value)
+              }
+            >
+              <SelectTrigger
+                size="sm"
+                className="bg-background text-foreground font-mono"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[incident.status, ...incident.allowedTransitions].map((s) => (
+                  <SelectItem key={s} value={s} className="font-mono">
+                    <StatusDot variant={statusConfig[s].variant} />
+                    {statusConfig[s].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </TabsContent>
-      </Tabs>
-      <div className="flex justify-end">
-        <Button size="sm" disabled={disabled} onClick={() => submit()}>
-          {next
-            ? `Post and mark ${statusConfig[next].label.toLowerCase()}`
-            : "Post note"}
-        </Button>
-      </div>
+          <div className="ml-auto flex items-center gap-3">
+            <span className="hidden text-xs sm:inline">
+              Only your team sees notes
+            </span>
+            <Button
+              size="sm"
+              disabled={disabled}
+              onClick={() => submit().catch(console.error)}
+            >
+              {next
+                ? `Post and mark ${statusConfig[next].label.toLowerCase()}`
+                : "Post note"}
+            </Button>
+          </div>
+        </ComposerFooter>
+      </Composer>
     </div>
   );
 }
