@@ -27,20 +27,44 @@ describe("redactSensitiveBody", () => {
         items: [{ apiKey: "sk_live_123" }],
       }),
     );
-    expect(redacted).not.toContain("hunter2");
-    expect(redacted).not.toContain("sk_live_123");
-    expect(redacted).not.toContain('"abc"');
-    expect(redacted).toContain('"name":"ada"');
+    expect(redacted).toBe(
+      JSON.stringify({
+        user: { name: "ada", password: "[redacted]" },
+        session: "[redacted]",
+        items: [{ apiKey: "[redacted]" }],
+      }),
+    );
   });
 
   test("redacts tokens in non-JSON bodies", () => {
     const redacted = redactSensitiveBody(
       "error: Bearer abc.def-ghi rejected; token=s3cr3t&page=2 jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.sig",
     );
-    expect(redacted).not.toContain("abc.def-ghi");
-    expect(redacted).not.toContain("s3cr3t");
-    expect(redacted).not.toContain("eyJhbGciOiJIUzI1NiJ9");
-    expect(redacted).toContain("page=2");
+    expect(redacted).toBe(
+      "error: Bearer [redacted] rejected; token=[redacted]&page=2 jwt [redacted]",
+    );
+  });
+
+  test("redacts whole quoted values in non-JSON bodies", () => {
+    const redacted = redactSensitiveBody(
+      `{"api_key": "sk live 123", password='correct horse battery' (truncated`,
+    );
+    expect(redacted).toBe(
+      `{"api_key": "[redacted]", password='[redacted]' (truncated`,
+    );
+  });
+
+  test("only matches sensitive words, not substrings", () => {
+    expect(
+      redactSensitiveBody(
+        "monkey=1&turkey=2&obsession=3&author=ada&accessToken=abc&x-auth-token=def",
+      ),
+    ).toBe(
+      "monkey=1&turkey=2&obsession=3&author=ada&accessToken=[redacted]&x-auth-token=[redacted]",
+    );
+    expect(
+      redactSensitiveBody(JSON.stringify({ monkey: "1", client_secret: "s" })),
+    ).toBe(JSON.stringify({ monkey: "1", client_secret: "[redacted]" }));
   });
 
   test("passes empty bodies through", () => {

@@ -294,7 +294,7 @@ const ListResponseLogsInputShape = z.object({
     .enum(monitorTimeRange)
     .default("1d")
     .describe(
-      "Lookback window: 1d (default), 7d, 14d. Anchored at now. Ignored when `from` is set.",
+      "Lookback window: 1d (default), 7d, 14d. Ends at `to` (default now). Ignored when `from` is set.",
     ),
   from: z.iso
     .datetime({ offset: true })
@@ -376,12 +376,10 @@ export const listResponseLogsTool: AgentTool<
   inputSchema: ListResponseLogsInputShape,
   outputSchema: ListResponseLogsOutput,
   async run({ ctx, input }) {
+    const to = input.to ? Date.parse(input.to) : Date.now();
     const window = input.from
-      ? {
-          from: Date.parse(input.from),
-          to: input.to ? Date.parse(input.to) : Date.now(),
-        }
-      : agentTimeRangeToTimestampWindow(input.timeRange);
+      ? { from: Date.parse(input.from), to }
+      : agentTimeRangeToTimestampWindow(input.timeRange, to);
     const result = await listResponseLogsInfinite({
       ctx,
       input: {
@@ -487,12 +485,14 @@ function truncateBody(body: string | null): string | null {
   return `${body.slice(0, RESPONSE_BODY_MAX_CHARS)}… [truncated, ${body.length} chars total]`;
 }
 
-function agentTimeRangeToTimestampWindow(value: MonitorTimeRange): {
+function agentTimeRangeToTimestampWindow(
+  value: MonitorTimeRange,
+  to = Date.now(),
+): {
   from: number;
   to: number;
 } {
   const day = 24 * 60 * 60_000;
-  const to = Date.now();
   const ms = value === "1d" ? day : value === "7d" ? 7 * day : 14 * day;
   return { from: to - ms, to };
 }
