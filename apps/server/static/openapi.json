@@ -2049,7 +2049,7 @@
           "REGION_RAILWAY_EUROPE_WEST4",
           "REGION_RAILWAY_ASIA_SOUTHEAST1"
         ],
-        "description": "Geographic regions where monitors can run checks from."
+        "description": "Geographic regions where monitors can run checks from.\n REGION_FLY_BOM is deprecated and rejected on create/update; use REGION_FLY_SIN."
       },
       "openstatus.monitor.v1.RegionStatus": {
         "type": "object",
