@@ -30,7 +30,9 @@ const EMAIL_ERROR =
 
 /**
  * Routes by domain: a verified SSO domain goes to the identity provider,
- * everything else gets a magic link.
+ * everything else gets a magic link. SSO is an additional way in, not a
+ * replacement (GitHub and Google stay available), so an SSO-domain address
+ * that reaches the Resend provider directly is still allowed.
  */
 export async function continueWithEmail(
   _prevState: EmailFormState,
@@ -43,9 +45,11 @@ export async function continueWithEmail(
 
   if (hasWorkOS) {
     const ip = resolveClientIp(await headers()) ?? "unknown";
-    if (!(await ssoLookupRateLimit(ip))) return { error: EMAIL_ERROR };
-
-    const workspace = await getWorkspaceByVerifiedSsoDomain(email);
+    // The lookup limiter guards the SSO-domain oracle, not the login: once it
+    // trips (shared office IP), the address takes the magic-link path instead.
+    const workspace = (await ssoLookupRateLimit(ip))
+      ? await getWorkspaceByVerifiedSsoDomain(email)
+      : null;
     if (workspace?.workosOrganizationId) {
       const cookieStore = await cookies();
       cookieStore.set(SSO_ORG_COOKIE, workspace.workosOrganizationId, {

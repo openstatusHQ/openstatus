@@ -412,6 +412,7 @@ export class EmailClient {
       );
       throw result.error;
     }
+    console.log(`Sent dashboard magic link email to ${req.to}`);
   }
 
   public async sendMaintenanceNotification(req: {

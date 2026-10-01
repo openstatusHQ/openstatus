@@ -38,9 +38,12 @@ export function EmailForm({ redirectTo }: { redirectTo?: string }) {
         placeholder="gilfoyle@piedpiper.dev"
         aria-label="Email"
         aria-invalid={state.error ? true : undefined}
+        aria-describedby={state.error ? "email-error" : undefined}
       />
       {state.error ? (
-        <p className="text-destructive text-xs">{state.error}</p>
+        <p id="email-error" role="alert" className="text-destructive text-xs">
+          {state.error}
+        </p>
       ) : null}
       <LoginButton
         type="submit"

@@ -23,7 +23,7 @@ cp apps/dashboard/.env.example apps/dashboard/.env
 
 The defaults in `.env.example` are dummy values that work for local dev — no real API keys needed.
 Fill them in before deployment to enable optional functionality (Resend for real magic-link emails, Stripe, Tinybird analytics, Sentry, GitHub/Google OAuth, etc.).
-Email/Magic Link login is only available in dev.
+Magic-link login works everywhere; in dev the link is printed to the terminal instead of emailed.
 
 ### Startup
 

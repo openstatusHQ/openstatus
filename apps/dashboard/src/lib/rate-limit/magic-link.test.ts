@@ -30,6 +30,7 @@ describe("magicLinkRateLimit", () => {
       "ratelimit:magic-link:ip:1.2.3.4",
       "ratelimit:magic-link:email:a@b.c",
     ]);
+    expect(evalStub?.calls[0]?.args[2]).toEqual([600]);
   });
 
   test("allows at the limits", async () => {

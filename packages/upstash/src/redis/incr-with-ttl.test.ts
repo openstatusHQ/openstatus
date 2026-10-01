@@ -26,7 +26,7 @@ describe("incrWithTtl", () => {
     expect(calls[0]?.args).toEqual([600]);
   });
 
-  test("the script sets the TTL only on the key's first hit", () => {
+  test("the script guards EXPIRE behind the first INCR of each key", () => {
     const { client, calls } = fakeClient([1]);
     incrWithTtl(client, ["a"], 600);
 

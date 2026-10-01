@@ -7,6 +7,10 @@ const MAX_PER_EMAIL = 3;
 /**
  * Throttle magic-link requests per sender IP and per target address: without
  * it the login form sends one email to any inbox per submit.
+ *
+ * Accepted trade-offs: refused requests count too, so three submits for
+ * someone else's address block that inbox for the window (they keep GitHub
+ * and Google); every request without a resolvable IP shares one bucket.
  */
 export async function magicLinkRateLimit(args: {
   ip: string;

@@ -104,7 +104,11 @@ export function formatDateForInput(date: Date): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-/** Display name for a user row: name, then first/last, then email. */
+/**
+ * Display name for a user row: name, then first/last, then email. Twin of
+ * `displayName` in `@openstatus/services/attribution`, which imports the db
+ * and cannot reach client components.
+ */
 export function personName(
   person: {
     name: string | null;
