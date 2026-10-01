@@ -15,6 +15,7 @@ import {
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
+import { listStatusReportsTool } from "../../agent-tools/status-report";
 import type { DB, ServiceContext } from "../../context";
 import { addStatusReportUpdate } from "../add-update";
 import { createStatusReport } from "../create";
@@ -102,6 +103,22 @@ describe("status report attribution", () => {
       expect(full.createdByUser).toEqual(owner);
       expect(full.updatedByUser).toEqual(owner);
       expect(full.updates[0].createdByUser).toEqual(owner);
+    });
+  });
+
+  test("agent tool output carries the name only", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report } = await create(ctx, "agent");
+      const output = await listStatusReportsTool.run({
+        ctx,
+        input: { filter: "all", pageId, page: 1, perPage: 50 },
+      });
+      const item = output.items.find((i) => i.id === report.id);
+      const agentUser = { id: ownerId, name: "Test User" };
+      expect(item?.createdBy).toEqual(agentUser);
+      expect(item?.updatedBy).toEqual(agentUser);
+      expect(item?.latestUpdate?.createdBy).toEqual(agentUser);
     });
   });
 

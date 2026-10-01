@@ -32,8 +32,12 @@ describe("attribution projections", () => {
   });
 
   test("agent projection drops email and photo", () => {
-    const agent = toAgentUser(toAttributedUserDetail(row));
-    expect(agent).toEqual({ id: 7, name: "Ada Lovelace" });
+    const detail = toAttributedUserDetail({
+      ...row,
+      photoUrl: "https://example.com/ada.png",
+    });
+    expect(detail?.photoUrl).toBe("https://example.com/ada.png");
+    expect(toAgentUser(detail)).toEqual({ id: 7, name: "Ada Lovelace" });
     expect(toAgentUser(null)).toBeNull();
   });
 });
