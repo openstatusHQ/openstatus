@@ -54,8 +54,8 @@
       {
         "command": "/openstatus",
         "url": "https://api.openstatus.dev/slack/commands",
-        "description": "Run incidents and manage status page subscriptions",
-        "usage_hint": "incident declare | incident list | subscribe <status-page-url> | help",
+        "description": "Declare incidents and subscribe channels to status pages",
+        "usage_hint": "[incident | subscribe | help]",
         "should_escape": false
       }
     ]
