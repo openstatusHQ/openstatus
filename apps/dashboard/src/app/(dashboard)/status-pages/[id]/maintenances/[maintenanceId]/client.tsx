@@ -27,7 +27,6 @@ import { MaintenanceComposer } from "@/components/maintenances/maintenance-compo
 import { MaintenanceProperties } from "@/components/maintenances/maintenance-properties";
 import { useInvalidateMaintenance } from "@/components/maintenances/use-invalidate-maintenance";
 import { Notifications } from "@/components/status-reports/status-report-notifications";
-import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { toUpdateInput } from "@/data/maintenances.client";
 import { getMaintenanceStatus } from "@/data/overview-events.client";
 import { getPageUrl } from "@/data/status-pages.client";
@@ -120,10 +119,8 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
           </DetailSection>
           <MaintenanceComponents
             maintenance={maintenance}
-            items={toCheckboxTreeItems(
-              page.pageComponents,
-              page.pageComponentGroups,
-            )}
+            components={page.pageComponents}
+            groups={page.pageComponentGroups}
           />
           <DetailSection>
             <DetailSectionTitle>Notifications</DetailSectionTitle>
