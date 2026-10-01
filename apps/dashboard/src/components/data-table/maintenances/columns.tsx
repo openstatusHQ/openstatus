@@ -4,7 +4,8 @@ import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceStrict } from "date-fns";
 
-import { ProcessMessage } from "@/components/content/process-message";
+import { Link } from "@/components/common/link";
+import { TableCellBadge } from "@/components/data-table/table-cell-badge";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
@@ -34,15 +35,26 @@ export const columns: ColumnDef<Maintenance>[] = [
     },
   },
   {
-    accessorKey: "message",
-    header: "Message",
+    id: "pageComponents",
+    accessorFn: (row) => row.pageComponents,
+    header: "Affected",
     enableSorting: false,
-    enableHiding: false,
     cell: ({ row }) => {
-      const value = String(row.getValue("message"));
+      const value = row.original.pageComponents;
+      if (value.length === 0) {
+        return <div className="text-muted-foreground">-</div>;
+      }
       return (
-        <div className="prose dark:prose-invert prose-sm text-muted-foreground line-clamp-3 max-w-[200px] truncate">
-          <ProcessMessage value={value} />
+        <div className="flex flex-wrap gap-1">
+          {value.map((c) =>
+            c.monitorId ? (
+              <Link href={`/monitors/${c.monitorId}/overview`} key={c.id}>
+                <TableCellBadge value={c.name} />
+              </Link>
+            ) : (
+              <TableCellBadge value={c.name} key={c.id} />
+            ),
+          )}
         </div>
       );
     },

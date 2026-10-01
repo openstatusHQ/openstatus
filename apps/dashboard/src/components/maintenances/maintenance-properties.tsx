@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { ArrowUpRight } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { formatDistanceStrict } from "date-fns";
 import { useState } from "react";
@@ -29,10 +30,12 @@ export function MaintenanceProperties({
   maintenance,
   page,
   status,
+  publicUrl,
 }: {
   maintenance: Maintenance;
   page: { id: number; title: string };
   status: MaintenanceStatus;
+  publicUrl: string;
 }) {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   // null = pristine: the inputs follow the server copy until edited.
@@ -64,10 +67,11 @@ export function MaintenanceProperties({
         <PropertyLabel>Status page</PropertyLabel>
         <PropertyValue>
           <Link
-            href={`/status-pages/${page.id}/maintenances`}
-            className="truncate font-normal"
+            href={publicUrl}
+            className="inline-flex min-w-0 items-center gap-1 font-normal"
           >
-            {page.title}
+            <span className="truncate">{page.title}</span>
+            <ArrowUpRight className="size-3.5 shrink-0" />
           </Link>
         </PropertyValue>
       </Property>
@@ -92,7 +96,7 @@ export function MaintenanceProperties({
             onChange={(e) => setDraft({ from, to: e.target.value })}
           />
           {dirty ? (
-            <div className="flex w-full items-center gap-1 font-sans">
+            <div className="grid w-full grid-cols-2 gap-1 font-sans">
               <Button
                 size="sm"
                 className="h-7"
@@ -113,7 +117,7 @@ export function MaintenanceProperties({
                 Reset
               </Button>
               {from && to && invalid ? (
-                <span className="text-destructive text-xs">
+                <span className="text-destructive col-span-full text-xs">
                   End must be after start
                 </span>
               ) : null}

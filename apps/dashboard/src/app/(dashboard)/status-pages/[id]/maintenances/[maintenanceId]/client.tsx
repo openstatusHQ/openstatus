@@ -90,6 +90,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
               maintenance={maintenance}
               page={page}
               status={status}
+              publicUrl={publicUrl}
             />
           </DetailSection>
           <DetailSection>
@@ -102,11 +103,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
           </DetailSection>
           <DetailSection>
             <DetailSectionTitle>Notifications</DetailSectionTitle>
-            <Notifications
-              pageId={pageId}
-              publicUrl={publicUrl}
-              description="Customers can see this maintenance on your status page."
-            />
+            <Notifications pageId={pageId} />
           </DetailSection>
         </DetailAside>
       </DetailContent>

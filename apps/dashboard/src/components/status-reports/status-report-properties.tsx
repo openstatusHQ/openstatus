@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { ArrowUpRight } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 
 import { Link } from "@/components/common/link";
@@ -17,7 +18,13 @@ import { useTRPC } from "@/lib/trpc/client";
 
 type StatusReport = NonNullable<RouterOutputs["statusReport"]["get"]>;
 
-export function StatusReportProperties({ report }: { report: StatusReport }) {
+export function StatusReportProperties({
+  report,
+  publicUrl,
+}: {
+  report: StatusReport;
+  publicUrl: string;
+}) {
   const trpc = useTRPC();
   const incidentsEnabled = useFeature("incident-management");
   const { data: incident } = useQuery({
@@ -41,10 +48,11 @@ export function StatusReportProperties({ report }: { report: StatusReport }) {
         <PropertyLabel>Status page</PropertyLabel>
         <PropertyValue>
           <Link
-            href={`/status-pages/${report.pageId}/status-reports`}
-            className="truncate font-normal"
+            href={publicUrl}
+            className="inline-flex min-w-0 items-center gap-1 font-normal"
           >
-            {report.page.title}
+            <span className="truncate">{report.page.title}</span>
+            <ArrowUpRight className="size-3.5 shrink-0" />
           </Link>
         </PropertyValue>
       </Property>

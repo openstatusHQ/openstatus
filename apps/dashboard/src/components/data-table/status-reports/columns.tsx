@@ -36,17 +36,6 @@ function worstReportImpact(report: StatusReport) {
 
 export const columns: ColumnDef<StatusReport>[] = [
   {
-    id: "impact",
-    accessorFn: (row) => worstReportImpact(row),
-    header: "Impact",
-    enableSorting: false,
-    cell: ({ row }) => (
-      <StatusReportImpactBadge
-        impact={row.getValue<PageComponentImpact | null>("impact")}
-      />
-    ),
-  },
-  {
     accessorKey: "title",
     header: "Title",
     enableSorting: false,
@@ -61,6 +50,17 @@ export const columns: ColumnDef<StatusReport>[] = [
       );
     },
     meta: { cellClassName: "max-w-[200px] truncate" },
+  },
+  {
+    id: "impact",
+    accessorFn: (row) => worstReportImpact(row),
+    header: "Impact",
+    enableSorting: false,
+    cell: ({ row }) => (
+      <StatusReportImpactBadge
+        impact={row.getValue<PageComponentImpact | null>("impact")}
+      />
+    ),
   },
   {
     accessorKey: "status",

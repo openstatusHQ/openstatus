@@ -123,7 +123,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
         <DetailAside>
           <DetailSection>
             <DetailSectionTitle>Properties</DetailSectionTitle>
-            <StatusReportProperties report={report} />
+            <StatusReportProperties report={report} publicUrl={publicUrl} />
           </DetailSection>
           <DetailSection>
             <DetailSectionTitle>Affected components</DetailSectionTitle>
@@ -155,11 +155,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
           </DetailSection>
           <DetailSection>
             <DetailSectionTitle>Notifications</DetailSectionTitle>
-            <Notifications
-              pageId={pageId}
-              publicUrl={publicUrl}
-              description="Customers can read this report on your status page."
-            />
+            <Notifications pageId={pageId} />
           </DetailSection>
         </DetailAside>
       </DetailContent>
