@@ -20,7 +20,7 @@ if (!redirectUri) {
 const redirectUrl = new URL(redirectUri);
 if (redirectUrl.pathname !== "/slack/oauth/callback") {
   console.error(
-    `SLACK_REDIRECT_URI must end in /slack/oauth/callback — got ${redirectUri}`,
+    `SLACK_REDIRECT_URI must have the exact path /slack/oauth/callback — got ${redirectUri}`,
   );
   Deno.exit(1);
 }

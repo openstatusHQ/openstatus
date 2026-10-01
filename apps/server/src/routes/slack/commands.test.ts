@@ -91,6 +91,18 @@ describe("handleSlackCommand (members only)", () => {
     expect(view.private_metadata).toBe(JSON.stringify({ channelId: "C_HERE" }));
   });
 
+  test("`incident declare` in an unconnected workspace says so", async () => {
+    const res = await post(app, "incident declare", "U_OWNER", "C_HERE", {
+      trigger_id: "trig-cmd",
+      team_id: "T_UNKNOWN",
+    });
+    const json = (await res.json()) as { text: string };
+    expect(json.text).toContain("isn't connected");
+    expect(slackTestState.calls.some((c) => c.method === "views.open")).toBe(
+      false,
+    );
+  });
+
   test("help needs no link", async () => {
     const res = await post(app, "help", `U_${crypto.randomUUID()}`);
     const json = (await res.json()) as { text: string };

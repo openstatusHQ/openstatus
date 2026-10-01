@@ -20,6 +20,7 @@ import {
   openDeclareIncidentModal,
   submitDeclareIncident,
   type ViewSubmissionPayload,
+  type ViewSubmissionResponse,
 } from "./incident-modal";
 import {
   afterIncidentTool,
@@ -120,7 +121,15 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
     if (submission.view?.callback_id !== DECLARE_INCIDENT_CALLBACK) {
       return c.body(null, 200);
     }
-    const response = await submitDeclareIncident(submission, config);
+    const response = await submitDeclareIncident(submission, config).catch(
+      (error): ViewSubmissionResponse => {
+        logger.error("slack declare modal submit failed", { error });
+        return {
+          response_action: "errors",
+          errors: { title: "Something went wrong. Please try again." },
+        };
+      },
+    );
     return response ? c.json(response) : c.body(null, 200);
   }
 

@@ -95,23 +95,40 @@ export function handleSlackCommand(c: Context<SlackEnv>) {
   const command = parsed.data;
   const sub = subcommand(command);
 
-  if (command.trigger_id && opensDeclareModal(command)) {
-    // Awaited, not backgrounded: `trigger_id` dies with the 3s ack window.
-    return openDeclareIncidentModal({
-      teamId: command.team_id,
-      slackUserId: command.user_id,
-      triggerId: command.trigger_id,
-      channelId: command.channel_id,
-      config,
-    }).then(
-      () => c.body(null, 200),
-      (error) => {
-        logger.error("slack declare modal open failed", { error });
-        return ephemeral(c, {
-          text: ":x: Could not open the form. Please try again.",
-        });
+  const triggerId = command.trigger_id;
+  if (triggerId && opensDeclareModal(command)) {
+    // `trigger_id` stays valid for 3s after the user's action whether or not
+    // we have acked, so ack now and open the form in the background.
+    const open = () =>
+      openDeclareIncidentModal({
+        teamId: command.team_id,
+        slackUserId: command.user_id,
+        triggerId,
+        channelId: command.channel_id,
+        config,
+      }).then(
+        (notice): CommandReply | undefined =>
+          notice ? { text: notice } : undefined,
+        (error) => {
+          logger.error("slack declare modal open failed", { error });
+          return { text: ":x: Could not open the form. Please try again." };
+        },
+      );
+    const responseUrl = command.response_url;
+    if (!responseUrl) {
+      return open().then((reply) =>
+        reply ? ephemeral(c, reply) : c.body(null, 200),
+      );
+    }
+    runInBackground(
+      "command declare modal",
+      async () => {
+        const reply = await open();
+        if (reply) await respondLater(responseUrl, reply);
       },
+      { teamId: command.team_id, channelId: command.channel_id },
     );
+    return c.body(null, 200);
   }
 
   // `help` — and anything unrecognised, which falls through to it — needs no

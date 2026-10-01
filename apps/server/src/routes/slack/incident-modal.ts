@@ -4,6 +4,7 @@ import {
   type ServiceContext,
   ServiceError,
 } from "@openstatus/services";
+import { escapeMrkdwn } from "@openstatus/services/incident";
 import { type ModalView, WebClient } from "@slack/web-api";
 import { z } from "zod";
 
@@ -28,6 +29,9 @@ import { resolveSlackMember } from "./resolve-slack-user";
 import { resolveWorkspace, type SlackWorkspace } from "./workspace-resolver";
 
 const logger = getLogger(["api-server", "slack", "incident-modal"]);
+
+const NOT_CONNECTED =
+  "openstatus isn't connected to this Slack workspace. Connect it from the openstatus dashboard.";
 
 /** Callback id of the global shortcut, the message shortcut and the modal. */
 export const DECLARE_INCIDENT_CALLBACK = "declare_incident";
@@ -169,9 +173,7 @@ async function gate(
   if (!resolved) {
     return {
       ok: false,
-      view: noticeModal(
-        "openstatus isn't connected to this Slack workspace. Connect it from the openstatus dashboard.",
-      ),
+      view: noticeModal(NOT_CONNECTED),
     };
   }
   if (!slackAgentAllowed(resolved.workspace)) {
@@ -211,7 +213,10 @@ async function gate(
   return { ok: true, resolved, actor };
 }
 
-/** `trigger_id` expires 3s after the user's action, so call this before acking. */
+/**
+ * `trigger_id` expires 3s after the user's action. Returns the message to show
+ * instead when there is no bot token to open even a notice with.
+ */
 export async function openDeclareIncidentModal(args: {
   teamId: string;
   slackUserId: string;
@@ -219,12 +224,11 @@ export async function openDeclareIncidentModal(args: {
   channelId?: string;
   prefill?: Prefill;
   config: SlackConfig;
-}): Promise<void> {
+}): Promise<string | undefined> {
   const { teamId, slackUserId, triggerId, config } = args;
   const checked = await gate(teamId, slackUserId, config);
   if (!checked.ok) {
-    // Without a connection there is no bot token to open the notice with.
-    if (!checked.botToken) return;
+    if (!checked.botToken) return NOT_CONNECTED;
     await new WebClient(checked.botToken).views.open({
       trigger_id: triggerId,
       view: checked.view,
@@ -383,7 +387,7 @@ export async function submitDeclareIncident(
         channel.status === "bound" || channel.status === "unbound"
           ? ` Join <#${channel.channelId}>.`
           : "";
-      const text = `:rotating_light: Declared *${parsed.title}* (${parsed.severity}).${where} <${getIncidentDashboardUrl(incidentId)}|Open in openstatus>`;
+      const text = `:rotating_light: Declared *${escapeMrkdwn(parsed.title)}* (${parsed.severity}).${where} <${getIncidentDashboardUrl(incidentId)}|Open in openstatus>`;
       if (origin) {
         await slack.chat
           .postEphemeral({ channel: origin, user: slackUserId, text })

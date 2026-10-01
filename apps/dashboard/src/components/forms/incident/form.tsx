@@ -303,7 +303,7 @@ export function FormDeclareIncident({
                     />
                   </FormControl>
                   <FormLabel className="font-normal">
-                    Open a Slack channel and add you to it
+                    Open a Slack channel and try to add you to it
                   </FormLabel>
                 </FormItem>
               )}

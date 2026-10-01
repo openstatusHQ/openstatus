@@ -661,6 +661,7 @@ describe("declare incident modal", () => {
     });
     expect(res.status).toBe(200);
     const open = slackTestState.calls.find((c) => c.method === "views.open");
+    expect(open).toBeDefined();
     expect(open?.args.trigger_id).toBe("trig-1");
     const view = open?.args.view as Record<string, unknown>;
     expect(view.callback_id).toBe("declare_incident");
@@ -678,6 +679,7 @@ describe("declare incident modal", () => {
       message: { text: "checkout is throwing 500s" },
     });
     const open = slackTestState.calls.find((c) => c.method === "views.open");
+    expect(open).toBeDefined();
     const view = open?.args.view as Record<string, unknown>;
     expect(view.private_metadata).toBe(
       JSON.stringify({ channelId: "C_ORIGIN" }),
@@ -696,6 +698,7 @@ describe("declare incident modal", () => {
       user: { id: "U_STRANGER" },
     });
     const open = slackTestState.calls.find((c) => c.method === "views.open");
+    expect(open).toBeDefined();
     const view = open?.args.view as Record<string, unknown>;
     expect(view.callback_id).toBeUndefined();
     expect(JSON.stringify(view.blocks)).toContain("Link account");
@@ -710,10 +713,10 @@ describe("declare incident modal", () => {
       actions: [{ action_id: "open_declare_incident" }],
     });
     const open = slackTestState.calls.find((c) => c.method === "views.open");
+    expect(open).toBeDefined();
     expect(open?.args.trigger_id).toBe("trig-home");
-    expect((open?.args.view as { callback_id?: string }).callback_id).toBe(
-      "declare_incident",
-    );
+    const view = open?.args.view as { callback_id?: string };
+    expect(view.callback_id).toBe("declare_incident");
   });
 
   test("a blank title is rejected on the form", async () => {
