@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -82,17 +87,102 @@ export function TimelineIndicator({
   );
 }
 
-// Same size as the indicator so the rail starts below it.
+// Same size as the indicator so the rail starts below it; children render
+// outside the avatar's overflow clip (see `TimelineAvatarBadge`).
 export function TimelineAvatar({
+  children,
   className,
   ...props
-}: React.ComponentProps<typeof UserAvatar>) {
+}: React.ComponentProps<typeof UserAvatar> & { children?: React.ReactNode }) {
   return (
-    <UserAvatar
-      data-slot="timeline-avatar"
-      className={cn("size-8 text-xs", className)}
+    <span data-slot="timeline-avatar" className="relative size-8 shrink-0">
+      <UserAvatar
+        className={cn("size-8 text-xs", className)}
+        {...props}
+        data-slot="avatar"
+      />
+      {children}
+    </span>
+  );
+}
+
+// Event icon pinned to the avatar's corner; the ring lifts it off the photo.
+export function TimelineAvatarBadge({
+  children,
+  className,
+  variant,
+  ...props
+}: React.ComponentProps<"span"> &
+  VariantProps<typeof timelineIndicatorVariants>) {
+  return (
+    <span
+      data-slot="timeline-avatar-badge"
+      aria-hidden="true"
+      className={cn(
+        timelineIndicatorVariants({ variant }),
+        "ring-background absolute -right-1 -bottom-1 size-4 ring-2 [&>svg]:size-2.5",
+        className,
+      )}
       {...props}
-    />
+    >
+      {children}
+    </span>
+  );
+}
+
+type Actor = {
+  name: string | null;
+  email: string | null;
+  photoUrl?: string | null;
+};
+
+// Name and email on hover; the avatar is the only place the actor is shown.
+export function TimelineActorTooltip({
+  actor,
+  children,
+}: {
+  actor: Actor;
+  children: React.ReactNode;
+}) {
+  if (!actor.name && !actor.email) return children;
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        asChild
+        // focusable so the tooltip opens from the keyboard
+        tabIndex={0}
+        className="focus-visible:ring-ring/50 rounded-full outline-none focus-visible:ring-[3px]"
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-center">
+        {actor.name && actor.name !== actor.email ? (
+          <div>{actor.name}</div>
+        ) : null}
+        {actor.email ? <div className="opacity-80">{actor.email}</div> : null}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+// Inline actor avatar for rows whose rail shows the event indicator.
+export function TimelineActor({
+  actor,
+  className,
+  ...props
+}: Omit<React.ComponentProps<typeof UserAvatar>, "name" | "src"> & {
+  actor: Actor;
+}) {
+  return (
+    <TimelineActorTooltip actor={actor}>
+      <UserAvatar
+        data-slot="timeline-actor"
+        name={actor.name ?? actor.email}
+        src={actor.photoUrl}
+        className={className}
+        {...props}
+      />
+    </TimelineActorTooltip>
   );
 }
 

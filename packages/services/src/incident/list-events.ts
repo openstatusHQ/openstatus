@@ -27,6 +27,7 @@ export async function listIncidentEvents(args: {
           firstName: true,
           lastName: true,
           email: true,
+          photoUrl: true,
         },
       },
     },
