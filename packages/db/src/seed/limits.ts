@@ -29,7 +29,6 @@ export const TEAM_WORKSPACE_LIMITS = JSON.stringify({
     "arn",
     "atl",
     "bog",
-    "bom",
     "bos",
     "cdg",
     "den",

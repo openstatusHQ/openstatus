@@ -1,3 +1,4 @@
+import { regionDict } from "@openstatus/regions";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 
@@ -28,6 +29,7 @@ import {
   mapResource,
   mapSection,
   mapStatusPage,
+  REGION_MAP,
 } from "./mapper";
 
 describe("mapFrequency", () => {
@@ -60,6 +62,17 @@ describe("mapRegions", () => {
   test("maps multiple regions", () => {
     expect(mapRegions(["us", "eu"])).toBe("iad,fra");
     expect(mapRegions(["us", "eu", "as", "au"])).toBe("iad,fra,sin,syd");
+  });
+
+  test("only targets regions that are still available", () => {
+    for (const [location, region] of Object.entries(REGION_MAP)) {
+      const info = regionDict[region as keyof typeof regionDict];
+      expect({ location, region, deprecated: info?.deprecated }).toEqual({
+        location,
+        region,
+        deprecated: false,
+      });
+    }
   });
 
   test("returns default for unknown regions", () => {

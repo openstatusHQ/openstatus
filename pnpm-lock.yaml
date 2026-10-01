@@ -2320,6 +2320,9 @@ importers:
         specifier: 'catalog:'
         version: 4.6.5
     devDependencies:
+      '@openstatus/regions':
+        specifier: workspace:*
+        version: link:../regions
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
