@@ -17,7 +17,14 @@ if (!redirectUri) {
   );
   Deno.exit(1);
 }
-const devOrigin = new URL(redirectUri).origin;
+const redirectUrl = new URL(redirectUri);
+if (redirectUrl.pathname !== "/slack/oauth/callback") {
+  console.error(
+    `SLACK_REDIRECT_URI must end in /slack/oauth/callback — got ${redirectUri}`,
+  );
+  Deno.exit(1);
+}
+const devOrigin = redirectUrl.origin;
 
 const dev = structuredClone(manifest);
 dev.display_information.name = DEV_NAME;

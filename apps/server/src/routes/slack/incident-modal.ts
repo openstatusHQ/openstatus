@@ -35,7 +35,8 @@ export const DECLARE_INCIDENT_FROM_MESSAGE_CALLBACK =
   "declare_incident_from_message";
 
 const TITLE_MAX = 256;
-const SUMMARY_MAX = 4000;
+// Slack rejects the whole view if a plain_text_input's max_length exceeds 3000.
+const SUMMARY_MAX = 3000;
 const SEVERITIES = [
   { value: "critical", label: "Critical — major outage or data loss" },
   { value: "major", label: "Major — significant degradation" },
