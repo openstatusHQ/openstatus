@@ -206,6 +206,25 @@ describe("status report attribution", () => {
       current = await readReport(tx, report.id);
       expect(current.status).toBe("investigating");
       expect(current.updatedBy).toBe(editor.id);
+
+      // same even when the status does not change
+      const { statusReportUpdate: repeated } = await addStatusReportUpdate({
+        ctx: creatorCtx,
+        input: {
+          statusReportId: report.id,
+          status: "investigating",
+          message: "still looking",
+        },
+      });
+      current = await readReport(tx, report.id);
+      expect(current.updatedBy).toBe(ownerId);
+      await deleteStatusReportUpdate({
+        ctx: editorCtx,
+        input: { id: repeated.id },
+      });
+      current = await readReport(tx, report.id);
+      expect(current.status).toBe("investigating");
+      expect(current.updatedBy).toBe(editor.id);
     });
   });
 

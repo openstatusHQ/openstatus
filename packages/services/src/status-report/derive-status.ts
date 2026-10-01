@@ -51,6 +51,8 @@ export async function recomputeReportStatus(
     touchIfLatestIs?: number;
     /** Stamped on the report whenever the row is written. */
     updatedBy?: number | null;
+    /** Write the row even when the status is unchanged. */
+    touch?: boolean;
   },
 ): Promise<StatusReport | null> {
   const rows = await tx
@@ -81,7 +83,8 @@ export async function recomputeReportStatus(
   // no-op edits (message, impacts) must not bump updatedAt — the RSS/Atom
   // feed dates and sorts items by it. A new latest update always counts,
   // even when it repeats the current status.
-  if (current.status === latest.status && !isNewLatest) return current;
+  if (current.status === latest.status && !isNewLatest && !options?.touch)
+    return current;
 
   return tx
     .update(statusReport)

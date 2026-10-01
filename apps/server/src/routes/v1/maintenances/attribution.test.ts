@@ -35,9 +35,10 @@ test("v1 maintenance stamps the key's creator on create and update", async () =>
       pageId: 1,
     }),
   });
-  expect(created.status).toBe(200);
-  const { id } = (await created.json()) as { id: number };
+  let id: number | undefined;
   try {
+    expect(created.status).toBe(200);
+    id = ((await created.json()) as { id: number }).id;
     let row = await db
       .select()
       .from(maintenance)
@@ -61,6 +62,8 @@ test("v1 maintenance stamps the key's creator on create and update", async () =>
     expect(row?.createdBy).toBe(1);
     expect(row?.updatedBy).toBeNull();
   } finally {
-    await db.delete(maintenance).where(eq(maintenance.id, id));
+    if (id !== undefined) {
+      await db.delete(maintenance).where(eq(maintenance.id, id));
+    }
   }
 });

@@ -82,7 +82,7 @@ export type ListStatusReportsResult = {
 };
 
 /**
- * Load relations for a set of status reports in two round-trips regardless
+ * Load relations for a set of status reports in three round-trips regardless
  * of how many reports were passed in. Avoids the O(N) per-row pattern that
  * pairs badly with the dashboard's effectively-unlimited list request.
  */

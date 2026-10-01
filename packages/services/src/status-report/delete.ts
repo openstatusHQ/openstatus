@@ -71,9 +71,11 @@ export async function deleteStatusReportUpdate(args: {
       .delete(statusReportUpdate)
       .where(eq(statusReportUpdate.id, existing.id));
 
-    // deleting the latest update hands the status back to the one before it
+    // deleting the latest update hands the status back to the one before it;
+    // the report is edited either way, so always stamp the deleter
     await recomputeReportStatus(tx, existing.statusReportId, {
       updatedBy: tryGetActorUserId(ctx.actor),
+      touch: true,
     });
 
     await emitAudit(tx, ctx, {

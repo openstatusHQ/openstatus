@@ -54,7 +54,7 @@ test("v1 status report stamps the key's creator", async () => {
       .from(statusReportUpdate)
       .where(eq(statusReportUpdate.statusReportId, id))
       .all();
-    expect(updates.map((u) => u.createdBy)).toEqual([1]);
+    expect(updates.map((u) => [u.createdBy, u.updatedBy])).toEqual([[1, 1]]);
   } finally {
     await db.delete(statusReport).where(eq(statusReport.id, id));
   }
@@ -70,6 +70,14 @@ test("v1 status report leaves NULL for a key without a creator", async () => {
       .get();
     expect(report?.createdBy).toBeNull();
     expect(report?.updatedBy).toBeNull();
+    const updates = await db
+      .select()
+      .from(statusReportUpdate)
+      .where(eq(statusReportUpdate.statusReportId, id))
+      .all();
+    expect(updates.map((u) => [u.createdBy, u.updatedBy])).toEqual([
+      [null, null],
+    ]);
   } finally {
     await db.delete(statusReport).where(eq(statusReport.id, id));
   }

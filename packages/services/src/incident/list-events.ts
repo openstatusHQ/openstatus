@@ -28,6 +28,7 @@ export async function listIncidentEvents(args: {
           lastName: true,
           email: true,
           photoUrl: true,
+          deletedAt: true,
         },
       },
     },

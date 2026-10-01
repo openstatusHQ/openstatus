@@ -77,6 +77,7 @@ describe("import stamps the importing user", () => {
         pageRow.id,
         new Map(),
       );
+      expect(incidents.resources[0].status).toBe("created");
       const reportId = incidents.resources[0].openstatusId as number;
       const report = await tx
         .select()
@@ -120,6 +121,7 @@ describe("import stamps the importing user", () => {
         pageRow.id,
         new Map(),
       );
+      expect(maintenances.resources[0].status).toBe("created");
       const row = await tx
         .select()
         .from(maintenance)
