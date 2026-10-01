@@ -3,6 +3,7 @@ import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { maintenancesToPageComponents } from "../page_components";
 import { page } from "../pages";
+import { user } from "../users";
 import { workspace } from "../workspaces";
 
 export const maintenance = sqliteTable(
@@ -19,6 +20,9 @@ export const maintenance = sqliteTable(
     pageId: integer("page_id").references(() => page.id, {
       onDelete: "cascade",
     }),
+
+    createdBy: integer("created_by").references(() => user.id),
+    updatedBy: integer("updated_by").references(() => user.id),
 
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
@@ -42,5 +46,15 @@ export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
   workspace: one(workspace, {
     fields: [maintenance.workspaceId],
     references: [workspace.id],
+  }),
+  createdByUser: one(user, {
+    fields: [maintenance.createdBy],
+    references: [user.id],
+    relationName: "maintenanceCreatedBy",
+  }),
+  updatedByUser: one(user, {
+    fields: [maintenance.updatedBy],
+    references: [user.id],
+    relationName: "maintenanceUpdatedBy",
   }),
 }));

@@ -18,7 +18,7 @@ import type { PageComponentImpact } from "@openstatus/db/src/schema";
 import type { PhaseResult, UpdateComponentImpact } from "@openstatus/importers";
 
 import { emitAudit } from "../audit";
-import type { DB, ServiceContext } from "../context";
+import { type DB, type ServiceContext, tryGetActorUserId } from "../context";
 import {
   withComponentImpacts,
   withPageComponentIds,
@@ -357,6 +357,7 @@ export async function writeIncidentsPhase(
 ): Promise<void> {
   const { ctx, tx } = pc;
   const workspaceId = ctx.workspace.id;
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   for (const resource of phase.resources) {
     try {
@@ -427,6 +428,8 @@ export async function writeIncidentsPhase(
           status: data.report.status,
           workspaceId,
           pageId,
+          createdBy: actorUserId,
+          updatedBy: actorUserId,
         })
         .returning();
 
@@ -482,6 +485,8 @@ export async function writeIncidentsPhase(
             message: u.message,
             date: u.date,
             statusReportId: insertedReport.id,
+            createdBy: actorUserId,
+            updatedBy: actorUserId,
           })
           .returning()
           .get();
@@ -553,6 +558,7 @@ export async function writeMaintenancesPhase(
 ): Promise<void> {
   const { ctx, tx } = pc;
   const workspaceId = ctx.workspace.id;
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   for (const resource of phase.resources) {
     try {
@@ -619,6 +625,8 @@ export async function writeMaintenancesPhase(
           to: data.to,
           workspaceId,
           pageId,
+          createdBy: actorUserId,
+          updatedBy: actorUserId,
         })
         .returning();
 

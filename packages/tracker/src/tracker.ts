@@ -16,11 +16,13 @@ export type Monitor = {
   ok: number;
   day: string;
 };
-type StatusReports = (StatusReport & {
-  statusReportUpdates?: StatusReportUpdate[];
+// public page payloads strip author columns; the tracker never reads them
+type AuthorColumns = "createdBy" | "updatedBy";
+type StatusReports = (Omit<StatusReport, AuthorColumns> & {
+  statusReportUpdates?: Omit<StatusReportUpdate, AuthorColumns>[];
 })[];
 type Incidents = MonitorIncident[];
-type Maintenances = Maintenance[];
+type Maintenances = Omit<Maintenance, AuthorColumns>[];
 
 /**
  * Tracker Class is supposed to handle the data and calculate from a single monitor.
@@ -38,7 +40,7 @@ export class Tracker {
     data?: Monitor[];
     statusReports?: StatusReports;
     incidents?: Incidents;
-    maintenances?: Maintenance[];
+    maintenances?: Maintenances;
   }) {
     this.data = arg.data || []; // TODO: use another Class to handle a single Day
     this.statusReports = arg.statusReports || [];

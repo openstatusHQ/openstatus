@@ -54,6 +54,7 @@ const postRoute = createRoute({
 export function registerPostMaintenance(api: typeof maintenancesApi) {
   return api.openapi(postRoute, async (c) => {
     const workspaceId = c.get("workspace").id;
+    const actorUserId = c.get("apiKey").createdById ?? null;
     const input = c.req.valid("json");
     const limits = c.get("workspace").limits;
 
@@ -104,6 +105,8 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
         .values({
           ...input,
           workspaceId,
+          createdBy: actorUserId,
+          updatedBy: actorUserId,
         })
         .returning()
         .get();

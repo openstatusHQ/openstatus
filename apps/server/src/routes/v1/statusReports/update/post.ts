@@ -57,11 +57,16 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
     const input = c.req.valid("json");
     const { id } = c.req.valid("param");
     const workspaceId = c.get("workspace").id;
+    const actorUserId = c.get("apiKey").createdById ?? null;
     const limits = c.get("workspace").limits;
 
     const _statusReport = await db
       .update(statusReport)
-      .set({ status: input.status, updatedAt: new Date() })
+      .set({
+        status: input.status,
+        updatedAt: new Date(),
+        updatedBy: actorUserId,
+      })
       .where(
         and(
           eq(statusReport.id, Number(id)),
@@ -85,6 +90,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
         message: input.message,
         date: input.date,
         statusReportId: Number(id),
+        createdBy: actorUserId,
+        updatedBy: actorUserId,
       })
       .returning()
       .get();

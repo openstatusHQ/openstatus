@@ -4,6 +4,7 @@ import {
 } from "@openstatus/db/src/schema/incidents/constants";
 import { z } from "zod";
 
+import { attributedUserSchema, toAttributedUser } from "../attribution";
 import { tryGetActorUserId } from "../context";
 import { NotFoundError } from "../errors";
 import {
@@ -11,7 +12,6 @@ import {
   approvePostmortem,
   declareIncident,
   draftPostmortem,
-  displayName,
   getIncident,
   getPostmortem,
   listIncidentEvents,
@@ -27,27 +27,13 @@ const title = z.string().trim().min(1).max(256);
 const summary = z.string().trim().min(1).max(4000);
 const note = z.string().trim().min(1).max(10_000);
 
-const personSchema = z.object({ id: z.number().int(), name: z.string() });
-
-type Person = {
-  id: number;
-  name: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-} | null;
-
-function person(row: Person) {
-  return row ? { id: row.id, name: displayName(row) } : null;
-}
-
 const IncidentSummary = z.object({
   id: z.number().int(),
   title: z.string(),
   severity: z.enum(incidentSeverity),
   status: z.enum(incidentStatus),
   closed: z.boolean(),
-  commander: personSchema.nullable(),
+  commander: attributedUserSchema.nullable(),
   declaredAt: z.string(),
   startedAt: z.string(),
   statusReportId: z.number().int().nullable(),
@@ -88,7 +74,7 @@ export const listIncidentsTool: AgentTool<
         severity: row.severity,
         status: row.status,
         closed: row.closedAt !== null,
-        commander: person(row.commander),
+        commander: toAttributedUser(row.commander),
         declaredAt: row.declaredAt.toISOString(),
         startedAt: row.startedAt.toISOString(),
         statusReportId: row.statusReportId,
@@ -104,7 +90,7 @@ const GetIncidentInput = z.object({
 
 const GetIncidentOutput = IncidentSummary.extend({
   summary: z.string().nullable(),
-  declaredBy: personSchema.nullable(),
+  declaredBy: attributedUserSchema.nullable(),
   statusReport: z
     .object({ id: z.number().int(), title: z.string(), status: z.string() })
     .nullable(),
@@ -113,7 +99,7 @@ const GetIncidentOutput = IncidentSummary.extend({
       type: z.string(),
       message: z.string().nullable(),
       at: z.string(),
-      by: personSchema.nullable(),
+      by: attributedUserSchema.nullable(),
     }),
   ),
 });
@@ -143,13 +129,13 @@ export const getIncidentTool: AgentTool<
       severity: row.severity,
       status: row.status,
       closed: row.closedAt !== null,
-      commander: person(row.commander),
+      commander: toAttributedUser(row.commander),
       declaredAt: row.declaredAt.toISOString(),
       startedAt: row.startedAt.toISOString(),
       statusReportId: row.statusReportId,
       slackChannelId: row.slackChannelId,
       summary: row.summary,
-      declaredBy: person(row.declaredByUser),
+      declaredBy: toAttributedUser(row.declaredByUser),
       statusReport: row.statusReport
         ? {
             id: row.statusReport.id,
@@ -161,7 +147,7 @@ export const getIncidentTool: AgentTool<
         type: e.type,
         message: e.message,
         at: e.createdAt.toISOString(),
-        by: person(e.createdByUser),
+        by: toAttributedUser(e.createdByUser),
       })),
     };
   },

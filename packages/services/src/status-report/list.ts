@@ -21,6 +21,7 @@ import {
   statusReportUpdateToPageComponents,
 } from "@openstatus/db/src/schema";
 
+import { type AttributedUser, loadAttributedUsers } from "../attribution";
 import { batchReads, type DB, type ServiceContext } from "../context";
 import type {
   Page,
@@ -48,22 +49,32 @@ function periodToSince(period: StatusReportListPeriod): Date {
   }
 }
 
-export type StatusReportUpdateWithImpacts = StatusReportUpdate & {
-  /** Impacts this update set; empty for legacy reports. */
-  componentImpacts: { pageComponentId: number; impact: PageComponentImpact }[];
+type Attributed = {
+  createdByUser: AttributedUser | null;
+  updatedByUser: AttributedUser | null;
 };
 
-export type StatusReportWithRelations = StatusReport & {
-  updates: StatusReportUpdateWithImpacts[];
-  pageComponents: PageComponent[];
-  /** Flat list of associated component ids. Convenience for proto conversion. */
-  pageComponentIds: number[];
-  /**
-   * The owning page with its full component roster. `null` when the report
-   * has no `pageId` — rare today but schema-allowed.
-   */
-  page: (Page & { pageComponents: PageComponent[] }) | null;
-};
+export type StatusReportUpdateWithImpacts = StatusReportUpdate &
+  Attributed & {
+    /** Impacts this update set; empty for legacy reports. */
+    componentImpacts: {
+      pageComponentId: number;
+      impact: PageComponentImpact;
+    }[];
+  };
+
+export type StatusReportWithRelations = StatusReport &
+  Attributed & {
+    updates: StatusReportUpdateWithImpacts[];
+    pageComponents: PageComponent[];
+    /** Flat list of associated component ids. Convenience for proto conversion. */
+    pageComponentIds: number[];
+    /**
+     * The owning page with its full component roster. `null` when the report
+     * has no `pageId` — rare today but schema-allowed.
+     */
+    page: (Page & { pageComponents: PageComponent[] }) | null;
+  };
 
 export type ListStatusReportsResult = {
   items: StatusReportWithRelations[];
@@ -71,7 +82,7 @@ export type ListStatusReportsResult = {
 };
 
 /**
- * Load relations for a set of status reports in two round-trips regardless
+ * Load relations for a set of status reports in three round-trips regardless
  * of how many reports were passed in. Avoids the O(N) per-row pattern that
  * pairs badly with the dashboard's effectively-unlimited list request.
  */
@@ -153,10 +164,25 @@ async function enrichReportsBatch(
     else impactsByUpdate.set(row.statusReportUpdateId, [entry]);
   }
 
+  const users = await loadAttributedUsers(db, [
+    ...rows.flatMap((r) => [r.createdBy, r.updatedBy]),
+    ...allUpdates.flatMap((u) => [u.createdBy, u.updatedBy]),
+  ]);
+  const attributed = (row: {
+    createdBy: number | null;
+    updatedBy: number | null;
+  }): Attributed => ({
+    createdByUser:
+      row.createdBy != null ? (users.get(row.createdBy) ?? null) : null,
+    updatedByUser:
+      row.updatedBy != null ? (users.get(row.updatedBy) ?? null) : null,
+  });
+
   const updatesByReport = new Map<number, StatusReportUpdateWithImpacts[]>();
   for (const u of allUpdates) {
     const withImpacts = {
       ...u,
+      ...attributed(u),
       componentImpacts: impactsByUpdate.get(u.id) ?? [],
     };
     const arr = updatesByReport.get(u.statusReportId);
@@ -195,6 +221,7 @@ async function enrichReportsBatch(
     const components = componentsByReport.get(r.id) ?? [];
     return {
       ...r,
+      ...attributed(r),
       updates: updatesByReport.get(r.id) ?? [],
       pageComponents: components,
       pageComponentIds: components.map((c) => c.id),

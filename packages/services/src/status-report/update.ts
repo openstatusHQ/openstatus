@@ -8,7 +8,11 @@ import {
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
 import { ConflictError, InternalServiceError } from "../errors";
 import type { StatusReport, StatusReportUpdate } from "../types";
 import { recomputeReportStatus } from "./derive-status";
@@ -46,6 +50,7 @@ export async function updateStatusReport(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = UpdateStatusReportInput.parse(args.input);
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   return withTransaction(ctx, async (tx) => {
     const report = await getReportInWorkspace({
@@ -62,7 +67,10 @@ export async function updateStatusReport(args: {
     );
     let afterComponentIds = beforeComponentIds;
 
-    const updateValues: Record<string, unknown> = { updatedAt: new Date() };
+    const updateValues: Record<string, unknown> = {
+      updatedAt: new Date(),
+      updatedBy: actorUserId,
+    };
     if (input.title !== undefined) updateValues.title = input.title;
     if (input.status !== undefined) {
       const latest = await tx
@@ -140,6 +148,7 @@ export async function updateStatusReportUpdate(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = UpdateStatusReportUpdateInput.parse(args.input);
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   return withTransaction(ctx, async (tx) => {
     const existing = await getReportUpdateInWorkspace({
@@ -151,7 +160,10 @@ export async function updateStatusReportUpdate(args: {
     const beforeImpacts = await getComponentImpactsForUpdate(tx, existing.id);
     const afterImpacts = input.componentImpacts ?? beforeImpacts;
 
-    const updateValues: Record<string, unknown> = { updatedAt: new Date() };
+    const updateValues: Record<string, unknown> = {
+      updatedAt: new Date(),
+      updatedBy: actorUserId,
+    };
     if (input.status !== undefined) updateValues.status = input.status;
     if (input.message !== undefined) updateValues.message = input.message;
     if (input.date !== undefined) updateValues.date = input.date;
@@ -223,7 +235,9 @@ export async function updateStatusReportUpdate(args: {
     }
 
     // editing status or date can change which update is latest
-    await recomputeReportStatus(tx, existing.statusReportId);
+    await recomputeReportStatus(tx, existing.statusReportId, {
+      updatedBy: actorUserId,
+    });
 
     await emitAudit(tx, ctx, {
       action: "status_report_update.update",

@@ -9,6 +9,7 @@ import {
   user,
 } from "@openstatus/db/src/schema";
 
+import { displayName } from "../attribution";
 import { emitAudit } from "../audit";
 import { type DB, type ServiceContext, tryGetActorUserId } from "../context";
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
@@ -131,14 +132,4 @@ export async function userDisplayName(
     .get();
   if (!row) return null;
   return displayName(row);
-}
-
-export function displayName(row: {
-  name: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-}): string {
-  const full = [row.firstName, row.lastName].filter(Boolean).join(" ");
-  return row.name || full || row.email || "Unknown user";
 }

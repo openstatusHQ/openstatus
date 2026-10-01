@@ -2,7 +2,8 @@ export { addIncidentNote } from "./add-note";
 export { closeIncident, closeIncidentInTx } from "./close";
 export { declareIncident } from "./declare";
 export { deleteIncident, isDeletable } from "./delete";
-export { allowedTransitions, displayName } from "./internal";
+export { displayName } from "../attribution";
+export { allowedTransitions } from "./internal";
 export {
   linkIncidentStatusReport,
   unlinkIncidentFromStatusReport,

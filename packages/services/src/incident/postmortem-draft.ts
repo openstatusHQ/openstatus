@@ -4,10 +4,10 @@ import {
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 
+import { displayName } from "../attribution";
 import { type ServiceContext, getReadDb } from "../context";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors";
 import { getSlackConnection } from "../integration/slack-connection";
-import { displayName } from "./internal";
 import { getIncident } from "./list";
 import { listIncidentEvents } from "./list-events";
 import { draftPostmortem, getPostmortem } from "./postmortem";
