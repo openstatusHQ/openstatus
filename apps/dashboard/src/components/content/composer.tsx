@@ -130,6 +130,26 @@ export function ComposerPreview({
   );
 }
 
+/** Structured fields between the textarea and the footer. */
+export function ComposerSection({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<typeof InputGroupAddon>) {
+  return (
+    <InputGroupAddon
+      align="block-end"
+      className={cn(
+        "flex-col items-stretch gap-2 border-t px-3 py-3 font-normal [.border-t]:pt-3",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </InputGroupAddon>
+  );
+}
+
 export function ComposerFooter({
   children,
   className,

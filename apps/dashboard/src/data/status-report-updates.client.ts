@@ -89,6 +89,13 @@ export const colors = {
     "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
 } as const satisfies Record<StatusReportStatus, string>;
 
+export const impactVariants = {
+  operational: "success",
+  degraded_performance: "warning",
+  partial_outage: "warning",
+  major_outage: "destructive",
+} as const satisfies Record<PageComponentImpact, StatusVariant>;
+
 export const statusVariants = {
   resolved: "success",
   investigating: "destructive",

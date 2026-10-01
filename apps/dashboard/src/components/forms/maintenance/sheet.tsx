@@ -25,19 +25,34 @@ export function FormSheetMaintenance({
   defaultValues,
   onSubmit,
   items,
+  open: controlledOpen,
+  onOpenChange,
   ...props
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
   items: CheckboxTreeItem[];
   onSubmit: (values: FormValues) => Promise<void>;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (next: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(next);
+    } else {
+      setInternalOpen(next);
+    }
+  };
 
   return (
     <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>
-      <FormSheetTrigger {...props} asChild>
-        {children}
-      </FormSheetTrigger>
+      {children ? (
+        <FormSheetTrigger {...props} asChild>
+          {children}
+        </FormSheetTrigger>
+      ) : null}
       <FormSheetContent className="sm:max-w-lg">
         <FormSheetHeader>
           <FormSheetTitle>Maintenance</FormSheetTitle>

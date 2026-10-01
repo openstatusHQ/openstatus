@@ -6,6 +6,7 @@ import { formatDistanceStrict } from "date-fns";
 
 import { ProcessMessage } from "@/components/content/process-message";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 
@@ -17,6 +18,15 @@ export const columns: ColumnDef<Maintenance>[] = [
   {
     accessorKey: "title",
     header: "Title",
+    cell: ({ row }) => {
+      const { id, pageId } = row.original;
+      return (
+        <TableCellLink
+          href={`/status-pages/${pageId}/maintenances/${id}`}
+          value={row.getValue("title")}
+        />
+      );
+    },
     enableSorting: false,
     enableHiding: false,
     meta: {

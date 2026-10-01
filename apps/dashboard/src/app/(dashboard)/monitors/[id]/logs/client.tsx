@@ -74,7 +74,7 @@ export function Client({
 
   if (!workspace || !monitor) return null;
 
-  // No `SectionGroup` here: it centres content in a `max-w-4xl` column, and the
+  // No `SectionGroup` here: it centres content in a `max-w-6xl` column, and the
   // table renders its own filter sidebar + toolbar shell that needs the full
   // width of the content area. The box is pinned to the space left below the
   // app header and the monitor tabs so the document never scrolls: the filter

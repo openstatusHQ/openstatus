@@ -101,7 +101,7 @@ export function Client({ id }: { id: number }) {
   };
 
   return (
-    <SectionGroup className="max-w-6xl">
+    <SectionGroup>
       <DetailHeader>
         <IncidentHeading
           incident={incident}

@@ -58,7 +58,8 @@ const updateStatusTRPCInput = z.object({
   id: z.number(),
   pageComponents: z.array(z.number()).optional(),
   title: z.string(),
-  status: CreateStatusReportInput.shape.status,
+  // A defined status rewrites the latest update, so title-only edits omit it.
+  status: CreateStatusReportInput.shape.status.optional(),
 });
 
 export const statusReportRouter = createTRPCRouter({

@@ -5,9 +5,6 @@ import {
   type PageComponentImpact,
   worstImpact,
 } from "@openstatus/db/src/schema/page_components/constants";
-import { ChevronDown, ChevronUp } from "@openstatus/icons";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { cn } from "@openstatus/ui/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
@@ -15,12 +12,11 @@ import { TableCellBadge } from "@/components/data-table/table-cell-badge";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
-import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import {
-  colors,
-  impactConfig,
-  untriagedImpact,
-} from "@/data/status-report-updates.client";
+  StatusReportImpactBadge,
+  StatusReportStatusBadge,
+} from "@/components/status-reports/status-report-badge";
+import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -39,102 +35,44 @@ function worstReportImpact(report: StatusReport) {
 
 export const columns: ColumnDef<StatusReport>[] = [
   {
-    id: "expander",
-    header: () => null,
-    cell: ({ row }) => {
-      return row.getCanExpand() ? (
-        <Button
-          {...{
-            className: "size-7 shadow-none text-muted-foreground",
-            onClick: (e) => {
-              e.stopPropagation();
-              row.toggleExpanded();
-            },
-            "aria-expanded": row.getIsExpanded(),
-            "aria-label": row.getIsExpanded()
-              ? `Collapse details for ${row.original.title}`
-              : `Expand details for ${row.original.title}`,
-            size: "icon",
-            variant: "ghost",
-          }}
-        >
-          {row.getIsExpanded() ? (
-            <ChevronUp className="opacity-60" size={16} aria-hidden="true" />
-          ) : (
-            <ChevronDown className="opacity-60" size={16} aria-hidden="true" />
-          )}
-        </Button>
-      ) : undefined;
-    },
-    meta: {
-      headerClassName: "w-7",
-    },
+    id: "impact",
+    accessorFn: (row) => worstReportImpact(row),
+    header: "Impact",
+    enableSorting: false,
+    cell: ({ row }) => (
+      <StatusReportImpactBadge
+        impact={row.getValue<PageComponentImpact | null>("impact")}
+      />
+    ),
   },
   {
     accessorKey: "title",
     header: "Title",
+    enableSorting: false,
+    enableHiding: false,
     cell: ({ row }) => {
       const { id, pageId } = row.original;
-
       return (
         <TableCellLink
           href={`/status-pages/${pageId}/status-reports/${id}`}
-          onClick={(e) => {
-            // avoid expanding the row
-            e.stopPropagation();
-          }}
           value={row.getValue("title")}
         />
       );
     },
-    enableSorting: false,
-    enableHiding: false,
-    meta: {
-      cellClassName: "max-w-[200px] truncate",
-    },
+    meta: { cellClassName: "max-w-[200px] truncate" },
   },
   {
     accessorKey: "status",
-    header: "Current Status",
-    cell: ({ row }) => {
-      const value = String(row.getValue("status"));
-      return (
-        <div
-          className={cn(
-            "font-mono capitalize",
-            colors[value as keyof typeof colors],
-          )}
-        >
-          {value}
-        </div>
-      );
-    },
+    header: "Status",
     enableSorting: false,
     enableHiding: false,
-  },
-  {
-    id: "impact",
-    accessorFn: (row) => worstReportImpact(row),
-    header: "Impact",
-    cell: ({ row }) => {
-      const impact = row.getValue<PageComponentImpact | null>("impact");
-      const config = impact ? impactConfig[impact] : untriagedImpact;
-      return (
-        <div className={cn("max-w-[120px] truncate font-mono", config.color)}>
-          {config.label}
-        </div>
-      );
-    },
-    enableSorting: false,
+    cell: ({ row }) => <StatusReportStatusBadge status={row.original.status} />,
   },
   {
     id: "updates",
     accessorFn: (row) => row.updates.length,
     header: "Updates",
-    cell: ({ row }) => {
-      const value = row.getValue("updates");
-      return <TableCellNumber value={value} />;
-    },
+    cell: ({ row }) => <TableCellNumber value={row.getValue("updates")} />,
   },
   {
     id: "pageComponents",
@@ -170,15 +108,11 @@ export const columns: ColumnDef<StatusReport>[] = [
     ),
     cell: ({ row }) => <TableCellDate value={row.getValue("startedAt")} />,
     enableHiding: false,
-    meta: {
-      cellClassName: "w-[170px]",
-    },
+    meta: { cellClassName: "whitespace-nowrap" },
   },
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,
-    meta: {
-      cellClassName: "w-8",
-    },
+    meta: { cellClassName: "w-8" },
   },
 ];

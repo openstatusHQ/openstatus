@@ -1,18 +1,6 @@
-import { Settings, Show, Add, Delete } from "@openstatus/icons";
+import { Show, Delete } from "@openstatus/icons";
 
 export const actions = [
-  {
-    id: "edit",
-    label: "Settings",
-    icon: Settings,
-    variant: "default" as const,
-  },
-  {
-    id: "create-update",
-    label: "Create Update",
-    icon: Add,
-    variant: "default" as const,
-  },
   {
     id: "view-report",
     label: "View Report",

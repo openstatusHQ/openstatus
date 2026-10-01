@@ -26,17 +26,32 @@ export function FormSheetStatusReport({
   onSubmit,
   items,
   warning,
+  open: controlledOpen,
+  onOpenChange,
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
   items: CheckboxTreeItem[];
   warning?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (next: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(next);
+    } else {
+      setInternalOpen(next);
+    }
+  };
 
   return (
     <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>
-      <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      {children ? (
+        <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      ) : null}
       <FormSheetContent className="sm:max-w-lg">
         <FormSheetHeader>
           <FormSheetTitle>Status Report</FormSheetTitle>
