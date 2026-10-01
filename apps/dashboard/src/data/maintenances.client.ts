@@ -1,3 +1,4 @@
+import type { RouterOutputs } from "@openstatus/api";
 import { Settings, Delete } from "@openstatus/icons";
 
 import type { StatusVariant } from "@/components/common/status-dot";
@@ -34,3 +35,17 @@ export const getActions = (
     onClick: props[action.id as keyof typeof props],
   }));
 };
+
+type Maintenance = NonNullable<RouterOutputs["maintenance"]["get"]>;
+
+/** `maintenance.update` requires every field: start from the current row. */
+export function toUpdateInput(maintenance: Maintenance) {
+  return {
+    id: maintenance.id,
+    title: maintenance.title,
+    message: maintenance.message,
+    startDate: maintenance.from,
+    endDate: maintenance.to,
+    pageComponents: maintenance.pageComponentIds,
+  };
+}

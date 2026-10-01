@@ -1,21 +1,21 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Show } from "@openstatus/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { getActions } from "@/data/maintenances.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Maintenance = NonNullable<RouterOutputs["maintenance"]["get"]>;
 
 export function MaintenanceActions({
   maintenance,
-  onEdit,
+  publicUrl,
 }: {
   maintenance: Maintenance;
-  onEdit: () => void;
+  publicUrl: string;
 }) {
   const trpc = useTRPC();
   const router = useRouter();
@@ -33,7 +33,17 @@ export function MaintenanceActions({
 
   return (
     <QuickActions
-      actions={getActions({ edit: onEdit })}
+      actions={[
+        {
+          id: "view",
+          label: "View Page",
+          icon: Show,
+          variant: "default",
+          onClick: () => {
+            window.open(publicUrl, "_blank");
+          },
+        },
+      ]}
       deleteAction={{
         confirmationValue: maintenance.title,
         submitAction: async () => {
