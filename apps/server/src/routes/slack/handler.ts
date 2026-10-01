@@ -35,7 +35,7 @@ import type { SlackConfig, SlackEnv } from "./config";
 import { makeRefResolvers } from "./confirmation-card";
 import { draftKey, findByThread, replace, store } from "./confirmation-store";
 import type { PendingPayload } from "./confirmation-store";
-import { publishHomeView, publishLinkAccountView } from "./home";
+import { homeIncidents, publishHomeView, publishLinkAccountView } from "./home";
 import { handleChannelGone, handlePinReaction } from "./incident-events";
 import {
   getComponentNames,
@@ -433,6 +433,13 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
           reconnectUrl: needsReconnect
             ? `${config.dashboardUrl}/settings/integrations`
             : undefined,
+          openIncidents: await homeIncidents({
+            workspace: resolved.workspace,
+            actor,
+          }).catch((error) => {
+            logger.warn("slack home incidents failed", { error, teamId });
+            return undefined;
+          }),
         });
       } else {
         const url = await linkAccountUrl(config, {

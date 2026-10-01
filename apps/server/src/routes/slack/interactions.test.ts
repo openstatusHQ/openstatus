@@ -629,3 +629,155 @@ describe("link this channel button", () => {
     }
   });
 });
+
+describe("declare incident modal", () => {
+  const app = createTestApp();
+
+  beforeEach(() => {
+    configureSlackDoubles();
+    redisStore.clear();
+  });
+
+  function submission(values: Record<string, unknown>, metadata = "{}") {
+    return {
+      type: "view_submission",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      view: {
+        callback_id: "declare_incident",
+        private_metadata: metadata,
+        state: { values },
+      },
+    };
+  }
+
+  test("the global shortcut opens the form", async () => {
+    const res = await signAndPost(app, {
+      type: "shortcut",
+      callback_id: "declare_incident",
+      trigger_id: "trig-1",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+    });
+    expect(res.status).toBe(200);
+    const open = slackTestState.calls.find((c) => c.method === "views.open");
+    expect(open).toBeDefined();
+    expect(open?.args.trigger_id).toBe("trig-1");
+    const view = open?.args.view as Record<string, unknown>;
+    expect(view.callback_id).toBe("declare_incident");
+    expect(JSON.stringify(view.blocks)).toContain('"initial_user":"U_OWNER"');
+  });
+
+  test("the message shortcut prefills the summary", async () => {
+    await signAndPost(app, {
+      type: "message_action",
+      callback_id: "declare_incident_from_message",
+      trigger_id: "trig-2",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      channel: { id: "C_ORIGIN" },
+      message: { text: "checkout is throwing 500s" },
+    });
+    const open = slackTestState.calls.find((c) => c.method === "views.open");
+    expect(open).toBeDefined();
+    const view = open?.args.view as Record<string, unknown>;
+    expect(view.private_metadata).toBe(
+      JSON.stringify({ channelId: "C_ORIGIN" }),
+    );
+    expect(JSON.stringify(view.blocks)).toContain("checkout is throwing 500s");
+  });
+
+  test("an unlinked user gets the link card instead of the form", async () => {
+    slackTestState.usersInfoImpl = () =>
+      Promise.resolve({ ok: true, user: { profile: {} } });
+    await signAndPost(app, {
+      type: "shortcut",
+      callback_id: "declare_incident",
+      trigger_id: "trig-3",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_STRANGER" },
+    });
+    const open = slackTestState.calls.find((c) => c.method === "views.open");
+    expect(open).toBeDefined();
+    const view = open?.args.view as Record<string, unknown>;
+    expect(view.callback_id).toBeUndefined();
+    expect(JSON.stringify(view.blocks)).toContain("Link account");
+  });
+
+  test("the home tab button opens the form", async () => {
+    await signAndPost(app, {
+      type: "block_actions",
+      trigger_id: "trig-home",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      actions: [{ action_id: "open_declare_incident" }],
+    });
+    const open = slackTestState.calls.find((c) => c.method === "views.open");
+    expect(open).toBeDefined();
+    expect(open?.args.trigger_id).toBe("trig-home");
+    const view = open?.args.view as { callback_id?: string };
+    expect(view.callback_id).toBe("declare_incident");
+  });
+
+  test("a blank title is rejected on the form", async () => {
+    const res = await signAndPost(
+      app,
+      submission({
+        title: { value: { value: "  " } },
+        severity: { value: { selected_option: { value: "major" } } },
+      }),
+    );
+    expect(await res.json()).toEqual({
+      response_action: "errors",
+      errors: { title: "Give the incident a title." },
+    });
+  });
+
+  test("submitting declares the incident and closes the form", async () => {
+    const title = `Modal ${crypto.randomUUID()}`;
+    const res = await signAndPost(
+      app,
+      submission(
+        {
+          title: { value: { value: title } },
+          severity: { value: { selected_option: { value: "critical" } } },
+          summary: { value: { value: "Checkout is down" } },
+          commander: { value: { selected_user: "U_OWNER" } },
+        },
+        JSON.stringify({ channelId: "C_ORIGIN" }),
+      ),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("");
+    const row = await db
+      .select()
+      .from(incident)
+      .where(eq(incident.title, title))
+      .get();
+    try {
+      expect(row?.severity).toBe("critical");
+      expect(row?.summary).toBe("Checkout is down");
+      expect(row?.workspaceId).toBe(1);
+      const ephemeral = slackTestState.calls.find(
+        (c) => c.method === "postEphemeral",
+      );
+      expect(ephemeral?.args.channel).toBe("C_ORIGIN");
+      expect(String(ephemeral?.args.text)).toContain(title);
+    } finally {
+      if (row) {
+        await db
+          .delete(auditLog)
+          .where(
+            and(
+              eq(auditLog.entityType, "incident"),
+              eq(auditLog.entityId, String(row.id)),
+            ),
+          );
+        await db
+          .delete(incidentEvent)
+          .where(eq(incidentEvent.incidentId, row.id));
+        await db.delete(incident).where(eq(incident.id, row.id));
+      }
+    }
+  });
+});

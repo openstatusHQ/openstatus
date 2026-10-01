@@ -17,6 +17,7 @@ import {
 } from "./blocks";
 import type { SlackConfig, SlackEnv } from "./config";
 import { runIncidentCommand } from "./incident-commands";
+import { openDeclareIncidentModal } from "./incident-modal";
 import {
   linkAccountUrl,
   planRequiredMessage,
@@ -35,16 +36,18 @@ const slashCommandSchema = z.object({
   channel_id: z.string(),
   channel_name: z.string().optional(),
   response_url: z.string().optional(),
+  trigger_id: z.string().optional(),
 });
 
 type SlashCommand = z.infer<typeof slashCommandSchema>;
 
 const HELP = [
   "*openstatus*",
+  "• `/openstatus incident declare` — declare an incident (opens a form)",
+  "• `/openstatus incident help` — run incidents: notes, status, postmortem",
   "• `/openstatus subscribe <status-page-url>` — subscribe this channel to a status page",
   "• `/openstatus unsubscribe <status-page-url>` — unsubscribe",
   "• `/openstatus subscriptions` — show this channel's subscriptions",
-  "• `/openstatus incident help` — declare and run incidents",
 ].join("\n");
 
 type CommandReply = { text: string; blocks?: Block[] };
@@ -91,6 +94,42 @@ export function handleSlackCommand(c: Context<SlackEnv>) {
   }
   const command = parsed.data;
   const sub = subcommand(command);
+
+  const triggerId = command.trigger_id;
+  if (triggerId && opensDeclareModal(command)) {
+    // `trigger_id` stays valid for 3s after the user's action whether or not
+    // we have acked, so ack now and open the form in the background.
+    const open = () =>
+      openDeclareIncidentModal({
+        teamId: command.team_id,
+        slackUserId: command.user_id,
+        triggerId,
+        channelId: command.channel_id,
+        config,
+      }).then(
+        (notice): CommandReply | undefined =>
+          notice ? { text: notice } : undefined,
+        (error) => {
+          logger.error("slack declare modal open failed", { error });
+          return { text: ":x: Could not open the form. Please try again." };
+        },
+      );
+    const responseUrl = command.response_url;
+    if (!responseUrl) {
+      return open().then((reply) =>
+        reply ? ephemeral(c, reply) : c.body(null, 200),
+      );
+    }
+    runInBackground(
+      "command declare modal",
+      async () => {
+        const reply = await open();
+        if (reply) await respondLater(responseUrl, reply);
+      },
+      { teamId: command.team_id, channelId: command.channel_id },
+    );
+    return c.body(null, 200);
+  }
 
   // `help` — and anything unrecognised, which falls through to it — needs no
   // I/O, so it is answered in the ack itself.
@@ -139,6 +178,16 @@ export function handleSlackCommand(c: Context<SlackEnv>) {
 function subcommand(command: SlashCommand): string {
   const tokens = command.text.trim().split(/\s+/).filter(Boolean);
   return (tokens[0] ?? "help").toLowerCase();
+}
+
+/** `/openstatus incident declare` with no title opens the form instead. */
+function opensDeclareModal(command: SlashCommand): boolean {
+  const words = command.text.trim().split(/\s+/).filter(Boolean);
+  return (
+    words.length === 2 &&
+    words[0].toLowerCase() === "incident" &&
+    words[1].toLowerCase() === "declare"
+  );
 }
 
 function argument(command: SlashCommand): string | undefined {

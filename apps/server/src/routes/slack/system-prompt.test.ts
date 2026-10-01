@@ -54,6 +54,12 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain("call list_notifications FIRST");
   });
 
+  test("asks for short, direct replies", () => {
+    const prompt = buildSystemPrompt("Acme Corp");
+    expect(prompt).toContain("REPLY STYLE");
+    expect(prompt).toContain("Lead with the answer");
+  });
+
   test("tells the model not to show internal ids", () => {
     expect(buildSystemPrompt("Acme Corp")).toContain("NEVER show internal ids");
   });

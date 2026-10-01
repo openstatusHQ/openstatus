@@ -1,10 +1,5 @@
 import { and, eq, isNull } from "@openstatus/db";
-import {
-  type Incident,
-  slackUser,
-  user,
-  usersToWorkspaces,
-} from "@openstatus/db/src/schema";
+import { type Incident, slackUser, user } from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb } from "../context";
 import { isFeatureEnabled } from "../features";
@@ -137,56 +132,57 @@ export async function incidentSlackReady(
   return connection;
 }
 
-/** Link every member whose openstatus email has a Slack account in the team. */
-async function autoMapMembers(
+/**
+ * The Slack user who declared the incident: the clicking user when declared
+ * from Slack, else the declarer's linked Slack account, else one found by
+ * their openstatus email (and linked for next time).
+ */
+async function resolveDeclarerSlackId(
   ctx: ServiceContext,
   client: SlackIncidentClient,
   teamId: string,
-): Promise<string[]> {
+  declaredBy: number | null,
+): Promise<string | undefined> {
+  if (ctx.actor.type === "slack" && ctx.actor.teamId === teamId) {
+    return ctx.actor.slackUserId;
+  }
+  if (declaredBy === null) return undefined;
   const db = getReadDb(ctx);
-  const members = await db
-    .select({ id: user.id, email: user.email })
-    .from(usersToWorkspaces)
-    .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
-    .where(
-      and(
-        eq(usersToWorkspaces.workspaceId, ctx.workspace.id),
-        isNull(user.deletedAt),
-      ),
-    )
-    .all();
   const linked = await db
-    .select({ userId: slackUser.userId, slackUserId: slackUser.slackUserId })
+    .select({ slackUserId: slackUser.slackUserId })
     .from(slackUser)
     .where(
       and(
         eq(slackUser.workspaceId, ctx.workspace.id),
         eq(slackUser.slackTeamId, teamId),
+        eq(slackUser.userId, declaredBy),
       ),
     )
-    .all();
-  const slackIds = new Map(linked.map((l) => [l.userId, l.slackUserId]));
-  const system: ServiceContext = {
-    ...ctx,
-    actor: { type: "system", job: "slack-incident-channel" },
-  };
+    .get();
+  if (linked) return linked.slackUserId;
 
-  for (const member of members) {
-    if (slackIds.has(member.id) || !member.email) continue;
-    try {
-      const res = await client.users.lookupByEmail({ email: member.email });
-      const slackUserId = res.user?.id;
-      if (!slackUserId) continue;
-      await createSlackUserMapping({
-        ctx: system,
-        input: { teamId, slackUserId, userId: member.id },
-      });
-      slackIds.set(member.id, slackUserId);
-    } catch {
-      // users_not_found: no Slack account with this email.
-    }
+  const declarer = await db
+    .select({ email: user.email })
+    .from(user)
+    .where(and(eq(user.id, declaredBy), isNull(user.deletedAt)))
+    .get();
+  if (!declarer?.email) return undefined;
+  try {
+    const res = await client.users.lookupByEmail({ email: declarer.email });
+    const slackUserId = res.user?.id;
+    if (!slackUserId) return undefined;
+    await createSlackUserMapping({
+      ctx: {
+        ...ctx,
+        actor: { type: "system", job: "slack-incident-channel" },
+      },
+      input: { teamId, slackUserId, userId: declaredBy },
+    });
+    return slackUserId;
+  } catch {
+    // users_not_found: no Slack account with this email.
+    return undefined;
   }
-  return [...slackIds.values()];
 }
 
 export type OpenChannelResult =
@@ -198,7 +194,7 @@ export type OpenChannelResult =
 /**
  * Creates the incident's channel after the declare has committed: a Slack
  * failure never loses the incident. Order: create (retrying `name_taken`),
- * link members by email, invite everyone linked, topic, pinned header card,
+ * invite the declarer (others join themselves), topic, pinned header card,
  * bind. If binding fails twice the channel gets a "link this channel" card.
  */
 export async function openIncidentSlackChannel(args: {
@@ -236,15 +232,15 @@ export async function openIncidentSlackChannel(args: {
   if (!channelId) return { status: "failed", error: "name_taken" };
 
   try {
-    const slackUserIds = await autoMapMembers(ctx, client, connection.teamId);
-    const invitees = slackUserIds.filter((id) => id !== connection.botUserId);
-    for (let i = 0; i < invitees.length; i += 1000) {
+    const declarer = await resolveDeclarerSlackId(
+      ctx,
+      client,
+      connection.teamId,
+      incident.declaredBy,
+    );
+    if (declarer && declarer !== connection.botUserId) {
       await client.conversations
-        .invite({
-          channel: channelId,
-          users: invitees.slice(i, i + 1000).join(","),
-          force: true,
-        })
+        .invite({ channel: channelId, users: declarer, force: true })
         .catch(() => undefined);
     }
     await client.conversations

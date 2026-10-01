@@ -27,6 +27,7 @@ const logger = getLogger(["api-server", "slack", "incident-commands"]);
 
 export const INCIDENT_HELP = [
   "*Incidents*",
+  "• `/openstatus incident declare` — open the declare form (or the *Declare incident* shortcut)",
   "• `/openstatus incident declare <title> [--sev critical|major|minor]` — declare an incident (approval card)",
   "• `/openstatus incident note <text>` — add to the timeline (in an incident channel)",
   "• `/openstatus incident mitigate|resolve|cancel|reopen [#id] [note]` — change its status (approval card)",
