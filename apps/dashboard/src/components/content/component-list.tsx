@@ -5,15 +5,24 @@ import {
   SelectGroup,
   SelectItem,
   SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
+import { Fragment } from "react";
 
 import { StatusDot } from "@/components/common/status-dot";
+import { toComponentSections } from "@/data/page-components.client";
 import { impactDisplay } from "@/data/status-report-updates.client";
 
-type Component = { id: number; name: string; groupId?: number | null };
+type Component = {
+  id: number;
+  name: string;
+  groupId?: number | null;
+  order?: number | null;
+  groupOrder?: number | null;
+};
 
 export function ComponentList({
   children,
@@ -47,11 +56,13 @@ export function ComponentListItem({
   );
 }
 
+/** `group` renders muted after the name for components in a group. */
 export function ComponentListName({
   children,
+  group,
   className,
   ...props
-}: React.ComponentProps<"span">) {
+}: React.ComponentProps<"span"> & { group?: string | null }) {
   return (
     <span
       data-slot="component-list-name"
@@ -59,6 +70,9 @@ export function ComponentListName({
       {...props}
     >
       {children}
+      {group ? (
+        <span className="text-muted-foreground ml-1.5">{group}</span>
+      ) : null}
     </span>
   );
 }
@@ -137,7 +151,11 @@ export function ComponentListSelectTrigger({
   );
 }
 
-/** Picker for `components` not yet on the list; `groups` adds section labels. */
+/**
+ * Picker for `components` not yet on the list, in page order: a group's
+ * members sit under its label, runs of ungrouped components in between,
+ * separated.
+ */
 export function ComponentListAdd({
   components,
   groups = [],
@@ -154,13 +172,12 @@ export function ComponentListAdd({
   placeholder?: string;
   className?: string;
 }) {
-  const groupName = new Map(groups.map((g) => [g.id, g.name]));
-  const byGroup = new Map<number | null, Component[]>();
-  for (const c of components) {
-    const key =
-      c.groupId != null && groupName.has(c.groupId) ? c.groupId : null;
-    byGroup.set(key, [...(byGroup.get(key) ?? []), c]);
-  }
+  const sections = toComponentSections(components, groups);
+  const option = (c: Component) => (
+    <SelectItem key={c.id} value={String(c.id)} className="font-mono">
+      {c.name}
+    </SelectItem>
+  );
 
   return (
     <Select
@@ -180,18 +197,20 @@ export function ComponentListAdd({
         />
       </ComponentListSelectTrigger>
       <SelectContent>
-        {[...byGroup.entries()].map(([groupId, items]) => {
-          const options = items.map((c) => (
-            <SelectItem key={c.id} value={String(c.id)} className="font-mono">
-              {c.name}
-            </SelectItem>
-          ));
-          if (groupId === null) return options;
+        {sections.map((section, i) => {
+          const key = section.group?.id ?? `ungrouped-${i}`;
           return (
-            <SelectGroup key={groupId}>
-              <SelectLabel>{groupName.get(groupId)}</SelectLabel>
-              {options}
-            </SelectGroup>
+            <Fragment key={key}>
+              {i > 0 ? <SelectSeparator /> : null}
+              {section.group ? (
+                <SelectGroup>
+                  <SelectLabel>{section.group.name}</SelectLabel>
+                  {section.items.map(option)}
+                </SelectGroup>
+              ) : (
+                section.items.map(option)
+              )}
+            </Fragment>
           );
         })}
       </SelectContent>

@@ -13,6 +13,7 @@ import {
   ComponentListItem,
   ComponentListName,
 } from "@/components/content/component-list";
+import { toGroupNameLookup } from "@/data/page-components.client";
 
 import { useUpdateMaintenance } from "./use-update-maintenance";
 
@@ -33,6 +34,7 @@ export function MaintenanceComponents({
   const addable = components.filter(
     (c) => !maintenance.pageComponentIds.includes(c.id),
   );
+  const groupOf = toGroupNameLookup(components, groups);
 
   return (
     <div className="flex flex-col gap-1">
@@ -41,7 +43,9 @@ export function MaintenanceComponents({
           {selected.map((component) => (
             <ComponentListItem key={component.id}>
               <StatusDot variant="info" />
-              <ComponentListName>{component.name}</ComponentListName>
+              <ComponentListName group={groupOf.get(component.id)}>
+                {component.name}
+              </ComponentListName>
               <ComponentListActions>
                 <Button
                   variant="ghost"

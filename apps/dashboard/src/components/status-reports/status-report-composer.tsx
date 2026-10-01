@@ -43,6 +43,7 @@ import {
 } from "@/components/content/composer";
 import { TimelineAvatar, TimelineItem } from "@/components/content/timeline";
 import { personName } from "@/data/managed-incidents.client";
+import { toGroupNameLookup } from "@/data/page-components.client";
 import {
   getNextStatus,
   statusVariants,
@@ -55,7 +56,13 @@ import { errorMessage } from "@/lib/trpc/error";
 import { usePublishUpdate } from "./use-publish-update";
 
 type StatusReport = NonNullable<RouterOutputs["statusReport"]["get"]>;
-type Component = { id: number; name: string; groupId?: number | null };
+type Component = {
+  id: number;
+  name: string;
+  groupId?: number | null;
+  order?: number | null;
+  groupOrder?: number | null;
+};
 
 /**
  * Publishes a status report update. Impact rows default to "No change"
@@ -108,6 +115,7 @@ export function StatusReportComposer({
   const componentIds = ids ?? report.pageComponents.map((c) => c.id);
   const components = componentIds.flatMap((id) => byId.get(id) ?? []);
   const addable = pageComponents.filter((c) => !componentIds.includes(c.id));
+  const groupOf = toGroupNameLookup(pageComponents, groups);
   const reportHasImpacts = report.updates.some(
     (u) => u.componentImpacts.length > 0,
   );
@@ -192,7 +200,9 @@ export function StatusReportComposer({
                 const override = overrides.get(component.id);
                 return (
                   <ComponentListItem key={component.id}>
-                    <ComponentListName>{component.name}</ComponentListName>
+                    <ComponentListName group={groupOf.get(component.id)}>
+                      {component.name}
+                    </ComponentListName>
                     <ComponentImpact
                       impact={currentImpacts.get(component.id)}
                     />

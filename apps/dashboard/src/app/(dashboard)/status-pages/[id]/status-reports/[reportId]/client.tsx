@@ -35,6 +35,7 @@ import { StatusReportComposer } from "@/components/status-reports/status-report-
 import { StatusReportProperties } from "@/components/status-reports/status-report-properties";
 import { StatusReportTimelineItem } from "@/components/status-reports/status-report-timeline";
 import { useInvalidateStatusReport } from "@/components/status-reports/use-invalidate-status-report";
+import { toGroupNameLookup } from "@/data/page-components.client";
 import { getPageUrl } from "@/data/status-pages.client";
 import { reportStartedAt } from "@/data/status-reports.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -65,6 +66,10 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
   );
   const latest = updates[0];
   const currentImpacts = currentImpactsFromUpdates(report.updates);
+  const groupOf = toGroupNameLookup(
+    page?.pageComponents ?? [],
+    page?.pageComponentGroups ?? [],
+  );
 
   return (
     <SectionGroup>
@@ -129,7 +134,9 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
               <ComponentList>
                 {report.pageComponents.map((component) => (
                   <ComponentListItem key={component.id}>
-                    <ComponentListName>{component.name}</ComponentListName>
+                    <ComponentListName group={groupOf.get(component.id)}>
+                      {component.name}
+                    </ComponentListName>
                     <ComponentListActions>
                       <ComponentImpact
                         impact={currentImpacts.get(component.id)}
