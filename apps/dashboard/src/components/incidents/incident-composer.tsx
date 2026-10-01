@@ -22,7 +22,8 @@ import {
   ComposerTextarea,
 } from "@/components/content/composer";
 import { TimelineAvatar, TimelineItem } from "@/components/content/timeline";
-import { personName, statusConfig } from "@/data/managed-incidents.client";
+import { statusConfig } from "@/data/managed-incidents.client";
+import { personName } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 

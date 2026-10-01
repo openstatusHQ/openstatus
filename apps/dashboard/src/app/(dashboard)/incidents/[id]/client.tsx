@@ -40,8 +40,9 @@ import { IncidentProperties } from "@/components/incidents/incident-properties";
 import { IncidentStatusReport } from "@/components/incidents/incident-status-report";
 import { IncidentTimelineItem } from "@/components/incidents/incident-timeline";
 import { ResolveReportDialog } from "@/components/incidents/resolve-report-dialog";
-import { incidentEndedAt, personName } from "@/data/managed-incidents.client";
+import { incidentEndedAt } from "@/data/managed-incidents.client";
 import { useFeature } from "@/hooks/use-feature";
+import { personName } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 function slackChannelUrl(teamId: string, channelId: string): string {

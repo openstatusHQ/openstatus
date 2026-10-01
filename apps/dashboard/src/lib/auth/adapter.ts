@@ -8,7 +8,7 @@ import {
 } from "@openstatus/db/src/schema";
 import type { Adapter } from "next-auth/adapters";
 
-import { createUser, getUser, normalizeEmail } from "./helpers";
+import { createUser, getUser, getUserByEmail } from "./helpers";
 
 const drizzleAdapter = DrizzleAdapter(db, {
   // @ts-expect-error: problem with type
@@ -25,8 +25,15 @@ export const adapter: Adapter = {
   // Auth.js lowercases magic-link addresses while OAuth profiles arrive as-is;
   // without this a mixed-case OAuth user gets a second account on first
   // magic-link sign-in.
-  getUserByEmail: (email) =>
-    drizzleAdapter.getUserByEmail?.(normalizeEmail(email)) ?? null,
+  getUserByEmail: async (email) => {
+    const user = await getUserByEmail(email);
+    if (!user) return null;
+    return {
+      ...user,
+      id: user.id.toString(),
+      email: user.email || "",
+    };
+  },
   createUser: async (data) => {
     const user = await createUser(data);
     return {

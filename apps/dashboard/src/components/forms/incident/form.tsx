@@ -34,8 +34,8 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { personName, severityConfig } from "@/data/managed-incidents.client";
-import { formatDateForInput } from "@/lib/formatter";
+import { severityConfig } from "@/data/managed-incidents.client";
+import { formatDateForInput, personName } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 

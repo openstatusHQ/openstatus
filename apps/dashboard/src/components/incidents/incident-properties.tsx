@@ -32,10 +32,10 @@ import {
 } from "@/components/content/property-list";
 import {
   incidentEndedAt,
-  personName,
   severityConfig,
   statusConfig,
 } from "@/data/managed-incidents.client";
+import { personName } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 

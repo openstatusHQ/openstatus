@@ -69,7 +69,7 @@ Turbo runs the dashboard (`apps/dashboard`) and `@openstatus/db` together.
 
 The dashboard uses NextAuth with GitHub, Google, SSO and a Resend magic-link provider.
 
-In `NODE_ENV=development`, `src/lib/auth/providers.ts` **prints the magic link to the dashboard's terminal stdout** instead of sending an email. No OAuth credentials required. Everywhere else, including self-hosted deployments, the link is emailed through Resend, so `RESEND_API_KEY` must be a real key.
+In `NODE_ENV=development` or `SELF_HOST=true`, `src/lib/auth/providers.ts` **prints the magic link to the dashboard's terminal stdout**; self-hosted deployments additionally email it when `RESEND_API_KEY` is a real key. No OAuth credentials required. Everywhere else the link is only emailed through Resend.
 
 To log in:
 

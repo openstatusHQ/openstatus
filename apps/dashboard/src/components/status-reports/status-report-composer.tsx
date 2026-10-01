@@ -42,14 +42,13 @@ import {
   ComposerTextarea,
 } from "@/components/content/composer";
 import { TimelineAvatar, TimelineItem } from "@/components/content/timeline";
-import { personName } from "@/data/managed-incidents.client";
 import { toGroupNameLookup } from "@/data/page-components.client";
 import {
   getNextStatus,
   statusVariants,
   toCreateStatusReportUpdateInput,
 } from "@/data/status-report-updates.client";
-import { formatDateForInput } from "@/lib/formatter";
+import { formatDateForInput, personName } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 

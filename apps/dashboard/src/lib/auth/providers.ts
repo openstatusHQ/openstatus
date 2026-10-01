@@ -74,12 +74,22 @@ export const ResendProvider = Resend({
       throw new MagicLinkRefused("rate limited");
     }
 
-    const emailClient = new EmailClient({
-      apiKey: process.env.RESEND_API_KEY ?? "",
-    });
+    // Self-hosted installs may run without a Resend key: print the link to the
+    // dashboard log as before and treat a failed send as non-fatal.
+    const selfHosted = process.env.SELF_HOST === "true";
+    if (selfHosted && process.env.NODE_ENV !== "development") {
+      console.log(`>>> Magic Link: ${params.url}`);
+    }
     try {
+      const emailClient = new EmailClient({
+        apiKey: process.env.RESEND_API_KEY ?? "",
+      });
       await emailClient.sendDashboardMagicLink({ link: params.url, to: email });
     } catch (cause) {
+      if (selfHosted) {
+        console.warn("magic link email not sent, use the printed link", cause);
+        return;
+      }
       throw new MagicLinkRefused("send failed", { cause });
     }
   },

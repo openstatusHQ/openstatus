@@ -35,7 +35,7 @@ export function MagicLinkForm({ redirectTo }: { redirectTo?: string }) {
         type="email"
         required
         autoComplete="email"
-        placeholder="you@company.com"
+        placeholder="gilfoyle@piedpiper.dev"
         aria-label="Email"
         aria-invalid={state.error ? true : undefined}
       />

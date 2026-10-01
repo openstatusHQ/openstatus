@@ -21,8 +21,9 @@ export async function magicLinkRateLimit(args: {
       WINDOW_SECONDS,
     );
     return byIp <= MAX_PER_IP && byEmail <= MAX_PER_EMAIL;
-  } catch {
+  } catch (e) {
     // Redis unavailable: allow the request rather than locking everyone out.
+    console.warn("magic link rate limit unavailable, allowing request", e);
     return true;
   }
 }

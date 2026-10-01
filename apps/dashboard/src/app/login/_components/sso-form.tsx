@@ -36,7 +36,7 @@ export function SsoForm({ redirectTo }: { redirectTo?: string }) {
         type="email"
         required
         autoFocus
-        placeholder="you@company.com"
+        placeholder="gilfoyle@piedpiper.dev"
         aria-label="Work email"
         aria-invalid={state.error ? true : undefined}
       />

@@ -42,11 +42,8 @@ import {
   TimelineTime,
   TimelineTitle,
 } from "@/components/content/timeline";
-import {
-  personName,
-  severityConfig,
-  statusConfig,
-} from "@/data/managed-incidents.client";
+import { severityConfig, statusConfig } from "@/data/managed-incidents.client";
+import { personName } from "@/lib/formatter";
 
 import { IncidentSeverityBadge, IncidentStatusBadge } from "./incident-badge";
 

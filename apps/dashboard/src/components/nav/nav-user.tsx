@@ -40,7 +40,7 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 import { toast } from "sonner";
 
-import { personName } from "@/data/managed-incidents.client";
+import { personName } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function NavUser() {
