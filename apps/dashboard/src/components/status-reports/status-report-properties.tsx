@@ -1,7 +1,6 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { ArrowUpRight } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 
 import { Link } from "@/components/common/link";
@@ -9,6 +8,7 @@ import { StatusDot } from "@/components/common/status-dot";
 import {
   Property,
   PropertyLabel,
+  PropertyLink,
   PropertyList,
   PropertyValue,
 } from "@/components/content/property-list";
@@ -47,13 +47,7 @@ export function StatusReportProperties({
       <Property>
         <PropertyLabel>Status page</PropertyLabel>
         <PropertyValue>
-          <Link
-            href={publicUrl}
-            className="inline-flex min-w-0 items-center gap-1 font-normal"
-          >
-            <span className="truncate">{report.page.title}</span>
-            <ArrowUpRight className="size-3.5 shrink-0" />
-          </Link>
+          <PropertyLink href={publicUrl}>{report.page.title}</PropertyLink>
         </PropertyValue>
       </Property>
       {incidentsEnabled ? (

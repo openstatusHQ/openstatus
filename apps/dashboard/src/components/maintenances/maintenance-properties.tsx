@@ -1,18 +1,17 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { ArrowUpRight } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { formatDistanceStrict } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Link } from "@/components/common/link";
 import { StatusDot } from "@/components/common/status-dot";
 import {
   Property,
   PropertyInput,
   PropertyLabel,
+  PropertyLink,
   PropertyList,
   PropertyValue,
 } from "@/components/content/property-list";
@@ -66,13 +65,7 @@ export function MaintenanceProperties({
       <Property>
         <PropertyLabel>Status page</PropertyLabel>
         <PropertyValue>
-          <Link
-            href={publicUrl}
-            className="inline-flex min-w-0 items-center gap-1 font-normal"
-          >
-            <span className="truncate">{page.title}</span>
-            <ArrowUpRight className="size-3.5 shrink-0" />
-          </Link>
+          <PropertyLink href={publicUrl}>{page.title}</PropertyLink>
         </PropertyValue>
       </Property>
       <Property>
