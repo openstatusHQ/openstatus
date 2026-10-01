@@ -16,7 +16,7 @@ import {
   selectPageComponentSchema,
 } from "@openstatus/db/src/schema";
 
-import { type AttributedUser, loadAttributedUsers } from "../attribution";
+import { type AttributedUserDetail, loadAttributedUsers } from "../attribution";
 import type { DB, ServiceContext } from "../context";
 import type { Maintenance, PageComponent } from "../types";
 import { getMaintenanceInWorkspace } from "./internal";
@@ -42,8 +42,8 @@ function periodToSince(period: MaintenanceListPeriod): Date {
 export type MaintenanceWithRelations = Maintenance & {
   pageComponents: PageComponent[];
   pageComponentIds: number[];
-  createdByUser: AttributedUser | null;
-  updatedByUser: AttributedUser | null;
+  createdByUser: AttributedUserDetail | null;
+  updatedByUser: AttributedUserDetail | null;
 };
 
 export type ListMaintenancesResult = {

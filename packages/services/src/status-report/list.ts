@@ -21,7 +21,7 @@ import {
   statusReportUpdateToPageComponents,
 } from "@openstatus/db/src/schema";
 
-import { type AttributedUser, loadAttributedUsers } from "../attribution";
+import { type AttributedUserDetail, loadAttributedUsers } from "../attribution";
 import { batchReads, type DB, type ServiceContext } from "../context";
 import type {
   Page,
@@ -50,8 +50,8 @@ function periodToSince(period: StatusReportListPeriod): Date {
 }
 
 type Attributed = {
-  createdByUser: AttributedUser | null;
-  updatedByUser: AttributedUser | null;
+  createdByUser: AttributedUserDetail | null;
+  updatedByUser: AttributedUserDetail | null;
 };
 
 export type StatusReportUpdateWithImpacts = StatusReportUpdate &

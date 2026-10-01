@@ -19,11 +19,13 @@ import {
 } from "@/components/content/component-list";
 import { ProcessMessage } from "@/components/content/process-message";
 import {
+  TimelineActor,
   TimelineBody,
   TimelineContent,
   TimelineHeader,
   TimelineIndicator,
   TimelineItem,
+  TimelineMeta,
   TimelineTime,
   TimelineTitle,
 } from "@/components/content/timeline";
@@ -107,6 +109,13 @@ export function StatusReportTimelineItem({
     name: c.name,
   }));
   const Icon = icons.status[update.status];
+  // Every update is a status change, so the colored indicator keeps the rail
+  // and the author sits inline, as on incident state-change rows.
+  const author = update.createdByUser;
+  const editor =
+    update.updatedByUser && update.updatedByUser.id !== author?.id
+      ? update.updatedByUser
+      : null;
   const impacts = update.componentImpacts.flatMap((ci) => {
     const component = components.find((c) => c.id === ci.pageComponentId);
     return component
@@ -131,6 +140,12 @@ export function StatusReportTimelineItem({
           <TimelineTitle>
             <span className="capitalize">{update.status}</span>
             {impacts.length ? <TimelineImpact impacts={impacts} /> : null}
+            {author ? <TimelineActor actor={author} /> : null}
+            {editor ? (
+              <TimelineMeta className="inline-flex items-center gap-1.5">
+                edited by <TimelineActor actor={editor} />
+              </TimelineMeta>
+            ) : null}
           </TimelineTitle>
           <TimelineTime date={update.date} />
         </TimelineHeader>

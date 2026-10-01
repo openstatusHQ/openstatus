@@ -7,6 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { StatusDot } from "@/components/common/status-dot";
+import { UserAvatar } from "@/components/common/user-avatar";
 import {
   Property,
   PropertyInput,
@@ -55,6 +56,11 @@ export function MaintenanceProperties({
 
   const dirty = draft !== null && (from !== serverFrom || to !== serverTo);
   const invalid = !from || !to || new Date(to) <= new Date(from);
+  const author = maintenance.createdByUser;
+  const editor =
+    maintenance.updatedByUser && maintenance.updatedByUser.id !== author?.id
+      ? maintenance.updatedByUser
+      : null;
 
   return (
     <PropertyList>
@@ -138,6 +144,24 @@ export function MaintenanceProperties({
           ) : null}
         </PropertyValue>
       </Property>
+      {author ? (
+        <Property>
+          <PropertyLabel>Created by</PropertyLabel>
+          <PropertyValue>
+            <UserAvatar name={author.name} src={author.photoUrl} />
+            <span className="truncate">{author.name}</span>
+          </PropertyValue>
+        </Property>
+      ) : null}
+      {editor ? (
+        <Property>
+          <PropertyLabel>Edited by</PropertyLabel>
+          <PropertyValue>
+            <UserAvatar name={editor.name} src={editor.photoUrl} />
+            <span className="truncate">{editor.name}</span>
+          </PropertyValue>
+        </Property>
+      ) : null}
       <Property>
         <PropertyLabel>Timezone</PropertyLabel>
         <PropertyValue>

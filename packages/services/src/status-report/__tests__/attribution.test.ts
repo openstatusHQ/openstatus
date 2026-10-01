@@ -92,12 +92,16 @@ describe("status report attribution", () => {
       expect(initialUpdate.updatedBy).toBe(ownerId);
 
       const full = await getStatusReport({ ctx, input: { id: report.id } });
-      expect(full.createdByUser).toEqual({ id: ownerId, name: "Test User" });
-      expect(full.updatedByUser).toEqual({ id: ownerId, name: "Test User" });
-      expect(full.updates[0].createdByUser).toEqual({
+      const owner = {
         id: ownerId,
         name: "Test User",
-      });
+        email: expect.stringContaining("@openstatus.dev"),
+        // the factory stores "", which the projection normalizes to null
+        photoUrl: null,
+      };
+      expect(full.createdByUser).toEqual(owner);
+      expect(full.updatedByUser).toEqual(owner);
+      expect(full.updates[0].createdByUser).toEqual(owner);
     });
   });
 
@@ -246,7 +250,12 @@ describe("status report attribution", () => {
       };
       const { statusReport: report } = await create(ctx, "deleted");
       const full = await getStatusReport({ ctx, input: { id: report.id } });
-      expect(full.createdByUser).toEqual({ id: gone.id, name: "Deleted user" });
+      expect(full.createdByUser).toEqual({
+        id: gone.id,
+        name: "Deleted user",
+        email: null,
+        photoUrl: null,
+      });
     });
   });
 });

@@ -67,8 +67,15 @@ describe("maintenance attribution", () => {
       expect(record.updatedBy).toBe(ownerId);
 
       const full = await getMaintenance({ ctx, input: { id: record.id } });
-      expect(full.createdByUser).toEqual({ id: ownerId, name: "Test User" });
-      expect(full.updatedByUser).toEqual({ id: ownerId, name: "Test User" });
+      const owner = {
+        id: ownerId,
+        name: "Test User",
+        email: expect.stringContaining("@openstatus.dev"),
+        // the factory stores "", which the projection normalizes to null
+        photoUrl: null,
+      };
+      expect(full.createdByUser).toEqual(owner);
+      expect(full.updatedByUser).toEqual(owner);
     });
   });
 
