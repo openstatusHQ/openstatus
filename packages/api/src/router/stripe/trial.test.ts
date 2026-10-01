@@ -162,6 +162,20 @@ describe("maybeStartSignupTrial", () => {
     assertSpyCalls(createCustomer, 0);
   });
 
+  test("skips magic-link sign-ins", async () => {
+    const { user } = await freeWorkspace();
+
+    const result = await maybeStartSignupTrial({
+      userId: user.id,
+      email: user.email ?? "",
+      provider: "resend",
+      currency: "USD",
+    });
+
+    expect(result).toEqual({ started: false, reason: "email" });
+    assertSpyCalls(createCustomer, 0);
+  });
+
   test("skips users with a pending invitation", async () => {
     const { workspace: ws, user } = await freeWorkspace();
     await db.insert(invitation).values({

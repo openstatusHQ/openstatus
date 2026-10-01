@@ -1,17 +1,7 @@
-import { redis } from "@openstatus/upstash";
+import { incrWithTtl } from "./incr-with-ttl";
 
 const WINDOW_SECONDS = 60 * 10;
 const MAX_ATTEMPTS = 10;
-
-// INCR + conditional EXPIRE in one round-trip so a crash between the two can't
-// leave a TTL-less key. Mirrors `rate-limit/chat.ts`.
-const INCR_WITH_TTL = `
-  local count = redis.call('INCR', KEYS[1])
-  if count == 1 then
-    redis.call('EXPIRE', KEYS[1], tonumber(ARGV[1]))
-  end
-  return count
-`;
 
 /**
  * Throttle unauthenticated SSO domain lookups — without this the login form is
@@ -19,10 +9,9 @@ const INCR_WITH_TTL = `
  */
 export async function ssoLookupRateLimit(ip: string): Promise<boolean> {
   try {
-    const count = await redis.eval<[number], number>(
-      INCR_WITH_TTL,
+    const [count] = await incrWithTtl(
       [`ratelimit:sso-lookup:${ip}`],
-      [WINDOW_SECONDS],
+      WINDOW_SECONDS,
     );
     return count <= MAX_ATTEMPTS;
   } catch {

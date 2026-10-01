@@ -1,6 +1,8 @@
 "use server";
 
+import { resolveClientIp } from "@openstatus/services/page-access";
 import { getWorkspaceByVerifiedSsoDomain } from "@openstatus/services/sso";
+import { AuthError } from "next-auth";
 import { cookies, headers } from "next/headers";
 
 import { signIn } from "@/lib/auth";
@@ -14,16 +16,40 @@ function sanitizeRedirectTo(raw: FormDataEntryValue | null) {
   return value.startsWith("/") && !value.startsWith("//") ? value : undefined;
 }
 
-export async function signInWithResendAction(formData: FormData) {
+export type MagicLinkFormState = { sent?: boolean; error?: string };
+
+// One message for every refusal (bad address, disposable domain, throttled,
+// send failure): the form must not tell a caller which addresses exist or
+// what we filter. The screening itself runs in the Resend provider.
+const MAGIC_LINK_ERROR =
+  "We couldn't send a sign-in link to that address. Try GitHub or Google.";
+
+export async function signInWithMagicLink(
+  _prevState: MagicLinkFormState,
+  formData: FormData,
+): Promise<MagicLinkFormState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email.includes("@")) return { error: MAGIC_LINK_ERROR };
+
+  // next-auth lifts `redirectTo` into the magic link's `callbackUrl` itself.
+  // In a server action Auth.js rethrows `AuthError`s; anything else comes back
+  // as the `?error=` URL it would have redirected to.
   try {
-    // next-auth lifts `redirectTo` into the magic link's `callbackUrl` itself.
-    await signIn("resend", {
-      email: String(formData.get("email") ?? ""),
+    const url = await signIn("resend", {
+      email,
       redirectTo: sanitizeRedirectTo(formData.get("redirectTo")),
+      redirect: false,
     });
+    if (typeof url === "string" && new URL(url).searchParams.has("error")) {
+      return { error: MAGIC_LINK_ERROR };
+    }
   } catch (e) {
-    console.error(e);
+    if (!(e instanceof AuthError)) throw e;
+    console.error("magic link sign-in failed", e);
+    return { error: MAGIC_LINK_ERROR };
   }
+
+  return { sent: true };
 }
 
 export type SsoFormState = { error?: string };
@@ -44,9 +70,7 @@ export async function startSsoSignIn(
 
   if (!email.includes("@")) return { error: GENERIC_ERROR };
 
-  const headerList = await headers();
-  const ip =
-    headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip = resolveClientIp(await headers()) ?? "unknown";
   if (!(await ssoLookupRateLimit(ip))) return { error: GENERIC_ERROR };
 
   const workspace = await getWorkspaceByVerifiedSsoDomain(email);

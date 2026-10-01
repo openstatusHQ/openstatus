@@ -16,6 +16,14 @@ const hasWorkOS = Boolean(
   process.env.AUTH_WORKOS_ID && process.env.AUTH_WORKOS_SECRET,
 );
 
+// Auth.js error codes that land on `/login?error=`; anything else stays silent.
+const ERROR_MESSAGES: Record<string, string> = {
+  AccessDenied:
+    "Your SSO login isn't linked to a workspace yet. Contact your workspace admin.",
+  Verification:
+    "That sign-in link has expired or was already used. Request a new one.",
+};
+
 export const metadata: Metadata = {
   title: "Sign In",
   description:
@@ -43,20 +51,14 @@ export default async function Page(props: {
           Get started now. No credit card required.
         </p>
       </div>
-      {error === "AccessDenied" ? (
+      {error && Object.hasOwn(ERROR_MESSAGES, error) ? (
         <p className="text-destructive mx-auto max-w-md px-8 text-center text-sm text-pretty">
-          Your SSO login isn&apos;t linked to a workspace yet. Contact your
-          workspace admin.
+          {ERROR_MESSAGES[error]}
         </p>
       ) : null}
       <div className="grid gap-4 p-4">
-        {process.env.NODE_ENV === "development" ||
-        process.env.SELF_HOST === "true" ? (
-          <div className="grid gap-4">
-            <MagicLinkForm redirectTo={redirectTo ?? undefined} />
-            <Separator />
-          </div>
-        ) : null}
+        <MagicLinkForm redirectTo={redirectTo ?? undefined} />
+        <Separator />
         <form
           action={async () => {
             "use server";

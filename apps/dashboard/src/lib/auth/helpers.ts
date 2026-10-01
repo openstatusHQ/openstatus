@@ -3,11 +3,16 @@ import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 import type { AdapterUser } from "next-auth/adapters";
 import * as randomWordSlugs from "random-word-slugs";
 
+/** Stored and looked up lowercase; the `user.email` index is an exact match. */
+export function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
 export async function createUser(data: AdapterUser) {
   const newUser = await db
     .insert(user)
     .values({
-      email: data.email,
+      email: normalizeEmail(data.email),
       photoUrl: data.image,
       name: data.name,
       firstName: data.firstName,

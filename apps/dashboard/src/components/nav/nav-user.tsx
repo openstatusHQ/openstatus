@@ -40,6 +40,7 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 import { toast } from "sonner";
 
+import { personName } from "@/data/managed-incidents.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function NavUser() {
@@ -59,7 +60,7 @@ export function NavUser() {
 
   if (!user || !workspace) return null;
 
-  const userName = user?.name ?? `${user?.firstName} ${user?.lastName}`.trim();
+  const userName = personName(user) ?? "";
   const isTrialing = workspace.trialDaysLeft !== null;
 
   return (

@@ -13,6 +13,7 @@ import { renderMarkdown } from "../emails/_components/markdown";
 import { Pill } from "../emails/_components/pill";
 import { Steps } from "../emails/_components/steps";
 import { tones } from "../emails/_components/styles";
+import DashboardMagicLinkEmail from "../emails/dashboard-magic-link";
 import IncidentCommanderEmail, {
   incidentCommanderSubject,
 } from "../emails/incident-commander";
@@ -660,6 +661,15 @@ describe("account and status page mail", () => {
     expect(html).toContain("24 hours");
     expect(html).toContain('href="https://acme.openstatus.dev/verify/t"');
   });
+
+  test("dashboard magic link", async () => {
+    const link = "https://app.openstatus.dev/api/auth/callback/resend?token=t";
+    const html = await render(<DashboardMagicLinkEmail link={link} />);
+    expect(html).toContain("Sign in to openstatus");
+    expect(html).toContain("24 hours");
+    expect(html.split(`href="${link}"`).length - 1).toBe(1);
+    expect(html).toContain('href="https://www.openstatus.dev"');
+  });
 });
 
 describe("every transactional template", () => {
@@ -682,6 +692,7 @@ describe("every transactional template", () => {
     invitation: <TeamInvitationEmail token="t" invitedBy="a@b.c" />,
     subscription: <PageSubscriptionEmail page="Acme" link="https://a.dev" />,
     magicLink: <StatusPageMagicLinkEmail page="Acme" link="https://a.dev" />,
+    dashboardMagicLink: <DashboardMagicLinkEmail link="https://a.dev" />,
     welcome: <WelcomeEmail trialEndsAt={new Date("2026-10-07T00:00:00Z")} />,
     incidentCommander: (
       <IncidentCommanderEmail {...IncidentCommanderEmail.PreviewProps} />
