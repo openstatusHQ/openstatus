@@ -28,6 +28,9 @@ describe("buildHomeBlocks", () => {
     expect(text).toContain(OPEN_DECLARE_INCIDENT_ACTION);
     expect(text).toContain("<https://app.test/incidents/7|API &lt;down&gt;>");
     expect(text).toContain("<#C_INC>");
+    expect(text).toContain(
+      "API &lt;down&gt;>*  ·  Critical  ·  Open  ·  #7  ·  <#C_INC>",
+    );
     expect(text).toContain("/openstatus incident declare");
   });
 

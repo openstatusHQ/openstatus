@@ -1,4 +1,5 @@
-import { integration } from "@openstatus/db/src/schema";
+import { db, eq } from "@openstatus/db";
+import { integration, user } from "@openstatus/db/src/schema";
 import {
   addUserToWorkspace,
   createUser,
@@ -86,12 +87,19 @@ function fakeSlack(
 
 let workspace: Workspace;
 let ownerId: number;
+let ownerEmail: string;
 let memberEmail: string;
 
 beforeAll(async () => {
   const fixture = await createWorkspaceFixture("team");
   workspace = fixture.workspace;
   ownerId = fixture.userId;
+  const owner = await db
+    .select({ email: user.email })
+    .from(user)
+    .where(eq(user.id, ownerId))
+    .get();
+  ownerEmail = owner?.email as string;
   const member = await createUser();
   memberEmail = member.email as string;
   await addUserToWorkspace(member.id, workspace.id, "member");
@@ -134,7 +142,7 @@ describe("incidentChannelName", () => {
 });
 
 describe("openIncidentSlackChannel", () => {
-  test("creates, links members by email, invites, pins and binds", async () => {
+  test("creates, invites only the declarer, pins and binds", async () => {
     await withTestTransaction(async (tx) => {
       await connectSlack(tx, "T_FLOW", SLACK_BOT_SCOPES.join(","));
       const ctx = ctxFor(tx);
@@ -145,7 +153,7 @@ describe("openIncidentSlackChannel", () => {
       const name = incidentChannelName(inc);
       const { client, calls } = fakeSlack({
         takenNames: [name],
-        emails: { [memberEmail]: "U_MEMBER" },
+        emails: { [ownerEmail]: "U_OWNER", [memberEmail]: "U_MEMBER" },
       });
 
       const result = await openIncidentSlackChannel({
@@ -158,8 +166,8 @@ describe("openIncidentSlackChannel", () => {
       expect(result).toEqual({ status: "bound", channelId: "C_NEW" });
       const creates = calls.filter((c) => c.method === "create");
       expect(creates.map((c) => c.args.name)).toEqual([name, `${name}-2`]);
-      const invite = calls.find((c) => c.method === "invite");
-      expect(String(invite?.args.users)).toContain("U_MEMBER");
+      const invites = calls.filter((c) => c.method === "invite");
+      expect(invites.map((c) => c.args.users)).toEqual(["U_OWNER"]);
       expect(calls.some((c) => c.method === "pins.add")).toBe(true);
 
       const bound = await getIncident({ ctx, input: { id: inc.id } });
@@ -167,6 +175,39 @@ describe("openIncidentSlackChannel", () => {
       expect(bound?.slackTeamId).toBe("T_FLOW");
       const events = await listIncidentEvents({ ctx, input: { id: inc.id } });
       expect(events[0].type).toBe("slack_channel_bound");
+    });
+  });
+
+  test("declared from Slack, invites the clicking user without a lookup", async () => {
+    await withTestTransaction(async (tx) => {
+      await connectSlack(tx, "T_SLACK", SLACK_BOT_SCOPES.join(","));
+      const ctx: ServiceContext = {
+        ...ctxFor(tx),
+        actor: {
+          type: "slack",
+          teamId: "T_SLACK",
+          slackUserId: "U_CLICKER",
+          userId: ownerId,
+        },
+      };
+      const inc = await declareIncident({
+        ctx,
+        input: { title: "Search slow", severity: "minor" },
+      });
+      const { client, calls } = fakeSlack({
+        emails: { [memberEmail]: "U_MEMBER" },
+      });
+
+      await openIncidentSlackChannel({
+        ctx,
+        incidentId: inc.id,
+        clientFor: () => client,
+        dashboardUrl: "https://app.test",
+      });
+
+      const invites = calls.filter((c) => c.method === "invite");
+      expect(invites.map((c) => c.args.users)).toEqual(["U_CLICKER"]);
+      expect(calls.some((c) => c.method === "lookupByEmail")).toBe(false);
     });
   });
 

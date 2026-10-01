@@ -25,20 +25,30 @@ const SEVERITY_EMOJI: Record<string, string> = {
   minor: ":large_yellow_circle:",
 };
 
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function incidentLine(i: HomeIncident): KnownBlock {
+  const text = [
+    `${SEVERITY_EMOJI[i.severity] ?? "•"} *<${i.url}|${escapeMrkdwn(i.title)}>*`,
+    capitalize(i.severity),
+    capitalize(i.status),
+    `#${i.id}`,
+    ...(i.slackChannelId ? [`<#${i.slackChannelId}>`] : []),
+  ].join("  ·  ");
+  return { type: "section", text: { type: "mrkdwn", text } };
+}
+
 function incidentBlocks(openIncidents: HomeIncident[]): KnownBlock[] {
-  const list =
+  const heading =
     openIncidents.length === 0
-      ? "_No open incidents._ :white_check_mark:"
-      : openIncidents
-          .map(
-            (i) =>
-              `${SEVERITY_EMOJI[i.severity] ?? "•"} <${i.url}|${escapeMrkdwn(i.title)}> · ${i.severity} · ${i.status}${i.slackChannelId ? ` · <#${i.slackChannelId}>` : ""}`,
-          )
-          .join("\n");
+      ? "*Open incidents*"
+      : `*Open incidents (${openIncidents.length})*`;
   return [
     {
       type: "section",
-      text: { type: "mrkdwn", text: "*Incidents*" },
+      text: { type: "mrkdwn", text: heading },
       accessory: {
         type: "button",
         text: { type: "plain_text", text: "Declare incident", emoji: true },
@@ -46,13 +56,23 @@ function incidentBlocks(openIncidents: HomeIncident[]): KnownBlock[] {
         action_id: OPEN_DECLARE_INCIDENT_ACTION,
       },
     },
-    { type: "section", text: { type: "mrkdwn", text: list } },
+    ...(openIncidents.length === 0
+      ? [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: ":white_check_mark: No open incidents. All quiet.",
+            },
+          } satisfies KnownBlock,
+        ]
+      : openIncidents.map(incidentLine)),
     {
       type: "context",
       elements: [
         {
           type: "mrkdwn",
-          text: "Declaring opens a dedicated channel and invites the team. Also from the *Declare incident* shortcut (type `/`), or a message's *⋯* menu.",
+          text: "Declaring an incident opens a dedicated channel and adds you to it. You can also use the *Declare incident* shortcut: type `/` in any message box, or pick it from a message's *⋯* menu to start from that message.",
         },
       ],
     },
@@ -95,48 +115,77 @@ export function buildHomeBlocks(
       ]
     : [];
   const incidents = opts.openIncidents;
-  const commands = [
+  const commandBlocks: KnownBlock[] = [
+    {
+      type: "section",
+      text: { type: "mrkdwn", text: "*Slash commands*" },
+    },
     ...(incidents
       ? [
-          "• `/openstatus incident declare` — open the declare form",
-          "• `/openstatus incident note <text>` — add to the timeline (in an incident channel)",
-          "• `/openstatus incident mitigate|resolve|cancel|reopen [#id]` — change its status",
-          "• `/openstatus incident postmortem [#id]` — draft the postmortem",
-          "• `/openstatus incident list` — open incidents",
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: [
+                "*Incidents*",
+                "`/openstatus incident declare`  Open the declare form",
+                "`/openstatus incident list`  List open incidents",
+                "`/openstatus incident note <text>`  Add a note to the timeline",
+                "`/openstatus incident mitigate` · `resolve` · `cancel` · `reopen`  Change its status",
+                "`/openstatus incident postmortem`  Draft the postmortem",
+              ].join("\n"),
+            },
+          } satisfies KnownBlock,
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: "Run these in the incident's channel, or add its number from anywhere, e.g. `/openstatus incident resolve #12`.",
+              },
+            ],
+          } satisfies KnownBlock,
         ]
       : []),
-    "• `/openstatus subscribe <status-page-url>` — subscribe this channel to a status page",
-    "• `/openstatus unsubscribe <status-page-url>` — unsubscribe this channel",
-    "• `/openstatus subscriptions` — list this channel's subscriptions",
-    "• `/openstatus help` — show all commands",
-  ];
-  return [
-    ...reconnect,
-    {
-      type: "header",
-      text: { type: "plain_text", text: "openstatus", emoji: true },
-    },
     {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: "Your incident communication agent. Open *openstatus* from the Slack top bar to chat with it, or mention *@openstatus* in any channel or thread — it drafts status updates from the conversation, and nothing is published until you approve it.",
+        text: [
+          "*Status page subscriptions*",
+          "`/openstatus subscribe <status-page-url>`  Post that page's updates in this channel",
+          "`/openstatus unsubscribe <status-page-url>`  Stop posting them",
+          "`/openstatus subscriptions`  List this channel's subscriptions",
+        ].join("\n"),
+      },
+    },
+  ];
+  return [
+    ...reconnect,
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: incidents
+          ? "*Run incidents and keep your status page up to date, without leaving Slack.*"
+          : "*Keep your status page up to date, without leaving Slack.*",
       },
     },
     { type: "divider" },
     ...(incidents ? incidentBlocks(incidents) : []),
     {
       type: "section",
-      text: {
-        type: "mrkdwn",
-        text: '*Status page updates*\nDescribe the issue in the agent pane, or mention `@openstatus` in any channel or thread. It reads the thread, drafts a report, and you click *Approve*, *Approve & Notify*, or *Cancel*. Say _"we found the cause"_ or _"it\'s fixed"_ and it moves the report to Identified or Resolved.',
-      },
+      text: { type: "mrkdwn", text: "*Update your status page*" },
     },
     {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*Slash commands*\n${commands.join("\n")}`,
+        text: [
+          "*1.* Mention *@openstatus* in a channel or thread, or open it from the Slack top bar, and describe what's happening.",
+          "*2.* It reads the conversation and drafts a status report.",
+          "*3.* Click *Approve* to publish it, or *Approve & Notify* to also notify your subscribers.",
+        ].join("\n"),
       },
     },
     {
@@ -144,7 +193,18 @@ export function buildHomeBlocks(
       elements: [
         {
           type: "mrkdwn",
-          text: `<${DOCS_URL}|Documentation> · Updates from subscribed status pages appear as threaded messages in the channel.`,
+          text: 'Keep replying in the same thread: _"we found the cause"_ moves the report to Identified, _"it\'s fixed"_ to Resolved.',
+        },
+      ],
+    },
+    { type: "divider" },
+    ...commandBlocks,
+    {
+      type: "context",
+      elements: [
+        {
+          type: "mrkdwn",
+          text: `\`/openstatus help\` lists every command  ·  <${DOCS_URL}|Documentation>`,
         },
       ],
     },
