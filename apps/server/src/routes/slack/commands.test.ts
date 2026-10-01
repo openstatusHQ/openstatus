@@ -109,6 +109,12 @@ describe("handleSlackCommand (members only)", () => {
     expect(json.text).toContain("/openstatus subscribe");
   });
 
+  test("no argument shows help", async () => {
+    const res = await post(app, "", `U_${crypto.randomUUID()}`);
+    const json = (await res.json()) as { text: string };
+    expect(json.text).toContain("/openstatus subscribe");
+  });
+
   test("an unlinked user gets the link card instead of running the command", async () => {
     slackTestState.usersInfoImpl = () =>
       Promise.resolve({ ok: true, user: { profile: {} } });
