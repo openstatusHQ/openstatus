@@ -61,4 +61,5 @@ export {
   regionsToStrings,
   regionsToDbString,
   validateRegions,
+  getDeprecatedRegions,
 } from "./regions";

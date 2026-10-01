@@ -1,3 +1,4 @@
+import { regionDict } from "@openstatus/regions";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 
@@ -18,6 +19,7 @@ import {
   mapPage,
   mapRegions,
   mapService,
+  REGION_MAP,
 } from "./mapper";
 
 describe("mapCheckType", () => {
@@ -55,6 +57,23 @@ describe("mapFrequency", () => {
 describe("mapRegions", () => {
   test("maps AWS locations to fly regions", () => {
     expect(mapRegions(["us-east-1", "eu-west-1"])).toBe("iad,lhr");
+  });
+
+  test("only targets regions that are still available", () => {
+    for (const [location, region] of Object.entries(REGION_MAP)) {
+      const info = regionDict[region as keyof typeof regionDict];
+      expect({ location, region, deprecated: info?.deprecated }).toEqual({
+        location,
+        region,
+        deprecated: false,
+      });
+    }
+  });
+
+  test("maps deprecated targets to their replacements", () => {
+    expect(mapRegions(["ap-south-1", "us-west-2", "ca-central-1"])).toBe(
+      "sin,sjc,yyz",
+    );
   });
 
   test("dedupes collapsed regions", () => {

@@ -25,6 +25,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/regions": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@std/expect": "jsr:^1.0.19",
     "@std/testing": "jsr:^1.0.19",
