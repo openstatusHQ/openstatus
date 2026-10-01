@@ -8,6 +8,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { StatusDot } from "@/components/common/status-dot";
+import { ComponentImpact } from "@/components/content/component-list";
 import { ProcessMessage } from "@/components/content/process-message";
 import {
   TimelineBody,
@@ -23,7 +24,6 @@ import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-up
 import { icons } from "@/data/icons";
 import {
   getActions,
-  impactConfig,
   impactsEqual,
   statusVariants,
 } from "@/data/status-report-updates.client";
@@ -96,10 +96,7 @@ export function StatusReportTimelineItem({
               >
                 <span className="font-mono">{ci.name}</span>
                 <Next className="text-muted-foreground/50 size-3" />
-                <StatusDot variant={impactConfig[ci.impact].variant} />
-                <span className="font-mono">
-                  {impactConfig[ci.impact].label}
-                </span>
+                <ComponentImpact impact={ci.impact} />
               </span>
             ))}
           </div>

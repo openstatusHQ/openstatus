@@ -1,3 +1,4 @@
+import type { PageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
 import {
   Select,
   SelectContent,
@@ -8,6 +9,9 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
+
+import { StatusDot } from "@/components/common/status-dot";
+import { impactDisplay } from "@/data/status-report-updates.client";
 
 type Component = { id: number; name: string; groupId?: number | null };
 
@@ -59,21 +63,26 @@ export function ComponentListName({
   );
 }
 
-export function ComponentListImpact({
-  children,
+/** Dot + label for an impact; nullish reads as untriaged. */
+export function ComponentImpact({
+  impact,
   className,
   ...props
-}: React.ComponentProps<"span">) {
+}: React.ComponentProps<"span"> & {
+  impact: PageComponentImpact | null | undefined;
+}) {
+  const display = impactDisplay(impact);
   return (
     <span
-      data-slot="component-list-impact"
+      data-slot="component-impact"
       className={cn(
-        "text-muted-foreground shrink-0 font-mono text-xs uppercase",
+        "inline-flex shrink-0 items-center gap-1.5 font-mono",
         className,
       )}
       {...props}
     >
-      {children}
+      <StatusDot variant={display.variant} />
+      {display.label}
     </span>
   );
 }

@@ -4,12 +4,11 @@ import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_compon
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { StatusDot } from "@/components/common/status-dot";
 import {
+  ComponentImpact,
   ComponentList,
   ComponentListActions,
   ComponentListEmpty,
-  ComponentListImpact,
   ComponentListItem,
   ComponentListName,
 } from "@/components/content/component-list";
@@ -37,7 +36,6 @@ import { StatusReportProperties } from "@/components/status-reports/status-repor
 import { StatusReportTimelineItem } from "@/components/status-reports/status-report-timeline";
 import { useInvalidateStatusReport } from "@/components/status-reports/use-invalidate-status-report";
 import { getPageUrl } from "@/data/status-pages.client";
-import { impactDisplay } from "@/data/status-report-updates.client";
 import { reportStartedAt } from "@/data/status-reports.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
@@ -129,22 +127,16 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
             <DetailSectionTitle>Affected components</DetailSectionTitle>
             {report.pageComponents.length ? (
               <ComponentList>
-                {report.pageComponents.map((component) => {
-                  const impact = impactDisplay(
-                    currentImpacts.get(component.id),
-                  );
-                  return (
-                    <ComponentListItem key={component.id}>
-                      <StatusDot variant={impact.variant} />
-                      <ComponentListName>{component.name}</ComponentListName>
-                      <ComponentListActions>
-                        <ComponentListImpact>
-                          {impact.label}
-                        </ComponentListImpact>
-                      </ComponentListActions>
-                    </ComponentListItem>
-                  );
-                })}
+                {report.pageComponents.map((component) => (
+                  <ComponentListItem key={component.id}>
+                    <ComponentListName>{component.name}</ComponentListName>
+                    <ComponentListActions>
+                      <ComponentImpact
+                        impact={currentImpacts.get(component.id)}
+                      />
+                    </ComponentListActions>
+                  </ComponentListItem>
+                ))}
               </ComponentList>
             ) : (
               <ComponentListEmpty />

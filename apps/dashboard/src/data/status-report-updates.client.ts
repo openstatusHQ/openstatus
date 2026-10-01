@@ -9,30 +9,22 @@ export const impactConfig = {
   operational: {
     label: "Operational",
     variant: "success",
-    color:
-      "text-success/80 data-[state=selected]:bg-success/10 data-[state=selected]:text-success",
   },
   degraded_performance: {
     label: "Degraded performance",
     variant: "warning",
-    color:
-      "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
   },
   partial_outage: {
     label: "Partial outage",
     variant: "warning",
-    color:
-      "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
   },
   major_outage: {
     label: "Major outage",
     variant: "destructive",
-    color:
-      "text-destructive/80 data-[state=selected]:bg-destructive/10 data-[state=selected]:text-destructive",
   },
 } as const satisfies Record<
   PageComponentImpact,
-  { label: string; variant: StatusVariant; color: string }
+  { label: string; variant: StatusVariant }
 >;
 
 /** Set equality regardless of order — used to skip no-op impact writes. */
@@ -52,8 +44,7 @@ export function impactsEqual(
 export const untriagedImpact = {
   label: "Untriaged",
   variant: "default",
-  color: "text-muted-foreground/80",
-} as const satisfies { label: string; variant: StatusVariant; color: string };
+} as const satisfies { label: string; variant: StatusVariant };
 
 /** Label + dot variant for an impact; nullish reads as untriaged. */
 export function impactDisplay(impact: PageComponentImpact | null | undefined) {

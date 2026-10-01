@@ -11,9 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
-import { cn } from "@openstatus/ui/lib/utils";
 
-import { impactConfig } from "@/data/status-report-updates.client";
+import {
+  ComponentImpact,
+  ComponentList,
+  ComponentListActions,
+  ComponentListItem,
+  ComponentListName,
+} from "@/components/content/component-list";
 
 export type ComponentImpactValue = {
   pageComponentId: number;
@@ -51,45 +56,35 @@ export function ComponentImpactList({
   if (components.length === 0) return null;
 
   return (
-    <div className="grid gap-2">
-      {components.map((component) => {
-        const impact = impactFor(component.id);
-        return (
-          <div
-            key={component.id}
-            className="flex items-center justify-between gap-2"
-          >
-            <span className="truncate text-sm">{component.name}</span>
+    <ComponentList>
+      {components.map((component) => (
+        <ComponentListItem key={component.id}>
+          <ComponentListName>{component.name}</ComponentListName>
+          <ComponentListActions>
             <Select
-              value={impact}
+              value={impactFor(component.id)}
               onValueChange={(next) =>
                 setImpact(component.id, next as PageComponentImpact)
               }
             >
               <SelectTrigger
                 size="sm"
-                className={cn(
-                  impact ? impactConfig[impact].color : "text-muted-foreground",
-                  "w-[180px] font-mono",
-                )}
+                aria-label={`${component.name} impact`}
+                className="w-[180px] font-mono"
               >
                 <SelectValue placeholder={placeholder} />
               </SelectTrigger>
               <SelectContent>
                 {pageComponentImpact.map((option) => (
-                  <SelectItem
-                    key={option}
-                    value={option}
-                    className={cn(impactConfig[option].color, "font-mono")}
-                  >
-                    {impactConfig[option].label}
+                  <SelectItem key={option} value={option}>
+                    <ComponentImpact impact={option} />
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        );
-      })}
-    </div>
+          </ComponentListActions>
+        </ComponentListItem>
+      ))}
+    </ComponentList>
   );
 }

@@ -25,10 +25,10 @@ import { toast } from "sonner";
 
 import { StatusDot } from "@/components/common/status-dot";
 import {
+  ComponentImpact,
   ComponentList,
   ComponentListActions,
   ComponentListAdd,
-  ComponentListImpact,
   ComponentListItem,
   ComponentListName,
   ComponentListSelectTrigger,
@@ -45,8 +45,6 @@ import { TimelineAvatar, TimelineItem } from "@/components/content/timeline";
 import { personName } from "@/data/managed-incidents.client";
 import {
   getNextStatus,
-  impactConfig,
-  impactDisplay,
   statusVariants,
   toCreateStatusReportUpdateInput,
 } from "@/data/status-report-updates.client";
@@ -185,13 +183,13 @@ export function StatusReportComposer({
             </div>
             <ComponentList>
               {components.map((component) => {
-                const current = impactDisplay(currentImpacts.get(component.id));
                 const override = overrides.get(component.id);
                 return (
                   <ComponentListItem key={component.id}>
-                    <StatusDot variant={current.variant} />
                     <ComponentListName>{component.name}</ComponentListName>
-                    <ComponentListImpact>{current.label}</ComponentListImpact>
+                    <ComponentImpact
+                      impact={currentImpacts.get(component.id)}
+                    />
                     <ComponentListActions>
                       <Next className="text-muted-foreground/50 size-3" />
                       <Select
@@ -212,32 +210,24 @@ export function StatusReportComposer({
                         >
                           <SelectValue
                             placeholder={
-                              <span className="text-muted-foreground inline-flex items-center gap-2">
-                                <StatusDot
-                                  variant={
-                                    status === "resolved"
-                                      ? "success"
-                                      : "default"
-                                  }
+                              status === "resolved" ? (
+                                <ComponentImpact
+                                  impact="operational"
+                                  className="text-muted-foreground"
                                 />
-                                {status === "resolved"
-                                  ? "Operational"
-                                  : "No change"}
-                              </span>
+                              ) : (
+                                <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                                  <StatusDot />
+                                  No change
+                                </span>
+                              )
                             }
                           />
                         </ComponentListSelectTrigger>
                         <SelectContent>
                           {pageComponentImpact.map((impact) => (
-                            <SelectItem
-                              key={impact}
-                              value={impact}
-                              className="font-mono"
-                            >
-                              <StatusDot
-                                variant={impactConfig[impact].variant}
-                              />
-                              {impactConfig[impact].label}
+                            <SelectItem key={impact} value={impact}>
+                              <ComponentImpact impact={impact} />
                             </SelectItem>
                           ))}
                         </SelectContent>
