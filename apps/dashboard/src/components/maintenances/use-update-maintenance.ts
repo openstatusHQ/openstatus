@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { toUpdateInput } from "@/data/maintenances.client";
@@ -13,25 +13,27 @@ type Patch = Partial<ReturnType<typeof toUpdateInput>>;
 
 /**
  * `maintenance.update` takes the whole row, so the patch is spread over the
- * cached row. `onSuccess` runs after the refetch.
+ * cached row, which is patched right away: a second save that lands before
+ * the first one's refetch then carries the first one's values instead of
+ * reverting them. `onSuccess` runs after the refetch.
  */
 export function useUpdateMaintenance(
   id: number,
   { onSuccess }: { onSuccess?: () => void } = {},
 ) {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const invalidate = useInvalidateMaintenance(id);
-  const { data: maintenance } = useQuery(
-    trpc.maintenance.get.queryOptions({ id }),
-  );
+  const queryKey = trpc.maintenance.get.queryKey({ id });
   const mutation = useMutation(
     trpc.maintenance.update.mutationOptions({
       onSuccess: async () => {
         await invalidate();
         onSuccess?.();
       },
-      onError: (error) => {
+      onError: async (error) => {
         toast.error(errorMessage(error, "Failed to save"));
+        await invalidate();
       },
     }),
   );
@@ -39,8 +41,18 @@ export function useUpdateMaintenance(
   return {
     isPending: mutation.isPending,
     update: (patch: Patch) => {
+      const maintenance = queryClient.getQueryData(queryKey);
       if (!maintenance) return;
-      mutation.mutate({ ...toUpdateInput(maintenance), ...patch });
+      const input = { ...toUpdateInput(maintenance), ...patch };
+      queryClient.setQueryData(queryKey, {
+        ...maintenance,
+        title: input.title,
+        message: input.message,
+        from: input.startDate,
+        to: input.endDate,
+        pageComponentIds: input.pageComponents ?? maintenance.pageComponentIds,
+      });
+      mutation.mutate(input);
     },
   };
 }

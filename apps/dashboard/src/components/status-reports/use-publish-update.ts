@@ -30,14 +30,14 @@ export function usePublishUpdate(statusReportId: number) {
     async publish(input: Parameters<typeof create.mutateAsync>[0]) {
       const update = await create.mutateAsync(input);
       if (update && input.notifySubscribers) {
-        await notify.mutateAsync({ id: update.id }).catch((error) => {
-          toast.error(
-            errorMessage(
-              error,
-              "Update published, but subscribers were not notified",
-            ),
-          );
-        });
+        const fallback = "Update published, but subscribers were not notified";
+        try {
+          // resolves with success=false when the plan lacks subscribers
+          const result = await notify.mutateAsync({ id: update.id });
+          if (!result.success) toast.error(fallback);
+        } catch (error) {
+          toast.error(errorMessage(error, fallback));
+        }
       }
       await Promise.all([
         invalidate(),

@@ -73,9 +73,13 @@ export function IncidentProperties({
   };
   const update = useMutation(
     trpc.incident.update.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (_row, variables) => {
         await invalidate();
-        setDraft(null);
+        // severity/commander saves share this mutation; keep an unsaved draft
+        if (variables.startedAt instanceof Date) {
+          const saved = formatDateForInput(variables.startedAt);
+          setDraft((draft) => (draft === saved ? null : draft));
+        }
       },
       onError,
     }),

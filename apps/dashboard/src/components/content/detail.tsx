@@ -231,7 +231,12 @@ export function DetailMetaTime({
       <time
         data-slot="detail-meta-time"
         dateTime={date.toISOString()}
-        className={cn("text-foreground font-mono", className)}
+        // focusable so the hover card opens from the keyboard
+        tabIndex={0}
+        className={cn(
+          "text-foreground focus-visible:ring-ring/50 rounded-sm font-mono outline-none focus-visible:ring-[3px]",
+          className,
+        )}
         {...props}
       >
         {hydrated ? (children ?? format(date, "LLL dd, HH:mm")) : null}

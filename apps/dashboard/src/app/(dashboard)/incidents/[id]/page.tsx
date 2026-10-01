@@ -17,16 +17,25 @@ export default async function Page({
   // Throws FORBIDDEN without the feature / NOT_FOUND for a foreign id;
   // prefetchQuery swallows both and the client renders the empty state.
   await Promise.all([
-    queryClient.prefetchQuery(
-      trpc.incident.get.queryOptions({ id: incidentId }),
-    ),
+    queryClient
+      .prefetchQuery(trpc.incident.get.queryOptions({ id: incidentId }))
+      .then(() =>
+        queryClient.getQueryData(
+          trpc.incident.get.queryKey({ id: incidentId }),
+        ),
+      )
+      // the postmortem query is only enabled once resolved
+      .then((incident) =>
+        incident?.status === "resolved"
+          ? queryClient.prefetchQuery(
+              trpc.incident.getPostmortem.queryOptions({ id: incidentId }),
+            )
+          : undefined,
+      ),
     queryClient.prefetchQuery(
       trpc.incident.listEvents.queryOptions({ id: incidentId }),
     ),
     queryClient.prefetchQuery(trpc.member.list.queryOptions()),
-    queryClient.prefetchQuery(
-      trpc.incident.getPostmortem.queryOptions({ id: incidentId }),
-    ),
   ]);
 
   return (

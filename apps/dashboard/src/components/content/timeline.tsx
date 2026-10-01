@@ -181,8 +181,10 @@ export function TimelineTime({
       <time
         data-slot="timeline-time"
         dateTime={date.toISOString()}
+        // focusable so the hover card opens from the keyboard
+        tabIndex={0}
         className={cn(
-          "text-muted-foreground shrink-0 font-mono text-xs",
+          "text-muted-foreground focus-visible:ring-ring/50 shrink-0 rounded-sm font-mono text-xs outline-none focus-visible:ring-[3px]",
           className,
         )}
         {...props}
