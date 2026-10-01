@@ -29,6 +29,10 @@ import { SlackIcon } from "@openstatus/icons/brand";
 import type { StatusVariant } from "@/components/common/status-dot";
 import { ProcessMessage } from "@/components/content/process-message";
 import {
+  TimelineActor,
+  TimelineActorTooltip,
+  TimelineAvatar,
+  TimelineAvatarBadge,
   TimelineBody,
   TimelineContent,
   TimelineHeader,
@@ -133,20 +137,39 @@ export function IncidentTimelineItem({ event }: { event: Event }) {
     : event.type === "declared" && severity
       ? severityConfig[severity].variant
       : config.variant;
+  const user = event.createdByUser;
+  const actor = user
+    ? { name: personName(user), email: user.email, photoUrl: user.photoUrl }
+    : null;
+  // Notes are authored, so the author leads the row; state changes keep the
+  // colored indicator and show the actor inline.
+  const authored = event.type === "note" && actor;
   return (
     <TimelineItem>
-      <TimelineIndicator variant={variant}>
-        <config.icon />
-      </TimelineIndicator>
+      {authored ? (
+        <TimelineActorTooltip actor={actor}>
+          <TimelineAvatar name={actor.name ?? actor.email} src={actor.photoUrl}>
+            <TimelineAvatarBadge variant={variant}>
+              <config.icon />
+            </TimelineAvatarBadge>
+          </TimelineAvatar>
+        </TimelineActorTooltip>
+      ) : (
+        <TimelineIndicator variant={variant}>
+          <config.icon />
+        </TimelineIndicator>
+      )}
       <TimelineContent>
         <TimelineHeader>
           <TimelineTitle>
             {config.label}
             {status ? <IncidentStatusBadge status={status} /> : null}
             {severity ? <IncidentSeverityBadge severity={severity} /> : null}
-            <TimelineMeta>
-              {personName(event.createdByUser) ?? "System"}
-            </TimelineMeta>
+            {authored ? null : actor ? (
+              <TimelineActor actor={actor} />
+            ) : (
+              <TimelineMeta>System</TimelineMeta>
+            )}
             {slackUrl ? (
               <TimelineMeta>
                 <a

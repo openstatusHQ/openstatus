@@ -2,7 +2,6 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { toast } from "sonner";
 
 import {
@@ -13,6 +12,7 @@ import {
   DetailTitleRow,
 } from "@/components/content/detail";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
 import { useInvalidateIncident } from "./use-invalidate-incident";
 
@@ -31,9 +31,7 @@ export function IncidentHeading({
     trpc.incident.update.mutationOptions({
       onSuccess: invalidate,
       onError: (error) => {
-        toast.error(
-          isTRPCClientError(error) ? error.message : "Failed to save",
-        );
+        toast.error(errorMessage(error, "Failed to save"));
       },
     }),
   );

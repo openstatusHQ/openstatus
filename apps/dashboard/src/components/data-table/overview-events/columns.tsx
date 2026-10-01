@@ -59,7 +59,7 @@ function getTitle(event: OverviewEvent): { title: string; href: string } {
     case "maintenance":
       return {
         title: event.maintenance.title,
-        href: `/status-pages/${event.maintenance.pageId}/maintenances`,
+        href: `/status-pages/${event.maintenance.pageId}/maintenances/${event.maintenance.id}`,
       };
   }
 }

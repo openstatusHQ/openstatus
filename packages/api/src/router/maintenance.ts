@@ -3,6 +3,7 @@ import { NotFoundError } from "@openstatus/services";
 import {
   createMaintenance,
   deleteMaintenance,
+  getMaintenance,
   listMaintenances,
   updateMaintenance,
 } from "@openstatus/services/maintenance";
@@ -31,6 +32,19 @@ export const maintenanceRouter = createTRPCRouter({
         // delete silently succeeded when the row was already gone. Connect
         // still returns 404 on missing; external API semantics preserved.
         if (err instanceof NotFoundError) return [] as Array<never>;
+        toTRPCError(err);
+      }
+    }),
+
+  get: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        return await getMaintenance({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
+        });
+      } catch (err) {
         toTRPCError(err);
       }
     }),

@@ -13,25 +13,23 @@ import {
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
-import { isTRPCClientError } from "@trpc/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { usePublicUpdate } from "./use-public-update";
+import { usePublishUpdate } from "@/components/status-reports/use-publish-update";
+import { errorMessage } from "@/lib/trpc/error";
 
 /**
  * Offered after an incident is resolved or canceled while its status report
  * is still open. Nothing is posted unless the user confirms the text.
  */
 export function ResolveReportDialog({
-  incidentId,
   report,
   defaultMessage,
   canNotify,
   open,
   onOpenChange,
 }: {
-  incidentId: number;
   report: { id: number; title: string };
   defaultMessage: string;
   canNotify: boolean;
@@ -40,24 +38,24 @@ export function ResolveReportDialog({
 }) {
   const [message, setMessage] = useState(defaultMessage);
   const [notifySubscribers, setNotifySubscribers] = useState(canNotify);
-  const update = usePublicUpdate(incidentId);
+  const update = usePublishUpdate(report.id);
 
   useEffect(() => {
     if (open) setMessage(defaultMessage);
   }, [open, defaultMessage]);
 
   async function submit() {
-    const promise = update.post({
+    const promise = update.publish({
       statusReportId: report.id,
       status: "resolved",
       message,
+      date: new Date(),
       notifySubscribers,
     });
     toast.promise(promise, {
       loading: "Resolving status report...",
       success: "Status report resolved",
-      error: (error) =>
-        isTRPCClientError(error) ? error.message : "Failed to resolve",
+      error: (error) => errorMessage(error, "Failed to resolve"),
     });
     await promise;
     onOpenChange(false);

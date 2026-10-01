@@ -3,8 +3,8 @@
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 
-import { toLocalInput } from "@/components/forms/incident/form";
 import { useFeature } from "@/hooks/use-feature";
+import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import {
@@ -41,7 +41,7 @@ export function DeclareFromRow({
       defaultValues={{
         title,
         // epoch = legacy report without dates; prefill now instead
-        startedAt: toLocalInput(
+        startedAt: formatDateForInput(
           startedAt.getTime() === 0 ? new Date() : startedAt,
         ),
         ...(statusReportId ? { statusReportId: String(statusReportId) } : {}),

@@ -17,7 +17,6 @@ import {
   SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { DataTable as UpdatesDataTable } from "@/components/data-table/status-report-updates/data-table";
 import { columns } from "@/components/data-table/status-reports/columns";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
@@ -136,23 +135,7 @@ export default function Page() {
             </FormSheetStatusReport>
           </div>
         </SectionHeaderRow>
-        <DataTable
-          columns={columns}
-          data={statusReports}
-          onRowClick={(row) =>
-            row.getCanExpand() ? row.toggleExpanded() : undefined
-          }
-          rowComponent={({ row }) => (
-            <UpdatesDataTable
-              updates={row.original.updates}
-              reportId={row.original.id}
-              components={row.original.pageComponents.map((c) => ({
-                id: c.id,
-                name: c.name,
-              }))}
-            />
-          )}
-        />
+        <DataTable columns={columns} data={statusReports} />
       </Section>
     </SectionGroup>
   );

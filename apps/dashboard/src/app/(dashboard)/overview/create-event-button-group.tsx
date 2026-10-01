@@ -13,9 +13,13 @@ import { useState } from "react";
 
 import { FormSheetMaintenanceCreate } from "@/components/forms/maintenance/sheet-create";
 import { FormSheetStatusReportCreate } from "@/components/forms/status-report/sheet-create";
+import { DeclareIncidentButton } from "@/components/incidents/declare-incident-button";
+import { useFeature } from "@/hooks/use-feature";
 
 export function CreateEventButtonGroup() {
   const [maintenanceOpen, setMaintenanceOpen] = useState(false);
+  const [incidentOpen, setIncidentOpen] = useState(false);
+  const incidentsEnabled = useFeature("incident-management");
 
   return (
     <div>
@@ -42,6 +46,12 @@ export function CreateEventButtonGroup() {
               <Add className="text-muted-foreground" />
               Create Maintenance
             </DropdownMenuItem>
+            {incidentsEnabled ? (
+              <DropdownMenuItem onSelect={() => setIncidentOpen(true)}>
+                <Add className="text-muted-foreground" />
+                Declare Incident
+              </DropdownMenuItem>
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </ButtonGroup>
@@ -49,6 +59,10 @@ export function CreateEventButtonGroup() {
         open={maintenanceOpen}
         onOpenChange={setMaintenanceOpen}
       />
+      {/* Mounted on demand: the sheet fetches integrations as soon as it renders. */}
+      {incidentsEnabled && incidentOpen ? (
+        <DeclareIncidentButton open onOpenChange={setIncidentOpen} />
+      ) : null}
     </div>
   );
 }

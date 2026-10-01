@@ -15,15 +15,20 @@ import { cn } from "@openstatus/ui/lib/utils";
 
 import { ProcessMessage } from "@/components/content/process-message";
 
-/** Markdown composer: write/preview tabs around a textarea, with a footer for actions. */
+/**
+ * Markdown composer: write/preview tabs around a textarea, with a footer for
+ * actions. `size="lg"` is for long-form documents (message, postmortem).
+ */
 export function Composer({
   children,
   className,
+  size = "default",
   ...props
-}: React.ComponentProps<typeof Tabs>) {
+}: React.ComponentProps<typeof Tabs> & { size?: "default" | "lg" }) {
   return (
     <Tabs
       defaultValue="write"
+      data-size={size}
       className={cn("min-w-0 flex-1", className)}
       {...props}
     >
@@ -34,6 +39,7 @@ export function Composer({
   );
 }
 
+/** Write/Preview tabs on the left; `children` replaces the "Markdown" hint on the right. */
 export function ComposerHeader({
   children,
   className,
@@ -48,7 +54,8 @@ export function ComposerHeader({
       )}
       {...props}
     >
-      {children}
+      <ComposerTabs />
+      {children ?? <ComposerHint>Markdown</ComposerHint>}
     </InputGroupAddon>
   );
 }
@@ -56,7 +63,7 @@ export function ComposerHeader({
 const tabsTriggerClassName =
   "text-muted-foreground hover:text-foreground data-[state=active]:text-foreground dark:data-[state=active]:bg-transparent h-7 flex-none data-[state=active]:bg-transparent data-[state=active]:shadow-none dark:data-[state=active]:border-transparent";
 
-export function ComposerTabs({
+function ComposerTabs({
   className,
   ...props
 }: Omit<React.ComponentProps<typeof TabsList>, "children">) {
@@ -94,13 +101,29 @@ export function ComposerHint({
   );
 }
 
+/** `onSubmit` fires on Cmd/Ctrl+Enter. */
 export function ComposerTextarea({
   className,
+  onSubmit,
+  onKeyDown,
   ...props
-}: React.ComponentProps<typeof InputGroupTextarea>) {
+}: React.ComponentProps<typeof InputGroupTextarea> & {
+  onSubmit?: () => void;
+}) {
   return (
     <TabsContent value="write">
-      <InputGroupTextarea className={cn("min-h-24", className)} {...props} />
+      <InputGroupTextarea
+        className={cn("min-h-24 in-data-[size=lg]:min-h-96", className)}
+        onKeyDown={(e) => {
+          onKeyDown?.(e);
+          if (e.defaultPrevented || e.nativeEvent.isComposing) return;
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && onSubmit) {
+            e.preventDefault();
+            onSubmit();
+          }
+        }}
+        {...props}
+      />
     </TabsContent>
   );
 }
@@ -115,7 +138,7 @@ export function ComposerPreview({
       <div
         data-slot="composer-preview"
         className={cn(
-          "prose prose-sm dark:prose-invert min-h-24 max-w-none px-3 py-3",
+          "prose prose-sm dark:prose-invert min-h-24 max-w-none px-3 py-3 in-data-[size=lg]:min-h-96",
           className,
         )}
         {...props}
@@ -127,6 +150,26 @@ export function ComposerPreview({
         )}
       </div>
     </TabsContent>
+  );
+}
+
+/** Structured fields between the textarea and the footer. */
+export function ComposerSection({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<typeof InputGroupAddon>) {
+  return (
+    <InputGroupAddon
+      align="block-end"
+      className={cn(
+        "flex-col items-stretch gap-2 border-t px-3 py-3 font-normal [.border-t]:pt-3",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </InputGroupAddon>
   );
 }
 

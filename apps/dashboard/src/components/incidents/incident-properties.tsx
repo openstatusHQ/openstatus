@@ -5,7 +5,6 @@ import {
   type IncidentStatus,
   incidentSeverity,
 } from "@openstatus/db/src/schema/incidents/constants";
-import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -13,7 +12,6 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import {
   format,
   formatDistanceStrict,
@@ -27,13 +25,11 @@ import { StatusDot } from "@/components/common/status-dot";
 import { UserAvatar } from "@/components/common/user-avatar";
 import {
   Property,
-  PropertyInput,
   PropertyLabel,
   PropertyList,
   PropertySelectTrigger,
   PropertyValue,
 } from "@/components/content/property-list";
-import { toLocalInput } from "@/components/forms/incident/form";
 import {
   incidentEndedAt,
   personName,
@@ -41,7 +37,9 @@ import {
   statusConfig,
 } from "@/data/managed-incidents.client";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
+import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { useInvalidateIncident } from "./use-invalidate-incident";
 
 type Incident = NonNullable<RouterOutputs["incident"]["get"]>;
@@ -59,20 +57,24 @@ export function IncidentProperties({
 }) {
   const trpc = useTRPC();
   const { data: members } = useQuery(trpc.member.list.queryOptions());
-  const [startedAt, setStartedAt] = useState(toLocalInput(incident.startedAt));
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const closed = incident.closedAt !== null;
 
   const invalidate = useInvalidateIncident(incident.id);
   const onError = (error: { message: string }) => {
-    toast.error(isTRPCClientError(error) ? error.message : "Failed to save");
+    toast.error(errorMessage(error, "Failed to save"));
   };
   const update = useMutation(
-    trpc.incident.update.mutationOptions({ onSuccess: invalidate, onError }),
+    trpc.incident.update.mutationOptions({
+      onSuccess: invalidate,
+      onError,
+    }),
   );
   const setStatus = useMutation(
     trpc.incident.setStatus.mutationOptions({
       onSuccess: async (row) => {
         await invalidate();
+        setConfirmCancel(false);
         if (row) onStatusChanged(row.status, "");
       },
       onError,
@@ -86,6 +88,15 @@ export function IncidentProperties({
 
   return (
     <PropertyList>
+      <ConfirmCloseDialog
+        kind="cancel"
+        open={confirmCancel}
+        onOpenChange={setConfirmCancel}
+        pending={setStatus.isPending}
+        onConfirm={() =>
+          setStatus.mutate({ id: incident.id, status: "canceled" })
+        }
+      />
       <Property>
         <PropertyLabel>Severity</PropertyLabel>
         <PropertyValue>
@@ -136,7 +147,10 @@ export function IncidentProperties({
                 const next = incident.allowedTransitions.find(
                   (s) => s === value,
                 );
-                if (next) setStatus.mutate({ id: incident.id, status: next });
+                if (!next) return;
+                // Canceling closes the incident for good; ask first.
+                if (next === "canceled") setConfirmCancel(true);
+                else setStatus.mutate({ id: incident.id, status: next });
               }}
             >
               <PropertySelectTrigger aria-label="Status">
@@ -207,49 +221,10 @@ export function IncidentProperties({
       </Property>
       <Property>
         <PropertyLabel>Started at</PropertyLabel>
-        <PropertyValue className="flex-wrap">
-          {closed ? (
-            <HoverCardTimestamp date={incident.startedAt} side="left">
-              <span>{format(incident.startedAt, "LLL dd, y HH:mm")}</span>
-            </HoverCardTimestamp>
-          ) : (
-            <>
-              <PropertyInput
-                type="datetime-local"
-                aria-label="Started at"
-                value={startedAt}
-                onChange={(e) => setStartedAt(e.target.value)}
-              />
-              {startedAt !== toLocalInput(incident.startedAt) ? (
-                <div className="flex gap-1 font-sans">
-                  <Button
-                    size="sm"
-                    className="h-7"
-                    disabled={!startedAt || update.isPending}
-                    onClick={() =>
-                      update.mutate({
-                        id: incident.id,
-                        startedAt: new Date(startedAt),
-                      })
-                    }
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7"
-                    disabled={update.isPending}
-                    onClick={() =>
-                      setStartedAt(toLocalInput(incident.startedAt))
-                    }
-                  >
-                    Reset
-                  </Button>
-                </div>
-              ) : null}
-            </>
-          )}
+        <PropertyValue>
+          <HoverCardTimestamp date={incident.startedAt} side="left">
+            <span>{format(incident.startedAt, "LLL dd, y HH:mm")}</span>
+          </HoverCardTimestamp>
         </PropertyValue>
       </Property>
       <Property>

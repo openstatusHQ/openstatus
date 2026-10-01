@@ -1,6 +1,9 @@
+import { ArrowUpRight } from "@openstatus/icons";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { SelectTrigger } from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
+
+import { Link } from "@/components/common/link";
 
 export function PropertyList({
   children,
@@ -69,6 +72,27 @@ export function PropertyValue({
     >
       {children}
     </dd>
+  );
+}
+
+// pr-2 lines the arrow up with select chevrons on sibling rows.
+export function PropertyLink({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<typeof Link>) {
+  return (
+    <Link
+      data-slot="property-link"
+      className={cn(
+        "group flex min-w-0 flex-1 items-center justify-between gap-2 pr-2 font-normal",
+        className,
+      )}
+      {...props}
+    >
+      <span className="truncate">{children}</span>
+      <ArrowUpRight className="text-muted-foreground group-hover:text-foreground size-4 shrink-0 transition-colors" />
+    </Link>
   );
 }
 

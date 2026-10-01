@@ -10,25 +10,23 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { StatusDot } from "@/components/common/status-dot";
-import { UserAvatar } from "@/components/common/user-avatar";
 import {
   Composer,
   ComposerFooter,
   ComposerHeader,
-  ComposerHint,
   ComposerPreview,
-  ComposerTabs,
   ComposerTextarea,
 } from "@/components/content/composer";
-import { TimelineItem } from "@/components/content/timeline";
+import { TimelineAvatar, TimelineItem } from "@/components/content/timeline";
 import { personName, statusConfig } from "@/data/managed-incidents.client";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
+import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { useInvalidateIncident } from "./use-invalidate-incident";
 
 /**
@@ -53,6 +51,7 @@ export function IncidentComposer({
   const { data: user } = useQuery(trpc.user.get.queryOptions());
   const [selected, setSelected] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   const invalidate = useInvalidateIncident(incident.id);
   const addNote = useMutation(
@@ -64,6 +63,13 @@ export function IncidentComposer({
   const pending = addNote.isPending || setIncidentStatus.isPending;
   const next = incident.allowedTransitions.find((s) => s === selected);
   const disabled = pending || (!next && !message.trim());
+
+  // Canceling closes the incident for good; route through the dialog first.
+  function requestSubmit() {
+    if (disabled) return;
+    if (next === "canceled") setConfirmCancel(true);
+    else submit().catch(console.error);
+  }
 
   async function submit() {
     if (disabled) return;
@@ -82,10 +88,10 @@ export function IncidentComposer({
     toast.promise(promise, {
       loading: "Posting...",
       success: "Posted",
-      error: (error) =>
-        isTRPCClientError(error) ? error.message : "Failed to post",
+      error: (error) => errorMessage(error, "Failed to post"),
     });
     await promise;
+    setConfirmCancel(false);
     setMessage("");
     setSelected(null);
     if (next) onStatusChanged(next, note);
@@ -93,26 +99,24 @@ export function IncidentComposer({
 
   return (
     <TimelineItem>
-      <UserAvatar
+      <ConfirmCloseDialog
+        kind="cancel"
+        open={confirmCancel}
+        onOpenChange={setConfirmCancel}
+        pending={pending}
+        onConfirm={() => submit().catch(console.error)}
+      />
+      <TimelineAvatar
         name={user ? personName(user) : null}
         src={user?.photoUrl}
-        className="size-8 text-xs"
       />
       <Composer>
-        <ComposerHeader>
-          <ComposerTabs />
-          <ComposerHint>Markdown</ComposerHint>
-        </ComposerHeader>
+        <ComposerHeader />
         <ComposerTextarea
           placeholder="What's happening? Impact, what you've found, what's next."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              submit().catch(console.error);
-            }
-          }}
+          onSubmit={requestSubmit}
         />
         <ComposerPreview value={message} />
         <ComposerFooter>
@@ -145,11 +149,7 @@ export function IncidentComposer({
             <span className="hidden text-xs sm:inline">
               Only your team sees notes
             </span>
-            <Button
-              size="sm"
-              disabled={disabled}
-              onClick={() => submit().catch(console.error)}
-            >
+            <Button size="sm" disabled={disabled} onClick={requestSubmit}>
               {next
                 ? `Post and mark ${statusConfig[next].label.toLowerCase()}`
                 : "Post note"}

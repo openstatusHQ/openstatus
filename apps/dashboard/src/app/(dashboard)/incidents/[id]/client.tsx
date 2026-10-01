@@ -1,17 +1,10 @@
 "use client";
 
 import type { IncidentStatus } from "@openstatus/db/src/schema/incidents/constants";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 
-import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { Link } from "@/components/common/link";
 import {
   DetailAside,
@@ -20,6 +13,7 @@ import {
   DetailMain,
   DetailMeta,
   DetailMetaItem,
+  DetailMetaTime,
   DetailSection,
   DetailSectionTitle,
 } from "@/components/content/detail";
@@ -100,8 +94,42 @@ export function Client({ id }: { id: number }) {
     }
   };
 
+  const resolved = incident.status === "resolved";
+  const timeline = (
+    <DetailSection>
+      <DetailSectionTitle variant="heading">
+        Timeline
+        {events ? (
+          <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
+            {events.length}
+          </span>
+        ) : null}
+      </DetailSectionTitle>
+      <Timeline>
+        {closed ? null : (
+          <IncidentComposer
+            incident={incident}
+            onStatusChanged={onStatusChanged}
+          />
+        )}
+        {events?.map((event) => (
+          <IncidentTimelineItem key={event.id} event={event} />
+        ))}
+      </Timeline>
+    </DetailSection>
+  );
+  const postmortem = (
+    <DetailSection>
+      <DetailSectionTitle variant="heading">Postmortem</DetailSectionTitle>
+      <IncidentPostmortem
+        incident={incident}
+        agentAllowed={workspace?.limits["slack-agent"] === true}
+      />
+    </DetailSection>
+  );
+
   return (
-    <SectionGroup className="max-w-6xl">
+    <SectionGroup>
       <DetailHeader>
         <IncidentHeading
           incident={incident}
@@ -119,20 +147,16 @@ export function Client({ id }: { id: number }) {
             </span>
           </DetailMetaItem>
           <DetailMetaItem>
-            <HoverCardTimestamp date={incident.declaredAt} side="bottom">
-              <time dateTime={incident.declaredAt.toISOString()}>
-                {formatDistanceToNow(incident.declaredAt, { addSuffix: true })}
-              </time>
-            </HoverCardTimestamp>
+            <DetailMetaTime date={incident.declaredAt}>
+              {formatDistanceToNow(incident.declaredAt, { addSuffix: true })}
+            </DetailMetaTime>
           </DetailMetaItem>
           {incident.closedAt ? (
             <DetailMetaItem>
               Closed
-              <HoverCardTimestamp date={incident.closedAt} side="bottom">
-                <time dateTime={incident.closedAt.toISOString()}>
-                  {formatDistanceToNow(incident.closedAt, { addSuffix: true })}
-                </time>
-              </HoverCardTimestamp>
+              <DetailMetaTime date={incident.closedAt}>
+                {formatDistanceToNow(incident.closedAt, { addSuffix: true })}
+              </DetailMetaTime>
             </DetailMetaItem>
           ) : (
             <DetailMetaItem>
@@ -149,38 +173,9 @@ export function Client({ id }: { id: number }) {
       </DetailHeader>
       <DetailContent>
         <DetailMain>
-          <Tabs defaultValue="timeline" className="gap-4">
-            <TabsList>
-              <TabsTrigger value="timeline">
-                Timeline
-                {events ? (
-                  <span className="text-muted-foreground font-mono text-xs">
-                    {events.length}
-                  </span>
-                ) : null}
-              </TabsTrigger>
-              <TabsTrigger value="postmortem">Postmortem</TabsTrigger>
-            </TabsList>
-            <TabsContent value="timeline">
-              <Timeline>
-                {closed ? null : (
-                  <IncidentComposer
-                    incident={incident}
-                    onStatusChanged={onStatusChanged}
-                  />
-                )}
-                {events?.map((event) => (
-                  <IncidentTimelineItem key={event.id} event={event} />
-                ))}
-              </Timeline>
-            </TabsContent>
-            <TabsContent value="postmortem">
-              <IncidentPostmortem
-                incident={incident}
-                agentAllowed={workspace?.limits["slack-agent"] === true}
-              />
-            </TabsContent>
-          </Tabs>
+          {/* Resolved incidents lead with the postmortem; open ones with the timeline. */}
+          {resolved ? postmortem : timeline}
+          {resolved ? timeline : postmortem}
         </DetailMain>
         <DetailAside>
           <DetailSection>
@@ -218,7 +213,6 @@ export function Client({ id }: { id: number }) {
       </DetailContent>
       {report ? (
         <ResolveReportDialog
-          incidentId={incident.id}
           report={report}
           canNotify={canNotify}
           defaultMessage={followUp?.note ?? ""}

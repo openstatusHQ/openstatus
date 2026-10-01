@@ -17,14 +17,6 @@ type ManagedIncident = NonNullable<RouterOutputs["incident"]["list"]>[number];
 
 export const columns: ColumnDef<ManagedIncident>[] = [
   {
-    accessorKey: "severity",
-    header: "Severity",
-    enableSorting: false,
-    cell: ({ row }) => (
-      <IncidentSeverityBadge severity={row.original.severity} />
-    ),
-  },
-  {
     accessorKey: "title",
     header: "Title",
     enableSorting: false,
@@ -35,6 +27,14 @@ export const columns: ColumnDef<ManagedIncident>[] = [
       />
     ),
     meta: { cellClassName: "max-w-[260px] truncate" },
+  },
+  {
+    accessorKey: "severity",
+    header: "Severity",
+    enableSorting: false,
+    cell: ({ row }) => (
+      <IncidentSeverityBadge severity={row.original.severity} />
+    ),
   },
   {
     accessorKey: "status",
