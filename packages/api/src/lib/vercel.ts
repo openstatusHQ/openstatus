@@ -119,7 +119,7 @@ function toDomainError(domain: string, code?: string): TRPCError {
     case "domain_already_in_use":
       return new TRPCError({
         code: "CONFLICT",
-        message: `The domain '${domain}' is already in use by another status page. Remove it there first or contact support.`,
+        message: `The domain '${domain}' is already in use. Remove it there first or contact support.`,
       });
     case "invalid_domain":
     case "not_found":
