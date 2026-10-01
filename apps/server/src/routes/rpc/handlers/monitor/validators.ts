@@ -6,6 +6,7 @@ import type { UpdateMonitorConfigInput } from "@openstatus/services/monitor";
 
 import {
   MONITOR_DEFAULTS,
+  getDeprecatedRegions,
   protoOpenTelemetryToService,
   periodicityToString,
   regionsToStrings,
@@ -48,6 +49,13 @@ export function toValidMethod(value: string | undefined): MonitorMethod {
 export function validateCommonMonitorFields(mon: { regions?: Region[] }): void {
   if (mon.regions && mon.regions.length > 0) {
     const regionStrings = regionsToStrings(mon.regions);
+    const deprecatedRegions = getDeprecatedRegions(regionStrings);
+    if (deprecatedRegions.length > 0) {
+      throw new ConnectError(
+        `Deprecated regions: ${deprecatedRegions.join(", ")}. These regions are no longer available, please choose another region.`,
+        Code.InvalidArgument,
+      );
+    }
     const invalidRegions = validateRegions(regionStrings);
     if (invalidRegions.length > 0) {
       throw new ConnectError(

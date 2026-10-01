@@ -51,6 +51,26 @@ describe("updateRegion", () => {
     });
   });
 
+  describe("bom deprecation", () => {
+    test("should replace bom with sin", () => {
+      const regions: z.infer<typeof monitorRegionSchema>[] = ["ams", "bom"];
+      updateRegion("bom", "sin", regions);
+
+      expect(regions).toEqual(["ams", "sin"]);
+    });
+
+    test("should drop bom when sin is already selected", () => {
+      const regions: z.infer<typeof monitorRegionSchema>[] = [
+        "bom",
+        "sin",
+        "fra",
+      ];
+      updateRegion("bom", "sin", regions);
+
+      expect(regions).toEqual(["sin", "fra"]);
+    });
+  });
+
   describe("when old region does not exist in array", () => {
     test("should not modify the array when old region is not found", () => {
       const originalRegions = [...regions];

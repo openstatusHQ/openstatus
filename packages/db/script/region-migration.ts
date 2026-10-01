@@ -4,42 +4,23 @@ import { db, eq, schema } from "../src";
 import { selectMonitorSchema } from "../src/schema";
 import type { monitorRegionSchema } from "../src/schema/constants";
 
-const rawMonitors = await db.select().from(schema.monitor);
+// Only run against the DB when executed directly, not when imported by tests.
+if (import.meta.main) {
+  const rawMonitors = await db.select().from(schema.monitor);
 
-const monitors = z.array(selectMonitorSchema).parse(rawMonitors);
-for (const monitor of monitors) {
-  const regions = monitor.regions.slice();
-  // Asia Pacific
-  updateRegion("hkg", "sin", regions);
-
-  // North America
-  updateRegion("atl", "dfw", regions);
-  updateRegion("mia", "dfw", regions);
-  updateRegion("gdl", "dfw", regions);
-  updateRegion("qro", "dfw", regions);
-  updateRegion("bos", "ewr", regions);
-  updateRegion("phx", "lax", regions);
-  updateRegion("sea", "sjc", regions);
-  updateRegion("yul", "yyz", regions);
-  updateRegion("den", "dfw", regions);
-
-  // Europe
-  updateRegion("waw", "ams", regions);
-  updateRegion("mad", "cdg", regions);
-  updateRegion("otp", "fra", regions);
-
-  // South America
-  updateRegion("bog", "gru", regions);
-  updateRegion("gig", "gru", regions);
-  updateRegion("scl", "gru", regions);
-  updateRegion("eze", "gru", regions);
-  const newRegions = regions.join(",");
-  // console.log("new regions:",newRegions)
-  await db
-    .update(schema.monitor)
-    .set({ regions: newRegions })
-    .where(eq(schema.monitor.id, monitor.id))
-    .execute();
+  const monitors = z.array(selectMonitorSchema).parse(rawMonitors);
+  for (const monitor of monitors) {
+    const regions = monitor.regions.slice();
+    // Asia Pacific
+    updateRegion("bom", "sin", regions);
+    const newRegions = regions.join(",");
+    if (newRegions === monitor.regions.join(",")) continue;
+    await db
+      .update(schema.monitor)
+      .set({ regions: newRegions })
+      .where(eq(schema.monitor.id, monitor.id))
+      .execute();
+  }
 }
 
 export function updateRegion(
