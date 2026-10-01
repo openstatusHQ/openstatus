@@ -16,8 +16,6 @@ import { ConflictError, NotFoundError, ValidationError } from "../errors";
 import { requireFeature } from "../features";
 import { getMembership } from "../member/membership";
 
-export { displayName };
-
 export const INCIDENT_FEATURE = "incident-management";
 
 export function requireIncidentFeature(ctx: ServiceContext): void {

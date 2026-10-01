@@ -27,16 +27,13 @@ const title = z.string().trim().min(1).max(256);
 const summary = z.string().trim().min(1).max(4000);
 const note = z.string().trim().min(1).max(10_000);
 
-const personSchema = attributedUserSchema;
-const person = toAttributedUser;
-
 const IncidentSummary = z.object({
   id: z.number().int(),
   title: z.string(),
   severity: z.enum(incidentSeverity),
   status: z.enum(incidentStatus),
   closed: z.boolean(),
-  commander: personSchema.nullable(),
+  commander: attributedUserSchema.nullable(),
   declaredAt: z.string(),
   startedAt: z.string(),
   statusReportId: z.number().int().nullable(),
@@ -77,7 +74,7 @@ export const listIncidentsTool: AgentTool<
         severity: row.severity,
         status: row.status,
         closed: row.closedAt !== null,
-        commander: person(row.commander),
+        commander: toAttributedUser(row.commander),
         declaredAt: row.declaredAt.toISOString(),
         startedAt: row.startedAt.toISOString(),
         statusReportId: row.statusReportId,
@@ -93,7 +90,7 @@ const GetIncidentInput = z.object({
 
 const GetIncidentOutput = IncidentSummary.extend({
   summary: z.string().nullable(),
-  declaredBy: personSchema.nullable(),
+  declaredBy: attributedUserSchema.nullable(),
   statusReport: z
     .object({ id: z.number().int(), title: z.string(), status: z.string() })
     .nullable(),
@@ -102,7 +99,7 @@ const GetIncidentOutput = IncidentSummary.extend({
       type: z.string(),
       message: z.string().nullable(),
       at: z.string(),
-      by: personSchema.nullable(),
+      by: attributedUserSchema.nullable(),
     }),
   ),
 });
@@ -132,13 +129,13 @@ export const getIncidentTool: AgentTool<
       severity: row.severity,
       status: row.status,
       closed: row.closedAt !== null,
-      commander: person(row.commander),
+      commander: toAttributedUser(row.commander),
       declaredAt: row.declaredAt.toISOString(),
       startedAt: row.startedAt.toISOString(),
       statusReportId: row.statusReportId,
       slackChannelId: row.slackChannelId,
       summary: row.summary,
-      declaredBy: person(row.declaredByUser),
+      declaredBy: toAttributedUser(row.declaredByUser),
       statusReport: row.statusReport
         ? {
             id: row.statusReport.id,
@@ -150,7 +147,7 @@ export const getIncidentTool: AgentTool<
         type: e.type,
         message: e.message,
         at: e.createdAt.toISOString(),
-        by: person(e.createdByUser),
+        by: toAttributedUser(e.createdByUser),
       })),
     };
   },
