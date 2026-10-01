@@ -15,6 +15,7 @@ import {
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
+import { listStatusReportsTool } from "../../agent-tools/status-report";
 import type { DB, ServiceContext } from "../../context";
 import { addStatusReportUpdate } from "../add-update";
 import { createStatusReport } from "../create";
@@ -92,12 +93,32 @@ describe("status report attribution", () => {
       expect(initialUpdate.updatedBy).toBe(ownerId);
 
       const full = await getStatusReport({ ctx, input: { id: report.id } });
-      expect(full.createdByUser).toEqual({ id: ownerId, name: "Test User" });
-      expect(full.updatedByUser).toEqual({ id: ownerId, name: "Test User" });
-      expect(full.updates[0].createdByUser).toEqual({
+      const owner = {
         id: ownerId,
         name: "Test User",
+        email: expect.stringContaining("@openstatus.dev"),
+        // the factory stores "", which the projection normalizes to null
+        photoUrl: null,
+      };
+      expect(full.createdByUser).toEqual(owner);
+      expect(full.updatedByUser).toEqual(owner);
+      expect(full.updates[0].createdByUser).toEqual(owner);
+    });
+  });
+
+  test("agent tool output carries the name only", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report } = await create(ctx, "agent");
+      const output = await listStatusReportsTool.run({
+        ctx,
+        input: { filter: "all", pageId, page: 1, perPage: 50 },
       });
+      const item = output.items.find((i) => i.id === report.id);
+      const agentUser = { id: ownerId, name: "Test User" };
+      expect(item?.createdBy).toEqual(agentUser);
+      expect(item?.updatedBy).toEqual(agentUser);
+      expect(item?.latestUpdate?.createdBy).toEqual(agentUser);
     });
   });
 
@@ -246,7 +267,12 @@ describe("status report attribution", () => {
       };
       const { statusReport: report } = await create(ctx, "deleted");
       const full = await getStatusReport({ ctx, input: { id: report.id } });
-      expect(full.createdByUser).toEqual({ id: gone.id, name: "Deleted user" });
+      expect(full.createdByUser).toEqual({
+        id: gone.id,
+        name: "Deleted user",
+        email: null,
+        photoUrl: null,
+      });
     });
   });
 });

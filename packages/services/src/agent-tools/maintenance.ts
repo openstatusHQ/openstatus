@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { attributedUserSchema } from "../attribution";
+import { attributedUserSchema, toAgentUser } from "../attribution";
 import {
   createMaintenance,
   listMaintenances,
@@ -101,8 +101,8 @@ export const listMaintenancesTool: AgentTool<
         to: m.to.toISOString(),
         pageId: m.pageId,
         pageComponentIds: m.pageComponentIds,
-        createdBy: m.createdByUser,
-        updatedBy: m.updatedByUser,
+        createdBy: toAgentUser(m.createdByUser),
+        updatedBy: toAgentUser(m.updatedByUser),
       })),
       pagination: {
         page,

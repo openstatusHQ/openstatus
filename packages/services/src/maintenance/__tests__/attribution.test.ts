@@ -11,6 +11,7 @@ import {
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
+import { listMaintenancesTool } from "../../agent-tools/maintenance";
 import type { ServiceContext } from "../../context";
 import { createMaintenance } from "../create";
 import { getMaintenance } from "../list";
@@ -67,8 +68,30 @@ describe("maintenance attribution", () => {
       expect(record.updatedBy).toBe(ownerId);
 
       const full = await getMaintenance({ ctx, input: { id: record.id } });
-      expect(full.createdByUser).toEqual({ id: ownerId, name: "Test User" });
-      expect(full.updatedByUser).toEqual({ id: ownerId, name: "Test User" });
+      const owner = {
+        id: ownerId,
+        name: "Test User",
+        email: expect.stringContaining("@openstatus.dev"),
+        // the factory stores "", which the projection normalizes to null
+        photoUrl: null,
+      };
+      expect(full.createdByUser).toEqual(owner);
+      expect(full.updatedByUser).toEqual(owner);
+    });
+  });
+
+  test("agent tool output carries the name only", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const record = await create(ctx, "agent");
+      const output = await listMaintenancesTool.run({
+        ctx,
+        input: { pageId, page: 1, perPage: 50 },
+      });
+      const item = output.items.find((i) => i.id === record.id);
+      const agentUser = { id: ownerId, name: "Test User" };
+      expect(item?.createdBy).toEqual(agentUser);
+      expect(item?.updatedBy).toEqual(agentUser);
     });
   });
 

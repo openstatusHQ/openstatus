@@ -9,8 +9,17 @@ export const attributedUserSchema = z.object({
   name: z.string(),
 });
 
-/** The user behind a `created_by` / `updated_by` column, reduced to what callers may show. */
+/** The user behind a `created_by` / `updated_by` column, reduced to what agent tools may show. */
 export type AttributedUser = z.infer<typeof attributedUserSchema>;
+
+/**
+ * `AttributedUser` plus what the dashboard needs to render an avatar. Carries
+ * the email: pass through `toAgentUser` before any other transport.
+ */
+export type AttributedUserDetail = AttributedUser & {
+  email: string | null;
+  photoUrl: string | null;
+};
 
 type UserRow = {
   id: number;
@@ -18,6 +27,7 @@ type UserRow = {
   firstName: string | null;
   lastName: string | null;
   email: string | null;
+  photoUrl?: string | null;
   deletedAt?: Date | null;
 };
 
@@ -43,15 +53,34 @@ export function toAttributedUser(
   };
 }
 
+export function toAttributedUserDetail(
+  row: UserRow | null | undefined,
+): AttributedUserDetail | null {
+  const base = toAttributedUser(row);
+  if (!base || !row) return null;
+  return {
+    ...base,
+    email: row.deletedAt ? null : row.email || null,
+    photoUrl: row.deletedAt ? null : row.photoUrl || null,
+  };
+}
+
+/** Agent tools expose the name only; `email` and `photoUrl` stay in the dashboard. */
+export function toAgentUser(
+  detail: AttributedUserDetail | null,
+): AttributedUser | null {
+  return detail ? { id: detail.id, name: detail.name } : null;
+}
+
 /** One query for every distinct id; ids with no user row are absent from the map. */
 export async function loadAttributedUsers(
   db: DB,
   ids: Iterable<number | null | undefined>,
-): Promise<Map<number, AttributedUser>> {
+): Promise<Map<number, AttributedUserDetail>> {
   const distinct = [
     ...new Set([...ids].filter((id): id is number => id != null)),
   ];
-  const map = new Map<number, AttributedUser>();
+  const map = new Map<number, AttributedUserDetail>();
   if (distinct.length === 0) return map;
   const rows = await db
     .select({
@@ -60,13 +89,14 @@ export async function loadAttributedUsers(
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      photoUrl: user.photoUrl,
       deletedAt: user.deletedAt,
     })
     .from(user)
     .where(inArray(user.id, distinct))
     .all();
   for (const row of rows) {
-    const attributed = toAttributedUser(row);
+    const attributed = toAttributedUserDetail(row);
     if (attributed) map.set(row.id, attributed);
   }
   return map;

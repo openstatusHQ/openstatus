@@ -4,7 +4,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
-import { attributedUserSchema } from "../attribution";
+import { attributedUserSchema, toAgentUser } from "../attribution";
 import type { ServiceContext } from "../context";
 import {
   addStatusReportUpdate,
@@ -166,14 +166,14 @@ export const listStatusReportsTool: AgentTool<
           pageId: r.pageId,
           createdAt: r.createdAt?.toISOString() ?? null,
           updatedAt: r.updatedAt?.toISOString() ?? null,
-          createdBy: r.createdByUser,
-          updatedBy: r.updatedByUser,
+          createdBy: toAgentUser(r.createdByUser),
+          updatedBy: toAgentUser(r.updatedByUser),
           latestUpdate: latestUpdate
             ? {
                 message: latestUpdate.message,
                 status: latestUpdate.status,
                 date: latestUpdate.date?.toISOString() ?? null,
-                createdBy: latestUpdate.createdByUser,
+                createdBy: toAgentUser(latestUpdate.createdByUser),
               }
             : null,
         };

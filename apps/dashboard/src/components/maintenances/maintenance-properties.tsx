@@ -7,6 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { StatusDot } from "@/components/common/status-dot";
+import { UserAvatar } from "@/components/common/user-avatar";
 import {
   Property,
   PropertyInput,
@@ -15,6 +16,7 @@ import {
   PropertyList,
   PropertyValue,
 } from "@/components/content/property-list";
+import { distinctEditor } from "@/data/attribution.client";
 import {
   type MaintenanceStatus,
   maintenanceStatusConfig,
@@ -25,6 +27,24 @@ import { formatDateForInput } from "@/lib/formatter";
 import { useUpdateMaintenance } from "./use-update-maintenance";
 
 type Maintenance = NonNullable<RouterOutputs["maintenance"]["get"]>;
+
+function UserProperty({
+  label,
+  user,
+}: {
+  label: string;
+  user: { name: string; photoUrl: string | null };
+}) {
+  return (
+    <Property>
+      <PropertyLabel>{label}</PropertyLabel>
+      <PropertyValue>
+        <UserAvatar name={user.name} src={user.photoUrl} />
+        <span className="truncate">{user.name}</span>
+      </PropertyValue>
+    </Property>
+  );
+}
 
 export function MaintenanceProperties({
   maintenance,
@@ -55,6 +75,8 @@ export function MaintenanceProperties({
 
   const dirty = draft !== null && (from !== serverFrom || to !== serverTo);
   const invalid = !from || !to || new Date(to) <= new Date(from);
+  const author = maintenance.createdByUser;
+  const editor = distinctEditor(maintenance);
 
   return (
     <PropertyList>
@@ -138,6 +160,8 @@ export function MaintenanceProperties({
           ) : null}
         </PropertyValue>
       </Property>
+      {author ? <UserProperty label="Created by" user={author} /> : null}
+      {editor ? <UserProperty label="Edited by" user={editor} /> : null}
       <Property>
         <PropertyLabel>Timezone</PropertyLabel>
         <PropertyValue>
