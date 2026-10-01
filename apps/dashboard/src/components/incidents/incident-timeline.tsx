@@ -25,6 +25,7 @@ import {
   Warning,
 } from "@openstatus/icons";
 import { SlackIcon } from "@openstatus/icons/brand";
+import { personName } from "@openstatus/utils";
 
 import type { StatusVariant } from "@/components/common/status-dot";
 import { ProcessMessage } from "@/components/content/process-message";
@@ -43,7 +44,6 @@ import {
   TimelineTitle,
 } from "@/components/content/timeline";
 import { severityConfig, statusConfig } from "@/data/managed-incidents.client";
-import { personName } from "@/lib/formatter";
 
 import { IncidentSeverityBadge, IncidentStatusBadge } from "./incident-badge";
 

@@ -1,4 +1,4 @@
-import { asc, db, eq, sql } from "@openstatus/db";
+import { db, eq, sql } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 import type { AdapterUser } from "next-auth/adapters";
 import * as randomWordSlugs from "random-word-slugs";
@@ -10,6 +10,8 @@ export function normalizeEmail(email: string) {
 
 // Rows created before emails were normalized keep the OAuth profile's casing,
 // so an indexed exact match comes first and a `lower()` scan only on a miss.
+// Two case variants of one address cannot be told apart, so the sign-in fails
+// (`?error=Configuration`) rather than landing in either workspace.
 export async function getUserByEmail(email: string) {
   const normalized = normalizeEmail(email);
   const exact = await db
@@ -23,9 +25,15 @@ export async function getUserByEmail(email: string) {
     .select()
     .from(user)
     .where(sql`lower(${user.email}) = ${normalized}`)
-    .orderBy(asc(user.id))
-    .get();
-  return legacy ?? null;
+    .limit(2)
+    .all();
+  if (legacy.length > 1) {
+    console.error("ambiguous legacy email, refusing sign-in", {
+      userIds: legacy.map((row) => row.id),
+    });
+    throw new Error("ambiguous legacy email");
+  }
+  return legacy[0] ?? null;
 }
 
 export async function createUser(data: AdapterUser) {

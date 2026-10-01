@@ -26,7 +26,9 @@ describe("incrWithTtl", () => {
     expect(calls[0]?.args).toEqual([600]);
   });
 
-  test("the script guards EXPIRE behind the first INCR of each key", () => {
+  // Source-level only: no Lua runtime here, so this pins the shape of the
+  // script, not its behaviour.
+  test("ships INCR followed by a first-hit-only EXPIRE per key", () => {
     const { client, calls } = fakeClient([1]);
     incrWithTtl(client, ["a"], 600);
 

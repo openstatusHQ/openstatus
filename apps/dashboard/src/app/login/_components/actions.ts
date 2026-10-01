@@ -48,7 +48,11 @@ export async function continueWithEmail(
     // The lookup limiter guards the SSO-domain oracle, not the login: once it
     // trips (shared office IP), the address takes the magic-link path instead.
     const workspace = (await ssoLookupRateLimit(ip))
-      ? await getWorkspaceByVerifiedSsoDomain(email)
+      ? await getWorkspaceByVerifiedSsoDomain(email).catch((e: unknown) => {
+          // A lookup outage must not take the magic link down with it.
+          console.warn("sso domain lookup failed, sending magic link", e);
+          return null;
+        })
       : null;
     if (workspace?.workosOrganizationId) {
       const cookieStore = await cookies();

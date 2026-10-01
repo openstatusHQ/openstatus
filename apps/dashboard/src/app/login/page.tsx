@@ -20,6 +20,8 @@ const ERROR_MESSAGES: Record<string, string> = {
     "Your SSO login isn't linked to a workspace yet. Contact your workspace admin.",
   Verification:
     "That sign-in link has expired or was already used. Request a new one.",
+  Configuration:
+    "We couldn't complete your sign-in. Try again or contact support.",
 };
 
 export const metadata: Metadata = {
@@ -55,39 +57,40 @@ export default async function Page(props: {
         </p>
       ) : null}
       <div className="grid gap-3 p-4">
-        <form
-          action={async () => {
-            "use server";
-            await signIn("github", { redirectTo: redirectTo ?? undefined });
-          }}
-        >
-          <LoginButton type="submit" provider="github" variant="default">
-            <GitHubIcon className="h-4 w-4" /> Continue with GitHub
-          </LoginButton>
-        </form>
-        <form
-          action={async () => {
-            "use server";
-            await signIn("google", { redirectTo: redirectTo ?? undefined });
-          }}
-        >
-          <LoginButton type="submit" provider="google" variant="default">
-            <GoogleIcon className="h-4 w-4" /> Continue with Google
-          </LoginButton>
-        </form>
-        {process.env.AUTH_OIDC_ISSUER ? (
+        <EmailForm redirectTo={redirectTo ?? undefined} sso={hasWorkOS}>
           <form
             action={async () => {
               "use server";
-              await signIn("oidc", { redirectTo: redirectTo ?? undefined });
+              await signIn("github", { redirectTo: redirectTo ?? undefined });
             }}
           >
-            <LoginButton type="submit" provider="oidc">
-              Continue with {process.env.AUTH_OIDC_NAME ?? "SSO"}
+            <LoginButton type="submit" provider="github" variant="default">
+              <GitHubIcon className="h-4 w-4" /> Continue with GitHub
             </LoginButton>
           </form>
-        ) : null}
-        <EmailForm redirectTo={redirectTo ?? undefined} sso={hasWorkOS} />
+          <form
+            action={async () => {
+              "use server";
+              await signIn("google", { redirectTo: redirectTo ?? undefined });
+            }}
+          >
+            <LoginButton type="submit" provider="google" variant="default">
+              <GoogleIcon className="h-4 w-4" /> Continue with Google
+            </LoginButton>
+          </form>
+          {process.env.AUTH_OIDC_ISSUER ? (
+            <form
+              action={async () => {
+                "use server";
+                await signIn("oidc", { redirectTo: redirectTo ?? undefined });
+              }}
+            >
+              <LoginButton type="submit" provider="oidc">
+                Continue with {process.env.AUTH_OIDC_NAME ?? "SSO"}
+              </LoginButton>
+            </form>
+          ) : null}
+        </EmailForm>
       </div>
       <p className="text-muted-foreground mx-auto max-w-md px-8 text-center text-xs text-pretty">
         By clicking continue, you agree to our{" "}

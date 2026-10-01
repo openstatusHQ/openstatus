@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
+import { personName } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -48,7 +49,7 @@ import {
   statusVariants,
   toCreateStatusReportUpdateInput,
 } from "@/data/status-report-updates.client";
-import { formatDateForInput, personName } from "@/lib/formatter";
+import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 

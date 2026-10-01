@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
+import { personName } from "@openstatus/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -23,7 +24,6 @@ import {
 } from "@/components/content/composer";
 import { TimelineAvatar, TimelineItem } from "@/components/content/timeline";
 import { statusConfig } from "@/data/managed-incidents.client";
-import { personName } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 

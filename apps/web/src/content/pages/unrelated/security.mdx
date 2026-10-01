@@ -46,7 +46,7 @@ Application secrets — third-party tokens, webhook URLs, integration credential
 
 ## Authentication and access
 
-You sign in with GitHub or Google OAuth, an email magic link, or your company's SSO provider. openstatus has no passwords to see or store.
+You sign in with GitHub or Google OAuth, an email magic link, or your company's SSO provider. Account sign-in never involves a password, so there is none for openstatus to see or store.
 
 API access uses scoped keys: a key with the `read` scope can only call read-only endpoints; a key with the `write` scope can mutate data. Scopes are enforced before any database lookup, so a read-only key can't even reach a write code path.
 

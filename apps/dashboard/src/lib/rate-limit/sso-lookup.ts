@@ -15,9 +15,10 @@ export async function ssoLookupRateLimit(ip: string): Promise<boolean> {
       WINDOW_SECONDS,
     );
     return count <= MAX_ATTEMPTS;
-  } catch {
+  } catch (e) {
     // Redis unavailable: allow the lookup rather than locking everyone out of
     // SSO. The verified-domain check downstream is the real security boundary.
+    console.warn("sso lookup rate limit unavailable, allowing request", e);
     return true;
   }
 }

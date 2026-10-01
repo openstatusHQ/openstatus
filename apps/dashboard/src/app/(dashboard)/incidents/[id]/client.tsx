@@ -1,6 +1,7 @@
 "use client";
 
 import type { IncidentStatus } from "@openstatus/db/src/schema/incidents/constants";
+import { personName } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { useState } from "react";
@@ -42,7 +43,6 @@ import { IncidentTimelineItem } from "@/components/incidents/incident-timeline";
 import { ResolveReportDialog } from "@/components/incidents/resolve-report-dialog";
 import { incidentEndedAt } from "@/data/managed-incidents.client";
 import { useFeature } from "@/hooks/use-feature";
-import { personName } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 function slackChannelUrl(teamId: string, channelId: string): string {

@@ -33,6 +33,17 @@ describe("magicLinkRateLimit", () => {
     expect(evalStub?.calls[0]?.args[2]).toEqual([600]);
   });
 
+  test("lowercases the email key", async () => {
+    stubCounts([1, 1]);
+
+    await magicLinkRateLimit({ ip: "ip", email: " Gilfoyle@PiedPiper.dev " });
+
+    expect(evalStub?.calls[0]?.args[1]).toEqual([
+      "ratelimit:magic-link:ip:ip",
+      "ratelimit:magic-link:email:gilfoyle@piedpiper.dev",
+    ]);
+  });
+
   test("allows at the limits", async () => {
     stubCounts([10, 3]);
     expect(await magicLinkRateLimit({ ip: "ip", email: "e" })).toBe(true);

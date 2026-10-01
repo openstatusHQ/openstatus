@@ -1,5 +1,6 @@
 import { inArray } from "@openstatus/db";
 import { user } from "@openstatus/db/src/schema";
+import { personName } from "@openstatus/utils";
 import { z } from "zod";
 
 import type { DB } from "./context";
@@ -37,8 +38,7 @@ export function displayName(row: {
   lastName: string | null;
   email: string | null;
 }): string {
-  const full = [row.firstName, row.lastName].filter(Boolean).join(" ");
-  return row.name || full || row.email || "Unknown user";
+  return personName(row) ?? "Unknown user";
 }
 
 // `user/delete.ts` soft-deletes and blanks every name field, so the row

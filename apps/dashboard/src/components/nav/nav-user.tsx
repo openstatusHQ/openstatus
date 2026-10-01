@@ -34,13 +34,13 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
+import { personName } from "@openstatus/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { toast } from "sonner";
 
-import { personName } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function NavUser() {

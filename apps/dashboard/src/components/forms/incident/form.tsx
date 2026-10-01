@@ -22,6 +22,7 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { cn } from "@openstatus/ui/lib/utils";
+import { personName } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -35,7 +36,7 @@ import {
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { severityConfig } from "@/data/managed-incidents.client";
-import { formatDateForInput, personName } from "@/lib/formatter";
+import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 

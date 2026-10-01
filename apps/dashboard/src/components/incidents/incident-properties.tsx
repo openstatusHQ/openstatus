@@ -11,6 +11,7 @@ import {
   SelectItem,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
+import { personName } from "@openstatus/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   format,
@@ -35,7 +36,6 @@ import {
   severityConfig,
   statusConfig,
 } from "@/data/managed-incidents.client";
-import { personName } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 

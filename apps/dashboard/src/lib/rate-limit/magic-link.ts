@@ -11,6 +11,8 @@ const MAX_PER_EMAIL = 3;
  * Accepted trade-offs: refused requests count too, so three submits for
  * someone else's address block that inbox for the window (they keep GitHub
  * and Google); every request without a resolvable IP shares one bucket.
+ * Auth.js already lowercases the identifier; the key does so again so direct
+ * callers cannot multiply the per-address budget with case variants.
  */
 export async function magicLinkRateLimit(args: {
   ip: string;
@@ -21,7 +23,7 @@ export async function magicLinkRateLimit(args: {
       redis,
       [
         `ratelimit:magic-link:ip:${args.ip}`,
-        `ratelimit:magic-link:email:${args.email}`,
+        `ratelimit:magic-link:email:${args.email.trim().toLowerCase()}`,
       ],
       WINDOW_SECONDS,
     );
