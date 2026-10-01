@@ -7,14 +7,9 @@ import type { SearchParams } from "nuqs/server";
 
 import { signIn } from "@/lib/auth";
 
+import { EmailForm } from "./_components/email-form";
 import { LoginButton } from "./_components/login-button";
-import { MagicLinkForm } from "./_components/magic-link-form";
-import { SsoForm } from "./_components/sso-form";
 import { searchParamsCache } from "./search-params";
-
-const hasWorkOS = Boolean(
-  process.env.AUTH_WORKOS_ID && process.env.AUTH_WORKOS_SECRET,
-);
 
 // Auth.js error codes that land on `/login?error=`; anything else stays silent.
 const ERROR_MESSAGES: Record<string, string> = {
@@ -57,30 +52,30 @@ export default async function Page(props: {
         </p>
       ) : null}
       <div className="grid gap-4 p-4">
-        <MagicLinkForm redirectTo={redirectTo ?? undefined} />
+        <EmailForm redirectTo={redirectTo ?? undefined} />
         <Separator />
-        <form
-          action={async () => {
-            "use server";
-            await signIn("github", { redirectTo: redirectTo ?? undefined });
-          }}
-          className="w-full"
-        >
-          <LoginButton type="submit" provider="github">
-            Sign in with GitHub <GitHubIcon className="ml-2 h-4 w-4" />
-          </LoginButton>
-        </form>
-        <form
-          action={async () => {
-            "use server";
-            await signIn("google", { redirectTo: redirectTo ?? undefined });
-          }}
-          className="w-full"
-        >
-          <LoginButton type="submit" provider="google">
-            Sign in with Google <GoogleIcon className="ml-2 h-4 w-4" />
-          </LoginButton>
-        </form>
+        <div className="grid grid-cols-2 gap-4">
+          <form
+            action={async () => {
+              "use server";
+              await signIn("github", { redirectTo: redirectTo ?? undefined });
+            }}
+          >
+            <LoginButton type="submit" provider="github">
+              <GitHubIcon className="h-4 w-4" /> GitHub
+            </LoginButton>
+          </form>
+          <form
+            action={async () => {
+              "use server";
+              await signIn("google", { redirectTo: redirectTo ?? undefined });
+            }}
+          >
+            <LoginButton type="submit" provider="google">
+              <GoogleIcon className="h-4 w-4" /> Google
+            </LoginButton>
+          </form>
+        </div>
         {process.env.AUTH_OIDC_ISSUER ? (
           <form
             action={async () => {
@@ -90,11 +85,10 @@ export default async function Page(props: {
             className="w-full"
           >
             <LoginButton type="submit" provider="oidc">
-              Sign in with {process.env.AUTH_OIDC_NAME ?? "SSO"}
+              Continue with {process.env.AUTH_OIDC_NAME ?? "SSO"}
             </LoginButton>
           </form>
         ) : null}
-        {hasWorkOS ? <SsoForm redirectTo={redirectTo ?? undefined} /> : null}
       </div>
       <p className="text-muted-foreground mx-auto max-w-md px-8 text-center text-xs text-pretty">
         By clicking continue, you agree to our{" "}

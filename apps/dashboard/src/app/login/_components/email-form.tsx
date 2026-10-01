@@ -3,14 +3,14 @@
 import { Input } from "@openstatus/ui/components/ui/input";
 import { useActionState } from "react";
 
-import { type MagicLinkFormState, signInWithMagicLink } from "./actions";
+import { type EmailFormState, continueWithEmail } from "./actions";
 import { LoginButton } from "./login-button";
 
-const initialState: MagicLinkFormState = {};
+const initialState: EmailFormState = {};
 
-export function MagicLinkForm({ redirectTo }: { redirectTo?: string }) {
+export function EmailForm({ redirectTo }: { redirectTo?: string }) {
   const [state, formAction, isPending] = useActionState(
-    signInWithMagicLink,
+    continueWithEmail,
     initialState,
   );
 
@@ -42,8 +42,13 @@ export function MagicLinkForm({ redirectTo }: { redirectTo?: string }) {
       {state.error ? (
         <p className="text-destructive text-xs">{state.error}</p>
       ) : null}
-      <LoginButton type="submit" provider="email" disabled={isPending}>
-        {isPending ? "Sending…" : "Continue with email"}
+      <LoginButton
+        type="submit"
+        provider="email"
+        variant="default"
+        disabled={isPending}
+      >
+        {isPending ? "Continuing…" : "Continue"}
       </LoginButton>
     </form>
   );

@@ -13,6 +13,8 @@ Head to **Settings > SSO**, enable it, and verify your domain with a DNS TXT rec
 
 On the login page your team selects **Sign in with SSO** and enters their work email — they're redirected to your identity provider and added to the workspace as members on first login. Signing in from your provider's app tile works too. Anyone who already has an openstatus account with the same email keeps it, along with their role.
 
+_Edit: there is no separate SSO button anymore. Enter your work email and click **Continue** — a verified SSO domain is sent to your identity provider, any other address receives a magic link._
+
 GitHub and Google stay available — SSO is an additional way in, not a replacement.
 
 SSO is a paid add-on, available on the Starter, Team, and Scale plans. Self-hosting? Point the dashboard at any OIDC provider with `AUTH_OIDC_ISSUER`, `AUTH_OIDC_ID`, and `AUTH_OIDC_SECRET` instead.

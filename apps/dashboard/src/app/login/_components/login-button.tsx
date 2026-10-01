@@ -42,8 +42,8 @@ export function LoginButton({
       {children}
       {isLastUsed ? (
         <Badge
-          variant="secondary"
-          className="border-primary bg-background absolute -top-2.5 -right-2.5 border text-[10px]"
+          variant="outline"
+          className="text-muted-foreground absolute top-1/2 right-2 -translate-y-1/2 px-1.5 text-[10px] font-normal"
         >
           Last used
         </Badge>
