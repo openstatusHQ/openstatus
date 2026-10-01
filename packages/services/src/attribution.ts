@@ -12,7 +12,10 @@ export const attributedUserSchema = z.object({
 /** The user behind a `created_by` / `updated_by` column, reduced to what agent tools may show. */
 export type AttributedUser = z.infer<typeof attributedUserSchema>;
 
-/** `AttributedUser` plus what the dashboard needs to render an avatar. */
+/**
+ * `AttributedUser` plus what the dashboard needs to render an avatar. Carries
+ * the email: pass through `toAgentUser` before any other transport.
+ */
 export type AttributedUserDetail = AttributedUser & {
   email: string | null;
   photoUrl: string | null;
@@ -63,7 +66,7 @@ export function toAttributedUserDetail(
 }
 
 /** Agent tools expose the name only; `email` and `photoUrl` stay in the dashboard. */
-export function omitAvatar(
+export function toAgentUser(
   detail: AttributedUserDetail | null,
 ): AttributedUser | null {
   return detail ? { id: detail.id, name: detail.name } : null;

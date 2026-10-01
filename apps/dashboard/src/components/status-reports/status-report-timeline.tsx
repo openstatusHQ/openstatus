@@ -31,6 +31,7 @@ import {
 } from "@/components/content/timeline";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
+import { distinctEditor } from "@/data/attribution.client";
 import { icons } from "@/data/icons";
 import {
   getActions,
@@ -112,10 +113,7 @@ export function StatusReportTimelineItem({
   // Every update is a status change, so the colored indicator keeps the rail
   // and the author sits inline, as on incident state-change rows.
   const author = update.createdByUser;
-  const editor =
-    update.updatedByUser && update.updatedByUser.id !== author?.id
-      ? update.updatedByUser
-      : null;
+  const editor = distinctEditor(update);
   const impacts = update.componentImpacts.flatMap((ci) => {
     const component = components.find((c) => c.id === ci.pageComponentId);
     return component

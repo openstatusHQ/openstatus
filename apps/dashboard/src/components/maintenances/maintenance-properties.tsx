@@ -16,6 +16,7 @@ import {
   PropertyList,
   PropertyValue,
 } from "@/components/content/property-list";
+import { distinctEditor } from "@/data/attribution.client";
 import {
   type MaintenanceStatus,
   maintenanceStatusConfig,
@@ -26,6 +27,24 @@ import { formatDateForInput } from "@/lib/formatter";
 import { useUpdateMaintenance } from "./use-update-maintenance";
 
 type Maintenance = NonNullable<RouterOutputs["maintenance"]["get"]>;
+
+function UserProperty({
+  label,
+  user,
+}: {
+  label: string;
+  user: { name: string; photoUrl: string | null };
+}) {
+  return (
+    <Property>
+      <PropertyLabel>{label}</PropertyLabel>
+      <PropertyValue>
+        <UserAvatar name={user.name} src={user.photoUrl} />
+        <span className="truncate">{user.name}</span>
+      </PropertyValue>
+    </Property>
+  );
+}
 
 export function MaintenanceProperties({
   maintenance,
@@ -57,10 +76,7 @@ export function MaintenanceProperties({
   const dirty = draft !== null && (from !== serverFrom || to !== serverTo);
   const invalid = !from || !to || new Date(to) <= new Date(from);
   const author = maintenance.createdByUser;
-  const editor =
-    maintenance.updatedByUser && maintenance.updatedByUser.id !== author?.id
-      ? maintenance.updatedByUser
-      : null;
+  const editor = distinctEditor(maintenance);
 
   return (
     <PropertyList>
@@ -144,24 +160,8 @@ export function MaintenanceProperties({
           ) : null}
         </PropertyValue>
       </Property>
-      {author ? (
-        <Property>
-          <PropertyLabel>Created by</PropertyLabel>
-          <PropertyValue>
-            <UserAvatar name={author.name} src={author.photoUrl} />
-            <span className="truncate">{author.name}</span>
-          </PropertyValue>
-        </Property>
-      ) : null}
-      {editor ? (
-        <Property>
-          <PropertyLabel>Edited by</PropertyLabel>
-          <PropertyValue>
-            <UserAvatar name={editor.name} src={editor.photoUrl} />
-            <span className="truncate">{editor.name}</span>
-          </PropertyValue>
-        </Property>
-      ) : null}
+      {author ? <UserProperty label="Created by" user={author} /> : null}
+      {editor ? <UserProperty label="Edited by" user={editor} /> : null}
       <Property>
         <PropertyLabel>Timezone</PropertyLabel>
         <PropertyValue>
