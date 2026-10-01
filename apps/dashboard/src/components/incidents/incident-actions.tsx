@@ -5,11 +5,13 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { useInvalidateIncident } from "./use-invalidate-incident";
 
 type Incident = NonNullable<RouterOutputs["incident"]["get"]>;
@@ -31,10 +33,14 @@ export function IncidentActions({ incident }: { incident: Incident }) {
     trpc.incident.getPostmortem.queryOptions({ id: incident.id }),
   );
   const approved = postmortem?.status === "approved";
+  const [confirmClose, setConfirmClose] = useState(false);
 
   const close = useMutation(
     trpc.incident.close.mutationOptions({
-      onSuccess: invalidate,
+      onSuccess: async () => {
+        await invalidate();
+        setConfirmClose(false);
+      },
       onError: (error) => {
         toast.error(
           isTRPCClientError(error) ? error.message : "Failed to close",
@@ -59,19 +65,28 @@ export function IncidentActions({ incident }: { incident: Incident }) {
   return (
     <>
       {closable ? (
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={close.isPending}
-          onClick={() =>
-            close.mutate({
-              id: incident.id,
-              skipPostmortem: approved ? undefined : true,
-            })
-          }
-        >
-          {approved ? "Close incident" : "Close (skip postmortem)"}
-        </Button>
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={close.isPending}
+            onClick={() => setConfirmClose(true)}
+          >
+            {approved ? "Close incident" : "Close (skip postmortem)"}
+          </Button>
+          <ConfirmCloseDialog
+            kind="close"
+            open={confirmClose}
+            onOpenChange={setConfirmClose}
+            pending={close.isPending}
+            onConfirm={() =>
+              close.mutate({
+                id: incident.id,
+                skipPostmortem: approved ? undefined : true,
+              })
+            }
+          />
+        </>
       ) : null}
       {incident.deletable ? (
         <QuickActions

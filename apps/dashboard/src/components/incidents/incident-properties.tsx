@@ -42,6 +42,7 @@ import {
 } from "@/data/managed-incidents.client";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { useInvalidateIncident } from "./use-invalidate-incident";
 
 type Incident = NonNullable<RouterOutputs["incident"]["get"]>;
@@ -60,6 +61,7 @@ export function IncidentProperties({
   const trpc = useTRPC();
   const { data: members } = useQuery(trpc.member.list.queryOptions());
   const [startedAt, setStartedAt] = useState(toLocalInput(incident.startedAt));
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const closed = incident.closedAt !== null;
 
   const invalidate = useInvalidateIncident(incident.id);
@@ -73,6 +75,7 @@ export function IncidentProperties({
     trpc.incident.setStatus.mutationOptions({
       onSuccess: async (row) => {
         await invalidate();
+        setConfirmCancel(false);
         if (row) onStatusChanged(row.status, "");
       },
       onError,
@@ -86,6 +89,15 @@ export function IncidentProperties({
 
   return (
     <PropertyList>
+      <ConfirmCloseDialog
+        kind="cancel"
+        open={confirmCancel}
+        onOpenChange={setConfirmCancel}
+        pending={setStatus.isPending}
+        onConfirm={() =>
+          setStatus.mutate({ id: incident.id, status: "canceled" })
+        }
+      />
       <Property>
         <PropertyLabel>Severity</PropertyLabel>
         <PropertyValue>
@@ -136,7 +148,10 @@ export function IncidentProperties({
                 const next = incident.allowedTransitions.find(
                   (s) => s === value,
                 );
-                if (next) setStatus.mutate({ id: incident.id, status: next });
+                if (!next) return;
+                // Canceling closes the incident for good; ask first.
+                if (next === "canceled") setConfirmCancel(true);
+                else setStatus.mutate({ id: incident.id, status: next });
               }}
             >
               <PropertySelectTrigger aria-label="Status">

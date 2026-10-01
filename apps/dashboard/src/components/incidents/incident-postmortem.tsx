@@ -26,6 +26,7 @@ import {
 } from "@/components/content/empty-state";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { useInvalidateIncident } from "./use-invalidate-incident";
 
 type Incident = NonNullable<RouterOutputs["incident"]["get"]>;
@@ -66,6 +67,7 @@ export function IncidentPostmortem({
   // null = pristine: the editor follows the server copy, so a background
   // refetch never clobbers unsaved edits.
   const [draft, setDraft] = useState<string | null>(null);
+  const [confirmClose, setConfirmClose] = useState(false);
   const server = postmortem?.content ?? TEMPLATE;
   const content = draft ?? server;
 
@@ -102,6 +104,7 @@ export function IncidentPostmortem({
     trpc.incident.approvePostmortem.mutationOptions({
       onSuccess: () => {
         toast.success("Postmortem approved");
+        setConfirmClose(false);
         return refresh();
       },
       onError,
@@ -204,10 +207,19 @@ export function IncidentPostmortem({
               <Button
                 size="sm"
                 disabled={busy || dirty || incident.closedAt !== null}
-                onClick={() => approve.mutate({ id: incident.id, close: true })}
+                onClick={() => setConfirmClose(true)}
               >
                 Approve & close
               </Button>
+              <ConfirmCloseDialog
+                kind="close"
+                open={confirmClose}
+                onOpenChange={setConfirmClose}
+                pending={approve.isPending}
+                onConfirm={() =>
+                  approve.mutate({ id: incident.id, close: true })
+                }
+              />
             </>
           ) : null}
         </div>
