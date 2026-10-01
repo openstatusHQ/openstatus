@@ -51,8 +51,8 @@ export async function recomputeReportStatus(
     touchIfLatestIs?: number;
     /** Stamped on the report whenever the row is written. */
     updatedBy?: number | null;
-    /** Write the row even when the status is unchanged. */
-    touch?: boolean;
+    /** The update just deleted; forces the write when it was the latest one. */
+    removed?: DerivableUpdate;
   },
 ): Promise<StatusReport | null> {
   const rows = await tx
@@ -79,11 +79,14 @@ export async function recomputeReportStatus(
   const isNewLatest =
     options?.touchIfLatestIs !== undefined &&
     options.touchIfLatestIs === latest.id;
+  const removedLatest =
+    options?.removed !== undefined &&
+    findLatestUpdate([...rows, options.removed])?.id === options.removed.id;
 
   // no-op edits (message, impacts) must not bump updatedAt — the RSS/Atom
-  // feed dates and sorts items by it. A new latest update always counts,
-  // even when it repeats the current status.
-  if (current.status === latest.status && !isNewLatest && !options?.touch)
+  // feed dates and sorts items by it. Adding or removing the latest update
+  // always counts, even when the status it leaves behind is the same.
+  if (current.status === latest.status && !isNewLatest && !removedLatest)
     return current;
 
   return tx
