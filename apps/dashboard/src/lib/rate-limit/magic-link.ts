@@ -1,4 +1,4 @@
-import { incrWithTtl } from "./incr-with-ttl";
+import { incrWithTtl, redis } from "@openstatus/upstash";
 
 const WINDOW_SECONDS = 60 * 10;
 const MAX_PER_IP = 10;
@@ -14,6 +14,7 @@ export async function magicLinkRateLimit(args: {
 }): Promise<boolean> {
   try {
     const [byIp, byEmail] = await incrWithTtl(
+      redis,
       [
         `ratelimit:magic-link:ip:${args.ip}`,
         `ratelimit:magic-link:email:${args.email}`,

@@ -1,4 +1,4 @@
-import { incrWithTtl } from "./incr-with-ttl";
+import { incrWithTtl, redis } from "@openstatus/upstash";
 
 const WINDOW_SECONDS = 60 * 10;
 const MAX_ATTEMPTS = 10;
@@ -10,6 +10,7 @@ const MAX_ATTEMPTS = 10;
 export async function ssoLookupRateLimit(ip: string): Promise<boolean> {
   try {
     const [count] = await incrWithTtl(
+      redis,
       [`ratelimit:sso-lookup:${ip}`],
       WINDOW_SECONDS,
     );

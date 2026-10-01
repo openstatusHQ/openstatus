@@ -1,4 +1,4 @@
-import { redis } from "@openstatus/upstash";
+import type { Redis } from "@upstash/redis";
 
 // INCR + conditional EXPIRE in one round-trip so a crash between the two can't
 // leave a TTL-less key. Every key shares the window.
@@ -15,6 +15,10 @@ const INCR_WITH_TTL = `
 `;
 
 /** Current count per key after this hit, in `keys` order. */
-export function incrWithTtl(keys: string[], windowSeconds: number) {
-  return redis.eval<[number], number[]>(INCR_WITH_TTL, keys, [windowSeconds]);
+export function incrWithTtl(
+  client: Pick<Redis, "eval">,
+  keys: string[],
+  windowSeconds: number,
+) {
+  return client.eval<[number], number[]>(INCR_WITH_TTL, keys, [windowSeconds]);
 }

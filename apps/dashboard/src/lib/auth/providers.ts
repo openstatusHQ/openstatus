@@ -1,6 +1,7 @@
+import { AuthError } from "@auth/core/errors";
 import { EmailClient } from "@openstatus/emails";
 import { resolveClientIp } from "@openstatus/services/page-access";
-import { AuthError, type Profile } from "next-auth";
+import type { Profile } from "next-auth";
 import type { OIDCConfig } from "next-auth/providers";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";

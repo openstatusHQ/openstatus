@@ -1,9 +1,13 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
+import { Text } from "react-email";
+
 import { Actions } from "./_components/actions";
+import { CodeBlock } from "./_components/code-block";
 import { Footer } from "./_components/footer";
 import { Heading } from "./_components/heading";
 import { Layout } from "./_components/layout";
+import { styles } from "./_components/styles";
 
 export interface DashboardMagicLinkProps {
   link: string;
@@ -23,6 +27,10 @@ const DashboardMagicLinkEmail = ({ link }: DashboardMagicLinkProps) => {
         once.
       </Heading>
       <Actions primary={{ label: "Sign in", href: link }} />
+      <Text style={{ ...styles.text, margin: "24px 0 8px" }}>
+        If the button doesn’t work, copy this link into your browser:
+      </Text>
+      <CodeBlock>{link}</CodeBlock>
     </Layout>
   );
 };

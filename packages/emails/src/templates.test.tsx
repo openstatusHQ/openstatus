@@ -668,6 +668,8 @@ describe("account and status page mail", () => {
     expect(html).toContain("Sign in to openstatus");
     expect(html).toContain("24 hours");
     expect(html.split(`href="${link}"`).length - 1).toBe(1);
+    // raw link rendered as copyable text, not a second anchor
+    expect(html).toContain(`>${link}</p>`);
     expect(html).toContain('href="https://www.openstatus.dev"');
   });
 });
