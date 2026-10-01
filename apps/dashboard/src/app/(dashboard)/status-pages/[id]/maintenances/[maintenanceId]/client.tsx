@@ -23,9 +23,9 @@ import { MaintenanceActions } from "@/components/maintenances/maintenance-action
 import { MaintenanceComponents } from "@/components/maintenances/maintenance-components";
 import { MaintenanceComposer } from "@/components/maintenances/maintenance-composer";
 import { MaintenanceProperties } from "@/components/maintenances/maintenance-properties";
+import { useMaintenanceStatus } from "@/components/maintenances/use-maintenance-status";
 import { useUpdateMaintenance } from "@/components/maintenances/use-update-maintenance";
 import { Notifications } from "@/components/status-pages/notifications";
-import { getMaintenanceStatus } from "@/data/overview-events.client";
 import { getPageUrl } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -36,10 +36,12 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
   );
   const { data: page } = useQuery(trpc.page.get.queryOptions({ id: pageId }));
   const rename = useUpdateMaintenance(id);
+  const status = useMaintenanceStatus(
+    maintenance ?? { from: new Date(0), to: new Date(0) },
+  );
 
   if (!maintenance || !page) return null;
 
-  const status = getMaintenanceStatus(maintenance);
   const publicUrl = `${getPageUrl(page)}/events/maintenance/${maintenance.id}`;
 
   return (

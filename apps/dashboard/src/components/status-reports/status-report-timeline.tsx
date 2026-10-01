@@ -1,11 +1,9 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Next } from "@openstatus/icons";
 import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { StatusDot } from "@/components/common/status-dot";
 import { ComponentImpact } from "@/components/content/component-list";
@@ -28,7 +26,6 @@ import {
   statusVariants,
 } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
-import { errorMessage } from "@/lib/trpc/error";
 
 import { useInvalidateStatusReport } from "./use-invalidate-status-report";
 
@@ -48,13 +45,9 @@ export function StatusReportTimelineItem({
   const trpc = useTRPC();
   const [editing, setEditing] = useState(false);
   const invalidate = useInvalidateStatusReport(report.id);
-  const onError = (error: { message: string }) => {
-    toast.error(errorMessage(error, "Failed to save"));
-  };
   const edit = useMutation(
     trpc.statusReport.updateStatusReportUpdate.mutationOptions({
       onSuccess: invalidate,
-      onError,
     }),
   );
   const remove = useMutation(
@@ -95,7 +88,6 @@ export function StatusReportTimelineItem({
                 className="inline-flex items-center gap-1.5"
               >
                 <span className="font-mono">{ci.name}</span>
-                <Next className="text-muted-foreground/50 size-3" />
                 <ComponentImpact impact={ci.impact} />
               </span>
             ))}

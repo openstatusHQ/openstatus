@@ -45,12 +45,12 @@ export function MaintenanceActions({
           icon: Show,
           variant: "default",
           onClick: () => {
-            window.open(publicUrl, "_blank");
+            window.open(publicUrl, "_blank", "noopener,noreferrer");
           },
         },
       ]}
       deleteAction={{
-        confirmationValue: maintenance.title,
+        confirmationValue: maintenance.title || "maintenance",
         submitAction: async () => {
           await remove.mutateAsync({ id: maintenance.id });
         },

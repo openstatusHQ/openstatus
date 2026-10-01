@@ -3,23 +3,17 @@
 import { StatusPage } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname } from "next/navigation";
-import { useSyncExternalStore } from "react";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { STATUS_PAGE_TABS } from "./constants";
 
-const subscribe = () => () => {};
-
 export function Breadcrumb() {
   // The entity crumb depends on data the page hydrates after this layout
   // streamed, so it is only rendered on the client.
-  const hydrated = useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false,
-  );
+  const hydrated = useHydrated();
   const { id, reportId, maintenanceId } = useParams<{
     id: string;
     reportId?: string;
@@ -45,6 +39,7 @@ export function Breadcrumb() {
   const currentTab = STATUS_PAGE_TABS.find((tab) =>
     segments.includes(tab.value),
   );
+  const onDetail = reportId !== undefined || maintenanceId !== undefined;
   const entity = hydrated ? (report?.title ?? maintenance?.title) : undefined;
 
   return (
@@ -61,8 +56,10 @@ export function Breadcrumb() {
           label: statusPage.title,
           href: `/status-pages/${id}`,
         },
+        // on a detail route the tab links back to its list even before the
+        // entity resolves
         ...(currentTab
-          ? entity
+          ? onDetail
             ? [
                 {
                   type: "link" as const,
@@ -70,7 +67,7 @@ export function Breadcrumb() {
                   href: `/status-pages/${id}/${currentTab.value}`,
                   icon: currentTab.icon,
                 },
-                { type: "page" as const, label: entity },
+                ...(entity ? [{ type: "page" as const, label: entity }] : []),
               ]
             : [
                 {

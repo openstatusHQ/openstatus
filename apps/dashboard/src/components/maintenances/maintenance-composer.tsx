@@ -36,7 +36,8 @@ export function MaintenanceComposer({
   });
 
   const dirty = draft !== null && draft !== server;
-  const canSave = dirty && !isPending;
+  // the service rejects an empty message
+  const canSave = dirty && content.trim().length > 0 && !isPending;
   const submit = () => update({ message: content });
 
   return (
@@ -45,6 +46,7 @@ export function MaintenanceComposer({
       <ComposerTextarea
         aria-label="Message"
         placeholder="What is being maintained and what customers can expect."
+        disabled={isPending}
         value={content}
         onChange={(e) => setDraft(e.target.value)}
         onSubmit={canSave ? submit : undefined}

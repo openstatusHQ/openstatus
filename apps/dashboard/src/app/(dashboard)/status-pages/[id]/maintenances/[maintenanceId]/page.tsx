@@ -17,14 +17,18 @@ export default async function Page({
   const { id, maintenanceId } = await params;
   const pageId = Number(id);
   const maintenanceIdNumber = Number(maintenanceId);
-  if (!Number.isInteger(maintenanceIdNumber)) notFound();
+  if (!Number.isInteger(pageId) || !Number.isInteger(maintenanceIdNumber)) {
+    notFound();
+  }
 
   const subscribers = getQueryClient().prefetchQuery(
     trpc.pageSubscriber.list.queryOptions({ pageId }),
   );
-  await fetchQueryOrNotFound(
+  const maintenance = await fetchQueryOrNotFound(
     trpc.maintenance.get.queryOptions({ id: maintenanceIdNumber }),
   );
+  // the URL's page must own the maintenance
+  if (maintenance.pageId !== pageId) notFound();
   await subscribers;
 
   return (

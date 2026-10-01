@@ -1,14 +1,18 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
 import { useInvalidateStatusReport } from "./use-invalidate-status-report";
 
 /**
  * Posts a status-report update, notifies subscribers when asked, then
- * refetches the report and any incident that embeds it.
+ * refetches the report and any incident that embeds it. The update is
+ * persisted before notifying, so a notification failure is reported on its
+ * own and never rejects the publish (a retry would duplicate the update).
  */
 export function usePublishUpdate(statusReportId: number) {
   const trpc = useTRPC();
@@ -26,7 +30,14 @@ export function usePublishUpdate(statusReportId: number) {
     async publish(input: Parameters<typeof create.mutateAsync>[0]) {
       const update = await create.mutateAsync(input);
       if (update && input.notifySubscribers) {
-        await notify.mutateAsync({ id: update.id });
+        await notify.mutateAsync({ id: update.id }).catch((error) => {
+          toast.error(
+            errorMessage(
+              error,
+              "Update published, but subscribers were not notified",
+            ),
+          );
+        });
       }
       await Promise.all([
         invalidate(),

@@ -7,7 +7,7 @@ import {
   pageComponentImpact,
 } from "@openstatus/db/src/schema/page_components/constants";
 import { statusReportStatus } from "@openstatus/db/src/schema/status_reports/constants";
-import { Close, Next } from "@openstatus/icons";
+import { Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import { Input } from "@openstatus/ui/components/ui/input";
@@ -94,7 +94,13 @@ export function StatusReportComposer({
   const notify = canNotify && notifyChecked;
   const status = selected ?? getNextStatus(report.status);
   const now = formatDateForInput(new Date());
-  const disabled = publish.isPending || !message.trim() || date === "";
+  // the input's `max` is not enforced on the button handler
+  const invalidDate =
+    date !== null &&
+    (date === "" ||
+      Number.isNaN(new Date(date).getTime()) ||
+      new Date(date) > new Date());
+  const disabled = publish.isPending || !message.trim() || invalidDate;
 
   const byId = new Map<number, Component>(
     [...report.pageComponents, ...pageComponents].map((c) => [c.id, c]),
@@ -191,7 +197,6 @@ export function StatusReportComposer({
                       impact={currentImpacts.get(component.id)}
                     />
                     <ComponentListActions>
-                      <Next className="text-muted-foreground/50 size-3" />
                       <Select
                         value={override ?? ""}
                         onValueChange={(value) => {
@@ -206,7 +211,8 @@ export function StatusReportComposer({
                       >
                         <ComponentListSelectTrigger
                           aria-label={`${component.name} impact`}
-                          className="text-foreground font-mono"
+                          // fixed width keeps chevrons and close buttons in a column
+                          className="text-foreground w-52 font-mono"
                         >
                           <SelectValue
                             placeholder={

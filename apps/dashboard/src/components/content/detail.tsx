@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { useState } from "react";
 
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 export function DetailHeader({
   children,
@@ -223,6 +224,8 @@ export function DetailMetaTime({
   className,
   ...props
 }: Omit<React.ComponentProps<"time">, "dateTime"> & { date: Date }) {
+  // local-time text differs between server and browser
+  const hydrated = useHydrated();
   return (
     <HoverCardTimestamp date={date} side="bottom">
       <time
@@ -231,7 +234,7 @@ export function DetailMetaTime({
         className={cn("text-foreground font-mono", className)}
         {...props}
       >
-        {children ?? format(date, "LLL dd, HH:mm")}
+        {hydrated ? (children ?? format(date, "LLL dd, HH:mm")) : null}
       </time>
     </HoverCardTimestamp>
   );

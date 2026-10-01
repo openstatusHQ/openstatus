@@ -19,6 +19,7 @@ import {
   type MaintenanceStatus,
   maintenanceStatusConfig,
 } from "@/data/overview-events.client";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { formatDateForInput } from "@/lib/formatter";
 
 import { useUpdateMaintenance } from "./use-update-maintenance";
@@ -36,6 +37,8 @@ export function MaintenanceProperties({
   status: MaintenanceStatus;
   publicUrl: string;
 }) {
+  // datetime-local values and the timezone are browser-local
+  const hydrated = useHydrated();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   // null = pristine: the inputs follow the server copy until edited.
   const [draft, setDraft] = useState<{ from: string; to: string } | null>(null);
@@ -74,7 +77,7 @@ export function MaintenanceProperties({
           <PropertyInput
             type="datetime-local"
             aria-label="From"
-            value={from}
+            value={hydrated ? from : ""}
             onChange={(e) => setDraft({ from: e.target.value, to })}
           />
         </PropertyValue>
@@ -85,7 +88,7 @@ export function MaintenanceProperties({
           <PropertyInput
             type="datetime-local"
             aria-label="To"
-            value={to}
+            value={hydrated ? to : ""}
             onChange={(e) => setDraft({ from, to: e.target.value })}
           />
           {dirty ? (
@@ -94,8 +97,13 @@ export function MaintenanceProperties({
                 size="sm"
                 className="h-7"
                 disabled={invalid || isPending}
+                // an untouched field keeps its Date: the input drops seconds
                 onClick={() =>
-                  update({ startDate: new Date(from), endDate: new Date(to) })
+                  update({
+                    startDate:
+                      from === serverFrom ? maintenance.from : new Date(from),
+                    endDate: to === serverTo ? maintenance.to : new Date(to),
+                  })
                 }
               >
                 Save
@@ -133,9 +141,7 @@ export function MaintenanceProperties({
       <Property>
         <PropertyLabel>Timezone</PropertyLabel>
         <PropertyValue>
-          <span className="truncate" suppressHydrationWarning>
-            {timezone}
-          </span>
+          <span className="truncate">{hydrated ? timezone : null}</span>
         </PropertyValue>
       </Property>
     </PropertyList>

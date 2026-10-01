@@ -37,7 +37,7 @@ export function StatusReportActions({
   );
   const actions = getActions({
     "view-report": () => {
-      window.open(publicUrl, "_blank");
+      window.open(publicUrl, "_blank", "noopener,noreferrer");
     },
   });
 
@@ -45,7 +45,7 @@ export function StatusReportActions({
     <QuickActions
       actions={actions}
       deleteAction={{
-        confirmationValue: report.title,
+        confirmationValue: report.title || "status report",
         submitAction: async () => {
           await remove.mutateAsync({ id: report.id });
         },

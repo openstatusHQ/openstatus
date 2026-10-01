@@ -17,10 +17,12 @@ export default async function Page({
   const { id, reportId } = await params;
   const pageId = Number(id);
   const statusReportId = Number(reportId);
-  if (!Number.isInteger(statusReportId)) notFound();
+  if (!Number.isInteger(pageId) || !Number.isInteger(statusReportId)) {
+    notFound();
+  }
 
   const queryClient = getQueryClient();
-  await Promise.all([
+  const [report] = await Promise.all([
     fetchQueryOrNotFound(
       trpc.statusReport.get.queryOptions({ id: statusReportId }),
     ),
@@ -38,6 +40,8 @@ export default async function Page({
           : undefined,
       ),
   ]);
+  // the URL's page must own the report
+  if (report.pageId !== pageId) notFound();
 
   return (
     <HydrateClient>

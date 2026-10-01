@@ -1,9 +1,12 @@
+"use client";
+
 import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 import { formatDistanceToNowStrict } from "date-fns";
 
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { UserAvatar } from "@/components/common/user-avatar";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 export function Timeline({
   children,
@@ -171,6 +174,8 @@ export function TimelineTime({
   className,
   ...props
 }: Omit<React.ComponentProps<"time">, "dateTime"> & { date: Date }) {
+  // local-time text differs between server and browser
+  const hydrated = useHydrated();
   return (
     <HoverCardTimestamp date={date} side="left">
       <time
@@ -182,7 +187,9 @@ export function TimelineTime({
         )}
         {...props}
       >
-        {children ?? formatDistanceToNowStrict(date, { addSuffix: true })}
+        {hydrated
+          ? (children ?? formatDistanceToNowStrict(date, { addSuffix: true }))
+          : null}
       </time>
     </HoverCardTimestamp>
   );
