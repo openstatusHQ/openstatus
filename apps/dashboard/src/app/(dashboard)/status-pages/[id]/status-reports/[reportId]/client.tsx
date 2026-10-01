@@ -119,6 +119,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
                 report={report}
                 update={update}
                 index={updates.length - i}
+                groupOf={groupOf}
               />
             ))}
           </Timeline>

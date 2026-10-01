@@ -1,12 +1,22 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import {
+  type PageComponentImpact,
+  worstImpact,
+} from "@openstatus/db/src/schema/page_components/constants";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@openstatus/ui/components/ui/hover-card";
 import { useMutation } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { useState } from "react";
 
-import { StatusDot } from "@/components/common/status-dot";
-import { ComponentImpact } from "@/components/content/component-list";
+import {
+  ComponentImpact,
+  ComponentListName,
+} from "@/components/content/component-list";
 import { ProcessMessage } from "@/components/content/process-message";
 import {
   TimelineBody,
@@ -27,20 +37,59 @@ import {
 } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { StatusReportImpactBadge } from "./status-report-badge";
 import { useInvalidateStatusReport } from "./use-invalidate-status-report";
 
 type StatusReport = NonNullable<RouterOutputs["statusReport"]["get"]>;
 type StatusReportUpdate = StatusReport["updates"][number];
 
+/** Worst impact of the update; hover lists each component's own impact. */
+function TimelineImpact({
+  impacts,
+}: {
+  impacts: {
+    id: number;
+    name: string;
+    group?: string;
+    impact: PageComponentImpact;
+  }[];
+}) {
+  const worst = worstImpact(impacts.map((i) => i.impact));
+  return (
+    <HoverCard openDelay={100} closeDelay={100}>
+      <HoverCardTrigger asChild>
+        <StatusReportImpactBadge
+          impact={worst}
+          tabIndex={0}
+          className="focus-visible:ring-ring/50 cursor-default outline-none focus-visible:ring-[3px]"
+        />
+      </HoverCardTrigger>
+      <HoverCardContent align="start" className="w-auto min-w-56 p-3">
+        <ul className="flex flex-col gap-1.5 text-xs">
+          {impacts.map((ci) => (
+            <li key={ci.id} className="flex items-center justify-between gap-4">
+              <ComponentListName group={ci.group}>{ci.name}</ComponentListName>
+              <ComponentImpact impact={ci.impact} />
+            </li>
+          ))}
+        </ul>
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
 export function StatusReportTimelineItem({
   report,
   update,
   index,
+  groupOf,
 }: {
   report: StatusReport;
   update: StatusReportUpdate;
   /** 1-based, counted from the oldest update. */
   index: number;
+  /** component id → group name, for disambiguating same-named components */
+  groupOf?: Map<number, string>;
 }) {
   const trpc = useTRPC();
   const [editing, setEditing] = useState(false);
@@ -60,7 +109,16 @@ export function StatusReportTimelineItem({
   const Icon = icons.status[update.status];
   const impacts = update.componentImpacts.flatMap((ci) => {
     const component = components.find((c) => c.id === ci.pageComponentId);
-    return component ? [{ ...ci, name: component.name }] : [];
+    return component
+      ? [
+          {
+            id: component.id,
+            name: component.name,
+            group: groupOf?.get(component.id),
+            impact: ci.impact,
+          },
+        ]
+      : [];
   });
 
   return (
@@ -71,28 +129,11 @@ export function StatusReportTimelineItem({
       <TimelineContent>
         <TimelineHeader>
           <TimelineTitle>
-            <StatusDot variant={statusVariants[update.status]} />
-            <span className="font-mono font-semibold capitalize">
-              {update.status}
-            </span>
+            <span className="capitalize">{update.status}</span>
+            {impacts.length ? <TimelineImpact impacts={impacts} /> : null}
           </TimelineTitle>
-          <TimelineTime date={update.date}>
-            {format(update.date, "MM/dd/yyyy, hh:mm a")}
-          </TimelineTime>
+          <TimelineTime date={update.date} />
         </TimelineHeader>
-        {impacts.length ? (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-            {impacts.map((ci) => (
-              <span
-                key={ci.pageComponentId}
-                className="inline-flex items-center gap-1.5"
-              >
-                <span className="font-mono">{ci.name}</span>
-                <ComponentImpact impact={ci.impact} />
-              </span>
-            ))}
-          </div>
-        ) : null}
         {update.message ? (
           <TimelineBody className="prose prose-sm dark:prose-invert max-w-none">
             <ProcessMessage value={update.message} />
