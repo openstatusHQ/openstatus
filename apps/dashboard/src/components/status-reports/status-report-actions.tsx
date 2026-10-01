@@ -5,13 +5,18 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { getPageUrl } from "@/data/status-pages.client";
 import { getActions } from "@/data/status-reports.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 type StatusReport = NonNullable<RouterOutputs["statusReport"]["get"]>;
 
-export function StatusReportActions({ report }: { report: StatusReport }) {
+export function StatusReportActions({
+  report,
+  publicUrl,
+}: {
+  report: StatusReport;
+  publicUrl: string;
+}) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -32,10 +37,7 @@ export function StatusReportActions({ report }: { report: StatusReport }) {
   );
   const actions = getActions({
     "view-report": () => {
-      window.open(
-        `${getPageUrl(report.page)}/events/report/${report.id}`,
-        "_blank",
-      );
+      window.open(publicUrl, "_blank");
     },
   });
 

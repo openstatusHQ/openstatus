@@ -10,24 +10,21 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { StatusDot } from "@/components/common/status-dot";
-import { UserAvatar } from "@/components/common/user-avatar";
 import {
   Composer,
   ComposerFooter,
   ComposerHeader,
-  ComposerHint,
   ComposerPreview,
-  ComposerTabs,
   ComposerTextarea,
 } from "@/components/content/composer";
-import { TimelineItem } from "@/components/content/timeline";
+import { TimelineAvatar, TimelineItem } from "@/components/content/timeline";
 import { personName, statusConfig } from "@/data/managed-incidents.client";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
 import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { useInvalidateIncident } from "./use-invalidate-incident";
@@ -91,8 +88,7 @@ export function IncidentComposer({
     toast.promise(promise, {
       loading: "Posting...",
       success: "Posted",
-      error: (error) =>
-        isTRPCClientError(error) ? error.message : "Failed to post",
+      error: (error) => errorMessage(error, "Failed to post"),
     });
     await promise;
     setConfirmCancel(false);
@@ -110,26 +106,17 @@ export function IncidentComposer({
         pending={pending}
         onConfirm={() => submit().catch(console.error)}
       />
-      <UserAvatar
+      <TimelineAvatar
         name={user ? personName(user) : null}
         src={user?.photoUrl}
-        className="size-8 text-xs"
       />
       <Composer>
-        <ComposerHeader>
-          <ComposerTabs />
-          <ComposerHint>Markdown</ComposerHint>
-        </ComposerHeader>
+        <ComposerHeader />
         <ComposerTextarea
           placeholder="What's happening? Impact, what you've found, what's next."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              requestSubmit();
-            }
-          }}
+          onSubmit={requestSubmit}
         />
         <ComposerPreview value={message} />
         <ComposerFooter>

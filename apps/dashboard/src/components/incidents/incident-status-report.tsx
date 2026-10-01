@@ -15,7 +15,6 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -29,16 +28,12 @@ import {
   ActionCardHeader,
   ActionCardTitle,
 } from "@/components/content/action-card";
+import { usePublishUpdate } from "@/components/status-reports/use-publish-update";
 import { statusVariants } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
-
-import { usePublicUpdate } from "./use-public-update";
+import { errorMessage } from "@/lib/trpc/error";
 
 type Incident = NonNullable<RouterOutputs["incident"]["get"]>;
-
-function toastError(error: Error) {
-  return isTRPCClientError(error) ? error.message : "Something went wrong";
-}
 
 export function IncidentStatusReport({
   incident,
@@ -97,7 +92,7 @@ function LinkedReport({
   );
   const [message, setMessage] = useState("");
   const [notifySubscribers, setNotifySubscribers] = useState(canNotify);
-  const update = usePublicUpdate(incident.id);
+  const update = usePublishUpdate(report.id);
   const unlink = useMutation(
     trpc.incident.unlinkStatusReport.mutationOptions({
       onSuccess: () =>
@@ -111,16 +106,17 @@ function LinkedReport({
   async function post() {
     const parsed = statusReportStatus.find((s) => s === status);
     if (!parsed) return;
-    const promise = update.post({
+    const promise = update.publish({
       statusReportId: report.id,
       status: parsed,
       message,
+      date: new Date(),
       notifySubscribers,
     });
     toast.promise(promise, {
       loading: "Posting public update...",
       success: "Public update posted",
-      error: toastError,
+      error: (error) => errorMessage(error),
     });
     await promise;
     setMessage("");
@@ -229,9 +225,6 @@ function UnlinkedReport({
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { data: reports } = useQuery(
-    trpc.statusReport.list.queryOptions({ order: "desc" }),
-  );
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
   const [draftMode, setMode] = useState<"link" | "create" | null>(null);
   const [reportId, setReportId] = useState<string>("");
@@ -261,6 +254,10 @@ function UnlinkedReport({
   const closed = incident.closedAt !== null;
   // Closing mid-edit would otherwise strand a form whose footer is gone.
   const mode = closed ? null : draftMode;
+  const { data: reports } = useQuery({
+    ...trpc.statusReport.list.queryOptions({ order: "desc" }),
+    enabled: mode === "link",
+  });
 
   async function createReport() {
     const promise = (async () => {
@@ -281,7 +278,7 @@ function UnlinkedReport({
     toast.promise(promise, {
       loading: "Creating status report...",
       success: "Status report created",
-      error: toastError,
+      error: (error) => errorMessage(error),
     });
     await promise;
     setMode(null);
@@ -398,7 +395,7 @@ function UnlinkedReport({
                       {
                         loading: "Linking...",
                         success: "Status report linked",
-                        error: toastError,
+                        error: (error) => errorMessage(error),
                       },
                     )
                   }

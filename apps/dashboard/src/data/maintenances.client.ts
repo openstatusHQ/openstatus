@@ -1,15 +1,6 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { Settings, Delete } from "@openstatus/icons";
 
-import type { StatusVariant } from "@/components/common/status-dot";
-import type { MaintenanceStatus } from "@/data/overview-events.client";
-
-export const maintenanceStatusVariants = {
-  scheduled: "info",
-  "in-progress": "warning",
-  completed: "success",
-} as const satisfies Record<MaintenanceStatus, StatusVariant>;
-
 export const actions = [
   {
     id: "edit",

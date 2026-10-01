@@ -213,7 +213,6 @@ export function Client({ id }: { id: number }) {
       </DetailContent>
       {report ? (
         <ResolveReportDialog
-          incidentId={incident.id}
           report={report}
           canNotify={canNotify}
           defaultMessage={followUp?.note ?? ""}

@@ -4,7 +4,6 @@ import type { RouterOutputs } from "@openstatus/api";
 import type { StatusReportStatus } from "@openstatus/db/src/schema";
 import {
   type PageComponentImpact,
-  currentImpactsFromUpdates,
   pageComponentImpact,
 } from "@openstatus/db/src/schema/page_components/constants";
 import { statusReportStatus } from "@openstatus/db/src/schema/status_reports/constants";
@@ -20,15 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { StatusDot } from "@/components/common/status-dot";
-import { UserAvatar } from "@/components/common/user-avatar";
 import {
   ComponentList,
+  ComponentListActions,
+  ComponentListAdd,
   ComponentListImpact,
   ComponentListItem,
   ComponentListName,
@@ -38,29 +37,27 @@ import {
   Composer,
   ComposerFooter,
   ComposerHeader,
-  ComposerHint,
   ComposerPreview,
   ComposerSection,
-  ComposerTabs,
   ComposerTextarea,
 } from "@/components/content/composer";
-import { TimelineItem } from "@/components/content/timeline";
+import { TimelineAvatar, TimelineItem } from "@/components/content/timeline";
 import { personName } from "@/data/managed-incidents.client";
 import {
-  defaultComponentImpacts,
   getNextStatus,
   impactConfig,
-  impactVariants,
+  impactDisplay,
   statusVariants,
   toCreateStatusReportUpdateInput,
-  untriagedImpact,
 } from "@/data/status-report-updates.client";
 import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
-import { useInvalidateStatusReport } from "./use-invalidate-status-report";
+import { usePublishUpdate } from "./use-publish-update";
 
 type StatusReport = NonNullable<RouterOutputs["statusReport"]["get"]>;
+type Component = { id: number; name: string; groupId?: number | null };
 
 /**
  * Publishes a status report update. Impact rows default to "No change"
@@ -69,12 +66,16 @@ type StatusReport = NonNullable<RouterOutputs["statusReport"]["get"]>;
  */
 export function StatusReportComposer({
   report,
+  currentImpacts,
   pageComponents,
+  groups,
   canNotify,
 }: {
   report: StatusReport;
+  currentImpacts: Map<number, PageComponentImpact>;
   /** Every component on the page; the ones not on the report can be added. */
-  pageComponents: { id: number; name: string }[];
+  pageComponents: Component[];
+  groups: { id: number; name: string }[];
   /** Whether the plan includes subscriber notifications. */
   canNotify: boolean;
 }) {
@@ -82,82 +83,66 @@ export function StatusReportComposer({
   const { data: user } = useQuery(trpc.user.get.queryOptions());
   const [message, setMessage] = useState("");
   const [notifyChecked, setNotifyChecked] = useState(true);
-  const notify = canNotify && notifyChecked;
   const [selected, setSelected] = useState<StatusReportStatus | null>(null);
-  const [date, setDate] = useState(() => formatDateForInput(new Date()));
+  // null = now, resolved at publish time so an open composer never backdates.
+  const [date, setDate] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<Map<number, PageComponentImpact>>(
     () => new Map(),
   );
-  const [removed, setRemoved] = useState<Set<number>>(() => new Set());
-  const [added, setAdded] = useState<number[]>([]);
+  // null = the report's own components; an edit replaces the set for this update.
+  const [ids, setIds] = useState<number[] | null>(null);
 
-  const invalidate = useInvalidateStatusReport(report.id);
-  const create = useMutation(
-    trpc.statusReport.createStatusReportUpdate.mutationOptions(),
-  );
-  const send = useMutation(
-    trpc.subscriberNotification.statusReport.mutationOptions(),
-  );
-  const pending = create.isPending || send.isPending;
+  const publish = usePublishUpdate(report.id);
+  const notify = canNotify && notifyChecked;
   const status = selected ?? getNextStatus(report.status);
-  const disabled = pending || !message.trim() || !date;
+  const now = formatDateForInput(new Date());
+  const disabled = publish.isPending || !message.trim() || date === "";
 
-  const currentImpacts = currentImpactsFromUpdates(report.updates);
+  const byId = new Map<number, Component>(
+    [...report.pageComponents, ...pageComponents].map((c) => [c.id, c]),
+  );
+  const componentIds = ids ?? report.pageComponents.map((c) => c.id);
+  const components = componentIds.flatMap((id) => byId.get(id) ?? []);
+  const addable = pageComponents.filter((c) => !componentIds.includes(c.id));
   const reportHasImpacts = report.updates.some(
     (u) => u.componentImpacts.length > 0,
   );
-  const components = [
-    ...report.pageComponents,
-    ...added.flatMap((id) => pageComponents.filter((c) => c.id === id)),
-  ].filter((c) => !removed.has(c.id));
-  const addable = pageComponents.filter(
-    (c) => !components.some((rc) => rc.id === c.id),
-  );
-  const defaults = new Map(
-    defaultComponentImpacts({
-      components,
-      currentImpacts,
-      nextStatus: status,
-    }).map((ci) => [ci.pageComponentId, ci.impact]),
-  );
+  const impactFor = (id: number): PageComponentImpact =>
+    overrides.get(id) ??
+    (status === "resolved"
+      ? "operational"
+      : (currentImpacts.get(id) ?? "operational"));
 
   function reset() {
     setMessage("");
     setSelected(null);
-    setDate(formatDateForInput(new Date()));
+    setDate(null);
     setOverrides(new Map());
-    setRemoved(new Set());
-    setAdded([]);
+    setIds(null);
   }
 
   async function submit() {
     if (disabled) return;
-    const promise = (async () => {
-      const update = await create.mutateAsync(
-        toCreateStatusReportUpdateInput({
-          statusReportId: report.id,
-          values: {
-            status,
-            message: message.trim(),
-            date: new Date(date),
-            componentImpacts: components.map((c) => ({
-              pageComponentId: c.id,
-              impact:
-                overrides.get(c.id) ?? defaults.get(c.id) ?? "operational",
-            })),
-            notifySubscribers: notify,
-          },
-          reportHasImpacts,
-        }),
-      );
-      if (update && notify) await send.mutateAsync({ id: update.id });
-      await invalidate();
-    })();
+    const promise = publish.publish(
+      toCreateStatusReportUpdateInput({
+        statusReportId: report.id,
+        values: {
+          status,
+          message: message.trim(),
+          date: date ? new Date(date) : new Date(),
+          componentImpacts: components.map((c) => ({
+            pageComponentId: c.id,
+            impact: impactFor(c.id),
+          })),
+          notifySubscribers: notify,
+        },
+        reportHasImpacts,
+      }),
+    );
     toast.promise(promise, {
       loading: "Publishing...",
       success: "Update published",
-      error: (error) =>
-        isTRPCClientError(error) ? error.message : "Failed to publish",
+      error: (error) => errorMessage(error, "Failed to publish"),
     });
     await promise;
     reset();
@@ -165,20 +150,17 @@ export function StatusReportComposer({
 
   return (
     <TimelineItem>
-      <UserAvatar
+      <TimelineAvatar
         name={user ? personName(user) : null}
         src={user?.photoUrl}
-        className="size-8 text-xs"
       />
       <Composer>
-        <ComposerHeader>
-          <ComposerTabs />
-          <ComposerHint>Markdown</ComposerHint>
-        </ComposerHeader>
+        <ComposerHeader />
         <ComposerTextarea
           placeholder="What changed? Customers will read this on the status page."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          onSubmit={() => submit().catch(console.error)}
         />
         <ComposerPreview value={message} />
         {pageComponents.length ? (
@@ -203,122 +185,94 @@ export function StatusReportComposer({
             </div>
             <ComponentList>
               {components.map((component) => {
-                const current = currentImpacts.get(component.id);
+                const current = impactDisplay(currentImpacts.get(component.id));
                 const override = overrides.get(component.id);
                 return (
                   <ComponentListItem key={component.id}>
-                    <StatusDot
-                      variant={current ? impactVariants[current] : "default"}
-                    />
+                    <StatusDot variant={current.variant} />
                     <ComponentListName>{component.name}</ComponentListName>
-                    <ComponentListImpact>
-                      {current
-                        ? impactConfig[current].label
-                        : untriagedImpact.label}
-                    </ComponentListImpact>
-                    <Next className="text-muted-foreground/50 ml-auto size-3 shrink-0" />
-                    <Select
-                      value={override ?? ""}
-                      onValueChange={(value) => {
-                        const impact = pageComponentImpact.find(
-                          (i) => i === value,
-                        );
-                        if (!impact) return;
-                        setOverrides((prev) =>
-                          new Map(prev).set(component.id, impact),
-                        );
-                      }}
-                    >
-                      <ComponentListSelectTrigger
-                        aria-label={`${component.name} impact`}
-                        className="text-foreground font-mono"
+                    <ComponentListImpact>{current.label}</ComponentListImpact>
+                    <ComponentListActions>
+                      <Next className="text-muted-foreground/50 size-3" />
+                      <Select
+                        value={override ?? ""}
+                        onValueChange={(value) => {
+                          const impact = pageComponentImpact.find(
+                            (i) => i === value,
+                          );
+                          if (!impact) return;
+                          setOverrides((prev) =>
+                            new Map(prev).set(component.id, impact),
+                          );
+                        }}
                       >
-                        <SelectValue
-                          placeholder={
-                            <span className="text-muted-foreground inline-flex items-center gap-2">
+                        <ComponentListSelectTrigger
+                          aria-label={`${component.name} impact`}
+                          className="text-foreground font-mono"
+                        >
+                          <SelectValue
+                            placeholder={
+                              <span className="text-muted-foreground inline-flex items-center gap-2">
+                                <StatusDot
+                                  variant={
+                                    status === "resolved"
+                                      ? "success"
+                                      : "default"
+                                  }
+                                />
+                                {status === "resolved"
+                                  ? "Operational"
+                                  : "No change"}
+                              </span>
+                            }
+                          />
+                        </ComponentListSelectTrigger>
+                        <SelectContent>
+                          {pageComponentImpact.map((impact) => (
+                            <SelectItem
+                              key={impact}
+                              value={impact}
+                              className="font-mono"
+                            >
                               <StatusDot
-                                variant={
-                                  status === "resolved" ? "success" : "default"
-                                }
+                                variant={impactConfig[impact].variant}
                               />
-                              {status === "resolved"
-                                ? "Operational"
-                                : "No change"}
-                            </span>
-                          }
-                        />
-                      </ComponentListSelectTrigger>
-                      <SelectContent>
-                        {pageComponentImpact.map((impact) => (
-                          <SelectItem
-                            key={impact}
-                            value={impact}
-                            className="font-mono"
-                          >
-                            <StatusDot variant={impactVariants[impact]} />
-                            {impactConfig[impact].label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground size-7"
-                      aria-label={`Leave ${component.name} out of this update`}
-                      onClick={() => {
-                        setAdded((prev) =>
-                          prev.filter((id) => id !== component.id),
-                        );
-                        setRemoved((prev) => new Set(prev).add(component.id));
-                      }}
-                    >
-                      <Close />
-                    </Button>
+                              {impactConfig[impact].label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground size-7"
+                        aria-label={`Leave ${component.name} out of this update`}
+                        onClick={() =>
+                          setIds(
+                            componentIds.filter((id) => id !== component.id),
+                          )
+                        }
+                      >
+                        <Close />
+                      </Button>
+                    </ComponentListActions>
                   </ComponentListItem>
                 );
               })}
             </ComponentList>
-            <Select
-              value=""
-              disabled={addable.length === 0}
-              onValueChange={(value) => {
-                const id = Number(value);
-                setRemoved((prev) => {
-                  const next = new Set(prev);
-                  next.delete(id);
-                  return next;
-                });
-                if (report.pageComponents.some((c) => c.id === id)) return;
-                setAdded((prev) => [...prev, id]);
+            <ComponentListAdd
+              components={addable}
+              groups={groups}
+              onAdd={(id) => {
+                setIds([...componentIds, id]);
                 // a component joins the report with a concrete impact
-                setOverrides((prev) =>
-                  new Map(prev).set(id, "degraded_performance"),
-                );
+                if (!report.pageComponents.some((c) => c.id === id)) {
+                  setOverrides((prev) =>
+                    new Map(prev).set(id, "degraded_performance"),
+                  );
+                }
               }}
-            >
-              <ComponentListSelectTrigger
-                aria-label="Add component"
-                className="text-muted-foreground"
-              >
-                <SelectValue
-                  placeholder={
-                    addable.length ? "Add component" : "All components added"
-                  }
-                />
-              </ComponentListSelectTrigger>
-              <SelectContent>
-                {addable.map((c) => (
-                  <SelectItem
-                    key={c.id}
-                    value={String(c.id)}
-                    className="font-mono"
-                  >
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           </ComposerSection>
         ) : null}
         <ComposerFooter>
@@ -353,8 +307,8 @@ export function StatusReportComposer({
             <Input
               type="datetime-local"
               aria-label="Date"
-              value={date}
-              max={formatDateForInput(new Date())}
+              value={date ?? now}
+              max={now}
               onChange={(e) => setDate(e.target.value)}
               className="bg-background text-foreground h-8 w-auto font-mono md:text-sm"
             />

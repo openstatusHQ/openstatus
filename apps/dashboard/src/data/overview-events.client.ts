@@ -8,6 +8,12 @@ import {
   Maintenance as MaintenanceIcon,
 } from "@openstatus/icons";
 
+import type { StatusVariant } from "@/components/common/status-dot";
+import {
+  reportResolvedAt,
+  reportStartedAt,
+} from "@/data/status-reports.client";
+
 type Incident = RouterOutputs["monitorIncident"]["list"][number];
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
@@ -34,10 +40,21 @@ export const incidentStatusConfig = {
 export type IncidentStatus = keyof typeof incidentStatusConfig;
 
 export const maintenanceStatusConfig = {
-  scheduled: { label: "Scheduled", color: "text-info/80" },
-  "in-progress": { label: "In Progress", color: "text-info/80" },
-  completed: { label: "Completed", color: "text-info/80" },
-} as const;
+  scheduled: { label: "Scheduled", color: "text-info/80", variant: "info" },
+  "in-progress": {
+    label: "In Progress",
+    color: "text-info/80",
+    variant: "warning",
+  },
+  completed: {
+    label: "Completed",
+    color: "text-info/80",
+    variant: "success",
+  },
+} as const satisfies Record<
+  string,
+  { label: string; color: string; variant: StatusVariant }
+>;
 
 export type MaintenanceStatus = keyof typeof maintenanceStatusConfig;
 
@@ -57,20 +74,6 @@ export function getMaintenanceStatus(
   if (now < maintenance.from) return "scheduled";
   if (now > maintenance.to) return "completed";
   return "in-progress";
-}
-
-function reportStartedAt(report: StatusReport): Date {
-  const dates = report.updates.map((u) => u.date.getTime());
-  if (dates.length) return new Date(Math.min(...dates));
-  return report.createdAt ?? new Date(0);
-}
-
-function reportResolvedAt(report: StatusReport): Date | null {
-  if (report.status !== "resolved") return null;
-  const dates = report.updates.map((u) => u.date.getTime());
-  // legacy resolved report without updates: fall back to updatedAt
-  if (!dates.length) return report.updatedAt ?? report.createdAt;
-  return new Date(Math.max(...dates));
 }
 
 export function getStartedAt(event: OverviewEvent): Date {

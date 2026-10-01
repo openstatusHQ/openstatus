@@ -8,27 +8,31 @@ import type { FormValues as StatusReportUpdateFormValues } from "@/components/fo
 export const impactConfig = {
   operational: {
     label: "Operational",
+    variant: "success",
     color:
       "text-success/80 data-[state=selected]:bg-success/10 data-[state=selected]:text-success",
   },
   degraded_performance: {
     label: "Degraded performance",
+    variant: "warning",
     color:
       "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
   },
   partial_outage: {
     label: "Partial outage",
+    variant: "warning",
     color:
       "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
   },
   major_outage: {
     label: "Major outage",
+    variant: "destructive",
     color:
       "text-destructive/80 data-[state=selected]:bg-destructive/10 data-[state=selected]:text-destructive",
   },
 } as const satisfies Record<
   PageComponentImpact,
-  { label: string; color: string }
+  { label: string; variant: StatusVariant; color: string }
 >;
 
 /** Set equality regardless of order — used to skip no-op impact writes. */
@@ -47,8 +51,14 @@ export function impactsEqual(
 // legacy report (created before impact tracking): no impact rows
 export const untriagedImpact = {
   label: "Untriaged",
+  variant: "default",
   color: "text-muted-foreground/80",
-} as const;
+} as const satisfies { label: string; variant: StatusVariant; color: string };
+
+/** Label + dot variant for an impact; nullish reads as untriaged. */
+export function impactDisplay(impact: PageComponentImpact | null | undefined) {
+  return impact ? impactConfig[impact] : untriagedImpact;
+}
 
 export const actions = [
   {
@@ -89,13 +99,6 @@ export const colors = {
     "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
 } as const satisfies Record<StatusReportStatus, string>;
 
-export const impactVariants = {
-  operational: "success",
-  degraded_performance: "warning",
-  partial_outage: "warning",
-  major_outage: "destructive",
-} as const satisfies Record<PageComponentImpact, StatusVariant>;
-
 export const statusVariants = {
   resolved: "success",
   investigating: "destructive",
@@ -121,24 +124,6 @@ export function getNextStatus(currentStatus: string): StatusReportStatus {
   return (
     statusProgression[currentStatus as StatusReportStatus] ?? "investigating"
   );
-}
-
-export function defaultComponentImpacts({
-  components,
-  currentImpacts,
-  nextStatus,
-}: {
-  components: { id: number }[];
-  currentImpacts: Map<number, PageComponentImpact>;
-  nextStatus: StatusReportStatus;
-}): NonNullable<StatusReportUpdateFormValues["componentImpacts"]> {
-  return components.map((c) => ({
-    pageComponentId: c.id,
-    impact:
-      nextStatus === "resolved"
-        ? "operational"
-        : (currentImpacts.get(c.id) ?? "operational"),
-  }));
 }
 
 // a legacy report stays legacy unless the operator actively sets a

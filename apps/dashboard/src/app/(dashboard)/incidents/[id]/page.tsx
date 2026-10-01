@@ -25,7 +25,7 @@ export default async function Page({
     ),
     queryClient.prefetchQuery(trpc.member.list.queryOptions()),
     queryClient.prefetchQuery(
-      trpc.statusReport.list.queryOptions({ order: "desc" }),
+      trpc.incident.getPostmortem.queryOptions({ id: incidentId }),
     ),
   ]);
 

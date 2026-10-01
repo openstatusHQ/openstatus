@@ -5,7 +5,6 @@ import { AI } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { InputGroupButton } from "@openstatus/ui/components/ui/input-group";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -14,9 +13,7 @@ import {
   Composer,
   ComposerFooter,
   ComposerHeader,
-  ComposerHint,
   ComposerPreview,
-  ComposerTabs,
   ComposerTextarea,
 } from "@/components/content/composer";
 import {
@@ -25,6 +22,7 @@ import {
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
 import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { useInvalidateIncident } from "./use-invalidate-incident";
@@ -46,10 +44,6 @@ const TEMPLATE = `## Summary
 ## Action items
 - [ ] `;
 
-function errorText(error: { message: string }) {
-  return isTRPCClientError(error) ? error.message : "Something went wrong";
-}
-
 /** The postmortem editor: draft by hand or with the agent, then approve. */
 export function IncidentPostmortem({
   incident,
@@ -61,9 +55,10 @@ export function IncidentPostmortem({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const invalidate = useInvalidateIncident(incident.id);
-  const { data: postmortem } = useQuery(
-    trpc.incident.getPostmortem.queryOptions({ id: incident.id }),
-  );
+  const { data: postmortem } = useQuery({
+    ...trpc.incident.getPostmortem.queryOptions({ id: incident.id }),
+    enabled: incident.status === "resolved",
+  });
   // null = pristine: the editor follows the server copy, so a background
   // refetch never clobbers unsaved edits.
   const [draft, setDraft] = useState<string | null>(null);
@@ -79,7 +74,7 @@ export function IncidentPostmortem({
       invalidate(),
     ]);
   const onError = (error: { message: string }) => {
-    toast.error(errorText(error));
+    toast.error(errorMessage(error));
   };
 
   const save = useMutation(
@@ -141,9 +136,8 @@ export function IncidentPostmortem({
           : "No postmortem yet";
 
   return (
-    <Composer defaultValue={approved ? "preview" : "write"}>
+    <Composer size="lg" defaultValue={approved ? "preview" : "write"}>
       <ComposerHeader>
-        <ComposerTabs />
         {agentAllowed && !approved ? (
           <InputGroupButton
             variant="outline"
@@ -153,23 +147,19 @@ export function IncidentPostmortem({
             <AI />
             {draftWithAgent.isPending ? "Drafting..." : "Draft with agent"}
           </InputGroupButton>
-        ) : (
-          <ComposerHint>Markdown</ComposerHint>
-        )}
+        ) : null}
       </ComposerHeader>
       <ComposerTextarea
         aria-label="Postmortem"
-        className="min-h-96"
         value={content}
         onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && canSave) {
-            e.preventDefault();
-            save.mutate({ id: incident.id, content, draftedBy: "user" });
-          }
-        }}
+        onSubmit={
+          canSave
+            ? () => save.mutate({ id: incident.id, content, draftedBy: "user" })
+            : undefined
+        }
       />
-      <ComposerPreview value={content} className="min-h-96" />
+      <ComposerPreview value={content} />
       <ComposerFooter>
         <div className="flex items-center gap-2">
           {postmortem ? (

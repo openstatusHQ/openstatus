@@ -2,8 +2,6 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { formatDistanceStrict } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -18,17 +16,12 @@ import {
   PropertyValue,
 } from "@/components/content/property-list";
 import {
-  maintenanceStatusVariants,
-  toUpdateInput,
-} from "@/data/maintenances.client";
-import {
   type MaintenanceStatus,
   maintenanceStatusConfig,
 } from "@/data/overview-events.client";
 import { formatDateForInput } from "@/lib/formatter";
-import { useTRPC } from "@/lib/trpc/client";
 
-import { useInvalidateMaintenance } from "./use-invalidate-maintenance";
+import { useUpdateMaintenance } from "./use-update-maintenance";
 
 type Maintenance = NonNullable<RouterOutputs["maintenance"]["get"]>;
 
@@ -41,41 +34,29 @@ export function MaintenanceProperties({
   page: { id: number; title: string };
   status: MaintenanceStatus;
 }) {
-  const trpc = useTRPC();
-  const invalidate = useInvalidateMaintenance(maintenance.id);
-  const [from, setFrom] = useState(formatDateForInput(maintenance.from));
-  const [to, setTo] = useState(formatDateForInput(maintenance.to));
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // null = pristine: the inputs follow the server copy until edited.
+  const [draft, setDraft] = useState<{ from: string; to: string } | null>(null);
+  const serverFrom = formatDateForInput(maintenance.from);
+  const serverTo = formatDateForInput(maintenance.to);
+  const from = draft?.from ?? serverFrom;
+  const to = draft?.to ?? serverTo;
+  const { update, isPending } = useUpdateMaintenance(maintenance.id, {
+    onSuccess: () => {
+      toast.success("Schedule saved");
+      setDraft(null);
+    },
+  });
 
-  const update = useMutation(
-    trpc.maintenance.update.mutationOptions({
-      onSuccess: () => {
-        toast.success("Schedule saved");
-        return invalidate();
-      },
-      onError: (error) => {
-        toast.error(
-          isTRPCClientError(error) ? error.message : "Failed to save",
-        );
-      },
-    }),
-  );
-
-  const dirty =
-    from !== formatDateForInput(maintenance.from) ||
-    to !== formatDateForInput(maintenance.to);
+  const dirty = draft !== null && (from !== serverFrom || to !== serverTo);
   const invalid = !from || !to || new Date(to) <= new Date(from);
-  const reset = () => {
-    setFrom(formatDateForInput(maintenance.from));
-    setTo(formatDateForInput(maintenance.to));
-  };
 
   return (
     <PropertyList>
       <Property>
         <PropertyLabel>Status</PropertyLabel>
         <PropertyValue>
-          <StatusDot variant={maintenanceStatusVariants[status]} />
+          <StatusDot variant={maintenanceStatusConfig[status].variant} />
           {maintenanceStatusConfig[status].label}
         </PropertyValue>
       </Property>
@@ -97,7 +78,7 @@ export function MaintenanceProperties({
             type="datetime-local"
             aria-label="From"
             value={from}
-            onChange={(e) => setFrom(e.target.value)}
+            onChange={(e) => setDraft({ from: e.target.value, to })}
           />
         </PropertyValue>
       </Property>
@@ -108,20 +89,16 @@ export function MaintenanceProperties({
             type="datetime-local"
             aria-label="To"
             value={to}
-            onChange={(e) => setTo(e.target.value)}
+            onChange={(e) => setDraft({ from, to: e.target.value })}
           />
           {dirty ? (
             <div className="flex w-full items-center gap-1 font-sans">
               <Button
                 size="sm"
                 className="h-7"
-                disabled={invalid || update.isPending}
+                disabled={invalid || isPending}
                 onClick={() =>
-                  update.mutate({
-                    ...toUpdateInput(maintenance),
-                    startDate: new Date(from),
-                    endDate: new Date(to),
-                  })
+                  update({ startDate: new Date(from), endDate: new Date(to) })
                 }
               >
                 Save
@@ -130,8 +107,8 @@ export function MaintenanceProperties({
                 size="sm"
                 variant="ghost"
                 className="h-7"
-                disabled={update.isPending}
-                onClick={reset}
+                disabled={isPending}
+                onClick={() => setDraft(null)}
               >
                 Reset
               </Button>

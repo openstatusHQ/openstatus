@@ -17,6 +17,7 @@ import {
   StatusReportStatusBadge,
 } from "@/components/status-reports/status-report-badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { reportStartedAt } from "@/data/status-reports.client";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -100,9 +101,7 @@ export const columns: ColumnDef<StatusReport>[] = [
   },
   {
     id: "startedAt",
-    accessorFn: (row) =>
-      row.updates.sort((a, b) => a.date.getTime() - b.date.getTime())[0]
-        ?.date ?? row.createdAt,
+    accessorFn: (row) => reportStartedAt(row),
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Started At" />
     ),

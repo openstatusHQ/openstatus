@@ -3,13 +3,13 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
 import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { useInvalidateIncident } from "./use-invalidate-incident";
@@ -29,9 +29,11 @@ export function IncidentActions({ incident }: { incident: Incident }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const invalidate = useInvalidateIncident(incident.id);
-  const { data: postmortem } = useQuery(
-    trpc.incident.getPostmortem.queryOptions({ id: incident.id }),
-  );
+  const closable = incident.status === "resolved" && incident.closedAt === null;
+  const { data: postmortem } = useQuery({
+    ...trpc.incident.getPostmortem.queryOptions({ id: incident.id }),
+    enabled: closable,
+  });
   const approved = postmortem?.status === "approved";
   const [confirmClose, setConfirmClose] = useState(false);
 
@@ -42,9 +44,7 @@ export function IncidentActions({ incident }: { incident: Incident }) {
         setConfirmClose(false);
       },
       onError: (error) => {
-        toast.error(
-          isTRPCClientError(error) ? error.message : "Failed to close",
-        );
+        toast.error(errorMessage(error, "Failed to close"));
       },
     }),
   );
@@ -60,7 +60,6 @@ export function IncidentActions({ incident }: { incident: Incident }) {
   );
 
   if (!hasIncidentActions(incident)) return null;
-  const closable = incident.status === "resolved" && incident.closedAt === null;
 
   return (
     <>

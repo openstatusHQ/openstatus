@@ -3,10 +3,8 @@ import type { PageComponentImpact } from "@openstatus/db/src/schema/page_compone
 
 import { StatusBadge } from "@/components/common/status-badge";
 import {
-  impactConfig,
-  impactVariants,
+  impactDisplay,
   statusVariants,
-  untriagedImpact,
 } from "@/data/status-report-updates.client";
 
 type BadgeProps = Omit<
@@ -30,16 +28,10 @@ export function StatusReportImpactBadge({
   impact,
   ...props
 }: BadgeProps & { impact: PageComponentImpact | null }) {
-  if (!impact) {
-    return (
-      <StatusBadge variant="default" {...props}>
-        {untriagedImpact.label}
-      </StatusBadge>
-    );
-  }
+  const display = impactDisplay(impact);
   return (
-    <StatusBadge variant={impactVariants[impact]} {...props}>
-      {impactConfig[impact].label}
+    <StatusBadge variant={display.variant} {...props}>
+      {display.label}
     </StatusBadge>
   );
 }

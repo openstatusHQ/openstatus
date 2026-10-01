@@ -5,6 +5,7 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 
 import { Link } from "@/components/common/link";
+import { StatusDot } from "@/components/common/status-dot";
 import {
   ActionCard,
   ActionCardDescription,
@@ -20,14 +21,15 @@ import {
 } from "@/components/content/property-list";
 import { useTRPC } from "@/lib/trpc/client";
 
+/** Subscriber count plus the "it is live" card for anything published on a page. */
 export function Notifications({
   pageId,
   publicUrl,
-  description = "Customers can read this on your status page.",
+  description,
 }: {
   pageId: number;
   publicUrl: string;
-  description?: string;
+  description: string;
 }) {
   const trpc = useTRPC();
   const { data: subscribers } = useQuery(
@@ -59,10 +61,7 @@ export function Notifications({
       <ActionCard className="border-dashed">
         <ActionCardHeader>
           <ActionCardTitle className="flex items-center gap-2 text-sm">
-            <span
-              aria-hidden="true"
-              className="bg-success size-2 shrink-0 rounded-full"
-            />
+            <StatusDot variant="success" />
             Published
           </ActionCardTitle>
           <ActionCardDescription>{description}</ActionCardDescription>

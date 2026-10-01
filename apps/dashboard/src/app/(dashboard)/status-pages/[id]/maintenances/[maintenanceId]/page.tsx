@@ -19,13 +19,13 @@ export default async function Page({
   const maintenanceIdNumber = Number(maintenanceId);
   if (!Number.isInteger(maintenanceIdNumber)) notFound();
 
+  const subscribers = getQueryClient().prefetchQuery(
+    trpc.pageSubscriber.list.queryOptions({ pageId }),
+  );
   await fetchQueryOrNotFound(
     trpc.maintenance.get.queryOptions({ id: maintenanceIdNumber }),
   );
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(
-    trpc.pageSubscriber.list.queryOptions({ pageId }),
-  );
+  await subscribers;
 
   return (
     <HydrateClient>

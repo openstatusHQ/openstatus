@@ -23,7 +23,6 @@ import {
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -38,6 +37,7 @@ import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { personName, severityConfig } from "@/data/managed-incidents.client";
 import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
 const NONE = "none";
 
@@ -130,8 +130,7 @@ export function FormDeclareIncident({
         toast.promise(promise, {
           loading: "Declaring...",
           success: () => "Incident declared",
-          error: (error) =>
-            isTRPCClientError(error) ? error.message : "Failed to declare",
+          error: (error) => errorMessage(error, "Failed to declare"),
         });
         await promise;
       } catch (error) {

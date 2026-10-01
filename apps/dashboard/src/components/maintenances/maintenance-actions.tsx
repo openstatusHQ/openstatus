@@ -23,9 +23,14 @@ export function MaintenanceActions({
   const remove = useMutation(
     trpc.maintenance.delete.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: trpc.maintenance.list.queryKey(),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.maintenance.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.page.list.queryKey(),
+          }),
+        ]);
         router.push(`/status-pages/${maintenance.pageId}/maintenances`);
       },
     }),

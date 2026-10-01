@@ -2,8 +2,6 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -11,15 +9,11 @@ import {
   Composer,
   ComposerFooter,
   ComposerHeader,
-  ComposerHint,
   ComposerPreview,
-  ComposerTabs,
   ComposerTextarea,
 } from "@/components/content/composer";
-import { toUpdateInput } from "@/data/maintenances.client";
-import { useTRPC } from "@/lib/trpc/client";
 
-import { useInvalidateMaintenance } from "./use-invalidate-maintenance";
+import { useUpdateMaintenance } from "./use-update-maintenance";
 
 type Maintenance = NonNullable<RouterOutputs["maintenance"]["get"]>;
 
@@ -29,53 +23,33 @@ export function MaintenanceComposer({
 }: {
   maintenance: Maintenance;
 }) {
-  const trpc = useTRPC();
-  const invalidate = useInvalidateMaintenance(maintenance.id);
   // null = pristine: the editor follows the server copy, so a background
   // refetch never clobbers unsaved edits.
   const [draft, setDraft] = useState<string | null>(null);
   const server = maintenance.message;
   const content = draft ?? server;
-
-  const save = useMutation(
-    trpc.maintenance.update.mutationOptions({
-      onSuccess: () => {
-        toast.success("Message saved");
-        return invalidate().then(() => setDraft(null));
-      },
-      onError: (error) => {
-        toast.error(
-          isTRPCClientError(error) ? error.message : "Failed to save",
-        );
-      },
-    }),
-  );
+  const { update, isPending } = useUpdateMaintenance(maintenance.id, {
+    onSuccess: () => {
+      toast.success("Message saved");
+      setDraft(null);
+    },
+  });
 
   const dirty = draft !== null && draft !== server;
-  const canSave = dirty && !save.isPending;
-  const submit = () =>
-    save.mutate({ ...toUpdateInput(maintenance), message: content });
+  const canSave = dirty && !isPending;
+  const submit = () => update({ message: content });
 
   return (
-    <Composer>
-      <ComposerHeader>
-        <ComposerTabs />
-        <ComposerHint>Markdown</ComposerHint>
-      </ComposerHeader>
+    <Composer size="lg">
+      <ComposerHeader />
       <ComposerTextarea
         aria-label="Message"
-        className="min-h-96"
         placeholder="What is being maintained and what customers can expect."
         value={content}
         onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && canSave) {
-            e.preventDefault();
-            submit();
-          }
-        }}
+        onSubmit={canSave ? submit : undefined}
       />
-      <ComposerPreview value={content} className="min-h-96" />
+      <ComposerPreview value={content} />
       <ComposerFooter>
         <span className="text-xs">
           {dirty
@@ -87,7 +61,7 @@ export function MaintenanceComposer({
             <Button
               size="sm"
               variant="ghost"
-              disabled={save.isPending}
+              disabled={isPending}
               onClick={() => setDraft(null)}
             >
               Reset

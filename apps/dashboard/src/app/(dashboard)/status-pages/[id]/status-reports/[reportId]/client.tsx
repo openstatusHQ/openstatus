@@ -2,12 +2,12 @@
 
 import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { toast } from "sonner";
 
 import { StatusDot } from "@/components/common/status-dot";
 import {
   ComponentList,
+  ComponentListActions,
   ComponentListEmpty,
   ComponentListImpact,
   ComponentListItem,
@@ -30,32 +30,22 @@ import {
 } from "@/components/content/detail";
 import { SectionGroup } from "@/components/content/section";
 import { Timeline } from "@/components/content/timeline";
+import { Notifications } from "@/components/status-pages/notifications";
 import { StatusReportActions } from "@/components/status-reports/status-report-actions";
 import { StatusReportComposer } from "@/components/status-reports/status-report-composer";
-import { Notifications } from "@/components/status-reports/status-report-notifications";
-import {
-  StatusReportProperties,
-  reportStartedAt,
-} from "@/components/status-reports/status-report-properties";
+import { StatusReportProperties } from "@/components/status-reports/status-report-properties";
 import { StatusReportTimelineItem } from "@/components/status-reports/status-report-timeline";
 import { useInvalidateStatusReport } from "@/components/status-reports/use-invalidate-status-report";
 import { getPageUrl } from "@/data/status-pages.client";
-import {
-  impactConfig,
-  impactVariants,
-  untriagedImpact,
-} from "@/data/status-report-updates.client";
+import { impactDisplay } from "@/data/status-report-updates.client";
+import { reportStartedAt } from "@/data/status-reports.client";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
-export function Client({ id }: { id: number }) {
+export function Client({ id, pageId }: { id: number; pageId: number }) {
   const trpc = useTRPC();
   const { data: report } = useQuery(trpc.statusReport.get.queryOptions({ id }));
-  const { data: page } = useQuery(
-    trpc.page.get.queryOptions(
-      { id: report?.pageId ?? 0 },
-      { enabled: report?.pageId != null },
-    ),
-  );
+  const { data: page } = useQuery(trpc.page.get.queryOptions({ id: pageId }));
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 
   const invalidate = useInvalidateStatusReport(id);
@@ -63,9 +53,7 @@ export function Client({ id }: { id: number }) {
     trpc.statusReport.updateStatus.mutationOptions({
       onSuccess: invalidate,
       onError: (error) => {
-        toast.error(
-          isTRPCClientError(error) ? error.message : "Failed to save",
-        );
+        toast.error(errorMessage(error, "Failed to save"));
       },
     }),
   );
@@ -95,7 +83,7 @@ export function Client({ id }: { id: number }) {
             />
           </DetailTitle>
           <DetailActions>
-            <StatusReportActions report={report} />
+            <StatusReportActions report={report} publicUrl={publicUrl} />
           </DetailActions>
         </DetailTitleRow>
         <DetailMeta>
@@ -117,7 +105,9 @@ export function Client({ id }: { id: number }) {
           <Timeline>
             <StatusReportComposer
               report={report}
+              currentImpacts={currentImpacts}
               pageComponents={page?.pageComponents ?? []}
+              groups={page?.pageComponentGroups ?? []}
               canNotify={canNotify}
             />
             {updates.map((update, i) => (
@@ -140,18 +130,18 @@ export function Client({ id }: { id: number }) {
             {report.pageComponents.length ? (
               <ComponentList>
                 {report.pageComponents.map((component) => {
-                  const impact = currentImpacts.get(component.id);
+                  const impact = impactDisplay(
+                    currentImpacts.get(component.id),
+                  );
                   return (
                     <ComponentListItem key={component.id}>
-                      <StatusDot
-                        variant={impact ? impactVariants[impact] : "default"}
-                      />
+                      <StatusDot variant={impact.variant} />
                       <ComponentListName>{component.name}</ComponentListName>
-                      <ComponentListImpact className="ml-auto">
-                        {impact
-                          ? impactConfig[impact].label
-                          : untriagedImpact.label}
-                      </ComponentListImpact>
+                      <ComponentListActions>
+                        <ComponentListImpact>
+                          {impact.label}
+                        </ComponentListImpact>
+                      </ComponentListActions>
                     </ComponentListItem>
                   );
                 })}
@@ -166,7 +156,7 @@ export function Client({ id }: { id: number }) {
           <DetailSection>
             <DetailSectionTitle>Notifications</DetailSectionTitle>
             <Notifications
-              pageId={report.pageId ?? 0}
+              pageId={pageId}
               publicUrl={publicUrl}
               description="Customers can read this report on your status page."
             />

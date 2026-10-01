@@ -1,9 +1,7 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
+import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict } from "date-fns";
-import { toast } from "sonner";
 
 import {
   DetailActions,
@@ -25,30 +23,19 @@ import { MaintenanceActions } from "@/components/maintenances/maintenance-action
 import { MaintenanceComponents } from "@/components/maintenances/maintenance-components";
 import { MaintenanceComposer } from "@/components/maintenances/maintenance-composer";
 import { MaintenanceProperties } from "@/components/maintenances/maintenance-properties";
-import { useInvalidateMaintenance } from "@/components/maintenances/use-invalidate-maintenance";
-import { Notifications } from "@/components/status-reports/status-report-notifications";
-import { toUpdateInput } from "@/data/maintenances.client";
+import { useUpdateMaintenance } from "@/components/maintenances/use-update-maintenance";
+import { Notifications } from "@/components/status-pages/notifications";
 import { getMaintenanceStatus } from "@/data/overview-events.client";
 import { getPageUrl } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Client({ id, pageId }: { id: number; pageId: number }) {
   const trpc = useTRPC();
-  const invalidate = useInvalidateMaintenance(id);
   const { data: maintenance } = useQuery(
     trpc.maintenance.get.queryOptions({ id }),
   );
   const { data: page } = useQuery(trpc.page.get.queryOptions({ id: pageId }));
-  const rename = useMutation(
-    trpc.maintenance.update.mutationOptions({
-      onSuccess: invalidate,
-      onError: (error) => {
-        toast.error(
-          isTRPCClientError(error) ? error.message : "Failed to save",
-        );
-      },
-    }),
-  );
+  const rename = useUpdateMaintenance(id);
 
   if (!maintenance || !page) return null;
 
@@ -66,9 +53,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
               maxLength={256}
               disabled={rename.isPending}
               value={maintenance.title}
-              onCommit={(title) =>
-                rename.mutate({ ...toUpdateInput(maintenance), title })
-              }
+              onCommit={(title) => rename.update({ title })}
             />
           </DetailTitle>
           <DetailActions>

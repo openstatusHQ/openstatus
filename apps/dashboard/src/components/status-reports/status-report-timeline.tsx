@@ -3,7 +3,6 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { Next } from "@openstatus/icons";
 import { useMutation } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { format } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,11 +24,11 @@ import { icons } from "@/data/icons";
 import {
   getActions,
   impactConfig,
-  impactVariants,
   impactsEqual,
   statusVariants,
 } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
 import { useInvalidateStatusReport } from "./use-invalidate-status-report";
 
@@ -50,7 +49,7 @@ export function StatusReportTimelineItem({
   const [editing, setEditing] = useState(false);
   const invalidate = useInvalidateStatusReport(report.id);
   const onError = (error: { message: string }) => {
-    toast.error(isTRPCClientError(error) ? error.message : "Failed to save");
+    toast.error(errorMessage(error, "Failed to save"));
   };
   const edit = useMutation(
     trpc.statusReport.updateStatusReportUpdate.mutationOptions({
@@ -97,7 +96,7 @@ export function StatusReportTimelineItem({
               >
                 <span className="font-mono">{ci.name}</span>
                 <Next className="text-muted-foreground/50 size-3" />
-                <StatusDot variant={impactVariants[ci.impact]} />
+                <StatusDot variant={impactConfig[ci.impact].variant} />
                 <span className="font-mono">
                   {impactConfig[ci.impact].label}
                 </span>

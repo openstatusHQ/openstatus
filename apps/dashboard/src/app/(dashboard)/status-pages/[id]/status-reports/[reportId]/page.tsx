@@ -19,25 +19,29 @@ export default async function Page({
   const statusReportId = Number(reportId);
   if (!Number.isInteger(statusReportId)) notFound();
 
-  await fetchQueryOrNotFound(
-    trpc.statusReport.get.queryOptions({ id: statusReportId }),
-  );
   const queryClient = getQueryClient();
-  // forStatusReport throws FORBIDDEN without the feature; prefetch swallows it.
   await Promise.all([
-    queryClient.prefetchQuery(trpc.workspace.get.queryOptions()),
-    queryClient.prefetchQuery(trpc.user.get.queryOptions()),
+    fetchQueryOrNotFound(
+      trpc.statusReport.get.queryOptions({ id: statusReportId }),
+    ),
     queryClient.prefetchQuery(
       trpc.pageSubscriber.list.queryOptions({ pageId }),
     ),
-    queryClient.prefetchQuery(
-      trpc.incident.forStatusReport.queryOptions({ statusReportId }),
-    ),
+    // forStatusReport throws FORBIDDEN without the feature; skip it then.
+    queryClient
+      .fetchQuery(trpc.workspace.get.queryOptions())
+      .then((workspace) =>
+        workspace.features.includes("incident-management")
+          ? queryClient.prefetchQuery(
+              trpc.incident.forStatusReport.queryOptions({ statusReportId }),
+            )
+          : undefined,
+      ),
   ]);
 
   return (
     <HydrateClient>
-      <Client id={statusReportId} />
+      <Client id={statusReportId} pageId={pageId} />
     </HydrateClient>
   );
 }

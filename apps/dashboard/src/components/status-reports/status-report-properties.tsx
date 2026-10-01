@@ -17,21 +17,6 @@ import { useTRPC } from "@/lib/trpc/client";
 
 type StatusReport = NonNullable<RouterOutputs["statusReport"]["get"]>;
 
-/** Earliest update, else the row's creation. */
-export function reportStartedAt(report: StatusReport): Date {
-  const dates = report.updates.map((u) => u.date.getTime());
-  if (dates.length) return new Date(Math.min(...dates));
-  return report.createdAt ?? new Date(0);
-}
-
-/** Latest update once resolved; `null` while the report is open. */
-export function reportEndedAt(report: StatusReport): Date | null {
-  if (report.status !== "resolved") return null;
-  const dates = report.updates.map((u) => u.date.getTime());
-  if (!dates.length) return report.updatedAt ?? report.createdAt;
-  return new Date(Math.max(...dates));
-}
-
 export function StatusReportProperties({ report }: { report: StatusReport }) {
   const trpc = useTRPC();
   const incidentsEnabled = useFeature("incident-management");

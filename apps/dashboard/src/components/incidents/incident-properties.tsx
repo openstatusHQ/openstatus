@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import {
   format,
   formatDistanceStrict,
@@ -41,6 +40,7 @@ import {
 } from "@/data/managed-incidents.client";
 import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
 import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { useInvalidateIncident } from "./use-invalidate-incident";
@@ -60,18 +60,25 @@ export function IncidentProperties({
 }) {
   const trpc = useTRPC();
   const { data: members } = useQuery(trpc.member.list.queryOptions());
-  const [startedAt, setStartedAt] = useState(
-    formatDateForInput(incident.startedAt),
-  );
+  // null = pristine: the input follows the server copy until edited.
+  const [draft, setDraft] = useState<string | null>(null);
+  const serverStartedAt = formatDateForInput(incident.startedAt);
+  const startedAt = draft ?? serverStartedAt;
   const [confirmCancel, setConfirmCancel] = useState(false);
   const closed = incident.closedAt !== null;
 
   const invalidate = useInvalidateIncident(incident.id);
   const onError = (error: { message: string }) => {
-    toast.error(isTRPCClientError(error) ? error.message : "Failed to save");
+    toast.error(errorMessage(error, "Failed to save"));
   };
   const update = useMutation(
-    trpc.incident.update.mutationOptions({ onSuccess: invalidate, onError }),
+    trpc.incident.update.mutationOptions({
+      onSuccess: async () => {
+        await invalidate();
+        setDraft(null);
+      },
+      onError,
+    }),
   );
   const setStatus = useMutation(
     trpc.incident.setStatus.mutationOptions({
@@ -235,9 +242,9 @@ export function IncidentProperties({
                 type="datetime-local"
                 aria-label="Started at"
                 value={startedAt}
-                onChange={(e) => setStartedAt(e.target.value)}
+                onChange={(e) => setDraft(e.target.value)}
               />
-              {startedAt !== formatDateForInput(incident.startedAt) ? (
+              {startedAt !== serverStartedAt ? (
                 <div className="flex gap-1 font-sans">
                   <Button
                     size="sm"
@@ -257,9 +264,7 @@ export function IncidentProperties({
                     variant="ghost"
                     className="h-7"
                     disabled={update.isPending}
-                    onClick={() =>
-                      setStartedAt(formatDateForInput(incident.startedAt))
-                    }
+                    onClick={() => setDraft(null)}
                   >
                     Reset
                   </Button>

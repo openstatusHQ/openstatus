@@ -3,6 +3,7 @@ import { type VariantProps, cva } from "class-variance-authority";
 import { formatDistanceToNowStrict } from "date-fns";
 
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
+import { UserAvatar } from "@/components/common/user-avatar";
 
 export function Timeline({
   children,
@@ -75,6 +76,20 @@ export function TimelineIndicator({
     >
       {children}
     </div>
+  );
+}
+
+// Same size as the indicator so the rail starts below it.
+export function TimelineAvatar({
+  className,
+  ...props
+}: React.ComponentProps<typeof UserAvatar>) {
+  return (
+    <UserAvatar
+      data-slot="timeline-avatar"
+      className={cn("size-8 text-xs", className)}
+      {...props}
+    />
   );
 }
 
