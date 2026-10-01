@@ -4,6 +4,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
+import { attributedUserSchema } from "../attribution";
 import type { ServiceContext } from "../context";
 import {
   addStatusReportUpdate,
@@ -112,11 +113,14 @@ const ListStatusReportsOutput = z.object({
       pageId: z.number().int().nullable(),
       createdAt: z.string().nullable(),
       updatedAt: z.string().nullable(),
+      createdBy: attributedUserSchema.nullable(),
+      updatedBy: attributedUserSchema.nullable(),
       latestUpdate: z
         .object({
           message: z.string(),
           status: statusReportStatusSchema,
           date: z.string().nullable(),
+          createdBy: attributedUserSchema.nullable(),
         })
         .nullable(),
     }),
@@ -162,11 +166,14 @@ export const listStatusReportsTool: AgentTool<
           pageId: r.pageId,
           createdAt: r.createdAt?.toISOString() ?? null,
           updatedAt: r.updatedAt?.toISOString() ?? null,
+          createdBy: r.createdByUser,
+          updatedBy: r.updatedByUser,
           latestUpdate: latestUpdate
             ? {
                 message: latestUpdate.message,
                 status: latestUpdate.status,
                 date: latestUpdate.date?.toISOString() ?? null,
+                createdBy: latestUpdate.createdByUser,
               }
             : null,
         };

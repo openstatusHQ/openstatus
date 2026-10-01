@@ -6,6 +6,7 @@ import {
   statusReportsToPageComponents,
 } from "../page_components";
 import { page } from "../pages";
+import { user } from "../users";
 import { workspace } from "../workspaces";
 import { statusReportStatus } from "./constants";
 
@@ -23,6 +24,9 @@ export const statusReport = sqliteTable(
     pageId: integer("page_id").references(() => page.id, {
       onDelete: "cascade",
     }),
+
+    createdBy: integer("created_by").references(() => user.id),
+    updatedBy: integer("updated_by").references(() => user.id),
 
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
@@ -49,6 +53,10 @@ export const statusReportUpdate = sqliteTable(
     statusReportId: integer("status_report_id")
       .references(() => statusReport.id, { onDelete: "cascade" })
       .notNull(),
+
+    createdBy: integer("created_by").references(() => user.id),
+    updatedBy: integer("updated_by").references(() => user.id),
+
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
@@ -74,6 +82,16 @@ export const StatusReportRelations = relations(
       fields: [statusReport.workspaceId],
       references: [workspace.id],
     }),
+    createdByUser: one(user, {
+      fields: [statusReport.createdBy],
+      references: [user.id],
+      relationName: "statusReportCreatedBy",
+    }),
+    updatedByUser: one(user, {
+      fields: [statusReport.updatedBy],
+      references: [user.id],
+      relationName: "statusReportUpdatedBy",
+    }),
   }),
 );
 
@@ -87,5 +105,15 @@ export const statusReportUpdateRelations = relations(
     statusReportUpdateToPageComponents: many(
       statusReportUpdateToPageComponents,
     ),
+    createdByUser: one(user, {
+      fields: [statusReportUpdate.createdBy],
+      references: [user.id],
+      relationName: "statusReportUpdateCreatedBy",
+    }),
+    updatedByUser: one(user, {
+      fields: [statusReportUpdate.updatedBy],
+      references: [user.id],
+      relationName: "statusReportUpdateUpdatedBy",
+    }),
   }),
 );

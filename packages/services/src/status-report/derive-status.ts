@@ -49,6 +49,8 @@ export async function recomputeReportStatus(
   options?: {
     /** Bump `updatedAt` even if the status is unchanged, when this update is the latest one. */
     touchIfLatestIs?: number;
+    /** Stamped on the report whenever the row is written. */
+    updatedBy?: number | null;
   },
 ): Promise<StatusReport | null> {
   const rows = await tx
@@ -83,7 +85,11 @@ export async function recomputeReportStatus(
 
   return tx
     .update(statusReport)
-    .set({ status: latest.status, updatedAt: new Date() })
+    .set({
+      status: latest.status,
+      updatedAt: new Date(),
+      ...(options?.updatedBy !== undefined && { updatedBy: options.updatedBy }),
+    })
     .where(eq(statusReport.id, statusReportId))
     .returning()
     .get();

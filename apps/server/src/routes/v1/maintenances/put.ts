@@ -54,6 +54,7 @@ const putRoute = createRoute({
 export function registerPutMaintenance(api: typeof maintenancesApi) {
   return api.openapi(putRoute, async (c) => {
     const workspaceId = c.get("workspace").id;
+    const actorUserId = c.get("apiKey").createdById ?? null;
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
@@ -132,6 +133,7 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
         .set({
           ...input,
           updatedAt: new Date(),
+          updatedBy: actorUserId,
         })
         .where(eq(maintenance.id, Number(id)))
         .returning()

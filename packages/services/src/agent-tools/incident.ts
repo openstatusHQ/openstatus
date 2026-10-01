@@ -4,6 +4,7 @@ import {
 } from "@openstatus/db/src/schema/incidents/constants";
 import { z } from "zod";
 
+import { attributedUserSchema, toAttributedUser } from "../attribution";
 import { tryGetActorUserId } from "../context";
 import { NotFoundError } from "../errors";
 import {
@@ -11,7 +12,6 @@ import {
   approvePostmortem,
   declareIncident,
   draftPostmortem,
-  displayName,
   getIncident,
   getPostmortem,
   listIncidentEvents,
@@ -27,19 +27,8 @@ const title = z.string().trim().min(1).max(256);
 const summary = z.string().trim().min(1).max(4000);
 const note = z.string().trim().min(1).max(10_000);
 
-const personSchema = z.object({ id: z.number().int(), name: z.string() });
-
-type Person = {
-  id: number;
-  name: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-} | null;
-
-function person(row: Person) {
-  return row ? { id: row.id, name: displayName(row) } : null;
-}
+const personSchema = attributedUserSchema;
+const person = toAttributedUser;
 
 const IncidentSummary = z.object({
   id: z.number().int(),

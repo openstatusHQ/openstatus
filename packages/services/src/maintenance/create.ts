@@ -2,7 +2,11 @@ import { maintenance } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
 import { ConflictError } from "../errors";
 import type { Maintenance } from "../types";
 import {
@@ -19,6 +23,7 @@ export async function createMaintenance(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = CreateMaintenanceInput.parse(args.input);
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   return withTransaction(ctx, async (tx) => {
     await assertPageInWorkspace({
@@ -48,6 +53,8 @@ export async function createMaintenance(args: {
         message: input.message,
         from: input.from,
         to: input.to,
+        createdBy: actorUserId,
+        updatedBy: actorUserId,
       })
       .returning()
       .get();

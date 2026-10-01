@@ -33,38 +33,45 @@ export const selectPublicMonitorSchema =
     name: data.externalName || data.name,
   }));
 
-export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
-  statusReportUpdates: z
-    .array(
-      selectStatusReportUpdateSchema.extend({
-        statusReportUpdateToPageComponents: z
-          .array(selectStatusReportUpdateToPageComponentSchema)
-          .prefault([]),
-      }),
-    )
-    .prefault([]),
-  statusReportsToPageComponents: z
-    .array(
-      z.object({
-        pageComponentId: z.number(),
-        statusReportId: z.number(),
-        pageComponent: selectPageComponentSchema,
-      }),
-    )
-    .prefault([]),
-});
+// author identity is workspace-internal; the public page never carries it
+const authorColumns = { createdBy: true, updatedBy: true } as const;
 
-export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
-  maintenancesToPageComponents: z
-    .array(
-      z.object({
-        pageComponentId: z.number(),
-        maintenanceId: z.number(),
-        pageComponent: selectPageComponentSchema,
-      }),
-    )
-    .prefault([]),
-});
+export const selectStatusReportPageSchema = selectStatusReportSchema
+  .omit(authorColumns)
+  .extend({
+    statusReportUpdates: z
+      .array(
+        selectStatusReportUpdateSchema.omit(authorColumns).extend({
+          statusReportUpdateToPageComponents: z
+            .array(selectStatusReportUpdateToPageComponentSchema)
+            .prefault([]),
+        }),
+      )
+      .prefault([]),
+    statusReportsToPageComponents: z
+      .array(
+        z.object({
+          pageComponentId: z.number(),
+          statusReportId: z.number(),
+          pageComponent: selectPageComponentSchema,
+        }),
+      )
+      .prefault([]),
+  });
+
+export const selectMaintenancePageSchema = selectMaintenanceSchema
+  .omit(authorColumns)
+  .extend({
+    maintenancesToPageComponents: z
+      .array(
+        z.object({
+          pageComponentId: z.number(),
+          maintenanceId: z.number(),
+          pageComponent: selectPageComponentSchema,
+        }),
+      )
+      .prefault([]),
+  });
 
 export const selectPageSchemaWithRelation = selectPageSchema.extend({
   monitors: z.array(selectMonitorSchema),

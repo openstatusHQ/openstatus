@@ -124,6 +124,8 @@ describe("getEvents lookback", () => {
           to,
           workspaceId: 1,
           pageId: 1,
+          createdBy: null,
+          updatedBy: null,
           createdAt: from,
           updatedAt: from,
           maintenancesToPageComponents: [],
