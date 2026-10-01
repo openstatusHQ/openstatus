@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 
-import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { Link } from "@/components/common/link";
 import {
   DetailAside,
@@ -14,6 +13,7 @@ import {
   DetailMain,
   DetailMeta,
   DetailMetaItem,
+  DetailMetaTime,
   DetailSection,
   DetailSectionTitle,
 } from "@/components/content/detail";
@@ -147,20 +147,16 @@ export function Client({ id }: { id: number }) {
             </span>
           </DetailMetaItem>
           <DetailMetaItem>
-            <HoverCardTimestamp date={incident.declaredAt} side="bottom">
-              <time dateTime={incident.declaredAt.toISOString()}>
-                {formatDistanceToNow(incident.declaredAt, { addSuffix: true })}
-              </time>
-            </HoverCardTimestamp>
+            <DetailMetaTime date={incident.declaredAt}>
+              {formatDistanceToNow(incident.declaredAt, { addSuffix: true })}
+            </DetailMetaTime>
           </DetailMetaItem>
           {incident.closedAt ? (
             <DetailMetaItem>
               Closed
-              <HoverCardTimestamp date={incident.closedAt} side="bottom">
-                <time dateTime={incident.closedAt.toISOString()}>
-                  {formatDistanceToNow(incident.closedAt, { addSuffix: true })}
-                </time>
-              </HoverCardTimestamp>
+              <DetailMetaTime date={incident.closedAt}>
+                {formatDistanceToNow(incident.closedAt, { addSuffix: true })}
+              </DetailMetaTime>
             </DetailMetaItem>
           ) : (
             <DetailMetaItem>

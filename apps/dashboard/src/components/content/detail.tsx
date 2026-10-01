@@ -3,7 +3,10 @@
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
+import { format } from "date-fns";
 import { useState } from "react";
+
+import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 
 export function DetailHeader({
   children,
@@ -210,6 +213,27 @@ export function DetailMetaItem({
     >
       {children}
     </span>
+  );
+}
+
+/** Absolute by default; pass children for a relative or custom label. */
+export function DetailMetaTime({
+  date,
+  children,
+  className,
+  ...props
+}: Omit<React.ComponentProps<"time">, "dateTime"> & { date: Date }) {
+  return (
+    <HoverCardTimestamp date={date} side="bottom">
+      <time
+        data-slot="detail-meta-time"
+        dateTime={date.toISOString()}
+        className={cn("text-foreground font-mono", className)}
+        {...props}
+      >
+        {children ?? format(date, "LLL dd, HH:mm")}
+      </time>
+    </HoverCardTimestamp>
   );
 }
 

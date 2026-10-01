@@ -17,7 +17,6 @@ import {
   PropertyList,
   PropertyValue,
 } from "@/components/content/property-list";
-import { toLocalInput } from "@/components/forms/incident/form";
 import {
   maintenanceStatusVariants,
   toUpdateInput,
@@ -26,6 +25,7 @@ import {
   type MaintenanceStatus,
   maintenanceStatusConfig,
 } from "@/data/overview-events.client";
+import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { useInvalidateMaintenance } from "./use-invalidate-maintenance";
@@ -43,8 +43,8 @@ export function MaintenanceProperties({
 }) {
   const trpc = useTRPC();
   const invalidate = useInvalidateMaintenance(maintenance.id);
-  const [from, setFrom] = useState(toLocalInput(maintenance.from));
-  const [to, setTo] = useState(toLocalInput(maintenance.to));
+  const [from, setFrom] = useState(formatDateForInput(maintenance.from));
+  const [to, setTo] = useState(formatDateForInput(maintenance.to));
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const update = useMutation(
@@ -62,12 +62,12 @@ export function MaintenanceProperties({
   );
 
   const dirty =
-    from !== toLocalInput(maintenance.from) ||
-    to !== toLocalInput(maintenance.to);
+    from !== formatDateForInput(maintenance.from) ||
+    to !== formatDateForInput(maintenance.to);
   const invalid = !from || !to || new Date(to) <= new Date(from);
   const reset = () => {
-    setFrom(toLocalInput(maintenance.from));
-    setTo(toLocalInput(maintenance.to));
+    setFrom(formatDateForInput(maintenance.from));
+    setTo(formatDateForInput(maintenance.to));
   };
 
   return (

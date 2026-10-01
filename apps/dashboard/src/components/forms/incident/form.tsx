@@ -24,7 +24,6 @@ import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { format } from "date-fns";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -37,6 +36,7 @@ import {
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { personName, severityConfig } from "@/data/managed-incidents.client";
+import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 const NONE = "none";
@@ -69,10 +69,6 @@ export type DeclareIncidentValues = {
   openSlackChannel: boolean;
 };
 
-export function toLocalInput(date: Date): string {
-  return format(date, "yyyy-MM-dd'T'HH:mm");
-}
-
 export function FormDeclareIncident({
   defaultValues,
   onSubmit,
@@ -100,7 +96,7 @@ export function FormDeclareIncident({
       // user.get is prefetched in the dashboard layout, so it is hydrated
       // before the sheet can mount and the default is never NONE for members.
       commanderId: user ? String(user.id) : NONE,
-      startedAt: toLocalInput(new Date()),
+      startedAt: formatDateForInput(new Date()),
       statusReportId: NONE,
       openSlackChannel: slack === "ready",
       ...defaultValues,

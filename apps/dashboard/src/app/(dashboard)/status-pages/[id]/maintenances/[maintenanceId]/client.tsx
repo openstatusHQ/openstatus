@@ -2,10 +2,9 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { format, formatDistanceStrict } from "date-fns";
+import { formatDistanceStrict } from "date-fns";
 import { toast } from "sonner";
 
-import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import {
   DetailActions,
   DetailAside,
@@ -15,6 +14,7 @@ import {
   DetailMain,
   DetailMeta,
   DetailMetaItem,
+  DetailMetaTime,
   DetailSection,
   DetailSectionTitle,
   DetailTitle,
@@ -31,16 +31,6 @@ import { toUpdateInput } from "@/data/maintenances.client";
 import { getMaintenanceStatus } from "@/data/overview-events.client";
 import { getPageUrl } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
-
-function MetaDate({ date }: { date: Date }) {
-  return (
-    <HoverCardTimestamp date={date} side="bottom">
-      <time dateTime={date.toISOString()} className="text-foreground font-mono">
-        {format(date, "LLL dd, HH:mm")}
-      </time>
-    </HoverCardTimestamp>
-  );
-}
 
 export function Client({ id, pageId }: { id: number; pageId: number }) {
   const trpc = useTRPC();
@@ -91,7 +81,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
         <DetailMeta>
           <DetailMetaItem>
             {status === "scheduled" ? "Starts" : "Started"}{" "}
-            <MetaDate date={maintenance.from} />
+            <DetailMetaTime date={maintenance.from} />
           </DetailMetaItem>
           <DetailMetaItem>
             {status === "completed" ? "Lasted" : "Lasts"}{" "}
@@ -117,11 +107,14 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
               status={status}
             />
           </DetailSection>
-          <MaintenanceComponents
-            maintenance={maintenance}
-            components={page.pageComponents}
-            groups={page.pageComponentGroups}
-          />
+          <DetailSection>
+            <DetailSectionTitle>Affected components</DetailSectionTitle>
+            <MaintenanceComponents
+              maintenance={maintenance}
+              components={page.pageComponents}
+              groups={page.pageComponentGroups}
+            />
+          </DetailSection>
           <DetailSection>
             <DetailSectionTitle>Notifications</DetailSectionTitle>
             <Notifications

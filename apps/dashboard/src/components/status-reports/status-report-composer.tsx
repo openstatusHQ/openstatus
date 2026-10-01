@@ -28,6 +28,13 @@ import { toast } from "sonner";
 import { StatusDot } from "@/components/common/status-dot";
 import { UserAvatar } from "@/components/common/user-avatar";
 import {
+  ComponentList,
+  ComponentListImpact,
+  ComponentListItem,
+  ComponentListName,
+  ComponentListSelectTrigger,
+} from "@/components/content/component-list";
+import {
   Composer,
   ComposerFooter,
   ComposerHeader,
@@ -38,7 +45,6 @@ import {
   ComposerTextarea,
 } from "@/components/content/composer";
 import { TimelineItem } from "@/components/content/timeline";
-import { toLocalInput } from "@/components/forms/incident/form";
 import { personName } from "@/data/managed-incidents.client";
 import {
   defaultComponentImpacts,
@@ -47,7 +53,9 @@ import {
   impactVariants,
   statusVariants,
   toCreateStatusReportUpdateInput,
+  untriagedImpact,
 } from "@/data/status-report-updates.client";
+import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { useInvalidateStatusReport } from "./use-invalidate-status-report";
@@ -76,7 +84,7 @@ export function StatusReportComposer({
   const [notifyChecked, setNotifyChecked] = useState(true);
   const notify = canNotify && notifyChecked;
   const [selected, setSelected] = useState<StatusReportStatus | null>(null);
-  const [date, setDate] = useState(() => toLocalInput(new Date()));
+  const [date, setDate] = useState(() => formatDateForInput(new Date()));
   const [overrides, setOverrides] = useState<Map<number, PageComponentImpact>>(
     () => new Map(),
   );
@@ -116,7 +124,7 @@ export function StatusReportComposer({
   function reset() {
     setMessage("");
     setSelected(null);
-    setDate(toLocalInput(new Date()));
+    setDate(formatDateForInput(new Date()));
     setOverrides(new Map());
     setRemoved(new Set());
     setAdded([]);
@@ -193,22 +201,21 @@ export function StatusReportComposer({
                 Mark all operational
               </Button>
             </div>
-            <ul className="flex flex-col gap-1">
+            <ComponentList>
               {components.map((component) => {
                 const current = currentImpacts.get(component.id);
                 const override = overrides.get(component.id);
                 return (
-                  <li
-                    key={component.id}
-                    className="flex items-center gap-2 text-sm"
-                  >
+                  <ComponentListItem key={component.id}>
                     <StatusDot
                       variant={current ? impactVariants[current] : "default"}
                     />
-                    <span className="truncate font-mono">{component.name}</span>
-                    <span className="text-muted-foreground shrink-0 font-mono text-xs uppercase">
-                      {current ? impactConfig[current].label : "Untriaged"}
-                    </span>
+                    <ComponentListName>{component.name}</ComponentListName>
+                    <ComponentListImpact>
+                      {current
+                        ? impactConfig[current].label
+                        : untriagedImpact.label}
+                    </ComponentListImpact>
                     <Next className="text-muted-foreground/50 ml-auto size-3 shrink-0" />
                     <Select
                       value={override ?? ""}
@@ -222,10 +229,9 @@ export function StatusReportComposer({
                         );
                       }}
                     >
-                      <SelectTrigger
-                        size="sm"
+                      <ComponentListSelectTrigger
                         aria-label={`${component.name} impact`}
-                        className="hover:bg-accent dark:hover:bg-accent/50 data-[state=open]:bg-accent text-foreground border-transparent bg-transparent font-mono shadow-none dark:bg-transparent"
+                        className="text-foreground font-mono"
                       >
                         <SelectValue
                           placeholder={
@@ -241,7 +247,7 @@ export function StatusReportComposer({
                             </span>
                           }
                         />
-                      </SelectTrigger>
+                      </ComponentListSelectTrigger>
                       <SelectContent>
                         {pageComponentImpact.map((impact) => (
                           <SelectItem
@@ -269,10 +275,10 @@ export function StatusReportComposer({
                     >
                       <Close />
                     </Button>
-                  </li>
+                  </ComponentListItem>
                 );
               })}
-            </ul>
+            </ComponentList>
             <Select
               value=""
               disabled={addable.length === 0}
@@ -291,17 +297,16 @@ export function StatusReportComposer({
                 );
               }}
             >
-              <SelectTrigger
-                size="sm"
+              <ComponentListSelectTrigger
                 aria-label="Add component"
-                className="hover:bg-accent dark:hover:bg-accent/50 data-[state=open]:bg-accent text-muted-foreground w-fit border-transparent bg-transparent shadow-none dark:bg-transparent"
+                className="text-muted-foreground"
               >
                 <SelectValue
                   placeholder={
                     addable.length ? "Add component" : "All components added"
                   }
                 />
-              </SelectTrigger>
+              </ComponentListSelectTrigger>
               <SelectContent>
                 {addable.map((c) => (
                   <SelectItem
@@ -349,7 +354,7 @@ export function StatusReportComposer({
               type="datetime-local"
               aria-label="Date"
               value={date}
-              max={toLocalInput(new Date())}
+              max={formatDateForInput(new Date())}
               onChange={(e) => setDate(e.target.value)}
               className="bg-background text-foreground h-8 w-auto font-mono md:text-sm"
             />

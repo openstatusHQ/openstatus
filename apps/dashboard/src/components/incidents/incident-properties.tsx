@@ -33,13 +33,13 @@ import {
   PropertySelectTrigger,
   PropertyValue,
 } from "@/components/content/property-list";
-import { toLocalInput } from "@/components/forms/incident/form";
 import {
   incidentEndedAt,
   personName,
   severityConfig,
   statusConfig,
 } from "@/data/managed-incidents.client";
+import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { ConfirmCloseDialog } from "./confirm-close-dialog";
@@ -60,7 +60,9 @@ export function IncidentProperties({
 }) {
   const trpc = useTRPC();
   const { data: members } = useQuery(trpc.member.list.queryOptions());
-  const [startedAt, setStartedAt] = useState(toLocalInput(incident.startedAt));
+  const [startedAt, setStartedAt] = useState(
+    formatDateForInput(incident.startedAt),
+  );
   const [confirmCancel, setConfirmCancel] = useState(false);
   const closed = incident.closedAt !== null;
 
@@ -235,7 +237,7 @@ export function IncidentProperties({
                 value={startedAt}
                 onChange={(e) => setStartedAt(e.target.value)}
               />
-              {startedAt !== toLocalInput(incident.startedAt) ? (
+              {startedAt !== formatDateForInput(incident.startedAt) ? (
                 <div className="flex gap-1 font-sans">
                   <Button
                     size="sm"
@@ -256,7 +258,7 @@ export function IncidentProperties({
                     className="h-7"
                     disabled={update.isPending}
                     onClick={() =>
-                      setStartedAt(toLocalInput(incident.startedAt))
+                      setStartedAt(formatDateForInput(incident.startedAt))
                     }
                   >
                     Reset

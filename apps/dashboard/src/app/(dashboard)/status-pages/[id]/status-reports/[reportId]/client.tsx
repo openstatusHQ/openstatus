@@ -3,10 +3,16 @@
 import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { format } from "date-fns";
 import { toast } from "sonner";
 
-import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
+import { StatusDot } from "@/components/common/status-dot";
+import {
+  ComponentList,
+  ComponentListEmpty,
+  ComponentListImpact,
+  ComponentListItem,
+  ComponentListName,
+} from "@/components/content/component-list";
 import {
   DetailActions,
   DetailAside,
@@ -16,6 +22,7 @@ import {
   DetailMain,
   DetailMeta,
   DetailMetaItem,
+  DetailMetaTime,
   DetailSection,
   DetailSectionTitle,
   DetailTitle,
@@ -24,7 +31,6 @@ import {
 import { SectionGroup } from "@/components/content/section";
 import { Timeline } from "@/components/content/timeline";
 import { StatusReportActions } from "@/components/status-reports/status-report-actions";
-import { AffectedComponents } from "@/components/status-reports/status-report-components";
 import { StatusReportComposer } from "@/components/status-reports/status-report-composer";
 import { Notifications } from "@/components/status-reports/status-report-notifications";
 import {
@@ -34,17 +40,12 @@ import {
 import { StatusReportTimelineItem } from "@/components/status-reports/status-report-timeline";
 import { useInvalidateStatusReport } from "@/components/status-reports/use-invalidate-status-report";
 import { getPageUrl } from "@/data/status-pages.client";
+import {
+  impactConfig,
+  impactVariants,
+  untriagedImpact,
+} from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
-
-function MetaDate({ date }: { date: Date }) {
-  return (
-    <HoverCardTimestamp date={date} side="bottom">
-      <time dateTime={date.toISOString()} className="text-foreground font-mono">
-        {format(date, "LLL dd, HH:mm")}
-      </time>
-    </HoverCardTimestamp>
-  );
-}
 
 export function Client({ id }: { id: number }) {
   const trpc = useTRPC();
@@ -99,14 +100,14 @@ export function Client({ id }: { id: number }) {
         </DetailTitleRow>
         <DetailMeta>
           <DetailMetaItem>
-            Opened <MetaDate date={reportStartedAt(report)} />
+            Opened <DetailMetaTime date={reportStartedAt(report)} />
           </DetailMetaItem>
           <DetailMetaItem>
             {updates.length} {updates.length === 1 ? "update" : "updates"}
           </DetailMetaItem>
           {latest ? (
             <DetailMetaItem>
-              Last update <MetaDate date={latest.date} />
+              Last update <DetailMetaTime date={latest.date} />
             </DetailMetaItem>
           ) : null}
         </DetailMeta>
@@ -136,11 +137,31 @@ export function Client({ id }: { id: number }) {
           </DetailSection>
           <DetailSection>
             <DetailSectionTitle>Affected components</DetailSectionTitle>
-            <AffectedComponents
-              components={report.pageComponents}
-              impacts={currentImpacts}
-              note="Change impact per component in the composer."
-            />
+            {report.pageComponents.length ? (
+              <ComponentList>
+                {report.pageComponents.map((component) => {
+                  const impact = currentImpacts.get(component.id);
+                  return (
+                    <ComponentListItem key={component.id}>
+                      <StatusDot
+                        variant={impact ? impactVariants[impact] : "default"}
+                      />
+                      <ComponentListName>{component.name}</ComponentListName>
+                      <ComponentListImpact className="ml-auto">
+                        {impact
+                          ? impactConfig[impact].label
+                          : untriagedImpact.label}
+                      </ComponentListImpact>
+                    </ComponentListItem>
+                  );
+                })}
+              </ComponentList>
+            ) : (
+              <ComponentListEmpty />
+            )}
+            <p className="text-muted-foreground text-sm">
+              Change impact per component in the composer.
+            </p>
           </DetailSection>
           <DetailSection>
             <DetailSectionTitle>Notifications</DetailSectionTitle>
