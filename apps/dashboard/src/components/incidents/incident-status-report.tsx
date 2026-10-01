@@ -4,7 +4,6 @@ import type { RouterOutputs } from "@openstatus/api";
 import { statusReportStatus } from "@openstatus/db/src/schema/status_reports/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
-import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import {
   Select,
@@ -28,6 +27,7 @@ import {
   ActionCardHeader,
   ActionCardTitle,
 } from "@/components/content/action-card";
+import { FormSheetStatusReportCreate } from "@/components/forms/status-report/sheet-create";
 import { usePublishUpdate } from "@/components/status-reports/use-publish-update";
 import { statusVariants } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -51,7 +51,7 @@ export function IncidentStatusReport({
       />
     );
   }
-  return <UnlinkedReport incident={incident} canNotify={canNotify} />;
+  return <UnlinkedReport incident={incident} />;
 }
 
 function NotifySubscribers({
@@ -216,22 +216,13 @@ function LinkedReport({
   );
 }
 
-function UnlinkedReport({
-  incident,
-  canNotify,
-}: {
-  incident: Incident;
-  canNotify: boolean;
-}) {
+function UnlinkedReport({ incident }: { incident: Incident }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { data: pages } = useQuery(trpc.page.list.queryOptions());
-  const [draftMode, setMode] = useState<"link" | "create" | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [linking, setLinking] = useState(false);
   const [reportId, setReportId] = useState<string>("");
-  const [pageId, setPageId] = useState<string>("");
-  const [title, setTitle] = useState(incident.title);
-  const [message, setMessage] = useState("");
-  const [notifySubscribers, setNotifySubscribers] = useState(canNotify);
+  const closed = incident.closedAt !== null;
 
   const refresh = () =>
     Promise.all([
@@ -245,46 +236,13 @@ function UnlinkedReport({
   const link = useMutation(
     trpc.incident.linkStatusReport.mutationOptions({ onSuccess: refresh }),
   );
-  const create = useMutation(
-    trpc.statusReport.create.mutationOptions({ onSuccess: refresh }),
-  );
-  const notify = useMutation(
-    trpc.subscriberNotification.statusReport.mutationOptions(),
-  );
-  const closed = incident.closedAt !== null;
-  // Closing mid-edit would otherwise strand a form whose footer is gone.
-  const mode = closed ? null : draftMode;
   const { data: reports } = useQuery({
     ...trpc.statusReport.list.queryOptions({ order: "desc" }),
-    enabled: mode === "link",
+    enabled: !closed,
   });
-
-  async function createReport() {
-    const promise = (async () => {
-      const created = await create.mutateAsync({
-        title,
-        status: "investigating",
-        pageId: Number(pageId),
-        pageComponents: [],
-        date: new Date(),
-        message,
-        notifySubscribers,
-        incidentId: incident.id,
-      });
-      if (created && notifySubscribers) {
-        await notify.mutateAsync({ id: created.id });
-      }
-    })();
-    toast.promise(promise, {
-      loading: "Creating status report...",
-      success: "Status report created",
-      error: (error) => errorMessage(error),
-    });
-    await promise;
-    setMode(null);
-  }
-
   const openReports = (reports ?? []).filter((r) => r.status !== "resolved");
+  // Closing mid-edit would otherwise strand a form whose footer is gone.
+  const showLink = !closed && linking && openReports.length > 0;
 
   return (
     <ActionCard className="border-dashed">
@@ -302,7 +260,7 @@ function UnlinkedReport({
             : "Nothing here is public. Customers only see what you publish on your status page."}
         </ActionCardDescription>
       </ActionCardHeader>
-      {mode === "link" ? (
+      {showLink ? (
         <ActionCardContent className="grid gap-2">
           <Select value={reportId} onValueChange={setReportId}>
             <SelectTrigger size="sm" className="w-full">
@@ -311,6 +269,7 @@ function UnlinkedReport({
             <SelectContent>
               {openReports.map((r) => (
                 <SelectItem key={r.id} value={String(r.id)}>
+                  <StatusDot variant={statusVariants[r.status]} />
                   {r.title}
                 </SelectItem>
               ))}
@@ -318,98 +277,64 @@ function UnlinkedReport({
           </Select>
         </ActionCardContent>
       ) : null}
-      {mode === "create" ? (
-        <ActionCardContent className="grid gap-2">
-          <Select value={pageId} onValueChange={setPageId}>
-            <SelectTrigger size="sm" className="w-full">
-              <SelectValue placeholder="Select a status page" />
-            </SelectTrigger>
-            <SelectContent>
-              {(pages ?? []).map((p) => (
-                <SelectItem key={p.id} value={String(p.id)}>
-                  {p.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            aria-label="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <Textarea
-            rows={3}
-            placeholder="First public message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-          {canNotify ? (
-            <NotifySubscribers
-              id="incident-create-notify"
-              checked={notifySubscribers}
-              onCheckedChange={setNotifySubscribers}
-            />
-          ) : null}
-        </ActionCardContent>
-      ) : null}
       {closed ? null : (
         <ActionCardFooter className="flex-wrap gap-2">
-          {mode === null ? (
+          {showLink ? (
             <>
-              <Button size="sm" onClick={() => setMode("create")}>
-                Create status report
+              <Button
+                size="sm"
+                disabled={!reportId || link.isPending}
+                onClick={() =>
+                  toast.promise(
+                    link.mutateAsync({
+                      id: incident.id,
+                      statusReportId: Number(reportId),
+                    }),
+                    {
+                      loading: "Linking...",
+                      success: "Status report linked",
+                      error: (error) => errorMessage(error),
+                    },
+                  )
+                }
+              >
+                Link
               </Button>
               <Button
                 size="sm"
-                variant="outline"
-                onClick={() => setMode("link")}
+                variant="ghost"
+                onClick={() => setLinking(false)}
               >
-                Link existing
+                Cancel
               </Button>
             </>
           ) : (
             <>
-              {mode === "create" ? (
-                <Button
-                  size="sm"
-                  disabled={
-                    !pageId ||
-                    !title.trim() ||
-                    !message.trim() ||
-                    create.isPending
-                  }
-                  onClick={() => createReport().catch(console.error)}
-                >
-                  Create and link
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  disabled={!reportId || link.isPending}
-                  onClick={() =>
-                    toast.promise(
-                      link.mutateAsync({
-                        id: incident.id,
-                        statusReportId: Number(reportId),
-                      }),
-                      {
-                        loading: "Linking...",
-                        success: "Status report linked",
-                        error: (error) => errorMessage(error),
-                      },
-                    )
-                  }
-                >
-                  Link
-                </Button>
-              )}
-              <Button size="sm" variant="ghost" onClick={() => setMode(null)}>
-                Cancel
+              <Button size="sm" onClick={() => setCreateOpen(true)}>
+                Create status report
               </Button>
+              {openReports.length > 0 ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setLinking(true)}
+                >
+                  Link existing
+                </Button>
+              ) : null}
             </>
           )}
         </ActionCardFooter>
       )}
+      {/* Mounted on demand: the sheet fetches pages as soon as it renders. */}
+      {createOpen ? (
+        <FormSheetStatusReportCreate
+          open
+          onOpenChange={setCreateOpen}
+          incidentId={incident.id}
+          onCreated={() => refresh().catch(console.error)}
+        />
+      ) : null}
     </ActionCard>
   );
 }

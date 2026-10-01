@@ -5,7 +5,6 @@ import {
   type IncidentStatus,
   incidentSeverity,
 } from "@openstatus/db/src/schema/incidents/constants";
-import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -26,7 +25,6 @@ import { StatusDot } from "@/components/common/status-dot";
 import { UserAvatar } from "@/components/common/user-avatar";
 import {
   Property,
-  PropertyInput,
   PropertyLabel,
   PropertyList,
   PropertySelectTrigger,
@@ -38,7 +36,6 @@ import {
   severityConfig,
   statusConfig,
 } from "@/data/managed-incidents.client";
-import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
@@ -60,10 +57,6 @@ export function IncidentProperties({
 }) {
   const trpc = useTRPC();
   const { data: members } = useQuery(trpc.member.list.queryOptions());
-  // null = pristine: the input follows the server copy until edited.
-  const [draft, setDraft] = useState<string | null>(null);
-  const serverStartedAt = formatDateForInput(incident.startedAt);
-  const startedAt = draft ?? serverStartedAt;
   const [confirmCancel, setConfirmCancel] = useState(false);
   const closed = incident.closedAt !== null;
 
@@ -73,14 +66,7 @@ export function IncidentProperties({
   };
   const update = useMutation(
     trpc.incident.update.mutationOptions({
-      onSuccess: async (_row, variables) => {
-        await invalidate();
-        // severity/commander saves share this mutation; keep an unsaved draft
-        if (variables.startedAt instanceof Date) {
-          const saved = formatDateForInput(variables.startedAt);
-          setDraft((draft) => (draft === saved ? null : draft));
-        }
-      },
+      onSuccess: invalidate,
       onError,
     }),
   );
@@ -235,47 +221,10 @@ export function IncidentProperties({
       </Property>
       <Property>
         <PropertyLabel>Started at</PropertyLabel>
-        <PropertyValue className="flex-wrap">
-          {closed ? (
-            <HoverCardTimestamp date={incident.startedAt} side="left">
-              <span>{format(incident.startedAt, "LLL dd, y HH:mm")}</span>
-            </HoverCardTimestamp>
-          ) : (
-            <>
-              <PropertyInput
-                type="datetime-local"
-                aria-label="Started at"
-                value={startedAt}
-                onChange={(e) => setDraft(e.target.value)}
-              />
-              {startedAt !== serverStartedAt ? (
-                <div className="flex gap-1 font-sans">
-                  <Button
-                    size="sm"
-                    className="h-7"
-                    disabled={!startedAt || update.isPending}
-                    onClick={() =>
-                      update.mutate({
-                        id: incident.id,
-                        startedAt: new Date(startedAt),
-                      })
-                    }
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7"
-                    disabled={update.isPending}
-                    onClick={() => setDraft(null)}
-                  >
-                    Reset
-                  </Button>
-                </div>
-              ) : null}
-            </>
-          )}
+        <PropertyValue>
+          <HoverCardTimestamp date={incident.startedAt} side="left">
+            <span>{format(incident.startedAt, "LLL dd, y HH:mm")}</span>
+          </HoverCardTimestamp>
         </PropertyValue>
       </Property>
       <Property>
