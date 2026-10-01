@@ -109,8 +109,8 @@ describe("agent-tool shape equivalence", () => {
       input: {
         monitorId,
         timeRange: "1d",
+        status: ["error"],
         limit: 10,
-        offset: 0,
       },
     });
     const parsed = tool.outputSchema.safeParse(result);
