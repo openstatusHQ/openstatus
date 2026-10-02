@@ -42,7 +42,12 @@ export const SetIncidentStatusInput = z.object({
 });
 export type SetIncidentStatusInput = z.infer<typeof SetIncidentStatusInput>;
 
-export const AddIncidentNoteInput = z.object({ id, message: note });
+// `createdAt` lets a note copied from elsewhere keep the time it was said.
+export const AddIncidentNoteInput = z.object({
+  id,
+  message: note,
+  createdAt: z.coerce.date().optional(),
+});
 export type AddIncidentNoteInput = z.infer<typeof AddIncidentNoteInput>;
 
 export const LinkIncidentStatusReportInput = z.object({

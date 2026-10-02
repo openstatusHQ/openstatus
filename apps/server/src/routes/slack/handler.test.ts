@@ -2043,6 +2043,8 @@ describe("incident channel events", () => {
     resetSlackTestState();
     slackTestState.reactionsGetImpl = () =>
       Promise.resolve({ ok: true, message: {} });
+    slackTestState.conversationsInfoImpl = () =>
+      Promise.resolve({ ok: true, channel: {} });
     channelId = `C_PIN_${crypto.randomUUID()}`;
     const [row] = await db
       .insert(incident)
@@ -2099,6 +2101,147 @@ describe("incident channel events", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].message).toContain("Rolled back to v41");
     expect(rows[0].message).toContain("https://slack.test/archives/");
+  });
+
+  test("rich_text wins over mrkdwn: emoji, styles, mentions and channels", async () => {
+    // U1 is the pinner and must stay linked; U9 has no email, so the
+    // profile name is the only thing we know about them.
+    slackTestState.usersInfoImpl = (args) =>
+      Promise.resolve(
+        args.user === "U9"
+          ? { ok: true, user: { real_name: "Jane Doe", profile: {} } }
+          : { ok: true, user: { profile: { email: "ping@openstatus.dev" } } },
+      );
+    slackTestState.conversationsInfoImpl = () =>
+      Promise.resolve({ ok: true, channel: { name: "inc-db" } });
+    slackTestState.historyImpl = () =>
+      Promise.resolve({
+        messages: [
+          {
+            ts: "503.1",
+            user: "U2",
+            text: "*rolled back* :face_holding_back_tears: <@U9> see <#C7|inc-db>",
+            blocks: [
+              {
+                type: "rich_text",
+                elements: [
+                  {
+                    type: "rich_text_section",
+                    elements: [
+                      {
+                        type: "text",
+                        text: "rolled back",
+                        style: { bold: true },
+                      },
+                      { type: "text", text: " " },
+                      {
+                        type: "emoji",
+                        name: "face_holding_back_tears",
+                        unicode: "1f979",
+                      },
+                      { type: "text", text: " " },
+                      { type: "user", user_id: "U9" },
+                      { type: "text", text: " see " },
+                      { type: "channel", channel_id: "C7" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+    await pin("503.1");
+    await waitForCall("reactions.add");
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].message).toContain(
+      "**rolled back** 🥹 @Jane Doe see #inc-db",
+    );
+    expect(rows[0].message).not.toContain(":face_holding_back_tears:");
+  });
+
+  test("a mention whose lookup fails keeps the raw id", async () => {
+    slackTestState.usersInfoImpl = (args) =>
+      args.user === "U9"
+        ? Promise.reject(new Error("user_not_found"))
+        : Promise.resolve({
+            ok: true,
+            user: { profile: { email: "ping@openstatus.dev" } },
+          });
+    slackTestState.historyImpl = () =>
+      Promise.resolve({
+        messages: [
+          {
+            ts: "504.1",
+            text: "<@U9> ack",
+            blocks: [
+              {
+                type: "rich_text",
+                elements: [
+                  {
+                    type: "rich_text_section",
+                    elements: [
+                      { type: "user", user_id: "U9" },
+                      { type: "text", text: " ack" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+    await pin("504.1");
+    await waitForCall("reactions.add");
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].message).toContain("@U9 ack");
+  });
+
+  test("the note keeps the time the message was said", async () => {
+    const saidAt = Math.floor(Date.now() / 1000) - 3600;
+    const ts = `${saidAt}.000100`;
+    slackTestState.historyImpl = () =>
+      Promise.resolve({ messages: [{ ts, text: "an hour ago" }] });
+    await pin(ts);
+    await waitForCall("reactions.add");
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    expect(Math.abs(rows[0].createdAt.getTime() - saidAt * 1000)).toBeLessThan(
+      1000,
+    );
+  });
+
+  test("a message with only attachments is noted from their fallback", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({
+        messages: [
+          {
+            ts: "505.1",
+            text: "",
+            attachments: [{ fallback: "[FIRING] db latency > 2s" }],
+          },
+        ],
+      });
+    await pin("505.1");
+    await waitForCall("reactions.add");
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].message).toContain("[FIRING] db latency > 2s");
+  });
+
+  test("a message with nothing to copy tells the pinner", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({ messages: [{ ts: "506.1", text: "" }] });
+    await pin("506.1");
+    const ephemeral = await waitForCall("postEphemeral");
+    expect(ephemeral?.args.text).toContain("Nothing to copy");
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackTestState.calls.some((c) => c.method === "reactions.add")).toBe(
+      false,
+    );
+    expect(await notes()).toHaveLength(0);
   });
 
   test("a message already confirmed is not noted twice", async () => {

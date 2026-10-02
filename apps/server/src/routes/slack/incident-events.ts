@@ -17,6 +17,12 @@ import {
   requireSlackMember,
   slackAgentAllowed,
 } from "./require-slack-member";
+import { resolveSlackMentionNames } from "./resolve-slack-user";
+import {
+  collectMentions,
+  mentionLabelsFromText,
+  richTextToMarkdown,
+} from "./rich-text";
 import type { SlackWorkspace } from "./workspace-resolver";
 
 const logger = getLogger(["api-server", "slack", "incident-events"]);
@@ -24,7 +30,62 @@ const logger = getLogger(["api-server", "slack", "incident-events"]);
 const PIN = "pushpin";
 const DONE = "white_check_mark";
 
-type SlackMessage = { ts?: string; text?: string; user?: string };
+type SlackMessage = {
+  ts?: string;
+  text?: string;
+  user?: string;
+  blocks?: unknown[];
+  attachments?: { text?: string; fallback?: string }[];
+};
+
+const NOTHING_TO_COPY = "Nothing to copy from that message.";
+// Older than this and the note is more likely a mis-pin than history.
+const MAX_MESSAGE_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** A Slack `ts` ("1759300000.123456") as the time the message was said. */
+function messageDate(ts: string): Date | undefined {
+  const ms = Number(ts) * 1000;
+  if (!Number.isFinite(ms)) return undefined;
+  const now = Date.now();
+  if (ms > now + 60_000 || ms < now - MAX_MESSAGE_AGE_MS) return undefined;
+  return new Date(ms);
+}
+
+/** Alert bots post `attachments` with an empty `text`. */
+function attachmentsText(message: SlackMessage): string {
+  return (message.attachments ?? [])
+    .map((a) => (a.fallback ?? a.text ?? "").trim())
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+async function noteBody(args: {
+  resolved: SlackWorkspace;
+  teamId: string;
+  slack: WebClient;
+  message: SlackMessage;
+}): Promise<string> {
+  const { resolved, teamId, slack, message } = args;
+  const labels = mentionLabelsFromText(message.text);
+  const lookedUp = await resolveSlackMentionNames({
+    workspace: resolved.workspace,
+    teamId,
+    slack,
+    ...collectMentions(message.blocks),
+  });
+  // A looked-up name beats the label Slack put in `text`.
+  const names = {
+    users: new Map([...(labels.users ?? []), ...(lookedUp.users ?? [])]),
+    channels: new Map([
+      ...(labels.channels ?? []),
+      ...(lookedUp.channels ?? []),
+    ]),
+    usergroups: labels.usergroups,
+  };
+  const body =
+    richTextToMarkdown(message.blocks, names) ?? message.text?.trim() ?? "";
+  return body || attachmentsText(message);
+}
 
 function system(resolved: SlackWorkspace): ServiceContext {
   return {
@@ -131,8 +192,21 @@ export async function handlePinReaction(args: {
   try {
     if (await alreadyNoted(slack, channel, ts, resolved.botUserId)) return;
     const message = await findMessage(slack, channel, ts);
-    if (!message?.text) {
+    const body = message
+      ? await noteBody({ resolved, teamId, slack, message })
+      : "";
+    if (!body) {
       await redis.del(claim);
+      await slack.chat
+        .postEphemeral({
+          channel,
+          user: slackUserId,
+          thread_ts: ts,
+          text: NOTHING_TO_COPY,
+        })
+        .catch((error) =>
+          logger.warn("slack failed to report an empty pin", { error }),
+        );
       return;
     }
     const permalink = await slack.chat
@@ -145,9 +219,8 @@ export async function handlePinReaction(args: {
       ctx,
       input: {
         id: bound.id,
-        message: permalink
-          ? `${message.text}\n\n[From Slack](${permalink})`
-          : message.text,
+        message: permalink ? `${body}\n\n[From Slack](${permalink})` : body,
+        createdAt: messageDate(ts),
       },
     });
     trackSlackIncident(ctx, "note", { via: "reaction" });
