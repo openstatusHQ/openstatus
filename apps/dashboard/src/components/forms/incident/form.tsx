@@ -48,7 +48,10 @@ const schema = z.object({
   commanderId: z.string(),
   startedAt: z
     .date()
-    .refine((value) => value <= new Date(), "Start time cannot be in the future."),
+    .refine(
+      (value) => value <= new Date(),
+      "Start time cannot be in the future.",
+    ),
   statusReportId: z.string(),
   openSlackChannel: z.boolean(),
 });

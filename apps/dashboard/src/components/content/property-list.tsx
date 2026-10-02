@@ -147,7 +147,7 @@ export function PropertyDateTimePicker({
       className={cn(
         propertyControlClassName,
         // the outline variant re-adds a border and tint in dark mode
-        "data-[state=open]:bg-accent dark:border-transparent dark:hover:bg-accent/50 md:text-sm",
+        "data-[state=open]:bg-accent dark:hover:bg-accent/50 md:text-sm dark:border-transparent",
         className,
       )}
       {...props}
