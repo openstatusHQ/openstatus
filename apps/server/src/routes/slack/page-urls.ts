@@ -1,5 +1,9 @@
 import { and, db, eq, inArray } from "@openstatus/db";
 import { page, pageComponent, statusReport } from "@openstatus/db/src/schema";
+import {
+  incidentDashboardUrl,
+  resolveDashboardUrl,
+} from "@openstatus/services/incident";
 
 import { env } from "@/env";
 
@@ -24,13 +28,14 @@ export async function getPageUrl(pageId: number): Promise<string | null> {
 }
 
 function getDashboardBaseUrl(): string {
-  return env.NODE_ENV === "production"
-    ? "https://app.openstatus.dev"
-    : "http://localhost:3001";
+  return resolveDashboardUrl({
+    nodeEnv: env.NODE_ENV,
+    override: env.DASHBOARD_URL,
+  });
 }
 
 export function getIncidentDashboardUrl(incidentId: number): string {
-  return `${getDashboardBaseUrl()}/incidents/${incidentId}`;
+  return incidentDashboardUrl(getDashboardBaseUrl(), incidentId);
 }
 
 /**

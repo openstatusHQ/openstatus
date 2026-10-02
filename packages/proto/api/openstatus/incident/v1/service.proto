@@ -1,0 +1,347 @@
+syntax = "proto3";
+
+package openstatus.incident.v1;
+
+import "buf/validate/validate.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "openstatus/incident/v1/incident.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/incident/v1;incidentv1";
+
+// IncidentService declares and runs incidents: lifecycle, timeline, status report link and postmortem.
+service IncidentService {
+  // DeclareIncident declares a new incident.
+  rpc DeclareIncident(DeclareIncidentRequest) returns (DeclareIncidentResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Declares a new incident in the open status. The commander is set by email and must be a member of the workspace; without one the incident is unassigned. A newly assigned commander is emailed unless they own the API key. When open_slack_channel is true and Slack is connected, a dedicated channel is created and the team invited. started_at defaults to now and can be set in the past for a retroactive declare."
+    };
+  }
+
+  // GetIncident retrieves an incident by ID, including its timeline.
+  rpc GetIncident(GetIncidentRequest) returns (GetIncidentResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // ListIncidents returns the incidents of the workspace (metadata only), open first.
+  rpc ListIncidents(ListIncidentsRequest) returns (ListIncidentsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // UpdateIncident edits the title, severity, summary, commander or start time of an incident.
+  rpc UpdateIncident(UpdateIncidentRequest) returns (UpdateIncidentResponse);
+
+  // SetIncidentStatus moves an incident through its lifecycle, optionally with a note.
+  rpc SetIncidentStatus(SetIncidentStatusRequest) returns (SetIncidentStatusResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Moves an incident to a new status. Allowed transitions: open -> mitigated, resolved or canceled; mitigated -> resolved, open or canceled; resolved -> open. Canceled is terminal and closes the incident. The same status, a forbidden transition or a closed incident fail with failed_precondition; Incident.allowed_transitions lists what is valid. A linked status report is never updated: post the public update with StatusReportService.AddStatusReportUpdate."
+    };
+  }
+
+  // AddIncidentNote appends a note to the incident timeline.
+  rpc AddIncidentNote(AddIncidentNoteRequest) returns (AddIncidentNoteResponse);
+
+  // LinkStatusReport links a public status report to the incident.
+  rpc LinkStatusReport(LinkStatusReportRequest) returns (LinkStatusReportResponse);
+
+  // UnlinkStatusReport removes the link to the incident's status report.
+  rpc UnlinkStatusReport(UnlinkStatusReportRequest) returns (UnlinkStatusReportResponse);
+
+  // CloseIncident closes a resolved incident.
+  rpc CloseIncident(CloseIncidentRequest) returns (CloseIncidentResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Closes a resolved incident, after which only its postmortem can change. Requires an approved postmortem, or skip_postmortem set to true. Allowed for workspace owners and admins and for the incident commander. The API key acts as its creator, with the creator's current role; keys without a creator cannot call this."
+    };
+  }
+
+  // DeleteIncident removes an incident declared by mistake.
+  rpc DeleteIncident(DeleteIncidentRequest) returns (DeleteIncidentResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Deletes an incident declared by mistake. Only allowed while the incident is open and was never mitigated, resolved or closed (Incident.deletable); cancel it otherwise. Allowed for workspace owners and admins only. The API key acts as its creator, with the creator's current role; keys without a creator cannot call this."
+    };
+  }
+
+  // GetPostmortem retrieves the postmortem of an incident, if any.
+  rpc GetPostmortem(GetPostmortemRequest) returns (GetPostmortemResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // UpdatePostmortem creates or replaces the postmortem body of a resolved incident.
+  rpc UpdatePostmortem(UpdatePostmortemRequest) returns (UpdatePostmortemResponse);
+
+  // ApprovePostmortem approves the postmortem and optionally closes the incident.
+  rpc ApprovePostmortem(ApprovePostmortemRequest) returns (ApprovePostmortemResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Approves the draft postmortem of a resolved incident. With close set to true the incident is closed in the same step. Allowed for workspace owners and admins and for the incident commander. The API key acts as its creator, with the creator's current role; keys without a creator cannot call this."
+    };
+  }
+}
+
+// DeclareIncidentRequest is the request to declare a new incident.
+message DeclareIncidentRequest {
+  // Title of the incident (required, 1-256 characters).
+  string title = 1 [
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 256
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "Checkout API returns 502"}}
+  ];
+
+  // Severity of the incident (required).
+  IncidentSeverity severity = 2 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+
+  // Short human summary (optional, up to 4000 characters).
+  optional string summary = 3 [(buf.validate.field).string.max_len = 4000];
+
+  // Email of the member who leads the response (optional, defaults to unassigned).
+  optional string commander_email = 4 [
+    (buf.validate.field).string.email = true,
+    (gnostic.openapi.v3.property) = {example: {yaml: "jane@example.com"}}
+  ];
+
+  // When the impact began (RFC 3339 format, optional, defaults to now).
+  optional string started_at = 5 [
+    (buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$",
+    (gnostic.openapi.v3.property) = {example: {yaml: "\"2024-03-15T10:30:00Z\""}}
+  ];
+
+  // ID of a status report to link (optional).
+  optional string status_report_id = 6 [(buf.validate.field).string.min_len = 1];
+
+  // Whether to open a Slack channel for the incident when Slack is connected (optional, defaults to false).
+  optional bool open_slack_channel = 7;
+}
+
+// DeclareIncidentResponse is the response after declaring an incident.
+message DeclareIncidentResponse {
+  // The declared incident.
+  Incident incident = 1;
+}
+
+// GetIncidentRequest is the request to get an incident by ID.
+message GetIncidentRequest {
+  // ID of the incident to retrieve (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// GetIncidentResponse is the response containing the incident and its timeline.
+message GetIncidentResponse {
+  // The requested incident.
+  Incident incident = 1;
+}
+
+// ListIncidentsRequest is the request to list incidents.
+message ListIncidentsRequest {
+  // Maximum number of incidents to return (1-100, defaults to 50).
+  optional int32 limit = 1 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+
+  // Number of incidents to skip for pagination (defaults to 0).
+  optional int32 offset = 2 [(buf.validate.field).int32.gte = 0];
+
+  // Filter by status (optional). If empty, returns all statuses.
+  repeated IncidentStatus statuses = 3 [(buf.validate.field).repeated.items.enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+
+  // Filter by closed state (optional). If unset, returns both.
+  optional bool closed = 4;
+}
+
+// ListIncidentsResponse is the response containing incident summaries.
+message ListIncidentsResponse {
+  // List of incidents (metadata only, use GetIncident for full details).
+  repeated IncidentSummary incidents = 1;
+
+  // Total number of incidents matching the filter.
+  int32 total_size = 2;
+}
+
+// UpdateIncidentRequest is the request to edit an incident.
+message UpdateIncidentRequest {
+  // ID of the incident to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // New title (optional, 1-256 characters).
+  optional string title = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+
+  // New severity (optional).
+  optional IncidentSeverity severity = 3 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+
+  // New summary (optional, 1-4000 characters).
+  optional string summary = 4 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 4000
+  }];
+
+  // Set to true to remove the summary. Cannot be combined with summary.
+  optional bool clear_summary = 5;
+
+  // Email of the new commander (optional).
+  optional string commander_email = 6 [(buf.validate.field).string.email = true];
+
+  // Set to true to unassign the commander. Cannot be combined with commander_email.
+  optional bool clear_commander = 7;
+
+  // New start of impact (RFC 3339 format, optional).
+  optional string started_at = 8 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
+}
+
+// UpdateIncidentResponse is the response after updating an incident.
+message UpdateIncidentResponse {
+  // The updated incident (without its timeline).
+  Incident incident = 1;
+}
+
+// SetIncidentStatusRequest is the request to change the status of an incident.
+message SetIncidentStatusRequest {
+  // ID of the incident (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Target status (required).
+  IncidentStatus status = 2 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+
+  // Note recorded with the change (optional, up to 10000 characters).
+  optional string note = 3 [(buf.validate.field).string.max_len = 10000];
+}
+
+// SetIncidentStatusResponse is the response after changing the status of an incident.
+message SetIncidentStatusResponse {
+  // The updated incident (without its timeline).
+  Incident incident = 1;
+}
+
+// AddIncidentNoteRequest is the request to add a note to an incident timeline.
+message AddIncidentNoteRequest {
+  // ID of the incident (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Note text, markdown (required, 1-10000 characters).
+  string message = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 10000
+  }];
+}
+
+// AddIncidentNoteResponse is the response after adding a note.
+message AddIncidentNoteResponse {
+  // The timeline event that was added.
+  IncidentEvent event = 1;
+}
+
+// LinkStatusReportRequest is the request to link a status report to an incident.
+message LinkStatusReportRequest {
+  // ID of the incident (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // ID of the status report to link (required).
+  string status_report_id = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+// LinkStatusReportResponse is the response after linking a status report.
+message LinkStatusReportResponse {
+  // The updated incident (without its timeline).
+  Incident incident = 1;
+}
+
+// UnlinkStatusReportRequest is the request to unlink the status report of an incident.
+message UnlinkStatusReportRequest {
+  // ID of the incident (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// UnlinkStatusReportResponse is the response after unlinking the status report.
+message UnlinkStatusReportResponse {
+  // The updated incident (without its timeline).
+  Incident incident = 1;
+}
+
+// CloseIncidentRequest is the request to close a resolved incident.
+message CloseIncidentRequest {
+  // ID of the incident (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Close without an approved postmortem (optional, defaults to false).
+  optional bool skip_postmortem = 2;
+}
+
+// CloseIncidentResponse is the response after closing an incident.
+message CloseIncidentResponse {
+  // The closed incident (without its timeline).
+  Incident incident = 1;
+}
+
+// DeleteIncidentRequest is the request to delete an incident.
+message DeleteIncidentRequest {
+  // ID of the incident (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// DeleteIncidentResponse is the response after deleting an incident.
+message DeleteIncidentResponse {
+  // Whether the deletion was successful.
+  bool success = 1;
+}
+
+// GetPostmortemRequest is the request to get the postmortem of an incident.
+message GetPostmortemRequest {
+  // ID of the incident (required).
+  string incident_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// GetPostmortemResponse is the response containing the postmortem, if any.
+message GetPostmortemResponse {
+  // The postmortem (unset when none has been written yet).
+  optional Postmortem postmortem = 1;
+}
+
+// UpdatePostmortemRequest is the request to write the postmortem of a resolved incident.
+message UpdatePostmortemRequest {
+  // ID of the incident (required).
+  string incident_id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Markdown body (required, 1-100000 characters). Replaces the current body; an approved postmortem stays approved.
+  string content = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 100000
+  }];
+}
+
+// UpdatePostmortemResponse is the response after writing the postmortem.
+message UpdatePostmortemResponse {
+  // The saved postmortem.
+  Postmortem postmortem = 1;
+}
+
+// ApprovePostmortemRequest is the request to approve the postmortem of an incident.
+message ApprovePostmortemRequest {
+  // ID of the incident (required).
+  string incident_id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Also close the incident (optional, defaults to false).
+  optional bool close = 2;
+}
+
+// ApprovePostmortemResponse is the response after approving the postmortem.
+message ApprovePostmortemResponse {
+  // The approved postmortem.
+  Postmortem postmortem = 1;
+
+  // The incident after approval (without its timeline).
+  Incident incident = 2;
+}

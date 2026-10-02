@@ -19,6 +19,7 @@ import { closeIncidentInTx } from "./close";
 import {
   appendIncidentEvent,
   getIncidentInWorkspace,
+  incidentUserColumns,
   requireIncidentFeature,
 } from "./internal";
 import {
@@ -202,11 +203,14 @@ export async function approvePostmortem(args: {
 export async function getPostmortem(args: {
   ctx: ServiceContext;
   input: IncidentIdInput;
-}): Promise<IncidentPostmortem | undefined> {
+}) {
   const { ctx } = args;
   requireIncidentFeature(ctx);
   const input = IncidentIdInput.parse(args.input);
   const db = getReadDb(ctx);
   const row = await getIncidentInWorkspace(db, ctx.workspace.id, input.id);
-  return findPostmortem(db, row.id);
+  return db.query.incidentPostmortem.findFirst({
+    where: eq(incidentPostmortem.incidentId, row.id),
+    with: { approvedByUser: { columns: incidentUserColumns } },
+  });
 }

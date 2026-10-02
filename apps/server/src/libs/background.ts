@@ -5,7 +5,7 @@ const logger = getLogger("api-server");
 /**
  * Work that runs after the HTTP response has been sent.
  *
- * Slack gives us 3 seconds to acknowledge an event, an interaction or a slash
+ * Slack, for example, gives us 3 seconds to acknowledge an event, an interaction or a slash
  * command. Anything slower and the user sees a timeout warning — on a click
  * that in fact succeeded. Approving a status report writes to the DB and then
  * fans out to every subscriber, so it routinely outlives that window: ack
@@ -27,7 +27,7 @@ export function runInBackground(
   const task: Promise<void> = Promise.resolve()
     .then(work)
     .catch((error: unknown) => {
-      logger.error(`slack background task failed: ${label}`, {
+      logger.error(`background task failed: ${label}`, {
         error,
         ...context,
       });

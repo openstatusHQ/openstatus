@@ -49,7 +49,7 @@ export function toConnectError(err: unknown): never {
       case "UNAUTHORIZED":
         throw new ConnectError(err.message, Code.Unauthenticated);
       case "CONFLICT":
-        throw new ConnectError(err.message, Code.InvalidArgument);
+        throw new ConnectError(err.message, Code.FailedPrecondition);
       case "VALIDATION":
         throw new ConnectError(err.message, Code.InvalidArgument);
       case "LIMIT_EXCEEDED":

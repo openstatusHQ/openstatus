@@ -2,6 +2,22 @@ export { addIncidentNote } from "./add-note";
 export { closeIncident, closeIncidentInTx } from "./close";
 export { declareIncident } from "./declare";
 export { deleteIncident, isDeletable } from "./delete";
+export {
+  actorDisplayName,
+  afterIncidentClosed,
+  afterIncidentDeclared,
+  afterIncidentDeleted,
+  afterIncidentStatusChanged,
+  afterIncidentUpdated,
+  afterPostmortemApproved,
+  type CommanderEmail,
+  describeIncidentChanges,
+  incidentDashboardUrl,
+  type IncidentEffects,
+  notifyIncidentCommander,
+  quoteNote,
+  resolveDashboardUrl,
+} from "./effects";
 export { displayName } from "../attribution";
 export { allowedTransitions } from "./internal";
 export {
@@ -22,7 +38,9 @@ export {
   getIncident,
   getIncidentBySlackChannel,
   getIncidentForStatusReport,
+  getIncidentOrThrow,
   listIncidents,
+  toIncidentView,
 } from "./list";
 export {
   approvePostmortem,

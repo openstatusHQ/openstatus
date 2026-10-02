@@ -1,0 +1,24 @@
+---
+title: "Incident API"
+description: "Declare and run incidents from the API: lifecycle, timeline notes, status report link and postmortem."
+publishedAt: "2026-10-02"
+category: "incidents"
+author: "openstatus"
+---
+
+Incidents are now available on the API, through the new `IncidentService`.
+
+Everything you do from the dashboard works from your scripts and integrations too:
+
+- Declare an incident with a severity, a commander (by email) and an optional Slack channel.
+- Move it through `open`, `mitigated`, `resolved` or `canceled`, with a note on each change.
+- Add timeline notes, link the public status report, and write and approve the postmortem.
+- Close the incident, or delete one declared by mistake.
+
+Changes made through the API send the same commander emails and Slack channel messages as the dashboard. `createStatusReport` now takes an `incidentId`, and status reports return the incident they are linked to.
+
+Read the [Incident Service guide](/docs/sdk/nodejs/incident-service) to get started.
+
+## Error code change
+
+Requests that conflict with the current state of a resource now fail with `failed_precondition` instead of `invalid_argument`, across every service. This covers cases such as a status change the lifecycle does not allow or a report that is already linked. If your integration checks for `invalid_argument` on those errors, update it.

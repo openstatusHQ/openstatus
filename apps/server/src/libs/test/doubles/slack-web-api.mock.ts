@@ -85,6 +85,31 @@ export class WebClient {
       s.calls.push({ method: "conversations.info", args });
       return s.conversationsInfoImpl(args);
     },
+    create: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.create", args });
+      return Promise.resolve({
+        ok: true,
+        channel: { id: "C_INCIDENT", name: args.name },
+      });
+    },
+    invite: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.invite", args });
+      return Promise.resolve({ ok: true });
+    },
+    setTopic: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.setTopic", args });
+      return Promise.resolve({ ok: true });
+    },
+    archive: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.archive", args });
+      return Promise.resolve({ ok: true });
+    },
+  };
+  pins = {
+    add: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "pins.add", args });
+      return Promise.resolve({ ok: true });
+    },
   };
   agents = {
     sessions: {
@@ -112,6 +137,10 @@ export class WebClient {
     info: (args: Record<string, unknown>) => {
       s.calls.push({ method: "users.info", args });
       return s.usersInfoImpl(args);
+    },
+    lookupByEmail: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "users.lookupByEmail", args });
+      return Promise.reject(new Error("users_not_found"));
     },
   };
   views = {

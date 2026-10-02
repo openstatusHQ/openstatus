@@ -9,11 +9,11 @@ import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
 
+import { runInBackground } from "@/libs/background";
 import { redis } from "@/libs/clients";
 
 import { type AgentEvents, runAgent } from "./agent";
 import { greetOnce, setAssistantStatus, setSessionStatus } from "./assistant";
-import { runInBackground } from "./background";
 import {
   type Block,
   buildAnswerMessage,
