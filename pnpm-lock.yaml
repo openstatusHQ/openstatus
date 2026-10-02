@@ -901,6 +901,9 @@ importers:
       lucide-react:
         specifier: 'catalog:'
         version: 0.525.0(react@19.3.0)
+      mailchecker:
+        specifier: 'catalog:'
+        version: 6.0.21
       next:
         specifier: 'catalog:'
         version: 16.3.5(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -912,7 +915,7 @@ importers:
         version: 0.4.6(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       nuqs:
         specifier: 'catalog:'
-        version: 2.10.1(next@16.3.5(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
+        version: 2.10.1(next@16.3.5(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
       random-word-slugs:
         specifier: 'catalog:'
         version: 0.1.7
@@ -962,6 +965,12 @@ importers:
         specifier: 'catalog:'
         version: 4.6.5
     devDependencies:
+      '@std/expect':
+        specifier: jsr:^1.0.19
+        version: '@jsr/std__expect@1.0.20'
+      '@std/testing':
+        specifier: jsr:^1.0.19
+        version: '@jsr/std__testing@1.0.20'
       '@tailwindcss/postcss':
         specifier: 'catalog:'
         version: 4.3.3
@@ -1404,7 +1413,7 @@ importers:
         version: 0.4.6(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       nuqs:
         specifier: 'catalog:'
-        version: 2.10.1(next@16.3.5(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
+        version: 2.10.1(next@16.3.5(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
       react:
         specifier: 'catalog:'
         version: 19.3.0
@@ -1669,7 +1678,7 @@ importers:
         version: 0.4.6(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       nuqs:
         specifier: 'catalog:'
-        version: 2.10.1(next@16.3.5(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
+        version: 2.10.1(next@16.3.5(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
       random-word-slugs:
         specifier: 'catalog:'
         version: 0.1.7
@@ -3230,7 +3239,7 @@ importers:
         version: 0.4.6(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       nuqs:
         specifier: 'catalog:'
-        version: 2.10.1(next@16.3.5(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
+        version: 2.10.1(next@16.3.5(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
       qr-code-styling:
         specifier: 'catalog:'
         version: 1.9.2
@@ -3299,6 +3308,12 @@ importers:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      '@std/expect':
+        specifier: jsr:^1.0.19
+        version: '@jsr/std__expect@1.0.20'
+      '@std/testing':
+        specifier: jsr:^1.0.19
+        version: '@jsr/std__testing@1.0.20'
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.2
@@ -18792,7 +18807,7 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
-  nuqs@2.10.1(next@16.3.5(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0):
+  nuqs@2.10.1(next@16.3.5(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0):
     dependencies:
       '@standard-schema/spec': 1.1.0
       react: 19.3.0

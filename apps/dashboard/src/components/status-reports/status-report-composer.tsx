@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
+import { personName } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -42,7 +43,6 @@ import {
   ComposerTextarea,
 } from "@/components/content/composer";
 import { TimelineAvatar, TimelineItem } from "@/components/content/timeline";
-import { personName } from "@/data/managed-incidents.client";
 import { toGroupNameLookup } from "@/data/page-components.client";
 import {
   getNextStatus,
