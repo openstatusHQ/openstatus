@@ -17,6 +17,22 @@ export function isStale(fetchedAtMs: number): boolean {
   return Date.now() - fetchedAtMs > STALE_THRESHOLD_MS;
 }
 
+// Upstream component names often already carry the provider ("Zoom AI" on
+// Zoom), so prefixing blindly yields "Zoom Zoom AI".
+export function getComponentFullName(
+  serviceName: string,
+  componentName: string,
+): string {
+  const service = serviceName.trim().replace(/\s+/g, " ");
+  const component = componentName.trim().replace(/\s+/g, " ");
+  if (!component) return service;
+  if (!service) return component;
+  const lower = component.toLowerCase();
+  const prefix = service.toLowerCase();
+  if (lower === prefix || lower.startsWith(`${prefix} `)) return component;
+  return `${service} ${component}`;
+}
+
 // Natural-language answer to "Is <name> down?", used both as on-page lead copy
 // and as the FAQPage answer in JSON-LD. Mirrors getPillStyle semantics.
 export function getStatusAnswer(args: {
