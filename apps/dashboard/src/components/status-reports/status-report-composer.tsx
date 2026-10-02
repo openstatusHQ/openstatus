@@ -10,7 +10,6 @@ import { statusReportStatus } from "@openstatus/db/src/schema/status_reports/con
 import { Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
-import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import {
   Select,
@@ -24,6 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { DateTimePicker } from "@/components/common/date-time-picker";
 import { StatusDot } from "@/components/common/status-dot";
 import {
   ComponentImpact,
@@ -49,7 +49,6 @@ import {
   statusVariants,
   toCreateStatusReportUpdateInput,
 } from "@/data/status-report-updates.client";
-import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
@@ -90,7 +89,9 @@ export function StatusReportComposer({
   const [notifyChecked, setNotifyChecked] = useState(true);
   const [selected, setSelected] = useState<StatusReportStatus | null>(null);
   // null = now, resolved at publish time so an open composer never backdates.
-  const [date, setDate] = useState<string | null>(null);
+  const [date, setDate] = useState<Date | null>(null);
+  // shown while `date` is null; refreshed on reset
+  const [now, setNow] = useState(() => new Date());
   const [overrides, setOverrides] = useState<Map<number, PageComponentImpact>>(
     () => new Map(),
   );
@@ -100,13 +101,7 @@ export function StatusReportComposer({
   const publish = usePublishUpdate(report.id);
   const notify = canNotify && notifyChecked;
   const status = selected ?? getNextStatus(report.status);
-  const now = formatDateForInput(new Date());
-  // the input's `max` is not enforced on the button handler
-  const invalidDate =
-    date !== null &&
-    (date === "" ||
-      Number.isNaN(new Date(date).getTime()) ||
-      new Date(date) > new Date());
+  const invalidDate = date !== null && date > new Date();
   const disabled = publish.isPending || !message.trim() || invalidDate;
 
   const byId = new Map<number, Component>(
@@ -129,6 +124,7 @@ export function StatusReportComposer({
     setMessage("");
     setSelected(null);
     setDate(null);
+    setNow(new Date());
     setOverrides(new Map());
     setIds(null);
   }
@@ -141,7 +137,7 @@ export function StatusReportComposer({
         values: {
           status,
           message: message.trim(),
-          date: date ? new Date(date) : new Date(),
+          date: date ?? new Date(),
           componentImpacts: components.map((c) => ({
             pageComponentId: c.id,
             impact: impactFor(c.id),
@@ -310,13 +306,13 @@ export function StatusReportComposer({
               </SelectContent>
             </Select>
             <span>at</span>
-            <Input
-              type="datetime-local"
+            <DateTimePicker
+              key={now.getTime()}
               aria-label="Date"
               value={date ?? now}
-              max={now}
-              onChange={(e) => setDate(e.target.value)}
-              className="bg-background text-foreground h-8 w-auto font-mono md:text-sm"
+              max={new Date()}
+              onChange={setDate}
+              className="bg-background text-foreground h-8 font-mono"
             />
           </div>
           <div className="ml-auto flex items-center gap-3">

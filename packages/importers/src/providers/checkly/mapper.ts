@@ -125,6 +125,7 @@ export function mapCheck(check: ChecklyCheck, workspaceId: number) {
     headers,
     body: req?.body ?? "",
     method: mapMethod(req?.method ?? "GET"),
+    followRedirects: req?.followRedirects ?? true,
     // Checkly maxResponseTime is the hard timeout (ms); default to 45s.
     timeout: check.maxResponseTime ?? 45000,
     sourceMonitorGroupId: check.groupId,

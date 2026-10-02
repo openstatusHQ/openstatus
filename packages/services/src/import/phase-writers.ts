@@ -726,6 +726,7 @@ export async function writeMonitorsPhase(
         body: string;
         method: string;
         timeout: number;
+        followRedirects?: boolean;
         sourceMonitorGroupId: string | null;
       };
 
@@ -793,6 +794,7 @@ export async function writeMonitorsPhase(
             | "CONNECT"
             | "OPTIONS",
           timeout: data.timeout,
+          followRedirects: data.followRedirects,
         })
         .returning();
 

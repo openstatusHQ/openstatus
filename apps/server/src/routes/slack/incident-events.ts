@@ -3,6 +3,7 @@ import type { ServiceContext } from "@openstatus/services";
 import {
   addIncidentNote,
   getIncidentBySlackChannel,
+  isAllowedNoteCreatedAt,
   unbindIncidentSlackChannel,
 } from "@openstatus/services/incident";
 import { WebClient } from "@slack/web-api";
@@ -17,6 +18,15 @@ import {
   requireSlackMember,
   slackAgentAllowed,
 } from "./require-slack-member";
+import {
+  resolveSlackMember,
+  resolveSlackMentionNames,
+} from "./resolve-slack-user";
+import {
+  collectMentions,
+  mentionLabelsFromText,
+  richTextToMarkdown,
+} from "./rich-text";
 import type { SlackWorkspace } from "./workspace-resolver";
 
 const logger = getLogger(["api-server", "slack", "incident-events"]);
@@ -24,7 +34,71 @@ const logger = getLogger(["api-server", "slack", "incident-events"]);
 const PIN = "pushpin";
 const DONE = "white_check_mark";
 
-type SlackMessage = { ts?: string; text?: string; user?: string };
+type SlackMessage = {
+  ts?: string;
+  text?: string;
+  user?: string;
+  bot_id?: string;
+  subtype?: string;
+  blocks?: unknown[];
+  attachments?: { text?: string; fallback?: string }[];
+};
+
+const NOTHING_TO_COPY = "Nothing to copy from that message.";
+const PIN_FAILED =
+  "Couldn't copy that message to the timeline. Pin it again to retry.";
+const VERB_LAG_MS = 60_000;
+
+/**
+ * A Slack `ts` ("1759300000.123456") as the time the message was said, or
+ * `undefined` (now) when the verb would reject it as outside its window.
+ */
+function messageDate(ts: string): Date | undefined {
+  const date = new Date(Number(ts) * 1000);
+  const now = Date.now();
+  // The verb samples its own `now` a moment later; a boundary message must
+  // pass both, or the pin would fail instead of falling back to now.
+  return isAllowedNoteCreatedAt(date, now) &&
+    isAllowedNoteCreatedAt(date, now + VERB_LAG_MS)
+    ? date
+    : undefined;
+}
+
+/** Alert bots post `attachments` with an empty `text`. */
+function attachmentsText(message: SlackMessage): string {
+  return (message.attachments ?? [])
+    .map((a) => a.fallback?.trim() || a.text?.trim() || "")
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+async function noteBody(args: {
+  resolved: SlackWorkspace;
+  teamId: string;
+  slack: WebClient;
+  message: SlackMessage;
+}): Promise<string> {
+  const { resolved, teamId, slack, message } = args;
+  const labels = mentionLabelsFromText(message.text);
+  const lookedUp = await resolveSlackMentionNames({
+    workspace: resolved.workspace,
+    teamId,
+    slack,
+    ...collectMentions(message.blocks),
+  });
+  // A looked-up name beats the label Slack put in `text`.
+  const names = {
+    users: new Map([...(labels.users ?? []), ...(lookedUp.users ?? [])]),
+    channels: new Map([
+      ...(labels.channels ?? []),
+      ...(lookedUp.channels ?? []),
+    ]),
+    usergroups: labels.usergroups,
+  };
+  const body =
+    richTextToMarkdown(message.blocks, names) ?? message.text?.trim() ?? "";
+  return body || attachmentsText(message);
+}
 
 function system(resolved: SlackWorkspace): ServiceContext {
   return {
@@ -131,28 +205,82 @@ export async function handlePinReaction(args: {
   try {
     if (await alreadyNoted(slack, channel, ts, resolved.botUserId)) return;
     const message = await findMessage(slack, channel, ts);
-    if (!message?.text) {
+    const body = message
+      ? await noteBody({ resolved, teamId, slack, message })
+      : "";
+    if (!body) {
       await redis.del(claim);
+      await slack.chat
+        .postEphemeral({
+          channel,
+          user: slackUserId,
+          thread_ts: ts,
+          text: NOTHING_TO_COPY,
+        })
+        .catch((error) =>
+          logger.warn("slack failed to report an empty pin", { error }),
+        );
       return;
     }
-    const permalink = await slack.chat
-      .getPermalink({ channel, message_ts: ts })
-      .then((res) => res.permalink)
-      .catch(() => undefined);
+    // The note belongs to whoever said it; bots and unlinked authors fall
+    // back to the pinner. A lookup hiccup throws so the claim is released and
+    // Slack retries, rather than pinning the wrong name forever.
+    const authorSlackId =
+      message?.user &&
+      message.user !== slackUserId &&
+      !message.bot_id &&
+      message.subtype !== "bot_message"
+        ? message.user
+        : null;
+    const [permalink, author] = await Promise.all([
+      slack.chat
+        .getPermalink({ channel, message_ts: ts })
+        .then((res) => res.permalink)
+        .catch(() => undefined),
+      authorSlackId
+        ? resolveSlackMember({
+            workspace: resolved.workspace,
+            teamId,
+            slackUserId: authorSlackId,
+            slack,
+            strict: true,
+          })
+        : null,
+    ]);
 
     const ctx: ServiceContext = { workspace: resolved.workspace, actor };
     await addIncidentNote({
       ctx,
       input: {
         id: bound.id,
-        message: permalink
-          ? `${message.text}\n\n[From Slack](${permalink})`
-          : message.text,
+        message: permalink ? `${body}\n\n[From Slack](${permalink})` : body,
+        createdAt: messageDate(ts),
+        createdBy: author ?? undefined,
       },
     });
     trackSlackIncident(ctx, "note", { via: "reaction" });
   } catch (err) {
     await redis.del(claim).catch(() => undefined);
+    // Slack retries the event, but a lost pin should not go unnoticed if it
+    // keeps failing; one notice per message is enough.
+    const once = await redis
+      .set(`slack:pinfail:${channel}:${ts}`, "1", {
+        nx: true,
+        ex: 24 * 60 * 60,
+      })
+      .catch(() => null);
+    if (once !== null) {
+      await slack.chat
+        .postEphemeral({
+          channel,
+          user: slackUserId,
+          thread_ts: ts,
+          text: PIN_FAILED,
+        })
+        .catch((error) =>
+          logger.warn("slack failed to report a lost pin", { error }),
+        );
+    }
     throw err;
   }
   await slack.reactions
