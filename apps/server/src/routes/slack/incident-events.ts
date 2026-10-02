@@ -18,7 +18,10 @@ import {
   requireSlackMember,
   slackAgentAllowed,
 } from "./require-slack-member";
-import { resolveSlackMentionNames } from "./resolve-slack-user";
+import {
+  resolveSlackMember,
+  resolveSlackMentionNames,
+} from "./resolve-slack-user";
 import {
   collectMentions,
   mentionLabelsFromText,
@@ -35,11 +38,15 @@ type SlackMessage = {
   ts?: string;
   text?: string;
   user?: string;
+  bot_id?: string;
+  subtype?: string;
   blocks?: unknown[];
   attachments?: { text?: string; fallback?: string }[];
 };
 
 const NOTHING_TO_COPY = "Nothing to copy from that message.";
+const PIN_FAILED =
+  "Couldn't copy that message to the timeline. Pin it again to retry.";
 const VERB_LAG_MS = 60_000;
 
 /**
@@ -215,10 +222,31 @@ export async function handlePinReaction(args: {
         );
       return;
     }
-    const permalink = await slack.chat
-      .getPermalink({ channel, message_ts: ts })
-      .then((res) => res.permalink)
-      .catch(() => undefined);
+    // The note belongs to whoever said it; bots and unlinked authors fall
+    // back to the pinner. A lookup hiccup throws so the claim is released and
+    // Slack retries, rather than pinning the wrong name forever.
+    const authorSlackId =
+      message?.user &&
+      message.user !== slackUserId &&
+      !message.bot_id &&
+      message.subtype !== "bot_message"
+        ? message.user
+        : null;
+    const [permalink, author] = await Promise.all([
+      slack.chat
+        .getPermalink({ channel, message_ts: ts })
+        .then((res) => res.permalink)
+        .catch(() => undefined),
+      authorSlackId
+        ? resolveSlackMember({
+            workspace: resolved.workspace,
+            teamId,
+            slackUserId: authorSlackId,
+            slack,
+            strict: true,
+          })
+        : null,
+    ]);
 
     const ctx: ServiceContext = { workspace: resolved.workspace, actor };
     await addIncidentNote({
@@ -227,11 +255,32 @@ export async function handlePinReaction(args: {
         id: bound.id,
         message: permalink ? `${body}\n\n[From Slack](${permalink})` : body,
         createdAt: messageDate(ts),
+        createdBy: author ?? undefined,
       },
     });
     trackSlackIncident(ctx, "note", { via: "reaction" });
   } catch (err) {
     await redis.del(claim).catch(() => undefined);
+    // Slack retries the event, but a lost pin should not go unnoticed if it
+    // keeps failing; one notice per message is enough.
+    const once = await redis
+      .set(`slack:pinfail:${channel}:${ts}`, "1", {
+        nx: true,
+        ex: 24 * 60 * 60,
+      })
+      .catch(() => null);
+    if (once !== null) {
+      await slack.chat
+        .postEphemeral({
+          channel,
+          user: slackUserId,
+          thread_ts: ts,
+          text: PIN_FAILED,
+        })
+        .catch((error) =>
+          logger.warn("slack failed to report a lost pin", { error }),
+        );
+    }
     throw err;
   }
   await slack.reactions

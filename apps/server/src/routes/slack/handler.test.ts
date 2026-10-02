@@ -5,8 +5,15 @@ import {
   incident,
   incidentEvent,
   integration,
+  slackUser,
+  user,
+  usersToWorkspaces,
 } from "@openstatus/db/src/schema";
-import { createTestWorkspace } from "@openstatus/db/src/test/factories";
+import {
+  addUserToWorkspace,
+  createTestWorkspace,
+  createUser,
+} from "@openstatus/db/src/test/factories";
 import {
   afterEach,
   beforeEach,
@@ -2211,6 +2218,139 @@ describe("incident channel events", () => {
     expect(Math.abs(rows[0].createdAt.getTime() - saidAt * 1000)).toBeLessThan(
       1000,
     );
+  });
+
+  test("the note belongs to the author, not the pinner", async () => {
+    const author = await createUser();
+    await addUserToWorkspace(author.id, 1, "member");
+    const authorSlackId = `U_AUTHOR_${crypto.randomUUID()}`;
+    slackTestState.usersInfoImpl = (args) =>
+      Promise.resolve({
+        ok: true,
+        user: {
+          profile: {
+            email:
+              args.user === authorSlackId
+                ? author.email
+                : "ping@openstatus.dev",
+          },
+        },
+      });
+    slackTestState.historyImpl = () =>
+      Promise.resolve({
+        messages: [
+          { ts: "508.1", text: "I rolled it back", user: authorSlackId },
+        ],
+      });
+    try {
+      await pin("508.1");
+      await waitForCall("reactions.add");
+      const rows = await notes();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].createdBy).toBe(author.id);
+    } finally {
+      // The note references the author; drop it before the user.
+      await db
+        .delete(incidentEvent)
+        .where(eq(incidentEvent.incidentId, incidentId));
+      await db
+        .delete(slackUser)
+        .where(eq(slackUser.slackUserId, authorSlackId));
+      await db
+        .delete(usersToWorkspaces)
+        .where(eq(usersToWorkspaces.userId, author.id));
+      await db.delete(user).where(eq(user.id, author.id));
+    }
+  });
+
+  test("a bot message is attributed to the pinner without a lookup", async () => {
+    // Apps with a bot user carry both `bot_id` and `user`.
+    slackTestState.historyImpl = () =>
+      Promise.resolve({
+        messages: [
+          {
+            ts: "509.1",
+            text: "[FIRING] api 5xx",
+            bot_id: "B1",
+            user: "U_BOT",
+          },
+        ],
+      });
+    await pin("509.1");
+    await waitForCall("reactions.add");
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    const [pinner] = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.email, "ping@openstatus.dev"));
+    expect(rows[0].createdBy).toBe(pinner.id);
+    expect(
+      slackTestState.calls.some(
+        (m) => m.method === "users.info" && m.args.user === "U_BOT",
+      ),
+    ).toBe(false);
+  });
+
+  test("a failed author lookup releases the pin for a retry", async () => {
+    const author = await createUser();
+    await addUserToWorkspace(author.id, 1, "member");
+    const authorSlackId = `U_AUTHOR_${crypto.randomUUID()}`;
+    let flaky = true;
+    slackTestState.usersInfoImpl = (args) => {
+      if (args.user !== authorSlackId) {
+        return Promise.resolve({
+          ok: true,
+          user: { profile: { email: "ping@openstatus.dev" } },
+        });
+      }
+      if (flaky) {
+        const err = new Error("An API error occurred: ratelimited");
+        Object.assign(err, { data: { ok: false, error: "ratelimited" } });
+        return Promise.reject(err);
+      }
+      return Promise.resolve({
+        ok: true,
+        user: { profile: { email: author.email } },
+      });
+    };
+    slackTestState.historyImpl = () =>
+      Promise.resolve({
+        messages: [{ ts: "510.1", text: "flaky lookup", user: authorSlackId }],
+      });
+    try {
+      await pin("510.1");
+      await settleBackgroundTasks();
+      expect(await notes()).toHaveLength(0);
+      expect(await waitForCall("reactions.add", 100)).toBeUndefined();
+      const notice = await waitForCall("postEphemeral");
+      expect(notice?.args.text).toContain("Pin it again");
+
+      // A second failure stays quiet; the pinner was already told.
+      await pin("510.1");
+      await settleBackgroundTasks();
+      expect(
+        slackTestState.calls.filter((c) => c.method === "postEphemeral"),
+      ).toHaveLength(1);
+
+      flaky = false;
+      await pin("510.1");
+      await waitForCall("reactions.add");
+      const rows = await notes();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].createdBy).toBe(author.id);
+    } finally {
+      await db
+        .delete(incidentEvent)
+        .where(eq(incidentEvent.incidentId, incidentId));
+      await db
+        .delete(slackUser)
+        .where(eq(slackUser.slackUserId, authorSlackId));
+      await db
+        .delete(usersToWorkspaces)
+        .where(eq(usersToWorkspaces.userId, author.id));
+      await db.delete(user).where(eq(user.id, author.id));
+    }
   });
 
   test("a message with only attachments is noted from their fallback", async () => {

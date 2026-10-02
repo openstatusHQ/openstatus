@@ -66,6 +66,11 @@ export const AddIncidentNoteInput = z.object({
         "createdAt must be within the last 30 days and at most a minute ahead",
     })
     .nullish(),
+  // The member who wrote the note when someone else copies it in (a pinned
+  // Slack message). The actor stays the one who performed the action. Trusted
+  // callers only: a public route must omit it or anyone could speak for a
+  // colleague.
+  createdBy: id.nullish(),
 });
 export type AddIncidentNoteInput = z.infer<typeof AddIncidentNoteInput>;
 
