@@ -5,7 +5,7 @@ description: "Interact with openstatus programmatically from your JavaScript and
 ---
 
 
-The openstatus Node.js SDK lets you manage monitors, status pages, status reports, maintenance windows, and notifications from JavaScript and TypeScript. Request and response messages are fully typed, generated from the openstatus protobuf schemas.
+The openstatus Node.js SDK lets you manage monitors, status pages, status reports, maintenance windows, incidents, and notifications from JavaScript and TypeScript. Request and response messages are fully typed, generated from the openstatus protobuf schemas.
 
 The SDK is open source and developed in its own repository, [openstatusHQ/sdk-node](https://github.com/openstatusHQ/sdk-node) (separate from the main monorepo).
 
@@ -13,7 +13,8 @@ The SDK is open source and developed in its own repository, [openstatusHQ/sdk-no
 
 - **HTTP, TCP, and DNS monitoring** — monitor websites, APIs, database connections, and DNS records from 28 locations worldwide. (ICMP and gRPC monitors exist in the API but are not yet exposed by this SDK.)
 - **Status pages** — create and manage public status pages with monitor-based or static components, grouping, and subscribers.
-- **Status reports and maintenance** — manage incident reports with update timelines and schedule planned maintenance windows.
+- **Status reports and maintenance** — manage public status reports with update timelines and schedule planned maintenance windows.
+- **Incidents** — declare and run incidents with a timeline, a linked status report and a postmortem. (Available on the API; coming to this SDK in an upcoming release.)
 - **Notifications** — configure all 12 channels: Slack, Discord, Microsoft Teams, Email, WhatsApp, Telegram, PagerDuty, Opsgenie, Google Chat, Grafana OnCall, ntfy, and generic webhooks.
 - **Type-safe** — typed request/response messages generated from the openstatus protobuf schemas.
 - **Cross-runtime** — works on Node.js, Deno, and Bun, in both ESM and CJS.
@@ -37,6 +38,7 @@ The client exposes one service per domain. Each has its own reference page:
 | Status Report | [Status Report Service](/docs/sdk/nodejs/status-report-service) | Manage incident reports and their update timelines. |
 | Status Page | [Status Page Service](/docs/sdk/nodejs/status-page-service) | Manage status pages, components, component groups, and subscribers. |
 | Maintenance | [Maintenance Service](/docs/sdk/nodejs/maintenance-service) | Schedule and manage planned maintenance windows. |
+| Incident | [Incident Service](/docs/sdk/nodejs/incident-service) | Declare and run incidents: lifecycle, timeline, status report link and postmortem. |
 | Notification | [Notification Service](/docs/sdk/nodejs/notification-service) | Configure notification channels and check usage limits. |
 | Private Location | [Private Location Service](/docs/sdk/nodejs/private-location-service) | Manage self-hosted probes and their agent tokens. |
 

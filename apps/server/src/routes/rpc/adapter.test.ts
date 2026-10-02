@@ -1,6 +1,7 @@
 import { Code, ConnectError } from "@connectrpc/connect";
 import type { Workspace } from "@openstatus/db/src/schema";
 import {
+  ConflictError,
   ForbiddenError,
   NotFoundError,
   type ServiceContext,
@@ -90,6 +91,13 @@ describe("toConnectError", () => {
       toConnectError(new ValidationError("bad input")),
     );
     expect((err as ConnectError).code).toBe(Code.InvalidArgument);
+  });
+
+  test("ConflictError → ConnectError(FailedPrecondition)", () => {
+    const err = captureThrow(() =>
+      toConnectError(new ConflictError("Incident #1 is closed")),
+    );
+    expect((err as ConnectError).code).toBe(Code.FailedPrecondition);
   });
 
   test("re-throws an existing ConnectError unchanged", () => {

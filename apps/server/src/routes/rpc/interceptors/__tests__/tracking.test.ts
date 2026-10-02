@@ -1,5 +1,13 @@
+import { create } from "@bufbuild/protobuf";
 import type { Interceptor } from "@connectrpc/connect";
 import { Events } from "@openstatus/analytics";
+import {
+  DeclareIncidentRequestSchema,
+  IncidentService,
+  IncidentSeverity,
+  IncidentStatus,
+  SetIncidentStatusRequestSchema,
+} from "@openstatus/proto/incident/v1";
 import { MonitorService } from "@openstatus/proto/monitor/v1";
 // @ts-nocheck — ConnectRPC's deep generic types (AnyFn, UnaryResponse, etc.)
 // are incompatible with the test mocks. All runtime behavior is correct.
@@ -302,5 +310,59 @@ describe("RPC_EVENT_MAP", () => {
       RPC_EVENT_MAP["openstatus.monitor.v1.MonitorService/CreateDNSMonitor"]
         ?.eventProps,
     );
+  });
+});
+
+describe("IncidentService tracking", () => {
+  beforeEach(() => {
+    mockSetupAnalytics.mockClear();
+    mockTrack.mockClear();
+  });
+
+  test("every mutating IncidentService RPC except unlink is tracked", () => {
+    const mutating = Object.values(IncidentService.method)
+      .map((m) => m.name)
+      .filter((name) => !/^(Get|List)/.test(name));
+    const untracked = mutating.filter(
+      (name) =>
+        !(`openstatus.incident.v1.IncidentService/${name}` in RPC_EVENT_MAP),
+    );
+    expect(untracked).toEqual(["UnlinkStatusReport"]);
+  });
+
+  test("declare carries the source and a readable severity", async () => {
+    const interceptor = trackingInterceptor();
+    const req = createMockRequest(
+      "openstatus.incident.v1.IncidentService",
+      "DeclareIncident",
+      create(DeclareIncidentRequestSchema, {
+        title: "API down",
+        severity: IncidentSeverity.CRITICAL,
+      }),
+    );
+    await interceptor(mockNext({}))(req as never);
+    await Promise.resolve();
+    expect(mockTrack).toHaveBeenCalledWith({
+      ...Events.DeclareManagedIncident,
+      additionalProps: { source: "api", severity: "critical" },
+    });
+  });
+
+  test("a status change carries the target status", async () => {
+    const interceptor = trackingInterceptor();
+    const req = createMockRequest(
+      "openstatus.incident.v1.IncidentService",
+      "SetIncidentStatus",
+      create(SetIncidentStatusRequestSchema, {
+        id: "1",
+        status: IncidentStatus.RESOLVED,
+      }),
+    );
+    await interceptor(mockNext({}))(req as never);
+    await Promise.resolve();
+    expect(mockTrack).toHaveBeenCalledWith({
+      ...Events.ChangeManagedIncidentStatus,
+      additionalProps: { source: "api", status: "resolved" },
+    });
   });
 });

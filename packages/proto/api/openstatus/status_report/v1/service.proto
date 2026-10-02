@@ -77,6 +77,10 @@ message CreateStatusReportRequest {
   // the named components are added to the report's affected set. Omitting this
   // field creates a legacy report without impact tracking.
   repeated ComponentImpact component_impacts = 8;
+
+  // ID of an incident to link the report to (optional). Linked in the same
+  // step: a closed incident, or one already linked to a report, fails the create.
+  optional string incident_id = 9 [(buf.validate.field).string.min_len = 1];
 }
 
 // CreateStatusReportResponse is the response after creating a status report.
