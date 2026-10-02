@@ -130,7 +130,15 @@ async function* makeIterator({
       );
     } catch (error) {
       console.log(error);
-      return encoder.encode("");
+      // Stream the failure so the client doesn't stop at N-1 regions.
+      return encoder.encode(
+        `${JSON.stringify({
+          state: "error",
+          region,
+          message: "Check failed in this region",
+          index,
+        })}\n`,
+      );
     }
   });
 
