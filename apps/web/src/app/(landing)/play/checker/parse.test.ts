@@ -1,7 +1,7 @@
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 
-import { parseCheckerLine } from "./parse";
+import { parseCheckerLine, splitStreamLines } from "./parse";
 
 const timing = {
   dnsStart: 0,
@@ -64,5 +64,48 @@ describe("parseCheckerLine", () => {
       message: "x",
     });
     expect(parseCheckerLine(line)).toBeNull();
+  });
+});
+
+describe("splitStreamLines", () => {
+  test("keeps an unfinished line for the next read", () => {
+    expect(splitStreamLines('{"a":1}\n{"b":', false)).toEqual({
+      lines: ['{"a":1}'],
+      rest: '{"b":',
+    });
+  });
+
+  test("flushes the tail when the stream is done", () => {
+    const id = "aec4e0ec3c4f4557b8ce46e55078fc95";
+    expect(splitStreamLines(`{"a":1}\n${id}`, true)).toEqual({
+      lines: ['{"a":1}', id],
+      rest: "",
+    });
+  });
+
+  test("a failed region split across chunks is still parsed", () => {
+    const record = `${JSON.stringify({
+      state: "error",
+      region: "bom",
+      message: "Check failed in this region",
+      index: 3,
+    })}\n`;
+    const chunks = [record.slice(0, 20), record.slice(20)];
+
+    let buffer = "";
+    const parsed = [];
+    for (const [i, chunk] of chunks.entries()) {
+      buffer += chunk;
+      const { lines, rest } = splitStreamLines(buffer, i === chunks.length - 1);
+      buffer = rest;
+      parsed.push(...lines.map(parseCheckerLine));
+    }
+
+    expect(parsed).toEqual([
+      {
+        type: "failure",
+        value: { region: "bom", message: "Check failed in this region" },
+      },
+    ]);
   });
 });

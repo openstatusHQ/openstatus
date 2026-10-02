@@ -36,6 +36,7 @@ import {
   type CheckerFailure,
   type CheckerSuccess,
   parseCheckerLine,
+  splitStreamLines,
 } from "./parse";
 import { searchParamsParsers } from "./search-params";
 import { handleExportCSV } from "./utils";
@@ -196,18 +197,21 @@ export function Form({
 
           const decoder = new TextDecoder();
           let done = false;
+          let buffer = "";
 
           while (!done) {
             const { value, done: streamDone } = await reader.read();
             done = streamDone;
-            if (value) {
-              const decoded = decoder.decode(value, { stream: true });
-              if (!decoded) continue;
-
+            buffer += value
+              ? decoder.decode(value, { stream: true })
+              : decoder.decode();
+            const { lines, rest } = splitStreamLines(buffer, done);
+            buffer = rest;
+            if (lines.length > 0) {
               const results: Values[] = [];
               const failed: CheckerFailure[] = [];
 
-              for (const item of decoded.split("\n").filter(Boolean)) {
+              for (const item of lines) {
                 const line = parseCheckerLine(item);
                 if (!line) continue;
                 if (line.type === "id") {

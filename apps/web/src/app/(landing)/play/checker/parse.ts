@@ -52,3 +52,14 @@ export function parseCheckerLine(line: string): CheckerLine | null {
     },
   };
 }
+
+// Reader chunks can end mid-line: keep the unfinished tail for the next read,
+// and flush it once the stream is done (the result id has no trailing newline).
+export function splitStreamLines(
+  buffer: string,
+  done: boolean,
+): { lines: string[]; rest: string } {
+  const parts = buffer.split("\n");
+  const rest = done ? "" : (parts.pop() ?? "");
+  return { lines: parts.filter(Boolean), rest };
+}
