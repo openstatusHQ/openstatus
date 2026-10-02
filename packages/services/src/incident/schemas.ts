@@ -42,7 +42,31 @@ export const SetIncidentStatusInput = z.object({
 });
 export type SetIncidentStatusInput = z.infer<typeof SetIncidentStatusInput>;
 
-export const AddIncidentNoteInput = z.object({ id, message: note });
+// A note copied from elsewhere (Slack) may keep the time it was said, within
+// a window that keeps the timeline honest for every caller of the verb.
+export const NOTE_BACKDATE_MAX_MS = 30 * 24 * 60 * 60 * 1000;
+export const NOTE_FUTURE_SKEW_MS = 60_000;
+
+export function isAllowedNoteCreatedAt(date: Date, now = Date.now()): boolean {
+  const ms = date.getTime();
+  return (
+    Number.isFinite(ms) &&
+    ms <= now + NOTE_FUTURE_SKEW_MS &&
+    ms >= now - NOTE_BACKDATE_MAX_MS
+  );
+}
+
+export const AddIncidentNoteInput = z.object({
+  id,
+  message: note,
+  createdAt: z.coerce
+    .date()
+    .refine((d) => isAllowedNoteCreatedAt(d), {
+      message:
+        "createdAt must be within the last 30 days and at most a minute ahead",
+    })
+    .nullish(),
+});
 export type AddIncidentNoteInput = z.infer<typeof AddIncidentNoteInput>;
 
 export const LinkIncidentStatusReportInput = z.object({

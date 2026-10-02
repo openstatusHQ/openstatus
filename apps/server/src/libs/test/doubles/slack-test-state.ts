@@ -26,6 +26,8 @@ export interface SlackTestState {
   usersInfoImpl: (args: Record<string, unknown>) => Promise<unknown>;
   /** `reactions.get` result; the default message has no reactions. */
   reactionsGetImpl: (args: Record<string, unknown>) => Promise<unknown>;
+  /** `conversations.info` result; the default channel has no name. */
+  conversationsInfoImpl: (args: Record<string, unknown>) => Promise<unknown>;
 }
 
 const g = globalThis as Record<string, unknown>;
@@ -52,6 +54,7 @@ if (!g.__slackTestState) {
       }),
     usersInfoImpl: () => Promise.resolve({ ok: true, user: { profile: {} } }),
     reactionsGetImpl: () => Promise.resolve({ ok: true, message: {} }),
+    conversationsInfoImpl: () => Promise.resolve({ ok: true, channel: {} }),
   } satisfies SlackTestState;
 }
 

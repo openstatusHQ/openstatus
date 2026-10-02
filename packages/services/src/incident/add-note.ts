@@ -32,6 +32,7 @@ export async function addIncidentNote(args: {
       incidentId: existing.id,
       type: "note",
       message: input.message,
+      createdAt: input.createdAt ?? undefined,
     });
   });
 }

@@ -81,6 +81,10 @@ export class WebClient {
       s.calls.push({ method: "conversations.history", args });
       return s.historyImpl();
     },
+    info: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.info", args });
+      return s.conversationsInfoImpl(args);
+    },
   };
   agents = {
     sessions: {
