@@ -420,7 +420,7 @@ export function ResultTable() {
 function FailedRow({ failure }: { failure: CheckerFailure }) {
   const regionConfig = regionDict[failure.region as Region];
   return (
-    <tr title={failure.message}>
+    <tr>
       <td>
         <IconCloudProvider
           provider={regionConfig.provider}
@@ -434,7 +434,12 @@ function FailedRow({ failure }: { failure: CheckerFailure }) {
         {regionConfig.flag} {regionConfig.code}{" "}
         <span className="text-muted-foreground">{regionConfig.location}</span>
       </td>
-      <td className="text-destructive text-right!">Failed</td>
+      <td className="text-right!">
+        <span className="text-destructive">Failed</span>
+        <span className="text-muted-foreground block text-xs">
+          {failure.message}
+        </span>
+      </td>
     </tr>
   );
 }

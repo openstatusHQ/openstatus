@@ -130,7 +130,7 @@ async function* makeIterator({
       );
     } catch (error) {
       console.log(error);
-      // Stream the failure so the client can show it instead of stopping at N-1 regions.
+      // Stream the failure so the client doesn't stop at N-1 regions.
       return encoder.encode(
         `${JSON.stringify({
           state: "error",
