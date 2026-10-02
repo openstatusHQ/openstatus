@@ -2230,13 +2230,17 @@ describe("incident channel events", () => {
         user: {
           profile: {
             email:
-              args.user === authorSlackId ? author.email : "ping@openstatus.dev",
+              args.user === authorSlackId
+                ? author.email
+                : "ping@openstatus.dev",
           },
         },
       });
     slackTestState.historyImpl = () =>
       Promise.resolve({
-        messages: [{ ts: "508.1", text: "I rolled it back", user: authorSlackId }],
+        messages: [
+          { ts: "508.1", text: "I rolled it back", user: authorSlackId },
+        ],
       });
     try {
       await pin("508.1");
