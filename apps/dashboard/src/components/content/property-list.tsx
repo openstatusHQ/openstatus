@@ -3,6 +3,7 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import { SelectTrigger } from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
 
+import { DateTimePicker } from "@/components/common/date-time-picker";
 import { Link } from "@/components/common/link";
 
 export function PropertyList({
@@ -130,6 +131,23 @@ export function PropertyInput({
       className={cn(
         propertyControlClassName,
         "relative md:text-sm [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-50",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function PropertyDateTimePicker({
+  className,
+  ...props
+}: React.ComponentProps<typeof DateTimePicker>) {
+  return (
+    <DateTimePicker
+      className={cn(
+        propertyControlClassName,
+        // the outline variant re-adds a border and tint in dark mode
+        "data-[state=open]:bg-accent dark:border-transparent dark:hover:bg-accent/50 md:text-sm",
         className,
       )}
       {...props}
