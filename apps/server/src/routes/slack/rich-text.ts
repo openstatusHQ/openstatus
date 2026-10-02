@@ -30,6 +30,7 @@ type List = {
   type: "rich_text_list";
   style: "bullet" | "ordered";
   indent?: number;
+  offset?: number;
   elements: Section[];
 };
 type Quote = { type: "rich_text_quote"; elements: InlineElement[] };
@@ -86,6 +87,14 @@ function richTextBlocks(blocks: unknown[] | undefined): RichTextBlock[] {
   return (blocks ?? []).filter(isRichTextBlock);
 }
 
+/** A list's children are sections; everything else holds inlines directly. */
+function inlinesOf(element: RichTextElement): InlineElement[] {
+  if (element.type === "rich_text_list") {
+    return element.elements.flatMap((item) => item.elements ?? []);
+  }
+  return element.elements ?? [];
+}
+
 /** Every user and channel id mentioned, deduplicated, for the caller to resolve. */
 export function collectMentions(blocks: unknown[] | undefined): {
   users: string[];
@@ -95,7 +104,7 @@ export function collectMentions(blocks: unknown[] | undefined): {
   const channels = new Set<string>();
   for (const block of richTextBlocks(blocks)) {
     for (const element of block.elements) {
-      for (const inline of element.elements ?? []) {
+      for (const inline of inlinesOf(element)) {
         if (inline.type === "user") users.add(inline.user_id);
         if (inline.type === "channel") channels.add(inline.channel_id);
       }
@@ -105,13 +114,41 @@ export function collectMentions(blocks: unknown[] | undefined): {
 }
 
 // Only what remark would otherwise interpret; `#`, `>`, `-` matter at line start.
-const INLINE_SPECIALS = /[\\`*_[\]]/g;
+const INLINE_SPECIALS = /[\\`*_~[\]]/g;
 const LINE_START_SPECIALS = /^(\s*)([#>-]|\d+\.)(?=\s|$)/gm;
 
 function escapeText(text: string): string {
   return text
     .replace(INLINE_SPECIALS, "\\$&")
     .replace(LINE_START_SPECIALS, "$1\\$2");
+}
+
+function longestBacktickRun(text: string): number {
+  let max = 0;
+  for (const match of text.matchAll(/`+/g)) {
+    max = Math.max(max, match[0].length);
+  }
+  return max;
+}
+
+/** A delimiter longer than any backtick run inside, so the span cannot close early. */
+function inlineCode(text: string): string {
+  const fence = "`".repeat(longestBacktickRun(text) + 1);
+  const pad = text.startsWith("`") || text.endsWith("`") ? " " : "";
+  return `${fence}${pad}${text}${pad}${fence}`;
+}
+
+function codeFence(code: string): string {
+  const fence = "`".repeat(Math.max(3, longestBacktickRun(code) + 1));
+  return `${fence}\n${code}\n${fence}`;
+}
+
+/** Spaces and parentheses end a markdown destination early; `<>` break autolinks. */
+function linkDestination(url: string): string {
+  return url.replace(
+    /[ ()<>]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
 }
 
 /** `"1f44d-1f3fc"` → 👍🏼. Hyphen-separated hex codepoints. */
@@ -134,7 +171,7 @@ function applyStyle(text: string, style: Style | undefined): string {
   const trailing = text.match(/\s*$/)?.[0] ?? "";
   let inner = text.slice(leading.length, text.length - trailing.length);
   if (style.code) {
-    inner = `\`${inner}\``;
+    inner = inlineCode(inner);
   } else {
     if (style.strike) inner = `~~${inner}~~`;
     if (style.italic) inner = `_${inner}_`;
@@ -158,10 +195,11 @@ function renderInline(element: InlineElement, names: MentionNames): string {
     }
     case "link": {
       const label = element.text?.trim();
+      const url = linkDestination(element.url);
       const md =
         label && label !== element.url
-          ? `[${escapeText(label)}](${element.url})`
-          : `<${element.url}>`;
+          ? `[${escapeText(label)}](${url})`
+          : `<${url}>`;
       return applyStyle(md, element.style);
     }
     case "user": {
@@ -200,15 +238,20 @@ function renderInlines(elements: InlineElement[], names: MentionNames): string {
   return elements.map((element) => renderInline(element, names)).join("");
 }
 
+// Wide enough to nest under `1. ` (3 columns) as well as `- `.
+const LIST_INDENT = "    ";
+
 function renderElement(element: RichTextElement, names: MentionNames): string {
   switch (element.type) {
     case "rich_text_section":
       return renderInlines(element.elements, names);
     case "rich_text_list": {
-      const pad = "  ".repeat(element.indent ?? 0);
+      const pad = LIST_INDENT.repeat(element.indent ?? 0);
+      const start = (element.offset ?? 0) + 1;
       return element.elements
         .map((item, index) => {
-          const marker = element.style === "ordered" ? `${index + 1}.` : "-";
+          const marker =
+            element.style === "ordered" ? `${start + index}.` : "-";
           return `${pad}${marker} ${renderInlines(item.elements, names)}`;
         })
         .join("\n");
@@ -218,18 +261,18 @@ function renderElement(element: RichTextElement, names: MentionNames): string {
         .split("\n")
         .map((line) => `> ${line}`)
         .join("\n");
-    case "rich_text_preformatted": {
-      const code = element.elements
-        .map((inline) =>
-          inline.type === "text"
-            ? inline.text
-            : inline.type === "link"
-              ? (inline.text ?? inline.url)
-              : "",
-        )
-        .join("");
-      return `\`\`\`\n${code}\n\`\`\``;
-    }
+    case "rich_text_preformatted":
+      return codeFence(
+        element.elements
+          .map((inline) =>
+            inline.type === "text"
+              ? inline.text
+              : inline.type === "link"
+                ? (inline.text ?? inline.url)
+                : "",
+          )
+          .join(""),
+      );
     default:
       return "";
   }
@@ -245,12 +288,19 @@ export function richTextToMarkdown(
 ): string | undefined {
   const rich = richTextBlocks(blocks);
   if (rich.length === 0) return undefined;
-  const parts: string[] = [];
+  let out = "";
+  let previous: RichTextElement["type"] | undefined;
   for (const block of rich) {
     for (const element of block.elements) {
       const rendered = renderElement(element, names);
-      if (rendered.trim()) parts.push(rendered);
+      if (!rendered.trim()) continue;
+      // Slack emits one list per nesting level; a blank line would split them.
+      const adjacentLists =
+        previous === "rich_text_list" && element.type === "rich_text_list";
+      if (out) out += adjacentLists ? "\n" : "\n\n";
+      out += rendered;
+      previous = element.type;
     }
   }
-  return parts.join("\n\n").trim() || undefined;
+  return out.trim() || undefined;
 }

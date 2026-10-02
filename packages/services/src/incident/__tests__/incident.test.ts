@@ -459,6 +459,43 @@ describe("addIncidentNote", () => {
     });
   });
 
+  test("keeps a createdAt inside the window and treats null as now", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      const saidAt = new Date(Date.now() - 60 * 60 * 1000);
+      const backdated = await addIncidentNote({
+        ctx: as(memberId, tx),
+        input: { id: row.id, message: "an hour ago", createdAt: saidAt },
+      });
+      // `created_at` is stored in whole seconds.
+      expect(
+        Math.abs(backdated.createdAt.getTime() - saidAt.getTime()),
+      ).toBeLessThan(1000);
+      const now = await addIncidentNote({
+        ctx: as(memberId, tx),
+        input: { id: row.id, message: "now", createdAt: null },
+      });
+      expect(Math.abs(now.createdAt.getTime() - Date.now())).toBeLessThan(5000);
+    });
+  });
+
+  test("rejects a createdAt in the future or older than the window", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      for (const createdAt of [
+        new Date(Date.now() + 10 * 60 * 1000),
+        new Date(Date.now() - 31 * 24 * 60 * 60 * 1000),
+      ]) {
+        await expect(
+          addIncidentNote({
+            ctx: as(memberId, tx),
+            input: { id: row.id, message: "off the timeline", createdAt },
+          }),
+        ).rejects.toThrow();
+      }
+    });
+  });
+
   test("a closed incident takes no notes", async () => {
     await withTestTransaction(async (tx) => {
       const row = await createIncident(

@@ -15,7 +15,12 @@ import type { MentionNames } from "./rich-text";
 
 const logger = getLogger(["api-server", "slack", "resolve-user"]);
 
-/** One `users.info` serves both the email match and the fallback name. */
+/**
+ * One `users.info` serves both the email match and the fallback name. Links
+ * the Slack user to the member on an email match, so merely being mentioned
+ * in a pinned message can create the mapping; it is the same rule applied
+ * when they act themselves.
+ */
 async function lookupSlackMember(args: {
   workspace: Workspace;
   teamId: string;
@@ -75,8 +80,19 @@ export async function resolveSlackMember(args: {
   return (await lookupSlackMember(args)).userId;
 }
 
-// A pinned message rarely mentions more than a handful of people.
+// A pinned message rarely mentions more than a handful of people; Slack
+// rate-limits `users.info`/`conversations.info`, so look them up a few at a time.
 const MAX_MENTIONS = 20;
+const LOOKUP_CONCURRENCY = 5;
+
+async function forEachBounded<T>(
+  items: T[],
+  fn: (item: T) => Promise<void>,
+): Promise<void> {
+  for (let i = 0; i < items.length; i += LOOKUP_CONCURRENCY) {
+    await Promise.all(items.slice(i, i + LOOKUP_CONCURRENCY).map(fn));
+  }
+}
 
 /**
  * Names for the users and channels a message mentions: a linked member's
@@ -99,7 +115,7 @@ export async function resolveSlackMentionNames(args: {
   const channels = new Map<string, string>();
 
   await Promise.all([
-    ...args.users.slice(0, MAX_MENTIONS).map(async (slackUserId) => {
+    forEachBounded(args.users.slice(0, MAX_MENTIONS), async (slackUserId) => {
       const { userId, profileName } = await lookupSlackMember({
         workspace,
         teamId,
@@ -115,7 +131,7 @@ export async function resolveSlackMentionNames(args: {
       const name = memberName ?? profileName;
       if (name) users.set(slackUserId, name);
     }),
-    ...args.channels.slice(0, MAX_MENTIONS).map(async (channelId) => {
+    forEachBounded(args.channels.slice(0, MAX_MENTIONS), async (channelId) => {
       const res = await slack.conversations
         .info({ channel: channelId })
         .catch(() => undefined);

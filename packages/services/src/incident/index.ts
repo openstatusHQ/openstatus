@@ -37,6 +37,9 @@ export {
 } from "./postmortem-draft";
 export {
   AddIncidentNoteInput,
+  isAllowedNoteCreatedAt,
+  NOTE_BACKDATE_MAX_MS,
+  NOTE_FUTURE_SKEW_MS,
   ApprovePostmortemInput,
   CloseIncidentInput,
   DraftPostmortemInput,

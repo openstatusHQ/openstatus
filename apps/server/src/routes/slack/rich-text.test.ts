@@ -205,9 +205,7 @@ describe("richTextToMarkdown", () => {
       [
         "Findings:",
         "",
-        "- one\n- two",
-        "",
-        "  1. nested",
+        "- one\n- two\n    1. nested",
         "",
         "> quoted\n> lines",
         "",
@@ -222,6 +220,68 @@ describe("richTextToMarkdown", () => {
         message(section({ type: "text", text: "- not a list" })),
       ),
     ).toBe("\\- not a list");
+  });
+});
+
+describe("richTextToMarkdown edge cases", () => {
+  test("honors the ordered-list offset", () => {
+    expect(
+      richTextToMarkdown(
+        message({
+          type: "rich_text_list",
+          style: "ordered",
+          offset: 2,
+          elements: [
+            section({ type: "text", text: "third" }),
+            section({ type: "text", text: "fourth" }),
+          ],
+        }),
+      ),
+    ).toBe("3. third\n4. fourth");
+  });
+
+  test("escapes tildes so literal text is not struck through", () => {
+    expect(
+      richTextToMarkdown(
+        message(section({ type: "text", text: "~~not gone~~" })),
+      ),
+    ).toBe("\\~\\~not gone\\~\\~");
+  });
+
+  test("widens code delimiters past the backticks inside", () => {
+    expect(
+      richTextToMarkdown(
+        message(
+          section({ type: "text", text: "a `b` c", style: { code: true } }),
+          {
+            type: "rich_text_preformatted",
+            elements: [{ type: "text", text: "```\nx\n```" }],
+          },
+        ),
+      ),
+    ).toBe("``a `b` c``\n\n````\n```\nx\n```\n````");
+  });
+
+  test("pads inline code that starts or ends with a backtick", () => {
+    expect(
+      richTextToMarkdown(
+        message(section({ type: "text", text: "`x", style: { code: true } })),
+      ),
+    ).toBe("`` `x ``");
+  });
+
+  test("encodes spaces and parentheses in link destinations", () => {
+    expect(
+      richTextToMarkdown(
+        message(
+          section(
+            { type: "link", url: "https://w.org/wiki/Foo_(bar)", text: "wiki" },
+            { type: "text", text: " " },
+            { type: "link", url: "https://e.com/a b" },
+          ),
+        ),
+      ),
+    ).toBe("[wiki](https://w.org/wiki/Foo_%28bar%29) <https://e.com/a%20b>");
   });
 });
 
@@ -263,5 +323,26 @@ describe("collectMentions", () => {
 
   test("is empty without rich_text", () => {
     expect(collectMentions(undefined)).toEqual({ users: [], channels: [] });
+  });
+
+  test("finds mentions inside list items", () => {
+    const blocks = message({
+      type: "rich_text_list",
+      style: "bullet",
+      elements: [
+        section(
+          { type: "user", user_id: "U5" },
+          { type: "text", text: " owns it" },
+        ),
+        section({ type: "channel", channel_id: "C5" }),
+      ],
+    });
+    expect(collectMentions(blocks)).toEqual({
+      users: ["U5"],
+      channels: ["C5"],
+    });
+    expect(
+      richTextToMarkdown(blocks, { users: new Map([["U5", "Sam"]]) }),
+    ).toBe("- @Sam owns it\n- #C5");
   });
 });

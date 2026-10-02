@@ -3,6 +3,7 @@ import type { ServiceContext } from "@openstatus/services";
 import {
   addIncidentNote,
   getIncidentBySlackChannel,
+  isAllowedNoteCreatedAt,
   unbindIncidentSlackChannel,
 } from "@openstatus/services/incident";
 import { WebClient } from "@slack/web-api";
@@ -39,22 +40,20 @@ type SlackMessage = {
 };
 
 const NOTHING_TO_COPY = "Nothing to copy from that message.";
-// Older than this and the note is more likely a mis-pin than history.
-const MAX_MESSAGE_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
-/** A Slack `ts` ("1759300000.123456") as the time the message was said. */
+/**
+ * A Slack `ts` ("1759300000.123456") as the time the message was said, or
+ * `undefined` (now) when the verb would reject it as outside its window.
+ */
 function messageDate(ts: string): Date | undefined {
-  const ms = Number(ts) * 1000;
-  if (!Number.isFinite(ms)) return undefined;
-  const now = Date.now();
-  if (ms > now + 60_000 || ms < now - MAX_MESSAGE_AGE_MS) return undefined;
-  return new Date(ms);
+  const date = new Date(Number(ts) * 1000);
+  return isAllowedNoteCreatedAt(date) ? date : undefined;
 }
 
 /** Alert bots post `attachments` with an empty `text`. */
 function attachmentsText(message: SlackMessage): string {
   return (message.attachments ?? [])
-    .map((a) => (a.fallback ?? a.text ?? "").trim())
+    .map((a) => a.fallback?.trim() || a.text?.trim() || "")
     .filter(Boolean)
     .join("\n\n");
 }

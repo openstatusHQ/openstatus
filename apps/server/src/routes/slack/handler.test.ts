@@ -2231,6 +2231,24 @@ describe("incident channel events", () => {
     expect(rows[0].message).toContain("[FIRING] db latency > 2s");
   });
 
+  test("an attachment with an empty fallback is noted from its text", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({
+        messages: [
+          {
+            ts: "507.1",
+            text: "",
+            attachments: [{ fallback: "", text: "Deploy 1234 failed" }],
+          },
+        ],
+      });
+    await pin("507.1");
+    await waitForCall("reactions.add");
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].message).toContain("Deploy 1234 failed");
+  });
+
   test("a message with nothing to copy tells the pinner", async () => {
     slackTestState.historyImpl = () =>
       Promise.resolve({ messages: [{ ts: "506.1", text: "" }] });
