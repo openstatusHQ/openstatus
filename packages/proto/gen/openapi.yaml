@@ -118,6 +118,795 @@ components:
         - SERVING_STATUS_SERVING
         - SERVING_STATUS_NOT_SERVING
       description: ServingStatus represents the health status of the service.
+    openstatus.incident.v1.AddIncidentNoteRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the incident (required).
+        message:
+          type: string
+          title: message
+          maxLength: 10000
+          minLength: 1
+          description: Note text, markdown (required, 1-10000 characters).
+      title: AddIncidentNoteRequest
+      additionalProperties: false
+      description: AddIncidentNoteRequest is the request to add a note to an incident timeline.
+    openstatus.incident.v1.AddIncidentNoteResponse:
+      type: object
+      properties:
+        event:
+          title: event
+          description: The timeline event that was added.
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentEvent'
+      title: AddIncidentNoteResponse
+      additionalProperties: false
+      description: AddIncidentNoteResponse is the response after adding a note.
+    openstatus.incident.v1.ApprovePostmortemRequest:
+      type: object
+      properties:
+        incidentId:
+          type: string
+          title: incident_id
+          minLength: 1
+          description: ID of the incident (required).
+        close:
+          type:
+            - boolean
+            - "null"
+          title: close
+          description: Also close the incident (optional, defaults to false).
+      title: ApprovePostmortemRequest
+      additionalProperties: false
+      description: ApprovePostmortemRequest is the request to approve the postmortem of an incident.
+    openstatus.incident.v1.ApprovePostmortemResponse:
+      type: object
+      properties:
+        postmortem:
+          title: postmortem
+          description: The approved postmortem.
+          $ref: '#/components/schemas/openstatus.incident.v1.Postmortem'
+        incident:
+          title: incident
+          description: The incident after approval (without its timeline).
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: ApprovePostmortemResponse
+      additionalProperties: false
+      description: ApprovePostmortemResponse is the response after approving the postmortem.
+    openstatus.incident.v1.CloseIncidentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the incident (required).
+        skipPostmortem:
+          type:
+            - boolean
+            - "null"
+          title: skip_postmortem
+          description: Close without an approved postmortem (optional, defaults to false).
+      title: CloseIncidentRequest
+      additionalProperties: false
+      description: CloseIncidentRequest is the request to close a resolved incident.
+    openstatus.incident.v1.CloseIncidentResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          description: The closed incident (without its timeline).
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: CloseIncidentResponse
+      additionalProperties: false
+      description: CloseIncidentResponse is the response after closing an incident.
+    openstatus.incident.v1.DeclareIncidentRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          examples:
+            - Checkout API returns 502
+          title: title
+          maxLength: 256
+          minLength: 1
+          description: Title of the incident (required, 1-256 characters).
+        severity:
+          not:
+            enum:
+              - INCIDENT_SEVERITY_UNSPECIFIED
+          title: severity
+          description: Severity of the incident (required).
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentSeverity'
+        summary:
+          type:
+            - string
+            - "null"
+          title: summary
+          maxLength: 4000
+          description: Short human summary (optional, up to 4000 characters).
+        commanderEmail:
+          type:
+            - string
+            - "null"
+          examples:
+            - jane@example.com
+          title: commander_email
+          format: email
+          description: Email of the member who leads the response (optional, defaults to unassigned).
+        startedAt:
+          type:
+            - string
+            - "null"
+          examples:
+            - "2024-03-15T10:30:00Z"
+          title: started_at
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: When the impact began (RFC 3339 format, optional, defaults to now).
+        statusReportId:
+          type:
+            - string
+            - "null"
+          title: status_report_id
+          minLength: 1
+          description: ID of a status report to link (optional).
+        openSlackChannel:
+          type:
+            - boolean
+            - "null"
+          title: open_slack_channel
+          description: Whether to open a Slack channel for the incident when Slack is connected (optional, defaults to false).
+      title: DeclareIncidentRequest
+      additionalProperties: false
+      description: DeclareIncidentRequest is the request to declare a new incident.
+    openstatus.incident.v1.DeclareIncidentResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          description: The declared incident.
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: DeclareIncidentResponse
+      additionalProperties: false
+      description: DeclareIncidentResponse is the response after declaring an incident.
+    openstatus.incident.v1.DeleteIncidentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the incident (required).
+      title: DeleteIncidentRequest
+      additionalProperties: false
+      description: DeleteIncidentRequest is the request to delete an incident.
+    openstatus.incident.v1.DeleteIncidentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteIncidentResponse
+      additionalProperties: false
+      description: DeleteIncidentResponse is the response after deleting an incident.
+    openstatus.incident.v1.GetIncidentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the incident to retrieve (required).
+      title: GetIncidentRequest
+      additionalProperties: false
+      description: GetIncidentRequest is the request to get an incident by ID.
+    openstatus.incident.v1.GetIncidentResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          description: The requested incident.
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: GetIncidentResponse
+      additionalProperties: false
+      description: GetIncidentResponse is the response containing the incident and its timeline.
+    openstatus.incident.v1.GetPostmortemRequest:
+      type: object
+      properties:
+        incidentId:
+          type: string
+          title: incident_id
+          minLength: 1
+          description: ID of the incident (required).
+      title: GetPostmortemRequest
+      additionalProperties: false
+      description: GetPostmortemRequest is the request to get the postmortem of an incident.
+    openstatus.incident.v1.GetPostmortemResponse:
+      type: object
+      properties:
+        postmortem:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.Postmortem'
+            - type: "null"
+          title: postmortem
+          description: The postmortem (unset when none has been written yet).
+      title: GetPostmortemResponse
+      additionalProperties: false
+      description: GetPostmortemResponse is the response containing the postmortem, if any.
+    openstatus.incident.v1.Incident:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the incident.
+        title:
+          type: string
+          title: title
+          description: Title of the incident.
+        severity:
+          title: severity
+          description: Severity of the incident.
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentSeverity'
+        status:
+          title: status
+          description: Current status of the incident.
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentStatus'
+        summary:
+          type:
+            - string
+            - "null"
+          title: summary
+          description: Short human summary.
+        commander:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentUser'
+            - type: "null"
+          title: commander
+          description: Member leading the response (unset when unassigned).
+        declaredBy:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentUser'
+            - type: "null"
+          title: declared_by
+          description: Member who declared the incident (unset for API keys without a creator).
+        resolvedBy:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentUser'
+            - type: "null"
+          title: resolved_by
+          description: Member who last resolved the incident.
+        declaredAt:
+          type: string
+          title: declared_at
+          description: Timestamp when the incident was declared (RFC 3339 format).
+        startedAt:
+          type: string
+          title: started_at
+          description: Timestamp when the impact began (RFC 3339 format).
+        mitigatedAt:
+          type:
+            - string
+            - "null"
+          title: mitigated_at
+          description: Timestamp when the incident was first mitigated (RFC 3339 format).
+        resolvedAt:
+          type:
+            - string
+            - "null"
+          title: resolved_at
+          description: Timestamp of the last resolution (RFC 3339 format).
+        closedAt:
+          type:
+            - string
+            - "null"
+          title: closed_at
+          description: |-
+            Timestamp when the incident was closed or canceled (RFC 3339 format).
+             A closed incident is read-only except for its postmortem.
+        statusReport:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentStatusReport'
+            - type: "null"
+          title: status_report
+          description: Linked public status report.
+        slackChannelUrl:
+          type:
+            - string
+            - "null"
+          title: slack_channel_url
+          description: Link to the bound Slack channel.
+        allowedTransitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.incident.v1.IncidentStatus'
+          title: allowed_transitions
+          description: Statuses SetIncidentStatus accepts from the current state (empty once closed).
+        deletable:
+          type: boolean
+          title: deletable
+          description: 'Whether DeleteIncident is allowed: only while open and never mitigated, resolved or closed.'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.incident.v1.IncidentEvent'
+          title: events
+          description: Timeline, newest first (only included in GetIncident).
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the incident was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the incident was last updated (RFC 3339 format).
+      title: Incident
+      additionalProperties: false
+      description: Incident is a managed incident with full details.
+    openstatus.incident.v1.IncidentEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the event.
+        type:
+          title: type
+          description: Kind of event.
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentEventType'
+        message:
+          type: string
+          title: message
+          description: 'Text of the event: the note for notes, a rendered summary otherwise.'
+        createdBy:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentUser'
+            - type: "null"
+          title: created_by
+          description: Member who caused the event (unset for system events and API keys without a creator).
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the event was recorded (RFC 3339 format).
+      title: IncidentEvent
+      additionalProperties: false
+      description: IncidentEvent is one entry of an incident timeline.
+    openstatus.incident.v1.IncidentEventType:
+      type: string
+      title: IncidentEventType
+      enum:
+        - INCIDENT_EVENT_TYPE_UNSPECIFIED
+        - INCIDENT_EVENT_TYPE_DECLARED
+        - INCIDENT_EVENT_TYPE_SEVERITY_CHANGED
+        - INCIDENT_EVENT_TYPE_STATUS_CHANGED
+        - INCIDENT_EVENT_TYPE_COMMANDER_CHANGED
+        - INCIDENT_EVENT_TYPE_STARTED_AT_CHANGED
+        - INCIDENT_EVENT_TYPE_NOTE
+        - INCIDENT_EVENT_TYPE_STATUS_REPORT_LINKED
+        - INCIDENT_EVENT_TYPE_STATUS_REPORT_UNLINKED
+        - INCIDENT_EVENT_TYPE_SLACK_CHANNEL_BOUND
+        - INCIDENT_EVENT_TYPE_SLACK_CHANNEL_UNBOUND
+        - INCIDENT_EVENT_TYPE_RESOLVED
+        - INCIDENT_EVENT_TYPE_CANCELED
+        - INCIDENT_EVENT_TYPE_POSTMORTEM_DRAFTED
+        - INCIDENT_EVENT_TYPE_POSTMORTEM_UPDATED
+        - INCIDENT_EVENT_TYPE_POSTMORTEM_APPROVED
+        - INCIDENT_EVENT_TYPE_CLOSED
+      description: IncidentEventType is the kind of entry in an incident timeline.
+    openstatus.incident.v1.IncidentSeverity:
+      type: string
+      title: IncidentSeverity
+      enum:
+        - INCIDENT_SEVERITY_UNSPECIFIED
+        - INCIDENT_SEVERITY_CRITICAL
+        - INCIDENT_SEVERITY_MAJOR
+        - INCIDENT_SEVERITY_MINOR
+      description: IncidentSeverity is how bad an incident is.
+    openstatus.incident.v1.IncidentStatus:
+      type: string
+      title: IncidentStatus
+      enum:
+        - INCIDENT_STATUS_UNSPECIFIED
+        - INCIDENT_STATUS_OPEN
+        - INCIDENT_STATUS_MITIGATED
+        - INCIDENT_STATUS_RESOLVED
+        - INCIDENT_STATUS_CANCELED
+      description: |-
+        IncidentStatus is the lifecycle state of an incident.
+         Closed is not a status: a closed incident has closed_at set and keeps its last status.
+    openstatus.incident.v1.IncidentStatusReport:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: ID of the status report.
+        title:
+          type: string
+          title: title
+          description: Title of the status report.
+        status:
+          title: status
+          description: Current status of the status report.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the status page the report belongs to.
+      title: IncidentStatusReport
+      additionalProperties: false
+      description: IncidentStatusReport is the public status report linked to an incident.
+    openstatus.incident.v1.IncidentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the incident.
+        title:
+          type: string
+          title: title
+          description: Title of the incident.
+        severity:
+          title: severity
+          description: Severity of the incident.
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentSeverity'
+        status:
+          title: status
+          description: Current status of the incident.
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentStatus'
+        commander:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentUser'
+            - type: "null"
+          title: commander
+          description: Member leading the response (unset when unassigned).
+        declaredAt:
+          type: string
+          title: declared_at
+          description: Timestamp when the incident was declared (RFC 3339 format).
+        startedAt:
+          type: string
+          title: started_at
+          description: Timestamp when the impact began (RFC 3339 format).
+        resolvedAt:
+          type:
+            - string
+            - "null"
+          title: resolved_at
+          description: Timestamp of the last resolution (RFC 3339 format).
+        closedAt:
+          type:
+            - string
+            - "null"
+          title: closed_at
+          description: Timestamp when the incident was closed or canceled (RFC 3339 format).
+        statusReport:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentStatusReport'
+            - type: "null"
+          title: status_report
+          description: Linked public status report.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the incident was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the incident was last updated (RFC 3339 format).
+      title: IncidentSummary
+      additionalProperties: false
+      description: IncidentSummary is the metadata of an incident (used in list responses).
+    openstatus.incident.v1.IncidentUser:
+      type: object
+      properties:
+        email:
+          type: string
+          title: email
+          description: Email address of the member (empty for a deleted account).
+        name:
+          type: string
+          title: name
+          description: Display name of the member ("Deleted user" for a deleted account).
+      title: IncidentUser
+      additionalProperties: false
+      description: IncidentUser is a workspace member referenced by an incident.
+    openstatus.incident.v1.LinkStatusReportRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the incident (required).
+        statusReportId:
+          type: string
+          title: status_report_id
+          minLength: 1
+          description: ID of the status report to link (required).
+      title: LinkStatusReportRequest
+      additionalProperties: false
+      description: LinkStatusReportRequest is the request to link a status report to an incident.
+    openstatus.incident.v1.LinkStatusReportResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          description: The updated incident (without its timeline).
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: LinkStatusReportResponse
+      additionalProperties: false
+      description: LinkStatusReportResponse is the response after linking a status report.
+    openstatus.incident.v1.ListIncidentsRequest:
+      type: object
+      properties:
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of incidents to return (1-100, defaults to 50).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of incidents to skip for pagination (defaults to 0).
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.incident.v1.IncidentStatus'
+          title: statuses
+          description: Filter by status (optional). If empty, returns all statuses.
+        closed:
+          type:
+            - boolean
+            - "null"
+          title: closed
+          description: Filter by closed state (optional). If unset, returns both.
+      title: ListIncidentsRequest
+      additionalProperties: false
+      description: ListIncidentsRequest is the request to list incidents.
+    openstatus.incident.v1.ListIncidentsResponse:
+      type: object
+      properties:
+        incidents:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.incident.v1.IncidentSummary'
+          title: incidents
+          description: List of incidents (metadata only, use GetIncident for full details).
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of incidents matching the filter.
+      title: ListIncidentsResponse
+      additionalProperties: false
+      description: ListIncidentsResponse is the response containing incident summaries.
+    openstatus.incident.v1.Postmortem:
+      type: object
+      properties:
+        incidentId:
+          type: string
+          title: incident_id
+          description: ID of the incident the postmortem belongs to.
+        status:
+          title: status
+          description: Review state of the postmortem.
+          $ref: '#/components/schemas/openstatus.incident.v1.PostmortemStatus'
+        content:
+          type: string
+          title: content
+          description: Markdown body of the postmortem.
+        draftedBy:
+          title: drafted_by
+          description: Who wrote the current body.
+          $ref: '#/components/schemas/openstatus.incident.v1.PostmortemAuthor'
+        approvedBy:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentUser'
+            - type: "null"
+          title: approved_by
+          description: Member who approved the postmortem.
+        approvedAt:
+          type:
+            - string
+            - "null"
+          title: approved_at
+          description: Timestamp when the postmortem was approved (RFC 3339 format).
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the postmortem was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the postmortem was last updated (RFC 3339 format).
+      title: Postmortem
+      additionalProperties: false
+      description: Postmortem is the review written after an incident is resolved.
+    openstatus.incident.v1.PostmortemAuthor:
+      type: string
+      title: PostmortemAuthor
+      enum:
+        - POSTMORTEM_AUTHOR_UNSPECIFIED
+        - POSTMORTEM_AUTHOR_AGENT
+        - POSTMORTEM_AUTHOR_USER
+      description: PostmortemAuthor is who wrote the current postmortem body.
+    openstatus.incident.v1.PostmortemStatus:
+      type: string
+      title: PostmortemStatus
+      enum:
+        - POSTMORTEM_STATUS_UNSPECIFIED
+        - POSTMORTEM_STATUS_DRAFT
+        - POSTMORTEM_STATUS_APPROVED
+      description: PostmortemStatus is the review state of a postmortem.
+    openstatus.incident.v1.SetIncidentStatusRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the incident (required).
+        status:
+          not:
+            enum:
+              - INCIDENT_STATUS_UNSPECIFIED
+          title: status
+          description: Target status (required).
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentStatus'
+        note:
+          type:
+            - string
+            - "null"
+          title: note
+          maxLength: 10000
+          description: Note recorded with the change (optional, up to 10000 characters).
+      title: SetIncidentStatusRequest
+      additionalProperties: false
+      description: SetIncidentStatusRequest is the request to change the status of an incident.
+    openstatus.incident.v1.SetIncidentStatusResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          description: The updated incident (without its timeline).
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: SetIncidentStatusResponse
+      additionalProperties: false
+      description: SetIncidentStatusResponse is the response after changing the status of an incident.
+    openstatus.incident.v1.UnlinkStatusReportRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the incident (required).
+      title: UnlinkStatusReportRequest
+      additionalProperties: false
+      description: UnlinkStatusReportRequest is the request to unlink the status report of an incident.
+    openstatus.incident.v1.UnlinkStatusReportResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          description: The updated incident (without its timeline).
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: UnlinkStatusReportResponse
+      additionalProperties: false
+      description: UnlinkStatusReportResponse is the response after unlinking the status report.
+    openstatus.incident.v1.UpdateIncidentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the incident to update (required).
+        title:
+          type:
+            - string
+            - "null"
+          title: title
+          maxLength: 256
+          minLength: 1
+          description: New title (optional, 1-256 characters).
+        severity:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentSeverity'
+            - type: "null"
+          not:
+            enum:
+              - INCIDENT_SEVERITY_UNSPECIFIED
+          title: severity
+          description: New severity (optional).
+        summary:
+          type:
+            - string
+            - "null"
+          title: summary
+          maxLength: 4000
+          minLength: 1
+          description: New summary (optional, 1-4000 characters).
+        clearSummary:
+          type:
+            - boolean
+            - "null"
+          title: clear_summary
+          description: Set to true to remove the summary. Cannot be combined with summary.
+        commanderEmail:
+          type:
+            - string
+            - "null"
+          title: commander_email
+          format: email
+          description: Email of the new commander (optional).
+        clearCommander:
+          type:
+            - boolean
+            - "null"
+          title: clear_commander
+          description: Set to true to unassign the commander. Cannot be combined with commander_email.
+        startedAt:
+          type:
+            - string
+            - "null"
+          title: started_at
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: New start of impact (RFC 3339 format, optional).
+      title: UpdateIncidentRequest
+      additionalProperties: false
+      description: UpdateIncidentRequest is the request to edit an incident.
+    openstatus.incident.v1.UpdateIncidentResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          description: The updated incident (without its timeline).
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: UpdateIncidentResponse
+      additionalProperties: false
+      description: UpdateIncidentResponse is the response after updating an incident.
+    openstatus.incident.v1.UpdatePostmortemRequest:
+      type: object
+      properties:
+        incidentId:
+          type: string
+          title: incident_id
+          minLength: 1
+          description: ID of the incident (required).
+        content:
+          type: string
+          title: content
+          maxLength: 100000
+          minLength: 1
+          description: Markdown body (required, 1-100000 characters). Replaces the current body; an approved postmortem stays approved.
+      title: UpdatePostmortemRequest
+      additionalProperties: false
+      description: UpdatePostmortemRequest is the request to write the postmortem of a resolved incident.
+    openstatus.incident.v1.UpdatePostmortemResponse:
+      type: object
+      properties:
+        postmortem:
+          title: postmortem
+          description: The saved postmortem.
+          $ref: '#/components/schemas/openstatus.incident.v1.Postmortem'
+      title: UpdatePostmortemResponse
+      additionalProperties: false
+      description: UpdatePostmortemResponse is the response after writing the postmortem.
     openstatus.maintenance.v1.CreateMaintenanceRequest:
       type: object
       properties:
@@ -4852,6 +5641,15 @@ components:
             Per-component impacts set by the initial update (optional). When provided,
              the named components are added to the report's affected set. Omitting this
              field creates a legacy report without impact tracking.
+        incidentId:
+          type:
+            - string
+            - "null"
+          title: incident_id
+          minLength: 1
+          description: |-
+            ID of an incident to link the report to (optional). Linked in the same
+             step: a closed incident, or one already linked to a report, fails the create.
       title: CreateStatusReportRequest
       additionalProperties: false
       description: CreateStatusReportRequest is the request to create a new status report.
@@ -5000,6 +5798,12 @@ components:
           type: string
           title: updated_at
           description: Timestamp when the report was last updated (RFC 3339 format).
+        incidentId:
+          type:
+            - string
+            - "null"
+          title: incident_id
+          description: ID of the incident this report communicates (unset when not linked).
       title: StatusReport
       additionalProperties: false
       description: StatusReport represents an incident or maintenance report with full details.
@@ -5042,6 +5846,12 @@ components:
           type: string
           title: updated_at
           description: Timestamp when the report was last updated (RFC 3339 format).
+        incidentId:
+          type:
+            - string
+            - "null"
+          title: incident_id
+          description: ID of the incident this report communicates (unset when not linked).
       title: StatusReportSummary
       additionalProperties: false
       description: StatusReportSummary represents metadata for a status report (used in list responses).
@@ -5136,8 +5946,12 @@ tags:
       and associate them with monitors. Supports 12 notification providers.
   - name: StatusReportService
     description: |
-      Create and manage incident reports with status updates. Reports follow a lifecycle:
+      Create and manage public status reports with status updates. Reports follow a lifecycle:
       investigating -> identified -> monitoring -> resolved.
+  - name: IncidentService
+    description: |
+      Declare and run incidents: lifecycle (open -> mitigated -> resolved, or canceled),
+      timeline notes, a linked status report, and the postmortem.
   - name: MaintenanceService
     description: |
       Schedule maintenance windows for status page components. Subscribers can be
@@ -5205,6 +6019,454 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.health.v1.CheckResponse'
+  /rpc/openstatus.incident.v1.IncidentService/AddIncidentNote:
+    post:
+      tags:
+        - IncidentService
+      summary: AddIncidentNote
+      description: AddIncidentNote appends a note to the incident timeline.
+      operationId: IncidentService_AddIncidentNote
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.AddIncidentNoteRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.AddIncidentNoteResponse'
+  /rpc/openstatus.incident.v1.IncidentService/ApprovePostmortem:
+    post:
+      tags:
+        - IncidentService
+      summary: ApprovePostmortem
+      description: Approves the draft postmortem of a resolved incident. With close set to true the incident is closed in the same step. Allowed for workspace owners and admins and for the incident commander. The API key acts as its creator, with the creator's current role; keys without a creator cannot call this.
+      operationId: IncidentService_ApprovePostmortem
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.ApprovePostmortemRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.ApprovePostmortemResponse'
+  /rpc/openstatus.incident.v1.IncidentService/CloseIncident:
+    post:
+      tags:
+        - IncidentService
+      summary: CloseIncident
+      description: Closes a resolved incident, after which only its postmortem can change. Requires an approved postmortem, or skip_postmortem set to true. Allowed for workspace owners and admins and for the incident commander. The API key acts as its creator, with the creator's current role; keys without a creator cannot call this.
+      operationId: IncidentService_CloseIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.CloseIncidentRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.CloseIncidentResponse'
+  /rpc/openstatus.incident.v1.IncidentService/DeclareIncident:
+    post:
+      tags:
+        - IncidentService
+      summary: DeclareIncident
+      description: Declares a new incident in the open status. The commander is set by email and must be a member of the workspace; without one the incident is unassigned. A newly assigned commander is emailed unless they own the API key. When open_slack_channel is true and Slack is connected, a dedicated channel is created and the team invited. started_at defaults to now and can be set in the past for a retroactive declare.
+      operationId: IncidentService_DeclareIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.DeclareIncidentRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.DeclareIncidentResponse'
+  /rpc/openstatus.incident.v1.IncidentService/DeleteIncident:
+    post:
+      tags:
+        - IncidentService
+      summary: DeleteIncident
+      description: Deletes an incident declared by mistake. Only allowed while the incident is open and was never mitigated, resolved or closed (Incident.deletable); cancel it otherwise. Allowed for workspace owners and admins only. The API key acts as its creator, with the creator's current role; keys without a creator cannot call this.
+      operationId: IncidentService_DeleteIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.DeleteIncidentRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.DeleteIncidentResponse'
+  /rpc/openstatus.incident.v1.IncidentService/GetIncident:
+    get:
+      tags:
+        - IncidentService
+      summary: GetIncident
+      description: GetIncident retrieves an incident by ID, including its timeline.
+      operationId: IncidentService_GetIncident.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.GetIncidentRequest'
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.GetIncidentResponse'
+    post:
+      tags:
+        - IncidentService
+      summary: GetIncident
+      description: GetIncident retrieves an incident by ID, including its timeline.
+      operationId: IncidentService_GetIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.GetIncidentRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.GetIncidentResponse'
+  /rpc/openstatus.incident.v1.IncidentService/GetPostmortem:
+    get:
+      tags:
+        - IncidentService
+      summary: GetPostmortem
+      description: GetPostmortem retrieves the postmortem of an incident, if any.
+      operationId: IncidentService_GetPostmortem.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.GetPostmortemRequest'
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.GetPostmortemResponse'
+    post:
+      tags:
+        - IncidentService
+      summary: GetPostmortem
+      description: GetPostmortem retrieves the postmortem of an incident, if any.
+      operationId: IncidentService_GetPostmortem
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.GetPostmortemRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.GetPostmortemResponse'
+  /rpc/openstatus.incident.v1.IncidentService/LinkStatusReport:
+    post:
+      tags:
+        - IncidentService
+      summary: LinkStatusReport
+      description: LinkStatusReport links a public status report to the incident.
+      operationId: IncidentService_LinkStatusReport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.LinkStatusReportRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.LinkStatusReportResponse'
+  /rpc/openstatus.incident.v1.IncidentService/ListIncidents:
+    get:
+      tags:
+        - IncidentService
+      summary: ListIncidents
+      description: ListIncidents returns the incidents of the workspace (metadata only), open first.
+      operationId: IncidentService_ListIncidents.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.ListIncidentsRequest'
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.ListIncidentsResponse'
+    post:
+      tags:
+        - IncidentService
+      summary: ListIncidents
+      description: ListIncidents returns the incidents of the workspace (metadata only), open first.
+      operationId: IncidentService_ListIncidents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.ListIncidentsRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.ListIncidentsResponse'
+  /rpc/openstatus.incident.v1.IncidentService/SetIncidentStatus:
+    post:
+      tags:
+        - IncidentService
+      summary: SetIncidentStatus
+      description: 'Moves an incident to a new status. Allowed transitions: open -> mitigated, resolved or canceled; mitigated -> resolved, open or canceled; resolved -> open. Canceled is terminal and closes the incident. The same status, a forbidden transition or a closed incident fail with failed_precondition; Incident.allowed_transitions lists what is valid. A linked status report is never updated: post the public update with StatusReportService.AddStatusReportUpdate.'
+      operationId: IncidentService_SetIncidentStatus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.SetIncidentStatusRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.SetIncidentStatusResponse'
+  /rpc/openstatus.incident.v1.IncidentService/UnlinkStatusReport:
+    post:
+      tags:
+        - IncidentService
+      summary: UnlinkStatusReport
+      description: UnlinkStatusReport removes the link to the incident's status report.
+      operationId: IncidentService_UnlinkStatusReport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.UnlinkStatusReportRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.UnlinkStatusReportResponse'
+  /rpc/openstatus.incident.v1.IncidentService/UpdateIncident:
+    post:
+      tags:
+        - IncidentService
+      summary: UpdateIncident
+      description: UpdateIncident edits the title, severity, summary, commander or start time of an incident.
+      operationId: IncidentService_UpdateIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.UpdateIncidentRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.UpdateIncidentResponse'
+  /rpc/openstatus.incident.v1.IncidentService/UpdatePostmortem:
+    post:
+      tags:
+        - IncidentService
+      summary: UpdatePostmortem
+      description: UpdatePostmortem creates or replaces the postmortem body of a resolved incident.
+      operationId: IncidentService_UpdatePostmortem
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.UpdatePostmortemRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.UpdatePostmortemResponse'
   /rpc/openstatus.maintenance.v1.MaintenanceService/CreateMaintenance:
     post:
       tags:

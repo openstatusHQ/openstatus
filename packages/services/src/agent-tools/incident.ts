@@ -63,7 +63,7 @@ export const listIncidentsTool: AgentTool<
   inputSchema: ListIncidentsInput,
   outputSchema: ListIncidentsOutput,
   async run({ ctx, input }) {
-    const rows = await listIncidents({
+    const { items: rows } = await listIncidents({
       ctx,
       input: { status: input.status, limit: input.limit },
     });

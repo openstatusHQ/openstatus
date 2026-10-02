@@ -1,0 +1,232 @@
+syntax = "proto3";
+
+package openstatus.incident.v1;
+
+import "openstatus/status_report/v1/status_report.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/incident/v1;incidentv1";
+
+// IncidentSeverity is how bad an incident is.
+enum IncidentSeverity {
+  INCIDENT_SEVERITY_UNSPECIFIED = 0;
+  INCIDENT_SEVERITY_CRITICAL = 1;
+  INCIDENT_SEVERITY_MAJOR = 2;
+  INCIDENT_SEVERITY_MINOR = 3;
+}
+
+// IncidentStatus is the lifecycle state of an incident.
+// Closed is not a status: a closed incident has closed_at set and keeps its last status.
+enum IncidentStatus {
+  INCIDENT_STATUS_UNSPECIFIED = 0;
+  INCIDENT_STATUS_OPEN = 1;
+  INCIDENT_STATUS_MITIGATED = 2;
+  INCIDENT_STATUS_RESOLVED = 3;
+  INCIDENT_STATUS_CANCELED = 4;
+}
+
+// IncidentEventType is the kind of entry in an incident timeline.
+enum IncidentEventType {
+  INCIDENT_EVENT_TYPE_UNSPECIFIED = 0;
+  INCIDENT_EVENT_TYPE_DECLARED = 1;
+  INCIDENT_EVENT_TYPE_SEVERITY_CHANGED = 2;
+  INCIDENT_EVENT_TYPE_STATUS_CHANGED = 3;
+  INCIDENT_EVENT_TYPE_COMMANDER_CHANGED = 4;
+  INCIDENT_EVENT_TYPE_STARTED_AT_CHANGED = 5;
+  INCIDENT_EVENT_TYPE_NOTE = 6;
+  INCIDENT_EVENT_TYPE_STATUS_REPORT_LINKED = 7;
+  INCIDENT_EVENT_TYPE_STATUS_REPORT_UNLINKED = 8;
+  INCIDENT_EVENT_TYPE_SLACK_CHANNEL_BOUND = 9;
+  INCIDENT_EVENT_TYPE_SLACK_CHANNEL_UNBOUND = 10;
+  INCIDENT_EVENT_TYPE_RESOLVED = 11;
+  INCIDENT_EVENT_TYPE_CANCELED = 12;
+  INCIDENT_EVENT_TYPE_POSTMORTEM_DRAFTED = 13;
+  INCIDENT_EVENT_TYPE_POSTMORTEM_UPDATED = 14;
+  INCIDENT_EVENT_TYPE_POSTMORTEM_APPROVED = 15;
+  INCIDENT_EVENT_TYPE_CLOSED = 16;
+}
+
+// PostmortemStatus is the review state of a postmortem.
+enum PostmortemStatus {
+  POSTMORTEM_STATUS_UNSPECIFIED = 0;
+  POSTMORTEM_STATUS_DRAFT = 1;
+  POSTMORTEM_STATUS_APPROVED = 2;
+}
+
+// PostmortemAuthor is who wrote the current postmortem body.
+enum PostmortemAuthor {
+  POSTMORTEM_AUTHOR_UNSPECIFIED = 0;
+  POSTMORTEM_AUTHOR_AGENT = 1;
+  POSTMORTEM_AUTHOR_USER = 2;
+}
+
+// IncidentUser is a workspace member referenced by an incident.
+message IncidentUser {
+  // Email address of the member (empty for a deleted account).
+  string email = 1;
+
+  // Display name of the member ("Deleted user" for a deleted account).
+  string name = 2;
+}
+
+// IncidentStatusReport is the public status report linked to an incident.
+message IncidentStatusReport {
+  // ID of the status report.
+  string id = 1;
+
+  // Title of the status report.
+  string title = 2;
+
+  // Current status of the status report.
+  openstatus.status_report.v1.StatusReportStatus status = 3;
+
+  // ID of the status page the report belongs to.
+  string page_id = 4;
+}
+
+// IncidentEvent is one entry of an incident timeline.
+message IncidentEvent {
+  // Unique identifier for the event.
+  string id = 1;
+
+  // Kind of event.
+  IncidentEventType type = 2;
+
+  // Text of the event: the note for notes, a rendered summary otherwise.
+  string message = 3;
+
+  // Member who caused the event (unset for system events and API keys without a creator).
+  optional IncidentUser created_by = 4;
+
+  // Timestamp when the event was recorded (RFC 3339 format).
+  string created_at = 5;
+}
+
+// IncidentSummary is the metadata of an incident (used in list responses).
+message IncidentSummary {
+  // Unique identifier for the incident.
+  string id = 1;
+
+  // Title of the incident.
+  string title = 2;
+
+  // Severity of the incident.
+  IncidentSeverity severity = 3;
+
+  // Current status of the incident.
+  IncidentStatus status = 4;
+
+  // Member leading the response (unset when unassigned).
+  optional IncidentUser commander = 5;
+
+  // Timestamp when the incident was declared (RFC 3339 format).
+  string declared_at = 6;
+
+  // Timestamp when the impact began (RFC 3339 format).
+  string started_at = 7;
+
+  // Timestamp of the last resolution (RFC 3339 format).
+  optional string resolved_at = 8;
+
+  // Timestamp when the incident was closed or canceled (RFC 3339 format).
+  optional string closed_at = 9;
+
+  // Linked public status report.
+  optional IncidentStatusReport status_report = 10;
+
+  // Timestamp when the incident was created (RFC 3339 format).
+  string created_at = 11;
+
+  // Timestamp when the incident was last updated (RFC 3339 format).
+  string updated_at = 12;
+}
+
+// Incident is a managed incident with full details.
+message Incident {
+  // Unique identifier for the incident.
+  string id = 1;
+
+  // Title of the incident.
+  string title = 2;
+
+  // Severity of the incident.
+  IncidentSeverity severity = 3;
+
+  // Current status of the incident.
+  IncidentStatus status = 4;
+
+  // Short human summary.
+  optional string summary = 5;
+
+  // Member leading the response (unset when unassigned).
+  optional IncidentUser commander = 6;
+
+  // Member who declared the incident (unset for API keys without a creator).
+  optional IncidentUser declared_by = 7;
+
+  // Member who last resolved the incident.
+  optional IncidentUser resolved_by = 8;
+
+  // Timestamp when the incident was declared (RFC 3339 format).
+  string declared_at = 9;
+
+  // Timestamp when the impact began (RFC 3339 format).
+  string started_at = 10;
+
+  // Timestamp when the incident was first mitigated (RFC 3339 format).
+  optional string mitigated_at = 11;
+
+  // Timestamp of the last resolution (RFC 3339 format).
+  optional string resolved_at = 12;
+
+  // Timestamp when the incident was closed or canceled (RFC 3339 format).
+  // A closed incident is read-only except for its postmortem.
+  optional string closed_at = 13;
+
+  // Linked public status report.
+  optional IncidentStatusReport status_report = 14;
+
+  // Link to the bound Slack channel.
+  optional string slack_channel_url = 15;
+
+  // Statuses SetIncidentStatus accepts from the current state (empty once closed).
+  repeated IncidentStatus allowed_transitions = 16;
+
+  // Whether DeleteIncident is allowed: only while open and never mitigated, resolved or closed.
+  bool deletable = 17;
+
+  // Timeline, newest first (only included in GetIncident).
+  repeated IncidentEvent events = 18;
+
+  // Timestamp when the incident was created (RFC 3339 format).
+  string created_at = 19;
+
+  // Timestamp when the incident was last updated (RFC 3339 format).
+  string updated_at = 20;
+}
+
+// Postmortem is the review written after an incident is resolved.
+message Postmortem {
+  // ID of the incident the postmortem belongs to.
+  string incident_id = 1;
+
+  // Review state of the postmortem.
+  PostmortemStatus status = 2;
+
+  // Markdown body of the postmortem.
+  string content = 3;
+
+  // Who wrote the current body.
+  PostmortemAuthor drafted_by = 4;
+
+  // Member who approved the postmortem.
+  optional IncidentUser approved_by = 5;
+
+  // Timestamp when the postmortem was approved (RFC 3339 format).
+  optional string approved_at = 6;
+
+  // Timestamp when the postmortem was created (RFC 3339 format).
+  string created_at = 7;
+
+  // Timestamp when the postmortem was last updated (RFC 3339 format).
+  string updated_at = 8;
+}

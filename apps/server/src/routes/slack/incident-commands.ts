@@ -215,7 +215,7 @@ export async function runIncidentCommand(args: {
         return `*${target.title}* · ${target.severity} · ${target.status}${target.closedAt ? " (closed)" : ""}\nCommander: ${commander}${target.statusReport ? `\nStatus report: ${target.statusReport.title} (${target.statusReport.status})` : ""}\n<${getIncidentDashboardUrl(target.id)}|Open in openstatus>`;
       }
       case "list": {
-        const open = await listIncidents({
+        const { items: open } = await listIncidents({
           ctx,
           input: { status: ["open", "mitigated"], limit: 20 },
         });

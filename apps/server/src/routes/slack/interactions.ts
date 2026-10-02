@@ -3,7 +3,8 @@ import { ServiceError } from "@openstatus/services";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 
-import { runInBackground } from "./background";
+import { runInBackground } from "@/libs/background";
+
 import {
   buildLinkAccountBlocks,
   LINK_ACCOUNT_TEXT,
