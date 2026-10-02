@@ -2323,6 +2323,15 @@ describe("incident channel events", () => {
       await settleBackgroundTasks();
       expect(await notes()).toHaveLength(0);
       expect(await waitForCall("reactions.add", 100)).toBeUndefined();
+      const notice = await waitForCall("postEphemeral");
+      expect(notice?.args.text).toContain("Pin it again");
+
+      // A second failure stays quiet; the pinner was already told.
+      await pin("510.1");
+      await settleBackgroundTasks();
+      expect(
+        slackTestState.calls.filter((c) => c.method === "postEphemeral"),
+      ).toHaveLength(1);
 
       flaky = false;
       await pin("510.1");

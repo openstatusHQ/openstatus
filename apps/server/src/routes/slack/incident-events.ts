@@ -45,6 +45,8 @@ type SlackMessage = {
 };
 
 const NOTHING_TO_COPY = "Nothing to copy from that message.";
+const PIN_FAILED =
+  "Couldn't copy that message to the timeline. Pin it again to retry.";
 const VERB_LAG_MS = 60_000;
 
 /**
@@ -259,6 +261,26 @@ export async function handlePinReaction(args: {
     trackSlackIncident(ctx, "note", { via: "reaction" });
   } catch (err) {
     await redis.del(claim).catch(() => undefined);
+    // Slack retries the event, but a lost pin should not go unnoticed if it
+    // keeps failing; one notice per message is enough.
+    const once = await redis
+      .set(`slack:pinfail:${channel}:${ts}`, "1", {
+        nx: true,
+        ex: 24 * 60 * 60,
+      })
+      .catch(() => null);
+    if (once !== null) {
+      await slack.chat
+        .postEphemeral({
+          channel,
+          user: slackUserId,
+          thread_ts: ts,
+          text: PIN_FAILED,
+        })
+        .catch((error) =>
+          logger.warn("slack failed to report a lost pin", { error }),
+        );
+    }
     throw err;
   }
   await slack.reactions
