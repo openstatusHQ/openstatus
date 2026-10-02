@@ -27,27 +27,26 @@ import {
 
 import { IconCloudProvider } from "../../../../components/icon-cloud-provider";
 import {
-  type Timing,
-  is32CharHex,
   latencyFormatter,
-  regionCheckerSchema,
   regionFormatter,
 } from "../../../../lib/checker/utils";
 import { toast } from "../../../../lib/toast";
-import { cn, notEmpty } from "../../../../lib/utils";
+import { cn } from "../../../../lib/utils";
+import {
+  type CheckerFailure,
+  type CheckerSuccess,
+  parseCheckerLine,
+} from "./parse";
 import { searchParamsParsers } from "./search-params";
 import { handleExportCSV } from "./utils";
 
-type Values = {
-  region: string;
-  latency: number;
-  status: number;
-  timing: Timing;
-};
+type Values = CheckerSuccess;
 
 type CheckerContextType = {
   values: Values[];
   setValues: React.Dispatch<React.SetStateAction<Values[]>>;
+  failures: CheckerFailure[];
+  setFailures: React.Dispatch<React.SetStateAction<CheckerFailure[]>>;
   id: string | null;
   setId: React.Dispatch<React.SetStateAction<string | null>>;
 };
@@ -55,6 +54,8 @@ type CheckerContextType = {
 const CheckerContext = createContext<CheckerContextType>({
   values: [],
   setValues: () => {},
+  failures: [],
+  setFailures: () => {},
   id: null,
   setId: () => {},
 });
@@ -67,6 +68,7 @@ export function CheckerProvider({
   defaultValues?: Values[];
 }) {
   const [values, setValues] = useState<Values[]>(defaultValues);
+  const [failures, setFailures] = useState<CheckerFailure[]>([]);
   const [{ id: urlId }, setSearchParams] = useQueryStates(searchParamsParsers);
   const [id, setId] = useState<string | null>(urlId);
 
@@ -85,7 +87,16 @@ export function CheckerProvider({
   };
 
   return (
-    <CheckerContext.Provider value={{ values, setValues, id, setId: updateId }}>
+    <CheckerContext.Provider
+      value={{
+        values,
+        setValues,
+        failures,
+        setFailures,
+        id,
+        setId: updateId,
+      }}
+    >
       {children}
     </CheckerContext.Provider>
   );
@@ -106,7 +117,7 @@ export function Form({
   defaultMethod?: string;
   defaultUrl?: string;
 }) {
-  const { setValues, setId } = useCheckerContext();
+  const { setValues, setFailures, setId } = useCheckerContext();
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -127,6 +138,7 @@ export function Form({
 
     // Reset values and ID
     setValues([]);
+    setFailures([]);
     setId(null); // This will also clear the URL param
 
     startTransition(async () => {
@@ -192,38 +204,25 @@ export function Form({
               const decoded = decoder.decode(value, { stream: true });
               if (!decoded) continue;
 
-              const array = decoded.split("\n").filter(Boolean);
+              const results: Values[] = [];
+              const failed: CheckerFailure[] = [];
 
-              const results = array
-                .map((item) => {
-                  try {
-                    // Store the ID if it's a 32-char hex string
-                    if (is32CharHex(item)) {
-                      setId(item);
-                      resultId = item;
-                      return null;
-                    }
+              for (const item of decoded.split("\n").filter(Boolean)) {
+                const line = parseCheckerLine(item);
+                if (!line) continue;
+                if (line.type === "id") {
+                  setId(line.id);
+                  resultId = line.id;
+                } else if (line.type === "success") {
+                  results.push(line.value);
+                } else {
+                  failed.push(line.value);
+                }
+              }
 
-                    const parsed = JSON.parse(item);
-                    const validation = regionCheckerSchema.safeParse(parsed);
-                    if (!validation.success) return null;
-
-                    const check = validation.data;
-                    // Only process successful checks
-                    if (check.state === "success") {
-                      return {
-                        region: check.region,
-                        latency: check.latency,
-                        status: check.status,
-                        timing: check.timing,
-                      };
-                    }
-                    return null;
-                  } catch {
-                    return null;
-                  }
-                })
-                .filter(notEmpty);
+              if (failed.length > 0) {
+                setFailures((prev) => [...prev, ...failed]);
+              }
 
               if (results.length > 0) {
                 successCount += results.length;
@@ -332,7 +331,7 @@ export function Form({
 }
 
 export function ResultTable() {
-  const { values } = useCheckerContext();
+  const { values, failures } = useCheckerContext();
   return (
     <div className="table-wrapper">
       <table>
@@ -345,7 +344,7 @@ export function ResultTable() {
           </tr>
         </thead>
         <tbody>
-          {values.length === 0 ? (
+          {values.length === 0 && failures.length === 0 ? (
             <tr>
               <td>
                 <IconCloudProvider
@@ -400,13 +399,39 @@ export function ResultTable() {
               );
             })
           )}
+          {failures.map((failure) => (
+            <FailedRow key={failure.region} failure={failure} />
+          ))}
         </tbody>
         <caption>
-          Results of your check ({values.length} / {AVAILABLE_REGIONS.length}{" "}
-          regions)
+          Results of your check ({values.length + failures.length} /{" "}
+          {AVAILABLE_REGIONS.length} regions
+          {failures.length > 0 ? `, ${failures.length} failed` : ""})
         </caption>
       </table>
     </div>
+  );
+}
+
+function FailedRow({ failure }: { failure: CheckerFailure }) {
+  const regionConfig = regionDict[failure.region as Region];
+  return (
+    <tr title={failure.message}>
+      <td>
+        <IconCloudProvider
+          provider={regionConfig.provider}
+          className="size-4"
+        />
+      </td>
+      <td>
+        <div className="bg-muted-foreground size-4" />
+      </td>
+      <td>
+        {regionConfig.flag} {regionConfig.code}{" "}
+        <span className="text-muted-foreground">{regionConfig.location}</span>
+      </td>
+      <td className="text-destructive text-right!">Failed</td>
+    </tr>
   );
 }
 
