@@ -154,11 +154,17 @@ export function FormMaintenance({
                     value={field.value}
                     className="w-[240px]"
                     onChange={(date) => {
-                      field.onChange(date);
-                      // keep the end after the start
+                      // a start moved past the end drags the end along,
+                      // keeping the duration
                       if (watchEndDate && date > watchEndDate) {
-                        form.setValue("endDate", date);
+                        const duration =
+                          watchEndDate.getTime() - field.value.getTime();
+                        form.setValue(
+                          "endDate",
+                          new Date(date.getTime() + duration),
+                        );
                       }
+                      field.onChange(date);
                     }}
                   />
                 </FormControl>

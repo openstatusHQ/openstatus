@@ -102,7 +102,9 @@ export function MaintenanceProperties({
               value={from}
               onChange={(date) => setDraft({ from: date, to })}
             />
-          ) : null}
+          ) : (
+            <div className="h-8" />
+          )}
         </PropertyValue>
       </Property>
       <Property>
@@ -114,7 +116,9 @@ export function MaintenanceProperties({
               value={to}
               onChange={(date) => setDraft({ from, to: date })}
             />
-          ) : null}
+          ) : (
+            <div className="h-8" />
+          )}
           {dirty ? (
             <div className="grid w-full grid-cols-2 gap-1 font-sans">
               <Button

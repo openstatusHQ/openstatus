@@ -195,6 +195,7 @@ export function FormStatusReportUpdate({
                   <DateTimePicker
                     value={field.value}
                     onChange={field.onChange}
+                    min={new Date("1900-01-01")}
                     max={new Date()}
                     className="w-[240px]"
                   />
