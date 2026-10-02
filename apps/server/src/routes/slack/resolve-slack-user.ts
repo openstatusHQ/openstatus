@@ -21,11 +21,18 @@ const logger = getLogger(["api-server", "slack", "resolve-user"]);
  * in a pinned message can create the mapping; it is the same rule applied
  * when they act themselves.
  */
+function isUserNotFound(err: unknown): boolean {
+  const code = (err as { data?: { error?: string } })?.data?.error;
+  return code === "user_not_found" || code === "users_not_found";
+}
+
 async function lookupSlackMember(args: {
   workspace: Workspace;
   teamId: string;
   slackUserId: string;
   slack: WebClient;
+  /** Rethrow a failed lookup instead of answering "unlinked". */
+  strict?: boolean;
 }): Promise<{ userId: number | null; profileName: string | null }> {
   const { workspace, teamId, slackUserId, slack } = args;
   if (!teamId || !slackUserId) return { userId: null, profileName: null };
@@ -58,6 +65,9 @@ async function lookupSlackMember(args: {
     });
     return { userId, profileName };
   } catch (err) {
+    // A user Slack no longer knows is unlinked for good; anything else
+    // (rate limit, DB) is a hiccup the caller may want to retry.
+    if (args.strict && !isUserNotFound(err)) throw err;
     logger.warn("slack user resolution failed", {
       workspaceId: workspace.id,
       teamId,
@@ -70,12 +80,14 @@ async function lookupSlackMember(args: {
 /**
  * The openstatus member linked to a Slack user, or `null`. A missing link is
  * created on the spot when the Slack profile email matches exactly one member.
+ * With `strict`, a failed lookup throws instead of passing for "unlinked".
  */
 export async function resolveSlackMember(args: {
   workspace: Workspace;
   teamId: string;
   slackUserId: string;
   slack: WebClient;
+  strict?: boolean;
 }): Promise<number | null> {
   return (await lookupSlackMember(args)).userId;
 }

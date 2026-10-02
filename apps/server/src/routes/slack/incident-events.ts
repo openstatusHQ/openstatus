@@ -38,6 +38,8 @@ type SlackMessage = {
   ts?: string;
   text?: string;
   user?: string;
+  bot_id?: string;
+  subtype?: string;
   blocks?: unknown[];
   attachments?: { text?: string; fallback?: string }[];
 };
@@ -218,21 +220,31 @@ export async function handlePinReaction(args: {
         );
       return;
     }
-    const permalink = await slack.chat
-      .getPermalink({ channel, message_ts: ts })
-      .then((res) => res.permalink)
-      .catch(() => undefined);
     // The note belongs to whoever said it; bots and unlinked authors fall
-    // back to the pinner.
-    const author =
-      message?.user && message.user !== slackUserId
-        ? await resolveSlackMember({
+    // back to the pinner. A lookup hiccup throws so the claim is released and
+    // Slack retries, rather than pinning the wrong name forever.
+    const authorSlackId =
+      message?.user &&
+      message.user !== slackUserId &&
+      !message.bot_id &&
+      message.subtype !== "bot_message"
+        ? message.user
+        : null;
+    const [permalink, author] = await Promise.all([
+      slack.chat
+        .getPermalink({ channel, message_ts: ts })
+        .then((res) => res.permalink)
+        .catch(() => undefined),
+      authorSlackId
+        ? resolveSlackMember({
             workspace: resolved.workspace,
             teamId,
-            slackUserId: message.user,
+            slackUserId: authorSlackId,
             slack,
+            strict: true,
           })
-        : null;
+        : null,
+    ]);
 
     const ctx: ServiceContext = { workspace: resolved.workspace, actor };
     await addIncidentNote({

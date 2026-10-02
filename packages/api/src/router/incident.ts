@@ -284,7 +284,8 @@ export const incidentRouter = createTRPCRouter({
 
   addNote: protectedProcedure
     .meta({ track: Events.AddManagedIncidentNote })
-    .input(AddIncidentNoteInput)
+    // `createdBy` is for trusted callers copying a note in (Slack pins).
+    .input(AddIncidentNoteInput.omit({ createdBy: true }))
     .mutation(async ({ ctx, input }) => {
       try {
         return await addIncidentNote({ ctx: toServiceCtx(ctx), input });
