@@ -10,7 +10,7 @@ import { StatusDot } from "@/components/common/status-dot";
 import { UserAvatar } from "@/components/common/user-avatar";
 import {
   Property,
-  PropertyInput,
+  PropertyDateTimePicker,
   PropertyLabel,
   PropertyLink,
   PropertyList,
@@ -22,7 +22,6 @@ import {
   maintenanceStatusConfig,
 } from "@/data/overview-events.client";
 import { useHydrated } from "@/hooks/use-hydrated";
-import { formatDateForInput } from "@/lib/formatter";
 
 import { useUpdateMaintenance } from "./use-update-maintenance";
 
@@ -57,15 +56,13 @@ export function MaintenanceProperties({
   status: MaintenanceStatus;
   publicUrl: string;
 }) {
-  // datetime-local values and the timezone are browser-local
+  // the formatted dates and the timezone are browser-local
   const hydrated = useHydrated();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  // null = pristine: the inputs follow the server copy until edited.
-  const [draft, setDraft] = useState<{ from: string; to: string } | null>(null);
-  const serverFrom = formatDateForInput(maintenance.from);
-  const serverTo = formatDateForInput(maintenance.to);
-  const from = draft?.from ?? serverFrom;
-  const to = draft?.to ?? serverTo;
+  // null = pristine: the pickers follow the server copy until edited.
+  const [draft, setDraft] = useState<{ from: Date; to: Date } | null>(null);
+  const from = draft?.from ?? maintenance.from;
+  const to = draft?.to ?? maintenance.to;
   const { update, isPending } = useUpdateMaintenance(maintenance.id, {
     onSuccess: () => {
       toast.success("Schedule saved");
@@ -73,8 +70,11 @@ export function MaintenanceProperties({
     },
   });
 
-  const dirty = draft !== null && (from !== serverFrom || to !== serverTo);
-  const invalid = !from || !to || new Date(to) <= new Date(from);
+  const dirty =
+    draft !== null &&
+    (from.getTime() !== maintenance.from.getTime() ||
+      to.getTime() !== maintenance.to.getTime());
+  const invalid = to <= from;
   const author = maintenance.createdByUser;
   const editor = distinctEditor(maintenance);
 
@@ -96,37 +96,36 @@ export function MaintenanceProperties({
       <Property>
         <PropertyLabel>From</PropertyLabel>
         <PropertyValue>
-          <PropertyInput
-            type="datetime-local"
-            aria-label="From"
-            value={hydrated ? from : ""}
-            onChange={(e) => setDraft({ from: e.target.value, to })}
-          />
+          {hydrated ? (
+            <PropertyDateTimePicker
+              aria-label="From"
+              value={from}
+              onChange={(date) => setDraft({ from: date, to })}
+            />
+          ) : (
+            <div className="h-8" />
+          )}
         </PropertyValue>
       </Property>
       <Property>
         <PropertyLabel>To</PropertyLabel>
         <PropertyValue className="flex-wrap">
-          <PropertyInput
-            type="datetime-local"
-            aria-label="To"
-            value={hydrated ? to : ""}
-            onChange={(e) => setDraft({ from, to: e.target.value })}
-          />
+          {hydrated ? (
+            <PropertyDateTimePicker
+              aria-label="To"
+              value={to}
+              onChange={(date) => setDraft({ from, to: date })}
+            />
+          ) : (
+            <div className="h-8" />
+          )}
           {dirty ? (
             <div className="grid w-full grid-cols-2 gap-1 font-sans">
               <Button
                 size="sm"
                 className="h-7"
                 disabled={invalid || isPending}
-                // an untouched field keeps its Date: the input drops seconds
-                onClick={() =>
-                  update({
-                    startDate:
-                      from === serverFrom ? maintenance.from : new Date(from),
-                    endDate: to === serverTo ? maintenance.to : new Date(to),
-                  })
-                }
+                onClick={() => update({ startDate: from, endDate: to })}
               >
                 Save
               </Button>
@@ -139,7 +138,7 @@ export function MaintenanceProperties({
               >
                 Reset
               </Button>
-              {from && to && invalid ? (
+              {invalid ? (
                 <span className="text-destructive col-span-full text-xs">
                   End must be after start
                 </span>

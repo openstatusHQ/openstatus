@@ -28,6 +28,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { DateTimePicker } from "@/components/common/date-time-picker";
 import { Link } from "@/components/common/link";
 import {
   FormCardContent,
@@ -35,7 +36,6 @@ import {
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { personName, severityConfig } from "@/data/managed-incidents.client";
-import { formatDateForInput } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
@@ -47,10 +47,9 @@ const schema = z.object({
   summary: z.string().max(4000),
   commanderId: z.string(),
   startedAt: z
-    .string()
-    .min(1, "Start time is required.")
+    .date()
     .refine(
-      (value) => new Date(value) <= new Date(),
+      (value) => value <= new Date(),
       "Start time cannot be in the future.",
     ),
   statusReportId: z.string(),
@@ -96,7 +95,7 @@ export function FormDeclareIncident({
       // user.get is prefetched in the dashboard layout, so it is hydrated
       // before the sheet can mount and the default is never NONE for members.
       commanderId: user ? String(user.id) : NONE,
-      startedAt: formatDateForInput(new Date()),
+      startedAt: new Date(),
       statusReportId: NONE,
       openSlackChannel: slack === "ready",
       ...defaultValues,
@@ -120,7 +119,7 @@ export function FormDeclareIncident({
           summary: values.summary || undefined,
           commanderId:
             values.commanderId === NONE ? null : Number(values.commanderId),
-          startedAt: new Date(values.startedAt),
+          startedAt: values.startedAt,
           statusReportId:
             values.statusReportId === NONE
               ? undefined
@@ -239,7 +238,12 @@ export function FormDeclareIncident({
               <FormItem>
                 <FormLabel>Started at</FormLabel>
                 <FormControl>
-                  <Input type="datetime-local" {...field} />
+                  <DateTimePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    max={new Date()}
+                    className="w-[240px]"
+                  />
                 </FormControl>
                 <FormDescription>
                   When the impact began. Set it in the past to record an
