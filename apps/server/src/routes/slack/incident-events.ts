@@ -40,6 +40,7 @@ type SlackMessage = {
 };
 
 const NOTHING_TO_COPY = "Nothing to copy from that message.";
+const VERB_LAG_MS = 60_000;
 
 /**
  * A Slack `ts` ("1759300000.123456") as the time the message was said, or
@@ -47,7 +48,13 @@ const NOTHING_TO_COPY = "Nothing to copy from that message.";
  */
 function messageDate(ts: string): Date | undefined {
   const date = new Date(Number(ts) * 1000);
-  return isAllowedNoteCreatedAt(date) ? date : undefined;
+  const now = Date.now();
+  // The verb samples its own `now` a moment later; a boundary message must
+  // pass both, or the pin would fail instead of falling back to now.
+  return isAllowedNoteCreatedAt(date, now) &&
+    isAllowedNoteCreatedAt(date, now + VERB_LAG_MS)
+    ? date
+    : undefined;
 }
 
 /** Alert bots post `attachments` with an empty `text`. */

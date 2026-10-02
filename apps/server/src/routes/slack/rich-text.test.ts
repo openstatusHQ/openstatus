@@ -268,6 +268,62 @@ describe("richTextToMarkdown edge cases", () => {
         message(section({ type: "text", text: "`x", style: { code: true } })),
       ),
     ).toBe("`` `x ``");
+    expect(
+      richTextToMarkdown(
+        message(section({ type: "text", text: "x`", style: { code: true } })),
+      ),
+    ).toBe("`` x` ``");
+  });
+
+  test("keeps a multi-line list item inside the item", () => {
+    expect(
+      richTextToMarkdown(
+        message(
+          {
+            type: "rich_text_list",
+            style: "ordered",
+            offset: 9,
+            elements: [section({ type: "text", text: "first\nstill first" })],
+          },
+          {
+            type: "rich_text_list",
+            style: "bullet",
+            indent: 1,
+            elements: [section({ type: "text", text: "a\nb" })],
+          },
+        ),
+      ),
+    ).toBe("10. first\n    still first\n    - a\n      b");
+  });
+
+  test("escapes block syntax at line start, also inside quotes", () => {
+    expect(
+      richTextToMarkdown(
+        message(
+          section({ type: "text", text: "## not a heading\n---\n+ no\n1) no" }),
+          {
+            type: "rich_text_quote",
+            elements: [{ type: "text", text: "# q" }],
+          },
+        ),
+      ),
+    ).toBe("\\## not a heading\n\\---\n\\+ no\n\\1) no\n\n> \\# q");
+  });
+
+  test("renders a link with an unsafe scheme as plain text", () => {
+    expect(
+      richTextToMarkdown(
+        message(
+          section(
+            { type: "link", url: "javascript:alert(1)", text: "click" },
+            { type: "text", text: " " },
+            { type: "link", url: "javascript:alert(1)" },
+            { type: "text", text: " " },
+            { type: "link", url: "mailto:ops@example.com" },
+          ),
+        ),
+      ),
+    ).toBe("click javascript:alert(1) <mailto:ops@example.com>");
   });
 
   test("encodes spaces and parentheses in link destinations", () => {

@@ -115,7 +115,8 @@ export function collectMentions(blocks: unknown[] | undefined): {
 
 // Only what remark would otherwise interpret; `#`, `>`, `-` matter at line start.
 const INLINE_SPECIALS = /[\\`*_~[\]]/g;
-const LINE_START_SPECIALS = /^(\s*)([#>-]|\d+\.)(?=\s|$)/gm;
+const LINE_START_SPECIALS =
+  /^(\s*)(#{1,6}|>|[-+]|-{3,}|={3,}|\d+[.)])(?=\s|$)/gm;
 
 function escapeText(text: string): string {
   return text
@@ -142,6 +143,9 @@ function codeFence(code: string): string {
   const fence = "`".repeat(Math.max(3, longestBacktickRun(code) + 1));
   return `${fence}\n${code}\n${fence}`;
 }
+
+// Not every renderer sanitizes `javascript:`; anything else becomes plain text.
+const SAFE_LINK = /^(https?:|mailto:)/i;
 
 /** Spaces and parentheses end a markdown destination early; `<>` break autolinks. */
 function linkDestination(url: string): string {
@@ -195,6 +199,9 @@ function renderInline(element: InlineElement, names: MentionNames): string {
     }
     case "link": {
       const label = element.text?.trim();
+      if (!SAFE_LINK.test(element.url)) {
+        return applyStyle(escapeText(label || element.url), element.style);
+      }
       const url = linkDestination(element.url);
       const md =
         label && label !== element.url
@@ -252,7 +259,10 @@ function renderElement(element: RichTextElement, names: MentionNames): string {
         .map((item, index) => {
           const marker =
             element.style === "ordered" ? `${start + index}.` : "-";
-          return `${pad}${marker} ${renderInlines(item.elements, names)}`;
+          // Continuation lines stay inside the item when indented to its text.
+          const hang = `\n${pad}${" ".repeat(marker.length + 1)}`;
+          const text = renderInlines(item.elements, names).replace(/\n/g, hang);
+          return `${pad}${marker} ${text}`;
         })
         .join("\n");
     }

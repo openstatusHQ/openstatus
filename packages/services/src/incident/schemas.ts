@@ -63,7 +63,7 @@ export const AddIncidentNoteInput = z.object({
     .date()
     .refine((d) => isAllowedNoteCreatedAt(d), {
       message:
-        "createdAt must be within the last 30 days and not in the future",
+        "createdAt must be within the last 30 days and at most a minute ahead",
     })
     .nullish(),
 });

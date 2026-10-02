@@ -491,7 +491,7 @@ describe("addIncidentNote", () => {
             ctx: as(memberId, tx),
             input: { id: row.id, message: "off the timeline", createdAt },
           }),
-        ).rejects.toThrow();
+        ).rejects.toThrow(/createdAt must be within the last 30 days/);
       }
     });
   });
