@@ -44,8 +44,7 @@ export function DateTimePicker({
   /** Clamps into the bounds and reports a change; returns what was applied. */
   function commit(next: Date) {
     if (Number.isNaN(next.getTime())) return null;
-    const clamped =
-      min && next < min ? min : max && next > max ? max : next;
+    const clamped = min && next < min ? min : max && next > max ? max : next;
     if (clamped.getTime() !== value.getTime()) onChange(clamped);
     return clamped;
   }
