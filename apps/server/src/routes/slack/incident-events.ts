@@ -18,7 +18,10 @@ import {
   requireSlackMember,
   slackAgentAllowed,
 } from "./require-slack-member";
-import { resolveSlackMentionNames } from "./resolve-slack-user";
+import {
+  resolveSlackMember,
+  resolveSlackMentionNames,
+} from "./resolve-slack-user";
 import {
   collectMentions,
   mentionLabelsFromText,
@@ -219,6 +222,17 @@ export async function handlePinReaction(args: {
       .getPermalink({ channel, message_ts: ts })
       .then((res) => res.permalink)
       .catch(() => undefined);
+    // The note belongs to whoever said it; bots and unlinked authors fall
+    // back to the pinner.
+    const author =
+      message?.user && message.user !== slackUserId
+        ? await resolveSlackMember({
+            workspace: resolved.workspace,
+            teamId,
+            slackUserId: message.user,
+            slack,
+          })
+        : null;
 
     const ctx: ServiceContext = { workspace: resolved.workspace, actor };
     await addIncidentNote({
@@ -227,6 +241,7 @@ export async function handlePinReaction(args: {
         id: bound.id,
         message: permalink ? `${body}\n\n[From Slack](${permalink})` : body,
         createdAt: messageDate(ts),
+        createdBy: author ?? undefined,
       },
     });
     trackSlackIncident(ctx, "note", { via: "reaction" });

@@ -4,6 +4,7 @@ import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import {
   appendIncidentEvent,
+  assertMember,
   assertNotClosed,
   getIncidentInWorkspace,
   requireIncidentFeature,
@@ -28,11 +29,15 @@ export async function addIncidentNote(args: {
       input.id,
     );
     assertNotClosed(existing);
+    if (input.createdBy != null) {
+      await assertMember(tx, ctx.workspace.id, input.createdBy);
+    }
     return appendIncidentEvent(tx, ctx, {
       incidentId: existing.id,
       type: "note",
       message: input.message,
       createdAt: input.createdAt ?? undefined,
+      createdBy: input.createdBy ?? undefined,
     });
   });
 }

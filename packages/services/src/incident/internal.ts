@@ -79,6 +79,7 @@ export async function appendIncidentEvent(
     type: IncidentEventType;
     message?: string | null;
     createdAt?: Date;
+    createdBy?: number | null;
   },
 ): Promise<IncidentEvent> {
   const event = await tx
@@ -87,7 +88,7 @@ export async function appendIncidentEvent(
       incidentId: args.incidentId,
       type: args.type,
       message: args.message ?? null,
-      createdBy: tryGetActorUserId(ctx.actor),
+      createdBy: args.createdBy ?? tryGetActorUserId(ctx.actor),
       createdAt: args.createdAt ?? new Date(),
     })
     .returning()

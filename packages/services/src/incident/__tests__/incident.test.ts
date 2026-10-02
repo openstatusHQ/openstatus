@@ -496,6 +496,44 @@ describe("addIncidentNote", () => {
     });
   });
 
+  test("createdBy attributes the note to another member, actor stays audited", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      const note = await addIncidentNote({
+        ctx: as(memberId, tx),
+        input: { id: row.id, message: "said by admin", createdBy: adminId },
+      });
+      expect(note.createdBy).toBe(adminId);
+      const [audit] = await tx
+        .select()
+        .from(auditLog)
+        .where(
+          and(
+            eq(auditLog.entityType, "incident_event"),
+            eq(auditLog.entityId, String(note.id)),
+          ),
+        );
+      expect(audit?.actorUserId).toBe(memberId);
+      const self = await addIncidentNote({
+        ctx: as(memberId, tx),
+        input: { id: row.id, message: "mine", createdBy: null },
+      });
+      expect(self.createdBy).toBe(memberId);
+    });
+  });
+
+  test("rejects a createdBy outside the workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      await expect(
+        addIncidentNote({
+          ctx: as(memberId, tx),
+          input: { id: row.id, message: "spoofed", createdBy: outsiderId },
+        }),
+      ).rejects.toThrow(ValidationError);
+    });
+  });
+
   test("a closed incident takes no notes", async () => {
     await withTestTransaction(async (tx) => {
       const row = await createIncident(
