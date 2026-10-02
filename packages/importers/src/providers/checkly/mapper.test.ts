@@ -114,6 +114,11 @@ describe("mapCheck", () => {
     expect(m.active).toBe(false);
     expect(m.method).toBe("POST");
   });
+
+  test("carries over the check's followRedirects setting", () => {
+    expect(mapCheck(MOCK_CHECKS[0], 1).followRedirects).toBe(true);
+    expect(mapCheck(MOCK_CHECKS[3], 1).followRedirects).toBe(false);
+  });
 });
 
 describe("deriveSlug", () => {
