@@ -7,6 +7,8 @@ import { type Action, type ComposeInput, passthrough } from "./types";
 
 export type { ComposeInput };
 
+const BADGE_ROUTE_PATTERN = /(?:^|\/)(?:monitors\/\d+\/)?badge(?:\/v2)?\/?$/;
+
 /**
  * Runs the proxy stages in priority order and returns the first non-null
  * Action. If every stage passes, returns a `passthrough` action.
@@ -26,11 +28,17 @@ export type { ComposeInput };
  * outweighs the ambiguity.
  */
 export function composePageAction(input: ComposeInput): Action {
+  const isBadge =
+    BADGE_ROUTE_PATTERN.test(input.pathname) ||
+    BADGE_ROUTE_PATTERN.test(input.route.rewritePath);
+
   return (
     resolveLocaleAction(input) ??
-    resolvePasswordAction(input) ??
-    resolveEmailDomainAction(input) ??
-    resolveIpRestrictionAction(input) ??
+    (!isBadge
+      ? (resolvePasswordAction(input) ??
+        resolveEmailDomainAction(input) ??
+        resolveIpRestrictionAction(input))
+      : null) ??
     resolveDefaultRewrite(input) ??
     // Reached whenever resolveDefaultRewrite declines: host is not an
     // openstatus.dev host AND route.rewritePath === pathname. In hosted
