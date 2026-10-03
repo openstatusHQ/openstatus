@@ -243,6 +243,8 @@ jobs:
           docker buildx imagetools inspect "${{ env.IMAGE }}@${digest}"
 
       - name: Generate SBOM
+        id: sbom
+        continue-on-error: true
         uses: anchore/sbom-action@v0
         with:
           image: ${{ env.IMAGE }}@${{ steps.manifest.outputs.digest }}
@@ -250,6 +252,7 @@ jobs:
           output-file: sbom-${{ matrix.service }}.spdx.json
 
       - name: Upload SBOM
+        if: steps.sbom.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: sbom-${{ matrix.service }}
