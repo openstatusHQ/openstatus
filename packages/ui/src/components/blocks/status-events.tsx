@@ -438,11 +438,8 @@ export function StatusEventTimelineImpact({
  *
  * Displays a chronological timeline of incident updates, sorted from newest to
  * oldest. Each update shows the status (investigating → identified → monitoring → resolved),
- * timestamp, message, and time elapsed between updates.
- *
- * **Automatic Duration Calculation**:
- * - First update (most recent): Shows total time from start to resolution (if resolved)
- * - Other updates: Shows time elapsed since the previous update
+ * absolute timestamp and message. A resolved report also shows the time from
+ * its first update to resolution on the latest update.
  *
  * @param updates - Array of report updates to display
  * @param withDot - Whether to show colored status dots (default: true)
@@ -474,7 +471,7 @@ export function StatusEventTimelineImpact({
  *     }
  *   ]}
  * />
- * // Displays timeline with: "Resolved (in 1 hour)" → "Monitoring (15 minutes earlier)" → etc.
+ * // Displays timeline with: "Resolved · January 15 at 12:00 PM (UTC) (1 hour)" → "Monitoring · …" → etc.
  * ```
  *
  * @see StatusEventTimelineReportUpdate - For individual update rendering
@@ -492,13 +489,20 @@ export function StatusEventTimelineReport({
   maxUpdates?: number;
   renderMessage?: (message: string) => React.ReactNode;
 }) {
-  const labels = useStatusBlocksLabels();
   const sortedUpdates = [...updates].sort(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
   const displayedUpdates = maxUpdates
     ? sortedUpdates.slice(0, maxUpdates)
     : sortedUpdates;
+  const latest = sortedUpdates[0];
+  const firstUpdate = sortedUpdates[sortedUpdates.length - 1];
+  const resolvedDuration =
+    sortedUpdates.length > 1 &&
+    latest.status === "resolved" &&
+    latest.date > firstUpdate.date
+      ? `(${formatDistanceStrict(firstUpdate.date, latest.date)})`
+      : undefined;
 
   return (
     <div
@@ -507,37 +511,18 @@ export function StatusEventTimelineReport({
       {...props}
     >
       {/* NOTE: make sure they are sorted by date */}
-      {displayedUpdates.map((update, index) => {
-        const updateDate = new Date(update.date);
-        let durationText: string | undefined;
-
-        if (index === 0) {
-          const startedAt = new Date(
-            sortedUpdates[sortedUpdates.length - 1].date,
-          );
-          const duration = formatDistanceStrict(startedAt, updateDate);
-
-          if (duration !== "0 seconds" && update.status === "resolved") {
-            durationText = labels.durationIn(duration);
-          }
-        } else {
-          const lastUpdateDate = new Date(displayedUpdates[index - 1].date);
-          const timeFromLast = formatDistanceStrict(updateDate, lastUpdateDate);
-          durationText = labels.durationEarlier(timeFromLast);
-        }
-
-        return (
-          <StatusEventTimelineReportUpdate
-            key={index}
-            report={update}
-            duration={durationText}
-            withSeparator={index !== displayedUpdates.length - 1}
-            withDot={withDot}
-            isLast={index === displayedUpdates.length - 1}
-            renderMessage={renderMessage}
-          />
-        );
-      })}
+      {/* NOTE: no duration on the other updates: without a shared anchor it reads as "x ago". */}
+      {displayedUpdates.map((update, index) => (
+        <StatusEventTimelineReportUpdate
+          key={index}
+          report={update}
+          duration={index === 0 ? resolvedDuration : undefined}
+          withSeparator={index !== displayedUpdates.length - 1}
+          withDot={withDot}
+          isLast={index === displayedUpdates.length - 1}
+          renderMessage={renderMessage}
+        />
+      ))}
     </div>
   );
 }

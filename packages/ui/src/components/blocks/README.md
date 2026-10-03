@@ -512,8 +512,6 @@ export function MyStatusBlocksProvider({ children }: { children: React.ReactNode
       ariaStatusTracker: t("Status tracker"),
       ariaDayStatus: (n) => t("Day {n} status", { n }),
       clickAgainToUnpin: t("Click again to unpin"),
-      durationIn: (s) => t("(in {duration})", { duration: s }),
-      durationEarlier: (s) => t("({timeFromLast} earlier)", { timeFromLast: s }),
       durationFor: (s) => t("(for {duration})", { duration: s }),
       durationAcross: (s) => t("across {duration}", { duration: s }),
       formatDate: (d) => dateFmt.format(d),
