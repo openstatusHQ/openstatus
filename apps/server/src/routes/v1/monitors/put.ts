@@ -106,7 +106,11 @@ export function registerPutMonitor(api: typeof monitorsApi) {
 
     const { headers, regions, assertions, ...rest } = input;
 
-    const assert = assertions ? getAssertions(assertions) : [];
+    // The shared schema defaults omitted assertions to an empty list.
+    const assert =
+      assertions && Object.hasOwn(await c.req.json<object>(), "assertions")
+        ? getAssertions(assertions)
+        : undefined;
 
     const _newMonitor = await db
       .update(monitor)
@@ -115,7 +119,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         regions: regions ? regions.join(",") : undefined,
         description: input.description ?? undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
-        assertions: assert.length > 0 ? serialize(assert) : undefined,
+        assertions: assert ? serialize(assert) : undefined,
         timeout: input.timeout || 45000,
         updatedAt: new Date(),
       })
