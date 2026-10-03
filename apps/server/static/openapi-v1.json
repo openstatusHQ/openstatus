@@ -8851,6 +8851,7 @@
             "schema": {
               "type": "string",
               "minLength": 1,
+              "pattern": "^\\d+$",
               "description": "The id of the notification",
               "example": "1"
             },

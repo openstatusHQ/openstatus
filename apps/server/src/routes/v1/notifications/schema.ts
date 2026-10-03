@@ -5,6 +5,7 @@ export const ParamsSchema = z.object({
   id: z
     .string()
     .min(1)
+    .regex(/^\d+$/, "ID must be a numeric string")
     .openapi({
       param: {
         name: "id",
