@@ -1,4 +1,4 @@
-import { Code, ConnectError } from "@connectrpc/connect";
+import { Code } from "@connectrpc/connect";
 import type {
   ComponentImpact,
   StatusReport,
@@ -10,6 +10,7 @@ import {
   StatusReportStatus,
 } from "@openstatus/proto/status_report/v1";
 
+import { ErrorReason, rpcError } from "../../errors";
 import { invalidStatusError } from "./errors";
 
 type DBPageComponentImpact =
@@ -124,10 +125,17 @@ export function protoImpactToDb(
     case PageComponentImpact.MAJOR_OUTAGE:
       return "major_outage";
     default:
-      throw new ConnectError(
-        `Invalid component impact: ${impact}`,
-        Code.InvalidArgument,
-      );
+      throw rpcError({
+        code: Code.InvalidArgument,
+        reason: ErrorReason.VALIDATION_FAILED,
+        message: `Invalid component impact: ${impact}`,
+        fieldViolations: [
+          {
+            field: "impact",
+            description: `Invalid component impact: ${impact}`,
+          },
+        ],
+      });
   }
 }
 

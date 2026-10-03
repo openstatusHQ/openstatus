@@ -1,29 +1,17 @@
 import { Code, ConnectError, type Interceptor } from "@connectrpc/connect";
 import { getLogger } from "@logtape/logtape";
-import type { ErrorCode } from "@openstatus/error";
 
 import { OpenStatusApiError } from "@/libs/errors";
+import {
+  ERROR_CODE_TO_CONNECT,
+  ErrorReason,
+  rpcError,
+  withErrorInfo,
+} from "@/libs/errors/rpc";
 
 import { RPC_CONTEXT_KEY } from "./auth";
 
 const logger = getLogger("api-server");
-
-/**
- * Mapping from OpenStatus error codes to ConnectRPC codes.
- */
-const ERROR_CODE_MAP: Record<ErrorCode, Code> = {
-  BAD_REQUEST: Code.InvalidArgument,
-  UNAUTHORIZED: Code.Unauthenticated,
-  PAYMENT_REQUIRED: Code.ResourceExhausted,
-  FORBIDDEN: Code.PermissionDenied,
-  NOT_FOUND: Code.NotFound,
-  METHOD_NOT_ALLOWED: Code.Unimplemented,
-  CONFLICT: Code.AlreadyExists,
-  UNPROCESSABLE_ENTITY: Code.InvalidArgument,
-  TOO_MANY_REQUESTS: Code.ResourceExhausted,
-  INTERNAL_SERVER_ERROR: Code.Internal,
-  SERVICE_UNAVAILABLE: Code.Unavailable,
-};
 
 /**
  * Opaque `Internal` error for anything we didn't classify. The request id is
@@ -31,18 +19,18 @@ const ERROR_CODE_MAP: Record<ErrorCode, Code> = {
  * find the real cause in the logs.
  */
 export function internalError(requestId?: string): ConnectError {
-  return new ConnectError(
-    requestId
+  return rpcError({
+    code: Code.Internal,
+    reason: ErrorReason.INTERNAL_SERVER_ERROR,
+    message: requestId
       ? `Internal server error (request id: ${requestId})`
       : "Internal server error",
-    Code.Internal,
-  );
+  });
 }
 
 /**
- * Error mapping interceptor for ConnectRPC.
- * Converts OpenStatusApiError to ConnectError with appropriate codes.
- * Logs server errors and passes through client errors.
+ * Outermost interceptor: every error leaving the RPC layer is a ConnectError
+ * carrying `google.rpc.ErrorInfo` with `requestId` and `docs`.
  */
 export function errorInterceptor(): Interceptor {
   return (next) => async (req) => {
@@ -50,15 +38,17 @@ export function errorInterceptor(): Interceptor {
       return await next(req);
     } catch (error) {
       const rpcCtx = req.contextValues.get(RPC_CONTEXT_KEY);
+      // Auth failures throw before the context exists; the bridge stamps the
+      // Hono request id on the header for exactly that case.
+      const requestId =
+        rpcCtx?.requestId ?? req.header.get("x-request-id") ?? undefined;
 
-      // Already a ConnectError, pass through
       if (error instanceof ConnectError) {
-        throw error;
+        throw withErrorInfo(error, requestId);
       }
 
-      // Map OpenStatusApiError to ConnectError
       if (error instanceof OpenStatusApiError) {
-        const code = ERROR_CODE_MAP[error.code] ?? Code.Internal;
+        const code = ERROR_CODE_TO_CONNECT[error.code] ?? Code.Internal;
 
         // Log server errors (5xx equivalent)
         if (error.status >= 500) {
@@ -67,11 +57,14 @@ export function errorInterceptor(): Interceptor {
               code: error.code,
               message: error.message,
             },
-            requestId: rpcCtx?.requestId,
+            requestId,
           });
         }
 
-        throw new ConnectError(error.message, code);
+        throw withErrorInfo(
+          rpcError({ code, reason: error.code, message: error.message }),
+          requestId,
+        );
       }
 
       // Unknown error - log and wrap as Internal
@@ -81,13 +74,13 @@ export function errorInterceptor(): Interceptor {
           message: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
         },
-        requestId: rpcCtx?.requestId,
+        requestId,
       });
 
       // Never forward the raw message: drizzle's `DrizzleQueryError` embeds
       // the full SQL and bound params, which would leak schema and other
       // rows' ids to the API client.
-      throw internalError(rpcCtx?.requestId);
+      throw withErrorInfo(internalError(requestId), requestId);
     }
   };
 }

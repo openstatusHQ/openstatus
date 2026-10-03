@@ -96,7 +96,7 @@ export async function checkNotificationLimit(
   const currentCount = result?.count ?? 0;
 
   if (currentCount >= maxCount) {
-    throw notificationLimitReachedError();
+    throw notificationLimitReachedError(maxCount);
   }
 }
 

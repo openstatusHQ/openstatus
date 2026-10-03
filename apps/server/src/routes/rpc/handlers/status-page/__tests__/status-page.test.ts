@@ -431,7 +431,7 @@ describe("StatusPageService.CreateStatusPage", () => {
       expect(res.status).toBe(403); // PermissionDenied
 
       const data = await res.json();
-      expect(data.message).toContain("Upgrade for more status pages");
+      expect(data.message).toContain("status-pages limit reached");
     } finally {
       // Clean up
       await db.delete(page).where(eq(page.id, firstPage.id));

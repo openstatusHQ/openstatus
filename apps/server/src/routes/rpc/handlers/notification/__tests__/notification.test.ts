@@ -858,7 +858,7 @@ describe("NotificationService.SendTestNotification", () => {
       { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
-    expect(res.status).toBe(429);
+    expect(res.status).toBe(403); // PermissionDenied, plan gating
     const data = await res.json();
     expect(data.message).toContain("pagerduty");
   });

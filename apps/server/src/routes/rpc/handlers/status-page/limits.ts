@@ -1,7 +1,11 @@
-import { Code, ConnectError } from "@connectrpc/connect";
 import { count, db, eq } from "@openstatus/db";
 import { page, pageComponent } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+
+import {
+  planFeatureNotAvailableError,
+  planLimitReachedError,
+} from "../../errors";
 
 /**
  * Check workspace limits for creating a new status page.
@@ -20,9 +24,11 @@ export async function checkStatusPageLimits(
 
   const currentCount = countResult?.count ?? 0;
   if (currentCount >= limits["status-pages"]) {
-    throw new ConnectError(
+    throw planLimitReachedError(
       "Upgrade for more status pages",
-      Code.PermissionDenied,
+      "status-pages",
+      limits["status-pages"],
+      currentCount,
     );
   }
 }
@@ -33,7 +39,10 @@ export async function checkStatusPageLimits(
  */
 export function checkCustomDomainLimit(limits: Limits): void {
   if (!limits["custom-domain"]) {
-    throw new ConnectError("Upgrade for custom domains", Code.PermissionDenied);
+    throw planFeatureNotAvailableError(
+      "Upgrade for custom domains",
+      "custom-domain",
+    );
   }
 }
 
@@ -43,9 +52,9 @@ export function checkCustomDomainLimit(limits: Limits): void {
  */
 export function checkPasswordProtectionLimit(limits: Limits): void {
   if (!limits["password-protection"]) {
-    throw new ConnectError(
+    throw planFeatureNotAvailableError(
       "Upgrade for password protection",
-      Code.PermissionDenied,
+      "password-protection",
     );
   }
 }
@@ -56,9 +65,9 @@ export function checkPasswordProtectionLimit(limits: Limits): void {
  */
 export function checkEmailDomainProtectionLimit(limits: Limits): void {
   if (!limits["email-domain-protection"]) {
-    throw new ConnectError(
+    throw planFeatureNotAvailableError(
       "Upgrade for email domain protection",
-      Code.PermissionDenied,
+      "email-domain-protection",
     );
   }
 }
@@ -69,7 +78,10 @@ export function checkEmailDomainProtectionLimit(limits: Limits): void {
  */
 export function checkIpRestrictionLimit(limits: Limits): void {
   if (!limits["ip-restriction"]) {
-    throw new ConnectError("Upgrade for IP restriction", Code.PermissionDenied);
+    throw planFeatureNotAvailableError(
+      "Upgrade for IP restriction",
+      "ip-restriction",
+    );
   }
 }
 
@@ -79,9 +91,9 @@ export function checkIpRestrictionLimit(limits: Limits): void {
  */
 export function checkNoIndexLimit(limits: Limits): void {
   if (!limits["no-index"]) {
-    throw new ConnectError(
+    throw planFeatureNotAvailableError(
       "Upgrade for search engine indexing toggle",
-      Code.PermissionDenied,
+      "no-index",
     );
   }
 }
@@ -92,15 +104,18 @@ export function checkNoIndexLimit(limits: Limits): void {
  */
 export function checkCustomThemeLimit(limits: Limits): void {
   if (!limits["custom-theme"]) {
-    throw new ConnectError("Upgrade for custom theme", Code.PermissionDenied);
+    throw planFeatureNotAvailableError(
+      "Upgrade for custom theme",
+      "custom-theme",
+    );
   }
 }
 
 export function checkStatusSubscribersLimit(limits: Limits): void {
   if (!limits["status-subscribers"]) {
-    throw new ConnectError(
+    throw planFeatureNotAvailableError(
       "Upgrade to use status subscribers",
-      Code.PermissionDenied,
+      "status-subscribers",
     );
   }
 }
@@ -121,9 +136,11 @@ export async function checkPageComponentLimits(
 
   const currentCount = countResult?.count ?? 0;
   if (currentCount >= limits["page-components"]) {
-    throw new ConnectError(
+    throw planLimitReachedError(
       "Upgrade for more page components",
-      Code.PermissionDenied,
+      "page-components",
+      limits["page-components"],
+      currentCount,
     );
   }
 }

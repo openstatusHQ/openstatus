@@ -40,15 +40,22 @@ Content-Type: application/json
 {
   "code": "TOO_MANY_REQUESTS",
   "message": "Rate limit exceeded, retry later",
-  "docs": "https://www.openstatus.dev/docs/api-references/errors/code/TOO_MANY_REQUESTS",
+  "docs": "https://www.openstatus.dev/docs/reference/api-errors#too-many-requests",
   "requestId": "1c4b8f1e-3f4b-4f79-9f9d-2a6d7f0b6c1a"
 }
 ```
 
-On `/rpc` the body is a Connect error instead, so ConnectRPC clients such as the [Node.js SDK](/docs/sdk/nodejs/error-handling) raise a `ConnectError` with code `resource_exhausted`:
+On `/rpc` the body is a Connect error instead, so ConnectRPC clients such as the [Node.js SDK](/docs/sdk/nodejs/error-handling) raise a `ConnectError` with code `resource_exhausted`. It carries a `google.rpc.ErrorInfo` with reason `TOO_MANY_REQUESTS` and a `google.rpc.RetryInfo` with the same delay as the header (see [API errors](/docs/reference/api-errors#connect-errors)):
 
 ```json
-{ "code": "resource_exhausted", "message": "Rate limit exceeded, retry later" }
+{
+  "code": "resource_exhausted",
+  "message": "Rate limit exceeded, retry later",
+  "details": [
+    { "type": "google.rpc.ErrorInfo", "value": "…", "debug": { "reason": "TOO_MANY_REQUESTS", "domain": "openstatus.dev", "metadata": { "requestId": "…", "docs": "…" } } },
+    { "type": "google.rpc.RetryInfo", "value": "…", "debug": { "retryDelay": "7s" } }
+  ]
+}
 ```
 
 When a server is overloaded it may also answer `503 Service Unavailable` with a `Retry-After` header: `code: "SERVICE_UNAVAILABLE"` in the envelope, `unavailable` on `/rpc`. Treat it exactly like a `429`.
