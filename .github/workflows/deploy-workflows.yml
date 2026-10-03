@@ -12,6 +12,7 @@ on:
       - "packages/notifications/**"
       - "packages/status-fetcher/**"
       - "pnpm-workspace.yaml"
+  workflow_dispatch: {}
 jobs:
   deploy-workflows:
     name: Deploy Workflows
@@ -20,7 +21,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --config apps/workflows/fly.toml
+      - if: github.event_name == 'push'
+        run: flyctl deploy --config apps/workflows/fly.toml
           --dockerfile  apps/workflows/Dockerfile --remote-only --wait-timeout=500
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      # Every rolling deploy destroys the superseded machines but leaves their
+      # per-machine `libsql_data` volumes behind, detached and still billed.
+      # Nothing ever re-attaches them, so the count compounds with every
+      # rollout. Delete them after each deploy so it tracks the live machine
+      # count.
+      - name: Delete detached libsql_data volumes
+        run: |
+          for v in $(flyctl volumes list -a "$FLY_APP" --json \
+            | jq -r '.[] | select(has("attached_machine_id") and .attached_machine_id == null and .name == "libsql_data") | .id'); do
+            echo "Deleting detached volume $v"
+            flyctl volumes destroy "$v" -a "$FLY_APP" --yes
+          done
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_APP: openstatus-workflows
