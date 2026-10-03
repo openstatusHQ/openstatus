@@ -3,6 +3,13 @@
 import { deserialize } from "@openstatus/assertions";
 import { Logs } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 
@@ -19,8 +26,28 @@ export function Sidebar() {
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
+  const { data: pageComponents } = useQuery(
+    trpc.pageComponent.list.queryOptions(),
+  );
+  const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
+  const { copy } = useCopyToClipboard();
 
   if (!monitor) return null;
+
+  const matchingComponent = pageComponents?.find(
+    (c) => c.monitorId === monitor.id,
+  );
+  const statusPage = matchingComponent
+    ? statusPages?.find(
+        (p) => p.id === matchingComponent.pageId && p.accessType === "public",
+      )
+    : undefined;
+
+  const BADGE_URL = statusPage
+    ? `https://${
+        statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
+      }/monitors/${monitor.id}/badge/v2`
+    : null;
 
   const assertions = monitor.assertions ? deserialize(monitor.assertions) : [];
   const type = monitorTypes.find((type) => type.id === monitor.jobType);
@@ -111,6 +138,31 @@ export function Sidebar() {
                     </Badge>
                   ))}
                 </div>
+              ),
+            },
+            {
+              label: "Badge",
+              value: BADGE_URL ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger className="align-middle">
+                      <img
+                        className="h-5 rounded-sm border"
+                        src={BADGE_URL}
+                        alt="badge"
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent
+                      className="cursor-pointer"
+                      side="left"
+                      onClick={() => copy(BADGE_URL, { withToast: true })}
+                    >
+                      {BADGE_URL}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                "-"
               ),
             },
           ],

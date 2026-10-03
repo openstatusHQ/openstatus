@@ -2,7 +2,7 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { buildCurlCommand } from "@openstatus/utils";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -22,6 +22,10 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const [openDialog, setOpenDialog] = useState(false);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { data: pageComponents } = useQuery(
+    trpc.pageComponent.list.queryOptions(),
+  );
+  const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
       onSuccess: () => {
@@ -32,6 +36,16 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const router = useRouter();
   // curl only speaks HTTP — the action is hidden for tcp/dns monitors
   const isHttp = row.original.jobType === "http";
+
+  const matchingComponent = pageComponents?.find(
+    (c) => c.monitorId === row.original.id,
+  );
+  const statusPage = matchingComponent
+    ? statusPages?.find(
+        (p) => p.id === matchingComponent.pageId && p.accessType === "public",
+      )
+    : undefined;
+
   const actions = getActions({
     edit: () => router.push(`/monitors/${row.original.id}/edit`),
     "copy-id": () => {
@@ -44,6 +58,17 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           toast.success("cURL command copied to clipboard");
         }
       : undefined,
+    "copy-badge": () => {
+      if (!statusPage) {
+        toast.error("Monitor is not attached to a public status page");
+        return;
+      }
+      const badgeUrl = `https://${
+        statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
+      }/monitors/${row.original.id}/badge/v2`;
+      navigator.clipboard.writeText(badgeUrl);
+      toast.success("Badge URL copied to clipboard");
+    },
     // export: () => setOpenDialog(true),
   }).filter((action) => action.id !== "copy-curl" || isHttp);
 
