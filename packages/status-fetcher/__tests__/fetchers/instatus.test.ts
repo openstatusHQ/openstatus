@@ -216,6 +216,36 @@ describe("InstatusFetcher", () => {
       expect(result.description).toBe("Scheduled Maintenance");
     });
 
+    it("should accept numeric maintenance duration from live Instatus pages", async () => {
+      // status.bsky.app served duration as a number during a real
+      // maintenance, which the string-only schema rejected on every tick.
+      mockJson({
+        page: {
+          name: "Bluesky",
+          url: "https://status.bsky.app",
+          status: "UNDERMAINTENANCE",
+        },
+        activeMaintenances: [
+          {
+            id: "cmtvvm6sh07i60wlfbx9pwx89",
+            name: "Network Maintenance",
+            start: "2026-09-10T18:45:00.000Z",
+            status: "INPROGRESS",
+            duration: 60,
+            url: "https://status.bsky.app/cmtvvm6sh07i60wlfbx9pwx89",
+            updatedAt: "2026-09-10T18:45:01.150Z",
+          },
+        ],
+      });
+
+      const result = await runFetcher(fetcher, entry);
+
+      expect(result.severity).toBe("none");
+      expect(result.status).toBe("under_maintenance");
+      expect(result.description).toBe("Network Maintenance");
+      expect(result.updated_at).toBe(Date.parse("2026-09-10T18:45:00.000Z"));
+    });
+
     it("should use custom endpoint if provided", async () => {
       const fetchMock = mockJson({
         page: { name: "Test", url: "https://test.instatus.com", status: "UP" },
