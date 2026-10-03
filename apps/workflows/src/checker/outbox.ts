@@ -397,25 +397,28 @@ async function commitDead(
 
   await withBusyRetry(() =>
     db.batch([
-      db.insert(notificationDeadLetter).values(
-        entries.map(({ row, error }) => ({
-          outboxId: row.id,
-          dedupKey: row.dedupKey,
-          monitorId: row.monitorId,
-          workspaceId: row.workspaceId,
-          notificationId: row.notificationId,
-          provider: row.provider,
-          eventType: row.eventType,
-          fromStatus: row.fromStatus,
-          toStatus: row.toStatus,
-          cronTimestamp: row.cronTimestamp,
-          incidentId: row.incidentId,
-          payload: row.payload,
-          attempts: row.attempts,
-          finalError: error.slice(0, 2000),
-          diedAt,
-        })),
-      ),
+      db
+        .insert(notificationDeadLetter)
+        .values(
+          entries.map(({ row, error }) => ({
+            outboxId: row.id,
+            dedupKey: row.dedupKey,
+            monitorId: row.monitorId,
+            workspaceId: row.workspaceId,
+            notificationId: row.notificationId,
+            provider: row.provider,
+            eventType: row.eventType,
+            fromStatus: row.fromStatus,
+            toStatus: row.toStatus,
+            cronTimestamp: row.cronTimestamp,
+            incidentId: row.incidentId,
+            payload: row.payload,
+            attempts: row.attempts,
+            finalError: error.slice(0, 2000),
+            diedAt,
+          })),
+        )
+        .onConflictDoNothing(),
       db.delete(notificationOutbox).where(
         inArray(
           notificationOutbox.id,
