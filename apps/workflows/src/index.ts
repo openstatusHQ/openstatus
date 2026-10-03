@@ -27,6 +27,7 @@ import { cronRouter } from "./cron";
 import { env } from "./env";
 import { pingRoute } from "./health";
 import { incidentRoute } from "./incident";
+import { ReportingLogExporter } from "./lib/reporting-log-exporter.ts";
 
 const { NODE_ENV } = env();
 
@@ -77,13 +78,15 @@ const loggerProvider = new LoggerProvider({
   }),
   processors: [
     new BatchLogRecordProcessor(
-      new OTLPLogExporter({
-        url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
-        headers: {
-          Authorization: `Bearer ${env().AXIOM_TOKEN}`,
-          "X-Axiom-Dataset": env().AXIOM_DATASET,
-        },
-      }),
+      new ReportingLogExporter(
+        new OTLPLogExporter({
+          url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
+          headers: {
+            Authorization: `Bearer ${env().AXIOM_TOKEN}`,
+            "X-Axiom-Dataset": env().AXIOM_DATASET,
+          },
+        }),
+      ),
     ),
   ],
 });

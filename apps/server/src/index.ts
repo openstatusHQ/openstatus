@@ -28,6 +28,7 @@ import { env } from "./env";
 import { handleError } from "./libs/errors";
 import { concurrencyGuard } from "./libs/middlewares/concurrency";
 import { rateLimit } from "./libs/middlewares/rate-limit";
+import { ReportingLogExporter } from "./libs/reporting-log-exporter.ts";
 import { shouldSample } from "./libs/sampling";
 import { pingRoute } from "./routes/health";
 import { mcpRoute } from "./routes/mcp";
@@ -69,13 +70,20 @@ const loggerProvider = new LoggerProvider({
   }),
   processors: [
     new BatchLogRecordProcessor(
-      new OTLPLogExporter({
-        url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
-        headers: {
-          Authorization: `Bearer ${env.AXIOM_TOKEN}`,
-          "X-Axiom-Dataset": env.AXIOM_DATASET,
+      new ReportingLogExporter(
+        new OTLPLogExporter({
+          url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
+          headers: {
+            Authorization: `Bearer ${env.AXIOM_TOKEN}`,
+            "X-Axiom-Dataset": env.AXIOM_DATASET,
+          },
+        }),
+        (error) => {
+          console.error(
+            `[otel-export] failed to export log records to Axiom: ${error.message}`,
+          );
         },
-      }),
+      ),
     ),
   ],
 });
