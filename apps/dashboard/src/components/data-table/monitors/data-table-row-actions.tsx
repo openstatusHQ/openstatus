@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ExportCodeDialog } from "@/components/dialogs/export-code";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { getActions } from "@/data/monitors.client";
+import { buildMonitorBadgeUrl } from "@/lib/monitor-badge";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
@@ -66,9 +67,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         toast.error("Monitor is not attached to a public status page");
         return;
       }
-      const badgeUrl = `https://${
-        statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
-      }/monitors/${row.original.id}/badge/v2`;
+      const badgeUrl = buildMonitorBadgeUrl(statusPage, row.original.id);
       void copy(badgeUrl, {
         withToast: true,
         successMessage: "Badge URL copied to clipboard",

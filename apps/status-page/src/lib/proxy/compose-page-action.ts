@@ -7,6 +7,8 @@ import { type Action, type ComposeInput, passthrough } from "./types";
 
 export type { ComposeInput };
 
+const BADGE_ROUTE_PATTERN = /(?:^|\/)(?:monitors\/\d+\/)?badge(?:\/v2)?\/?$/;
+
 /**
  * Runs the proxy stages in priority order and returns the first non-null
  * Action. If every stage passes, returns a `passthrough` action.
@@ -27,8 +29,8 @@ export type { ComposeInput };
  */
 export function composePageAction(input: ComposeInput): Action {
   const isBadge =
-    input.pathname.includes("/badge") ||
-    input.route.rewritePath.includes("/badge");
+    BADGE_ROUTE_PATTERN.test(input.pathname) ||
+    BADGE_ROUTE_PATTERN.test(input.route.rewritePath);
 
   return (
     resolveLocaleAction(input) ??

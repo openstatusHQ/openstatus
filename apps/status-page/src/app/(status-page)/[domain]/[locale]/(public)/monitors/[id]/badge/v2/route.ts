@@ -1,10 +1,10 @@
 import type { NextRequest } from "next/server";
 
 import {
-  BADGE_SIZE,
   getPublicMonitorForBadge,
   getTextWidth,
   parseMonitorId,
+  resolveBadgeSize,
   resolveMonitorStatus,
   svgStatusDictionary,
 } from "@/lib/monitor-badge";
@@ -30,10 +30,9 @@ export async function GET(
   const resolved = resolveMonitorStatus(monitor.status);
   const theme = req.nextUrl.searchParams.get("theme") ?? "light";
   const variant = req.nextUrl.searchParams.get("variant") ?? "default";
-  const size = req.nextUrl.searchParams.get("size") ?? "sm";
+  const size = req.nextUrl.searchParams.get("size");
 
-  const { height, padding, gap, radius, fontSize } =
-    BADGE_SIZE[size] ?? BADGE_SIZE.sm;
+  const { height, padding, gap, radius, fontSize } = resolveBadgeSize(size);
   const { label, hexColor } = svgStatusDictionary[resolved];
   const textWidth = getTextWidth(label, fontSize);
   const width = Math.ceil(padding + textWidth + gap + radius * 2 + padding);

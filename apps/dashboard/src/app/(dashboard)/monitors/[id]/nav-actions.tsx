@@ -22,6 +22,7 @@ import { DataTableSheetTest } from "@/components/data-table/response-logs/data-t
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { NavFeedback } from "@/components/nav/nav-feedback";
 import { getActions } from "@/data/monitors.client";
+import { buildMonitorBadgeUrl } from "@/lib/monitor-badge";
 import { useTRPC } from "@/lib/trpc/client";
 
 type TestTCP = RouterOutputs["checker"]["testTcp"];
@@ -75,10 +76,15 @@ export function NavActions() {
   const testGrpcMutation = useMutation(trpc.checker.testGrpc.mutationOptions());
 
   const { copy } = useCopyToClipboard();
-  const { data: pageComponents } = useQuery(
-    trpc.pageComponent.list.queryOptions(),
-  );
-  const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
+  const isPublic = Boolean(monitor?.public);
+  const { data: pageComponents } = useQuery({
+    ...trpc.pageComponent.list.queryOptions(),
+    enabled: isPublic,
+  });
+  const { data: statusPages } = useQuery({
+    ...trpc.page.list.queryOptions(),
+    enabled: isPublic,
+  });
 
   const statusPage = monitor?.public
     ? statusPages?.find(
@@ -108,9 +114,7 @@ export function NavActions() {
       : undefined,
     "copy-badge": statusPage
       ? () => {
-          const badgeUrl = `https://${
-            statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
-          }/monitors/${id}/badge/v2`;
+          const badgeUrl = buildMonitorBadgeUrl(statusPage, id);
           void copy(badgeUrl, {
             withToast: true,
             successMessage: "Badge URL copied to clipboard",

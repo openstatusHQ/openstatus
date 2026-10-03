@@ -17,6 +17,7 @@ import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { SidebarRight } from "@/components/nav/sidebar-right";
 import { monitorTypes } from "@/data/monitors.client";
 import { formatMilliseconds } from "@/lib/formatter";
+import { buildMonitorBadgeUrl } from "@/lib/monitor-badge";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Sidebar() {
@@ -26,10 +27,15 @@ export function Sidebar() {
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
-  const { data: pageComponents } = useQuery(
-    trpc.pageComponent.list.queryOptions(),
-  );
-  const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
+  const isPublic = Boolean(monitor?.public);
+  const { data: pageComponents } = useQuery({
+    ...trpc.pageComponent.list.queryOptions(),
+    enabled: isPublic,
+  });
+  const { data: statusPages } = useQuery({
+    ...trpc.page.list.queryOptions(),
+    enabled: isPublic,
+  });
   const { copy } = useCopyToClipboard();
 
   if (!monitor) return null;
@@ -45,9 +51,7 @@ export function Sidebar() {
     : undefined;
 
   const BADGE_URL = statusPage
-    ? `https://${
-        statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
-      }/monitors/${monitor.id}/badge/v2`
+    ? buildMonitorBadgeUrl(statusPage, monitor.id)
     : null;
 
   const assertions = monitor.assertions ? deserialize(monitor.assertions) : [];

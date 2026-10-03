@@ -1,7 +1,17 @@
-import { db, sql } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
-
-import { getQueryClient, trpc } from "@/lib/trpc/server";
+import { and, eq, gte, isNull, lte, ne, sql } from "@openstatus/db";
+import { db } from "@openstatus/db";
+import {
+  incidentTable,
+  maintenance,
+  page,
+  pageComponent,
+  pageConfigurationSchema,
+  statusReport,
+} from "@openstatus/db/src/schema";
+import {
+  activeReportStatus,
+  getEvents,
+} from "@openstatus/services/status-timeline";
 
 export type MonitorStatus =
   | "operational"
@@ -90,6 +100,13 @@ export const BADGE_SIZE: Record<
   },
 };
 
+export function resolveBadgeSize(size: string | null) {
+  if (size && Object.hasOwn(BADGE_SIZE, size)) {
+    return BADGE_SIZE[size];
+  }
+  return BADGE_SIZE.sm;
+}
+
 export const svgStatusDictionary: Record<
   MonitorStatus,
   { label: string; hexColor: string }
@@ -124,29 +141,103 @@ export async function getPublicMonitorForBadge(
   monitorId: number,
 ) {
   const prefix = domain.toLowerCase();
-  const row = await db
-    .select({
-      slug: page.slug,
-      accessType: page.accessType,
-    })
-    .from(page)
-    .where(
-      sql`lower(${page.slug}) = ${prefix} OR lower(${page.customDomain}) = ${prefix}`,
-    )
-    .get();
+  const pageRow = await db.query.page.findFirst({
+    where: sql`lower(${page.slug}) = ${prefix} OR lower(${page.customDomain}) = ${prefix}`,
+    columns: {
+      id: true,
+      slug: true,
+      accessType: true,
+      configuration: true,
+    },
+    with: {
+      pageComponents: {
+        where: eq(pageComponent.monitorId, monitorId),
+        with: {
+          monitor: {
+            with: {
+              incidents: {
+                where: isNull(incidentTable.resolvedAt),
+              },
+            },
+          },
+        },
+      },
+      maintenances: {
+        where: and(
+          lte(maintenance.from, new Date()),
+          gte(maintenance.to, new Date()),
+        ),
+        with: {
+          maintenancesToPageComponents: {
+            with: {
+              pageComponent: true,
+            },
+          },
+        },
+      },
+      statusReports: {
+        where: ne(statusReport.status, "resolved"),
+        with: {
+          statusReportUpdates: {
+            orderBy: (reports, { desc }) => desc(reports.date),
+            with: { statusReportUpdateToPageComponents: true },
+          },
+          statusReportsToPageComponents: {
+            with: {
+              pageComponent: true,
+            },
+          },
+        },
+      },
+    },
+  });
 
-  if (!row || row.accessType !== "public") {
+  if (!pageRow || pageRow.accessType !== "public") {
     return null;
   }
 
-  const data = await getQueryClient().fetchQuery(
-    trpc.statusPage.get.queryOptions({ slug: row.slug }),
+  const component = pageRow.pageComponents.find(
+    (c) => c.monitorId === monitorId,
   );
-
-  const monitor = data?.monitors.find((m) => m.id === monitorId);
-  if (!monitor || !monitor.public) {
+  if (
+    !component ||
+    !component.monitor ||
+    !component.monitor.public ||
+    component.monitor.deletedAt ||
+    !component.monitor.active
+  ) {
     return null;
   }
 
-  return monitor;
+  const events = getEvents({
+    maintenances: pageRow.maintenances,
+    incidents: component.monitor.incidents ?? [],
+    reports: pageRow.statusReports,
+    pageComponentId: component.id,
+    monitorId: component.monitor.id,
+  });
+
+  const parsedConfig = pageConfigurationSchema.safeParse(
+    pageRow.configuration ?? {},
+  );
+  const barType = parsedConfig.success ? parsedConfig.data.type : undefined;
+
+  const status =
+    events.some((e) => e.type === "incident" && !e.to) && barType !== "manual"
+      ? "error"
+      : (activeReportStatus(events) ??
+        (events.some(
+          (e) =>
+            e.type === "maintenance" &&
+            e.to &&
+            e.from.getTime() <= Date.now() &&
+            e.to.getTime() >= Date.now(),
+        )
+          ? "info"
+          : "success"));
+
+  return {
+    ...component.monitor,
+    status,
+  };
 }
