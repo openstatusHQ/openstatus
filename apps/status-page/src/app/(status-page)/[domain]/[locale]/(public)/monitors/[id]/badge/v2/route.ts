@@ -1,126 +1,30 @@
-import { db, sql } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
 import type { NextRequest } from "next/server";
 
-import { getQueryClient, trpc } from "@/lib/trpc/server";
+import {
+  BADGE_SIZE,
+  getPublicMonitorForBadge,
+  getTextWidth,
+  parseMonitorId,
+  resolveMonitorStatus,
+  svgStatusDictionary,
+} from "@/lib/monitor-badge";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-type MonitorStatus =
-  | "operational"
-  | "degraded_performance"
-  | "partial_outage"
-  | "major_outage"
-  | "under_maintenance"
-  | "unknown";
-
-const statusDictionary: Record<
-  MonitorStatus,
-  { label: string; hexColor: string }
-> = {
-  operational: {
-    label: "Operational",
-    hexColor: "#10b981",
-  },
-  degraded_performance: {
-    label: "Degraded",
-    hexColor: "#f59e0b",
-  },
-  partial_outage: {
-    label: "Partial Outage",
-    hexColor: "#f59e0b",
-  },
-  major_outage: {
-    label: "Outage",
-    hexColor: "#ef4444",
-  },
-  under_maintenance: {
-    label: "Maintenance",
-    hexColor: "#3b82f6",
-  },
-  unknown: {
-    label: "Unknown",
-    hexColor: "#6b7280",
-  },
-};
-
-const SIZE: Record<
-  string,
-  {
-    height: number;
-    padding: number;
-    gap: number;
-    radius: number;
-    fontSize: number;
-  }
-> = {
-  sm: { height: 34, padding: 8, gap: 12, radius: 4, fontSize: 12 },
-  md: { height: 46, padding: 8, gap: 12, radius: 4, fontSize: 14 },
-  lg: { height: 56, padding: 12, gap: 16, radius: 6, fontSize: 16 },
-  xl: { height: 68, padding: 12, gap: 16, radius: 6, fontSize: 18 },
-};
-
-function getTextWidth(text: string, fontSize: number): number {
-  const monoCharWidthRatio = 0.6;
-  return text.length * monoCharWidthRatio * fontSize;
-}
-
-function resolveMonitorStatus(status?: string): MonitorStatus {
-  switch (status) {
-    case "success":
-    case "active":
-    case "operational":
-      return "operational";
-    case "degraded":
-    case "degraded_performance":
-      return "degraded_performance";
-    case "partial_outage":
-      return "partial_outage";
-    case "error":
-    case "major_outage":
-      return "major_outage";
-    case "info":
-    case "under_maintenance":
-      return "under_maintenance";
-    default:
-      return "unknown";
-  }
-}
 
 export async function GET(
   req: NextRequest,
   props: { params: Promise<{ domain: string; id: string }> },
 ) {
   const { domain, id } = await props.params;
-  const monitorId = Number.parseInt(id, 10);
-  if (Number.isNaN(monitorId)) {
+  const monitorId = parseMonitorId(id);
+  if (monitorId === null) {
     return new Response("Invalid monitor ID", { status: 400 });
   }
 
-  const prefix = domain.toLowerCase();
-  const row = await db
-    .select({
-      slug: page.slug,
-      accessType: page.accessType,
-    })
-    .from(page)
-    .where(
-      sql`lower(${page.slug}) = ${prefix} OR lower(${page.customDomain}) = ${prefix}`,
-    )
-    .get();
-
-  if (!row || row.accessType !== "public") {
+  const monitor = await getPublicMonitorForBadge(domain, monitorId);
+  if (!monitor) {
     return new Response("Not Found", { status: 404 });
-  }
-
-  const data = await getQueryClient().fetchQuery(
-    trpc.statusPage.get.queryOptions({ slug: row.slug }),
-  );
-
-  const monitor = data?.monitors.find((m) => m.id === monitorId);
-  if (!monitor || !monitor.public) {
-    return new Response("Monitor Not Found", { status: 404 });
   }
 
   const resolved = resolveMonitorStatus(monitor.status);
@@ -128,8 +32,9 @@ export async function GET(
   const variant = req.nextUrl.searchParams.get("variant") ?? "default";
   const size = req.nextUrl.searchParams.get("size") ?? "sm";
 
-  const { height, padding, gap, radius, fontSize } = SIZE[size] ?? SIZE.sm;
-  const { label, hexColor } = statusDictionary[resolved];
+  const { height, padding, gap, radius, fontSize } =
+    BADGE_SIZE[size] ?? BADGE_SIZE.sm;
+  const { label, hexColor } = svgStatusDictionary[resolved];
   const textWidth = getTextWidth(label, fontSize);
   const width = Math.ceil(padding + textWidth + gap + radius * 2 + padding);
 

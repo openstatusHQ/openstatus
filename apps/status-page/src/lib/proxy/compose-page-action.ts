@@ -26,11 +26,17 @@ export type { ComposeInput };
  * outweighs the ambiguity.
  */
 export function composePageAction(input: ComposeInput): Action {
+  const isBadge =
+    input.pathname.includes("/badge") ||
+    input.route.rewritePath.includes("/badge");
+
   return (
     resolveLocaleAction(input) ??
-    resolvePasswordAction(input) ??
-    resolveEmailDomainAction(input) ??
-    resolveIpRestrictionAction(input) ??
+    (!isBadge
+      ? (resolvePasswordAction(input) ??
+        resolveEmailDomainAction(input) ??
+        resolveIpRestrictionAction(input))
+      : null) ??
     resolveDefaultRewrite(input) ??
     // Reached whenever resolveDefaultRewrite declines: host is not an
     // openstatus.dev host AND route.rewritePath === pathname. In hosted

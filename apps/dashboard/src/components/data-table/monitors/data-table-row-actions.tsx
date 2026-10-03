@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { buildCurlCommand } from "@openstatus/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
@@ -22,6 +23,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const [openDialog, setOpenDialog] = useState(false);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { copy } = useCopyToClipboard();
   const { data: pageComponents } = useQuery(
     trpc.pageComponent.list.queryOptions(),
   );
@@ -37,12 +39,13 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   // curl only speaks HTTP — the action is hidden for tcp/dns monitors
   const isHttp = row.original.jobType === "http";
 
-  const matchingComponent = pageComponents?.find(
-    (c) => c.monitorId === row.original.id,
-  );
-  const statusPage = matchingComponent
+  const statusPage = row.original.public
     ? statusPages?.find(
-        (p) => p.id === matchingComponent.pageId && p.accessType === "public",
+        (p) =>
+          p.accessType === "public" &&
+          pageComponents?.some(
+            (c) => c.monitorId === row.original.id && c.pageId === p.id,
+          ),
       )
     : undefined;
 
@@ -66,8 +69,10 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       const badgeUrl = `https://${
         statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
       }/monitors/${row.original.id}/badge/v2`;
-      navigator.clipboard.writeText(badgeUrl);
-      toast.success("Badge URL copied to clipboard");
+      void copy(badgeUrl, {
+        withToast: true,
+        successMessage: "Badge URL copied to clipboard",
+      });
     },
     // export: () => setOpenDialog(true),
   }).filter((action) => action.id !== "copy-curl" || isHttp);

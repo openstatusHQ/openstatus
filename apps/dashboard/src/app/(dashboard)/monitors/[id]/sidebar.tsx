@@ -34,12 +34,13 @@ export function Sidebar() {
 
   if (!monitor) return null;
 
-  const matchingComponent = pageComponents?.find(
-    (c) => c.monitorId === monitor.id,
-  );
-  const statusPage = matchingComponent
+  const statusPage = monitor.public
     ? statusPages?.find(
-        (p) => p.id === matchingComponent.pageId && p.accessType === "public",
+        (p) =>
+          p.accessType === "public" &&
+          pageComponents?.some(
+            (c) => c.monitorId === monitor.id && c.pageId === p.id,
+          ),
       )
     : undefined;
 
