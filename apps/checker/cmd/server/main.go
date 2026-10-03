@@ -180,7 +180,7 @@ func main() {
 	logLevel := env("LOG_LEVEL", "info")
 	cloudProvider := env("CLOUD_PROVIDER", "fly")
 	axiomToken := env("AXIOM_TOKEN", "")
-	axiomDataset := env("AXIOM_DATASET", "dev")
+	axiomDataset := env("AXIOM_DATASET", "")
 	switch cloudProvider {
 	case "fly":
 		region = env("FLY_REGION", env("REGION", "local"))
