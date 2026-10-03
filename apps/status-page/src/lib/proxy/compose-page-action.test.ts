@@ -167,3 +167,108 @@ describe("composePageAction — priority ordering", () => {
     expect(action.reason).toBe("email-domain-gate-in");
   });
 });
+
+describe("composePageAction — badge route gate bypass", () => {
+  const gatedPages = [
+    {
+      name: "password gate",
+      page: {
+        ...basePage,
+        accessType: "password",
+        password: "secret",
+      } as Page,
+      expectedBlockedReason: "password-gate-in",
+    },
+    {
+      name: "email-domain gate",
+      page: {
+        ...basePage,
+        accessType: "email-domain",
+        authEmailDomains: ["acme.com"],
+      } as Page,
+      expectedBlockedReason: "email-domain-gate-in",
+    },
+    {
+      name: "ip-restriction gate",
+      page: {
+        ...basePage,
+        accessType: "ip-restriction",
+        allowedIpRanges: ["10.0.0.0/24"],
+      } as Page,
+      expectedBlockedReason: "ip-restriction-gate-in",
+    },
+  ];
+
+  for (const { name, page, expectedBlockedReason } of gatedPages) {
+    describe(`${name} bypass`, () => {
+      const validBadgePaths = [
+        "/acme/en/monitors/123/badge",
+        "/acme/en/monitors/123/badge/",
+        "/acme/en/monitors/123/badge/v2",
+        "/acme/en/monitors/123/badge/v2/",
+        "/acme/en/badge",
+        "/acme/en/badge/",
+        "/acme/en/badge/v2",
+        "/acme/en/badge/v2/",
+      ];
+
+      for (const pathname of validBadgePaths) {
+        test(`bypasses ${name} for ${pathname}`, () => {
+          const action = composePageAction(
+            buildInput({
+              page,
+              pathname,
+              route: { ...route, rewritePath: pathname },
+              clientIp: "1.2.3.4",
+            }),
+          );
+          expect(action.reason).not.toBe(expectedBlockedReason);
+          expect(action.type).toBe("passthrough");
+        });
+      }
+
+      test(`bypasses ${name} for hostname routing rewritePath`, () => {
+        const action = composePageAction(
+          buildInput({
+            page: { ...page, customDomain: "status.acme.com" } as Page,
+            host: "status.acme.com",
+            urlHost: "status.acme.com",
+            pathname: "/monitors/123/badge/v2",
+            route: {
+              type: "hostname",
+              prefix: "acme",
+              locale: "en",
+              localeExplicit: false,
+              rewritePath: "/acme/en/monitors/123/badge/v2",
+            },
+            clientIp: "1.2.3.4",
+          }),
+        );
+        expect(action.reason).not.toBe(expectedBlockedReason);
+        expect(action.type).toBe("rewrite");
+        expect(action.reason).toBe("default-rewrite");
+      });
+
+      const nonBadgePaths = [
+        "/badge/en",
+        "/badge/en/events",
+        "/acme/en/monitors/123",
+        "/acme/en/badge-overview",
+      ];
+
+      for (const pathname of nonBadgePaths) {
+        test(`does NOT bypass ${name} for ${pathname}`, () => {
+          const action = composePageAction(
+            buildInput({
+              page,
+              pathname,
+              route: { ...route, prefix: "badge", rewritePath: pathname },
+              clientIp: "1.2.3.4",
+            }),
+          );
+          expect(action.reason).toBe(expectedBlockedReason);
+        });
+      }
+    });
+  }
+});
