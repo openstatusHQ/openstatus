@@ -14,26 +14,13 @@ interface DataTableSkeletonProps {
    * @default 10
    */
   rows?: number;
-  /**
-   * Whether to include a checkbox skeleton column
-   * @default false
-   */
-  withCheckbox?: boolean;
 }
 
-export function DataTableSkeleton({
-  rows = 3,
-  withCheckbox = false,
-}: DataTableSkeletonProps) {
+export function DataTableSkeleton({ rows = 3 }: DataTableSkeletonProps) {
   return (
     <Table>
       <TableHeader className="bg-muted/50">
         <TableRow className="hover:bg-transparent">
-          {withCheckbox ? (
-            <TableHead className="pr-0">
-              <Skeleton className="my-1.5 h-4 w-4" />
-            </TableHead>
-          ) : null}
           <TableHead>
             <Skeleton className="my-1.5 h-4 w-24" />
           </TableHead>
@@ -52,11 +39,6 @@ export function DataTableSkeleton({
       <TableBody>
         {Array.from({ length: rows }).map((_, i) => (
           <TableRow key={i} className="hover:bg-transparent">
-            {withCheckbox ? (
-              <TableCell className="pr-0">
-                <Skeleton className="my-1.5 h-4 w-4" />
-              </TableCell>
-            ) : null}
             <TableCell>
               <Skeleton className="my-1.5 h-4 w-full max-w-40" />
             </TableCell>
