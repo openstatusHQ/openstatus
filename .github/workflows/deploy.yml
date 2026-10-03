@@ -33,7 +33,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1
       - run:
           flyctl deploy --config apps/server/fly.toml
           --dockerfile  apps/server/Dockerfile --remote-only --wait-timeout=500
