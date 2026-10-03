@@ -104,13 +104,13 @@ export function FormMembers({
             </Tabs>
           </FormCardContent>
           <FormCardSeparator />
-          <FormCardContent>
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               disabled={locked}
               name="email"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Add member</FormLabel>
                   <FormControl>
                     <Input

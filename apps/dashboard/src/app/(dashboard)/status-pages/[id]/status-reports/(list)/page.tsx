@@ -1,6 +1,6 @@
 "use client";
 
-import { Impact, Add } from "@openstatus/icons";
+import { Impact } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import NextLink from "next/link";
@@ -129,7 +129,6 @@ export default function Page() {
               }}
             >
               <Button data-section="action" size="sm">
-                <Add />
                 Create Status Report
               </Button>
             </FormSheetStatusReport>
