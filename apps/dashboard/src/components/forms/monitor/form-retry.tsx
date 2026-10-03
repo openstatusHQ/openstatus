@@ -86,7 +86,7 @@ export function FormRetry({
               Configure the retry policy for your monitor.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent className="grid gap-4 sm:grid-cols-2">
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="retry"
