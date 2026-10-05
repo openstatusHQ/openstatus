@@ -26,6 +26,7 @@ export const TRIAL_DAYS = 14;
 export type TrialSkipReason =
   | "disabled"
   | "sso"
+  | "email"
   | "invited"
   | "disposable"
   | "already_trialed"
@@ -71,6 +72,9 @@ export async function maybeStartSignupTrial(args: {
     return { started: false, reason: "disabled" };
   }
   if (args.provider === "workos") return { started: false, reason: "sso" };
+  // A magic link proves only inbox access, so email signups start on free and
+  // upgrade through checkout.
+  if (args.provider === "resend") return { started: false, reason: "email" };
   if (await hasPendingInvitation({ email, db })) {
     return { started: false, reason: "invited" };
   }

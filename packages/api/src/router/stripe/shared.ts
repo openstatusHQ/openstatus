@@ -14,8 +14,8 @@ export const stripe = new Stripe(env.STRIPE_SECRET_KEY || "sk_unset", {
   },
 });
 
-// An unsupported price is a permanent misconfiguration; surface it as a 400 so
-// Stripe stops retrying instead of hammering the endpoint on a 5xx.
+// A subscription we cannot classify is a permanent misconfiguration; surface
+// it as a 400 so Stripe stops retrying instead of hammering the endpoint.
 export function buildFromSubscriptionOrThrow(
   subscription: Stripe.Subscription,
 ) {
@@ -28,6 +28,18 @@ export function buildFromSubscriptionOrThrow(
       message: e instanceof Error ? e.message : "Invalid subscription",
     });
   }
+}
+
+/** The limits to write, or undefined to keep a custom deal's hand-set ones. */
+export function syncedLimits(
+  subscription: Stripe.Subscription,
+  built: NonNullable<ReturnType<typeof buildLimitsFromSubscription>>,
+) {
+  if (built.customPriceIds.length === 0) return built.limits;
+  console.warn(
+    `Subscription ${subscription.id} has custom prices (${built.customPriceIds.join(", ")}); keeping workspace limits`,
+  );
+  return undefined;
 }
 
 // Statuses that mean the customer still has a subscription. `incomplete` and

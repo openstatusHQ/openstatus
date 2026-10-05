@@ -146,12 +146,12 @@ export function FormLocale({
             </FormCardDescription>
           </FormCardHeader>
           <FormCardSeparator />
-          <FormCardContent className="grid gap-4">
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="defaultLocale"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Default Locale</FormLabel>
                   <Select
                     onValueChange={field.onChange}
@@ -177,7 +177,7 @@ export function FormLocale({
                 </FormItem>
               )}
             />
-            <div className="space-y-3">
+            <div className="col-span-full space-y-3">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="multi-locale"

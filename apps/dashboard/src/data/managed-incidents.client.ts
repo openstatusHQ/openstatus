@@ -47,16 +47,3 @@ export function incidentEndedAt(incident: {
   }
   return incident.closedAt;
 }
-
-export function personName(
-  person: {
-    name: string | null;
-    firstName: string | null;
-    lastName: string | null;
-    email: string | null;
-  } | null,
-): string | null {
-  if (!person) return null;
-  const full = [person.firstName, person.lastName].filter(Boolean).join(" ");
-  return person.name || full || person.email || null;
-}

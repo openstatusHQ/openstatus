@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
+import { personName } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -42,7 +43,6 @@ import {
   ComposerTextarea,
 } from "@/components/content/composer";
 import { TimelineAvatar, TimelineItem } from "@/components/content/timeline";
-import { personName } from "@/data/managed-incidents.client";
 import { toGroupNameLookup } from "@/data/page-components.client";
 import {
   getNextStatus,
@@ -173,14 +173,14 @@ export function StatusReportComposer({
         <ComposerPreview value={message} />
         {pageComponents.length ? (
           <ComposerSection>
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
               <span className="text-muted-foreground text-xs font-light tracking-wide uppercase">
                 Affected components
               </span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground -my-1 h-7 font-normal"
+                className="text-muted-foreground -my-1 ml-auto h-7 font-normal"
                 disabled={components.length === 0}
                 onClick={() =>
                   setOverrides(
@@ -195,14 +195,21 @@ export function StatusReportComposer({
               {components.map((component) => {
                 const override = overrides.get(component.id);
                 return (
-                  <ComponentListItem key={component.id}>
-                    <ComponentListName group={groupOf.get(component.id)}>
+                  <ComponentListItem
+                    key={component.id}
+                    // phones: name + current impact on one row, the picker below
+                    className="flex-wrap sm:flex-nowrap"
+                  >
+                    <ComponentListName
+                      group={groupOf.get(component.id)}
+                      className="min-w-0 flex-1 sm:flex-initial"
+                    >
                       {component.name}
                     </ComponentListName>
                     <ComponentImpact
                       impact={currentImpacts.get(component.id)}
                     />
-                    <ComponentListActions>
+                    <ComponentListActions className="basis-full sm:basis-auto">
                       <Select
                         value={override ?? ""}
                         onValueChange={(value) => {
@@ -217,8 +224,9 @@ export function StatusReportComposer({
                       >
                         <ComponentListSelectTrigger
                           aria-label={`${component.name} impact`}
+                          // phones: -ml-3 puts the text on the name's edge; from sm a
                           // fixed width keeps chevrons and close buttons in a column
-                          className="text-foreground w-52 font-mono"
+                          className="text-foreground -ml-3 w-auto min-w-0 flex-1 font-mono sm:ml-0 sm:w-52 sm:flex-none"
                         >
                           <SelectValue
                             placeholder={
@@ -265,6 +273,7 @@ export function StatusReportComposer({
             <ComponentListAdd
               components={addable}
               groups={groups}
+              className="-ml-3 sm:ml-0"
               onAdd={(id) => {
                 setIds([...componentIds, id]);
                 // a component joins the report with a concrete impact
@@ -278,7 +287,8 @@ export function StatusReportComposer({
           </ComposerSection>
         ) : null}
         <ComposerFooter>
-          <div className="flex flex-wrap items-center gap-2">
+          {/* phones: label column + field column so both fields share a left edge */}
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 sm:flex sm:flex-wrap">
             <span>Status</span>
             <Select
               value={status}
@@ -312,10 +322,10 @@ export function StatusReportComposer({
               value={date ?? now}
               max={new Date()}
               onChange={setDate}
-              className="bg-background text-foreground h-8 font-mono"
+              className="bg-background text-foreground h-8 w-fit font-mono"
             />
           </div>
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex w-full flex-wrap items-center justify-between gap-3 sm:w-auto sm:justify-start">
             <div className="flex items-center gap-2">
               <Checkbox
                 id="notify-subscribers"
@@ -325,7 +335,7 @@ export function StatusReportComposer({
               />
               <Label
                 htmlFor="notify-subscribers"
-                className="text-xs font-normal"
+                className="text-xs font-normal whitespace-nowrap"
                 title={
                   canNotify
                     ? undefined
@@ -337,6 +347,7 @@ export function StatusReportComposer({
             </div>
             <Button
               size="sm"
+              className="ml-auto"
               disabled={disabled}
               onClick={() => submit().catch(console.error)}
             >

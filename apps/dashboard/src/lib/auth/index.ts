@@ -119,10 +119,7 @@ const {
     GoogleProvider,
     ...(process.env.AUTH_OIDC_ISSUER ? [OIDCProvider] : []),
     ...(hasWorkOS ? [WorkOSProvider] : []),
-    ...(process.env.NODE_ENV === "development" ||
-    process.env.SELF_HOST === "true"
-      ? [ResendProvider]
-      : []),
+    ResendProvider,
   ],
   callbacks: {
     async redirect({ url, baseUrl }) {
@@ -191,7 +188,6 @@ const {
         return authorizeSsoSignIn(readWorkOSProfile(params.profile));
       }
 
-      // REMINDER: only used in dev mode
       if (params.account?.provider === "resend") {
         if (Number.isNaN(Number(params.user.id))) return true;
         await db
@@ -244,6 +240,8 @@ const {
   },
   pages: {
     signIn: "/login",
+    // Expired or reused magic links surface as `?error=Verification` here.
+    error: "/login",
     newUser: "/onboarding",
   },
   // basePath: "/api/auth", // default is `/api/auth`
