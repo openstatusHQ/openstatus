@@ -17,7 +17,6 @@ import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-report-update/sheet-create";
-import { DeclareFromRow } from "@/components/incidents/declare-from-row";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import {
   type OverviewEvent,
@@ -170,7 +169,7 @@ const baseColumns: ColumnDef<OverviewEvent>[] = [
   },
 ];
 
-const actionColumn = (declare: boolean): ColumnDef<OverviewEvent> => ({
+const actionColumn: ColumnDef<OverviewEvent> = {
   id: "action",
   header: () => null,
   cell: ({ row }) => {
@@ -179,13 +178,6 @@ const actionColumn = (declare: boolean): ColumnDef<OverviewEvent> => ({
       case "incident":
         return (
           <div className="flex justify-end gap-1">
-            {!declare || event.incident.resolvedAt ? null : (
-              <DeclareFromRow
-                title={`${event.incident.monitor.name} is down`}
-                startedAt={event.incident.startedAt}
-                source={{ type: "monitor_incident", id: event.incident.id }}
-              />
-            )}
             <IncidentActionCell incident={event.incident} />
           </div>
         );
@@ -193,14 +185,6 @@ const actionColumn = (declare: boolean): ColumnDef<OverviewEvent> => ({
         if (event.report.status === "resolved") return null;
         return (
           <div className="flex justify-end gap-1">
-            {declare ? (
-              <DeclareFromRow
-                title={event.report.title}
-                startedAt={getStartedAt(event)}
-                source={{ type: "status_report", id: event.report.id }}
-                statusReportId={event.report.id}
-              />
-            ) : null}
             <FormSheetStatusReportUpdateCreate report={event.report}>
               <Button variant="outline" size="sm" className="h-7">
                 Add Update
@@ -215,9 +199,9 @@ const actionColumn = (declare: boolean): ColumnDef<OverviewEvent> => ({
   },
   enableSorting: false,
   meta: {
-    cellClassName: cn("text-right", declare ? "w-[180px]" : "w-[110px]"),
+    cellClassName: "w-[110px] text-right",
   },
-});
+};
 
 const actionsColumn: ColumnDef<OverviewEvent> = {
   id: "actions",
@@ -239,7 +223,4 @@ const actionsColumn: ColumnDef<OverviewEvent> = {
   },
 };
 
-/** `declare` adds the incident-management quick action; omit it when the feature is off. */
-export function getColumns({ declare }: { declare: boolean }) {
-  return [...baseColumns, actionColumn(declare), actionsColumn];
-}
+export const columns = [...baseColumns, actionColumn, actionsColumn];

@@ -2,36 +2,27 @@ import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 
 import { ForbiddenError } from "../errors";
-import { isFeatureEnabled, requireFeature } from "../features";
+import { type Feature, isFeatureEnabled, requireFeature } from "../features";
 import type { Workspace } from "../types";
 
 const none = new Set<string>();
+// No feature is registered right now; cast a placeholder to exercise the logic.
+const feature = "test-feature" as Feature;
 
 describe("isFeatureEnabled", () => {
-  test("allowlisted workspace", () => {
-    expect(isFeatureEnabled({ id: 1 }, "incident-management", none)).toBe(true);
-  });
-
-  test("other workspace", () => {
-    expect(
-      isFeatureEnabled({ id: 987654321 }, "incident-management", none),
-    ).toBe(false);
+  test("workspace off the allowlist", () => {
+    expect(isFeatureEnabled({ id: 987654321 }, feature, none)).toBe(false);
   });
 
   test("env override enables it for every workspace", () => {
     expect(
-      isFeatureEnabled(
-        { id: 987654321 },
-        "incident-management",
-        new Set(["incident-management"]),
-      ),
+      isFeatureEnabled({ id: 987654321 }, feature, new Set([feature])),
     ).toBe(true);
   });
 });
 
 describe("requireFeature", () => {
   test("throws ForbiddenError when disabled", () => {
-    // The package test script enables the feature globally; clear it here.
     const processEnv: Record<string, string | undefined> = process.env;
     const saved = processEnv.OPENSTATUS_FEATURES;
     delete processEnv.OPENSTATUS_FEATURES;
@@ -40,7 +31,7 @@ describe("requireFeature", () => {
       expect(() =>
         requireFeature(
           { workspace, actor: { type: "system", job: "test" } },
-          "incident-management",
+          feature,
         ),
       ).toThrow(ForbiddenError);
     } finally {

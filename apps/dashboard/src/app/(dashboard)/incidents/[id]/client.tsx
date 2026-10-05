@@ -41,7 +41,6 @@ import { IncidentStatusReport } from "@/components/incidents/incident-status-rep
 import { IncidentTimelineItem } from "@/components/incidents/incident-timeline";
 import { ResolveReportDialog } from "@/components/incidents/resolve-report-dialog";
 import { incidentEndedAt, personName } from "@/data/managed-incidents.client";
-import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 function slackChannelUrl(teamId: string, channelId: string): string {
@@ -50,17 +49,14 @@ function slackChannelUrl(teamId: string, channelId: string): string {
 
 export function Client({ id }: { id: number }) {
   const trpc = useTRPC();
-  const enabled = useFeature("incident-management");
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: incident, isError } = useQuery({
     ...trpc.incident.get.queryOptions({ id }),
-    enabled,
     retry: false,
   });
-  const { data: events } = useQuery({
-    ...trpc.incident.listEvents.queryOptions({ id }),
-    enabled,
-  });
+  const { data: events } = useQuery(
+    trpc.incident.listEvents.queryOptions({ id }),
+  );
   const [followUp, setFollowUp] = useState<{ note: string } | null>(null);
 
   if (isError) {

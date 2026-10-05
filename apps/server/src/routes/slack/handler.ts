@@ -1,5 +1,4 @@
 import { getLogger } from "@logtape/logtape";
-import { isFeatureEnabled } from "@openstatus/services";
 import { getIncidentBySlackChannel } from "@openstatus/services/incident";
 import {
   missingSlackScopes,
@@ -426,9 +425,7 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
         slackUserId: userId,
       });
       if (actor) {
-        const needsReconnect =
-          isFeatureEnabled(resolved.workspace, "incident-management") &&
-          missingSlackScopes(resolved.scopes).length > 0;
+        const needsReconnect = missingSlackScopes(resolved.scopes).length > 0;
         await publishHomeView(slack, userId, {
           reconnectUrl: needsReconnect
             ? `${config.dashboardUrl}/settings/integrations`

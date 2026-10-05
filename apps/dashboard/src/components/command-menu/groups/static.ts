@@ -7,16 +7,14 @@ import { SETTINGS_TABS } from "@/config/settings";
 
 import type { CommandMenuGroup, CommandMenuItem } from "../types";
 
-// Incident entries are feature-flagged. Unlike the sidebar, Incidents sits
-// right below Overview: the palette is for reaching the urgent thing fast.
-export function navigationGroup({
-  incidents,
-}: {
-  incidents: boolean;
-}): CommandMenuGroup {
-  const items = incidents
-    ? [...NAV_MENU_ITEMS.slice(0, 1), NAV.incidents, ...NAV_MENU_ITEMS.slice(1)]
-    : NAV_MENU_ITEMS;
+// Unlike the sidebar, Incidents sits right below Overview: the palette is for
+// reaching the urgent thing fast.
+export function navigationGroup(): CommandMenuGroup {
+  const items = [
+    ...NAV_MENU_ITEMS.slice(0, 1),
+    NAV.incidents,
+    ...NAV_MENU_ITEMS.slice(1),
+  ];
   return {
     heading: "Navigation",
     items: items.map((item) => ({
@@ -59,15 +57,11 @@ export function createMaintenanceItem(pageId?: number): CommandMenuItem {
   };
 }
 
-export function createGroup({
-  incidents,
-}: {
-  incidents: boolean;
-}): CommandMenuGroup {
+export function createGroup(): CommandMenuGroup {
   return {
     heading: "Create",
     items: [
-      ...(incidents ? [declareIncidentItem()] : []),
+      declareIncidentItem(),
       {
         value: "Create Monitor",
         label: "Create Monitor",

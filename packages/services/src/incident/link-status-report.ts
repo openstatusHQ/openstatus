@@ -13,7 +13,6 @@ import {
   appendIncidentEvent,
   assertNotClosed,
   getIncidentInWorkspace,
-  requireIncidentFeature,
 } from "./internal";
 import { IncidentIdInput, LinkIncidentStatusReportInput } from "./schemas";
 
@@ -94,7 +93,6 @@ export async function linkIncidentStatusReport(args: {
 }): Promise<Incident> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  requireIncidentFeature(ctx);
   const input = LinkIncidentStatusReportInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -126,7 +124,6 @@ export async function unlinkIncidentStatusReport(args: {
 }): Promise<Incident> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  requireIncidentFeature(ctx);
   const input = IncidentIdInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

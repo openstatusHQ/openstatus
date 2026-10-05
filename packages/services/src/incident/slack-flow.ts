@@ -2,13 +2,12 @@ import { and, eq, isNull } from "@openstatus/db";
 import { type Incident, slackUser, user } from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb } from "../context";
-import { isFeatureEnabled } from "../features";
 import {
   type SlackConnection,
   getSlackConnection,
 } from "../integration/slack-connection";
 import { createSlackUserMapping } from "../slack-user/create";
-import { getIncidentInWorkspace, INCIDENT_FEATURE } from "./internal";
+import { getIncidentInWorkspace } from "./internal";
 import { bindIncidentSlackChannel } from "./slack-channel";
 
 type SlackText = { type: "mrkdwn" | "plain_text"; text: string };
@@ -121,11 +120,10 @@ function errorCode(err: Error | string): string {
   return err.message;
 }
 
-/** Channel automation needs the feature, the plan, and a fully-scoped install. */
+/** Channel automation needs the plan and a fully-scoped install. */
 export async function incidentSlackReady(
   ctx: ServiceContext,
 ): Promise<SlackConnection | null> {
-  if (!isFeatureEnabled(ctx.workspace, INCIDENT_FEATURE)) return null;
   if (!ctx.workspace.limits["slack-agent"]) return null;
   const connection = await getSlackConnection({ ctx });
   if (!connection || connection.missingScopes.length > 0) return null;

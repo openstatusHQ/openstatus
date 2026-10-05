@@ -1,4 +1,4 @@
-import { isFeatureEnabled, type ServiceContext } from "@openstatus/services";
+import type { ServiceContext } from "@openstatus/services";
 import { escapeMrkdwn, listIncidents } from "@openstatus/services/incident";
 import type { WebClient } from "@slack/web-api";
 import type { KnownBlock } from "@slack/web-api";
@@ -80,11 +80,9 @@ function incidentBlocks(openIncidents: HomeIncident[]): KnownBlock[] {
   ];
 }
 
-/** `undefined` hides the incidents section: the feature is off here. */
 export async function homeIncidents(
   ctx: ServiceContext,
-): Promise<HomeIncident[] | undefined> {
-  if (!isFeatureEnabled(ctx.workspace, "incident-management")) return;
+): Promise<HomeIncident[]> {
   const rows = await listIncidents({
     ctx,
     input: { status: ["open", "mitigated"], limit: 10 },

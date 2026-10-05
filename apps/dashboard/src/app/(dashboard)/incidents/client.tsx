@@ -17,29 +17,11 @@ import {
 import { columns } from "@/components/data-table/managed-incidents/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
-import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Client() {
   const trpc = useTRPC();
-  const enabled = useFeature("incident-management");
-  const { data: incidents } = useQuery({
-    ...trpc.incident.list.queryOptions(),
-    enabled,
-  });
-
-  if (!enabled) {
-    return (
-      <SectionGroup>
-        <EmptyStateContainer>
-          <EmptyStateTitle>Incidents are not available yet</EmptyStateTitle>
-          <EmptyStateDescription>
-            Incident management is rolling out gradually.
-          </EmptyStateDescription>
-        </EmptyStateContainer>
-      </SectionGroup>
-    );
-  }
+  const { data: incidents } = useQuery(trpc.incident.list.queryOptions());
 
   return (
     <SectionGroup>

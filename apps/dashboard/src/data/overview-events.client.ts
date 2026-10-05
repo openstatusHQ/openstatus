@@ -143,9 +143,9 @@ export function buildOverviewData(
     monitors: RouterOutputs["monitor"]["list"];
     pages: RouterOutputs["page"]["list"];
     monitorIncidents: MonitorIncident[];
-    // set when incident management is enabled — replaces the downtime count
+    // replaces the downtime count; undefined while loading or on a failed query
     managedIncidents?: RouterOutputs["incident"]["list"];
-    // resolved/canceled managed incidents — only feed Recent Activity
+    // resolved/canceled managed incidents — feed Recent Activity
     endedIncidents?: RouterOutputs["incident"]["list"];
     statusReports: StatusReport[];
     maintenances: Maintenance[];
@@ -159,10 +159,9 @@ export function buildOverviewData(
       type: "incident" as const,
       incident,
     })),
-    ...(endedIncidents ?? []).map((incident) => ({
-      type: "managedIncident" as const,
-      incident,
-    })),
+    ...[...(managedIncidents ?? []), ...(endedIncidents ?? [])].map(
+      (incident) => ({ type: "managedIncident" as const, incident }),
+    ),
     ...statusReports.map((report) => ({ type: "report" as const, report })),
     ...maintenances.map((maintenance) => ({
       type: "maintenance" as const,
