@@ -42,7 +42,7 @@ export default function Page() {
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
   // no period — an incident open for weeks must still surface here
-  const { data: incidents } = useQuery(
+  const { data: monitorIncidents } = useQuery(
     trpc.monitorIncident.list.queryOptions(),
   );
   const { data: statusReports } = useQuery(
@@ -59,16 +59,23 @@ export default function Page() {
     [incidentsEnabled],
   );
 
-  if (!monitors || !pages || !incidents || !statusReports || !maintenances)
+  if (
+    !monitors ||
+    !pages ||
+    !monitorIncidents ||
+    !statusReports ||
+    !maintenances
+  )
     return null;
 
   const { needsAttention, upcomingMaintenances, recentlyResolved, metrics } =
     buildOverviewData({
       monitors,
       pages,
-      incidents,
+      monitorIncidents,
       statusReports,
       maintenances,
+      managedIncidents: incidentsEnabled ? (openIncidents ?? []) : undefined,
     });
 
   return (

@@ -14,12 +14,12 @@ import {
   reportStartedAt,
 } from "@/data/status-reports.client";
 
-type Incident = RouterOutputs["monitorIncident"]["list"][number];
+type MonitorIncident = RouterOutputs["monitorIncident"]["list"][number];
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 
 export type OverviewEvent =
-  | { type: "incident"; incident: Incident }
+  | { type: "incident"; incident: MonitorIncident }
   | { type: "report"; report: StatusReport }
   | { type: "maintenance"; maintenance: Maintenance };
 
@@ -121,13 +121,16 @@ export function buildOverviewData(
   {
     monitors,
     pages,
-    incidents,
+    monitorIncidents,
     statusReports,
     maintenances,
+    managedIncidents,
   }: {
     monitors: RouterOutputs["monitor"]["list"];
     pages: RouterOutputs["page"]["list"];
-    incidents: Incident[];
+    monitorIncidents: MonitorIncident[];
+    // set when incident management is enabled — replaces the downtime count
+    managedIncidents?: RouterOutputs["incident"]["list"];
     statusReports: StatusReport[];
     maintenances: Maintenance[];
   },
@@ -136,7 +139,10 @@ export function buildOverviewData(
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   const events: OverviewEvent[] = [
-    ...incidents.map((incident) => ({ type: "incident" as const, incident })),
+    ...monitorIncidents.map((incident) => ({
+      type: "incident" as const,
+      incident,
+    })),
     ...statusReports.map((report) => ({ type: "report" as const, report })),
     ...maintenances.map((maintenance) => ({
       type: "maintenance" as const,
@@ -157,7 +163,9 @@ export function buildOverviewData(
     return resolvedAt !== null && resolvedAt >= sevenDaysAgo;
   });
 
-  const openIncidents = incidents.filter((i) => !i.resolvedAt);
+  const openIncidentsCount = managedIncidents
+    ? managedIncidents.length
+    : monitorIncidents.filter((i) => !i.resolvedAt).length;
   const openReports = statusReports.filter((r) => r.status !== "resolved");
   const activeMaintenances = maintenances.filter((m) => m.to >= now);
 
@@ -178,8 +186,9 @@ export function buildOverviewData(
     },
     {
       title: "Open Incidents",
-      value: openIncidents.length,
-      variant: openIncidents.length > 0 ? "destructive" : "default",
+      value: openIncidentsCount,
+      href: managedIncidents ? "/incidents" : undefined,
+      variant: openIncidentsCount > 0 ? "destructive" : "default",
       icon: eventTypeConfig.incident.icon,
     },
     {

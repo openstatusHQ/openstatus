@@ -28,7 +28,7 @@ import { useTRPC } from "@/lib/trpc/client";
 export default function Page() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
-  const { data: incidents } = useQuery(
+  const { data: monitorIncidents } = useQuery(
     trpc.monitorIncident.list.queryOptions({
       monitorId: Number.parseInt(id),
     }),
@@ -42,7 +42,7 @@ export default function Page() {
     [incidentsEnabled],
   );
 
-  if (!incidents || !monitor) return null;
+  if (!monitorIncidents || !monitor) return null;
 
   return (
     <SectionGroup>
@@ -67,7 +67,7 @@ export default function Page() {
             )}
           </SectionDescription>
         </SectionHeader>
-        {incidents.length === 0 ? (
+        {monitorIncidents.length === 0 ? (
           <EmptyStateContainer>
             <EmptyStateTitle>No downtime</EmptyStateTitle>
             <EmptyStateDescription>
@@ -77,7 +77,7 @@ export default function Page() {
         ) : (
           <DataTable
             columns={columns}
-            data={incidents}
+            data={monitorIncidents}
             paginationComponent={DataTablePaginationSimple}
           />
         )}

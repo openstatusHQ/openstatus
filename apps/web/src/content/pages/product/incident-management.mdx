@@ -1,0 +1,268 @@
+---
+title: "Incident Management"
+seo:
+  title: "Incident Management — Slack Channels, Timeline, Postmortems"
+  description: "Open source incident management next to your monitors and status page. Declare from Slack, get a channel per incident, keep a timeline and draft the postmortem."
+hero: "Incident management for small teams"
+publishedAt: "2026-10-05"
+updatedAt: "2026-10-05"
+author: "Maximilian Kaske"
+description: "Declare an incident from Slack or the dashboard, run it in its own channel, keep one timeline and leave with a postmortem. Next to the monitors and the status page it belongs to."
+category: "Product"
+faq:
+  - question: "What is incident management?"
+    answer: "Incident management is how a team responds when something breaks: someone declares the incident, one person takes command, the team works the problem in one place, customers are kept informed, and afterwards a postmortem records what happened and what changes. Openstatus keeps the declaration, the timeline, the public status report and the postmortem in one record."
+  - question: "What is the difference between an incident and a status report?"
+    answer: "An incident is internal: severity, commander, timeline notes and the postmortem are for your team. A status report is public: it is what customers read on your status page and receive as a subscriber. You link the two, and each keeps its own status, so the team can mark an incident mitigated while the status report still says monitoring."
+  - question: "Do I need Slack to manage incidents?"
+    answer: "No. You can declare, update, resolve and write the postmortem from the dashboard. Connecting Slack adds the channel per incident, slash commands, pinning messages to the timeline, stale-incident reminders and agent drafting."
+  - question: "How does the postmortem draft work?"
+    answer: "Once an incident is resolved, the agent drafts a blameless postmortem from the incident's fields, its timeline, the public status report updates and the history of the incident's Slack channel. The draft has seven sections: summary, impact, timeline, root cause, what went well, what went wrong and action items. Where it has no facts it says what is unknown. You edit the draft, approve it and close the incident."
+  - question: "Which severities and statuses are there?"
+    answer: "Three severities: critical for a major outage or data loss, major for significant degradation, and minor for limited impact. An incident is open, mitigated, resolved or canceled. Closing an incident freezes it: status, severity, commander and notes can no longer change."
+  - question: "Can an AI agent run an incident?"
+    answer: "Yes. The MCP server and the Slack agent share the same incident tools: declare, update, change status, add a note, draft and approve the postmortem. Every action that changes something asks for approval first and is written to the audit log with the person behind it."
+---
+
+<Actions source="incident-management-hero">
+  <ButtonLink href="https://app.openstatus.dev" variant="default">Declare your first incident</ButtonLink>
+  <ButtonLink href="/docs/guides/how-to-setup-slack-agent" variant="ghost">Set up the Slack agent</ButtonLink>
+</Actions>
+
+<p>
+<Subtle>Free to start, with a 14-day Starter trial and no card needed. Paid plans from $30/mo.</Subtle>
+</p>
+
+<Demo type="incident" />
+
+<SrOnly>
+
+The incident page for "Checkout API 503s in EU" at the fictional Pied Piper: severity Major, status Resolved, commander Gilfoyle, duration 55m, and a timeline from Declared at 09:43 through a note pinned in Slack, the linked status report, Mitigated at 10:14 and Resolved at 10:36 to the approved postmortem at 11:20.
+
+</SrOnly>
+
+## Trusted by teams who ship transparency
+
+<LogoCloud />
+
+## Why run incidents here
+
+<Grid cols={3}>
+<div>
+
+**It starts where the alert lands**
+
+The monitor that caught the failure, the incident and the status page live in one workspace. Nothing is copied between tools while the Checkout API is down.
+
+</div>
+<div>
+
+**Internal and public stay apart**
+
+The team works with severities, notes and a commander. Customers read a [status report](/status-page) in your words. The two are linked, never mixed.
+
+</div>
+<div>
+
+**The record writes itself**
+
+Every status change, note and public update is timestamped as it happens. The postmortem and the [audit trail](/use-case/compliance) are built from it, not from memory.
+
+</div>
+</Grid>
+
+## Declare from Slack or the dashboard
+
+<Grid variant="borderless">
+<div>
+
+Run `/openstatus incident declare` with a title and a severity, approve the card, and the incident exists. The dashboard has the same form, with a commander, a start time you can set in the past and an open status report to link.
+
+- [Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)
+- [Status report reference](/docs/reference/status-report)
+
+</div>
+<div>
+
+<Demo type="incident-declare" />
+
+<SrOnly>
+
+Gilfoyle runs `/openstatus incident declare Checkout API 503s in EU --sev major` in #incidents at 09:43. The openstatus app posts an approval card with the title and severity, then confirms the incident is declared and that a dedicated channel was opened with Gilfoyle invited.
+
+</SrOnly>
+
+</div>
+</Grid>
+
+## A Slack channel per incident
+
+<Grid variant="borderless">
+<div>
+
+<Demo type="incident-channel" />
+
+<SrOnly>
+
+The incident's own Slack channel, named inc-, the date and checkout-api-503s-in-eu. The pinned card shows severity Major and status Open. Gilfoyle's 09:49 message, "Edge config deploy at 09:38 changed EU routing. Rolling back.", carries a pin reaction and a check mark from the app: it is now a note on the timeline. A reminder follows after 4 hours without an update.
+
+</SrOnly>
+
+</div>
+<div>
+
+Every incident gets a channel with the severity and status in its topic and the incident card pinned on top. React to any message with 📌 and it becomes a timeline note, with a link back to Slack.
+
+If the incident goes quiet, the channel gets a reminder: after one hour for critical, four for major and a day for minor.
+
+- [Slack agent](/docs/guides/how-to-setup-slack-agent)
+- [Notification channels](/docs/reference/notification)
+
+</div>
+</Grid>
+
+## From the monitor that caught it
+
+<Grid variant="borderless">
+<div>
+
+When a monitor goes down, declare the incident from its downtime row and the start time is already filled in. The duration counts from when the impact began, not from when someone got around to declaring it.
+
+- [Uptime monitoring](/uptime-monitoring)
+- [Response logs and retention](/docs/concept/response-logs-and-retention)
+
+</div>
+<div>
+
+<Demo type="alert" />
+
+<SrOnly>
+
+The Slack alert that started it at 09:41: Checkout API returned 503 from lhr, ams, cdg and koyeb_fra at 4,388 ms, with 4 of 6 regions failing the status-code assertion.
+
+</SrOnly>
+
+</div>
+</Grid>
+
+## Internal status, public update
+
+<Grid variant="borderless">
+<div>
+
+<Demo type="incident-status" />
+
+<SrOnly>
+
+At 10:14 Gilfoyle runs `/openstatus incident mitigate Rollback complete in eu-west-1 and eu-west-2.` in the incident channel and the app confirms the incident is now mitigated. Below it, the linked status report "Elevated errors on Checkout API" reads Monitoring, with its own public message and 1,337 subscribers notified.
+
+</SrOnly>
+
+</div>
+<div>
+
+Mitigate, resolve, cancel or reopen from the channel or the dashboard, with a note that lands on the timeline. The linked status report keeps its own status and wording, and you post the public update from the same page.
+
+- [Status page](/status-page)
+- [Subscriptions](/docs/reference/subscriber)
+
+</div>
+</Grid>
+
+## A postmortem with a first draft
+
+<Grid variant="borderless">
+<div>
+
+Once the incident is resolved, the agent drafts a blameless postmortem from the timeline, the public updates and the channel history. Where it has no facts it says so instead of guessing.
+
+Edit it in markdown, approve it, and close the incident.
+
+- [Slack agent](/docs/guides/how-to-setup-slack-agent)
+- [Status pages for compliance](/use-case/compliance)
+
+</div>
+<div>
+
+<Demo type="postmortem" />
+
+<SrOnly>
+
+The postmortem draft, written by the agent, in seven sections: summary, impact (55m, from 09:41 to 10:36 UTC, Europe only), a UTC timeline from Declared to Resolved, root cause (the 09:38 edge config deploy), what went well, what went wrong, and two action items as a checklist. Buttons to approve it or draft again with the agent.
+
+</SrOnly>
+
+</div>
+</Grid>
+
+## For agents, with a paper trail
+
+<Grid variant="borderless">
+<div>
+
+<Demo type="audit" />
+
+<SrOnly>
+
+The audit log for the same incident, newest first: monitor.alert at 09:41:12, incident.create at 09:43:08 by gilfoyle@piedpiper.dev via Slack, the status report and its updates, incident.update to mitigated and resolved, and the postmortem created by the agent and approved at 11:20:48.
+
+</SrOnly>
+
+</div>
+<div>
+
+The MCP server and the Slack agent share the incident tools: declare, update, change status, add a note, draft the postmortem. Anything that changes state asks for approval first.
+
+Every one of those steps is in the audit log with the person behind it, whichever surface they used.
+
+- [MCP server](/tooling/mcp-server)
+- [Connect openstatus to your agent](/docs/guides/how-to-connect-openstatus-to-your-agent)
+
+</div>
+</Grid>
+
+## Get started
+
+<Actions source="incident-management-bottom">
+  <ButtonLink href="https://app.openstatus.dev" variant="default">Declare your first incident</ButtonLink>
+</Actions>
+
+<Subtle>Free to start, with a 14-day Starter trial and no card needed. Paid plans from $30/mo.</Subtle>
+
+## Frequently asked questions
+
+<Details summary="What is incident management?" headingLevel={3}>
+
+Incident management is how a team responds when something breaks: someone declares the incident, one person takes command, the team works the problem in one place, customers are kept informed, and afterwards a postmortem records what happened and what changes. Openstatus keeps the declaration, the timeline, the public status report and the postmortem in one record.
+
+</Details>
+
+<Details summary="What is the difference between an incident and a status report?" headingLevel={3}>
+
+An incident is internal: severity, commander, timeline notes and the postmortem are for your team. A status report is public: it is what customers read on your status page and receive as a subscriber. You link the two, and each keeps its own status, so the team can mark an incident mitigated while the status report still says monitoring.
+
+</Details>
+
+<Details summary="Do I need Slack to manage incidents?" headingLevel={3}>
+
+No. You can declare, update, resolve and write the postmortem from the dashboard. Connecting Slack adds the channel per incident, slash commands, pinning messages to the timeline, stale-incident reminders and agent drafting.
+
+</Details>
+
+<Details summary="How does the postmortem draft work?" headingLevel={3}>
+
+Once an incident is resolved, the agent drafts a blameless postmortem from the incident's fields, its timeline, the public status report updates and the history of the incident's Slack channel. The draft has seven sections: summary, impact, timeline, root cause, what went well, what went wrong and action items. Where it has no facts it says what is unknown. You edit the draft, approve it and close the incident.
+
+</Details>
+
+<Details summary="Which severities and statuses are there?" headingLevel={3}>
+
+Three severities: critical for a major outage or data loss, major for significant degradation, and minor for limited impact. An incident is open, mitigated, resolved or canceled. Closing an incident freezes it: status, severity, commander and notes can no longer change.
+
+</Details>
+
+<Details summary="Can an AI agent run an incident?" headingLevel={3}>
+
+Yes. The MCP server and the Slack agent share the same incident tools: declare, update, change status, add a note, draft and approve the postmortem. Every action that changes something asks for approval first and is written to the audit log with the person behind it.
+
+</Details>
