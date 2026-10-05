@@ -15,7 +15,6 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const queryClient = getQueryClient();
-  // Throws FORBIDDEN without the feature; prefetchQuery swallows it.
   await queryClient.prefetchQuery(trpc.incident.list.queryOptions());
 
   return (

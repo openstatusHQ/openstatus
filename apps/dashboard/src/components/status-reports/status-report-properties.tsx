@@ -13,7 +13,6 @@ import {
   PropertyValue,
 } from "@/components/content/property-list";
 import { statusVariants } from "@/data/status-report-updates.client";
-import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 type StatusReport = NonNullable<RouterOutputs["statusReport"]["get"]>;
@@ -26,13 +25,11 @@ export function StatusReportProperties({
   publicUrl: string;
 }) {
   const trpc = useTRPC();
-  const incidentsEnabled = useFeature("incident-management");
-  const { data: incident } = useQuery({
-    ...trpc.incident.forStatusReport.queryOptions({
+  const { data: incident } = useQuery(
+    trpc.incident.forStatusReport.queryOptions({
       statusReportId: report.id,
     }),
-    enabled: incidentsEnabled,
-  });
+  );
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   return (
@@ -50,23 +47,21 @@ export function StatusReportProperties({
           <PropertyLink href={publicUrl}>{report.page.title}</PropertyLink>
         </PropertyValue>
       </Property>
-      {incidentsEnabled ? (
-        <Property>
-          <PropertyLabel>Incident</PropertyLabel>
-          <PropertyValue>
-            {incident ? (
-              <Link
-                href={`/incidents/${incident.id}`}
-                className="truncate font-normal"
-              >
-                {incident.title}
-              </Link>
-            ) : (
-              <span className="text-muted-foreground">None</span>
-            )}
-          </PropertyValue>
-        </Property>
-      ) : null}
+      <Property>
+        <PropertyLabel>Incident</PropertyLabel>
+        <PropertyValue>
+          {incident ? (
+            <Link
+              href={`/incidents/${incident.id}`}
+              className="truncate font-normal"
+            >
+              {incident.title}
+            </Link>
+          ) : (
+            <span className="text-muted-foreground">None</span>
+          )}
+        </PropertyValue>
+      </Property>
       <Property>
         <PropertyLabel>Timezone</PropertyLabel>
         <PropertyValue>

@@ -216,6 +216,36 @@ export function SlackFieldValue({
   );
 }
 
+/** Reaction row under a message; each `SlackReaction` is an emoji and its count. */
+export function SlackReactions({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="slack-reactions"
+      className={cn("flex flex-wrap gap-1 pt-1", className)}
+      {...props}
+    />
+  );
+}
+
+export function SlackReaction({
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="slack-reaction"
+      className={cn(
+        "border-border bg-muted text-foreground border px-1.5 py-0.5 text-xs",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 /** Inline link or @mention. */
 export function SlackLink({
   className,

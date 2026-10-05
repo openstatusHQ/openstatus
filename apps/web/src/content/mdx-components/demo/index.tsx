@@ -4,6 +4,12 @@ import { AssertionsDemo } from "./assertions";
 import { AuditDemo, StatusReportDemo } from "./audit";
 import { ComponentsDemo } from "./components";
 import { ImportDemo } from "./import";
+import { IncidentDemo, PostmortemDemo } from "./incident";
+import {
+  IncidentChannelDemo,
+  IncidentDeclareDemo,
+  IncidentStatusDemo,
+} from "./incident-slack";
 import { LogsDemo } from "./logs";
 import { MaintenanceDemo } from "./maintenance";
 import { MonitorDemo } from "./monitor";
@@ -39,6 +45,11 @@ const demos = {
   "private-location": PrivateLocationDemo,
   timing: TimingDemo,
   logs: LogsDemo,
+  incident: IncidentDemo,
+  "incident-declare": IncidentDeclareDemo,
+  "incident-channel": IncidentChannelDemo,
+  "incident-status": IncidentStatusDemo,
+  postmortem: PostmortemDemo,
 } as const;
 
 export type DemoType = keyof typeof demos;

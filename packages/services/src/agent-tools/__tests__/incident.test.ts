@@ -9,10 +9,8 @@ import {
 import type { Workspace } from "../../types";
 import {
   addIncidentNoteTool,
-  agentTools,
   declareIncidentTool,
   getIncidentTool,
-  isAgentToolAvailable,
   listIncidentsTool,
   resolveIncidentTool,
   updateIncidentTool,
@@ -72,14 +70,5 @@ describe("incident agent tools", () => {
       ]);
       expect(getIncidentTool.outputSchema.parse(detail)).toBeDefined();
     });
-  });
-
-  test("every incident tool is feature-gated, the rest are not", () => {
-    for (const tool of Object.values(agentTools)) {
-      const isIncident =
-        tool.name.includes("incident") || tool.name.includes("postmortem");
-      expect(tool.feature === "incident-management").toBe(isIncident);
-    }
-    expect(isAgentToolAvailable(listIncidentsTool, { id: 1 })).toBe(true);
   });
 });

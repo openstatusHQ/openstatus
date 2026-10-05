@@ -15,13 +15,25 @@ export const severityConfig = {
 >;
 
 export const statusConfig = {
-  open: { label: "Open", variant: "destructive" },
-  mitigated: { label: "Mitigated", variant: "warning" },
-  resolved: { label: "Resolved", variant: "success" },
-  canceled: { label: "Canceled", variant: "default" },
+  open: { label: "Open", color: "text-destructive/80", variant: "destructive" },
+  mitigated: {
+    label: "Mitigated",
+    color: "text-warning/80",
+    variant: "warning",
+  },
+  resolved: {
+    label: "Resolved",
+    color: "text-success/80",
+    variant: "success",
+  },
+  canceled: {
+    label: "Canceled",
+    color: "text-muted-foreground",
+    variant: "default",
+  },
 } as const satisfies Record<
   IncidentStatus,
-  { label: string; variant: StatusVariant }
+  { label: string; color: string; variant: StatusVariant }
 >;
 
 /** When the incident stopped being ongoing; `null` while it still is. */

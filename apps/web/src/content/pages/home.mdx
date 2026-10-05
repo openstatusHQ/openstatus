@@ -2,7 +2,7 @@
 title: "Free & Open Source Status Page and Uptime Monitoring"
 hero: "The status page that just works."
 publishedAt: "2026-04-07"
-updatedAt: "2026-09-26"
+updatedAt: "2026-10-05"
 author: "openstatus"
 description: "Open source status page and uptime monitoring. Your monitors update it, your subscribers hear it first, your auditor gets the trail. Live in five minutes."
 category: "product"
@@ -97,21 +97,37 @@ Open the failing checks. The European regions spend four seconds waiting on the 
 </div>
 </Grid>
 
-<Eyebrow>09:44</Eyebrow>
+<Eyebrow>09:43</Eyebrow>
 
-## Declare it in Slack, or with your favorite agent
+## Declare the incident, get a channel
 
 <Grid variant="borderless">
 <div>
 
-Ask the openstatus agent in the incident thread. It drafts the status report, you approve it, and it goes live without anyone opening the dashboard. The same agent runs wherever you work: connect the MCP server to Claude, ChatGPT or Cursor and declare it from there.
+One slash command declares the incident with a title and a severity. Openstatus opens a dedicated Slack channel, invites you and pins the incident card, so the response has one place to happen.
 
+- [Incident management](/incident-management)
 - [Slack agent](/docs/guides/how-to-setup-slack-agent)
-- [MCP server](/tooling/mcp-server)
-- [CLI](/tooling/cli)
-- [API](/tooling/api)
 
 </div>
+<div>
+
+<Demo type="incident-declare" />
+
+<SrOnly>
+
+Gilfoyle runs `/openstatus incident declare Checkout API 503s in EU --sev major` in #incidents at 09:43. The openstatus app posts an approval card, confirms the incident is declared and opens a dedicated incident channel.
+
+</SrOnly>
+
+</div>
+</Grid>
+
+<Eyebrow>09:44</Eyebrow>
+
+## Tell customers from Slack, or with your favorite agent
+
+<Grid variant="borderless">
 <div>
 
 <Demo type="slack-agent" />
@@ -123,6 +139,16 @@ An engineer asks @openstatus in the incident thread to open a status report. The
 </SrOnly>
 
 </div>
+<div>
+
+Ask the openstatus agent in the incident thread. It drafts the status report, you approve it, and it goes live without anyone opening the dashboard. The same agent runs wherever you work: connect the MCP server to Claude, ChatGPT or Cursor and publish it from there.
+
+- [Slack agent](/docs/guides/how-to-setup-slack-agent)
+- [MCP server](/tooling/mcp-server)
+- [CLI](/tooling/cli)
+- [API](/tooling/api)
+
+</div>
 </Grid>
 
 <Eyebrow>09:52</Eyebrow>
@@ -130,6 +156,14 @@ An engineer asks @openstatus in the incident thread to open a status report. The
 ## Everyone hears it from you first
 
 <Grid variant="borderless">
+<div>
+
+Subscribers get the update by email, RSS and Slack Connect the moment it is approved. Support stops answering "is it down?" because the answer is already in the inbox.
+
+- [Subscriptions](/docs/reference/subscriber)
+- [Reducing support tickets](/use-case/reduce-support-tickets)
+
+</div>
 <div>
 
 <Demo type="notify" />
@@ -141,14 +175,6 @@ The 09:52 Identified update as it lands in a customer's Slack Connect channel, w
 </SrOnly>
 
 </div>
-<div>
-
-Subscribers get the update by email, RSS and Slack Connect the moment it is approved. Support stops answering "is it down?" because the answer is already in the inbox.
-
-- [Subscriptions](/docs/reference/subscriber)
-- [Reducing support tickets](/use-case/reduce-support-tickets)
-
-</div>
 </Grid>
 
 <Eyebrow>09:53</Eyebrow>
@@ -158,15 +184,6 @@ Subscribers get the update by email, RSS and Slack Connect the moment it is appr
 <Grid variant="borderless">
 <div>
 
-The public page shows the Checkout API as degraded. The internal page, behind a password and the office IP range, shows the failing regions and the rollback progress.
-
-- [Status page](/status-page)
-- [Password, magic link and IP restriction](/docs/reference/status-page#password-basic-auth)
-- [Status pages for enterprise sales](/use-case/enterprise-sales)
-
-</div>
-<div>
-
 <Demo type="access" />
 
 <SrOnly>
@@ -174,6 +191,67 @@ The public page shows the Checkout API as degraded. The internal page, behind a 
 Two pages side by side: the public status.piedpiper.dev shows Checkout API degraded, while internal.piedpiper.dev asks for a password and only admits the 203.0.113.0/24 range.
 
 </SrOnly>
+
+</div>
+<div>
+
+The public page shows the Checkout API as degraded. The internal page, behind a password and the office IP range, shows the failing regions and the rollback progress.
+
+- [Status page](/status-page)
+- [Password, magic link and IP restriction](/docs/reference/status-page#password-basic-auth)
+- [Status pages for enterprise sales](/use-case/enterprise-sales)
+
+</div>
+</Grid>
+
+<Eyebrow>10:14</Eyebrow>
+
+## Update the status where the work happens
+
+<Grid variant="borderless">
+<div>
+
+When the rollback lands, mark the incident mitigated from its channel. The internal status and the public status report move separately, so the team says "mitigated" while customers read "monitoring".
+
+- [Incident management](/incident-management#internal-status-public-update)
+- [Status report reference](/docs/reference/status-report)
+
+</div>
+<div>
+
+<Demo type="incident-status" />
+
+<SrOnly>
+
+At 10:14 Gilfoyle runs `/openstatus incident mitigate Rollback complete in eu-west-1 and eu-west-2.` in the incident channel and the app confirms the incident is now mitigated. The linked status report "Elevated errors on Checkout API" reads Monitoring, with 1,337 subscribers notified.
+
+</SrOnly>
+
+</div>
+</Grid>
+
+<Eyebrow>11:02</Eyebrow>
+
+## The postmortem arrives as a draft
+
+<Grid variant="borderless">
+<div>
+
+<Demo type="postmortem" />
+
+<SrOnly>
+
+The postmortem draft, written by the agent at 11:02: summary, impact (55m, from 09:41 to 10:36 UTC, Europe only), a UTC timeline, root cause (the 09:38 edge config deploy), what went well, what went wrong and two action items, with buttons to approve it or draft again.
+
+</SrOnly>
+
+</div>
+<div>
+
+Once the incident is resolved, the agent drafts a blameless postmortem from the timeline, the public updates and the channel history. You edit it, approve it and close the incident while everyone still remembers what happened.
+
+- [Incident management](/incident-management#a-postmortem-with-a-first-draft)
+- [MCP server](/tooling/mcp-server)
 
 </div>
 </Grid>
@@ -193,7 +271,7 @@ Every step is logged: who declared it, from where, when each update shipped. Whe
 
 <SrOnly>
 
-The incident's audit log, newest first: monitor.alert at 09:41:12, status_report.create at 09:44:30 by gilfoyle@piedpiper.dev via Slack, notification.send a second later, then the identified, monitoring and resolved updates. It exports as CSV or JSON.
+The incident's audit log, with the newest entry at the top. From oldest to newest: monitor.alert at 09:41:12, incident.create at 09:43:08 and status_report.create at 09:44:30 by gilfoyle@piedpiper.dev via Slack, notification.send a second later, then the identified, monitoring and resolved updates, the incident mitigated and resolved, and the postmortem approved at 11:20:48. It exports as CSV or JSON.
 
 </SrOnly>
 

@@ -1,9 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import {
-  isFeatureEnabled,
-  type ServiceContext,
-  ServiceError,
-} from "@openstatus/services";
+import { type ServiceContext, ServiceError } from "@openstatus/services";
 import { escapeMrkdwn } from "@openstatus/services/incident";
 import { type ModalView, WebClient } from "@slack/web-api";
 import { z } from "zod";
@@ -180,15 +176,6 @@ async function gate(
     return {
       ok: false,
       view: noticeModal(planRequiredMessage(config).text),
-      botToken: resolved.botToken,
-    };
-  }
-  if (!isFeatureEnabled(resolved.workspace, "incident-management")) {
-    return {
-      ok: false,
-      view: noticeModal(
-        "Incident management isn't available for this workspace yet.",
-      ),
       botToken: resolved.botToken,
     };
   }

@@ -16,8 +16,6 @@ export type AgentSystemPromptOptions = {
    * false the model passes `notify: false` and skips the yes/no prompt.
    */
   canNotifySubscribers: boolean;
-  /** Whether managed-incident tools are offered in this workspace. */
-  incidentManagement?: boolean;
 };
 
 export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
@@ -41,8 +39,7 @@ Exception: after get_doc_page or get_content_page, DO synthesize an answer from 
 
   const preamble = opts.preamble ? `${opts.preamble}\n\n` : "";
 
-  const incidentSection = opts.incidentManagement
-    ? `
+  const incidentSection = `
 
 Managed incidents (internal):
 - Three different things are called "incident". A managed incident (list_incidents, get_incident, declare_incident, update_incident, resolve_incident, set_incident_status, add_incident_note) is the team's INTERNAL record: severity, commander, timeline. A status report is PUBLIC communication on a status page. Monitor downtime (activeIncidentCount on monitors) is detected automatically.
@@ -52,8 +49,7 @@ Managed incidents (internal):
 - "the incident is fixed/resolved" with a managed incident in play → resolve_incident; if its linked status report is still open, ask whether to resolve that too (resolve_status_report).
 - "mitigated", "the bleeding stopped" → set_incident_status mitigated; "false alarm", "declared by mistake" → set_incident_status canceled (this closes it).
 - Postmortems: get_postmortem reads it; draft_postmortem saves a draft you wrote from get_incident and the conversation (resolved incidents only, never invent facts); approve_postmortem signs it off and by default closes the incident.
-- severity: critical = major outage or data loss, major = significant degradation, minor = limited impact. Ask when unclear.`
-    : "";
+- severity: critical = major outage or data loss, major = significant degradation, minor = limited impact. Ask when unclear.`;
 
   // Workspaces without subscriber notify get a different rubric — asking
   // is wasted friction when the field is a server-side no-op anyway.
@@ -118,7 +114,7 @@ Component impact:
 - Recovery counts as a change: when a component is back to normal before the incident is resolved ("API is back up"), set it to operational in that update.
 - resolve_status_report clears every remaining impact back to operational automatically — never publish a manual "everything operational" update for that.
 
-Draft → Ask → Confirm rubric (MANDATORY for every write tool${opts.incidentManagement ? " except add_incident_note, which logs immediately" : ""}):
+Draft → Ask → Confirm rubric (MANDATORY for every write tool except add_incident_note, which logs immediately):
 1. Draft the proposed change (title, status, message, time window, affected components and their impact levels).
 2. Show the draft to the user before calling the tool.
 ${notifyStep}

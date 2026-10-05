@@ -44,6 +44,7 @@ The available slash commands are:
 - `/openstatus subscribe <status-page-url>` — subscribe this channel to a status page
 - `/openstatus unsubscribe [status-page-url]` — unsubscribe. The URL is optional when the channel is subscribed to exactly one page; with several, the command lists them and asks you to name one.
 - `/openstatus subscriptions` — show this channel's subscriptions
+- `/openstatus incident …` — declare and run incidents, see [step 6](#6-run-an-incident-from-slack)
 - `/openstatus help` — show this list (also the response to any unrecognised subcommand)
 
 A channel subscribed this way receives updates for the whole page. For component scoping, and for the other ways a status page can be followed (email, feeds, webhooks), see the [subscriber reference](/docs/reference/subscriber).
@@ -96,11 +97,53 @@ Plan downtime so subscribers are informed in advance.
 @openstatus schedule a maintenance window for my database next Friday from 2–3 PM.
 ```
 
+### 6. Run an incident from Slack
+
+The examples above publish to your status page. An incident is the internal side: a severity, a commander, a timeline and a postmortem, in a Slack channel of its own.
+
+<Aside>Incident management is rolling out workspace by workspace. If the commands below answer that it isn't available yet, it is not enabled for your workspace. If you installed the Slack app before incident management, go to **Settings** > **Integrations** and click **Reconnect** to grant the new permissions.</Aside>
+
+#### Declare
+
+```
+/openstatus incident declare Checkout API 503s in EU --sev major
+```
+
+Approve the card and the incident exists. openstatus opens a channel named `inc-YYYY-MM-DD-<title>`, invites you, sets the severity and status as the topic and pins the incident card. Run `/openstatus incident declare` without a title to get a form instead.
+
+#### Keep the timeline
+
+In the incident's channel, react to any message with 📌 and it becomes a note on the incident's timeline. Or write one directly:
+
+```
+/openstatus incident note Rolling back the 09:38 edge config deploy.
+```
+
+#### Change the status
+
+```
+/openstatus incident mitigate Rollback complete in eu-west-1 and eu-west-2.
+/openstatus incident resolve
+```
+
+`cancel` and `reopen` work the same way. Outside the incident's channel, name the incident: `/openstatus incident resolve #12`. The status report on your status page is not touched; update it separately.
+
+#### Draft the postmortem
+
+```
+/openstatus incident postmortem
+```
+
+Once the incident is resolved, the agent drafts a postmortem from the timeline, the public updates and the channel history, then posts a card to approve it and close the incident. Closing archives the channel.
+
+`/openstatus incident status` shows where an incident stands and `/openstatus incident list` shows the open ones. The [Incident management reference](/docs/reference/incident-management) has every command, the status rules and the reminder thresholds.
+
 ## What you've accomplished
 
 - Installed the openstatus Slack agent in your workspace
 - Connected your openstatus account to Slack
 - Learned how to manage incidents directly from Slack
+- Declared an incident and ran it in its own channel
 
 ## Troubleshooting
 
@@ -118,7 +161,12 @@ Your Slack workspace admin may need to approve the app. Ask your workspace admin
 
 Make sure you have at least one monitor and one status page created in your openstatus workspace before using incident commands.
 
+### No channel was created for an incident
+
+The incident is declared either way. A missing channel means the Slack app lacks the permissions added for incident channels: go to **Settings** > **Integrations** and click **Reconnect**.
+
 ## What's next
 
+- **[Incident management reference](/docs/reference/incident-management)** — severities, statuses, the timeline and the postmortem.
 - **[Create a status page](/docs/tutorial/create-your-first-status-page)** — share your service status publicly with users.
 - **[Create a monitor](/docs/tutorial/create-your-first-monitor)** — set up uptime monitoring for your endpoints.

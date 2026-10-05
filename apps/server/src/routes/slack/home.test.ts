@@ -4,7 +4,7 @@ import { describe, test } from "@std/testing/bdd";
 import { buildHomeBlocks, OPEN_DECLARE_INCIDENT_ACTION } from "./home";
 
 describe("buildHomeBlocks", () => {
-  test("hides incidents when the feature is off", () => {
+  test("hides incidents without a list", () => {
     const text = JSON.stringify(buildHomeBlocks());
     expect(text).not.toContain(OPEN_DECLARE_INCIDENT_ACTION);
     expect(text).not.toContain("incident declare");

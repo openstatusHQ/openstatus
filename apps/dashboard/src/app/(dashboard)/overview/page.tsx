@@ -3,7 +3,6 @@
 import { Agent } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useMemo } from "react";
 
 import { NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
@@ -19,8 +18,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { Section } from "@/components/content/section";
-import { columns as incidentColumns } from "@/components/data-table/managed-incidents/columns";
-import { getColumns } from "@/components/data-table/overview-events/columns";
+import { columns } from "@/components/data-table/overview-events/columns";
 import {
   MetricCard,
   MetricCardGroup,
@@ -31,7 +29,6 @@ import {
 } from "@/components/metric/metric-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { buildOverviewData } from "@/data/overview-events.client";
-import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { CreateEventButtonGroup } from "./create-event-button-group";
@@ -42,33 +39,42 @@ export default function Page() {
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
   // no period — an incident open for weeks must still surface here
-  const { data: incidents } = useQuery(
+  const { data: monitorIncidents } = useQuery(
     trpc.monitorIncident.list.queryOptions(),
   );
   const { data: statusReports } = useQuery(
     trpc.statusReport.list.queryOptions({}),
   );
   const { data: maintenances } = useQuery(trpc.maintenance.list.queryOptions());
-  const incidentsEnabled = useFeature("incident-management");
-  const { data: openIncidents } = useQuery({
-    ...trpc.incident.list.queryOptions({ status: ["open", "mitigated"] }),
-    enabled: incidentsEnabled,
-  });
-  const columns = useMemo(
-    () => getColumns({ declare: incidentsEnabled }),
-    [incidentsEnabled],
+  const { data: openIncidents, isPending: openIncidentsPending } = useQuery(
+    trpc.incident.list.queryOptions({ status: ["open", "mitigated"] }),
+  );
+  const { data: endedIncidents, isPending: endedIncidentsPending } = useQuery(
+    trpc.incident.list.queryOptions({ status: ["resolved", "canceled"] }),
   );
 
-  if (!monitors || !pages || !incidents || !statusReports || !maintenances)
+  if (
+    !monitors ||
+    !pages ||
+    !monitorIncidents ||
+    !statusReports ||
+    !maintenances ||
+    // wait for the incident queries; a failed one still renders (see below)
+    openIncidentsPending ||
+    endedIncidentsPending
+  )
     return null;
 
   const { needsAttention, upcomingMaintenances, recentlyResolved, metrics } =
     buildOverviewData({
       monitors,
       pages,
-      incidents,
+      monitorIncidents,
       statusReports,
       maintenances,
+      // undefined on a failed query — falls back to the downtime count
+      managedIncidents: openIncidents,
+      endedIncidents,
     });
 
   return (
@@ -119,17 +125,6 @@ export default function Page() {
           })}
         </MetricCardGroup>
       </Section>
-      {openIncidents?.length ? (
-        <Section>
-          <SectionHeader>
-            <SectionTitle>Open Incidents</SectionTitle>
-            <SectionDescription>
-              Incidents your team is responding to.
-            </SectionDescription>
-          </SectionHeader>
-          <DataTable columns={incidentColumns} data={openIncidents} />
-        </Section>
-      ) : null}
       <Section>
         <SectionHeader>
           <SectionTitle>Needs Attention</SectionTitle>

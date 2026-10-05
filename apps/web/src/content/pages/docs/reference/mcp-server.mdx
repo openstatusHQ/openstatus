@@ -53,7 +53,7 @@ Get a key from the dashboard's **Settings > General**, in the **API Keys** card.
 
 Both credentials carry a scope that controls what tools the MCP server exposes:
 
-- **Read-only** — the server only registers read tools (`list_*` and `get_*`). Mutation tools (`create_*`, `update_*`, `add_*`, `resolve_*`) are not advertised in `tools/list` and cannot be called.
+- **Read-only** — the server only registers read tools (`list_*` and `get_*`). Mutation tools (`create_*`, `update_*`, `add_*`, `resolve_*`, and the incident tools `declare_*`, `set_*`, `draft_*`, `approve_*`) are not advertised in `tools/list` and cannot be called.
 - **Read & write** — every tool is available.
 
 With OAuth you choose the scope on the consent screen; a client may request read & write and you can still downgrade it to read-only. On an API key the scope is set at creation time and is **immutable**: to change it, revoke the key and issue a new one.
@@ -62,7 +62,7 @@ For AI agents that should only observe state — health summaries, paging on-cal
 
 ## Tools
 
-The server exposes 23 tools (21 on plans without the `audit-log` feature), grouped by resource: 19 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
+The server exposes 23 tools (21 on plans without the `audit-log` feature), grouped by resource: 19 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). Workspaces with incident management enabled get 10 more (see [Incidents](#incidents)). Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
 
 ### Pages
 
@@ -87,6 +87,23 @@ The server exposes 23 tools (21 on plans without the `audit-log` feature), group
 |----------------------|----------|---------|
 | `list_maintenances`  | read     | List maintenance windows newest-first. Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
 | `create_maintenance` | mutation | Schedule a maintenance window (`from` / `to` are ISO 8601 strings). |
+
+### Incidents
+
+Registered only when incident management is enabled for the workspace — otherwise these tools are absent from `tools/list`. They act on declared incidents, not on monitor downtime, and are internal: none of them publishes to a status page or notifies subscribers. See the [Incident management reference](/docs/reference/incident-management).
+
+| Tool                  | Type     | Purpose |
+|-----------------------|----------|---------|
+| `list_incidents`      | read     | List declared incidents, open ones first. Optional `status` filter; `limit` ≤ 100 and `offset`. |
+| `get_incident`        | read     | One incident with its timeline (newest first, up to 50 events) and linked status report. |
+| `declare_incident`    | mutation | Declare an incident with a `title` and `severity` (`critical` / `major` / `minor`), optionally a summary, commander, start time and status report to link. |
+| `update_incident`     | mutation | Change the title, severity, summary, commander or start time. |
+| `set_incident_status` | mutation | Move to `mitigated`, `resolved`, `canceled` or back to `open`, with an optional timeline note. Canceling closes the incident for good. |
+| `resolve_incident`    | mutation | Mark an incident resolved. Does not resolve its status report; use `resolve_status_report` for that. |
+| `add_incident_note`   | mutation | Append a note to the timeline. Append-only. |
+| `get_postmortem`      | read     | Read the incident's postmortem (markdown), if one was drafted. |
+| `draft_postmortem`    | mutation | Save a postmortem draft for a resolved incident. Replaces an existing draft; an approved postmortem can't be redrafted. |
+| `approve_postmortem`  | mutation | Approve the draft and, by default, close the incident. Only an owner, an admin or the incident's commander can approve. |
 
 ### Monitors
 

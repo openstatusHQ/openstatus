@@ -2,12 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function useCommandMenuData({ open }: { open: boolean }) {
   const trpc = useTRPC();
-  const incidentsEnabled = useFeature("incident-management");
 
   // `enabled: open` keeps the always-mounted palette from fetching on every
   // dashboard load; data stays cached once fetched.
@@ -31,12 +29,9 @@ export function useCommandMenuData({ open }: { open: boolean }) {
   const { data: maintenances } = useQuery(
     trpc.maintenance.list.queryOptions(undefined, { enabled: open }),
   );
-  // Server rejects the query without the feature — never fire it unflagged.
   // Server order is already open → mitigated → newest declared.
   const { data: incidents } = useQuery(
-    trpc.incident.list.queryOptions(undefined, {
-      enabled: open && incidentsEnabled,
-    }),
+    trpc.incident.list.queryOptions(undefined, { enabled: open }),
   );
 
   const otherWorkspaces =
@@ -64,8 +59,7 @@ export function useCommandMenuData({ open }: { open: boolean }) {
   const pageTitleById = new Map(statusPages?.map((p) => [p.id, p.title]) ?? []);
 
   return {
-    incidentsEnabled,
-    incidents: incidentsEnabled ? incidents : undefined,
+    incidents,
     monitors,
     statusPages,
     statusReports,

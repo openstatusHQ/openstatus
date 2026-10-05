@@ -1,0 +1,115 @@
+---
+category: Reference
+title: Incident Management Reference
+description: Technical specification for declared incidents - severity, status, timeline, postmortem and the Slack channel
+---
+
+A managed incident is your team's internal record of an outage: who declared it, how severe it is, who is in command, what happened when, and the postmortem that follows. Someone on the team declares it. Nothing about it is published.
+
+It is a different object from the two things it sits between:
+
+- A **[monitor incident](/docs/reference/incident)** is created automatically when a monitor fails. It is a downtime record for one monitor.
+- A **[status report](/docs/reference/status-report)** is what your users read on the status page.
+
+## Declaring an incident
+
+- **Dashboard**: from **Incidents**, or from a monitor's downtime row or a status report, which pre-fills the start time.
+- **Slack**: `/openstatus incident declare`, see [Slack](#slack).
+- **Agents**: the `declare_incident` tool, see the [MCP server reference](/docs/reference/mcp-server#incidents).
+
+## Properties
+
+| Property | Description |
+|---|---|
+| Title | Required, up to 256 characters. |
+| Severity | `critical`, `major` or `minor`. |
+| Status | `open`, `mitigated`, `resolved` or `canceled`. |
+| Summary | Optional, up to 4,000 characters. |
+| Commander | Optional workspace member in charge of the incident. |
+| Started at | When the impact began. Defaults to the declare time, or to the start of the monitor incident or status report it was declared from. Can be set in the past. |
+| Status report | Optional link to one status report. |
+| Slack channel | The incident's channel, when Slack is connected. |
+
+## Severity
+
+| Severity | Use for | Stale reminder after |
+|---|---|---|
+| `critical` | Major outage or data loss | 1 hour |
+| `major` | Significant degradation | 4 hours |
+| `minor` | Limited impact | 24 hours |
+
+## Status
+
+| Status | Meaning | Can move to |
+|---|---|---|
+| `open` | Declared, impact ongoing | `mitigated`, `resolved`, `canceled` |
+| `mitigated` | Impact stopped, cause not yet fixed | `resolved`, `open`, `canceled` |
+| `resolved` | Fixed | `open` (reopen) |
+| `canceled` | False alarm | Nothing. Canceling closes the incident. |
+
+A status change can carry a note, which lands on the timeline.
+
+### Closing
+
+Closing ends the incident's life. Only a resolved incident can be closed, by an owner, an admin or the incident's commander, and it needs an approved postmortem unless you explicitly skip it. A closed incident is frozen: status, severity, commander and notes can no longer change.
+
+## Timeline
+
+Every change is appended to the incident's timeline with its time and the member behind it: declared, severity, status, commander and start-time changes, notes, status report links, Slack channel binding, postmortem drafted and approved, closed.
+
+Notes are internal and append-only, up to 10,000 characters each.
+
+## Status report link
+
+An incident can link to one status report. The two keep their own status: marking the incident `mitigated` or `resolved` does not post a public update or resolve the report. Resolve the report separately, with its own public message.
+
+## Postmortem
+
+A postmortem is a markdown document attached to a resolved incident. It is either a `draft` or `approved`.
+
+- The agent drafts it from the incident's fields, its timeline, the linked status report's updates and the history of the incident's Slack channel. Where it has no facts it says what is unknown.
+- The draft has seven sections: Summary, Impact, Timeline, Root cause, What went well, What went wrong, Action items.
+- Drafting again replaces the draft. Once approved, the agent can no longer redraft it; a person can still edit it.
+- An owner, an admin or the incident's commander approves it. Approving closes the incident by default.
+
+## Slack
+
+Requires the [Slack agent](/docs/guides/how-to-setup-slack-agent), which is available on paid plans.
+
+### Channel per incident
+
+Declaring an incident, from Slack or the dashboard, opens a channel named `inc-YYYY-MM-DD-<title-slug>` (UTC date). The declarer is invited, the topic shows severity, status and a link to the incident, and the incident card is pinned.
+
+- React to a message with 📌 (`:pushpin:`) and it becomes a timeline note, attributed to its author and linked back to Slack. The bot confirms with ✅.
+- Status changes are announced in the channel and the topic is kept in sync.
+- The channel is archived when the incident is closed or canceled.
+
+A failure on Slack's side never loses the incident: it is declared first, the channel is opened after.
+
+### Commands
+
+| Command | What it does |
+|---|---|
+| `/openstatus incident declare` | Opens the declare form. |
+| `/openstatus incident declare <title> [--sev critical\|major\|minor]` | Declares an incident. Severity defaults to `major`. |
+| `/openstatus incident note <text>` | Adds a note to the timeline. Incident channel only. |
+| `/openstatus incident mitigate\|resolve\|cancel\|reopen [#id] [note]` | Changes the status. |
+| `/openstatus incident status [#id]` | Shows where the incident stands. |
+| `/openstatus incident postmortem [#id]` | Drafts the postmortem and posts a card to approve and close. |
+| `/openstatus incident list` | Lists open incidents. |
+
+`#id` is optional inside an incident's channel. Commands that change something post an approval card first; nothing happens until someone approves it.
+
+### Stale reminders
+
+An `open` or `mitigated` incident with no activity gets a reminder after the threshold for its [severity](#severity). If it stays quiet, the next reminders follow at twice, four times and eight times that threshold, and so on. The reminder goes to the incident's channel. Without a channel it is sent as a direct message to the commander, or else to the person who declared it.
+
+## Audit log
+
+Every change to an incident or its postmortem is written to the audit log with the member behind it, whether it came from the dashboard, Slack or an agent.
+
+## Related resources
+
+- **[Understanding status reports and incidents](/docs/concept/status-reports-and-incidents)**: how the objects fit together.
+- **[Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)**: install Slack and run your first incident from it.
+- **[MCP server reference](/docs/reference/mcp-server#incidents)**: the incident tools for agents.

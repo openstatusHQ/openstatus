@@ -37,7 +37,9 @@ new state — a recovery alert for `active`, a degraded alert for `degraded`.
 
 The stored `status` field accepts `triage` (the default), `investigating`, `identified`, `monitoring`, `resolved`, and `duplicated`.
 
-Incidents are distinct from status reports. Status reports are the manual, public communication channel on your status page and are not linked to an incident record — see the [Status report reference](/docs/reference/status-report).
+Incidents are distinct from status reports. Status reports are the manual, public communication channel on your status page and are not linked to a monitor's incident record — see the [Status report reference](/docs/reference/status-report).
+
+This page covers the incident a monitor opens on its own. The incident your team declares, with a severity, a commander, a timeline and a postmortem, is a separate object: see the [Incident management reference](/docs/reference/incident-management).
 
 ## Properties
 
@@ -53,3 +55,4 @@ While an incident is active, it collects and displays key information related to
 ## Related resources
 
 - **[Status report reference](/docs/reference/status-report)** — how to communicate an incident publicly on your status page.
+- **[Incident management reference](/docs/reference/incident-management)** — declared incidents, their timeline and postmortem.
