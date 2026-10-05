@@ -5,15 +5,16 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useEffect, useState } from "react";
 
-const STORAGE_KEY = "openstatus:last-login-provider";
+export const STORAGE_KEY = "openstatus:last-login-provider";
 
-type Provider = "github" | "google" | "oidc" | "email";
+type Provider = "github" | "google" | "oidc" | "sso" | "email";
 
 export function LoginButton({
   provider,
   children,
   onClick,
   className,
+  variant = "secondary",
   ...props
 }: {
   provider: Provider;
@@ -27,7 +28,7 @@ export function LoginButton({
 
   return (
     <Button
-      variant="secondary"
+      variant={variant}
       className={cn(
         "relative w-full",
         isLastUsed && "border-primary border",
@@ -42,8 +43,8 @@ export function LoginButton({
       {children}
       {isLastUsed ? (
         <Badge
-          variant="secondary"
-          className="border-primary bg-background absolute -top-2.5 -right-2.5 border text-[10px]"
+          variant="outline"
+          className="text-muted-foreground absolute top-1/2 right-2 -translate-y-1/2 px-1.5 text-[10px] font-normal"
         >
           Last used
         </Badge>

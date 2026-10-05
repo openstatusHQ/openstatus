@@ -24,6 +24,7 @@ export {
 } from "./constants";
 export { buildCurlCommand, type CurlRequest } from "./curl";
 export { type HeaderPair, headerPairSchema } from "./headers";
+export { personName } from "./person-name";
 export { iteratorToStream, yieldMany } from "./stream";
 export { type PageUpdateStatus, statusLabel } from "./status";
 

@@ -5,6 +5,8 @@ import { type Duration, Effect, Schedule } from "effect";
 import { render } from "react-email";
 import { Resend } from "resend";
 
+import DashboardMagicLinkEmail from "../emails/dashboard-magic-link";
+import type { DashboardMagicLinkProps } from "../emails/dashboard-magic-link";
 import FollowUpEmail from "../emails/followup";
 import MonitorAlertEmail, {
   monitorAlertSubject,
@@ -383,6 +385,34 @@ export class EmailClient {
     } catch (err) {
       console.error(`Error sending status page magic link to ${req.to}`, err);
     }
+  }
+
+  /** Throws on a Resend failure so the login form can say the email did not go out. */
+  public async sendDashboardMagicLink(
+    req: DashboardMagicLinkProps & { to: string },
+  ) {
+    if (env.NODE_ENV === "development") {
+      console.log(`Sending dashboard magic link email to ${req.to}`);
+      console.log(`>>> Magic Link: ${req.link}`);
+      return;
+    }
+
+    const html = await render(<DashboardMagicLinkEmail link={req.link} />);
+    const result = await this.client.emails.send({
+      from: SYSTEM_FROM,
+      subject: "Sign in to openstatus",
+      to: req.to,
+      html,
+    });
+
+    if (result.error) {
+      console.error(
+        `Error sending dashboard magic link to ${req.to}`,
+        result.error,
+      );
+      throw result.error;
+    }
+    console.log(`Sent dashboard magic link email to ${req.to}`);
   }
 
   public async sendMaintenanceNotification(req: {

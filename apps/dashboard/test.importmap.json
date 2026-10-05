@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "@/": "./src/",
+    "@openstatus/upstash": "./src/test/upstash.mock.ts"
+  }
+}
