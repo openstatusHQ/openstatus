@@ -23,7 +23,7 @@ The word "incident" is overloaded. Colloquially it means the whole event — the
 
 ## Incidents: detection
 
-An incident is created **automatically** when at least half of a monitor's configured regions report an `error` — requiring agreement across regions is what filters out a single flaky probe. You never create an incident by hand.
+An incident is created **automatically** when at least half of a monitor's configured regions report an `error` — requiring agreement across regions is what filters out a single flaky probe. You never create this kind of incident by hand.
 
 An incident is scoped to a single **monitor** and is primarily an internal object:
 
@@ -37,7 +37,7 @@ Think of an incident as the smoke detector going off. It tells *you* something i
 
 A status report is what your users actually read. It is created **manually** (dashboard, CLI, or API), belongs to a single **status page**, and is attached to one or more of that page's [components](/docs/reference/page-components) — the services your users recognize, not your internal monitors.
 
-Crucially, a status report is **not linked to an incident** in the data model. They are independent:
+Crucially, a status report is **not linked to a monitor's incident** in the data model. They are independent:
 
 - A monitor can fail (incident) without you publishing anything — say, a flapping internal service.
 - You can publish a report with no incident behind it — a third-party provider is down, or you spot a problem your monitors can't see.
@@ -63,6 +63,12 @@ Each update can declare a per-component impact — `degraded_performance`, `part
 - On status pages using [manual uptime calculation](/docs/concept/uptime-calculation-and-values#manual-type), impacts also weight the uptime percentage: a major outage counts fully against uptime, a partial outage counts half, and degraded performance not at all.
 
 The [Status report reference](/docs/reference/status-report) covers the exact impact semantics and weights.
+
+## Declared incidents: coordination
+
+Detection and communication leave a gap: the team's own record of the event. With incident management, someone **declares** an incident by hand, from the dashboard or Slack. It carries a severity, a commander, an internal timeline and, once resolved, a postmortem.
+
+A declared incident is internal. It can link to a status report, and each keeps its own status: the team can mark the incident `mitigated` while the public report still says `monitoring`. See the [Incident management reference](/docs/reference/incident-management).
 
 ## Maintenance windows: planned disruption
 
@@ -101,4 +107,4 @@ On the status page itself, when several apply to one component, the worst wins: 
 
 - **[Publish your first status report](/docs/tutorial/your-first-status-report)** — the hands-on version of this page.
 - **[Building trust with status pages](/docs/concept/best-practices-status-page)** — what to write in those updates.
-- **[Incident](/docs/reference/incident)**, **[Status report](/docs/reference/status-report)**, and **[Maintenance](/docs/reference/maintenance)** references — the field-level specifications.
+- **[Incident](/docs/reference/incident)**, **[Incident management](/docs/reference/incident-management)**, **[Status report](/docs/reference/status-report)**, and **[Maintenance](/docs/reference/maintenance)** references — the field-level specifications.

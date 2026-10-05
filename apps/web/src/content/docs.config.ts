@@ -261,6 +261,10 @@ export const docsNav: DocsNavSection[] = [
         label: "Notification Channels Reference",
       },
       { slug: "reference/incident", label: "Incident Reference" },
+      {
+        slug: "reference/incident-management",
+        label: "Incident Management Reference",
+      },
       { slug: "reference/location", label: "Location Reference" },
       {
         slug: "reference/private-location",
