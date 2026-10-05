@@ -1,5 +1,7 @@
 <p align="center" style="margin-top: 120px">
 
+[![Deploy to Railyard](https://app.railyard.run/deploy/badge)](https://app.railyard.run/deploy?repo=https://github.com/openstatusHQ/openstatus)
+
   <h3 align="center">openstatus</h3>
 
   <p align="center">The open-source status page and uptime monitoring platform.
