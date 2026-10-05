@@ -35,12 +35,12 @@ function parseDate(dateString: string): Date {
 // Match the digits explicitly: `Number("")` is 0 (finite!), so a blank id used
 // to slip through and target component 0, and `Number.parseInt("1.5")` is 1, so
 // swapping in parseInt alone would still truncate a malformed id silently.
-const PAGE_COMPONENT_ID = /^\d+$/;
+const NUMERIC_ID = /^\d+$/;
 
 function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
   return ids.map((id) => {
     const trimmed = id.trim();
-    if (!PAGE_COMPONENT_ID.test(trimmed)) {
+    if (!NUMERIC_ID.test(trimmed)) {
       throw new ConnectError(
         `Invalid page component id: "${id}"`,
         Code.InvalidArgument,
@@ -48,6 +48,17 @@ function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
     }
     return Number(trimmed);
   });
+}
+
+function parseIncidentId(id: string): number {
+  const trimmed = id.trim();
+  if (!NUMERIC_ID.test(trimmed)) {
+    throw new ConnectError(
+      `Invalid incident id: "${id}"`,
+      Code.InvalidArgument,
+    );
+  }
+  return Number(trimmed);
 }
 
 // empty list ⇒ undefined: an old client omitting the field must produce a
@@ -86,6 +97,10 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
             pageId,
             pageComponentIds: parsePageComponentIds(req.pageComponentIds),
             componentImpacts: parseComponentImpacts(req.componentImpacts),
+            incidentId:
+              req.incidentId === undefined
+                ? undefined
+                : parseIncidentId(req.incidentId),
           },
         });
 

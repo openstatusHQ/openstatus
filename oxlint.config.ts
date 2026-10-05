@@ -66,6 +66,7 @@ export default defineConfig({
         "apps/server/src/routes/rpc/handlers/status-report/**",
         "apps/server/src/routes/rpc/handlers/maintenance/**",
         "apps/server/src/routes/rpc/handlers/notification/**",
+        "apps/server/src/routes/rpc/handlers/incident/**",
         "apps/server/src/routes/slack/interactions.ts",
       ],
       excludeFiles: [

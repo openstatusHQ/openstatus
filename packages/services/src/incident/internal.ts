@@ -18,6 +18,16 @@ import { getMembership } from "../member/membership";
 
 export const INCIDENT_FEATURE = "incident-management";
 
+export const incidentUserColumns = {
+  id: true,
+  name: true,
+  firstName: true,
+  lastName: true,
+  email: true,
+  photoUrl: true,
+  deletedAt: true,
+} as const;
+
 export function requireIncidentFeature(ctx: ServiceContext): void {
   requireFeature(ctx, INCIDENT_FEATURE);
 }

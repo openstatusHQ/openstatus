@@ -10,6 +10,7 @@ import {
   sql,
 } from "@openstatus/db";
 import {
+  incident,
   page as pageTable,
   pageComponent,
   type PageComponentImpact,
@@ -69,6 +70,7 @@ export type StatusReportWithRelations = StatusReport &
     pageComponents: PageComponent[];
     /** Flat list of associated component ids. Convenience for proto conversion. */
     pageComponentIds: number[];
+    incidentId: number | null;
     /**
      * The owning page with its full component roster. `null` when the report
      * has no `pageId` — rare today but schema-allowed.
@@ -105,30 +107,43 @@ async function enrichReportsBatch(
   // Everything that keys off the reports themselves — updates, component
   // associations, owning pages and their component rosters — in one
   // round-trip. Only the impact rows below depend on a prior result.
-  const [allUpdates, assocRows, pageRows, pageSiblings] = await batchReads(db, [
-    db
-      .select()
-      .from(statusReportUpdate)
-      .where(inArray(statusReportUpdate.statusReportId, reportIds))
-      .orderBy(desc(statusReportUpdate.date), desc(statusReportUpdate.id)),
-    // Explicit column selection with aliases avoids depending on drizzle's
-    // auto-derived `row.<object_name>` keys — those are named after the
-    // exported JS variable, so a rename in the schema silently breaks the
-    // row shape at runtime.
-    db
-      .select({
-        reportId: statusReportsToPageComponents.statusReportId,
-        component: pageComponent,
-      })
-      .from(pageComponent)
-      .innerJoin(
-        statusReportsToPageComponents,
-        eq(statusReportsToPageComponents.pageComponentId, pageComponent.id),
-      )
-      .where(inArray(statusReportsToPageComponents.statusReportId, reportIds)),
-    db.select().from(pageTable).where(anyPage),
-    db.select().from(pageComponent).where(anyPageComponent),
-  ]);
+  const [allUpdates, assocRows, pageRows, pageSiblings, incidentRows] =
+    await batchReads(db, [
+      db
+        .select()
+        .from(statusReportUpdate)
+        .where(inArray(statusReportUpdate.statusReportId, reportIds))
+        .orderBy(desc(statusReportUpdate.date), desc(statusReportUpdate.id)),
+      // Explicit column selection with aliases avoids depending on drizzle's
+      // auto-derived `row.<object_name>` keys — those are named after the
+      // exported JS variable, so a rename in the schema silently breaks the
+      // row shape at runtime.
+      db
+        .select({
+          reportId: statusReportsToPageComponents.statusReportId,
+          component: pageComponent,
+        })
+        .from(pageComponent)
+        .innerJoin(
+          statusReportsToPageComponents,
+          eq(statusReportsToPageComponents.pageComponentId, pageComponent.id),
+        )
+        .where(
+          inArray(statusReportsToPageComponents.statusReportId, reportIds),
+        ),
+      db.select().from(pageTable).where(anyPage),
+      db.select().from(pageComponent).where(anyPageComponent),
+      db
+        .select({ id: incident.id, statusReportId: incident.statusReportId })
+        .from(incident)
+        .where(inArray(incident.statusReportId, reportIds)),
+    ]);
+  const incidentByReport = new Map<number, number>();
+  for (const row of incidentRows) {
+    if (row.statusReportId !== null) {
+      incidentByReport.set(row.statusReportId, row.id);
+    }
+  }
 
   // One query: all impact rows for all updates.
   const updateIds = allUpdates.map((u) => u.id);
@@ -225,6 +240,7 @@ async function enrichReportsBatch(
       updates: updatesByReport.get(r.id) ?? [],
       pageComponents: components,
       pageComponentIds: components.map((c) => c.id),
+      incidentId: incidentByReport.get(r.id) ?? null,
       page: r.pageId != null ? (pageById.get(r.pageId) ?? null) : null,
     };
   });

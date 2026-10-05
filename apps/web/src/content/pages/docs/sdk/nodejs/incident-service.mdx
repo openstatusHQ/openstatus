@@ -1,0 +1,181 @@
+---
+category: SDK
+title: Incident Service
+description: "Declare and run incidents with the openstatus Node.js SDK: lifecycle, timeline, status report link and postmortem"
+---
+
+Declare and run incidents: move them through their lifecycle, keep a timeline, link the public status report and write the postmortem. The Incident Service provides 13 RPC methods.
+
+The `IncidentService` is live on the API (`/rpc/openstatus.incident.v1.IncidentService/*`, see the [API reference](https://api.openstatus.dev/openapi)). The examples below use the SDK client shape it will ship with in an upcoming release.
+
+An incident is your team's internal record of an outage. It is not public: to tell your users, link a [status report](/docs/sdk/nodejs/status-report-service). It is also not the same as monitor downtime, which openstatus detects on its own.
+
+## Declare an Incident
+
+```typescript
+import { IncidentSeverity } from "@openstatus/sdk-node";
+
+const { incident } = await client.incident.v1.IncidentService.declareIncident({
+  title: "Checkout API returns 502",
+  severity: IncidentSeverity.MAJOR,
+  commanderEmail: "jane@example.com",
+  startedAt: "2024-03-15T10:30:00Z",
+  openSlackChannel: true,
+});
+
+console.log(`Incident #${incident?.id} declared`);
+```
+
+- `commanderEmail` must belong to a member of your workspace. Without it the incident has no commander. A newly assigned commander gets an email, unless they created the API key.
+- `startedAt` defaults to now. Set it in the past to declare an outage after the fact.
+- `openSlackChannel` creates a dedicated Slack channel when the Slack integration is connected. It defaults to `false`.
+- `statusReportId` links an existing status report right away.
+
+## Lifecycle
+
+```
+open ──▶ mitigated ──▶ resolved ──▶ closed
+  │                       ▲
+  └──── (skip mitigated) ─┘
+```
+
+| From | Allowed next statuses |
+| --- | --- |
+| `OPEN` | `MITIGATED`, `RESOLVED`, `CANCELED` |
+| `MITIGATED` | `RESOLVED`, `OPEN`, `CANCELED` |
+| `RESOLVED` | `OPEN` (reopen), or close with `closeIncident` |
+| `CANCELED` | none: a false alarm, closed for good |
+
+Every incident carries `allowedTransitions`, so you don't have to hard-code this table. Closed is not a status: a closed incident has `closedAt` set and keeps `RESOLVED` (or `CANCELED`). After close, only the postmortem can change.
+
+### Change the Status
+
+```typescript
+import { IncidentStatus } from "@openstatus/sdk-node";
+
+await client.incident.v1.IncidentService.setIncidentStatus({
+  id: "42",
+  status: IncidentStatus.MITIGATED,
+  note: "Rolled back the deploy, error rate is dropping.",
+});
+```
+
+The note becomes part of the timeline entry. Setting the status the incident already has, or a transition the table forbids, fails with `failed_precondition`.
+
+A linked status report is never updated for you. To tell your users the incident is over, post a resolved update with [`addStatusReportUpdate`](/docs/sdk/nodejs/status-report-service).
+
+### Add a Note
+
+```typescript
+const { event } = await client.incident.v1.IncidentService.addIncidentNote({
+  id: "42",
+  message: "Root cause looks like the connection pool limit.",
+});
+```
+
+## Get and List Incidents
+
+```typescript
+const { incident } = await client.incident.v1.IncidentService.getIncident({
+  id: "42",
+});
+
+for (const event of incident?.events ?? []) {
+  console.log(event.createdAt, event.type, event.message);
+}
+```
+
+`getIncident` includes the full timeline, newest first. Other responses leave `events` empty.
+
+```typescript
+const { incidents, totalSize } = await client.incident.v1.IncidentService
+  .listIncidents({
+    statuses: [IncidentStatus.RESOLVED],
+    closed: false,
+    limit: 20,
+  });
+```
+
+Incidents are listed open first, then by most recently declared. Combine `statuses: [RESOLVED]` with `closed: false` to find the incidents that still need a postmortem.
+
+How long an incident lasted is `startedAt` to `resolvedAt` (or `closedAt` when canceled), or to now while it is ongoing.
+
+## Update an Incident
+
+```typescript
+await client.incident.v1.IncidentService.updateIncident({
+  id: "42",
+  severity: IncidentSeverity.CRITICAL,
+  commanderEmail: "sam@example.com",
+});
+
+await client.incident.v1.IncidentService.updateIncident({
+  id: "42",
+  clearCommander: true,
+  clearSummary: true,
+});
+```
+
+Fields you leave out are kept. Use `clearCommander` and `clearSummary` to remove a value. Sending a value together with its clear flag is rejected.
+
+## Link a Status Report
+
+```typescript
+await client.incident.v1.IncidentService.linkStatusReport({
+  id: "42",
+  statusReportId: "17",
+});
+
+await client.incident.v1.IncidentService.unlinkStatusReport({ id: "42" });
+```
+
+An incident links to at most one status report, and a status report to at most one incident. You can also link while creating the report, by passing `incidentId` to `createStatusReport`. Status reports return their linked `incidentId`.
+
+## Postmortem
+
+Once an incident is resolved, write its postmortem as markdown:
+
+```typescript
+await client.incident.v1.IncidentService.updatePostmortem({
+  incidentId: "42",
+  content: "## Summary\n\nCheckout failed for 23 minutes...",
+});
+
+const { postmortem, incident } = await client.incident.v1.IncidentService
+  .approvePostmortem({ incidentId: "42", close: true });
+```
+
+`updatePostmortem` replaces the body. Editing an approved postmortem keeps it approved. `approvePostmortem` with `close: true` approves the postmortem and closes the incident in one step.
+
+## Close and Delete
+
+```typescript
+await client.incident.v1.IncidentService.closeIncident({
+  id: "42",
+  skipPostmortem: true,
+});
+```
+
+Closing needs a resolved incident and an approved postmortem, or `skipPostmortem: true`.
+
+```typescript
+await client.incident.v1.IncidentService.deleteIncident({ id: "42" });
+```
+
+Delete is for incidents declared by mistake: it only works while the incident is open and was never mitigated, resolved or closed (`deletable` is true). Cancel the incident otherwise; that keeps the record.
+
+## Permissions
+
+All write methods need an API key with `write` scope. The key acts as the member who created it, with that member's current role:
+
+| Method | Who can call it |
+| --- | --- |
+| `closeIncident`, `approvePostmortem` | Workspace owners and admins, and the incident commander |
+| `deleteIncident` | Workspace owners and admins |
+| Everything else | Any member |
+
+Keys that were created before keys had an owner cannot close, delete or approve; they get `permission_denied`. Create a new key from the dashboard to get one tied to your account.
+
+## Slack
+
+When the [Slack agent](/docs/guides/how-to-setup-slack-agent) is connected, changes made through the API are announced in the incident's channel, and closing, canceling or deleting the incident archives it, just like changes made in the dashboard. Incidents return `slackChannelUrl` when a channel is bound.

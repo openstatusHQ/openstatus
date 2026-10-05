@@ -36,6 +36,10 @@
     "./private_location/v1": {
       "import": "./gen/ts/openstatus/private_location/v1/index.ts",
       "types": "./gen/ts/openstatus/private_location/v1/index.ts"
+    },
+    "./incident/v1": {
+      "import": "./gen/ts/openstatus/incident/v1/index.ts",
+      "types": "./gen/ts/openstatus/incident/v1/index.ts"
     }
   },
   "scripts": {

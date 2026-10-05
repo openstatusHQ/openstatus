@@ -8,7 +8,8 @@ import { escapeMrkdwn } from "@openstatus/services/incident";
 import { type ModalView, WebClient } from "@slack/web-api";
 import { z } from "zod";
 
-import { runInBackground } from "./background";
+import { runInBackground } from "@/libs/background";
+
 import {
   type Block,
   buildLinkAccountBlocks,
