@@ -1,6 +1,5 @@
 "use client";
 
-import { Add } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
@@ -82,7 +81,6 @@ export default function Page() {
               }}
             >
               <Button data-section="action" size="sm">
-                <Add />
                 Create Maintenance
               </Button>
             </FormSheetMaintenance>

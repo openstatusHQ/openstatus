@@ -157,7 +157,7 @@ export function FormConfiguration({
             <FormCardSeparator />
             <FormCardContent
               className={cn(
-                "grid gap-4 sm:grid-cols-2",
+                "grid gap-4 sm:grid-cols-3",
                 !hasMonitorComponents && "pointer-events-none opacity-50",
               )}
             >
@@ -259,7 +259,7 @@ export function FormConfiguration({
               </Note>
             </FormCardContent>
             <FormCardSeparator />
-            <FormCardContent className="grid gap-4 sm:grid-cols-2">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               <FormField
                 control={form.control}
                 name="configuration.uptime"
@@ -341,7 +341,7 @@ export function FormConfiguration({
                 </ul>
               </Note>
             </FormCardContent>
-            <FormCardFooter>
+            <FormCardFooter className="flex-wrap">
               <FormCardFooterInfo>
                 Learn more about{" "}
                 <Link

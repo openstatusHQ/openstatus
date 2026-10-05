@@ -211,14 +211,14 @@ export function FormPageAccess({
             <FormCardSeparator />
           ) : null}
           {watchAccessType === "password" ? (
-            <FormCardContent className="grid gap-4">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               {locked ? <FormCardContentUpgrade /> : null}
               <FormField
                 control={form.control}
                 name="password"
                 disabled={locked}
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="sm:col-span-2">
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -234,14 +234,14 @@ export function FormPageAccess({
             </FormCardContent>
           ) : null}
           {watchAccessType === "email-domain" ? (
-            <FormCardContent className="grid gap-4">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               {locked ? <FormCardContentUpgrade /> : null}
               <FormField
                 control={form.control}
                 name="authEmailDomains"
                 disabled={locked}
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="sm:col-span-2">
                     <FormLabel>Email Domains</FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -258,14 +258,14 @@ export function FormPageAccess({
             </FormCardContent>
           ) : null}
           {watchAccessType === "ip-restriction" ? (
-            <FormCardContent className="grid gap-4">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               {locked ? <FormCardContentUpgrade /> : null}
               <FormField
                 control={form.control}
                 name="allowedIpRanges"
                 disabled={locked}
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="sm:col-span-2">
                     <FormLabel>Allowed IP Ranges</FormLabel>
                     <FormControl>
                       <Input
