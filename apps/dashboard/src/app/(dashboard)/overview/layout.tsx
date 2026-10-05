@@ -23,6 +23,9 @@ export default async function Layout({
     queryClient.prefetchQuery(
       trpc.incident.list.queryOptions({ status: ["open", "mitigated"] }),
     ),
+    queryClient.prefetchQuery(
+      trpc.incident.list.queryOptions({ status: ["resolved", "canceled"] }),
+    ),
   ]);
 
   return (

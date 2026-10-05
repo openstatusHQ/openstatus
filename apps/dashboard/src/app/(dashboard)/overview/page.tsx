@@ -46,10 +46,10 @@ export default function Page() {
     trpc.statusReport.list.queryOptions({}),
   );
   const { data: maintenances } = useQuery(trpc.maintenance.list.queryOptions());
-  const { data: openIncidents } = useQuery(
+  const { data: openIncidents, isPending: openIncidentsPending } = useQuery(
     trpc.incident.list.queryOptions({ status: ["open", "mitigated"] }),
   );
-  const { data: endedIncidents } = useQuery(
+  const { data: endedIncidents, isPending: endedIncidentsPending } = useQuery(
     trpc.incident.list.queryOptions({ status: ["resolved", "canceled"] }),
   );
 
@@ -58,7 +58,10 @@ export default function Page() {
     !pages ||
     !monitorIncidents ||
     !statusReports ||
-    !maintenances
+    !maintenances ||
+    // wait for the incident queries; a failed one still renders (see below)
+    openIncidentsPending ||
+    endedIncidentsPending
   )
     return null;
 
