@@ -75,7 +75,8 @@ export default function Page() {
       monitorIncidents,
       statusReports,
       maintenances,
-      managedIncidents: incidentsEnabled ? (openIncidents ?? []) : undefined,
+      // undefined on a failed query — falls back to the downtime count
+      managedIncidents: incidentsEnabled ? openIncidents : undefined,
     });
 
   return (
