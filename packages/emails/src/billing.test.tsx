@@ -471,6 +471,10 @@ describe("send plumbing", () => {
     });
     expect(id).toBe("email_123");
     const [payload, options] = send.calls[0].args;
+    expect(payload.from).toBe(
+      "openstatus <notifications@notifications.openstatus.dev>",
+    );
+    expect(payload.replyTo).toBe("ping@openstatus.dev");
     expect(payload.scheduledAt).toBe("2026-09-22T00:00:00.000Z");
     expect(options).toEqual({
       idempotencyKey: "stripe:evt_2:plan-ending-soon",
@@ -503,9 +507,9 @@ describe("send plumbing", () => {
     });
     const [payload, options] = send.calls[0].args;
     expect(payload.from).toBe(
-      "Thibault from openstatus <thibault@notifications.openstatus.dev>",
+      "openstatus <notifications@notifications.openstatus.dev>",
     );
-    expect(payload.replyTo).toBe("thibault@openstatus.dev");
+    expect(payload.replyTo).toBe("ping@openstatus.dev");
     expect(payload.subject).toBe(
       "Your trial ends on 25 Sep — add a payment method to keep starter",
     );
