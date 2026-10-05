@@ -16,10 +16,7 @@ import {
 } from "../context";
 import { ConflictError, NotFoundError } from "../errors";
 import { closeIncidentInTx } from "./close";
-import {
-  appendIncidentEvent,
-  getIncidentInWorkspace,
-} from "./internal";
+import { appendIncidentEvent, getIncidentInWorkspace } from "./internal";
 import {
   ApprovePostmortemInput,
   DraftPostmortemInput,

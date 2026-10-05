@@ -15,10 +15,7 @@ import {
   withTransaction,
 } from "../context";
 import { NotFoundError } from "../errors";
-import {
-  appendIncidentEvent,
-  assertMember,
-} from "./internal";
+import { appendIncidentEvent, assertMember } from "./internal";
 import { assertStatusReportLinkable } from "./link-status-report";
 import { DeclareIncidentInput } from "./schemas";
 

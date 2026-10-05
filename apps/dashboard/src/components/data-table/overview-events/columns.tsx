@@ -18,6 +18,7 @@ import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-report-update/sheet-create";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { statusConfig as managedIncidentStatusConfig } from "@/data/managed-incidents.client";
 import {
   type OverviewEvent,
   eventTypeConfig,
@@ -28,7 +29,6 @@ import {
   incidentStatusConfig,
   maintenanceStatusConfig,
 } from "@/data/overview-events.client";
-import { statusConfig as managedIncidentStatusConfig } from "@/data/managed-incidents.client";
 import { colors } from "@/data/status-report-updates.client";
 
 import { IncidentActionCell } from "./incident-action-cell";

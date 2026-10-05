@@ -1,8 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import {
-  type ServiceContext,
-  ServiceError,
-} from "@openstatus/services";
+import { type ServiceContext, ServiceError } from "@openstatus/services";
 import { escapeMrkdwn } from "@openstatus/services/incident";
 import { type ModalView, WebClient } from "@slack/web-api";
 import { z } from "zod";
