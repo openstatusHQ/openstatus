@@ -202,7 +202,7 @@ export function StatusReportComposer({
                   >
                     <ComponentListName
                       group={groupOf.get(component.id)}
-                      className="min-w-0 flex-1 sm:flex-none"
+                      className="min-w-0 flex-1 sm:flex-initial"
                     >
                       {component.name}
                     </ComponentListName>

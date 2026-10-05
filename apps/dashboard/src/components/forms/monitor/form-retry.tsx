@@ -91,7 +91,7 @@ export function FormRetry({
               control={form.control}
               name="retry"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Retry</FormLabel>
                   <FormControl>
                     <Input
