@@ -32,6 +32,7 @@ import {
   getCurrentSubscription,
   hasPaymentMethod,
   stripe,
+  syncedLimits,
   trialEndsAtOf,
 } from "./shared";
 import {
@@ -232,11 +233,9 @@ export const stripeRouter = createTRPCRouter({
           });
         }
 
-        // Classify before mutating Stripe. An item on a price neither table
-        // knows throws, and throwing *after* the update would leave the
-        // customer re-priced and billed while the workspace kept the old plan
-        // — a split the webhook cannot repair either, since it throws on the
-        // same item.
+        // Classify before mutating Stripe: throwing *after* the update would
+        // leave the customer re-priced and billed while the workspace kept the
+        // old plan. Custom-deal prices were already refused above.
         buildFromSubscriptionOrThrow(current);
 
         // Every existing item is listed by id, so Stripe re-prices it in place
@@ -275,7 +274,7 @@ export const stripeRouter = createTRPCRouter({
             endsAt: getCurrentPeriodEnd(updated),
             paidUntil: getCurrentPeriodEnd(updated),
             trialEndsAt: trialEndsAtOf(updated),
-            limits: built.limits,
+            limits: syncedLimits(updated, built),
             reason: "plan_changed",
           },
         });
