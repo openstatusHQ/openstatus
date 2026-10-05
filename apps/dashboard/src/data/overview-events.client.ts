@@ -1,5 +1,6 @@
 import type { RouterOutputs } from "@openstatus/api";
 import {
+  CloudOff,
   Monitor,
   type IconType,
   Report,
@@ -9,22 +10,26 @@ import {
 } from "@openstatus/icons";
 
 import type { StatusVariant } from "@/components/common/status-dot";
+import { incidentEndedAt } from "@/data/managed-incidents.client";
 import {
   reportResolvedAt,
   reportStartedAt,
 } from "@/data/status-reports.client";
 
 type MonitorIncident = RouterOutputs["monitorIncident"]["list"][number];
+type ManagedIncident = NonNullable<RouterOutputs["incident"]["list"]>[number];
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 
 export type OverviewEvent =
   | { type: "incident"; incident: MonitorIncident }
+  | { type: "managedIncident"; incident: ManagedIncident }
   | { type: "report"; report: StatusReport }
   | { type: "maintenance"; maintenance: Maintenance };
 
 export const eventTypeConfig = {
-  incident: { label: "Downtime", icon: IncidentIcon },
+  incident: { label: "Downtime", icon: CloudOff },
+  managedIncident: { label: "Incident", icon: IncidentIcon },
   report: { label: "Status Report", icon: Report },
   maintenance: { label: "Maintenance", icon: MaintenanceIcon },
 } as const;
@@ -79,6 +84,7 @@ export function getMaintenanceStatus(
 export function getStartedAt(event: OverviewEvent): Date {
   switch (event.type) {
     case "incident":
+    case "managedIncident":
       return event.incident.startedAt;
     case "report":
       return reportStartedAt(event.report);
@@ -91,6 +97,8 @@ export function getResolvedAt(event: OverviewEvent): Date | null {
   switch (event.type) {
     case "incident":
       return event.incident.resolvedAt;
+    case "managedIncident":
+      return incidentEndedAt(event.incident);
     case "report":
       return reportResolvedAt(event.report);
     case "maintenance":
@@ -102,6 +110,11 @@ function isOpen(event: OverviewEvent, now: Date): boolean {
   switch (event.type) {
     case "incident":
       return !event.incident.resolvedAt;
+    case "managedIncident":
+      return (
+        event.incident.status === "open" ||
+        event.incident.status === "mitigated"
+      );
     case "report":
       return event.report.status !== "resolved";
     case "maintenance":
@@ -125,12 +138,15 @@ export function buildOverviewData(
     statusReports,
     maintenances,
     managedIncidents,
+    endedIncidents,
   }: {
     monitors: RouterOutputs["monitor"]["list"];
     pages: RouterOutputs["page"]["list"];
     monitorIncidents: MonitorIncident[];
     // set when incident management is enabled — replaces the downtime count
     managedIncidents?: RouterOutputs["incident"]["list"];
+    // resolved/canceled managed incidents — only feed Recent Activity
+    endedIncidents?: RouterOutputs["incident"]["list"];
     statusReports: StatusReport[];
     maintenances: Maintenance[];
   },
@@ -141,6 +157,10 @@ export function buildOverviewData(
   const events: OverviewEvent[] = [
     ...monitorIncidents.map((incident) => ({
       type: "incident" as const,
+      incident,
+    })),
+    ...(endedIncidents ?? []).map((incident) => ({
+      type: "managedIncident" as const,
       incident,
     })),
     ...statusReports.map((report) => ({ type: "report" as const, report })),
@@ -189,7 +209,7 @@ export function buildOverviewData(
       value: openIncidentsCount,
       href: managedIncidents ? "/incidents" : undefined,
       variant: openIncidentsCount > 0 ? "destructive" : "default",
-      icon: eventTypeConfig.incident.icon,
+      icon: IncidentIcon,
     },
     {
       title: "Open Reports",

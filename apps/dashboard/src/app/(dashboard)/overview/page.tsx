@@ -54,6 +54,10 @@ export default function Page() {
     ...trpc.incident.list.queryOptions({ status: ["open", "mitigated"] }),
     enabled: incidentsEnabled,
   });
+  const { data: endedIncidents } = useQuery({
+    ...trpc.incident.list.queryOptions({ status: ["resolved", "canceled"] }),
+    enabled: incidentsEnabled,
+  });
   const columns = useMemo(
     () => getColumns({ declare: incidentsEnabled }),
     [incidentsEnabled],
@@ -77,6 +81,7 @@ export default function Page() {
       maintenances,
       // undefined on a failed query — falls back to the downtime count
       managedIncidents: incidentsEnabled ? openIncidents : undefined,
+      endedIncidents: incidentsEnabled ? endedIncidents : undefined,
     });
 
   return (

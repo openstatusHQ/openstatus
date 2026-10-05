@@ -27,6 +27,7 @@ export { ChevronRight } from "./chevron-right";
 export { ChevronUp } from "./chevron-up";
 export { Clock } from "./clock";
 export { Close } from "./close";
+export { CloudOff } from "./cloud-off";
 export { Code } from "./code";
 export { Collapse } from "./collapse";
 export { Command } from "./command";

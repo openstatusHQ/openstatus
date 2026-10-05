@@ -29,6 +29,7 @@ import {
   incidentStatusConfig,
   maintenanceStatusConfig,
 } from "@/data/overview-events.client";
+import { statusConfig as managedIncidentStatusConfig } from "@/data/managed-incidents.client";
 import { colors } from "@/data/status-report-updates.client";
 
 import { IncidentActionCell } from "./incident-action-cell";
@@ -37,6 +38,8 @@ function getStatus(event: OverviewEvent): { label: string; color: string } {
   switch (event.type) {
     case "incident":
       return incidentStatusConfig[getIncidentStatus(event.incident)];
+    case "managedIncident":
+      return managedIncidentStatusConfig[event.incident.status];
     case "report":
       return { label: event.report.status, color: colors[event.report.status] };
     case "maintenance":
@@ -50,6 +53,11 @@ function getTitle(event: OverviewEvent): { title: string; href: string } {
       return {
         title: event.incident.monitor.name,
         href: `/monitors/${event.incident.monitor.id}/incidents`,
+      };
+    case "managedIncident":
+      return {
+        title: event.incident.title,
+        href: `/incidents/${event.incident.id}`,
       };
     case "report":
       return {
@@ -200,6 +208,7 @@ const actionColumn = (declare: boolean): ColumnDef<OverviewEvent> => ({
             </FormSheetStatusReportUpdateCreate>
           </div>
         );
+      case "managedIncident":
       case "maintenance":
         return null;
     }
@@ -217,6 +226,8 @@ const actionsColumn: ColumnDef<OverviewEvent> = {
     switch (event.type) {
       case "incident":
         return <IncidentRowActions incident={event.incident} />;
+      case "managedIncident":
+        return null;
       case "report":
         return <StatusReportRowActions report={event.report} />;
       case "maintenance":
