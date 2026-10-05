@@ -103,12 +103,13 @@ describe("buildLimitsFromSubscription", () => {
     expect(built?.limits["status-pages"]).toBe(planDefault + 5);
   });
 
-  test("throws on an unsupported price when a plan is present", () => {
-    expect(() =>
-      buildLimitsFromSubscription(
-        subscriptionWith([{ priceId: STARTER }, { priceId: "price_unknown" }]),
-      ),
-    ).toThrow(/unsupported stripe price/i);
+  test("reports a custom price instead of throwing", () => {
+    const built = buildLimitsFromSubscription(
+      subscriptionWith([{ priceId: STARTER }, { priceId: "price_custom" }]),
+    );
+    expect(built?.plan).toBe("starter");
+    expect(built?.customPriceIds).toEqual(["price_custom"]);
+    expect(built?.limits).toEqual(getLimits("starter"));
   });
 
   test("one pack addon unit grants `packSize` limit units", () => {

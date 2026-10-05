@@ -36,6 +36,7 @@ import {
   isNewerSubscription,
   listLiveSubscriptions,
   stripe,
+  syncedLimits,
   trialEndsAtOf,
 } from "./shared";
 
@@ -267,7 +268,7 @@ export const webhookRouter = createTRPCRouter({
         endsAt: getCurrentPeriodEnd(current),
         paidUntil: getCurrentPeriodEnd(current),
         trialEndsAt: trialEndsAtOf(current),
-        limits: built.limits,
+        limits: syncedLimits(current, built),
       },
     });
 
@@ -427,7 +428,7 @@ export const webhookRouter = createTRPCRouter({
         endsAt: getCurrentPeriodEnd(subscription),
         paidUntil: getCurrentPeriodEnd(subscription),
         trialEndsAt: trialEndsAtOf(subscription),
-        limits: built.limits,
+        limits: syncedLimits(subscription, built),
         reason: "checkout_session_completed",
       },
     });
@@ -474,31 +475,33 @@ export const webhookRouter = createTRPCRouter({
       });
     }
 
-    try {
-      const withCard = await hasPaymentMethod(subscription);
-      const preview = withCard
-        ? undefined
-        : await previewWorkspaceDowngrade({
-            ctx: {
-              workspace: ws,
-              actor: { type: "system", job: "stripe-trial-will-end" },
-              db: opts.ctx.db,
-            },
-          });
-      await sendTrialEnding({
-        to: await getBillingRecipients(opts.ctx.db, ws.id, customerId),
-        eventId: opts.input.event.id,
-        workspaceSlug: ws.slug,
-        trialEnd: new Date(subscription.trial_end * 1000),
-        plan: ws.plan ?? "starter",
-        hasPaymentMethod: withCard,
-        loss: preview
-          ? toPlanLoss(preview, preview.customDomains, preview.ssoEnabled)
-          : undefined,
-      });
-    } catch (err) {
-      console.error("Failed to send trial ending email:", err);
-    }
+    // Stripe fires this once per trial, so a failure must reach Stripe as a
+    // non-2xx to be redelivered; the idempotency key dedupes the retry.
+    const withCard = await hasPaymentMethod(subscription);
+    const preview = withCard
+      ? undefined
+      : await previewWorkspaceDowngrade({
+          ctx: {
+            workspace: ws,
+            actor: { type: "system", job: "stripe-trial-will-end" },
+            db: opts.ctx.db,
+          },
+        }).catch((err) => {
+          // The reminder matters more than the loss lines.
+          console.error("Failed to preview trial downgrade:", err);
+          return undefined;
+        });
+    await sendTrialEnding({
+      to: await getBillingRecipients(opts.ctx.db, ws.id, customerId),
+      eventId: opts.input.event.id,
+      workspaceSlug: ws.slug,
+      trialEnd: new Date(subscription.trial_end * 1000),
+      plan: ws.plan ?? "starter",
+      hasPaymentMethod: withCard,
+      loss: preview
+        ? toPlanLoss(preview, preview.customDomains, preview.ssoEnabled)
+        : undefined,
+    });
   }),
   customerSubscriptionDeleted: webhookProcedure.mutation(async (opts) => {
     const subscription = opts.input.event.data.object as Stripe.Subscription;

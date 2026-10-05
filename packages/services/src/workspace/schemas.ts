@@ -83,7 +83,8 @@ export type UpdateWorkspaceNameInput = z.infer<typeof UpdateWorkspaceNameInput>;
  * Set a workspace's billing plan and the columns that move with it
  * (subscription id, paid-until / ends-at dates, feature limits). Driven
  * by the Stripe webhook — `limits` is the structured object; the verb
- * serialises it to the `text` column. `reason` is stamped into the audit
+ * serialises it to the `text` column. Omitted `limits` leaves the stored
+ * ones untouched (custom deals whose limits are set by hand). `reason` is stamped into the audit
  * row's `metadata` so a plan change from an involuntary cancellation is
  * distinguishable from a checkout upgrade.
  */
@@ -93,7 +94,7 @@ export const UpdateWorkspacePlanInput = z.object({
   paidUntil: z.date().nullable(),
   endsAt: z.date().nullable(),
   trialEndsAt: z.date().nullable().optional(),
-  limits: limitsSchema,
+  limits: limitsSchema.optional(),
   reason: z.string().optional(),
 });
 export type UpdateWorkspacePlanInput = z.infer<typeof UpdateWorkspacePlanInput>;

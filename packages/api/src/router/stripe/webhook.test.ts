@@ -466,6 +466,46 @@ describe("stripe webhook emails", () => {
       expect(keys.slice(0, 2)).toEqual(keys.slice(2, 4));
     });
 
+    test("a custom-deal price syncs the plan but keeps hand-set limits", async () => {
+      const s = await seed();
+      const handSet = JSON.stringify({ monitors: 999 });
+      await db
+        .update(workspace)
+        .set({ limits: handSet })
+        .where(eq(workspace.id, s.workspace.id));
+      const sub = subscription(s.stripeId, {
+        id: "sub_custom_deal",
+        items: {
+          data: [
+            {
+              price: { id: TEAM_PRICE },
+              quantity: 1,
+              current_period_end: now() + 10 * DAY,
+            },
+            {
+              price: { id: "price_custom_deal" },
+              quantity: 1,
+              current_period_end: now() + 10 * DAY,
+            },
+          ],
+        },
+      } as Partial<Stripe.Subscription>);
+      live = [sub];
+
+      await caller().customerSubscriptionUpdated(
+        event("customer.subscription.updated", sub, { metadata: {} }),
+      );
+
+      const ws = await db
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, s.workspace.id))
+        .get();
+      expect(ws?.subscriptionId).toBe("sub_custom_deal");
+      expect(ws?.plan).toBe("team");
+      expect(ws?.limits).toBe(handSet);
+    });
+
     test("a mail failure does not fail the plan sync", async () => {
       const s = await seed();
       const sub = subscription(s.stripeId, { cancel_at_period_end: true });
@@ -559,6 +599,45 @@ describe("stripe webhook emails", () => {
       );
       await caller().customerSubscriptionTrialWillEnd(evt);
       assertSpyCalls(send, 0);
+    });
+
+    test("a mail failure fails the webhook so Stripe redelivers", async () => {
+      const s = await seed();
+      failSends();
+      const evt = event(
+        "customer.subscription.trial_will_end",
+        subscription(s.stripeId, { status: "trialing", trial_end: trialEnd }),
+      );
+
+      await expect(
+        caller().customerSubscriptionTrialWillEnd(evt),
+      ).rejects.toThrow();
+    });
+
+    test("a Resend error response fails the webhook too", async () => {
+      const s = await seed();
+      send.restore();
+      stubs = stubs.filter((x) => x !== send);
+      send = stub(resend.emails, "send", () =>
+        Promise.resolve({
+          data: null,
+          error: { name: "application_error", message: "boom" },
+          // biome-ignore lint/suspicious/noExplicitAny: Resend result double
+        } as any),
+      );
+      stubs.push(send);
+
+      await expect(
+        caller().customerSubscriptionTrialWillEnd(
+          event(
+            "customer.subscription.trial_will_end",
+            subscription(s.stripeId, {
+              status: "trialing",
+              trial_end: trialEnd,
+            }),
+          ),
+        ),
+      ).rejects.toThrow();
     });
 
     test("no trial_end → nothing sent", async () => {

@@ -223,6 +223,9 @@ export async function sendTrialEnding(
       subject: trialEndingSubject(props),
       react: <TrialEndingEmail {...props} />,
     },
-    { idempotencyKey: stripeIdempotencyKey(eventId, "trial-ending") },
+    {
+      idempotencyKey: stripeIdempotencyKey(eventId, "trial-ending"),
+      throwOnError: true,
+    },
   );
 }
