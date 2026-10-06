@@ -1,9 +1,10 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { AI } from "@openstatus/icons";
+import { AI, Check, Copy } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { InputGroupButton } from "@openstatus/ui/components/ui/input-group";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -63,6 +64,7 @@ export function IncidentPostmortem({
   // refetch never clobbers unsaved edits.
   const [draft, setDraft] = useState<string | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
+  const { copy, isCopied } = useCopyToClipboard();
   const server = postmortem?.content ?? TEMPLATE;
   const content = draft ?? server;
 
@@ -125,6 +127,9 @@ export function IncidentPostmortem({
   const canSave = !busy && dirty && content.trim().length > 0;
   const canApprove = postmortem !== null && !approved;
 
+  const showAgent = agentAllowed && !approved;
+  const hasActions = postmortem !== null || showAgent;
+
   const hint = dirty
     ? "Unsaved changes"
     : approved && incident.closedAt === null
@@ -136,17 +141,33 @@ export function IncidentPostmortem({
           : "No postmortem yet";
 
   return (
-    <Composer size="lg" defaultValue={approved ? "preview" : "write"}>
+    <Composer size="lg" defaultValue={postmortem ? "preview" : "write"}>
       <ComposerHeader>
-        {agentAllowed && !approved ? (
-          <InputGroupButton
-            variant="outline"
-            disabled={busy}
-            onClick={() => draftWithAgent.mutate({ id: incident.id })}
-          >
-            <AI />
-            {draftWithAgent.isPending ? "Drafting..." : "Draft with agent"}
-          </InputGroupButton>
+        {/* Rendered only with an action, so the header's "Markdown" hint shows otherwise. */}
+        {hasActions ? (
+          <div className="flex items-center gap-1">
+            {postmortem ? (
+              <InputGroupButton
+                variant="ghost"
+                onClick={() =>
+                  copy(content, { withToast: "Postmortem copied" })
+                }
+              >
+                {isCopied ? <Check /> : <Copy />}
+                Copy
+              </InputGroupButton>
+            ) : null}
+            {showAgent ? (
+              <InputGroupButton
+                variant="outline"
+                disabled={busy}
+                onClick={() => draftWithAgent.mutate({ id: incident.id })}
+              >
+                <AI />
+                {draftWithAgent.isPending ? "Drafting..." : "Draft with agent"}
+              </InputGroupButton>
+            ) : null}
+          </div>
         ) : null}
       </ComposerHeader>
       <ComposerTextarea

@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from "@openstatus/db";
+import { and, desc, eq, inArray, isNotNull, sql } from "@openstatus/db";
 import { incident } from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb } from "../context";
@@ -78,6 +78,26 @@ export async function getIncidentForStatusReport(args: {
       ),
     )
     .get();
+}
+
+/** Status reports already held by an incident; each links to at most one. */
+export async function listLinkedStatusReportIds(args: {
+  ctx: ServiceContext;
+}): Promise<number[]> {
+  const { ctx } = args;
+  const rows = await getReadDb(ctx)
+    .select({ statusReportId: incident.statusReportId })
+    .from(incident)
+    .where(
+      and(
+        eq(incident.workspaceId, ctx.workspace.id),
+        isNotNull(incident.statusReportId),
+      ),
+    )
+    .all();
+  return rows.flatMap((r) =>
+    r.statusReportId === null ? [] : [r.statusReportId],
+  );
 }
 
 /** The incident bound to a Slack channel, or `undefined`. */
