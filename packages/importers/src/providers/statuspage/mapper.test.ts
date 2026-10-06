@@ -111,6 +111,32 @@ describe("mapIncidentToStatusReport", () => {
     expect(lastUpdate.message).toContain("## Summary");
   });
 
+  it("does not duplicate the postmortem when a postmortem update exists", () => {
+    const incident = MOCK_INCIDENTS[0];
+    const updates = incident.incident_updates ?? [];
+    const postmortemUpdate = {
+      ...updates[updates.length - 1],
+      id: "sp_upd_postmortem",
+      status: "postmortem" as const,
+      body: incident.postmortem_body,
+      affected_components: null,
+      created_at: "2099-01-01T00:00:00.000Z",
+    };
+    const result = mapIncidentToStatusReport(
+      {
+        ...incident,
+        status: "postmortem",
+        incident_updates: [...updates, postmortemUpdate],
+      },
+      1,
+      10,
+    );
+    expect(result.report.status).toBe("resolved");
+    const lastUpdate = result.updates[result.updates.length - 1];
+    expect(lastUpdate.status).toBe("resolved");
+    expect(lastUpdate.message).toBe(incident.postmortem_body);
+  });
+
   it("maps per-update component impacts from affected_components", () => {
     const result = mapIncidentToStatusReport(MOCK_INCIDENTS[0], 1, 10);
     expect(result.updates[0].componentImpacts).toEqual([
@@ -131,10 +157,12 @@ describe("mapIncidentUpdateStatus", () => {
     ["identified", "identified"],
     ["monitoring", "monitoring"],
     ["resolved", "resolved"],
+    ["postmortem", "resolved"],
     ["scheduled", "investigating"],
     ["in_progress", "investigating"],
     ["verifying", "monitoring"],
     ["completed", "resolved"],
+    ["unknown", "investigating"],
   ] as const) {
     it(`maps ${input} to ${expected}`, () => {
       expect(mapIncidentUpdateStatus(input)).toBe(expected);
@@ -185,5 +213,10 @@ describe("mapSubscriber", () => {
 
   it("returns null for slack subscriber", () => {
     expect(mapSubscriber(MOCK_SUBSCRIBERS[4], 10)).toBeNull();
+  });
+
+  it("returns null for subscriber with unknown mode", () => {
+    const subscriber = { ...MOCK_SUBSCRIBERS[0], mode: "unknown" as const };
+    expect(mapSubscriber(subscriber, 10)).toBeNull();
   });
 });
