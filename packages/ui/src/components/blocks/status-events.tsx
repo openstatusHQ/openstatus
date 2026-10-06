@@ -497,12 +497,12 @@ export function StatusEventTimelineReport({
     : sortedUpdates;
   const latest = sortedUpdates[0];
   const firstUpdate = sortedUpdates[sortedUpdates.length - 1];
-  const resolvedDuration =
-    sortedUpdates.length > 1 &&
-    latest.status === "resolved" &&
-    latest.date > firstUpdate.date
-      ? `(${formatDistanceStrict(firstUpdate.date, latest.date)})`
+  const distance =
+    sortedUpdates.length > 1 && latest.status === "resolved"
+      ? formatDistanceStrict(firstUpdate.date, latest.date)
       : undefined;
+  const resolvedDuration =
+    distance && distance !== "0 seconds" ? `(${distance})` : undefined;
 
   return (
     <div

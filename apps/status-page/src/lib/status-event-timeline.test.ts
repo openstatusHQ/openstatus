@@ -56,4 +56,19 @@ describe("StatusEventTimelineReport", () => {
     );
     expect(html).not.toMatch(/\(\d+ (seconds|minutes|hours|days)/);
   });
+
+  test("shows no duration when resolved less than half a second after the first update", () => {
+    const html = renderToStaticMarkup(
+      createElement(StatusEventTimelineReport, {
+        updates: [
+          {
+            ...updates[0],
+            date: new Date(updates[2].date.getTime() + 300),
+          },
+          updates[2],
+        ],
+      }),
+    );
+    expect(html).not.toMatch(/\(\d+ (seconds|minutes|hours|days)/);
+  });
 });
