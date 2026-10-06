@@ -110,7 +110,7 @@ export type StatuspageIncident = z.infer<typeof StatuspageIncidentSchema>;
 
 export const StatuspageSubscriberSchema = z.object({
   id: z.string(),
-  page_id: z.string(),
+  page_id: z.string().nullish(),
   mode: lenientEnum([
     "email",
     "sms",

@@ -162,6 +162,24 @@ describe("StatuspageClient", () => {
     expect(subscribers[0].workspace_name).toBeUndefined();
   });
 
+  test("getSubscribers accepts the real API shape without page_id", async () => {
+    mockFetchPaginated([
+      {
+        id: "ht9cy29jdb3r",
+        mode: "email",
+        email: "user@example.com",
+        created_at: "03-14-22 12:19 CET",
+        confirmed_at: "03-14-22 12:19 CET",
+        skip_confirmation_notification: false,
+        quarantined_at: null,
+        purge_at: null,
+      },
+    ]);
+    const subscribers = await client.getSubscribers("sp_page_001");
+    expect(subscribers[0].email).toBe("user@example.com");
+    expect(subscribers[0].page_id).toBeUndefined();
+  });
+
   test("getIncidents accepts incidents with omitted optional fields", async () => {
     const [incident] = MOCK_INCIDENTS;
     const { metadata, postmortem_body, shortlink, ...rest } = incident;
