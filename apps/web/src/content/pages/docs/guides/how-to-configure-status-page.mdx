@@ -48,37 +48,39 @@ The **Components Configuration** card, on the **Components** page, controls two 
 
 These settings only apply to **monitor components** — the fields are disabled until your status page has at least one.
 
-**Bar type** — how every day is displayed in a status tracker. Either **absolute** or **manual**.
+**Status source** — where the bars get their status from:
+- **Monitor checks** — bars show your monitor's real results for each day.
+- **Reports only** — bars only change when you post a status report or maintenance. Monitor results are hidden.
 
-**Card value** — only configurable if the bar type is **absolute**. Choose between **duration**, which shows the duration of "success", "error", "degraded", or "maintenance" reports, or **requests**, which shares the number of request statuses themselves. If **manual** bar type is chosen, only the most significant status of the day is shown.
+**Card shows** — only configurable if the status source is **Monitor checks**. Choose between **Time per status**, which shows how long the monitor was operational, degraded, down or in maintenance, or **Number of checks**, which shows how many checks succeeded, degraded or failed. With **Reports only**, the card shows only the worst status of the day.
 
 #### Uptime and history
 
-**Show uptime** — uptime is calculated by either the **duration** of the different reports _or_ the **request** values depending on what you've chosen for the **absolute** value (including incidents). If you've chosen **manual**, it's calculated only from the duration of your status reports.
+**Show uptime** — with **Monitor checks**, uptime is calculated from either the **time per status** _or_ the **number of checks**, depending on what you've chosen for **Card shows** (including incidents). With **Reports only**, it's calculated only from the duration of your status reports.
 
 **History** — the number of days of history rendered on the bars. Choose between **30** or **45** days (defaults to **45**).
 
 A few examples to understand it:
 
-Example of **absolute bar** with **duration card** and **showing uptime**
+Example of **Monitor checks** with **Time per status** and **showing uptime**
 
 <Image
     src="/docs/tutorial/configure-status-page/status-page-beta-3.png"
-    alt="absolute bar type with duration card and showing uptime"
+    alt="monitor checks with time per status and showing uptime"
 />
 
-Example of **absolute bar** with **request card** and **hiding uptime**
+Example of **Monitor checks** with **Number of checks** and **hiding uptime**
 
 <Image
     src="/docs/tutorial/configure-status-page/status-page-beta-4.png"
-    alt="absolute bar type with request card and hiding uptime"
+    alt="monitor checks with number of checks and hiding uptime"
 />
 
-Example of **manual bar** with **simple card** and **hiding uptime**
+Example of **Reports only** and **hiding uptime**
 
 <Image
     src="/docs/tutorial/configure-status-page/status-page-beta-2.png"
-    alt="manual bar type and hiding uptime"
+    alt="reports only and hiding uptime"
 />
 
 ### 2. Appearance
