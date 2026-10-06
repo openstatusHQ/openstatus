@@ -136,7 +136,7 @@ export function IncidentPostmortem({
           : "No postmortem yet";
 
   return (
-    <Composer size="lg" defaultValue={approved ? "preview" : "write"}>
+    <Composer size="lg" defaultValue={postmortem ? "preview" : "write"}>
       <ComposerHeader>
         {agentAllowed && !approved ? (
           <InputGroupButton

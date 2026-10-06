@@ -1,5 +1,6 @@
 import { asc, eq } from "@openstatus/db";
 import {
+  type IncidentEventType,
   type IncidentPostmortem,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
@@ -137,7 +138,19 @@ Write GitHub-flavored markdown with exactly these sections, in order:
 ## What went well
 ## What went wrong
 ## Action items
-Use only the facts given. Where a section has no facts, say what is unknown instead of guessing. Timeline entries are UTC timestamps with one line each. Action items are a checklist ("- [ ] ...") with an owner placeholder when none is known. No preamble, no closing remarks.`;
+Use only the facts given. Where a section has no facts, say what is unknown instead of guessing. The timeline is a bullet list ("- HH:MM UTC - ...") of the key moments only (detection, escalation, decisions, mitigation, resolution); state the date once above the list when the incident spans one day. Never mention internal IDs (Slack channel IDs, status report numbers). Action items are a checklist ("- [ ] ...") with an owner placeholder when none is known. No preamble, no closing remarks.`;
+
+/** Events that record wiring, not what happened during the incident. */
+const BOOKKEEPING = new Set<IncidentEventType>([
+  "status_report_linked",
+  "status_report_unlinked",
+  "slack_channel_bound",
+  "slack_channel_unbound",
+  "postmortem_drafted",
+  "postmortem_updated",
+  "postmortem_approved",
+  "closed",
+]);
 
 async function fitTranscript(
   transcript: string,
@@ -232,6 +245,7 @@ export async function generatePostmortemDraft(args: {
 
   const timeline = [...events]
     .reverse()
+    .filter((e) => !BOOKKEEPING.has(e.type))
     .map(
       (e) =>
         `[${e.createdAt.toISOString()}] ${e.type}${e.createdByUser ? ` by ${displayName(e.createdByUser)}` : ""}: ${e.message ?? ""}`,
