@@ -145,6 +145,35 @@ describe("StatuspageClient", () => {
     expect(subscribers[0].mode).toBe("teams");
   });
 
+  test("getSubscribers accepts subscribers with omitted optional fields", async () => {
+    const {
+      phone_number,
+      phone_country,
+      display_phone_number,
+      obfuscated_channel_name,
+      workspace_name,
+      components,
+      quarantined_at,
+      ...subscriber
+    } = MOCK_SUBSCRIBERS[0];
+    mockFetchPaginated([subscriber]);
+    const subscribers = await client.getSubscribers("sp_page_001");
+    expect(subscribers[0].email).toBe(MOCK_SUBSCRIBERS[0].email);
+    expect(subscribers[0].workspace_name).toBeUndefined();
+  });
+
+  test("getIncidents accepts incidents with omitted optional fields", async () => {
+    const [incident] = MOCK_INCIDENTS;
+    const { metadata, postmortem_body, shortlink, ...rest } = incident;
+    const updates = (incident.incident_updates ?? []).map(
+      ({ affected_components, display_at, deliver_notifications, ...u }) => u,
+    );
+    mockFetchPaginated([{ ...rest, incident_updates: updates }]);
+    const incidents = await client.getIncidents("sp_page_001");
+    expect(incidents[0].postmortem_body).toBeUndefined();
+    expect(incidents[0].incident_updates?.[0].affected_components).toBeUndefined();
+  });
+
   test("getSubscribers returns parsed subscribers", async () => {
     mockFetchPaginated(MOCK_SUBSCRIBERS);
     const subscribers = await client.getSubscribers("sp_page_001");
