@@ -169,7 +169,7 @@ services:
     environment:
       - COMPATIBILITY_MODE=1
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7181/tokens"]
+      test: ["CMD", "curl", "-f", "-o", "/dev/null", "http://localhost:7181/tokens"]
       interval: 15s
       timeout: 5s
       retries: 5
