@@ -240,7 +240,11 @@ describe("upsertSelfSignupSubscriber", () => {
           },
         });
         expect(result.id).toBe(first.id);
-        expect(result.token).toBe(first.token);
+        if (scenario === "entire-page first") {
+          expect(result.token).toBe(first.token);
+        } else {
+          expect(result.token).not.toBe(first.token);
+        }
         expect(result.componentIds).toEqual([]);
         expect(
           await tx.query.pageSubscriberToPageComponent.findMany({
@@ -270,6 +274,69 @@ describe("upsertSelfSignupSubscriber", () => {
         });
         expect(verified?.acceptedAt).not.toBeNull();
         expect(verified?.componentIds).toEqual([]);
+      });
+    });
+  }
+
+  for (const scope of ["entire page", "additional component"] as const) {
+    test(`old verification link cannot confirm expanded scope: ${scope}`, async () => {
+      await withTestTransaction(async (tx) => {
+        const first = await upsertSelfSignupSubscriber({
+          visitor: null,
+          db: tx,
+          input: {
+            email: "scope-verification@example.com",
+            pageId: PAGE_ID,
+            componentIds: [COMPONENT_1],
+          },
+        });
+        if (!first.token) throw new Error("Expected a verification token");
+        await tx
+          .update(pageSubscriber)
+          .set({ expiresAt: new Date("2020-01-01T00:00:00Z") })
+          .where(eq(pageSubscriber.id, first.id));
+        await expect(
+          verifySelfSignupSubscriber({
+            input: { token: first.token },
+            db: tx,
+          }),
+        ).rejects.toThrow("Verification token expired");
+
+        const expanded = await upsertSelfSignupSubscriber({
+          visitor: null,
+          db: tx,
+          input: {
+            email: first.email,
+            pageId: PAGE_ID,
+            componentIds: scope === "entire page" ? [] : [COMPONENT_2],
+          },
+        });
+        expect(
+          await verifySelfSignupSubscriber({
+            input: { token: first.token },
+            db: tx,
+          }),
+        ).toBeNull();
+        expect(
+          (
+            await tx.query.pageSubscriber.findFirst({
+              where: eq(pageSubscriber.id, first.id),
+            })
+          )?.acceptedAt,
+        ).toBeNull();
+        expect(expanded.token).not.toBe(first.token);
+        if (!expanded.token)
+          throw new Error("Expected a new verification token");
+        const verified = await verifySelfSignupSubscriber({
+          input: { token: expanded.token },
+          db: tx,
+        });
+        expect(verified?.acceptedAt).toBeInstanceOf(Date);
+        expect(verified?.componentIds.sort((a, b) => a - b)).toEqual(
+          scope === "entire page"
+            ? []
+            : [COMPONENT_1, COMPONENT_2].sort((a, b) => a - b),
+        );
       });
     });
   }
