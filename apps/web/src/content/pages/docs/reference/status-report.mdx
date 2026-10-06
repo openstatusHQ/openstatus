@@ -72,7 +72,7 @@ All attached components must belong to the same status page. Adding a component 
 
 ## Component impacts
 
-Beyond marking a component as affected, each update of a status report can declare **how badly** each component is affected. This per-component impact drives the component's live status, the report's overall indicator, and — for status pages using manual uptime — the uptime percentage.
+Beyond marking a component as affected, each update of a status report can declare **how badly** each component is affected. This per-component impact drives the component's live status, the report's overall indicator, and — for status pages using the Reports only status source — the uptime percentage.
 
 ### Impact levels
 
@@ -107,7 +107,7 @@ After update 2, the API shows _partial outage_ (latest update naming it) and the
 
 - **Component status:** `major_outage` renders the component and its status bar red; `degraded_performance` and `partial_outage` render orange; `operational` renders green.
 - **Report indicator:** the report's overall state is derived from the **worst** active component impact — it is not stored separately.
-- **Manual uptime:** on status pages using [manual uptime calculation](/docs/concept/uptime-calculation-and-values#manual-type), each interval between updates counts against uptime weighted by its impact:
+- **Reports only uptime:** on status pages using the [Reports only status source](/docs/concept/uptime-calculation-and-values#reports-only), each interval between updates counts against uptime weighted by its impact:
 
 | Impact | Downtime weight |
 |--------|-----------------|
@@ -117,7 +117,7 @@ After update 2, the API shows _partial outage_ (latest update naming it) and the
 | `major_outage` | 1 — full downtime |
 
 <Aside>
-Status reports created before component impacts existed (or via API clients that don't send impacts) have no impact rows. They keep the previous behavior: the affected components render orange and, in manual mode, the report's full duration counts as downtime.
+Status reports created before component impacts existed (or via API clients that don't send impacts) have no impact rows. They keep the previous behavior: the affected components render orange and, with the Reports only status source, the report's full duration counts as downtime.
 </Aside>
 
 ## Related resources

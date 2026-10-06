@@ -169,8 +169,8 @@ the **Components** page in the dashboard; see
 
 | Field | Values | Default | Description |
 |---|---|---|---|
-| `type` | `absolute`, `manual` | `absolute` | Bar type. `absolute` draws each day proportionally; `manual` shows only the most significant status of the day. |
-| `value` | `duration`, `requests`, `manual` | `requests` | What the hover card and uptime percentage are derived from. Only meaningful when `type` is `absolute`. |
+| `type` | `absolute`, `manual` | `absolute` | **Status source** in the dashboard. `absolute` (**Monitor checks**) draws each day proportionally from monitor results; `manual` (**Reports only**) uses only status reports and maintenances and shows the most significant status of the day. |
+| `value` | `duration`, `requests`, `manual` | `requests` | **Card shows** in the dashboard: `duration` (**Time per status**) or `requests` (**Number of checks**). What the hover card and uptime percentage are derived from. Only meaningful when `type` is `absolute`. |
 | `uptime` | boolean | `true` | Whether the uptime percentage is shown at all. |
 | `days` | `30`, `45` | `45` | Number of days of history rendered on the bars. |
 

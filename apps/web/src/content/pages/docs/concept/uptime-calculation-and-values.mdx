@@ -1,7 +1,7 @@
 ---
 category: Concepts
 title: Uptime Calculation and Shared Values
-description: Understand how openstatus calculates uptime — absolute (duration or requests) and manual modes — and choose which values to share on your status page.
+description: Understand how openstatus calculates uptime — from monitor checks (time per status or number of checks) or from reports only — and choose which values to share on your status page.
 ---
 
 Uptime values can be a complete lie if they're not properly connected to monitoring. openstatus makes uptime transparent and configurable — you decide how it's calculated and which values to share on your status page.
@@ -12,28 +12,32 @@ When monitoring an endpoint, a check can end up in one of three states:
 - **Degraded** — slow or partially failing.
 - **Down** — no response or full failure.
 
-There are two top-level types of uptime calculation:
+In the dashboard, two settings on the status page's **Components** page control this:
 
-- **Absolute** (default) — derived directly from your monitoring data.
-    - **Duration** — aggregated from the incidents' duration.
-    - **Requests** (default) — aggregated from the request values.
-- **Manual** — for teams that prefer full control over what's shown.
+- **Status source** — where the status comes from:
+    - **Monitor checks** (default) — derived directly from your monitoring data.
+    - **Reports only** — only from the status reports and maintenances you publish.
+- **Card shows** — what the hover card (and uptime) is based on, when the source is **Monitor checks**:
+    - **Time per status** — aggregated from the incidents' duration.
+    - **Number of checks** (default) — aggregated from every check result.
+
+> **API and URL values:** in the API, SDKs and configuration links, **Monitor checks** is `type: absolute`, **Reports only** is `type: manual`, **Time per status** is `value: duration` and **Number of checks** is `value: requests`.
 
 **TL;DR**
 
-| Type        | Source of truth      | What users see                      | Best for                        |
+| Setting        | Source of truth      | What users see                      | Best for                        |
 |-------------|----------------------|-------------------------------------|----------------------------------|
-| **Duration** (absolute) | Incident duration    | Time-based uptime, proportional colours | Accurate long-term view         |
-| **Request** (absolute)  | Every ping result    | Request-based uptime %              | Real-time reflection            |
-| **Manual**   | Manually set status  | Controlled, narrative updates       | Transparency without monitoring |
+| **Monitor checks** + **Time per status** | Incident duration    | Time-based uptime, proportional colours | Accurate long-term view         |
+| **Monitor checks** + **Number of checks** | Every check result    | Check-based uptime %              | Real-time reflection            |
+| **Reports only**   | Your status reports and maintenances  | Controlled, narrative updates       | Transparency without monitoring |
 
-## Absolute type
+## Monitor checks
 
-The absolute type calculates uptime based on actual monitoring results. It's the most accurate reflection of what's really happening, and comes in two variants: _duration_ and _request_. Both share real data with your users — incidents, degraded states, and historical uptime — but they differ in how they aggregate and display that data.
+With **Monitor checks** as the status source (`absolute`), uptime is calculated from actual monitoring results. It's the most accurate reflection of what's really happening, and comes in two variants: _time per status_ and _number of checks_. Both share real data with your users — incidents, degraded states, and historical uptime — but they differ in how they aggregate and display that data.
 
-### Duration
+### Time per status
 
-The duration value is calculated from the **total monitoring time and the duration of incidents**.
+The time per status value (`duration`) is calculated from the **total monitoring time and the duration of incidents**.
 
 In simple terms: `uptime = (total time - incident duration) / total time`
 
@@ -43,19 +47,19 @@ Temporary single-region ping failures (e.g., one location failing once, sometime
 
 The proportional colours in the status bar are drawn from these duration values. Hovering over a day shows both incidents and status reports, so users can explore what happened.
 
-### Request
+### Number of checks
 
-The request value is more straightforward — it looks at each ping result individually. **Every check we run contributes to your uptime score**.
+The number of checks value (`requests`) is more straightforward — it looks at each ping result individually. **Every check we run contributes to your uptime score**.
 
 In simple terms: `uptime = (success + degraded) / total requests`
 
 This is the current default mode for most openstatus users. It's simple, data-driven, and updates immediately as new results come in.
 
-Like with duration, hover cards display incidents and status reports, giving your users a quick overview of recent events.
+Like with time per status, hover cards display incidents and status reports, giving your users a quick overview of recent events.
 
-## Manual type
+## Reports only
 
-The manual type is for teams who want to **fully control what's shown** on your status page, without relying on automatic checks. By default, your monitor is marked operational. You can then manually create status reports whenever you want to reflect changes — independent of any monitoring data.
+The **Reports only** status source (`manual`) is for teams who want to **fully control what's shown** on your status page, without relying on automatic checks. By default, your monitor is marked operational. You can then manually create status reports whenever you want to reflect changes — independent of any monitoring data.
 
 This is ideal if:
 

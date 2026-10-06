@@ -13,6 +13,7 @@ import { useParams } from "next/navigation";
 
 import { Link } from "@/components/common/link";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { configurationLabels } from "@/components/forms/status-page/form-configuration";
 import { SidebarRight } from "@/components/nav/sidebar-right";
 import { getPageUrl } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -92,12 +93,16 @@ export function Sidebar() {
               value: statusPage.configuration?.theme ?? "-",
             },
             {
-              label: "Bar Value",
-              value: statusPage.configuration?.type ?? "-",
+              label: "Status source",
+              value: statusPage.configuration?.type
+                ? configurationLabels.type[statusPage.configuration.type]
+                : "-",
             },
             {
-              label: "Card Value",
-              value: statusPage.configuration?.value ?? "-",
+              label: "Card shows",
+              value: statusPage.configuration?.value
+                ? configurationLabels.value[statusPage.configuration.value]
+                : "-",
             },
             {
               label: "Show Uptime",
