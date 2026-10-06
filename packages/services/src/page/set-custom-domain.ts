@@ -42,7 +42,8 @@ export async function setPageCustomDomain(args: {
     throw new ValidationError("Domain cannot contain 'openstatus'");
   }
   // Attach is idempotent per project, so it can't tell our own page's
-  // attachment from another workspace's — the row check has to.
+  // attachment from another workspace's — the row check has to. Not atomic:
+  // concurrent claims can both pass without a unique index.
   if (
     next &&
     (await findDomainHolder({

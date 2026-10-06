@@ -6,6 +6,8 @@ import {
 import { captureMessage } from "@sentry/nextjs";
 import type { NextRequest } from "next/server";
 
+// Report-only unless DOMAIN_RECONCILE_APPLY=1. "missing" is never re-attached:
+// re-saving the domain in the dashboard heals that page.
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
   const authHeader = request.headers.get("authorization");

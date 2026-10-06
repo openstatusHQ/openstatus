@@ -7,7 +7,7 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { LimitExceededError } from "../errors";
+import { LimitExceededError, ValidationError } from "../errors";
 import { assertWithinLimit } from "../limits";
 import type { Page } from "../types";
 import {
@@ -26,6 +26,9 @@ export async function createPage(args: {
   requireScope(ctx, "write");
   const input = CreatePageInput.parse(args.input);
 
+  if (input.customDomain) {
+    throw new ValidationError("Set the custom domain after creating the page.");
+  }
   if (input.customTheme && !ctx.workspace.limits["custom-theme"]) {
     throw new LimitExceededError("custom-theme", 0);
   }
@@ -70,9 +73,6 @@ export async function createPage(args: {
         // JSON string, breaking downstream reads that expect an object.
         configuration,
         ...pageProps,
-        // Domains go through `setPageCustomDomain`, which checks the plan
-        // and attaches on Vercel.
-        customDomain: "",
         authEmailDomains: pageProps.authEmailDomains?.join(","),
         allowedIpRanges: pageProps.allowedIpRanges?.join(","),
       })

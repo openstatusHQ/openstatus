@@ -652,11 +652,18 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
             input: { id: created.id, customDomain },
           });
         } catch (err) {
-          // The attach may have landed before the failure; release it once
-          // the page is gone (skipped if another page holds the domain).
+          // Mapped service errors (limit, conflict, invalid, forbidden) fire
+          // before or instead of an attach; anything else may follow one.
+          const mayHaveAttached =
+            !(err instanceof ServiceError) || err.code === "INTERNAL";
           try {
             await deletePage({ ctx: sCtx, input: { id: created.id } });
-            await detachDomainIfUnused({ domain: customDomain });
+            if (mayHaveAttached) {
+              await detachDomainIfUnused({
+                domain: customDomain,
+                config: sCtx.vercel,
+              });
+            }
           } catch (cleanupErr) {
             console.error("Failed to roll back status page create:", {
               pageId: created.id,

@@ -1,13 +1,7 @@
 import { db, eq } from "@openstatus/db";
 import { page as pageTable } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  test,
-} from "@std/testing/bdd";
+import { afterEach, beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
   clearAuditLogFor,
@@ -241,21 +235,22 @@ describe("setPageCustomDomain", () => {
   });
 });
 
-test("createPage never writes a custom domain", async () => {
+test("createPage rejects a custom domain instead of dropping it", async () => {
   await withTestTransaction(async (tx) => {
     mockVercel(ok);
-    const p = await createPage({
-      ctx: { ...teamCtx, db: tx },
-      input: {
-        title: "Create",
-        description: "",
-        slug: `svc-set-domain-${crypto.randomUUID()}`,
-        customDomain: domain(),
-        workspaceId: teamCtx.workspace.id,
-        monitors: [],
-      },
-    });
-    expect(p.customDomain).toBe("");
+    await expect(
+      createPage({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          title: "Create",
+          description: "",
+          slug: `svc-set-domain-${crypto.randomUUID()}`,
+          customDomain: domain(),
+          workspaceId: teamCtx.workspace.id,
+          monitors: [],
+        },
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
     expect(calls).toHaveLength(0);
   });
 });
@@ -264,18 +259,15 @@ describe("deletePage domain release", () => {
   // Committed db: inside a transaction deletePage deliberately skips Vercel.
   const created: number[] = [];
   afterEach(async () => {
-    for (const id of created.splice(0)) {
+    const ids = created.splice(0);
+    for (const id of ids) {
       await db.delete(pageTable).where(eq(pageTable.id, id));
     }
+    await clearAuditLogFor({ entityType: "page", entityIds: ids });
   });
-  afterAll(async () => {
-    await clearAuditLogFor({ entityType: "page", entityIds: auditIds });
-  });
-  const auditIds: number[] = [];
   async function committedPage(customDomain: string) {
     const id = await pageWithDomain(db, teamCtx, customDomain);
     created.push(id);
-    auditIds.push(id);
     return id;
   }
 

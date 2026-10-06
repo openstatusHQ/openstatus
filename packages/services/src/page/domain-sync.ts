@@ -174,6 +174,7 @@ export async function findDomainHolder(args: {
 
 // customDomain has no unique constraint, so another workspace's page may
 // hold the same domain — detaching it would take their status page down.
+// Concurrent deletes of the last two holders can both skip; reconcile catches it.
 // Returns whether the domain was detached.
 export async function detachDomainIfUnused(args: {
   db?: DB;
