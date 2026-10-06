@@ -94,7 +94,7 @@ export function createStatuspageProvider(): ImportProvider<StatuspageImportConfi
           status: "created" as const,
           data: {
             ...mapComponent(c, config.workspaceId, pageId),
-            sourceGroupId: c.group_id,
+            sourceGroupId: c.group_id ?? null,
           },
         }));
         phases.push({
