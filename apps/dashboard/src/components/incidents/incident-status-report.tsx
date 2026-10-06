@@ -2,9 +2,33 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { statusReportStatus } from "@openstatus/db/src/schema/status_reports/constants";
+import { Check, Expand } from "@openstatus/icons";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@openstatus/ui/components/ui/alert-dialog";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@openstatus/ui/components/ui/command";
 import { Label } from "@openstatus/ui/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@openstatus/ui/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -13,6 +37,7 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -87,6 +112,7 @@ function LinkedReport({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [composing, setComposing] = useState(false);
+  const [confirmUnlink, setConfirmUnlink] = useState(false);
   const [status, setStatus] = useState<string>(
     report.status === "resolved" ? "monitoring" : report.status,
   );
@@ -95,10 +121,18 @@ function LinkedReport({
   const update = usePublishUpdate(report.id);
   const unlink = useMutation(
     trpc.incident.unlinkStatusReport.mutationOptions({
-      onSuccess: () =>
-        queryClient.invalidateQueries({
-          queryKey: trpc.incident.get.queryKey({ id: incident.id }),
-        }),
+      onSuccess: () => {
+        setConfirmUnlink(false);
+        return Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.incident.get.queryKey({ id: incident.id }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.incident.linkedStatusReportIds.queryKey(),
+          }),
+        ]);
+      },
+      onError: (error) => toast.error(errorMessage(error)),
     }),
   );
   const closed = incident.closedAt !== null;
@@ -203,8 +237,7 @@ function LinkedReport({
               <Button
                 size="sm"
                 variant="outline"
-                disabled={unlink.isPending}
-                onClick={() => unlink.mutate({ id: incident.id })}
+                onClick={() => setConfirmUnlink(true)}
               >
                 Unlink
               </Button>
@@ -212,6 +245,30 @@ function LinkedReport({
           </>
         )}
       </ActionCardFooter>
+      <AlertDialog open={confirmUnlink} onOpenChange={setConfirmUnlink}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unlink this status report?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {report.title} stays on your status page as it is, but updates
+              from this incident no longer reach it. You can link it again
+              later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep linked</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={unlink.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                unlink.mutate({ id: incident.id });
+              }}
+            >
+              Unlink
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ActionCard>
   );
 }
@@ -221,7 +278,8 @@ function UnlinkedReport({ incident }: { incident: Incident }) {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [linking, setLinking] = useState(false);
-  const [reportId, setReportId] = useState<string>("");
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [reportId, setReportId] = useState<number | null>(null);
   const closed = incident.closedAt !== null;
 
   const refresh = () =>
@@ -232,6 +290,9 @@ function UnlinkedReport({ incident }: { incident: Incident }) {
       queryClient.invalidateQueries({
         queryKey: trpc.incident.listEvents.queryKey({ id: incident.id }),
       }),
+      queryClient.invalidateQueries({
+        queryKey: trpc.incident.linkedStatusReportIds.queryKey(),
+      }),
     ]);
   const link = useMutation(
     trpc.incident.linkStatusReport.mutationOptions({ onSuccess: refresh }),
@@ -240,9 +301,15 @@ function UnlinkedReport({ incident }: { incident: Incident }) {
     ...trpc.statusReport.list.queryOptions({ order: "desc" }),
     enabled: !closed,
   });
-  const openReports = (reports ?? []).filter((r) => r.status !== "resolved");
+  const { data: linkedIds } = useQuery({
+    ...trpc.incident.linkedStatusReportIds.queryOptions(),
+    enabled: !closed,
+  });
+  const linked = new Set(linkedIds ?? []);
+  const linkable = (reports ?? []).filter((r) => !linked.has(r.id));
+  const selected = linkable.find((r) => r.id === reportId);
   // Closing mid-edit would otherwise strand a form whose footer is gone.
-  const showLink = !closed && linking && openReports.length > 0;
+  const showLink = !closed && linking && linkable.length > 0;
 
   return (
     <ActionCard className="border-dashed">
@@ -262,19 +329,63 @@ function UnlinkedReport({ incident }: { incident: Incident }) {
       </ActionCardHeader>
       {showLink ? (
         <ActionCardContent className="grid gap-2">
-          <Select value={reportId} onValueChange={setReportId}>
-            <SelectTrigger size="sm" className="w-full">
-              <SelectValue placeholder="Select an open report" />
-            </SelectTrigger>
-            <SelectContent>
-              {openReports.map((r) => (
-                <SelectItem key={r.id} value={String(r.id)}>
-                  <StatusDot variant={statusVariants[r.status]} />
-                  {r.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                role="combobox"
+                aria-expanded={pickerOpen}
+                className={cn(
+                  "w-full justify-between font-normal",
+                  !selected && "text-muted-foreground",
+                )}
+              >
+                {selected ? (
+                  <span className="flex min-w-0 items-center gap-2">
+                    <StatusDot variant={statusVariants[selected.status]} />
+                    <span className="truncate">{selected.title}</span>
+                  </span>
+                ) : (
+                  "Search status reports..."
+                )}
+                <Expand className="size-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+              <Command>
+                <CommandInput placeholder="Search status reports..." />
+                <CommandList>
+                  <CommandEmpty>No status report found.</CommandEmpty>
+                  <CommandGroup>
+                    {linkable.map((r) => (
+                      <CommandItem
+                        key={r.id}
+                        value={String(r.id)}
+                        keywords={[r.title, r.page.title, r.status]}
+                        onSelect={() => {
+                          setReportId(r.id);
+                          setPickerOpen(false);
+                        }}
+                      >
+                        <StatusDot variant={statusVariants[r.status]} />
+                        <span className="truncate">{r.title}</span>
+                        <span className="text-muted-foreground ml-auto truncate text-xs">
+                          {r.page.title}
+                        </span>
+                        <Check
+                          className={cn(
+                            "size-4 shrink-0",
+                            r.id === reportId ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </ActionCardContent>
       ) : null}
       {closed ? null : (
@@ -283,12 +394,13 @@ function UnlinkedReport({ incident }: { incident: Incident }) {
             <>
               <Button
                 size="sm"
-                disabled={!reportId || link.isPending}
+                disabled={reportId === null || link.isPending}
                 onClick={() =>
+                  reportId !== null &&
                   toast.promise(
                     link.mutateAsync({
                       id: incident.id,
-                      statusReportId: Number(reportId),
+                      statusReportId: reportId,
                     }),
                     {
                       loading: "Linking...",
@@ -313,7 +425,7 @@ function UnlinkedReport({ incident }: { incident: Incident }) {
               <Button size="sm" onClick={() => setCreateOpen(true)}>
                 Create status report
               </Button>
-              {openReports.length > 0 ? (
+              {linkable.length > 0 ? (
                 <Button
                   size="sm"
                   variant="outline"

@@ -23,6 +23,7 @@ export {
   getIncidentBySlackChannel,
   getIncidentForStatusReport,
   listIncidents,
+  listLinkedStatusReportIds,
 } from "./list";
 export {
   approvePostmortem,
