@@ -39,8 +39,11 @@ export const userRouter = createTRPCRouter({
       });
       // `userId` is derived from `ctx.actor` inside the service — no
       // input needed.
-      await deleteAccount({ ctx: toServiceCtx(ctx) });
-      for (const domain of customDomains) {
+      const deleted = await deleteAccount({ ctx: toServiceCtx(ctx) });
+      for (const domain of new Set([
+        ...customDomains,
+        ...deleted.customDomains,
+      ])) {
         await detachDomainIfUnused({ db: ctx.db, domain }).catch((error) =>
           console.error("Failed to release domain from Vercel:", {
             domain,

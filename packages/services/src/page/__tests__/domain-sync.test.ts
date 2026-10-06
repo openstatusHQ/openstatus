@@ -199,7 +199,11 @@ for (const path of [
   "//evil.example/v2/user",
 ]) {
   test(`vercelFetch refuses ${path}`, async () => {
+    mockVercel(() => {
+      throw new Error("unexpected network call");
+    });
     const error = await vercelFetch("token", path).catch((e) => e);
     expect(error).toBeInstanceOf(ValidationError);
+    expect(calls).toHaveLength(0);
   });
 }

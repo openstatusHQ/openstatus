@@ -7,8 +7,9 @@ import { captureMessage } from "@sentry/nextjs";
 import type { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
+  const secret = process.env.CRON_SECRET;
   const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return new Response("Unauthorized", { status: 401 });
   }
 
@@ -21,11 +22,15 @@ export async function GET(request: NextRequest) {
     apply: process.env.DOMAIN_RECONCILE_APPLY === "1",
   });
 
-  if (result.orphans.length > 0 || result.missing.length > 0) {
+  const remaining = {
+    orphans: result.orphans.filter((d) => !result.detached.includes(d)),
+    missing: result.missing,
+  };
+  if (remaining.orphans.length > 0 || remaining.missing.length > 0) {
     console.warn("Custom domain drift between Vercel and page table:", result);
     captureMessage("Custom domain drift between Vercel and page table", {
       level: "warning",
-      extra: result,
+      extra: { ...result, remaining },
     });
   }
 

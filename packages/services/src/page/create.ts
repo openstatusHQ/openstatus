@@ -70,6 +70,9 @@ export async function createPage(args: {
         // JSON string, breaking downstream reads that expect an object.
         configuration,
         ...pageProps,
+        // Domains go through `setPageCustomDomain`, which checks the plan
+        // and attaches on Vercel.
+        customDomain: "",
         authEmailDomains: pageProps.authEmailDomains?.join(","),
         allowedIpRanges: pageProps.allowedIpRanges?.join(","),
       })

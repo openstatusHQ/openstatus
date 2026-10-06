@@ -1,4 +1,4 @@
-import { and, ne, sql } from "@openstatus/db";
+import { and, db as defaultDb, ne, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 
 import type { DB, ServiceContext } from "../context";
@@ -86,6 +86,8 @@ const ADD_FAILED =
   "Failed to add custom domain. Please try again. If it continues, contact support.";
 const REMOVE_FAILED =
   "Failed to remove custom domain. Please try again. If it continues, contact support.";
+const READ_FAILED =
+  "Failed to check custom domain. Please try again. If it continues, contact support.";
 
 export type ProjectDomain = {
   name: string;
@@ -99,13 +101,13 @@ export async function getProjectDomain(
   domain: string,
 ): Promise<ProjectDomain | null> {
   const response = await syncFetch(config, projectDomainPath(config, domain), {
-    failure: ADD_FAILED,
+    failure: READ_FAILED,
   });
   if (response.status === 404) return null;
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     console.warn("Failed to read domain from Vercel:", { domain, error });
-    throw new InternalServiceError(ADD_FAILED);
+    throw new InternalServiceError(READ_FAILED, error);
   }
   return response.json();
 }
@@ -150,18 +152,13 @@ export async function detachDomain(
   throw new InternalServiceError(REMOVE_FAILED);
 }
 
-// customDomain has no unique constraint, so another workspace's page may
-// hold the same domain — detaching it would take their status page down.
-export async function detachDomainIfUnused(args: {
+/** Any page (across workspaces) holding `domain`, case-insensitive. */
+export async function findDomainHolder(args: {
   db: DB;
   domain: string;
   excludePageId?: number;
-  config?: VercelDomainConfig | null;
-}): Promise<void> {
-  const config = resolveVercelConfig({ vercel: args.config });
-  if (!config) return;
-
-  const holder = await args.db
+}): Promise<{ id: number } | undefined> {
+  return args.db
     .select({ id: page.id })
     .from(page)
     .where(
@@ -173,16 +170,35 @@ export async function detachDomainIfUnused(args: {
       ),
     )
     .get();
+}
 
+// customDomain has no unique constraint, so another workspace's page may
+// hold the same domain — detaching it would take their status page down.
+// Returns whether the domain was detached.
+export async function detachDomainIfUnused(args: {
+  db?: DB;
+  domain: string;
+  excludePageId?: number;
+  config?: VercelDomainConfig | null;
+}): Promise<boolean> {
+  const config = resolveVercelConfig({ vercel: args.config });
+  if (!config) return false;
+
+  const holder = await findDomainHolder({
+    db: args.db ?? defaultDb,
+    domain: args.domain,
+    excludePageId: args.excludePageId,
+  });
   if (holder) {
     console.warn("Skipping Vercel domain removal, still in use:", {
       domain: args.domain,
       pageId: holder.id,
     });
-    return;
+    return false;
   }
 
   await detachDomain(config, args.domain);
+  return true;
 }
 
 export async function listProjectDomains(
@@ -271,8 +287,16 @@ export async function reconcileProjectDomains(args: {
   if (args.apply) {
     for (const domain of orphans) {
       try {
-        await detachDomain(args.config, domain);
-        detached.push(domain);
+        // Re-check: a concurrent set attaches on Vercel before writing the row.
+        if (
+          await detachDomainIfUnused({
+            db: args.db,
+            domain,
+            config: args.config,
+          })
+        ) {
+          detached.push(domain);
+        }
       } catch (err) {
         console.warn("Failed to detach orphaned domain:", {
           domain,

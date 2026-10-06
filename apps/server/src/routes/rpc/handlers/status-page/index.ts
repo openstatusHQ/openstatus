@@ -44,6 +44,7 @@ import {
 import {
   createPage,
   deletePage,
+  detachDomainIfUnused,
   getPage,
   getPageBySlug,
   getStatusPageContent,
@@ -651,16 +652,17 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
             input: { id: created.id, customDomain },
           });
         } catch (err) {
-          await deletePage({
-            ctx: sCtx,
-            input: { id: created.id },
-            releaseDomain: false,
-          }).catch((cleanupErr) =>
+          // The attach may have landed before the failure; release it once
+          // the page is gone (skipped if another page holds the domain).
+          try {
+            await deletePage({ ctx: sCtx, input: { id: created.id } });
+            await detachDomainIfUnused({ domain: customDomain });
+          } catch (cleanupErr) {
             console.error("Failed to roll back status page create:", {
               pageId: created.id,
               error: cleanupErr,
-            }),
-          );
+            });
+          }
           throw err;
         }
       }
@@ -879,7 +881,8 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       }
 
       // Outside the transaction below: Vercel calls must not hold the libSQL
-      // writer. First, so an attach failure aborts before any other write.
+      // writer. First, so an attach failure aborts before any other write; a
+      // later section failure leaves the domain change applied.
       if (customDomainForUpdate !== undefined) {
         await setPageCustomDomain({
           ctx: sCtx,
@@ -887,8 +890,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         });
       }
 
-      // Wrap all per-section updates in a single transaction so partial
-      // failures don't leave the page in a half-updated state. Each
+      // Wrap the remaining per-section updates in a single transaction. Each
       // per-section service call's internal `withTransaction` detects
       // the pre-opened tx and skips nesting.
       await withTransaction(sCtx, async (tx) => {

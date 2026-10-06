@@ -1,9 +1,10 @@
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
-import { LimitExceededError, ValidationError } from "../errors";
+import { ConflictError, LimitExceededError, ValidationError } from "../errors";
 import {
   attachDomain,
   detachDomainIfUnused,
+  findDomainHolder,
   resolveVercelConfig,
 } from "./domain-sync";
 import { getPageCustomDomain } from "./list";
@@ -25,18 +26,36 @@ export async function setPageCustomDomain(args: {
   const input = UpdatePageCustomDomainInput.parse(args.input);
   const next = input.customDomain;
 
+  const previous = await getPageCustomDomain({ ctx, input: { id: input.id } });
+  const config = resolveVercelConfig(ctx);
+  // Case-only changes count as unchanged: DNS is case-insensitive. Re-attaching
+  // (idempotent) lets a re-save heal a row that never reached Vercel.
+  if (previous.toLowerCase() === next.toLowerCase()) {
+    if (previous) await attachDomain(config, previous);
+    return;
+  }
+
   if (next && !ctx.workspace.limits["custom-domain"]) {
     throw new LimitExceededError("custom-domain", 0);
   }
   if (next.toLowerCase().includes("openstatus")) {
     throw new ValidationError("Domain cannot contain 'openstatus'");
   }
+  // Attach is idempotent per project, so it can't tell our own page's
+  // attachment from another workspace's — the row check has to.
+  if (
+    next &&
+    (await findDomainHolder({
+      db: getReadDb(ctx),
+      domain: next,
+      excludePageId: input.id,
+    }))
+  ) {
+    throw new ConflictError(
+      `The domain '${next}' is already in use. Remove it there first or contact support.`,
+    );
+  }
 
-  const previous = await getPageCustomDomain({ ctx, input: { id: input.id } });
-  // Case-only changes skip Vercel too: DNS is case-insensitive.
-  if (previous.toLowerCase() === next.toLowerCase()) return;
-
-  const config = resolveVercelConfig(ctx);
   if (next) await attachDomain(config, next);
   if (previous) {
     await detachDomainIfUnused({

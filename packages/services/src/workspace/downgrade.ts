@@ -142,11 +142,7 @@ export async function downgradeWorkspaceToFree(args: {
     ];
 
     for (const p of statusPages.slice(1)) {
-      await deletePage({
-        ctx: txCtx,
-        input: { id: p.id },
-        releaseDomain: false,
-      });
+      await deletePage({ ctx: txCtx, input: { id: p.id } });
     }
 
     // Strip the surviving page's paid-only access features. Both verbs
