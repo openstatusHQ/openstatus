@@ -306,10 +306,9 @@ function UnlinkedReport({ incident }: { incident: Incident }) {
     enabled: !closed,
   });
   // Until both load, the list could offer reports another incident holds.
+  const linked = linkedIds ? new Set(linkedIds) : null;
   const linkable =
-    reports && linkedIds
-      ? reports.filter((r) => !linkedIds.includes(r.id))
-      : [];
+    reports && linked ? reports.filter((r) => !linked.has(r.id)) : [];
   const selected = linkable.find((r) => r.id === reportId);
   // Closing mid-edit would otherwise strand a form whose footer is gone.
   const showLink = !closed && linking && linkable.length > 0;
