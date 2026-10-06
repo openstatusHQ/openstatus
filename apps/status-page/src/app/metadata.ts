@@ -15,7 +15,6 @@ const THEME_EXPLORER_IMAGE = `/api/og?title=${OG_TITLE}&description=${OG_DESCRIP
 
 export const defaultMetadata: Metadata = {
   title: {
-    template: `%s | ${TITLE}`,
     default: TITLE,
   },
   icons: "https://www.openstatus.dev/favicon.ico",
@@ -48,6 +47,10 @@ export function themeExplorerMetadata({
   indexable: boolean;
 }): Metadata {
   return {
+    title: {
+      template: `%s | ${TITLE}`,
+      default: `${OG_TITLE} | ${TITLE}`,
+    },
     alternates: { canonical: THEME_EXPLORER_URL },
     robots: indexable
       ? { index: true, follow: true }
