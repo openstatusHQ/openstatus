@@ -189,7 +189,9 @@ describe("StatuspageClient", () => {
     mockFetchPaginated([{ ...rest, incident_updates: updates }]);
     const incidents = await client.getIncidents("sp_page_001");
     expect(incidents[0].postmortem_body).toBeUndefined();
-    expect(incidents[0].incident_updates?.[0].affected_components).toBeUndefined();
+    expect(
+      incidents[0].incident_updates?.[0].affected_components,
+    ).toBeUndefined();
   });
 
   test("getSubscribers returns parsed subscribers", async () => {
