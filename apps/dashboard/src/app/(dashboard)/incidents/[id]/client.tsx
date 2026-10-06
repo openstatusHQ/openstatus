@@ -170,9 +170,11 @@ export function Client({ id }: { id: number }) {
       </DetailHeader>
       <DetailContent>
         <DetailMain>
-          {/* Resolved incidents lead with the postmortem; open ones with the timeline. */}
+          {/* Resolved incidents lead with the postmortem; open ones with the
+              timeline. A canceled one is a false alarm: no postmortem. */}
           {resolved ? postmortem : timeline}
-          {resolved ? timeline : postmortem}
+          {resolved ? timeline : null}
+          {resolved || incident.status === "canceled" ? null : postmortem}
         </DetailMain>
         <DetailAside>
           <DetailSection>
