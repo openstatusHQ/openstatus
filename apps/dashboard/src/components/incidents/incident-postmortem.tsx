@@ -127,6 +127,9 @@ export function IncidentPostmortem({
   const canSave = !busy && dirty && content.trim().length > 0;
   const canApprove = postmortem !== null && !approved;
 
+  const showAgent = agentAllowed && !approved;
+  const hasActions = postmortem !== null || showAgent;
+
   const hint = dirty
     ? "Unsaved changes"
     : approved && incident.closedAt === null
@@ -140,27 +143,32 @@ export function IncidentPostmortem({
   return (
     <Composer size="lg" defaultValue={postmortem ? "preview" : "write"}>
       <ComposerHeader>
-        <div className="flex items-center gap-1">
-          {postmortem ? (
-            <InputGroupButton
-              variant="ghost"
-              onClick={() => copy(content, { withToast: "Postmortem copied" })}
-            >
-              {isCopied ? <Check /> : <Copy />}
-              Copy
-            </InputGroupButton>
-          ) : null}
-          {agentAllowed && !approved ? (
-            <InputGroupButton
-              variant="outline"
-              disabled={busy}
-              onClick={() => draftWithAgent.mutate({ id: incident.id })}
-            >
-              <AI />
-              {draftWithAgent.isPending ? "Drafting..." : "Draft with agent"}
-            </InputGroupButton>
-          ) : null}
-        </div>
+        {/* Rendered only with an action, so the header's "Markdown" hint shows otherwise. */}
+        {hasActions ? (
+          <div className="flex items-center gap-1">
+            {postmortem ? (
+              <InputGroupButton
+                variant="ghost"
+                onClick={() =>
+                  copy(content, { withToast: "Postmortem copied" })
+                }
+              >
+                {isCopied ? <Check /> : <Copy />}
+                Copy
+              </InputGroupButton>
+            ) : null}
+            {showAgent ? (
+              <InputGroupButton
+                variant="outline"
+                disabled={busy}
+                onClick={() => draftWithAgent.mutate({ id: incident.id })}
+              >
+                <AI />
+                {draftWithAgent.isPending ? "Drafting..." : "Draft with agent"}
+              </InputGroupButton>
+            ) : null}
+          </div>
+        ) : null}
       </ComposerHeader>
       <ComposerTextarea
         aria-label="Postmortem"

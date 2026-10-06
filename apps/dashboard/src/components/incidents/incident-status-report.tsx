@@ -305,8 +305,11 @@ function UnlinkedReport({ incident }: { incident: Incident }) {
     ...trpc.incident.linkedStatusReportIds.queryOptions(),
     enabled: !closed,
   });
-  const linked = new Set(linkedIds ?? []);
-  const linkable = (reports ?? []).filter((r) => !linked.has(r.id));
+  // Until both load, the list could offer reports another incident holds.
+  const linkable =
+    reports && linkedIds
+      ? reports.filter((r) => !linkedIds.includes(r.id))
+      : [];
   const selected = linkable.find((r) => r.id === reportId);
   // Closing mid-edit would otherwise strand a form whose footer is gone.
   const showLink = !closed && linking && linkable.length > 0;
@@ -394,13 +397,13 @@ function UnlinkedReport({ incident }: { incident: Incident }) {
             <>
               <Button
                 size="sm"
-                disabled={reportId === null || link.isPending}
+                disabled={!selected || link.isPending}
                 onClick={() =>
-                  reportId !== null &&
+                  selected &&
                   toast.promise(
                     link.mutateAsync({
                       id: incident.id,
-                      statusReportId: reportId,
+                      statusReportId: selected.id,
                     }),
                     {
                       loading: "Linking...",
