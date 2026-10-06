@@ -152,7 +152,7 @@ export async function deleteAccount(args: {
           .all()
       ).map((p) => p.id);
       for (const id of pageIds) {
-        await deletePage({ ctx: subCtx, input: { id } });
+        await deletePage({ ctx: subCtx, input: { id }, releaseDomain: false });
       }
 
       const notificationIds = (

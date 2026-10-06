@@ -12,6 +12,7 @@ import {
   stripeIdempotencyKey,
 } from "@openstatus/emails";
 import type { ServiceContext } from "@openstatus/services";
+import { detachDomainIfUnused } from "@openstatus/services/page";
 import {
   type DowngradeTrim,
   downgradeWorkspaceToFree,
@@ -24,7 +25,6 @@ import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
 import { z } from "zod";
 
-import { removeDomainFromVercelIfUnused } from "../../lib/vercel";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import {
   buildFromSubscriptionOrThrow,
@@ -596,7 +596,7 @@ export const webhookRouter = createTRPCRouter({
     // commit: a Vercel error must not fail the webhook into Stripe retries.
     for (const domain of customDomains) {
       try {
-        await removeDomainFromVercelIfUnused(opts.ctx.db, domain);
+        await detachDomainIfUnused({ db: opts.ctx.db, domain });
       } catch (err) {
         console.error("Failed to release domain from Vercel:", {
           domain,

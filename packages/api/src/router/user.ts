@@ -1,8 +1,8 @@
 import { PreconditionFailedError } from "@openstatus/services";
+import { detachDomainIfUnused } from "@openstatus/services/page";
 import { deleteAccount } from "@openstatus/services/user";
 import { listOwnedWorkspaces } from "@openstatus/services/workspace";
 
-import { removeDomainFromVercelIfUnused } from "../lib/vercel";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { cancelOwnedTrials } from "./stripe/trial";
@@ -41,7 +41,7 @@ export const userRouter = createTRPCRouter({
       // input needed.
       await deleteAccount({ ctx: toServiceCtx(ctx) });
       for (const domain of customDomains) {
-        await removeDomainFromVercelIfUnused(ctx.db, domain).catch((error) =>
+        await detachDomainIfUnused({ db: ctx.db, domain }).catch((error) =>
           console.error("Failed to release domain from Vercel:", {
             domain,
             error,

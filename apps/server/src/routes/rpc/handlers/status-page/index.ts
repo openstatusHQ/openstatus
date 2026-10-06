@@ -50,7 +50,7 @@ import {
   type StatusPageContent,
   listPages,
   updatePageAppearance,
-  updatePageCustomDomain,
+  setPageCustomDomain,
   updatePageCustomTheme,
   updatePageGeneral,
   updatePageLinks,
@@ -494,18 +494,6 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   // ==========================================================================
   // Page CRUD
   // ==========================================================================
-  //
-  // Known gap (predates the services migration): both `createStatusPage`
-  // and `updateStatusPage` accept and persist `customDomain`, but
-  // neither calls the Vercel add/remove API the way the tRPC
-  // `updateCustomDomain` procedure does. Clients setting a custom domain
-  // via gRPC will get a db row that says the domain is set, but routing
-  // won't actually work until a tRPC/dashboard round-trip picks up the
-  // diff. The fix is to lift the Vercel sync (`addDomainToVercel` /
-  // `removeDomainFromVercel`) into a shared transport-layer helper the
-  // Connect handlers can reuse, kept out of the service layer. Tracked
-  // as a follow-up; not landing here to avoid widening the behavioural
-  // blast radius of the migration PR on external API consumers.
 
   async createStatusPage(req, ctx) {
     try {
@@ -622,7 +610,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           title: req.title,
           description: req.description ?? "",
           slug: req.slug,
-          customDomain,
+          customDomain: "",
           icon,
           forceTheme,
           accessType,
@@ -655,7 +643,33 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         throw err;
       });
 
-      return { statusPage: dbPageToProto(serviceToConverterPage(created)) };
+      // Set after create so the row never claims a domain Vercel doesn't route.
+      if (customDomain) {
+        try {
+          await setPageCustomDomain({
+            ctx: sCtx,
+            input: { id: created.id, customDomain },
+          });
+        } catch (err) {
+          await deletePage({
+            ctx: sCtx,
+            input: { id: created.id },
+            releaseDomain: false,
+          }).catch((cleanupErr) =>
+            console.error("Failed to roll back status page create:", {
+              pageId: created.id,
+              error: cleanupErr,
+            }),
+          );
+          throw err;
+        }
+      }
+
+      return {
+        statusPage: dbPageToProto(
+          serviceToConverterPage({ ...created, customDomain }),
+        ),
+      };
     } catch (err) {
       toConnectError(err);
     }
@@ -864,6 +878,15 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         customThemeForUpdate = validateProtoCustomTheme(req.customTheme);
       }
 
+      // Outside the transaction below: Vercel calls must not hold the libSQL
+      // writer. First, so an attach failure aborts before any other write.
+      if (customDomainForUpdate !== undefined) {
+        await setPageCustomDomain({
+          ctx: sCtx,
+          input: { id: pageId, customDomain: customDomainForUpdate },
+        });
+      }
+
       // Wrap all per-section updates in a single transaction so partial
       // failures don't leave the page in a half-updated state. Each
       // per-section service call's internal `withTransaction` detects
@@ -949,13 +972,6 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
               forceTheme: protoThemeToDb(themeForUpdate),
               configuration: { theme: existingTheme },
             },
-          });
-        }
-
-        if (customDomainForUpdate !== undefined) {
-          await updatePageCustomDomain({
-            ctx: txCtx,
-            input: { id: pageId, customDomain: customDomainForUpdate },
           });
         }
 

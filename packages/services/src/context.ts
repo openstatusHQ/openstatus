@@ -2,6 +2,7 @@ import { SQLiteTransaction, db as defaultDb, is } from "@openstatus/db";
 import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 
+import type { VercelDomainConfig } from "./page/domain-sync";
 import { withBusyRetry } from "./retry";
 import type { WorkOSClient } from "./sso/client";
 
@@ -32,6 +33,8 @@ export type ServiceContext = {
   db?: DB;
   tb?: OSTinybird;
   workos?: WorkOSClient;
+  /** Unset reads the env; `null` disables Vercel domain sync. */
+  vercel?: VercelDomainConfig | null;
 };
 
 // Fallback for callers with no app env to read from (scripts, tests). Request
