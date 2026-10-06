@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { lenientEnum } from "../../schemas";
+
 export const StatuspageComponentSchema = z.object({
   id: z.string(),
   page_id: z.string(),
@@ -7,12 +9,14 @@ export const StatuspageComponentSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   position: z.number(),
-  status: z.enum([
+  status: lenientEnum([
     "operational",
     "degraded_performance",
     "partial_outage",
     "major_outage",
     "under_maintenance",
+    // the spec allows an empty status
+    "",
   ]),
   showcase: z.boolean(),
   only_show_if_degraded: z.boolean(),
@@ -39,19 +43,23 @@ export type StatuspageGroupComponent = z.infer<
   typeof StatuspageGroupComponentSchema
 >;
 
+// `postmortem` is set on the incident and on the update that publishes it.
+const StatuspageIncidentStatusSchema = lenientEnum([
+  "investigating",
+  "identified",
+  "monitoring",
+  "resolved",
+  "postmortem",
+  "scheduled",
+  "in_progress",
+  "verifying",
+  "completed",
+]);
+
 export const StatuspageIncidentUpdateSchema = z.object({
   id: z.string(),
   incident_id: z.string(),
-  status: z.enum([
-    "investigating",
-    "identified",
-    "monitoring",
-    "resolved",
-    "scheduled",
-    "in_progress",
-    "verifying",
-    "completed",
-  ]),
+  status: StatuspageIncidentStatusSchema,
   body: z.string().nullable(),
   display_at: z.string().nullable(),
   deliver_notifications: z.boolean(),
@@ -77,17 +85,14 @@ export const StatuspageIncidentSchema = z.object({
   id: z.string(),
   page_id: z.string(),
   name: z.string(),
-  status: z.enum([
-    "investigating",
-    "identified",
-    "monitoring",
-    "resolved",
-    "scheduled",
-    "in_progress",
-    "verifying",
-    "completed",
-  ]),
-  impact: z.enum(["none", "minor", "major", "critical"]).nullable(),
+  status: StatuspageIncidentStatusSchema,
+  impact: lenientEnum([
+    "none",
+    "maintenance",
+    "minor",
+    "major",
+    "critical",
+  ]).nullable(),
   shortlink: z.string().nullable(),
   scheduled_for: z.string().nullable(),
   scheduled_until: z.string().nullable(),
@@ -106,7 +111,14 @@ export type StatuspageIncident = z.infer<typeof StatuspageIncidentSchema>;
 export const StatuspageSubscriberSchema = z.object({
   id: z.string(),
   page_id: z.string(),
-  mode: z.enum(["email", "sms", "slack", "webhook", "integration_partner"]),
+  mode: lenientEnum([
+    "email",
+    "sms",
+    "slack",
+    "webhook",
+    "teams",
+    "integration_partner",
+  ]),
   email: z.string().nullable(),
   endpoint: z.string().nullable(),
   phone_number: z.string().nullable(),
