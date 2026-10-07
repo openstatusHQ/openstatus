@@ -215,7 +215,8 @@ export const getJsonLDSoftwareApplication =
       description:
         "The open-source status page, incident response and uptime monitoring platform. Run incidents from Slack or your AI agent and declare monitors in code.",
       applicationCategory: "BusinessApplication",
-      applicationSubCategory: "Status Pages, Incident Response & Uptime Monitoring",
+      applicationSubCategory:
+        "Status Pages, Incident Response & Uptime Monitoring",
       operatingSystem: "Web, Self-hosted",
       offers: Object.entries(allPlans).map(([_, value]) => ({
         "@type": "Offer",
