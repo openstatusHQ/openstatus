@@ -4,11 +4,12 @@ import type { MDXData } from "../../content/utils";
 
 export const TITLE = "openstatus";
 export const HOMEPAGE_TITLE =
-  "Free & Open Source Status Page and Uptime Monitoring";
+  "Open Source Status Page, Uptime Monitoring & Incident Response";
 export const DESCRIPTION =
-  "Open source status page and uptime monitoring. Your monitors update it, your subscribers hear it from you first. Free to start, self-hostable.";
+  "Open source status page, incident response and global uptime monitoring. When something breaks, your subscribers hear it first and your auditor gets the trail.";
 
-export const OG_DESCRIPTION = "The status page for humans and agents";
+export const OG_DESCRIPTION =
+  "Status pages and incident response for humans and agents";
 
 export const BASE_URL =
   process.env.NODE_ENV === "production"
