@@ -212,7 +212,7 @@
   @apply mt-12 mb-2 pt-8 border-t border-border/60;
 }
 
-.prose [data-slot="eyebrow"] + h2 {
+.prose [data-slot="eyebrow"] + :is(h2, h3) {
   @apply mt-0 pt-0 border-t-0;
 }
 

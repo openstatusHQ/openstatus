@@ -127,18 +127,32 @@ Users subscribe once and get every status report and maintenance by email, RSS, 
 </div>
 </Grid>
 
-## Translations
+## Everyone hears it from you first
 
 <Grid variant="borderless">
 <div>
 
-Set a default locale and turn on the switcher. The page chrome and the canonical status copy are translated; your updates stay in the language you wrote them.
+The moment an update is approved, subscribers get it by email, RSS and Slack Connect. Support stops answering "is it down?" because the answer is already in the inbox.
 
-English, French, German, Turkish, Hindi, Korean and Japanese today, with more from community contributions.
-
-- [Translate your status page](/docs/guides/how-to-translate-status-page)
+- [Reducing support tickets](/use-case/reduce-support-tickets)
 
 </div>
+<div>
+
+<Demo type="notify" />
+
+<SrOnly>
+
+The 09:52 Identified update as it lands in a customer's Slack Connect channel, with the delivery summary: 1,337 emails sent, RSS and Atom updated, 3 Slack Connect workspaces notified.
+
+</SrOnly>
+
+</div>
+</Grid>
+
+## Translations
+
+<Grid variant="borderless">
 <div>
 
 <Demo type="translations" />
@@ -150,11 +164,29 @@ The same page in French: a "Performances dégradées" banner, components labelle
 </SrOnly>
 
 </div>
+<div>
+
+Set a default locale and turn on the switcher. The page chrome and the canonical status copy are translated; your updates stay in the language you wrote them.
+
+English, French, German, Turkish, Hindi, Korean and Japanese today, with more from community contributions.
+
+- [Translate your status page](/docs/guides/how-to-translate-status-page)
+
+</div>
 </Grid>
 
 ## Slack agent
 
 <Grid variant="borderless">
+<div>
+
+Mention @openstatus in any thread. It drafts the report, you approve, it publishes. Follow up in the same thread with "it's fixed" and it drafts the next update.
+
+Every action asks for confirmation before anything goes public, and every action is written to the audit log.
+
+- [Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)
+
+</div>
 <div>
 
 <Demo type="slack-agent" />
@@ -166,28 +198,11 @@ The Slack thread where @openstatus drafts "Elevated errors on Checkout API" with
 </SrOnly>
 
 </div>
-<div>
-
-Mention @openstatus in any thread. It drafts the report, you approve, it publishes. Follow up in the same thread with "it's fixed" and it drafts the next update.
-
-Every action asks for confirmation before anything goes public, and every action is written to the audit log.
-
-- [Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)
-
-</div>
 </Grid>
 
 ## Branded, on your domain
 
 <Grid variant="borderless">
-<div>
-
-Pick a theme from the store or override any CSS variable, separately for light and dark. Point status.yourdomain.com at it, and even white label it to drop the "Powered by" line.
-
-- [Theme Store](https://themes.openstatus.dev)
-- [Custom theme variables](/docs/reference/status-page#custom-theme)
-
-</div>
 <div>
 
 <Demo type="themes" />
@@ -199,11 +214,27 @@ The same status blocks re-skinned with a Theme Store theme: banner, component an
 </SrOnly>
 
 </div>
+<div>
+
+Pick a theme from the store or override any CSS variable, separately for light and dark. Point status.yourdomain.com at it, and even white label it to drop the "Powered by" line.
+
+- [Theme Store](https://themes.openstatus.dev)
+- [Custom theme variables](/docs/reference/status-page#custom-theme)
+
+</div>
 </Grid>
 
 ## Internal and private pages
 
 <Grid variant="borderless">
+<div>
+
+Public by default. Protect a page with a password, magic-link login, or a CIDR allowlist so internal teams and named clients see more than the public does.
+
+- [Password, magic link and IP restriction](/docs/reference/status-page#password-basic-auth)
+- [Status pages for enterprise sales](/use-case/enterprise-sales)
+
+</div>
 <div>
 
 <Demo type="access" />
@@ -215,26 +246,11 @@ Public and internal pages side by side: the public one lists all four components
 </SrOnly>
 
 </div>
-<div>
-
-Public by default. Protect a page with a password, magic-link login, or a CIDR allowlist so internal teams and named clients see more than the public does.
-
-- [Password, magic link and IP restriction](/docs/reference/status-page#password-basic-auth)
-- [Status pages for enterprise sales](/use-case/enterprise-sales)
-
-</div>
 </Grid>
 
 ## Maintenance windows
 
 <Grid variant="borderless">
-<div>
-
-Schedule the window ahead of time. Subscribers are told when it is planned, the banner flips to maintenance while it runs, and affected components stop counting against uptime.
-
-- [Maintenance reference](/docs/reference/maintenance)
-
-</div>
 <div>
 
 <Demo type="maintenance" />
@@ -246,11 +262,25 @@ A scheduled maintenance banner, "Database upgrade": a two-hour window three days
 </SrOnly>
 
 </div>
+<div>
+
+Schedule the window ahead of time. Subscribers are told when it is planned, the banner flips to maintenance while it runs, and affected components stop counting against uptime.
+
+- [Maintenance reference](/docs/reference/maintenance)
+
+</div>
 </Grid>
 
 ## Import from another provider
 
 <Grid variant="borderless">
+<div>
+
+Paste an API key from Atlassian Statuspage, Better Stack or Instatus. Preview components, incidents, maintenances and subscribers before anything is written.
+
+- [Import guide](/docs/guides/how-to-import-status-page)
+
+</div>
 <div>
 
 <Demo type="import" />
@@ -262,26 +292,11 @@ The import preview for Atlassian Statuspage: 5 components, 2 groups, 37 status r
 </SrOnly>
 
 </div>
-<div>
-
-Paste an API key from Atlassian Statuspage, Better Stack or Instatus. Preview components, incidents, maintenances and subscribers before anything is written.
-
-- [Import guide](/docs/guides/how-to-import-status-page)
-
-</div>
 </Grid>
 
 ## For terminals and agents
 
 <Grid variant="borderless">
-<div>
-
-The same page over SSH for people in a terminal, and as markdown for the agents and LLMs your customers point at it. No screenshots, no scraping.
-
-- [SSH command](/docs/reference/status-page#ssh-command)
-- [Shadcn component registry](/registry)
-
-</div>
 <div>
 
 <Demo type="terminal" />
@@ -291,6 +306,14 @@ The same page over SSH for people in a terminal, and as markdown for the agents 
 The page over SSH, `ssh pied-piper@ssh.openstatus.dev`, printing "Degraded Performance · Pied Piper Status · 5 components · 1 degraded", and the same page as markdown with a 30-day bar of + and ~ characters.
 
 </SrOnly>
+
+</div>
+<div>
+
+The same page over SSH for people in a terminal, and as markdown for the agents and LLMs your customers point at it. No screenshots, no scraping.
+
+- [SSH command](/docs/reference/status-page#ssh-command)
+- [Shadcn component registry](/registry)
 
 </div>
 </Grid>
