@@ -52,6 +52,14 @@ type CreateContextOptions = {
 type Meta = {
   track?: EventProps;
   trackProps?: string[];
+  /**
+   * Props derived from the raw input and the procedure's result, merged over
+   * `trackProps`. Return `null` to skip the event for this call.
+   */
+  trackResult?: (args: {
+    input: unknown;
+    data: unknown;
+  }) => Record<string, unknown> | null;
 };
 
 /**
@@ -286,11 +294,20 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
     const { meta, getRawInput } = opts;
 
     if (meta?.track) {
-      const analytics = await setupAnalytics(identify);
       const rawInput = await getRawInput();
+      const resultProps = meta.trackResult
+        ? meta.trackResult({ input: rawInput, data: result.data })
+        : {};
+      if (resultProps === null) return;
+
+      const analytics = await setupAnalytics(identify);
       const additionalProps = parseInputToProps(rawInput, meta.trackProps);
 
-      await analytics.track({ ...meta.track, ...additionalProps });
+      await analytics.track({
+        ...additionalProps,
+        ...resultProps,
+        ...meta.track,
+      });
     }
   });
 

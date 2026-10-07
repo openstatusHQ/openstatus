@@ -31,6 +31,7 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
       const workspace = c.get("workspace");
 
       setupAnalytics({
+        userId: `api_${workspace.id}`,
         workspaceId: `${workspace.id}`,
         workspaceName: workspace.name || workspace.slug,
         plan: workspace.plan,

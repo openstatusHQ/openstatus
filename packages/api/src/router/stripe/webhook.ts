@@ -37,6 +37,7 @@ import {
   syncedLimits,
   trialEndsAtOf,
 } from "./shared";
+import { billingProps } from "./utils";
 
 const webhookProcedure = publicProcedure.input(
   z.object({
@@ -112,40 +113,34 @@ type StripeWorkspace = NonNullable<
   Awaited<ReturnType<typeof getWorkspaceByStripeId>>
 >;
 
+// Never throws: runs after DB writes and emails, so a failure here would make
+// Stripe redeliver the event and resend them.
 async function trackForWorkspaceOwner(args: {
   db: NonNullable<Db>;
   ws: StripeWorkspace;
   event: EventProps;
   props?: Record<string, unknown>;
 }) {
-  const [owner] = await listWorkspaceOwners({
-    input: { workspaceId: args.ws.id },
-    db: args.db,
-  });
-  const analytics = await setupAnalytics({
-    userId: owner ? `usr_${owner.id}` : undefined,
-    email: owner?.email ?? undefined,
-    workspaceId: String(args.ws.id),
-    workspaceName: args.ws.name || args.ws.slug,
-    plan: args.ws.plan ?? undefined,
-    source: "stripe",
-  });
-  await analytics.track({ ...args.props, ...args.event });
-}
-
-// List price only: discounts and prorations are not reflected.
-function billingProps(subscription: Stripe.Subscription) {
-  const items = subscription.items.data;
-  const interval = items[0]?.price.recurring?.interval;
-  const total = items.reduce(
-    (sum, item) => sum + (item.price.unit_amount ?? 0) * (item.quantity ?? 1),
-    0,
-  );
-  return {
-    interval,
-    currency: subscription.currency,
-    mrr: (interval === "year" ? total / 12 : total) / 100,
-  };
+  try {
+    const owners = await listWorkspaceOwners({
+      input: { workspaceId: args.ws.id },
+      db: args.db,
+    });
+    // Owners come back unordered: with several, picking one would attribute
+    // billing to an arbitrary profile, so only the workspace group gets it.
+    const owner = owners.length === 1 ? owners[0] : undefined;
+    const analytics = await setupAnalytics({
+      userId: owner ? `usr_${owner.id}` : undefined,
+      email: owner?.email ?? undefined,
+      workspaceId: String(args.ws.id),
+      workspaceName: args.ws.name || args.ws.slug,
+      plan: args.ws.plan ?? undefined,
+      source: "stripe",
+    });
+    await analytics.track({ ...args.props, ...args.event });
+  } catch (err) {
+    console.error(`Failed to track ${args.event.name}:`, err);
+  }
 }
 
 async function sendCancellationEmails(args: {
@@ -407,8 +402,6 @@ export const webhookRouter = createTRPCRouter({
               )
             : undefined,
         },
-      }).catch((err) => {
-        console.error("Failed to track payment method setup:", err);
       });
       return;
     }
@@ -547,9 +540,6 @@ export const webhookRouter = createTRPCRouter({
       ws,
       event: Events.NotifyTrialEnding,
       props: { hasPaymentMethod: withCard },
-    }).catch((err) => {
-      // Throwing here would make Stripe redeliver and resend the reminder.
-      console.error("Failed to track trial ending:", err);
     });
   }),
   customerSubscriptionDeleted: webhookProcedure.mutation(async (opts) => {

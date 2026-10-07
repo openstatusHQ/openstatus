@@ -99,6 +99,7 @@ describe("trackingInterceptor", () => {
     expect(result).toEqual(mockResponse);
     expect(mockSetupAnalytics).toHaveBeenCalledTimes(1);
     expect(mockSetupAnalytics).toHaveBeenCalledWith({
+      userId: "api_42",
       workspaceId: "42",
       workspaceName: "test-ws",
       plan: "free",
@@ -230,6 +231,7 @@ describe("trackingInterceptor", () => {
     await interceptor(next)(req as never);
 
     expect(mockSetupAnalytics).toHaveBeenCalledWith({
+      userId: "api_42",
       workspaceId: "42",
       workspaceName: "test-ws",
       plan: "free",

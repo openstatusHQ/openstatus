@@ -280,7 +280,7 @@ describe("MCP transport — analytics", () => {
       string,
       unknown
     >;
-    expect(identify?.userId).toBeUndefined();
+    expect(identify?.userId).toBe(`api_${SEEDED_WORKSPACE_TEAM_ID}`);
     expect(identify?.workspaceId).toBe(`${SEEDED_WORKSPACE_TEAM_ID}`);
     expect(identify?.source).toBe("mcp");
 

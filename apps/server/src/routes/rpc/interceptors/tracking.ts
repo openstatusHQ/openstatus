@@ -176,6 +176,7 @@ export function trackingInterceptor(): Interceptor {
     const additionalProps = parseInputToProps(input, mapping.eventProps);
 
     setupAnalytics({
+      userId: `api_${rpcCtx.workspace.id}`,
       workspaceId: `${rpcCtx.workspace.id}`,
       workspaceName: rpcCtx.workspace.name || rpcCtx.workspace.slug,
       plan: rpcCtx.workspace.plan,
