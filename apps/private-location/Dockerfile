@@ -3,33 +3,30 @@
 # See https://github.com/lenra-io/dofigen
 
 # builder
-FROM golang@sha256:51a7c389a5ddaf82f527191a1e9bff9928655130a44e4975dd1d7e0acf59f1ae AS builder
-ARG TARGETARCH
-ARG TARGETOS
+FROM golang@sha256:dc9ad6c05acc7a88e5b71bde60a5fe3bd4b9f0db209011711b464107438a8107 AS builder
 LABEL \
-    org.opencontainers.image.base.digest="sha256:51a7c389a5ddaf82f527191a1e9bff9928655130a44e4975dd1d7e0acf59f1ae" \
-    org.opencontainers.image.base.name="docker.io/golang:1.26-alpine" \
+    org.opencontainers.image.base.digest="sha256:dc9ad6c05acc7a88e5b71bde60a5fe3bd4b9f0db209011711b464107438a8107" \
+    org.opencontainers.image.base.name="docker.io/golang:1.26-bookworm" \
     org.opencontainers.image.stage="builder"
 ENV \
-    CGO_ENABLED="0" \
-    TZ="UTC"
+    TZ="UTC" \
+    CGO_ENABLED="1"
 WORKDIR /go/src/app
 COPY \
     --link \
     "." "."
 RUN <<EOF
-apk add --no-cache tzdata
 go mod download
-GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
+go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
 EOF
 
 # runtime
-FROM alpine@sha256:ce64758a109eb420d874a118f87920e625e12d3634e03b4a5573fd9f6e5d3507 AS runtime
+FROM debian@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587 AS runtime
 LABEL \
     io.dofigen.version="2.8.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:ce64758a109eb420d874a118f87920e625e12d3634e03b4a5573fd9f6e5d3507" \
-    org.opencontainers.image.base.name="docker.io/alpine:3.21" \
+    org.opencontainers.image.base.digest="sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587" \
+    org.opencontainers.image.base.name="docker.io/debian:bookworm-slim" \
     org.opencontainers.image.description="Private location orchestrator for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
     org.opencontainers.image.title="OpenStatus Private Location" \
@@ -54,6 +51,12 @@ COPY \
     --chown=1000:1000 \
     --link \
     "/go/src/app/private-location" "/opt/bin/private-location"
+USER 0:0
+RUN <<EOF
+apt-get update
+apt-get install -y --no-install-recommends wget
+rm -rf /var/lib/apt/lists/*
+EOF
 USER 1000:1000
 EXPOSE 8080
 HEALTHCHECK \
@@ -61,5 +64,5 @@ HEALTHCHECK \
     --timeout=10s \
     --start-period=30s \
     --retries=3 \
-    CMD wget --spider -q http://localhost:8080/health || exit 1
+    CMD wget -q -O /dev/null http://localhost:8080/health || exit 1
 CMD ["/opt/bin/private-location"]
