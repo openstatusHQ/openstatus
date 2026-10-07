@@ -26,7 +26,7 @@ import { resolveWorkspace, type SlackWorkspace } from "./workspace-resolver";
 
 const logger = getLogger(["api-server", "slack", "incident-modal"]);
 
-const NOT_CONNECTED =
+export const NOT_CONNECTED =
   "openstatus isn't connected to this Slack workspace. Connect it from the openstatus dashboard.";
 
 /** Callback id of the global shortcut, the message shortcut and the modal. */

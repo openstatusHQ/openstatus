@@ -15,8 +15,14 @@ import { consume, get } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
 import { OPEN_DECLARE_INCIDENT_ACTION } from "./home";
 import {
+  ADD_TO_TIMELINE_CALLBACK,
+  handleAddToTimeline,
+  type SlackMessage,
+} from "./incident-events";
+import {
   DECLARE_INCIDENT_CALLBACK,
   DECLARE_INCIDENT_FROM_MESSAGE_CALLBACK,
+  NOT_CONNECTED,
   openDeclareIncidentModal,
   submitDeclareIncident,
   type ViewSubmissionPayload,
@@ -36,6 +42,7 @@ import {
   type SlackActor,
   slackAgentAllowed,
 } from "./require-slack-member";
+import { respondLater } from "./response-url";
 import { toServiceCtx } from "./service-adapter";
 import { resolveWorkspace } from "./workspace-resolver";
 
@@ -69,14 +76,18 @@ async function processIncidentBind(payload: SlackInteractionPayload) {
   });
 }
 
+const TIMELINE_UNAVAILABLE =
+  "Couldn't read that message from Slack. Please try again.";
+
 interface SlackShortcutPayload {
   type: "shortcut" | "message_action" | "block_actions";
   callback_id: string;
   trigger_id: string;
+  response_url?: string;
   user?: { id: string; team_id?: string };
   team?: { id: string };
   channel?: { id: string };
-  message?: { text?: string };
+  message?: SlackMessage;
 }
 
 async function handleShortcut(
@@ -84,6 +95,45 @@ async function handleShortcut(
   payload: SlackShortcutPayload,
 ) {
   const teamId = payload.team?.id ?? payload.user?.team_id;
+  if (payload.callback_id === ADD_TO_TIMELINE_CALLBACK) {
+    const { user, channel, message, response_url } = payload;
+    if (!response_url) {
+      logger.warn("slack timeline shortcut without a response_url", { teamId });
+    } else if (!teamId || !user?.id || !channel?.id || !message?.ts) {
+      logger.warn("slack timeline shortcut with an incomplete payload", {
+        teamId,
+      });
+      runInBackground(
+        "add-to-timeline",
+        () => respondLater(response_url, { text: TIMELINE_UNAVAILABLE }),
+        { teamId },
+      );
+    } else {
+      const config = c.get("slackConfig");
+      const ts = message.ts;
+      runInBackground(
+        "add-to-timeline",
+        async () => {
+          const resolved = await resolveWorkspace(teamId);
+          if (!resolved) {
+            await respondLater(response_url, { text: NOT_CONNECTED });
+            return;
+          }
+          await handleAddToTimeline({
+            resolved,
+            config,
+            teamId,
+            slackUserId: user.id,
+            channel: channel.id,
+            message: { ...message, ts },
+            responseUrl: response_url,
+          });
+        },
+        { teamId },
+      );
+    }
+    return c.body(null, 200);
+  }
   if (
     !teamId ||
     !payload.user?.id ||
