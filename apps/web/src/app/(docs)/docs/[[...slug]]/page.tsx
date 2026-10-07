@@ -49,7 +49,7 @@ const EDIT_BASE =
   "https://github.com/openstatusHQ/openstatus/edit/main/apps/web/src/content/pages/docs";
 
 const DOCS_DESCRIPTION =
-  "Infra as code for uptime monitoring and status pages. Let your agents update them. Learn how to monitor your endpoints, create your status page, configure notifications, and drive it all from the CLI, Terraform, API, or MCP.";
+  "Infra as code for uptime monitoring, status pages and incident response. Let your agents update them. Learn how to monitor your endpoints, create your status page, run incidents from Slack, configure notifications, and drive it all from the CLI, Terraform, API, or MCP.";
 
 type Params = { slug?: string[] };
 

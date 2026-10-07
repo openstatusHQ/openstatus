@@ -3,10 +3,11 @@
 // Keep numbers in sync with src/content/pages/unrelated/pricing.mdx.
 
 export const PRODUCT_SUMMARY =
-  "Openstatus is an open-source uptime monitoring and status page platform built for infra as code: monitors, status pages, and notification channels are declared in YAML or Terraform and driven from a CLI, a typed API, or an MCP server (Claude, ChatGPT, Cursor), so your agents can update them. It runs synthetic checks in parallel from 28 regions across Fly.io, Koyeb, and Railway and surfaces incidents on branded status pages. Available as managed SaaS or self-hosted (AGPL-3.0). Bootstrapped, founded in 2023.";
+  "Openstatus is an open-source status page, incident response and uptime monitoring platform. Incidents run from Slack or your AI agent: declare one, get a dedicated Slack channel, keep a single timeline and leave with a drafted postmortem. It is built for infra as code: monitors, status pages, and notification channels are declared in YAML or Terraform and driven from a CLI, a typed API, or an MCP server (Claude, ChatGPT, Cursor), so your agents can update them. It runs synthetic checks in parallel from 28 regions across Fly.io, Koyeb, and Railway and surfaces incidents on branded status pages. Available as managed SaaS or self-hosted (AGPL-3.0). Bootstrapped, founded in 2023.";
 
 export const PRODUCT_CONTEXT_MARKDOWN = `## Who it's for
 
+- Small teams that want incident response next to their monitors and status page, run from Slack instead of a separate on-call tool
 - Teams that manage uptime monitoring and status pages as infra as code and let agents (Claude, Cursor, ChatGPT, CI) open and resolve incidents over MCP, CLI, or API
 - Development teams that want transparent incident communication
 - Companies that need multi-region uptime monitoring
@@ -28,6 +29,7 @@ Annual billing gives 2 months free (Starter $300/yr, Pro $1,000/yr, Scale $5,000
 - **28-region monitoring** — Parallel checks across Europe, North America, South America, Asia, Africa, and Oceania; no round-robin, all selected regions fire simultaneously
 - **Multi-cloud** — Monitors run on Fly.io, Koyeb, and Railway for true cloud diversity
 - **Status Pages** — Branded public or password-protected pages with custom domains, themes, maintenance windows, and subscriber notifications (email, RSS, Slack)
+- **Incident Response** — Declare incidents from Slack or the dashboard, a Slack channel per incident, one timeline with reminders, internal status alongside public status page updates, and AI-drafted postmortems
 - **API Monitoring** — Assertions, thresholds, status code checks, header and body validation
 - **Infra as Code** — Define monitors, status pages, and notification channels in YAML (CLI, GitHub Actions) or Terraform
 - **Private Locations** — 8.5MB Docker image for monitoring internal services behind firewalls

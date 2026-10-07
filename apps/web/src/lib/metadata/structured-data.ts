@@ -185,7 +185,7 @@ export const getJsonLDProduct = (): WithContext<Product> => {
     "@type": "Product",
     name: "openstatus",
     description:
-      "The open-source status page and uptime monitoring platform built for infra as code. Declare monitors in code and let your agents update them.",
+      "The open-source status page, incident response and uptime monitoring platform. Run incidents from Slack or your AI agent and declare monitors in code.",
     image: `${BASE_URL}/assets/logos/OpenStatus-Logo.svg`,
     url: BASE_URL,
     brand: {
@@ -213,9 +213,9 @@ export const getJsonLDSoftwareApplication =
       name: "openstatus",
       url: BASE_URL,
       description:
-        "The open-source status page and uptime monitoring platform built for infra as code. Declare monitors in code and let your agents update them.",
+        "The open-source status page, incident response and uptime monitoring platform. Run incidents from Slack or your AI agent and declare monitors in code.",
       applicationCategory: "BusinessApplication",
-      applicationSubCategory: "Status Pages & Uptime Monitoring",
+      applicationSubCategory: "Status Pages, Incident Response & Uptime Monitoring",
       operatingSystem: "Web, Self-hosted",
       offers: Object.entries(allPlans).map(([_, value]) => ({
         "@type": "Offer",
