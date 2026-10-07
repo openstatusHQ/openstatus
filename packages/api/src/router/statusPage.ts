@@ -1323,7 +1323,7 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   subscribe: publicProcedure
-    .meta({ track: Events.SubscribePage, trackProps: ["slug", "email"] })
+    .meta({ track: Events.SubscribePage, trackProps: ["slug"] })
     .input(
       z.object({
         slug: z.string().toLowerCase(),
@@ -1458,7 +1458,7 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   validateEmailDomain: publicProcedure
-    .meta({ track: Events.ValidateEmailDomain, trackProps: ["slug", "email"] })
+    .meta({ track: Events.ValidateEmailDomain, trackProps: ["slug"] })
     .input(z.object({ slug: z.string().toLowerCase(), email: z.string() }))
     .query(async (opts) => {
       if (!opts.input.slug) return null;

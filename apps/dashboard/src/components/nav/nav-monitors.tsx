@@ -102,6 +102,8 @@ export function NavMonitors() {
               <TooltipTrigger asChild>
                 <SidebarMenuAction
                   data-limited={limitReached}
+                  data-track={limitReached ? "paywall_viewed" : undefined}
+                  data-limit={limitReached ? "monitors" : undefined}
                   className="relative top-0 right-0 border data-[limited=true]:opacity-80"
                   onClick={() => {
                     if (limitReached) {

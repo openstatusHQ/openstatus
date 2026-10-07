@@ -66,6 +66,7 @@ export function toTRPCError(err: unknown): never {
         throw new TRPCError({
           code: "TOO_MANY_REQUESTS",
           message: err.message,
+          cause: err,
         });
       case "PRECONDITION_FAILED":
         throw new TRPCError({

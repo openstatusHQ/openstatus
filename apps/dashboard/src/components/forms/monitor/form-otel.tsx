@@ -183,7 +183,7 @@ export function FormOtel({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button asChild>
+              <Button data-track="paywall_viewed" data-limit="otel" asChild>
                 <NextLink href="/settings/billing">
                   <Lock className="size-4" />
                   Upgrade

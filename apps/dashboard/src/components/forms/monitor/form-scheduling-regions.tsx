@@ -188,7 +188,12 @@ export function FormSchedulingRegions({
               <Note color="error">
                 <Error />
                 The periodicity you are selecting is not allowed for your plan.
-                <NoteButton type="button" onClick={() => setOpenDialog(true)}>
+                <NoteButton
+                  data-track="paywall_viewed"
+                  data-limit="periodicity"
+                  type="button"
+                  onClick={() => setOpenDialog(true)}
+                >
                   Upgrade your plan
                 </NoteButton>
               </Note>

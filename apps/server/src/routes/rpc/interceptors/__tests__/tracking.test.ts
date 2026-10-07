@@ -101,7 +101,9 @@ describe("trackingInterceptor", () => {
     expect(mockSetupAnalytics).toHaveBeenCalledWith({
       userId: "api_42",
       workspaceId: "42",
+      workspaceName: "test-ws",
       plan: "free",
+      source: "api",
       location: "1.2.3.4",
       userAgent: "test-agent",
     });
@@ -112,7 +114,6 @@ describe("trackingInterceptor", () => {
     expect(mockTrack).toHaveBeenCalledTimes(1);
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.DeleteMonitor,
-      additionalProps: {},
     });
   });
 
@@ -130,7 +131,8 @@ describe("trackingInterceptor", () => {
 
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.CreateMonitor,
-      additionalProps: { url: "https://example.com", jobType: "http" },
+      url: "https://example.com",
+      jobType: "http",
     });
   });
 
@@ -148,7 +150,8 @@ describe("trackingInterceptor", () => {
 
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.CreateMonitor,
-      additionalProps: { url: "example.com", jobType: "icmp" },
+      url: "example.com",
+      jobType: "icmp",
     });
   });
 
@@ -230,7 +233,9 @@ describe("trackingInterceptor", () => {
     expect(mockSetupAnalytics).toHaveBeenCalledWith({
       userId: "api_42",
       workspaceId: "42",
+      workspaceName: "test-ws",
       plan: "free",
+      source: "api",
       location: "1.2.3.4",
       userAgent: "test-agent",
     });
@@ -240,7 +245,7 @@ describe("trackingInterceptor", () => {
 
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.CreateNotification,
-      additionalProps: { provider: "slack" },
+      provider: "slack",
     });
   });
 });

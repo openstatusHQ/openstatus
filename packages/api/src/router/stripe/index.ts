@@ -110,6 +110,15 @@ async function createPaymentMethodSetupSession(args: {
   });
 }
 
+const checkoutSessionInput = z.object({
+  currency: z.string(),
+  workspaceSlug: z.string(),
+  plan: z.enum(workspacePlans),
+  interval: z.enum(billingIntervals).default("monthly"),
+  successUrl: z.string().optional(),
+  cancelUrl: z.string().optional(),
+});
+
 export const stripeRouter = createTRPCRouter({
   // The workspace only stores the plan, not the interval it is billed on, so
   // the plan table asks Stripe to tell "Pro monthly" apart from "Pro yearly".
@@ -149,16 +158,22 @@ export const stripeRouter = createTRPCRouter({
     }),
 
   getCheckoutSession: protectedProcedure
-    .input(
-      z.object({
-        currency: z.string(),
-        workspaceSlug: z.string(),
-        plan: z.enum(workspacePlans),
-        interval: z.enum(billingIntervals).default("monthly"),
-        successUrl: z.string().optional(),
-        cancelUrl: z.string().optional(),
-      }),
-    )
+    .meta({
+      track: Events.StartCheckout,
+      // Only the final branch opens a Stripe checkout; the setup-session and
+      // in-place plan change paths are not checkouts. Re-parse the raw input so
+      // the defaulted `interval` is tracked too.
+      trackResult: ({ input, data }) => {
+        if ((data as { type?: string } | undefined)?.type !== "checkout") {
+          return null;
+        }
+        const parsed = checkoutSessionInput.safeParse(input);
+        if (!parsed.success) return {};
+        const { plan, interval, currency } = parsed.data;
+        return { plan, interval, currency };
+      },
+    })
+    .input(checkoutSessionInput)
     .mutation(async (opts) => {
       const resolved = await resolveWorkspaceCtx(opts);
       if (!resolved) return;

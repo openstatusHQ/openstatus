@@ -389,7 +389,11 @@ function BillingPlaceholder() {
         />
       </DataTableStoreProvider>
       <BillingOverlay>
-        <BillingOverlayButton asChild>
+        <BillingOverlayButton
+          data-track="paywall_viewed"
+          data-limit="response-logs"
+          asChild
+        >
           <Link href="/settings/billing">
             <Lock />
             Upgrade

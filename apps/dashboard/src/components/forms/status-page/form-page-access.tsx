@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import {
   ApiKey,
   Lock,
@@ -87,6 +88,13 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+
+const ACCESS_TYPE_LIMIT = {
+  public: undefined,
+  password: "password-protection",
+  "email-domain": "email-domain-protection",
+  "ip-restriction": "ip-restriction",
+} satisfies Record<z.infer<typeof accessTypeSchema>, keyof Limits | undefined>;
 
 export function FormPageAccess({
   lockedMap,
@@ -325,7 +333,12 @@ export function FormPageAccess({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button type="button" asChild>
+              <Button
+                data-track="paywall_viewed"
+                data-limit={ACCESS_TYPE_LIMIT[watchAccessType]}
+                type="button"
+                asChild
+              >
                 <Link href="/settings/billing">
                   <Lock />
                   Upgrade

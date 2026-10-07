@@ -1,6 +1,4 @@
-import { Events, setupAnalytics } from "@openstatus/analytics";
-import { eq } from "@openstatus/db";
-import { user } from "@openstatus/db/src/schema";
+import { type EventProps, Events, setupAnalytics } from "@openstatus/analytics";
 import {
   billingRecipients,
   cancelScheduledEmail,
@@ -39,6 +37,7 @@ import {
   syncedLimits,
   trialEndsAtOf,
 } from "./shared";
+import { billingProps } from "./utils";
 
 const webhookProcedure = publicProcedure.input(
   z.object({
@@ -110,9 +109,43 @@ function toPlanLoss(
   };
 }
 
+type StripeWorkspace = NonNullable<
+  Awaited<ReturnType<typeof getWorkspaceByStripeId>>
+>;
+
+// Never throws: runs after DB writes and emails, so a failure here would make
+// Stripe redeliver the event and resend them.
+async function trackForWorkspaceOwner(args: {
+  db: NonNullable<Db>;
+  ws: StripeWorkspace;
+  event: EventProps;
+  props?: Record<string, unknown>;
+}) {
+  try {
+    const owners = await listWorkspaceOwners({
+      input: { workspaceId: args.ws.id },
+      db: args.db,
+    });
+    // Owners come back unordered: with several, picking one would attribute
+    // billing to an arbitrary profile, so only the workspace group gets it.
+    const owner = owners.length === 1 ? owners[0] : undefined;
+    const analytics = await setupAnalytics({
+      userId: owner ? `usr_${owner.id}` : undefined,
+      email: owner?.email ?? undefined,
+      workspaceId: String(args.ws.id),
+      workspaceName: args.ws.name || args.ws.slug,
+      plan: args.ws.plan ?? undefined,
+      source: "stripe",
+    });
+    await analytics.track({ ...args.props, ...args.event });
+  } catch (err) {
+    console.error(`Failed to track ${args.event.name}:`, err);
+  }
+}
+
 async function sendCancellationEmails(args: {
   db: NonNullable<Db>;
-  ws: NonNullable<Awaited<ReturnType<typeof getWorkspaceByStripeId>>>;
+  ws: StripeWorkspace;
   customerId: string;
   current: Stripe.Subscription;
   plan: string;
@@ -191,6 +224,7 @@ async function attachSetupPaymentMethod(session: Stripe.Checkout.Session) {
   await stripe.subscriptions.update(subscriptionId, {
     default_payment_method: paymentMethod,
   });
+  return subscription;
 }
 
 // Never mount this on an app router: the procedures trust `event`, and only
@@ -318,53 +352,57 @@ export const webhookRouter = createTRPCRouter({
       wasTrialing &&
       current.status === "active"
     ) {
-      const [owner] = await listWorkspaceOwners({
-        input: { workspaceId: ws.id },
+      await trackForWorkspaceOwner({
         db: opts.ctx.db,
+        ws: { ...ws, plan: built.plan },
+        event: Events.ConvertTrial,
+        props: { toPlan: built.plan, ...billingProps(current) },
       });
-      const analytics = await setupAnalytics({
-        userId: owner ? `usr_${owner.id}` : undefined,
-        email: owner?.email ?? undefined,
-        workspaceId: String(ws.id),
-        plan: built.plan,
-      });
-      await analytics.track(Events.ConvertTrial);
     }
 
     const newPlan = built.plan;
     if (newPlan !== oldPlan) {
-      const customer = await stripe.customers.retrieve(customerId);
-      if (!customer.deleted && customer.email) {
-        const userResult = await opts.ctx.db
-          .select()
-          .from(user)
-          .where(eq(user.email, customer.email))
-          .get();
-        if (!userResult) return;
+      const planOrder = ["free", "starter", "team", "scale"] as const;
+      const oldIndex = planOrder.indexOf(oldPlan ?? "free");
+      const newIndex = planOrder.indexOf(newPlan ?? "free");
 
-        const planOrder = ["free", "starter", "team", "scale"] as const;
-        const oldIndex = planOrder.indexOf(oldPlan ?? "free");
-        const newIndex = planOrder.indexOf(newPlan ?? "free");
-
-        const event =
+      await trackForWorkspaceOwner({
+        db: opts.ctx.db,
+        ws: { ...ws, plan: newPlan },
+        event:
           newIndex > oldIndex
             ? Events.UpgradeWorkspace
-            : Events.DowngradeWorkspace;
-
-        const analytics = await setupAnalytics({
-          userId: `usr_${userResult.id}`,
-          email: userResult.email || undefined,
-          workspaceId: String(ws.id),
-          plan: newPlan,
-        });
-        await analytics.track(event);
-      }
+            : Events.DowngradeWorkspace,
+        props: { fromPlan: oldPlan, toPlan: newPlan, ...billingProps(current) },
+      });
     }
   }),
   sessionCompleted: webhookProcedure.mutation(async (opts) => {
     const session = opts.input.event.data.object as Stripe.Checkout.Session;
     if (session.mode === "setup") {
-      await attachSetupPaymentMethod(session);
+      const subscription = await attachSetupPaymentMethod(session);
+      if (!subscription) return;
+      const ws = await getWorkspaceByStripeId({
+        input: { stripeId: customerIdOf(subscription) },
+        db: opts.ctx.db,
+      });
+      if (!ws) return;
+      await trackForWorkspaceOwner({
+        db: opts.ctx.db,
+        ws,
+        event: Events.AddTrialPaymentMethod,
+        props: {
+          subscriptionStatus: subscription.status,
+          trialDaysLeft: subscription.trial_end
+            ? Math.max(
+                0,
+                Math.ceil(
+                  (subscription.trial_end * 1000 - Date.now()) / 86_400_000,
+                ),
+              )
+            : undefined,
+        },
+      });
       return;
     }
     if (typeof session.subscription !== "string") {
@@ -433,23 +471,17 @@ export const webhookRouter = createTRPCRouter({
       },
     });
 
-    const customer = await stripe.customers.retrieve(customerId);
-    if (!customer.deleted && customer.email) {
-      const userResult = await opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.email, customer.email))
-        .get();
-      if (!userResult) return;
-
-      const analytics = await setupAnalytics({
-        userId: `usr_${userResult.id}`,
-        email: userResult.email || undefined,
-        workspaceId: String(ws.id),
-        plan: built.plan,
-      });
-      await analytics.track(Events.UpgradeWorkspace);
-    }
+    await trackForWorkspaceOwner({
+      db: opts.ctx.db,
+      ws: { ...ws, plan: built.plan },
+      event: Events.UpgradeWorkspace,
+      props: {
+        fromPlan: ws.plan,
+        toPlan: built.plan,
+        trialing: subscription.status === "trialing",
+        ...billingProps(subscription),
+      },
+    });
   }),
   customerSubscriptionTrialWillEnd: webhookProcedure.mutation(async (opts) => {
     const subscription = opts.input.event.data.object as Stripe.Subscription;
@@ -501,6 +533,13 @@ export const webhookRouter = createTRPCRouter({
       loss: preview
         ? toPlanLoss(preview, preview.customDomains, preview.ssoEnabled)
         : undefined,
+    });
+
+    await trackForWorkspaceOwner({
+      db: opts.ctx.db,
+      ws,
+      event: Events.NotifyTrialEnding,
+      props: { hasPaymentMethod: withCard },
     });
   }),
   customerSubscriptionDeleted: webhookProcedure.mutation(async (opts) => {
@@ -605,23 +644,14 @@ export const webhookRouter = createTRPCRouter({
       }
     }
 
-    const customer = await stripe.customers.retrieve(customerId);
-
-    if (!customer.deleted && customer.email) {
-      const userResult = await opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.email, customer.email))
-        .get();
-      if (!userResult) return;
-
-      const analytics = await setupAnalytics({
-        userId: `usr_${userResult.id}`,
-        email: customer.email || undefined,
-        workspaceId: String(ws.id),
-        plan: "free",
-      });
-      await analytics.track(Events.DowngradeWorkspace);
-    }
+    await trackForWorkspaceOwner({
+      db: opts.ctx.db,
+      ws: { ...ws, plan: "free" },
+      event:
+        reason === "subscription_deleted"
+          ? Events.DowngradeWorkspace
+          : Events.ExpireTrial,
+      props: { fromPlan: ws.plan, toPlan: "free", reason },
+    });
   }),
 });

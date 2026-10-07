@@ -160,7 +160,12 @@ export function SlackIntegrationCard({
           .
         </FormCardFooterInfo>
         {locked ? (
-          <Button type="button" asChild>
+          <Button
+            data-track="paywall_viewed"
+            data-limit="slack-agent"
+            type="button"
+            asChild
+          >
             <Link href="/settings/billing">
               <Lock />
               Upgrade

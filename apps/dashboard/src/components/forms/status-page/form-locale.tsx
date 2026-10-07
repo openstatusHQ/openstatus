@@ -229,7 +229,12 @@ export function FormLocale({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button type="button" asChild>
+              <Button
+                data-track="paywall_viewed"
+                data-limit="i18n"
+                type="button"
+                asChild
+              >
                 <Link href="/settings/billing">
                   <Lock className="size-4" />
                   Upgrade

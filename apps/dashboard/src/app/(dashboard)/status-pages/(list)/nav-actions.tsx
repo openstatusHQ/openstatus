@@ -24,6 +24,8 @@ export function NavActions() {
       <NavFeedback />
       {limitReached ? (
         <Button
+          data-track="paywall_viewed"
+          data-limit="status-pages"
           size="sm"
           data-limited={limitReached}
           className="data-[limited=true]:opacity-80"
