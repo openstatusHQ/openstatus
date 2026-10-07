@@ -15,13 +15,16 @@ import type { SlackConfig } from "./config";
 import { trackSlackIncident } from "./incident-analytics";
 import {
   linkAccountUrl,
+  planRequiredMessage,
   requireSlackMember,
+  type SlackActor,
   slackAgentAllowed,
 } from "./require-slack-member";
 import {
   resolveSlackMember,
   resolveSlackMentionNames,
 } from "./resolve-slack-user";
+import { type EphemeralReply, respondLater } from "./response-url";
 import {
   collectMentions,
   mentionLabelsFromText,
@@ -31,10 +34,13 @@ import type { SlackWorkspace } from "./workspace-resolver";
 
 const logger = getLogger(["api-server", "slack", "incident-events"]);
 
+/** Callback id of the "Add to incident timeline" message shortcut. */
+export const ADD_TO_TIMELINE_CALLBACK = "add_to_incident_timeline";
+
 const PIN = "pushpin";
 const DONE = "white_check_mark";
 
-type SlackMessage = {
+export type SlackMessage = {
   ts?: string;
   text?: string;
   user?: string;
@@ -45,6 +51,12 @@ type SlackMessage = {
 };
 
 const NOTHING_TO_COPY = "Nothing to copy from that message.";
+const NOT_AN_INCIDENT =
+  "This channel isn't an open incident's channel. Use *Add to incident timeline* or :pushpin: inside the incident's channel.";
+const ALREADY_NOTED = "That message is already on the timeline.";
+const NOTED = "Added to the timeline.";
+const NOTE_FAILED =
+  "Couldn't add that message to the timeline. Please try again.";
 const PIN_FAILED =
   "Couldn't copy that message to the timeline. Pin it again to retry.";
 const VERB_LAG_MS = 60_000;
@@ -57,7 +69,7 @@ function messageDate(ts: string): Date | undefined {
   const date = new Date(Number(ts) * 1000);
   const now = Date.now();
   // The verb samples its own `now` a moment later; a boundary message must
-  // pass both, or the pin would fail instead of falling back to now.
+  // pass both, or the note would fail instead of falling back to now.
   return isAllowedNoteCreatedAt(date, now) &&
     isAllowedNoteCreatedAt(date, now + VERB_LAG_MS)
     ? date
@@ -146,7 +158,113 @@ async function alreadyNoted(
   );
 }
 
-/** 📌 on a message in an incident channel copies it onto the timeline. */
+/** The open incident bound to `channel`, if any. */
+async function openIncidentIn(
+  resolved: SlackWorkspace,
+  teamId: string,
+  channel: string,
+) {
+  const bound = await getIncidentBySlackChannel({
+    ctx: system(resolved),
+    input: { teamId, channelId: channel },
+  });
+  return bound && !bound.closedAt ? bound : null;
+}
+
+type NoteOutcome = "noted" | "unconfirmed" | "already" | "empty";
+
+/**
+ * Copies a message onto the incident's timeline and confirms it with ✅,
+ * shared by the 📌 reaction and the message shortcut. `unconfirmed` means the
+ * note was added but the ✅ wasn't. Throws, with the claim released, when the
+ * note could not be added.
+ */
+async function noteMessage(args: {
+  resolved: SlackWorkspace;
+  teamId: string;
+  slack: WebClient;
+  actor: SlackActor;
+  incidentId: number;
+  slackUserId: string;
+  channel: string;
+  ts: string;
+  loadMessage: () => Promise<SlackMessage | undefined>;
+  via: "reaction" | "shortcut";
+}): Promise<NoteOutcome> {
+  const { resolved, teamId, slack, actor, slackUserId, channel, ts } = args;
+  // Claimed before the ✅ check so a 📌 and a click racing on one message
+  // note it once; it also stands in for the ✅ when adding the reaction fails.
+  const claim = `slack:timeline:${channel}:${ts}`;
+  const claimed = await redis.set(claim, "1", { nx: true, ex: 24 * 60 * 60 });
+  if (claimed === null) return "already";
+  try {
+    if (await alreadyNoted(slack, channel, ts, resolved.botUserId)) {
+      return "already";
+    }
+    const message = await args.loadMessage();
+    const body = message
+      ? await noteBody({ resolved, teamId, slack, message })
+      : "";
+    if (!body) {
+      await redis.del(claim);
+      return "empty";
+    }
+    // The note belongs to whoever said it; bots and unlinked authors fall
+    // back to whoever pinned it or ran the shortcut. A lookup hiccup throws
+    // rather than attributing the note to the wrong name forever.
+    const authorSlackId =
+      message?.user &&
+      message.user !== slackUserId &&
+      !message.bot_id &&
+      message.subtype !== "bot_message"
+        ? message.user
+        : null;
+    const [permalink, author] = await Promise.all([
+      slack.chat
+        .getPermalink({ channel, message_ts: ts })
+        .then((res) => res.permalink)
+        .catch(() => undefined),
+      authorSlackId
+        ? resolveSlackMember({
+            workspace: resolved.workspace,
+            teamId,
+            slackUserId: authorSlackId,
+            slack,
+            strict: true,
+          })
+        : null,
+    ]);
+
+    const ctx: ServiceContext = { workspace: resolved.workspace, actor };
+    await addIncidentNote({
+      ctx,
+      input: {
+        id: args.incidentId,
+        message: permalink ? `${body}\n\n[From Slack](${permalink})` : body,
+        createdAt: messageDate(ts),
+        createdBy: author ?? undefined,
+      },
+    });
+    trackSlackIncident(ctx, "note", { via: args.via });
+  } catch (err) {
+    await redis.del(claim).catch(() => undefined);
+    throw err;
+  }
+  // The ✅ shows everyone the message is on the timeline.
+  return slack.reactions
+    .add({ channel, timestamp: ts, name: DONE })
+    .then((): NoteOutcome => "noted")
+    .catch((error) => {
+      logger.warn("slack failed to confirm a timeline note", { error });
+      return "unconfirmed";
+    });
+}
+
+/**
+ * 📌 on a message in an incident channel copies it onto the timeline. A
+ * reaction is ambient, so anything but a real attempt stays silent; a failure
+ * throws so Slack retries the event.
+ */
 export async function handlePinReaction(args: {
   resolved: SlackWorkspace;
   config: SlackConfig;
@@ -159,13 +277,16 @@ export async function handlePinReaction(args: {
   const { resolved, config, teamId, slackUserId, channel, ts } = args;
   if (args.reaction !== PIN) return;
   if (!slackAgentAllowed(resolved.workspace)) return;
-  const bound = await getIncidentBySlackChannel({
-    ctx: system(resolved),
-    input: { teamId, channelId: channel },
-  });
-  if (!bound || bound.closedAt) return;
+  const bound = await openIncidentIn(resolved, teamId, channel);
+  if (!bound) return;
 
   const slack = new WebClient(resolved.botToken);
+  const tell = (text: string, what: string) =>
+    slack.chat
+      .postEphemeral({ channel, user: slackUserId, thread_ts: ts, text })
+      .catch((error) =>
+        logger.warn(`slack failed to report ${what}`, { error }),
+      );
   const actor = await requireSlackMember({
     workspace: resolved.workspace,
     teamId,
@@ -197,70 +318,21 @@ export async function handlePinReaction(args: {
     return;
   }
 
-  // Claimed before the ✅ check so two 📌 racing on one message note it once;
-  // it also stands in for the ✅ when adding the reaction fails.
-  const claim = `slack:pinned:${channel}:${ts}`;
-  const claimed = await redis.set(claim, "1", { nx: true, ex: 24 * 60 * 60 });
-  if (claimed === null) return;
   try {
-    if (await alreadyNoted(slack, channel, ts, resolved.botUserId)) return;
-    const message = await findMessage(slack, channel, ts);
-    const body = message
-      ? await noteBody({ resolved, teamId, slack, message })
-      : "";
-    if (!body) {
-      await redis.del(claim);
-      await slack.chat
-        .postEphemeral({
-          channel,
-          user: slackUserId,
-          thread_ts: ts,
-          text: NOTHING_TO_COPY,
-        })
-        .catch((error) =>
-          logger.warn("slack failed to report an empty pin", { error }),
-        );
-      return;
-    }
-    // The note belongs to whoever said it; bots and unlinked authors fall
-    // back to the pinner. A lookup hiccup throws so the claim is released and
-    // Slack retries, rather than pinning the wrong name forever.
-    const authorSlackId =
-      message?.user &&
-      message.user !== slackUserId &&
-      !message.bot_id &&
-      message.subtype !== "bot_message"
-        ? message.user
-        : null;
-    const [permalink, author] = await Promise.all([
-      slack.chat
-        .getPermalink({ channel, message_ts: ts })
-        .then((res) => res.permalink)
-        .catch(() => undefined),
-      authorSlackId
-        ? resolveSlackMember({
-            workspace: resolved.workspace,
-            teamId,
-            slackUserId: authorSlackId,
-            slack,
-            strict: true,
-          })
-        : null,
-    ]);
-
-    const ctx: ServiceContext = { workspace: resolved.workspace, actor };
-    await addIncidentNote({
-      ctx,
-      input: {
-        id: bound.id,
-        message: permalink ? `${body}\n\n[From Slack](${permalink})` : body,
-        createdAt: messageDate(ts),
-        createdBy: author ?? undefined,
-      },
+    const outcome = await noteMessage({
+      resolved,
+      teamId,
+      slack,
+      actor,
+      incidentId: bound.id,
+      slackUserId,
+      channel,
+      ts,
+      loadMessage: () => findMessage(slack, channel, ts),
+      via: "reaction",
     });
-    trackSlackIncident(ctx, "note", { via: "reaction" });
+    if (outcome === "empty") await tell(NOTHING_TO_COPY, "an empty pin");
   } catch (err) {
-    await redis.del(claim).catch(() => undefined);
     // Slack retries the event, but a lost pin should not go unnoticed if it
     // keeps failing; one notice per message is enough.
     const once = await redis
@@ -269,23 +341,80 @@ export async function handlePinReaction(args: {
         ex: 24 * 60 * 60,
       })
       .catch(() => null);
-    if (once !== null) {
-      await slack.chat
-        .postEphemeral({
-          channel,
-          user: slackUserId,
-          thread_ts: ts,
-          text: PIN_FAILED,
-        })
-        .catch((error) =>
-          logger.warn("slack failed to report a lost pin", { error }),
-        );
-    }
+    if (once !== null) await tell(PIN_FAILED, "a lost pin");
     throw err;
   }
-  await slack.reactions
-    .add({ channel, timestamp: ts, name: DONE })
-    .catch((error) => logger.warn("slack failed to confirm pin", { error }));
+}
+
+/**
+ * The "Add to incident timeline" message shortcut: the ⋯-menu twin of 📌.
+ * The user asked for it, so every outcome but a ✅ is told to them through
+ * the shortcut's `response_url`.
+ */
+export async function handleAddToTimeline(args: {
+  resolved: SlackWorkspace;
+  config: SlackConfig;
+  teamId: string;
+  slackUserId: string;
+  channel: string;
+  message: SlackMessage & { ts: string };
+  responseUrl: string;
+}): Promise<void> {
+  const { resolved, config, teamId, slackUserId, channel, message } = args;
+  const reply = (text: string, blocks?: EphemeralReply["blocks"]) =>
+    respondLater(args.responseUrl, { text, blocks }).catch((error) =>
+      logger.warn("slack failed to answer the timeline shortcut", { error }),
+    );
+
+  if (!slackAgentAllowed(resolved.workspace)) {
+    await reply(planRequiredMessage(config).text);
+    return;
+  }
+  const bound = await openIncidentIn(resolved, teamId, channel);
+  if (!bound) {
+    await reply(NOT_AN_INCIDENT);
+    return;
+  }
+
+  const slack = new WebClient(resolved.botToken);
+  const actor = await requireSlackMember({
+    workspace: resolved.workspace,
+    teamId,
+    slackUserId,
+    slack,
+  });
+  if (!actor) {
+    const url = await linkAccountUrl(config, {
+      workspaceId: resolved.workspace.id,
+      teamId,
+      slackUserId,
+    });
+    await reply(LINK_ACCOUNT_TEXT, buildLinkAccountBlocks(url));
+    return;
+  }
+
+  let outcome: NoteOutcome;
+  try {
+    outcome = await noteMessage({
+      resolved,
+      teamId,
+      slack,
+      actor,
+      incidentId: bound.id,
+      slackUserId,
+      channel,
+      ts: message.ts,
+      // The shortcut carries the whole message; no need to look it up.
+      loadMessage: () => Promise.resolve(message),
+      via: "shortcut",
+    });
+  } catch (err) {
+    await reply(NOTE_FAILED);
+    throw err;
+  }
+  if (outcome === "already") await reply(ALREADY_NOTED);
+  else if (outcome === "empty") await reply(NOTHING_TO_COPY);
+  else if (outcome === "unconfirmed") await reply(NOTED);
 }
 
 /** An archived or deleted channel no longer carries its incident. */

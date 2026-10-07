@@ -327,7 +327,7 @@ export function headerBlocks(
       elements: [
         {
           type: "mrkdwn",
-          text: `<${url}|Open in openstatus> · Pin a message with :pushpin: to add it to the timeline.`,
+          text: `<${url}|Open in openstatus> · Add a message to the timeline: ⋯ → *Add to incident timeline*, or react :pushpin:.`,
         },
       ],
     },

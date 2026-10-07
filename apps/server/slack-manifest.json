@@ -3,7 +3,7 @@
     "name": "openstatus",
     "description": "Run incidents and keep your status page up to date, without leaving Slack.",
     "background_color": "#000000",
-    "long_description": "openstatus runs your incidents and status page from Slack. Declare an incident and it opens a dedicated channel for it. Mention @openstatus in that channel or any thread, or open it from the Slack top bar, and it turns the conversation into status page updates. Nothing is published until you approve it.\n\nIncidents\n:rotating_light: Declare an incident from the Declare incident shortcut, a message's ⋯ menu, or /openstatus incident declare\n:hash: openstatus opens a dedicated channel and adds you to it\n:memo: Add notes to the timeline, mark the incident mitigated or resolved, and draft the postmortem\n\nStatus page updates\n:speech_balloon: Mention @openstatus in a thread and it drafts a status report from the discussion\n:white_check_mark: Click Approve to publish it, or Approve & Notify to also notify your subscribers\n:arrows_counterclockwise: Say \"we found the cause\" or \"it's fixed\" and it moves the report to Identified or Resolved\n:calendar: Schedule maintenance windows in plain language\n\nStatus page subscriptions\n:bell: /openstatus subscribe <status-page-url> posts a status page's updates in a channel\n\nAI disclaimer\nopenstatus uses large language models (LLMs) to summarize conversations, draft status updates, and infer incident status. AI-generated content may be inaccurate or incomplete, so review every draft before approving it. Nothing is posted to your status page until you confirm, only the person who triggered the action can approve it, and you can cancel any draft."
+    "long_description": "openstatus runs your incidents and status page from Slack. Declare an incident and it opens a dedicated channel for it. Mention @openstatus in that channel or any thread, or open it from the Slack top bar, and it turns the conversation into status page updates. Nothing is published until you approve it.\n\nIncidents\n:rotating_light: Declare an incident from the Declare incident shortcut, a message's ⋯ menu, or /openstatus incident declare\n:hash: openstatus opens a dedicated channel and adds you to it\n:memo: Add any message to the timeline from its ⋯ menu or with a :pushpin: reaction, write notes, mark the incident mitigated or resolved, and draft the postmortem\n\nStatus page updates\n:speech_balloon: Mention @openstatus in a thread and it drafts a status report from the discussion\n:white_check_mark: Click Approve to publish it, or Approve & Notify to also notify your subscribers\n:arrows_counterclockwise: Say \"we found the cause\" or \"it's fixed\" and it moves the report to Identified or Resolved\n:calendar: Schedule maintenance windows in plain language\n\nStatus page subscriptions\n:bell: /openstatus subscribe <status-page-url> posts a status page's updates in a channel\n\nAI disclaimer\nopenstatus uses large language models (LLMs) to summarize conversations, draft status updates, and infer incident status. AI-generated content may be inaccurate or incomplete, so review every draft before approving it. Nothing is posted to your status page until you confirm, only the person who triggered the action can approve it, and you can cancel any draft."
   },
   "features": {
     "agent_view": {
@@ -48,6 +48,12 @@
         "type": "message",
         "callback_id": "declare_incident_from_message",
         "description": "Declare an incident from this message"
+      },
+      {
+        "name": "Add to incident timeline",
+        "type": "message",
+        "callback_id": "add_to_incident_timeline",
+        "description": "Add this message to the incident's timeline"
       }
     ],
     "slash_commands": [
