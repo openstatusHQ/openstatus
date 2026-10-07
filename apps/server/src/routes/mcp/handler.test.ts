@@ -280,7 +280,9 @@ describe("MCP transport — analytics", () => {
       string,
       unknown
     >;
-    expect(identify?.userId).toBe(`api_${SEEDED_WORKSPACE_TEAM_ID}`);
+    expect(identify?.userId).toBeUndefined();
+    expect(identify?.workspaceId).toBe(`${SEEDED_WORKSPACE_TEAM_ID}`);
+    expect(identify?.source).toBe("mcp");
 
     const event = analyticsSpies.track.mock.calls[0]?.[0] as Record<
       string,

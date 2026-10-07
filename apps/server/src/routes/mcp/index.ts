@@ -86,9 +86,10 @@ function trackMcpRequest(
   if (calls.length === 0) return;
 
   setupAnalytics({
-    userId: `api_${workspace.id}`,
     workspaceId: `${workspace.id}`,
+    workspaceName: workspace.name || workspace.slug,
     plan: workspace.plan,
+    source: "mcp",
     location: c.req.header("x-forwarded-for"),
     userAgent: c.req.header("user-agent"),
   })

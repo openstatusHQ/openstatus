@@ -1,3 +1,4 @@
+import { Events } from "@openstatus/analytics";
 import {
   PreviewImportInput,
   RunImportInput,
@@ -10,6 +11,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const importRouter = createTRPCRouter({
   preview: protectedProcedure
+    .meta({ track: Events.PreviewImport, trackProps: ["provider"] })
     .input(PreviewImportInput)
     .mutation(async ({ ctx, input }) => {
       try {
@@ -20,6 +22,7 @@ export const importRouter = createTRPCRouter({
     }),
 
   run: protectedProcedure
+    .meta({ track: Events.RunImport, trackProps: ["provider"] })
     .input(RunImportInput)
     .mutation(async ({ ctx, input }) => {
       try {

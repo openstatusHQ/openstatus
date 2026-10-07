@@ -149,6 +149,10 @@ export const stripeRouter = createTRPCRouter({
     }),
 
   getCheckoutSession: protectedProcedure
+    .meta({
+      track: Events.StartCheckout,
+      trackProps: ["plan", "interval", "currency"],
+    })
     .input(
       z.object({
         currency: z.string(),

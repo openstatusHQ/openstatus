@@ -95,9 +95,10 @@ async function onNewUser(
     email: newUser.email,
     location: requestHeaders.get("x-forwarded-for") ?? undefined,
     userAgent: requestHeaders.get("user-agent") ?? undefined,
+    source: "dashboard",
   });
 
-  await analytics.track(Events.CreateUser);
+  await analytics.track({ ...Events.CreateUser, provider });
   if (trial.started) {
     await analytics.track({ ...Events.StartTrial, currency });
   } else if (trial.reason !== "disabled") {
@@ -233,9 +234,13 @@ const {
         email: params.user.email,
         location: (await headers()).get("x-forwarded-for") ?? undefined,
         userAgent: (await headers()).get("user-agent") ?? undefined,
+        source: "dashboard",
       });
 
-      await analytics.track(Events.SignInUser);
+      await analytics.track({
+        ...Events.SignInUser,
+        provider: params.account?.provider,
+      });
     },
   },
   pages: {

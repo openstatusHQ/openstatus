@@ -204,7 +204,11 @@ export function CommandRegion({
         </Command>
         {limited ? (
           <BillingOverlay className="to-70%">
-            <BillingOverlayButton asChild>
+            <BillingOverlayButton
+              data-track="paywall_viewed"
+              data-limit="max-regions"
+              asChild
+            >
               <Link href="/settings/billing">
                 <Lock />
                 Upgrade

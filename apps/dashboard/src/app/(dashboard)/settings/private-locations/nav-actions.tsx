@@ -34,6 +34,8 @@ export function NavActions() {
       <NavFeedback />
       {limitReached ? (
         <Button
+          data-track="paywall_viewed"
+          data-limit="private-locations"
           size="sm"
           data-disabled={limitReached}
           className="data-[disabled=true]:opacity-50"

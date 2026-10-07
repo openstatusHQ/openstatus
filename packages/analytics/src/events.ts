@@ -132,6 +132,10 @@ export const Events = {
     name: "notification_updated",
     channel: "notification",
   },
+  TestNotification: {
+    name: "notification_tested",
+    channel: "notification",
+  },
   DeleteNotification: {
     name: "notification_deleted",
     channel: "notification",
@@ -255,6 +259,46 @@ export const Events = {
   ConvertTrial: {
     name: "trial_converted",
     channel: "billing",
+  },
+  AddTrialPaymentMethod: {
+    name: "trial_payment_method_added",
+    channel: "billing",
+  },
+  NotifyTrialEnding: {
+    name: "trial_ending_notified",
+    channel: "billing",
+  },
+  ExpireTrial: {
+    name: "trial_expired",
+    channel: "billing",
+  },
+  StartCheckout: {
+    name: "checkout_started",
+    channel: "billing",
+  },
+  ReachLimit: {
+    name: "limit_reached",
+    channel: "billing",
+  },
+  PreviewImport: {
+    name: "import_previewed",
+    channel: "import",
+  },
+  RunImport: {
+    name: "import_completed",
+    channel: "import",
+  },
+  InstallSlackAgent: {
+    name: "slack_agent_installed",
+    channel: "integration",
+  },
+  EnableSso: {
+    name: "sso_enabled",
+    channel: "workspace",
+  },
+  SubmitFeedback: {
+    name: "feedback_submitted",
+    channel: "feedback",
   },
   GlobalSpeedChecker: {
     name: "global_speed_checker",

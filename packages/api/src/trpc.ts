@@ -1,11 +1,13 @@
 import {
   type EventProps,
+  Events,
   type IdentifyProps,
   parseInputToProps,
   setupAnalytics,
 } from "@openstatus/analytics";
 import { db } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
+import { LimitExceededError } from "@openstatus/services";
 import { TRPCError, initTRPC } from "@trpc/server";
 import { type NextRequest, after } from "next/server.js";
 import superjson from "superjson";
@@ -250,32 +252,40 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
     return result;
   }
 
-  // REMINDER: We only track the event if the request was successful
+  const identify: IdentifyProps = {
+    userAgent: ctx.metadata?.userAgent,
+    location: ctx.metadata?.location,
+    source: "dashboard",
+    userId: `usr_${user.id}`,
+    email: user.email || undefined,
+    workspaceId: String(workspace.id),
+    workspaceName: workspace.name || workspace.slug,
+    plan: workspace.plan,
+  };
+
   if (!result.ok) {
+    const cause = result.error.cause;
+    if (cause instanceof LimitExceededError) {
+      after(async () => {
+        const analytics = await setupAnalytics(identify);
+        await analytics.track({
+          ...Events.ReachLimit,
+          limit: cause.limit,
+          max: cause.max,
+          current: cause.current,
+          procedure: opts.path,
+        });
+      });
+    }
     return result;
   }
 
   // REMINDER: We only track the event if the request was successful
   // REMINDER: We are not blocking the request
   after(async () => {
-    const { ctx, meta, getRawInput } = opts;
+    const { meta, getRawInput } = opts;
 
     if (meta?.track) {
-      let identify: IdentifyProps = {
-        userAgent: ctx.metadata?.userAgent,
-        location: ctx.metadata?.location,
-      };
-
-      if (user && workspace) {
-        identify = {
-          ...identify,
-          userId: `usr_${user.id}`,
-          email: user.email || undefined,
-          workspaceId: String(workspace.id),
-          plan: workspace.plan,
-        };
-      }
-
       const analytics = await setupAnalytics(identify);
       const rawInput = await getRawInput();
       const additionalProps = parseInputToProps(rawInput, meta.trackProps);

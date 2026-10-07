@@ -142,7 +142,13 @@ export function FormMembers({
                   </Link>
                   .
                 </FormCardFooterInfo>
-                <Button type="button" size="sm" asChild>
+                <Button
+                  data-track="paywall_viewed"
+                  data-limit="members"
+                  type="button"
+                  size="sm"
+                  asChild
+                >
                   <Link href="/settings/billing">
                     <Lock />
                     Upgrade
