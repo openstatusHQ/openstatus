@@ -4,7 +4,7 @@ import type { MDXData } from "../../content/utils";
 
 export const TITLE = "openstatus";
 export const HOMEPAGE_TITLE =
-  "Free & Open Source Uptime Monitoring, Status Page and Incident Response from Slack or AI";
+  "Open Source Status Page, Uptime Monitoring & Incident Response";
 export const DESCRIPTION =
   "Open source status page, incident response and global uptime monitoring. When something breaks, your subscribers hear it first and your auditor gets the trail.";
 
