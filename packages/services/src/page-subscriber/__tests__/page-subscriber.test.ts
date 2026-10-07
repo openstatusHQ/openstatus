@@ -18,9 +18,11 @@ import {
   describe,
   test,
 } from "@std/testing/bdd";
+import { stub } from "@std/testing/mock";
 
 import {
   clearAuditLog,
+  clearAuditLogFor,
   createWorkspaceFixture,
   expectAuditRow,
   makeApiKeyCtx,
@@ -521,6 +523,73 @@ describe("verifySelfSignupSubscriber", () => {
     pendingToken = sub.token;
     pendingId = sub.id;
   });
+
+  for (const scope of ["entire page", "additional component"] as const) {
+    test(`rejects an in-flight verification when scope expands to ${scope}`, async () => {
+      const first = await upsertSelfSignupSubscriber({
+        visitor: null,
+        input: {
+          email: `verify-race-${crypto.randomUUID()}@example.com`,
+          pageId: PAGE_ID,
+          componentIds: [COMPONENT_1],
+        },
+      });
+      if (!first.token) throw new Error("Expected a verification token");
+      let expanded:
+        | Awaited<ReturnType<typeof upsertSelfSignupSubscriber>>
+        | undefined;
+      const transaction = db.transaction.bind(db);
+      // Commit the competing signup after token lookup, before acceptance starts.
+      const intercept = stub(db, "transaction", async (fn, config) => {
+        intercept.restore();
+        expanded = await upsertSelfSignupSubscriber({
+          visitor: null,
+          input: {
+            email: first.email,
+            pageId: PAGE_ID,
+            componentIds: scope === "entire page" ? [] : [COMPONENT_2],
+          },
+        });
+        return transaction(fn, config);
+      });
+      try {
+        const result = await verifySelfSignupSubscriber({
+          input: { token: first.token, domain: PAGE_SLUG },
+        });
+        expect(result).toBeNull();
+        if (!expanded?.token) throw new Error("Expected a rotated token");
+        expect(expanded.token).not.toBe(first.token);
+        const stored = await db.query.pageSubscriber.findFirst({
+          where: eq(pageSubscriber.id, first.id),
+        });
+        expect(stored?.acceptedAt).toBeNull();
+        expect(stored?.token).toBe(expanded.token);
+        const audit = await readAuditLog({
+          workspaceId: WORKSPACE_ID,
+          entityType: "page_subscriber",
+          entityId: first.id,
+        });
+        expect(audit).toHaveLength(2);
+        expect(audit.some((row) => row.after?.acceptedAt != null)).toBe(false);
+        const verified = await verifySelfSignupSubscriber({
+          input: { token: expanded.token, domain: PAGE_SLUG },
+        });
+        expect(verified?.acceptedAt).toBeInstanceOf(Date);
+        expect(verified?.componentIds.sort((a, b) => a - b)).toEqual(
+          scope === "entire page"
+            ? []
+            : [COMPONENT_1, COMPONENT_2].sort((a, b) => a - b),
+        );
+      } finally {
+        if (!intercept.restored) intercept.restore();
+        await db.delete(pageSubscriber).where(eq(pageSubscriber.id, first.id));
+        await clearAuditLogFor({
+          entityType: "page_subscriber",
+          entityIds: [first.id],
+        });
+      }
+    });
+  }
 
   test("returns null for an unknown token", async () => {
     const result = await verifySelfSignupSubscriber({
