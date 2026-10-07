@@ -171,7 +171,7 @@ export function convertMdxToMarkdown(data: MDXData): string {
   markdown = markdown.replace(/<Eyebrow\b[^>]*>[\s\S]*?<\/Eyebrow>/g, "");
   // SrOnly is a demo's text alternative: hidden on the page, plain copy here.
   // One pass skips wrappers nested inside a match, so repeat until stable.
-  const wrapper = /<(Grid|Subtle|p|SrOnly)\b[^>]*>([\s\S]*?)<\/\1>/g;
+  const wrapper = /<(Grid|Subtle|p|SrOnly|Timeline)\b[^>]*>([\s\S]*?)<\/\1>/g;
   while (wrapper.test(markdown)) {
     markdown = markdown.replace(wrapper, (_match, _tag, content) => content);
   }

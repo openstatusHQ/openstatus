@@ -216,6 +216,24 @@
   @apply mt-0 pt-0 border-t-0;
 }
 
+/* In a `Timeline` each step is a grid whose text cell opens with the eyebrow
+   and heading, so they stick with it; the rail replaces the rule. */
+.prose [data-slot="timeline"] [data-slot="eyebrow"] {
+  @apply relative mt-0 pt-0 border-t-0;
+}
+
+.prose [data-slot="timeline"] h2 {
+  @apply text-balance;
+}
+
+.prose [data-slot="timeline"] > * {
+  @apply my-0;
+}
+
+.prose [data-slot="timeline"] > * + * {
+  @apply mt-20;
+}
+
 .prose h3 {
   @apply text-xl text-foreground font-medium tracking-tight mt-8 mb-3 relative scroll-mt-8;
 }

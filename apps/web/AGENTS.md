@@ -26,7 +26,10 @@ donates domain authority and leaks the conversion.
 The home and product pages (`pages/home.mdx`, `pages/product/*.mdx`) follow one
 section pattern: an `h2` outside the grid, a text cell with two sentences and a
 short list of internal links, and one `<Demo type="…" />` in the other cell of
-a `<Grid variant="borderless">`. `content-lint.test.ts` enforces the structural
+a `<Grid variant="borderless">`. Inside a `<Timeline>` (the home page story)
+the `Eyebrow` and `h2` move into the text cell instead, and the text cell comes
+first, so the label, heading and copy stick together beside the demo and every
+marker lands on the rail. `content-lint.test.ts` enforces the structural
 rules on those pages (registered tags, `SrOnly` next to every demo, no raw
 `className`, every demo type in the kitchen sink); the rest of the rules below
 are kept by hand and in review. `/kitchen-sink` (noindex) renders every
