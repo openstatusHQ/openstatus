@@ -25,7 +25,7 @@ describe("resolveChatModel", () => {
   test("gateway path: free plan resolves the cheaper model string", () => {
     process.env.AI_GATEWAY_API_KEY = "gw-key";
     expect(resolveChatModel({ plan: "free" })).toBe(
-      "anthropic/claude-haiku-4.5",
+      "anthropic/claude-haiku-5.5",
     );
   });
 
