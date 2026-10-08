@@ -127,6 +127,8 @@ export async function dispatchMaintenance(maintenanceId: number) {
     pageComponentIds: pageComponents.map((c) => c.id),
     pageComponents: pageComponents.map((c) => c.name),
     date: record.from.toISOString(),
+    // anchors the Slack thread and the email idempotency key on the first update
+    updateId: record.maintenanceUpdates[0]?.id,
     startsAt: record.from.toISOString(),
     endsAt: record.to.toISOString(),
     pageComponentsWithId: pageComponents.map((c) => ({

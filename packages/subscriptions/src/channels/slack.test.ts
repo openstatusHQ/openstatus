@@ -78,6 +78,8 @@ function makeUpdate(over: Partial<PageUpdate> = {}): PageUpdate {
 
 const noopUnsub = async () => {};
 const token = async () => "xoxb-test";
+const REPORT = { kind: "report", id: 10 } as const;
+const MAINTENANCE = { kind: "maintenance", id: 10 } as const;
 
 describe("createSlackChannel", () => {
   test("first update opens the thread (root post, no update, anchor set)", async () => {
@@ -95,7 +97,7 @@ describe("createSlackChannel", () => {
     expect(calls.filter((c) => c.method === "post").length).toBe(1);
     expect(calls[0]?.thread_ts).toBeUndefined();
     expect(calls.some((c) => c.method === "update")).toBe(false);
-    expect(await store.getAnchor(10, 1)).not.toBeNull();
+    expect(await store.getAnchor(REPORT, 1)).not.toBeNull();
   });
 
   test("subsequent update backfills the first update then replies in thread and re-renders root", async () => {
@@ -267,7 +269,43 @@ describe("createSlackChannel", () => {
     expect(calls.filter((c) => c.method === "post").length).toBe(1);
   });
 
-  test("maintenance posts once with no thread and no anchor", async () => {
+  test("maintenance threads like a report: root, then backfill + reply + re-render", async () => {
+    const { client, calls } = makeClient();
+    const store = createMemoryAnchorStore();
+    const channel = createSlackChannel({
+      store,
+      createClient: () => client,
+      getBotToken: token,
+      softUnsubscribe: noopUnsub,
+    });
+    const maintenance = {
+      status: "maintenance" as const,
+      startsAt: "2026-01-02T00:00:00.000Z",
+      endsAt: "2026-01-02T02:00:00.000Z",
+    };
+
+    await channel.sendNotifications(
+      [makeSub()],
+      makeUpdate({ ...maintenance, updateId: 200, message: "scheduled" }),
+    );
+    expect(calls.filter((c) => c.method === "post").length).toBe(1);
+    expect(calls[0]?.thread_ts).toBeUndefined();
+    expect(await store.getAnchor(MAINTENANCE, 1)).not.toBeNull();
+
+    await channel.sendNotifications(
+      [makeSub()],
+      makeUpdate({ ...maintenance, updateId: 201, message: "starting now" }),
+    );
+    const posts = calls.filter((c) => c.method === "post");
+    expect(posts.length).toBe(3);
+    expect(posts[1]?.thread_ts).toBe("1700000000.0001");
+    expect(posts[1]?.text).toContain("scheduled");
+    expect(posts[2]?.thread_ts).toBe("1700000000.0001");
+    expect(posts[2]?.text).toContain("starting now");
+    expect(calls.filter((c) => c.method === "update").length).toBe(1);
+  });
+
+  test("a maintenance and a report sharing an id keep separate threads", async () => {
     const { client, calls } = makeClient();
     const store = createMemoryAnchorStore();
     const channel = createSlackChannel({
@@ -277,14 +315,20 @@ describe("createSlackChannel", () => {
       softUnsubscribe: noopUnsub,
     });
 
+    await channel.sendNotifications([makeSub()], makeUpdate({ updateId: 100 }));
     await channel.sendNotifications(
       [makeSub()],
-      makeUpdate({ status: "maintenance", updateId: undefined }),
+      makeUpdate({ status: "maintenance", updateId: 100 }),
     );
 
-    expect(calls.filter((c) => c.method === "post").length).toBe(1);
+    // Both are roots: no thread reply, no root re-render.
+    expect(calls.filter((c) => c.method === "post").length).toBe(2);
+    expect(calls.every((c) => c.thread_ts === undefined)).toBe(true);
     expect(calls.some((c) => c.method === "update")).toBe(false);
-    expect(await store.getAnchor(10, 1)).toBeNull();
+    expect((await store.getAnchor(REPORT, 1))?.ts).toBe("1700000000.0001");
+    expect((await store.getAnchor(MAINTENANCE, 1))?.ts).toBe(
+      "1700000000.0002",
+    );
   });
 });
 
@@ -320,16 +364,16 @@ describe("validateSlackConfig", () => {
 describe("reserveDelivery (memory store)", () => {
   test("only the first reservation for a key wins", async () => {
     const store = createMemoryAnchorStore();
-    expect(await store.reserveDelivery(1, 2, 3)).toBe(true);
-    expect(await store.reserveDelivery(1, 2, 3)).toBe(false);
+    expect(await store.reserveDelivery(REPORT, 2, 3)).toBe(true);
+    expect(await store.reserveDelivery(REPORT, 2, 3)).toBe(false);
     // A different updateId is an independent reservation.
-    expect(await store.reserveDelivery(1, 2, 4)).toBe(true);
+    expect(await store.reserveDelivery(REPORT, 2, 4)).toBe(true);
   });
 
   test("releaseDelivery makes the key reservable again", async () => {
     const store = createMemoryAnchorStore();
-    expect(await store.reserveDelivery(1, 2, 3)).toBe(true);
-    await store.releaseDelivery(1, 2, 3);
-    expect(await store.reserveDelivery(1, 2, 3)).toBe(true);
+    expect(await store.reserveDelivery(REPORT, 2, 3)).toBe(true);
+    await store.releaseDelivery(REPORT, 2, 3);
+    expect(await store.reserveDelivery(REPORT, 2, 3)).toBe(true);
   });
 });

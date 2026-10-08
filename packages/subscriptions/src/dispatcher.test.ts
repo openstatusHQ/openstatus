@@ -29,6 +29,7 @@ import {
 import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 
 import {
+  dispatchMaintenance,
   dispatchMaintenanceUpdate,
   dispatchPageUpdate,
   dispatchStatusReportUpdate,
@@ -240,6 +241,46 @@ describe("dispatchPageUpdate - edge cases", () => {
     await expect(
       dispatchPageUpdate(makePageUpdate({ pageComponentIds: [] })),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("dispatchMaintenance", () => {
+  test("announcement carries the first update's id and message", async () => {
+    const record = await db
+      .insert(maintenance)
+      .values({
+        workspaceId: WORKSPACE_ID,
+        pageId: PAGE_ID,
+        title: "Database maintenance",
+        message: "stale column",
+        from: new Date("2026-08-10T10:00:00.000Z"),
+        to: new Date("2026-08-10T11:00:00.000Z"),
+      })
+      .returning()
+      .get();
+
+    try {
+      const update = await db
+        .insert(maintenanceUpdate)
+        .values({
+          maintenanceId: record.id,
+          message: "announcement",
+          date: new Date("2026-08-07T14:00:00.000Z"),
+        })
+        .returning()
+        .get();
+
+      await dispatchMaintenance(record.id);
+
+      const args = sendStatusReportUpdateMock.calls[0].args[0];
+      expect(args.message).toBe("announcement");
+      expect(args.date).toBe("2026-08-10T10:00:00.000Z");
+      expect(args.idempotencyKey).toMatch(
+        new RegExp(`^maintenance-update:${update.id}:`),
+      );
+    } finally {
+      await db.delete(maintenance).where(eq(maintenance.id, record.id));
+    }
   });
 });
 
