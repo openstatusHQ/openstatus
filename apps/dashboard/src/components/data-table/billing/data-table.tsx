@@ -40,7 +40,6 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
   const trpc = useTRPC();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [pendingPlan, setPendingPlan] = useState<WorkspacePlan | null>(null);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 
   const checkoutSessionMutation = useMutation(
@@ -62,6 +61,13 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
       },
     }),
   );
+
+  // Which button is in flight, derived from the running mutation.
+  const pendingPlan: WorkspacePlan | null = checkoutSessionMutation.isPending
+    ? checkoutSessionMutation.variables.plan
+    : customerPortalMutation.isPending
+      ? "free"
+      : null;
 
   if (!workspace) return null;
 
@@ -132,7 +138,6 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                       type="button"
                       variant={id === "starter" ? "default" : "outline"}
                       onClick={() => {
-                        setPendingPlan(id);
                         startTransition(async () => {
                           if (id === "free") {
                             await customerPortalMutation.mutateAsync({
@@ -155,7 +160,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                     >
                       {isCurrentPlan
                         ? "Current Plan"
-                        : isPending && pendingPlan === id
+                        : pendingPlan === id
                           ? "Choosing..."
                           : "Choose"}
                     </Button>
