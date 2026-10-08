@@ -44,12 +44,14 @@ A live status page for the fictional Pied Piper, mid-incident: a Degraded Perfor
 
 At 09:41 the Checkout API at Pied Piper starts returning 503s from Europe. Here is what openstatus does before the team has finished reading the first alert, and what is left behind six months later.
 
-<Eyebrow>09:41</Eyebrow>
-
-## Your monitor catches it first
+<Timeline>
 
 <Grid variant="borderless">
 <div>
+
+<Eyebrow status="investigating">09:41</Eyebrow>
+
+## Your monitor catches it first
 
 Four of the six regions the monitor runs from confirm the 503s, so the alert fires before the first support ticket arrives. It lands in Slack and PagerDuty with a link to the failing checks.
 
@@ -71,38 +73,12 @@ The Slack alert at 09:41: Checkout API returned 503 from lhr, ams, cdg and koyeb
 </div>
 </Grid>
 
-<Eyebrow>09:42</Eyebrow>
-
-## Know what to say before you say it
-
 <Grid variant="borderless">
 <div>
 
-<Demo type="logs" />
-
-<SrOnly>
-
-Response logs for the 09:41 check, one row per region: the four European regions returned 503 in about 4 seconds, almost all of it TTFB, while Virginia and San Jose returned 200 in about 230 ms.
-
-</SrOnly>
-
-</div>
-<div>
-
-Open the failing checks. The European regions spend four seconds waiting on the edge while DNS and TLS are fine, and the US regions return 200 in under 250 ms. That is the sentence the status report needs, and the headers and body are kept in case the postmortem needs more.
-
-- [Response logs and retention](/docs/concept/response-logs-and-retention)
-- [Request phases: DNS, TCP, TLS, TTFB](/docs/concept/latency-vs-response-time#the-request-in-phases-dns-tcp-tls-ttfb-transfer)
-
-</div>
-</Grid>
-
-<Eyebrow>09:43</Eyebrow>
+<Eyebrow status="investigating">09:43</Eyebrow>
 
 ## Declare the incident, get a channel
-
-<Grid variant="borderless">
-<div>
 
 One slash command declares the incident with a title and a severity. Openstatus opens a dedicated Slack channel, invites you and pins the incident card, so the response has one place to happen.
 
@@ -123,11 +99,21 @@ Gilfoyle runs `/openstatus incident declare Checkout API 503s in EU --sev major`
 </div>
 </Grid>
 
-<Eyebrow>09:44</Eyebrow>
+<Grid variant="borderless">
+<div>
+
+<Eyebrow status="identified">09:44</Eyebrow>
 
 ## Tell customers from Slack, or with your favorite agent
 
-<Grid variant="borderless">
+Ask the openstatus agent in the incident thread. It drafts the status report, you approve it, and it goes live without anyone opening the dashboard. The same agent runs wherever you work: connect the MCP server to Claude, ChatGPT or Cursor and publish it from there.
+
+- [Slack agent](/docs/guides/how-to-setup-slack-agent)
+- [MCP server](/tooling/mcp-server)
+- [CLI](/tooling/cli)
+- [API](/tooling/api)
+
+</div>
 <div>
 
 <Demo type="slack-agent" />
@@ -139,82 +125,19 @@ An engineer asks @openstatus in the incident thread to open a status report. The
 </SrOnly>
 
 </div>
-<div>
-
-Ask the openstatus agent in the incident thread. It drafts the status report, you approve it, and it goes live without anyone opening the dashboard. The same agent runs wherever you work: connect the MCP server to Claude, ChatGPT or Cursor and publish it from there.
-
-- [Slack agent](/docs/guides/how-to-setup-slack-agent)
-- [MCP server](/tooling/mcp-server)
-- [CLI](/tooling/cli)
-- [API](/tooling/api)
-
-</div>
 </Grid>
-
-<Eyebrow>09:52</Eyebrow>
-
-## Everyone hears it from you first
 
 <Grid variant="borderless">
 <div>
 
-Subscribers get the update by email, RSS and Slack Connect the moment it is approved. Support stops answering "is it down?" because the answer is already in the inbox.
+<Eyebrow status="monitoring">10:14</Eyebrow>
 
-- [Subscriptions](/docs/reference/subscriber)
-- [Reducing support tickets](/use-case/reduce-support-tickets)
+## Mitigate in the channel, update the page
 
-</div>
-<div>
+The rollback lands and one slash command marks the incident mitigated. The linked status report moves to monitoring with its own public wording, and subscribers hear about it without anyone leaving Slack.
 
-<Demo type="notify" />
-
-<SrOnly>
-
-The 09:52 Identified update as it lands in a customer's Slack Connect channel, with the delivery summary: 1,337 emails sent, RSS and Atom updated, 3 Slack Connect workspaces notified.
-
-</SrOnly>
-
-</div>
-</Grid>
-
-<Eyebrow>09:53</Eyebrow>
-
-## Only the right people see it
-
-<Grid variant="borderless">
-<div>
-
-<Demo type="access" />
-
-<SrOnly>
-
-Two pages side by side: the public status.piedpiper.dev shows Checkout API degraded, while internal.piedpiper.dev asks for a password and only admits the 203.0.113.0/24 range.
-
-</SrOnly>
-
-</div>
-<div>
-
-The public page shows the Checkout API as degraded. The internal page, behind a password and the office IP range, shows the failing regions and the rollback progress.
-
+- [Incident management](/incident-management)
 - [Status page](/status-page)
-- [Password, magic link and IP restriction](/docs/reference/status-page#password-basic-auth)
-- [Status pages for enterprise sales](/use-case/enterprise-sales)
-
-</div>
-</Grid>
-
-<Eyebrow>10:14</Eyebrow>
-
-## Update the status where the work happens
-
-<Grid variant="borderless">
-<div>
-
-When the rollback lands, mark the incident mitigated from its channel. The internal status and the public status report move separately, so the team says "mitigated" while customers read "monitoring".
-
-- [Incident management](/incident-management#internal-status-public-update)
-- [Status report reference](/docs/reference/status-report)
 
 </div>
 <div>
@@ -223,18 +146,26 @@ When the rollback lands, mark the incident mitigated from its channel. The inter
 
 <SrOnly>
 
-At 10:14 Gilfoyle runs `/openstatus incident mitigate Rollback complete in eu-west-1 and eu-west-2.` in the incident channel and the app confirms the incident is now mitigated. The linked status report "Elevated errors on Checkout API" reads Monitoring, with 1,337 subscribers notified.
+At 10:14 Gilfoyle runs `/openstatus incident mitigate Rollback complete in eu-west-1 and eu-west-2.` in the incident channel and the app confirms the incident is now mitigated. Below it, the linked status report "Elevated errors on Checkout API" reads Monitoring, with its own public message and 1,337 subscribers notified.
 
 </SrOnly>
 
 </div>
 </Grid>
 
-<Eyebrow>11:02</Eyebrow>
+<Grid variant="borderless">
+<div>
+
+<Eyebrow status="resolved">11:02</Eyebrow>
 
 ## The postmortem arrives as a draft
 
-<Grid variant="borderless">
+Once the incident is resolved, the agent drafts a blameless postmortem from the timeline, the public updates and the channel history. You edit it, approve it and close the incident while everyone still remembers what happened.
+
+- [Incident management](/incident-management#a-postmortem-with-a-first-draft)
+- [MCP server](/tooling/mcp-server)
+
+</div>
 <div>
 
 <Demo type="postmortem" />
@@ -246,26 +177,47 @@ The postmortem draft, written by the agent at 11:02: summary, impact (55m, from 
 </SrOnly>
 
 </div>
+</Grid>
+
+<Grid variant="borderless">
 <div>
 
-Once the incident is resolved, the agent drafts a blameless postmortem from the timeline, the public updates and the channel history. You edit it, approve it and close the incident while everyone still remembers what happened.
+<Eyebrow>+1 week</Eyebrow>
 
-- [Incident management](/incident-management#a-postmortem-with-a-first-draft)
-- [MCP server](/tooling/mcp-server)
+## The record stays public
+
+Every update stays on the status page with its timestamp. When a prospect asks how you handle outages, the answer is already in your incident history.
+
+- [Status page](/status-page)
+- [Status pages for enterprise sales](/use-case/enterprise-sales)
+
+</div>
+<div>
+
+<Demo type="status-report" />
+
+<SrOnly>
+
+The same incident a week later in the status page's events feed: four timestamped updates from investigating at 09:44 to resolved at 10:36.
+
+</SrOnly>
 
 </div>
 </Grid>
+
+<Grid variant="borderless">
+<div>
 
 <Eyebrow>+6 months</Eyebrow>
 
 ## The trail exists when the auditor asks
 
-<Grid variant="borderless">
-<div>
-
 Every step is logged: who declared it, from where, when each update shipped. When SOC 2 asks how you notify customers during an incident, you send one link.
 
 - [Status pages for compliance](/use-case/compliance)
+
+</div>
+<div>
 
 <Demo type="audit" />
 
@@ -276,18 +228,9 @@ The incident's audit log, with the newest entry at the top. From oldest to newes
 </SrOnly>
 
 </div>
-<div>
-
-<Demo type="status-report" />
-
-<SrOnly>
-
-The same incident six months later in the status page's events feed: four timestamped updates from investigating at 09:44 to resolved at 10:36.
-
-</SrOnly>
-
-</div>
 </Grid>
+
+</Timeline>
 
 ## In their words
 

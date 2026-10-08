@@ -232,6 +232,58 @@ What the demo shows, for screen readers and the `.md` representation of the page
 </div>
 </Grid>
 
+## Timeline
+
+<Timeline>
+
+<Grid variant="borderless">
+<div>
+
+<Eyebrow status="investigating">09:41</Eyebrow>
+
+### A step on the rail
+
+The eyebrow and heading open the text cell, so they stick with it. The marker takes the status-report color of the moment it describes.
+
+</div>
+<div>
+
+<Demo type="alert" />
+
+<SrOnly>
+
+The Slack alert at 09:41 for the failing Checkout API.
+
+</SrOnly>
+
+</div>
+</Grid>
+
+<Grid variant="borderless">
+<div>
+
+<Eyebrow>+6 months</Eyebrow>
+
+### A step without a status
+
+No `status` renders a hollow marker.
+
+</div>
+<div>
+
+<Demo type="audit" />
+
+<SrOnly>
+
+The incident's audit log.
+
+</SrOnly>
+
+</div>
+</Grid>
+
+</Timeline>
+
 ## LogoCloud
 
 <LogoCloud />
