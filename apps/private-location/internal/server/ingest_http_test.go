@@ -180,6 +180,31 @@ func TestIngestHTTP_MonitorExist(t *testing.T) {
 	}
 }
 
+// TestIngestHTTP_DuplicateTokenStillIngests guards the joined lookup:
+// private_location.token is not unique, so an unlinked location sharing the
+// token must not shadow a monitor that is genuinely linked. The token-only half
+// of the lookup would pick the first (unlinked) row and 404 a valid monitor.
+func TestIngestHTTP_DuplicateTokenStillIngests(t *testing.T) {
+	db := testDB()
+	// Inserted first so a token-only lookup returns the unlinked location.
+	db.MustExec("INSERT INTO private_location (id, name, token, workspace_id, created_at, updated_at) VALUES (100, 'Wrong', 'dup-token', 3, 1760358329, 1760358329), (101, 'Right', 'dup-token', 3, 1760358329, 1760358329)")
+	db.MustExec("INSERT INTO monitor (id, workspace_id, url, name) VALUES (50, 3, 'https://example.com', 'Dup monitor')")
+	db.MustExec("INSERT INTO private_location_to_monitor (private_location_id, monitor_id, created_at) VALUES (101, 50, 1760358329)")
+
+	h := server.NewPrivateLocationServer(db, getTBClient(context.Background()))
+
+	req := connect.NewRequest(&private_locationv1.IngestHTTPRequest{
+		Id:        "dup-1",
+		MonitorId: "50",
+		Timestamp: 1234567890,
+	})
+	req.Header().Set("openstatus-token", "dup-token")
+
+	resp, err := h.IngestHTTP(context.Background(), req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+}
+
 func TestIngestHTTP_ValidationError_EmptyMonitorID(t *testing.T) {
 	h := server.NewPrivateLocationServer(testDB(), getTBClient(context.Background()))
 
