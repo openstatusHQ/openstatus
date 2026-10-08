@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 
-import { Link } from "@/components/common/link";
 import {
   DetailAside,
   DetailContent,
@@ -22,31 +21,21 @@ import {
   EmptyStateContainer,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
-import {
-  Property,
-  PropertyLabel,
-  PropertyList,
-  PropertyValue,
-} from "@/components/content/property-list";
 import { SectionGroup } from "@/components/content/section";
 import { Timeline } from "@/components/content/timeline";
 import {
   IncidentActions,
   hasIncidentActions,
 } from "@/components/incidents/incident-actions";
+import { IncidentCommunication } from "@/components/incidents/incident-communication";
 import { IncidentComposer } from "@/components/incidents/incident-composer";
 import { IncidentHeading } from "@/components/incidents/incident-heading";
 import { IncidentPostmortem } from "@/components/incidents/incident-postmortem";
 import { IncidentProperties } from "@/components/incidents/incident-properties";
-import { IncidentStatusReport } from "@/components/incidents/incident-status-report";
 import { IncidentTimelineItem } from "@/components/incidents/incident-timeline";
 import { ResolveReportDialog } from "@/components/incidents/resolve-report-dialog";
 import { incidentEndedAt } from "@/data/managed-incidents.client";
 import { useTRPC } from "@/lib/trpc/client";
-
-function slackChannelUrl(teamId: string, channelId: string): string {
-  return `https://slack.com/app_redirect?team=${teamId}&channel=${channelId}`;
-}
 
 export function Client({ id }: { id: number }) {
   const trpc = useTRPC();
@@ -187,26 +176,7 @@ export function Client({ id }: { id: number }) {
           </DetailSection>
           <DetailSection>
             <DetailSectionTitle>Communication</DetailSectionTitle>
-            <IncidentStatusReport incident={incident} canNotify={canNotify} />
-            <PropertyList>
-              <Property>
-                <PropertyLabel>Slack</PropertyLabel>
-                <PropertyValue>
-                  {incident.slackTeamId && incident.slackChannelId ? (
-                    <Link
-                      href={slackChannelUrl(
-                        incident.slackTeamId,
-                        incident.slackChannelId,
-                      )}
-                    >
-                      Open channel
-                    </Link>
-                  ) : (
-                    <span className="text-muted-foreground">No channel</span>
-                  )}
-                </PropertyValue>
-              </Property>
-            </PropertyList>
+            <IncidentCommunication incident={incident} />
           </DetailSection>
         </DetailAside>
       </DetailContent>
