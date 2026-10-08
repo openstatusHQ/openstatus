@@ -326,9 +326,7 @@ describe("createSlackChannel", () => {
     expect(calls.every((c) => c.thread_ts === undefined)).toBe(true);
     expect(calls.some((c) => c.method === "update")).toBe(false);
     expect((await store.getAnchor(REPORT, 1))?.ts).toBe("1700000000.0001");
-    expect((await store.getAnchor(MAINTENANCE, 1))?.ts).toBe(
-      "1700000000.0002",
-    );
+    expect((await store.getAnchor(MAINTENANCE, 1))?.ts).toBe("1700000000.0002");
   });
 });
 
