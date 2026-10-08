@@ -172,7 +172,9 @@ components:
           type: string
           title: message
           minLength: 1
-          description: Message describing the maintenance (required).
+          description: |-
+            Message describing the maintenance (required). Posted as the first
+             maintenance update.
         from:
           type: string
           examples:
@@ -340,7 +342,7 @@ components:
         message:
           type: string
           title: message
-          description: Message describing the maintenance.
+          description: Message of the newest maintenance update.
         from:
           type: string
           title: from
@@ -390,7 +392,7 @@ components:
         message:
           type: string
           title: message
-          description: Message describing the maintenance.
+          description: Message of the newest maintenance update.
         from:
           type: string
           title: from
@@ -471,7 +473,7 @@ components:
             - string
             - "null"
           title: message
-          description: New message for the maintenance (optional).
+          description: Replaces the message of the newest maintenance update (optional).
         from:
           type:
             - string

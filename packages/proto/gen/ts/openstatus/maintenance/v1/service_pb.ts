@@ -30,7 +30,8 @@ export type CreateMaintenanceRequest = Message<"openstatus.maintenance.v1.Create
   title: string;
 
   /**
-   * Message describing the maintenance (required).
+   * Message describing the maintenance (required). Posted as the first
+   * maintenance update.
    *
    * @generated from field: string message = 2;
    */
@@ -226,7 +227,7 @@ export type UpdateMaintenanceRequest = Message<"openstatus.maintenance.v1.Update
   title?: string | undefined;
 
   /**
-   * New message for the maintenance (optional).
+   * Replaces the message of the newest maintenance update (optional).
    *
    * @generated from field: optional string message = 3;
    */

@@ -89,7 +89,7 @@ export type MaintenanceSummary = Message<"openstatus.maintenance.v1.MaintenanceS
   title: string;
 
   /**
-   * Message describing the maintenance.
+   * Message of the newest maintenance update.
    *
    * @generated from field: string message = 3;
    */
@@ -166,7 +166,7 @@ export type Maintenance = Message<"openstatus.maintenance.v1.Maintenance"> & {
   title: string;
 
   /**
-   * Message describing the maintenance.
+   * Message of the newest maintenance update.
    *
    * @generated from field: string message = 3;
    */
