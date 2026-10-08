@@ -6,6 +6,7 @@ import {
 } from "@openstatus/analytics";
 import type { Context, Next } from "hono";
 
+import { claimCliCommandEvent, parseCliHeaders } from "@/libs/cli-telemetry";
 import type { Variables } from "@/types";
 
 const logger = getLogger("api-server");
@@ -47,5 +48,43 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
           );
         });
     }
+  };
+}
+
+/**
+ * Fires `cli_command` for the first request of each openstatus CLI run. V1 is
+ * deprecated and gets no `api_request` volume tracking, but some CLI commands
+ * (`whoami`) only ever call it, so their runs would go uncounted without this.
+ * Mount after `authMiddleware`; counts the run whatever the response status.
+ */
+export function cliTrackMiddleware() {
+  return async (c: Context<{ Variables: Variables }, "/*">, next: Next) => {
+    const cli = parseCliHeaders(c.req.raw.headers);
+    const workspace = c.get("workspace");
+
+    if (cli && workspace) {
+      claimCliCommandEvent(workspace.id, cli)
+        .then(async (event) => {
+          if (!event) return;
+          const analytics = await setupAnalytics({
+            userId: `api_${workspace.id}`,
+            workspaceId: `${workspace.id}`,
+            workspaceName: workspace.name || workspace.slug,
+            plan: workspace.plan,
+            source: "api",
+            location: c.req.raw.headers.get("x-forwarded-for") ?? undefined,
+            userAgent: c.req.raw.headers.get("user-agent") ?? undefined,
+          });
+          await analytics.track(event);
+        })
+        .catch(() => {
+          logger.warn(
+            "Failed to send CLI analytics event for workspace {workspaceId}",
+            { workspaceId: workspace.id },
+          );
+        });
+    }
+
+    await next();
   };
 }

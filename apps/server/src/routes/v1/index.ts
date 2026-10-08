@@ -6,7 +6,11 @@ import type { RequestIdVariables } from "hono/request-id";
 
 import { env } from "@/env";
 import { handleZodError } from "@/libs/errors";
-import { authMiddleware, requireWriteScope } from "@/libs/middlewares";
+import {
+  authMiddleware,
+  cliTrackMiddleware,
+  requireWriteScope,
+} from "@/libs/middlewares";
 
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
@@ -145,6 +149,7 @@ api.get(
  * Middlewares
  */
 api.use("/*", authMiddleware);
+api.use("/*", cliTrackMiddleware());
 // Primary scope enforcement for V1: routes here use inline Drizzle
 // queries instead of `@openstatus/services`, so the service-level
 // `requireScope` won't run. After per-route migration to services,

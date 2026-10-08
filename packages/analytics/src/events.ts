@@ -316,4 +316,12 @@ export const Events = {
     name: "mcp_request",
     channel: "mcp",
   },
+  ApiRequest: {
+    name: "api_request",
+    channel: "api",
+  },
+  CliCommand: {
+    name: "cli_command",
+    channel: "cli",
+  },
 } as const satisfies Record<string, EventProps>;
