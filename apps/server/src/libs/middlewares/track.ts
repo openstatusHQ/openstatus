@@ -1,11 +1,15 @@
 import { getLogger } from "@logtape/logtape";
 import {
   type EventProps,
+  Events,
   parseInputToProps,
   setupAnalytics,
 } from "@openstatus/analytics";
 import type { Context, Next } from "hono";
+import { matchedRoutes } from "hono/route";
 
+import { apiAnalyticsIdentity } from "@/libs/analytics-identity";
+import { parseCliHeaders, trackCliCommand } from "@/libs/cli-telemetry";
 import type { Variables } from "@/types";
 
 const logger = getLogger("api-server");
@@ -30,15 +34,7 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
       const additionalProps = parseInputToProps(json, eventProps);
       const workspace = c.get("workspace");
 
-      setupAnalytics({
-        userId: `api_${workspace.id}`,
-        workspaceId: `${workspace.id}`,
-        workspaceName: workspace.name || workspace.slug,
-        plan: workspace.plan,
-        source: "api",
-        location: c.req.raw.headers.get("x-forwarded-for") ?? undefined,
-        userAgent: c.req.raw.headers.get("user-agent") ?? undefined,
-      })
+      setupAnalytics(apiAnalyticsIdentity(workspace, c.req.raw.headers))
         .then((analytics) => analytics.track({ ...additionalProps, ...event }))
         .catch(() => {
           logger.warn(
@@ -47,5 +43,56 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
           );
         });
     }
+  };
+}
+
+/**
+ * Fires `api_request` for every authenticated V1 call — reads included, and
+ * failures too (`success: false`) — mirroring the RPC tracking interceptor so
+ * API volume is countable across both surfaces. `method` is the matched route
+ * pattern (`GET /v1/monitor/:id`), never the raw URL, to keep it low-cardinality.
+ *
+ * Requests from the openstatus CLI also carry `cliCommand`/`cliVersion`, and
+ * the first request of each CLI run fires one `cli_command`.
+ *
+ * Mount after `authMiddleware`; requests it rejects carry no workspace and are
+ * skipped, as are requests that match no route. Per-route domain events stay with `trackMiddleware`.
+ */
+export function apiTrackMiddleware() {
+  return async (c: Context<{ Variables: Variables }, "/*">, next: Next) => {
+    await next();
+
+    const workspace = c.get("workspace");
+    if (!workspace) return;
+
+    // `use()` middlewares register as `ALL`; with no handler route matched
+    // (a 404 on an unknown path) the only pattern left is `/*`, which says
+    // nothing about the endpoint, so those aren't counted.
+    const route = matchedRoutes(c).findLast((r) => r.method !== "ALL");
+    if (!route) return;
+
+    const cli = parseCliHeaders(c.req.raw.headers);
+    const success = c.res.status.toString().startsWith("2") && !c.error;
+
+    setupAnalytics(apiAnalyticsIdentity(workspace, c.req.raw.headers))
+      .then((analytics) =>
+        Promise.all([
+          analytics.track({
+            ...Events.ApiRequest,
+            service: "v1",
+            method: `${c.req.method} ${route.path}`,
+            success,
+            ...(cli ? { cliCommand: cli.command } : {}),
+            ...(cli?.version ? { cliVersion: cli.version } : {}),
+          }),
+          ...(cli ? [trackCliCommand(analytics, workspace.id, cli)] : []),
+        ]),
+      )
+      .catch(() => {
+        logger.warn(
+          "Failed to send API analytics events for workspace {workspaceId}",
+          { workspaceId: workspace.id },
+        );
+      });
   };
 }

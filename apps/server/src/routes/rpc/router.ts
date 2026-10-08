@@ -29,7 +29,7 @@ import {
  * 2. loggingInterceptor - Logs requests/responses with duration
  * 3. authInterceptor - Validates API key and sets workspace context
  * 4. validationInterceptor - Validates request messages using protovalidate
- * 5. trackingInterceptor - Fires OpenPanel events on success
+ * 5. trackingInterceptor - Fires OpenPanel `api_request` for authenticated, validated calls + domain events on success
  */
 export const routes = createConnectRouter({
   interceptors: [

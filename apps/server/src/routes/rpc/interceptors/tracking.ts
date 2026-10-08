@@ -7,6 +7,8 @@ import {
   setupAnalytics,
 } from "@openstatus/analytics";
 
+import { apiAnalyticsIdentity } from "../../../libs/analytics-identity";
+import { parseCliHeaders, trackCliCommand } from "../../../libs/cli-telemetry";
 import { RPC_CONTEXT_KEY } from "./auth";
 
 const logger = getLogger("api-server");
@@ -151,52 +153,82 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
 
 /**
  * Tracking interceptor for ConnectRPC.
- * Fires OpenPanel analytics events on successful RPC calls.
- * Must be placed after authInterceptor (needs workspace context)
- * and validationInterceptor (only track valid requests).
+ *
+ * Every authenticated call fires an `api_request` event — reads included, and
+ * failures too (`success: false`) — so API volume is countable per workspace
+ * the same way `mcp_request` counts MCP traffic. V1 REST fires the same event
+ * from `apiTrackMiddleware`. Successful calls listed in
+ * `RPC_EVENT_MAP` additionally fire their domain event (e.g. `monitor_created`).
+ *
+ * Requests from the openstatus CLI also carry `cliCommand`/`cliVersion` on
+ * `api_request`, and the first request of each CLI run fires one `cli_command`.
+ *
+ * Must be placed after authInterceptor (needs workspace context) and
+ * validationInterceptor (requests it rejects never reach here, so they are not
+ * counted). Unauthenticated calls (HealthService) carry no context and are
+ * skipped.
  */
 export function trackingInterceptor(): Interceptor {
   return (next) => async (req) => {
-    const response = await next(req);
-
-    const key = `${req.service.typeName}/${req.method.name}`;
-    const mapping = RPC_EVENT_MAP[key];
-
-    if (!mapping) {
+    let success = false;
+    try {
+      const response = await next(req);
+      success = true;
       return response;
+    } finally {
+      // Tracking must never replace the call's own result or error.
+      try {
+        trackRpcCall(req, success);
+      } catch {
+        logger.warn("Failed to track RPC call {method}", {
+          method: `${req.service.typeName}/${req.method.name}`,
+        });
+      }
     }
+  };
+}
 
-    const rpcCtx = req.contextValues.get(RPC_CONTEXT_KEY);
+type TrackedRequest = Parameters<Parameters<Interceptor>[0]>[0];
 
-    if (!rpcCtx) {
-      return response;
-    }
+function trackRpcCall(req: TrackedRequest, success: boolean) {
+  const rpcCtx = req.contextValues.get(RPC_CONTEXT_KEY);
 
+  if (!rpcCtx) {
+    return;
+  }
+
+  const key = `${req.service.typeName}/${req.method.name}`;
+  const mapping = success ? RPC_EVENT_MAP[key] : undefined;
+  const cli = parseCliHeaders(req.header);
+
+  const events: (EventProps & Record<string, unknown>)[] = [
+    {
+      ...Events.ApiRequest,
+      service: req.service.typeName,
+      method: req.method.name,
+      success,
+      ...(cli ? { cliCommand: cli.command } : {}),
+      ...(cli?.version ? { cliVersion: cli.version } : {}),
+    },
+  ];
+
+  if (mapping) {
     const input = mapping.normalizeInput?.(req.message) ?? req.message;
     const additionalProps = parseInputToProps(input, mapping.eventProps);
+    events.push({ ...additionalProps, ...mapping.event });
+  }
 
-    setupAnalytics({
-      userId: `api_${rpcCtx.workspace.id}`,
-      workspaceId: `${rpcCtx.workspace.id}`,
-      workspaceName: rpcCtx.workspace.name || rpcCtx.workspace.slug,
-      plan: rpcCtx.workspace.plan,
-      source: "api",
-      location: req.header.get("x-forwarded-for") ?? undefined,
-      userAgent: req.header.get("user-agent") ?? undefined,
-    })
-      .then((analytics) =>
-        analytics.track({ ...additionalProps, ...mapping.event }),
-      )
-      .catch(() => {
-        logger.warn(
-          "Failed to send analytics event {event} for workspace {workspaceId}",
-          {
-            event: mapping.event.name,
-            workspaceId: rpcCtx.workspace.id,
-          },
-        );
-      });
-
-    return response;
-  };
+  setupAnalytics(apiAnalyticsIdentity(rpcCtx.workspace, req.header))
+    .then((analytics) =>
+      Promise.all([
+        ...events.map((event) => analytics.track(event)),
+        ...(cli ? [trackCliCommand(analytics, rpcCtx.workspace.id, cli)] : []),
+      ]),
+    )
+    .catch(() => {
+      logger.warn(
+        "Failed to send analytics events for {method} in workspace {workspaceId}",
+        { method: key, workspaceId: rpcCtx.workspace.id },
+      );
+    });
 }

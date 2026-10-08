@@ -47,6 +47,42 @@ export type IdentifyProps = {
   userAgent?: string;
 };
 
+// identify, upsertGroup and setGroup are an HTTP round trip each, and
+// per-request callers (every API and MCP call) send the same payload over and
+// over. Remember which identities this process sent recently and skip them;
+// a changed name or plan is a new key, so it still goes out.
+const IDENTITY_TTL_MS = 60 * 60 * 1000;
+const MAX_IDENTITIES = 10_000;
+const sentIdentities = new Map<string, number>();
+
+function identityKey(props: IdentifyProps) {
+  return JSON.stringify([
+    props.userId,
+    props.fullName,
+    props.email,
+    props.workspaceId,
+    props.workspaceName,
+    props.plan,
+  ]);
+}
+
+function wasIdentitySent(key: string) {
+  const expiresAt = sentIdentities.get(key);
+  if (expiresAt === undefined) return false;
+  if (expiresAt > Date.now()) return true;
+  sentIdentities.delete(key);
+  return false;
+}
+
+function markIdentitySent(key: string) {
+  // Map iterates in insertion order, so the first key is the oldest.
+  if (sentIdentities.size >= MAX_IDENTITIES) {
+    const oldest = sentIdentities.keys().next().value;
+    if (oldest !== undefined) sentIdentities.delete(oldest);
+  }
+  sentIdentities.set(key, Date.now() + IDENTITY_TTL_MS);
+}
+
 export async function setupAnalytics(props: IdentifyProps) {
   if (env.NODE_ENV !== "production") {
     return noop();
@@ -62,6 +98,21 @@ export async function setupAnalytics(props: IdentifyProps) {
     op.api.addHeader("user-agent", props.userAgent);
   }
 
+  const groupId = props.workspaceId ? `ws_${props.workspaceId}` : undefined;
+  // profileId and groups go on each event rather than relying on the client
+  // state identify()/setGroup() leave behind, which the cache below skips.
+  const track = (opts: EventProps & TrackProperties) => {
+    const { name, ...rest } = opts;
+    return op.track(name, {
+      ...(props.userId ? { profileId: props.userId } : {}),
+      ...rest,
+      ...(groupId ? { groups: [groupId] } : {}),
+    });
+  };
+
+  const key = identityKey(props);
+  if (wasIdentitySent(key)) return { track };
+
   if (props.userId) {
     const [firstName, lastName] = props.fullName?.split(" ") || [];
     await op.identify({
@@ -72,7 +123,6 @@ export async function setupAnalytics(props: IdentifyProps) {
     });
   }
 
-  const groupId = props.workspaceId ? `ws_${props.workspaceId}` : undefined;
   if (groupId && props.workspaceName) {
     await op.upsertGroup({
       id: groupId,
@@ -85,14 +135,12 @@ export async function setupAnalytics(props: IdentifyProps) {
   if (groupId && props.userId) {
     await op.setGroup(groupId);
   }
+  markIdentitySent(key);
 
-  return {
-    track: (opts: EventProps & TrackProperties) => {
-      const { name, ...rest } = opts;
-      return op.track(name, groupId ? { ...rest, groups: [groupId] } : rest);
-    },
-  };
+  return { track };
 }
+
+export type Analytics = Awaited<ReturnType<typeof setupAnalytics>>;
 
 /**
  * Noop analytics for development environment

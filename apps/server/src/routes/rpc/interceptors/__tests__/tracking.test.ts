@@ -25,6 +25,9 @@ const { track: mockTrack, setupAnalytics: mockSetupAnalytics } = (
 
 type NextFn = Parameters<ReturnType<Interceptor>>[0];
 
+/** Let the fire-and-forget analytics chain (several awaits deep) settle. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 /** Create a mock `next` that resolves with the given value. */
 function mockNext(response: unknown): NextFn {
   return mock(() => Promise.resolve(response)) as unknown as NextFn;
@@ -53,7 +56,7 @@ function createMockRequest(
   serviceTypeName: string,
   methodName: string,
   message: Record<string, unknown> = {},
-  opts?: { withAuth?: boolean },
+  opts?: { withAuth?: boolean; headers?: Record<string, string> },
 ) {
   const contextValues = new Map<unknown, unknown>();
 
@@ -71,6 +74,7 @@ function createMockRequest(
     header: new Headers({
       "x-forwarded-for": "1.2.3.4",
       "user-agent": "test-agent",
+      ...opts?.headers,
     }),
     contextValues: {
       get: (key: unknown) => contextValues.get(key),
@@ -109,9 +113,15 @@ describe("trackingInterceptor", () => {
     });
 
     // Flush the .then() chain
-    await Promise.resolve();
+    await flush();
 
-    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockTrack).toHaveBeenCalledTimes(2);
+    expect(mockTrack).toHaveBeenCalledWith({
+      ...Events.ApiRequest,
+      service: "openstatus.monitor.v1.MonitorService",
+      method: "DeleteMonitor",
+      success: true,
+    });
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.DeleteMonitor,
     });
@@ -127,7 +137,7 @@ describe("trackingInterceptor", () => {
     const next = mockNext({});
 
     await interceptor(next)(req as never);
-    await Promise.resolve();
+    await flush();
 
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.CreateMonitor,
@@ -146,7 +156,7 @@ describe("trackingInterceptor", () => {
     const next = mockNext({});
 
     await interceptor(next)(req as never);
-    await Promise.resolve();
+    await flush();
 
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.CreateMonitor,
@@ -155,22 +165,29 @@ describe("trackingInterceptor", () => {
     });
   });
 
-  test("silently skips unmapped methods", async () => {
+  test("tracks only api_request for unmapped methods", async () => {
     const interceptor = trackingInterceptor();
     const req = createMockRequest(
-      "openstatus.health.v1.HealthService",
-      "Check",
+      "openstatus.monitor.v1.MonitorService",
+      "ListMonitors",
     );
-    const mockResponse = { status: "ok" };
+    const mockResponse = { monitors: [] };
     const next = mockNext(mockResponse);
 
     const result = await interceptor(next)(req as never);
+    await flush();
 
     expect(result).toEqual(mockResponse);
-    expect(mockSetupAnalytics).not.toHaveBeenCalled();
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockTrack).toHaveBeenCalledWith({
+      ...Events.ApiRequest,
+      service: "openstatus.monitor.v1.MonitorService",
+      method: "ListMonitors",
+      success: true,
+    });
   });
 
-  test("does not track on error", async () => {
+  test("tracks failed api_request without the domain event", async () => {
     const interceptor = trackingInterceptor();
     const req = createMockRequest(
       "openstatus.monitor.v1.MonitorService",
@@ -179,7 +196,58 @@ describe("trackingInterceptor", () => {
     const next = mockNextReject(new Error("not found"));
 
     await expect(interceptor(next)(req as never)).rejects.toThrow("not found");
-    expect(mockSetupAnalytics).not.toHaveBeenCalled();
+    await flush();
+
+    expect(mockSetupAnalytics).toHaveBeenCalledTimes(1);
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockTrack).toHaveBeenCalledWith({
+      ...Events.ApiRequest,
+      service: "openstatus.monitor.v1.MonitorService",
+      method: "DeleteMonitor",
+      success: false,
+    });
+  });
+
+  test("tracks one cli_command per CLI invocation", async () => {
+    const interceptor = trackingInterceptor();
+    const invocation = crypto.randomUUID();
+    const headers = {
+      "user-agent": "openstatus-cli/v1.3.2 (darwin; arm64)",
+      "x-openstatus-cli-command": "monitors list",
+      "x-openstatus-cli-invocation": invocation,
+    };
+
+    for (let i = 0; i < 2; i++) {
+      const req = createMockRequest(
+        "openstatus.monitor.v1.MonitorService",
+        "ListMonitors",
+        {},
+        { headers },
+      );
+      await interceptor(mockNext({}))(req as never);
+      await flush();
+    }
+
+    expect(mockTrack).toHaveBeenCalledWith({
+      ...Events.ApiRequest,
+      service: "openstatus.monitor.v1.MonitorService",
+      method: "ListMonitors",
+      success: true,
+      cliCommand: "monitors list",
+      cliVersion: "1.3.2",
+    });
+    const cliEvents = mockTrack.mock.calls.filter(
+      ([event]) => event.name === Events.CliCommand.name,
+    );
+    expect(cliEvents).toHaveLength(1);
+    expect(cliEvents[0][0]).toEqual({
+      ...Events.CliCommand,
+      command: "monitors list",
+      invocation,
+      version: "1.3.2",
+      os: "darwin",
+      arch: "arm64",
+    });
   });
 
   test("skips tracking when no RPC context", async () => {
@@ -214,7 +282,7 @@ describe("trackingInterceptor", () => {
     expect(result).toEqual(mockResponse);
 
     // Flush the .catch() chain — should not throw
-    await Promise.resolve();
+    await flush();
 
     expect(mockTrack).not.toHaveBeenCalled();
   });
@@ -241,7 +309,7 @@ describe("trackingInterceptor", () => {
     });
 
     // Flush the .then() chain
-    await Promise.resolve();
+    await flush();
 
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.CreateNotification,

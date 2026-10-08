@@ -3,4 +3,6 @@
 export const cacheKeys = {
   pageStatus: (slug: string) => `status:page:${slug}`,
   monitorDailyStats: (id: string | number) => `stats:monitor:${id}:daily`,
+  cliInvocation: (workspaceId: number, invocation: string) =>
+    `cli:invocation:${workspaceId}:${invocation}`,
 };
