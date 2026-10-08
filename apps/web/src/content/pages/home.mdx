@@ -76,32 +76,6 @@ The Slack alert at 09:41: Checkout API returned 503 from lhr, ams, cdg and koyeb
 <Grid variant="borderless">
 <div>
 
-<Eyebrow status="investigating">09:42</Eyebrow>
-
-## Know what to say before you say it
-
-Open the failing checks. The European regions spend four seconds waiting on the edge while DNS and TLS are fine, and the US regions return 200 in under 250 ms. That is the sentence the status report needs, and the headers and body are kept in case the postmortem needs more.
-
-- [Response logs and retention](/docs/concept/response-logs-and-retention)
-- [Request phases: DNS, TCP, TLS, TTFB](/docs/concept/latency-vs-response-time#the-request-in-phases-dns-tcp-tls-ttfb-transfer)
-
-</div>
-<div>
-
-<Demo type="logs" />
-
-<SrOnly>
-
-Response logs for the 09:41 check, one row per region: the four European regions returned 503 in about 4 seconds, almost all of it TTFB, while Virginia and San Jose returned 200 in about 230 ms.
-
-</SrOnly>
-
-</div>
-</Grid>
-
-<Grid variant="borderless">
-<div>
-
 <Eyebrow status="investigating">09:43</Eyebrow>
 
 ## Declare the incident, get a channel
@@ -128,7 +102,7 @@ Gilfoyle runs `/openstatus incident declare Checkout API 503s in EU --sev major`
 <Grid variant="borderless">
 <div>
 
-<Eyebrow status="investigating">09:44</Eyebrow>
+<Eyebrow status="identified">09:44</Eyebrow>
 
 ## Tell customers from Slack, or with your favorite agent
 
@@ -147,6 +121,32 @@ Ask the openstatus agent in the incident thread. It drafts the status report, yo
 <SrOnly>
 
 An engineer asks @openstatus in the incident thread to open a status report. The agent drafts "Elevated errors on Checkout API", the engineer approves, and 1,337 subscribers are notified.
+
+</SrOnly>
+
+</div>
+</Grid>
+
+<Grid variant="borderless">
+<div>
+
+<Eyebrow status="monitoring">10:14</Eyebrow>
+
+## Mitigate in the channel, update the page
+
+The rollback lands and one slash command marks the incident mitigated. The linked status report moves to monitoring with its own public wording, and subscribers hear about it without anyone leaving Slack.
+
+- [Incident management](/incident-management)
+- [Status page](/status-page)
+
+</div>
+<div>
+
+<Demo type="incident-status" />
+
+<SrOnly>
+
+At 10:14 Gilfoyle runs `/openstatus incident mitigate Rollback complete in eu-west-1 and eu-west-2.` in the incident channel and the app confirms the incident is now mitigated. Below it, the linked status report "Elevated errors on Checkout API" reads Monitoring, with its own public message and 1,337 subscribers notified.
 
 </SrOnly>
 
