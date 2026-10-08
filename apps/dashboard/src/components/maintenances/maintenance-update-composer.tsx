@@ -79,6 +79,7 @@ export function MaintenanceUpdateComposer({
         <ComposerHeader />
         <ComposerTextarea
           placeholder="What changed? Customers will read this on the status page."
+          disabled={publish.isPending}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onSubmit={() => submit().catch(console.error)}

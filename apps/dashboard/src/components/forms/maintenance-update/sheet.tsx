@@ -24,6 +24,7 @@ export function FormSheetMaintenanceUpdate({
   onSubmit,
   open: controlledOpen,
   onOpenChange,
+  ...props
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: Partial<FormValues>;
   onSubmit: (values: FormValues) => Promise<void>;
@@ -44,7 +45,9 @@ export function FormSheetMaintenanceUpdate({
   return (
     <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>
       {children ? (
-        <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+        <FormSheetTrigger {...props} asChild>
+          {children}
+        </FormSheetTrigger>
       ) : null}
       <FormSheetContent className="sm:max-w-lg">
         <FormSheetHeader>

@@ -44,6 +44,9 @@ test("maintenance update REST CRUD", async () => {
       headers,
     });
     expect(fetched.status).toBe(200);
+    const fetchedBody = await fetched.json();
+    expect(fetchedBody.id).toBe(update.id);
+    expect(fetchedBody.message).toBe("REST maintenance update");
 
     const edited = await app.request(`/v1/maintenance_update/${update.id}`, {
       method: "PUT",

@@ -737,9 +737,6 @@ export const statusPageRouter = createTRPCRouter({
         with: {
           maintenances: {
             with: {
-              maintenanceUpdates: {
-                orderBy: (updates, { desc }) => desc(updates.date),
-              },
               maintenancesToPageComponents: { with: { pageComponent: true } },
             },
           },

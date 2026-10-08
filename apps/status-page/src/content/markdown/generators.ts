@@ -460,7 +460,9 @@ export function generateEventsList(
       const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
       if (updates.length === 0 && m.message) out.push(m.message);
       for (const update of updates) {
-        out.push(`- ${formatDayTime(update.date)} — ${update.message}`);
+        // indent continuation lines so a blank line does not end the item
+        const message = update.message.replace(/\n/g, "\n  ");
+        out.push(`- ${formatDayTime(update.date)} — ${message}`);
       }
       out.push("");
     }

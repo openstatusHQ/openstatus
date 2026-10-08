@@ -22,8 +22,8 @@ export const maintenanceRouter = createTRPCRouter({
     .input(
       z.object({
         maintenanceId: z.number(),
-        message: z.string(),
-        date: z.coerce.date().optional(),
+        message: z.string().min(1),
+        date: z.date().optional(),
         notifySubscribers: z.boolean().nullish(),
       }),
     )
@@ -189,7 +189,7 @@ export const maintenanceRouter = createTRPCRouter({
         .object({
           id: z.number(),
           message: z.string().min(1).optional(),
-          date: z.coerce.date().optional(),
+          date: z.date().optional(),
         })
         .refine(
           (input) => input.message !== undefined || input.date !== undefined,

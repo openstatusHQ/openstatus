@@ -25,17 +25,24 @@ export const MaintenanceUpdateSchema = z
   })
   .openapi("MaintenanceUpdate");
 
+// JSON `null` would coerce to 1970-01-01 with a bare `z.coerce.date()`.
+const isoDate = z.iso.datetime({ offset: true }).pipe(z.coerce.date());
+
 export const CreateMaintenanceUpdateSchema = z.object({
   maintenanceId: z.number().int(),
   message: z.string().min(1),
-  date: z.coerce.date().optional(),
+  date: isoDate.optional().openapi({
+    description: "ISO 8601 date-time of the update; defaults to now",
+  }),
   notify: z.boolean().default(false),
 });
 
 export const UpdateMaintenanceUpdateSchema = z
   .object({
     message: z.string().min(1).optional(),
-    date: z.coerce.date().optional(),
+    date: isoDate.optional().openapi({
+      description: "ISO 8601 date-time of the update",
+    }),
   })
   .refine((input) => input.message !== undefined || input.date !== undefined, {
     message: "At least one field must be provided.",

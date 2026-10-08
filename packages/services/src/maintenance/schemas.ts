@@ -10,15 +10,20 @@ export const maintenanceListPeriods = ["1d", "7d", "14d"] as const;
 export type MaintenanceListPeriod = (typeof maintenanceListPeriods)[number];
 export const maintenanceListPeriodSchema = z.enum(maintenanceListPeriods);
 
+// `z.coerce.date()` turns `null` into 1970-01-01; reject it before coercing.
+const coercedDate = z
+  .union([z.string(), z.number(), z.date()])
+  .pipe(z.coerce.date());
+
 export const CreateMaintenanceInput = z
   .object({
     title: z.string().trim().min(1).max(256),
     /** Becomes the first timeline update. */
     message: z.string().min(1),
     /** Date of the first update; defaults to now. */
-    date: z.coerce.date().optional(),
-    from: z.coerce.date(),
-    to: z.coerce.date(),
+    date: coercedDate.optional(),
+    from: coercedDate,
+    to: coercedDate,
     pageId: z.number().int(),
     pageComponentIds: z.array(z.number().int()).default([]),
   })
@@ -33,8 +38,8 @@ export const UpdateMaintenanceInput = z.object({
   title: z.string().trim().min(1).max(256).optional(),
   /** Rewrites the newest timeline update. */
   message: z.string().min(1).optional(),
-  from: z.coerce.date().optional(),
-  to: z.coerce.date().optional(),
+  from: coercedDate.optional(),
+  to: coercedDate.optional(),
   /** When provided, replaces the full association set (empty array clears). */
   pageComponentIds: z.array(z.number().int()).optional(),
 });
@@ -43,7 +48,7 @@ export type UpdateMaintenanceInput = z.infer<typeof UpdateMaintenanceInput>;
 export const AddMaintenanceUpdateInput = z.object({
   maintenanceId: z.number().int(),
   message: z.string().min(1),
-  date: z.coerce.date().optional(),
+  date: coercedDate.optional(),
 });
 export type AddMaintenanceUpdateInput = z.infer<
   typeof AddMaintenanceUpdateInput
@@ -53,7 +58,7 @@ export const UpdateMaintenanceUpdateInput = z
   .object({
     id: z.number().int(),
     message: z.string().min(1).optional(),
-    date: z.coerce.date().optional(),
+    date: coercedDate.optional(),
   })
   .refine((input) => input.message !== undefined || input.date !== undefined, {
     message: "At least one field must be provided.",

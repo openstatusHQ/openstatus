@@ -168,7 +168,11 @@ export function DataTable<TData, TValue>({
                   data-state={
                     (row.getIsSelected() || row.getIsExpanded()) && "selected"
                   }
-                  onClick={() => onRowClick?.(row)}
+                  onClick={(e) => {
+                    // nested links/buttons own their click
+                    if ((e.target as HTMLElement).closest("a,button")) return;
+                    onRowClick?.(row);
+                  }}
                   className="data-[state=selected]:bg-muted/50"
                 >
                   {row.getVisibleCells().map((cell) => (

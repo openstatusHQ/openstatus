@@ -639,13 +639,16 @@ export async function writeMaintenancesPhase(
 
       // the message is the first timeline update; the announcement time
       // of imported history is unknown, so it is dated at the window start
-      await tx.insert(maintenanceUpdate).values({
-        maintenanceId: inserted.id,
-        message: data.message,
-        date: data.from,
-        createdBy: actorUserId,
-        updatedBy: actorUserId,
-      });
+      const [insertedUpdate] = await tx
+        .insert(maintenanceUpdate)
+        .values({
+          maintenanceId: inserted.id,
+          message: data.message,
+          date: data.from,
+          createdBy: actorUserId,
+          updatedBy: actorUserId,
+        })
+        .returning();
 
       const componentLinks: Array<{
         maintenanceId: number;
@@ -678,6 +681,18 @@ export async function writeMaintenancesPhase(
         }),
         after: inserted,
       });
+      if (insertedUpdate) {
+        await emitAudit(tx, ctx, {
+          action: "maintenance_update.create",
+          entityType: "maintenance_update",
+          entityId: insertedUpdate.id,
+          metadata: auditMeta(pc, {
+            sourceId: resource.sourceId,
+            maintenanceId: inserted.id,
+          }),
+          after: insertedUpdate,
+        });
+      }
     } catch (err) {
       resource.status = "failed";
       resource.error = err instanceof Error ? err.message : String(err);

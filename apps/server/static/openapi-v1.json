@@ -933,7 +933,7 @@
             "type": "string",
             "nullable": true,
             "format": "date-time",
-            "default": "2026-10-08T13:22:10.941Z",
+            "default": "2026-10-08T14:29:20.267Z",
             "description": "The date of the update in ISO8601 format"
           },
           "message": {
@@ -6631,7 +6631,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T13:22:10.941Z",
+                    "default": "2026-10-08T14:29:20.267Z",
                     "description": "The date of the report in ISO8601 format, defaults to now"
                   },
                   "message": {
@@ -7086,7 +7086,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T13:22:10.941Z",
+                    "default": "2026-10-08T14:29:20.267Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
@@ -7387,7 +7387,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T13:22:10.941Z",
+                    "default": "2026-10-08T14:29:20.267Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
@@ -8755,8 +8755,8 @@
                   },
                   "date": {
                     "type": "string",
-                    "nullable": true,
-                    "format": "date-time"
+                    "format": "date-time",
+                    "description": "ISO 8601 date-time of the update"
                   }
                 }
               }
@@ -9049,8 +9049,8 @@
                   },
                   "date": {
                     "type": "string",
-                    "nullable": true,
-                    "format": "date-time"
+                    "format": "date-time",
+                    "description": "ISO 8601 date-time of the update; defaults to now"
                   },
                   "notify": {
                     "type": "boolean",

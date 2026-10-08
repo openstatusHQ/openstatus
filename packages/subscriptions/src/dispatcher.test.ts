@@ -274,7 +274,10 @@ describe("dispatchMaintenance", () => {
 
       const args = sendStatusReportUpdateMock.calls[0].args[0];
       expect(args.message).toBe("announcement");
-      expect(args.date).toBe("2026-08-10T10:00:00.000Z");
+      // maintenance emails carry the window, not the update timestamp
+      expect(args.date).toBe(
+        "2026-08-10T10:00:00.000Z - 2026-08-10T11:00:00.000Z",
+      );
       expect(args.idempotencyKey).toMatch(
         new RegExp(`^maintenance-update:${update.id}:`),
       );
@@ -324,7 +327,9 @@ describe("dispatchMaintenanceUpdate", () => {
 
       const args = sendStatusReportUpdateMock.calls[0].args[0];
       expect(args.message).toBe("specific update message");
-      expect(args.date).toBe(occurredAt.toISOString());
+      expect(args.date).toBe(
+        `${startsAt.toISOString()} - ${endsAt.toISOString()}`,
+      );
       expect(args.pageComponents).toContain(COMPONENT_1_NAME);
       expect(args.idempotencyKey).toMatch(
         new RegExp(`^maintenance-update:${update.id}:`),

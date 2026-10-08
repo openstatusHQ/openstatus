@@ -62,7 +62,7 @@ For AI agents that should only observe state — health summaries, paging on-cal
 
 ## Tools
 
-The server exposes 23 tools (21 on plans without the `audit-log` feature), grouped by resource: 19 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). Workspaces with incident management enabled get 10 more (see [Incidents](#incidents)). Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
+The server exposes 26 tools (24 on plans without the `audit-log` feature), grouped by resource: 22 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). Workspaces with incident management enabled get 10 more (see [Incidents](#incidents)). Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
 
 ### Pages
 
@@ -170,7 +170,7 @@ the read returns a short pointer back to the same URI rather than a blank body.
 
 ### Notifying subscribers
 
-Every publishing tool — `create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance` — has a **required** `notify: boolean` field, with no default. The tool's input schema rejects calls that omit it, which forces the LLM to make an explicit choice (and therefore ask the user) before firing. `update_status_report` edits metadata only and carries no `notify` field at all.
+Every publishing tool — `create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`, `add_maintenance_update` — has a **required** `notify: boolean` field, with no default. The tool's input schema rejects calls that omit it, which forces the LLM to make an explicit choice (and therefore ask the user) before firing. `update_status_report` edits metadata only and carries no `notify` field at all.
 
 This required-field behaviour is specific to MCP. The dashboard AI assistant and the Slack agent wrap these same tools in an approval step that strips `notify` from the model-facing schema and injects it from a human toggle defaulting to `false`. MCP exposes the raw schema, so the caller must supply `notify` explicitly.
 
@@ -178,7 +178,7 @@ Notifications dispatch as part of the same call. There is no separate notify too
 
 The mutation and the notify dispatch are sequential, not transactional. The mutation persists first; if the notify step then throws (transient provider issue, partial outage of an integration), the response carries `notified: false` and the row stays.
 
-`notified: true` means the dispatch call returned without throwing — **not** that every subscriber received a message. If the workspace plan doesn't include subscriber notifications, the service is a silent no-op and the response will still report `notified: true`. Treat the field as "the dispatch ran cleanly," not as a delivery receipt.
+`notified: true` means the dispatch call returned without throwing — **not** that every subscriber received a message. If the workspace plan doesn't include subscriber notifications, the service is a no-op: the maintenance tools report `notified: false`, the status report tools still report `notified: true`. Treat the field as "the dispatch ran cleanly," not as a delivery receipt.
 
 | Tool                       | What `notify: true` sends |
 |----------------------------|---------------------------|
