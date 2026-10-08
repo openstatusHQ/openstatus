@@ -61,6 +61,12 @@ export function createAIFilterHandler({
       const result = streamObject({
         model,
         schema: outputSchema,
+        // Native structured outputs only: the JSON-tool fallback forces
+        // `tool_choice`, which newer Claude models (e.g. Sonnet 5.5) reject.
+        // Ignored by non-Anthropic (self-hosted) providers.
+        providerOptions: {
+          anthropic: { structuredOutputMode: "outputFormat" },
+        },
         messages: [
           {
             role: "system",
