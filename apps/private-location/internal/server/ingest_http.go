@@ -46,7 +46,7 @@ func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Re
 
 	ic, err := h.getIngestContext(ctx, token, req.Msg.MonitorId)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, ingestError(err)
 	}
 
 	// Enrich wide event with business context

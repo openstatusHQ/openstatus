@@ -96,7 +96,7 @@ func TestIngestHTTP_Unauthenticated(t *testing.T) {
 	}
 }
 
-func TestIngestHTTP_DBError(t *testing.T) {
+func TestIngestHTTP_UnknownToken(t *testing.T) {
 	h := server.NewPrivateLocationServer(testDB(), getTBClient(context.Background()))
 
 	req := connect.NewRequest(&private_locationv1.IngestHTTPRequest{})
@@ -104,6 +104,32 @@ func TestIngestHTTP_DBError(t *testing.T) {
 	req.Msg.Id = "monitor1"
 	req.Msg.MonitorId = "nonexistent"
 	req.Msg.Timestamp = 1234567890
+	resp, err := h.IngestHTTP(context.Background(), req)
+	if err == nil {
+		t.Fatalf("expected error for unknown token, got nil")
+	}
+	if connect.CodeOf(err) != connect.CodeUnauthenticated {
+		t.Errorf("expected unauthenticated code, got %v", connect.CodeOf(err))
+	}
+	if resp != nil {
+		t.Errorf("expected nil response, got %v", resp)
+	}
+}
+
+// TestIngestHTTP_DBError keeps a genuine database failure at 500: only the
+// not-found lookups moved off CodeInternal.
+func TestIngestHTTP_DBError(t *testing.T) {
+	db := testDB()
+	h := server.NewPrivateLocationServer(db, getTBClient(context.Background()))
+	require.NoError(t, db.Close())
+
+	req := connect.NewRequest(&private_locationv1.IngestHTTPRequest{
+		Id:        "monitor1",
+		MonitorId: "5",
+		Timestamp: 1234567890,
+	})
+	req.Header().Set("openstatus-token", "my-secret-key")
+
 	resp, err := h.IngestHTTP(context.Background(), req)
 	if err == nil {
 		t.Fatalf("expected error for db failure, got nil")
@@ -126,10 +152,10 @@ func TestIngestHTTP_MonitorNotExist(t *testing.T) {
 	req.Msg.Timestamp = 1234567890
 	resp, err := h.IngestHTTP(context.Background(), req)
 	if err == nil {
-		t.Fatalf("expected error for db failure, got nil")
+		t.Fatalf("expected error for missing monitor, got nil")
 	}
-	if connect.CodeOf(err) != connect.CodeInternal {
-		t.Errorf("expected internal code, got %v", connect.CodeOf(err))
+	if connect.CodeOf(err) != connect.CodeNotFound {
+		t.Errorf("expected not found code, got %v", connect.CodeOf(err))
 	}
 	if resp != nil {
 		t.Errorf("expected nil response, got %v", resp)
