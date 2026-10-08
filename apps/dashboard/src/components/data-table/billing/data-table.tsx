@@ -97,6 +97,13 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
     }),
   );
 
+  // Which button is in flight, derived from the running mutation.
+  const pendingPlan: WorkspacePlan | null = checkoutSessionMutation.isPending
+    ? checkoutSessionMutation.variables.plan
+    : customerPortalMutation.isPending
+      ? "free"
+      : null;
+
   if (!workspace) return null;
 
   const isTrialing = workspace.trialDaysLeft !== null;
@@ -221,7 +228,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                           ? isTrialing
                             ? "On Trial"
                             : "Current Plan"
-                          : isPending
+                          : pendingPlan === id
                             ? "Choosing..."
                             : isIntervalSwitch
                               ? `Switch to ${interval}`
