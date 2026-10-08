@@ -93,6 +93,7 @@ export function MaintenanceUpdateComposer({
               aria-label="Date"
               value={date ?? now}
               onChange={setDate}
+              max={new Date()}
               className="bg-background text-foreground h-8 w-fit font-mono"
             />
           </div>

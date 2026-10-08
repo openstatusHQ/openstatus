@@ -933,7 +933,7 @@
             "type": "string",
             "nullable": true,
             "format": "date-time",
-            "default": "2026-10-08T14:29:20.267Z",
+            "default": "2026-10-08T16:05:35.618Z",
             "description": "The date of the update in ISO8601 format"
           },
           "message": {
@@ -1048,8 +1048,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true,
+            "type": "integer",
             "description": "The update id"
           },
           "message": {
@@ -1059,7 +1058,6 @@
           },
           "date": {
             "type": "string",
-            "nullable": true,
             "format": "date-time",
             "description": "The update date"
           },
@@ -1079,6 +1077,7 @@
           }
         },
         "required": [
+          "id",
           "message",
           "date",
           "maintenanceId",
@@ -6631,7 +6630,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T14:29:20.267Z",
+                    "default": "2026-10-08T16:05:35.618Z",
                     "description": "The date of the report in ISO8601 format, defaults to now"
                   },
                   "message": {
@@ -7086,7 +7085,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T14:29:20.267Z",
+                    "default": "2026-10-08T16:05:35.618Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
@@ -7387,7 +7386,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T14:29:20.267Z",
+                    "default": "2026-10-08T16:05:35.618Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
@@ -8756,7 +8755,7 @@
                   "date": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "ISO 8601 date-time of the update"
+                    "description": "ISO 8601 date-time of the update, not in the future"
                   }
                 }
               }
@@ -9050,7 +9049,7 @@
                   "date": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "ISO 8601 date-time of the update; defaults to now"
+                    "description": "ISO 8601 date-time of the update, not in the future; defaults to now"
                   },
                   "notify": {
                     "type": "boolean",

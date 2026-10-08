@@ -15,13 +15,20 @@ const coercedDate = z
   .union([z.string(), z.number(), z.date()])
   .pipe(z.coerce.date());
 
+// Timeline updates record what happened; the skew tolerates client clocks.
+const CLOCK_SKEW_MS = 5 * 60 * 1000;
+const pastDate = coercedDate.refine(
+  (date) => date.getTime() <= Date.now() + CLOCK_SKEW_MS,
+  { error: "Date cannot be in the future." },
+);
+
 export const CreateMaintenanceInput = z
   .object({
     title: z.string().trim().min(1).max(256),
     /** Becomes the first timeline update. */
     message: z.string().min(1),
-    /** Date of the first update; defaults to now. */
-    date: coercedDate.optional(),
+    /** Date of the first update; defaults to now, must not be in the future. */
+    date: pastDate.optional(),
     from: coercedDate,
     to: coercedDate,
     pageId: z.number().int(),
@@ -48,7 +55,7 @@ export type UpdateMaintenanceInput = z.infer<typeof UpdateMaintenanceInput>;
 export const AddMaintenanceUpdateInput = z.object({
   maintenanceId: z.number().int(),
   message: z.string().min(1),
-  date: coercedDate.optional(),
+  date: pastDate.optional(),
 });
 export type AddMaintenanceUpdateInput = z.infer<
   typeof AddMaintenanceUpdateInput
@@ -58,7 +65,7 @@ export const UpdateMaintenanceUpdateInput = z
   .object({
     id: z.number().int(),
     message: z.string().min(1).optional(),
-    date: coercedDate.optional(),
+    date: pastDate.optional(),
   })
   .refine((input) => input.message !== undefined || input.date !== undefined, {
     message: "At least one field must be provided.",

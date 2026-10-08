@@ -711,6 +711,28 @@ describe("maintenance updates", () => {
     });
   });
 
+  test("rejects future-dated updates", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const parent = await createParent(ctx, "future-update");
+      const future = new Date(Date.now() + 10 * 60 * 1000);
+      await expect(
+        addMaintenanceUpdate({
+          ctx,
+          input: { maintenanceId: parent.id, message: "later", date: future },
+        }),
+      ).rejects.toThrow("Date cannot be in the future.");
+      const [first] = (await getMaintenance({ ctx, input: { id: parent.id } }))
+        .updates;
+      await expect(
+        updateMaintenanceUpdate({
+          ctx,
+          input: { id: first.id, date: future },
+        }),
+      ).rejects.toThrow("Date cannot be in the future.");
+    });
+  });
+
   test("the last update cannot be removed", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
