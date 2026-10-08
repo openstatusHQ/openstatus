@@ -2,8 +2,10 @@
 // real Events/parseInputToProps but replaces setupAnalytics with a spy (exposed
 // on globalThis.__analyticsSpies) so tests assert tracking without OpenPanel.
 export {
+  type Analytics,
   type EventProps,
   Events,
+  type IdentifyProps,
   parseInputToProps,
 } from "@openstatus/analytics-real";
 

@@ -6,7 +6,7 @@ import {
   setupAnalytics,
 } from "@openstatus/analytics";
 import type { Context, Next } from "hono";
-import { routePath } from "hono/route";
+import { matchedRoutes } from "hono/route";
 
 import { apiAnalyticsIdentity } from "@/libs/analytics-identity";
 import { parseCliHeaders, trackCliCommand } from "@/libs/cli-telemetry";
@@ -56,7 +56,7 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
  * the first request of each CLI run fires one `cli_command`.
  *
  * Mount after `authMiddleware`; requests it rejects carry no workspace and are
- * skipped. Per-route domain events stay with `trackMiddleware`.
+ * skipped, as are requests that match no route. Per-route domain events stay with `trackMiddleware`.
  */
 export function apiTrackMiddleware() {
   return async (c: Context<{ Variables: Variables }, "/*">, next: Next) => {
@@ -64,6 +64,12 @@ export function apiTrackMiddleware() {
 
     const workspace = c.get("workspace");
     if (!workspace) return;
+
+    // `use()` middlewares register as `ALL`; with no handler route matched
+    // (a 404 on an unknown path) the only pattern left is `/*`, which says
+    // nothing about the endpoint, so those aren't counted.
+    const route = matchedRoutes(c).findLast((r) => r.method !== "ALL");
+    if (!route) return;
 
     const cli = parseCliHeaders(c.req.raw.headers);
     const success = c.res.status.toString().startsWith("2") && !c.error;
@@ -74,7 +80,7 @@ export function apiTrackMiddleware() {
           analytics.track({
             ...Events.ApiRequest,
             service: "v1",
-            method: `${c.req.method} ${routePath(c, -1)}`,
+            method: `${c.req.method} ${route.path}`,
             success,
             ...(cli ? { cliCommand: cli.command } : {}),
             ...(cli?.version ? { cliVersion: cli.version } : {}),

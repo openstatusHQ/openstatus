@@ -84,6 +84,16 @@ describe("apiTrackMiddleware", () => {
     });
   });
 
+  test("skips requests that match no route", async () => {
+    const res = await makeApp().request("/nope", {
+      headers: { "user-agent": "curl/8" },
+    });
+    await flush();
+
+    expect(res.status).toBe(404);
+    expect(mockSetupAnalytics).not.toHaveBeenCalled();
+  });
+
   test("skips requests without a workspace", async () => {
     const res = await makeApp({ withWorkspace: false }).request("/whoami", {
       headers: cliHeaders(crypto.randomUUID()),

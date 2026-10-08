@@ -1,5 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import { type EventProps, Events } from "@openstatus/analytics";
+import { type Analytics, type EventProps, Events } from "@openstatus/analytics";
 
 import { cacheKeys } from "@/libs/cache-keys";
 import { redis } from "@/libs/clients";
@@ -83,10 +83,6 @@ export async function claimCliCommandEvent(
   };
 }
 
-type Analytics = {
-  track: (event: EventProps & Record<string, unknown>) => Promise<unknown>;
-};
-
 /**
  * Sends this run's `cli_command` through `analytics` if this request is the
  * first of the run to claim it. Claim only once analytics is set up, and give
@@ -105,7 +101,12 @@ export async function trackCliCommand(
   } catch (error) {
     await redis
       .del(cacheKeys.cliInvocation(workspaceId, cli.invocation))
-      .catch(() => {});
+      .catch(() => {
+        logger.warn(
+          "Failed to release CLI invocation claim for workspace {workspaceId}",
+          { workspaceId },
+        );
+      });
     throw error;
   }
 }

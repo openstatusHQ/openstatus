@@ -99,17 +99,19 @@ export async function setupAnalytics(props: IdentifyProps) {
   }
 
   const groupId = props.workspaceId ? `ws_${props.workspaceId}` : undefined;
+  // profileId and groups go on each event rather than relying on the client
+  // state identify()/setGroup() leave behind, which the cache below skips.
   const track = (opts: EventProps & TrackProperties) => {
     const { name, ...rest } = opts;
-    return op.track(name, groupId ? { ...rest, groups: [groupId] } : rest);
+    return op.track(name, {
+      ...(props.userId ? { profileId: props.userId } : {}),
+      ...rest,
+      ...(groupId ? { groups: [groupId] } : {}),
+    });
   };
 
   const key = identityKey(props);
-  if (wasIdentitySent(key)) {
-    // A profileId-only identify sets the id `track()` reads without a request.
-    if (props.userId) op.identify({ profileId: props.userId });
-    return { track };
-  }
+  if (wasIdentitySent(key)) return { track };
 
   if (props.userId) {
     const [firstName, lastName] = props.fullName?.split(" ") || [];
@@ -137,6 +139,8 @@ export async function setupAnalytics(props: IdentifyProps) {
 
   return { track };
 }
+
+export type Analytics = Awaited<ReturnType<typeof setupAnalytics>>;
 
 /**
  * Noop analytics for development environment
