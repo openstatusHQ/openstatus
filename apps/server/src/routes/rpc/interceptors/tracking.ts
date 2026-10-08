@@ -156,7 +156,8 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
  *
  * Every authenticated call fires an `api_request` event — reads included, and
  * failures too (`success: false`) — so API volume is countable per workspace
- * the same way `mcp_request` counts MCP traffic. Successful calls listed in
+ * the same way `mcp_request` counts MCP traffic. V1 REST fires the same event
+ * from `apiTrackMiddleware`. Successful calls listed in
  * `RPC_EVENT_MAP` additionally fire their domain event (e.g. `monitor_created`).
  *
  * Requests from the openstatus CLI also carry `cliCommand`/`cliVersion` on

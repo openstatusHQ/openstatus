@@ -11,7 +11,7 @@ import { Hono } from "hono";
 
 import type { Variables } from "@/types";
 
-import { cliTrackMiddleware } from "./track";
+import { apiTrackMiddleware } from "./track";
 
 // @openstatus/analytics is swapped for a double (test.importmap.json) whose
 // setupAnalytics/track spies are exposed here on globalThis.
@@ -34,7 +34,7 @@ const TEST_WORKSPACE = {
 
 /**
  * Minimal app with `workspace` pre-set (simulating `authMiddleware`) and
- * `cliTrackMiddleware` mounted the way the V1 router mounts it.
+ * `apiTrackMiddleware` mounted the way the V1 router mounts it.
  */
 function makeApp(opts: { withWorkspace?: boolean } = {}) {
   const app = new Hono<{ Variables: Variables }>();
@@ -42,8 +42,9 @@ function makeApp(opts: { withWorkspace?: boolean } = {}) {
     if (opts.withWorkspace !== false) c.set("workspace", TEST_WORKSPACE);
     await next();
   });
-  app.use("*", cliTrackMiddleware());
+  app.use("*", apiTrackMiddleware());
   app.get("/whoami", (c) => c.text("ok"));
+  app.get("/monitor/:id", (c) => c.text("missing", 404));
   return app;
 }
 
@@ -61,21 +62,26 @@ function cliCommandCalls() {
   );
 }
 
-describe("cliTrackMiddleware", () => {
+describe("apiTrackMiddleware", () => {
   beforeEach(() => {
     mockSetupAnalytics.mockClear();
     mockTrack.mockClear();
   });
 
-  test("skips requests without CLI headers", async () => {
-    const res = await makeApp().request("/whoami", {
+  test("fires api_request for GET requests with the route pattern", async () => {
+    const res = await makeApp().request("/monitor/123", {
       headers: { "user-agent": "curl/8" },
     });
     await flush();
 
-    expect(res.status).toBe(200);
-    expect(mockSetupAnalytics).not.toHaveBeenCalled();
-    expect(mockTrack).not.toHaveBeenCalled();
+    expect(res.status).toBe(404);
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockTrack).toHaveBeenCalledWith({
+      ...Events.ApiRequest,
+      service: "v1",
+      method: "GET /monitor/:id",
+      success: false,
+    });
   });
 
   test("skips requests without a workspace", async () => {
@@ -89,7 +95,7 @@ describe("cliTrackMiddleware", () => {
     expect(mockTrack).not.toHaveBeenCalled();
   });
 
-  test("fires cli_command once per invocation", async () => {
+  test("tags CLI requests and fires cli_command once per invocation", async () => {
     const app = makeApp();
     const invocation = crypto.randomUUID();
 
@@ -98,6 +104,14 @@ describe("cliTrackMiddleware", () => {
       await flush();
     }
 
+    expect(mockTrack).toHaveBeenCalledWith({
+      ...Events.ApiRequest,
+      service: "v1",
+      method: "GET /whoami",
+      success: true,
+      cliCommand: "whoami",
+      cliVersion: "1.3.2",
+    });
     expect(cliCommandCalls()).toHaveLength(1);
     expect(cliCommandCalls()[0][0]).toEqual({
       ...Events.CliCommand,

@@ -8,7 +8,7 @@ import { env } from "@/env";
 import { handleZodError } from "@/libs/errors";
 import {
   authMiddleware,
-  cliTrackMiddleware,
+  apiTrackMiddleware,
   requireWriteScope,
 } from "@/libs/middlewares";
 
@@ -149,7 +149,7 @@ api.get(
  * Middlewares
  */
 api.use("/*", authMiddleware);
-api.use("/*", cliTrackMiddleware());
+api.use("/*", apiTrackMiddleware());
 // Primary scope enforcement for V1: routes here use inline Drizzle
 // queries instead of `@openstatus/services`, so the service-level
 // `requireScope` won't run. After per-route migration to services,

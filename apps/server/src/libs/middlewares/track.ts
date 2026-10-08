@@ -1,10 +1,12 @@
 import { getLogger } from "@logtape/logtape";
 import {
   type EventProps,
+  Events,
   parseInputToProps,
   setupAnalytics,
 } from "@openstatus/analytics";
 import type { Context, Next } from "hono";
+import { routePath } from "hono/route";
 
 import { apiAnalyticsIdentity } from "@/libs/analytics-identity";
 import { parseCliHeaders, trackCliCommand } from "@/libs/cli-telemetry";
@@ -45,27 +47,46 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
 }
 
 /**
- * Fires `cli_command` for the first request of each openstatus CLI run. V1 is
- * deprecated and gets no `api_request` volume tracking, but some CLI commands
- * (`whoami`) only ever call it, so their runs would go uncounted without this.
- * Mount after `authMiddleware`; counts the run whatever the response status.
+ * Fires `api_request` for every authenticated V1 call — reads included, and
+ * failures too (`success: false`) — mirroring the RPC tracking interceptor so
+ * API volume is countable across both surfaces. `method` is the matched route
+ * pattern (`GET /v1/monitor/:id`), never the raw URL, to keep it low-cardinality.
+ *
+ * Requests from the openstatus CLI also carry `cliCommand`/`cliVersion`, and
+ * the first request of each CLI run fires one `cli_command`.
+ *
+ * Mount after `authMiddleware`; requests it rejects carry no workspace and are
+ * skipped. Per-route domain events stay with `trackMiddleware`.
  */
-export function cliTrackMiddleware() {
+export function apiTrackMiddleware() {
   return async (c: Context<{ Variables: Variables }, "/*">, next: Next) => {
-    const cli = parseCliHeaders(c.req.raw.headers);
-    const workspace = c.get("workspace");
-
-    if (cli && workspace) {
-      setupAnalytics(apiAnalyticsIdentity(workspace, c.req.raw.headers))
-        .then((analytics) => trackCliCommand(analytics, workspace.id, cli))
-        .catch(() => {
-          logger.warn(
-            "Failed to send CLI analytics event for workspace {workspaceId}",
-            { workspaceId: workspace.id },
-          );
-        });
-    }
-
     await next();
+
+    const workspace = c.get("workspace");
+    if (!workspace) return;
+
+    const cli = parseCliHeaders(c.req.raw.headers);
+    const success = c.res.status.toString().startsWith("2") && !c.error;
+
+    setupAnalytics(apiAnalyticsIdentity(workspace, c.req.raw.headers))
+      .then((analytics) =>
+        Promise.all([
+          analytics.track({
+            ...Events.ApiRequest,
+            service: "v1",
+            method: `${c.req.method} ${routePath(c, -1)}`,
+            success,
+            ...(cli ? { cliCommand: cli.command } : {}),
+            ...(cli?.version ? { cliVersion: cli.version } : {}),
+          }),
+          ...(cli ? [trackCliCommand(analytics, workspace.id, cli)] : []),
+        ]),
+      )
+      .catch(() => {
+        logger.warn(
+          "Failed to send API analytics events for workspace {workspaceId}",
+          { workspaceId: workspace.id },
+        );
+      });
   };
 }
