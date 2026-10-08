@@ -737,6 +737,18 @@ describe("MaintenanceService.GetMaintenance", () => {
   test("rejects ids that are not plain decimal digits", async () => {
     const calls: Array<[string, Record<string, unknown>]> = [
       ["GetMaintenance", { id: "1e3" }],
+      [
+        "CreateMaintenance",
+        {
+          title: "x",
+          message: "x",
+          from: "2026-10-09T00:00:00Z",
+          to: "2026-10-10T00:00:00Z",
+          pageId: "1e3",
+          pageComponentIds: [],
+        },
+      ],
+      ["ListMaintenances", { pageId: "0x10" }],
       ["DeleteMaintenance", { id: "0x10" }],
       ["AddMaintenanceUpdate", { maintenanceId: "1.5", message: "x" }],
       ["UpdateMaintenanceUpdate", { id: "1e3", message: "x" }],

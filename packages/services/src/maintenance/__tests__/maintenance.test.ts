@@ -654,19 +654,31 @@ describe("notifyMaintenance", () => {
     test("creates, edits, deletes, stamps attribution, touches parent, audits", async () => {
       await withTestTransaction(async (tx) => {
         const ctx = { ...teamCtx, db: tx };
+        // a second actor on the same workspace: every timeline write must
+        // flip the parent's `updatedBy`, which the creator alone cannot show
+        const editorCtx = {
+          ...makeUserCtx(teamCtx.workspace, { userId: 2 }),
+          db: tx,
+        };
         const parent = await createParent(ctx, "updates");
         const before = await getMaintenance({ ctx, input: { id: parent.id } });
         expect(before.updates.map((u) => u.message)).toEqual(["announcement"]);
+        expect(before.updatedBy).toBe(1);
 
         const date = new Date("2026-06-20T00:15:00.000Z");
         const created = await addMaintenanceUpdate({
-          ctx,
+          ctx: editorCtx,
           input: { maintenanceId: parent.id, message: "work started", date },
         });
         expect(created.message).toBe("work started");
         expect(created.date.getTime()).toBe(date.getTime());
-        expect(created.createdBy).toBe(1);
-        expect(created.updatedBy).toBe(1);
+        expect(created.createdBy).toBe(2);
+        expect(created.updatedBy).toBe(2);
+        const afterAdd = await getMaintenance({
+          ctx,
+          input: { id: parent.id },
+        });
+        expect(afterAdd.updatedBy).toBe(2);
 
         const edited = await updateMaintenanceUpdate({
           ctx,
@@ -683,15 +695,24 @@ describe("notifyMaintenance", () => {
           "announcement",
           "work resumed",
         ]);
+        // the edit by user 1 flipped the parent back from the editor
         expect(full.updatedBy).toBe(1);
 
-        await deleteMaintenanceUpdate({ ctx, input: { id: created.id } });
+        await deleteMaintenanceUpdate({
+          ctx: editorCtx,
+          input: { id: created.id },
+        });
         const gone = await tx
           .select()
           .from(maintenanceUpdate)
           .where(eq(maintenanceUpdate.id, created.id))
           .get();
         expect(gone).toBeUndefined();
+        const afterDelete = await getMaintenance({
+          ctx,
+          input: { id: parent.id },
+        });
+        expect(afterDelete.updatedBy).toBe(2);
 
         for (const action of [
           "maintenance_update.create",
