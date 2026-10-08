@@ -15,7 +15,10 @@ export function apiAnalyticsIdentity(
     workspaceName: workspace.name || workspace.slug,
     plan: workspace.plan,
     source: "api",
-    location: headers.get("x-forwarded-for") ?? undefined,
+    location:
+      headers.get("fly-client-ip") ||
+      headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() ||
+      undefined,
     userAgent: headers.get("user-agent") ?? undefined,
   };
 }
