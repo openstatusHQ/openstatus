@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -117,28 +117,28 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		retry = int(req.Retry)
 	}
 
-	op := func() error {
+	op := func() (struct{}, error) {
 		called++
 		res, err := checker.Http(ctx, requestClient, req)
 
 		if err != nil {
-			return fmt.Errorf("unable to ping: %w", err)
+			return struct{}{}, fmt.Errorf("unable to ping: %w", err)
 		}
 
 		// In TB we need to store them as string
 		timingAsString, err := json.Marshal(res.Timing)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URL, err)
+			return struct{}{}, fmt.Errorf("error while parsing timing data %s: %w", req.URL, err)
 		}
 
 		headersAsString, err := json.Marshal(res.Headers)
 		if err != nil {
-			return fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
+			return struct{}{}, fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
 		}
 
 		id, err := uuid.NewV7()
 		if err != nil {
-			return fmt.Errorf("error while generating uuid %w", err)
+			return struct{}{}, fmt.Errorf("error while generating uuid %w", err)
 		}
 
 		var requestStatus = ""
@@ -173,12 +173,12 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		var isSuccessfull bool = true
 		isSuccessfull, err = EvaluateHTTPAssertions(req.RawAssertions, data, res)
 		if err != nil {
-			return err
+			return struct{}{}, err
 		}
 
 		// let's retry at least once if the status code is not successful.
 		if !isSuccessfull && called < retry {
-			return fmt.Errorf("unable to ping: %v with status %v", res, res.Status)
+			return struct{}{}, fmt.Errorf("unable to ping: %v with status %v", res, res.Status)
 		}
 
 		result = res
@@ -271,10 +271,10 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			c.Set("event", t)
 		}
 
-		return nil
+		return struct{}{}, nil
 	}
 
-	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), uint64(retry))); err != nil {
+	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry))); err != nil {
 		id, e := uuid.NewV7()
 		if e != nil {
 			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")

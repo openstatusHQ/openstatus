@@ -86,6 +86,11 @@ const PLAY = [
     href: "https://themes.openstatus.dev",
   },
   {
+    label: "Health Endpoints",
+    description: "Health endpoint toolkit that reports every dependency",
+    href: "/health",
+  },
+  {
     label: "Incident Severity Matrix Builder",
     description: "Classify incidents with deterministic, auditable rules",
     href: "/play/severity-matrix",

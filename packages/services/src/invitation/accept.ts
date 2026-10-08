@@ -110,18 +110,23 @@ export async function acceptInvitation(args: {
     if (!existing.workspace) {
       throw new NotFoundError("workspace", existing.workspaceId);
     }
+    const workspace = selectWorkspaceSchema.parse(existing.workspace);
 
     // Strip `token` (email-link capability) from the snapshot; construct the snapshots from the pre-fetched row
     // to avoid a second SELECT after the UPDATE.
     const { token: _token, ...before } = existing;
-    await emitAudit(tx, ctx, {
-      action: "invitation.update",
-      entityType: "invitation",
-      entityId: input.id,
-      before,
-      after: { ...before, acceptedAt },
-    });
+    await emitAudit(
+      tx,
+      { ...ctx, workspace },
+      {
+        action: "invitation.update",
+        entityType: "invitation",
+        entityId: input.id,
+        before,
+        after: { ...before, acceptedAt },
+      },
+    );
 
-    return selectWorkspaceSchema.parse(existing.workspace);
+    return workspace;
   });
 }

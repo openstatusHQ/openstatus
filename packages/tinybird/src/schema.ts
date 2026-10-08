@@ -1,6 +1,14 @@
 import { z } from "zod";
 
-export const jobTypes = ["http", "tcp", "icmp", "udp", "dns", "ssl"] as const;
+export const jobTypes = [
+  "http",
+  "tcp",
+  "icmp",
+  "grpc",
+  "udp",
+  "dns",
+  "ssl",
+] as const;
 export const jobTypeEnum = z.enum(jobTypes);
 export type JobType = z.infer<typeof jobTypeEnum>;
 

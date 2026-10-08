@@ -13,7 +13,9 @@ import { useParams } from "next/navigation";
 
 import { Link } from "@/components/common/link";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { configurationLabels } from "@/components/forms/status-page/form-configuration";
 import { SidebarRight } from "@/components/nav/sidebar-right";
+import { getPageUrl } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Sidebar() {
@@ -26,9 +28,7 @@ export function Sidebar() {
 
   if (!statusPage) return null;
 
-  const BADGE_URL = `https://${
-    statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
-  }/badge/v2`;
+  const BADGE_URL = `${getPageUrl(statusPage)}/badge/v2`;
 
   return (
     <SidebarRight
@@ -40,13 +40,7 @@ export function Sidebar() {
             {
               label: "Slug",
               value: (
-                <Link
-                  href={`https://${
-                    statusPage.customDomain ||
-                    `${statusPage.slug}.openstatus.dev`
-                  }`}
-                  target="_blank"
-                >
+                <Link href={getPageUrl(statusPage)} target="_blank">
                   {statusPage.slug}
                 </Link>
               ),
@@ -99,12 +93,16 @@ export function Sidebar() {
               value: statusPage.configuration?.theme ?? "-",
             },
             {
-              label: "Bar Value",
-              value: statusPage.configuration?.type ?? "-",
+              label: "Status source",
+              value: statusPage.configuration?.type
+                ? configurationLabels.type[statusPage.configuration.type]
+                : "-",
             },
             {
-              label: "Card Value",
-              value: statusPage.configuration?.value ?? "-",
+              label: "Card shows",
+              value: statusPage.configuration?.value
+                ? configurationLabels.value[statusPage.configuration.value]
+                : "-",
             },
             {
               label: "Show Uptime",
@@ -138,12 +136,7 @@ export function Sidebar() {
       footerButton={{
         onClick: () =>
           typeof window !== "undefined" &&
-          window.open(
-            `https://${
-              statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
-            }`,
-            "_blank",
-          ),
+          window.open(getPageUrl(statusPage), "_blank"),
         children: (
           <>
             <ExternalLink />

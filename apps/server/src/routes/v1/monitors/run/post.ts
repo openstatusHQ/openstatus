@@ -21,6 +21,7 @@ import { HTTPException } from "hono/http-exception";
 
 import type { monitorsApi } from "..";
 import { ParamsSchema, TriggerResult } from "../schema";
+import { assertLegacyRunnableJobType } from "../utils";
 import { QuerySchema } from "./schema";
 
 const postMonitor = createRoute({
@@ -97,6 +98,8 @@ export function registerRunMonitor(api: typeof monitorsApi) {
     }
 
     const row = parseMonitor.data;
+
+    assertLegacyRunnableJobType(row.jobType);
 
     // Maybe later overwrite the region
 

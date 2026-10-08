@@ -3,6 +3,7 @@ import {
   type AgentToolName,
   type AnyAgentTool,
   agentTools,
+  isAgentToolAvailable,
 } from "@openstatus/services/agent-tools";
 import { type Tool, tool } from "ai";
 import { ZodObject, type ZodType, type z } from "zod";
@@ -38,12 +39,18 @@ export function isSlackToolDraft(value: unknown): value is SlackToolDraft {
  * extraFlag fields (e.g. `notify`) so the model can't be expected to
  * answer them — the user supplies them via the Block Kit buttons.
  */
-export function buildSlackTools(ctx: ServiceContext): Record<string, Tool> {
+export function buildSlackTools(
+  ctx: ServiceContext,
+  /** Surface-only tools (e.g. reading the channel the user is viewing). */
+  extras?: Record<string, Tool>,
+): Record<string, Tool> {
   const out: Record<string, Tool> = {};
   for (const name of Object.keys(agentTools) as AgentToolName[]) {
-    out[name] = buildTool(agentTools[name] as AnyAgentTool, ctx);
+    const t: AnyAgentTool = agentTools[name];
+    if (!isAgentToolAvailable(t, ctx.workspace)) continue;
+    out[name] = buildTool(t, ctx);
   }
-  return out;
+  return { ...out, ...extras };
 }
 
 export function buildTool(t: AnyAgentTool, ctx: ServiceContext): Tool {
@@ -66,7 +73,7 @@ export function buildTool(t: AnyAgentTool, ctx: ServiceContext): Tool {
   // re-validates after applyFlags on button click.
   const draftSchema = deriveDraftSchema(t);
   return tool({
-    description: t.description,
+    description: draftToolDescription(t),
     inputSchema: draftSchema,
     execute: async (input: unknown) => {
       const parsed = draftSchema.parse(input);
@@ -82,6 +89,22 @@ export function buildTool(t: AnyAgentTool, ctx: ServiceContext): Tool {
       return draft;
     },
   });
+}
+
+/**
+ * Registry descriptions document execute-time semantics ("PUBLIC … irreversible
+ * side effects"), which don't hold here — destructive calls only produce a draft
+ * for the Block Kit card. Left unqualified, the model reads the warning and asks
+ * for permission in prose instead of calling, and the user never gets a card.
+ */
+export function draftToolDescription(t: AnyAgentTool): string {
+  const flags = t.approval?.extraFlags ?? [];
+  const flagNote = flags.length
+    ? ` The card also carries the user's ${flags.map((f) => `\`${f.id}\``).join(", ")} choice as a button, so never ask about it.`
+    : "";
+  return `${t.description}
+
+IN SLACK THIS CALL DOES NOT EXECUTE. It renders an approval card with Approve/Cancel buttons; nothing is created, published, or notified until the user clicks Approve.${flagNote} Call this tool as soon as you have the required ids — do NOT describe the draft in a message and ask for permission first, because that leaves the user with no card to click.`;
 }
 
 /**

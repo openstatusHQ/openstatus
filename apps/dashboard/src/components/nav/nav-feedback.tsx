@@ -27,7 +27,7 @@ import { z } from "zod";
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
-  message: z.string().min(1),
+  message: z.string().trim().min(1),
 });
 
 export function NavFeedback() {

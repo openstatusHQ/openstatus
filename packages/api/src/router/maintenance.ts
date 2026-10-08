@@ -29,7 +29,7 @@ export const maintenanceRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const { maintenanceUpdate } = await addMaintenanceUpdate({
+        const update = await addMaintenanceUpdate({
           ctx: toServiceCtx(ctx),
           input: {
             maintenanceId: input.maintenanceId,
@@ -37,10 +37,7 @@ export const maintenanceRouter = createTRPCRouter({
             date: input.date,
           },
         });
-        return {
-          ...maintenanceUpdate,
-          notifySubscribers: input.notifySubscribers,
-        };
+        return { ...update, notifySubscribers: input.notifySubscribers };
       } catch (err) {
         toTRPCError(err);
       }
@@ -140,7 +137,7 @@ export const maintenanceRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const result = await createMaintenance({
+        const record = await createMaintenance({
           ctx: toServiceCtx(ctx),
           input: {
             title: input.title,
@@ -151,11 +148,7 @@ export const maintenanceRouter = createTRPCRouter({
             pageComponentIds: input.pageComponents ?? [],
           },
         });
-        return {
-          ...result.maintenance,
-          initialUpdateId: result.initialUpdate.id,
-          notifySubscribers: input.notifySubscribers,
-        };
+        return { ...record, notifySubscribers: input.notifySubscribers };
       } catch (err) {
         toTRPCError(err);
       }

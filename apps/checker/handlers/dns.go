@@ -246,7 +246,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 
 func (h Handler) DNSHandlerRegion(c *gin.Context) {
 	ctx := c.Request.Context()
-	dataSourceName := "check_dns_response__v0"
+	dataSourceName := "check_response_dns__v0"
 	const defaultRetry = 3
 
 	// Authorization check

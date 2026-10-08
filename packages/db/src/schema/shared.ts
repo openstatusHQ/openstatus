@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-import { selectIncidentSchema } from "./incidents/validation";
 import {
   selectMaintenanceSchema,
   selectMaintenanceUpdateSchema,
 } from "./maintenances";
 import { selectMonitorGroupSchema } from "./monitor_groups";
+import { selectMonitorIncidentSchema } from "./monitor_incidents/validation";
 import { selectMonitorSchema } from "./monitors";
 import { selectPageComponentGroupSchema } from "./page_component_groups";
 import {
@@ -36,39 +36,48 @@ export const selectPublicMonitorSchema =
     name: data.externalName || data.name,
   }));
 
-export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
-  statusReportUpdates: z
-    .array(
-      selectStatusReportUpdateSchema.extend({
-        statusReportUpdateToPageComponents: z
-          .array(selectStatusReportUpdateToPageComponentSchema)
-          .prefault([]),
-      }),
-    )
-    .prefault([]),
-  statusReportsToPageComponents: z
-    .array(
-      z.object({
-        pageComponentId: z.number(),
-        statusReportId: z.number(),
-        pageComponent: selectPageComponentSchema,
-      }),
-    )
-    .prefault([]),
-});
+// author identity is workspace-internal; the public page never carries it
+const authorColumns = { createdBy: true, updatedBy: true } as const;
 
-export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
-  maintenanceUpdates: z.array(selectMaintenanceUpdateSchema).prefault([]),
-  maintenancesToPageComponents: z
-    .array(
-      z.object({
-        pageComponentId: z.number(),
-        maintenanceId: z.number(),
-        pageComponent: selectPageComponentSchema,
-      }),
-    )
-    .prefault([]),
-});
+export const selectStatusReportPageSchema = selectStatusReportSchema
+  .omit(authorColumns)
+  .extend({
+    statusReportUpdates: z
+      .array(
+        selectStatusReportUpdateSchema.omit(authorColumns).extend({
+          statusReportUpdateToPageComponents: z
+            .array(selectStatusReportUpdateToPageComponentSchema)
+            .prefault([]),
+        }),
+      )
+      .prefault([]),
+    statusReportsToPageComponents: z
+      .array(
+        z.object({
+          pageComponentId: z.number(),
+          statusReportId: z.number(),
+          pageComponent: selectPageComponentSchema,
+        }),
+      )
+      .prefault([]),
+  });
+
+export const selectMaintenancePageSchema = selectMaintenanceSchema
+  .omit(authorColumns)
+  .extend({
+    maintenanceUpdates: z
+      .array(selectMaintenanceUpdateSchema.omit(authorColumns))
+      .prefault([]),
+    maintenancesToPageComponents: z
+      .array(
+        z.object({
+          pageComponentId: z.number(),
+          maintenanceId: z.number(),
+          pageComponent: selectPageComponentSchema,
+        }),
+      )
+      .prefault([]),
+  });
 
 export const selectPageSchemaWithRelation = selectPageSchema.extend({
   monitors: z.array(selectMonitorSchema),
@@ -79,7 +88,7 @@ export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
     monitors: z.array(selectPublicMonitorSchema).prefault([]),
     statusReports: z.array(selectStatusReportPageSchema).prefault([]),
-    incidents: z.array(selectIncidentSchema).prefault([]),
+    incidents: z.array(selectMonitorIncidentSchema).prefault([]),
     maintenances: z.array(selectMaintenancePageSchema).prefault([]),
     workspacePlan: workspacePlanSchema
       .nullable()
@@ -125,7 +134,7 @@ const selectPublicPageComponentWithStatusSchema =
     // For monitor-type components - omit status since it's now at component level
     monitor: selectPublicMonitorBaseSchema
       .extend({
-        incidents: selectIncidentSchema.array().nullish(),
+        monitorIncidents: selectMonitorIncidentSchema.array().nullish(),
       })
       .nullish(),
   });
@@ -157,7 +166,7 @@ export const selectPageComponentWithMonitorRelation = selectPageComponentSchema
   .extend({
     monitor: selectPublicMonitorBaseSchema
       .extend({
-        incidents: selectIncidentSchema.array().nullish(),
+        monitorIncidents: selectMonitorIncidentSchema.array().nullish(),
       })
       .nullish(),
     group: selectPageComponentGroupSchema.nullish(),
@@ -186,7 +195,7 @@ export const selectPublicPageLightSchemaWithRelation = selectPageSchema
   .extend({
     monitors: z.array(selectPublicMonitorSchema).prefault([]),
     statusReports: z.array(selectStatusReportPageSchema).prefault([]),
-    incidents: z.array(selectIncidentSchema).prefault([]),
+    incidents: z.array(selectMonitorIncidentSchema).prefault([]),
     maintenances: z.array(selectMaintenancePageSchema).prefault([]),
     workspacePlan: workspacePlanSchema
       .nullable()
@@ -215,7 +224,7 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
     lastEvents: z.array(statusPageEventSchema),
     openEvents: z.array(statusPageEventSchema),
     statusReports: z.array(selectStatusReportPageSchema),
-    incidents: z.array(selectIncidentSchema),
+    incidents: z.array(selectMonitorIncidentSchema),
     maintenances: z.array(selectMaintenancePageSchema),
     status: z
       .enum(["success", "degraded", "error", "info"])

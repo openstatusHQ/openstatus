@@ -47,18 +47,25 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
     (i) => i.pageComponent,
   );
 
+  // impacts as of this update: a late dispatch must not show later updates
   const currentImpacts = currentImpactsFromUpdates(
-    update.statusReport.statusReportUpdates.map((u) => ({
-      id: u.id,
-      date: u.date,
-      componentImpacts: u.statusReportUpdateToPageComponents,
-    })),
+    update.statusReport.statusReportUpdates
+      .filter((u) => u.date.getTime() <= update.date.getTime())
+      .map((u) => ({
+        id: u.id,
+        date: u.date,
+        componentImpacts: u.statusReportUpdateToPageComponents,
+      })),
   );
-  const componentsWithImpact = pageComponents.map((c) => ({
-    id: c.id,
-    name: c.name,
-    impact: currentImpacts.get(c.id) ?? "operational",
-  }));
+  // legacy report (no impact rows): channels fall back to bare names
+  const componentsWithImpact =
+    currentImpacts.size > 0
+      ? pageComponents.map((c) => ({
+          id: c.id,
+          name: c.name,
+          impact: currentImpacts.get(c.id) ?? ("operational" as const),
+        }))
+      : undefined;
 
   await dispatchPageUpdate({
     id: update.statusReport.id,
@@ -81,6 +88,48 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
 /**
  * Dispatch notifications for a maintenance update
  */
+export async function dispatchMaintenance(maintenanceId: number) {
+  const record = await db.query.maintenance.findFirst({
+    where: eq(maintenance.id, maintenanceId),
+    with: {
+      maintenancesToPageComponents: {
+        with: { pageComponent: true },
+      },
+    },
+  });
+
+  if (!record) {
+    console.error(`Maintenance ${maintenanceId} not found`);
+    return;
+  }
+
+  if (!record.pageId) {
+    console.error(`Maintenance ${maintenanceId} has no page ID`);
+    return;
+  }
+
+  const pageComponents = record.maintenancesToPageComponents.map(
+    (i) => i.pageComponent,
+  );
+
+  await dispatchPageUpdate({
+    id: record.id,
+    pageId: record.pageId,
+    title: record.title,
+    status: "maintenance",
+    message: record.message,
+    pageComponentIds: pageComponents.map((c) => c.id),
+    pageComponents: pageComponents.map((c) => c.name),
+    date: record.from.toISOString(),
+    startsAt: record.from.toISOString(),
+    endsAt: record.to.toISOString(),
+    pageComponentsWithId: pageComponents.map((c) => ({
+      id: c.id,
+      name: c.name,
+    })),
+  });
+}
+
 export async function dispatchMaintenanceUpdate(maintenanceUpdateId: number) {
   const update = await db.query.maintenanceUpdate.findFirst({
     where: eq(maintenanceUpdate.id, maintenanceUpdateId),

@@ -1,14 +1,15 @@
-import { count, eq } from "@openstatus/db";
+import { eq } from "@openstatus/db";
 import { maintenanceUpdate } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
-import { ConflictError } from "../errors";
 import {
-  getMaintenanceUpdateInWorkspace,
-  syncMaintenanceMessage,
-} from "./internal";
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
+import { touchMaintenance } from "./add-update";
+import { getMaintenanceUpdateInWorkspace } from "./internal";
 import { DeleteMaintenanceUpdateInput } from "./schemas";
 
 export async function deleteMaintenanceUpdate(args: {
@@ -18,6 +19,7 @@ export async function deleteMaintenanceUpdate(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = DeleteMaintenanceUpdateInput.parse(args.input);
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   await withTransaction(ctx, async (tx) => {
     const existing = await getMaintenanceUpdateInWorkspace({
@@ -25,19 +27,11 @@ export async function deleteMaintenanceUpdate(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
-    const total = await tx
-      .select({ value: count() })
-      .from(maintenanceUpdate)
-      .where(eq(maintenanceUpdate.maintenanceId, existing.maintenanceId))
-      .get();
-    if ((total?.value ?? 0) <= 1) {
-      throw new ConflictError("A maintenance must have at least one update.");
-    }
 
     await tx
       .delete(maintenanceUpdate)
       .where(eq(maintenanceUpdate.id, existing.id));
-    await syncMaintenanceMessage(tx, existing.maintenanceId);
+    await touchMaintenance(tx, existing.maintenanceId, actorUserId);
 
     await emitAudit(tx, ctx, {
       action: "maintenance_update.delete",

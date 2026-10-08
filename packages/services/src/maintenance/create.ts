@@ -1,10 +1,14 @@
-import { maintenance, maintenanceUpdate } from "@openstatus/db/src/schema";
+import { maintenance } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
 import { ConflictError } from "../errors";
-import type { Maintenance, MaintenanceUpdate } from "../types";
+import type { Maintenance } from "../types";
 import {
   assertPageInWorkspace,
   updatePageComponentAssociations,
@@ -12,18 +16,14 @@ import {
 } from "./internal";
 import { CreateMaintenanceInput } from "./schemas";
 
-export type CreateMaintenanceResult = {
-  maintenance: Maintenance;
-  initialUpdate: MaintenanceUpdate;
-};
-
 export async function createMaintenance(args: {
   ctx: ServiceContext;
   input: CreateMaintenanceInput;
-}): Promise<CreateMaintenanceResult> {
+}): Promise<Maintenance> {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = CreateMaintenanceInput.parse(args.input);
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   return withTransaction(ctx, async (tx) => {
     await assertPageInWorkspace({
@@ -53,16 +53,8 @@ export async function createMaintenance(args: {
         message: input.message,
         from: input.from,
         to: input.to,
-      })
-      .returning()
-      .get();
-
-    const initialUpdate = await tx
-      .insert(maintenanceUpdate)
-      .values({
-        maintenanceId: record.id,
-        message: input.message,
-        date: record.createdAt ?? input.from,
+        createdBy: actorUserId,
+        updatedBy: actorUserId,
       })
       .returning()
       .get();
@@ -80,14 +72,6 @@ export async function createMaintenance(args: {
       after: record,
     });
 
-    await emitAudit(tx, ctx, {
-      action: "maintenance_update.create",
-      entityType: "maintenance_update",
-      entityId: initialUpdate.id,
-      after: initialUpdate,
-      metadata: { maintenanceId: record.id },
-    });
-
-    return { maintenance: record, initialUpdate };
+    return record;
   });
 }

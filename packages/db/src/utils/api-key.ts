@@ -1,5 +1,5 @@
 // oxlint-disable-next-line unicorn/prefer-node-protocol
-import crypto from "crypto";
+import crypto from "node:crypto";
 
 import bcrypt from "bcryptjs";
 
@@ -52,13 +52,15 @@ export async function verifyApiKeyHash(
  * Determines if lastUsedAt should be updated based on debounce period
  * @param lastUsedAt - The last time the key was used (or null)
  * @param debounceMinutes - Minutes to wait before updating again (default: 5)
+ * @param now - Reference time (default: wall clock); callers with an injected clock pass theirs
  * @returns True if lastUsedAt should be updated
  */
 export function shouldUpdateLastUsed(
   lastUsedAt: Date | null,
   debounceMinutes = 5,
+  now: Date = new Date(),
 ): boolean {
   if (!lastUsedAt) return true;
-  const diffMs = Date.now() - lastUsedAt.getTime();
+  const diffMs = now.getTime() - lastUsedAt.getTime();
   return diffMs > debounceMinutes * 60 * 1000;
 }

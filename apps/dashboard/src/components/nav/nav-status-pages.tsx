@@ -54,7 +54,7 @@ export function NavStatusPages() {
       onSuccess: () => {
         refetch();
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
       },
     }),
@@ -83,6 +83,8 @@ export function NavStatusPages() {
               <TooltipTrigger asChild>
                 <SidebarMenuAction
                   data-limited={limitReached}
+                  data-track={limitReached ? "paywall_viewed" : undefined}
+                  data-limit={limitReached ? "status-pages" : undefined}
                   className="relative top-0 right-0 border data-[limited=true]:opacity-80"
                   onClick={() => {
                     if (limitReached) {
@@ -119,10 +121,6 @@ export function NavStatusPages() {
                 toast.success("Status Page ID copied to clipboard");
               },
             });
-            const hasActiveStatusReport = item.statusReports.some(
-              (report) => report.status !== "resolved",
-            );
-
             return (
               <SidebarMenuItem key={item.id}>
                 <SidebarMenuButton
@@ -150,7 +148,9 @@ export function NavStatusPages() {
                       className={cn(
                         "absolute top-1/2 left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
                         STATUS[
-                          hasActiveStatusReport ? "degraded" : "operational"
+                          item.hasActiveStatusReport
+                            ? "degraded"
+                            : "operational"
                         ],
                       )}
                     />

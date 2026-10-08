@@ -1,3 +1,4 @@
+import { Events } from "@openstatus/analytics";
 import {
   feedback,
   feedbackSource,
@@ -10,9 +11,13 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const feedbackRouter = createTRPCRouter({
   submit: protectedProcedure
+    .meta({
+      track: Events.SubmitFeedback,
+      trackProps: ["source", "type", "blocker"],
+    })
     .input(
       z.object({
-        message: z.string().min(1, "Message required"),
+        message: z.string().trim().min(1, "Message required"),
         source: z.enum(feedbackSource),
         path: z.string(),
         isMobile: z.boolean().optional(),

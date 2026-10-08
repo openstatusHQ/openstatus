@@ -11,16 +11,26 @@ export type Status =
 
 export type StatusResponse = { status: Status };
 
-export async function getStatus(slug: string): Promise<StatusResponse> {
-  const res = await fetch(`https://api.openstatus.dev/public/status/${slug}`, {
-    cache: "no-cache",
-  });
+export async function getStatus(
+  slug: string,
+  baseUrl = process.env.OPENSTATUS_API_URL ?? "https://api.openstatus.dev",
+): Promise<StatusResponse> {
+  // read at runtime on the server: no NEXT_PUBLIC_ prefix, so deployments
+  // shipping prebuilt images can still point badges at their own API
+  const base = baseUrl.replace(/\/+$/, "") || "https://api.openstatus.dev";
+  try {
+    const res = await fetch(`${base}/public/status/${slug}`, {
+      cache: "no-cache",
+    });
 
-  if (res.ok) {
-    const data = (await res.json()) as StatusResponse;
-    return data;
+    if (res.ok) {
+      const data = (await res.json()) as StatusResponse;
+      return data;
+    }
+  } catch {
+    // network-level failures (unreachable host, DNS, …) degrade to "unknown"
+    // instead of bubbling a 500 out of the badge routes
   }
-
   return { status: "unknown" };
 }
 

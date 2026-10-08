@@ -28,9 +28,8 @@ export function Client() {
     trpc.page.new.mutationOptions({
       onSuccess: (data) => {
         refetch();
-        // NOTE: invalidate workspace to update the usage
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
         startTransition(() => {
           router.push(`/status-pages/${data.id}/edit`);

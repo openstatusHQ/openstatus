@@ -1,10 +1,48 @@
 builders:
-  # Stage 1: Next.js build with Node.js
+  # Stage 1: collect every workspace manifest (package.json) into a tree that only
+  # changes when a manifest changes. The install stage copies from here, so its
+  # layer cache key depends on manifests + lockfile alone, not on source edits.
+  manifests:
+    fromImage: node:24-slim
+    workdir: /app
+    copy:
+      - . /app/
+    run:
+      - mkdir -p /out
+      - cp pnpm-workspace.yaml pnpm-lock.yaml package.json /out/
+      - find apps packages -name package.json -not -path '*/node_modules/*' -exec cp --parents {} /out/ \;
+
+  # Stage 2: install the dashboard dependency subgraph (dev deps included — next build needs them).
+  # Cached across builds as long as no package.json / pnpm-lock.yaml changed.
+  install:
+    fromImage: node:24-slim
+    workdir: /app
+    env:
+      PNPM_HOME: /pnpm
+      PATH: $PNPM_HOME:$PATH
+    copy:
+      - fromBuilder: manifests
+        source: /out/
+        target: /app/
+    run:
+      - corepack enable pnpm
+      - pnpm install --frozen-lockfile --filter=@openstatus/dashboard...
+
+  # Stage 3: Next.js build with Node.js
   builder:
     fromImage: node:24-slim
     workdir: /app
     copy:
       - . /app/
+      - fromBuilder: install
+        source: /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        source: /app/apps/dashboard/node_modules
+        target: /app/apps/dashboard/node_modules
+      - fromBuilder: install
+        source: /app/packages
+        target: /app/packages
     env:
       NODE_ENV: production
       PNPM_HOME: /pnpm
@@ -28,9 +66,9 @@ builders:
       STRIPE_SECRET_KEY: test
       AUTH_SECRET: build-time-placeholder-min-32-chars-long
       SELF_HOST: "true"
+      NEXT_PUBLIC_SELF_HOST: "true"
     run:
-      - corepack enable
-      - pnpm install --frozen-lockfile
+      - corepack enable pnpm
       - pnpm turbo run build --filter=@openstatus/dashboard
 
 # Runtime stage

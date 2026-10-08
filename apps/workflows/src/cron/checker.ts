@@ -28,10 +28,12 @@ import { regionDict } from "@openstatus/regions";
 import {
   type DNSPayloadSchema,
   type httpPayloadSchema,
+  type grpcPayloadSchema,
+  type icmpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
-import { Effect, Either, Schedule } from "effect";
+import { Effect, Result, Schedule } from "effect";
 import { z } from "zod";
 
 import { env } from "../env";
@@ -50,18 +52,54 @@ export const isAuthorizedDomain = (url: string) => {
 
 const logger = getLogger("workflow");
 
-const client = new CloudTasksClient({
-  // fallback: true,
-  projectId: env().GCP_PROJECT_ID,
-  credentials: {
-    client_email: env().GCP_CLIENT_EMAIL,
-    private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
-  },
-});
+/**
+ * Check if GCP Cloud Tasks is properly configured.
+ * Returns false if credentials are missing or set to placeholder values.
+ */
+function isGcpConfigured(): boolean {
+  const projectId = env().GCP_PROJECT_ID;
+  const location = env().GCP_LOCATION;
+  const clientEmail = env().GCP_CLIENT_EMAIL;
+  const privateKey = env().GCP_PRIVATE_KEY;
+
+  return (
+    projectId !== "" &&
+    projectId !== "your-value" &&
+    location !== "" &&
+    location !== "your-value" &&
+    clientEmail !== "" &&
+    clientEmail !== "your-value" &&
+    privateKey !== "" &&
+    privateKey !== "your-value"
+  );
+}
+
+// Only initialize CloudTasksClient if GCP credentials are properly configured
+// This allows self-hosted deployments to run without GCP Cloud Tasks
+let client: CloudTasksClient | null = null;
+
+if (isGcpConfigured()) {
+  client = new CloudTasksClient({
+    // fallback: true,
+    projectId: env().GCP_PROJECT_ID,
+    credentials: {
+      client_email: env().GCP_CLIENT_EMAIL,
+      private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+    },
+  });
+}
 
 export async function sendCheckerTasks(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
 ): Promise<{ success: number; failed: number }> {
+  // If GCP Cloud Tasks is not configured, skip task creation
+  if (!client) {
+    logger.warn("GCP Cloud Tasks not configured - skipping checker tasks", {
+      periodicity,
+    });
+    return { success: 0, failed: 0 };
+  }
+
   const parent = client.queuePath(
     env().GCP_PROJECT_ID,
     env().GCP_LOCATION,
@@ -201,22 +239,22 @@ export async function sendCheckerTasks(
             times: 3,
             schedule: Schedule.exponential("1000 millis"),
           }),
-          Effect.either,
+          Effect.result,
         ),
       { concurrency: 100 },
     ),
   );
 
   for (const result of results) {
-    if (Either.isLeft(result)) {
+    if (Result.isFailure(result)) {
       logger.error("Task creation failed after retries", {
-        error_message: result.left.message,
+        error_message: result.failure.message,
       });
     }
   }
 
-  const success = results.filter(Either.isRight).length;
-  const failed = results.filter(Either.isLeft).length;
+  const success = results.filter(Result.isSuccess).length;
+  const failed = results.filter(Result.isFailure).length;
 
   logger.info("Completed cron job", {
     periodicity,
@@ -240,10 +278,17 @@ const createCronTask = async (
   { row, timestamp, status, region }: TaskInput,
   parent: string,
 ) => {
+  // This should never happen due to the guard in sendCheckerTasks, but TypeScript needs this
+  if (!client) {
+    throw new Error("GCP Cloud Tasks client is not initialized");
+  }
+
   let payload:
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
     | z.infer<typeof DNSPayloadSchema>
+    | z.infer<typeof icmpPayloadSchema>
+    | z.infer<typeof grpcPayloadSchema>
     | null = null;
 
   //
@@ -300,6 +345,49 @@ const createCronTask = async (
       cronTimestamp: timestamp,
       status: status,
       assertions: row.assertions ? JSON.parse(row.assertions) : null,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+      trigger: "cron",
+      otelConfig: row.otelEndpoint
+        ? {
+            endpoint: row.otelEndpoint,
+            headers: transformHeaders(row.otelHeaders),
+          }
+        : undefined,
+      retry: row.retry || 3,
+    };
+  }
+
+  if (row.jobType === "icmp") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      uri: row.url,
+      cronTimestamp: timestamp,
+      status: status,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+      trigger: "cron",
+      otelConfig: row.otelEndpoint
+        ? {
+            endpoint: row.otelEndpoint,
+            headers: transformHeaders(row.otelHeaders),
+          }
+        : undefined,
+      retry: row.retry || 3,
+    };
+  }
+
+  if (row.jobType === "grpc") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      uri: row.url,
+      service: row.grpcService ?? undefined,
+      tls: row.grpcTls ?? "tls",
+      headers: transformHeaders(row.headers),
+      cronTimestamp: timestamp,
+      status: status,
       degradedAfter: row.degradedAfter,
       timeout: row.timeout,
       trigger: "cron",

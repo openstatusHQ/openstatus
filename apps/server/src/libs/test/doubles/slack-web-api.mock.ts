@@ -19,13 +19,108 @@ export class WebClient {
       s.calls.push({ method: "postEphemeral", args });
       return Promise.resolve();
     },
+    getPermalink: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "chat.getPermalink", args });
+      return Promise.resolve({
+        ok: true,
+        permalink: `https://slack.test/archives/${args.channel}/p${String(args.message_ts).replace(".", "")}`,
+      });
+    },
+  };
+  reactions = {
+    get: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "reactions.get", args });
+      return s.reactionsGetImpl(args);
+    },
+    add: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "reactions.add", args });
+      return Promise.resolve({ ok: true });
+    },
+  };
+  // Mirrors ChatStreamer: `ts` is undefined until the first append or stop.
+  chatStream = (args: Record<string, unknown>) => {
+    if (!s.chatStreamEnabled) {
+      throw new Error("chat streaming is not enabled for this workspace");
+    }
+    s.calls.push({ method: "chatStream", args });
+    let ts: string | undefined;
+    let appends = 0;
+    return {
+      get ts() {
+        return ts;
+      },
+      append: (a: Record<string, unknown>) => {
+        if (
+          s.streamAppendFailAfter !== null &&
+          appends >= s.streamAppendFailAfter
+        ) {
+          return Promise.reject(new Error("stream append failed"));
+        }
+        appends++;
+        ts = "stream.ts";
+        s.calls.push({ method: "stream.append", args: a });
+        return Promise.resolve(null);
+      },
+      stop: (a?: Record<string, unknown>) => {
+        ts = "stream.ts";
+        s.calls.push({ method: "stream.stop", args: a ?? {} });
+        if (s.streamStopFail) {
+          return Promise.reject(new Error("stream already closed"));
+        }
+        return Promise.resolve({ ok: true, ts });
+      },
+    };
   };
   conversations = {
-    replies: () => s.repliesImpl(),
+    replies: (args: Record<string, unknown>) => s.repliesImpl(args),
+    join: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.join", args });
+      return Promise.resolve({ ok: true });
+    },
+    history: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.history", args });
+      return s.historyImpl();
+    },
+    info: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.info", args });
+      return s.conversationsInfoImpl(args);
+    },
+  };
+  agents = {
+    sessions: {
+      setStatus: (args: Record<string, unknown>) => {
+        if (s.sessionStatusOverride) return s.sessionStatusOverride(args);
+        s.calls.push({ method: "agents.sessions.setStatus", args });
+        return Promise.resolve({ ok: true });
+      },
+      rename: (args: Record<string, unknown>) => {
+        if (s.renameOverride) return s.renameOverride(args);
+        s.calls.push({ method: "agents.sessions.rename", args });
+        return Promise.resolve({ ok: true });
+      },
+    },
+  };
+  assistant = {
+    threads: {
+      setStatus: (args: Record<string, unknown>) => {
+        s.calls.push({ method: "assistant.threads.setStatus", args });
+        return Promise.resolve({ ok: true });
+      },
+    },
+  };
+  users = {
+    info: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "users.info", args });
+      return s.usersInfoImpl(args);
+    },
   };
   views = {
     publish: (args: Record<string, unknown>) => {
       s.calls.push({ method: "views.publish", args });
+      return Promise.resolve({ ok: true });
+    },
+    open: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "views.open", args });
       return Promise.resolve({ ok: true });
     },
   };

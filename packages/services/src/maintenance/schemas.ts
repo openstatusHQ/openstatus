@@ -12,7 +12,7 @@ export const maintenanceListPeriodSchema = z.enum(maintenanceListPeriods);
 
 export const CreateMaintenanceInput = z
   .object({
-    title: z.string().min(1).max(256),
+    title: z.string().trim().min(1).max(256),
     message: z.string().min(1),
     from: z.coerce.date(),
     to: z.coerce.date(),
@@ -27,7 +27,7 @@ export type CreateMaintenanceInput = z.infer<typeof CreateMaintenanceInput>;
 
 export const UpdateMaintenanceInput = z.object({
   id: z.number().int(),
-  title: z.string().min(1).max(256).optional(),
+  title: z.string().trim().min(1).max(256).optional(),
   message: z.string().min(1).optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
@@ -89,7 +89,12 @@ export const ListMaintenancesInput = z.object({
 });
 export type ListMaintenancesInput = z.infer<typeof ListMaintenancesInput>;
 
-export const NotifyMaintenanceInput = z.object({
+export const NotifyMaintenanceInput = z.object({ maintenanceId: z.number().int() });
+export type NotifyMaintenanceInput = z.infer<typeof NotifyMaintenanceInput>;
+
+export const NotifyMaintenanceUpdateInput = z.object({
   maintenanceUpdateId: z.number().int(),
 });
-export type NotifyMaintenanceInput = z.infer<typeof NotifyMaintenanceInput>;
+export type NotifyMaintenanceUpdateInput = z.infer<
+  typeof NotifyMaintenanceUpdateInput
+>;

@@ -1,8 +1,5 @@
-export {
-  addMaintenanceUpdate,
-  type AddMaintenanceUpdateResult,
-} from "./add-update";
-export { createMaintenance, type CreateMaintenanceResult } from "./create";
+export { addMaintenanceUpdate } from "./add-update";
+export { createMaintenance } from "./create";
 export { deleteMaintenance } from "./delete";
 export { deleteMaintenanceUpdate } from "./delete-update";
 export { getMaintenanceUpdate } from "./get-update";
@@ -13,6 +10,7 @@ export {
   type MaintenanceWithRelations,
 } from "./list";
 export { notifyMaintenance } from "./notify";
+export { notifyMaintenanceUpdate } from "./notify-update";
 export { updateMaintenance } from "./update";
 export { updateMaintenanceUpdate } from "./update-update";
 
@@ -28,6 +26,7 @@ export {
   maintenanceListPeriodSchema,
   maintenanceListPeriods,
   NotifyMaintenanceInput,
+  NotifyMaintenanceUpdateInput,
   UpdateMaintenanceInput,
   UpdateMaintenanceUpdateInput,
 } from "./schemas";

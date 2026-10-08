@@ -195,7 +195,7 @@ async function cleanup() {
   // entity. The entities are gone but the rows are not — and
   // INTEGER PRIMARY KEY ids recycle, so a later test inserting into the
   // same table can land on an id that already has an audit row,
-  // inheriting its actor attribution. See docs/adr/test-audit-cleanup.md.
+  // inheriting its actor attribution. See packages/services/AGENTS.md.
   await Promise.all([
     clearAuditLogFor({ entityType: "page", entityIds: createdIds.pages }),
     clearAuditLogFor({

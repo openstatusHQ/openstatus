@@ -26,9 +26,12 @@ export async function validateEmailConfig(config: unknown) {
 
 // Stable per entity update so Resend dedupes the email retry path.
 function idempotencyKeyFor(pageUpdate: PageUpdate): string {
-  return pageUpdate.updateId != null
-    ? `status-report-update:${pageUpdate.updateId}`
-    : `page-update:${pageUpdate.id}:${pageUpdate.status}`;
+  if (pageUpdate.updateId == null) {
+    return `page-update:${pageUpdate.id}:${pageUpdate.status}`;
+  }
+  return pageUpdate.status === "maintenance"
+    ? `maintenance-update:${pageUpdate.updateId}`
+    : `status-report-update:${pageUpdate.updateId}`;
 }
 
 // FNV-1a, Edge-safe (no node:crypto). Resend 409s when a key is reused within
@@ -93,6 +96,7 @@ export async function sendEmailNotifications(
       pageUpdate.message,
       pageUpdate.date,
       pageUpdate.pageComponents,
+      pageUpdate.componentsWithImpact?.map((c) => c.impact),
     ]),
   );
 
@@ -110,6 +114,7 @@ export async function sendEmailNotifications(
     message: pageUpdate.message,
     date: pageUpdate.date,
     pageComponents: pageUpdate.pageComponents,
+    componentImpacts: pageUpdate.componentsWithImpact,
     idempotencyKey: `${idempotencyKeyFor(pageUpdate)}:${payloadHash}`,
   });
 }

@@ -5,15 +5,15 @@ effective: |
     install:
       fromImage:
         path: node
-        digest: sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
+        digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
       label:
         org.opencontainers.image.base.name: docker.io/node:24-slim
-        org.opencontainers.image.base.digest: sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
         org.opencontainers.image.stage: install
+        org.opencontainers.image.base.digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
       workdir: /app/
       run:
       - corepack enable pnpm
-      - pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --verbose
+      - pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --loglevel debug
       cache:
       - target: /root/.local/share/pnpm/store
       bind:
@@ -37,16 +37,16 @@ effective: |
         source: packages/utils/package.json
   fromImage:
     path: denoland/deno
-    digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
+    digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
   label:
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.7
+    io.dofigen.version: 2.8.0
     org.opencontainers.image.description: One-shot database migration runner for OpenStatus
     org.opencontainers.image.title: OpenStatus DB Migrate
-    io.dofigen.version: 2.8.0
-    org.opencontainers.image.base.digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
     org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.2
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.base.digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
   workdir: /app/packages/db
   env:
     DENO_DIR: /tmp/deno-dir
@@ -83,17 +83,17 @@ effective: |
   - migrate
 images:
   docker.io:
-    denoland:
-      deno:
-        2.9.2:
-          digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
     library:
       node:
         24-slim:
-          digest: sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
+          digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+    denoland:
+      deno:
+        2.9.7:
+          digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
 resources:
   dofigen.yml:
-    hash: 3347644fa382f2f6faa53be252b2bfa2f0b65aaee345bc391b93fd11f57f7af8
+    hash: 0726894ce94078edb23f99504defdbbb9ed0c312d689fe21f6efa64d8455ecc0
     content: |
       ignore:
         - node_modules
@@ -115,13 +115,13 @@ resources:
             - packages/utils/package.json
           run:
             - corepack enable pnpm
-            - pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --verbose
+            - pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --loglevel debug
           cache:
             - /root/.local/share/pnpm/store
 
       # One-shot migration runner: drizzle's migrator reads drizzle/ from disk at
       # runtime, so the image ships source + node_modules instead of a compiled binary.
-      fromImage: denoland/deno:2.9.2
+      fromImage: denoland/deno:2.9.7
       workdir: /app/packages/db
 
       labels:

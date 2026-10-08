@@ -1,0 +1,20 @@
+SCHEMA >
+    `monitorId` Int32 `json:$.monitorId`,
+    `region` String `json:$.region`,
+    `timestamp` Int64 `json:$.timestamp`,
+    `cronTimestamp` Int64 `json:$.cronTimestamp`,
+    `timing` String `json:$.timing`,
+    `latency` Int64 `json:$.latency`,
+    `servingStatus` Nullable(String) `json:$.servingStatus`,
+    `grpcCode` Nullable(Int16) `json:$.grpcCode`,
+    `service` Nullable(String) `json:$.service`,
+    `errorMessage` Nullable(String) `json:$.errorMessage`,
+    `error` Int16 `json:$.error`,
+    `trigger` Nullable(String) `json:$.trigger`,
+    `uri` Nullable(String) `json:$.uri`,
+    `id` Nullable(String) `json:$.id`,
+    `requestStatus` Nullable(String) `json:$.requestStatus`,
+    `requestId` Int64 `json:$.requestId`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "monitorId, requestId, timestamp"

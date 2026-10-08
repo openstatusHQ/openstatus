@@ -55,9 +55,12 @@ export function clipToCoverage(
   );
 }
 
-// floor so a single failed check never rounds up to 100.00
+// floor so a single failed check never rounds up to 100.000. the epsilon
+// absorbs float error from the caller's a/b division (0.29 * 100_000 is
+// 28999.999999999996) — it is ~450x the ULP at this scale, far too small to
+// lift a genuinely-below value onto the next thousandth.
 export function floorPct(ratio: number): number {
-  return Math.floor(ratio * 10_000) / 100;
+  return Math.floor(ratio * 100_000 + 1e-8) / 1_000;
 }
 
 export function requestsTally(counts: CheckCounts[]): {

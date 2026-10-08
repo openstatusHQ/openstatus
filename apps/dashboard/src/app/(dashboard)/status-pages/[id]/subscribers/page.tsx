@@ -112,6 +112,8 @@ export default function Page() {
           <div>
             {isLimited ? (
               <Button
+                data-track="paywall_viewed"
+                data-limit="status-subscribers"
                 variant="outline"
                 size="sm"
                 onClick={() => setOpenDialog(true)}
@@ -161,7 +163,11 @@ export default function Page() {
               data={[...EXAMPLES, ...EXAMPLES, ...EXAMPLES]}
             />
             <BillingOverlay>
-              <BillingOverlayButton onClick={() => setOpenDialog(true)}>
+              <BillingOverlayButton
+                data-track="paywall_viewed"
+                data-limit="status-subscribers"
+                onClick={() => setOpenDialog(true)}
+              >
                 <Lock />
                 Upgrade
               </BillingOverlayButton>
@@ -189,7 +195,6 @@ export default function Page() {
             data={subscribers}
             toolbarComponent={SubscribersDataTableToolbar}
             paginationComponent={DataTablePaginationSimple}
-            defaultColumnFilters={[{ id: "status", value: ["active"] }]}
           />
         ) : (
           <EmptyStateContainer>

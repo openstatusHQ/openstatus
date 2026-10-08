@@ -3,6 +3,7 @@ title: "What Is Uptime Monitoring?"
 description: "Uptime monitoring is the practice of continuously checking whether your service is reachable and responding correctly from outside your own network. Here's how it works, how uptime percentages are actually calculated, and what to monitor."
 author: "openstatus"
 publishedAt: "2026-05-06"
+updatedAt: "2026-08-26"
 category: "fundamentals"
 faq:
   - question: "What is uptime monitoring?"
@@ -141,6 +142,64 @@ If you only need to know whether your endpoints respond, uptime monitoring is en
 Uptime monitoring exists because you cannot trust your own infrastructure to tell you when it's unreachable. The whole point is the external perspective - what does this look like to a user in São Paulo right now?
 
 Set it up. Monitor the things customers actually depend on. Use multiple regions. Tune the check frequency for the criticality. Push results into a [status page](/guides/what-is-a-status-page) so users can self-serve when things break.
+
+If you would rather not run the probes yourself, [openstatus uptime monitoring](/uptime-monitoring) checks your websites, APIs and services from 28 regions and feeds the results straight into your status page.
+
+## Frequently asked questions
+
+<Details summary="What is uptime monitoring?">
+
+Uptime monitoring is the practice of regularly checking - usually every 30 seconds to 5 minutes - whether your service is reachable and returning the expected response. The checks run from external locations so they catch problems your internal infrastructure can't see, like DNS failures, certificate expirations, or regional outages.
+
+</Details>
+
+<Details summary="How does uptime monitoring actually work?">
+
+A monitoring service sends synthetic requests (HTTP, TCP, ping, or full browser sessions) to your endpoints from probe locations around the world on a fixed interval. If a request fails or times out, the monitor flags it. Most systems require multiple consecutive failures from different regions before alerting, to avoid noise from transient network blips.
+
+</Details>
+
+<Details summary="What does 99.9% uptime mean in practice?">
+
+99.9% uptime means roughly 8.76 hours of allowed downtime per year, or about 43 minutes per month. 99.99% drops that to 52 minutes per year. 99.999% ('five nines') is about 5 minutes per year - a target that's expensive to hit and usually only meaningful for infrastructure providers.
+
+</Details>
+
+<Details summary="How often should I check my endpoints?">
+
+For customer-facing services, every 30-60 seconds is standard. Less frequent (5-15 minutes) is fine for internal tools or batch systems. More frequent than 30 seconds rarely helps - you start measuring network jitter rather than real availability, and your costs climb fast.
+
+</Details>
+
+<Details summary="Why monitor from multiple regions?">
+
+An outage that only affects one region is invisible to a single-region monitor. CDN issues, DNS propagation failures, and regional ISP problems are common. Running checks from at least 3 geographically distributed locations and requiring a majority to fail before alerting catches real outages while ignoring isolated network blips.
+
+</Details>
+
+<Details summary="What's the difference between uptime monitoring and synthetic monitoring?">
+
+Uptime monitoring is the simplest form of synthetic monitoring - a periodic check that an endpoint responds. Synthetic monitoring is the broader category that includes multi-step browser flows, transaction monitoring, and API sequences. All uptime monitoring is synthetic monitoring; not all synthetic monitoring is uptime monitoring.
+
+</Details>
+
+<Details summary="Should I monitor my homepage or my API?">
+
+Both, separately. A working homepage doesn't mean your API is up - they often run on different infrastructure. Monitor the critical user paths: login, the main API endpoints your customers integrate with, payment processing. Each gets its own monitor so you know precisely what's failing.
+
+</Details>
+
+<Details summary="What's a false positive in uptime monitoring?">
+
+An alert that fires when nothing was actually wrong - usually because the probe location had a transient network problem, hit a rate limit, or got caught by a bot detection rule. Good monitoring tools reduce false positives by requiring multi-region confirmation and ignoring single-probe failures.
+
+</Details>
+
+<Details summary="How is uptime percentage calculated?">
+
+Uptime percentage is (total time minus downtime) divided by total time, expressed as a percent. The catch is defining 'downtime'. Some teams count only full outages; others include degraded performance. Be explicit: '99.9% uptime measured as HTTP 200 response in under 2 seconds from 3 of 5 regions' is meaningful. '99.9% uptime' alone is marketing.
+
+</Details>
 
 ---
 

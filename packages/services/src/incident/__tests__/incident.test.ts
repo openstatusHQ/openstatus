@@ -1,318 +1,779 @@
-import { db, eq } from "@openstatus/db";
-import { incidentTable, monitor } from "@openstatus/db/src/schema";
+import { and, db, eq, sql } from "@openstatus/db";
+import {
+  auditLog,
+  type IncidentStatus,
+  incident,
+  incidentEvent,
+  incidentStatus,
+  monitorIncidentTable,
+  statusReport,
+} from "@openstatus/db/src/schema";
+import {
+  addUserToWorkspace,
+  createIncident,
+  createMonitor,
+  createUser,
+} from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
-  expectAuditRow,
+  clearAuditLogFor,
   createWorkspaceFixture,
+  expectAuditRow,
   makeApiKeyCtx,
   makeUserCtx,
+  readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { DrizzleTx, ServiceContext } from "../../context";
-import { ConflictError, ForbiddenError, NotFoundError } from "../../errors";
-import { acknowledgeIncident } from "../acknowledge";
-import { deleteIncident } from "../delete";
-import { getIncident, listIncidents } from "../list";
-import { resolveIncident } from "../resolve";
+import type { DB, ServiceContext } from "../../context";
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "../../errors";
+import type { Workspace } from "../../types";
+import {
+  addIncidentNote,
+  allowedTransitions,
+  bindIncidentSlackChannel,
+  closeIncident,
+  declareIncident,
+  deleteIncident,
+  getIncident,
+  linkIncidentStatusReport,
+  listIncidentEvents,
+  listIncidents,
+  setIncidentStatus,
+  unbindIncidentSlackChannel,
+  unlinkIncidentStatusReport,
+  updateIncident,
+} from "../index";
 
-const TEST_PREFIX = "svc-incident-test";
-
-let teamCtx: ServiceContext;
-let freeCtx: ServiceContext;
-let testMonitorId: number;
+let workspace: Workspace;
+let ownerId: number;
+let adminId: number;
+let memberId: number;
+let outsiderId: number;
+let otherWorkspace: Workspace;
 
 beforeAll(async () => {
-  const team = (await createWorkspaceFixture("team")).workspace;
-  const free = (await createWorkspaceFixture("free")).workspace;
-  teamCtx = makeUserCtx(team, { userId: 1 });
-  freeCtx = makeUserCtx(free, { userId: 2 });
-
-  const monitorRow = await db
-    .insert(monitor)
-    .values({
-      workspaceId: team.id,
-      active: true,
-      url: "https://example.com",
-      name: `${TEST_PREFIX}-monitor`,
-      method: "GET",
-      periodicity: "10m",
-      regions: "ams",
-    })
-    .returning()
-    .get();
-  testMonitorId = monitorRow.id;
+  const fixture = await createWorkspaceFixture("team");
+  workspace = fixture.workspace;
+  ownerId = fixture.userId;
+  adminId = (await createUser()).id;
+  memberId = (await createUser()).id;
+  outsiderId = (await createUser()).id;
+  await addUserToWorkspace(adminId, workspace.id, "admin");
+  await addUserToWorkspace(memberId, workspace.id, "member");
+  otherWorkspace = (await createWorkspaceFixture("team")).workspace;
 });
 
-afterAll(async () => {
-  await db
-    .delete(monitor)
-    .where(eq(monitor.id, testMonitorId))
-    .catch(() => undefined);
+const as = (userId: number, tx: DB): ServiceContext => ({
+  ...makeUserCtx(workspace, { userId }),
+  db: tx,
 });
 
-let nextStartedAtOffset = 0;
-async function insertIncident(
-  tx: DrizzleTx,
-  opts: {
-    workspaceId: number;
-    monitorId: number;
-    acknowledgedAt?: Date;
-    resolvedAt?: Date;
-  },
-) {
-  // Unique `(monitor_id, started_at)` constraint means we bump per-call.
-  nextStartedAtOffset += 1;
-  const startedAt = new Date(Date.now() - nextStartedAtOffset * 60 * 1000);
-  const row = await tx
-    .insert(incidentTable)
-    .values({
-      workspaceId: opts.workspaceId,
-      monitorId: opts.monitorId,
-      startedAt,
-      acknowledgedAt: opts.acknowledgedAt ?? null,
-      resolvedAt: opts.resolvedAt ?? null,
-    })
-    .returning()
-    .get();
-  return row;
+async function declare(tx: DB, userId = memberId) {
+  return declareIncident({
+    ctx: as(userId, tx),
+    input: { title: "API down", severity: "major", commanderId: memberId },
+  });
 }
 
-describe("acknowledgeIncident", () => {
-  test("stamps acknowledgedAt + acknowledgedBy and emits audit", async () => {
+async function eventCount(tx: DB, incidentId: number) {
+  const rows = await tx
+    .select({ id: incidentEvent.id })
+    .from(incidentEvent)
+    .where(eq(incidentEvent.incidentId, incidentId))
+    .all();
+  return rows.length;
+}
+
+async function eventAuditCount(tx: DB, incidentId: number) {
+  const rows = await tx
+    .select({ id: auditLog.id })
+    .from(auditLog)
+    .where(
+      and(
+        eq(auditLog.workspaceId, workspace.id),
+        eq(auditLog.action, "incident_event.create"),
+        sql`json_extract(${auditLog.metadata}, '$.incidentId') = ${incidentId}`,
+      ),
+    )
+    .all();
+  return rows.length;
+}
+
+async function expectInvariant(tx: DB, incidentId: number) {
+  expect(await eventAuditCount(tx, incidentId)).toBe(
+    await eventCount(tx, incidentId),
+  );
+}
+
+async function incidentAudits(tx: DB, incidentId: number) {
+  return readAuditLog({
+    workspaceId: workspace.id,
+    entityType: "incident",
+    entityId: incidentId,
+    db: tx,
+  });
+}
+
+describe("declareIncident", () => {
+  test("creates the incident, its declared event and both audit rows", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-
-      const updated = await acknowledgeIncident({
-        ctx,
-        input: { id: incident.id },
-      });
-
-      expect(updated.acknowledgedAt).toBeInstanceOf(Date);
-      expect(updated.acknowledgedBy).toBe(1);
-
+      const row = await declare(tx);
+      expect(row.status).toBe("open");
+      expect(row.declaredBy).toBe(memberId);
+      expect(row.startedAt.getTime()).toBe(row.declaredAt.getTime());
       await expectAuditRow({
-        workspaceId: teamCtx.workspace.id,
-        action: "incident.update",
+        workspaceId: workspace.id,
+        action: "incident.create",
         entityType: "incident",
-        entityId: incident.id,
+        entityId: row.id,
+        actorType: "user",
         db: tx,
       });
+      const events = await listIncidentEvents({
+        ctx: as(memberId, tx),
+        input: { id: row.id },
+      });
+      expect(events.map((e) => e.type)).toEqual(["declared"]);
+      expect(events[0].createdByUser?.id).toBe(memberId);
+      await expectInvariant(tx, row.id);
     });
   });
 
-  test("throws ConflictError when already acknowledged", async () => {
+  test("declaring from a monitor incident takes its start and records the source", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-        acknowledgedAt: new Date(),
+      const monitor = await createMonitor(workspace.id, {}, tx);
+      const startedAt = new Date(Date.now() - 3 * 60 * 60 * 1000);
+      startedAt.setMilliseconds(0);
+      const downtime = await tx
+        .insert(monitorIncidentTable)
+        .values({ workspaceId: workspace.id, monitorId: monitor.id, startedAt })
+        .returning()
+        .get();
+      const row = await declareIncident({
+        ctx: as(memberId, tx),
+        input: {
+          title: "Checkout down",
+          severity: "critical",
+          source: { type: "monitor_incident", id: downtime.id },
+        },
       });
-
-      await expect(
-        acknowledgeIncident({ ctx, input: { id: incident.id } }),
-      ).rejects.toBeInstanceOf(ConflictError);
+      expect(row.startedAt.getTime()).toBe(startedAt.getTime());
+      const [created] = await incidentAudits(tx, row.id);
+      expect(created.metadata).toEqual({
+        source: "monitor_incident",
+        ref: downtime.id,
+      });
     });
   });
 
-  test("throws NotFoundError for a cross-workspace incident", async () => {
+  test("links a status report at declare time, once", async () => {
     await withTestTransaction(async (tx) => {
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
+      const report = await tx
+        .insert(statusReport)
+        .values({
+          workspaceId: workspace.id,
+          title: "Degraded",
+          status: "investigating",
+        })
+        .returning()
+        .get();
+      const row = await declareIncident({
+        ctx: as(memberId, tx),
+        input: {
+          title: "Linked",
+          severity: "minor",
+          statusReportId: report.id,
+        },
       });
-
+      expect(row.statusReportId).toBe(report.id);
+      const events = await listIncidentEvents({
+        ctx: as(memberId, tx),
+        input: { id: row.id },
+      });
+      expect(events.map((e) => e.type).sort()).toEqual([
+        "declared",
+        "status_report_linked",
+      ]);
       await expect(
-        acknowledgeIncident({
-          ctx: { ...freeCtx, db: tx },
-          input: { id: incident.id },
+        declareIncident({
+          ctx: as(memberId, tx),
+          input: {
+            title: "Second",
+            severity: "minor",
+            statusReportId: report.id,
+          },
         }),
-      ).rejects.toBeInstanceOf(NotFoundError);
+      ).rejects.toThrow(ConflictError);
+      await expectInvariant(tx, row.id);
     });
   });
 
-  test("rejects read-only actor", async () => {
+  test("a commander must be a member", async () => {
     await withTestTransaction(async (tx) => {
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-      const ctx = {
-        ...makeApiKeyCtx(teamCtx.workspace, {
-          keyId: "k-read",
-          userId: 1,
-          scopes: ["read"],
-        }),
-        db: tx,
-      };
       await expect(
-        acknowledgeIncident({ ctx, input: { id: incident.id } }),
-      ).rejects.toBeInstanceOf(ForbiddenError);
+        declareIncident({
+          ctx: as(memberId, tx),
+          input: { title: "x", severity: "minor", commanderId: outsiderId },
+        }),
+      ).rejects.toThrow(ValidationError);
+    });
+  });
+
+  test("rejects a read-only API key", async () => {
+    await expect(
+      declareIncident({
+        ctx: makeApiKeyCtx(workspace, { keyId: "k", scopes: ["read"] }),
+        input: { title: "x", severity: "minor" },
+      }),
+    ).rejects.toThrow(ForbiddenError);
+  });
+});
+
+describe("updateIncident", () => {
+  test("one event per tracked field, one incident.update", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      const startedAt = new Date(row.startedAt.getTime() - 60_000);
+      await updateIncident({
+        ctx: as(memberId, tx),
+        input: {
+          id: row.id,
+          severity: "critical",
+          commanderId: adminId,
+          startedAt,
+          title: "API fully down",
+        },
+      });
+      const events = await listIncidentEvents({
+        ctx: as(memberId, tx),
+        input: { id: row.id },
+      });
+      expect(events.map((e) => e.type).sort()).toEqual([
+        "commander_changed",
+        "declared",
+        "severity_changed",
+        "started_at_changed",
+      ]);
+      const updates = (await incidentAudits(tx, row.id)).filter(
+        (a) => a.action === "incident.update",
+      );
+      expect(updates).toHaveLength(1);
+      expect(updates[0].changedFields?.sort()).toEqual([
+        "commanderId",
+        "severity",
+        "startedAt",
+        "title",
+      ]);
+      await expectInvariant(tx, row.id);
+    });
+  });
+
+  test("a title-only edit writes no event, a no-op writes nothing", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      await updateIncident({
+        ctx: as(memberId, tx),
+        input: { id: row.id, title: "Renamed" },
+      });
+      await updateIncident({
+        ctx: as(memberId, tx),
+        input: { id: row.id, title: "Renamed" },
+      });
+      expect(await eventCount(tx, row.id)).toBe(1);
+      const updates = (await incidentAudits(tx, row.id)).filter(
+        (a) => a.action === "incident.update",
+      );
+      expect(updates).toHaveLength(1);
     });
   });
 });
 
-describe("resolveIncident", () => {
-  test("stamps resolvedAt + resolvedBy", async () => {
-    await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
+describe("setIncidentStatus", () => {
+  const cases: Array<[IncidentStatus, IncidentStatus, boolean]> = [];
+  for (const from of incidentStatus) {
+    for (const to of incidentStatus) {
+      cases.push([
+        from,
+        to,
+        allowedTransitions({ status: from, closedAt: null }).includes(to),
+      ]);
+    }
+  }
 
-      const updated = await resolveIncident({
-        ctx,
-        input: { id: incident.id },
+  test("follows the transition table", async () => {
+    const expected: Record<IncidentStatus, IncidentStatus[]> = {
+      open: ["mitigated", "resolved", "canceled"],
+      mitigated: ["open", "resolved", "canceled"],
+      resolved: ["open"],
+      canceled: [],
+    };
+    for (const [from, to, allowed] of cases) {
+      expect(allowed).toBe(expected[from].includes(to));
+      await withTestTransaction(async (tx) => {
+        const row = await createIncident(
+          workspace.id,
+          {
+            status: from,
+            closedAt: from === "canceled" ? new Date() : null,
+          },
+          tx,
+        );
+        const run = setIncidentStatus({
+          ctx: as(memberId, tx),
+          input: { id: row.id, status: to },
+        });
+        if (allowed) {
+          expect((await run).status).toBe(to);
+        } else {
+          await expect(run).rejects.toThrow(ConflictError);
+        }
       });
-      expect(updated.resolvedAt).toBeInstanceOf(Date);
-      expect(updated.resolvedBy).toBe(1);
-    });
+    }
   });
 
-  test("throws ConflictError when already resolved", async () => {
+  test("a closed incident accepts no transition", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-        resolvedAt: new Date(),
-      });
-
+      const row = await createIncident(
+        workspace.id,
+        { status: "resolved", resolvedAt: new Date(), closedAt: new Date() },
+        tx,
+      );
       await expect(
-        resolveIncident({ ctx, input: { id: incident.id } }),
-      ).rejects.toBeInstanceOf(ConflictError);
-    });
-  });
-
-  test("throws NotFoundError for a cross-workspace incident", async () => {
-    await withTestTransaction(async (tx) => {
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-
-      await expect(
-        resolveIncident({
-          ctx: { ...freeCtx, db: tx },
-          input: { id: incident.id },
+        setIncidentStatus({
+          ctx: as(memberId, tx),
+          input: { id: row.id, status: "open" },
         }),
-      ).rejects.toBeInstanceOf(NotFoundError);
+      ).rejects.toThrow(ConflictError);
+    });
+  });
+
+  test("timestamps: mitigate once, resolve, reopen keeps resolved_at, cancel closes", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      const ctx = as(memberId, tx);
+      const mitigated = await setIncidentStatus({
+        ctx,
+        input: { id: row.id, status: "mitigated", note: "Rolled back" },
+      });
+      expect(mitigated.mitigatedAt).not.toBeNull();
+      await setIncidentStatus({ ctx, input: { id: row.id, status: "open" } });
+      const again = await setIncidentStatus({
+        ctx,
+        input: { id: row.id, status: "mitigated" },
+      });
+      expect(again.mitigatedAt?.getTime()).toBe(
+        mitigated.mitigatedAt?.getTime(),
+      );
+      const resolved = await setIncidentStatus({
+        ctx,
+        input: { id: row.id, status: "resolved" },
+      });
+      expect(resolved.resolvedBy).toBe(memberId);
+      const reopened = await setIncidentStatus({
+        ctx,
+        input: { id: row.id, status: "open" },
+      });
+      expect(reopened.resolvedBy).toBeNull();
+      expect(reopened.resolvedAt).not.toBeNull();
+      const canceled = await setIncidentStatus({
+        ctx,
+        input: { id: row.id, status: "canceled", note: "False alarm" },
+      });
+      expect(canceled.closedAt).not.toBeNull();
+
+      const events = await listIncidentEvents({ ctx, input: { id: row.id } });
+      const noted = events.find((e) => e.message?.includes("Rolled back"));
+      expect(noted?.type).toBe("status_changed");
+      expect(events[0].type).toBe("canceled");
+      expect(events[0].message).toBe("False alarm");
+      await expectInvariant(tx, row.id);
+    });
+  });
+
+  test("two concurrent resolves: one wins, one conflicts, one event", async () => {
+    const row = await createIncident(workspace.id);
+    try {
+      const ctx = makeUserCtx(workspace, { userId: memberId });
+      const results = await Promise.allSettled([
+        setIncidentStatus({ ctx, input: { id: row.id, status: "resolved" } }),
+        setIncidentStatus({ ctx, input: { id: row.id, status: "resolved" } }),
+      ]);
+      expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+      const rejected = results.find((r) => r.status === "rejected");
+      expect(
+        rejected?.status === "rejected" &&
+          rejected.reason instanceof ConflictError,
+      ).toBe(true);
+      const resolvedEvents = await db
+        .select()
+        .from(incidentEvent)
+        .where(
+          and(
+            eq(incidentEvent.incidentId, row.id),
+            eq(incidentEvent.type, "resolved"),
+          ),
+        )
+        .all();
+      expect(resolvedEvents).toHaveLength(1);
+    } finally {
+      const events = await db
+        .delete(incidentEvent)
+        .where(eq(incidentEvent.incidentId, row.id))
+        .returning({ id: incidentEvent.id });
+      await db.delete(incident).where(eq(incident.id, row.id));
+      await clearAuditLogFor({ entityType: "incident", entityIds: [row.id] });
+      await clearAuditLogFor({
+        entityType: "incident_event",
+        entityIds: events.map((e) => e.id),
+      });
+    }
+  });
+});
+
+describe("addIncidentNote", () => {
+  test("appends a note with a single audit row", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      const before = (await incidentAudits(tx, row.id)).length;
+      const note = await addIncidentNote({
+        ctx: as(memberId, tx),
+        input: { id: row.id, message: "Looking at the load balancer" },
+      });
+      expect(note.type).toBe("note");
+      expect((await incidentAudits(tx, row.id)).length).toBe(before);
+      await expectAuditRow({
+        workspaceId: workspace.id,
+        action: "incident_event.create",
+        entityType: "incident_event",
+        entityId: note.id,
+        db: tx,
+      });
+      await expectInvariant(tx, row.id);
+    });
+  });
+
+  test("keeps a createdAt inside the window and treats null as now", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      const saidAt = new Date(Date.now() - 60 * 60 * 1000);
+      const backdated = await addIncidentNote({
+        ctx: as(memberId, tx),
+        input: { id: row.id, message: "an hour ago", createdAt: saidAt },
+      });
+      // `created_at` is stored in whole seconds.
+      expect(
+        Math.abs(backdated.createdAt.getTime() - saidAt.getTime()),
+      ).toBeLessThan(1000);
+      const now = await addIncidentNote({
+        ctx: as(memberId, tx),
+        input: { id: row.id, message: "now", createdAt: null },
+      });
+      expect(Math.abs(now.createdAt.getTime() - Date.now())).toBeLessThan(5000);
+    });
+  });
+
+  test("rejects a createdAt in the future or older than the window", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      for (const createdAt of [
+        new Date(Date.now() + 10 * 60 * 1000),
+        new Date(Date.now() - 31 * 24 * 60 * 60 * 1000),
+      ]) {
+        await expect(
+          addIncidentNote({
+            ctx: as(memberId, tx),
+            input: { id: row.id, message: "off the timeline", createdAt },
+          }),
+        ).rejects.toThrow(/createdAt must be within the last 30 days/);
+      }
+    });
+  });
+
+  test("createdBy attributes the note to another member, actor stays audited", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      const note = await addIncidentNote({
+        ctx: as(memberId, tx),
+        input: { id: row.id, message: "said by admin", createdBy: adminId },
+      });
+      expect(note.createdBy).toBe(adminId);
+      const [audit] = await tx
+        .select()
+        .from(auditLog)
+        .where(
+          and(
+            eq(auditLog.entityType, "incident_event"),
+            eq(auditLog.entityId, String(note.id)),
+          ),
+        );
+      expect(audit?.actorUserId).toBe(memberId);
+      const self = await addIncidentNote({
+        ctx: as(memberId, tx),
+        input: { id: row.id, message: "mine", createdBy: null },
+      });
+      expect(self.createdBy).toBe(memberId);
+    });
+  });
+
+  test("rejects a createdBy outside the workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      await expect(
+        addIncidentNote({
+          ctx: as(memberId, tx),
+          input: { id: row.id, message: "spoofed", createdBy: outsiderId },
+        }),
+      ).rejects.toThrow(ValidationError);
+    });
+  });
+
+  test("a closed incident takes no notes", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createIncident(
+        workspace.id,
+        { status: "canceled", closedAt: new Date() },
+        tx,
+      );
+      await expect(
+        addIncidentNote({
+          ctx: as(memberId, tx),
+          input: { id: row.id, message: "late" },
+        }),
+      ).rejects.toThrow(ConflictError);
+    });
+  });
+});
+
+describe("status report link", () => {
+  test("link and unlink, each audited with an event", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      const report = await tx
+        .insert(statusReport)
+        .values({
+          workspaceId: workspace.id,
+          title: "Outage",
+          status: "investigating",
+        })
+        .returning()
+        .get();
+      const ctx = as(memberId, tx);
+      const linked = await linkIncidentStatusReport({
+        ctx,
+        input: { id: row.id, statusReportId: report.id },
+      });
+      expect(linked.statusReportId).toBe(report.id);
+      const unlinked = await unlinkIncidentStatusReport({
+        ctx,
+        input: { id: row.id },
+      });
+      expect(unlinked.statusReportId).toBeNull();
+      const types = (await listIncidentEvents({ ctx, input: { id: row.id } }))
+        .map((e) => e.type)
+        .sort();
+      expect(types).toEqual([
+        "declared",
+        "status_report_linked",
+        "status_report_unlinked",
+      ]);
+      await expectInvariant(tx, row.id);
+    });
+  });
+
+  test("a report from another workspace is not found", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      const report = await tx
+        .insert(statusReport)
+        .values({
+          workspaceId: otherWorkspace.id,
+          title: "Theirs",
+          status: "investigating",
+        })
+        .returning()
+        .get();
+      await expect(
+        linkIncidentStatusReport({
+          ctx: as(memberId, tx),
+          input: { id: row.id, statusReportId: report.id },
+        }),
+      ).rejects.toThrow(NotFoundError);
+    });
+  });
+});
+
+describe("slack channel binding", () => {
+  test("bind, conflict on a second incident, unbind even when closed", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = as(memberId, tx);
+      const first = await declare(tx);
+      const second = await declare(tx);
+      const bound = await bindIncidentSlackChannel({
+        ctx,
+        input: { id: first.id, teamId: "T1", channelId: "C_INC" },
+      });
+      expect(bound.slackChannelId).toBe("C_INC");
+      await expect(
+        bindIncidentSlackChannel({
+          ctx,
+          input: { id: second.id, teamId: "T1", channelId: "C_INC" },
+        }),
+      ).rejects.toThrow(ConflictError);
+      await setIncidentStatus({
+        ctx,
+        input: { id: first.id, status: "canceled" },
+      });
+      const unbound = await unbindIncidentSlackChannel({
+        ctx,
+        input: { id: first.id },
+      });
+      expect(unbound.slackChannelId).toBeNull();
+      await expectInvariant(tx, first.id);
+    });
+  });
+});
+
+describe("closeIncident", () => {
+  test("a member who isn't commander cannot close; the commander can", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declareIncident({
+        ctx: as(ownerId, tx),
+        input: { title: "x", severity: "minor", commanderId: adminId },
+      });
+      await setIncidentStatus({
+        ctx: as(memberId, tx),
+        input: { id: row.id, status: "resolved" },
+      });
+      await expect(
+        closeIncident({
+          ctx: as(memberId, tx),
+          input: { id: row.id, skipPostmortem: true },
+        }),
+      ).rejects.toThrow(ForbiddenError);
+      const closed = await closeIncident({
+        ctx: as(adminId, tx),
+        input: { id: row.id, skipPostmortem: true },
+      });
+      expect(closed.closedAt).not.toBeNull();
+      await expectInvariant(tx, row.id);
+    });
+  });
+
+  test("the commander closes even as a plain member", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      await setIncidentStatus({
+        ctx: as(memberId, tx),
+        input: { id: row.id, status: "resolved" },
+      });
+      const closed = await closeIncident({
+        ctx: as(memberId, tx),
+        input: { id: row.id, skipPostmortem: true },
+      });
+      expect(closed.closedAt).not.toBeNull();
+    });
+  });
+
+  test("only a resolved incident closes", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      await expect(
+        closeIncident({
+          ctx: as(ownerId, tx),
+          input: { id: row.id, skipPostmortem: true },
+        }),
+      ).rejects.toThrow(ConflictError);
     });
   });
 });
 
 describe("deleteIncident", () => {
-  test("removes the row and emits audit", async () => {
+  test("an admin deletes a fresh incident, timeline included", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-
-      await deleteIncident({ ctx, input: { id: incident.id } });
-
-      const remaining = await tx
-        .select()
-        .from(incidentTable)
-        .where(eq(incidentTable.id, incident.id))
-        .all();
-      expect(remaining).toHaveLength(0);
-
+      const row = await declare(tx);
+      await deleteIncident({ ctx: as(adminId, tx), input: { id: row.id } });
+      expect(await eventCount(tx, row.id)).toBe(0);
       await expectAuditRow({
-        workspaceId: teamCtx.workspace.id,
+        workspaceId: workspace.id,
         action: "incident.delete",
         entityType: "incident",
-        entityId: incident.id,
+        entityId: row.id,
         db: tx,
       });
+      await expect(
+        getIncident({ ctx: as(adminId, tx), input: { id: row.id } }),
+      ).resolves.toBeUndefined();
     });
   });
 
-  test("throws NotFoundError for cross-workspace delete", async () => {
+  test("a member cannot delete", async () => {
     await withTestTransaction(async (tx) => {
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-
+      const row = await declare(tx);
       await expect(
-        deleteIncident({
-          ctx: { ...freeCtx, db: tx },
-          input: { id: incident.id },
-        }),
-      ).rejects.toBeInstanceOf(NotFoundError);
+        deleteIncident({ ctx: as(memberId, tx), input: { id: row.id } }),
+      ).rejects.toThrow(ForbiddenError);
+    });
+  });
+
+  test("an incident that was ever mitigated is history", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      const ctx = as(memberId, tx);
+      await setIncidentStatus({
+        ctx,
+        input: { id: row.id, status: "mitigated" },
+      });
+      await setIncidentStatus({ ctx, input: { id: row.id, status: "open" } });
+      await expect(
+        deleteIncident({ ctx: as(ownerId, tx), input: { id: row.id } }),
+      ).rejects.toThrow(ConflictError);
     });
   });
 });
 
-describe("list / get", () => {
-  test("respects workspace isolation and enriches monitor", async () => {
+describe("reads", () => {
+  test("list puts open incidents first and filters by status", async () => {
     await withTestTransaction(async (tx) => {
-      const teamCtxTx = { ...teamCtx, db: tx };
-      const freeCtxTx = { ...freeCtx, db: tx };
-      const incident = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
+      const resolved = await createIncident(
+        workspace.id,
+        { status: "resolved", declaredAt: new Date() },
+        tx,
+      );
+      const open = await createIncident(
+        workspace.id,
+        { status: "open", declaredAt: new Date(Date.now() - 86_400_000) },
+        tx,
+      );
+      const ctx = as(memberId, tx);
+      const ids = (await listIncidents({ ctx })).map((i) => i.id);
+      expect(ids.indexOf(open.id)).toBeLessThan(ids.indexOf(resolved.id));
+      const onlyResolved = await listIncidents({
+        ctx,
+        input: { status: ["resolved"] },
       });
-
-      const full = await getIncident({
-        ctx: teamCtxTx,
-        input: { id: incident.id },
-      });
-      expect(full.monitor?.id).toBe(testMonitorId);
-
-      await expect(
-        getIncident({ ctx: freeCtxTx, input: { id: incident.id } }),
-      ).rejects.toBeInstanceOf(NotFoundError);
-
-      const { items } = await listIncidents({
-        ctx: freeCtxTx,
-        input: {
-          limit: 100,
-          offset: 0,
-          order: "desc",
-        },
-      });
-      expect(items.find((r) => r.id === incident.id)).toBeUndefined();
+      expect(onlyResolved.every((i) => i.status === "resolved")).toBe(true);
     });
   });
 
-  test("list batch-enriches monitors without duplication", async () => {
+  test("another workspace's incident is not visible", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const a = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-      const b = await insertIncident(tx, {
-        workspaceId: teamCtx.workspace.id,
-        monitorId: testMonitorId,
-      });
-
-      const { items } = await listIncidents({
-        ctx,
-        input: {
-          limit: 100,
-          offset: 0,
-          order: "desc",
-          monitorId: testMonitorId,
-        },
-      });
-
-      // Both incidents share the monitor — they should share the same enriched
-      // Monitor object (same-pageId dedup logic in the batch loader).
-      const ours = items.filter((i) => i.id === a.id || i.id === b.id);
-      expect(ours).toHaveLength(2);
-      expect(ours[0]?.monitor?.id).toBe(testMonitorId);
-      expect(ours[1]?.monitor?.id).toBe(testMonitorId);
+      const theirs = await createIncident(otherWorkspace.id, {}, tx);
+      expect(
+        await getIncident({ ctx: as(memberId, tx), input: { id: theirs.id } }),
+      ).toBeUndefined();
+      await expect(
+        addIncidentNote({
+          ctx: as(memberId, tx),
+          input: { id: theirs.id, message: "x" },
+        }),
+      ).rejects.toThrow(NotFoundError);
     });
   });
 });

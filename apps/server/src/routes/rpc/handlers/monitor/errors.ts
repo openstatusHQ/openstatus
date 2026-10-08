@@ -83,29 +83,6 @@ export function monitorIdRequiredError(): ConnectError {
 }
 
 /**
- * Creates a "failed to create monitor" error.
- */
-export function monitorCreateFailedError(): ConnectError {
-  return createError(
-    "Failed to create monitor",
-    Code.Internal,
-    ErrorReason.MONITOR_CREATE_FAILED,
-  );
-}
-
-/**
- * Creates a "failed to update monitor" error.
- */
-export function monitorUpdateFailedError(monitorId: string): ConnectError {
-  return createError(
-    "Failed to update monitor",
-    Code.Internal,
-    ErrorReason.MONITOR_UPDATE_FAILED,
-    { "monitor-id": monitorId },
-  );
-}
-
-/**
  * Creates a "monitor type mismatch" error when trying to update with wrong type.
  */
 export function monitorTypeMismatchError(
@@ -160,18 +137,6 @@ export function monitorParseFailedError(monitorId?: string): ConnectError {
     Code.Internal,
     ErrorReason.MONITOR_PARSE_FAILED,
     monitorId ? { "monitor-id": monitorId } : undefined,
-  );
-}
-
-/**
- * Creates a "failed to create monitor run" error.
- */
-export function monitorRunCreateFailedError(monitorId: string): ConnectError {
-  return createError(
-    "Failed to create monitor run",
-    Code.Internal,
-    ErrorReason.MONITOR_RUN_CREATE_FAILED,
-    { "monitor-id": monitorId },
   );
 }
 

@@ -1,11 +1,13 @@
 import { z } from "zod";
 
+import { attributedUserSchema, toAgentUser } from "../attribution";
 import {
   addMaintenanceUpdate,
   createMaintenance,
   deleteMaintenanceUpdate,
   listMaintenances,
   notifyMaintenance,
+  notifyMaintenanceUpdate,
   updateMaintenanceUpdate,
 } from "../maintenance";
 import type { AgentTool } from "./types";
@@ -67,6 +69,8 @@ const ListMaintenancesOutput = z.object({
           date: z.string(),
         }),
       ),
+      createdBy: attributedUserSchema.nullable(),
+      updatedBy: attributedUserSchema.nullable(),
     }),
   ),
   pagination: z.object({
@@ -113,6 +117,8 @@ export const listMaintenancesTool: AgentTool<
           message: u.message,
           date: u.date.toISOString(),
         })),
+        createdBy: toAgentUser(m.createdByUser),
+        updatedBy: toAgentUser(m.updatedByUser),
       })),
       pagination: {
         page,
@@ -161,7 +167,6 @@ const CreateMaintenanceOutput = z.object({
   from: z.string(),
   to: z.string(),
   pageId: z.number().int().nullable(),
-  initialUpdateId: z.number().int(),
   notified: z.boolean(),
 });
 
@@ -208,7 +213,7 @@ export const createMaintenanceTool: AgentTool<
     verb: "scheduled",
   },
   async run({ ctx, input }) {
-    const result = await createMaintenance({
+    const record = await createMaintenance({
       ctx,
       input: {
         title: input.title,
@@ -224,19 +229,18 @@ export const createMaintenanceTool: AgentTool<
       try {
         notified = await notifyMaintenance({
           ctx,
-          input: { maintenanceUpdateId: result.initialUpdate.id },
+          input: { maintenanceId: record.id },
         });
       } catch (err) {
         console.warn("notifyMaintenance failed after create_maintenance", err);
       }
     }
     return {
-      id: result.maintenance.id,
-      title: result.maintenance.title,
-      from: result.maintenance.from.toISOString(),
-      to: result.maintenance.to.toISOString(),
-      pageId: result.maintenance.pageId,
-      initialUpdateId: result.initialUpdate.id,
+      id: record.id,
+      title: record.title,
+      from: record.from.toISOString(),
+      to: record.to.toISOString(),
+      pageId: record.pageId,
       notified,
     };
   },
@@ -292,7 +296,7 @@ export const addMaintenanceUpdateTool: AgentTool<
     verb: "published",
   },
   async run({ ctx, input }) {
-    const result = await addMaintenanceUpdate({
+    const update = await addMaintenanceUpdate({
       ctx,
       input: {
         maintenanceId: input.maintenanceId,
@@ -303,22 +307,22 @@ export const addMaintenanceUpdateTool: AgentTool<
     let notified = false;
     if (input.notify) {
       try {
-        notified = await notifyMaintenance({
+        notified = await notifyMaintenanceUpdate({
           ctx,
-          input: { maintenanceUpdateId: result.maintenanceUpdate.id },
+          input: { maintenanceUpdateId: update.id },
         });
       } catch (err) {
         console.warn(
-          "notifyMaintenance failed after add_maintenance_update",
+          "notifyMaintenanceUpdate failed after add_maintenance_update",
           err,
         );
       }
     }
     return {
-      id: result.maintenanceUpdate.id,
-      maintenanceId: result.maintenanceUpdate.maintenanceId,
-      message: result.maintenanceUpdate.message,
-      date: result.maintenanceUpdate.date.toISOString(),
+      id: update.id,
+      maintenanceId: update.maintenanceId,
+      message: update.message,
+      date: update.date.toISOString(),
       notified,
     };
   },

@@ -19,9 +19,12 @@ export type StatusPipeFn = (params: {
   monitorIds: string[];
 }) => Promise<{ data: ComputeCountRow[] }>;
 
-// only these job types have a 45d status pipe; others (icmp/udp/ssl) have no
+// only these job types have a 45d status pipe; others (udp/ssl) have no
 // counts on the live status page either and are skipped
-export type UptimeFreezePipes = Record<"http" | "tcp" | "dns", StatusPipeFn>;
+export type UptimeFreezePipes = Record<
+  "http" | "tcp" | "dns" | "icmp" | "grpc",
+  StatusPipeFn
+>;
 
 export type ChunkFailure = {
   jobType: string;
@@ -39,7 +42,7 @@ const TB_THROTTLE_MS = 250;
 
 // the status pipes look back a fixed 45 days; past monthStart + 45d the
 // earliest month days return no rows and would freeze as permanent zeros
-const FREEZE_CUTOFF_MS = 45 * 86_400_000;
+export const FREEZE_CUTOFF_MS = 45 * 86_400_000;
 
 function chunk<T>(items: T[], size: number): T[][] {
   if (size <= 0) throw new Error(`chunk size must be positive, got ${size}`);
@@ -53,7 +56,13 @@ function chunk<T>(items: T[], size: number): T[][] {
 function hasStatusPipe(
   jobType: string | null | undefined,
 ): jobType is keyof UptimeFreezePipes {
-  return jobType === "http" || jobType === "tcp" || jobType === "dns";
+  return (
+    jobType === "http" ||
+    jobType === "tcp" ||
+    jobType === "dns" ||
+    jobType === "icmp" ||
+    jobType === "grpc"
+  );
 }
 
 /**

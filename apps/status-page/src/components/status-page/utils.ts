@@ -115,33 +115,3 @@ export function getHighestStatus(items: VariantType[]) {
   if (items.some((item) => item === "info")) return "info";
   return "success";
 }
-
-export function getTotalUptime(item: ChartData[]) {
-  const { ok, total } = item.reduce(
-    (acc, item) => ({
-      ok: acc.ok + item.success + item.degraded + item.info,
-      total: acc.total + item.success + item.degraded + item.info + item.error,
-    }),
-    {
-      ok: 0,
-      total: 0,
-    },
-  );
-
-  if (total === 0) return 100;
-  return Math.round((ok / total) * 10000) / 100;
-}
-
-export function getManualUptime(
-  items: { from: Date | null; to: Date | null }[],
-  days: number,
-) {
-  const duration = items.reduce((acc, item) => {
-    if (!item.from) return acc;
-    return acc + ((item.to || new Date()).getTime() - item.from.getTime());
-  }, 0);
-
-  const total = days * 24 * 60 * 60 * 1000;
-
-  return Math.round(((total - duration) / total) * 10000) / 100;
-}

@@ -90,6 +90,17 @@ const apiKeyActions = [
   action("api_key.delete", "api_key", intId),
 ] as const;
 
+// `delete` covers every revocation path: manual, re-consent, member removal
+// and account deletion. `metadata` carries client name and scope on create.
+const oauthGrantActions = [
+  action("oauth_grant.create", "oauth_grant", intId, {
+    optionalMetadata: true,
+  }),
+  action("oauth_grant.delete", "oauth_grant", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
 const notificationActions = [
   action("notification.create", "notification", intId),
   action("notification.update", "notification", intId),
@@ -122,9 +133,36 @@ const maintenanceUpdateActions = [
   }),
 ] as const;
 
+const monitorIncidentActions = [
+  action("monitor_incident.update", "monitor_incident", intId),
+  action("monitor_incident.delete", "monitor_incident", intId),
+] as const;
+
 const incidentActions = [
-  action("incident.update", "incident", intId),
+  action("incident.create", "incident", intId, { optionalMetadata: true }),
+  action("incident.update", "incident", intId, { optionalMetadata: true }),
   action("incident.delete", "incident", intId),
+] as const;
+
+// Append-only timeline: events are never updated or deleted on their own.
+const incidentEventActions = [
+  action("incident_event.create", "incident_event", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
+const incidentPostmortemActions = [
+  action("incident_postmortem.create", "incident_postmortem", intId, {
+    optionalMetadata: true,
+  }),
+  action("incident_postmortem.update", "incident_postmortem", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
+const slackUserActions = [
+  action("slack_user.create", "slack_user", intId, { optionalMetadata: true }),
+  action("slack_user.delete", "slack_user", intId, { optionalMetadata: true }),
 ] as const;
 
 const statusReportActions = [
@@ -159,7 +197,7 @@ const invitationActions = [
 //     (the acceptance stamp), so `member.create` covers only the paths that
 //     mint a membership with no invitation behind it — today, SSO JIT
 //     provisioning.
-//   - `incident`: rows originate from the checker pipeline, not user
+//   - `monitor_incident`: rows originate from the checker pipeline, not user
 //     mutations.
 // When those write paths migrate to the service layer, add the missing
 // verbs alongside.
@@ -218,12 +256,17 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...pageComponentGroupActions,
   ...pageSubscriberActions,
   ...apiKeyActions,
+  ...oauthGrantActions,
   ...notificationActions,
   ...userActions,
   ...workspaceActions,
   ...maintenanceActions,
   ...maintenanceUpdateActions,
+  ...monitorIncidentActions,
   ...incidentActions,
+  ...incidentEventActions,
+  ...incidentPostmortemActions,
+  ...slackUserActions,
   ...statusReportActions,
   ...statusReportUpdateActions,
   ...invitationActions,

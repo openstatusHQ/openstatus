@@ -36,9 +36,9 @@ export function FormComponentsUpdate() {
   // "removed" (delete) and placeholders as "new" (create).
   const refetchAndRemount = async (...refetches: Promise<unknown>[]) => {
     await Promise.all(refetches);
-    // invalidate workspace to update the usage (getting-started checklist)
+    // the getting-started checklist reads these counts
     queryClient.invalidateQueries({
-      queryKey: trpc.workspace.get.queryKey(),
+      queryKey: trpc.workspace.usage.queryKey(),
     });
     setFormKey((k) => k + 1);
   };

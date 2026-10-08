@@ -5,6 +5,12 @@ import {
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import {
+  CHECKER_REQUEST_TIMEOUT_MS,
+  TargetUnreachableError,
+  isTimeoutError,
+} from "@/lib/checker/utils";
+
 import { TCPResponse, tcpPayload } from "./schema";
 
 export const runtime = "edge";
@@ -34,36 +40,47 @@ export async function POST(request: Request) {
 
     return NextResponse.json(res);
   } catch (e) {
-    console.error(e);
+    // Unreachable/timeout targets are expected; only real bugs should reach Sentry.
+    if (!(e instanceof TargetUnreachableError)) {
+      console.error(e);
+    }
     return NextResponse.json({ success: false }, { status: 400 });
   }
 }
 async function checkTCP(url: string, region: Region) {
   //
-  const res = await fetch(`https://checker.openstatus.dev/tcp/${region}`, {
-    headers: {
-      Authorization: `Basic ${process.env.CRON_SECRET}`,
-      "Content-Type": "application/json",
-      "fly-prefer-region": region,
-    },
-    method: "POST",
-    body: JSON.stringify({
-      uri: url,
-    }),
-    next: { revalidate: 0 },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`https://checker.openstatus.dev/tcp/${region}`, {
+      headers: {
+        Authorization: `Basic ${process.env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": region,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        uri: url,
+      }),
+      next: { revalidate: 0 },
+      signal: AbortSignal.timeout(CHECKER_REQUEST_TIMEOUT_MS),
+    });
+  } catch (e) {
+    if (isTimeoutError(e)) {
+      throw new TargetUnreachableError("checker request timed out");
+    }
+    throw e;
+  }
 
   const json = await res.json();
 
   const data = TCPResponse.safeParse(json);
 
+  // A timeout / unreachable target is an expected outcome, not a bug — throw so
+  // the caller returns 400, but the catch keeps it out of Sentry. A parse miss
+  // here may also be checker schema drift, so warn so it stays observable.
   if (!data.success) {
-    console.error(res);
-    console.error(JSON.stringify(json));
-    console.error(
-      `something went wrong with request to ${url} error ${data.error.message}`,
-    );
-    throw new Error(data.error.message);
+    console.warn("Unexpected TCP checker response shape:", json);
+    throw new TargetUnreachableError(data.error.message);
   }
 
   return data.data;

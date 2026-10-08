@@ -83,7 +83,11 @@ docker logs openstatus-probe
 Common causes:
 
 - **Invalid token** — double-check the token value; ensure no extra spaces or newlines.
-- **Wrong variable name** — the probe reads `OPENSTATUS_KEY`. `OPENSTATUS_TOKEN` is ignored, so the probe starts unauthenticated and fetches no monitors.
+- **Wrong variable name** — the probe reads `OPENSTATUS_KEY` and nothing else. If you set
+  `OPENSTATUS_TOKEN` instead, the probe refuses to start and exits immediately with:
+  ```
+  OPENSTATUS_KEY is required: the probe cannot authenticate against openstatus
+  ```
 - **Network issues** — ensure the container can reach `openstatus-private-location.fly.dev` on port 443.
 
 ### No data appearing in the dashboard

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "2855038f-b409-4990-b445-ce9d0b54a9a4",
+  "id": "b39ead3f-410d-45d6-8d9d-b169d00d0039",
   "prevId": "6d3f5d66-7abe-46a6-bb0e-8db6c9f3b401",
   "tables": {
     "workspace": {
@@ -1300,6 +1300,21 @@
           "autoincrement": false,
           "default": true
         },
+        "grpc_service": {
+          "name": "grpc_service",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "grpc_tls": {
+          "name": "grpc_tls",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'tls'"
+        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -2529,82 +2544,6 @@
           "tableTo": "page",
           "columnsFrom": [
             "page_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "maintenance_update": {
-      "name": "maintenance_update",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "message": {
-          "name": "message",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "date": {
-          "name": "date",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "maintenance_id": {
-          "name": "maintenance_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(strftime('%s', 'now'))"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(strftime('%s', 'now'))"
-        }
-      },
-      "indexes": {
-        "maintenance_update_maintenance_id_idx": {
-          "name": "maintenance_update_maintenance_id_idx",
-          "columns": [
-            "maintenance_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "maintenance_update_maintenance_id_maintenance_id_fk": {
-          "name": "maintenance_update_maintenance_id_maintenance_id_fk",
-          "tableFrom": "maintenance_update",
-          "tableTo": "maintenance",
-          "columnsFrom": [
-            "maintenance_id"
           ],
           "columnsTo": [
             "id"

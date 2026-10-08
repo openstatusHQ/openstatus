@@ -9,6 +9,7 @@ import {
   getProductPages,
   getToolingPages,
   getUnrelatedPages,
+  isIndexable,
 } from "../../../content/utils";
 
 export const runtime = "nodejs";
@@ -26,7 +27,7 @@ export function GET() {
     getHomePage(),
     ...getProductPages(),
     ...getToolingPages(),
-    ...getUnrelatedPages().filter((p) => p.slug !== "not-found"),
+    ...getUnrelatedPages().filter(isIndexable),
   ];
 
   const chunks = pages.map(renderPage);

@@ -17,6 +17,7 @@ import {
   selectPageComponentSchema,
 } from "@openstatus/db/src/schema";
 
+import { type AttributedUserDetail, loadAttributedUsers } from "../attribution";
 import type { DB, ServiceContext } from "../context";
 import type { Maintenance, MaintenanceUpdate, PageComponent } from "../types";
 import { getMaintenanceInWorkspace } from "./internal";
@@ -43,6 +44,8 @@ export type MaintenanceWithRelations = Maintenance & {
   updates: MaintenanceUpdate[];
   pageComponents: PageComponent[];
   pageComponentIds: number[];
+  createdByUser: AttributedUserDetail | null;
+  updatedByUser: AttributedUserDetail | null;
 };
 
 export type ListMaintenancesResult = {
@@ -92,6 +95,11 @@ async function enrichMaintenancesBatch(
     .where(inArray(maintenancesToPageComponents.maintenanceId, ids))
     .all();
 
+  const users = await loadAttributedUsers(
+    db,
+    rows.flatMap((r) => [r.createdBy, r.updatedBy]),
+  );
+
   const componentsByMaintenance = new Map<number, PageComponent[]>();
   for (const row of assocRows) {
     const component = selectPageComponentSchema.parse(row.component);
@@ -107,6 +115,10 @@ async function enrichMaintenancesBatch(
       updates: updatesByMaintenance.get(r.id) ?? [],
       pageComponents: components,
       pageComponentIds: components.map((c) => c.id),
+      createdByUser:
+        r.createdBy != null ? (users.get(r.createdBy) ?? null) : null,
+      updatedByUser:
+        r.updatedBy != null ? (users.get(r.updatedBy) ?? null) : null,
     };
   });
 }

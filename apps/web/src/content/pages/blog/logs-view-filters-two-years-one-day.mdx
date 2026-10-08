@@ -1,0 +1,113 @@
+---
+title: "Logs View: Two years in the making, one day of migration"
+description: "We finally moved data-table-filters into the openstatus dashboard. What it grew into, and how to start using it."
+author: "Maximilian Kaske"
+publishedAt: "2026-09-20"
+category: "engineering"
+image: "/assets/posts/logs-view-filters-two-years-one-day/logs.png"
+---
+
+In August 2024 I started a data table for openstatus and we secured the [logs.run](https://logs.run) domain. In August 2026 we finally moved it into the openstatus dashboard.
+
+It took us **two years** of constant improvements, on the UI/UX and on the DX side. It took us **one day** to migrate it.
+
+<Grid>
+<div>
+
+**Filters and table**
+
+<Image
+  src="/assets/changelog/dashboard-response-logs.png"
+  alt="The new Logs tab in the openstatus dashboard: sidebar filters, faceted counts and the response timing column."
+/>
+
+
+</div>
+<div>
+
+**Row details**
+
+<Image src="/assets/posts/logs-view-filters-two-years-one-day/logs-sheet-open.png" alt="A selected log row opened in the sheet, showing request metadata and response headers." />
+
+</div>
+
+</Grid>
+
+
+## Why it lived outside openstatus
+
+We started [data-table-filters](https://github.com/openstatusHQ/data-table-filters) as a standalone test repository to build really good logs interfaces, with the main focus on _filters_. As you might know from [template.openstatus.dev](https://template.openstatus.dev?referrer=openstatus), we like to _experiment first_ before moving something into our core repo.
+
+I wanted a DX architecture that lets you create **clean, opinionated data tables** over and over again, from _clean primitives_. shadcn was the obvious choice. Back then the registry was brand new, the directory didn't exist, and AI could barely help you build any of it.
+
+We built it on the libraries we think are the best out there:
+
+- [nuqs](https://nuqs.dev?referrer=openstatus) for URL state
+- [TanStack Table and Query](https://tanstack.com?referrer=openstatus)
+- [Radix UI](https://www.radix-ui.com?referrer=openstatus)
+
+> [Base UI](https://base-ui.com?referrer=openstatus) is supported too. Our own repo still runs on Radix. There's an [open issue](https://github.com/openstatusHQ/data-table-filters/issues/116) if you want to help move it.
+
+We recently upgraded everything (TanStack Table v9, date-fns v4, Recharts v3), so there shouldn't be a _version mismatch_ when you bring it into your project. If there is, open an issue or send a PR.
+
+## How it grew
+
+The first iterations were _hand-crafted_, including the design of how you configure a data table. The main source of inspiration was the Datadog dashboard, where you can work a log stream without ever touching the mouse.
+
+Then it grew: first the **sidebar**, then the **command palette**, then the **infinite data table** (the hero), the **zoomable timeline chart**, **live mode**, and more on top.
+
+> I know, I know. It's 2026 and only a few of us still look at _beautifully crafted_ data table UIs. Everyone else is busy wiring up MCP servers and letting agents do the looking. So we made the table talk to the agents too btw.
+
+So now with AI, you can go _a lot further_:
+
+- [`DataTableAuto`](https://data-table.openstatus.dev/docs/builder?referrer=openstatus) infers the columns from your row types.
+- [`createDrizzleHandler`](https://data-table.openstatus.dev/docs/drizzle-orm?referrer=openstatus) gives you filtering, sorting and cursor pagination for the infinite table without rebuilding that logic yourself.
+- [`createTableMCPHandler`](https://data-table.openstatus.dev/docs/mcp?referrer=openstatus) exposes your table schema as an MCP endpoint.
+- [`DataTableFilterAICommand` and `createAIFilterHandler`](https://data-table.openstatus.dev/docs/ai-filters?referrer=openstatus) turn natural language in the command palette into filters.
+- [`DataTableRemote`](https://data-table.openstatus.dev/docs/headless?referrer=openstatus) renders a headless table from an endpoint that returns the schema and the data, so the server decides how the table looks.
+
+There's so much you can do with it. I'm a bit _obsessed_ with this repo. I care a lot about it, and I also know it **doesn't bring openstatus any money**. Awareness is always good, but devs often do not pay for open-source work.
+
+## Who it inspired
+
+What makes me really proud: bigger companies picked it up as a reference for their own logs.
+
+- **Supabase** gave us a shoutout in their [new observability features](https://supabase.com/blog/new-observability-features-in-supabase?referrer=openstatus) post, and it served as the reference for their [Unified Logs](https://supabase.com/blog/unified-logs-open-beta?referrer=openstatus).
+- **Langfuse** took inspiration from it for their tables.
+
+And away from the big names, people fork it and build their own logs UI on it. Every now and then I stumble on a repo crediting us in the README, which is really nice to see.
+
+Built something with it? Let us know and we'll add it to the list.
+
+## Getting started
+
+<Image
+  src="/assets/posts/logs-view-filters-two-years-one-day/data-table-filters-homepage.png"
+  alt="The data-table-filters homepage with the one-command shadcn init and the infinite and default table examples."
+/>
+
+We kept making it faster to pick up:
+
+- Every docs page is also available as _markdown_. Append `.md` to the URL, for example [/docs/quick-start.md](https://data-table.openstatus.dev/docs/quick-start.md?referrer=openstatus). Agents with `text/markdown` headers will also access it.
+- [`llms.txt`](https://data-table.openstatus.dev/llms.txt?referrer=openstatus) tells your agent exactly where to pick up.
+- We own the **`@data-table-filters` namespace** in the [shadcn directory](https://ui.shadcn.com/docs/directory?referrer=openstatus), so there's _no registry config_ to set up in your `components.json`.
+- **One** `shadcn init` command gets you from _nothing_ to a **working app**:
+
+```bash
+npx shadcn@latest init @data-table-filters/data-table-example-infinite --name data-table-app --template next -p nova
+```
+
+That creates a Next.js app on Base UI with a working `/example` route: filters, facets, cursor pagination, URL state, the row sheet and the timeline chart. Add `-b radix` before `-p nova` if you prefer Radix.
+
+Already have a project?
+
+```bash
+npx shadcn@latest add @data-table-filters/data-table
+```
+
+---
+
+While you're here, don't forget to [star it on GitHub](https://github.com/openstatusHQ/data-table-filters).
+
+Cheers,
+Max

@@ -214,3 +214,33 @@ about key rotation requirements.
 - Minor configuration issues → Use general service disruption template
 
 Only use security incident language when there's an actual security concern to avoid alarm fatigue.
+
+## Related
+
+This template is one of several in the [incident communication guide](/guides/incident-communication), which covers update cadence by severity, what to avoid saying, and the other scenario templates.
+
+## Frequently asked questions
+
+<Details summary="Do I need to notify users immediately for every security concern?">
+
+No. Only communicate publicly when there's a confirmed incident with user impact or when you're taking visible security measures (like requiring password resets). Internal security reviews and patched vulnerabilities without exploitation typically don't require public disclosure.
+
+</Details>
+
+<Details summary="What legal obligations do I have for security incident disclosure?">
+
+This varies by jurisdiction and industry. GDPR requires notification within 72 hours for personal data breaches. CCPA has requirements for California residents. Healthcare (HIPAA) and payment systems (PCI DSS) have specific rules. Always consult with legal counsel before publishing security incident communications.
+
+</Details>
+
+<Details summary="How much technical detail should I share about a security vulnerability?">
+
+Share enough to demonstrate competence and transparency, but avoid tactical details that could help attackers. Good: 'unauthorized access attempts to our admin panel.' Bad: 'SQL injection on /admin/login using parameter X.' Wait until the vulnerability is fully patched and no longer exploitable before sharing technical details.
+
+</Details>
+
+<Details summary="Should I tell users to change their passwords?">
+
+Only if there's evidence of credential compromise or unauthorized access to authentication systems. Don't create alarm fatigue by requesting password changes for unrelated security work. Be specific about why you're asking and which accounts are affected.
+
+</Details>

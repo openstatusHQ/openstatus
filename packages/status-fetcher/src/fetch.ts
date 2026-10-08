@@ -3,7 +3,22 @@ import type { z } from "zod";
 
 import type { JsonValue } from "./types";
 
-export type FetchErrorKind = "http" | "parse" | "network" | "timeout";
+// "parse": body is not JSON (html, challenge page); "schema": valid JSON our
+// zod schema rejects — the split separates "page moved" from "our schema is stale".
+export type FetchErrorKind =
+  | "http"
+  | "parse"
+  | "schema"
+  | "network"
+  | "timeout";
+
+const KIND_LABELS: Record<FetchErrorKind, string> = {
+  http: "fetch failed",
+  parse: "non-JSON body",
+  schema: "schema mismatch",
+  network: "network error",
+  timeout: "timeout",
+};
 
 type FetchErrorInit = {
   url: string;
@@ -26,7 +41,11 @@ export class FetchError extends Error {
       [init.fetcherName, init.entryId && `(${init.entryId})`]
         .filter(Boolean)
         .join(" ") || "FetchError";
-    const status = init.httpStatus ? `HTTP ${init.httpStatus}` : "fetch failed";
+    const status = init.httpStatus
+      ? `HTTP ${init.httpStatus}`
+      : init.kind
+        ? KIND_LABELS[init.kind]
+        : "fetch failed";
     super(`[${ctx}] ${status}: ${init.url}`, { cause: init.cause });
     this.name = "FetchError";
     this.url = init.url;
@@ -37,14 +56,14 @@ export class FetchError extends Error {
   }
 }
 
-const DEFAULT_TIMEOUT: Duration.DurationInput = "30000 millis";
+const DEFAULT_TIMEOUT: Duration.Input = "30000 millis";
 
 export type FetchBaseOptions = {
   url: string;
   init?: Omit<RequestInit, "signal" | "headers"> & {
     headers?: Record<string, string>;
   };
-  timeout?: Duration.DurationInput;
+  timeout?: Duration.Input;
   fetcherName?: string;
   entryId?: string;
 };
@@ -94,15 +113,17 @@ const doFetch = (
       }),
     catch: failWith(opts, "network"),
   }).pipe(
-    Effect.timeoutFail({
+    Effect.timeoutOrElse({
       duration: opts.timeout ?? DEFAULT_TIMEOUT,
-      onTimeout: () =>
-        buildFetchError(opts, {
-          kind: "timeout",
-          cause: new Error(
-            `timeout after ${String(opts.timeout ?? DEFAULT_TIMEOUT)}`,
-          ),
-        }),
+      orElse: () =>
+        Effect.fail(
+          buildFetchError(opts, {
+            kind: "timeout",
+            cause: new Error(
+              `timeout after ${String(opts.timeout ?? DEFAULT_TIMEOUT)}`,
+            ),
+          }),
+        ),
     }),
     Effect.flatMap((response) =>
       response.ok
@@ -127,15 +148,17 @@ const fetchBody = <T>(
     Effect.retry(retryPolicy),
     Effect.flatMap((response) =>
       read(response).pipe(
-        Effect.timeoutFail({
+        Effect.timeoutOrElse({
           duration: opts.timeout ?? DEFAULT_TIMEOUT,
-          onTimeout: () =>
-            buildFetchError(opts, {
-              kind: "timeout",
-              cause: new Error(
-                `body read timeout after ${String(opts.timeout ?? DEFAULT_TIMEOUT)}`,
-              ),
-            }),
+          orElse: () =>
+            Effect.fail(
+              buildFetchError(opts, {
+                kind: "timeout",
+                cause: new Error(
+                  `body read timeout after ${String(opts.timeout ?? DEFAULT_TIMEOUT)}`,
+                ),
+              }),
+            ),
         }),
       ),
     ),
@@ -162,7 +185,7 @@ export const fetchJson = <T>(
       Effect.flatMap((json) =>
         Effect.try({
           try: () => opts.schema.parse(json),
-          catch: failWith(opts, "parse"),
+          catch: failWith(opts, "schema"),
         }),
       ),
     ),
@@ -181,7 +204,7 @@ export const fetchJsonWithRaw = <T>(
       Effect.flatMap((raw) =>
         Effect.try({
           try: () => ({ parsed: opts.schema.parse(raw), raw }),
-          catch: failWith(opts, "parse"),
+          catch: failWith(opts, "schema"),
         }),
       ),
     ),

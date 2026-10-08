@@ -1,10 +1,14 @@
 import { createSelectSchema } from "drizzle-zod";
-import { z } from "zod";
+import type { z } from "zod";
 
-import { incidentTable } from "./incident";
+import { incident, incidentEvent } from "./incident";
+import { incidentPostmortem } from "./postmortem";
 
-export const selectIncidentSchema = createSelectSchema(incidentTable).extend({
-  monitorName: z.string().optional(),
-});
+export const selectIncidentSchema = createSelectSchema(incident);
+export const selectIncidentEventSchema = createSelectSchema(incidentEvent);
+export const selectIncidentPostmortemSchema =
+  createSelectSchema(incidentPostmortem);
 
 export type Incident = z.infer<typeof selectIncidentSchema>;
+export type IncidentEvent = z.infer<typeof selectIncidentEventSchema>;
+export type IncidentPostmortem = z.infer<typeof selectIncidentPostmortemSchema>;

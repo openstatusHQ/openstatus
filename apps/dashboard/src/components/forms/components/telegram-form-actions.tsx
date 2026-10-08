@@ -29,6 +29,13 @@ export function TelegramFormActions({
   function testAction() {
     if (isPending) return;
 
+    // Validate chat ID before sending test
+    const chatId = form.getValues("data.chatId");
+    if (!chatId || chatId.trim() === "") {
+      toast.error("Please enter a chat ID before sending test");
+      return;
+    }
+
     startTransition(async () => {
       try {
         const provider = form.getValues("provider");

@@ -26,7 +26,7 @@ import {
 } from "@/components/forms/form-card";
 
 const schema = z.object({
-  name: z.string(),
+  name: z.string().trim().min(1, "Name is required"),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -75,12 +75,12 @@ export function FormWorkspace({
               Manage your workspace name.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent>
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input {...field} />

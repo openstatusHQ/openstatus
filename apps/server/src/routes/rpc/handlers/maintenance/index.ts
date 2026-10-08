@@ -8,6 +8,7 @@ import {
   getMaintenance,
   listMaintenances,
   notifyMaintenance,
+  notifyMaintenanceUpdate,
   updateMaintenance,
   updateMaintenanceUpdate,
 } from "@openstatus/services/maintenance";
@@ -52,7 +53,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
       const rpcCtx = getRpcContext(ctx);
       const sCtx = toServiceCtx(rpcCtx);
 
-      const result = await createMaintenance({
+      const record = await createMaintenance({
         ctx: sCtx,
         input: {
           title: req.title,
@@ -78,7 +79,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
         // that affordance.
         await notifyMaintenance({
           ctx: sCtx,
-          input: { maintenanceUpdateId: result.initialUpdate.id },
+          input: { maintenanceId: record.id },
         });
       }
 
@@ -87,7 +88,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
       // createNotification.
       const full = await getMaintenance({
         ctx: sCtx,
-        input: { id: result.maintenance.id },
+        input: { id: record.id },
       });
       return {
         maintenance: dbMaintenanceToProto(
@@ -214,7 +215,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
       if (!req.maintenanceId?.trim()) {
         throw maintenanceIdRequiredError();
       }
-      const result = await addMaintenanceUpdate({
+      const update = await addMaintenanceUpdate({
         ctx: sCtx,
         input: {
           maintenanceId: Number(req.maintenanceId),
@@ -223,14 +224,12 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
         },
       });
       if (req.notify) {
-        await notifyMaintenance({
+        await notifyMaintenanceUpdate({
           ctx: sCtx,
-          input: { maintenanceUpdateId: result.maintenanceUpdate.id },
+          input: { maintenanceUpdateId: update.id },
         });
       }
-      return {
-        maintenanceUpdate: dbMaintenanceUpdateToProto(result.maintenanceUpdate),
-      };
+      return { maintenanceUpdate: dbMaintenanceUpdateToProto(update) };
     } catch (err) {
       toConnectError(err);
     }

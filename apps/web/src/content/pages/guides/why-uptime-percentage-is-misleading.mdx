@@ -1,9 +1,18 @@
 ---
 title: "Why Uptime Percentage Alone is Misleading"
-description: "99.9% uptime sounds impressive until you realize it tells you nothing about user experience. Learn why availability percentages hide the real story and what to measure instead."
+description: "99.9% uptime sounds impressive until you realize it tells you nothing about user experience. What uptime and availability actually mean, why the percentage hides the real story, and what to measure instead."
 author: "openstatus"
 publishedAt: "2026-02-13"
 category: "education"
+faq:
+  - question: "What is the difference between uptime and availability?"
+    answer: "In practice they are used interchangeably, and most SLAs treat them as synonyms. Where a distinction exists: uptime asks whether the system is running and reachable, while availability asks whether users can successfully do what they came for - usually measured as successful requests divided by total requests. A server that is powered on and returning 500 errors to every request has 100% uptime and 0% availability."
+  - question: "Is 99.9% uptime good?"
+    answer: "It depends entirely on how the 43 minutes of monthly downtime is distributed. Forty-three separate one-minute blips are barely noticed; a single 43-minute outage on a Tuesday afternoon is a crisis. Both are 99.9%. The percentage alone cannot tell you which one you had, which is why it is a reporting metric rather than an operational one."
+  - question: "What should I measure instead of uptime percentage?"
+    answer: "Latency percentiles (P50, P95, P99), error rates broken down by endpoint and region, user journey success for flows like login and checkout, regional availability rather than a global aggregate, and error budget burn rate. Those five tell you what users actually experienced; a single percentage does not."
+  - question: "Can you have high uptime and unhappy users?"
+    answer: "Yes, and it is common. A health check returning 200 OK in 50ms while real requests take eight seconds gives you excellent uptime and a service users consider broken. Uptime measures whether the service responds. It does not measure whether the response was fast enough or correct."
 ---
 
 99.9% uptime sounds great in sales decks. It makes executives nod approvingly and looks impressive on your status page.
@@ -52,6 +61,23 @@ You can have 99.9% uptime with P99 latency at 30 seconds. Technically available.
 
 **Availability measures if it responds. Reliability measures if it works.**
 
+## Uptime vs Availability: Is There a Difference?
+
+Most of the time, no — and anyone telling you the two words mean sharply different things is usually selling something. They are used interchangeably across the industry, both expressed as a percentage of a time window, and your SLA almost certainly treats them as synonyms.
+
+Where a distinction does exist, it is this:
+
+| | Uptime | Availability |
+| --- | --- | --- |
+| **Question it answers** | Is the system running? | Can users successfully do what they came for? |
+| **Typical measurement** | The process is up and the endpoint is reachable | Successful requests ÷ total requests |
+| **A server returning 500s** | Counted as **up** | Counted as **unavailable** |
+| **Origin** | Infrastructure and hardware monitoring | Service-level and user-facing measurement |
+
+The practical consequence: uptime is a property of your *infrastructure*, availability is a property of your *service*. A machine that is powered on, reachable, and returning `500 Internal Server Error` to every request has 100% uptime and 0% availability. That gap is exactly where "our monitoring was green" incidents live.
+
+Which is why the argument on this page is not really about vocabulary. Whichever word you use, a single percentage over a whole window hides *when* the failures happened, *what* broke, and *who* it hit. Renaming the metric fixes none of that. Measuring the things below does.
+
 ## The Five Nines Trap
 
 Teams obsess over pushing 99.9% to 99.99%. The cost grows exponentially in engineering time, infrastructure, and complexity.
@@ -66,7 +92,7 @@ You hit your uptime target. Users churn anyway.
 
 Stop obsessing over a single percentage. Start measuring what users actually experience:
 
-**Latency percentiles:** P50, P95, P99. How long do real requests take? A P99 of 10 seconds means 1 in 100 users have a terrible experience, even with perfect uptime.
+**Latency percentiles:** P50, P95, P99. How long do real requests take? A P99 of 10 seconds means 1 in 100 users have a terrible experience, even with perfect uptime. Be precise about which number you are tracking — [latency and response time](/docs/concept/latency-vs-response-time) are different measurements, and a threshold set against one while your monitoring reports the other is a threshold that never fires.
 
 **Error rates:** Break them down by endpoint, status code, and region. A 0.1% global error rate could be a 5% error rate for your checkout endpoint.
 
@@ -74,7 +100,9 @@ Stop obsessing over a single percentage. Start measuring what users actually exp
 
 **Regional availability:** Don't aggregate global uptime into one number. Your service down in Asia won't show up if North America is fine.
 
-**Error budget burn rate:** Are you on track to blow your SLO? This metric is actionable. A percentage alone tells you nothing about trajectory.
+**Error budget burn rate:** Are you on track to blow your SLO? This metric is actionable. A percentage alone tells you nothing about trajectory. [Error budgets explained](/guides/error-budgets-explained) covers how to calculate the budget and what burn rates are worth alerting on.
+
+**Regional detail, not a regional average.** [Uptime monitoring](/uptime-monitoring) from 28 regions is what makes the fourth point above measurable — a single-probe check cannot distinguish "our service is down" from "our service is down in Asia".
 
 ## Bottom Line
 
@@ -83,6 +111,32 @@ Uptime percentage is useful for SLA tracking and executive dashboards. It's not 
 Measure what users feel: latency, errors by feature, regional failures. If your monitoring shows green while users are frustrated, you're measuring the wrong things.
 
 Stop optimizing for a number that looks good in reports. Start optimizing for the experience your users actually have.
+
+## Frequently asked questions
+
+<Details summary="What is the difference between uptime and availability?">
+
+In practice they are used interchangeably, and most SLAs treat them as synonyms. Where a distinction exists: uptime asks whether the system is running and reachable, while availability asks whether users can successfully do what they came for - usually measured as successful requests divided by total requests. A server that is powered on and returning 500 errors to every request has 100% uptime and 0% availability.
+
+</Details>
+
+<Details summary="Is 99.9% uptime good?">
+
+It depends entirely on how the 43 minutes of monthly downtime is distributed. Forty-three separate one-minute blips are barely noticed; a single 43-minute outage on a Tuesday afternoon is a crisis. Both are 99.9%. The percentage alone cannot tell you which one you had, which is why it is a reporting metric rather than an operational one.
+
+</Details>
+
+<Details summary="What should I measure instead of uptime percentage?">
+
+Latency percentiles (P50, P95, P99), error rates broken down by endpoint and region, user journey success for flows like login and checkout, regional availability rather than a global aggregate, and error budget burn rate. Those five tell you what users actually experienced; a single percentage does not.
+
+</Details>
+
+<Details summary="Can you have high uptime and unhappy users?">
+
+Yes, and it is common. A health check returning 200 OK in 50ms while real requests take eight seconds gives you excellent uptime and a service users consider broken. Uptime measures whether the service responds. It does not measure whether the response was fast enough or correct.
+
+</Details>
 
 ---
 

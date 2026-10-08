@@ -1,0 +1,41 @@
+import { expect } from "@std/expect";
+import { describe, test } from "@std/testing/bdd";
+
+import { ForbiddenError } from "../errors";
+import { type Feature, isFeatureEnabled, requireFeature } from "../features";
+import type { Workspace } from "../types";
+
+const none = new Set<string>();
+// No feature is registered right now; cast a placeholder to exercise the logic.
+const feature = "test-feature" as Feature;
+
+describe("isFeatureEnabled", () => {
+  test("workspace off the allowlist", () => {
+    expect(isFeatureEnabled({ id: 987654321 }, feature, none)).toBe(false);
+  });
+
+  test("env override enables it for every workspace", () => {
+    expect(
+      isFeatureEnabled({ id: 987654321 }, feature, new Set([feature])),
+    ).toBe(true);
+  });
+});
+
+describe("requireFeature", () => {
+  test("throws ForbiddenError when disabled", () => {
+    const processEnv: Record<string, string | undefined> = process.env;
+    const saved = processEnv.OPENSTATUS_FEATURES;
+    delete processEnv.OPENSTATUS_FEATURES;
+    try {
+      const workspace = { id: 987654321 } as Workspace;
+      expect(() =>
+        requireFeature(
+          { workspace, actor: { type: "system", job: "test" } },
+          feature,
+        ),
+      ).toThrow(ForbiddenError);
+    } finally {
+      if (saved !== undefined) processEnv.OPENSTATUS_FEATURES = saved;
+    }
+  });
+});

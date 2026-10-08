@@ -3,17 +3,19 @@ import { maintenance } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
 import { ConflictError, InternalServiceError } from "../errors";
 import type { Maintenance } from "../types";
 import {
-  getLatestMaintenanceUpdate,
   getMaintenanceInWorkspace,
   updatePageComponentAssociations,
   validatePageComponentIds,
 } from "./internal";
 import { UpdateMaintenanceInput } from "./schemas";
-import { updateMaintenanceUpdate } from "./update-update";
 
 export async function updateMaintenance(args: {
   ctx: ServiceContext;
@@ -38,23 +40,14 @@ export async function updateMaintenance(args: {
       throw new ConflictError("End date must be after start date.");
     }
 
-    const updateValues: Record<string, unknown> = { updatedAt: new Date() };
+    const updateValues: Record<string, unknown> = {
+      updatedAt: new Date(),
+      updatedBy: tryGetActorUserId(ctx.actor),
+    };
     if (input.title !== undefined) updateValues.title = input.title;
+    if (input.message !== undefined) updateValues.message = input.message;
     if (input.from !== undefined) updateValues.from = input.from;
     if (input.to !== undefined) updateValues.to = input.to;
-
-    if (input.message !== undefined) {
-      const latest = await getLatestMaintenanceUpdate(tx, existing.id);
-      if (!latest) {
-        throw new InternalServiceError(
-          `maintenance ${existing.id} has no updates`,
-        );
-      }
-      await updateMaintenanceUpdate({
-        ctx: { ...ctx, db: tx },
-        input: { id: latest.id, message: input.message },
-      });
-    }
 
     if (input.pageComponentIds !== undefined) {
       const validated = await validatePageComponentIds({
@@ -63,13 +56,13 @@ export async function updateMaintenance(args: {
         pageComponentIds: input.pageComponentIds,
       });
 
-      // `pageId` follows the association set: a new non-empty set moves
-      // the maintenance to that page; an empty set nulls it. Matches the
-      // pattern established on status-report update and what the Connect
-      // `UpdateMaintenance` tests have encoded since the original handler.
-      // Mixed-page inputs are rejected upstream by
-      // `validatePageComponentIds` (all ids must share a page).
-      updateValues.pageId = validated.pageId;
+      // A non-empty set moves the maintenance to that page; an empty set
+      // only clears associations and keeps `pageId` (same as status-report).
+      // The dashboard edit sheet always sends the array, so nulling here
+      // orphaned every maintenance edited without components.
+      if (validated.pageId !== null) {
+        updateValues.pageId = validated.pageId;
+      }
 
       await updatePageComponentAssociations({
         tx,

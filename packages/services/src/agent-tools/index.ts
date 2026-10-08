@@ -1,7 +1,22 @@
 import type { z } from "zod";
 
+import { isFeatureEnabled } from "../features";
+import type { Workspace } from "../types";
 import { getAuditLogTool, listAuditLogsTool } from "./audit";
+import { getContentPageTool, searchContentTool } from "./content";
 import { getDocPageTool, searchDocsTool } from "./docs";
+import {
+  addIncidentNoteTool,
+  approvePostmortemTool,
+  declareIncidentTool,
+  draftPostmortemTool,
+  getIncidentTool,
+  getPostmortemTool,
+  listIncidentsTool,
+  resolveIncidentTool,
+  setIncidentStatusTool,
+  updateIncidentTool,
+} from "./incident";
 import {
   addMaintenanceUpdateTool,
   createMaintenanceTool,
@@ -31,7 +46,20 @@ import {
 import type { AnyAgentTool } from "./types";
 
 export { getAuditLogTool, listAuditLogsTool } from "./audit";
+export { getContentPageTool, searchContentTool } from "./content";
 export { getDocPageTool, searchDocsTool } from "./docs";
+export {
+  addIncidentNoteTool,
+  approvePostmortemTool,
+  declareIncidentTool,
+  draftPostmortemTool,
+  getIncidentTool,
+  getPostmortemTool,
+  listIncidentsTool,
+  resolveIncidentTool,
+  setIncidentStatusTool,
+  updateIncidentTool,
+} from "./incident";
 export {
   addMaintenanceUpdateTool,
   createMaintenanceTool,
@@ -92,6 +120,16 @@ export const agentTools = {
   add_status_report_update: addStatusReportUpdateTool,
   update_status_report: updateStatusReportTool,
   resolve_status_report: resolveStatusReportTool,
+  list_incidents: listIncidentsTool,
+  get_incident: getIncidentTool,
+  declare_incident: declareIncidentTool,
+  update_incident: updateIncidentTool,
+  resolve_incident: resolveIncidentTool,
+  set_incident_status: setIncidentStatusTool,
+  add_incident_note: addIncidentNoteTool,
+  get_postmortem: getPostmortemTool,
+  draft_postmortem: draftPostmortemTool,
+  approve_postmortem: approvePostmortemTool,
   list_maintenances: listMaintenancesTool,
   create_maintenance: createMaintenanceTool,
   add_maintenance_update: addMaintenanceUpdateTool,
@@ -109,6 +147,8 @@ export const agentTools = {
   get_audit_log: getAuditLogTool,
   search_docs: searchDocsTool,
   get_doc_page: getDocPageTool,
+  search_content: searchContentTool,
+  get_content_page: getContentPageTool,
 } satisfies Record<string, AnyAgentTool>;
 
 // Multi-flag confirmation UX should be a modal, not 2^N buttons. Fail
@@ -125,6 +165,14 @@ for (const tool of Object.values(agentTools) as AnyAgentTool[]) {
       `agent-tools: "${tool.name}" declares extraFlags but no applyFlags.`,
     );
   }
+}
+
+/** Whether a tool is offered in this workspace (feature-gated tools are hidden). */
+export function isAgentToolAvailable(
+  tool: AnyAgentTool,
+  workspace: Pick<Workspace, "id">,
+): boolean {
+  return !tool.feature || isFeatureEnabled(workspace, tool.feature);
 }
 
 /**

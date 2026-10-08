@@ -1,3 +1,4 @@
+import { createMonitor } from "@openstatus/db/src/test/factories";
 import { afterEach, expect, mock, test } from "@openstatus/test-utils";
 
 import { app } from "@/index";
@@ -183,4 +184,59 @@ test("trigger monitor with multiple regions should return result id", async () =
   const result = TriggerSchema.safeParse(json);
   expect(result.success).toBe(true);
   expect(json.resultId).toBeDefined();
+});
+
+test("trigger ICMP monitor is rejected by the legacy v1 API", async () => {
+  const icmpMonitor = await createMonitor(1, {
+    jobType: "icmp",
+    url: "1.1.1.1",
+    active: true,
+    regions: "ams",
+    periodicity: "10m",
+  });
+
+  mockFetch.mockReturnValue(
+    Promise.resolve(new Response(null, { status: 200 })),
+  );
+
+  const res = await app.request(`/v1/monitor/${icmpMonitor.id}/trigger`, {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+  });
+
+  expect(res.status).toBe(400);
+
+  const json = await res.json();
+  expect(json.message).toContain("not supported by the v1 API");
+
+  // Rejected before any probe leaves the process.
+  expect(mockFetch.mock.calls.length).toBe(0);
+});
+
+test("trigger DNS monitor is rejected by the legacy v1 API", async () => {
+  const dnsMonitor = await createMonitor(1, {
+    jobType: "dns",
+    url: "openstatus.dev",
+    active: true,
+    regions: "ams",
+    periodicity: "10m",
+  });
+
+  mockFetch.mockReturnValue(
+    Promise.resolve(new Response(null, { status: 200 })),
+  );
+
+  const res = await app.request(`/v1/monitor/${dnsMonitor.id}/trigger`, {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+  });
+
+  expect(res.status).toBe(400);
+  expect(mockFetch.mock.calls.length).toBe(0);
 });

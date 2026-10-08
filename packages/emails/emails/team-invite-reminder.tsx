@@ -29,7 +29,7 @@ const TeamInviteReminderEmail = () => {
         Hit reply if you have questions — happy to help.
         <br />
         <br />
-        Thibault Le Ouay Ducasse, co-founder of OpenStatus
+        Thibault Le Ouay Ducasse, co-founder of openstatus
         <br />
       </Body>
     </Html>

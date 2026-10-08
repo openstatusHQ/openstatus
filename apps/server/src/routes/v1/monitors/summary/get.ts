@@ -2,6 +2,7 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
+import { cacheKeys } from "@/libs/cache-keys";
 import { redis, tb } from "@/libs/clients";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 
@@ -57,7 +58,9 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
       });
     }
 
-    const cache = await redis.get<SummarySchema[]>(`${id}-daily-stats`);
+    const cache = await redis.get<SummarySchema[]>(
+      cacheKeys.monitorDailyStats(id),
+    );
 
     if (cache) {
       // c.get("event").cache_hit = true;
@@ -70,7 +73,7 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
         ? await tb.legacy_httpStatus45d({ monitorId: id })
         : await tb.legacy_tcpStatus45d({ monitorId: id });
 
-    await redis.set(`${id}-daily-stats`, res.data, { ex: 600 });
+    await redis.set(cacheKeys.monitorDailyStats(id), res.data, { ex: 600 });
 
     return c.json({ data: res.data }, 200);
   });

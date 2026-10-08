@@ -391,3 +391,41 @@ describe("AtlassianFetcher", () => {
     });
   });
 });
+
+describe("AtlassianFetcher maintenance indicator", () => {
+  it("maps the maintenance indicator to severity none and under_maintenance", async () => {
+    const fetcher = new AtlassianFetcher();
+    const entry: StatusPageEntry = {
+      id: "test",
+      name: "Test",
+      url: "https://test.com",
+      status_page_url: "https://test.statuspage.io",
+      provider: "atlassian-statuspage",
+      industry: ["saas"],
+    };
+    installMockFetch(() =>
+      Promise.resolve({
+        ok: true,
+        json: async () => ({
+          page: {
+            id: "123",
+            name: "Test",
+            url: "https://test.statuspage.io",
+            timezone: "Europe/Berlin",
+            updated_at: "2026-09-10T13:01:07.723+02:00",
+          },
+          status: {
+            indicator: "maintenance",
+            description: "Service Under Maintenance",
+          },
+        }),
+      } as Response),
+    );
+
+    const result = await runFetcher(fetcher, entry);
+
+    expect(result.severity).toBe("none");
+    expect(result.status).toBe("under_maintenance");
+    expect(result.description).toBe("Service Under Maintenance");
+  });
+});

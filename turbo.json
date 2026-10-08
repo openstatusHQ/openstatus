@@ -14,7 +14,13 @@
       "env": [
         "\\*",
         "RESEND_API_KEY",
-        "\\!NEXT_PUBLIC_GIT_\\*",
+        // Framework inference pulls every NEXT_PUBLIC_* into the hash of any
+        // package that depends on next; these Vercel system vars change on every
+        // deploy, so without the negations nothing ever cache-hits.
+        "!NEXT_PUBLIC_VERCEL_GIT_*",
+        "!NEXT_PUBLIC_VERCEL_URL",
+        "!NEXT_PUBLIC_VERCEL_BRANCH_URL",
+        "!NEXT_PUBLIC_VERCEL_DEPLOYMENT_ID",
         "DATABASE_URL",
         "DATABASE_AUTH_TOKEN",
         "TINY_BIRD_API_KEY",

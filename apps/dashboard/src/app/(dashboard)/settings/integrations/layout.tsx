@@ -18,7 +18,7 @@ export default async function Layout({
   const queryClient = getQueryClient();
   await Promise.all([
     queryClient.prefetchQuery(trpc.integrationRouter.list.queryOptions()),
-    queryClient.prefetchQuery(trpc.workspace.get.queryOptions()),
+    queryClient.prefetchQuery(trpc.oauth.listGrants.queryOptions()),
   ]);
 
   return (

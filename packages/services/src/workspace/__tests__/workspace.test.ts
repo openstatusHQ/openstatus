@@ -1,5 +1,9 @@
 import { eq } from "@openstatus/db";
 import {
+  monitor,
+  notification,
+  page,
+  pageComponent,
   selectWorkspaceSchema,
   statusReport,
   workspace,
@@ -22,7 +26,7 @@ import { ForbiddenError } from "../../errors";
 import {
   getWorkspace,
   getWorkspaceByStripeId,
-  getWorkspaceWithUsage,
+  getWorkspaceUsage,
   listWorkspaces,
   updateWorkspaceName,
   updateWorkspacePlan,
@@ -47,19 +51,18 @@ describe("getWorkspace", () => {
   });
 });
 
-describe("getWorkspaceWithUsage", () => {
-  test("attaches a zero-or-positive usage block", async () => {
+describe("getWorkspaceUsage", () => {
+  test("returns a zero-or-positive count for every key", async () => {
     await withTestTransaction(async (tx) => {
-      const result = await getWorkspaceWithUsage({
+      const result = await getWorkspaceUsage({
         ctx: { ...teamCtx, db: tx },
       });
-      expect(result.id).toBe(teamCtx.workspace.id);
 
       // Iterate the usage object *before* any `toMatchObject` call —
       // the `toMatchObject` implementation mutates the received
       // object in place, replacing number fields with the
       // `expect.any(Number)` asymmetric-matcher stub on the expected
-      // side. Subsequent reads of `result.usage.<key>` then return the
+      // side. Subsequent reads of `result.<key>` then return the
       // matcher object (typeof "object"), not the original count. Do
       // the value-shape + non-negative check first.
       for (const key of [
@@ -70,13 +73,13 @@ describe("getWorkspaceWithUsage", () => {
         "statusReports",
         "checks",
       ] as const) {
-        const value = result.usage[key];
+        const value = result[key];
         expect(typeof value).toBe("number");
         if (typeof value === "number") {
           expect(value).toBeGreaterThanOrEqual(0);
         }
       }
-      expect(result.usage.checks).toBe(0);
+      expect(result.checks).toBe(0);
     });
   });
 
@@ -87,10 +90,121 @@ describe("getWorkspaceWithUsage", () => {
         status: "investigating",
         title: "svc-ws-test-status-report",
       });
-      const result = await getWorkspaceWithUsage({
+      const result = await getWorkspaceUsage({
         ctx: { ...teamCtx, db: tx },
       });
-      expect(result.usage.statusReports).toBeGreaterThanOrEqual(1);
+      expect(result.statusReports).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  // The usage block is six independent counts rather than a relational read;
+  // each one must move by exactly the number of rows inserted.
+  test("each count moves by exactly the rows added", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const workspaceId = teamCtx.workspace.id;
+      const before = await getWorkspaceUsage({ ctx });
+
+      await tx.insert(monitor).values([
+        { workspaceId, url: "https://a.example.dev", name: "svc-ws-usage-1" },
+        { workspaceId, url: "https://b.example.dev", name: "svc-ws-usage-2" },
+      ]);
+      await tx.insert(notification).values({
+        workspaceId,
+        name: "svc-ws-usage-notif",
+        provider: "email",
+        data: JSON.stringify({ email: "usage@openstatus.dev" }),
+      });
+      const [pageRow] = await tx
+        .insert(page)
+        .values({
+          workspaceId,
+          title: "svc-ws-usage-page",
+          description: "",
+          slug: `svc-ws-usage-${workspaceId}`,
+          customDomain: "",
+        })
+        .returning();
+      if (!pageRow) throw new Error("page insert returned no row");
+      await tx.insert(pageComponent).values([
+        {
+          workspaceId,
+          pageId: pageRow.id,
+          type: "static",
+          name: "svc-ws-usage-c1",
+          order: 0,
+        },
+        {
+          workspaceId,
+          pageId: pageRow.id,
+          type: "static",
+          name: "svc-ws-usage-c2",
+          order: 1,
+        },
+      ]);
+      await tx.insert(statusReport).values({
+        workspaceId,
+        status: "investigating",
+        title: "svc-ws-usage-report",
+      });
+
+      const after = await getWorkspaceUsage({ ctx });
+      expect(after.monitors).toBe(before.monitors + 2);
+      expect(after.notifications).toBe(before.notifications + 1);
+      expect(after.pages).toBe(before.pages + 1);
+      expect(after.pageComponents).toBe(before.pageComponents + 2);
+      expect(after.statusReports).toBe(before.statusReports + 1);
+      expect(after.checks).toBe(0);
+    });
+  });
+
+  test("excludes soft-deleted monitors from the monitor count", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const workspaceId = teamCtx.workspace.id;
+      const before = (await getWorkspaceUsage({ ctx })).monitors;
+
+      await tx.insert(monitor).values({
+        workspaceId,
+        url: "https://deleted.example.dev",
+        name: "svc-ws-usage-deleted",
+        deletedAt: new Date(),
+      });
+
+      const after = (await getWorkspaceUsage({ ctx })).monitors;
+      expect(after).toBe(before);
+    });
+  });
+
+  test("does not count another workspace's rows", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const before = await getWorkspaceUsage({ ctx });
+
+      const [foreign] = await tx
+        .insert(workspace)
+        .values({
+          slug: `svc-ws-usage-foreign-${teamCtx.workspace.id}`,
+          name: "Foreign",
+          stripeId: `svc-ws-usage-stripe-${teamCtx.workspace.id}`,
+          plan: "team",
+        })
+        .returning();
+      if (!foreign) throw new Error("workspace insert returned no row");
+      await tx.insert(monitor).values({
+        workspaceId: foreign.id,
+        url: "https://foreign.example.dev",
+        name: "svc-ws-usage-foreign-monitor",
+      });
+      await tx.insert(statusReport).values({
+        workspaceId: foreign.id,
+        status: "investigating",
+        title: "svc-ws-usage-foreign-report",
+      });
+
+      const after = await getWorkspaceUsage({ ctx });
+      expect(after.monitors).toBe(before.monitors);
+      expect(after.statusReports).toBe(before.statusReports);
     });
   });
 });
@@ -221,6 +335,35 @@ async function insertPlanWorkspace(
 }
 
 describe("updateWorkspacePlan", () => {
+  test("writes trialEndsAt only when given", async () => {
+    await withTestTransaction(async (tx) => {
+      const ws = await insertPlanWorkspace(tx, {
+        plan: "free",
+        slug: "svc-plan-trial",
+      });
+      const ctx = { ...makeSystemCtx(ws, { job: "signup-trial" }), db: tx };
+      const trialEndsAt = new Date("2027-01-15T00:00:00Z");
+      const base = {
+        plan: "starter" as const,
+        subscriptionId: "sub_trial",
+        paidUntil: trialEndsAt,
+        endsAt: trialEndsAt,
+        limits: getLimits("starter"),
+      };
+      const read = () =>
+        tx.select().from(workspace).where(eq(workspace.id, ws.id)).get();
+
+      await updateWorkspacePlan({ ctx, input: { ...base, trialEndsAt } });
+      expect((await read())?.trialEndsAt).toEqual(trialEndsAt);
+
+      await updateWorkspacePlan({ ctx, input: base });
+      expect((await read())?.trialEndsAt).toEqual(trialEndsAt);
+
+      await updateWorkspacePlan({ ctx, input: { ...base, trialEndsAt: null } });
+      expect((await read())?.trialEndsAt).toBeNull();
+    });
+  });
+
   test("writes the new plan + limits and audits the change", async () => {
     await withTestTransaction(async (tx) => {
       const ws = await insertPlanWorkspace(tx, {

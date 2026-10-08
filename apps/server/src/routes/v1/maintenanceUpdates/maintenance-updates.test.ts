@@ -1,3 +1,5 @@
+import { db, eq } from "@openstatus/db";
+import { maintenance } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
 
@@ -9,37 +11,65 @@ const headers = {
 };
 
 test("maintenance update REST CRUD", async () => {
-  const created = await app.request("/v1/maintenance_update", {
+  const from = new Date(Date.now() + 60 * 60 * 1000);
+  const to = new Date(from.getTime() + 60 * 60 * 1000);
+  const parentRes = await app.request("/v1/maintenance", {
     method: "POST",
     headers,
     body: JSON.stringify({
-      maintenanceId: 1,
-      message: "REST maintenance update",
-      notify: false,
+      title: "REST update parent",
+      message: "announcement",
+      from: from.toISOString(),
+      to: to.toISOString(),
+      pageId: 1,
     }),
   });
-  expect(created.status).toBe(200);
-  const update = await created.json();
+  expect(parentRes.status).toBe(200);
+  const parent = await parentRes.json();
 
-  const fetched = await app.request(`/v1/maintenance_update/${update.id}`, {
-    headers,
-  });
-  expect(fetched.status).toBe(200);
+  try {
+    const created = await app.request("/v1/maintenance_update", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        maintenanceId: parent.id,
+        message: "REST maintenance update",
+        notify: false,
+      }),
+    });
+    expect(created.status).toBe(200);
+    const update = await created.json();
 
-  const edited = await app.request(`/v1/maintenance_update/${update.id}`, {
-    method: "PUT",
-    headers,
-    body: JSON.stringify({ message: "Edited REST maintenance update" }),
-  });
-  expect(edited.status).toBe(200);
-  expect((await edited.json()).message).toBe("Edited REST maintenance update");
+    const fetched = await app.request(`/v1/maintenance_update/${update.id}`, {
+      headers,
+    });
+    expect(fetched.status).toBe(200);
 
-  const deleted = await app.request(`/v1/maintenance_update/${update.id}`, {
-    method: "DELETE",
-    headers,
-  });
-  expect(deleted.status).toBe(200);
-  expect(await deleted.json()).toEqual({ success: true });
+    const edited = await app.request(`/v1/maintenance_update/${update.id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({ message: "Edited REST maintenance update" }),
+    });
+    expect(edited.status).toBe(200);
+    expect((await edited.json()).message).toBe(
+      "Edited REST maintenance update",
+    );
+
+    // the announcement is not a mirror of the timeline
+    const parentAgain = await app.request(`/v1/maintenance/${parent.id}`, {
+      headers,
+    });
+    expect((await parentAgain.json()).message).toBe("announcement");
+
+    const deleted = await app.request(`/v1/maintenance_update/${update.id}`, {
+      method: "DELETE",
+      headers,
+    });
+    expect(deleted.status).toBe(200);
+    expect(await deleted.json()).toEqual({ success: true });
+  } finally {
+    await db.delete(maintenance).where(eq(maintenance.id, parent.id));
+  }
 });
 
 test("maintenance update REST requires authentication", async () => {

@@ -7,5 +7,6 @@ export * from "@openstatus/subscriptions-real";
 import { subscriptionSpies as spies } from "./state.ts";
 
 export const dispatchStatusReportUpdate = spies.dispatchStatusReportUpdate;
+export const dispatchMaintenance = spies.dispatchMaintenance;
 export const dispatchMaintenanceUpdate = spies.dispatchMaintenanceUpdate;
 export const getChannel = () => spies.getChannel;

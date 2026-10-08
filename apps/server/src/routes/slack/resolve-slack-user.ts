@@ -1,0 +1,156 @@
+import { getLogger } from "@logtape/logtape";
+import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
+import type { ServiceContext } from "@openstatus/services";
+import {
+  findMemberIdByEmail,
+  getMemberDisplayName,
+} from "@openstatus/services/member";
+import {
+  createSlackUserMapping,
+  getSlackUserMapping,
+} from "@openstatus/services/slack-user";
+import type { WebClient } from "@slack/web-api";
+
+import type { MentionNames } from "./rich-text";
+
+const logger = getLogger(["api-server", "slack", "resolve-user"]);
+
+/**
+ * One `users.info` serves both the email match and the fallback name. Links
+ * the Slack user to the member on an email match, so merely being mentioned
+ * in a pinned message can create the mapping; it is the same rule applied
+ * when they act themselves.
+ */
+function isUserNotFound(err: unknown): boolean {
+  const code = (err as { data?: { error?: string } })?.data?.error;
+  return code === "user_not_found" || code === "users_not_found";
+}
+
+async function lookupSlackMember(args: {
+  workspace: Workspace;
+  teamId: string;
+  slackUserId: string;
+  slack: WebClient;
+  /** Rethrow a failed lookup instead of answering "unlinked". */
+  strict?: boolean;
+}): Promise<{ userId: number | null; profileName: string | null }> {
+  const { workspace, teamId, slackUserId, slack } = args;
+  if (!teamId || !slackUserId) return { userId: null, profileName: null };
+
+  const ctx: ServiceContext = {
+    workspace,
+    actor: { type: "system", job: "slack-user-automap" },
+  };
+  let profileName: string | null = null;
+  try {
+    const linked = await getSlackUserMapping({
+      ctx,
+      input: { teamId, slackUserId },
+    });
+    if (linked !== null) return { userId: linked, profileName };
+
+    const info = await slack.users.info({ user: slackUserId });
+    profileName =
+      info.user?.profile?.display_name ||
+      info.user?.real_name ||
+      info.user?.name ||
+      null;
+    const email = info.user?.profile?.email;
+    if (!email) return { userId: null, profileName };
+    const userId = await findMemberIdByEmail({ ctx, input: { email } });
+    if (userId === null) return { userId: null, profileName };
+    await createSlackUserMapping({
+      ctx,
+      input: { teamId, slackUserId, userId },
+    });
+    return { userId, profileName };
+  } catch (err) {
+    // A user Slack no longer knows is unlinked for good; anything else
+    // (rate limit, DB) is a hiccup the caller may want to retry.
+    if (args.strict && !isUserNotFound(err)) throw err;
+    logger.warn("slack user resolution failed", {
+      workspaceId: workspace.id,
+      teamId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return { userId: null, profileName };
+  }
+}
+
+/**
+ * The openstatus member linked to a Slack user, or `null`. A missing link is
+ * created on the spot when the Slack profile email matches exactly one member.
+ * With `strict`, a failed lookup throws instead of passing for "unlinked".
+ */
+export async function resolveSlackMember(args: {
+  workspace: Workspace;
+  teamId: string;
+  slackUserId: string;
+  slack: WebClient;
+  strict?: boolean;
+}): Promise<number | null> {
+  return (await lookupSlackMember(args)).userId;
+}
+
+// A pinned message rarely mentions more than a handful of people; Slack
+// rate-limits `users.info`/`conversations.info`, so look them up a few at a time.
+const MAX_MENTIONS = 20;
+const LOOKUP_CONCURRENCY = 5;
+
+async function forEachBounded<T>(
+  items: T[],
+  fn: (item: T) => Promise<void>,
+): Promise<void> {
+  for (let i = 0; i < items.length; i += LOOKUP_CONCURRENCY) {
+    await Promise.all(items.slice(i, i + LOOKUP_CONCURRENCY).map(fn));
+  }
+}
+
+/**
+ * Names for the users and channels a message mentions: a linked member's
+ * openstatus name, else the Slack profile name, else nothing (the caller
+ * keeps the raw id). Lookups that fail are dropped, never thrown.
+ */
+export async function resolveSlackMentionNames(args: {
+  workspace: Workspace;
+  teamId: string;
+  slack: WebClient;
+  users: string[];
+  channels: string[];
+}): Promise<MentionNames> {
+  const { workspace, teamId, slack } = args;
+  const ctx: ServiceContext = {
+    workspace,
+    actor: { type: "system", job: "slack-user-automap" },
+  };
+  const users = new Map<string, string>();
+  const channels = new Map<string, string>();
+
+  await Promise.all([
+    forEachBounded(args.users.slice(0, MAX_MENTIONS), async (slackUserId) => {
+      const { userId, profileName } = await lookupSlackMember({
+        workspace,
+        teamId,
+        slackUserId,
+        slack,
+      });
+      const memberName =
+        userId === null
+          ? null
+          : await getMemberDisplayName({ ctx, input: { userId } }).catch(
+              () => null,
+            );
+      const name = memberName ?? profileName;
+      if (name) users.set(slackUserId, name);
+    }),
+    forEachBounded(args.channels.slice(0, MAX_MENTIONS), async (channelId) => {
+      const res = await slack.conversations
+        .info({ channel: channelId })
+        .catch(() => undefined);
+      const name = res?.channel?.name;
+      if (name) channels.set(channelId, name);
+    }),
+  ]);
+
+  return { users, channels };
+}

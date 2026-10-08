@@ -38,7 +38,7 @@ export async function handleExternalIncidentsPruneCron(c: Context) {
           void cronCompleted();
         }),
       ),
-      Effect.catchAll((e) =>
+      Effect.catch((e) =>
         Effect.sync(() => {
           logger.error("external-incidents-prune tick errored: {message}", {
             message: e.message,

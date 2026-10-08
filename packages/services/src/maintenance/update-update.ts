@@ -3,13 +3,15 @@ import { maintenanceUpdate } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
 import { InternalServiceError } from "../errors";
 import type { MaintenanceUpdate } from "../types";
-import {
-  getMaintenanceUpdateInWorkspace,
-  syncMaintenanceMessage,
-} from "./internal";
+import { touchMaintenance } from "./add-update";
+import { getMaintenanceUpdateInWorkspace } from "./internal";
 import { UpdateMaintenanceUpdateInput } from "./schemas";
 
 export async function updateMaintenanceUpdate(args: {
@@ -19,6 +21,7 @@ export async function updateMaintenanceUpdate(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = UpdateMaintenanceUpdateInput.parse(args.input);
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   return withTransaction(ctx, async (tx) => {
     const existing = await getMaintenanceUpdateInWorkspace({
@@ -27,7 +30,10 @@ export async function updateMaintenanceUpdate(args: {
       workspaceId: ctx.workspace.id,
     });
 
-    const values: Record<string, unknown> = { updatedAt: new Date() };
+    const values: Partial<MaintenanceUpdate> = {
+      updatedAt: new Date(),
+      updatedBy: actorUserId,
+    };
     if (input.message !== undefined) values.message = input.message;
     if (input.date !== undefined) values.date = input.date;
 
@@ -43,7 +49,7 @@ export async function updateMaintenanceUpdate(args: {
       );
     }
 
-    await syncMaintenanceMessage(tx, existing.maintenanceId);
+    await touchMaintenance(tx, existing.maintenanceId, actorUserId);
 
     await emitAudit(tx, ctx, {
       action: "maintenance_update.update",

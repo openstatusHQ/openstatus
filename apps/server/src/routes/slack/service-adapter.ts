@@ -6,6 +6,7 @@ import {
 import type { ServiceContext } from "@openstatus/services";
 
 import type { PendingAction } from "./confirmation-store";
+import type { SlackActor } from "./require-slack-member";
 
 /**
  * Build a `ServiceContext` for a Slack-originated action. Loads the
@@ -14,8 +15,7 @@ import type { PendingAction } from "./confirmation-store";
  */
 export async function toServiceCtx(args: {
   pending: PendingAction;
-  slackUserId: string;
-  teamId: string | undefined;
+  actor: SlackActor;
   requestId?: string;
 }): Promise<ServiceContext> {
   const row = await db
@@ -28,14 +28,9 @@ export async function toServiceCtx(args: {
       `slack: workspace ${args.pending.workspaceId} not found at action execute time`,
     );
   }
-  const workspace = selectWorkspaceSchema.parse(row);
   return {
-    workspace,
-    actor: {
-      type: "slack",
-      teamId: args.teamId ?? "",
-      slackUserId: args.slackUserId,
-    },
+    workspace: selectWorkspaceSchema.parse(row),
+    actor: args.actor,
     requestId: args.requestId,
   };
 }

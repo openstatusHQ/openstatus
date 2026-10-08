@@ -1,11 +1,9 @@
-VERSION 0
+TOKEN "endpoint__dns_metrics_global_1d__v0_endpoint_read_0694" READ
 
-TAGS "dns"
-
-NODE endpoint
+NODE endopint
 SQL >
 
-    %
+%
     SELECT
         round(min(latency), 0) as minLatency,
         round(max(latency), 0) as maxLatency,
@@ -22,5 +20,6 @@ SQL >
         AND timestamp >= toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL 1 DAY, 3))
     GROUP BY monitorId
 
+TYPE endpoint
 
-TYPE ENDPOINT
+

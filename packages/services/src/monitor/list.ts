@@ -10,7 +10,7 @@ import {
   sql,
 } from "@openstatus/db";
 import {
-  incidentTable,
+  monitorIncidentTable,
   monitor,
   monitorTag,
   monitorTagsToMonitors,
@@ -18,7 +18,7 @@ import {
   notificationsToMonitors,
   privateLocation,
   privateLocationToMonitors,
-  selectIncidentSchema,
+  selectMonitorIncidentSchema,
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
@@ -27,7 +27,7 @@ import {
 
 import type { DB, ServiceContext } from "../context";
 import type {
-  Incident,
+  MonitorIncident,
   Monitor,
   MonitorTag,
   Notification,
@@ -38,12 +38,12 @@ import { GetMonitorInput, ListMonitorsInput } from "./schemas";
 
 export type MonitorListItem = Monitor & {
   tags: MonitorTag[];
-  incidents: Incident[];
+  incidents: MonitorIncident[];
 };
 
 export type MonitorWithRelations = Monitor & {
   tags: MonitorTag[];
-  incidents: Incident[];
+  incidents: MonitorIncident[];
   notifications: Notification[];
   privateLocations: PrivateLocation[];
 };
@@ -92,14 +92,14 @@ async function enrichMonitorsBatch(
       .all(),
     db
       .select()
-      .from(incidentTable)
+      .from(monitorIncidentTable)
       .where(
         and(
-          inArray(incidentTable.monitorId, ids),
+          inArray(monitorIncidentTable.monitorId, ids),
           // Scope to caller's workspace — defence-in-depth in case an
           // incident.monitorId somehow points cross-workspace. The
           // `incident.monitorId` FK doesn't enforce workspace ownership.
-          eq(incidentTable.workspaceId, workspaceId),
+          eq(monitorIncidentTable.workspaceId, workspaceId),
         ),
       )
       .all(),
@@ -151,10 +151,10 @@ async function enrichMonitorsBatch(
     else tagsByMonitor.set(row.monitorId, [tag]);
   }
 
-  const incidentsByMonitor = new Map<number, Incident[]>();
+  const incidentsByMonitor = new Map<number, MonitorIncident[]>();
   for (const row of incidentRows) {
     if (row.monitorId == null) continue;
-    const incident = selectIncidentSchema.parse(row);
+    const incident = selectMonitorIncidentSchema.parse(row);
     const arr = incidentsByMonitor.get(row.monitorId);
     if (arr) arr.push(incident);
     else incidentsByMonitor.set(row.monitorId, [incident]);
@@ -200,28 +200,32 @@ export async function listMonitors(args: {
   ];
   const whereClause = and(...conditions);
 
-  const [countRow, rows] = await Promise.all([
-    db
+  const rows = await db
+    .select()
+    .from(monitor)
+    .where(whereClause)
+    .orderBy(
+      input.order === "asc" ? asc(monitor.active) : desc(monitor.active),
+      input.order === "asc" ? asc(monitor.createdAt) : desc(monitor.createdAt),
+    )
+    .limit(input.limit)
+    .offset(input.offset)
+    .all();
+
+  // A short page is the last page, so the total is already known and the
+  // extra `count(*)` is only paid when a full page comes back — or when an
+  // empty page leaves it ambiguous whether we ran off the end. The tRPC
+  // `list` procedure discards `totalSize` entirely.
+  let totalSize = input.offset + rows.length;
+  if (rows.length === input.limit || (rows.length === 0 && input.offset > 0)) {
+    const countRow = await db
       .select({ count: sql<number>`count(*)` })
       .from(monitor)
       .where(whereClause)
-      .get(),
-    db
-      .select()
-      .from(monitor)
-      .where(whereClause)
-      .orderBy(
-        input.order === "asc" ? asc(monitor.active) : desc(monitor.active),
-        input.order === "asc"
-          ? asc(monitor.createdAt)
-          : desc(monitor.createdAt),
-      )
-      .limit(input.limit)
-      .offset(input.offset)
-      .all(),
-  ]);
+      .get();
+    totalSize = countRow?.count ?? totalSize;
+  }
 
-  const totalSize = countRow?.count ?? 0;
   const enriched = await enrichMonitorsBatch(db, rows, ctx.workspace.id);
   // `list` only exposes tags + incidents to match the tRPC `list` shape.
   const items: MonitorListItem[] = enriched.map(

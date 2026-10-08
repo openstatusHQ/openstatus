@@ -77,8 +77,12 @@ export const blobRouter = createTRPCRouter({
         buffer = sanitizedBuffer;
       }
 
+      // Re-uploading a file with the same name must not collide: since
+      // @vercel/blob 1.0 the suffix is opt-in and `put` throws on an existing
+      // pathname.
       const blob = await put(`${opts.ctx.workspace.slug}/${filename}`, buffer, {
         access: "public",
+        addRandomSuffix: true,
       });
 
       return blob;

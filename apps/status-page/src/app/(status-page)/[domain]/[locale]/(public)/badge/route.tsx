@@ -42,6 +42,13 @@ const SIZE: Record<string, { width: number; height: number }> = {
   lg: { width: 200, height: 56 },
   xl: { width: 240, height: 68 },
 };
+
+const TEXT_SIZE: Record<string, string> = {
+  sm: "text-sm",
+  md: "text-base",
+  lg: "text-lg",
+  xl: "text-xl",
+};
 export async function GET(
   req: NextRequest,
   props: { params: Promise<{ domain: string }> },
@@ -51,18 +58,16 @@ export async function GET(
   const theme = req.nextUrl.searchParams.get("theme");
   const size = req.nextUrl.searchParams.get("size");
   const s = SIZE[size ?? "sm"] ?? SIZE.sm;
+  const textSize = TEXT_SIZE[size ?? "sm"] ?? TEXT_SIZE.sm;
   const { label, color } = statusDictionary[status];
   const light = "border-gray-200 text-gray-700 bg-white";
   const dark = "border-gray-800 text-gray-300 bg-gray-900";
 
   return new ImageResponse(
     <div
-      tw={`flex items-center justify-center rounded-md border px-3 py-1
-        ${size === "sm" && "text-sm"}${size === "md" && "text-md"} ${
-          size === "lg" && "text-lg"
-        } ${size === "xl" && "text-xl"} ${!size && "text-sm"} ${
-          theme === "dark" ? dark : light
-        }`}
+      tw={`flex items-center justify-center rounded-md border px-3 py-1 ${textSize} ${
+        theme === "dark" ? dark : light
+      }`}
       style={{ ...s }}
     >
       {label}

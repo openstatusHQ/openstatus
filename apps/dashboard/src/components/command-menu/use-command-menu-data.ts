@@ -29,6 +29,10 @@ export function useCommandMenuData({ open }: { open: boolean }) {
   const { data: maintenances } = useQuery(
     trpc.maintenance.list.queryOptions(undefined, { enabled: open }),
   );
+  // Server order is already open → mitigated → newest declared.
+  const { data: incidents } = useQuery(
+    trpc.incident.list.queryOptions(undefined, { enabled: open }),
+  );
 
   const otherWorkspaces =
     workspaces?.filter((w) => w.slug !== workspace?.slug) ?? [];
@@ -55,6 +59,7 @@ export function useCommandMenuData({ open }: { open: boolean }) {
   const pageTitleById = new Map(statusPages?.map((p) => [p.id, p.title]) ?? []);
 
   return {
+    incidents,
     monitors,
     statusPages,
     statusReports,

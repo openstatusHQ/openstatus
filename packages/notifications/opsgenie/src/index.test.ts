@@ -1,9 +1,9 @@
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
+import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 
-import { sendAlert, sendDegraded, sendTest } from "./index";
+import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("OpsGenie Notifications", () => {
   let fetchMock: Stub<typeof globalThis>;
@@ -132,6 +132,80 @@ describe("OpsGenie Notifications", () => {
     const body = JSON.parse(callArgs[1].body);
     expect(body.details.severity).toBe("degraded");
     expect(body.message).toBe("API Health Check is degraded");
+  });
+
+  for (const { region, message, url } of [
+    {
+      region: "us",
+      message: "Service recovered",
+      url: "https://api.opsgenie.com/v2/alerts/monitor-1/close?identifierType=alias",
+    },
+    {
+      region: "eu",
+      message: undefined,
+      url: "https://api.eu.opsgenie.com/v2/alerts/monitor-1/close?identifierType=alias",
+    },
+  ] as const) {
+    test(`Recovery closes the monitor alias in ${region}`, async () => {
+      fetchMock.restore();
+      fetchMock = stub(globalThis, "fetch", () =>
+        Promise.resolve(new Response(null, { status: 202 })),
+      );
+
+      await sendRecovery({
+        // @ts-expect-error
+        monitor: createMockMonitor(),
+        notification: selectNotificationSchema.parse(
+          createMockNotification(region),
+        ),
+        statusCode: 200,
+        message,
+        cronTimestamp: Date.now(),
+      });
+
+      assertSpyCalls(fetchMock, 1);
+      const [requestUrl, options] = fetchMock.calls[0].args;
+      expect(requestUrl).toBe(url);
+      expect(options.method).toBe("POST");
+      expect(options.headers["Content-Type"]).toBe("application/json");
+      expect(options.headers.Authorization).toBe("GenieKey test-api-key-123");
+      expect(JSON.parse(options.body)).toEqual({ source: "OpenStatus" });
+    });
+  }
+
+  test("Recovery rejects an unsuccessful close response", async () => {
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
+      Promise.resolve(new Response(null, { status: 503 })),
+    );
+
+    await expect(
+      sendRecovery({
+        // @ts-expect-error
+        monitor: createMockMonitor(),
+        notification: selectNotificationSchema.parse(createMockNotification()),
+        message: "Service recovered",
+        cronTimestamp: Date.now(),
+      }),
+    ).rejects.toThrow("503");
+    assertSpyCalls(fetchMock, 1);
+  });
+
+  test("Recovery propagates a rejected close request", async () => {
+    const error = new Error("Connection reset");
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () => Promise.reject(error));
+
+    await expect(
+      sendRecovery({
+        // @ts-expect-error
+        monitor: createMockMonitor(),
+        notification: selectNotificationSchema.parse(createMockNotification()),
+        message: "Service recovered",
+        cronTimestamp: Date.now(),
+      }),
+    ).rejects.toBe(error);
+    assertSpyCalls(fetchMock, 1);
   });
 
   test("Handle fetch error gracefully", async () => {

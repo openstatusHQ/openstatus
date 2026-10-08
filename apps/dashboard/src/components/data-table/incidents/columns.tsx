@@ -7,13 +7,14 @@ import { formatDistanceStrict } from "date-fns";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
+import { DeclareFromRow } from "@/components/incidents/declare-from-row";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
-type Incident = RouterOutputs["incident"]["list"][number];
+type Incident = RouterOutputs["monitorIncident"]["list"][number];
 
-export const columns: ColumnDef<Incident>[] = [
+const baseColumns: ColumnDef<Incident>[] = [
   {
     id: "monitor",
     accessorFn: (row) => row.monitor.name,
@@ -72,11 +73,31 @@ export const columns: ColumnDef<Incident>[] = [
       return <TableCellNumber value={value} />;
     },
   },
-  {
-    id: "actions",
-    cell: ({ row }) => <DataTableRowActions row={row} />,
-    meta: {
-      cellClassName: "w-8",
-    },
-  },
 ];
+
+const declareColumn: ColumnDef<Incident> = {
+  id: "declare",
+  header: () => null,
+  cell: ({ row }) =>
+    row.original.resolvedAt ? null : (
+      <DeclareFromRow
+        title={`${row.original.monitor.name} is down`}
+        startedAt={row.original.startedAt}
+        source={{ type: "monitor_incident", id: row.original.id }}
+      />
+    ),
+  enableSorting: false,
+  meta: {
+    cellClassName: "w-[90px] text-right",
+  },
+};
+
+const actionsColumn: ColumnDef<Incident> = {
+  id: "actions",
+  cell: ({ row }) => <DataTableRowActions row={row} />,
+  meta: {
+    cellClassName: "w-8",
+  },
+};
+
+export const columns = [...baseColumns, declareColumn, actionsColumn];

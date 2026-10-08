@@ -12,7 +12,7 @@ faq:
   - question: "How do I communicate partial degradation percentages to users?"
     answer: "Be specific: '50% success rate - retry usually works' or '10% error rate - most requests succeeding.' Avoid vague terms like 'some' or 'many.' Percentages help users assess their likelihood of being affected and whether retrying makes sense."
   - question: "What if I don't know which feature is causing issues?"
-    answer: "Start with what you know: 'We're investigating reports of errors. Some users may be affected.' Then update as you learn more: 'We've confirmed the issue is with [specific feature].' Narrow the scope as quickly as possible to reduce user uncertainty."
+    answer: "Start with the symptom you can confirm, not a hedge: 'We're investigating elevated error rates on checkout. Next update in 30 minutes.' State what you have actually observed and when you will report again, then narrow it as you learn more: 'We've confirmed the issue is with [specific feature].' Avoid 'some users may be affected' — it commits to nothing and reads as evasion."
 ---
 
 Use this template when specific features are degraded or unavailable, but the core service remains operational. Helps users understand what's working and what isn't.
@@ -364,3 +364,33 @@ Thank you for your patience while we resolved this issue.
 - Use **Database Performance** if degradation is caused by database issues
 - Use **Network Connectivity** if some regions can't access the feature
 - Use **Deployment Rollback** if a recent deployment caused the degradation
+
+## Related
+
+This template is one of several in the [incident communication guide](/guides/incident-communication), which covers update cadence by severity, what to avoid saying, and the other scenario templates.
+
+## Frequently asked questions
+
+<Details summary="When is something 'degraded' vs a full outage?">
+
+Use degraded when the feature still works partially (e.g., 50% success rate, slower than normal, or intermittent failures). Use outage when the feature is completely unavailable (100% failure rate). Clear distinction helps users set expectations.
+
+</Details>
+
+<Details summary="Should I list all working features or just the broken ones?">
+
+For major features, list both. Users need to know what still works so they can continue their workflow. For minor features, focus on what's broken and state 'all other features operating normally.' The feature impact matrix format works well for complex degradations.
+
+</Details>
+
+<Details summary="How do I communicate partial degradation percentages to users?">
+
+Be specific: '50% success rate - retry usually works' or '10% error rate - most requests succeeding.' Avoid vague terms like 'some' or 'many.' Percentages help users assess their likelihood of being affected and whether retrying makes sense.
+
+</Details>
+
+<Details summary="What if I don't know which feature is causing issues?">
+
+Start with the symptom you can confirm, not a hedge: 'We're investigating elevated error rates on checkout. Next update in 30 minutes.' State what you have actually observed and when you will report again, then narrow it as you learn more: 'We've confirmed the issue is with [specific feature].' Avoid 'some users may be affected' — it commits to nothing and reads as evasion.
+
+</Details>

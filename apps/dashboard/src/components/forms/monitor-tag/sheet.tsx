@@ -49,7 +49,10 @@ export function FormSheetMonitorTag({
           <FormCard className="flex-1 overflow-auto rounded-none border-none">
             <FormCardContent>
               <FormMonitorTag
-                onSubmit={onSubmit}
+                onSubmit={async (values) => {
+                  await onSubmit(values);
+                  setOpen(false);
+                }}
                 defaultValues={defaultValues}
                 id="tags-form"
                 className="my-4"

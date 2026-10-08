@@ -9,10 +9,12 @@ import {
   buildSlackTools,
   buildTool,
   deriveDraftSchema,
+  draftToolDescription,
   executeRegistryAction,
   getRegistryTool,
   isSlackToolDraft,
 } from "./registry-runner";
+import { buildSystemPrompt } from "./system-prompt";
 
 const fakeCtx = {
   workspace: { id: 1 },
@@ -146,6 +148,34 @@ describe("buildSlackTools", () => {
   test("deriveDraftSchema is a no-op for tools without extraFlags", () => {
     const t = agentTools.update_status_report;
     expect(deriveDraftSchema(t)).toBe(t.inputSchema);
+  });
+
+  test("destructive tools are described as drafting, not executing", () => {
+    for (const name of Object.keys(agentTools)) {
+      const t = agentTools[name as keyof typeof agentTools] as AnyAgentTool;
+      if (!t.destructive) continue;
+      const description = tools[name].description ?? "";
+      expect(description, name).toContain("DOES NOT EXECUTE");
+      expect(description, name).toContain("Approve");
+      // The registry's own wording must survive — it carries the id-resolution
+      // rules the model needs to build a valid call.
+      expect(description, name).toContain(t.description);
+    }
+  });
+
+  test("read tools keep the registry description verbatim", () => {
+    expect(tools.list_status_pages.description).toBe(
+      agentTools.list_status_pages.description,
+    );
+  });
+
+  test("draftToolDescription names extraFlags so the model won't ask about them", () => {
+    const withFlag = draftToolDescription(agentTools.create_status_report);
+    expect(withFlag).toContain("`notify`");
+    expect(withFlag).toContain("never ask about it");
+    // update_status_report has no notify path, so no flag sentence.
+    const withoutFlag = draftToolDescription(agentTools.update_status_report);
+    expect(withoutFlag).not.toContain("never ask about it");
   });
 
   test("read tools expose the full registry schema", () => {
@@ -317,7 +347,10 @@ describe("buildTool draft split", () => {
   async function runExecute(t: AnyAgentTool) {
     const built = buildTool(t, fakeCtx);
     if (!built.execute) throw new Error("expected an execute fn");
-    return built.execute({ value: 7 }, { toolCallId: "t", messages: [] });
+    return built.execute(
+      { value: 7 },
+      { toolCallId: "t", messages: [], context: {} },
+    );
   }
 
   test("persists raw input but enriches a separate displayInput", async () => {
@@ -339,5 +372,17 @@ describe("buildTool draft split", () => {
     if (!isSlackToolDraft(result)) throw new Error("expected a draft");
     expect(result.input).toEqual({ value: 7 });
     expect(result.displayInput).toEqual({ value: 7 });
+  });
+});
+
+describe("buildSystemPrompt coverage", () => {
+  // buildSlackTools hands the model every registry tool; a tool the prompt
+  // never mentions is one the model won't reach for (or will misuse).
+  test("mentions every tool the Slack agent is given", () => {
+    const prompt = buildSystemPrompt("Acme Corp");
+    const missing = Object.keys(agentTools).filter(
+      (name) => !new RegExp(`\\b${name}\\b`).test(prompt),
+    );
+    expect(missing).toEqual([]);
   });
 });

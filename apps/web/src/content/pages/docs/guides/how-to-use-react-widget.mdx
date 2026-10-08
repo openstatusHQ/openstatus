@@ -1,7 +1,7 @@
 ---
 category: Guides
 title: How to Use openstatus React Widget
-description: Add an openstatus status widget to your React or Next.js app with the @openstatus/react package, as a server or client component.
+description: Add an openstatus status widget to your React or Next.js app with the @openstatus/react package as a React Server Component, or build your own with the typed fetch helper.
 ---
 
 Install the [npm](https://www.npmjs.com/package/@openstatus/react) package:
@@ -32,7 +32,20 @@ It will automatically attach the slug to the href to allow the user to open a ne
 
 #### With Tailwind CSS
 
-```ts
+The widget is styled with Tailwind utility classes, so Tailwind has to scan the published package
+for them.
+
+**Tailwind v4** — add a `@source` directive to the CSS file that imports Tailwind:
+
+```css
+/* app/globals.css */
+@import "tailwindcss";
+@source "../node_modules/@openstatus/react/dist";
+```
+
+**Tailwind v3** — add the package to `content`:
+
+```js
 // tailwind.config.js
 module.exports = {
   content: [
@@ -69,3 +82,20 @@ async function CustomStatusWidget() {
   return <div>{/* customize */}</div>;
 }
 ```
+
+`getStatus` never throws: a network failure or a non-`2xx` response degrades to
+`{ status: "unknown" }` rather than bubbling an error into your page.
+
+### Pointing at a self-hosted API
+
+Both `getStatus` and `StatusWidget` call `https://api.openstatus.dev` by default. If you self-host
+openstatus, set `OPENSTATUS_API_URL` on the server — that is the only lever for `StatusWidget`,
+which takes just `slug` and `href`. `getStatus` additionally accepts the base URL as a second
+argument:
+
+```tsx
+const res = await getStatus("slug", "https://api.status.example.com");
+```
+
+The variable is read at request time and has no `NEXT_PUBLIC_` prefix, so a prebuilt image can be
+pointed at a different API without rebuilding.

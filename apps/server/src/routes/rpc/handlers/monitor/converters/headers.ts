@@ -43,26 +43,25 @@ export function parseOpenTelemetry(
 }
 
 // ============================================================
-// Proto to DB (for writes)
+// Proto to service input (for writes)
 // ============================================================
 
-/**
- * Convert proto Headers array to database JSON string.
- */
-export function headersToDbJson(headers: Headers[]): string | undefined {
+/** Strip the proto wrapper down to the `{key,value}[]` the services take. */
+export function protoHeadersToService(
+  headers: Headers[],
+): Array<{ key: string; value: string }> | undefined {
   if (headers.length === 0) {
     return undefined;
   }
 
-  return JSON.stringify(headers.map((h) => ({ key: h.key, value: h.value })));
+  return headers.map((h) => ({ key: h.key, value: h.value }));
 }
 
-/**
- * Convert OpenTelemetry config to database fields.
- */
-export function openTelemetryToDb(config: OpenTelemetryConfig | undefined): {
+export function protoOpenTelemetryToService(
+  config: OpenTelemetryConfig | undefined,
+): {
   otelEndpoint: string | undefined;
-  otelHeaders: string | undefined;
+  otelHeaders: Array<{ key: string; value: string }> | undefined;
 } {
   if (!config || !config.endpoint) {
     return {
@@ -73,6 +72,6 @@ export function openTelemetryToDb(config: OpenTelemetryConfig | undefined): {
 
   return {
     otelEndpoint: config.endpoint,
-    otelHeaders: headersToDbJson(config.headers),
+    otelHeaders: protoHeadersToService(config.headers),
   };
 }

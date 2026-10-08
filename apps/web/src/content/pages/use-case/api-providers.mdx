@@ -57,6 +57,32 @@ Let your API consumers subscribe via **email**, **RSS/Atom**, or **JSON** feeds.
 
 Host on `status.yourapi.com`. Your consumers expect it.
 
+## Frequently asked questions
+
+<Details summary="Why do API providers need a public status page?">
+
+Your API consumers build their products on top of your infrastructure. When your API is down, their products are down. A public status page reduces support tickets, builds trust, and shows enterprise customers you take reliability seriously.
+
+</Details>
+
+<Details summary="Can I show per-endpoint status?">
+
+Yes. You can create separate page components for each API endpoint or service. Group them by product area, region, or any logical structure. Each component shows its own uptime data independently.
+
+</Details>
+
+<Details summary="Can I use monitoring as code to manage monitors?">
+
+Yes. Define your monitors as YAML configuration and manage them with the openstatus CLI or Terraform provider. Version control your monitoring setup alongside your API code.
+
+</Details>
+
+<Details summary="How do API consumers subscribe to updates?">
+
+Your consumers can subscribe via email, RSS/Atom feeds, or JSON feeds. Many API providers embed the JSON feed into their own dashboards to show upstream status to their users.
+
+</Details>
+
 ---
 
 Give your API consumers the transparency they expect

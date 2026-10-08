@@ -73,6 +73,8 @@ A status-code pinger checks one thing: did the URL return 200? An MCP server can
 
 The handshake also captures the negotiated protocol version, which is the only reliable signal that an MCP server upgrade hasn't silently changed behaviour. If your server claims `2025-06-18` today and `2025-09-01` next week, you want to know before your users do.
 
+Which is the argument for not running this by hand. [openstatus uptime monitoring](/uptime-monitoring) runs the same JSON-RPC handshake on a schedule from 28 regions and alerts you when `initialize` starts failing, `tools/list` comes back empty, or the protocol version shifts under you — the failures your AI clients hit first and report last.
+
 ## Common failure modes
 
 - **Connection refused / DNS** — the URL is wrong, the server is down, or your firewall is in the way.

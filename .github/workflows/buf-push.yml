@@ -27,12 +27,12 @@ jobs:
           fetch-depth: 0
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: ⎔ Setup node
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 24.12.0
           cache: "pnpm"
 
       - name: 📥 Download deps

@@ -74,7 +74,7 @@ export function FormSheetMaintenanceCreate({
       onSuccess: (maintenance) => {
         if (maintenance.notifySubscribers) {
           sendMaintenanceUpdateMutation.mutate({
-            id: maintenance.initialUpdateId,
+            id: maintenance.id,
           });
         }
         // no-input prefix key — matches every maintenance.list query

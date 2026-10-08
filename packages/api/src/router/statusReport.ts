@@ -32,6 +32,7 @@ const createStatusReportTRPCInput = z.object({
   date: z.coerce.date(),
   message: z.string(),
   notifySubscribers: z.boolean().nullish(),
+  incidentId: z.number().int().optional(),
 });
 
 const createStatusReportUpdateTRPCInput = z.object({
@@ -57,7 +58,8 @@ const updateStatusTRPCInput = z.object({
   id: z.number(),
   pageComponents: z.array(z.number()).optional(),
   title: z.string(),
-  status: CreateStatusReportInput.shape.status,
+  // A defined status rewrites the latest update, so title-only edits omit it.
+  status: CreateStatusReportInput.shape.status.optional(),
 });
 
 export const statusReportRouter = createTRPCRouter({
@@ -77,6 +79,7 @@ export const statusReportRouter = createTRPCRouter({
             componentImpacts: input.componentImpacts ?? undefined,
             date: input.date,
             message: input.message,
+            incidentId: input.incidentId,
           },
         });
         // Notification is a separate, client-driven step

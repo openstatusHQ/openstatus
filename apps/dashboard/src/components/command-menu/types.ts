@@ -10,6 +10,7 @@ type CommandSheetContext = {
   maintenance: { pageId?: number };
   support: Record<never, never>;
   "status-report-update": { reportId: number };
+  "declare-incident": Record<never, never>;
 };
 
 export type CommandSheet = {

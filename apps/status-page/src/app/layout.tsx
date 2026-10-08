@@ -8,7 +8,6 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { TailwindIndicator } from "../components/tailwind-indicator";
 import { TRPCReactProvider } from "../lib/trpc/client";
-import { ogMetadata, twitterMetadata } from "./metadata";
 import { defaultMetadata } from "./metadata";
 
 const cal = LocalFont({
@@ -52,15 +51,7 @@ const commitMono = LocalFont({
   variable: "--font-commit-mono",
 });
 
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  twitter: {
-    ...twitterMetadata,
-  },
-  openGraph: {
-    ...ogMetadata,
-  },
-};
+export const metadata: Metadata = defaultMetadata;
 
 // export const dynamic = "error";
 

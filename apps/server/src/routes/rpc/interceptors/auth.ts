@@ -1,41 +1,18 @@
-import {
-  Code,
-  ConnectError,
-  type Interceptor,
-  createContextKey,
-} from "@connectrpc/connect";
-import type { Scope, Workspace } from "@openstatus/db/src/schema";
+import { Code, ConnectError, type Interceptor } from "@connectrpc/connect";
 import { nanoid } from "nanoid";
 
 import { lookupWorkspace, validateKey } from "../../../libs/middlewares/auth";
+import {
+  MISSING_CREDENTIALS_MESSAGE,
+  extractCredential,
+} from "../../../libs/middlewares/credentials";
+import { RPC_CONTEXT_KEY, type RpcContext } from "./context";
 
-/**
- * RPC context containing workspace and request information.
- * This is set by the auth interceptor and available to all handlers.
- */
-export interface RpcContext {
-  workspace: Workspace;
-  requestId: string;
-  /**
-   * Resolved API key identity. `id` is the stable key identifier (audit
-   * `actor_id`); `createdById` is the openstatus user who created the
-   * key (`api_key.created_by_id`, audit `actor_user_id`).
-   * `scopes` carries the access-control scopes for the resolved key —
-   * `requireScope` reads them inside service write verbs.
-   */
-  apiKey: { id: string; createdById?: number; scopes: Scope[] };
-}
-
-/**
- * Context key for storing RPC context in request context values.
- */
-export const RPC_CONTEXT_KEY = createContextKey<RpcContext | undefined>(
-  undefined,
-);
+export { RPC_CONTEXT_KEY, type RpcContext, getRpcContext } from "./context";
 
 /**
  * Authentication interceptor for ConnectRPC.
- * Validates the x-openstatus-key header and sets workspace context.
+ * Validates `x-openstatus-key` or a bearer token and sets workspace context.
  * Skips authentication for HealthService endpoints.
  */
 export function authInterceptor(): Interceptor {
@@ -45,16 +22,13 @@ export function authInterceptor(): Interceptor {
       return next(req);
     }
 
-    const apiKey = req.header.get("x-openstatus-key");
+    const credential = extractCredential(req.header);
 
-    if (!apiKey) {
-      throw new ConnectError(
-        "Missing 'x-openstatus-key' header",
-        Code.Unauthenticated,
-      );
+    if (!credential) {
+      throw new ConnectError(MISSING_CREDENTIALS_MESSAGE, Code.Unauthenticated);
     }
 
-    const { error, result } = await validateKey(apiKey);
+    const { error, result } = await validateKey(credential.token);
 
     if (error) {
       throw new ConnectError(error.message, Code.Unauthenticated);
@@ -96,20 +70,4 @@ export function authInterceptor(): Interceptor {
 
     return next(req);
   };
-}
-
-/**
- * Helper to get RPC context from handler context.
- */
-export function getRpcContext(ctx: {
-  values: { get: <T>(key: { id: symbol; defaultValue: T }) => T };
-}): RpcContext {
-  const rpcCtx = ctx.values.get(RPC_CONTEXT_KEY);
-  if (!rpcCtx) {
-    throw new ConnectError(
-      "RPC context not found - auth interceptor may not have run",
-      Code.Internal,
-    );
-  }
-  return rpcCtx;
 }

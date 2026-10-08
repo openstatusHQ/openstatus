@@ -21,9 +21,9 @@
       "import": "./src/maintenance/index.ts",
       "types": "./src/maintenance/index.ts"
     },
-    "./incident": {
-      "import": "./src/incident/index.ts",
-      "types": "./src/incident/index.ts"
+    "./monitor-incident": {
+      "import": "./src/monitor-incident/index.ts",
+      "types": "./src/monitor-incident/index.ts"
     },
     "./monitor": {
       "import": "./src/monitor/index.ts",
@@ -36,6 +36,10 @@
     "./page-component": {
       "import": "./src/page-component/index.ts",
       "types": "./src/page-component/index.ts"
+    },
+    "./page-component-group": {
+      "import": "./src/page-component-group/index.ts",
+      "types": "./src/page-component-group/index.ts"
     },
     "./page": {
       "import": "./src/page/index.ts",
@@ -65,6 +69,10 @@
       "import": "./src/api-key/index.ts",
       "types": "./src/api-key/index.ts"
     },
+    "./oauth": {
+      "import": "./src/oauth/index.ts",
+      "types": "./src/oauth/index.ts"
+    },
     "./chat-session": {
       "import": "./src/chat-session/index.ts",
       "types": "./src/chat-session/index.ts"
@@ -76,6 +84,10 @@
     "./import": {
       "import": "./src/import/index.ts",
       "types": "./src/import/index.ts"
+    },
+    "./incident": {
+      "import": "./src/incident/index.ts",
+      "types": "./src/incident/index.ts"
     },
     "./audit": {
       "import": "./src/audit/index.ts",
@@ -104,6 +116,18 @@
     "./private-location": {
       "import": "./src/private-location/index.ts",
       "types": "./src/private-location/index.ts"
+    },
+    "./slack-user": {
+      "import": "./src/slack-user/index.ts",
+      "types": "./src/slack-user/index.ts"
+    },
+    "./page-access": {
+      "import": "./src/page-access/index.ts",
+      "types": "./src/page-access/index.ts"
+    },
+    "./page-access/cookie-key": {
+      "import": "./src/page-access/cookie-key.ts",
+      "types": "./src/page-access/cookie-key.ts"
     },
     "./page-subscriber": {
       "import": "./src/page-subscriber/index.ts",
@@ -151,6 +175,7 @@
     "@openstatus/utils": "workspace:*",
     "@workos-inc/node": "catalog:",
     "effect": "catalog:",
+    "ip-cidr": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

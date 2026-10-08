@@ -1,10 +1,13 @@
 import {
+  Api,
   Settings,
   Copy,
   Duplicate,
   Globe,
   Network,
+  Speed,
   Server,
+  Terminal,
   Delete,
 } from "@openstatus/icons";
 
@@ -24,6 +27,16 @@ export const monitorTypes = [
     label: "DNS",
     icon: Server,
   },
+  {
+    id: "icmp",
+    label: "ICMP",
+    icon: Speed,
+  },
+  {
+    id: "grpc",
+    label: "gRPC",
+    icon: Api,
+  },
 ] as const;
 
 export const actions = [
@@ -37,6 +50,12 @@ export const actions = [
     id: "copy-id",
     label: "Copy ID",
     icon: Copy,
+    variant: "default" as const,
+  },
+  {
+    id: "copy-curl",
+    label: "Copy cURL",
+    icon: Terminal,
     variant: "default" as const,
   },
   {

@@ -188,25 +188,21 @@ export function StatusFeed({
   // Memoize the unified events array to prevent flicker on re-renders
   const unifiedEvents = useMemo<UnifiedEvent[]>(() => {
     return [
-      ...statusReports.map(
-        (report): UnifiedEvent => ({
-          id: report.id,
-          title: report.title,
-          type: "report",
-          startDate:
-            report.updates[report.updates.length - 1]?.date || new Date(),
-          data: report,
-        }),
-      ),
-      ...maintenances.map(
-        (maintenance): UnifiedEvent => ({
-          id: maintenance.id,
-          title: maintenance.title,
-          type: "maintenance",
-          startDate: maintenance.from,
-          data: maintenance,
-        }),
-      ),
+      ...statusReports.map((report): UnifiedEvent => ({
+        id: report.id,
+        title: report.title,
+        type: "report",
+        startDate:
+          report.updates[report.updates.length - 1]?.date || new Date(),
+        data: report,
+      })),
+      ...maintenances.map((maintenance): UnifiedEvent => ({
+        id: maintenance.id,
+        title: maintenance.title,
+        type: "maintenance",
+        startDate: maintenance.from,
+        data: maintenance,
+      })),
     ].sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
   }, [statusReports, maintenances]);
 

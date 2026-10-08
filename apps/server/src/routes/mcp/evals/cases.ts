@@ -51,6 +51,21 @@ export const cases: EvalCase[] = [
     expectedTool: "list_maintenances",
   },
 
+  // Managed incidents: internal, distinct from status reports
+  {
+    id: "select.declare_incident",
+    prompt:
+      "Declare an incident: checkout is failing for everyone, critical severity.",
+    expectedTool: "declare_incident",
+    requiredArgs: ["title", "severity"],
+  },
+  {
+    id: "prereq.note_lists_incidents_first",
+    prompt:
+      "Add a note to the checkout incident that we rolled back the deploy.",
+    expectedTool: "list_incidents",
+  },
+
   // Prereq compliance: must call list_status_pages first when creating
   {
     id: "prereq.create_report_lists_pages_first",

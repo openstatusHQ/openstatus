@@ -130,7 +130,7 @@ export function Client() {
               </MetricCardTitle>
             </MetricCardHeader>
             <MetricCardValue>
-              {summary.uptime === null ? "—" : `${summary.uptime.toFixed(2)}%`}
+              {summary.uptime === null ? "—" : `${summary.uptime.toFixed(3)}%`}
             </MetricCardValue>
           </MetricCard>
           <MetricCard>
@@ -169,7 +169,11 @@ export function Client() {
               />
             </div>
             <BillingOverlay>
-              <BillingOverlayButton onClick={() => setOpenDialog(true)}>
+              <BillingOverlayButton
+                data-track="paywall_viewed"
+                data-limit="uptime-history"
+                onClick={() => setOpenDialog(true)}
+              >
                 <Lock />
                 Upgrade
               </BillingOverlayButton>

@@ -1,0 +1,345 @@
+---
+title: "Kitchen sink"
+publishedAt: "2026-09-25"
+author: "openstatus"
+description: "Every content-page component rendered once, so drift is visible. Not indexed."
+category: "internal"
+seo:
+  noindex: true
+---
+
+Every component the home and product pages are built from, in the order they appear on a page. Compare against the page you are editing; if a cell here looks different from the same cell there, something forked.
+
+## Actions
+
+<Actions source="kitchen-sink">
+  <ButtonLink href="https://app.openstatus.dev" variant="default">Get started free</ButtonLink>
+  <ButtonLink href="/play/checker">Try the speed checker</ButtonLink>
+</Actions>
+
+## Demo
+
+Every `type` in `mdx-components/demo/index.tsx`, one per grid cell.
+
+<SrOnly>
+
+A demo renders nothing in the markdown representation. The `SrOnly` block next to it is its text alternative: visually hidden here, read by screen readers, plain copy in the markdown.
+
+</SrOnly>
+
+<Grid cols={1}>
+<div>
+
+**status-page**
+
+<Demo type="status-page" />
+
+</div>
+</Grid>
+
+<Grid>
+<div>
+
+**monitor**
+
+<Demo type="monitor" />
+
+</div>
+<div>
+
+**alert**
+
+<Demo type="alert" />
+
+</div>
+<div>
+
+**slack-agent**
+
+<Demo type="slack-agent" />
+
+</div>
+<div>
+
+**notify**
+
+<Demo type="notify" />
+
+</div>
+<div>
+
+**access**
+
+<Demo type="access" />
+
+</div>
+<div>
+
+**status-report**
+
+<Demo type="status-report" />
+
+</div>
+<div>
+
+**audit**
+
+<Demo type="audit" />
+
+</div>
+<div>
+
+**components**
+
+<Demo type="components" />
+
+</div>
+<div>
+
+**subscriptions**
+
+<Demo type="subscriptions" />
+
+</div>
+<div>
+
+**translations**
+
+<Demo type="translations" />
+
+</div>
+<div>
+
+**themes**
+
+<Demo type="themes" />
+
+</div>
+<div>
+
+**import**
+
+<Demo type="import" />
+
+</div>
+<div>
+
+**maintenance**
+
+<Demo type="maintenance" />
+
+</div>
+<div>
+
+**terminal**
+
+<Demo type="terminal" />
+
+</div>
+<div>
+
+**regions**
+
+<Demo type="regions" />
+
+</div>
+<div>
+
+**assertions**
+
+<Demo type="assertions" />
+
+</div>
+<div>
+
+**private-location**
+
+<Demo type="private-location" />
+
+</div>
+<div>
+
+**timing**
+
+<Demo type="timing" />
+
+</div>
+<div>
+
+**logs**
+
+<Demo type="logs" />
+
+</div>
+<div>
+
+**incident**
+
+<Demo type="incident" />
+
+</div>
+<div>
+
+**incident-declare**
+
+<Demo type="incident-declare" />
+
+</div>
+<div>
+
+**incident-channel**
+
+<Demo type="incident-channel" />
+
+</div>
+<div>
+
+**incident-status**
+
+<Demo type="incident-status" />
+
+</div>
+<div>
+
+**postmortem**
+
+<Demo type="postmortem" />
+
+</div>
+</Grid>
+
+## Section pattern
+
+<Grid variant="borderless">
+<div>
+
+Two sentences. The first says what happens, the second what it saves you.
+
+- [A short list of internal links](/status-page)
+- [Two to four of them](/uptime-monitoring)
+
+</div>
+<div>
+
+<Demo type="notify" />
+
+<SrOnly>
+
+What the demo shows, for screen readers and the `.md` representation of the page. Every section with a demo has one.
+
+</SrOnly>
+
+</div>
+</Grid>
+
+## Timeline
+
+<Timeline>
+
+<Grid variant="borderless">
+<div>
+
+<Eyebrow status="investigating">09:41</Eyebrow>
+
+### A step on the rail
+
+The eyebrow and heading open the text cell, so they stick with it. The marker takes the status-report color of the moment it describes.
+
+</div>
+<div>
+
+<Demo type="alert" />
+
+<SrOnly>
+
+The Slack alert at 09:41 for the failing Checkout API.
+
+</SrOnly>
+
+</div>
+</Grid>
+
+<Grid variant="borderless">
+<div>
+
+<Eyebrow>+6 months</Eyebrow>
+
+### A step without a status
+
+No `status` renders a hollow marker.
+
+</div>
+<div>
+
+<Demo type="audit" />
+
+<SrOnly>
+
+The incident's audit log.
+
+</SrOnly>
+
+</div>
+</Grid>
+
+</Timeline>
+
+## LogoCloud
+
+<LogoCloud />
+
+## Quote
+
+<Grid>
+<div>
+
+<Quote customer="twenty" />
+
+</div>
+<div>
+
+<Quote customer="traefik" />
+
+</div>
+</Grid>
+
+## Cards
+
+<Grid cols={4}>
+<div>
+
+**CLI**
+
+<Subtle>manage from your terminal</Subtle>
+
+</div>
+<div>
+
+**API**
+
+<Subtle>typed endpoints, OpenAPI spec</Subtle>
+
+</div>
+<div>
+
+**MCP server**
+
+<Subtle>Claude, ChatGPT or Cursor run it</Subtle>
+
+</div>
+<div>
+
+**Terraform**
+
+<Subtle>version monitors, status pages, notifications as HCL</Subtle>
+
+</div>
+</Grid>
+
+## Details
+
+<Details summary="A question" headingLevel={3}>
+
+An answer.
+
+</Details>

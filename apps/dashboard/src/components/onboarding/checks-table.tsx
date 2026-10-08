@@ -23,13 +23,11 @@ import { getColumns } from "@/components/data-table/response-logs/columns";
 import { Sheet } from "@/components/data-table/response-logs/data-table-sheet";
 import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
 
-// Use the wider `get`-shape so the row also satisfies the Sheet's input.
-// The column defs are typed against `list` shape, but every list field
-// is also present on `get`, so casting is safe.
+// The `get` shape, so the row also satisfies the Sheet's input.
 export type OnboardingChecksRow =
   RouterOutputs["tinybird"]["get"]["data"][number];
 
-const COLUMNS = getColumns([]) as unknown as ColumnDef<OnboardingChecksRow>[];
+const COLUMNS: ColumnDef<OnboardingChecksRow>[] = getColumns([]);
 
 export function OnboardingChecksTable({
   rows,

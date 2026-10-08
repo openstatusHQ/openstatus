@@ -1,7 +1,14 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
-import type { Addons } from "@openstatus/db/src/schema/plan/schema";
-import { getAddonPriceConfig } from "@openstatus/db/src/schema/plan/utils";
+import type {
+  Addons,
+  BillingInterval,
+} from "@openstatus/db/src/schema/plan/schema";
+import {
+  getAddonMaxQuantity,
+  getAddonPackSize,
+  getAddonPriceConfig,
+} from "@openstatus/db/src/schema/plan/utils";
 import { Check, Remove, Add } from "@openstatus/icons";
 import {
   AlertDialog,
@@ -19,7 +26,7 @@ import { ButtonGroup } from "@openstatus/ui/components/ui/button-group";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -41,6 +48,11 @@ interface PriceConfig {
   locale: string;
 }
 
+const QUANTITY_UNIT_LABEL: Partial<Record<keyof Addons, string>> = {
+  monitors: "monitors",
+  "status-pages": "status pages",
+};
+
 export function BillingAddons({
   label,
   description,
@@ -52,6 +64,14 @@ export function BillingAddons({
   const [currency] = useCookieState("x-currency", "USD");
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  // Addons are billed on the plan's interval, so a yearly plan pays the
+  // yearly addon price.
+  // Until it resolves the price is unknown: showing the monthly one to a
+  // yearly customer would misstate what they are charged.
+  const intervalQuery = useQuery(
+    trpc.stripeRouter.getBillingInterval.queryOptions(),
+  );
+  const interval: BillingInterval = intervalQuery.data ?? "monthly";
   const checkoutSessionMutation = useMutation(
     trpc.stripeRouter.addAddon.mutationOptions({
       onSuccess: () => {
@@ -61,16 +81,31 @@ export function BillingAddons({
       },
     }),
   );
+  const paymentMethodSetupMutation = useMutation(
+    trpc.stripeRouter.getPaymentMethodSetupSession.mutationOptions({
+      onSuccess: (url) => {
+        if (url) window.location.assign(url);
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
+  const isTrialing = workspace.trialDaysLeft !== null;
   const plan = workspace.plan;
+  const packSize = getAddonPackSize(addon);
+  const maxPacks = getAddonMaxQuantity(addon);
+  const unitLabel = QUANTITY_UNIT_LABEL[addon] ?? "units";
   const defaultLimit = allPlans[workspace.plan].limits[addon];
   const workspaceLimit = workspace.limits[addon];
   const defaultValue =
     typeof workspaceLimit === "number" && typeof defaultLimit === "number"
-      ? // current value - default value to evaluate the difference
-        workspaceLimit - defaultLimit
+      ? // packs held today; floored so a hand-edited limit that is not a whole
+        // number of packs still renders a sane count
+        Math.floor((workspaceLimit - defaultLimit) / packSize)
       : workspaceLimit;
   const [value, setValue] = useState<number | boolean>(defaultValue);
-  const price = getAddonPriceConfig(plan, addon, currency);
+  const price = intervalQuery.isSuccess
+    ? getAddonPriceConfig(plan, addon, currency, interval)
+    : null;
 
   // Reset value when modal opens
   useEffect(() => {
@@ -96,10 +131,23 @@ export function BillingAddons({
             return "Billing information updated";
           },
           error: (error) => {
-            if (isTRPCClientError(error)) {
-              return error.message;
+            if (!isTRPCClientError(error))
+              return { message: "Failed to update" };
+            if (error.data?.code === "PRECONDITION_FAILED") {
+              return {
+                message: error.message,
+                action: {
+                  label: "Add payment method",
+                  onClick: () =>
+                    paymentMethodSetupMutation.mutate({
+                      workspaceSlug: workspace.slug,
+                      successUrl: `${window.location.origin}/settings/billing?setup=true`,
+                      cancelUrl: `${window.location.origin}/settings/billing`,
+                    }),
+                },
+              };
             }
-            return "Failed to update";
+            return { message: error.message };
           },
         });
         await promise;
@@ -113,6 +161,8 @@ export function BillingAddons({
       ? defaultValue > 0
       : defaultValue !== defaultLimit;
   const isQuantity = typeof value === "number";
+  // Mirrors the server: a boolean submit toggles, so `true` means removing.
+  const isRemoval = typeof value === "boolean" ? value : value === 0;
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
@@ -124,19 +174,24 @@ export function BillingAddons({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-foreground font-mono text-sm">
-              {formatPrice(price)}
-              {isQuantity ? "/mo./each" : "/mo."}
+              {price
+                ? `${formatPrice(price)}${getPriceSuffix(isQuantity, packSize, interval)}`
+                : intervalQuery.isPending
+                  ? "Loading..."
+                  : "N/A"}
             </span>
             {hasAddon && !isQuantity ? (
               <Check className="text-success size-4" />
             ) : null}
-            {hasAddon && isQuantity ? (
-              <span className="text-success font-mono">+{defaultValue}</span>
+            {hasAddon && isQuantity && typeof defaultValue === "number" ? (
+              <span className="text-success font-mono">
+                +{defaultValue * packSize}
+              </span>
             ) : null}
           </div>
           <div className="col-span-2 flex items-center justify-end gap-1.5 lg:col-span-1">
             <AlertDialogTrigger asChild>
-              <Button size="sm" variant="secondary">
+              <Button size="sm" variant="secondary" disabled={!price}>
                 {getButtonLabel(hasAddon, value)}
               </Button>
             </AlertDialogTrigger>
@@ -147,16 +202,27 @@ export function BillingAddons({
         <AlertDialogHeader>
           <AlertDialogTitle>{label}</AlertDialogTitle>
           <AlertDialogDescription>
-            {getDialogDescription(label, price, value, hasAddon)}
+            {getDialogDescription(
+              label,
+              price,
+              value,
+              hasAddon,
+              packSize,
+              unitLabel,
+              interval,
+            )}
+            {isTrialing && !isRemoval
+              ? " Adding it ends your Starter trial and charges your card today."
+              : null}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        {isQuantity &&
-        typeof value === "number" &&
-        typeof defaultLimit === "number" ? (
+        {isQuantity && typeof value === "number" ? (
           <QuantityControl
             value={value}
             setValue={setValue}
-            defaultLimit={defaultLimit}
+            maxValue={maxPacks}
+            packSize={packSize}
+            unitLabel={unitLabel}
           />
         ) : null}
         <AlertDialogFooter>
@@ -182,12 +248,17 @@ export function BillingAddons({
 }
 
 // NOTE: could move to lib/formatter.ts
-function formatPrice(price: PriceConfig | null) {
+function formatAmount(price: PriceConfig | null, amount: number) {
   if (!price) return "N/A";
   return new Intl.NumberFormat(price.locale, {
     style: "currency",
     currency: price.currency,
-  }).format(price.value);
+  }).format(amount);
+}
+
+function formatPrice(price: PriceConfig | null) {
+  if (!price) return "N/A";
+  return formatAmount(price, price.value);
 }
 
 function getButtonLabel(
@@ -209,16 +280,33 @@ function getButtonLabel(
   return null;
 }
 
+function getPeriodSuffix(interval: BillingInterval) {
+  return interval === "yearly" ? "/yr." : "/mo.";
+}
+
+function getPriceSuffix(
+  isQuantity: boolean,
+  packSize: number,
+  interval: BillingInterval,
+) {
+  const period = getPeriodSuffix(interval);
+  if (!isQuantity) return period;
+  return packSize > 1 ? `${period}/pack of ${packSize}` : `${period}/each`;
+}
+
 function getDialogDescription(
   label: string,
   price: PriceConfig | null,
   value: number | boolean,
   hasAddon: boolean,
+  packSize: number,
+  unitLabel: string,
+  interval: BillingInterval,
 ) {
   const formattedPrice = formatPrice(price);
   const isBoolean = typeof value === "boolean";
   const isQuantity = typeof value === "number";
-  const priceSuffix = isQuantity ? "/mo./each" : "/mo.";
+  const priceSuffix = getPriceSuffix(isQuantity, packSize, interval);
 
   if (isBoolean) {
     if (hasAddon) {
@@ -228,37 +316,46 @@ function getDialogDescription(
   }
 
   if (isQuantity) {
-    return `${label} will be updated to ${value} on your next billing cycle. You will be charged ${formattedPrice}${priceSuffix} on your next billing cycle.`;
+    if (value === 0) {
+      return `${label} will be removed from your subscription. You will stop being charged for it on your next billing cycle.`;
+    }
+    const total = formatAmount(price, price ? price.value * value : 0);
+    return `Your workspace will get ${value * packSize} extra ${unitLabel}. You will be charged ${total}${getPeriodSuffix(interval)}, starting on your next billing cycle.`;
   }
 }
 
 function QuantityControl({
   value,
   setValue,
-  defaultLimit,
+  maxValue,
+  packSize,
+  unitLabel,
 }: {
   value: number;
   setValue: (value: number) => void;
-  defaultLimit: number | boolean;
+  maxValue: number | null;
+  packSize: number;
+  unitLabel: string;
 }) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = Number.parseInt(e.target.value);
-    if (Number.isNaN(newValue)) {
-      setValue(typeof defaultLimit === "number" ? defaultLimit : 0);
-    } else {
-      setValue(
-        Math.max(typeof defaultLimit === "number" ? defaultLimit : 0, newValue),
-      );
-    }
+  const clamp = (next: number) => {
+    const floored = Math.max(0, next);
+    return maxValue === null ? floored : Math.min(maxValue, floored);
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = Number.parseInt(e.target.value);
+    setValue(Number.isNaN(newValue) ? 0 : clamp(newValue));
+  };
+
+  const atMax = maxValue !== null && value >= maxValue;
+
   return (
-    <div className="flex items-center justify-center gap-2 py-2">
+    <div className="flex flex-col items-center gap-2 py-2">
       <ButtonGroup aria-label="Quantity" className="h-fit">
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setValue(value - 1)}
+          onClick={() => setValue(clamp(value - 1))}
           disabled={value <= 0}
         >
           <Remove />
@@ -269,16 +366,31 @@ function QuantityControl({
           className="w-16 text-right"
           step={1}
           min={0}
+          max={maxValue ?? undefined}
           onChange={handleChange}
         />
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setValue(value + 1)}
+          onClick={() => setValue(clamp(value + 1))}
+          disabled={atMax}
         >
           <Add />
         </Button>
       </ButtonGroup>
+      {atMax && maxValue !== null ? (
+        <p className="text-muted-foreground text-xs">
+          Need more than {maxValue * packSize} extra {unitLabel}?{" "}
+          <a
+            href="https://openstatus.dev/cal"
+            target="_blank"
+            rel="noreferrer"
+            className="text-foreground underline underline-offset-4"
+          >
+            Book a call
+          </a>
+        </p>
+      ) : null}
     </div>
   );
 }

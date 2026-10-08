@@ -10,6 +10,7 @@ if (!g.__subscriptionSpies) {
   const sendVerification = mock(() => Promise.resolve());
   g.__subscriptionSpies = {
     dispatchStatusReportUpdate: mock(() => Promise.resolve()),
+    dispatchMaintenance: mock(() => Promise.resolve()),
     dispatchMaintenanceUpdate: mock(() => Promise.resolve()),
     sendVerification,
     getChannel: {
@@ -34,6 +35,7 @@ if (!g.__tinybirdMockCalls) {
 
 export const subscriptionSpies = g.__subscriptionSpies as {
   dispatchStatusReportUpdate: ReturnType<typeof mock>;
+  dispatchMaintenance: ReturnType<typeof mock>;
   dispatchMaintenanceUpdate: ReturnType<typeof mock>;
   sendVerification: ReturnType<typeof mock>;
   getChannel: Record<string, unknown>;

@@ -152,13 +152,9 @@ export function generateOverview(
         mdUrl(`events/maintenance/${m.id}`),
       ].filter(Boolean);
       out.push(head.join(" · "));
-      const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
-      if (updates.length > 0) {
-        for (const update of updates) {
-          out.push(`  - ${formatDayTime(update.date)} — ${update.message}`);
-        }
-      } else if (m.message) {
-        out.push(`  ${m.message}`);
+      if (m.message) out.push(`  ${m.message}`);
+      for (const update of newestMaintenanceUpdates(m.maintenanceUpdates)) {
+        out.push(`  - ${formatDayTime(update.date)} — ${update.message}`);
       }
     }
     out.push("");
@@ -347,20 +343,16 @@ export function generateEventsList(
     }
   }
   for (const m of page.maintenances) {
-    const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
-    if (updates.length > 0) {
-      for (const update of updates) {
-        logRows.push({
-          timestamp: update.date,
-          label: "MAINTENANCE",
-          glyph: statusGlyph("info"),
-          ref: `maintenance/${m.id}`,
-          title: m.title,
-        });
-      }
-    } else {
+    logRows.push({
+      timestamp: m.from,
+      label: "MAINTENANCE",
+      glyph: statusGlyph("info"),
+      ref: `maintenance/${m.id}`,
+      title: m.title,
+    });
+    for (const update of newestMaintenanceUpdates(m.maintenanceUpdates)) {
       logRows.push({
-        timestamp: m.from,
+        timestamp: update.date,
         label: "MAINTENANCE",
         glyph: statusGlyph("info"),
         ref: `maintenance/${m.id}`,
@@ -464,13 +456,9 @@ export function generateEventsList(
         `### [${escapeLinkLabel(m.title)}](${mdUrl(`events/maintenance/${m.id}`)})`,
       );
       out.push(meta.join(" · "));
-      const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
-      if (updates.length > 0) {
-        for (const update of updates) {
-          out.push(`- ${formatDayTime(update.date)} — ${update.message}`);
-        }
-      } else if (m.message) {
-        out.push(m.message);
+      if (m.message) out.push(m.message);
+      for (const update of newestMaintenanceUpdates(m.maintenanceUpdates)) {
+        out.push(`- ${formatDayTime(update.date)} — ${update.message}`);
       }
       out.push("");
     }
@@ -597,6 +585,9 @@ export function generateMaintenance(
     out.push(`**Affected components:** ${components.join(", ")}\n`);
   }
 
+  out.push("## Details\n");
+  out.push(`${maintenance.message}\n`);
+
   const updates = newestMaintenanceUpdates(maintenance.maintenanceUpdates);
   if (updates.length > 0) {
     out.push("## Updates\n");
@@ -604,9 +595,6 @@ export function generateMaintenance(
       out.push(`### ${formatDayTime(update.date)}\n`);
       out.push(`${update.message}\n`);
     }
-  } else {
-    out.push("## Details\n");
-    out.push(`${maintenance.message}\n`);
   }
 
   return `${out.join("\n").trimEnd()}\n`;

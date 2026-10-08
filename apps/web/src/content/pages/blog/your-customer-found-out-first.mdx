@@ -97,3 +97,29 @@ None of this is exotic. It's just the difference between monitoring built to *kn
 This is why we build [openstatus](https://www.openstatus.dev): synthetic checks that run your actual transactions with real assertions, from regions all over the world, tied to a status page that's part of the incident flow instead of an afterthought. It's [open source](https://github.com/openstatusHQ/openstatus) — the checker, the dashboard, all of it — because "trust our monitoring" should not itself require blind trust.
 
 Your customers already monitor your product with every request they make. The only question is whether you find out before they tell you.
+
+## Frequently asked questions
+
+<Details summary="Why do outages get reported by customers before monitoring catches them?">
+
+Because most monitoring checks the wrong thing: a cached homepage instead of the login, checkout, or API paths customers actually use. A CDN-served 200 can stay green while every authenticated request fails.
+
+</Details>
+
+<Details summary="Is a 200 status code enough to consider a service up?">
+
+No. Error pages, maintenance pages, empty JSON responses, and broken backends frequently return 200. A meaningful check asserts on the response body and latency, not just the status code.
+
+</Details>
+
+<Details summary="Why should uptime checks run from multiple regions?">
+
+A single-region check tells you the service is reachable from that region — nothing more. DNS issues, routing problems, and regional provider outages routinely take a service down for one continent while it stays up for another.
+
+</Details>
+
+<Details summary="How does a status page reduce the damage of an outage?">
+
+Customers forgive incidents; they don't forgive silence. Publishing before the support tickets arrive turns 'they didn't even know' into 'they told me before I noticed' — and deflects the duplicate tickets while you fix the actual problem.
+
+</Details>

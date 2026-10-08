@@ -44,7 +44,10 @@ export async function GET(
     }
 
     const page = await queryClient.fetchQuery(
-      trpc.statusPage.get.queryOptions({ slug: domain }),
+      trpc.statusPage.get.queryOptions({
+        slug: domain,
+        pw: new URL(_request.url).searchParams.get("pw"),
+      }),
     );
     if (!page) return notFound();
 
@@ -84,14 +87,12 @@ export async function GET(
       const updates = [...(maintenance.maintenanceUpdates ?? [])].sort(
         (a, b) => b.date.getTime() - a.date.getTime(),
       );
-      const description =
-        updates.length > 0
-          ? updates
-              .map(
-                (update) => `${update.date.toISOString()}: ${update.message}`,
-              )
-              .join("\n\n")
-          : maintenance.message;
+      const description = [
+        maintenance.message,
+        ...updates.map(
+          (update) => `${update.date.toISOString()}: ${update.message}`,
+        ),
+      ].join("\n\n");
       feed.addItem({
         id: maintenanceUrl,
         title: `${statusLabel("maintenance")} - ${maintenance.title}`,

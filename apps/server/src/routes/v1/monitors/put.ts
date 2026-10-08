@@ -9,7 +9,7 @@ import { trackMiddleware } from "@/libs/middlewares";
 
 import type { monitorsApi } from "./index";
 import { MonitorSchema, ParamsSchema } from "./schema";
-import { getAssertions } from "./utils";
+import { assertSafeMonitorUrl, getAssertions } from "./utils";
 
 const putRoute = createRoute({
   method: "put",
@@ -98,6 +98,10 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         message:
           "Cannot change jobType. Please delete and create a new monitor instead.",
       });
+    }
+
+    if (input.url !== undefined) {
+      assertSafeMonitorUrl({ jobType: _monitor.jobType, url: input.url });
     }
 
     const { headers, regions, assertions, ...rest } = input;

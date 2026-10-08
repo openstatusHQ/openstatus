@@ -1,11 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { statusReportStatus } from "@openstatus/db/src/schema";
 import { pageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
-import { Calendar as CalendarIcon, Clock } from "@openstatus/icons";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Calendar } from "@openstatus/ui/components/ui/calendar";
+import { statusReportStatus } from "@openstatus/db/src/schema/status_reports/constants";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Form,
@@ -19,11 +16,6 @@ import {
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@openstatus/ui/components/ui/popover";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -34,16 +26,15 @@ import { TabsContent } from "@openstatus/ui/components/ui/tabs";
 import { TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { Tabs } from "@openstatus/ui/components/ui/tabs";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
-import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { format } from "date-fns";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { DateTimePicker } from "@/components/common/date-time-picker";
 import {
   EmptyStateContainer,
   EmptyStateTitle,
@@ -64,7 +55,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
   status: z.enum(statusReportStatus),
-  title: z.string().min(1, "Title is required.").max(256),
+  title: z.string().trim().min(1, "Title is required.").max(256),
   message: z.string(),
   date: z.date(),
   pageComponents: z.array(z.number()),
@@ -102,7 +93,6 @@ export function FormStatusReport({
 }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const mobile = useIsMobile();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
     resolver: zodResolver(defaultValues ? updateSchema : schema),
@@ -226,96 +216,15 @@ export function FormStatusReport({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Date</FormLabel>
-                    <Popover modal>
-                      <FormControl>
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className={cn(
-                              "w-[240px] pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground",
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP 'at' h:mm a")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                      </FormControl>
-                      <PopoverContent
-                        className="pointer-events-auto w-auto p-0"
-                        align="start"
-                        side={mobile ? "bottom" : "left"}
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={(selectedDate) => {
-                            if (!selectedDate) return;
-                            const newDate = new Date(selectedDate);
-                            newDate.setHours(
-                              field.value.getHours(),
-                              field.value.getMinutes(),
-                              field.value.getSeconds(),
-                              field.value.getMilliseconds(),
-                            );
-                            field.onChange(newDate);
-                          }}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                        <div className="border-t p-3">
-                          <div className="flex items-center gap-3">
-                            <Label htmlFor="time" className="text-xs">
-                              Enter time
-                            </Label>
-                            <div className="relative grow">
-                              <Input
-                                id="time"
-                                type="time"
-                                step="1"
-                                defaultValue={new Date()
-                                  .toTimeString()
-                                  .slice(0, 8)}
-                                className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                                onChange={(e) => {
-                                  try {
-                                    const timeValue = e.target.value;
-                                    if (!timeValue || !field.value) return;
-
-                                    const [hours, minutes, seconds] = timeValue
-                                      .split(":")
-                                      .map(Number);
-
-                                    const newDate = new Date(field.value);
-                                    newDate.setHours(
-                                      hours,
-                                      minutes,
-                                      seconds || 0,
-                                      0,
-                                    );
-
-                                    field.onChange(newDate);
-                                  } catch (error) {
-                                    console.error(error);
-                                  }
-                                }}
-                              />
-                              <div className="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50">
-                                <Clock size={16} aria-hidden="true" />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                    <FormControl>
+                      <DateTimePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        min={new Date("1900-01-01")}
+                        max={new Date()}
+                        className="w-[240px]"
+                      />
+                    </FormControl>
                     <FormDescription>
                       When the status report was created. Shown in your timezone
                       (

@@ -104,6 +104,8 @@ export default function Page() {
               body: data.body,
               active: data.active,
               assertions: data.assertions,
+              grpcService: data.grpcService,
+              grpcTls: data.grpcTls,
               saveCheck: data.saveCheck,
               skipCheck: data.skipCheck,
             });

@@ -29,9 +29,7 @@ test("invalid monitor id should return 404", async () => {
       "x-openstatus-key": "1",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      /* */
-    }),
+    body: JSON.stringify({/* */}),
   });
 
   expect(res.status).toBe(404);
@@ -43,9 +41,7 @@ test("no auth key should return 401", async () => {
     headers: {
       "content-type": "application/json",
     },
-    body: JSON.stringify({
-      /* */
-    }),
+    body: JSON.stringify({/* */}),
   });
 
   expect(res.status).toBe(401);

@@ -265,3 +265,27 @@ recurrence.
 - Use **API Service Disruption** if network issues primarily affect API calls
 - Use **Database Performance** if network latency affects database connections
 - Use **Security Incident** if connectivity issues are attack-related
+
+## Related
+
+This template is one of several in the [incident communication guide](/guides/incident-communication), which covers update cadence by severity, what to avoid saying, and the other scenario templates.
+
+## Frequently asked questions
+
+<Details summary="How do I identify which region or users are affected?">
+
+Use monitoring data from multiple geographic locations, check CDN provider dashboards, and review user reports by location. Tools like uptime monitors with multi-region checks can quickly identify geographic patterns in outages.
+
+</Details>
+
+<Details summary="Should I provide a workaround like a direct IP address?">
+
+Yes, if safe and practical. Direct IPs, alternate endpoints, or backup URLs can help users during CDN or DNS issues. Just ensure the workaround is secure and won't create additional problems once the primary issue is resolved.
+
+</Details>
+
+<Details summary="What if my CDN provider is having issues but hasn't acknowledged it?">
+
+You can still communicate transparently without waiting for your provider. Say 'We're experiencing connectivity issues that appear related to our CDN provider. We're investigating with them and will update you shortly.' Users care about your transparency, not your provider's timeline.
+
+</Details>

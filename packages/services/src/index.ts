@@ -42,8 +42,22 @@ export {
   emitAudit,
 } from "./audit";
 
-export { matchesScope, requireScope } from "./auth";
+export { matchesScope, requireRole, requireScope } from "./auth";
 
-export { assertWithinLimit, getPlanLimits, type LimitKey } from "./limits";
+export {
+  enabledFeatures,
+  FEATURES,
+  type Feature,
+  isFeatureEnabled,
+  requireFeature,
+} from "./features";
+
+export {
+  LIMIT_KEYS,
+  assertWithinLimit,
+  countWorkspaceUsage,
+  getPlanLimits,
+  type LimitKey,
+} from "./limits";
 
 export * from "./types";

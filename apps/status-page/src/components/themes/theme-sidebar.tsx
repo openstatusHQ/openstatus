@@ -1,17 +1,16 @@
 "use client";
 
 import {
-  Check,
   ChevronDown,
   Copy,
   Sidebar as SidebarIcon,
   Reset,
 } from "@openstatus/icons";
 import {
-  THEMES,
   type Theme,
-  type ThemeKey,
+  type ThemeExportFormat,
   type ThemeVarName,
+  serializeTheme,
 } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -24,6 +23,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@openstatus/ui/components/ui/dropdown-menu";
 import {
   InputGroup,
   InputGroupInput,
@@ -60,6 +65,9 @@ import { useEffect, useState } from "react";
 
 import { searchParamsParsers } from "../../app/(public)/search-params";
 import { recomputeStyles } from "../status-page/floating-button";
+import { ThemePromptButton } from "./theme-agent-actions";
+import { useThemeBuilder } from "./theme-builder-provider";
+import { ThemePasteDialog } from "./theme-paste-dialog";
 
 type ThemeBuilderColor = {
   label: string;
@@ -74,28 +82,20 @@ type ThemeBuilderCheckbox = {
   options: { value: string; label: boolean }[];
 };
 
-const THEME_BUILDER_INFO = {
-  id: {
-    label: "ID",
-    id: "id",
-    type: "text",
-  },
-  name: {
-    label: "Name",
-    id: "name",
-    type: "text",
-  },
-  author: {
-    label: "Author",
-    id: "author.name",
-    type: "text",
-  },
-  authorUrl: {
-    label: "Link",
-    id: "author.url",
-    type: "text",
-  },
-} as const;
+type ThemeInfoField = "id" | "name" | "author.name" | "author.url";
+
+const THEME_BUILDER_INFO: { id: ThemeInfoField; label: string }[] = [
+  { id: "id", label: "ID" },
+  { id: "name", label: "Name" },
+  { id: "author.name", label: "Author" },
+  { id: "author.url", label: "Link" },
+];
+
+const THEME_EXPORT_FORMATS: { id: ThemeExportFormat; label: string }[] = [
+  { id: "ts", label: "TypeScript file" },
+  { id: "json", label: "JSON" },
+  { id: "css", label: "CSS variables" },
+];
 
 const THEME_STYLE_BUILDER = {
   base: {
@@ -144,23 +144,37 @@ const THEME_STYLE_BUILDER = {
   },
 } satisfies Record<string, ThemeBuilderColor | ThemeBuilderCheckbox>;
 
-// Helper function to get nested property value from an object
-// oxlint-disable-next-line typescript/no-explicit-any
-function getNestedValue(obj: any, path: string): string | undefined {
-  const keys = path.split(".");
-  let value = obj;
-  for (const key of keys) {
-    if (value === undefined || value === null) return undefined;
-    value = value[key];
+function getInfo(theme: Theme, field: ThemeInfoField) {
+  switch (field) {
+    case "id":
+      return theme.id;
+    case "name":
+      return theme.name;
+    case "author.name":
+      return theme.author.name;
+    case "author.url":
+      return theme.author.url;
   }
-  return value;
+}
+
+function setInfo(theme: Theme, field: ThemeInfoField, value: string): Theme {
+  switch (field) {
+    case "id":
+      return { ...theme, id: value };
+    case "name":
+      return { ...theme, name: value };
+    case "author.name":
+      return { ...theme, author: { ...theme.author, name: value } };
+    case "author.url":
+      return { ...theme, author: { ...theme.author, url: value } };
+  }
 }
 
 export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
-  const [{ t, b }, setSearchParams] = useQueryStates(searchParamsParsers);
-  const [newTheme, setNewTheme] = useState<Theme>(THEMES[t]);
+  const [{ b }, setSearchParams] = useQueryStates(searchParamsParsers);
+  const { theme: newTheme, setTheme: setNewTheme, reset } = useThemeBuilder();
   const { resolvedTheme, setTheme } = useTheme();
-  const { copy, isCopied } = useCopyToClipboard();
+  const { copy } = useCopyToClipboard();
   const [isMounted, setIsMounted] = useState(false);
   const debouncedNewTheme = useDebounce(newTheme, 100);
   const { setOpen } = useSidebar();
@@ -168,10 +182,6 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  useEffect(() => {
-    setNewTheme(THEMES[t]);
-  }, [t]);
 
   useEffect(() => {
     if (b) {
@@ -182,8 +192,13 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
 
   useEffect(() => {
     if (!resolvedTheme || !isMounted) return;
-    recomputeStyles(debouncedNewTheme.id as ThemeKey, { ...debouncedNewTheme });
+    recomputeStyles(debouncedNewTheme.id, { ...debouncedNewTheme });
   }, [resolvedTheme, isMounted, debouncedNewTheme]);
+
+  function copyTheme(format: ThemeExportFormat) {
+    const label = THEME_EXPORT_FORMATS.find((f) => f.id === format)?.label;
+    copy(serializeTheme(newTheme, format), { withToast: `Copied ${label}` });
+  }
 
   return (
     <Sidebar side="right" {...props}>
@@ -196,7 +211,7 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 variant="ghost"
                 size="icon"
                 className="size-7"
-                onClick={() => setNewTheme(THEMES[t])}
+                onClick={reset}
               >
                 <span className="sr-only">Reset</span>
                 <Reset />
@@ -208,9 +223,29 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
           </Tooltip>
         </div>
       </SidebarHeader>
-      <SidebarContent>
-        <Collapsible key="info" defaultOpen className="group/collapsible">
+      <SidebarContent className="pb-2">
+        <Collapsible key="agent" defaultOpen className="group/collapsible">
           <SidebarGroup className="pt-2 pb-0">
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger>
+                Agent
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent className="space-y-2 px-2">
+                <p className="text-muted-foreground text-xs">
+                  Let your agent design the theme. The prompt carries the
+                  current configuration and the output format you can paste back
+                  here.
+                </p>
+                <ThemePromptButton size="sm" className="w-full" />
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
+        <Collapsible key="info" defaultOpen className="group/collapsible">
+          <SidebarGroup className="py-0">
             <SidebarGroupLabel asChild>
               <CollapsibleTrigger>
                 Information
@@ -220,8 +255,8 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {Object.entries(THEME_BUILDER_INFO).map(([key, config]) => (
-                    <SidebarMenuItem key={key}>
+                  {THEME_BUILDER_INFO.map((config) => (
+                    <SidebarMenuItem key={config.id}>
                       <SidebarMenuButton asChild>
                         <div>
                           <ButtonGroup className="w-full">
@@ -231,10 +266,11 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
                             <InputGroup className="h-7">
                               <InputGroupInput
                                 id={config.id}
-                                defaultValue={
-                                  newTheme
-                                    ? getNestedValue(newTheme, config.id)
-                                    : ""
+                                value={getInfo(newTheme, config.id)}
+                                onChange={(e) =>
+                                  setNewTheme((prev) =>
+                                    setInfo(prev, config.id, e.target.value),
+                                  )
                                 }
                               />
                             </InputGroup>
@@ -277,15 +313,9 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {Object.entries(THEME_STYLE_BUILDER).map(([key, config], index) => (
+        {Object.entries(THEME_STYLE_BUILDER).map(([key, config]) => (
           <Collapsible key={key} defaultOpen className="group/collapsible">
-            <SidebarGroup
-              className={cn(
-                index !== Object.entries(THEME_STYLE_BUILDER).length - 1
-                  ? "py-0"
-                  : "pt-0",
-              )}
-            >
+            <SidebarGroup className="py-0">
               <SidebarGroupLabel asChild>
                 <CollapsibleTrigger>
                   {config.label}
@@ -321,17 +351,28 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
       <SidebarFooter className="border-border border-t">
-        <Button
-          size="sm"
-          onClick={() => copy(JSON.stringify(newTheme), { withToast: false })}
-        >
-          {isCopied ? "Configuration Copied!" : "Copy Configuration"}
-          {isCopied ? (
-            <Check className="size-4" />
-          ) : (
-            <Copy className="size-4" />
-          )}
-        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <ThemePasteDialog variant="outline" size="sm" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm">
+                <Copy className="size-4" />
+                Copy
+                <ChevronDown className="size-3.5 opacity-70" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {THEME_EXPORT_FORMATS.map((format) => (
+                <DropdownMenuItem
+                  key={format.id}
+                  onSelect={() => copyTheme(format.id)}
+                >
+                  {format.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
@@ -449,10 +490,9 @@ export function SidebarTrigger({
         </Button>
       </TooltipTrigger>
       <TooltipContent side="left" className="flex items-center gap-2">
-        Toggle Sidebar{" "}
+        Toggle Sidebar
         <KbdGroup>
           <Kbd>⌘</Kbd>
-          <span>+</span>
           <Kbd>B</Kbd>
         </KbdGroup>
       </TooltipContent>

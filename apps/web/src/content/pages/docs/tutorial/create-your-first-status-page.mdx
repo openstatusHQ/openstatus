@@ -15,7 +15,7 @@ description: "A step-by-step tutorial to create and publish your first status pa
 
 In this tutorial, you'll create a public status page to communicate your service's health to users. A status page is a transparent way to show real-time uptime information and keep your users informed during incidents.
 
-By the end you'll have a public status page showing your service health, monitors displayed on the page, and a working understanding of the privacy and security options.
+By the end you'll have a public status page with a component for each service you want to show, and a working understanding of where custom domains and access control are configured.
 
 <Aside type="tip">
 Coming from another provider? openstatus can import components, incidents, maintenances, and subscribers from your existing setup. See the migration guides for [Atlassian Statuspage](/guides/migrate-from-atlassian-statuspage), [Better Stack](/guides/migrate-from-betterstack), [Instatus](/guides/migrate-from-instatus), or [Checkly](/guides/migrate-from-checkly) instead of building from scratch.
@@ -33,48 +33,63 @@ Navigate to the **Status Pages** page from the sidebar and click the **Create St
 />
 
 
-### 2. Configure the status page
+### 2. Name the page
 
-Fill in the basic details for your status page:
+The create form asks for four things, and only the first two are required:
 
-- **Title:** A name for your status page (e.g., "Acme Status" or "API Health")
-- **Slug:** The URL path for your status page (e.g., `acme` creates `acme.openstatus.dev`)
+- **Title** — a name for your status page (e.g. "Acme Status" or "API Health").
+- **Slug** — the subdomain your page is served from (e.g. `acme` creates `acme.openstatus.dev`).
+- **Icon** — an optional favicon shown in the browser tab.
+- **Description** — an optional line shown under the title on the public page.
 
-<Image
-    src="/docs/tutorial/create-status-page/create-status-page-2.png"
-    alt="Status page configuration form showing title, slug, and monitor selection"
-/>
+Submit, and you land on the page's **Settings** tab. Everything else — components, custom
+domain, access control, theme, locales — is configured from here on the page's own tabs.
 
-#### Add monitors
+### 3. Add components
 
-Select the monitors you want to display on your status page. Each monitor will show as a separate service with its own uptime bar. You can add multiple monitors to give users a complete picture of your infrastructure health.
+Open the **Components** tab and add a component for each service you want to show. A component
+is what your visitors see, and it comes in two kinds:
 
-#### Custom domain
+- **Monitor components** are linked to one of your monitors and track its status automatically.
+- **Static components** have no monitor behind them; you drive their status with status reports
+  and maintenance windows. Use these for third-party dependencies.
 
-You can use your own domain (e.g., `status.yourdomain.com`) instead of the default `*.openstatus.dev` subdomain. To set this up:
+Give the component a name your users will recognise — it does not have to match the monitor's
+internal name. See the [page components reference](/docs/reference/page-components) for groups,
+ordering, and how each event type affects a component's status.
 
-1. Enter your custom domain in the **Custom Domain** field
-2. Configure DNS records based on your domain type:
-   - **Subdomain** (e.g., `status.yourdomain.com`): Add a CNAME record pointing to `cname.vercel-dns.com`
-   - **Apex domain** (e.g., `yourdomain.com`): Add an A record pointing to `76.76.21.21`
-3. Wait for DNS propagation (usually a few minutes, up to 48 hours)
-4. If your domain is already registered on another Vercel project, you may need to add a **TXT record** to verify ownership. The dashboard will show the exact TXT values if this step is required.
+**Checkpoint:** open your status page (the link is at the top of the page's settings). You
+should see each component listed with its uptime bar.
 
-The dashboard will show you the exact DNS records to configure after you save your custom domain.
+### 4. Optional: custom domain
 
-See the [status page reference](/docs/reference/status-page) for detailed DNS configuration instructions.
+On the **Settings** tab, the **Custom Domain** card lets you serve the page from your own
+domain (e.g. `status.yourdomain.com`) instead of the `*.openstatus.dev` subdomain:
 
-#### Password protection
+1. Enter your domain and submit.
+2. Configure DNS based on your domain type:
+   - **Subdomain** (e.g. `status.yourdomain.com`): add a CNAME record pointing to `cname.vercel-dns.com`.
+   - **Apex domain** (e.g. `yourdomain.com`): add an A record pointing to `76.76.21.21`.
+3. Wait for DNS propagation (usually a few minutes, up to 48 hours).
+4. If the domain is already registered on another Vercel project, you also need a **TXT record**
+   to prove ownership. The dashboard shows the exact values when this step applies.
 
-Enable password protection to restrict access to your status page. This is useful for internal status pages that should only be visible to your team or specific customers. Enter a password, and visitors will be prompted to authenticate before viewing the page.
+The dashboard displays the exact records to configure after you save the domain. See the
+[status page reference](/docs/reference/status-page) for the full DNS table.
 
-**Checkpoint:** After saving, click the link to your status page (shown at the top of the settings). You should see your monitors listed with uptime bars.
+### 5. Optional: restrict access
+
+Also on the **Settings** tab, the **Page Access** card controls who can see the page. Password
+protection is the simplest option — set a password and visitors are prompted before the page
+loads, which is what you want for an internal page. Magic-link and IP-range restriction are
+available as paid add-ons; the [status page reference](/docs/reference/status-page) covers all
+four access types.
 
 ## What you've accomplished
 
 - Created your first status page
-- Added monitors to display service health
-- Learned about custom domains and password protection
+- Added components so visitors can see service health
+- Learned where custom domains and access control live
 
 ## What's next
 

@@ -16,8 +16,12 @@ faq:
     answer: "99.9% uptime (three nines) allows approximately 8 hours and 45 minutes of downtime per year, 43 minutes per month, 10 minutes per week, or 1 minute and 26 seconds per day."
   - question: "What is the difference between 99.9% and 99.99% uptime?"
     answer: "The difference is significant: 99.9% uptime allows about 8 hours 45 minutes of downtime per year, while 99.99% allows only about 52 minutes per year. That extra 9 reduces your allowed downtime by roughly 10x and typically requires redundant infrastructure and automated failover."
-  - question: "How do I calculate uptime from downtime?"
-    answer: "To calculate uptime percentage from downtime, use this formula: Uptime % = ((Total time - Downtime) / Total time) × 100. For example, if your service was down for 1 hour in a 30-day month (720 hours), your uptime is ((720 - 1) / 720) × 100 = 99.86%."
+  - question: "How is SLA uptime calculated?"
+    answer: "Uptime % = ((Total time − Downtime) / Total time) × 100. For example, if your service was down for 1 hour in a 30-day month (720 hours), your uptime is ((720 − 1) / 720) × 100 = 99.86%. The subtlety is what counts as downtime in the first place - partial degradation, a single failing region, or a slow-but-responding endpoint may or may not be chargeable depending on how your agreement defines availability."
+  - question: "What is a good SLA?"
+    answer: "For most SaaS products, 99.9% is the right public commitment - it allows 43 minutes of downtime a month, which is enough room to deploy, patch, and recover from an incident without writing refund cheques. 99.99% is a commitment to redundant infrastructure and automated failover, not just a bigger number, and you should only publish it once you can prove you already hit it. The best SLA is the one slightly below what you consistently achieve."
+  - question: "Is uptime measured monthly or yearly?"
+    answer: "Almost always monthly, because that is the billing period service credits attach to. The distinction matters: a single 5-hour outage is 99.94% over a year but only 99.3% over the month it happened in, so a yearly window can hide an outage that a monthly window turns into a breach. Check which window your agreement specifies before committing to a tier."
 ---
 
 _All calculations assume continuous 24/7 availability requirements._
@@ -31,3 +35,61 @@ Common SLA tiers include 99.9% (three nines), 99.99% (four nines), and 99.999% (
 
 
 This calculator helps you understand the real-world impact of your SLA commitments and plan for capacity, incident response, and stakeholder expectations.
+
+## From an SLA target to a measured number
+
+A target is only half of it — the other half is measuring whether you hit it. Once
+you have picked a tier, [openstatus uptime monitoring](/uptime-monitoring) tracks
+the actual figure from 28 regions, and a [public status page](/status-page) reports
+it back to the customers the SLA was written for.
+
+Not sure which number you are agreeing to? [SLA vs SLO vs SLI](/guides/sla-vs-slo-vs-sli)
+covers why your internal target should be stricter than the promise you publish.
+
+## Frequently asked questions
+
+<Details summary="What is an uptime SLA?">
+
+An uptime SLA (Service Level Agreement) is a commitment between a service provider and a customer that guarantees a specific percentage of uptime over a given period. For example, a 99.9% SLA means the service can be down for no more than 8 hours and 45 minutes per year.
+
+</Details>
+
+<Details summary="How much downtime does 99.9% uptime allow?">
+
+99.9% uptime (three nines) allows approximately 8 hours and 45 minutes of downtime per year, 43 minutes per month, 10 minutes per week, or 1 minute and 26 seconds per day.
+
+</Details>
+
+<Details summary="How is SLA uptime calculated?">
+
+Uptime % = ((Total time − Downtime) / Total time) × 100.
+
+For example, if your service was down for 1 hour in a 30-day month (720 hours), your uptime is ((720 − 1) / 720) × 100 = 99.86%. The subtlety is what counts as downtime in the first place — partial degradation, a single failing region, or a slow-but-responding endpoint may or may not be chargeable depending on how your agreement defines availability.
+
+</Details>
+
+<Details summary="What are common SLA tiers?">
+
+Common tiers are 99.9% (three nines) allowing 8h 45m of downtime a year, 99.99% (four nines) allowing 52m 35s a year, and 99.999% (five nines) allowing only 5m 15s a year. Most cloud providers publish between 99.9% and 99.99%.
+
+</Details>
+
+<Details summary="What is the difference between 99.9% and 99.99% uptime?">
+
+The difference is larger than one digit suggests: 99.9% allows about 8 hours 45 minutes of downtime per year, while 99.99% allows only about 52 minutes. That extra nine cuts your allowed downtime by roughly 10×, and it usually requires redundant infrastructure and automated failover rather than simply more careful operations.
+
+</Details>
+
+<Details summary="What is a good SLA?">
+
+For most SaaS products, 99.9% is the right public commitment. It allows 43 minutes of downtime a month — enough room to deploy, patch, and recover from an incident without writing refund cheques. 99.99% is a commitment to redundant infrastructure and automated failover, not just a bigger number, and you should only publish it once you can prove you already hit it.
+
+The best SLA is the one slightly below what you consistently achieve. See [SLA vs SLO vs SLI](/guides/sla-vs-slo-vs-sli) for how to set the internal target that gives you that margin.
+
+</Details>
+
+<Details summary="Is uptime measured monthly or yearly?">
+
+Almost always monthly, because that is the billing period service credits attach to. The distinction matters more than it looks: a single 5-hour outage is 99.94% measured over a year, but 99.3% measured over the month it happened in. A yearly window can hide an outage that a monthly window turns into a breach — check which one your agreement specifies before committing to a tier.
+
+</Details>

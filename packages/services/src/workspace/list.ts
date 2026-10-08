@@ -1,18 +1,26 @@
-import { db as defaultDb, eq, isNull } from "@openstatus/db";
+import { and, db as defaultDb, eq, isNull, sql } from "@openstatus/db";
 import {
   monitor,
+  notification,
+  page,
+  pageComponent,
   selectWorkspaceSchema,
+  statusReport,
+  user,
   usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
 
-import type { DB, ServiceContext } from "../context";
+import { type DB, type ServiceContext, batchReads } from "../context";
 import { NotFoundError } from "../errors";
 import type { Workspace } from "../types";
 import {
   GetWorkspaceByStripeIdInput,
-  type GetWorkspaceWithUsageInput,
+  GetWorkspaceForMemberInput,
+  type GetWorkspaceUsageInput,
+  ListWorkspaceOwnersInput,
   ListWorkspacesInput,
+  OwnedWorkspacesInput,
 } from "./schemas";
 
 /**
@@ -28,8 +36,6 @@ export type WorkspaceUsage = {
   statusReports: number;
   checks: number;
 };
-
-export type WorkspaceWithUsage = Workspace & { usage: WorkspaceUsage };
 
 /** Load the workspace the caller is scoped to. */
 export async function getWorkspace(args: {
@@ -51,51 +57,64 @@ export async function getWorkspace(args: {
   return selectWorkspaceSchema.parse(result);
 }
 
-/**
- * Workspace plus the four usage counts the dashboard surfaces alongside plan
- * limits. Active monitors only (`deletedAt IS NULL`); notifications / pages /
- * page-components are unconditional counts scoped to the workspace.
- */
-export async function getWorkspaceWithUsage(args: {
-  ctx: ServiceContext;
-  input?: GetWorkspaceWithUsageInput;
-}): Promise<WorkspaceWithUsage> {
-  const { ctx } = args;
-  const db = ctx.db ?? defaultDb;
+// Counts, not rows: the previous relational read materialized every page,
+// component, monitor (with its config blobs) and notification just to call
+// `.length` on them. All five are single-table and index-covered.
+function usageCountQueries(db: DB, workspaceId: number) {
+  const total = sql<number>`count(*)`;
+  return [
+    db
+      .select({ count: total })
+      .from(monitor)
+      .where(
+        and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)),
+      ),
+    db
+      .select({ count: total })
+      .from(notification)
+      .where(eq(notification.workspaceId, workspaceId)),
+    db
+      .select({ count: total })
+      .from(page)
+      .where(eq(page.workspaceId, workspaceId)),
+    db
+      .select({ count: total })
+      .from(pageComponent)
+      .where(eq(pageComponent.workspaceId, workspaceId)),
+    db
+      .select({ count: total })
+      .from(statusReport)
+      .where(eq(statusReport.workspaceId, workspaceId)),
+  ] as const;
+}
 
-  const result = await db.query.workspace.findFirst({
-    where: eq(workspace.id, ctx.workspace.id),
-    with: {
-      pages: {
-        with: { pageComponents: true },
-      },
-      monitors: {
-        where: isNull(monitor.deletedAt),
-      },
-      notifications: true,
-      statusReports: { columns: { id: true } },
-    },
-  });
-
-  // Same guard as `getWorkspace` — unreachable in practice (workspace
-  // resolved upstream) but keeps the error shape consistent with every
-  // other service, rather than letting `parse(undefined)` surface as
-  // a `ZodError`.
-  if (!result) throw new NotFoundError("workspace", ctx.workspace.id);
-
-  const usage: WorkspaceUsage = {
-    monitors: result.monitors?.length ?? 0,
-    notifications: result.notifications?.length ?? 0,
-    pages: result.pages?.length ?? 0,
-    pageComponents:
-      result.pages?.flatMap((page) => page.pageComponents)?.length ?? 0,
-    statusReports: result.statusReports?.length ?? 0,
+function toUsage(rows: { count: number }[][]): WorkspaceUsage {
+  const [monitors, notifications, pages, pageComponents, statusReports] = rows;
+  return {
+    monitors: monitors?.[0]?.count ?? 0,
+    notifications: notifications?.[0]?.count ?? 0,
+    pages: pages?.[0]?.count ?? 0,
+    pageComponents: pageComponents?.[0]?.count ?? 0,
+    statusReports: statusReports?.[0]?.count ?? 0,
     // Parity with the legacy router — checks usage was previously commented
     // out pending a real source and left as 0. Preserved here.
     checks: 0,
   };
+}
 
-  return { ...selectWorkspaceSchema.parse(result), usage };
+/**
+ * The usage counts the dashboard surfaces alongside plan limits. Active
+ * monitors only (`deletedAt IS NULL`); notifications / pages / page-components
+ * are unconditional counts scoped to the workspace.
+ */
+export async function getWorkspaceUsage(args: {
+  ctx: ServiceContext;
+  input?: GetWorkspaceUsageInput;
+}): Promise<WorkspaceUsage> {
+  const { ctx } = args;
+  const db = ctx.db ?? defaultDb;
+
+  return toUsage(await batchReads(db, usageCountQueries(db, ctx.workspace.id)));
 }
 
 /**
@@ -140,4 +159,85 @@ export async function listWorkspaces(args: {
   return selectWorkspaceSchema
     .array()
     .parse(rows.map(({ workspace }) => workspace));
+}
+
+/**
+ * A workspace by slug, only if the user is a member. Billing procedures take
+ * the slug as input, so this runs before a `ctx.workspace` exists for it.
+ * Returns the member's email alongside for the Stripe customer record.
+ */
+export async function getWorkspaceForMember(args: {
+  input: GetWorkspaceForMemberInput;
+  db?: DB;
+}): Promise<{ workspace: Workspace; email: string | null } | null> {
+  const input = GetWorkspaceForMemberInput.parse(args.input);
+  const db = args.db ?? defaultDb;
+
+  const row = await db
+    .select({ workspace, email: user.email })
+    .from(usersToWorkspaces)
+    .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
+    .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
+    .where(
+      and(
+        eq(workspace.slug, input.slug),
+        eq(usersToWorkspaces.userId, input.userId),
+      ),
+    )
+    .get();
+
+  if (!row) return null;
+  return {
+    workspace: selectWorkspaceSchema.parse(row.workspace),
+    email: row.email,
+  };
+}
+
+/** Workspaces the user owns. Account deletion checks these for a paid plan. */
+export async function listOwnedWorkspaces(args: {
+  input: OwnedWorkspacesInput;
+  db?: DB;
+}): Promise<Workspace[]> {
+  const input = OwnedWorkspacesInput.parse(args.input);
+  const db = args.db ?? defaultDb;
+
+  const rows = await db
+    .select({ workspace })
+    .from(usersToWorkspaces)
+    .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
+    .where(
+      and(
+        eq(usersToWorkspaces.userId, input.userId),
+        eq(usersToWorkspaces.role, "owner"),
+      ),
+    )
+    .all();
+
+  return selectWorkspaceSchema.array().parse(rows.map((r) => r.workspace));
+}
+
+/**
+ * Owners of a workspace — billing mail recipients and trial attribution.
+ * Account deletion keeps the owner membership and only soft-deletes the
+ * user, so those rows are filtered out here.
+ */
+export async function listWorkspaceOwners(args: {
+  input: ListWorkspaceOwnersInput;
+  db?: DB;
+}): Promise<{ id: number; email: string | null }[]> {
+  const input = ListWorkspaceOwnersInput.parse(args.input);
+  const db = args.db ?? defaultDb;
+
+  return db
+    .select({ id: user.id, email: user.email })
+    .from(usersToWorkspaces)
+    .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
+    .where(
+      and(
+        eq(usersToWorkspaces.workspaceId, input.workspaceId),
+        eq(usersToWorkspaces.role, "owner"),
+        isNull(user.deletedAt),
+      ),
+    )
+    .all();
 }

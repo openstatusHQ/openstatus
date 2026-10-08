@@ -1,4 +1,5 @@
 export * from "./custom-theme";
+export * from "./theme-io";
 export * from "./types";
 import {
   type CustomTheme,
@@ -7,8 +8,12 @@ import {
 } from "./custom-theme";
 import { DRACULA_THEME } from "./dracula";
 import { GITHUB_HIGH_CONTRAST_THEME } from "./github";
+import { GRUVBOX_THEME } from "./gruvbox";
 import { OPENSTATUS_ROUNDED_THEME, OPENSTATUS_THEME } from "./openstatus";
+import { PASSBOLT_THEME } from "./passbolt";
+import { PROBO_THEME } from "./probo";
 import { SUPABASE_THEME } from "./supabase";
+import { TOMORROW_THEME } from "./tomorrow";
 import type { Theme, ThemeDefinition, ThemeMap } from "./types";
 import { assertUniqueThemeIds } from "./utils";
 // Please keep the themes ordered :)
@@ -18,6 +23,10 @@ const THEMES_LIST = [
   SUPABASE_THEME,
   GITHUB_HIGH_CONTRAST_THEME,
   DRACULA_THEME,
+  PASSBOLT_THEME,
+  GRUVBOX_THEME,
+  TOMORROW_THEME,
+  PROBO_THEME,
 ] satisfies Theme[];
 
 // NOTE: runtime validation to ensure that the theme IDs are unique

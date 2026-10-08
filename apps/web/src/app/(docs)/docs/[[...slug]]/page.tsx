@@ -18,6 +18,7 @@ import { DocsFeedback } from "../../../../content/docs-feedback";
 import { DocsSubNav } from "../../../../content/docs-sub-nav";
 import { TableOfContents } from "../../../../content/docs-toc";
 import {
+  DOCS_DESCRIPTION,
   type DocsNavNode,
   docsNavTree,
   findDocsNode,
@@ -47,9 +48,6 @@ export const dynamicParams = false;
 
 const EDIT_BASE =
   "https://github.com/openstatusHQ/openstatus/edit/main/apps/web/src/content/pages/docs";
-
-const DOCS_DESCRIPTION =
-  "Learn how to create your status page, monitor your endpoints, and configure notifications with openstatus.";
 
 type Params = { slug?: string[] };
 

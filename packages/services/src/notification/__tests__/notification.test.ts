@@ -200,6 +200,35 @@ describe("createNotification", () => {
     });
   });
 
+  test("throws ValidationError for deprecated sms before quota and plan gates", async () => {
+    await withTestTransaction(async (tx) => {
+      const grandfathered = {
+        ...teamCtx,
+        workspace: {
+          ...teamCtx.workspace,
+          // quota 0 proves the guard runs before assertWithinLimit
+          limits: {
+            ...teamCtx.workspace.limits,
+            sms: true,
+            "notification-channels": 0,
+          },
+        },
+        db: tx,
+      };
+      await expect(
+        createNotification({
+          ctx: grandfathered,
+          input: {
+            name: `${TEST_PREFIX}-deprecated-sms`,
+            provider: "sms",
+            data: { sms: "+10000000000" },
+            monitors: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
   test("rejects read-only actor", async () => {
     await withTestTransaction(async (tx) => {
       const readOnlyCtx = {
@@ -374,6 +403,33 @@ describe("updateNotification", () => {
       ).rejects.toBeInstanceOf(LimitExceededError);
     });
   });
+
+  test("keeps a deprecated sms channel editable when the plan flag is off", async () => {
+    await withTestTransaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(notification)
+        .values({
+          workspaceId: freeCtx.workspace.id,
+          name: `${TEST_PREFIX}-deprecated-sms`,
+          provider: "sms",
+          data: JSON.stringify({ sms: "+10000000000" }),
+        })
+        .returning();
+      if (!inserted) throw new Error("direct insert failed");
+
+      const updated = await updateNotification({
+        ctx: { ...freeCtx, db: tx },
+        input: {
+          id: inserted.id,
+          name: `${TEST_PREFIX}-deprecated-sms-renamed`,
+          data: { sms: "+10000000000" },
+          monitors: [],
+        },
+      });
+
+      expect(updated.name).toBe(`${TEST_PREFIX}-deprecated-sms-renamed`);
+    });
+  });
 });
 
 describe("deleteNotification", () => {
@@ -432,6 +488,27 @@ describe("list / get", () => {
         input: { limit: 100, offset: 0, order: "desc" },
       });
       expect(freeItems.find((n) => n.id === row.id)).toBeUndefined();
+    });
+  });
+});
+
+describe("notification-channel count quota", () => {
+  const input = (name: string) => ({
+    name,
+    provider: "email" as const,
+    data: { email: `${name}@openstatus.dev` },
+    monitors: [],
+  });
+
+  test("createNotification rejects once the plan's channel cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      // Free plan caps notification channels at 1.
+      const ctx = { ...freeCtx, db: tx };
+      await createNotification({ ctx, input: input(`${TEST_PREFIX}-cap-1`) });
+
+      await expect(
+        createNotification({ ctx, input: input(`${TEST_PREFIX}-cap-2`) }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
     });
   });
 });

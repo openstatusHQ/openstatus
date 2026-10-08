@@ -129,7 +129,7 @@ export function Step3({
             </Button>
           </OnboardingActions>
           <p className="text-muted-foreground text-xs">
-            SOC2 audit incoming? Ping us for a 14-day free trial.
+            SOC2 audit incoming? Ping us to try the Team plan.
           </p>
         </div>
         <NoClickopsCard />

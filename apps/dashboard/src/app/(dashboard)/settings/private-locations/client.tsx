@@ -78,14 +78,18 @@ export function Client() {
               data={[...EXAMPLES, ...EXAMPLES, ...EXAMPLES]}
             />
             <BillingOverlay>
-              <BillingOverlayButton onClick={() => setOpenDialog(true)}>
+              <BillingOverlayButton
+                data-track="paywall_viewed"
+                data-limit="private-locations"
+                onClick={() => setOpenDialog(true)}
+              >
                 <Lock />
                 Upgrade
               </BillingOverlayButton>
               <BillingOverlayDescription>
                 Create private locations to monitor your internal services.{" "}
                 <Link
-                  href="https://www.openstatus.dev/docs/tutorial/how-to-create-private-location/"
+                  href="https://www.openstatus.dev/docs/guides/how-to-create-private-location/"
                   rel="noreferrer"
                   target="_blank"
                 >

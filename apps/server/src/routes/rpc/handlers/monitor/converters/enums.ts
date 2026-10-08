@@ -1,5 +1,7 @@
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
+import type { GrpcTlsMode } from "@openstatus/db/src/schema/monitors/validation";
 import {
+  GRPCTlsMode,
   HTTPMethod,
   MonitorStatus,
   Periodicity,
@@ -93,6 +95,31 @@ const DB_TO_MONITOR_STATUS: Record<string, MonitorStatus> = {
 
 export function stringToMonitorStatus(value: string): MonitorStatus {
   return DB_TO_MONITOR_STATUS[value] ?? MonitorStatus.UNSPECIFIED;
+}
+
+// ============================================================
+// gRPC TLS Mode Conversions
+// ============================================================
+
+const DB_TO_GRPC_TLS_MODE: Record<string, GRPCTlsMode> = {
+  plaintext: GRPCTlsMode.GRPC_TLS_MODE_PLAINTEXT,
+  tls: GRPCTlsMode.GRPC_TLS_MODE_TLS,
+  tls_insecure: GRPCTlsMode.GRPC_TLS_MODE_TLS_INSECURE,
+};
+
+const GRPC_TLS_MODE_TO_DB: Record<GRPCTlsMode, GrpcTlsMode> = {
+  [GRPCTlsMode.GRPC_TLS_MODE_PLAINTEXT]: "plaintext",
+  [GRPCTlsMode.GRPC_TLS_MODE_TLS]: "tls",
+  [GRPCTlsMode.GRPC_TLS_MODE_TLS_INSECURE]: "tls_insecure",
+  [GRPCTlsMode.GRPC_TLS_MODE_UNSPECIFIED]: "tls",
+};
+
+export function stringToGrpcTlsMode(value: string | null): GRPCTlsMode {
+  return DB_TO_GRPC_TLS_MODE[value ?? ""] ?? GRPCTlsMode.GRPC_TLS_MODE_TLS;
+}
+
+export function grpcTlsModeToString(value: GRPCTlsMode): GrpcTlsMode {
+  return GRPC_TLS_MODE_TO_DB[value] ?? "tls";
 }
 
 // ============================================================

@@ -2,7 +2,7 @@ import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import {
   addMaintenanceUpdate,
-  notifyMaintenance,
+  notifyMaintenanceUpdate,
 } from "@openstatus/services/maintenance";
 
 import { openApiErrorResponses } from "@/libs/errors";
@@ -44,24 +44,18 @@ export function registerPostMaintenanceUpdate(
     try {
       const input = c.req.valid("json");
       const ctx = toServiceContext(c);
-      const result = await addMaintenanceUpdate({ ctx, input });
+      const update = await addMaintenanceUpdate({ ctx, input });
       if (input.notify) {
         try {
-          await notifyMaintenance({
+          await notifyMaintenanceUpdate({
             ctx,
-            input: { maintenanceUpdateId: result.maintenanceUpdate.id },
+            input: { maintenanceUpdateId: update.id },
           });
         } catch (err) {
-          console.warn(
-            "notifyMaintenance failed after create maintenance update",
-            err,
-          );
+          console.warn("notifyMaintenanceUpdate failed after create", err);
         }
       }
-      return c.json(
-        MaintenanceUpdateSchema.parse(result.maintenanceUpdate),
-        200,
-      );
+      return c.json(MaintenanceUpdateSchema.parse(update), 200);
     } catch (error) {
       throwApiError(error);
     }

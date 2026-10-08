@@ -36,7 +36,7 @@ export const MaintenanceObjectSchema = z.object({
   }),
   monitorIds: z
     .array(z.number())
-    .optional()
+
     .prefault([])
     .openapi({ description: "IDs of affected monitors" }),
   pageId: z.number().openapi({

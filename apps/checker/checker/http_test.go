@@ -28,6 +28,24 @@ func NewTestClient(fn RoundTripFunc) *http.Client {
 	}
 }
 
+func Test_HttpCapsResponseBody(t *testing.T) {
+	client := NewTestClient(func(req *http.Request) *http.Response {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(bytes.Repeat([]byte("b"), 20<<20))),
+			Header:     make(http.Header),
+		}
+	})
+
+	got, err := checker.Http(context.Background(), client, request.HttpCheckerRequest{URL: "https://openstat.us", CronTimestamp: 1})
+	if err != nil {
+		t.Fatalf("Http() error = %v", err)
+	}
+	if got.Body != string(bytes.Repeat([]byte("b"), 10<<20)) {
+		t.Errorf("Http() body length = %d, want %d (capped by maxResponseBodyBytes)", len(got.Body), 10<<20)
+	}
+}
+
 func Test_ping(t *testing.T) {
 
 	type args struct {

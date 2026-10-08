@@ -73,16 +73,14 @@ func (target HeaderTarget) HeaderEvaluate(s string) bool {
 		return false
 	}
 
-	v, found := headers[target.Key]
-	if !found {
-		return false
+	for key, value := range headers {
+		if strings.EqualFold(key, target.Key) {
+			t := StringTargetType{Comparator: target.Comparator, Target: target.Target}
+			return t.StringEvaluate(fmt.Sprintf("%v", value))
+		}
 	}
 
-	t := StringTargetType{Comparator: target.Comparator, Target: target.Target}
-	// convert all headers to array
-	str := fmt.Sprintf("%v", v)
-
-	return t.StringEvaluate(str)
+	return false
 }
 
 func (target StatusTarget) StatusEvaluate(value int64) bool {

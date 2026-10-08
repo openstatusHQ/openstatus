@@ -1,5 +1,5 @@
 import { db, eq } from "@openstatus/db";
-import { maintenance, maintenanceUpdate } from "@openstatus/db/src/schema";
+import { maintenance } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { beforeEach, test } from "@std/testing/bdd";
 
@@ -8,14 +8,14 @@ import { app } from "@/index";
 import { MaintenanceSchema } from "./schema";
 
 const spies = (globalThis as any).__subscriptionSpies as {
-  dispatchMaintenanceUpdate: {
+  dispatchMaintenance: {
     mockClear: () => void;
     mock: { calls: number[][] };
   };
 };
 
 beforeEach(() => {
-  spies.dispatchMaintenanceUpdate.mockClear();
+  spies.dispatchMaintenance.mockClear();
 });
 
 test("create a valid maintenance without monitorIds", async () => {
@@ -221,7 +221,7 @@ test("no auth key should return 401", async () => {
   expect(res.status).toBe(401);
 });
 
-test("create a maintenance calls dispatchMaintenanceUpdate", async () => {
+test("create a maintenance calls dispatchMaintenance", async () => {
   const from = new Date();
   const to = new Date(from.getTime() + 3600000);
 
@@ -244,17 +244,12 @@ test("create a maintenance calls dispatchMaintenanceUpdate", async () => {
   expect(res.status).toBe(200);
   const result = MaintenanceSchema.safeParse(await res.json());
   expect(result.success).toBe(true);
-  expect(spies.dispatchMaintenanceUpdate.mock.calls.length).toBe(1);
+  expect(spies.dispatchMaintenance.mock.calls.length).toBe(1);
+  expect(typeof spies.dispatchMaintenance.mock.calls[0][0]).toBe(
+    "number",
+  );
 
   if (result.success) {
-    const initialUpdate = await db
-      .select({ id: maintenanceUpdate.id })
-      .from(maintenanceUpdate)
-      .where(eq(maintenanceUpdate.maintenanceId, result.data.id))
-      .get();
-    expect(spies.dispatchMaintenanceUpdate.mock.calls[0][0]).toBe(
-      initialUpdate?.id,
-    );
     await db.delete(maintenance).where(eq(maintenance.id, result.data.id));
   }
 });

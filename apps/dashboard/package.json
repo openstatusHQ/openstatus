@@ -3,11 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "PORT=3001 next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "tsc": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "tsc": "tsc --noEmit",
+    "test": "deno test --parallel -A --no-check --sloppy-imports --import-map=test.importmap.json src"
   },
   "dependencies": {
     "@ai-sdk/react": "catalog:",
@@ -31,6 +33,11 @@
     "@openstatus/emails": "workspace:*",
     "@openstatus/error": "workspace:*",
     "@openstatus/header-analysis": "workspace:*",
+    "@openstatus/health": "catalog:",
+    "@openstatus/health-tinybird": "catalog:",
+    "@openstatus/health-turso": "catalog:",
+    "@openstatus/health-upstash": "catalog:",
+    "@openstatus/health-vercel": "catalog:",
     "@openstatus/icons": "workspace:*",
     "@openstatus/importers": "workspace:*",
     "@openstatus/locales": "workspace:*",
@@ -63,7 +70,6 @@
     "@radix-ui/react-slot": "catalog:",
     "@radix-ui/react-tooltip": "catalog:",
     "@sentry/nextjs": "catalog:",
-    "@stripe/stripe-js": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-table": "catalog:",
     "@trpc/client": "catalog:",
@@ -78,6 +84,7 @@
     "cmdk": "catalog:",
     "date-fns": "catalog:",
     "lucide-react": "catalog:",
+    "mailchecker": "catalog:",
     "next": "catalog:",
     "next-auth": "catalog:",
     "next-themes": "catalog:",
@@ -100,6 +107,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
     "@tailwindcss/postcss": "catalog:",
     "@tailwindcss/typography": "catalog:",
     "@types/dom-speech-recognition": "catalog:",

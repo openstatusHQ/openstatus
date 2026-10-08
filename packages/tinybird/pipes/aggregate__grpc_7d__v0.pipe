@@ -1,0 +1,23 @@
+TAGS "grpc"
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        latency,
+        servingStatus,
+        grpcCode,
+        service,
+        error,
+        region,
+        trigger,
+        timestamp,
+        cronTimestamp,
+        monitorId,
+        requestStatus,
+        id
+    FROM grpc_response__v0
+
+TYPE materialized
+DATASOURCE mv__grpc_7d__v0

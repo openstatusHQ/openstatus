@@ -4,13 +4,13 @@ SCHEMA >
     `time` DateTime,
     `id` Nullable(String),
     `latency` Int64,
-    `requestStatus` Nullable(String),
     `region` LowCardinality(String),
     `trigger` Nullable(String),
     `statusCode` Nullable(Int16),
     `timestamp` Int64,
     `cronTimestamp` Int64,
     `monitorId` String,
+    `requestStatus` Nullable(String),
     `timing` Nullable(String)
 
 ENGINE "MergeTree"

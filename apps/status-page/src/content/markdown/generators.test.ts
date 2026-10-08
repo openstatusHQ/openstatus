@@ -539,7 +539,7 @@ describe("generateMaintenance", () => {
     expect(withUrls).toContain('contact_url: "mailto:status@acme.com"');
   });
 
-  test("renders updates newest-first without the parent message", () => {
+  test("renders the announcement, then updates newest-first", () => {
     const withUpdates = {
       ...maintenance,
       maintenanceUpdates: [
@@ -554,11 +554,14 @@ describe("generateMaintenance", () => {
       ],
     } as unknown as MaintenanceDetail;
     const out = generateMaintenance(withUpdates, BASE);
+    expect(out).toContain("## Details");
     expect(out).toContain("## Updates");
+    expect(out.indexOf("Brief downtime.")).toBeLessThan(
+      out.indexOf("Work completed."),
+    );
     expect(out.indexOf("Work completed.")).toBeLessThan(
       out.indexOf("Work started."),
     );
-    expect(out).not.toContain("Brief downtime.");
   });
 
   test("null `to` renders 'ongoing', not a bogus duration", () => {
@@ -617,7 +620,7 @@ describe("generateMonitor", () => {
   test("KPI table", () => {
     expect(md).toContain("| Global latency (p75) | 200ms – 300ms |");
     expect(md).toContain("| Region latency | 2 regions · fastest: iad |");
-    expect(md).toContain("| Uptime (last 7 days) | 97.50% · 200 checks |");
+    expect(md).toContain("| Uptime (last 7 days) | 97.500% · 200 checks |");
   });
 
   test("percentile table", () => {

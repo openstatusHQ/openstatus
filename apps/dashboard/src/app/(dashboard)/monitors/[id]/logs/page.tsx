@@ -1,15 +1,13 @@
-import type { SearchParams } from "nuqs/server";
+import { CONTROLS_COOKIE_NAME } from "@openstatus/ui/lib/data-table-filters/cookie";
+
+import { getSidebarDefaultOpen } from "@/lib/sidebar-cookie";
 
 import { Client } from "./client";
-import { searchParamsCache } from "./search-params";
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  // NOTE: store in cache to avoid flicker on clients first render
-  await searchParamsCache.parse(searchParams);
-
-  return <Client />;
+export default async function Page() {
+  const controlsDefaultOpen = await getSidebarDefaultOpen(
+    CONTROLS_COOKIE_NAME,
+    true,
+  );
+  return <Client controlsDefaultOpen={controlsDefaultOpen} />;
 }

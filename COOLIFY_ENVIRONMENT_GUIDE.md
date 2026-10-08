@@ -12,6 +12,8 @@ This guide explains how to configure environment variables for OpenStatus deploy
    ```
 3. Click **"Deploy"**
 
+> **ℹ️ Database migrations:** the stack includes a one-shot `db-migrate` service that applies the database schema before any app service starts. It runs on every deploy and safely skips already-applied migrations — no manual migration step is needed.
+
 ### Step 2: Configure Environment Variables
 1. After deployment, click on the **OpenStatus stack**
 2. Go to **"Settings"** → **"Environment Variables"**

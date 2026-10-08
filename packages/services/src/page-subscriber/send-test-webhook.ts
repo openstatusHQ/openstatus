@@ -17,6 +17,9 @@ import { SendPageSubscriberTestWebhookInput } from "./schemas";
  * No audit emit — a test dispatch has no effect on the entity's durable
  * state. If we add "last-tested-at" bookkeeping later, we'd revisit.
  */
+// The transaction only reads the subscriber row; the webhook send mutates
+// nothing, so there is no state change to audit.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function sendPageSubscriberTestWebhook(args: {
   ctx: ServiceContext;
   input: SendPageSubscriberTestWebhookInput;

@@ -5,6 +5,7 @@ import {
   type CustomTheme,
   THEMES,
   THEME_KEYS,
+  type Theme,
   type ThemeDefinition,
   generateThemeStyles,
   hasCustomTheme,
@@ -38,6 +39,7 @@ import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 
+import { clearThemeDraft } from "../../lib/theme-draft";
 import { ThemeSelect } from "../themes/theme-select";
 
 export const IS_DEV = process.env.NODE_ENV === "development";
@@ -68,6 +70,9 @@ interface StatusPageContextType {
   setNumberOfDays: (numberOfDays: NumberOfDays) => void;
   communityTheme: CommunityTheme;
   setCommunityTheme: (communityTheme: CommunityTheme) => void;
+  /** Unregistered theme previewed from the explorer's builder. */
+  draftTheme: Theme | null;
+  setDraftTheme: (draftTheme: Theme | null) => void;
 }
 
 const StatusPageContext = createContext<StatusPageContextType | null>(null);
@@ -102,9 +107,17 @@ export function StatusPageProvider({
   const [showUptime, setShowUptime] = useState<boolean>(defaultShowUptime);
   const [numberOfDays, setNumberOfDays] =
     useState<NumberOfDays>(defaultNumberOfDays);
-  const [communityTheme, setCommunityTheme] = useState<CommunityTheme>(
+  const [communityTheme, setCommunityThemeState] = useState<CommunityTheme>(
     defaultCommunityTheme,
   );
+  const [draftTheme, setDraftTheme] = useState<Theme | null>(null);
+
+  // a draft shadows the community theme, so picking one discards the draft
+  function setCommunityTheme(theme: CommunityTheme) {
+    clearThemeDraft();
+    setDraftTheme(null);
+    setCommunityThemeState(theme);
+  }
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -112,17 +125,22 @@ export function StatusPageProvider({
   }, []);
 
   useEffect(() => {
-    if (isMounted) {
-      // keep the page's custom vars applied — without them this rewrite
-      // clobbers the server-rendered overrides on hydration
-      recomputeStyles(
-        communityTheme,
-        hasCustomTheme(customTheme)
-          ? sanitizeCustomTheme(customTheme)
-          : undefined,
-      );
+    if (!isMounted) return;
+    if (draftTheme) {
+      // an unregistered id falls back to the default theme as base, which is
+      // what the draft would render over once registered
+      recomputeStyles(draftTheme.id, draftTheme);
+      return;
     }
-  }, [communityTheme, isMounted, customTheme]);
+    // keep the page's custom vars applied — without them this rewrite
+    // clobbers the server-rendered overrides on hydration
+    recomputeStyles(
+      communityTheme,
+      hasCustomTheme(customTheme)
+        ? sanitizeCustomTheme(customTheme)
+        : undefined,
+    );
+  }, [communityTheme, isMounted, customTheme, draftTheme]);
 
   return (
     <StatusPageContext.Provider
@@ -137,6 +155,8 @@ export function StatusPageProvider({
         setNumberOfDays,
         communityTheme,
         setCommunityTheme,
+        draftTheme,
+        setDraftTheme,
       }}
     >
       {children}
@@ -386,8 +406,9 @@ export function FloatingButton({
   );
 }
 
+/** Unregistered ids (builder drafts) fall back to the default theme as base. */
 export function recomputeStyles(
-  newTheme: CommunityTheme,
+  newTheme: string,
   overrides?: Partial<ThemeDefinition>,
 ) {
   try {

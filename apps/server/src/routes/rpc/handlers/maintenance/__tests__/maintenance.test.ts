@@ -19,6 +19,7 @@ import { app } from "../../../../../index";
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as {
   dispatchStatusReportUpdate: ReturnType<typeof mock>;
+  dispatchMaintenance: ReturnType<typeof mock>;
   dispatchMaintenanceUpdate: ReturnType<typeof mock>;
 };
 
@@ -155,6 +156,14 @@ beforeAll(async () => {
     .returning()
     .get();
   testMaintenanceId = maintenanceRecord.id;
+  await db
+    .insert(maintenanceUpdate)
+    .values({
+      maintenanceId: maintenanceRecord.id,
+      message: "Test maintenance message",
+      date: new Date(),
+    })
+    .run();
 
   // Create page component association
   await db.insert(maintenancesToPageComponents).values({
@@ -176,6 +185,14 @@ beforeAll(async () => {
     .returning()
     .get();
   testMaintenanceToDeleteId = deleteRecord.id;
+  await db
+    .insert(maintenanceUpdate)
+    .values({
+      maintenanceId: deleteRecord.id,
+      message: "Maintenance to delete",
+      date: new Date(),
+    })
+    .run();
 
   // Create maintenance to update
   const updateRecord = await db
@@ -191,6 +208,14 @@ beforeAll(async () => {
     .returning()
     .get();
   testMaintenanceToUpdateId = updateRecord.id;
+  await db
+    .insert(maintenanceUpdate)
+    .values({
+      maintenanceId: updateRecord.id,
+      message: "Maintenance to update",
+      date: new Date(),
+    })
+    .run();
 
   await db.insert(maintenancesToPageComponents).values({
     maintenanceId: updateRecord.id,
@@ -503,7 +528,7 @@ describe("MaintenanceService.CreateMaintenance", () => {
   });
 
   test("creates maintenance with notify=true", async () => {
-    subscriptionSpies.dispatchMaintenanceUpdate.mockClear();
+    subscriptionSpies.dispatchMaintenance.mockClear();
 
     const fromDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const toDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000);
@@ -529,7 +554,7 @@ describe("MaintenanceService.CreateMaintenance", () => {
     expect(data.maintenance.title).toBe(`${TEST_PREFIX}-with-notify`);
 
     // Verify dispatcher was called (dispatchers are mocked in preload.ts)
-    expect(subscriptionSpies.dispatchMaintenanceUpdate).toHaveBeenCalledTimes(
+    expect(subscriptionSpies.dispatchMaintenance).toHaveBeenCalledTimes(
       1,
     );
     const initialUpdate = await db
@@ -537,7 +562,7 @@ describe("MaintenanceService.CreateMaintenance", () => {
       .from(maintenanceUpdate)
       .where(eq(maintenanceUpdate.maintenanceId, Number(data.maintenance.id)))
       .get();
-    expect(subscriptionSpies.dispatchMaintenanceUpdate).toHaveBeenCalledWith(
+    expect(subscriptionSpies.dispatchMaintenance).toHaveBeenCalledWith(
       initialUpdate?.id,
     );
 
@@ -556,7 +581,7 @@ describe("MaintenanceService.CreateMaintenance", () => {
   });
 
   test("creates maintenance with notify=false (default)", async () => {
-    subscriptionSpies.dispatchMaintenanceUpdate.mockClear();
+    subscriptionSpies.dispatchMaintenance.mockClear();
 
     const fromDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const toDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000);
@@ -582,7 +607,7 @@ describe("MaintenanceService.CreateMaintenance", () => {
     expect(data.maintenance.title).toBe(`${TEST_PREFIX}-no-notify`);
 
     // Verify dispatcher was NOT called
-    expect(subscriptionSpies.dispatchMaintenanceUpdate).not.toHaveBeenCalled();
+    expect(subscriptionSpies.dispatchMaintenance).not.toHaveBeenCalled();
 
     // Clean up
     await db
@@ -1278,7 +1303,7 @@ describe("MaintenanceService.UpdateMaintenance", () => {
     expect(afterRecord?.pageId).toBe(beforeRecord?.pageId);
   });
 
-  test("clears pageId when removing all components", async () => {
+  test("keeps pageId when removing all components", async () => {
     const tempRecord = await db
       .insert(maintenance)
       .values({
@@ -1315,7 +1340,7 @@ describe("MaintenanceService.UpdateMaintenance", () => {
         .from(maintenance)
         .where(eq(maintenance.id, tempRecord.id))
         .get();
-      expect(afterRecord?.pageId).toBeNull();
+      expect(afterRecord?.pageId).toBe(testPageId);
 
       const afterAssociations = await db
         .select()

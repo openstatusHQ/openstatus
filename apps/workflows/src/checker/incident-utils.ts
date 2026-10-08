@@ -11,11 +11,11 @@ const logger = getLogger(["workflow"]);
 export async function findOpenIncident(monitorId: number) {
   return db
     .select()
-    .from(schema.incidentTable)
+    .from(schema.monitorIncidentTable)
     .where(
       and(
-        eq(schema.incidentTable.monitorId, monitorId),
-        isNull(schema.incidentTable.resolvedAt),
+        eq(schema.monitorIncidentTable.monitorId, monitorId),
+        isNull(schema.monitorIncidentTable.resolvedAt),
       ),
     )
     .get();
@@ -27,11 +27,11 @@ export async function findOpenIncident(monitorId: number) {
 export async function findAllOpenIncidents(monitorId: number) {
   return db
     .select()
-    .from(schema.incidentTable)
+    .from(schema.monitorIncidentTable)
     .where(
       and(
-        eq(schema.incidentTable.monitorId, monitorId),
-        isNull(schema.incidentTable.resolvedAt),
+        eq(schema.monitorIncidentTable.monitorId, monitorId),
+        isNull(schema.monitorIncidentTable.resolvedAt),
       ),
     )
     .all();
@@ -45,7 +45,7 @@ export async function findAllOpenIncidents(monitorId: number) {
 export async function resolveIncident(params: {
   monitorId: string;
   cronTimestamp: number;
-}): Promise<(typeof schema.incidentTable.$inferSelect)[]> {
+}): Promise<(typeof schema.monitorIncidentTable.$inferSelect)[]> {
   const { monitorId, cronTimestamp } = params;
 
   // Find ALL open incidents for this monitor
@@ -61,15 +61,15 @@ export async function resolveIncident(params: {
   // ATOMIC BULK UPDATE: Resolve all incidents in a single query
   // This prevents partial state if operation fails midway
   const resolvedIncidents = await db
-    .update(schema.incidentTable)
+    .update(schema.monitorIncidentTable)
     .set({
       resolvedAt: new Date(cronTimestamp),
       autoResolved: true,
     })
     .where(
       and(
-        inArray(schema.incidentTable.id, incidentIds),
-        isNull(schema.incidentTable.resolvedAt), // Still prevents race conditions
+        inArray(schema.monitorIncidentTable.id, incidentIds),
+        isNull(schema.monitorIncidentTable.resolvedAt), // Still prevents race conditions
       ),
     )
     .returning();

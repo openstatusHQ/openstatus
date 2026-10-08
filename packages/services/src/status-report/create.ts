@@ -7,8 +7,13 @@ import {
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
 import { ConflictError, NotFoundError } from "../errors";
+import { linkIncidentStatusReport } from "../incident/link-status-report";
 import type { StatusReport, StatusReportUpdate } from "../types";
 import {
   insertUpdateComponentImpacts,
@@ -31,6 +36,7 @@ export async function createStatusReport(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = CreateStatusReportInput.parse(args.input);
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   return withTransaction(ctx, async (tx) => {
     const page_ = await tx
@@ -66,6 +72,8 @@ export async function createStatusReport(args: {
         pageId: input.pageId,
         title: input.title,
         status: input.status,
+        createdBy: actorUserId,
+        updatedBy: actorUserId,
       })
       .returning()
       .get();
@@ -83,6 +91,8 @@ export async function createStatusReport(args: {
         status: input.status,
         date: input.date,
         message: input.message,
+        createdBy: actorUserId,
+        updatedBy: actorUserId,
       })
       .returning()
       .get();
@@ -109,6 +119,13 @@ export async function createStatusReport(args: {
       after: withComponentImpacts(initialUpdate, componentImpacts),
       metadata: { statusReportId: newReport.id },
     });
+
+    if (input.incidentId !== undefined) {
+      await linkIncidentStatusReport({
+        ctx: { ...ctx, db: tx },
+        input: { id: input.incidentId, statusReportId: newReport.id },
+      });
+    }
 
     return { statusReport: newReport, initialUpdate };
   });

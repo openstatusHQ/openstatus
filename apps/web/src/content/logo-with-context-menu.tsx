@@ -19,7 +19,7 @@ export function LogoWithContextMenu() {
             alt="openstatus logo"
             width={20}
             height={20}
-            className="border-border dark:border-foreground rounded-full border"
+            className="border-border dark:border-foreground rounded-[50%] border"
           />
           <span className="hidden sm:block">openstatus</span>
           <div className="absolute right-0.5 bottom-0 hidden group-hover:block">

@@ -4,9 +4,52 @@ import {
   StatusAssertion,
   TextBodyAssertion,
 } from "@openstatus/assertions";
+import { ServiceError } from "@openstatus/services";
+import { assertMonitorUrlSafe } from "@openstatus/services/monitor";
 import type { z } from "zod";
 
+import { OpenStatusApiError } from "@/libs/errors";
+
 import type { assertion, assertionsSchema } from "./schema";
+
+/**
+ * These routes write to the DB directly instead of going through
+ * `@openstatus/services`, so the SSRF guard has to be invoked by hand.
+ */
+export function assertSafeMonitorUrl(args: {
+  jobType: string;
+  url: string;
+}): void {
+  try {
+    assertMonitorUrlSafe(args);
+  } catch (err) {
+    if (err instanceof ServiceError) {
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
+        message: err.message,
+      });
+    }
+    throw err;
+  }
+}
+
+/**
+ * The v1 API is legacy and frozen to the monitor types it already shipped:
+ * `POST /v1/monitor` refuses anything but http/tcp, so a newer type can only
+ * reach these routes on a monitor created elsewhere. Running one here would
+ * dispatch a probe the route cannot describe back to the caller. New types are
+ * served by the ConnectRPC API (`TriggerMonitor`) instead.
+ */
+const LEGACY_RUNNABLE_JOB_TYPES = ["http", "tcp"];
+
+export function assertLegacyRunnableJobType(jobType: string): void {
+  if (!LEGACY_RUNNABLE_JOB_TYPES.includes(jobType)) {
+    throw new OpenStatusApiError({
+      code: "BAD_REQUEST",
+      message: `Running a '${jobType}' monitor is not supported by the v1 API. Use the ConnectRPC MonitorService.TriggerMonitor instead.`,
+    });
+  }
+}
 
 export const getAssertions = (
   assertions: z.infer<typeof assertion>[],

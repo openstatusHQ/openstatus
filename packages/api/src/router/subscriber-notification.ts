@@ -1,5 +1,8 @@
 import { Events } from "@openstatus/analytics";
-import { notifyMaintenance } from "@openstatus/services/maintenance";
+import {
+  notifyMaintenance,
+  notifyMaintenanceUpdate,
+} from "@openstatus/services/maintenance";
 import { notifyStatusReport } from "@openstatus/services/status-report";
 import { z } from "zod";
 
@@ -39,6 +42,24 @@ export const subscriberNotificationRouter = createTRPCRouter({
       }
       try {
         await notifyMaintenance({
+          ctx: toServiceCtx(ctx),
+          input: { maintenanceId: input.id },
+        });
+        return { success: true };
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  maintenanceUpdate: protectedProcedure
+    .meta({ track: Events.NotifyMaintenanceUpdate })
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.workspace.limits["status-subscribers"]) {
+        return { success: false };
+      }
+      try {
+        await notifyMaintenanceUpdate({
           ctx: toServiceCtx(ctx),
           input: { maintenanceUpdateId: input.id },
         });

@@ -1,0 +1,1 @@
+ALTER TABLE `workspace` ADD `trial_ends_at` integer;

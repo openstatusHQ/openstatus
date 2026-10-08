@@ -48,6 +48,11 @@
   --font-mono: var(--font-commit-mono);
 }
 
+/* Article link look for `not-prose` islands (quotes, demos) that still want a real link. */
+@utility link {
+  @apply text-foreground underline decoration-muted-foreground/50 underline-offset-2 decoration-2 hover:decoration-muted-foreground transition-colors duration-150 motion-reduce:transition-none;
+}
+
 @utility container {
   margin-inline: auto;
   padding-inline: 2rem;
@@ -148,8 +153,10 @@
   @apply visible;
 }
 
-.prose a {
-  @apply text-foreground underline decoration-muted-foreground/50 underline-offset-2 decoration-2 hover:decoration-muted-foreground transition-colors duration-150 motion-reduce:transition-none;
+/* Every element rule below stops at `.not-prose`, so demos and other embedded
+   UI inherit nothing from the article they sit in. */
+.prose a:not(:where(.not-prose, .not-prose *)) {
+  @apply link;
 }
 
 .prose .anchor:after {
@@ -161,30 +168,30 @@
   @apply visible;
 }
 
-.prose pre {
+.prose pre:not(:where(.not-prose, .not-prose *)) {
   @apply relative bg-muted overflow-x-auto border border-border py-2.5 px-3.5 text-sm rounded-none;
 }
 
-.prose code {
+.prose code:not(:where(.not-prose, .not-prose *)) {
   @apply px-1 py-0.5 bg-muted text-muted-foreground;
 }
 
-.prose pre code {
+.prose pre code:not(:where(.not-prose, .not-prose *)) {
   @apply p-0;
   border: initial;
   line-height: 1.5;
 }
 
-.prose code span {
+.prose code span:not(:where(.not-prose, .not-prose *)) {
   @apply font-medium;
 }
 
-.prose img {
+.prose img:not(:where(.not-prose, .not-prose *)) {
   /* Don't apply styles to next/image */
   @apply m-0;
 }
 
-.prose p {
+.prose p:not(:where(.not-prose, .not-prose *)) {
   @apply my-4 leading-7;
 }
 
@@ -200,6 +207,29 @@
   @apply text-2xl text-foreground font-semibold tracking-tight mt-12 mb-4 pt-8 border-t border-border/60 relative scroll-mt-12;
 }
 
+/* An `Eyebrow` takes over the rule and spacing above the heading it precedes. */
+.prose [data-slot="eyebrow"] {
+  @apply mt-12 mb-2 pt-8 border-t border-border/60;
+}
+
+.prose [data-slot="eyebrow"] + :is(h2, h3) {
+  @apply mt-0 pt-0 border-t-0;
+}
+
+/* In a `Timeline` each step is a grid whose text cell opens with the eyebrow
+   and heading, so they stick with it; the rail replaces the rule. */
+.prose [data-slot="timeline"] [data-slot="eyebrow"] {
+  @apply relative mt-0 pt-0 border-t-0;
+}
+
+.prose [data-slot="timeline"] h2 {
+  @apply text-balance;
+}
+
+.prose [data-slot="timeline"] > * + * {
+  @apply mt-20;
+}
+
 .prose h3 {
   @apply text-xl text-foreground font-medium tracking-tight mt-8 mb-3 relative scroll-mt-8;
 }
@@ -208,60 +238,60 @@
   @apply text-lg text-foreground font-medium tracking-tight mt-6 mb-2 relative scroll-mt-6;
 }
 
-.prose hr {
+.prose hr:not(:where(.not-prose, .not-prose *)) {
   @apply my-6
 }
 
-.prose strong {
+.prose strong:not(:where(.not-prose, .not-prose *)) {
   @apply text-foreground font-semibold;
 }
 
-.prose blockquote {
+.prose blockquote:not(:where(.not-prose, .not-prose *)) {
   @apply border-l-2 border-foreground/50 pl-4;
 }
 
-.prose blockquote p::before {
+.prose blockquote p:not(:where(.not-prose, .not-prose *))::before {
   content: '"';
   @apply text-muted-foreground;
 }
 
-.prose blockquote p::after {
+.prose blockquote p:not(:where(.not-prose, .not-prose *))::after {
   content: '"';
   @apply text-muted-foreground;
 }
 
-.prose figure {
+.prose figure:not(:where(.not-prose, .not-prose *)) {
   @apply my-4;
 }
 
-.prose figure img {
+.prose figure img:not(:where(.not-prose, .not-prose *)) {
   @apply aspect-video object-cover border border-border outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10;
 }
 
-.prose figure img.img-fit {
+.prose figure img.img-fit:not(:where(.not-prose, .not-prose *)) {
   /* opt out of the forced 16:9 crop: show non-16:9 images (wide diagrams, terminal strips, portrait cards) whole */
   aspect-ratio: auto;
   object-fit: contain;
 }
 
-.prose figure figcaption {
+.prose figure figcaption:not(:where(.not-prose, .not-prose *)) {
   @apply text-sm text-muted-foreground not-empty:mt-1;
 }
 
-.prose em {
+.prose em:not(:where(.not-prose, .not-prose *)) {
   @apply text-foreground italic;
 }
 
-.prose ul {
+.prose ul:not(:where(.not-prose, .not-prose *)) {
   list-style-type: "–  ";
   @apply list-outside pl-5 marker:text-muted-foreground;
 }
 
-.prose ol {
+.prose ol:not(:where(.not-prose, .not-prose *)) {
   @apply list-outside pl-5 list-decimal marker:text-muted-foreground;
 }
 
-.prose li {
+.prose li:not(:where(.not-prose, .not-prose *)) {
   @apply leading-7 pl-1;
 }
 
@@ -277,6 +307,17 @@
   @apply cursor-pointer font-medium text-foreground select-none;
 }
 
+/* A summary rendered as a heading (see Details `headingLevel`) is outline
+   semantics, not a visual step — inherit the summary's own type entirely so
+   the rendering is identical to a plain-text summary. */
+.prose details summary :is(h2, h3, h4) {
+  display: inline;
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
 .prose details summary:hover {
   @apply bg-muted;
 }
@@ -289,11 +330,11 @@
   @apply mb-2;
 }
 
-.prose form {
+.prose form:not(:where(.not-prose, .not-prose *)) {
   @apply my-4;
 }
 
-.prose form label {
+.prose form label:not(:where(.not-prose, .not-prose *)) {
   @apply text-foreground font-medium;
 }
 
@@ -302,19 +343,19 @@
   @apply w-full overflow-x-auto my-4;
 }
 
-.prose table {
+.prose table:not(:where(.not-prose, .not-prose *)) {
   @apply w-full border-collapse border border-border text-foreground;
 }
 
-.prose table th {
+.prose table th:not(:where(.not-prose, .not-prose *)) {
   @apply font-medium bg-muted/50 p-4 text-left border border-border;
 }
 
-.prose table td {
+.prose table td:not(:where(.not-prose, .not-prose *)) {
   @apply font-normal p-4 border border-border;
 }
 
-.prose table caption {
+.prose table caption:not(:where(.not-prose, .not-prose *)) {
   @apply text-muted-foreground text-sm caption-bottom mt-4;
 }
 
@@ -337,4 +378,16 @@ input[type='email'] {
 
 .title {
   text-wrap: balance;
+}
+
+/* Same theme as the status page (apps/status-page/src/app/globals.css): no
+   radius, `.rounded-full` derived from it. Root-level so portaled content
+   (hover cards, popovers, menus mounted on body) matches the blocks that opened it. */
+:root {
+  --radius: 0rem;
+}
+@layer utilities {
+  .rounded-full {
+    border-radius: calc(var(--radius) * 99999999);
+  }
 }

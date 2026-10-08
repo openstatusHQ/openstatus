@@ -19,7 +19,7 @@ export const apiKeyCreateScopesSchema = z
   .default(["write"]);
 
 export const CreateApiKeyInput = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required"),
   description: z.string().optional(),
   expiresAt: z.date().optional(),
   scopes: apiKeyCreateScopesSchema,

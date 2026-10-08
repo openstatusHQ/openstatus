@@ -4,42 +4,58 @@ import { db, eq, schema } from "../src";
 import { selectMonitorSchema } from "../src/schema";
 import type { monitorRegionSchema } from "../src/schema/constants";
 
-const rawMonitors = await db.select().from(schema.monitor);
+type MonitorRegion = z.infer<typeof monitorRegionSchema>;
 
-const monitors = z.array(selectMonitorSchema).parse(rawMonitors);
-for (const monitor of monitors) {
-  const regions = monitor.regions.slice();
+// Every deprecated region and its replacement. Earlier entries already ran;
+// they stay because re-applying them is a no-op.
+export const REGION_REMAPS: ReadonlyArray<[MonitorRegion, MonitorRegion]> = [
   // Asia Pacific
-  updateRegion("hkg", "sin", regions);
-
+  ["hkg", "sin"],
+  ["bom", "sin"],
   // North America
-  updateRegion("atl", "dfw", regions);
-  updateRegion("mia", "dfw", regions);
-  updateRegion("gdl", "dfw", regions);
-  updateRegion("qro", "dfw", regions);
-  updateRegion("bos", "ewr", regions);
-  updateRegion("phx", "lax", regions);
-  updateRegion("sea", "sjc", regions);
-  updateRegion("yul", "yyz", regions);
-  updateRegion("den", "dfw", regions);
-
+  ["atl", "dfw"],
+  ["mia", "dfw"],
+  ["gdl", "dfw"],
+  ["qro", "dfw"],
+  ["bos", "ewr"],
+  ["phx", "lax"],
+  ["sea", "sjc"],
+  ["yul", "yyz"],
+  ["den", "dfw"],
   // Europe
-  updateRegion("waw", "ams", regions);
-  updateRegion("mad", "cdg", regions);
-  updateRegion("otp", "fra", regions);
-
+  ["waw", "ams"],
+  ["mad", "cdg"],
+  ["otp", "fra"],
   // South America
-  updateRegion("bog", "gru", regions);
-  updateRegion("gig", "gru", regions);
-  updateRegion("scl", "gru", regions);
-  updateRegion("eze", "gru", regions);
-  const newRegions = regions.join(",");
-  // console.log("new regions:",newRegions)
-  await db
-    .update(schema.monitor)
-    .set({ regions: newRegions })
-    .where(eq(schema.monitor.id, monitor.id))
-    .execute();
+  ["bog", "gru"],
+  ["gig", "gru"],
+  ["scl", "gru"],
+  ["eze", "gru"],
+];
+
+export function applyRegionRemaps(regions: MonitorRegion[]) {
+  for (const [from, to] of REGION_REMAPS) {
+    // `updateRegion` handles one occurrence; a region can be listed twice.
+    while (regions.includes(from)) updateRegion(from, to, regions);
+  }
+}
+
+// Only run against the DB when executed directly, not when imported by tests.
+if (import.meta.main) {
+  const rawMonitors = await db.select().from(schema.monitor);
+
+  const monitors = z.array(selectMonitorSchema).parse(rawMonitors);
+  for (const monitor of monitors) {
+    const regions = monitor.regions.slice();
+    applyRegionRemaps(regions);
+    const newRegions = regions.join(",");
+    if (newRegions === monitor.regions.join(",")) continue;
+    await db
+      .update(schema.monitor)
+      .set({ regions: newRegions })
+      .where(eq(schema.monitor.id, monitor.id))
+      .execute();
+  }
 }
 
 export function updateRegion(

@@ -1,0 +1,31 @@
+DESCRIPTION >
+	Stores all the data from the grpc_response table for the last 30 days, mainly used for accessing the data details.
+
+
+TAGS "grpc, full"
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        monitorId,
+        region,
+        timestamp,
+        cronTimestamp,
+        timing,
+        workspaceId,
+        latency,
+        servingStatus,
+        grpcCode,
+        service,
+        errorMessage,
+        error,
+        trigger,
+        uri,
+        id,
+        requestStatus
+    FROM grpc_response__v0
+
+TYPE materialized
+DATASOURCE mv__grpc_full_30d__v0

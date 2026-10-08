@@ -3,11 +3,13 @@ import type { Metadata } from "next";
 import type { MDXData } from "../../content/utils";
 
 export const TITLE = "openstatus";
-export const HOMEPAGE_TITLE = "The Compliance-First Status Page";
+export const HOMEPAGE_TITLE =
+  "Open Source Status Page, Uptime Monitoring & Incident Response";
 export const DESCRIPTION =
-  "Ship your status page before your SOC 2 auditor asks for it. Communicate incidents, prove compliance readiness, and monitor uptime from 28 global regions. Open source and free to start.";
+  "Open source status page, incident response and global uptime monitoring. When something breaks, your subscribers hear it first and your auditor gets the trail.";
 
-export const OG_DESCRIPTION = "The status page for compliance-ready teams";
+export const OG_DESCRIPTION =
+  "Status pages and incident response for humans and agents";
 
 export const BASE_URL =
   process.env.NODE_ENV === "production"
@@ -83,7 +85,8 @@ export const getSocialMetadata = (args: {
 
 export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
   const { slug, metadata } = page;
-  const { title, description, category, publishedAt, seo } = metadata;
+  const { title, description, category, publishedAt, updatedAt, seo } =
+    metadata;
 
   const url = basePath
     ? `${BASE_URL}/${basePath}/${slug}`
@@ -112,7 +115,33 @@ export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
       ...openGraph,
       type: "article",
       publishedTime: publishedAt.toISOString(),
+      modifiedTime: (updatedAt ?? publishedAt).toISOString(),
     },
     twitter,
+  };
+};
+
+// Home sits outside `getPageMetadata`: its canonical is `/`, its title skips
+// the `%s | openstatus` template and its OG card is the static one.
+export const getHomeMetadata = (page: MDXData): Metadata => {
+  const { title, description, category, seo } = page.metadata;
+  const metaTitle = seo?.title ?? title;
+  const metaDescription = seo?.description ?? description;
+
+  return {
+    ...defaultMetadata,
+    title: { absolute: metaTitle },
+    description: metaDescription,
+    alternates: {
+      canonical: seo?.canonical ?? "/",
+    },
+    ...(seo?.noindex ? { robots: { index: false } } : {}),
+    ...getSocialMetadata({
+      title: metaTitle,
+      description: metaDescription,
+      url: BASE_URL,
+      category,
+      ogImage: seo?.ogImage ?? `${BASE_URL}/api/og`,
+    }),
   };
 };

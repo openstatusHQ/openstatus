@@ -1,5 +1,5 @@
 import { eq } from "@openstatus/db";
-import { monitorTag } from "@openstatus/db/src/schema";
+import { monitorTag, workspace } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
@@ -211,6 +211,57 @@ describe("syncMonitorTags", () => {
       expect(byAction["monitor_tag.create"]).toBe(1);
       expect(byAction["monitor_tag.update"]).toBe(1);
       expect(byAction["monitor_tag.delete"]).toBe(1);
+    });
+  });
+});
+
+describe("listMonitorTags", () => {
+  test("returns flat tag rows, without the monitor join", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await syncMonitorTags({
+        ctx,
+        input: { tags: [{ name: "flat", color: "red" }] },
+      });
+
+      const rows = await listMonitorTags({ ctx });
+      const row = rows.find((r) => r.name === "flat");
+      expect(row).toBeDefined();
+      // The join used to ship a full second copy of the monitor table in the
+      // same batch as `monitor.list`; no consumer ever read it.
+      expect(row && "monitor" in row).toBe(false);
+      expect(row?.color).toBe("red");
+      expect(row?.workspaceId).toBe(teamCtx.workspace.id);
+    });
+  });
+
+  test("is scoped to the caller's workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await syncMonitorTags({
+        ctx,
+        input: { tags: [{ name: "scoped", color: "green" }] },
+      });
+
+      const [foreign] = await tx
+        .insert(workspace)
+        .values({
+          slug: `svc-tag-foreign-${teamCtx.workspace.id}`,
+          name: "Foreign",
+          stripeId: `svc-tag-stripe-${teamCtx.workspace.id}`,
+          plan: "team",
+        })
+        .returning();
+      if (!foreign) throw new Error("workspace insert returned no row");
+      await tx.insert(monitorTag).values({
+        workspaceId: foreign.id,
+        name: "foreign-tag",
+        color: "blue",
+      });
+
+      const rows = await listMonitorTags({ ctx });
+      expect(rows.some((r) => r.name === "scoped")).toBe(true);
+      expect(rows.some((r) => r.name === "foreign-tag")).toBe(false);
     });
   });
 });

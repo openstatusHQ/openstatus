@@ -62,7 +62,7 @@ const schema = z.object({
   components: z
     .array(
       z.object({
-        name: z.string().min(1, "Component name is required"),
+        name: z.string().trim().min(1, "Component name is required"),
       }),
     )
     .optional(),

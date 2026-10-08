@@ -120,7 +120,7 @@ export const emailRouter = createTRPCRouter({
     }),
 
   sendTeamInvitation: protectedProcedure
-    .input(z.object({ id: z.number(), baseUrl: z.string().optional() }))
+    .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       const limits = opts.ctx.workspace.limits;
 
@@ -134,12 +134,16 @@ export const emailRouter = createTRPCRouter({
 
         if (!_invitation) return;
 
+        const baseUrl = opts.ctx.req?.nextUrl?.origin
+          ? `${opts.ctx.req.nextUrl.origin}/invite`
+          : undefined;
+
         await emailClient.sendTeamInvitation({
           to: _invitation.email,
           token: _invitation.token,
           invitedBy: `${opts.ctx.user.email}`,
-          workspaceName: opts.ctx.workspace.name || "OpenStatus",
-          baseUrl: opts.input.baseUrl,
+          workspaceName: opts.ctx.workspace.name || "openstatus",
+          baseUrl,
         });
       }
     }),

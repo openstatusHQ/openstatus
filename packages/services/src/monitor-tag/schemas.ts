@@ -5,7 +5,7 @@ export type ListMonitorTagsInput = z.infer<typeof ListMonitorTagsInput>;
 
 const tagInput = z.object({
   id: z.number().int().optional(),
-  name: z.string(),
+  name: z.string().trim().min(1),
   color: z.string(),
 });
 

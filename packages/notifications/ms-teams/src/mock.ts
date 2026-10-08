@@ -38,6 +38,8 @@ const monitor: Monitor = {
   otelHeaders: [],
   retry: 3,
   followRedirects: false,
+  grpcService: null,
+  grpcTls: null,
 };
 
 const notification: Notification = {

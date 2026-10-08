@@ -1,14 +1,19 @@
 {
   "extends": "@openstatus/tsconfig/react-library.json",
-  "exclude": ["node_modules"],
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"],
   "compilerOptions": {
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "preserveWatchOutput": true,
     "skipLibCheck": true,
-    "noEmit": true,
-    "strict": true
+    "strict": true,
+    "types": ["node"],
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "declaration": true,
+    "declarationMap": false
   }
 }

@@ -53,19 +53,20 @@ export function mapFrequency(minutes: number): string {
   return FREQUENCY_MAP[closest] ?? "10m";
 }
 
-// AWS region codes (Checkly locations) → Fly regions (OpenStatus).
-const REGION_MAP: Record<string, string> = {
+// AWS region codes (Checkly locations) → Fly regions (OpenStatus). Imports
+// write regions unvalidated, so every target must be a non-deprecated region.
+export const REGION_MAP: Record<string, string> = {
   "us-east-1": "iad",
   "us-east-2": "iad",
   "us-west-1": "sjc",
-  "us-west-2": "sea",
-  "ca-central-1": "yul",
+  "us-west-2": "sjc",
+  "ca-central-1": "yyz",
   "eu-west-1": "lhr",
   "eu-west-2": "lhr",
   "eu-west-3": "cdg",
   "eu-central-1": "fra",
   "eu-north-1": "arn",
-  "ap-south-1": "bom",
+  "ap-south-1": "sin",
   "ap-southeast-1": "sin",
   "ap-southeast-2": "syd",
   "ap-northeast-1": "nrt",
@@ -124,6 +125,7 @@ export function mapCheck(check: ChecklyCheck, workspaceId: number) {
     headers,
     body: req?.body ?? "",
     method: mapMethod(req?.method ?? "GET"),
+    followRedirects: req?.followRedirects ?? true,
     // Checkly maxResponseTime is the hard timeout (ms); default to 45s.
     timeout: check.maxResponseTime ?? 45000,
     sourceMonitorGroupId: check.groupId,

@@ -79,6 +79,21 @@ export function getResponseLogDetails(
     });
   }
 
+  if (output.body) {
+    sections.push({
+      rows: [
+        {
+          label: "Body",
+          value: (
+            <pre className="text-foreground break-all whitespace-pre-wrap">
+              {output.body}
+            </pre>
+          ),
+        },
+      ],
+    });
+  }
+
   if (output.assertions) {
     sections.push({
       rows: [

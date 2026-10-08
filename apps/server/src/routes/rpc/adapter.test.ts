@@ -97,6 +97,16 @@ describe("toConnectError", () => {
     const err = captureThrow(() => toConnectError(original));
     expect(err).toBe(original);
   });
+
+  // Unclassified errors propagate raw so `errorInterceptor` — the only
+  // layer holding the request id — can log and redact them in one place.
+  // The redaction itself is covered in `interceptors/__tests__/error.test.ts`.
+  test("rethrows an unclassified error untouched", () => {
+    const drizzleish = new Error("Failed query: insert into ...");
+    const err = captureThrow(() => toConnectError(drizzleish));
+    expect(err).toBe(drizzleish);
+    expect(err).not.toBeInstanceOf(ConnectError);
+  });
 });
 
 /**

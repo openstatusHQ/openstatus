@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "@openstatus/db";
+import { and, eq, inArray } from "@openstatus/db";
 import {
   maintenance,
   maintenanceUpdate,
@@ -136,28 +136,4 @@ export async function getMaintenanceUpdateInWorkspace(args: {
     .get();
   if (!row) throw new NotFoundError("maintenance_update", id);
   return row.update;
-}
-
-export async function syncMaintenanceMessage(tx: DB, maintenanceId: number) {
-  const latest = await getLatestMaintenanceUpdate(tx, maintenanceId);
-
-  if (!latest) {
-    throw new ConflictError("A maintenance must have at least one update.");
-  }
-
-  return tx
-    .update(maintenance)
-    .set({ message: latest.message, updatedAt: new Date() })
-    .where(eq(maintenance.id, maintenanceId))
-    .returning()
-    .get();
-}
-
-export function getLatestMaintenanceUpdate(tx: DB, maintenanceId: number) {
-  return tx
-    .select()
-    .from(maintenanceUpdate)
-    .where(eq(maintenanceUpdate.maintenanceId, maintenanceId))
-    .orderBy(desc(maintenanceUpdate.date), desc(maintenanceUpdate.id))
-    .get();
 }

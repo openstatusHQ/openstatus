@@ -3,7 +3,12 @@ import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
+import { unlinkIncidentFromStatusReport } from "../incident/link-status-report";
 import { recomputeReportStatus } from "./derive-status";
 import { getReportInWorkspace, getReportUpdateInWorkspace } from "./internal";
 import {
@@ -30,6 +35,11 @@ export async function deleteStatusReport(args: {
       workspaceId: ctx.workspace.id,
     });
 
+    await unlinkIncidentFromStatusReport({
+      tx,
+      ctx,
+      statusReportId: report.id,
+    });
     await tx.delete(statusReport).where(eq(statusReport.id, report.id));
 
     await emitAudit(tx, ctx, {
@@ -62,7 +72,10 @@ export async function deleteStatusReportUpdate(args: {
       .where(eq(statusReportUpdate.id, existing.id));
 
     // deleting the latest update hands the status back to the one before it
-    await recomputeReportStatus(tx, existing.statusReportId);
+    await recomputeReportStatus(tx, existing.statusReportId, {
+      updatedBy: tryGetActorUserId(ctx.actor),
+      removed: existing,
+    });
 
     await emitAudit(tx, ctx, {
       action: "status_report_update.delete",

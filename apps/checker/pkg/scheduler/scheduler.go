@@ -243,6 +243,115 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 		log.Printf("Started DNS monitoring job for %s (%s)", m.Id, m.Uri)
 	}
 
+	for _, m := range res.Msg.IcmpMonitors {
+		currentIDs[m.Id] = struct{}{}
+		if mm.shouldSchedule(m.Id, m) {
+
+			interval := time.Duration(intervalToSecond(m.Periodicity)) * time.Second
+			task := tasks.Task{
+				Interval:          interval,
+				RunOnce:           false,
+				RunSingleInstance: true,
+				FuncWithTaskContext: func(ctx tasks.TaskContext) error {
+
+					monitor := m
+					c := context.Background()
+					log.Printf("Starting ICMP job for monitor %s (%s)", monitor.Id, monitor.Uri)
+					data, err := mm.JobRunner.ICMPJob(c, monitor, res.Msg.Region)
+					if err != nil {
+						log.Printf("ICMP monitor check failed for %s (%s): %v", monitor.Id, monitor.Uri, err)
+						return err
+					}
+					resp, ingestErr := mm.Client.IngestICMP(c, &connect.Request[v1.IngestICMPRequest]{
+						Msg: &v1.IngestICMPRequest{
+							MonitorId:       monitor.Id,
+							Id:              data.ID,
+							Uri:             monitor.Uri,
+							Message:         data.Message,
+							Latency:         data.Latency,
+							LatencyMin:      data.LatencyMin,
+							LatencyMax:      data.LatencyMax,
+							PacketsSent:     data.PacketsSent,
+							PacketsReceived: data.PacketsReceived,
+							RequestStatus:   data.RequestStatus,
+							Error:           int64(data.Error),
+							CronTimestamp:   data.CronTimestamp,
+							Timestamp:       data.Timestamp,
+							Timing:          data.Timing,
+						},
+					})
+					if ingestErr != nil {
+						log.Printf("Failed to ingest ICMP result for %s (%s): %v", monitor.Id, monitor.Uri, ingestErr)
+						return ingestErr
+					}
+					log.Printf("ICMP monitor check succeeded for %s (%s), ingest response: %v", monitor.Id, monitor.Uri, resp)
+
+					return nil
+				},
+			}
+			err := mm.Scheduler.AddWithID(m.Id, &task)
+			if err != nil {
+				log.Printf("Failed to add ICMP monitor job for %s (%s): %v", m.Id, m.Uri, err)
+				continue
+			}
+			log.Printf("Started ICMP monitoring job for %s (%s)", m.Id, m.Uri)
+		}
+	}
+
+	for _, m := range res.Msg.GrpcMonitors {
+		currentIDs[m.Id] = struct{}{}
+		if mm.shouldSchedule(m.Id, m) {
+
+			interval := time.Duration(intervalToSecond(m.Periodicity)) * time.Second
+			task := tasks.Task{
+				Interval:          interval,
+				RunOnce:           false,
+				RunSingleInstance: true,
+				FuncWithTaskContext: func(ctx tasks.TaskContext) error {
+
+					monitor := m
+					c := context.Background()
+					log.Printf("Starting gRPC job for monitor %s (%s)", monitor.Id, monitor.Uri)
+					data, err := mm.JobRunner.GRPCJob(c, monitor, res.Msg.Region)
+					if err != nil {
+						log.Printf("gRPC monitor check failed for %s (%s): %v", monitor.Id, monitor.Uri, err)
+						return err
+					}
+					resp, ingestErr := mm.Client.IngestGRPC(c, &connect.Request[v1.IngestGRPCRequest]{
+						Msg: &v1.IngestGRPCRequest{
+							MonitorId:     monitor.Id,
+							Id:            data.ID,
+							Uri:           monitor.Uri,
+							Service:       data.Service,
+							ServingStatus: data.ServingStatus,
+							GrpcCode:      data.GRPCCode,
+							Message:       data.Message,
+							Latency:       data.Latency,
+							RequestStatus: data.RequestStatus,
+							Error:         int64(data.Error),
+							CronTimestamp: data.CronTimestamp,
+							Timestamp:     data.Timestamp,
+							Timing:        data.Timing,
+						},
+					})
+					if ingestErr != nil {
+						log.Printf("Failed to ingest gRPC result for %s (%s): %v", monitor.Id, monitor.Uri, ingestErr)
+						return ingestErr
+					}
+					log.Printf("gRPC monitor check succeeded for %s (%s), ingest response: %v", monitor.Id, monitor.Uri, resp)
+
+					return nil
+				},
+			}
+			err := mm.Scheduler.AddWithID(m.Id, &task)
+			if err != nil {
+				log.Printf("Failed to add gRPC monitor job for %s (%s): %v", m.Id, m.Uri, err)
+				continue
+			}
+			log.Printf("Started gRPC monitoring job for %s (%s)", m.Id, m.Uri)
+		}
+	}
+
 	mm.mu.Lock()
 	for id := range mm.Scheduler.Tasks() {
 		if _, stillExists := currentIDs[id]; !stillExists {

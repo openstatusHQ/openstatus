@@ -1,5 +1,6 @@
 import type { RouterOutputs } from "@openstatus/api";
 import {
+  CloudOff,
   Monitor,
   type IconType,
   Report,
@@ -8,17 +9,27 @@ import {
   Maintenance as MaintenanceIcon,
 } from "@openstatus/icons";
 
-type Incident = RouterOutputs["incident"]["list"][number];
+import type { StatusVariant } from "@/components/common/status-dot";
+import { incidentEndedAt } from "@/data/managed-incidents.client";
+import {
+  reportResolvedAt,
+  reportStartedAt,
+} from "@/data/status-reports.client";
+
+type MonitorIncident = RouterOutputs["monitorIncident"]["list"][number];
+type ManagedIncident = NonNullable<RouterOutputs["incident"]["list"]>[number];
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 
 export type OverviewEvent =
-  | { type: "incident"; incident: Incident }
+  | { type: "incident"; incident: MonitorIncident }
+  | { type: "managedIncident"; incident: ManagedIncident }
   | { type: "report"; report: StatusReport }
   | { type: "maintenance"; maintenance: Maintenance };
 
 export const eventTypeConfig = {
-  incident: { label: "Incident", icon: IncidentIcon },
+  incident: { label: "Downtime", icon: CloudOff },
+  managedIncident: { label: "Incident", icon: IncidentIcon },
   report: { label: "Status Report", icon: Report },
   maintenance: { label: "Maintenance", icon: MaintenanceIcon },
 } as const;
@@ -34,10 +45,21 @@ export const incidentStatusConfig = {
 export type IncidentStatus = keyof typeof incidentStatusConfig;
 
 export const maintenanceStatusConfig = {
-  scheduled: { label: "Scheduled", color: "text-info/80" },
-  "in-progress": { label: "In Progress", color: "text-info/80" },
-  completed: { label: "Completed", color: "text-info/80" },
-} as const;
+  scheduled: { label: "Scheduled", color: "text-info/80", variant: "info" },
+  "in-progress": {
+    label: "In Progress",
+    color: "text-info/80",
+    variant: "warning",
+  },
+  completed: {
+    label: "Completed",
+    color: "text-info/80",
+    variant: "success",
+  },
+} as const satisfies Record<
+  string,
+  { label: string; color: string; variant: StatusVariant }
+>;
 
 export type MaintenanceStatus = keyof typeof maintenanceStatusConfig;
 
@@ -59,23 +81,10 @@ export function getMaintenanceStatus(
   return "in-progress";
 }
 
-function reportStartedAt(report: StatusReport): Date {
-  const dates = report.updates.map((u) => u.date.getTime());
-  if (dates.length) return new Date(Math.min(...dates));
-  return report.createdAt ?? new Date(0);
-}
-
-function reportResolvedAt(report: StatusReport): Date | null {
-  if (report.status !== "resolved") return null;
-  const dates = report.updates.map((u) => u.date.getTime());
-  // legacy resolved report without updates: fall back to updatedAt
-  if (!dates.length) return report.updatedAt ?? report.createdAt;
-  return new Date(Math.max(...dates));
-}
-
 export function getStartedAt(event: OverviewEvent): Date {
   switch (event.type) {
     case "incident":
+    case "managedIncident":
       return event.incident.startedAt;
     case "report":
       return reportStartedAt(event.report);
@@ -88,6 +97,8 @@ export function getResolvedAt(event: OverviewEvent): Date | null {
   switch (event.type) {
     case "incident":
       return event.incident.resolvedAt;
+    case "managedIncident":
+      return incidentEndedAt(event.incident);
     case "report":
       return reportResolvedAt(event.report);
     case "maintenance":
@@ -99,6 +110,11 @@ function isOpen(event: OverviewEvent, now: Date): boolean {
   switch (event.type) {
     case "incident":
       return !event.incident.resolvedAt;
+    case "managedIncident":
+      return (
+        event.incident.status === "open" ||
+        event.incident.status === "mitigated"
+      );
     case "report":
       return event.report.status !== "resolved";
     case "maintenance":
@@ -118,13 +134,19 @@ export function buildOverviewData(
   {
     monitors,
     pages,
-    incidents,
+    monitorIncidents,
     statusReports,
     maintenances,
+    managedIncidents,
+    endedIncidents,
   }: {
     monitors: RouterOutputs["monitor"]["list"];
     pages: RouterOutputs["page"]["list"];
-    incidents: Incident[];
+    monitorIncidents: MonitorIncident[];
+    // replaces the downtime count; undefined while loading or on a failed query
+    managedIncidents?: RouterOutputs["incident"]["list"];
+    // resolved/canceled managed incidents — feed Recent Activity
+    endedIncidents?: RouterOutputs["incident"]["list"];
     statusReports: StatusReport[];
     maintenances: Maintenance[];
   },
@@ -133,7 +155,13 @@ export function buildOverviewData(
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   const events: OverviewEvent[] = [
-    ...incidents.map((incident) => ({ type: "incident" as const, incident })),
+    ...monitorIncidents.map((incident) => ({
+      type: "incident" as const,
+      incident,
+    })),
+    ...[...(managedIncidents ?? []), ...(endedIncidents ?? [])].map(
+      (incident) => ({ type: "managedIncident" as const, incident }),
+    ),
     ...statusReports.map((report) => ({ type: "report" as const, report })),
     ...maintenances.map((maintenance) => ({
       type: "maintenance" as const,
@@ -154,7 +182,9 @@ export function buildOverviewData(
     return resolvedAt !== null && resolvedAt >= sevenDaysAgo;
   });
 
-  const openIncidents = incidents.filter((i) => !i.resolvedAt);
+  const openIncidentsCount = managedIncidents
+    ? managedIncidents.length
+    : monitorIncidents.filter((i) => !i.resolvedAt).length;
   const openReports = statusReports.filter((r) => r.status !== "resolved");
   const activeMaintenances = maintenances.filter((m) => m.to >= now);
 
@@ -175,9 +205,10 @@ export function buildOverviewData(
     },
     {
       title: "Open Incidents",
-      value: openIncidents.length,
-      variant: openIncidents.length > 0 ? "destructive" : "default",
-      icon: eventTypeConfig.incident.icon,
+      value: openIncidentsCount,
+      href: managedIncidents ? "/incidents" : undefined,
+      variant: openIncidentsCount > 0 ? "destructive" : "default",
+      icon: IncidentIcon,
     },
     {
       title: "Open Reports",

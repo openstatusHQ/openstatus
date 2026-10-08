@@ -1,0 +1,18 @@
+---
+title: "OAuth for the MCP server"
+description: "Connect Claude, ChatGPT, Cursor, opencode, and any MCP client with a consent screen instead of an API key."
+image: "/assets/changelog/mcp-oauth.png"
+publishedAt: "2026-09-08"
+category: "integrations"
+author: "openstatus"
+---
+
+The openstatus MCP server now signs clients in with **OAuth 2.1**. Add `https://api.openstatus.dev/mcp` to Claude, ChatGPT, Cursor, Claude Code, or opencode, and the client opens a consent screen instead of asking for a key.
+
+On that screen you pick the **workspace**, choose **read-only or read & write**, and approve. Tokens are short-lived and refresh on their own.
+
+Every connection is listed under **Settings > Integrations > Connected apps**, where you can see who connected it and revoke it at any time.
+
+The `x-openstatus-key` header keeps working and stays the right choice for CI and headless agents.
+
+Details in the [MCP server reference](/docs/reference/mcp-server#oauth-endpoints), and guides for [Claude Code](/guides/connect-openstatus-to-claude-code), [Claude Desktop](/guides/connect-openstatus-to-claude-desktop), [Codex](/guides/connect-openstatus-to-codex), [ChatGPT](/guides/connect-openstatus-to-chatgpt), and [opencode](/guides/connect-openstatus-to-opencode).

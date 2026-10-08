@@ -65,7 +65,7 @@ export function MonitorDataTableActionBar({
           queryKey: trpc.monitor.list.queryKey(),
         });
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
         // Clear selection once deletion succeeds
         table.toggleAllRowsSelected(false);

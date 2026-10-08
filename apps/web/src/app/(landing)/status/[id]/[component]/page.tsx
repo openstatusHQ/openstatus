@@ -18,6 +18,7 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../../content-box";
+import { getComponentFullName } from "../../utils";
 import { ComponentDetail } from "./component-detail";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export async function generateMetadata(args: {
     return { ...defaultMetadata, title: "Not Found" };
   }
 
-  const fullName = `${service.name} ${component.name}`;
+  const fullName = getComponentFullName(service.name, component.name);
   const title = `Is ${fullName} Down? ${fullName} Status & History`;
   const description = `Is ${component.name} (${service.name}) down right now? Check the live status, uptime over the last ${HISTORY_DAYS} days, and recent incidents for ${component.name} tracked by OpenStatus.`;
   const canonicalUrl = `${BASE_URL}/status/${service.slug}/${component.slug}`;
@@ -77,6 +78,8 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
     permanentRedirect(`/status/${service.slug}/${component.slug}`);
   }
 
+  const fullName = getComponentFullName(service.name, component.name);
+
   await api.externalService.component.prefetch({
     serviceSlug: service.slug,
     componentSlug: component.slug,
@@ -100,7 +103,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           fallback={
             <section className="prose dark:prose-invert mb-12 max-w-none">
               <p className="text-muted-foreground">
-                Loading {service.name} {component.name} status…
+                Loading {fullName} status…
               </p>
             </section>
           }
@@ -118,7 +121,12 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           Looking for a status page?
         </ContentBoxTitle>
         <ContentBoxDescription className="m-0! text-sm">
-          Every service needs a status page. Run yours with OpenStatus.
+          Every service needs a status page. Run yours with OpenStatus — see
+          what a{" "}
+          <CustomLink href="/status-page" className="underline-offset-4">
+            hosted status page
+          </CustomLink>{" "}
+          includes.
         </ContentBoxDescription>
         <ButtonLink href={`${APP_URL}?ref=status-component-bottom`}>
           Create your status page

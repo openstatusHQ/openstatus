@@ -33,4 +33,14 @@ describe("parseXVercelId", () => {
       expect(result.error.message).toBe("Couldn't parse the header.");
     }
   });
+
+  it("fails when the region id is not in the list", () => {
+    const result = parseXVercelId("zzz9::qwert-1700000000000-abc123");
+    expect(result.status).toBe("failed");
+    if (result.status === "failed") {
+      expect(result.error.message).toBe(
+        "It seems like the region 'zzz9' is not listed.",
+      );
+    }
+  });
 });

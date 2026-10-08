@@ -159,3 +159,33 @@ After resolution, consider adding context about prevention:
 - Use **API Service Disruption** if rollback affects external integrations
 - Use **Database Performance** if rollback impacts database operations
 - Use **Security Incident** if deployment exposed security issues
+
+## Related
+
+This template is one of several in the [incident communication guide](/guides/incident-communication), which covers update cadence by severity, what to avoid saying, and the other scenario templates.
+
+## Frequently asked questions
+
+<Details summary="How quickly should I decide to roll back a deployment?">
+
+If error rates exceed 5% or critical functionality is broken, initiate rollback immediately. Don't wait to debug in production. Roll back first, then investigate the issue in a safe environment. Time is critical - every minute of impact affects user trust.
+
+</Details>
+
+<Details summary="Should I complete the rollback before communicating, or communicate during?">
+
+Communicate the rollback decision immediately, then provide updates during the process. Users appreciate knowing you're taking action. Example: 'We've initiated a rollback and expect completion in 10 minutes' is better than waiting until it's done.
+
+</Details>
+
+<Details summary="What if the rollback doesn't fix the issue?">
+
+This suggests the problem isn't with the recent deployment. Pivot your communication to general incident response, investigate the root cause, and consider whether you need to roll back further or take other remediation steps. Update users with revised information.
+
+</Details>
+
+<Details summary="Do I need a post-mortem after every rollback?">
+
+Yes. Even quick rollbacks deserve analysis. Document what went wrong, why it wasn't caught in testing, and what process changes will prevent recurrence. Share key findings with users if appropriate to show continuous improvement.
+
+</Details>

@@ -11,7 +11,6 @@ import {
   Linked,
   Unlinked,
   Plug,
-  Add,
   Delete,
 } from "@openstatus/icons";
 import {
@@ -106,7 +105,7 @@ const componentSchema = z.object({
   id: z.number(),
   monitorId: z.number().nullish(),
   order: z.number(),
-  name: z.string().min(1, { message: "Name is required" }),
+  name: z.string().trim().min(1, { message: "Name is required" }),
   description: z.string().optional(),
   type: z.enum(["monitor", "static"]),
 });
@@ -117,7 +116,7 @@ const schema = z.object({
     z.object({
       id: z.number(),
       order: z.number(),
-      name: z.string(),
+      name: z.string().trim().min(1, { message: "Name is required" }),
       defaultOpen: z.boolean(),
       components: z.array(componentSchema).min(1, {
         message: "At least one component is required",
@@ -506,9 +505,8 @@ export function FormComponents({
                 Manage your page components
               </FormCardDescription>
             </FormCardHeader>
-            <FormCardContent className="flex flex-row gap-2">
+            <FormCardContent className="flex flex-col gap-2 sm:flex-row">
               <Button variant="outline" type="button" onClick={handleAddGroup}>
-                <Add />
                 Add Component Group
               </Button>
               <FormField
@@ -520,7 +518,6 @@ export function FormComponents({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="w-full">
-                          <Add />
                           Add Component
                         </Button>
                       </DropdownMenuTrigger>
@@ -738,15 +735,15 @@ function ComponentRow({
       className={cn("rounded-md", className)}
       {...props}
     >
-      <div className="grid h-9 grid-cols-4 gap-2">
-        <div className="flex flex-row items-center gap-1 self-center">
-          <SortableItemHandle>
-            <DragHandle
-              size={16}
-              aria-hidden="true"
-              className="text-muted-foreground"
-            />
-          </SortableItemHandle>
+      <div className="grid min-h-9 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] gap-2 sm:grid-cols-[auto_repeat(4,minmax(0,1fr))]">
+        <SortableItemHandle className="row-span-2 self-center sm:row-span-1">
+          <DragHandle
+            size={16}
+            aria-hidden="true"
+            className="text-muted-foreground"
+          />
+        </SortableItemHandle>
+        <div className="flex items-center self-center">
           {fieldNamePrefix ? (
             <FormField
               key={`${component.id}-name-${fieldNamePrefix}`}
@@ -807,13 +804,13 @@ function ComponentRow({
             <Link
               href={`/monitors/${component.monitorId}/overview`}
               onClick={(e) => e.stopPropagation()}
-              className="flex w-full items-center gap-2 truncate py-1.5 text-sm"
+              className="flex w-full min-w-0 items-center gap-2 py-1.5 text-sm"
             >
               <Linked className="size-4 shrink-0" />{" "}
               <span className="truncate">{component.monitor.name}</span>
             </Link>
           ) : (
-            <span className="text-muted-foreground flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground flex min-w-0 items-center gap-2 text-sm">
               <Unlinked className="size-4 shrink-0" />{" "}
               <span className="truncate">Static Component</span>
             </span>
@@ -998,15 +995,15 @@ function ComponentGroupRow({
 
   return (
     <SortableItem value={group.id} className="bg-muted rounded-md border">
-      <div className="grid grid-cols-4 gap-2 px-2 pt-2">
-        <div className="flex flex-row items-center gap-1 self-center">
-          <SortableItemHandle>
-            <DragHandle
-              size={16}
-              aria-hidden="true"
-              className="text-muted-foreground"
-            />
-          </SortableItemHandle>
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] gap-2 px-2 pt-2 sm:grid-cols-[auto_repeat(4,minmax(0,1fr))]">
+        <SortableItemHandle className="row-span-2 self-center sm:row-span-1">
+          <DragHandle
+            size={16}
+            aria-hidden="true"
+            className="text-muted-foreground"
+          />
+        </SortableItemHandle>
+        <div className="flex items-center self-center">
           <FormField
             key={`${group.id}-name-${groupIndex}`}
             control={form.control}
@@ -1031,13 +1028,12 @@ function ComponentGroupRow({
           control={form.control}
           name={`groups.${groupIndex}.components` as const}
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem className="flex min-w-0 flex-col">
               <FormLabel className="sr-only">Components</FormLabel>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full">
-                    <Add />
-                    Add Component
+                  <Button variant="outline" className="w-full min-w-0">
+                    <span className="truncate">Add Component</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
@@ -1153,7 +1149,7 @@ function ComponentGroupRow({
           control={form.control}
           name={`groups.${groupIndex}.defaultOpen` as const}
           render={({ field }) => (
-            <FormItem className="flex items-center gap-2 self-center">
+            <FormItem className="flex min-w-0 items-center gap-2 self-center">
               <FormControl>
                 <Checkbox
                   className="bg-background"
@@ -1161,8 +1157,8 @@ function ComponentGroupRow({
                   onCheckedChange={field.onChange}
                 />
               </FormControl>
-              <FormLabel className="text-muted-foreground !mt-0 text-sm font-normal">
-                Open by default
+              <FormLabel className="text-muted-foreground !mt-0 min-w-0 text-sm font-normal">
+                <span className="truncate">Open by default</span>
               </FormLabel>
             </FormItem>
           )}

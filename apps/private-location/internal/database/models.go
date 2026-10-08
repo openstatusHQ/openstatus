@@ -10,6 +10,8 @@ const (
 	JobTypeUDP  JobType = "udp"
 	JobTypeHTTP JobType = "http"
 	JobTypeDNS  JobType = "dns"
+	JobTypeICMP JobType = "icmp"
+	JobTypeGRPC JobType = "grpc"
 )
 
 type Monitor struct {
@@ -38,6 +40,8 @@ type Monitor struct {
 	Regions         string         `db:"regions" json:"-"`
 	Status          string         `db:"status" json:"-"`
 	Public          bool           `db:"public" json:"-"`
+	GrpcService     sql.NullString `db:"grpc_service" json:"-"`
+	GrpcTls         sql.NullString `db:"grpc_tls" json:"-"`
 }
 
 type PrivateLocation struct {

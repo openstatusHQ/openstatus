@@ -701,75 +701,87 @@ export function StatusEventTimelineMaintenance({
     maintenance.from,
     maintenance.to,
   );
+  // chronological: the announcement is the oldest event, notes follow it
   const updates = [...(maintenance.maintenanceUpdates ?? [])].sort(
-    (a, b) => b.date.getTime() - a.date.getTime(),
+    (a, b) => a.date.getTime() - b.date.getTime(),
   );
-  const entries =
-    updates.length > 0
-      ? updates
-      : [{ date: maintenance.from, message: maintenance.message }];
+  const renderBody = (message: string) =>
+    message.trim() === "" ? (
+      <span className="text-muted-foreground/70">-</span>
+    ) : renderMessage ? (
+      renderMessage(message)
+    ) : (
+      message
+    );
 
   return (
     <div
       data-slot="status-event-timeline-maintenance"
       data-variant="maintenance"
-      className="text-muted-foreground group text-sm"
+      className="group"
     >
-      <StatusEventTimelineTitle>
-        <span>{maintenance.title}</span>{" "}
-        <span className="text-muted-foreground/70">·</span>{" "}
-        <span className="text-muted-foreground font-mono text-xs">
-          <StatusTimestamp date={maintenance.from} variant="rich" asChild>
-            <span>{from}</span>
-          </StatusTimestamp>
-          {" - "}
-          <StatusTimestamp date={maintenance.to} variant="rich" asChild>
-            <span>{to}</span>
-          </StatusTimestamp>
-        </span>{" "}
-        {duration ? (
-          <span className="text-muted-foreground/70 font-mono text-xs">
-            {labels.durationFor(duration)}
-          </span>
-        ) : null}
-      </StatusEventTimelineTitle>
-      <div className="mt-2">
-        {entries.map((update, index) => (
-          <div
-            key={`${update.date.getTime()}-${index}`}
-            className="flex flex-row gap-4"
-          >
-            {withDot ? (
-              <div className="flex flex-col">
-                <div className="flex h-5 flex-col items-center justify-center">
-                  <StatusEventTimelineDot />
-                </div>
-                {index !== entries.length - 1 ? (
-                  <StatusEventTimelineSeparator />
-                ) : null}
-              </div>
-            ) : null}
-            <div className={cn(index === entries.length - 1 ? "mb-0" : "mb-2")}>
-              <StatusEventTimelineTitle>
-                <span className="text-muted-foreground font-mono text-xs">
-                  <StatusTimestamp date={update.date} variant="rich" asChild>
-                    <span>{labels.formatDateTime(update.date)}</span>
-                  </StatusTimestamp>
-                </span>
-              </StatusEventTimelineTitle>
-              <StatusEventTimelineMessage>
-                {update.message.trim() === "" ? (
-                  <span className="text-muted-foreground/70">-</span>
-                ) : renderMessage ? (
-                  renderMessage(update.message)
-                ) : (
-                  update.message
-                )}
-              </StatusEventTimelineMessage>
+      <div className="flex flex-row gap-4">
+        {withDot ? (
+          <div className="flex flex-col">
+            <div className="flex h-5 flex-col items-center justify-center">
+              <StatusEventTimelineDot />
             </div>
+            {updates.length > 0 ? <StatusEventTimelineSeparator /> : null}
           </div>
-        ))}
+        ) : null}
+        <div className={cn(updates.length > 0 ? "mb-2" : "mb-0")}>
+          <StatusEventTimelineTitle>
+            <span>{maintenance.title}</span>{" "}
+            <span className="text-muted-foreground/70">·</span>{" "}
+            <span className="text-muted-foreground font-mono text-xs">
+              <StatusTimestamp date={maintenance.from} variant="rich" asChild>
+                <span>{from}</span>
+              </StatusTimestamp>
+              {" - "}
+              <StatusTimestamp date={maintenance.to} variant="rich" asChild>
+                <span>{to}</span>
+              </StatusTimestamp>
+            </span>{" "}
+            {duration ? (
+              <span className="text-muted-foreground/70 font-mono text-xs">
+                {labels.durationFor(duration)}
+              </span>
+            ) : null}
+          </StatusEventTimelineTitle>
+          <StatusEventTimelineMessage>
+            {renderBody(maintenance.message)}
+          </StatusEventTimelineMessage>
+        </div>
       </div>
+      {updates.map((update, index) => (
+        <div
+          key={`${update.date.getTime()}-${index}`}
+          className="flex flex-row gap-4"
+        >
+          {withDot ? (
+            <div className="flex flex-col">
+              <div className="flex h-5 flex-col items-center justify-center">
+                <StatusEventTimelineDot />
+              </div>
+              {index !== updates.length - 1 ? (
+                <StatusEventTimelineSeparator />
+              ) : null}
+            </div>
+          ) : null}
+          <div className={cn(index === updates.length - 1 ? "mb-0" : "mb-2")}>
+            <StatusEventTimelineTitle>
+              <span className="text-muted-foreground font-mono text-xs">
+                <StatusTimestamp date={update.date} variant="rich" asChild>
+                  <span>{labels.formatDateTime(update.date)}</span>
+                </StatusTimestamp>
+              </span>
+            </StatusEventTimelineTitle>
+            <StatusEventTimelineMessage>
+              {renderBody(update.message)}
+            </StatusEventTimelineMessage>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -863,7 +875,7 @@ export function StatusEventTimelineDot({
     <div
       data-slot="status-event-timeline-dot"
       className={cn(
-        "bg-muted size-2.5 shrink-0 rounded-full",
+        "bg-muted size-2.5 shrink-0 rounded-lg",
         "group-data-[variant=resolved]:bg-success",
         "group-data-[variant=monitoring]:bg-info",
         "group-data-[variant=identified]:bg-warning",

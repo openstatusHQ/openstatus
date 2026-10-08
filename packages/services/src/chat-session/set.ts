@@ -20,6 +20,10 @@ import { SetChatSessionMessagesInput } from "./schemas";
  * full-replace lets each fire be the canonical snapshot. Existing-row
  * `createdAt` wins on overlap so older messages don't drift forward.
  */
+// Per-user UI state, not workspace configuration: only user actors get past
+// `tryGetActorUserId`, so `requireScope` could never fire, and the audit action
+// union has no `chat_session` verb.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function setChatSessionMessages(args: {
   ctx: ServiceContext;
   input: SetChatSessionMessagesInput;

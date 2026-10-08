@@ -1,14 +1,21 @@
 import * as assertions from "@openstatus/assertions";
+import { headerPairSchema } from "@openstatus/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
-import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
+import {
+  grpcTlsModes,
+  monitorJobTypes,
+  monitorMethods,
+  monitorStatus,
+} from "./constants";
 import { monitor } from "./monitor";
 
 export const monitorMethodsSchema = z.enum(monitorMethods);
 export const monitorStatusSchema = z.enum(monitorStatus);
 export const monitorJobTypesSchema = z.enum(monitorJobTypes);
+export const grpcTlsModesSchema = z.enum(grpcTlsModes);
 
 // TODO: shared function
 // oxlint-disable-next-line eslint/no-unused-vars
@@ -56,13 +63,12 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   method: monitorMethodsSchema.prefault("GET"),
 });
 
-const headersSchema = z
-  .array(z.object({ key: z.string(), value: z.string() }))
-  .optional();
+const headersSchema = z.array(headerPairSchema).optional();
 
 export const insertMonitorSchema = createInsertSchema(monitor, {
   name: z
     .string()
+    .trim()
     .min(1, "Name must be at least 1 character long")
     .max(255, "Name must be at most 255 characters long"),
   periodicity: monitorPeriodicitySchema.prefault("10m"),
@@ -72,10 +78,10 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   otelHeaders: headersSchema.prefault([]),
 }).extend({
   method: monitorMethodsSchema.prefault("GET"),
-  notifications: z.array(z.number()).optional().prefault([]),
-  pages: z.array(z.number()).optional().prefault([]),
+  notifications: z.array(z.number()).prefault([]),
+  pages: z.array(z.number()).prefault([]),
   body: z.string().prefault("").optional(),
-  tags: z.array(z.number()).optional().prefault([]),
+  tags: z.array(z.number()).prefault([]),
   statusAssertions: z.array(assertions.statusAssertion).optional(),
   headerAssertions: z.array(assertions.headerAssertion).optional(),
   textBodyAssertions: z.array(assertions.textBodyAssertion).optional(),
@@ -90,3 +96,4 @@ export type MonitorPeriodicity = z.infer<typeof monitorPeriodicitySchema>;
 export type MonitorMethod = z.infer<typeof monitorMethodsSchema>;
 export type MonitorRegion = z.infer<typeof monitorRegionSchema>;
 export type MonitorJobType = z.infer<typeof monitorJobTypesSchema>;
+export type GrpcTlsMode = z.infer<typeof grpcTlsModesSchema>;

@@ -1,7 +1,9 @@
 import { and, eq, isNull } from "@openstatus/db";
-import { pageSubscriber } from "@openstatus/db/src/schema";
+import { page, pageSubscriber } from "@openstatus/db/src/schema";
 
 import { type DB, type ServiceContext, getReadDb } from "../context";
+import { NotFoundError } from "../errors";
+import { type PageVisitor, assertPageAccess } from "../page-access";
 import { HasPendingSubscriberInput } from "./schemas";
 
 /**
@@ -12,10 +14,21 @@ import { HasPendingSubscriberInput } from "./schemas";
  */
 export async function hasPendingSubscriber(args: {
   input: HasPendingSubscriberInput;
+  /** `null` only when the caller already ran the page gate. */
+  visitor: PageVisitor | null;
   db?: DB;
 }): Promise<boolean> {
   const input = HasPendingSubscriberInput.parse(args.input);
   const db = getReadDb({ db: args.db } as ServiceContext);
+
+  // Gate first: pending state on a protected page is not public.
+  if (args.visitor) {
+    const pageData = await db.query.page.findFirst({
+      where: eq(page.id, input.pageId),
+    });
+    if (!pageData) throw new NotFoundError("page", input.pageId);
+    assertPageAccess(pageData, args.visitor);
+  }
 
   const existing = await db.query.pageSubscriber.findFirst({
     where: and(

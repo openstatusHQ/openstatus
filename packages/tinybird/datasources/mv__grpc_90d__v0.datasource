@@ -1,0 +1,21 @@
+# Data Source created from Pipe 'aggregate__grpc_90d__v0'
+
+SCHEMA >
+    `time` DateTime,
+    `latency` Int64,
+    `servingStatus` Nullable(String),
+    `grpcCode` Nullable(Int16),
+    `service` Nullable(String),
+    `error` Int16,
+    `region` String,
+    `trigger` Nullable(String),
+    `timestamp` Int64,
+    `cronTimestamp` Int64,
+    `monitorId` Int32,
+    `requestStatus` Nullable(String),
+    `id` Nullable(String)
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "monitorId, time"
+ENGINE_TTL "time + toIntervalDay(90)"

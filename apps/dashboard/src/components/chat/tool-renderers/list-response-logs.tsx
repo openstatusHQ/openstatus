@@ -42,7 +42,7 @@ export function listResponseLogsTable(
         indicator: log.requestStatus ? (
           <div
             className={cn(
-              "h-2.5 w-2.5 rounded-[2px]",
+              "h-2.5 w-2.5 rounded-xs",
               statusColor[log.requestStatus],
             )}
           />

@@ -37,10 +37,13 @@ function channelLabel(channelId: string, channelName?: string): string {
 }
 
 /**
- * Self-signup for a Slack channel via `/openstatus add <url>`. There is no
+ * Self-signup for a Slack channel via `/openstatus subscribe <url>`. There is no
  * authenticated workspace at the call site — both workspace and audit actor
  * are resolved from the page. Auto-accepted (the slash command is consent).
  */
+// Token-addressed self-service by an anonymous visitor: the audit actor is
+// `subscriber`, for which `requireScope` is a documented no-op.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function createSlackSubscriber(args: {
   input: CreateSlackSubscriberInput;
   db?: DB;
@@ -164,6 +167,9 @@ export async function createSlackSubscriber(args: {
   });
 }
 
+// Token-addressed self-service by an anonymous visitor: the audit actor is
+// `subscriber`, for which `requireScope` is a documented no-op.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function removeSlackSubscriber(args: {
   input: RemoveSlackSubscriberInput;
   db?: DB;
@@ -217,6 +223,62 @@ export async function removeSlackSubscriber(args: {
     });
 
     return { removed: true };
+  });
+}
+
+/**
+ * Unsubscribes every channel of a Slack team, on any workspace's page, when
+ * the app is removed from that team. Audited per subscriber as `system`.
+ */
+// Called by `uninstallSlackTeam` for a team, not a workspace: each row is
+// audited in its page's workspace, and a system actor has no scope to check.
+// oxlint-disable-next-line openstatus/services-mutation-guards
+export async function removeSlackTeamSubscribers(args: {
+  input: { teamId: string };
+  job: string;
+  db?: DB;
+}): Promise<number> {
+  const { teamId } = args.input;
+  return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+    const rows = await tx.query.pageSubscriber.findMany({
+      where: and(
+        eq(pageSubscriber.channelType, "slack"),
+        isNull(pageSubscriber.unsubscribedAt),
+        sql`json_extract(${pageSubscriber.channelConfig}, '$.teamId') = ${teamId}`,
+      ),
+      with: { page: { with: { workspace: true } } },
+    });
+    for (const existing of rows) {
+      const updated = await tx
+        .update(pageSubscriber)
+        .set({ unsubscribedAt: new Date(), updatedAt: new Date() })
+        .where(eq(pageSubscriber.id, existing.id))
+        .returning()
+        .get();
+      if (!existing.page?.workspace) continue;
+      const { page: _page, ...existingRow } = existing;
+      const { token: _bt, ...beforeSnap } =
+        selectPageSubscriberSchema.parse(existingRow);
+      const { token: _at, ...afterSnap } = selectPageSubscriberSchema.parse(
+        updated ?? existingRow,
+      );
+      await emitAudit(
+        tx,
+        {
+          workspace: parseWorkspaceForContext(existing.page.workspace),
+          actor: { type: "system", job: args.job },
+          db: tx,
+        },
+        {
+          action: "page_subscriber.update",
+          entityType: "page_subscriber",
+          entityId: existing.id,
+          before: beforeSnap,
+          after: afterSnap,
+        },
+      );
+    }
+    return rows.length;
   });
 }
 

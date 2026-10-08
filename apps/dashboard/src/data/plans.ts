@@ -114,10 +114,6 @@ export const config: Record<
         label: "Slack, Discord, Email, Webhook, ntfy.sh",
       },
       {
-        value: "sms",
-        label: "SMS",
-      },
-      {
         value: "pagerduty",
         label: "PagerDuty",
       },

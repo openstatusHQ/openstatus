@@ -3,9 +3,9 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM node@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d AS install
+FROM node@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d" \
+    org.opencontainers.image.base.digest="sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6" \
     org.opencontainers.image.base.name="docker.io/node:24-slim" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
@@ -22,16 +22,16 @@ RUN \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
 corepack enable pnpm
-pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --verbose
+pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --loglevel debug
 EOF
 
 # runtime
-FROM denoland/deno@sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62 AS runtime
+FROM denoland/deno@sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432 AS runtime
 LABEL \
     io.dofigen.version="2.8.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62" \
-    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.2" \
+    org.opencontainers.image.base.digest="sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432" \
+    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.7" \
     org.opencontainers.image.description="One-shot database migration runner for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
     org.opencontainers.image.title="OpenStatus DB Migrate" \

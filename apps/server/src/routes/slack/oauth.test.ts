@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 
+import { SLACK_BOT_SCOPES } from "@openstatus/services/integration";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
@@ -9,6 +10,7 @@ import {
   withSlackConfig,
 } from "@/libs/test/slack-config";
 
+import manifest from "../../../slack-manifest.json" with { type: "json" };
 import type { SlackEnv } from "./config";
 import { handleSlackInstall, handleSlackOAuthCallback } from "./oauth";
 
@@ -19,7 +21,11 @@ function createTestApp() {
   return app;
 }
 
-function signToken(data: { workspaceId: number; ts: number }): string {
+function signToken(data: {
+  workspaceId: number;
+  userId?: number;
+  ts: number;
+}): string {
   const payload = JSON.stringify(data);
   const signature = crypto
     .createHmac("sha256", SIGNING_SECRET)
@@ -29,12 +35,33 @@ function signToken(data: { workspaceId: number; ts: number }): string {
 }
 
 function encodeState(state: { workspaceId: number; ts: number }): string {
-  return signToken(state);
+  return signToken({ userId: 1, ...state });
 }
 
 function makeInstallToken(workspaceId: number): string {
-  return signToken({ workspaceId, ts: Date.now() });
+  return signToken({ workspaceId, userId: 1, ts: Date.now() });
 }
+
+describe("slack manifest", () => {
+  test("requests exactly the bot scopes the code asks for", () => {
+    expect([...manifest.oauth_config.scopes.bot].sort()).toEqual(
+      [...SLACK_BOT_SCOPES].sort(),
+    );
+  });
+
+  // Subscribed ahead of their handlers so workspaces reconnect only once.
+  test("subscribes to every event the incident stack needs", () => {
+    for (const event of [
+      "app_uninstalled",
+      "tokens_revoked",
+      "reaction_added",
+      "channel_deleted",
+      "channel_archive",
+    ]) {
+      expect(manifest.settings.event_subscriptions.bot_events).toContain(event);
+    }
+  });
+});
 
 describe("handleSlackInstall", () => {
   const app = createTestApp();
@@ -72,6 +99,7 @@ describe("handleSlackInstall", () => {
   test("returns 403 for expired token", async () => {
     const expired = signToken({
       workspaceId: 1,
+      userId: 1,
       ts: Date.now() - 10 * 60 * 1000,
     });
     const res = await app.request(`/slack/install?token=${expired}`);
@@ -91,11 +119,15 @@ describe("handleSlackInstall", () => {
 
     const expectedScopes = [
       "app_mentions:read",
+      "assistant:write",
       "channels:history",
       "chat:write",
       "groups:history",
       "groups:read",
       "groups:write",
+      "im:history",
+      "users:read",
+      "users:read.email",
     ];
 
     for (const s of expectedScopes) {
@@ -160,7 +192,11 @@ describe("handleSlackOAuthCallback", () => {
   });
 
   test("returns 400 for tampered state", async () => {
-    const payload = JSON.stringify({ workspaceId: 1, ts: Date.now() });
+    const payload = JSON.stringify({
+      workspaceId: 1,
+      userId: 1,
+      ts: Date.now(),
+    });
     const tamperedState = Buffer.from(`${payload}.invalidsignature`).toString(
       "base64url",
     );

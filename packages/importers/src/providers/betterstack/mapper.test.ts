@@ -1,3 +1,4 @@
+import { regionDict } from "@openstatus/regions";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 
@@ -28,6 +29,7 @@ import {
   mapResource,
   mapSection,
   mapStatusPage,
+  REGION_MAP,
 } from "./mapper";
 
 describe("mapFrequency", () => {
@@ -62,6 +64,17 @@ describe("mapRegions", () => {
     expect(mapRegions(["us", "eu", "as", "au"])).toBe("iad,fra,sin,syd");
   });
 
+  test("only targets regions that are still available", () => {
+    for (const [location, region] of Object.entries(REGION_MAP)) {
+      const info = regionDict[region as keyof typeof regionDict];
+      expect({ location, region, deprecated: info?.deprecated }).toEqual({
+        location,
+        region,
+        deprecated: false,
+      });
+    }
+  });
+
   test("returns default for unknown regions", () => {
     expect(mapRegions([])).toBe("iad");
     expect(mapRegions(["unknown"])).toBe("iad");
@@ -76,6 +89,8 @@ describe("mapMonitorType", () => {
     expect(mapMonitorType("tcp")).toBe("tcp");
     expect(mapMonitorType("udp")).toBe("udp");
     expect(mapMonitorType("dns")).toBe("dns");
+    expect(mapMonitorType("ping")).toBe("icmp");
+    expect(mapMonitorType("ping_icmp")).toBe("icmp");
   });
 
   test("defaults to http for unknown types", () => {
@@ -115,6 +130,11 @@ describe("mapMonitor", () => {
   test("maps monitor with empty headers", () => {
     const result = mapMonitor(MOCK_MONITORS[1], 42);
     expect(result.headers).toBe("");
+  });
+
+  test("carries over the monitor's follow_redirects setting", () => {
+    expect(mapMonitor(MOCK_MONITORS[0], 42).followRedirects).toBe(true);
+    expect(mapMonitor(MOCK_MONITORS[2], 42).followRedirects).toBe(false);
   });
 });
 

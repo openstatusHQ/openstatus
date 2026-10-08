@@ -15,6 +15,8 @@ import { DataTableBasics } from "./data-table-basics";
 type TestTCP = RouterOutputs["checker"]["testTcp"];
 type TestHTTP = RouterOutputs["checker"]["testHttp"];
 type TestDNS = RouterOutputs["checker"]["testDns"];
+type TestICMP = RouterOutputs["checker"]["testIcmp"];
+type TestGRPC = RouterOutputs["checker"]["testGrpc"];
 type Monitor = NonNullable<RouterOutputs["monitor"]["get"]>;
 
 export function DataTableSheetTest({
@@ -22,7 +24,7 @@ export function DataTableSheetTest({
   monitor,
   onClose,
 }: {
-  data: TestTCP | TestHTTP | TestDNS | null;
+  data: TestTCP | TestHTTP | TestDNS | TestICMP | TestGRPC | null;
   monitor: Monitor;
   onClose: () => void;
 }) {
@@ -45,7 +47,10 @@ export function DataTableSheetTest({
   );
 }
 
-function mapping(data: TestTCP | TestHTTP | TestDNS, monitor: Monitor) {
+function mapping(
+  data: TestTCP | TestHTTP | TestDNS | TestICMP | TestGRPC,
+  monitor: Monitor,
+) {
   switch (data.type) {
     case "http":
       return {
@@ -100,6 +105,46 @@ function mapping(data: TestTCP | TestHTTP | TestDNS, monitor: Monitor) {
         latency: data.latency ?? 0,
         records: data.records,
         errorMessage: null,
+        assertions: null,
+      } as const;
+    case "icmp":
+      return {
+        id: null,
+        trigger: null,
+        timestamp: data.timestamp,
+        cronTimestamp: data.timestamp,
+        region: data.region,
+        type: data.type,
+        requestStatus: "success",
+        error: false,
+        latency: data.latency ?? 0,
+        latencyMin: data.latencyMin ?? 0,
+        latencyMax: data.latencyMax ?? 0,
+        packetsSent: data.packetsSent ?? 0,
+        packetsReceived: data.packetsReceived ?? 0,
+        uri: monitor.url,
+        monitorId: String(monitor.id),
+        errorMessage: null,
+        assertions: null,
+      } as const;
+    case "grpc":
+      return {
+        id: null,
+        trigger: null,
+        timestamp: data.timestamp,
+        cronTimestamp: data.timestamp,
+        region: data.region,
+        type: data.type,
+        requestStatus: data.servingStatus === "SERVING" ? "success" : "error",
+        error: data.servingStatus !== "SERVING",
+        latency: data.latency ?? 0,
+        servingStatus: data.servingStatus ?? null,
+        grpcCode: data.grpcCode ?? null,
+        service: data.service ?? null,
+        timing: calculateTiming(data.timing),
+        uri: monitor.url,
+        monitorId: String(monitor.id),
+        errorMessage: data.errorMessage ?? null,
         assertions: null,
       } as const;
     default:

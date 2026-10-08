@@ -33,11 +33,13 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
       setupAnalytics({
         userId: `api_${workspace.id}`,
         workspaceId: `${workspace.id}`,
+        workspaceName: workspace.name || workspace.slug,
         plan: workspace.plan,
+        source: "api",
         location: c.req.raw.headers.get("x-forwarded-for") ?? undefined,
         userAgent: c.req.raw.headers.get("user-agent") ?? undefined,
       })
-        .then((analytics) => analytics.track({ ...event, additionalProps }))
+        .then((analytics) => analytics.track({ ...additionalProps, ...event }))
         .catch(() => {
           logger.warn(
             "Failed to send analytics event {event} for workspace {workspaceId}",

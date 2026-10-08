@@ -1,5 +1,5 @@
 import { and, asc, eq, inArray } from "@openstatus/db";
-import { incidentTable, pageComponent } from "@openstatus/db/src/schema";
+import { monitorIncidentTable, pageComponent } from "@openstatus/db/src/schema";
 import type {
   PageComponentImpact,
   PageComponentType,
@@ -112,8 +112,8 @@ export async function getPageComponentDailySummary(args: {
     monitorIds.length > 0
       ? db
           .select()
-          .from(incidentTable)
-          .where(inArray(incidentTable.monitorId, monitorIds))
+          .from(monitorIncidentTable)
+          .where(inArray(monitorIncidentTable.monitorId, monitorIds))
           .all()
       : Promise.resolve([]),
   ]);

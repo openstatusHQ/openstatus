@@ -3,6 +3,9 @@
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "moduleResolution": "bundler",
     "paths": {
       "@openstatus/ui/*": ["./src/*"]
     }
