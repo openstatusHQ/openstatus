@@ -44,16 +44,14 @@ export function FormMaintenanceUpdateCard({
         onSubmit={onSubmit}
       />
       <FormCardFooter className="flex items-center justify-end gap-2 *:last:ml-0">
-        {total > 1 ? (
-          <FormAlertDialog confirmationValue={title} submitAction={onDelete}>
-            <Button
-              variant="outline"
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-            >
-              Delete
-            </Button>
-          </FormAlertDialog>
-        ) : null}
+        <FormAlertDialog confirmationValue={title} submitAction={onDelete}>
+          <Button
+            variant="outline"
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          >
+            Delete
+          </Button>
+        </FormAlertDialog>
         <Button type="submit" form={formId}>
           Submit
         </Button>

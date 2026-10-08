@@ -1,5 +1,6 @@
 import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
 import {
+  maintenance,
   maintenanceUpdate,
   page,
   pageSubscriber,

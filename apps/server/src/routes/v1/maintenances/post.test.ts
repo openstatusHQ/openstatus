@@ -245,9 +245,7 @@ test("create a maintenance calls dispatchMaintenance", async () => {
   const result = MaintenanceSchema.safeParse(await res.json());
   expect(result.success).toBe(true);
   expect(spies.dispatchMaintenance.mock.calls.length).toBe(1);
-  expect(typeof spies.dispatchMaintenance.mock.calls[0][0]).toBe(
-    "number",
-  );
+  expect(typeof spies.dispatchMaintenance.mock.calls[0][0]).toBe("number");
 
   if (result.success) {
     await db.delete(maintenance).where(eq(maintenance.id, result.data.id));

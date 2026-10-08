@@ -246,8 +246,6 @@ test("maintenance update procedures provide full CRUD", async () => {
   });
   createdMaintenanceIds.push(created.id);
 
-  createdMaintenanceUpdateIds.push(created.initialUpdateId);
-
   const added = await caller.maintenance.createUpdate({
     maintenanceId: created.id,
     message: "Second update",
@@ -264,8 +262,9 @@ test("maintenance update procedures provide full CRUD", async () => {
   expect(edited.message).toBe("Edited update");
 
   const found = await caller.maintenance.get({ id: created.id });
-  expect(found.updates.length).toBe(2);
-  expect(found.message).toBe("Edited update");
+  expect(found.updates.map((u) => u.message)).toEqual(["Edited update"]);
+  // the announcement is independent of the timeline
+  expect(found.message).toBe("Initial update");
 
   await caller.maintenance.deleteUpdate({ id: added.id });
   const deleted = await db.query.maintenanceUpdate.findFirst({
@@ -274,11 +273,11 @@ test("maintenance update procedures provide full CRUD", async () => {
   expect(deleted).toBeUndefined();
 
   try {
-    await caller.maintenance.deleteUpdate({ id: created.initialUpdateId });
+    await caller.maintenance.deleteUpdate({ id: added.id });
     throw new Error("Should have thrown");
   } catch (error) {
     expect(error).toBeInstanceOf(TRPCError);
-    expect((error as TRPCError).code).toBe("CONFLICT");
+    expect((error as TRPCError).code).toBe("NOT_FOUND");
   }
 
   await caller.maintenance.delete({ id: created.id });

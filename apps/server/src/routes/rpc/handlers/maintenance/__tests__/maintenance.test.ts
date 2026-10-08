@@ -554,16 +554,9 @@ describe("MaintenanceService.CreateMaintenance", () => {
     expect(data.maintenance.title).toBe(`${TEST_PREFIX}-with-notify`);
 
     // Verify dispatcher was called (dispatchers are mocked in preload.ts)
-    expect(subscriptionSpies.dispatchMaintenance).toHaveBeenCalledTimes(
-      1,
-    );
-    const initialUpdate = await db
-      .select({ id: maintenanceUpdate.id })
-      .from(maintenanceUpdate)
-      .where(eq(maintenanceUpdate.maintenanceId, Number(data.maintenance.id)))
-      .get();
+    expect(subscriptionSpies.dispatchMaintenance).toHaveBeenCalledTimes(1);
     expect(subscriptionSpies.dispatchMaintenance).toHaveBeenCalledWith(
-      initialUpdate?.id,
+      Number(data.maintenance.id),
     );
 
     // Clean up

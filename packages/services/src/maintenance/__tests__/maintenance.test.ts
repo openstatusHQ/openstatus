@@ -705,7 +705,11 @@ describe("maintenance updates", () => {
         input: { maintenanceId: parent.id, message: "x" },
       });
       const readOnly = {
-        ...makeApiKeyCtx(teamCtx.workspace, { scopes: ["read"] }),
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
         db: tx,
       };
 

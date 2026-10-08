@@ -35,7 +35,7 @@ A short, human-readable name for the maintenance window.
 
 **Type:** String (required)
 
-A description of the maintenance shown to users, explaining what is happening and the expected impact.
+A description of the maintenance shown to users, explaining what is happening and the expected impact. It is the announcement: progress during the window goes into [updates](#updates), which never change this field.
 
 **Example:** `"Upgrading our database to improve performance. Brief interruptions may occur."`
 
@@ -76,6 +76,16 @@ In the v1 REST API these are passed as `monitorIds`, which accepts monitor compo
 A one-time flag evaluated at creation time — it is **not** stored on the maintenance record and cannot be read back. When set, status page subscribers are notified that the maintenance has been scheduled.
 
 The v1 REST API does not expose this flag; it notifies subscribers automatically when a maintenance is created on a page whose workspace has subscribers enabled.
+
+## Updates
+
+A maintenance can carry an optional timeline of dated notes, for example "Work started", "Taking longer than expected" or "Completed early". Each update has:
+
+- **Message** — String (required). The note shown on the status page.
+- **Date** — Datetime (optional). When the note applies. Defaults to the time it is posted.
+- **Notify** — Boolean (optional, write-only). Sends the note to status page subscribers.
+
+Updates are independent of the maintenance message: adding, editing or deleting a note never rewrites the announcement, and a maintenance with no updates is valid. Reads return them newest-first under `updates` (RPC, agent tools) or `maintenanceUpdates` (status page JSON). The public status page, feeds and Markdown render the announcement followed by its notes.
 
 ## Relationships
 
