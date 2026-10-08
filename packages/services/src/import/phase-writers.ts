@@ -1,6 +1,7 @@
 import { and, count, eq, isNull } from "@openstatus/db";
 import {
   maintenance,
+  maintenanceUpdate,
   maintenancesToPageComponents,
   monitor,
   page,
@@ -635,6 +636,16 @@ export async function writeMaintenancesPhase(
         resource.error = "Failed to insert maintenance";
         continue;
       }
+
+      // the message is the first timeline update; the announcement time
+      // of imported history is unknown, so it is dated at the window start
+      await tx.insert(maintenanceUpdate).values({
+        maintenanceId: inserted.id,
+        message: data.message,
+        date: data.from,
+        createdBy: actorUserId,
+        updatedBy: actorUserId,
+      });
 
       const componentLinks: Array<{
         maintenanceId: number;

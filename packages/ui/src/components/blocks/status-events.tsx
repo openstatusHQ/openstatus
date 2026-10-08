@@ -648,7 +648,8 @@ export function StatusEventTimelineReportUpdate({
 
 interface StatusMaintenanceUpdate {
   title: string;
-  message: string;
+  /** Fallback body when no `maintenanceUpdates` are given. */
+  message?: string;
   from: Date;
   to: Date;
   maintenanceUpdates?: {
@@ -660,7 +661,9 @@ interface StatusMaintenanceUpdate {
 /**
  * StatusEventTimelineMaintenance - Timeline entry for maintenance windows
  *
- * Displays a maintenance window with title, date range, duration, and message.
+ * Displays a maintenance window with title, date range and duration. The
+ * oldest update is the announcement and later ones follow as dated notes;
+ * `message` is only used when no updates are given.
  * Uses a blue dot indicator to distinguish from incident updates.
  *
  * The date range is formatted and split to allow individual StatusTimestamp
@@ -701,10 +704,11 @@ export function StatusEventTimelineMaintenance({
     maintenance.from,
     maintenance.to,
   );
-  // chronological: the announcement is the oldest event, notes follow it
-  const updates = [...(maintenance.maintenanceUpdates ?? [])].sort(
-    (a, b) => a.date.getTime() - b.date.getTime(),
-  );
+  // chronological: the oldest update is the announcement, notes follow it
+  const [announcement, ...updates] = [
+    ...(maintenance.maintenanceUpdates ?? []),
+  ].sort((a, b) => a.date.getTime() - b.date.getTime());
+  const body = announcement?.message ?? maintenance.message ?? "";
   const renderBody = (message: string) =>
     message.trim() === "" ? (
       <span className="text-muted-foreground/70">-</span>
@@ -749,7 +753,7 @@ export function StatusEventTimelineMaintenance({
             ) : null}
           </StatusEventTimelineTitle>
           <StatusEventTimelineMessage>
-            {renderBody(maintenance.message)}
+            {renderBody(body)}
           </StatusEventTimelineMessage>
         </div>
       </div>

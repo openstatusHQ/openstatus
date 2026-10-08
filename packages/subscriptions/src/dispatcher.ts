@@ -96,6 +96,10 @@ export async function dispatchMaintenance(maintenanceId: number) {
       maintenancesToPageComponents: {
         with: { pageComponent: true },
       },
+      maintenanceUpdates: {
+        orderBy: (updates, { desc }) => [desc(updates.date), desc(updates.id)],
+        limit: 1,
+      },
     },
   });
 
@@ -118,7 +122,8 @@ export async function dispatchMaintenance(maintenanceId: number) {
     pageId: record.pageId,
     title: record.title,
     status: "maintenance",
-    message: record.message,
+    // the column is a stale mirror of the first update
+    message: record.maintenanceUpdates[0]?.message ?? record.message,
     pageComponentIds: pageComponents.map((c) => c.id),
     pageComponents: pageComponents.map((c) => c.name),
     date: record.from.toISOString(),

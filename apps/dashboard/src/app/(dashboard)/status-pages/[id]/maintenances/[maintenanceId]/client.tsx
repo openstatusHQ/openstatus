@@ -22,7 +22,6 @@ import { SectionGroup } from "@/components/content/section";
 import { Timeline } from "@/components/content/timeline";
 import { MaintenanceActions } from "@/components/maintenances/maintenance-actions";
 import { MaintenanceComponents } from "@/components/maintenances/maintenance-components";
-import { MaintenanceComposer } from "@/components/maintenances/maintenance-composer";
 import { MaintenanceProperties } from "@/components/maintenances/maintenance-properties";
 import { MaintenanceUpdateComposer } from "@/components/maintenances/maintenance-update-composer";
 import { MaintenanceUpdateTimelineItem } from "@/components/maintenances/maintenance-update-timeline";
@@ -99,27 +98,20 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
       </DetailHeader>
       <DetailContent>
         <DetailMain>
-          <DetailSection>
-            <DetailSectionTitle variant="heading">Message</DetailSectionTitle>
-            <MaintenanceComposer maintenance={maintenance} />
-          </DetailSection>
-          <DetailSection>
-            <DetailSectionTitle variant="heading">Updates</DetailSectionTitle>
-            <Timeline>
-              <MaintenanceUpdateComposer
+          <Timeline>
+            <MaintenanceUpdateComposer
+              maintenance={maintenance}
+              canNotify={canNotify}
+            />
+            {updates.map((update, i) => (
+              <MaintenanceUpdateTimelineItem
+                key={update.id}
                 maintenance={maintenance}
-                canNotify={canNotify}
+                update={update}
+                index={updates.length - i}
               />
-              {updates.map((update, i) => (
-                <MaintenanceUpdateTimelineItem
-                  key={update.id}
-                  maintenance={maintenance}
-                  update={update}
-                  index={updates.length - i}
-                />
-              ))}
-            </Timeline>
-          </DetailSection>
+            ))}
+          </Timeline>
         </DetailMain>
         <DetailAside>
           <DetailSection>

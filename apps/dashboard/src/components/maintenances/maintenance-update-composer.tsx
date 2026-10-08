@@ -25,7 +25,7 @@ import { usePublishMaintenanceUpdate } from "./use-publish-maintenance-update";
 
 type Maintenance = NonNullable<RouterOutputs["maintenance"]["get"]>;
 
-/** Posts a dated note on the maintenance timeline; the announcement stays as is. */
+/** Posts a dated note on the maintenance timeline; the newest is the public message. */
 export function MaintenanceUpdateComposer({
   maintenance,
   canNotify,

@@ -55,11 +55,13 @@ test("maintenance update REST CRUD", async () => {
       "Edited REST maintenance update",
     );
 
-    // the announcement is not a mirror of the timeline
+    // `message` is the newest update
     const parentAgain = await app.request(`/v1/maintenance/${parent.id}`, {
       headers,
     });
-    expect((await parentAgain.json()).message).toBe("announcement");
+    expect((await parentAgain.json()).message).toBe(
+      "Edited REST maintenance update",
+    );
 
     const deleted = await app.request(`/v1/maintenance_update/${update.id}`, {
       method: "DELETE",

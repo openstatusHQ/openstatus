@@ -135,7 +135,9 @@ const CreateMaintenanceInputShape = z.object({
   message: z
     .string()
     .min(1)
-    .describe("Public message describing the work, shown on the page."),
+    .describe(
+      "Public message describing the work; posted as the first timeline update.",
+    ),
   from: z.iso
     .datetime()
     .describe("Start time, ISO 8601 (e.g. 2026-04-30T14:00:00Z)."),
@@ -213,7 +215,7 @@ export const createMaintenanceTool: AgentTool<
     verb: "scheduled",
   },
   async run({ ctx, input }) {
-    const record = await createMaintenance({
+    const { maintenance: record } = await createMaintenance({
       ctx,
       input: {
         title: input.title,

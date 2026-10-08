@@ -50,7 +50,8 @@ message CreateMaintenanceRequest {
     (gnostic.openapi.v3.property) = {example: {yaml: "Database Migration"}}
   ];
 
-  // Message describing the maintenance (required).
+  // Message describing the maintenance (required). Posted as the first
+  // maintenance update.
   string message = 2 [(buf.validate.field).string.min_len = 1];
 
   // Start time of the maintenance window (RFC 3339 format, required).
@@ -128,7 +129,7 @@ message UpdateMaintenanceRequest {
     max_len: 256
   }];
 
-  // New message for the maintenance (optional).
+  // Replaces the message of the newest maintenance update (optional).
   optional string message = 3;
 
   // New start time (RFC 3339 format, optional).

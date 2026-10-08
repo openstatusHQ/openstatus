@@ -57,7 +57,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
       const rpcCtx = getRpcContext(ctx);
       const sCtx = toServiceCtx(rpcCtx);
 
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx: sCtx,
         input: {
           title: req.title,

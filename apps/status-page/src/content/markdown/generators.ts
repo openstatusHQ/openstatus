@@ -152,8 +152,9 @@ export function generateOverview(
         mdUrl(`events/maintenance/${m.id}`),
       ].filter(Boolean);
       out.push(head.join(" · "));
-      if (m.message) out.push(`  ${m.message}`);
-      for (const update of newestMaintenanceUpdates(m.maintenanceUpdates)) {
+      const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
+      if (updates.length === 0 && m.message) out.push(`  ${m.message}`);
+      for (const update of updates) {
         out.push(`  - ${formatDayTime(update.date)} — ${update.message}`);
       }
     }
@@ -456,8 +457,9 @@ export function generateEventsList(
         `### [${escapeLinkLabel(m.title)}](${mdUrl(`events/maintenance/${m.id}`)})`,
       );
       out.push(meta.join(" · "));
-      if (m.message) out.push(m.message);
-      for (const update of newestMaintenanceUpdates(m.maintenanceUpdates)) {
+      const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
+      if (updates.length === 0 && m.message) out.push(m.message);
+      for (const update of updates) {
         out.push(`- ${formatDayTime(update.date)} — ${update.message}`);
       }
       out.push("");
@@ -585,9 +587,8 @@ export function generateMaintenance(
     out.push(`**Affected components:** ${components.join(", ")}\n`);
   }
 
-  out.push("## Details\n");
-  out.push(`${maintenance.message}\n`);
-
+  // the oldest update is the announcement; `message` only serves rows that
+  // predate the timeline
   const updates = newestMaintenanceUpdates(maintenance.maintenanceUpdates);
   if (updates.length > 0) {
     out.push("## Updates\n");
@@ -595,6 +596,9 @@ export function generateMaintenance(
       out.push(`### ${formatDayTime(update.date)}\n`);
       out.push(`${update.message}\n`);
     }
+  } else {
+    out.push("## Details\n");
+    out.push(`${maintenance.message}\n`);
   }
 
   return `${out.join("\n").trimEnd()}\n`;

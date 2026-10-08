@@ -11,6 +11,8 @@ export const maintenance = sqliteTable(
   {
     id: integer("id").primaryKey(),
     title: text("title", { length: 256 }).notNull(),
+    // deprecated: mirror of the first `maintenance_update` (backfilled in
+    // migration 0092); dropped in a follow-up
     message: text("message").notNull(),
 
     from: integer("from", { mode: "timestamp" }).notNull(),

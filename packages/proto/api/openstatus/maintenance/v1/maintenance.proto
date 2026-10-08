@@ -33,7 +33,7 @@ message MaintenanceSummary {
   // Title of the maintenance.
   string title = 2;
 
-  // Message describing the maintenance.
+  // Message of the newest maintenance update.
   string message = 3;
 
   // Start time of the maintenance window (RFC 3339 format).
@@ -64,7 +64,7 @@ message Maintenance {
   // Title of the maintenance.
   string title = 2;
 
-  // Message describing the maintenance.
+  // Message of the newest maintenance update.
   string message = 3;
 
   // Start time of the maintenance window (RFC 3339 format).

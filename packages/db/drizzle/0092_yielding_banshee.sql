@@ -13,3 +13,8 @@ CREATE TABLE `maintenance_update` (
 );
 --> statement-breakpoint
 CREATE INDEX `maintenance_update_maintenance_id_idx` ON `maintenance_update` (`maintenance_id`);
+--> statement-breakpoint
+INSERT INTO `maintenance_update` (`maintenance_id`, `message`, `date`, `created_by`, `updated_by`)
+SELECT `id`, `message`, COALESCE(`created_at`, `from`), `created_by`, `created_by`
+FROM `maintenance`
+WHERE `message` <> '';

@@ -539,7 +539,7 @@ describe("generateMaintenance", () => {
     expect(withUrls).toContain('contact_url: "mailto:status@acme.com"');
   });
 
-  test("renders the announcement, then updates newest-first", () => {
+  test("renders updates newest-first instead of the deprecated message", () => {
     const withUpdates = {
       ...maintenance,
       maintenanceUpdates: [
@@ -554,11 +554,9 @@ describe("generateMaintenance", () => {
       ],
     } as unknown as MaintenanceDetail;
     const out = generateMaintenance(withUpdates, BASE);
-    expect(out).toContain("## Details");
+    expect(out).not.toContain("## Details");
+    expect(out).not.toContain("Brief downtime.");
     expect(out).toContain("## Updates");
-    expect(out.indexOf("Brief downtime.")).toBeLessThan(
-      out.indexOf("Work completed."),
-    );
     expect(out.indexOf("Work completed.")).toBeLessThan(
       out.indexOf("Work started."),
     );

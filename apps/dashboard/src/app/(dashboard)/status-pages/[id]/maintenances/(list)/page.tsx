@@ -81,7 +81,7 @@ export default function Page() {
                 await createMaintenanceMutation.mutateAsync({
                   pageId: Number.parseInt(id),
                   title: values.title,
-                  message: values.message,
+                  message: values.message ?? "",
                   startDate: values.startDate,
                   endDate: values.endDate,
                   pageComponents: values.pageComponents,

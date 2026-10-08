@@ -142,7 +142,7 @@ describe("createMaintenance", () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const range = futureRange();
-      const record = await createMaintenance({
+      const { maintenance: record, initialUpdate } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-happy`,
@@ -155,6 +155,9 @@ describe("createMaintenance", () => {
 
       expect(record.title).toBe(`${TEST_PREFIX}-happy`);
       expect(record.pageId).toBe(testPageId);
+      expect(initialUpdate.maintenanceId).toBe(record.id);
+      expect(initialUpdate.message).toBe("planned work");
+      expect(initialUpdate.createdBy).toBe(1);
 
       const assoc = await tx
         .select()
@@ -170,6 +173,13 @@ describe("createMaintenance", () => {
         action: "maintenance.create",
         entityType: "maintenance",
         entityId: record.id,
+        db: tx,
+      });
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "maintenance_update.create",
+        entityType: "maintenance_update",
+        entityId: initialUpdate.id,
         db: tx,
       });
     });
@@ -217,7 +227,7 @@ describe("createMaintenance", () => {
       // Duplicate ids in the input would violate the composite PK on
       // `maintenances_to_page_components` if not deduped. Guard against a
       // regression where the `Set` in `validatePageComponentIds` is dropped.
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx: { ...teamCtx, db: tx },
         input: {
           title: `${TEST_PREFIX}-dedupe`,
@@ -285,7 +295,7 @@ describe("updateMaintenance", () => {
   test("updates title + replaces associations", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-update`,
@@ -315,10 +325,53 @@ describe("updateMaintenance", () => {
     });
   });
 
+  test("message rewrites the newest update and audits it", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { maintenance: record, initialUpdate } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-update-message`,
+          message: "first",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+      const later = await addMaintenanceUpdate({
+        ctx,
+        input: {
+          maintenanceId: record.id,
+          message: "second",
+          date: new Date(Date.now() + 1000),
+        },
+      });
+
+      await updateMaintenance({
+        ctx,
+        input: { id: record.id, message: "second, edited" },
+      });
+
+      const full = await getMaintenance({ ctx, input: { id: record.id } });
+      expect(full.message).toBe("second, edited");
+      expect(full.updates.map((u) => [u.id, u.message])).toEqual([
+        [later.id, "second, edited"],
+        [initialUpdate.id, "first"],
+      ]);
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "maintenance_update.update",
+        entityType: "maintenance_update",
+        entityId: later.id,
+        db: tx,
+      });
+    });
+  });
+
   test("keeps pageId when clearing all components", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-keep-page`,
@@ -347,7 +400,7 @@ describe("updateMaintenance", () => {
   test("moves pageId when components belong to another page", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-move-page`,
@@ -368,7 +421,7 @@ describe("updateMaintenance", () => {
 
   test("throws NotFoundError for cross-workspace update", async () => {
     await withTestTransaction(async (tx) => {
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx: { ...teamCtx, db: tx },
         input: {
           title: `${TEST_PREFIX}-cross-ws-update`,
@@ -395,7 +448,7 @@ describe("updateMaintenance", () => {
       // `{from, to}` submissions. A partial update that moves only `to`
       // earlier than the stored `from` has to be rejected by the service's
       // own effective-range check. Regression guard for that code path.
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-range-update`,
@@ -418,7 +471,7 @@ describe("updateMaintenance", () => {
   test("throws ConflictError when pageComponentIds span multiple pages", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-update-mixed-pages`,
@@ -446,7 +499,7 @@ describe("deleteMaintenance", () => {
   test("cascades associations", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-delete`,
@@ -474,7 +527,7 @@ describe("list / get", () => {
     await withTestTransaction(async (tx) => {
       const teamCtxTx = { ...teamCtx, db: tx };
       const freeCtxTx = { ...freeCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx: teamCtxTx,
         input: {
           title: `${TEST_PREFIX}-isolation`,
@@ -505,7 +558,7 @@ describe("list / get", () => {
   test("list returns totalSize and enriched relations", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-list-enrich`,
@@ -531,7 +584,7 @@ describe("list / get", () => {
 describe("notifyMaintenance", () => {
   test("throws when maintenance belongs to another workspace", async () => {
     await withTestTransaction(async (tx) => {
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx: { ...teamCtx, db: tx },
         input: {
           title: `${TEST_PREFIX}-notify-cross-ws`,
@@ -563,7 +616,7 @@ describe("slack actor path", () => {
         }),
         db: tx,
       };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-slack`,
@@ -587,7 +640,7 @@ describe("slack actor path", () => {
 
 describe("maintenance updates", () => {
   async function createParent(ctx: ServiceContext, suffix: string) {
-    return createMaintenance({
+    const { maintenance } = await createMaintenance({
       ctx,
       input: {
         title: `${TEST_PREFIX}-${suffix}`,
@@ -597,6 +650,7 @@ describe("maintenance updates", () => {
         pageComponentIds: [],
       },
     });
+    return maintenance;
   }
 
   test("creates, edits, deletes, stamps attribution, touches parent, audits", async () => {
@@ -604,7 +658,7 @@ describe("maintenance updates", () => {
       const ctx = { ...teamCtx, db: tx };
       const parent = await createParent(ctx, "updates");
       const before = await getMaintenance({ ctx, input: { id: parent.id } });
-      expect(before.updates).toEqual([]);
+      expect(before.updates.map((u) => u.message)).toEqual(["announcement"]);
 
       const date = new Date("2026-06-20T00:15:00.000Z");
       const created = await addMaintenanceUpdate({
@@ -623,10 +677,14 @@ describe("maintenance updates", () => {
       expect(edited.message).toBe("work resumed");
       expect(edited.date.getTime()).toBe(date.getTime());
 
-      // the announcement is untouched by timeline writes
+      // `message` follows the newest update by date — the backdated note
+      // does not become the public message
       const full = await getMaintenance({ ctx, input: { id: parent.id } });
       expect(full.message).toBe("announcement");
-      expect(full.updates.map((u) => u.message)).toEqual(["work resumed"]);
+      expect(full.updates.map((u) => u.message)).toEqual([
+        "announcement",
+        "work resumed",
+      ]);
       expect(full.updatedBy).toBe(1);
 
       await deleteMaintenanceUpdate({ ctx, input: { id: created.id } });
@@ -653,18 +711,29 @@ describe("maintenance updates", () => {
     });
   });
 
-  test("the last update can be removed", async () => {
+  test("the last update cannot be removed", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const parent = await createParent(ctx, "last-update");
-      const only = await addMaintenanceUpdate({
+      const note = await addMaintenanceUpdate({
         ctx,
-        input: { maintenanceId: parent.id, message: "only" },
+        input: {
+          maintenanceId: parent.id,
+          message: "note",
+          date: new Date(Date.now() + 1000),
+        },
       });
-      await deleteMaintenanceUpdate({ ctx, input: { id: only.id } });
-      const full = await getMaintenance({ ctx, input: { id: parent.id } });
-      expect(full.updates).toEqual([]);
+      let full = await getMaintenance({ ctx, input: { id: parent.id } });
+      expect(full.message).toBe("note");
+
+      await deleteMaintenanceUpdate({ ctx, input: { id: note.id } });
+      full = await getMaintenance({ ctx, input: { id: parent.id } });
+      expect(full.updates).toHaveLength(1);
       expect(full.message).toBe("announcement");
+
+      await expect(
+        deleteMaintenanceUpdate({ ctx, input: { id: full.updates[0].id } }),
+      ).rejects.toBeInstanceOf(ConflictError);
     });
   });
 
@@ -736,7 +805,7 @@ describe("notifyMaintenanceUpdate", () => {
   test("throws when the update belongs to another workspace", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const parent = await createMaintenance({
+      const { maintenance: parent } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-notify-update-ws`,
@@ -762,7 +831,7 @@ describe("notifyMaintenanceUpdate", () => {
   test("returns false when the plan disables status-subscribers", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const parent = await createMaintenance({
+      const { maintenance: parent } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-notify-update-gated`,

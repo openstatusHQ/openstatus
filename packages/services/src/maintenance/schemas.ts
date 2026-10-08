@@ -13,7 +13,10 @@ export const maintenanceListPeriodSchema = z.enum(maintenanceListPeriods);
 export const CreateMaintenanceInput = z
   .object({
     title: z.string().trim().min(1).max(256),
+    /** Becomes the first timeline update. */
     message: z.string().min(1),
+    /** Date of the first update; defaults to now. */
+    date: z.coerce.date().optional(),
     from: z.coerce.date(),
     to: z.coerce.date(),
     pageId: z.number().int(),
@@ -28,6 +31,7 @@ export type CreateMaintenanceInput = z.infer<typeof CreateMaintenanceInput>;
 export const UpdateMaintenanceInput = z.object({
   id: z.number().int(),
   title: z.string().trim().min(1).max(256).optional(),
+  /** Rewrites the newest timeline update. */
   message: z.string().min(1).optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),

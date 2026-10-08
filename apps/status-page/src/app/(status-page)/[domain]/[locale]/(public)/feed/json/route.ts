@@ -81,7 +81,7 @@ export async function GET(
         return {
           id: maintenance.id,
           name: maintenance.title,
-          message: maintenance.message,
+          message: updates[0]?.message ?? maintenance.message,
           maintenanceUpdates: updates.map((update) => ({
             id: update.id,
             message: update.message,

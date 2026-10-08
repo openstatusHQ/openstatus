@@ -2,7 +2,10 @@ import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, inArray, isNull } from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
-import { maintenance } from "@openstatus/db/src/schema/maintenances";
+import {
+  maintenance,
+  maintenanceUpdate,
+} from "@openstatus/db/src/schema/maintenances";
 import {
   maintenancesToPageComponents,
   pageComponent,
@@ -110,6 +113,18 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
         })
         .returning()
         .get();
+
+      // the message is the first timeline update; the column is a mirror
+      await tx
+        .insert(maintenanceUpdate)
+        .values({
+          maintenanceId: newMaintenance.id,
+          message: input.message,
+          date: new Date(),
+          createdBy: actorUserId,
+          updatedBy: actorUserId,
+        })
+        .run();
 
       if (monitorIds?.length && newMaintenance.pageId) {
         // Get page components for the given monitors and page

@@ -87,12 +87,11 @@ export async function GET(
       const updates = [...(maintenance.maintenanceUpdates ?? [])].sort(
         (a, b) => b.date.getTime() - a.date.getTime(),
       );
-      const description = [
-        maintenance.message,
-        ...updates.map(
-          (update) => `${update.date.toISOString()}: ${update.message}`,
-        ),
-      ].join("\n\n");
+      const description = updates.length
+        ? updates
+            .map((update) => `${update.date.toISOString()}: ${update.message}`)
+            .join("\n\n")
+        : maintenance.message;
       feed.addItem({
         id: maintenanceUrl,
         title: `${statusLabel("maintenance")} - ${maintenance.title}`,

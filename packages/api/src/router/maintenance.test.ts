@@ -128,7 +128,6 @@ test("maintenance.update rejects maintenance from another workspace", async () =
     await caller.maintenance.update({
       id: otherWorkspaceMaintenanceId,
       title: "Unauthorized Modification",
-      message: "Should not work",
       startDate: new Date(),
       endDate: new Date(Date.now() + 3_600_000),
       pageComponents: [],
@@ -162,7 +161,6 @@ test("maintenance.update succeeds for own workspace maintenance", async () => {
   await caller.maintenance.update({
     id: 1,
     title: "Updated Maintenance Title",
-    message: "Updated message",
     startDate: new Date(),
     endDate: new Date(Date.now() + 7_200_000),
     pageComponents: [1],
@@ -262,9 +260,12 @@ test("maintenance update procedures provide full CRUD", async () => {
   expect(edited.message).toBe("Edited update");
 
   const found = await caller.maintenance.get({ id: created.id });
-  expect(found.updates.map((u) => u.message)).toEqual(["Edited update"]);
-  // the announcement is independent of the timeline
-  expect(found.message).toBe("Initial update");
+  expect(found.updates.map((u) => u.message)).toEqual([
+    "Edited update",
+    "Initial update",
+  ]);
+  // `message` is the newest update
+  expect(found.message).toBe("Edited update");
 
   await caller.maintenance.deleteUpdate({ id: added.id });
   const deleted = await db.query.maintenanceUpdate.findFirst({

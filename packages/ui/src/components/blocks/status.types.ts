@@ -35,7 +35,8 @@ export interface Maintenance {
   id: number;
   title: string;
   affected: string[];
-  message: string;
+  /** Fallback body when no `maintenanceUpdates` are given. */
+  message?: string;
   maintenanceUpdates?: {
     date: Date;
     message: string;

@@ -835,6 +835,31 @@ describe("MaintenanceService maintenance update CRUD", () => {
     );
     expect(deleted.status).toBe(200);
     expect(await deleted.json()).toEqual({ success: true });
+
+    const firstDeleted = await connectRequest(
+      "DeleteMaintenanceUpdate",
+      { id: (await first.json()).maintenanceUpdate.id },
+      { "x-openstatus-key": authKey },
+    );
+    expect(firstDeleted.status).toBe(200);
+  });
+
+  test("refuses to delete the last update", async () => {
+    const full = await connectRequest(
+      "GetMaintenance",
+      { id: String(testMaintenanceId) },
+      { "x-openstatus-key": authKey },
+    );
+    const { updates } = (await full.json()).maintenance;
+    expect(updates).toHaveLength(1);
+
+    const res = await connectRequest(
+      "DeleteMaintenanceUpdate",
+      { id: updates[0].id },
+      { "x-openstatus-key": authKey },
+    );
+    expect(res.status).toBe(400);
+    expect((await res.json()).message).toContain("at least one update");
   });
 
   test("scopes update mutations to the authenticated workspace", async () => {
@@ -1048,12 +1073,16 @@ describe("MaintenanceService.UpdateMaintenance", () => {
 
     const data = await res.json();
     expect(data.maintenance.message).toBe("Updated maintenance message");
+    // rewrites the newest update instead of appending one
+    expect(
+      data.maintenance.updates.map((u: { message: string }) => u.message),
+    ).toEqual(["Updated maintenance message"]);
 
     // Restore original message
     await db
-      .update(maintenance)
+      .update(maintenanceUpdate)
       .set({ message: "Maintenance to update" })
-      .where(eq(maintenance.id, testMaintenanceToUpdateId));
+      .where(eq(maintenanceUpdate.maintenanceId, testMaintenanceToUpdateId));
   });
 
   test("updates page component associations", async () => {

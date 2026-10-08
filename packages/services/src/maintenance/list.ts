@@ -26,6 +26,7 @@ import {
   ListMaintenancesInput,
   type MaintenanceListPeriod,
 } from "./schemas";
+import { latestMaintenanceUpdate } from "./utils";
 
 function periodToSince(period: MaintenanceListPeriod): Date {
   const day = 24 * 60 * 60 * 1000;
@@ -48,6 +49,7 @@ type Attributed = {
 export type MaintenanceUpdateWithRelations = MaintenanceUpdate & Attributed;
 
 export type MaintenanceWithRelations = Maintenance & {
+  /** Newest first. `message` on the row is the newest update's text. */
   updates: MaintenanceUpdateWithRelations[];
   pageComponents: PageComponent[];
   pageComponentIds: number[];
@@ -131,9 +133,12 @@ async function enrichMaintenancesBatch(
 
   return rows.map((r) => {
     const components = componentsByMaintenance.get(r.id) ?? [];
+    const updates = updatesByMaintenance.get(r.id) ?? [];
     return {
       ...r,
-      updates: updatesByMaintenance.get(r.id) ?? [],
+      // the column is a stale mirror of the first update
+      message: latestMaintenanceUpdate(updates)?.message ?? r.message,
+      updates,
       pageComponents: components,
       pageComponentIds: components.map((c) => c.id),
       ...attributed(r),

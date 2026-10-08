@@ -1,5 +1,5 @@
 export { addMaintenanceUpdate } from "./add-update";
-export { createMaintenance } from "./create";
+export { type CreateMaintenanceResult, createMaintenance } from "./create";
 export { deleteMaintenance } from "./delete";
 export { deleteMaintenanceUpdate } from "./delete-update";
 export { getMaintenanceUpdate } from "./get-update";
@@ -14,6 +14,7 @@ export { notifyMaintenance } from "./notify";
 export { notifyMaintenanceUpdate } from "./notify-update";
 export { updateMaintenance } from "./update";
 export { updateMaintenanceUpdate } from "./update-update";
+export { latestMaintenanceUpdate } from "./utils";
 
 export {
   AddMaintenanceUpdateInput,

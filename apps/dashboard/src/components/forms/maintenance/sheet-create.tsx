@@ -141,7 +141,7 @@ export function FormSheetMaintenanceCreate({
                   await createMaintenanceMutation.mutateAsync({
                     pageId,
                     title: values.title,
-                    message: values.message,
+                    message: values.message ?? "",
                     startDate: values.startDate,
                     endDate: values.endDate,
                     pageComponents: values.pageComponents,

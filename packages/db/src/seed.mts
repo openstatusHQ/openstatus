@@ -8,6 +8,7 @@ import {
   incidentEvent,
   monitorIncidentTable,
   maintenance,
+  maintenanceUpdate,
   maintenancesToPageComponents,
   monitor,
   notification,
@@ -400,6 +401,34 @@ async function main() {
         from: fiveDaysFromNow,
         to: fiveDaysFromNowPlus4Hours,
         pageId: 1,
+      },
+    ])
+    .onConflictDoNothing()
+    .run();
+
+  // the first update is the announcement; later ones are the timeline
+  await db
+    .insert(maintenanceUpdate)
+    .values([
+      {
+        id: 1,
+        maintenanceId: 1,
+        message:
+          "We will be performing database maintenance to improve performance. Some queries may be slower during this window.",
+        date: twentyDaysAgo,
+      },
+      {
+        id: 2,
+        maintenanceId: 1,
+        message: "Maintenance completed. All queries are back to full speed.",
+        date: twentyDaysAgoPlus2Hours,
+      },
+      {
+        id: 3,
+        maintenanceId: 2,
+        message:
+          "We will be upgrading our monitoring infrastructure to the latest version. Expect brief interruptions in data collection.",
+        date: new Date(),
       },
     ])
     .onConflictDoNothing()
