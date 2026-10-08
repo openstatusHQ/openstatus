@@ -10,7 +10,7 @@ import {
   maintenancesToPageComponents,
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
-import { dispatchMaintenance } from "@openstatus/subscriptions";
+import { dispatchMaintenanceUpdate } from "@openstatus/subscriptions";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
@@ -115,7 +115,7 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
         .get();
 
       // the message is the first timeline update; the column is a mirror
-      await tx
+      const initialUpdate = await tx
         .insert(maintenanceUpdate)
         .values({
           maintenanceId: newMaintenance.id,
@@ -124,7 +124,8 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
           createdBy: actorUserId,
           updatedBy: actorUserId,
         })
-        .run();
+        .returning({ id: maintenanceUpdate.id })
+        .get();
 
       if (monitorIds?.length && newMaintenance.pageId) {
         // Get page components for the given monitors and page
@@ -153,11 +154,11 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
         }
       }
 
-      return newMaintenance;
+      return { ...newMaintenance, initialUpdateId: initialUpdate.id };
     });
 
     if (limits["status-subscribers"] && _newMaintenance.pageId) {
-      await dispatchMaintenance(_newMaintenance.id);
+      await dispatchMaintenanceUpdate(_newMaintenance.initialUpdateId);
     }
 
     const data = MaintenanceSchema.parse({

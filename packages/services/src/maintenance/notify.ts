@@ -1,6 +1,6 @@
 import { db as defaultDb, eq } from "@openstatus/db";
-import { maintenance } from "@openstatus/db/src/schema";
-import { dispatchMaintenance } from "@openstatus/subscriptions";
+import { maintenance, maintenanceUpdate } from "@openstatus/db/src/schema";
+import { dispatchMaintenanceUpdate } from "@openstatus/subscriptions";
 
 import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
@@ -8,12 +8,13 @@ import { ForbiddenError, NotFoundError } from "../errors";
 import { NotifyMaintenanceInput } from "./schemas";
 
 /**
- * Dispatch subscriber notifications for a maintenance. Separate from the
- * create/update mutations because the dashboard runs on Edge and cannot
- * fire-and-forget — callers invoke this as a second awaited call.
+ * Dispatch subscriber notifications for one timeline entry (the announcement
+ * is the first update). Separate from the mutations because the dashboard
+ * runs on Edge and cannot fire-and-forget — callers invoke this as a second
+ * awaited call, mirroring `notifyStatusReport`.
  *
  * Enforces:
- *   - Workspace owns the target maintenance.
+ *   - Workspace owns the target update (via join to the parent maintenance).
  *   - Plan has `status-subscribers` enabled — otherwise no-op.
  *
  * Returns true only when a dispatch actually ran.
@@ -28,22 +29,25 @@ export async function notifyMaintenance(args: {
   const db = ctx.db ?? defaultDb;
 
   const row = await db
-    .select({ id: maintenance.id, workspaceId: maintenance.workspaceId })
-    .from(maintenance)
-    .where(eq(maintenance.id, input.maintenanceId))
+    .select({ workspaceId: maintenance.workspaceId })
+    .from(maintenanceUpdate)
+    .innerJoin(maintenance, eq(maintenanceUpdate.maintenanceId, maintenance.id))
+    .where(eq(maintenanceUpdate.id, input.maintenanceUpdateId))
     .get();
 
   if (!row) {
-    throw new NotFoundError("maintenance", input.maintenanceId);
+    throw new NotFoundError("maintenance_update", input.maintenanceUpdateId);
   }
   if (row.workspaceId !== ctx.workspace.id) {
-    throw new ForbiddenError("Maintenance does not belong to this workspace.");
+    throw new ForbiddenError(
+      "Maintenance update does not belong to this workspace.",
+    );
   }
 
   if (!ctx.workspace.limits["status-subscribers"]) {
     return false;
   }
 
-  await dispatchMaintenance(input.maintenanceId);
+  await dispatchMaintenanceUpdate(input.maintenanceUpdateId);
   return true;
 }

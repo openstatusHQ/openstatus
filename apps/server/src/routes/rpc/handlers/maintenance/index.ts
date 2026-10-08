@@ -8,7 +8,6 @@ import {
   getMaintenance,
   listMaintenances,
   notifyMaintenance,
-  notifyMaintenanceUpdate,
   updateMaintenance,
   updateMaintenanceUpdate,
 } from "@openstatus/services/maintenance";
@@ -59,7 +58,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
       const rpcCtx = getRpcContext(ctx);
       const sCtx = toServiceCtx(rpcCtx);
 
-      const { maintenance: record } = await createMaintenance({
+      const { maintenance: record, initialUpdate } = await createMaintenance({
         ctx: sCtx,
         input: {
           title: req.title,
@@ -85,7 +84,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
         // that affordance.
         await notifyMaintenance({
           ctx: sCtx,
-          input: { maintenanceId: record.id },
+          input: { maintenanceUpdateId: initialUpdate.id },
         });
       }
 
@@ -231,7 +230,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
         },
       });
       if (req.notify) {
-        await notifyMaintenanceUpdate({
+        await notifyMaintenance({
           ctx: sCtx,
           input: { maintenanceUpdateId: update.id },
         });

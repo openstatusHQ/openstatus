@@ -48,7 +48,9 @@ export default function Page() {
           queryKey: trpc.page.list.queryKey(),
         });
         if (maintenance.notifySubscribers) {
-          sendMaintenanceUpdateMutation.mutate({ id: maintenance.id });
+          sendMaintenanceUpdateMutation.mutate({
+            id: maintenance.initialUpdateId,
+          });
         }
       },
     }),

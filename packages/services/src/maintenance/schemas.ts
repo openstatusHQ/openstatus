@@ -106,13 +106,6 @@ export const ListMaintenancesInput = z.object({
 export type ListMaintenancesInput = z.infer<typeof ListMaintenancesInput>;
 
 export const NotifyMaintenanceInput = z.object({
-  maintenanceId: z.number().int(),
-});
-export type NotifyMaintenanceInput = z.infer<typeof NotifyMaintenanceInput>;
-
-export const NotifyMaintenanceUpdateInput = z.object({
   maintenanceUpdateId: z.number().int(),
 });
-export type NotifyMaintenanceUpdateInput = z.infer<
-  typeof NotifyMaintenanceUpdateInput
->;
+export type NotifyMaintenanceInput = z.infer<typeof NotifyMaintenanceInput>;

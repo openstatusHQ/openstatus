@@ -1,6 +1,5 @@
 import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
 import {
-  maintenance,
   maintenanceUpdate,
   page,
   pageSubscriber,
@@ -87,58 +86,8 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
 }
 
 /**
- * Dispatch notifications for a maintenance update
+ * Dispatch notifications for a maintenance update (the announcement is the first one)
  */
-export async function dispatchMaintenance(maintenanceId: number) {
-  const record = await db.query.maintenance.findFirst({
-    where: eq(maintenance.id, maintenanceId),
-    with: {
-      maintenancesToPageComponents: {
-        with: { pageComponent: true },
-      },
-      // first update: the announcement must not reuse a later update's id
-      maintenanceUpdates: {
-        orderBy: (updates, { asc }) => [asc(updates.date), asc(updates.id)],
-        limit: 1,
-      },
-    },
-  });
-
-  if (!record) {
-    console.error(`Maintenance ${maintenanceId} not found`);
-    return;
-  }
-
-  if (!record.pageId) {
-    console.error(`Maintenance ${maintenanceId} has no page ID`);
-    return;
-  }
-
-  const pageComponents = record.maintenancesToPageComponents.map(
-    (i) => i.pageComponent,
-  );
-
-  await dispatchPageUpdate({
-    id: record.id,
-    pageId: record.pageId,
-    title: record.title,
-    status: "maintenance",
-    // the column is a stale mirror of the first update
-    message: record.maintenanceUpdates[0]?.message ?? record.message,
-    pageComponentIds: pageComponents.map((c) => c.id),
-    pageComponents: pageComponents.map((c) => c.name),
-    date: record.from.toISOString(),
-    // anchors the Slack thread and the email idempotency key on the first update
-    updateId: record.maintenanceUpdates[0]?.id,
-    startsAt: record.from.toISOString(),
-    endsAt: record.to.toISOString(),
-    pageComponentsWithId: pageComponents.map((c) => ({
-      id: c.id,
-      name: c.name,
-    })),
-  });
-}
-
 export async function dispatchMaintenanceUpdate(maintenanceUpdateId: number) {
   const update = await db.query.maintenanceUpdate.findFirst({
     where: eq(maintenanceUpdate.id, maintenanceUpdateId),

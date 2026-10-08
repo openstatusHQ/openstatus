@@ -137,7 +137,7 @@ export const maintenanceRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const { maintenance } = await createMaintenance({
+        const { maintenance, initialUpdate } = await createMaintenance({
           ctx: toServiceCtx(ctx),
           input: {
             title: input.title,
@@ -148,7 +148,12 @@ export const maintenanceRouter = createTRPCRouter({
             pageComponentIds: input.pageComponents ?? [],
           },
         });
-        return { ...maintenance, notifySubscribers: input.notifySubscribers };
+        // subscriberNotification.maintenance is keyed by update id
+        return {
+          ...maintenance,
+          initialUpdateId: initialUpdate.id,
+          notifySubscribers: input.notifySubscribers,
+        };
       } catch (err) {
         toTRPCError(err);
       }

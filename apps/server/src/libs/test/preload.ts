@@ -6,7 +6,6 @@ import { mock } from "@openstatus/test-utils";
 
 // Subscription dispatch spies — accessible in tests via globalThis.__subscriptionSpies
 const dispatchStatusReportUpdateSpy = mock((_id: number) => Promise.resolve());
-const dispatchMaintenanceSpy = mock((_id: number) => Promise.resolve());
 const dispatchMaintenanceUpdateSpy = mock((_id: number) => Promise.resolve());
 
 const sendVerificationSpy = mock(
@@ -23,7 +22,6 @@ const getChannelMock = {
 
 (globalThis as Record<string, unknown>).__subscriptionSpies = {
   dispatchStatusReportUpdate: dispatchStatusReportUpdateSpy,
-  dispatchMaintenance: dispatchMaintenanceSpy,
   dispatchMaintenanceUpdate: dispatchMaintenanceUpdateSpy,
   sendVerification: sendVerificationSpy,
   getChannel: getChannelMock,
@@ -32,7 +30,6 @@ const getChannelMock = {
 mock.module("@openstatus/subscriptions", () => ({
   ...realSubscriptions,
   dispatchStatusReportUpdate: dispatchStatusReportUpdateSpy,
-  dispatchMaintenance: dispatchMaintenanceSpy,
   dispatchMaintenanceUpdate: dispatchMaintenanceUpdateSpy,
   getChannel: () => getChannelMock,
 }));

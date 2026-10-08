@@ -11,7 +11,6 @@ import { authMiddleware, requireWriteScope } from "@/libs/middlewares";
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
 import { maintenancesApi } from "./maintenances";
-import { maintenanceUpdatesApi } from "./maintenanceUpdates";
 import { monitorsApi } from "./monitors";
 import { notificationsApi } from "./notifications";
 import { pagesApi } from "./pages";
@@ -80,11 +79,6 @@ export const openapiV1Config = {
       name: "maintenance",
       description: "Maintenance related endpoints",
       "x-displayName": "Maintenance",
-    },
-    {
-      name: "maintenance_update",
-      description: "Maintenance update related endpoints",
-      "x-displayName": "Maintenance Update",
     },
     {
       name: "notification",
@@ -166,7 +160,6 @@ api.route("/status_report", statusReportsApi);
 api.route("/status_report_update", statusReportUpdatesApi);
 api.route("/incident", incidentsApi);
 api.route("/maintenance", maintenancesApi);
-api.route("/maintenance_update", maintenanceUpdatesApi);
 api.route("/notification", notificationsApi);
 api.route("/page_subscriber", pageSubscribersApi);
 api.route("/check", checkApi);

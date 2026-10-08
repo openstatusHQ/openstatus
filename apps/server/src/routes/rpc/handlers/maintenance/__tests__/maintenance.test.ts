@@ -19,7 +19,6 @@ import { app } from "../../../../../index";
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as {
   dispatchStatusReportUpdate: ReturnType<typeof mock>;
-  dispatchMaintenance: ReturnType<typeof mock>;
   dispatchMaintenanceUpdate: ReturnType<typeof mock>;
 };
 
@@ -550,7 +549,7 @@ describe("MaintenanceService.CreateMaintenance", () => {
   });
 
   test("creates maintenance with notify=true", async () => {
-    subscriptionSpies.dispatchMaintenance.mockClear();
+    subscriptionSpies.dispatchMaintenanceUpdate.mockClear();
 
     const fromDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const toDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000);
@@ -576,9 +575,12 @@ describe("MaintenanceService.CreateMaintenance", () => {
     expect(data.maintenance.title).toBe(`${TEST_PREFIX}-with-notify`);
 
     // Verify dispatcher was called (dispatchers are mocked in preload.ts)
-    expect(subscriptionSpies.dispatchMaintenance).toHaveBeenCalledTimes(1);
-    expect(subscriptionSpies.dispatchMaintenance).toHaveBeenCalledWith(
-      Number(data.maintenance.id),
+    // the announcement is the first update, not the maintenance row
+    expect(subscriptionSpies.dispatchMaintenanceUpdate).toHaveBeenCalledTimes(
+      1,
+    );
+    expect(subscriptionSpies.dispatchMaintenanceUpdate).toHaveBeenCalledWith(
+      Number(data.maintenance.updates[0].id),
     );
 
     // Clean up
@@ -596,7 +598,7 @@ describe("MaintenanceService.CreateMaintenance", () => {
   });
 
   test("creates maintenance with notify=false (default)", async () => {
-    subscriptionSpies.dispatchMaintenance.mockClear();
+    subscriptionSpies.dispatchMaintenanceUpdate.mockClear();
 
     const fromDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const toDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000);
@@ -622,7 +624,7 @@ describe("MaintenanceService.CreateMaintenance", () => {
     expect(data.maintenance.title).toBe(`${TEST_PREFIX}-no-notify`);
 
     // Verify dispatcher was NOT called
-    expect(subscriptionSpies.dispatchMaintenance).not.toHaveBeenCalled();
+    expect(subscriptionSpies.dispatchMaintenanceUpdate).not.toHaveBeenCalled();
 
     // Clean up
     await db

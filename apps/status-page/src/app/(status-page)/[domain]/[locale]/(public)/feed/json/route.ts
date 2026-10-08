@@ -81,6 +81,7 @@ export async function GET(
         return {
           id: maintenance.id,
           name: maintenance.title,
+          // @deprecated Use maintenanceUpdates instead - returning the newest update's message for backwards compatibility
           message: updates[0]?.message ?? maintenance.message,
           maintenanceUpdates: updates.map((update) => ({
             id: update.id,

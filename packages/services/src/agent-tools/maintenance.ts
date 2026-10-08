@@ -7,7 +7,6 @@ import {
   deleteMaintenanceUpdate,
   listMaintenances,
   notifyMaintenance,
-  notifyMaintenanceUpdate,
   updateMaintenanceUpdate,
 } from "../maintenance";
 import type { AgentTool } from "./types";
@@ -215,7 +214,7 @@ export const createMaintenanceTool: AgentTool<
     verb: "scheduled",
   },
   async run({ ctx, input }) {
-    const { maintenance: record } = await createMaintenance({
+    const { maintenance: record, initialUpdate } = await createMaintenance({
       ctx,
       input: {
         title: input.title,
@@ -231,7 +230,7 @@ export const createMaintenanceTool: AgentTool<
       try {
         notified = await notifyMaintenance({
           ctx,
-          input: { maintenanceId: record.id },
+          input: { maintenanceUpdateId: initialUpdate.id },
         });
       } catch (err) {
         console.warn("notifyMaintenance failed after create_maintenance", err);
@@ -309,13 +308,13 @@ export const addMaintenanceUpdateTool: AgentTool<
     let notified = false;
     if (input.notify) {
       try {
-        notified = await notifyMaintenanceUpdate({
+        notified = await notifyMaintenance({
           ctx,
           input: { maintenanceUpdateId: update.id },
         });
       } catch (err) {
         console.warn(
-          "notifyMaintenanceUpdate failed after add_maintenance_update",
+          "notifyMaintenance failed after add_maintenance_update",
           err,
         );
       }

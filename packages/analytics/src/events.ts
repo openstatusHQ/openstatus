@@ -136,10 +136,6 @@ export const Events = {
     name: "maintenance_notified",
     channel: "maintenance",
   },
-  NotifyMaintenanceUpdate: {
-    name: "maintenance_update_notified",
-    channel: "maintenance",
-  },
   CreateNotification: {
     name: "notification_created",
     channel: "notification",

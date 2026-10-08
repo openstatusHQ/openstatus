@@ -47,9 +47,8 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
 
   const publicUrl = `${getPageUrl(page)}/events/maintenance/${maintenance.id}`;
   const canNotify = workspace?.limits["status-subscribers"] === true;
-  const updates = [...maintenance.updates].sort(
-    (a, b) => b.date.getTime() - a.date.getTime() || b.id - a.id,
-  );
+  // service returns updates newest first
+  const updates = maintenance.updates;
   const latest = updates[0];
 
   return (

@@ -30,7 +30,6 @@ export { getChannel } from "./channels/index";
 // Export dispatcher functions
 export {
   dispatchStatusReportUpdate,
-  dispatchMaintenance,
   dispatchMaintenanceUpdate,
   dispatchPageUpdate,
 } from "./dispatcher";

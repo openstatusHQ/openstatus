@@ -11,7 +11,6 @@ export {
   type MaintenanceWithRelations,
 } from "./list";
 export { notifyMaintenance } from "./notify";
-export { notifyMaintenanceUpdate } from "./notify-update";
 export { updateMaintenance } from "./update";
 export { updateMaintenanceUpdate } from "./update-update";
 export { latestMaintenanceUpdate } from "./utils";
@@ -28,7 +27,6 @@ export {
   maintenanceListPeriodSchema,
   maintenanceListPeriods,
   NotifyMaintenanceInput,
-  NotifyMaintenanceUpdateInput,
   UpdateMaintenanceInput,
   UpdateMaintenanceUpdateInput,
 } from "./schemas";

@@ -20,7 +20,7 @@ export function usePublishMaintenanceUpdate(maintenanceId: number) {
   const invalidate = useInvalidateMaintenance(maintenanceId);
   const create = useMutation(trpc.maintenance.createUpdate.mutationOptions());
   const notify = useMutation(
-    trpc.subscriberNotification.maintenanceUpdate.mutationOptions(),
+    trpc.subscriberNotification.maintenance.mutationOptions(),
   );
   const [isPending, setIsPending] = useState(false);
 
