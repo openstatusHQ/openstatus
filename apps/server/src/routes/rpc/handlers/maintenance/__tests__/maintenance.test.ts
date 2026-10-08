@@ -396,6 +396,28 @@ describe("MaintenanceService.CreateMaintenance", () => {
     expect(res.status).toBe(404);
   });
 
+  test("rejects page component ids that are not plain decimal digits", async () => {
+    const fromDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const toDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000);
+
+    for (const id of ["1e3", "0x10", "1.5", ""]) {
+      const res = await connectRequest(
+        "CreateMaintenance",
+        {
+          title: "Malformed component id",
+          message: "Test message",
+          from: fromDate.toISOString(),
+          to: toDate.toISOString(),
+          pageId: String(testPageId),
+          pageComponentIds: [id],
+        },
+        { "x-openstatus-key": authKey },
+      );
+      expect(res.status).toBe(400);
+      expect((await res.json()).code).toBe("invalid_argument");
+    }
+  });
+
   test("returns error when page components are from different pages", async () => {
     const fromDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const toDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000);

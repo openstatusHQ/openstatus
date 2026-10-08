@@ -50,7 +50,11 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
     toast.error(errorMessage(error, "Failed to save"));
   };
   const notify = useMutation(
-    trpc.subscriberNotification.maintenanceUpdate.mutationOptions(),
+    trpc.subscriberNotification.maintenanceUpdate.mutationOptions({
+      onError: (error) => {
+        toast.error(errorMessage(error, "Failed to notify subscribers"));
+      },
+    }),
   );
   const createUpdate = useMutation(
     trpc.maintenance.createUpdate.mutationOptions({

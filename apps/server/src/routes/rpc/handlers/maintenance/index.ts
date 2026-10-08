@@ -34,16 +34,20 @@ function parseDate(dateString: string): Date {
   return date;
 }
 
+// `Number("1e3")` is 1000 and `Number("0x10")` is 16 — both would silently
+// target another component, so only plain decimal digits are accepted.
+const PAGE_COMPONENT_ID = /^\d+$/;
+
 function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
   return ids.map((id) => {
-    const n = Number(id);
-    if (id.trim() === "" || !Number.isSafeInteger(n)) {
+    const trimmed = id.trim();
+    if (!PAGE_COMPONENT_ID.test(trimmed)) {
       throw new ConnectError(
         `Invalid page component id: "${id}"`,
         Code.InvalidArgument,
       );
     }
-    return n;
+    return Number(trimmed);
   });
 }
 

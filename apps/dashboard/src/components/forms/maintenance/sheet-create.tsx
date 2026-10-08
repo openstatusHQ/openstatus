@@ -12,6 +12,7 @@ import {
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import {
   EmptyStateContainer,
@@ -30,6 +31,7 @@ import {
 import { FormMaintenance } from "@/components/forms/maintenance/form";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
 /**
  * Create-maintenance sheet with a status page selector — for surfaces that
@@ -67,7 +69,11 @@ export function FormSheetMaintenanceCreate({
   );
 
   const sendMaintenanceUpdateMutation = useMutation(
-    trpc.subscriberNotification.maintenance.mutationOptions(),
+    trpc.subscriberNotification.maintenance.mutationOptions({
+      onError: (error) => {
+        toast.error(errorMessage(error, "Failed to notify subscribers"));
+      },
+    }),
   );
   const createMaintenanceMutation = useMutation(
     trpc.maintenance.new.mutationOptions({

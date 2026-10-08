@@ -3,6 +3,7 @@
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { Link } from "@/components/common/link";
 import {
@@ -18,6 +19,7 @@ import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
@@ -33,7 +35,11 @@ export default function Page() {
     }),
   );
   const sendMaintenanceUpdateMutation = useMutation(
-    trpc.subscriberNotification.maintenance.mutationOptions(),
+    trpc.subscriberNotification.maintenance.mutationOptions({
+      onError: (error) => {
+        toast.error(errorMessage(error, "Failed to notify subscribers"));
+      },
+    }),
   );
   const createMaintenanceMutation = useMutation(
     trpc.maintenance.new.mutationOptions({
