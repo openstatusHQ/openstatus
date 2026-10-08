@@ -61,14 +61,15 @@ export function createAIFilterHandler({
       const result = streamObject({
         model,
         schema: outputSchema,
-        messages: [
-          {
-            role: "system",
-            content: staticPrompt,
-            providerOptions: {
-              anthropic: { cacheControl: { type: "ephemeral" } },
-            },
+        // AI SDK v7 rejects system messages inside `messages`.
+        instructions: {
+          role: "system",
+          content: staticPrompt,
+          providerOptions: {
+            anthropic: { cacheControl: { type: "ephemeral" } },
           },
+        },
+        messages: [
           {
             role: "user",
             content: `Current date/time: ${now}\n\nQuery: ${query}`,
