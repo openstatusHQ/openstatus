@@ -196,6 +196,28 @@ describe("sendEmailNotifications", () => {
     expect(keys[0]).not.toBe(keys[1]);
   });
 
+  test("changes the key when the maintenance window changes", async () => {
+    const base = {
+      updateId: 77,
+      status: "maintenance" as const,
+      date: "2026-07-16T11:00:00Z",
+      startsAt: "2026-07-20T10:00:00Z",
+    };
+    await sendEmailNotifications(
+      [makeSub()],
+      makeUpdate({ ...base, endsAt: "2026-07-20T11:00:00Z" }),
+    );
+    await sendEmailNotifications(
+      [makeSub()],
+      makeUpdate({ ...base, endsAt: "2026-07-20T12:00:00Z" }),
+    );
+
+    const keys = sendStatusReportUpdateMock.calls.map(
+      (c) => c.args[0].idempotencyKey,
+    );
+    expect(keys[0]).not.toBe(keys[1]);
+  });
+
   test("changes the key when the update content changes", async () => {
     const date = "2026-07-16T11:00:00Z";
     await sendEmailNotifications(

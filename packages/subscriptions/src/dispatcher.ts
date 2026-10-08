@@ -96,8 +96,9 @@ export async function dispatchMaintenance(maintenanceId: number) {
       maintenancesToPageComponents: {
         with: { pageComponent: true },
       },
+      // first update: the announcement must not reuse a later update's id
       maintenanceUpdates: {
-        orderBy: (updates, { desc }) => [desc(updates.date), desc(updates.id)],
+        orderBy: (updates, { asc }) => [asc(updates.date), asc(updates.id)],
         limit: 1,
       },
     },

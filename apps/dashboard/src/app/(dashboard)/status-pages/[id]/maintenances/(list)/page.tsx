@@ -2,7 +2,7 @@
 
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { Link } from "@/components/common/link";
@@ -23,7 +23,6 @@ import { errorMessage } from "@/lib/trpc/error";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: statusPage } = useQuery(
@@ -95,13 +94,7 @@ export default function Page() {
             </FormSheetMaintenance>
           </div>
         </SectionHeaderRow>
-        <DataTable
-          columns={columns}
-          data={maintenances}
-          onRowClick={(row) =>
-            router.push(`/status-pages/${id}/maintenances/${row.original.id}`)
-          }
-        />
+        <DataTable columns={columns} data={maintenances} />
       </Section>
     </SectionGroup>
   );

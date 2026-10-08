@@ -269,6 +269,15 @@ describe("dispatchMaintenance", () => {
         })
         .returning()
         .get();
+      // a later update must not hijack the announcement's id or message
+      await db
+        .insert(maintenanceUpdate)
+        .values({
+          maintenanceId: record.id,
+          message: "later update",
+          date: new Date("2026-08-08T14:00:00.000Z"),
+        })
+        .run();
 
       await dispatchMaintenance(record.id);
 

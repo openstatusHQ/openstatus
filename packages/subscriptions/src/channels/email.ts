@@ -95,6 +95,9 @@ export async function sendEmailNotifications(
       pageUpdate.status,
       pageUpdate.message,
       pageUpdate.date,
+      // the maintenance window is rendered instead of `date` below
+      pageUpdate.startsAt ?? null,
+      pageUpdate.endsAt ?? null,
       pageUpdate.pageComponents,
       pageUpdate.componentsWithImpact?.map((c) => c.impact),
     ]),
