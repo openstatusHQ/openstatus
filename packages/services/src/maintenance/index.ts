@@ -7,6 +7,7 @@ export {
   getMaintenance,
   listMaintenances,
   type ListMaintenancesResult,
+  type MaintenanceUpdateWithRelations,
   type MaintenanceWithRelations,
 } from "./list";
 export { notifyMaintenance } from "./notify";

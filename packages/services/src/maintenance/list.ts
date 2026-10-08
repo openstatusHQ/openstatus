@@ -40,8 +40,15 @@ function periodToSince(period: MaintenanceListPeriod): Date {
   }
 }
 
+type Attributed = {
+  createdByUser: AttributedUserDetail | null;
+  updatedByUser: AttributedUserDetail | null;
+};
+
+export type MaintenanceUpdateWithRelations = MaintenanceUpdate & Attributed;
+
 export type MaintenanceWithRelations = Maintenance & {
-  updates: MaintenanceUpdate[];
+  updates: MaintenanceUpdateWithRelations[];
   pageComponents: PageComponent[];
   pageComponentIds: number[];
   createdByUser: AttributedUserDetail | null;
@@ -71,12 +78,6 @@ async function enrichMaintenancesBatch(
     .where(inArray(maintenanceUpdate.maintenanceId, ids))
     .orderBy(desc(maintenanceUpdate.date), desc(maintenanceUpdate.id))
     .all();
-  const updatesByMaintenance = new Map<number, MaintenanceUpdate[]>();
-  for (const update of allUpdates) {
-    const existing = updatesByMaintenance.get(update.maintenanceId);
-    if (existing) existing.push(update);
-    else updatesByMaintenance.set(update.maintenanceId, [update]);
-  }
 
   // Explicit column selection (not `select()`) keeps the row shape in our
   // hands instead of relying on drizzle's auto-derived `row.<table_name>`
@@ -95,10 +96,30 @@ async function enrichMaintenancesBatch(
     .where(inArray(maintenancesToPageComponents.maintenanceId, ids))
     .all();
 
-  const users = await loadAttributedUsers(
-    db,
-    rows.flatMap((r) => [r.createdBy, r.updatedBy]),
-  );
+  const users = await loadAttributedUsers(db, [
+    ...rows.flatMap((r) => [r.createdBy, r.updatedBy]),
+    ...allUpdates.flatMap((u) => [u.createdBy, u.updatedBy]),
+  ]);
+  const attributed = (row: {
+    createdBy: number | null;
+    updatedBy: number | null;
+  }): Attributed => ({
+    createdByUser:
+      row.createdBy != null ? (users.get(row.createdBy) ?? null) : null,
+    updatedByUser:
+      row.updatedBy != null ? (users.get(row.updatedBy) ?? null) : null,
+  });
+
+  const updatesByMaintenance = new Map<
+    number,
+    MaintenanceUpdateWithRelations[]
+  >();
+  for (const update of allUpdates) {
+    const withUsers = { ...update, ...attributed(update) };
+    const existing = updatesByMaintenance.get(update.maintenanceId);
+    if (existing) existing.push(withUsers);
+    else updatesByMaintenance.set(update.maintenanceId, [withUsers]);
+  }
 
   const componentsByMaintenance = new Map<number, PageComponent[]>();
   for (const row of assocRows) {
@@ -115,10 +136,7 @@ async function enrichMaintenancesBatch(
       updates: updatesByMaintenance.get(r.id) ?? [],
       pageComponents: components,
       pageComponentIds: components.map((c) => c.id),
-      createdByUser:
-        r.createdBy != null ? (users.get(r.createdBy) ?? null) : null,
-      updatedByUser:
-        r.updatedBy != null ? (users.get(r.updatedBy) ?? null) : null,
+      ...attributed(r),
     };
   });
 }

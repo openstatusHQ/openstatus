@@ -22,20 +22,35 @@ export function FormSheetMaintenanceUpdate({
   children,
   defaultValues,
   onSubmit,
+  open: controlledOpen,
+  onOpenChange,
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: Partial<FormValues>;
   onSubmit: (values: FormValues) => Promise<void>;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (next: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(next);
+    } else {
+      setInternalOpen(next);
+    }
+  };
 
   return (
     <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>
-      <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      {children ? (
+        <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      ) : null}
       <FormSheetContent className="sm:max-w-lg">
         <FormSheetHeader>
           <FormSheetTitle>Maintenance Update</FormSheetTitle>
           <FormSheetDescription>
-            Post a dated update to this maintenance.
+            Edit the message or date of this update.
           </FormSheetDescription>
         </FormSheetHeader>
         <FormCardGroup className="overflow-y-auto">
@@ -44,7 +59,6 @@ export function FormSheetMaintenanceUpdate({
               id="maintenance-update-form"
               className="my-4"
               defaultValues={defaultValues}
-              showNotifySubscribers
               onSubmit={async (values) => {
                 await onSubmit(values);
                 setOpen(false);
