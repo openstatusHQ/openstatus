@@ -258,7 +258,8 @@ export function Client() {
                   const lastUpdate = [
                     ...(maintenance.maintenanceUpdates ?? []),
                   ].sort(
-                    (a, b) => b.date.getTime() - a.date.getTime() || b.id - a.id,
+                    (a, b) =>
+                      b.date.getTime() - a.date.getTime() || b.id - a.id,
                   )[0];
                   return (
                     <StatusBannerTabsContent
