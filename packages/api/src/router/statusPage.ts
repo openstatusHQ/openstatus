@@ -113,7 +113,10 @@ export const statusPageRouter = createTRPCRouter({
           maintenances: {
             with: {
               maintenanceUpdates: {
-                orderBy: (updates, { desc }) => desc(updates.date),
+                orderBy: (updates, { desc }) => [
+                  desc(updates.date),
+                  desc(updates.id),
+                ],
               },
               maintenancesToPageComponents: { with: { pageComponent: true } },
             },
@@ -555,7 +558,10 @@ export const statusPageRouter = createTRPCRouter({
           maintenances: {
             with: {
               maintenanceUpdates: {
-                orderBy: (updates, { desc }) => desc(updates.date),
+                orderBy: (updates, { desc }) => [
+                  desc(updates.date),
+                  desc(updates.id),
+                ],
               },
               maintenancesToPageComponents: { with: { pageComponent: true } },
             },
@@ -697,7 +703,10 @@ export const statusPageRouter = createTRPCRouter({
         ),
         with: {
           maintenanceUpdates: {
-            orderBy: (updates, { desc }) => desc(updates.date),
+            orderBy: (updates, { desc }) => [
+              desc(updates.date),
+              desc(updates.id),
+            ],
           },
           maintenancesToPageComponents: {
             with: { pageComponent: { with: { monitor: true } } },

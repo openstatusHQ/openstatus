@@ -85,7 +85,7 @@ function scheduledMaintenances(page: Page, now: number) {
       scheduled_for: isoOrNull(m.from),
       scheduled_until: isoOrNull(m.to),
       maintenance_updates: [...(m.maintenanceUpdates ?? [])]
-        .sort((a, b) => b.date.getTime() - a.date.getTime())
+        .sort((a, b) => b.date.getTime() - a.date.getTime() || b.id - a.id)
         .map((update) => ({
           body: update.message,
           created_at: isoOrNull(update.date),

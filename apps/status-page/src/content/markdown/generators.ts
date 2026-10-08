@@ -52,11 +52,14 @@ function avg(values: number[]): number | null {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-function newestMaintenanceUpdates<T extends { date: Date | string | number }>(
-  updates: T[] | undefined,
-): T[] {
+// Dates have second precision, so the id breaks ties.
+function newestMaintenanceUpdates<
+  T extends { date: Date | string | number; id?: number },
+>(updates: T[] | undefined): T[] {
   return [...(updates ?? [])].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    (a, b) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime() ||
+      (b.id ?? 0) - (a.id ?? 0),
   );
 }
 

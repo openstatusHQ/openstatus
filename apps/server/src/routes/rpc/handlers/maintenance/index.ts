@@ -35,20 +35,22 @@ function parseDate(dateString: string): Date {
 }
 
 // `Number("1e3")` is 1000 and `Number("0x10")` is 16 — both would silently
-// target another component, so only plain decimal digits are accepted.
-const PAGE_COMPONENT_ID = /^\d+$/;
+// target another row, so only plain decimal digits are accepted.
+const DECIMAL_ID = /^\d+$/;
+
+function parseId(value: string, label: string): number {
+  const trimmed = value.trim();
+  if (!DECIMAL_ID.test(trimmed)) {
+    throw new ConnectError(
+      `Invalid ${label}: "${value}"`,
+      Code.InvalidArgument,
+    );
+  }
+  return Number(trimmed);
+}
 
 function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
-  return ids.map((id) => {
-    const trimmed = id.trim();
-    if (!PAGE_COMPONENT_ID.test(trimmed)) {
-      throw new ConnectError(
-        `Invalid page component id: "${id}"`,
-        Code.InvalidArgument,
-      );
-    }
-    return Number(trimmed);
-  });
+  return ids.map((id) => parseId(id, "page component id"));
 }
 
 export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
@@ -64,7 +66,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
           message: req.message,
           from: parseDate(req.from),
           to: parseDate(req.to),
-          pageId: Number(req.pageId),
+          pageId: parseId(req.pageId, "page id"),
           pageComponentIds: parsePageComponentIds(req.pageComponentIds),
         },
       });
@@ -114,7 +116,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
       }
       const full = await getMaintenance({
         ctx: toServiceCtx(rpcCtx),
-        input: { id: Number(req.id) },
+        input: { id: parseId(req.id, "maintenance id") },
       });
       return {
         maintenance: dbMaintenanceToProto(
@@ -132,8 +134,9 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
     try {
       const rpcCtx = getRpcContext(ctx);
 
-      const pageId =
-        req.pageId && req.pageId.trim() !== "" ? Number(req.pageId) : undefined;
+      const pageId = req.pageId?.trim()
+        ? parseId(req.pageId, "page id")
+        : undefined;
 
       const { items, totalSize } = await listMaintenances({
         ctx: toServiceCtx(rpcCtx),
@@ -164,7 +167,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
         throw maintenanceIdRequiredError();
       }
 
-      const id = Number(req.id);
+      const id = parseId(req.id, "maintenance id");
       await updateMaintenance({
         ctx: sCtx,
         input: {
@@ -204,7 +207,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
       }
       await deleteMaintenance({
         ctx: toServiceCtx(rpcCtx),
-        input: { id: Number(req.id) },
+        input: { id: parseId(req.id, "maintenance id") },
       });
       return { success: true };
     } catch (err) {
@@ -222,7 +225,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
       const update = await addMaintenanceUpdate({
         ctx: sCtx,
         input: {
-          maintenanceId: Number(req.maintenanceId),
+          maintenanceId: parseId(req.maintenanceId, "maintenance id"),
           message: req.message,
           date: req.date ? parseDate(req.date) : undefined,
         },
@@ -248,7 +251,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
       const update = await updateMaintenanceUpdate({
         ctx: toServiceCtx(rpcCtx),
         input: {
-          id: Number(req.id),
+          id: parseId(req.id, "maintenance update id"),
           message: req.message,
           date: req.date ? parseDate(req.date) : undefined,
         },
@@ -267,7 +270,7 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
       }
       await deleteMaintenanceUpdate({
         ctx: toServiceCtx(rpcCtx),
-        input: { id: Number(req.id) },
+        input: { id: parseId(req.id, "maintenance update id") },
       });
       return { success: true };
     } catch (err) {

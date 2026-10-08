@@ -732,6 +732,23 @@ describe("MaintenanceService.GetMaintenance", () => {
     expect(res.status).toBe(401);
   });
 
+  test("rejects ids that are not plain decimal digits", async () => {
+    const calls: Array<[string, Record<string, unknown>]> = [
+      ["GetMaintenance", { id: "1e3" }],
+      ["DeleteMaintenance", { id: "0x10" }],
+      ["AddMaintenanceUpdate", { maintenanceId: "1.5", message: "x" }],
+      ["UpdateMaintenanceUpdate", { id: "1e3", message: "x" }],
+      ["DeleteMaintenanceUpdate", { id: "0x10" }],
+    ];
+    for (const [method, body] of calls) {
+      const res = await connectRequest(method, body, {
+        "x-openstatus-key": authKey,
+      });
+      expect(res.status).toBe(400);
+      expect((await res.json()).code).toBe("invalid_argument");
+    }
+  });
+
   test("returns 404 for non-existent maintenance", async () => {
     const res = await connectRequest(
       "GetMaintenance",

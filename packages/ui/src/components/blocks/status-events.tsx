@@ -653,6 +653,7 @@ interface StatusMaintenanceUpdate {
   from: Date;
   to: Date;
   maintenanceUpdates?: {
+    id: number;
     date: Date;
     message: string;
   }[];
@@ -704,10 +705,11 @@ export function StatusEventTimelineMaintenance({
     maintenance.from,
     maintenance.to,
   );
-  // chronological: the oldest update is the announcement, notes follow it
+  // chronological: the oldest update is the announcement, notes follow it;
+  // dates have second precision, so the id breaks ties
   const [announcement, ...updates] = [
     ...(maintenance.maintenanceUpdates ?? []),
-  ].sort((a, b) => a.date.getTime() - b.date.getTime());
+  ].sort((a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id);
   const body = announcement?.message ?? maintenance.message ?? "";
   const renderBody = (message: string) =>
     message.trim() === "" ? (

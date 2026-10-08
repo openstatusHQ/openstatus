@@ -85,7 +85,7 @@ export async function GET(
     for (const maintenance of page.maintenances ?? []) {
       const maintenanceUrl = `${baseUrl}/events/maintenance/${maintenance.id}`;
       const updates = [...(maintenance.maintenanceUpdates ?? [])].sort(
-        (a, b) => b.date.getTime() - a.date.getTime(),
+        (a, b) => b.date.getTime() - a.date.getTime() || b.id - a.id,
       );
       const description = updates.length
         ? updates

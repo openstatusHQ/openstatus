@@ -24,7 +24,7 @@ export const MaintenanceObjectSchema = z.object({
     description: "The title of the maintenance",
     example: "Database Upgrade",
   }),
-  message: z.string().openapi({
+  message: z.string().min(1).openapi({
     description:
       "The newest timeline update. On create it becomes the first update; on update it rewrites the newest one.",
     example: "Upgrading database to improve performance",

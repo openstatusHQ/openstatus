@@ -76,7 +76,7 @@ export async function GET(
       })),
       maintenances: page.maintenances.map((maintenance) => {
         const updates = [...(maintenance.maintenanceUpdates ?? [])].sort(
-          (a, b) => b.date.getTime() - a.date.getTime(),
+          (a, b) => b.date.getTime() - a.date.getTime() || b.id - a.id,
         );
         return {
           id: maintenance.id,

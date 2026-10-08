@@ -933,7 +933,7 @@
             "type": "string",
             "nullable": true,
             "format": "date-time",
-            "default": "2026-10-08T16:05:35.618Z",
+            "default": "2026-10-08T17:15:20.565Z",
             "description": "The date of the update in ISO8601 format"
           },
           "message": {
@@ -1014,6 +1014,7 @@
           },
           "message": {
             "type": "string",
+            "minLength": 1,
             "description": "The newest timeline update. On create it becomes the first update; on update it rewrites the newest one.",
             "example": "Upgrading database to improve performance"
           },
@@ -6630,7 +6631,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T16:05:35.618Z",
+                    "default": "2026-10-08T17:15:20.565Z",
                     "description": "The date of the report in ISO8601 format, defaults to now"
                   },
                   "message": {
@@ -7085,7 +7086,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T16:05:35.618Z",
+                    "default": "2026-10-08T17:15:20.565Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
@@ -7386,7 +7387,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T16:05:35.618Z",
+                    "default": "2026-10-08T17:15:20.565Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
@@ -8104,6 +8105,7 @@
                   },
                   "message": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "The newest timeline update. On create it becomes the first update; on update it rewrites the newest one.",
                     "example": "Upgrading database to improve performance"
                   },
@@ -8430,6 +8432,7 @@
                   },
                   "message": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "The newest timeline update. On create it becomes the first update; on update it rewrites the newest one.",
                     "example": "Upgrading database to improve performance"
                   },

@@ -251,3 +251,26 @@ test("create a maintenance calls dispatchMaintenance", async () => {
     await db.delete(maintenance).where(eq(maintenance.id, result.data.id));
   }
 });
+
+test("create a maintenance with an empty message should return 400", async () => {
+  const from = new Date();
+  const to = new Date(from.getTime() + 3600000);
+
+  const res = await app.request("/v1/maintenance", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      title: "Empty Message",
+      message: "",
+      from: from.toISOString(),
+      to: to.toISOString(),
+      monitorIds: [1],
+      pageId: 1,
+    }),
+  });
+
+  expect(res.status).toBe(400);
+});
