@@ -226,10 +226,6 @@
   @apply text-balance;
 }
 
-.prose [data-slot="timeline"] > * {
-  @apply my-0;
-}
-
 .prose [data-slot="timeline"] > * + * {
   @apply mt-20;
 }
