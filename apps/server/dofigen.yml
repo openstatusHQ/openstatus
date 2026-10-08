@@ -55,13 +55,13 @@ builders:
       - packages/importers/package.json
     run:
       - corepack enable pnpm
-      - pnpm install --prod --frozen-lockfile --filter=@openstatus/server... --verbose
+      - pnpm install --prod --frozen-lockfile --filter=@openstatus/server... --loglevel debug
     cache:
       - /root/.local/share/pnpm/store
 
   # Stage 2: Build application (compile to binary with Deno)
   build:
-    fromImage: denoland/deno:2.9.2
+    fromImage: denoland/deno:2.9.7
     workdir: /app/apps/server
     labels:
       org.opencontainers.image.stage: build

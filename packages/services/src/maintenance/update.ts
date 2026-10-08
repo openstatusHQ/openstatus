@@ -3,7 +3,11 @@ import { maintenance } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
 import { ConflictError, InternalServiceError } from "../errors";
 import type { Maintenance } from "../types";
 import {
@@ -36,7 +40,10 @@ export async function updateMaintenance(args: {
       throw new ConflictError("End date must be after start date.");
     }
 
-    const updateValues: Record<string, unknown> = { updatedAt: new Date() };
+    const updateValues: Record<string, unknown> = {
+      updatedAt: new Date(),
+      updatedBy: tryGetActorUserId(ctx.actor),
+    };
     if (input.title !== undefined) updateValues.title = input.title;
     if (input.message !== undefined) updateValues.message = input.message;
     if (input.from !== undefined) updateValues.from = input.from;

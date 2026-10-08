@@ -16,6 +16,7 @@ import {
   selectWorkspaceSchema,
   statusReport,
 } from "@openstatus/db/src/schema";
+import { constantTimeEqual } from "@openstatus/services/page-access";
 import {
   getSubscriberByToken,
   hasPendingSubscriber,
@@ -28,6 +29,11 @@ import { TRPCError } from "@trpc/server";
 import { endOfDay, startOfDay, subDays } from "date-fns";
 import { z } from "zod";
 
+import {
+  assertPageAccess,
+  resolvePageAccess,
+  visitorFromCtx,
+} from "../lib/page-access";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
@@ -57,24 +63,6 @@ import {
 
 // NOTE: this router is used on status pages only - do not confuse with the page router which is used in the dashboard for the config
 
-// Length-independent comparison so a wrong guess can't be timed by length or
-// character. Pure JS (no node:crypto) keeps it usable from the Edge runtime.
-function constantTimeEqual(
-  a: string | null | undefined,
-  b: string | null | undefined,
-): boolean {
-  if (a == null || b == null) return false;
-  // constant-time: iterate over the max length and fold the length delta into
-  // the accumulator so we never early-return or branch on length.
-  const max = Math.max(a.length, b.length);
-  let mismatch = a.length ^ b.length;
-  for (let i = 0; i < max; i++) {
-    // out-of-range indices read as 0; mismatch already non-zero on length diff.
-    mismatch |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
-  }
-  return mismatch === 0;
-}
-
 // Gate fields for getGate, reusing selectPageSchema's stringToArray transforms
 // so authEmailDomains / allowedIpRanges come back as arrays like getLight.
 const gateFieldsSchema = selectPageSchema.pick({
@@ -87,11 +75,15 @@ const gateFieldsSchema = selectPageSchema.pick({
   contactUrl: true,
 });
 
+// Password for cookie-less server callers (feeds, `?pw=` links).
+const queryPasswordSchema = z.string().nullish();
+
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
     .input(
       z.object({
         slug: z.string().toLowerCase(),
+        pw: queryPasswordSchema,
         // NOTE: override the defaults we are getting from the page configuration
         cardType: z
           .enum(["requests", "duration", "dominant", "manual"])
@@ -128,7 +120,7 @@ export const statusPageRouter = createTRPCRouter({
             with: {
               monitor: {
                 with: {
-                  incidents: true,
+                  monitorIncidents: true,
                 },
               },
               group: true,
@@ -140,6 +132,14 @@ export const statusPageRouter = createTRPCRouter({
       });
 
       if (!_page) return null;
+
+      // Denied visitors still need the page chrome (login, layout, OG).
+      if (!resolvePageAccess(opts.ctx, _page, opts.input.pw).ok) {
+        _page.statusReports = [];
+        _page.maintenances = [];
+        _page.pageComponents = [];
+        _page.pageComponentGroups = [];
+      }
 
       const ws = selectWorkspaceSchema.safeParse(_page.workspace);
       const pageComponents = selectPageComponentWithMonitorRelation
@@ -164,7 +164,7 @@ export const statusPageRouter = createTRPCRouter({
       const components = pageComponents.map((c) => {
         const events = getEvents({
           maintenances: _page.maintenances,
-          incidents: c.monitor?.incidents ?? [],
+          incidents: c.monitor?.monitorIncidents ?? [],
           reports: _page.statusReports,
           pageComponentId: c.id,
           monitorId: c.monitorId ?? undefined,
@@ -220,7 +220,7 @@ export const statusPageRouter = createTRPCRouter({
       const monitors = monitorComponents.map((c) => {
         const events = getEvents({
           maintenances: _page.maintenances,
-          incidents: c.monitor.incidents ?? [],
+          incidents: c.monitor.monitorIncidents ?? [],
           reports: _page.statusReports,
           monitorId: c.monitor.id,
         });
@@ -337,7 +337,9 @@ export const statusPageRouter = createTRPCRouter({
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
         maintenances: _page.maintenances,
-        incidents: monitorComponents.flatMap((c) => c.monitor.incidents ?? []),
+        incidents: monitorComponents.flatMap(
+          (c) => c.monitor.monitorIncidents ?? [],
+        ),
         reports: _page.statusReports,
         // No monitorId provided, so we get all events for the page
       });
@@ -435,13 +437,11 @@ export const statusPageRouter = createTRPCRouter({
         .flatMap((group): Tracker[] => {
           if (group.groupId === null) {
             // Ungrouped components - return as individual trackers
-            return group.components.map(
-              (component): PageComponentTracker => ({
-                type: "component",
-                component,
-                order: component.order ?? 0,
-              }),
-            );
+            return group.components.map((component): PageComponentTracker => ({
+              type: "component",
+              component,
+              order: component.order ?? 0,
+            }));
           }
           // Grouped components - return as single group tracker
           const sortedComponents = group.components.sort(
@@ -499,7 +499,7 @@ export const statusPageRouter = createTRPCRouter({
         barType === "manual"
           ? pageComponents.map((c) =>
               c.monitor
-                ? { ...c, monitor: { ...c.monitor, incidents: [] } }
+                ? { ...c, monitor: { ...c.monitor, monitorIncidents: [] } }
                 : c,
             )
           : pageComponents;
@@ -511,7 +511,8 @@ export const statusPageRouter = createTRPCRouter({
         monitorGroups,
         trackers,
         incidents:
-          monitorsWithPrivateLocationCount.flatMap((m) => m.incidents) ?? [],
+          monitorsWithPrivateLocationCount.flatMap((m) => m.monitorIncidents) ??
+          [],
         statusReports,
         maintenances,
         workspacePlan: _page.workspace.plan,
@@ -525,7 +526,12 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   getLight: publicProcedure
-    .input(z.object({ slug: z.string().toLowerCase() }))
+    .input(
+      z.object({
+        slug: z.string().toLowerCase(),
+        pw: queryPasswordSchema,
+      }),
+    )
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
@@ -551,7 +557,7 @@ export const statusPageRouter = createTRPCRouter({
           },
           pageComponents: {
             with: {
-              monitor: { with: { incidents: true } },
+              monitor: { with: { monitorIncidents: true } },
               group: true,
             },
             orderBy: (pageComponents, { asc }) => asc(pageComponents.order),
@@ -561,6 +567,14 @@ export const statusPageRouter = createTRPCRouter({
       });
 
       if (!_page) return null;
+
+      // Denied visitors still need the page chrome (login, layout, OG).
+      if (!resolvePageAccess(opts.ctx, _page, opts.input.pw).ok) {
+        _page.statusReports = [];
+        _page.maintenances = [];
+        _page.pageComponents = [];
+        _page.pageComponentGroups = [];
+      }
 
       // Extract monitor components for backwards compatibility
       const monitorComponents = _page.pageComponents.filter(
@@ -591,7 +605,7 @@ export const statusPageRouter = createTRPCRouter({
 
       // Extract all incidents from monitor components
       const incidents = monitorComponents.flatMap(
-        (c) => c.monitor?.incidents ?? [],
+        (c) => c.monitor?.monitorIncidents ?? [],
       );
 
       const ws = selectWorkspaceSchema.safeParse(_page.workspace);
@@ -648,7 +662,13 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   getMaintenance: publicProcedure
-    .input(z.object({ slug: z.string().toLowerCase(), id: z.number() }))
+    .input(
+      z.object({
+        slug: z.string().toLowerCase(),
+        id: z.number(),
+        pw: queryPasswordSchema,
+      }),
+    )
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
@@ -661,6 +681,8 @@ export const statusPageRouter = createTRPCRouter({
         .get();
 
       if (!_page) return null;
+
+      assertPageAccess(opts.ctx, _page, opts.input.pw);
 
       const _maintenance = await opts.ctx.db.query.maintenance.findFirst({
         where: and(
@@ -684,6 +706,7 @@ export const statusPageRouter = createTRPCRouter({
     .input(
       z.object({
         slug: z.string().toLowerCase(),
+        pw: queryPasswordSchema,
         pageComponentIds: z.string().array(),
         cardType: z
           .enum(["requests", "duration", "dominant", "manual"])
@@ -724,7 +747,7 @@ export const statusPageRouter = createTRPCRouter({
             with: {
               monitor: {
                 with: {
-                  incidents: true,
+                  monitorIncidents: true,
                 },
               },
             },
@@ -733,6 +756,8 @@ export const statusPageRouter = createTRPCRouter({
       });
 
       if (!_page) return null;
+
+      assertPageAccess(opts.ctx, _page, input.pw);
 
       const pageComponents = selectPageComponentWithMonitorRelation
         .array()
@@ -818,7 +843,7 @@ export const statusPageRouter = createTRPCRouter({
       return pageComponents.map((c) => {
         const events = getEvents({
           maintenances: _page.maintenances,
-          incidents: c.monitor?.incidents ?? [],
+          incidents: c.monitor?.monitorIncidents ?? [],
           reports: _page.statusReports,
           pageComponentId: c.id,
           monitorId: c.monitorId ?? undefined,
@@ -913,7 +938,13 @@ export const statusPageRouter = createTRPCRouter({
   }),
 
   getReport: publicProcedure
-    .input(z.object({ slug: z.string().toLowerCase(), id: z.number() }))
+    .input(
+      z.object({
+        slug: z.string().toLowerCase(),
+        id: z.number(),
+        pw: queryPasswordSchema,
+      }),
+    )
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
@@ -926,6 +957,8 @@ export const statusPageRouter = createTRPCRouter({
         .get();
 
       if (!_page) return null;
+
+      assertPageAccess(opts.ctx, _page, opts.input.pw);
 
       const _report = await opts.ctx.db.query.statusReport.findFirst({
         where: and(
@@ -1032,7 +1065,9 @@ export const statusPageRouter = createTRPCRouter({
   }),
 
   getMonitors: publicProcedure
-    .input(z.object({ slug: z.string().toLowerCase() }))
+    .input(
+      z.object({ slug: z.string().toLowerCase(), pw: queryPasswordSchema }),
+    )
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
@@ -1049,6 +1084,8 @@ export const statusPageRouter = createTRPCRouter({
       });
 
       if (!_page) return null;
+
+      assertPageAccess(opts.ctx, _page, opts.input.pw);
 
       const pageComponents = selectPageComponentWithMonitorRelation
         .array()
@@ -1166,7 +1203,13 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   getMonitor: publicProcedure
-    .input(z.object({ slug: z.string().toLowerCase(), id: z.number() }))
+    .input(
+      z.object({
+        slug: z.string().toLowerCase(),
+        id: z.number(),
+        pw: queryPasswordSchema,
+      }),
+    )
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
@@ -1183,6 +1226,8 @@ export const statusPageRouter = createTRPCRouter({
       });
 
       if (!_page) return null;
+
+      assertPageAccess(opts.ctx, _page, opts.input.pw);
 
       const pageComponents = selectPageComponentWithMonitorRelation
         .array()
@@ -1278,7 +1323,7 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   subscribe: publicProcedure
-    .meta({ track: Events.SubscribePage, trackProps: ["slug", "email"] })
+    .meta({ track: Events.SubscribePage, trackProps: ["slug"] })
     .input(
       z.object({
         slug: z.string().toLowerCase(),
@@ -1304,6 +1349,8 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
+      assertPageAccess(opts.ctx, _page);
+
       const workspace = selectWorkspaceSchema.safeParse(_page.workspace);
 
       if (!workspace.success) {
@@ -1323,6 +1370,8 @@ export const statusPageRouter = createTRPCRouter({
       // Guard against email spam: reject if a pending (unverified, unexpired) subscription exists
       const isPending = await hasPendingSubscriber({
         input: { email: opts.input.email, pageId: _page.id },
+        // gated by `assertPageAccess` above
+        visitor: null,
       });
       if (isPending) {
         throw new TRPCError({
@@ -1340,6 +1389,7 @@ export const statusPageRouter = createTRPCRouter({
             ? opts.input.pageComponents
             : [],
         },
+        visitor: visitorFromCtx(opts.ctx),
       });
 
       // Already verified — no need to send another verification email
@@ -1408,7 +1458,7 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   validateEmailDomain: publicProcedure
-    .meta({ track: Events.ValidateEmailDomain, trackProps: ["slug", "email"] })
+    .meta({ track: Events.ValidateEmailDomain, trackProps: ["slug"] })
     .input(z.object({ slug: z.string().toLowerCase(), email: z.string() }))
     .query(async (opts) => {
       if (!opts.input.slug) return null;

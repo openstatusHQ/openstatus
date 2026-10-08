@@ -3,6 +3,7 @@ import {
   type AgentToolName,
   type AnyAgentTool,
   agentTools,
+  isAgentToolAvailable,
 } from "@openstatus/services/agent-tools";
 import { type Tool, tool } from "ai";
 import { ZodObject, type ZodType, type z } from "zod";
@@ -38,12 +39,18 @@ export function isSlackToolDraft(value: unknown): value is SlackToolDraft {
  * extraFlag fields (e.g. `notify`) so the model can't be expected to
  * answer them — the user supplies them via the Block Kit buttons.
  */
-export function buildSlackTools(ctx: ServiceContext): Record<string, Tool> {
+export function buildSlackTools(
+  ctx: ServiceContext,
+  /** Surface-only tools (e.g. reading the channel the user is viewing). */
+  extras?: Record<string, Tool>,
+): Record<string, Tool> {
   const out: Record<string, Tool> = {};
   for (const name of Object.keys(agentTools) as AgentToolName[]) {
-    out[name] = buildTool(agentTools[name] as AnyAgentTool, ctx);
+    const t: AnyAgentTool = agentTools[name];
+    if (!isAgentToolAvailable(t, ctx.workspace)) continue;
+    out[name] = buildTool(t, ctx);
   }
-  return out;
+  return { ...out, ...extras };
 }
 
 export function buildTool(t: AnyAgentTool, ctx: ServiceContext): Tool {

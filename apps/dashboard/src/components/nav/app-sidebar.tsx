@@ -40,6 +40,8 @@ const data = {
   },
   overview: [
     { name: "Overview", url: NAV.overview.href, icon: NAV.overview.icon },
+    { name: "Assistant", url: NAV.chat.href, icon: NAV.chat.icon },
+    { name: "Agents", url: NAV.agents.href, icon: NAV.agents.icon },
     {
       name: "Status Pages",
       url: NAV.statusPages.href,
@@ -52,19 +54,28 @@ const data = {
       icon: NAV.notifications.icon,
     },
     { name: "Settings", url: NAV.settings.href, icon: NAV.settings.icon },
-    { name: "Assistant", url: NAV.chat.href, icon: NAV.chat.icon },
-    { name: "Slack agent", url: NAV.agents.href, icon: NAV.agents.icon },
   ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const overview = [
+    ...data.overview.slice(0, 3),
+    {
+      name: NAV.incidents.label,
+      url: NAV.incidents.href,
+      icon: NAV.incidents.icon,
+      badge: "New",
+    },
+    ...data.overview.slice(3),
+  ];
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="flex h-14 justify-center gap-0 border-b p-0">
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavOverview items={data.overview} />
+        <NavOverview items={overview} />
         <NavStatusPages />
         <NavMonitors />
         <div className="mt-auto px-2">

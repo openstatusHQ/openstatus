@@ -1,13 +1,13 @@
 import type { Page } from "@openstatus/db/src/schema";
+import {
+  evaluateMarkdownGate,
+  type MarkdownGateResult,
+} from "@openstatus/services/page-access";
 
 import { auth } from "../auth";
 import { createProtectedCookieKey } from "../protected";
 import type { getQueryClient } from "../trpc/server";
 import { trpc } from "../trpc/server";
-import {
-  evaluateMarkdownGate,
-  type MarkdownGateResult,
-} from "./evaluate-markdown-gate";
 
 export type GatePage = {
   accessType: Page["accessType"];

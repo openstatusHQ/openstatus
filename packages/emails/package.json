@@ -20,6 +20,7 @@
     "@openstatus/utils": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "effect": "catalog:",
+    "marked": "catalog:",
     "react": "catalog:",
     "react-email": "catalog:",
     "resend": "catalog:",

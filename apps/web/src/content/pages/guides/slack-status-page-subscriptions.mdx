@@ -101,7 +101,7 @@ Slack Connect subscriptions are a good fit when:
 - **You already share a Slack Connect channel with the customer.** Adding status updates to a channel that already exists is almost always easier than spinning up a new notification surface.
 - **You run a multi-tenant platform.** Per-customer routing, scoped to the components each customer depends on, avoids the noisy-neighbor problem where every customer sees every alert.
 
-For audiences that prefer other channels, openstatus also supports email and webhook subscriptions. Slack Connect is the right choice when the customer already operates in Slack and wants updates delivered where their team is.
+For audiences that prefer other channels, openstatus also supports email, webhook and feed subscriptions, and any Slack channel can follow a page on its own with `/openstatus subscribe <status-page-url>`. That self-serve path delivers the whole page with no component scoping, so it suits internal channels rather than customer ones. All methods are compared in the [subscriber reference](/docs/reference/subscriber). Slack Connect is the right choice when the customer already operates in Slack and wants updates delivered where their team is.
 
 ## Managing Subscriptions Over Time
 

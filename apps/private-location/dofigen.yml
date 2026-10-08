@@ -1,31 +1,27 @@
 builders:
   # Stage 1: Build Go binary
   builder:
-    fromImage: golang:1.26-alpine
-    platform: $BUILDPLATFORM
+    # go-libsql links a prebuilt glibc static library through cgo, so build
+    # natively on Debian for each target platform (no cross-compilation).
+    fromImage: golang:1.26-bookworm
     label:
       org.opencontainers.image.stage: builder
     workdir: /go/src/app
-    # Build-time arguments (overwritten by .env.docker at runtime)
-    args:
-      TARGETOS: ""
-      TARGETARCH: ""
     env:
       TZ: UTC
-      CGO_ENABLED: "0"
+      CGO_ENABLED: "1"
     copy:
       # Copy source code
       - . .
     run:
-      - apk add --no-cache tzdata
       - go mod download
       # Build optimized binary
       # -trimpath: Remove file system paths from binary
       # -ldflags "-s -w": Strip debug info and symbol table
-      - GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
+      - go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
 
-# Runtime stage
-fromImage: alpine:3.21
+# Runtime stage (glibc, required by go-libsql)
+fromImage: debian:bookworm-slim
 
 # Metadata labels
 label:
@@ -48,6 +44,13 @@ copy:
     source: /go/src/app/private-location
     target: /opt/bin/private-location
 
+# wget is used by the healthcheck
+root:
+  run:
+    - apt-get update
+    - apt-get install -y --no-install-recommends wget
+    - rm -rf /var/lib/apt/lists/*
+
 env:
   TZ: UTC
   USER: "1000"
@@ -65,7 +68,7 @@ healthcheck:
   timeout: 10s
   start: 30s
   retries: 3
-  cmd: wget --spider -q http://localhost:8080/health || exit 1
+  cmd: wget -q -O /dev/null http://localhost:8080/health || exit 1
 
 # Start application
 cmd:

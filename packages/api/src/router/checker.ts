@@ -16,6 +16,7 @@ import {
   type grpcPayloadSchema,
   type icmpPayloadSchema,
   GRPC_TLS_MODES,
+  headerPairSchema,
   safeUrlSchema,
   type tpcPayloadSchema,
   transformHeaders,
@@ -27,6 +28,9 @@ import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 const ABORT_TIMEOUT = 10000;
+const CHECKER_BASE_URL = (
+  env.CHECKER_URL || "https://openstatus-checker.fly.dev"
+).replace(/\/+$/, "");
 
 // PingICMP treats its timeout as the deadline for the whole check, so omitting
 // it means a deadline of "now": the send loop breaks before the first packet
@@ -81,9 +85,9 @@ const httpTestInput = z.object({
       "TRACE",
     ])
     .prefault("GET"),
-  headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
+  headers: z.array(headerPairSchema).optional(),
   body: z.string().optional(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  region: monitorRegionSchema.prefault("ams"),
   assertions: z
     .array(
       z.discriminatedUnion("type", [
@@ -99,12 +103,12 @@ const httpTestInput = z.object({
 
 const tcpTestInput = z.object({
   url: z.string(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  region: monitorRegionSchema.prefault("ams"),
 });
 
 const dnsTestInput = z.object({
   url: z.string(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  region: monitorRegionSchema.prefault("ams"),
   assertions: z
     .array(
       z.discriminatedUnion("type", [
@@ -120,15 +124,15 @@ const dnsTestInput = z.object({
 
 const icmpTestInput = z.object({
   url: z.string(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  region: monitorRegionSchema.prefault("ams"),
 });
 
 const grpcTestInput = z.object({
   url: z.string(),
   service: z.string().optional(),
-  tls: z.enum(GRPC_TLS_MODES).optional().prefault("tls"),
-  headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  tls: z.enum(GRPC_TLS_MODES).prefault("tls"),
+  headers: z.array(headerPairSchema).optional(),
+  region: monitorRegionSchema.prefault("ams"),
 });
 
 export const grpcOutput = z
@@ -282,30 +286,27 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
   }
 
   try {
-    const res = await fetch(
-      `https://openstatus-checker.fly.dev/ping/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({
-          url: input.url,
-          method: input.method,
-          headers: input.headers?.reduce(
-            (acc, { key, value }) => {
-              if (!key) return acc;
-              return { ...acc, [key]: value };
-            },
-            {} as Record<string, string>,
-          ),
-          body: input.body,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/ping/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({
+        url: input.url,
+        method: input.method,
+        headers: input.headers?.reduce(
+          (acc, { key, value }) => {
+            if (!key) return acc;
+            return { ...acc, [key]: value };
+          },
+          {} as Record<string, string>,
+        ),
+        body: input.body,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = httpOutput.safeParse(json);
@@ -370,19 +371,16 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
 
 export async function testTcp(input: z.infer<typeof tcpTestInput>) {
   try {
-    const res = await fetch(
-      `https://openstatus-checker.fly.dev/tcp/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({ uri: input.url }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/tcp/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({ uri: input.url }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = tcpOutput.safeParse(json);
@@ -413,21 +411,18 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
 
 export async function testDns(input: z.infer<typeof dnsTestInput>) {
   try {
-    const res = await fetch(
-      `https://openstatus-checker.fly.dev/dns/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({
-          uri: input.url,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/dns/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({
+        uri: input.url,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = dnsOutput.safeParse(json);
@@ -475,22 +470,19 @@ export async function testDns(input: z.infer<typeof dnsTestInput>) {
 
 export async function testIcmp(input: z.infer<typeof icmpTestInput>) {
   try {
-    const res = await fetch(
-      `https://openstatus-checker.fly.dev/icmp/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({
-          uri: input.url,
-          timeout: ICMP_TEST_TIMEOUT,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/icmp/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({
+        uri: input.url,
+        timeout: ICMP_TEST_TIMEOUT,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = icmpOutput.safeParse(json);
@@ -521,25 +513,22 @@ export async function testIcmp(input: z.infer<typeof icmpTestInput>) {
 
 export async function testGrpc(input: z.infer<typeof grpcTestInput>) {
   try {
-    const res = await fetch(
-      `https://openstatus-checker.fly.dev/grpc/${input.region}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": input.region,
-        },
-        body: JSON.stringify({
-          uri: input.url,
-          service: input.service,
-          tls: input.tls,
-          headers: transformHeaders(input.headers ?? []),
-          timeout: GRPC_TEST_TIMEOUT,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(`${CHECKER_BASE_URL}/grpc/${input.region}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": input.region,
       },
-    );
+      body: JSON.stringify({
+        uri: input.url,
+        service: input.service,
+        tls: input.tls,
+        headers: transformHeaders(input.headers ?? []),
+        timeout: GRPC_TEST_TIMEOUT,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = grpcOutput.safeParse(json);
@@ -731,15 +720,15 @@ export async function triggerChecker(
 function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
   switch (row.jobType) {
     case "http":
-      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}`;
+      return `${CHECKER_BASE_URL}/checker/http?monitor_id=${row.id}`;
     case "tcp":
-      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}`;
+      return `${CHECKER_BASE_URL}/checker/tcp?monitor_id=${row.id}`;
     case "dns":
-      return `https://openstatus-checker.fly.dev/checker/dns?monitor_id=${row.id}`;
+      return `${CHECKER_BASE_URL}/checker/dns?monitor_id=${row.id}`;
     case "icmp":
-      return `https://openstatus-checker.fly.dev/checker/icmp?monitor_id=${row.id}`;
+      return `${CHECKER_BASE_URL}/checker/icmp?monitor_id=${row.id}`;
     case "grpc":
-      return `https://openstatus-checker.fly.dev/checker/grpc?monitor_id=${row.id}`;
+      return `${CHECKER_BASE_URL}/checker/grpc?monitor_id=${row.id}`;
     default:
       throw new Error("Invalid jobType");
   }

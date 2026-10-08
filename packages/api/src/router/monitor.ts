@@ -31,6 +31,7 @@ import {
   updateMonitorSchedulingRegions,
   updateMonitorTags,
 } from "@openstatus/services/monitor";
+import { headerPairSchema } from "@openstatus/utils";
 import { z } from "zod";
 
 import { env } from "../env";
@@ -44,7 +45,7 @@ const isSelfHost = env.SELF_HOST;
 
 // tRPC-side input schemas. These preserve the existing wire contract exactly.
 
-const headerPair = z.object({ key: z.string(), value: z.string() });
+const headerPair = headerPairSchema;
 const assertionUnion = z.discriminatedUnion("type", [
   statusAssertion,
   headerAssertion,

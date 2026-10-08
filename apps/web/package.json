@@ -44,7 +44,6 @@
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@sentry/nextjs": "catalog:",
-    "@stripe/stripe-js": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@tailwindcss/container-queries": "catalog:",
     "@tailwindcss/typography": "catalog:",

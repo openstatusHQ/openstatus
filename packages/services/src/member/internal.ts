@@ -4,6 +4,9 @@ import { z } from "zod";
 
 import { emitAudit } from "../audit";
 import { type DB, type ServiceContext } from "../context";
+import { clearIncidentCommander } from "../incident/members";
+import { revokeGrantsForUser } from "../oauth/revoke";
+import { deleteSlackUserMappings } from "../slack-user/internal";
 
 // Composite-PK rows: drizzle's createSelectSchema would flatten the join,
 // but the membership row has no auto-generated columns we'd want to drop
@@ -52,4 +55,14 @@ export async function removeMemberInWorkspace(args: {
     entityId: userId,
     before: memberRowSnapshot.parse(removed),
   });
+
+  await revokeGrantsForUser({
+    tx,
+    ctx,
+    userId,
+    workspaceId: ctx.workspace.id,
+    reason: "member_removed",
+  });
+  await clearIncidentCommander({ tx, ctx, userId });
+  await deleteSlackUserMappings({ tx, ctx, where: { userId } });
 }

@@ -48,6 +48,12 @@ The interval at which the ICMP monitor pings the target host. Supported frequenc
 - `30 minutes`
 - `1 hour`
 
+<Aside>
+Which frequencies you can select depends on your plan: **Hobby** offers `10m`, `30m` and `1h`;
+**Starter** adds `1m` and `5m`; `30s` is **Pro** and **Scale** only. See
+[pricing](https://www.openstatus.dev/pricing) for the full breakdown.
+</Aside>
+
 ### Response time thresholds
 
 #### Timeout
@@ -55,7 +61,7 @@ The interval at which the ICMP monitor pings the target host. Supported frequenc
 **Type:** Duration (optional)
 **Default:** `45 seconds`
 
-The total budget for the whole check (all three echo requests). Each packet waits at most the remaining budget for a reply.
+The total budget for the whole check (all three echo requests). The remaining budget is divided evenly across the packets still to send, so each packet gets roughly a third of the timeout — and the check stops early if the budget runs out.
 
 #### Degraded
 

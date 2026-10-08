@@ -68,6 +68,7 @@ const INCIDENT_UPDATE_STATUS_MAP: Record<string, StatusReportStatus> = {
   identified: "identified",
   monitoring: "monitoring",
   resolved: "resolved",
+  postmortem: "resolved",
   scheduled: "investigating",
   in_progress: "investigating",
   verifying: "monitoring",
@@ -105,7 +106,13 @@ export function mapIncidentToStatusReport(
     ),
   }));
 
-  if (incident.postmortem_body && mappedUpdates.length > 0) {
+  // A `postmortem` update already carries the postmortem as its body.
+  const hasPostmortemUpdate = updates.some((u) => u.status === "postmortem");
+  if (
+    incident.postmortem_body &&
+    !hasPostmortemUpdate &&
+    mappedUpdates.length > 0
+  ) {
     const last = mappedUpdates[mappedUpdates.length - 1];
     last.message = `${last.message}\n\n---\n\n**Postmortem**\n\n${incident.postmortem_body}`;
   }

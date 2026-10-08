@@ -2,6 +2,8 @@ import { getLogger } from "@logtape/logtape";
 import * as Sentry from "@sentry/deno";
 import { Effect, Fiber, Schedule } from "effect";
 
+import { runIncidentRemindersTick } from "./incident-reminders";
+import { runOAuthPruneTick } from "./oauth-prune";
 import { handleOutboxDrainCron, handleOutboxRetentionCron } from "./outbox";
 import { handleStatusDriftCron } from "./status-drift";
 
@@ -17,7 +19,8 @@ type ScheduledTask = {
  * Internal maintenance only, so it runs in-process rather than needing a
  * schedule added outside this repo. Every task is safe to run on both machines
  * at once: the outbox claim is atomic, drift repair is guarded by the same
- * compare-and-swap as a live check, and retention deletes are idempotent.
+ * compare-and-swap as a live check, retention deletes are idempotent, and each
+ * incident reminder window is claimed in Redis before it is sent.
  */
 export const SCHEDULED_TASKS: ScheduledTask[] = [
   {
@@ -34,6 +37,16 @@ export const SCHEDULED_TASKS: ScheduledTask[] = [
     name: "outbox-retention",
     expression: "17 3 * * *",
     run: handleOutboxRetentionCron,
+  },
+  {
+    name: "oauth-prune",
+    expression: "41 3 * * *",
+    run: runOAuthPruneTick,
+  },
+  {
+    name: "incident-reminders",
+    expression: "*/10 * * * *",
+    run: runIncidentRemindersTick,
   },
 ];
 

@@ -3,3 +3,4 @@ app
 src/_serve.bundle.mjs
 .deno_compile_bundle_*.mjs
 app.tmp-*
+slack-manifest.dev.json

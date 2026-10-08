@@ -1,7 +1,7 @@
 import { and, eq } from "@openstatus/db";
 import { privateLocation } from "@openstatus/db/src/schema";
 
-import { type ServiceContext, getReadDb } from "../context";
+import { getReadDb, type ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
 import { GetPrivateLocationInput } from "./schemas";
 
@@ -36,6 +36,8 @@ export async function getPrivateLocation(args: {
     ...row,
     monitors: row.privateLocationToMonitors
       .map((link) => link.monitor)
-      .filter((m) => m !== null),
+      .filter(
+        (m): m is NonNullable<typeof m> => m !== null && m.deletedAt === null,
+      ),
   };
 }

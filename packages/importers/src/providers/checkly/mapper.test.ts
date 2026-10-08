@@ -1,3 +1,4 @@
+import { regionDict } from "@openstatus/regions";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 
@@ -18,6 +19,7 @@ import {
   mapPage,
   mapRegions,
   mapService,
+  REGION_MAP,
 } from "./mapper";
 
 describe("mapCheckType", () => {
@@ -57,6 +59,23 @@ describe("mapRegions", () => {
     expect(mapRegions(["us-east-1", "eu-west-1"])).toBe("iad,lhr");
   });
 
+  test("only targets regions that are still available", () => {
+    for (const [location, region] of Object.entries(REGION_MAP)) {
+      const info = regionDict[region as keyof typeof regionDict];
+      expect({ location, region, deprecated: info?.deprecated }).toEqual({
+        location,
+        region,
+        deprecated: false,
+      });
+    }
+  });
+
+  test("maps deprecated targets to their replacements", () => {
+    expect(mapRegions(["ap-south-1", "us-west-2", "ca-central-1"])).toBe(
+      "sin,sjc,yyz",
+    );
+  });
+
   test("dedupes collapsed regions", () => {
     expect(mapRegions(["us-east-1", "us-east-2"])).toBe("iad");
   });
@@ -94,6 +113,11 @@ describe("mapCheck", () => {
     const m = mapCheck(MOCK_CHECKS[3], 1);
     expect(m.active).toBe(false);
     expect(m.method).toBe("POST");
+  });
+
+  test("carries over the check's followRedirects setting", () => {
+    expect(mapCheck(MOCK_CHECKS[0], 1).followRedirects).toBe(true);
+    expect(mapCheck(MOCK_CHECKS[3], 1).followRedirects).toBe(false);
   });
 });
 

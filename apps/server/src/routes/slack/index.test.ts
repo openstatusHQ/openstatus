@@ -19,7 +19,7 @@ function signRequest(body: string, timestamp: number): string {
 }
 
 function makeInstallToken(workspaceId: number): string {
-  const payload = JSON.stringify({ workspaceId, ts: Date.now() });
+  const payload = JSON.stringify({ workspaceId, userId: 1, ts: Date.now() });
   const sig = crypto
     .createHmac("sha256", SIGNING_SECRET)
     .update(payload)

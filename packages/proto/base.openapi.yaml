@@ -3,6 +3,8 @@ info:
   description: OpenStatus is a open-source status page platform with global uptime monitoring.
     The OpenStatus API allows you to interact with the OpenStatus platform programmatically.
     To get started you need to create an account on https://www.openstatus.dev/ and create an api token in your settings.
+    Requests are rate limited per API key or token (600 per minute, 100 per 10 seconds); exceeding a limit returns HTTP 429 with a Retry-After header.
+    See https://www.openstatus.dev/docs/reference/api-rate-limits.
   title: OpenStatus API
   version: v2.0.0
   contact:

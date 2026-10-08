@@ -16,6 +16,7 @@ import {
   StepPaused,
   workflowStepSchema,
 } from "./monitor";
+import { handleOAuthPruneCron } from "./oauth-prune";
 import {
   handleOutboxDrainCron,
   handleOutboxRetentionCron,
@@ -99,6 +100,10 @@ app.get("/external-status", async (c) => {
 
 app.get("/external-incidents-prune", async (c) => {
   return handleExternalIncidentsPruneCron(c);
+});
+
+app.get("/oauth-prune", async (c) => {
+  return handleOAuthPruneCron(c);
 });
 
 app.get("/uptime-freeze", async (c) => {

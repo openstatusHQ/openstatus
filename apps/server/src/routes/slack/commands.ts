@@ -1,3 +1,4 @@
+import { getLogger } from "@logtape/logtape";
 import { ForbiddenError } from "@openstatus/services";
 import {
   createSlackSubscriber,
@@ -8,25 +9,48 @@ import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
 
+import { runInBackground } from "./background";
+import { buildLinkAccountBlocks, LINK_ACCOUNT_TEXT } from "./blocks";
+import type { SlackConfig, SlackEnv } from "./config";
+import { runIncidentCommand } from "./incident-commands";
+import { NOT_CONNECTED, openDeclareIncidentModal } from "./incident-modal";
+import {
+  linkAccountUrl,
+  planRequiredMessage,
+  requireSlackMember,
+  slackAgentAllowed,
+} from "./require-slack-member";
 import { resolvePageFromUrl } from "./resolve-page";
+import { type EphemeralReply, respondLater } from "./response-url";
 import { resolveWorkspace } from "./workspace-resolver";
+
+const logger = getLogger("api-server");
 
 const slashCommandSchema = z.object({
   text: z.string().optional().default(""),
   team_id: z.string(),
+  user_id: z.string(),
   channel_id: z.string(),
   channel_name: z.string().optional(),
+  response_url: z.string().optional(),
+  trigger_id: z.string().optional(),
 });
+
+type SlashCommand = z.infer<typeof slashCommandSchema>;
 
 const HELP = [
   "*openstatus*",
+  "• `/openstatus incident declare` — declare an incident (opens a form)",
+  "• `/openstatus incident help` — run incidents: notes, status, postmortem",
   "• `/openstatus subscribe <status-page-url>` — subscribe this channel to a status page",
   "• `/openstatus unsubscribe <status-page-url>` — unsubscribe",
   "• `/openstatus subscriptions` — show this channel's subscriptions",
 ].join("\n");
 
-function ephemeral(c: Context, text: string) {
-  return c.json({ response_type: "ephemeral", text });
+type CommandReply = EphemeralReply;
+
+function ephemeral(c: Context, reply: CommandReply) {
+  return c.json({ response_type: "ephemeral", ...reply });
 }
 
 async function joinChannel(teamId: string, channelId: string): Promise<void> {
@@ -37,117 +61,242 @@ async function joinChannel(teamId: string, channelId: string): Promise<void> {
     await client.conversations.join({ channel: channelId });
   } catch (error) {
     // Private channels can't be self-joined — the bot must be /invited.
-    if (error instanceof Error) {
-      console.error(
-        `slack: conversations.join failed for ${channelId}: ${error.message}`,
-      );
-    }
+    logger.warn("slack conversations.join failed", { error, channelId });
   }
 }
 
-export async function handleSlackCommand(c: Context) {
+export function handleSlackCommand(c: Context<SlackEnv>) {
+  const config = c.get("slackConfig");
   const parsed = slashCommandSchema.safeParse(c.get("slackBody"));
   if (!parsed.success) {
-    return ephemeral(c, "Could not read the command.");
+    return ephemeral(c, { text: "Could not read the command." });
   }
-  const { text, team_id, channel_id, channel_name } = parsed.data;
+  const command = parsed.data;
+  const sub = subcommand(command);
 
-  const tokens = text.trim().split(/\s+/).filter(Boolean);
-  const sub = (tokens[0] ?? "help").toLowerCase();
-  const arg = tokens[1];
+  const triggerId = command.trigger_id;
+  if (triggerId && opensDeclareModal(command)) {
+    // `trigger_id` stays valid for 3s after the user's action whether or not
+    // we have acked, so ack now and open the form in the background.
+    const open = () =>
+      openDeclareIncidentModal({
+        teamId: command.team_id,
+        slackUserId: command.user_id,
+        triggerId,
+        channelId: command.channel_id,
+        config,
+      }).then(
+        (notice): CommandReply | undefined =>
+          notice ? { text: notice } : undefined,
+        (error) => {
+          logger.error("slack declare modal open failed", { error });
+          return { text: ":x: Could not open the form. Please try again." };
+        },
+      );
+    const responseUrl = command.response_url;
+    if (!responseUrl) {
+      return open().then((reply) =>
+        reply ? ephemeral(c, reply) : c.body(null, 200),
+      );
+    }
+    runInBackground(
+      "command declare modal",
+      async () => {
+        const reply = await open();
+        if (reply) await respondLater(responseUrl, reply);
+      },
+      { teamId: command.team_id, channelId: command.channel_id },
+    );
+    return c.body(null, 200);
+  }
+
+  // `help` — and anything unrecognised, which falls through to it — needs no
+  // I/O, so it is answered in the ack itself.
+  if (
+    sub !== "subscribe" &&
+    sub !== "unsubscribe" &&
+    sub !== "subscriptions" &&
+    sub !== "incident"
+  ) {
+    return ephemeral(c, { text: HELP });
+  }
+
+  // The rest resolve a page, write to the DB and call the Slack API, which can
+  // outrun the 3s a slash command has to be acknowledged in. Ack now and
+  // deliver the reply to `response_url` (valid for 30 minutes).
+  const responseUrl = command.response_url;
+  if (!responseUrl) {
+    // Slack always sends one; without it there is nowhere to deliver a late
+    // reply, so fall back to answering inline.
+    return runMemberCommand(command, config).then((reply) =>
+      ephemeral(c, reply),
+    );
+  }
+
+  runInBackground(
+    `command ${sub}`,
+    async () => {
+      // The 200 above is the only other thing the user gets: without this the
+      // command fails silently on their side.
+      const reply = await runMemberCommand(command, config).catch((error) => {
+        logger.error("slack command failed", {
+          error,
+          teamId: command.team_id,
+          channelId: command.channel_id,
+        });
+        return { text: ":x: Something went wrong. Please try again." };
+      });
+      await respondLater(responseUrl, reply);
+    },
+    { teamId: command.team_id, channelId: command.channel_id },
+  );
+
+  return c.body(null, 200);
+}
+
+function subcommand(command: SlashCommand): string {
+  const tokens = command.text.trim().split(/\s+/).filter(Boolean);
+  return (tokens[0] ?? "help").toLowerCase();
+}
+
+/** `/openstatus incident declare` with no title opens the form instead. */
+function opensDeclareModal(command: SlashCommand): boolean {
+  const words = command.text.trim().split(/\s+/).filter(Boolean);
+  return (
+    words.length === 2 &&
+    words[0].toLowerCase() === "incident" &&
+    words[1].toLowerCase() === "declare"
+  );
+}
+
+function argument(command: SlashCommand): string | undefined {
+  return command.text.trim().split(/\s+/).filter(Boolean)[1];
+}
+
+/** Only linked members of the connected workspace may run commands. */
+async function runMemberCommand(
+  command: SlashCommand,
+  config: SlackConfig,
+): Promise<CommandReply> {
+  const resolved = await resolveWorkspace(command.team_id);
+  if (!resolved) {
+    return {
+      text: NOT_CONNECTED,
+    };
+  }
+  if (!slackAgentAllowed(resolved.workspace)) {
+    return planRequiredMessage(config);
+  }
+  const actor = await requireSlackMember({
+    workspace: resolved.workspace,
+    teamId: command.team_id,
+    slackUserId: command.user_id,
+    slack: new WebClient(resolved.botToken),
+  });
+  if (!actor) {
+    const url = await linkAccountUrl(config, {
+      workspaceId: resolved.workspace.id,
+      teamId: command.team_id,
+      slackUserId: command.user_id,
+    });
+    return { text: LINK_ACCOUNT_TEXT, blocks: buildLinkAccountBlocks(url) };
+  }
+  if (subcommand(command) === "incident") {
+    const words = command.text.trim().split(/\s+/).filter(Boolean).slice(1);
+    return {
+      text: await runIncidentCommand({
+        words,
+        teamId: command.team_id,
+        channelId: command.channel_id,
+        resolved,
+        actor,
+        config,
+      }),
+    };
+  }
+  return { text: await runCommand(command) };
+}
+
+/** Runs the subcommand and returns the message to show the user. */
+async function runCommand(command: SlashCommand): Promise<string> {
+  const {
+    team_id: teamId,
+    channel_id: channelId,
+    channel_name: channelName,
+  } = command;
+  const sub = subcommand(command);
+  const arg = argument(command);
 
   if (sub === "subscribe") {
     if (!arg) {
-      return ephemeral(c, "Usage: `/openstatus subscribe <status-page-url>`");
+      return "Usage: `/openstatus subscribe <status-page-url>`";
     }
     const page = await resolvePageFromUrl(arg);
     if (!page) {
-      return ephemeral(c, `Couldn't find a status page at \`${arg}\`.`);
+      return `Couldn't find a status page at \`${arg}\`.`;
     }
     try {
       const result = await createSlackSubscriber({
         input: {
           pageId: page.id,
-          teamId: team_id,
-          channelId: channel_id,
-          channelName: channel_name,
+          teamId,
+          channelId,
+          channelName,
         },
       });
-      await joinChannel(team_id, channel_id);
+      await joinChannel(teamId, channelId);
       if (result.alreadySubscribed) {
-        return ephemeral(
-          c,
-          `This channel is already subscribed to *${page.title}*.`,
-        );
+        return `This channel is already subscribed to *${page.title}*.`;
       }
-      return ephemeral(
-        c,
-        `📡 This channel is now subscribed to *${page.title}*. Incident updates will appear here.`,
-      );
+      return `📡 This channel is now subscribed to *${page.title}*. Incident updates will appear here.`;
     } catch (error) {
       if (error instanceof ForbiddenError) {
-        return ephemeral(
-          c,
-          `*${page.title}* isn't on a plan that supports subscribers.`,
-        );
+        return `*${page.title}* isn't on a plan that supports subscribers.`;
       }
-      console.error("slack /openstatus subscribe failed:", error);
-      return ephemeral(c, "Something went wrong subscribing this channel.");
+      logger.error("slack /openstatus subscribe failed", {
+        error,
+        teamId,
+        channelId,
+      });
+      return "Something went wrong subscribing this channel.";
     }
   }
 
   if (sub === "unsubscribe") {
     if (!arg) {
       const subs = await listSlackSubscribersForChannel({
-        input: { teamId: team_id, channelId: channel_id },
+        input: { teamId, channelId },
       });
       if (subs.length === 0) {
-        return ephemeral(
-          c,
-          "This channel isn't subscribed to any status page.",
-        );
+        return "This channel isn't subscribed to any status page.";
       }
       if (subs.length === 1) {
         await removeSlackSubscriber({
-          input: {
-            pageId: subs[0].pageId,
-            teamId: team_id,
-            channelId: channel_id,
-          },
+          input: { pageId: subs[0].pageId, teamId, channelId },
         });
-        return ephemeral(c, `Unsubscribed from *${subs[0].pageName}*.`);
+        return `Unsubscribed from *${subs[0].pageName}*.`;
       }
       const list = subs.map((s) => `• ${s.pageName}`).join("\n");
-      return ephemeral(
-        c,
-        `This channel is subscribed to several pages — specify which:\n${list}\n\nUsage: \`/openstatus unsubscribe <status-page-url>\``,
-      );
+      return `This channel is subscribed to several pages — specify which:\n${list}\n\nUsage: \`/openstatus unsubscribe <status-page-url>\``;
     }
     const page = await resolvePageFromUrl(arg);
     if (!page) {
-      return ephemeral(c, `Couldn't find a status page at \`${arg}\`.`);
+      return `Couldn't find a status page at \`${arg}\`.`;
     }
     const { removed } = await removeSlackSubscriber({
-      input: { pageId: page.id, teamId: team_id, channelId: channel_id },
+      input: { pageId: page.id, teamId, channelId },
     });
-    return ephemeral(
-      c,
-      removed
-        ? `Unsubscribed from *${page.title}*.`
-        : `This channel wasn't subscribed to *${page.title}*.`,
-    );
+    return removed
+      ? `Unsubscribed from *${page.title}*.`
+      : `This channel wasn't subscribed to *${page.title}*.`;
   }
 
-  if (sub === "subscriptions") {
-    const subs = await listSlackSubscribersForChannel({
-      input: { teamId: team_id, channelId: channel_id },
-    });
-    if (subs.length === 0) {
-      return ephemeral(c, "This channel isn't subscribed to any status page.");
-    }
-    const list = subs.map((s) => `• *${s.pageName}*`).join("\n");
-    return ephemeral(c, `This channel is subscribed to:\n${list}`);
+  const subs = await listSlackSubscribersForChannel({
+    input: { teamId, channelId },
+  });
+  if (subs.length === 0) {
+    return "This channel isn't subscribed to any status page.";
   }
-
-  return ephemeral(c, HELP);
+  const list = subs.map((s) => `• *${s.pageName}*`).join("\n");
+  return `This channel is subscribed to:\n${list}`;
 }

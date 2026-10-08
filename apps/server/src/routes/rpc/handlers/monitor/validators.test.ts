@@ -151,13 +151,24 @@ describe("validateCommonMonitorFields", () => {
     ).not.toThrow();
   });
 
+  test("rejects deprecated regions", () => {
+    expect(() =>
+      validateCommonMonitorFields({ regions: [Region.FLY_BOM] }),
+    ).toThrow(/Deprecated regions: bom/);
+    expect(() =>
+      validateCommonMonitorFields({
+        regions: [Region.FLY_AMS, Region.FLY_BOM],
+      }),
+    ).toThrow(/Deprecated regions: bom/);
+  });
+
   test("drops an unspecified region instead of rejecting it", () => {
     // Documents current behaviour, which is weaker than it looks:
     // `regionsToStrings` filters unmapped enum values to "", so the
-    // "Invalid regions" error below can never fire on the RPC path —
-    // every proto Region that maps to a non-empty string is in
-    // AVAILABLE_REGIONS. An unknown region is silently dropped and the
-    // monitor is created with fewer regions than the caller asked for.
+    // "Invalid regions" error can never fire on the RPC path — every proto
+    // Region maps either to AVAILABLE_REGIONS or to a deprecated region,
+    // which the deprecation check rejects first. An unknown region is
+    // silently dropped and the monitor is created with fewer regions.
     expect(() =>
       validateCommonMonitorFields({ regions: [Region.UNSPECIFIED] }),
     ).not.toThrow();

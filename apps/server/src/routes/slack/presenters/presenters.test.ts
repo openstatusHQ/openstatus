@@ -219,6 +219,68 @@ describe("renderToolResult (per-tool override)", () => {
     expect(text).toContain("https://example.openstatus.dev");
   });
 
+  test("declare_incident links to the incident in the dashboard", async () => {
+    const text = await renderToolResult({
+      tool: agentTools.declare_incident,
+      ctx: fakeCtx,
+      input: { title: "Checkout down", severity: "critical" },
+      output: {
+        id: 5,
+        title: "Checkout down",
+        severity: "critical",
+        status: "open",
+      },
+      notify: false,
+    });
+    expect(text).toContain("Incident *Checkout down* declared (critical)");
+    expect(text).toContain("https://app.openstatus.dev/incidents/5");
+  });
+
+  test("update_incident uses the persisted title", async () => {
+    const text = await renderToolResult({
+      tool: agentTools.update_incident,
+      ctx: fakeCtx,
+      input: { id: 5, severity: "major" },
+      output: {
+        id: 5,
+        title: "Checkout down",
+        severity: "major",
+        status: "open",
+      },
+      notify: false,
+    });
+    expect(text).toContain("Incident *Checkout down* updated");
+    expect(text).toContain("https://app.openstatus.dev/incidents/5");
+  });
+
+  test("resolve_incident quotes the note only when present", async () => {
+    const output = {
+      id: 5,
+      title: "Checkout down",
+      severity: "critical" as const,
+      status: "resolved" as const,
+    };
+    const withNote = await renderToolResult({
+      tool: agentTools.resolve_incident,
+      ctx: fakeCtx,
+      input: { id: 5, note: "Rolled back the deploy" },
+      output,
+      notify: false,
+    });
+    expect(withNote).toContain("Incident *Checkout down* resolved");
+    expect(withNote).toContain("> Rolled back the deploy");
+    expect(withNote).toContain("https://app.openstatus.dev/incidents/5");
+
+    const withoutNote = await renderToolResult({
+      tool: agentTools.resolve_incident,
+      ctx: fakeCtx,
+      input: { id: 5 },
+      output,
+      notify: false,
+    });
+    expect(withoutNote).not.toContain("\n> ");
+  });
+
   test("update_status_report uses input.title when provided, else output.title", async () => {
     const tool = agentTools.update_status_report;
     const withInputTitle = await renderToolResult({

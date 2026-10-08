@@ -23,7 +23,7 @@ The word "incident" is overloaded. Colloquially it means the whole event — the
 
 ## Incidents: detection
 
-An incident is created **automatically** when enough of a monitor's recent checks fail — a threshold mechanism that filters out one-off network blips. You never create an incident by hand.
+An incident is created **automatically** when at least half of a monitor's configured regions report an `error` — requiring agreement across regions is what filters out a single flaky probe. You never create this kind of incident by hand.
 
 An incident is scoped to a single **monitor** and is primarily an internal object:
 
@@ -37,7 +37,7 @@ Think of an incident as the smoke detector going off. It tells *you* something i
 
 A status report is what your users actually read. It is created **manually** (dashboard, CLI, or API), belongs to a single **status page**, and is attached to one or more of that page's [components](/docs/reference/page-components) — the services your users recognize, not your internal monitors.
 
-Crucially, a status report is **not linked to an incident** in the data model. They are independent:
+Crucially, a status report is **not linked to a monitor's incident** in the data model. They are independent:
 
 - A monitor can fail (incident) without you publishing anything — say, a flapping internal service.
 - You can publish a report with no incident behind it — a third-party provider is down, or you spot a problem your monitors can't see.
@@ -60,9 +60,15 @@ Each update can declare a per-component impact — `degraded_performance`, `part
 
 - A component's current impact is whatever the **latest update naming it** said. Components you omit from an update keep their previous impact — you only declare what changed.
 - Resolving the report sets every still-affected component back to `operational`, so the page clears deterministically.
-- On status pages using [manual uptime calculation](/docs/concept/uptime-calculation-and-values#manual-type), impacts also weight the uptime percentage: a major outage counts fully against uptime, a partial outage counts half, and degraded performance not at all.
+- On status pages using the [Reports only status source](/docs/concept/uptime-calculation-and-values#reports-only), impacts also weight the uptime percentage: a major outage counts fully against uptime, a partial outage counts half, and degraded performance not at all.
 
 The [Status report reference](/docs/reference/status-report) covers the exact impact semantics and weights.
+
+## Declared incidents: coordination
+
+Detection and communication leave a gap: the team's own record of the event. With incident management, someone **declares** an incident by hand, from the dashboard or Slack. It carries a severity, a commander, an internal timeline and, once resolved, a postmortem.
+
+A declared incident is internal. It can link to a status report, and each keeps its own status: the team can mark the incident `mitigated` while the public report still says `monitoring`. See the [Incident management reference](/docs/reference/incident-management).
 
 ## Maintenance windows: planned disruption
 
@@ -70,7 +76,7 @@ A maintenance window is for disruption you know about **in advance** — a datab
 
 Two properties make it the right tool for planned work:
 
-- **It never counts against uptime.** Uptime is computed from raw check results (or report impacts in manual mode); a maintenance window only changes the displayed status.
+- **It never counts against uptime.** Uptime is computed from raw check results (or report impacts with the Reports only status source); a maintenance window only changes the displayed status.
 - **Subscribers can be notified when it's scheduled**, so the disruption is announced before it happens instead of explained after.
 
 If planned work goes sideways and overruns or breaks something, escalate: publish a status report. An unresolved report (or an active incident) takes display precedence over maintenance.
@@ -83,14 +89,14 @@ If planned work goes sideways and overruns or breaks something, escalate: publis
 | Scoped to | A monitor | A status page + components | A status page + components |
 | Audience | Your team | Your users | Your users |
 | Timing | When detection fires | During/after the event | Announced before the event |
-| Affects uptime | Yes — failed checks count | Only in manual mode, via impacts | Never |
+| Affects uptime | Yes — failed checks count | Only with Reports only status source, via impacts | Never |
 | Resolved by | Acknowledge/resolve, or auto-resolve | A `resolved` update | The window ending |
 
 On the status page itself, when several apply to one component, the worst wins: an active incident (error) outranks an unresolved status report (degraded), which outranks maintenance (info), which outranks operational.
 
 ## A typical event, end to end
 
-1. **14:00** — Your API monitor's checks start failing from multiple regions. An **incident** is created and your on-call gets paged.
+1. **14:00** — Your API monitor's checks start failing from enough regions to cross the threshold. An **incident** is created and your on-call gets paged.
 2. **14:02** — You acknowledge the incident, confirm it's real, and publish a **status report** on your status page: status `investigating`, API component set to `major_outage`.
 3. **14:15** — Root cause found. You post an update: `identified`, API downgraded to `partial_outage` as the rollback lands.
 4. **14:30** — Rollback complete, checks recovering. Update: `monitoring`.
@@ -101,4 +107,4 @@ On the status page itself, when several apply to one component, the worst wins: 
 
 - **[Publish your first status report](/docs/tutorial/your-first-status-report)** — the hands-on version of this page.
 - **[Building trust with status pages](/docs/concept/best-practices-status-page)** — what to write in those updates.
-- **[Incident](/docs/reference/incident)**, **[Status report](/docs/reference/status-report)**, and **[Maintenance](/docs/reference/maintenance)** references — the field-level specifications.
+- **[Incident](/docs/reference/incident)**, **[Incident management](/docs/reference/incident-management)**, **[Status report](/docs/reference/status-report)**, and **[Maintenance](/docs/reference/maintenance)** references — the field-level specifications.

@@ -1,4 +1,4 @@
-import type { Incident, Monitor } from "@openstatus/db/src/schema";
+import type { MonitorIncident, Monitor } from "@openstatus/db/src/schema";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
@@ -96,7 +96,7 @@ describe("Microsoft Teams Notifications", () => {
     }),
   });
 
-  const createMockResolvedIncident = (): Incident => ({
+  const createMockResolvedIncident = (): MonitorIncident => ({
     id: 1,
     title: "",
     summary: "",

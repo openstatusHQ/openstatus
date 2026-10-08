@@ -18,7 +18,7 @@ import {
   ContentBoxTitle,
 } from "../../../content-box";
 import { ExternalServicePill } from "../../external-service-pill";
-import { formatRelative } from "../../utils";
+import { formatRelative, getComponentFullName } from "../../utils";
 import { HistoryBars } from "../history-bars";
 import { ReportIssue } from "../report-issue";
 
@@ -77,18 +77,19 @@ function formatTimestamp(value: string | null | undefined): string | null {
 function jsonLd(args: {
   serviceName: string;
   componentName: string;
+  fullName: string;
   serviceUrl: string;
   componentUrl: string;
   answer: string;
 }) {
   return createJsonLDGraph([
     getJsonLDWebPage({
-      name: `${args.serviceName} ${args.componentName} Status`,
+      name: `${args.fullName} Status`,
       url: args.componentUrl,
     }),
     getJsonLDFAQPage([
       {
-        question: `Is ${args.serviceName} ${args.componentName} down?`,
+        question: `Is ${args.fullName} down?`,
         answer: args.answer,
       },
     ]),
@@ -154,7 +155,7 @@ export function ComponentDetail({
   if (!data.found || !data.service || !data.component) return null;
   const { service, component, history, incidents, overlayIncidents } = data;
 
-  const fullName = `${service.name} ${component.name}`;
+  const fullName = getComponentFullName(service.name, component.name);
   const answer = answerFor({
     fullName,
     indicator: component.indicator,
@@ -167,6 +168,7 @@ export function ComponentDetail({
   const ld = jsonLd({
     serviceName: service.name,
     componentName: component.name,
+    fullName,
     serviceUrl,
     componentUrl,
     answer,
@@ -176,9 +178,7 @@ export function ComponentDetail({
     <section className="prose dark:prose-invert mb-12 max-w-none">
       <JsonLd graph={ld} />
 
-      <h1>
-        Is {service.name} {component.name} down?
-      </h1>
+      <h1>Is {fullName} down?</h1>
       <p>
         {answer} Below you'll find the live {component.name} status, uptime over
         the last {days} days, and recent incidents affecting {component.name}.
@@ -214,7 +214,7 @@ export function ComponentDetail({
       <div className="not-prose mt-6 flex flex-col gap-2">
         <ReportIssue
           slug={service.slug}
-          name={`${service.name} ${component.name}`}
+          name={fullName}
           componentSlug={component.slug}
         />
         {component.reporters > 0 ? (

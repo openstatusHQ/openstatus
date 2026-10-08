@@ -1,10 +1,11 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
-import { Body, Head, Heading, Html, Link, Preview, Text } from "react-email";
 import { z } from "zod";
 
-import { Layout } from "./_components/layout";
-import { styles } from "./_components/styles";
+import { Actions } from "./_components/actions";
+import { Footer } from "./_components/footer";
+import { Heading } from "./_components/heading";
+import { Layout, statusPageBrand } from "./_components/layout";
 
 export const PageSubscriptionSchema = z.object({
   page: z.string(),
@@ -22,37 +23,28 @@ export type PageSubscriptionProps = z.infer<typeof PageSubscriptionSchema>;
 
 const PageSubscriptionEmail = ({ page, link, img }: PageSubscriptionProps) => {
   return (
-    <Html>
-      <Head />
-      <Preview>Confirm your subscription to "{page}" Status Page</Preview>
-      <Body style={styles.main}>
-        <Layout img={img}>
-          <Heading as="h3">
-            Confirm your subscription to "{page}" Status Page
-          </Heading>
-          <Text>
-            You are receiving this email because you subscribed to receive
-            updates from "{page}" Status Page.
-          </Text>
-          <Text>
-            To confirm your subscription, please click the link below. The link
-            is valid for 7 days. If you believe this is a mistake, please ignore
-            this email.
-          </Text>
-          <Text>
-            <Link style={styles.link} href={link}>
-              Confirm subscription
-            </Link>
-          </Text>
-        </Layout>
-      </Body>
-    </Html>
+    <Layout
+      preview="One click to confirm. The link is valid for 7 days."
+      brand={statusPageBrand(page, img?.href ?? link, img?.src)}
+      pill={{ tone: "neutral", label: "Confirm" }}
+      footer={
+        <Footer
+          reason={`You get this because this address was subscribed to updates from ${page}. If that wasn’t you, ignore this email.`}
+        />
+      }
+    >
+      <Heading title={`Confirm your subscription to ${page}`}>
+        Once confirmed, you get email updates from this status page. The link is
+        valid for 7 days.
+      </Heading>
+      <Actions primary={{ label: "Confirm subscription", href: link }} />
+    </Layout>
   );
 };
 
 PageSubscriptionEmail.PreviewProps = {
   link: "https://slug.openstatus.dev/verify/token",
-  page: "OpenStatus",
+  page: "Acme",
 } satisfies PageSubscriptionProps;
 
 export default PageSubscriptionEmail;

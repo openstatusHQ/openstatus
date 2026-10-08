@@ -7,6 +7,26 @@ type StatusPage = RouterOutputs["page"]["list"][number];
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 type Workspace = RouterOutputs["workspace"]["list"][number];
+type Incident = RouterOutputs["incident"]["list"][number];
+
+export function incidentsGroup(
+  incidents: Incident[] | undefined,
+): CommandMenuGroup | null {
+  if (!incidents || incidents.length === 0) return null;
+  return {
+    heading: "Incidents",
+    idleLimit: 5,
+    items: incidents.map((i) => ({
+      value: `incident-${i.id}`,
+      label: i.title,
+      description: `${i.status} · ${i.severity}`,
+      keywords: [i.title, i.status, i.severity, i.commander?.name].filter(
+        Boolean,
+      ) as string[],
+      action: { type: "navigate", href: `/incidents/${i.id}` },
+    })),
+  };
+}
 
 export function monitorsGroup(
   monitors: Monitor[] | undefined,

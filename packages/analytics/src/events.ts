@@ -132,6 +132,10 @@ export const Events = {
     name: "notification_updated",
     channel: "notification",
   },
+  TestNotification: {
+    name: "notification_tested",
+    channel: "notification",
+  },
   DeleteNotification: {
     name: "notification_deleted",
     channel: "notification",
@@ -163,6 +167,42 @@ export const Events = {
   DeleteIncident: {
     name: "incident_deleted",
     channel: "incident",
+  },
+  DeclareManagedIncident: {
+    name: "incident_declared",
+    channel: "incident_management",
+  },
+  UpdateManagedIncident: {
+    name: "incident_edited",
+    channel: "incident_management",
+  },
+  ChangeManagedIncidentStatus: {
+    name: "incident_status_changed",
+    channel: "incident_management",
+  },
+  AddManagedIncidentNote: {
+    name: "incident_note_added",
+    channel: "incident_management",
+  },
+  LinkManagedIncidentReport: {
+    name: "incident_report_linked",
+    channel: "incident_management",
+  },
+  CloseManagedIncident: {
+    name: "incident_closed",
+    channel: "incident_management",
+  },
+  DraftManagedPostmortem: {
+    name: "postmortem_drafted",
+    channel: "incident_management",
+  },
+  ApproveManagedPostmortem: {
+    name: "postmortem_approved",
+    channel: "incident_management",
+  },
+  DeleteManagedIncident: {
+    name: "incident_removed",
+    channel: "incident_management",
   },
   InviteUser: {
     name: "user_invited",
@@ -208,6 +248,58 @@ export const Events = {
     name: "workspace_downgraded",
     channel: "billing",
   },
+  StartTrial: {
+    name: "trial_started",
+    channel: "billing",
+  },
+  SkipTrial: {
+    name: "trial_skipped",
+    channel: "billing",
+  },
+  ConvertTrial: {
+    name: "trial_converted",
+    channel: "billing",
+  },
+  AddTrialPaymentMethod: {
+    name: "trial_payment_method_added",
+    channel: "billing",
+  },
+  NotifyTrialEnding: {
+    name: "trial_ending_notified",
+    channel: "billing",
+  },
+  ExpireTrial: {
+    name: "trial_expired",
+    channel: "billing",
+  },
+  StartCheckout: {
+    name: "checkout_started",
+    channel: "billing",
+  },
+  ReachLimit: {
+    name: "limit_reached",
+    channel: "billing",
+  },
+  PreviewImport: {
+    name: "import_previewed",
+    channel: "import",
+  },
+  RunImport: {
+    name: "import_completed",
+    channel: "import",
+  },
+  InstallSlackAgent: {
+    name: "slack_agent_installed",
+    channel: "integration",
+  },
+  EnableSso: {
+    name: "sso_enabled",
+    channel: "workspace",
+  },
+  SubmitFeedback: {
+    name: "feedback_submitted",
+    channel: "feedback",
+  },
   GlobalSpeedChecker: {
     name: "global_speed_checker",
     channel: "checker",
@@ -219,5 +311,9 @@ export const Events = {
   CdnChecker: {
     name: "cdn_checker",
     channel: "checker",
+  },
+  McpRequest: {
+    name: "mcp_request",
+    channel: "mcp",
   },
 } as const satisfies Record<string, EventProps>;

@@ -3,6 +3,10 @@ import { db, eq } from "@openstatus/db";
 import {
   pageSubscriber,
   pageSubscriberToPageComponent,
+  statusReport,
+  statusReportUpdate,
+  statusReportUpdateToPageComponents,
+  statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import {
   createPage,
@@ -21,7 +25,7 @@ import {
 } from "@std/testing/bdd";
 import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 
-import { dispatchPageUpdate } from "./dispatcher";
+import { dispatchPageUpdate, dispatchStatusReportUpdate } from "./dispatcher";
 import type { PageUpdate } from "./types";
 
 // RESEND_API_KEY is set in test-preload.ts (see bunfig.toml) so @openstatus/emails
@@ -224,5 +228,67 @@ describe("dispatchPageUpdate - edge cases", () => {
     await expect(
       dispatchPageUpdate(makePageUpdate({ pageComponentIds: [] })),
     ).resolves.toBeUndefined();
+  });
+});
+
+// ─── dispatchStatusReportUpdate - impacts ─────────────────────────────────────
+
+describe("dispatchStatusReportUpdate - impacts", () => {
+  test("an earlier update is sent with the impacts as of that update", async () => {
+    const report = await db
+      .insert(statusReport)
+      .values({
+        status: "investigating",
+        title: "Late dispatch",
+        pageId: PAGE_ID,
+      })
+      .returning()
+      .get();
+    await db
+      .insert(statusReportsToPageComponents)
+      .values({ statusReportId: report.id, pageComponentId: COMPONENT_1 })
+      .run();
+
+    const insertUpdate = async (
+      date: Date,
+      impact: "major_outage" | "operational",
+    ) => {
+      const update = await db
+        .insert(statusReportUpdate)
+        .values({
+          status: "investigating",
+          date,
+          message: "msg",
+          statusReportId: report.id,
+        })
+        .returning()
+        .get();
+      await db
+        .insert(statusReportUpdateToPageComponents)
+        .values({
+          statusReportUpdateId: update.id,
+          pageComponentId: COMPONENT_1,
+          impact,
+        })
+        .run();
+      return update;
+    };
+
+    const earlier = await insertUpdate(
+      new Date("2026-01-01T10:00:00Z"),
+      "major_outage",
+    );
+    await insertUpdate(new Date("2026-01-01T11:00:00Z"), "operational");
+
+    try {
+      await dispatchStatusReportUpdate(earlier.id);
+      assertSpyCalls(sendStatusReportUpdateMock, 1);
+      const args = sendStatusReportUpdateMock.calls[0].args[0];
+      expect(
+        args.componentImpacts.map((c: { impact: string }) => c.impact),
+      ).toEqual(["major_outage"]);
+    } finally {
+      await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    }
   });
 });

@@ -7,6 +7,7 @@ const noopRedis = {
   getdel: () => Promise.resolve(null),
   incr: () => Promise.resolve(1),
   expire: () => Promise.resolve(1),
+  eval: () => Promise.resolve([1, 60 * 60 * 24]),
 };
 
 export const redis = noopRedis;

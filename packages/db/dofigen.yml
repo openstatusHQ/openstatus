@@ -18,13 +18,13 @@ builders:
       - packages/utils/package.json
     run:
       - corepack enable pnpm
-      - pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --verbose
+      - pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --loglevel debug
     cache:
       - /root/.local/share/pnpm/store
 
 # One-shot migration runner: drizzle's migrator reads drizzle/ from disk at
 # runtime, so the image ships source + node_modules instead of a compiled binary.
-fromImage: denoland/deno:2.9.2
+fromImage: denoland/deno:2.9.7
 workdir: /app/packages/db
 
 labels:

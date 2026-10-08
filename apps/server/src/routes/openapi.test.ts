@@ -3,11 +3,31 @@ import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
 import { parse as parseYaml } from "jsr:@std/yaml@^1.0.9";
 
+import openapiV1Json from "../../static/openapi-v1.json" with { type: "json" };
 import openapiYaml from "../../static/openapi-yaml";
 import openapiJson from "../../static/openapi.json" with { type: "json" };
 import { openapiRoute } from "./openapi";
+import { api, openapiV1Config } from "./v1/index";
 
 const app = new Hono().route("/", openapiRoute);
+
+/** `prefault(new Date())` bakes the module load time into the spec, so date defaults never match. */
+function withoutDateDefaults(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(withoutDateDefaults);
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, v] of Object.entries(value)) {
+      if (
+        key === "default" &&
+        (value as { format?: string }).format === "date-time"
+      )
+        continue;
+      out[key] = withoutDateDefaults(v);
+    }
+    return out;
+  }
+  return value;
+}
 
 describe("OpenAPI documents", () => {
   test("openapi.json is a faithful rendering of openapi.yaml", async () => {
@@ -49,6 +69,16 @@ describe("OpenAPI documents", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("application/yaml");
     expect(await res.text()).toContain("openapi: 3.1.0");
+  });
+
+  test("openapi-v1.json matches the v1 routes (run `pnpm openapi:v1` after changing them)", () => {
+    expect(
+      withoutDateDefaults(JSON.parse(JSON.stringify(openapiV1Json))),
+    ).toEqual(
+      withoutDateDefaults(
+        JSON.parse(JSON.stringify(api.getOpenAPIDocument(openapiV1Config))),
+      ),
+    );
   });
 
   test("GET /openapi-v1.json still serves the deprecated v1 spec", async () => {

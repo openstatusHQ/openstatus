@@ -19,6 +19,13 @@ import { getMonitorDetails } from "./get-monitor";
 import { getMonitorStatusTable } from "./get-monitor-status";
 import { getMonitorSummaryDetails } from "./get-monitor-summary";
 import { getResponseLogDetails } from "./get-response-log";
+import {
+  declareIncidentChanges,
+  getIncidentDetails,
+  listIncidentsTable,
+  resolveIncidentChanges,
+  updateIncidentChanges,
+} from "./incidents";
 import { listAuditLogsTable } from "./list-audit-logs";
 import { listMaintenancesTable } from "./list-maintenances";
 import { listMonitorsTable } from "./list-monitors";
@@ -30,6 +37,7 @@ import { listStatusPagesTable } from "./list-status-pages";
 import { listStatusReportsTable } from "./list-status-reports";
 import { resolveStatusReportChanges } from "./resolve-status-report";
 import { ResultTable } from "./result-table";
+import { searchContentTable } from "./search-content";
 import { searchDocsTable } from "./search-docs";
 import { updateStatusReportChanges } from "./update-status-report";
 
@@ -140,6 +148,68 @@ export const toolRenderers: ToolRendererRegistry = {
     ),
     summary: (o) => `ID ${o.id}`,
   },
+  list_incidents: {
+    renderResult: ({ output }) => (
+      <ResultTable {...listIncidentsTable(output)} />
+    ),
+    summary: (o) => itemsCountSummary(o.items),
+  },
+  get_incident: {
+    renderResult: ({ output }) => (
+      <DetailsTable {...getIncidentDetails(output)} />
+    ),
+    summary: (o) => `${o.severity} · ${o.status}`,
+  },
+  declare_incident: {
+    renderDraft: (input) => declareIncidentChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={declareIncidentChanges(input, output)} />
+    ),
+    summary: (o) => `ID ${o.id}`,
+  },
+  update_incident: {
+    renderDraft: (input) => updateIncidentChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={updateIncidentChanges(input)} />
+    ),
+    summary: (o) => `ID ${o.id}`,
+  },
+  resolve_incident: {
+    renderDraft: (input) => resolveIncidentChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={resolveIncidentChanges(input)} />
+    ),
+    summary: (o) => `resolved · ID ${o.id}`,
+  },
+  set_incident_status: {
+    renderDraft: (input) => [
+      { field: "incidentId", after: input.id },
+      { field: "status", after: input.status },
+      ...(input.note ? [{ field: "note", after: input.note }] : []),
+    ],
+    summary: (o) => `${o.status} · ID ${o.id}`,
+  },
+  get_postmortem: {
+    summary: (o) =>
+      o.exists ? `${o.status} · drafted by ${o.draftedBy}` : "no postmortem",
+  },
+  draft_postmortem: {
+    renderDraft: (input) => [
+      { field: "incidentId", after: input.id },
+      { field: "content", after: input.content },
+    ],
+    summary: (o) => `${o.status} · incident ${o.incidentId}`,
+  },
+  approve_postmortem: {
+    renderDraft: (input) => [
+      { field: "incidentId", after: input.id },
+      { field: "close", after: input.close },
+    ],
+    summary: (o) => `${o.status} · incident ${o.incidentId}`,
+  },
+  add_incident_note: {
+    summary: (o) => `note added to incident ${o.incidentId}`,
+  },
   list_monitors: {
     renderResult: ({ output }) => (
       <ResultTable {...listMonitorsTable(output)} />
@@ -210,6 +280,16 @@ export const toolRenderers: ToolRendererRegistry = {
   // No renderResult — a full markdown page in the transcript is noise; the
   // summary line plus the model's cited answer is the UX.
   get_doc_page: {
+    summary: (o) =>
+      o.error ? o.error : `read ${o.url}${o.truncated ? " (truncated)" : ""}`,
+  },
+  search_content: {
+    renderResult: ({ output }) => (
+      <ResultTable {...searchContentTable(output)} />
+    ),
+    summary: (o) => (o.error ? o.error : itemsCountSummary(o.results)),
+  },
+  get_content_page: {
     summary: (o) =>
       o.error ? o.error : `read ${o.url}${o.truncated ? " (truncated)" : ""}`,
   },

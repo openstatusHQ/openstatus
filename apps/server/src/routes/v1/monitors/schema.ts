@@ -238,17 +238,17 @@ export const MonitorSchema = z
     followRedirects: z.boolean().prefault(true).openapi({
       description: "If the monitor should follow redirects",
     }),
-    jobType: z.enum(monitorJobTypes).optional().prefault("http").openapi({
+    jobType: z.enum(monitorJobTypes).prefault("http").openapi({
       description: "The type of the monitor",
     }),
     openTelemetry: z
       .object({
-        endpoint: z.url().optional().prefault("http://localhost:4317").openapi({
+        endpoint: z.url().prefault("http://localhost:4317").openapi({
           description: "The endpoint of the OpenTelemetry collector",
         }),
         headers: z
           .record(z.string(), z.string())
-          .optional()
+
           .prefault({})
           .openapi({
             description: "The headers to send to the OpenTelemetry collector",

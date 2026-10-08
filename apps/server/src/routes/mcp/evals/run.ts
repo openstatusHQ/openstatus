@@ -1,12 +1,12 @@
 /**
  * MCP tool-selection eval. Standalone bun script — `pnpm eval:mcp`.
  *
- * Runs each case in `cases.ts` against Claude Haiku 4.5 (via the AI
+ * Runs each case in `cases.ts` against Claude Opus 5 (via the AI
  * Gateway), asserting the model picks the expected tool and includes
  * the required args. Fails the run if fewer than `PASS_THRESHOLD` of
  * `cases.length` succeed.
  *
- * Not in default CI. Cost: a handful of cents per run.
+ * Not in default CI — every run bills Opus tokens.
  *
  * --------------------------------------------------------------------
  * TODO: deduplicate tool catalogue.
@@ -15,6 +15,7 @@
  *   - apps/server/src/routes/mcp/tools/page.ts
  *   - apps/server/src/routes/mcp/tools/status-report.ts
  *   - apps/server/src/routes/mcp/tools/maintenance.ts
+ *   - apps/server/src/routes/mcp/tools/incident.ts
  *
  * When you edit a description, input shape, or required field in any
  * of those files, edit it here too — drift is silent because evals
@@ -37,7 +38,7 @@ import { type EvalCase, cases } from "./cases";
 // Resolved through the AI Gateway (`AI_GATEWAY_API_KEY` env). Using
 // `gateway(...)` instead of a bare string makes the routing path
 // explicit and gives a clearer error if the gateway is unconfigured.
-const MODEL = gateway("anthropic/claude-haiku-4-5");
+const MODEL = gateway("anthropic/claude-sonnet-5");
 // Lenient bar (10/12) accommodates model non-determinism even at
 // `temperature: 0` — a single flaky tool selection shouldn't tank
 // the run. Tighten if descriptions stabilize and runs trend toward
@@ -150,6 +151,39 @@ const tools = {
       pageId: z.number().int(),
       pageComponentIds: z.array(z.number().int()).optional(),
       notify: z.boolean(),
+    }),
+    execute: async () => ({ ok: true }),
+  }),
+  list_incidents: tool({
+    description:
+      "List managed incidents in this workspace (declared by the team, not monitor downtime), open ones first.",
+    inputSchema: z.object({
+      status: z
+        .array(z.enum(["open", "mitigated", "resolved", "canceled"]))
+        .optional(),
+      limit: z.number().int().min(1).max(100).default(20),
+    }),
+    execute: async () => ({ items: [] }),
+  }),
+  declare_incident: tool({
+    description:
+      "Declare a managed incident: the team's internal record of an outage, with a timeline and a commander. Internal only — nothing is published; use create_status_report for public communication.",
+    inputSchema: z.object({
+      title: z.string(),
+      severity: z.enum(["critical", "major", "minor"]),
+      summary: z.string().optional(),
+      commanderId: z.number().int().optional(),
+      startedAt: z.string().optional(),
+      statusReportId: z.number().int().optional(),
+    }),
+    execute: async () => ({ ok: true }),
+  }),
+  add_incident_note: tool({
+    description:
+      "Append a note to a managed incident's timeline. Internal and append-only.",
+    inputSchema: z.object({
+      id: z.number().int(),
+      message: z.string(),
     }),
     execute: async () => ({ ok: true }),
   }),

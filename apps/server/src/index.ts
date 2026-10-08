@@ -26,7 +26,13 @@ import { requestId } from "hono/request-id";
 
 import { env } from "./env";
 import { handleError } from "./libs/errors";
+import { concurrencyGuard } from "./libs/middlewares/concurrency";
+import { rateLimit } from "./libs/middlewares/rate-limit";
+import { shouldSample } from "./libs/sampling";
+import { pingRoute } from "./routes/health";
 import { mcpRoute } from "./routes/mcp";
+import { createOAuthRoutes } from "./routes/oauth";
+import { oauthConfigFromEnv } from "./routes/oauth/config";
 import { openapiRoute } from "./routes/openapi";
 import { publicRoute } from "./routes/public";
 import { mountRpcRoutes } from "./routes/rpc";
@@ -102,19 +108,6 @@ await configure({
   ],
   contextLocalStorage: new AsyncLocalStorage(),
 });
-
-/* oxlint-disable-next-line typescript/no-explicit-any */
-function shouldSample(event: Record<string, any>): boolean {
-  // Always keep errors
-  if (event.status_code >= 500) return true;
-  if (event.error) return true;
-
-  // Always keep slow requests (above p99)
-  if (event.duration_ms > 2000) return true;
-
-  // Random sample the rest at 20%
-  return Math.random() < 0.2;
-}
 
 /**
  * Middleware
@@ -195,6 +188,14 @@ app.use("*", async (c, next) => {
   );
 });
 
+/**
+ * Overload guards, after the wide event so shed requests still log with
+ * `shed` / `rate_limited`, before any route so they stay cheap. Rate limits
+ * go first so rejected traffic never occupies an in-flight slot.
+ */
+app.use("*", ...rateLimit);
+app.use("*", concurrencyGuard.middleware);
+
 app.onError(handleError);
 
 /**
@@ -204,19 +205,21 @@ app.onError(handleError);
 mountRpcRoutes(app);
 
 /**
+ * OAuth 2.1 authorization server for MCP clients: RFC 8414 / 9728 metadata,
+ * dynamic registration, authorize, token and revoke.
+ */
+app.route("/", createOAuthRoutes(oauthConfigFromEnv()));
+
+/**
  * Public Routes
  */
 app.route("/public", publicRoute);
 
 /**
- * Ping Pong
+ * Health check — probes the database, Tinybird, Unkey and Upstash and reports
+ * the Fly machine answering.
  */
-app.get("/ping", (c) => {
-  return c.json(
-    { ping: "pong", region: env.FLY_REGION, requestId: c.get("requestId") },
-    200,
-  );
-});
+app.route("/", pingRoute);
 
 app.route("/", openapiRoute);
 
@@ -273,6 +276,6 @@ app.route("/mcp", mcpRoute);
  * create incidents, and send notifications.
  */
 
-if (process.env.NODE_ENV === "development") {
+if (env.NODE_ENV === "development") {
   showRoutes(app, { verbose: true, colorize: true });
 }

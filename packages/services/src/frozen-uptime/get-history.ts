@@ -4,19 +4,23 @@ import {
   pageConfigurationSchema,
 } from "@openstatus/db/src/schema";
 
-import { type ServiceContext, defaultTb, getReadDb } from "../context";
+import { defaultTb, getReadDb, type ServiceContext } from "../context";
 import { ForbiddenError, NotFoundError } from "../errors";
 import {
-  type Event,
   dayCoverage,
   durationDowntimeMs,
+  type Event,
   floorPct,
   getEvents,
   reportsOnlyDowntimeMs,
   requestsTally,
 } from "../status-timeline";
 import { type ComputeCountRow, monthRange } from "./compute";
-import { type UptimeFreezePipes, fetchFreezeCounts } from "./run";
+import {
+  fetchFreezeCounts,
+  FREEZE_CUTOFF_MS,
+  type UptimeFreezePipes,
+} from "./run";
 import { GetUptimeHistoryInput } from "./schemas";
 
 const HISTORY_MONTHS = 24;
@@ -177,7 +181,7 @@ export async function getUptimeHistory(args: {
         },
       },
       pageComponents: {
-        with: { monitor: { with: { incidents: true } } },
+        with: { monitor: { with: { monitorIncidents: true } } },
         orderBy: (components, { asc }) => asc(components.order),
       },
     },
@@ -276,9 +280,11 @@ export async function getUptimeHistory(args: {
   function countsFor(monitorId: number, key: string): DayCount[] | null {
     const frozen = frozenByKey.get(`${monitorId}:${key}`);
     if (frozen && key !== currentKey) return frozen;
-    // older unfrozen months are never reconstructed from the partial 45d
-    // overlap — backfill is the fix, not partial months
-    const isLive = key === currentKey || key === previousKey;
+    // Unfrozen months need full retention coverage, just like the freeze job.
+    const isLive =
+      key === currentKey ||
+      (key === previousKey &&
+        nowMs - monthRange(`${key}-01`).start < FREEZE_CUTOFF_MS);
     if (!isLive || liveFailed.has(String(monitorId))) return null;
     const byDay = liveByMonitorMonth.get(`${monitorId}:${key}`);
     if (!byDay || byDay.size === 0) return null;
@@ -289,7 +295,7 @@ export async function getUptimeHistory(args: {
   const rows: UptimeHistoryRow[] = components.map((c) => {
     const events = getEvents({
       maintenances: _page.maintenances,
-      incidents: c.monitor?.incidents ?? [],
+      incidents: c.monitor?.monitorIncidents ?? [],
       reports: _page.statusReports,
       pageComponentId: c.id,
       monitorId: c.monitorId ?? undefined,

@@ -12,11 +12,10 @@ export function useCookieState<T extends string>(
   const handleChange = useCallback(
     (value: T) => {
       if (document) {
-        const date = new Date();
-        date.setTime(date.getTime() + 365 * 24 * 60 * 60 * 1000); // in one year
-        document.cookie = `${name}=${value}; path=/; expires=${
-          config?.expires ?? date.toUTCString()
-        }`;
+        // `expires` is a duration in ms; the cookie needs an absolute date
+        const ttl = config?.expires ?? 365 * 24 * 60 * 60 * 1000; // one year
+        const expires = new Date(Date.now() + ttl).toUTCString();
+        document.cookie = `${name}=${value}; path=/; expires=${expires}`;
         setState(value);
       }
     },

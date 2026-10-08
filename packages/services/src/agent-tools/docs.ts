@@ -143,7 +143,10 @@ export const getDocPageTool: AgentTool<
           url,
           markdown: "",
           truncated: false,
-          error: `page not found (HTTP ${res.status})`,
+          error:
+            res.status === 404
+              ? `page not found (HTTP ${res.status})`
+              : `page unavailable (HTTP ${res.status})`,
         };
       }
       const text = await res.text();

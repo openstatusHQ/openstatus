@@ -62,7 +62,7 @@ Your monitor doesn't just have to be a simple `GET` request. You can customise t
 
 #### HTTP method
 
-Choose the appropriate HTTP method for your check. While `GET` is the default and most common for simple health checks, you can also select `POST`, `HEAD`, `OPTIONS`, `PUT`, `PATCH`, `DELETE`, or `TRACE`.
+Choose the appropriate HTTP method for your check. While `GET` is the default and most common for simple health checks, you can also select `POST`, `HEAD`, `OPTIONS`, `PUT`, `PATCH`, `DELETE`, `TRACE`, or `CONNECT`.
 
 - `GET`: Retrieve data from an endpoint. The most common choice for health checks.
 - `POST`: Send data to an endpoint, for example, to test a form submission or API creation endpoint.
@@ -72,6 +72,7 @@ Choose the appropriate HTTP method for your check. While `GET` is the default an
 - `PATCH`: Partially update an existing resource.
 - `DELETE`: Delete a resource.
 - `TRACE`: Echo the request back to the client.
+- `CONNECT`: Establish a tunnel to the server.
 
 #### Request body
 
@@ -89,7 +90,7 @@ You can add any number of custom HTTP headers to your request. This is particula
 
 <Aside title="We've got your User-Agent covered!">
 
-openstatus automatically includes the `"User-Agent": "openstatus/1.0"` header in every request. This makes it easy to identify and filter out our monitoring traffic from your server logs or analytics.
+openstatus automatically includes the `"User-Agent": "OpenStatus/1.0"` header in every request. This makes it easy to identify and filter out our monitoring traffic from your server logs or analytics.
 
 </Aside>
 

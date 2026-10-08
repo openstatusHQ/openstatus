@@ -13,7 +13,7 @@ const FollowUpEmail = () => {
         Hey
         <br />
         <br />
-        Quick tip: connect the OpenStatus Slack app and manage incident updates
+        Quick tip: connect the openstatus Slack app and manage incident updates
         for your status page directly from Slack — no need to switch tabs during
         an outage.
         <br />
@@ -30,7 +30,7 @@ const FollowUpEmail = () => {
         Hit reply if you have questions — happy to help.
         <br />
         <br />
-        Thibault Le Ouay Ducasse, co-founder of OpenStatus
+        Thibault Le Ouay Ducasse, co-founder of openstatus
         <br />
       </Body>
     </Html>

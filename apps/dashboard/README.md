@@ -23,7 +23,7 @@ cp apps/dashboard/.env.example apps/dashboard/.env
 
 The defaults in `.env.example` are dummy values that work for local dev — no real API keys needed.
 Fill them in before deployment to enable optional functionality (Resend for real magic-link emails, Stripe, Tinybird analytics, Sentry, GitHub/Google OAuth, etc.).
-Email/Magic Link login is only available in dev.
+Magic-link login works everywhere; in dev the link is printed to the terminal instead of emailed.
 
 ### Startup
 
@@ -63,17 +63,17 @@ pnpm -w dev:dashboard
 
 Turbo runs the dashboard (`apps/dashboard`) and `@openstatus/db` together.
 
-6. Open [http://localhost:3000](http://localhost:3000)
+6. Open [http://localhost:3001](http://localhost:3001)
 
 ## Logging in
 
-The dashboard uses NextAuth with GitHub, Google, and — in dev mode — a Resend magic-link provider.
+The dashboard uses NextAuth with GitHub, Google, SSO and a Resend magic-link provider.
 
-In `NODE_ENV=development` or `SELF_HOST=true`, `src/lib/auth/providers.ts` configures the Resend provider with `apiKey: undefined` and overrides `sendVerificationRequest` to **print the magic link to the dashboard's terminal stdout** instead of sending an email. No OAuth credentials required.
+In `NODE_ENV=development`, `src/lib/auth/providers.ts` **prints the magic link to the dashboard's terminal stdout** instead of emailing it; the dummy `RESEND_API_KEY` from `.env.example` is enough and no OAuth credentials are required. Everywhere else the link is emailed through Resend. A self-hosted deployment (`SELF_HOST=true`) whose Resend send fails still tells the user to check their inbox but prints the link to the server log instead, so look there when running without a real key.
 
 To log in:
 
-1. Open [http://localhost:3000/login](http://localhost:3000/login)
+1. Open [http://localhost:3001/login](http://localhost:3001/login)
 2. Enter `ping@openstatus.dev` (the seeded user, bound to workspace 1) in the magic-link form
 3. Watch the dashboard terminal — the magic link is logged there. Open it in your browser.
 

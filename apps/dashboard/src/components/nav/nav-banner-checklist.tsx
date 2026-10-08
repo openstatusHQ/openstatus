@@ -69,8 +69,8 @@ export function NavBannerChecklist({
   if (items.every((i) => i.checked)) return null;
 
   return (
-    <SidebarGroup className="bg-background rounded-lg border group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel className="flex items-center justify-between pr-1">
+    <SidebarGroup className="bg-background rounded-lg border px-2 py-1.5 group-data-[collapsible=icon]:hidden">
+      <SidebarGroupLabel className="flex h-7 items-center justify-between pr-0 pl-0">
         <span>
           Getting Started ({items.filter((i) => i.checked).length}/
           {items.length})
@@ -90,25 +90,19 @@ export function NavBannerChecklist({
           >
             {item.checked ? (
               <>
-                <Success className="text-success shrink-0" size={12} />
+                <Success className="text-success size-3 shrink-0" />
                 <span>{item.title}</span>
               </>
             ) : (
               <>
-                <Pending
-                  className="text-muted-foreground/50 shrink-0"
-                  size={12}
-                />
+                <Pending className="text-muted-foreground/50 size-3 shrink-0" />
                 <Link href={item.href}>{item.title}</Link>
               </>
             )}
           </SidebarMenuItem>
         ))}
         <SidebarMenuItem className="flex items-center gap-2 text-sm">
-          <ArrowUpRight
-            className="text-muted-foreground/50 shrink-0"
-            size={12}
-          />
+          <ArrowUpRight className="text-muted-foreground/50 size-3 shrink-0" />
           <a
             href="https://www.openstatus.dev/docs"
             target="_blank"

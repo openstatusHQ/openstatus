@@ -26,8 +26,8 @@ import { useTRPC } from "@/lib/trpc/client";
 export default function Page() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
-  const { data: incidents } = useQuery(
-    trpc.incident.list.queryOptions({
+  const { data: monitorIncidents } = useQuery(
+    trpc.monitorIncident.list.queryOptions({
       monitorId: Number.parseInt(id),
     }),
   );
@@ -35,15 +35,15 @@ export default function Page() {
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
-  if (!incidents || !monitor) return null;
+  if (!monitorIncidents || !monitor) return null;
 
   return (
     <SectionGroup>
       <Note color="info">
         <Info />
         <p>
-          Incidents are automatically created when a monitor detects downtime.
-          To communicate updates to your users, use Status Reports on a{" "}
+          Downtime is recorded automatically when a monitor fails. To tell your
+          users, use Status Reports on a{" "}
           <Link href="/status-pages">Status Page</Link>.
         </p>
       </Note>
@@ -60,17 +60,17 @@ export default function Page() {
             )}
           </SectionDescription>
         </SectionHeader>
-        {incidents.length === 0 ? (
+        {monitorIncidents.length === 0 ? (
           <EmptyStateContainer>
-            <EmptyStateTitle>No incidents</EmptyStateTitle>
+            <EmptyStateTitle>No downtime</EmptyStateTitle>
             <EmptyStateDescription>
-              No incidents found for this monitor.
+              No downtime recorded for this monitor.
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (
           <DataTable
             columns={columns}
-            data={incidents}
+            data={monitorIncidents}
             paginationComponent={DataTablePaginationSimple}
           />
         )}

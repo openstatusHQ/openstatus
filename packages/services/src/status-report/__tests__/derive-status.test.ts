@@ -18,7 +18,7 @@ import { addStatusReportUpdate } from "../add-update";
 import { deleteStatusReportUpdate } from "../delete";
 import { deriveReportStatus, recomputeReportStatus } from "../derive-status";
 import type { StatusReportStatus } from "../schemas";
-import { updateStatusReportUpdate } from "../update";
+import { updateStatusReport, updateStatusReportUpdate } from "../update";
 
 const TEST_PREFIX = "svc-derive-status-test";
 
@@ -201,6 +201,141 @@ const readStatus = async (tx: DB, id: number) =>
   (await readRow(tx, id))?.status;
 
 describe("recomputeReportStatus (DB)", () => {
+  test("metadata status survives message edits without adding an update", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const report = await seedReport(
+        tx,
+        teamCtx.workspace.id,
+        "investigating",
+      );
+      const tied = await addUpdate(tx, report.id, "identified", "2026-01-03");
+      const latest = await addUpdate(
+        tx,
+        report.id,
+        "investigating",
+        "2026-01-03",
+      );
+      const backdated = await addUpdate(
+        tx,
+        report.id,
+        "monitoring",
+        "2026-01-02",
+      );
+
+      const updated = await updateStatusReport({
+        ctx,
+        input: { id: report.id, status: "resolved" },
+      });
+      expect(updated.status).toBe("resolved");
+
+      await updateStatusReportUpdate({
+        ctx,
+        input: { id: latest.id, message: "typo fixed" },
+      });
+      expect(await readStatus(tx, report.id)).toBe("resolved");
+
+      const rows = await tx
+        .select()
+        .from(statusReportUpdate)
+        .where(eq(statusReportUpdate.statusReportId, report.id))
+        .all();
+      expect(
+        rows.map(({ id, status, message, date }) => ({
+          id,
+          status,
+          message,
+          date,
+        })),
+      ).toEqual(
+        expect.arrayContaining([
+          {
+            id: tied.id,
+            status: "identified",
+            message: "identified",
+            date: tied.date,
+          },
+          {
+            id: latest.id,
+            status: "resolved",
+            message: "typo fixed",
+            date: latest.date,
+          },
+          {
+            id: backdated.id,
+            status: "monitoring",
+            message: "monitoring",
+            date: backdated.date,
+          },
+        ]),
+      );
+      expect(rows).toHaveLength(3);
+      const audit = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "status_report",
+        entityId: report.id,
+        db: tx,
+      });
+      expect(
+        audit.find((row) => row.action === "status_report.update")?.after
+          ?.status,
+      ).toBe("resolved");
+    });
+  });
+
+  test("metadata status works without update history", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const report = await seedReport(
+        tx,
+        teamCtx.workspace.id,
+        "investigating",
+      );
+      const updated = await updateStatusReport({
+        ctx,
+        input: { id: report.id, status: "resolved" },
+      });
+      expect(updated.status).toBe("resolved");
+      expect(await readStatus(tx, report.id)).toBe("resolved");
+      expect(
+        await tx
+          .select()
+          .from(statusReportUpdate)
+          .where(eq(statusReportUpdate.statusReportId, report.id))
+          .all(),
+      ).toEqual([]);
+    });
+  });
+
+  test("title and component metadata edits leave update history unchanged", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const report = await seedReport(
+        tx,
+        teamCtx.workspace.id,
+        "investigating",
+      );
+      const only = await addUpdate(
+        tx,
+        report.id,
+        "investigating",
+        "2026-01-02",
+      );
+      await updateStatusReport({
+        ctx,
+        input: { id: report.id, title: "New title", pageComponentIds: [] },
+      });
+      expect(
+        await tx
+          .select()
+          .from(statusReportUpdate)
+          .where(eq(statusReportUpdate.statusReportId, report.id))
+          .all(),
+      ).toEqual([only]);
+      expect(await readStatus(tx, report.id)).toBe("investigating");
+    });
+  });
+
   test("persists the latest update's status onto the report", async () => {
     await withTestTransaction(async (tx) => {
       const report = await seedReport(

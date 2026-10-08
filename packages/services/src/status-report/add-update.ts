@@ -5,7 +5,11 @@ import {
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
 import { ConflictError, InternalServiceError } from "../errors";
 import type { StatusReport, StatusReportUpdate } from "../types";
 import { recomputeReportStatus } from "./derive-status";
@@ -30,6 +34,7 @@ export async function addStatusReportUpdate(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = AddStatusReportUpdateInput.parse(args.input);
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   return withTransaction(ctx, async (tx) => {
     const report = await getReportInWorkspace({
@@ -95,6 +100,8 @@ export async function addStatusReportUpdate(args: {
         status: input.status,
         date,
         message: input.message,
+        createdBy: actorUserId,
+        updatedBy: actorUserId,
       })
       .returning()
       .get();
@@ -108,6 +115,7 @@ export async function addStatusReportUpdate(args: {
     // derived, not assigned — a back-dated update must not win
     const updatedReport = await recomputeReportStatus(tx, report.id, {
       touchIfLatestIs: newUpdate.id,
+      updatedBy: actorUserId,
     });
 
     if (!updatedReport) {

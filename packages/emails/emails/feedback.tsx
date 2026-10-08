@@ -8,22 +8,22 @@ const FeedbackEmail = () => {
       <Head>
         <title>One quick question</title>
       </Head>
-      <Preview>What's the one thing you'd change about OpenStatus?</Preview>
+      <Preview>What's the one thing you'd change about openstatus?</Preview>
       <Body>
         Hey
         <br />
         <br />
-        You've been on OpenStatus for about two weeks now. One quick question:
+        You've been on openstatus for about two weeks now. One quick question:
         <br />
         <br />
-        What's the one thing you wish OpenStatus did differently?
+        What's the one thing you wish openstatus did differently?
         <br />
         <br />
         No survey, no form — just hit reply. I read every response and it
         genuinely shapes what we build next.
         <br />
         <br />
-        Thibault Le Ouay Ducasse, co-founder of OpenStatus
+        Thibault Le Ouay Ducasse, co-founder of openstatus
         <br />
       </Body>
     </Html>

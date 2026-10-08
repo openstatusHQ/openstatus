@@ -10,8 +10,24 @@ export interface SlackTestState {
   postMessageOverride: Override;
   updateOverride: Override;
   postEphemeralOverride: Override;
-  runAgentOverride: (() => Promise<unknown>) | null;
-  repliesImpl: () => Promise<unknown>;
+  sessionStatusOverride: Override;
+  renameOverride: Override;
+  /** Set to false to simulate a workspace/SDK without message streaming. */
+  chatStreamEnabled: boolean;
+  /** Make appends start throwing once this many have succeeded. */
+  streamAppendFailAfter: number | null;
+  /** Make `stop` reject, as Slack does once it has closed the stream itself. */
+  streamStopFail: boolean;
+  /** Receives runAgent's options, so a test can drive the stream or abort. */
+  runAgentOverride: ((options?: unknown) => Promise<unknown>) | null;
+  repliesImpl: (args?: Record<string, unknown>) => Promise<unknown>;
+  historyImpl: () => Promise<unknown>;
+  /** `users.info` result; the default has no email, so no mapping is created. */
+  usersInfoImpl: (args: Record<string, unknown>) => Promise<unknown>;
+  /** `reactions.get` result; the default message has no reactions. */
+  reactionsGetImpl: (args: Record<string, unknown>) => Promise<unknown>;
+  /** `conversations.info` result; the default channel has no name. */
+  conversationsInfoImpl: (args: Record<string, unknown>) => Promise<unknown>;
 }
 
 const g = globalThis as Record<string, unknown>;
@@ -22,11 +38,23 @@ if (!g.__slackTestState) {
     postMessageOverride: null,
     updateOverride: null,
     postEphemeralOverride: null,
+    sessionStatusOverride: null,
+    renameOverride: null,
+    chatStreamEnabled: true,
+    streamAppendFailAfter: null,
+    streamStopFail: false,
     runAgentOverride: null,
     repliesImpl: () =>
       Promise.resolve({
         messages: [{ user: "U1", text: "test message", ts: "1.1" }],
       }),
+    historyImpl: () =>
+      Promise.resolve({
+        messages: [{ user: "U1", text: "channel message", ts: "1.1" }],
+      }),
+    usersInfoImpl: () => Promise.resolve({ ok: true, user: { profile: {} } }),
+    reactionsGetImpl: () => Promise.resolve({ ok: true, message: {} }),
+    conversationsInfoImpl: () => Promise.resolve({ ok: true, channel: {} }),
   } satisfies SlackTestState;
 }
 

@@ -3,46 +3,42 @@ effective: |
     builder:
       fromImage:
         path: golang
-        digest: sha256:d4c4845f5d60c6a974c6000ce58ae079328d03ab7f721a0734277e69905473e5
+        digest: sha256:dc9ad6c05acc7a88e5b71bde60a5fe3bd4b9f0db209011711b464107438a8107
       label:
-        org.opencontainers.image.base.name: docker.io/golang:1.26-alpine
-        org.opencontainers.image.base.digest: sha256:d4c4845f5d60c6a974c6000ce58ae079328d03ab7f721a0734277e69905473e5
+        org.opencontainers.image.base.name: docker.io/golang:1.26-bookworm
         org.opencontainers.image.stage: builder
+        org.opencontainers.image.base.digest: sha256:dc9ad6c05acc7a88e5b71bde60a5fe3bd4b9f0db209011711b464107438a8107
       workdir: /go/src/app
-      arg:
-        TARGETARCH: ''
-        TARGETOS: ''
       env:
         TZ: UTC
-        CGO_ENABLED: '0'
+        CGO_ENABLED: '1'
       copy:
       - paths:
         - .
         target: .
       run:
-      - apk add --no-cache tzdata
       - go mod download
-      - GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
+      - go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
   fromImage:
-    path: alpine
-    digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
+    path: debian
+    digest: sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
   label:
     org.opencontainers.image.description: Private location orchestrator for OpenStatus
-    org.opencontainers.image.vendor: OpenStatus
-    io.dofigen.version: 2.6.0
-    org.opencontainers.image.title: OpenStatus Private Location
-    org.opencontainers.image.base.digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
     org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.base.name: docker.io/alpine:3.21
+    io.dofigen.version: 2.8.0
+    org.opencontainers.image.base.name: docker.io/debian:bookworm-slim
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.title: OpenStatus Private Location
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.base.digest: sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
   user:
     user: '1000'
     group: '1000'
   workdir: /opt/bin
   env:
-    GIN_MODE: release
     TZ: UTC
     USER: '1000'
+    GIN_MODE: release
   copy:
   - fromBuilder: builder
     paths:
@@ -56,12 +52,17 @@ effective: |
     paths:
     - /go/src/app/private-location
     target: /opt/bin/private-location
+  root:
+    run:
+    - apt-get update
+    - apt-get install -y --no-install-recommends wget
+    - rm -rf /var/lib/apt/lists/*
   cmd:
   - /opt/bin/private-location
   expose:
   - port: 8080
   healthcheck:
-    cmd: wget --spider -q http://localhost:8080/health || exit 1
+    cmd: wget -q -O /dev/null http://localhost:8080/health || exit 1
     interval: 15s
     timeout: 10s
     start: 30s
@@ -69,44 +70,40 @@ effective: |
 images:
   docker.io:
     library:
-      alpine:
-        '3.21':
-          digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
       golang:
-        1.26-alpine:
-          digest: sha256:d4c4845f5d60c6a974c6000ce58ae079328d03ab7f721a0734277e69905473e5
+        1.26-bookworm:
+          digest: sha256:dc9ad6c05acc7a88e5b71bde60a5fe3bd4b9f0db209011711b464107438a8107
+      debian:
+        bookworm-slim:
+          digest: sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
 resources:
   dofigen.yml:
-    hash: acc14b01834402aab4f21cd4a168169eb464731acaa35ab27f1eaa2fd2cbdd28
+    hash: d04fca5247e646329f8612305da818b8d5ae47f9bae8c811690e0a61dd819b5d
     content: |
       builders:
         # Stage 1: Build Go binary
         builder:
-          fromImage: golang:1.26-alpine
-          platform: $BUILDPLATFORM
+          # go-libsql links a prebuilt glibc static library through cgo, so build
+          # natively on Debian for each target platform (no cross-compilation).
+          fromImage: golang:1.26-bookworm
           label:
             org.opencontainers.image.stage: builder
           workdir: /go/src/app
-          # Build-time arguments (overwritten by .env.docker at runtime)
-          args:
-            TARGETOS: ""
-            TARGETARCH: ""
           env:
             TZ: UTC
-            CGO_ENABLED: "0"
+            CGO_ENABLED: "1"
           copy:
             # Copy source code
             - . .
           run:
-            - apk add --no-cache tzdata
             - go mod download
             # Build optimized binary
             # -trimpath: Remove file system paths from binary
             # -ldflags "-s -w": Strip debug info and symbol table
-            - GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
+            - go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
 
-      # Runtime stage
-      fromImage: alpine:3.21
+      # Runtime stage (glibc, required by go-libsql)
+      fromImage: debian:bookworm-slim
 
       # Metadata labels
       label:
@@ -129,6 +126,13 @@ resources:
           source: /go/src/app/private-location
           target: /opt/bin/private-location
 
+      # wget is used by the healthcheck
+      root:
+        run:
+          - apt-get update
+          - apt-get install -y --no-install-recommends wget
+          - rm -rf /var/lib/apt/lists/*
+
       env:
         TZ: UTC
         USER: "1000"
@@ -146,7 +150,7 @@ resources:
         timeout: 10s
         start: 30s
         retries: 3
-        cmd: wget --spider -q http://localhost:8080/health || exit 1
+        cmd: wget -q -O /dev/null http://localhost:8080/health || exit 1
 
       # Start application
       cmd:

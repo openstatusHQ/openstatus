@@ -1,5 +1,5 @@
 import type {
-  Incident,
+  MonitorIncident,
   Maintenance,
   PageComponent,
   StatusReport,
@@ -1081,6 +1081,8 @@ describe("getEvents - pageComponent filtering", () => {
       to,
       workspaceId: 1,
       pageId: 1,
+      createdBy: null,
+      updatedBy: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       maintenancesToPageComponents: pageComponentIds.map((pcId) => ({
@@ -1109,6 +1111,8 @@ describe("getEvents - pageComponent filtering", () => {
       status,
       workspaceId: 1,
       pageId: 1,
+      createdBy: null,
+      updatedBy: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       statusReportsToPageComponents: pageComponentIds.map((pcId) => ({
@@ -1121,6 +1125,8 @@ describe("getEvents - pageComponent filtering", () => {
           date: updateDate,
           status: "investigating",
           message: "Investigating the issue",
+          createdBy: null,
+          updatedBy: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -1129,7 +1135,7 @@ describe("getEvents - pageComponent filtering", () => {
   }
 
   // Helper to create a mock incident
-  function createMockIncident(id: number, monitorId: number): Incident {
+  function createMockIncident(id: number, monitorId: number): MonitorIncident {
     const now = new Date();
     const startedAt = new Date(now.getTime() - 1000 * 60 * 60); // 1 hour ago
 
@@ -1377,6 +1383,8 @@ describe("componentImpacts", () => {
       status: args.status ?? ("investigating" as const),
       workspaceId: 1,
       pageId: 1,
+      createdBy: null,
+      updatedBy: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       statusReportsToPageComponents: args.components.map((pcId) => ({
@@ -1388,6 +1396,8 @@ describe("componentImpacts", () => {
         date: u.date,
         status: u.status,
         message: "m",
+        createdBy: null,
+        updatedBy: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         statusReportUpdateToPageComponents: (u.impacts ?? []).map((r) => ({

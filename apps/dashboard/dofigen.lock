@@ -1,51 +1,97 @@
 effective: |
   builders:
+    install:
+      fromImage:
+        path: node
+        digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+      label:
+        org.opencontainers.image.base.digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+        org.opencontainers.image.base.name: docker.io/node:24-slim
+      workdir: /app
+      env:
+        PATH: $PNPM_HOME:$PATH
+        PNPM_HOME: /pnpm
+      copy:
+      - fromBuilder: manifests
+        paths:
+        - /out/
+        target: /app/
+      run:
+      - corepack enable pnpm
+      - pnpm install --frozen-lockfile --filter=@openstatus/dashboard...
     builder:
       fromImage:
         path: node
-        digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+        digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
       label:
         org.opencontainers.image.base.name: docker.io/node:24-slim
-        org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+        org.opencontainers.image.base.digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
       workdir: /app
       env:
-        NODE_ENV: production
-        TINY_BIRD_API_KEY: test
-        OPENPANEL_CLIENT_SECRET: test
         NEXT_PUBLIC_URL: http://localhost:3002
         PROJECT_ID_VERCEL: test
-        TEAM_ID_VERCEL: test
-        PATH: $PNPM_HOME:$PATH
-        DATABASE_AUTH_TOKEN: test
-        CRON_SECRET: test
-        DATABASE_URL: http://libsql:8080
-        RESEND_API_KEY: test
-        UPSTASH_REDIS_REST_URL: https://test.upstash.io
-        UNKEY_TOKEN: test
-        SELF_HOST: 'true'
-        NEXT_PUBLIC_SELF_HOST: 'true'
-        UNKEY_API_ID: test
-        STRIPE_SECRET_KEY: test
-        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
         AUTH_SECRET: build-time-placeholder-min-32-chars-long
-        UPSTASH_REDIS_REST_TOKEN: test
-        VERCEL_AUTH_BEARER_TOKEN: test
+        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+        DATABASE_URL: http://libsql:8080
         PNPM_HOME: /pnpm
+        PATH: $PNPM_HOME:$PATH
+        UNKEY_API_ID: test
+        OPENPANEL_CLIENT_SECRET: test
+        SELF_HOST: 'true'
+        UPSTASH_REDIS_REST_URL: https://test.upstash.io
+        RESEND_API_KEY: test
+        DATABASE_AUTH_TOKEN: test
+        VERCEL_AUTH_BEARER_TOKEN: test
+        STRIPE_SECRET_KEY: test
+        TINY_BIRD_API_KEY: test
+        NODE_ENV: production
+        CRON_SECRET: test
+        TEAM_ID_VERCEL: test
+        NEXT_PUBLIC_SELF_HOST: 'true'
+        UPSTASH_REDIS_REST_TOKEN: test
+        UNKEY_TOKEN: test
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/dashboard/node_modules
+        target: /app/apps/dashboard/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
+      run:
+      - corepack enable pnpm
+      - pnpm turbo run build --filter=@openstatus/dashboard
+    manifests:
+      fromImage:
+        path: node
+        digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+      label:
+        org.opencontainers.image.base.name: docker.io/node:24-slim
+        org.opencontainers.image.base.digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+      workdir: /app
       copy:
       - paths:
         - .
         target: /app/
       run:
-      - corepack enable
-      - pnpm install --frozen-lockfile
-      - pnpm turbo run build --filter=@openstatus/dashboard
+      - mkdir -p /out
+      - cp pnpm-workspace.yaml pnpm-lock.yaml package.json /out/
+      - find apps packages -name package.json -not -path '*/node_modules/*' -exec cp --parents {} /out/ \;
   fromImage:
     path: node
-    digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+    digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
   label:
-    org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
-    io.dofigen.version: 2.7.0
+    org.opencontainers.image.base.digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
     org.opencontainers.image.base.name: docker.io/node:24-slim
+    io.dofigen.version: 2.8.0
   user:
     user: '1000'
     group: '1000'
@@ -89,18 +135,56 @@ images:
     library:
       node:
         24-slim:
-          digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+          digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
 resources:
   dofigen.yml:
-    hash: 72276183896ed0df05dbf54946741d0b4348a3dafc1d70c1e3b5e64a76eedc11
+    hash: faa334a75307a18788b8e2818ac6b7fd9f43ad79700e0c0b30162771f67f334b
     content: |
       builders:
-        # Stage 1: Next.js build with Node.js
+        # Stage 1: collect every workspace manifest (package.json) into a tree that only
+        # changes when a manifest changes. The install stage copies from here, so its
+        # layer cache key depends on manifests + lockfile alone, not on source edits.
+        manifests:
+          fromImage: node:24-slim
+          workdir: /app
+          copy:
+            - . /app/
+          run:
+            - mkdir -p /out
+            - cp pnpm-workspace.yaml pnpm-lock.yaml package.json /out/
+            - find apps packages -name package.json -not -path '*/node_modules/*' -exec cp --parents {} /out/ \;
+
+        # Stage 2: install the dashboard dependency subgraph (dev deps included — next build needs them).
+        # Cached across builds as long as no package.json / pnpm-lock.yaml changed.
+        install:
+          fromImage: node:24-slim
+          workdir: /app
+          env:
+            PNPM_HOME: /pnpm
+            PATH: $PNPM_HOME:$PATH
+          copy:
+            - fromBuilder: manifests
+              source: /out/
+              target: /app/
+          run:
+            - corepack enable pnpm
+            - pnpm install --frozen-lockfile --filter=@openstatus/dashboard...
+
+        # Stage 3: Next.js build with Node.js
         builder:
           fromImage: node:24-slim
           workdir: /app
           copy:
             - . /app/
+            - fromBuilder: install
+              source: /app/node_modules
+              target: /app/node_modules
+            - fromBuilder: install
+              source: /app/apps/dashboard/node_modules
+              target: /app/apps/dashboard/node_modules
+            - fromBuilder: install
+              source: /app/packages
+              target: /app/packages
           env:
             NODE_ENV: production
             PNPM_HOME: /pnpm
@@ -126,8 +210,7 @@ resources:
             SELF_HOST: "true"
             NEXT_PUBLIC_SELF_HOST: "true"
           run:
-            - corepack enable
-            - pnpm install --frozen-lockfile
+            - corepack enable pnpm
             - pnpm turbo run build --filter=@openstatus/dashboard
 
       # Runtime stage

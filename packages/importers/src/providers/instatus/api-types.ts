@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { lenientEnum } from "../../schemas";
+
 export const InstatusPageSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -20,7 +22,7 @@ export const InstatusComponentSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().nullable(),
-  status: z.enum([
+  status: lenientEnum([
     "OPERATIONAL",
     "UNDERMAINTENANCE",
     "DEGRADEDPERFORMANCE",
@@ -39,7 +41,12 @@ export const InstatusIncidentUpdateSchema = z.object({
   id: z.string(),
   message: z.string().nullable(),
   messageHtml: z.string().nullable(),
-  status: z.enum(["INVESTIGATING", "IDENTIFIED", "MONITORING", "RESOLVED"]),
+  status: lenientEnum([
+    "INVESTIGATING",
+    "IDENTIFIED",
+    "MONITORING",
+    "RESOLVED",
+  ]),
   notify: z.boolean(),
   started: z.string(),
   createdAt: z.string(),
@@ -57,7 +64,12 @@ const InstatusIncidentComponentRefSchema = z.object({
 export const InstatusIncidentSchema = z.object({
   id: z.string(),
   name: z.string(),
-  status: z.enum(["INVESTIGATING", "IDENTIFIED", "MONITORING", "RESOLVED"]),
+  status: lenientEnum([
+    "INVESTIGATING",
+    "IDENTIFIED",
+    "MONITORING",
+    "RESOLVED",
+  ]),
   started: z.string(),
   resolved: z.string().nullable(),
   updates: z.array(InstatusIncidentUpdateSchema).optional(),
@@ -70,7 +82,7 @@ export const InstatusMaintenanceUpdateSchema = z.object({
   id: z.string(),
   message: z.string().nullable(),
   messageHtml: z.string().nullable(),
-  status: z.enum(["NOTSTARTEDYET", "INPROGRESS", "COMPLETED"]),
+  status: lenientEnum(["NOTSTARTEDYET", "INPROGRESS", "COMPLETED"]),
   notify: z.boolean(),
   started: z.string(),
 });
@@ -82,7 +94,7 @@ export type InstatusMaintenanceUpdate = z.infer<
 export const InstatusMaintenanceSchema = z.object({
   id: z.string(),
   name: z.string(),
-  status: z.enum(["NOTSTARTEDYET", "INPROGRESS", "COMPLETED"]),
+  status: lenientEnum(["NOTSTARTEDYET", "INPROGRESS", "COMPLETED"]),
   start: z.string(),
   duration: z.number().nullable(),
   updates: z.array(InstatusMaintenanceUpdateSchema).optional(),

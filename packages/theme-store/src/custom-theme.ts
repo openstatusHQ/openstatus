@@ -29,7 +29,7 @@ export type CustomThemeValidation =
 type LooseThemeVars = Record<string, string>;
 type LooseCustomTheme = { light?: LooseThemeVars; dark?: LooseThemeVars };
 
-function validateVarEntry(name: string, value: string): string[] {
+export function validateVarEntry(name: string, value: string): string[] {
   const errors: string[] = [];
   if (!THEME_VAR_NAME_SET.has(name)) {
     errors.push(`Unknown CSS variable "${name}".`);

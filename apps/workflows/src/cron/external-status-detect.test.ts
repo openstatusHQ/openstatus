@@ -6,6 +6,7 @@ import {
   PROBE_TTL_MS,
   clearProbeStamp,
   decideDetectionAction,
+  isBlocked,
   isSuspicious,
   shouldProbe,
 } from "./external-status-detect";
@@ -13,7 +14,7 @@ import {
 const URL = "https://status.example.com";
 
 const fetchError = (init: {
-  kind?: "http" | "parse" | "network" | "timeout";
+  kind?: "http" | "parse" | "schema" | "network" | "timeout";
   httpStatus?: number;
 }) => new FetchError({ url: URL, ...init });
 
@@ -43,10 +44,22 @@ describe("shouldProbe", () => {
 });
 
 describe("isSuspicious", () => {
-  test("parse and 4xx are suspicious", () => {
+  test("parse, schema and 4xx are suspicious", () => {
     expect(isSuspicious(fetchError({ kind: "parse" }))).toBe(true);
+    expect(isSuspicious(fetchError({ kind: "schema" }))).toBe(true);
     expect(isSuspicious(fetchError({ kind: "http", httpStatus: 404 }))).toBe(
       true,
+    );
+  });
+
+  test("bot challenges and rate limits are blocked, not suspicious", () => {
+    for (const httpStatus of [401, 403, 429]) {
+      const err = fetchError({ kind: "http", httpStatus });
+      expect(isBlocked(err)).toBe(true);
+      expect(isSuspicious(err)).toBe(false);
+    }
+    expect(isBlocked(fetchError({ kind: "http", httpStatus: 404 }))).toBe(
+      false,
     );
   });
 
@@ -107,6 +120,31 @@ describe("decideDetectionAction", () => {
     expect(action).toMatchObject({
       kind: "suggest",
       suggestion: "atlassian-statuspage|incidentio",
+    });
+  });
+
+  test("suggests the new base when the page moved", () => {
+    const action = decideDetectionAction(
+      result({
+        movedTo: {
+          base: "https://example.status.atlassian.com",
+          matches: [
+            {
+              type: "atlassian",
+              provider: "atlassian-statuspage",
+              endpoint:
+                "https://example.status.atlassian.com/api/v2/summary.json",
+            },
+          ],
+        },
+        hostnameSuggestions: ["uptime-robot"],
+      }),
+      row(null),
+    );
+    expect(action).toMatchObject({
+      kind: "suggest",
+      suggestion:
+        "atlassian-statuspage at https://example.status.atlassian.com",
     });
   });
 

@@ -40,12 +40,17 @@ export function FormSheetStatusReportCreate({
   open: controlledOpen,
   onOpenChange,
   defaultPageId,
+  incidentId,
+  onCreated,
 }: {
   children?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   /** Pre-scopes the sheet to a page and hides the selector. */
   defaultPageId?: number;
+  /** Links the new report to an incident on create. */
+  incidentId?: number;
+  onCreated?: () => void;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
@@ -85,6 +90,7 @@ export function FormSheetStatusReportCreate({
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
+        onCreated?.();
       },
     }),
   );
@@ -177,6 +183,7 @@ export function FormSheetStatusReportCreate({
                       date: values.date,
                       message: values.message,
                       notifySubscribers: values.notifySubscribers,
+                      incidentId,
                     });
                     setOpen(false);
                   }

@@ -1,4 +1,5 @@
 import * as assertions from "@openstatus/assertions";
+import { headerPairSchema } from "@openstatus/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -62,9 +63,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   method: monitorMethodsSchema.prefault("GET"),
 });
 
-const headersSchema = z
-  .array(z.object({ key: z.string(), value: z.string() }))
-  .optional();
+const headersSchema = z.array(headerPairSchema).optional();
 
 export const insertMonitorSchema = createInsertSchema(monitor, {
   name: z
@@ -79,10 +78,10 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   otelHeaders: headersSchema.prefault([]),
 }).extend({
   method: monitorMethodsSchema.prefault("GET"),
-  notifications: z.array(z.number()).optional().prefault([]),
-  pages: z.array(z.number()).optional().prefault([]),
+  notifications: z.array(z.number()).prefault([]),
+  pages: z.array(z.number()).prefault([]),
   body: z.string().prefault("").optional(),
-  tags: z.array(z.number()).optional().prefault([]),
+  tags: z.array(z.number()).prefault([]),
   statusAssertions: z.array(assertions.statusAssertion).optional(),
   headerAssertions: z.array(assertions.headerAssertion).optional(),
   textBodyAssertions: z.array(assertions.textBodyAssertion).optional(),

@@ -70,7 +70,7 @@ function monitor(
 
 describe("UptimeRobotFetcher", () => {
   let fetcher: UptimeRobotFetcher;
-  const originalFetch = global.fetch;
+  const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
     fetcher = new UptimeRobotFetcher();
@@ -78,7 +78,7 @@ describe("UptimeRobotFetcher", () => {
   });
 
   afterEach(() => {
-    global.fetch = originalFetch;
+    globalThis.fetch = originalFetch;
   });
 
   describe("canHandle", () => {

@@ -21,7 +21,10 @@ import {
 } from "../../../test/helpers";
 import type { DrizzleTx, ServiceContext } from "../../context";
 import { ForbiddenError } from "../../errors";
-import { downgradeWorkspaceToFree } from "../index.ts";
+import {
+  downgradeWorkspaceToFree,
+  previewWorkspaceDowngrade,
+} from "../index.ts";
 
 const OLDEST = new Date("2020-01-01T00:00:00Z");
 const NEWER = new Date("2021-01-01T00:00:00Z");
@@ -54,7 +57,11 @@ async function seedTeamWorkspace(tx: DrizzleTx) {
   const memberBId = 900_003;
   await tx.insert(user).values([
     { id: ownerUserId, tenantId: "svc-downgrade-owner" },
-    { id: memberAId, tenantId: "svc-downgrade-member-a" },
+    {
+      id: memberAId,
+      tenantId: "svc-downgrade-member-a",
+      email: "svc-downgrade-member-a@example.test",
+    },
     { id: memberBId, tenantId: "svc-downgrade-member-b" },
   ]);
   await tx.insert(usersToWorkspaces).values([
@@ -182,6 +189,10 @@ describe("downgradeWorkspaceToFree", () => {
         actor: { type: "system", job: "stripe-subscription-deleted" },
         db: tx,
       };
+      await tx
+        .update(workspace)
+        .set({ trialEndsAt: new Date("2027-01-01T00:00:00Z") })
+        .where(eq(workspace.id, s.ws.id));
 
       await downgradeWorkspaceToFree({ ctx });
 
@@ -194,6 +205,7 @@ describe("downgradeWorkspaceToFree", () => {
       expect(after?.subscriptionId).toBeNull();
       expect(after?.paidUntil).toBeNull();
       expect(after?.endsAt).toBeNull();
+      expect(after?.trialEndsAt).toBeNull();
       // Compare parsed content, not the raw string — the verb persists
       // `limitsSchema`-canonicalised JSON (key order differs from the
       // config object returned by `getLimits`).
@@ -219,6 +231,40 @@ describe("downgradeWorkspaceToFree", () => {
         from: "team",
         to: "free",
       });
+    });
+  });
+
+  test("stamps the given reason instead of the default", async () => {
+    await withTestTransaction(async (tx) => {
+      const s = await seedTeamWorkspace(tx);
+      const withSso = await tx
+        .update(workspace)
+        .set({ workosOrganizationId: "org_downgrade_reason", ssoEnabled: true })
+        .where(eq(workspace.id, s.ws.id))
+        .returning()
+        .get();
+      const ctx: ServiceContext = {
+        workspace: selectWorkspaceSchema.parse(withSso),
+        actor: { type: "system", job: "stripe-subscription-deleted" },
+        db: tx,
+      };
+
+      await downgradeWorkspaceToFree({ ctx, input: { reason: "trial_ended" } });
+
+      const [wsAudit] = await readAuditLog({
+        workspaceId: s.ws.id,
+        entityType: "workspace",
+        entityId: s.ws.id,
+        db: tx,
+      });
+      expect(wsAudit?.metadata).toMatchObject({ reason: "trial_ended" });
+      const [ssoAudit] = await readAuditLog({
+        workspaceId: s.ws.id,
+        entityType: "workspace_sso",
+        entityId: s.ws.id,
+        db: tx,
+      });
+      expect(ssoAudit?.metadata).toMatchObject({ reason: "trial_ended" });
     });
   });
 
@@ -407,6 +453,88 @@ describe("downgradeWorkspaceToFree", () => {
         db: tx,
       });
       expect(acceptedAudit).toHaveLength(0);
+    });
+  });
+
+  test("returns what the cascade actually trimmed", async () => {
+    await withTestTransaction(async (tx) => {
+      const s = await seedTeamWorkspace(tx);
+      const ctx: ServiceContext = {
+        workspace: s.ws,
+        actor: { type: "system", job: "stripe-subscription-deleted" },
+        db: tx,
+      };
+
+      const { trimmed } = await downgradeWorkspaceToFree({ ctx });
+
+      expect(trimmed).toEqual({
+        monitorsDeactivated: 1,
+        pagesDeleted: ["Deleted Page"],
+        keptPageTitle: "Kept Page",
+        notificationsDeleted: 1,
+        invitationsDeleted: 1,
+        membersRemovedCount: 2,
+        // member B has no email on file and cannot be notified
+        membersRemoved: ["svc-downgrade-member-a@example.test"],
+      });
+    });
+  });
+
+  test("preview matches what the downgrade then trims, and changes nothing", async () => {
+    await withTestTransaction(async (tx) => {
+      const s = await seedTeamWorkspace(tx);
+      const ctx: ServiceContext = {
+        workspace: s.ws,
+        actor: { type: "system", job: "stripe-subscription-updated" },
+        db: tx,
+      };
+
+      const { customDomains, ssoEnabled, ...preview } =
+        await previewWorkspaceDowngrade({ ctx });
+
+      expect(customDomains).toEqual(["status.acme.test"]);
+      expect(ssoEnabled).toBe(false);
+      const pages = await tx
+        .select()
+        .from(page)
+        .where(eq(page.workspaceId, s.ws.id))
+        .all();
+      expect(pages.length).toBe(2);
+
+      const { trimmed } = await downgradeWorkspaceToFree({ ctx });
+      expect(preview).toEqual(trimmed);
+    });
+  });
+
+  test("returns an empty trim for a workspace with nothing to remove", async () => {
+    await withTestTransaction(async (tx) => {
+      const wsRow = await tx
+        .insert(workspace)
+        .values({
+          slug: "svc-downgrade-empty",
+          name: "Empty",
+          plan: "team",
+          limits: JSON.stringify(getLimits("team")),
+        })
+        .returning()
+        .get();
+      const ctx: ServiceContext = {
+        workspace: selectWorkspaceSchema.parse(wsRow),
+        actor: { type: "system", job: "stripe-subscription-deleted" },
+        db: tx,
+      };
+
+      const { trimmed } = await downgradeWorkspaceToFree({ ctx });
+
+      expect(trimmed).toEqual({
+        monitorsDeactivated: 0,
+        pagesDeleted: [],
+        keptPageTitle: null,
+        notificationsDeleted: 0,
+        invitationsDeleted: 0,
+        membersRemovedCount: 0,
+        membersRemoved: [],
+      });
     });
   });
 

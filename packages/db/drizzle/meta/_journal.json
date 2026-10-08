@@ -603,6 +603,48 @@
       "when": 1788374582005,
       "tag": "0085_daily_glorian",
       "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "6",
+      "when": 1788721405307,
+      "tag": "0086_robust_quicksilver",
+      "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "6",
+      "when": 1790175988767,
+      "tag": "0087_narrow_black_tarantula",
+      "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "6",
+      "when": 1790589150938,
+      "tag": "0088_rename_incident_to_monitor_incident",
+      "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "6",
+      "when": 1790599837204,
+      "tag": "0089_hesitant_dragon_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "6",
+      "when": 1790604809096,
+      "tag": "0090_condemned_photon",
+      "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "6",
+      "when": 1790864737627,
+      "tag": "0091_amused_wrecker",
+      "breakpoints": true
     }
   ]
 }

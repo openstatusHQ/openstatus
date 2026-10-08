@@ -17,7 +17,7 @@ type FetchImpl = (url: string, init?: RequestInit) => Promise<Response>;
 
 const installMockFetch = (impl: FetchImpl) => {
   const fn = spy(impl);
-  global.fetch = fn as unknown as typeof fetch;
+  globalThis.fetch = fn as unknown as typeof fetch;
   return fn;
 };
 
@@ -126,7 +126,8 @@ describe("fetchJson", () => {
     );
     const err = expectFailure(exit);
     expect(err.cause).toBeInstanceOf(Error);
-    expect(err.kind).toBe("parse");
+    expect(err.kind).toBe("schema");
+    expect(err.message).toBe(`[FetchError] schema mismatch: ${TEST_URL}`);
     expect(fetchMock.calls.length).toBe(1);
   });
 

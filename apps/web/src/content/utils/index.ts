@@ -6,6 +6,11 @@ import { type MDXData, getMDXDataFromDir, getMDXDataFromFile } from "./read";
 export * from "./schema";
 export type { MDXData } from "./read";
 
+/** Same rule for the sitemap, llms.txt and search: a noindex page is not advertised anywhere. */
+export function isIndexable(page: MDXData) {
+  return page.slug !== "not-found" && !page.metadata.seo?.noindex;
+}
+
 export function getBlogPosts(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "blog"),

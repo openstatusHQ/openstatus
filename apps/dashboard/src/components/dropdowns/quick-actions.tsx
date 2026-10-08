@@ -107,6 +107,7 @@ export function QuickActions({
               {...props}
             >
               <More />
+              <span className="sr-only">Actions</span>
             </Button>
           )}
         </DropdownMenuTrigger>

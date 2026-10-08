@@ -38,6 +38,7 @@ import {
 import {
   clearProbeStamp,
   decideDetectionAction,
+  isBlocked,
   isSuspicious,
   shouldProbe,
 } from "./external-status-detect";
@@ -175,12 +176,10 @@ function runStatusPhase(
         });
       }
       return fetcher.fetch(entry).pipe(
-        Effect.map(
-          (result): StatusPhaseOutcome => ({
-            kind: "ok",
-            snapshot: buildSnapshot({ entry, result, fetchedAt }),
-          }),
-        ),
+        Effect.map((result): StatusPhaseOutcome => ({
+          kind: "ok",
+          snapshot: buildSnapshot({ entry, result, fetchedAt }),
+        })),
         // Failure reporting is deferred: the detect step after this phase
         // either merges it into a detection story or reports it plain.
         Effect.catch((err: FetchError) =>
@@ -228,13 +227,11 @@ function runIncidentPhase(
                 cause: e instanceof Error ? e : new Error(String(e)),
               }),
           }).pipe(
-            Effect.map(
-              (result): IncidentPhaseOutcome => ({
-                kind: "ok",
-                slug: entry.id,
-                count: result.upserted,
-              }),
-            ),
+            Effect.map((result): IncidentPhaseOutcome => ({
+              kind: "ok",
+              slug: entry.id,
+              count: result.upserted,
+            })),
           ),
         ),
         Effect.catch((err: FetchError) =>
@@ -243,6 +240,7 @@ function runIncidentPhase(
               phase: "incidents",
               slug: entry.id,
               error: err,
+              level: isBlocked(err) ? "warning" : undefined,
             });
             return { kind: "fail", slug: entry.id, reason: err.message };
           }),
@@ -313,6 +311,7 @@ function runComponentPhase(
               phase: "components",
               slug: entry.id,
               error: err,
+              level: isBlocked(err) ? "warning" : undefined,
             });
             return { kind: "fail", slug: entry.id, reason: err.message };
           }),
@@ -479,6 +478,7 @@ function collectDetectItems(
         phase: "status",
         slug: outcome.slug,
         error: outcome.error,
+        level: isBlocked(outcome.error) ? "warning" : undefined,
       });
     }
   });
@@ -595,11 +595,16 @@ function detectAndAct(
         case "noop":
           return Effect.sync((): DetectOutcome => {
             if (action.reason === "no-evidence") {
+              // Valid JSON our schema rejects means our schema is stale, not
+              // that the page moved.
               reportDetectionStory({
                 slug: entry.id,
                 currentProvider: row.provider,
                 fetchError: error,
-                outcome: { kind: "none" },
+                outcome:
+                  error?.kind === "schema"
+                    ? { kind: "schema-mismatch" }
+                    : { kind: "none" },
                 evidence: action.evidence,
               });
               return { kind: "none", slug: entry.id };

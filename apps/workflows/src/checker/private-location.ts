@@ -257,7 +257,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             const existingIncident = await findOpenIncident(monitorIdNumber);
             if (!existingIncident) {
               const [newIncident] = await db
-                .insert(schema.incidentTable)
+                .insert(schema.monitorIncidentTable)
                 .values({
                   monitorId: monitorIdNumber,
                   workspaceId: monitor.workspaceId,

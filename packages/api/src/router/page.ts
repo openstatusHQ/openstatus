@@ -1,17 +1,13 @@
 import { Events } from "@openstatus/analytics";
 import { locales } from "@openstatus/locales";
-import { NotFoundError } from "@openstatus/services";
+import { LimitExceededError, NotFoundError } from "@openstatus/services";
 import { getUptimeHistory } from "@openstatus/services/frozen-uptime";
 import {
+  createPage,
   type CreatePageInput,
   // `CreatePageInput` re-exports the drizzle insert schema so routers
   // don't need to import it directly from `@openstatus/db`.
   CreatePageInput as CreatePageInputSchema,
-  UpdatePageAppearanceInput,
-  UpdatePageConfigurationInput,
-  UpdatePageCustomThemeInput,
-  UpdatePageCustomDomainInput,
-  createPage,
   deletePage,
   getPage,
   getPageCustomDomain,
@@ -20,9 +16,13 @@ import {
   newPage,
   pageAccessTypes,
   updatePageAppearance,
+  UpdatePageAppearanceInput,
   updatePageConfiguration,
-  updatePageCustomTheme,
+  UpdatePageConfigurationInput,
   updatePageCustomDomain,
+  UpdatePageCustomDomainInput,
+  updatePageCustomTheme,
+  UpdatePageCustomThemeInput,
   updatePageGeneral,
   updatePageLinks,
   updatePageLocales,
@@ -216,6 +216,9 @@ export const pageRouter = createTRPCRouter({
       // every domain update was wasteful.
       try {
         const sCtx = toServiceCtx(ctx);
+        if (input.customDomain && !sCtx.workspace.limits["custom-domain"]) {
+          throw new LimitExceededError("custom-domain", 0);
+        }
         const oldDomain = await getPageCustomDomain({
           ctx: sCtx,
           input: { id: input.id },

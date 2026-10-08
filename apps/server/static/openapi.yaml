@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  description: OpenStatus is a open-source status page platform with global uptime monitoring. The OpenStatus API allows you to interact with the OpenStatus platform programmatically. To get started you need to create an account on https://www.openstatus.dev/ and create an api token in your settings.
+  description: OpenStatus is a open-source status page platform with global uptime monitoring. The OpenStatus API allows you to interact with the OpenStatus platform programmatically. To get started you need to create an account on https://www.openstatus.dev/ and create an api token in your settings. Requests are rate limited per API key or token (600 per minute, 100 per 10 seconds); exceeding a limit returns HTTP 429 with a Retry-After header. See https://www.openstatus.dev/docs/reference/api-rate-limits.
   title: OpenStatus API
   version: v2.0.0
   contact:
@@ -13,6 +13,19 @@ externalDocs:
   description: OpenStatus Documentation
   url: https://www.openstatus.dev/docs
 components:
+  responses:
+    RateLimited:
+      description: Rate limit exceeded (Connect code resource_exhausted). Retry after the number of seconds in the Retry-After header. See https://www.openstatus.dev/docs/reference/api-rate-limits.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
+            example: 7
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/connect.error'
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
@@ -1772,7 +1785,9 @@ components:
         - REGION_RAILWAY_US_EAST4
         - REGION_RAILWAY_EUROPE_WEST4
         - REGION_RAILWAY_ASIA_SOUTHEAST1
-      description: Geographic regions where monitors can run checks from.
+      description: |-
+        Geographic regions where monitors can run checks from.
+         REGION_FLY_BOM is deprecated and rejected on create/update; use REGION_FLY_SIN.
     openstatus.monitor.v1.RegionStatus:
       type: object
       properties:
@@ -2427,7 +2442,8 @@ components:
           properties:
             sms:
               title: sms
-              description: SMS configuration.
+              description: 'Deprecated: SMS is no longer offered; use whatsapp.'
+              deprecated: true
               $ref: '#/components/schemas/openstatus.notification.v1.SmsData'
           title: sms
           required:
@@ -2631,7 +2647,8 @@ components:
           description: Phone number to send SMS to.
       title: SmsData
       additionalProperties: false
-      description: SmsData contains configuration for SMS notifications.
+      description: 'Deprecated: SMS is no longer offered; use WhatsappData. Kept for existing channels.'
+      deprecated: true
     openstatus.notification.v1.TelegramData:
       type: object
       properties:
@@ -3958,6 +3975,7 @@ components:
         - LOCALE_TR
         - LOCALE_HI
         - LOCALE_KO
+        - LOCALE_JA
       description: Locale defines the supported languages for a status page.
     openstatus.status_page.v1.OverallStatus:
       type: string
@@ -5146,6 +5164,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.health.v1.CheckRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5171,6 +5191,8 @@ paths:
               $ref: '#/components/schemas/openstatus.health.v1.CheckRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5197,6 +5219,8 @@ paths:
               $ref: '#/components/schemas/openstatus.maintenance.v1.CreateMaintenanceRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5223,6 +5247,8 @@ paths:
               $ref: '#/components/schemas/openstatus.maintenance.v1.DeleteMaintenanceRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5250,6 +5276,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.maintenance.v1.GetMaintenanceRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5275,6 +5303,8 @@ paths:
               $ref: '#/components/schemas/openstatus.maintenance.v1.GetMaintenanceRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5302,6 +5332,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.maintenance.v1.ListMaintenancesRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5327,6 +5359,8 @@ paths:
               $ref: '#/components/schemas/openstatus.maintenance.v1.ListMaintenancesRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5353,6 +5387,8 @@ paths:
               $ref: '#/components/schemas/openstatus.maintenance.v1.UpdateMaintenanceRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5379,6 +5415,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.CreateDNSMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5405,6 +5443,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.CreateGRPCMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5431,6 +5471,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.CreateHTTPMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5457,6 +5499,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.CreateICMPMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5483,6 +5527,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.CreateTCPMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5509,6 +5555,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.DeleteMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5538,6 +5586,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5565,6 +5615,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5592,6 +5644,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorHTTPResponseLogRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5617,6 +5671,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorHTTPResponseLogRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5644,6 +5700,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorStatusRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5669,6 +5727,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorStatusRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5696,6 +5756,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5721,6 +5783,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5748,6 +5812,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorHTTPResponseLogsRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5773,6 +5839,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorHTTPResponseLogsRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5800,6 +5868,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5825,6 +5895,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5851,6 +5923,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.TriggerMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5877,6 +5951,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.UpdateDNSMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5903,6 +5979,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.UpdateGRPCMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5929,6 +6007,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.UpdateHTTPMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5955,6 +6035,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.UpdateICMPMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -5981,6 +6063,8 @@ paths:
               $ref: '#/components/schemas/openstatus.monitor.v1.UpdateTCPMonitorRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6008,6 +6092,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.notification.v1.CheckNotificationLimitRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6033,6 +6119,8 @@ paths:
               $ref: '#/components/schemas/openstatus.notification.v1.CheckNotificationLimitRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6059,6 +6147,8 @@ paths:
               $ref: '#/components/schemas/openstatus.notification.v1.CreateNotificationRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6085,6 +6175,8 @@ paths:
               $ref: '#/components/schemas/openstatus.notification.v1.DeleteNotificationRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6112,6 +6204,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.notification.v1.GetNotificationRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6137,6 +6231,8 @@ paths:
               $ref: '#/components/schemas/openstatus.notification.v1.GetNotificationRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6164,6 +6260,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.notification.v1.ListNotificationsRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6189,6 +6287,8 @@ paths:
               $ref: '#/components/schemas/openstatus.notification.v1.ListNotificationsRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6215,6 +6315,8 @@ paths:
               $ref: '#/components/schemas/openstatus.notification.v1.SendTestNotificationRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6241,6 +6343,8 @@ paths:
               $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6267,6 +6371,8 @@ paths:
               $ref: '#/components/schemas/openstatus.private_location.v1.CreatePrivateLocationRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6293,6 +6399,8 @@ paths:
               $ref: '#/components/schemas/openstatus.private_location.v1.DeletePrivateLocationRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6322,6 +6430,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6349,6 +6459,8 @@ paths:
               $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6378,6 +6490,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6405,6 +6519,8 @@ paths:
               $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6431,6 +6547,8 @@ paths:
               $ref: '#/components/schemas/openstatus.private_location.v1.UpdatePrivateLocationRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6457,6 +6575,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.AddMonitorComponentRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6483,6 +6603,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.AddStaticComponentRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6509,6 +6631,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.CreateComponentGroupRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6535,6 +6659,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.CreatePageSubscriptionRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6561,6 +6687,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.CreateStatusPageRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6587,6 +6715,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.DeleteComponentGroupRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6613,6 +6743,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.DeleteStatusPageRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6640,6 +6772,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6665,6 +6799,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6692,6 +6828,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6717,6 +6855,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6744,6 +6884,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentDailySummaryRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6769,6 +6911,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentDailySummaryRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6796,6 +6940,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6821,6 +6967,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6848,6 +6996,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6873,6 +7023,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6900,6 +7052,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6925,6 +7079,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6952,6 +7108,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.ListStatusPagesRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -6977,6 +7135,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.ListStatusPagesRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7004,6 +7164,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.ListSubscribersRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7029,6 +7191,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.ListSubscribersRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7055,6 +7219,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.RemoveComponentRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7081,6 +7247,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.SubscribeToPageRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7107,6 +7275,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.UnsubscribeFromPageRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7133,6 +7303,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7159,6 +7331,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentGroupRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7185,6 +7359,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_page.v1.UpdateStatusPageRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7211,6 +7387,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_report.v1.AddStatusReportUpdateRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7237,6 +7415,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_report.v1.CreateStatusReportRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7263,6 +7443,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_report.v1.DeleteStatusReportRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7290,6 +7472,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.status_report.v1.GetStatusReportRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7315,6 +7499,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_report.v1.GetStatusReportRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7342,6 +7528,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/openstatus.status_report.v1.ListStatusReportsRequest'
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7367,6 +7555,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_report.v1.ListStatusReportsRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:
@@ -7393,6 +7583,8 @@ paths:
               $ref: '#/components/schemas/openstatus.status_report.v1.UpdateStatusReportRequest'
         required: true
       responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
         default:
           description: Error
           content:

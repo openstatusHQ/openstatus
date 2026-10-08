@@ -55,13 +55,17 @@ const FILE_LIKE = /\.[a-z0-9]+$/i;
 type Violation = { file: string; line: number; path: string };
 
 function trackedFiles(): string[] {
-  return execFileSync("git", ["ls-files", "-z"], {
-    cwd: REPO_ROOT,
-    encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
-  })
-    .split("\0")
-    .filter((file) => file.length > 0);
+  return (
+    execFileSync("git", ["ls-files", "-z"], {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+    })
+      .split("\0")
+      // Under jj the git index lags the working copy, so it still lists files
+      // deleted but not yet committed.
+      .filter((file) => file.length > 0 && existsSync(join(REPO_ROOT, file)))
+  );
 }
 
 /**

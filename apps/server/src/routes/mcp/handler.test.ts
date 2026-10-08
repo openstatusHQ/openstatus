@@ -1,13 +1,23 @@
 import { sentry } from "@hono/sentry";
+import { Events } from "@openstatus/analytics";
 import { db, desc, eq } from "@openstatus/db";
 import { auditLog, page, statusReport } from "@openstatus/db/src/schema";
+import { resourceMetadataUrl } from "@openstatus/services/oauth";
 import { SEEDED_WORKSPACE_TEAM_ID } from "@openstatus/services/test/fixtures";
+import type { MockFn } from "@openstatus/test-utils";
 import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  test,
+} from "@std/testing/bdd";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
 
 import { handleError } from "../../libs/errors";
+import { oauthConfigFromEnv } from "../oauth/config";
 import { mcpRoute } from "./index";
 
 /**
@@ -70,34 +80,28 @@ async function readJsonRpc(
 }
 
 describe("MCP transport", () => {
-  test("serves the public documents without a key", async () => {
+  test("a request without a key is a 401 that starts OAuth discovery", async () => {
     const app = makeApp();
-    const res = await app.fetch(jsonRpc({ method: "resources/list" }, false));
-    expect(res.status).toBe(200);
-    const body = await readJsonRpc(res);
-    const resources = (body.result as { resources: { uri: string }[] })
-      .resources;
-    expect(resources.length).toBeGreaterThan(0);
+    const res = await app.fetch(jsonRpc({ method: "initialize" }, false));
+    expect(res.status).toBe(401);
+    // RFC 9728: the challenge points at the protected-resource metadata, which
+    // is how an MCP client finds the authorization server. Without it the
+    // client has a dead endpoint rather than a protected one.
+    const challenge = res.headers.get("WWW-Authenticate") ?? "";
+    expect(challenge.startsWith("Bearer ")).toBe(true);
+    expect(challenge).toContain(
+      `resource_metadata="${resourceMetadataUrl(oauthConfigFromEnv().issuer)}"`,
+    );
   });
 
-  test("registers no tools without a key", async () => {
-    const app = makeApp();
-    const res = await app.fetch(jsonRpc({ method: "tools/list" }, false));
-    // No tool handler is registered on the anonymous server, so the method
-    // itself is absent — an empty tool list would still be a workspace-shaped
-    // response to an unauthenticated caller.
-    const body = await readJsonRpc(res);
-    expect(body.result).toBeUndefined();
-    expect(body.error?.code).toBe(-32601);
-  });
-
-  test("a present but empty key is a 401, not the public surface", async () => {
+  test("a present but empty key is a 401 too", async () => {
     const app = makeApp();
     const res = await app.fetch(jsonRpc({ method: "resources/list" }, ""));
     expect(res.status).toBe(401);
+    expect(res.headers.get("WWW-Authenticate")).toBeTruthy();
   });
 
-  test("resources/list is also served to an authenticated key", async () => {
+  test("resources/list serves the public documents to an authenticated key", async () => {
     const app = makeApp();
     const res = await app.fetch(jsonRpc({ method: "resources/list" }));
     expect(res.status).toBe(200);
@@ -115,15 +119,24 @@ describe("MCP transport", () => {
     const tools = (body.result as { tools: { name: string }[] }).tools;
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
+      "add_incident_note",
       "add_status_report_update",
+      "approve_postmortem",
       "create_maintenance",
       "create_status_report",
+      "declare_incident",
+      "draft_postmortem",
       "get_audit_log",
+      "get_content_page",
+      "get_doc_page",
+      "get_incident",
       "get_monitor",
       "get_monitor_status",
       "get_monitor_summary",
+      "get_postmortem",
       "get_response_log",
       "list_audit_logs",
+      "list_incidents",
       "list_maintenances",
       "list_monitors",
       "list_notifications",
@@ -132,7 +145,12 @@ describe("MCP transport", () => {
       "list_response_logs",
       "list_status_pages",
       "list_status_reports",
+      "resolve_incident",
       "resolve_status_report",
+      "search_content",
+      "search_docs",
+      "set_incident_status",
+      "update_incident",
       "update_status_report",
     ]);
   });
@@ -224,6 +242,66 @@ describe("MCP transport", () => {
       expect(tool.inputSchema).toBeDefined();
       expect(tool.outputSchema).toBeDefined();
     }
+  });
+});
+
+/**
+ * `@openstatus/analytics` is swapped for a double (test.importmap.json) whose
+ * spies live on `globalThis.__analyticsSpies`.
+ */
+const analyticsSpies = (globalThis as Record<string, unknown>)
+  .__analyticsSpies as { track: MockFn; setupAnalytics: MockFn };
+
+/**
+ * Tracking is fire-and-forget — `track` runs in a microtask chained off
+ * `setupAnalytics`, which may not have settled when `app.fetch` resolves.
+ */
+async function flushTracking() {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+describe("MCP transport — analytics", () => {
+  beforeEach(() => {
+    analyticsSpies.setupAnalytics.mockClear();
+    analyticsSpies.track.mockClear();
+  });
+
+  test("tools/call tracks mcp_request with the tool name", async () => {
+    const app = makeApp();
+    await app.fetch(
+      jsonRpc({
+        method: "tools/call",
+        params: { name: "list_status_pages", arguments: {} },
+      }),
+    );
+    await flushTracking();
+
+    const identify = analyticsSpies.setupAnalytics.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(identify?.userId).toBe(`api_${SEEDED_WORKSPACE_TEAM_ID}`);
+    expect(identify?.workspaceId).toBe(`${SEEDED_WORKSPACE_TEAM_ID}`);
+    expect(identify?.source).toBe("mcp");
+
+    const event = analyticsSpies.track.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(event?.name).toBe(Events.McpRequest.name);
+    expect(event?.method).toBe("tools/call");
+    expect(event?.tool).toBe("list_status_pages");
+    expect(event?.authenticated).toBe(true);
+  });
+
+  test("a rejected request is not tracked", async () => {
+    const app = makeApp();
+    await app.fetch(jsonRpc({ method: "resources/list" }, false));
+    await flushTracking();
+
+    // `authMiddleware` throws before the handler runs, so unauthenticated
+    // traffic never reaches the tracker: the event counts real MCP calls.
+    expect(analyticsSpies.track.mock.calls.length).toBe(0);
   });
 });
 

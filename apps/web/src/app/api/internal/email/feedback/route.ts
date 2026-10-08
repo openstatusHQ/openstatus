@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     if (!u.email || u.email.trim() === "") continue;
 
     await sendEmail({
-      from: "Thibault from OpenStatus <thibault@openstatus.dev>",
+      from: "Thibault from openstatus <thibault@openstatus.dev>",
       subject: "One quick question",
       to: [u.email],
       react: FeedbackEmail(),

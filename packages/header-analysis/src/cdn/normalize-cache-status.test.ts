@@ -47,6 +47,7 @@ describe("cloudfront / fastly / akamai (x-cache)", () => {
     ["RefreshHit from cloudfront", "EXPIRED"],
     ["HIT", "HIT"],
     ["MISS, HIT", "HIT"],
+    ["HIT, MISS", "HIT"],
     [
       "TCP_HIT from a23-45-67-89.deploy.akamaitechnologies.com (AkamaiGHost)",
       "HIT",
@@ -70,13 +71,31 @@ describe("rfc 9211 cache-status", () => {
     ["ExampleCache; fwd=miss; stored", "MISS"],
     ["ExampleCache; fwd=stale", "EXPIRED"],
     ["ExampleCache; fwd=bypass", "BYPASS"],
+    ["OriginCache; hit, EdgeCache; fwd=miss", "MISS"],
+    ["OriginCache; fwd=miss, EdgeCache; hit", "HIT"],
+    ["OriginCache; fwd=bypass, EdgeCache; fwd=stale", "EXPIRED"],
+    ['OriginCache; hit, "Edge, Cache"; fwd=miss', "MISS"],
+    ['OriginCache; hit, EdgeCache; fwd=miss; detail="a,b; hit"', "MISS"],
+    [
+      String.raw`OriginCache; hit, EdgeCache; fwd=miss; detail="a\",b; hit"`,
+      "MISS",
+    ],
+    [String.raw`OriginCache; detail="a\\"; hit, EdgeCache; fwd=miss`, "MISS"],
   ] as const) {
     test(`cache-status: ${raw} -> ${status}`, () => {
       const result = normalizeCacheStatus({ "Cache-Status": raw });
       expect(result.status).toBe(status);
       expect(result.source).toBe("cache-status");
+      expect(result.raw).toBe(raw);
     });
   }
+
+  test("does not use an upstream hit when the last cache has no status", () => {
+    expect(
+      normalizeCacheStatus({ "Cache-Status": "OriginCache; hit, EdgeCache" })
+        .status,
+    ).toBe("UNKNOWN");
+  });
 });
 
 describe("vendor header priority", () => {

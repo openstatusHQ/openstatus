@@ -108,7 +108,7 @@ export function StatusCalendar({
 
     const seenIncidents = new Set<number>();
     for (const c of pageComponents) {
-      const incidents = c.monitor?.incidents ?? [];
+      const incidents = c.monitor?.monitorIncidents ?? [];
       for (const inc of incidents) {
         if (seenIncidents.has(inc.id)) continue;
         seenIncidents.add(inc.id);

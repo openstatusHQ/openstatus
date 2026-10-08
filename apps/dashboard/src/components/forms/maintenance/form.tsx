@@ -1,9 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar as CalendarIcon, Clock } from "@openstatus/icons";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Calendar } from "@openstatus/ui/components/ui/calendar";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Form,
@@ -16,25 +13,20 @@ import {
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@openstatus/ui/components/ui/popover";
 import { TabsContent } from "@openstatus/ui/components/ui/tabs";
 import { TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { Tabs } from "@openstatus/ui/components/ui/tabs";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
-import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { addDays, format } from "date-fns";
+import { addDays } from "date-fns";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { DateTimePicker } from "@/components/common/date-time-picker";
 import {
   EmptyStateContainer,
   EmptyStateTitle,
@@ -80,7 +72,6 @@ export function FormMaintenance({
 }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const mobile = useIsMobile();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -158,101 +149,25 @@ export function FormMaintenance({
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Start Date</FormLabel>
-                <Popover modal>
-                  <FormControl>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground",
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP 'at' h:mm a")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                  </FormControl>
-                  <PopoverContent
-                    className="pointer-events-auto w-auto p-0"
-                    align="start"
-                    side={mobile ? "bottom" : "left"}
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={(selectedDate) => {
-                        if (!selectedDate) return;
-
-                        const newDate = new Date(selectedDate);
-                        newDate.setHours(
-                          field.value.getHours(),
-                          field.value.getMinutes(),
-                          field.value.getSeconds(),
-                          field.value.getMilliseconds(),
+                <FormControl>
+                  <DateTimePicker
+                    value={field.value}
+                    className="w-[240px]"
+                    onChange={(date) => {
+                      // a start moved past the end drags the end along,
+                      // keeping the duration
+                      if (watchEndDate && date > watchEndDate) {
+                        const duration =
+                          watchEndDate.getTime() - field.value.getTime();
+                        form.setValue(
+                          "endDate",
+                          new Date(date.getTime() + duration),
                         );
-                        field.onChange(newDate);
-
-                        // NOTE: if end date is before start date, set it to the same day as the start date
-                        if (watchEndDate && newDate > watchEndDate) {
-                          form.setValue("endDate", newDate);
-                        }
-                      }}
-                      initialFocus
-                    />
-                    <div className="border-t p-3">
-                      <div className="flex items-center gap-3">
-                        <Label htmlFor="time-start" className="text-xs">
-                          Enter time
-                        </Label>
-                        <div className="relative grow">
-                          <Input
-                            id="time-start"
-                            type="time"
-                            step="1"
-                            value={
-                              field.value
-                                ? field.value.toTimeString().slice(0, 8)
-                                : new Date().toTimeString().slice(0, 8)
-                            }
-                            className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                            onChange={(e) => {
-                              try {
-                                const timeValue = e.target.value;
-                                if (!timeValue || !field.value) return;
-
-                                const [hours, minutes, seconds] = timeValue
-                                  .split(":")
-                                  .map(Number);
-
-                                const newDate = new Date(field.value);
-                                newDate.setHours(
-                                  hours,
-                                  minutes,
-                                  seconds || 0,
-                                  0,
-                                );
-
-                                field.onChange(newDate);
-                              } catch (error) {
-                                console.error(error);
-                              }
-                            }}
-                          />
-                          <div className="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50">
-                            <Clock size={16} aria-hidden="true" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                      }
+                      field.onChange(date);
+                    }}
+                  />
+                </FormControl>
                 <FormDescription>
                   When the maintenance starts. Shown in your timezone (
                   <code className="font-commit-mono text-foreground/70">
@@ -277,96 +192,13 @@ export function FormMaintenance({
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>End Date</FormLabel>
-                <Popover modal>
-                  <FormControl>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground",
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP 'at' h:mm a")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                  </FormControl>
-                  <PopoverContent
-                    className="pointer-events-auto w-auto p-0"
-                    align="start"
-                    side={mobile ? "bottom" : "left"}
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={(selectedDate) => {
-                        if (!selectedDate) return;
-
-                        const newDate = new Date(selectedDate);
-                        newDate.setHours(
-                          field.value.getHours(),
-                          field.value.getMinutes(),
-                          field.value.getSeconds(),
-                          field.value.getMilliseconds(),
-                        );
-                        field.onChange(newDate);
-                      }}
-                      initialFocus
-                    />
-                    <div className="border-t p-3">
-                      <div className="flex items-center gap-3">
-                        <Label htmlFor="time-end" className="text-xs">
-                          Enter time
-                        </Label>
-                        <div className="relative grow">
-                          <Input
-                            id="time-end"
-                            type="time"
-                            step="1"
-                            value={
-                              field.value
-                                ? field.value.toTimeString().slice(0, 8)
-                                : new Date().toTimeString().slice(0, 8)
-                            }
-                            className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                            onChange={(e) => {
-                              try {
-                                const timeValue = e.target.value;
-                                if (!timeValue || !field.value) return;
-
-                                const [hours, minutes, seconds] = timeValue
-                                  .split(":")
-                                  .map(Number);
-
-                                const newDate = new Date(field.value);
-                                newDate.setHours(
-                                  hours,
-                                  minutes,
-                                  seconds || 0,
-                                  0,
-                                );
-
-                                field.onChange(newDate);
-                              } catch (error) {
-                                console.error(error);
-                              }
-                            }}
-                          />
-                          <div className="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50">
-                            <Clock size={16} aria-hidden="true" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <FormControl>
+                  <DateTimePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    className="w-[240px]"
+                  />
+                </FormControl>
                 <FormDescription>
                   When the maintenance ends. Shown in your timezone (
                   <code className="font-commit-mono text-foreground/70">

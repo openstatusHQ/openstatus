@@ -22,12 +22,14 @@ const card = {
     type: "streamable-http",
     url: "https://api.openstatus.dev/mcp",
   },
+  // The draft schema has no settled shape for OAuth yet, so the card keeps
+  // the apiKey form and points at the discovery document in prose.
   authentication: {
     type: "apiKey",
     in: "header",
     name: "x-openstatus-key",
     description:
-      "Workspace API key. Generate one in Settings → API Tokens. Same credential used by the CLI, REST API, and Terraform provider. Required for tools; the resources below are readable without one.",
+      "OAuth 2.1 is the default: an unauthenticated request answers 401 with WWW-Authenticate, and authorization-server metadata lives at https://api.openstatus.dev/.well-known/oauth-authorization-server (dynamic client registration, PKCE, scopes read and write). The x-openstatus-key header remains for CI and headless agents, using the same API key as the CLI, REST API, and Terraform provider (Settings → API Tokens). Credentials are required for tools; the resources below are readable without one.",
   },
   capabilities: {
     tools: { listChanged: false },

@@ -1,4 +1,4 @@
-import type { Incident } from "@openstatus/db/src/schema";
+import type { MonitorIncident } from "@openstatus/db/src/schema";
 import { getRegionInfo } from "@openstatus/regions";
 
 import type { FormattedMessageData, NotificationContext } from "../types";
@@ -78,7 +78,7 @@ export function formatStatusCode(statusCode?: number): string {
 export function buildCommonMessageData(
   context: NotificationContext,
   options?: {
-    incident?: Incident;
+    incident?: MonitorIncident;
   },
 ): FormattedMessageData {
   const { monitor, statusCode, message, cronTimestamp, regions, latency } =

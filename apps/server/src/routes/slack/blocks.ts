@@ -4,6 +4,8 @@ import type {
   SummaryLine,
 } from "@openstatus/services/agent-tools";
 
+import { toMrkdwn } from "./mrkdwn";
+
 interface TextObject {
   type: "plain_text" | "mrkdwn";
   text: string;
@@ -24,15 +26,94 @@ interface DividerBlock {
   type: "divider";
 }
 
+interface ContextBlock {
+  type: "context";
+  elements: TextObject[];
+}
+
+/**
+ * Renders standard markdown — the dialect the model actually writes — rather
+ * than Slack's mrkdwn, so tables, ordered lists and fenced code survive
+ * instead of being flattened by `toMrkdwn`.
+ */
+interface MarkdownBlock {
+  type: "markdown";
+  text: string;
+}
+
 interface ButtonElement {
   type: "button";
   text: TextObject;
   action_id: string;
   value?: string;
+  url?: string;
   style?: "primary" | "danger";
 }
 
-export type Block = SectionBlock | ActionsBlock | DividerBlock;
+export type Block =
+  | SectionBlock
+  | ActionsBlock
+  | DividerBlock
+  | ContextBlock
+  | MarkdownBlock;
+
+/** Slack caps all `markdown` blocks in one payload at 12,000 characters. */
+const MARKDOWN_BLOCK_LIMIT = 12_000;
+/** And a message's `text` at 40,000 — past it the post is rejected outright. */
+const MESSAGE_TEXT_LIMIT = 40_000;
+const TRUNCATION_NOTICE = "\n\n_Answer truncated._";
+
+/**
+ * The agent's free-text answer as a Slack message. `text` carries the
+ * mrkdwn-converted copy — it is what notifications and screen readers use, and
+ * the fallback when the answer is too long for a `markdown` block.
+ */
+export function buildAnswerMessage(text: string): {
+  text: string;
+  blocks?: Block[];
+} {
+  const fallback = toMrkdwn(text);
+  if (!text.trim() || text.length > MARKDOWN_BLOCK_LIMIT) {
+    return { text: capMessageText(fallback) };
+  }
+  return { text: fallback, blocks: [{ type: "markdown", text }] };
+}
+
+/** Nothing bounds the agent's answer, and an over-long post is rejected. */
+function capMessageText(text: string): string {
+  if (text.length <= MESSAGE_TEXT_LIMIT) return text;
+  const kept = MESSAGE_TEXT_LIMIT - TRUNCATION_NOTICE.length;
+  return `${text.slice(0, kept)}${TRUNCATION_NOTICE}`;
+}
+
+export const LINK_ACCOUNT_ACTION_ID = "link_account";
+
+export const LINK_ACCOUNT_TEXT =
+  "Link your openstatus account to use openstatus in Slack.";
+
+export function buildLinkAccountBlocks(url: string): Block[] {
+  return [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: "*Link your openstatus account*\nOnly members of this openstatus workspace can use openstatus in Slack. Link your account to continue — the link is valid for 10 minutes.",
+      },
+    },
+    {
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: { type: "plain_text", text: "Link account" },
+          action_id: LINK_ACCOUNT_ACTION_ID,
+          url,
+          style: "primary",
+        },
+      ],
+    },
+  ];
+}
 
 /**
  * Action-id encoding. We need to round-trip both the pending action's id
@@ -104,6 +185,11 @@ function escapeLinkText(text: string): string {
   return escapeText(text).replace(/\|/g, "❘");
 }
 
+/** Escape a URL for use as the target of a Slack mrkdwn link (`<url|text>`). */
+function escapeLinkUrl(url: string): string {
+  return escapeText(url).replace(/\|/g, "%7C");
+}
+
 /**
  * Data resolvers the Slack surface injects so `buildConfirmationBlocks` can
  * turn `SummaryLineRef` descriptors into names. Resolution needs DB access,
@@ -112,53 +198,92 @@ function escapeLinkText(text: string): string {
 export interface RefResolvers {
   /** Page id → dashboard link, or null when the page no longer exists. */
   page: (pageId: number) => Promise<{ title: string; url: string } | null>;
+  /**
+   * Status report id → its title and public URL (url null when its page is
+   * gone), or null when the report doesn't exist in the workspace.
+   */
+  statusReport?: (
+    statusReportId: number,
+  ) => Promise<{ title: string; url: string | null } | null>;
   /** Page-component ids → their names (missing ids simply absent). */
   componentNames: (ids: number[]) => Promise<Map<number, string>>;
 }
 
+// Internal ids mean nothing to the person approving, so the card never shows
+// one: id-only lines (e.g. "Report ID") are dropped, a page that can't be
+// named is dropped, and a component that can't be named shows as unknown.
+const ID_LABEL = /\bID$/i;
+const UNKNOWN = "_unknown_";
+
 async function renderLine(
   line: SummaryLine,
   resolvers?: RefResolvers,
-): Promise<string> {
+): Promise<string | null> {
   const ref = line.ref;
-  if (ref && resolvers) {
-    try {
-      switch (ref.kind) {
-        case "page": {
-          const link = await resolvers.page(ref.pageId);
-          if (link) {
-            return `*Page:* <${link.url}|${escapeLinkText(link.title)}>`;
-          }
-          break;
-        }
-        case "components": {
-          const names = await resolvers.componentNames(ref.componentIds);
-          const value = ref.componentIds
-            .map((id) => nameOrId(names, id))
-            .join(", ");
-          return `*${line.label}:* ${value}`;
-        }
-        case "componentImpacts": {
-          const names = await resolvers.componentNames(
-            ref.impacts.map((i) => i.pageComponentId),
-          );
-          const value = ref.impacts
-            .map((i) => `${nameOrId(names, i.pageComponentId)} → ${i.impact}`)
-            .join(", ");
-          return `*${line.label}:* ${value}`;
-        }
-      }
-    } catch {
-      // A transient name/link lookup failure degrades just this line to its
-      // raw id value below, rather than aborting the whole confirmation card.
-    }
+  if (!ref) {
+    return ID_LABEL.test(line.label)
+      ? null
+      : `*${line.label}:* ${escapeText(line.value)}`;
   }
-  return `*${line.label}:* ${escapeText(line.value)}`;
+  if (!resolvers) return null;
+  try {
+    switch (ref.kind) {
+      case "page": {
+        const link = await resolvers.page(ref.pageId);
+        return link
+          ? `*Page:* <${link.url}|${escapeLinkText(link.title)}>`
+          : null;
+      }
+      case "components": {
+        const names = await resolvers.componentNames(ref.componentIds);
+        const value = ref.componentIds
+          .map((id) => nameOrUnknown(names, id))
+          .join(", ");
+        return `*${line.label}:* ${value}`;
+      }
+      case "componentImpacts": {
+        const names = await resolvers.componentNames(
+          ref.impacts.map((i) => i.pageComponentId),
+        );
+        const value = ref.impacts
+          .map(
+            (i) => `${nameOrUnknown(names, i.pageComponentId)} → ${i.impact}`,
+          )
+          .join(", ");
+        return `*${line.label}:* ${value}`;
+      }
+    }
+  } catch {
+    // A transient lookup failure drops just this line, rather than aborting
+    // the whole confirmation card.
+  }
+  return null;
 }
 
-function nameOrId(names: Map<number, string>, id: number): string {
+function nameOrUnknown(names: Map<number, string>, id: number): string {
   const name = names.get(id);
-  return name ? escapeText(name) : String(id);
+  return name ? escapeText(name) : UNKNOWN;
+}
+
+/**
+ * The report a draft acts on (add update / update / resolve), found by its
+ * `statusReportId` input. The services summary only carries the id — which
+ * the card never shows — so Slack looks the title up itself.
+ */
+async function resolveReport(
+  input: unknown,
+  resolvers?: RefResolvers,
+): Promise<{ title: string; url: string | null } | null> {
+  if (!resolvers?.statusReport) return null;
+  if (typeof input !== "object" || input === null) return null;
+  const id = (input as { statusReportId?: unknown }).statusReportId;
+  if (typeof id !== "number") return null;
+  try {
+    return await resolvers.statusReport(id);
+  } catch {
+    // Same as a failed ref lookup: drop the line, keep the card.
+    return null;
+  }
 }
 
 /**
@@ -166,7 +291,7 @@ function nameOrId(names: Map<number, string>, id: number): string {
  * Two affirmative buttons when an extraFlag exists; one otherwise. When a
  * summary line carries a `ref` and `resolvers` are supplied, raw ids are
  * replaced by entity names (a dashboard link for pages, component names for
- * component ids).
+ * component ids). The card never shows a raw id.
  */
 export async function buildConfirmationBlocks(args: {
   actionId: string;
@@ -183,9 +308,13 @@ export async function buildConfirmationBlocks(args: {
   const summary = tool.approval.summarize(input);
   const flag: ExtraFlag | undefined = tool.approval.extraFlags?.[0];
 
-  const lines = (
-    await Promise.all(summary.lines.map((l) => renderLine(l, resolvers)))
-  ).join("\n");
+  const report = await resolveReport(input, resolvers);
+  const lines = [
+    report ? `*Report:* ${escapeText(report.title)}` : null,
+    ...(await Promise.all(summary.lines.map((l) => renderLine(l, resolvers)))),
+  ]
+    .filter((l) => l !== null)
+    .join("\n");
 
   const buttons: ButtonElement[] = [
     {
@@ -214,7 +343,7 @@ export async function buildConfirmationBlocks(args: {
     style: "danger",
   });
 
-  return [
+  const blocks: Block[] = [
     {
       type: "section",
       text: {
@@ -222,9 +351,17 @@ export async function buildConfirmationBlocks(args: {
         text: `*${escapeText(summary.title)}*\n\n${lines}`,
       },
     },
-    { type: "divider" },
-    { type: "actions", elements: buttons },
   ];
+  if (report?.url) {
+    blocks.push({
+      type: "context",
+      elements: [
+        { type: "mrkdwn", text: `<${escapeLinkUrl(report.url)}|View report>` },
+      ],
+    });
+  }
+  blocks.push({ type: "divider" }, { type: "actions", elements: buttons });
+  return blocks;
 }
 
 export function getConfirmationText(args: {

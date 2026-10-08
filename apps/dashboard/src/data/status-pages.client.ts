@@ -1,5 +1,12 @@
 import { Settings, Copy, Delete } from "@openstatus/icons";
 
+export function getPageUrl(page: {
+  slug: string;
+  customDomain: string | null;
+}): string {
+  return `https://${page.customDomain || `${page.slug}.openstatus.dev`}`;
+}
+
 export const actions = [
   {
     id: "edit",

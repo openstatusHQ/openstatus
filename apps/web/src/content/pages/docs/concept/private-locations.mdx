@@ -29,7 +29,9 @@ A private location is not an inbound port openstatus calls into. The probe initi
 2. The probe opens an outbound, authenticated connection to the openstatus platform using the token issued when you created the location.
 3. openstatus dispatches the checks assigned to that location down the connection. The probe runs them against your internal endpoints and streams the results back.
 
-The consequence is that you only need **outbound** network access from the probe to `api.openstatus.dev` on port 443. No inbound firewall rules, no exposed ports, no reverse tunnel — the same shape as any other agent that calls home.
+The consequence is that you only need **outbound** network access from the probe to the openstatus ingest endpoint, `openstatus-private-location.fly.dev`, on port 443. No inbound firewall rules, no exposed ports, no reverse tunnel — the same shape as any other agent that calls home.
+
+If you self-host openstatus, point the probe at your own ingest server with the `OPENSTATUS_INGEST_URL` environment variable — see [self-hosting openstatus](/docs/guides/self-hosting-openstatus).
 
 ## How it differs from a public location
 
@@ -50,7 +52,7 @@ Running a private location moves operational responsibility to you. Plan for:
 
 - **Probe availability.** If your probe host is down, openstatus can't run checks from it. Treat the probe as part of your own infrastructure — restart policy, host monitoring, log retention.
 - **Token handling.** The probe's token authenticates it as your workspace. Inject it as an environment variable, store it the same way you store other secrets, and rotate it if a host is decommissioned.
-- **Egress only.** Because the connection is outbound, an egress firewall that blocks `api.openstatus.dev:443` will silently stop the probe from running checks. The probe will appear "connected" briefly and then go quiet.
+- **Egress only.** Because the connection is outbound, an egress firewall that blocks `openstatus-private-location.fly.dev:443` will silently stop the probe from running checks. The probe will appear "connected" briefly and then go quiet.
 
 ## Next steps
 

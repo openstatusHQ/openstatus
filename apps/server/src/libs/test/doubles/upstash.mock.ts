@@ -5,7 +5,10 @@ import { testRedisStore as store } from "./state.ts";
 
 const client = {
   get: (key: string) => Promise.resolve(store.get(key) ?? null),
-  set: (key: string, value: string) => {
+  // `nx` is honoured because the slack code uses it as an atomic claim; `ex`
+  // is ignored — no test turns on expiry.
+  set: (key: string, value: string, opts?: { nx?: boolean; ex?: number }) => {
+    if (opts?.nx && store.has(key)) return Promise.resolve(null);
     store.set(key, value);
     return Promise.resolve("OK");
   },

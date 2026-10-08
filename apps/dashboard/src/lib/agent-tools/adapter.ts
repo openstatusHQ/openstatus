@@ -1,7 +1,8 @@
 import type { ServiceContext } from "@openstatus/services";
-import type {
-  AgentToolRegistry,
-  AnyAgentTool,
+import {
+  type AgentToolRegistry,
+  type AnyAgentTool,
+  isAgentToolAvailable,
 } from "@openstatus/services/agent-tools";
 import { type Tool, tool } from "ai";
 
@@ -27,7 +28,7 @@ export function toAiSdkTools(
   const out: Record<string, Tool> = {};
   for (const name in registry) {
     const t = registry[name];
-    if (!t) continue;
+    if (!t || !isAgentToolAvailable(t, ctx.workspace)) continue;
     out[name] = toolToAiSdkTool(t, ctx);
   }
   return out;

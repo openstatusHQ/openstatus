@@ -2,6 +2,7 @@ import {
   Agent,
   Chat,
   type IconType,
+  Incident,
   Monitor,
   Notification,
   Overview,
@@ -9,6 +10,7 @@ import {
   StatusPage,
   Terminal,
 } from "@openstatus/icons";
+import { ModelContextProtocolIcon } from "@openstatus/icons/brand";
 
 export type NavItem = {
   label: string;
@@ -26,6 +28,12 @@ export const NAV = {
     href: "/overview",
     icon: Overview,
     keywords: ["home", "dashboard"],
+  },
+  incidents: {
+    label: "Incidents",
+    href: "/incidents",
+    icon: Incident,
+    keywords: ["declare", "outage", "postmortem", "commander"],
   },
   monitors: {
     label: "Monitors",
@@ -53,15 +61,21 @@ export const NAV = {
   },
   agents: {
     label: "Agents",
-    href: "/agents",
+    href: "/agents/slack",
     icon: Agent,
-    keywords: ["slack"],
+    keywords: ["slack", "cli", "mcp"],
   },
   cli: {
     label: "CLI",
-    href: "/cli",
+    href: "/agents/cli",
     icon: Terminal,
     keywords: ["terminal"],
+  },
+  mcp: {
+    label: "MCP",
+    href: "/agents/mcp",
+    icon: ModelContextProtocolIcon,
+    keywords: ["model context protocol", "claude", "cursor"],
   },
   settings: {
     label: "Settings",
@@ -80,4 +94,5 @@ export const NAV_MENU_ITEMS: NavItem[] = [
   NAV.chat,
   NAV.agents,
   NAV.cli,
+  NAV.mcp,
 ];

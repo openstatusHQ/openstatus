@@ -1,9 +1,9 @@
 import { db, sql } from "@openstatus/db";
 import { page, selectPageSchema } from "@openstatus/db/src/schema";
+import { resolveClientIp } from "@openstatus/services/page-access";
 import { NextResponse } from "next/server";
 
 import { auth } from "./lib/auth";
-import { resolveClientIp } from "./lib/http/client-ip";
 import { createProtectedCookieKey } from "./lib/protected";
 import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override";
 import { applyPageSlugPrefix } from "./lib/proxy/apply-page-slug-prefix";
@@ -26,8 +26,11 @@ export default auth(async (req) => {
 
   // HTML served via internal rewrite shares its URL with the markdown variant —
   // carry the same Vary as the passthrough so caches don't cross them.
-  const rewriteWithVary = (target: URL) => {
-    const response = NextResponse.rewrite(target);
+  const rewriteWithVary = (
+    target: URL,
+    init?: Parameters<typeof NextResponse.rewrite>[1],
+  ) => {
+    const response = NextResponse.rewrite(target, init);
     response.headers.set("Vary", "Accept");
     return response;
   };
@@ -97,6 +100,7 @@ export default auth(async (req) => {
   );
 
   const clientIp = resolveClientIp(req.headers);
+  const queryPassword = url.searchParams.get("pw");
 
   console.log("[proxy] request", {
     host,
@@ -122,7 +126,7 @@ export default auth(async (req) => {
     origin: req.nextUrl.origin,
     cookiePassword: req.cookies.get(createProtectedCookieKey(_page.slug))
       ?.value,
-    queryPassword: url.searchParams.get("pw"),
+    queryPassword,
     redirectParam: sanitizeRedirectParam(url.searchParams.get("redirect")),
     authEmail: req.auth?.user?.email,
     clientIp,
@@ -134,15 +138,34 @@ export default auth(async (req) => {
     url: action.url?.toString() ?? null,
   });
 
+  // A `?pw=` link carries no cookie yet, and the tRPC gate downstream only
+  // sees cookies — forward the password as one on the internal request.
+  const request =
+    _page.accessType === "password" && queryPassword
+      ? { headers: withPasswordCookie(req.headers, _page.slug, queryPassword) }
+      : undefined;
+
   switch (action.type) {
     case "redirect":
       return NextResponse.redirect(action.url);
     case "rewrite":
-      return rewriteWithVary(action.url);
-    case "passthrough":
-      return passthroughResponse;
+      return rewriteWithVary(action.url, { request });
+    case "passthrough": {
+      if (!request) return passthroughResponse;
+      const response = NextResponse.next({ request });
+      response.headers.set("Vary", "Accept");
+      return response;
+    }
   }
 });
+
+function withPasswordCookie(headers: Headers, slug: string, password: string) {
+  const next = new Headers(headers);
+  const cookie = `${createProtectedCookieKey(slug)}=${encodeURIComponent(password)}`;
+  const existing = headers.get("cookie");
+  next.set("cookie", existing ? `${existing}; ${cookie}` : cookie);
+  return next;
+}
 
 export const config = {
   matcher: [

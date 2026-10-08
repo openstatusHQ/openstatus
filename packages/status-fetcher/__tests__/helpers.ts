@@ -14,7 +14,7 @@ type FetchImpl = (url: string, init?: RequestInit) => Promise<Response>;
 
 export const installMockFetch = (impl: FetchImpl) => {
   const fn = spy(impl);
-  global.fetch = fn as unknown as typeof fetch;
+  globalThis.fetch = fn as unknown as typeof fetch;
   return fn;
 };
 

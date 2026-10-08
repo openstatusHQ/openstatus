@@ -32,7 +32,7 @@ Run an HTTP check against a URL from 28 global regions.
 >   openstatus check https://openstat.us --timing
 >   openstatus check https://openstat.us --json | jq '.summary'
 
-Run a one-shot HTTP check against a URL from 28 global regions. The check is executed by the public openstatus speed checker. No API token is required. Results stream to the terminal as they arrive from each region. Output is sorted in the order regions report back (roughly fastest first). Pass `--timing` to see DNS/Connection/TLS/TTFB/Transfer phase breakdowns. Pass `--json` for a machine-readable single object including all phase data. Rate limit: 3 requests per 60 seconds.
+Run a one-shot HTTP check against a URL from 28 global regions. The check is executed by the public openstatus speed checker. No API token is required. Results stream to the terminal as they arrive from each region. Output is sorted in the order regions report back (roughly fastest first). Pass `--timing` to see DNS/Connection/TLS/TTFB/Transfer phase breakdowns. Pass `--json` for a machine-readable single object including all phase data. Rate limits: 3 requests per 60 seconds and 10 requests per hour, both per IP.
 
 Usage:
 

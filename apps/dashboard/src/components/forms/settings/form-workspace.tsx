@@ -75,12 +75,12 @@ export function FormWorkspace({
               Manage your workspace name.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent>
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input {...field} />

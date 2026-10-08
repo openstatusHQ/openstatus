@@ -25,6 +25,7 @@ import { checkerRoute } from "./checker";
 import "./lib/sentry";
 import { cronRouter } from "./cron";
 import { env } from "./env";
+import { pingRoute } from "./health";
 import { incidentRoute } from "./incident";
 
 const { NODE_ENV } = env();
@@ -185,9 +186,10 @@ app.onError((err, c) => {
 app.get("/", (c) => c.text("workflows", 200));
 
 /**
- * Ping Pong
+ * Health check — probes the database and Tinybird and reports the Fly
+ * machine answering.
  */
-app.get("/ping", (c) => c.json({ ping: "pong" }, 200));
+app.route("/", pingRoute);
 
 /**
  * Cron Routes

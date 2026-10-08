@@ -267,7 +267,7 @@ export function FormImport({
                           Checkly
                         </FormLabel>
                       </FormItem>
-                      <div className="text-muted-foreground col-span-1 self-end text-xs sm:place-self-end">
+                      <div className="text-muted-foreground col-span-full text-xs">
                         Missing a provider?{" "}
                         <a href="mailto:ping@openstatus.dev">Contact us</a>
                       </div>
@@ -281,12 +281,12 @@ export function FormImport({
           {watchProvider ? (
             <>
               <FormCardSeparator />
-              <FormCardContent className="grid gap-4">
+              <FormCardContent className="grid gap-4 sm:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="apiKey"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="sm:col-span-2">
                       <FormLabel>API Key</FormLabel>
                       <FormControl>
                         <Input
@@ -334,7 +334,7 @@ export function FormImport({
                     control={form.control}
                     name="statuspagePageId"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="sm:col-span-2">
                         <FormLabel>Page ID (optional)</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. abc123def456" {...field} />
@@ -352,7 +352,7 @@ export function FormImport({
                     control={form.control}
                     name="betterstackStatusPageId"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="sm:col-span-2">
                         <FormLabel>Status Page ID (optional)</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. 123456789" {...field} />
@@ -370,7 +370,7 @@ export function FormImport({
                     control={form.control}
                     name="instatusPageId"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="sm:col-span-2">
                         <FormLabel>Page ID (optional)</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. clx1abc2def3" {...field} />
@@ -389,7 +389,7 @@ export function FormImport({
                       control={form.control}
                       name="checklyAccountId"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="sm:col-span-2">
                           <FormLabel>Account ID</FormLabel>
                           <FormControl>
                             <Input placeholder="e.g. 1a2b3c4d-..." {...field} />
@@ -397,7 +397,7 @@ export function FormImport({
                           <FormMessage />
                           <FormDescription>
                             Your Checkly account ID. Found in Checkly under
-                            Account Settings → General.
+                            Account Settings &gt; General.
                           </FormDescription>
                         </FormItem>
                       )}
@@ -406,7 +406,7 @@ export function FormImport({
                       control={form.control}
                       name="checklyStatusPageId"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="sm:col-span-2">
                           <FormLabel>Status Page ID (optional)</FormLabel>
                           <FormControl>
                             <Input placeholder="e.g. 1a2b3c4d-..." {...field} />

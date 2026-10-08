@@ -1,13 +1,13 @@
 import { getLogger } from "@logtape/logtape";
 import { and, db, eq, inArray, lt, notInArray, sql } from "@openstatus/db";
 import type {
-  Incident,
+  MonitorIncident,
   Monitor,
   Notification,
 } from "@openstatus/db/src/schema";
 import {
   notificationOutbox,
-  incidentTable,
+  monitorIncidentTable,
   monitor,
   notification,
   notificationDeadLetter,
@@ -145,7 +145,7 @@ async function claimRows(
 type DeliveryDeps = {
   monitors: Map<number, Monitor>;
   notifications: Map<number, Notification>;
-  incidents: Map<number, Incident>;
+  incidents: Map<number, MonitorIncident>;
   smsBlocked: Map<number, boolean>;
 };
 
@@ -170,11 +170,11 @@ async function loadDeps(rows: OutboxRow[]): Promise<DeliveryDeps> {
           .where(inArray(notification.id, notificationIds)),
         db
           .select()
-          .from(incidentTable)
+          .from(monitorIncidentTable)
           .where(
             incidentIds.length === 0
               ? sql`1 = 0`
-              : inArray(incidentTable.id, incidentIds),
+              : inArray(monitorIncidentTable.id, incidentIds),
           ),
       ]),
   );
@@ -191,7 +191,7 @@ async function loadDeps(rows: OutboxRow[]): Promise<DeliveryDeps> {
     if (parsed.success) notifications.set(row.id, parsed.data);
   }
 
-  const incidents = new Map<number, Incident>();
+  const incidents = new Map<number, MonitorIncident>();
   for (const row of incidentRows) {
     incidents.set(row.id, row);
   }
@@ -571,7 +571,7 @@ export async function sweepExpiredOutbox(): Promise<{
   await commitDead(
     abandoned.map((row) => ({
       row,
-      error: "expired before delivery completed",
+      error: row.lastError ?? "expired before delivery completed",
     })),
   );
 

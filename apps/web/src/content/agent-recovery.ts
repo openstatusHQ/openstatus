@@ -4,7 +4,6 @@ const BASE = "https://www.openstatus.dev";
 export const AGENT_RECOVERY_LINKS = [
   ["Sitemap", "/sitemap.xml"],
   ["llms.txt", "/llms.txt"],
-  ["Documentation", "/docs"],
   ["OpenAPI specification", "/openapi.json"],
   ["MCP server card", "/.well-known/mcp.json"],
 ] as const;
@@ -24,7 +23,14 @@ export function notFoundMarkdown(pathname: string): string {
 
 No page exists at \`${encodeURI(pathname)}\` on openstatus.dev.
 
-## Where to look next
+## Are you looking for something specific?
+
+- [API Reference](https://api.openstatus.dev/v1)
+- [Documentation](${BASE}/docs)
+- [Dashboard](https://app.openstatus.dev)
+- [Global Speed Checker](${BASE}/play/checker)
+
+## For crawlers and agents
 
 ${links}
 

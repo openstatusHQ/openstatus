@@ -1,149 +1,120 @@
-import {
-  type SQL,
-  and,
-  asc,
-  db as defaultDb,
-  desc,
-  eq,
-  gte,
-  inArray,
-  sql,
-} from "@openstatus/db";
-import {
-  incidentTable,
-  monitor,
-  selectMonitorSchema,
-} from "@openstatus/db/src/schema";
+import { and, desc, eq, inArray, isNotNull, sql } from "@openstatus/db";
+import { incident } from "@openstatus/db/src/schema";
 
-import type { DB, ServiceContext } from "../context";
-import type { Incident, Monitor } from "../types";
-import { getIncidentInWorkspace } from "./internal";
-import {
-  GetIncidentInput,
-  type IncidentListPeriod,
-  ListIncidentsInput,
-} from "./schemas";
+import { type ServiceContext, getReadDb } from "../context";
+import { IncidentIdInput, ListIncidentsInput } from "./schemas";
 
-function periodToSince(period: IncidentListPeriod): Date {
-  const day = 24 * 60 * 60 * 1000;
-  const now = Date.now();
-  switch (period) {
-    case "1d":
-      return new Date(now - 1 * day);
-    case "7d":
-      return new Date(now - 7 * day);
-    case "14d":
-      return new Date(now - 14 * day);
-  }
-}
+const userColumns = {
+  id: true,
+  name: true,
+  firstName: true,
+  lastName: true,
+  email: true,
+  photoUrl: true,
+  deletedAt: true,
+} as const;
 
-export type IncidentWithRelations = Incident & {
-  monitor: Monitor | null;
-};
+const statusOrder = sql`case ${incident.status} when 'open' then 0 when 'mitigated' then 1 when 'resolved' then 2 else 3 end`;
 
-export type ListIncidentsResult = {
-  items: IncidentWithRelations[];
-  totalSize: number;
-};
-
-/**
- * Load each incident's monitor in a single IN query against distinct
- * `monitorId`s — avoids the per-row fetch that would balloon with the
- * 10_000 sentinel tRPC passes. Scoped to `workspaceId` for defence-in-depth:
- * the `incident.monitorId` column has no FK constraint against workspace
- * ownership, so a cross-workspace pointer (however unlikely) should not
- * leak the other workspace's monitor row.
- */
-async function enrichIncidentsBatch(
-  db: DB,
-  rows: Incident[],
-  workspaceId: number,
-): Promise<IncidentWithRelations[]> {
-  if (rows.length === 0) return [];
-
-  const monitorIdsSet = new Set<number>();
-  for (const r of rows) if (r.monitorId != null) monitorIdsSet.add(r.monitorId);
-  const monitorIds = Array.from(monitorIdsSet);
-
-  const monitorById = new Map<number, Monitor>();
-  if (monitorIds.length > 0) {
-    const monitorRows = await db
-      .select()
-      .from(monitor)
-      .where(
-        and(
-          inArray(monitor.id, monitorIds),
-          eq(monitor.workspaceId, workspaceId),
-        ),
-      )
-      .all();
-    for (const m of monitorRows) {
-      monitorById.set(m.id, selectMonitorSchema.parse(m));
-    }
-  }
-
-  return rows.map((r) => ({
-    ...r,
-    monitor:
-      r.monitorId != null ? (monitorById.get(r.monitorId) ?? null) : null,
-  }));
-}
-
+/** Open incidents first, then newest declared. */
 export async function listIncidents(args: {
   ctx: ServiceContext;
-  input: ListIncidentsInput;
-}): Promise<ListIncidentsResult> {
+  input?: ListIncidentsInput;
+}) {
   const { ctx } = args;
-  const input = ListIncidentsInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const input = ListIncidentsInput.parse(args.input ?? {});
 
-  const conditions: SQL[] = [eq(incidentTable.workspaceId, ctx.workspace.id)];
-  if (input.monitorId !== undefined) {
-    conditions.push(eq(incidentTable.monitorId, input.monitorId));
-  }
-  if (input.period !== undefined) {
-    conditions.push(gte(incidentTable.startedAt, periodToSince(input.period)));
-  }
-  const whereClause = and(...conditions);
-
-  const [countRow, rows] = await Promise.all([
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(incidentTable)
-      .where(whereClause)
-      .get(),
-    db
-      .select()
-      .from(incidentTable)
-      .where(whereClause)
-      .orderBy(
-        input.order === "asc"
-          ? asc(incidentTable.startedAt)
-          : desc(incidentTable.startedAt),
-      )
-      .limit(input.limit)
-      .offset(input.offset)
-      .all(),
-  ]);
-
-  const totalSize = countRow?.count ?? 0;
-  const items = await enrichIncidentsBatch(db, rows, ctx.workspace.id);
-  return { items, totalSize };
+  const where = and(
+    eq(incident.workspaceId, ctx.workspace.id),
+    input.status?.length ? inArray(incident.status, input.status) : undefined,
+  );
+  return getReadDb(ctx).query.incident.findMany({
+    where,
+    orderBy: [statusOrder, desc(incident.declaredAt), desc(incident.id)],
+    limit: input.limit,
+    offset: input.offset,
+    with: {
+      commander: { columns: userColumns },
+      statusReport: { columns: { id: true, title: true, status: true } },
+    },
+  });
 }
 
 export async function getIncident(args: {
   ctx: ServiceContext;
-  input: GetIncidentInput;
-}): Promise<IncidentWithRelations> {
+  input: IncidentIdInput;
+}) {
   const { ctx } = args;
-  const input = GetIncidentInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
-  const record = await getIncidentInWorkspace({
-    tx: db,
-    id: input.id,
-    workspaceId: ctx.workspace.id,
+  const input = IncidentIdInput.parse(args.input);
+  return getReadDb(ctx).query.incident.findFirst({
+    where: and(
+      eq(incident.id, input.id),
+      eq(incident.workspaceId, ctx.workspace.id),
+    ),
+    with: {
+      commander: { columns: userColumns },
+      declaredByUser: { columns: userColumns },
+      resolvedByUser: { columns: userColumns },
+      statusReport: {
+        columns: { id: true, title: true, status: true, pageId: true },
+      },
+    },
   });
-  const [enriched] = await enrichIncidentsBatch(db, [record], ctx.workspace.id);
-  // oxlint-disable-next-line typescript/no-non-null-assertion -- always defined for len === 1
-  return enriched!;
+}
+
+/** The incident a status report communicates, if any. */
+export async function getIncidentForStatusReport(args: {
+  ctx: ServiceContext;
+  input: { statusReportId: number };
+}) {
+  const { ctx } = args;
+  return getReadDb(ctx)
+    .select({ id: incident.id, title: incident.title, status: incident.status })
+    .from(incident)
+    .where(
+      and(
+        eq(incident.workspaceId, ctx.workspace.id),
+        eq(incident.statusReportId, args.input.statusReportId),
+      ),
+    )
+    .get();
+}
+
+/** Status reports already held by an incident; each links to at most one. */
+export async function listLinkedStatusReportIds(args: {
+  ctx: ServiceContext;
+}): Promise<number[]> {
+  const { ctx } = args;
+  const rows = await getReadDb(ctx)
+    .select({ statusReportId: incident.statusReportId })
+    .from(incident)
+    .where(
+      and(
+        eq(incident.workspaceId, ctx.workspace.id),
+        isNotNull(incident.statusReportId),
+      ),
+    )
+    .all();
+  return rows.flatMap((r) =>
+    r.statusReportId === null ? [] : [r.statusReportId],
+  );
+}
+
+/** The incident bound to a Slack channel, or `undefined`. */
+export async function getIncidentBySlackChannel(args: {
+  ctx: ServiceContext;
+  input: { teamId: string; channelId: string };
+}) {
+  const { ctx } = args;
+  return getReadDb(ctx).query.incident.findFirst({
+    where: and(
+      eq(incident.workspaceId, ctx.workspace.id),
+      eq(incident.slackTeamId, args.input.teamId),
+      eq(incident.slackChannelId, args.input.channelId),
+    ),
+    with: {
+      commander: { columns: userColumns },
+      statusReport: { columns: { id: true, title: true, status: true } },
+    },
+  });
 }

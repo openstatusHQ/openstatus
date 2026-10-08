@@ -4,6 +4,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
+import { attributedUserSchema, toAgentUser } from "../attribution";
 import type { ServiceContext } from "../context";
 import {
   addStatusReportUpdate,
@@ -112,11 +113,14 @@ const ListStatusReportsOutput = z.object({
       pageId: z.number().int().nullable(),
       createdAt: z.string().nullable(),
       updatedAt: z.string().nullable(),
+      createdBy: attributedUserSchema.nullable(),
+      updatedBy: attributedUserSchema.nullable(),
       latestUpdate: z
         .object({
           message: z.string(),
           status: statusReportStatusSchema,
           date: z.string().nullable(),
+          createdBy: attributedUserSchema.nullable(),
         })
         .nullable(),
     }),
@@ -162,11 +166,14 @@ export const listStatusReportsTool: AgentTool<
           pageId: r.pageId,
           createdAt: r.createdAt?.toISOString() ?? null,
           updatedAt: r.updatedAt?.toISOString() ?? null,
+          createdBy: toAgentUser(r.createdByUser),
+          updatedBy: toAgentUser(r.updatedByUser),
           latestUpdate: latestUpdate
             ? {
                 message: latestUpdate.message,
                 status: latestUpdate.status,
                 date: latestUpdate.date?.toISOString() ?? null,
+                createdBy: toAgentUser(latestUpdate.createdByUser),
               }
             : null,
         };
@@ -205,6 +212,13 @@ const CreateStatusReportInputShape = z.object({
     .datetime()
     .optional()
     .describe("Override the initial update's date. Defaults to now."),
+  incidentId: z
+    .number()
+    .int()
+    .optional()
+    .describe(
+      "Managed incident this report communicates, from list_incidents. Links them.",
+    ),
   notify: z
     .boolean()
     .describe(
@@ -274,6 +288,9 @@ export const createStatusReportTool: AgentTool<
               },
             ]
           : []),
+        ...(input.incidentId
+          ? [{ label: "Incident", value: `#${input.incidentId}` }]
+          : []),
         { label: "Message", value: input.message },
       ],
     }),
@@ -290,6 +307,7 @@ export const createStatusReportTool: AgentTool<
         pageComponentIds: input.pageComponentIds ?? [],
         componentImpacts: input.componentImpacts,
         date: input.date ? new Date(input.date) : new Date(),
+        incidentId: input.incidentId,
       },
     });
     let notified = false;

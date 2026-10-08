@@ -1,6 +1,6 @@
 import { getLogger } from "@logtape/logtape";
 import { db, eq, schema } from "@openstatus/db";
-import type { Incident } from "@openstatus/db/src/schema";
+import type { MonitorIncident } from "@openstatus/db/src/schema";
 import {
   selectMonitorSchema,
   selectNotificationSchema,
@@ -40,11 +40,11 @@ export const triggerNotifications = async ({
   const triggered: { notificationId: number; provider: string }[] = [];
   const smsQuota = new Map<number, boolean>();
 
-  let incident: Incident | undefined;
+  let incident: MonitorIncident | undefined;
   if (incidentId) {
     try {
-      incident = await db.query.incidentTable.findFirst({
-        where: eq(schema.incidentTable.id, incidentId),
+      incident = await db.query.monitorIncidentTable.findFirst({
+        where: eq(schema.monitorIncidentTable.id, incidentId),
       });
     } catch (err) {
       logger.warn("Failed to fetch incident data", {

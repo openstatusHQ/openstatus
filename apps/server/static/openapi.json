@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "description": "OpenStatus is a open-source status page platform with global uptime monitoring. The OpenStatus API allows you to interact with the OpenStatus platform programmatically. To get started you need to create an account on https://www.openstatus.dev/ and create an api token in your settings.",
+    "description": "OpenStatus is a open-source status page platform with global uptime monitoring. The OpenStatus API allows you to interact with the OpenStatus platform programmatically. To get started you need to create an account on https://www.openstatus.dev/ and create an api token in your settings. Requests are rate limited per API key or token (600 per minute, 100 per 10 seconds); exceeding a limit returns HTTP 429 with a Retry-After header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
     "title": "OpenStatus API",
     "version": "v2.0.0",
     "contact": {
@@ -20,6 +20,27 @@
     "url": "https://www.openstatus.dev/docs"
   },
   "components": {
+    "responses": {
+      "RateLimited": {
+        "description": "Rate limit exceeded (Connect code resource_exhausted). Retry after the number of seconds in the Retry-After header. See https://www.openstatus.dev/docs/reference/api-rate-limits.",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait before retrying.",
+            "schema": {
+              "type": "integer",
+              "example": 7
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/connect.error"
+            }
+          }
+        }
+      }
+    },
     "securitySchemes": {
       "ApiKeyAuth": {
         "type": "apiKey",
@@ -2028,7 +2049,7 @@
           "REGION_RAILWAY_EUROPE_WEST4",
           "REGION_RAILWAY_ASIA_SOUTHEAST1"
         ],
-        "description": "Geographic regions where monitors can run checks from."
+        "description": "Geographic regions where monitors can run checks from.\n REGION_FLY_BOM is deprecated and rejected on create/update; use REGION_FLY_SIN."
       },
       "openstatus.monitor.v1.RegionStatus": {
         "type": "object",
@@ -2846,7 +2867,8 @@
             "properties": {
               "sms": {
                 "title": "sms",
-                "description": "SMS configuration.",
+                "description": "Deprecated: SMS is no longer offered; use whatsapp.",
+                "deprecated": true,
                 "$ref": "#/components/schemas/openstatus.notification.v1.SmsData"
               }
             },
@@ -3091,7 +3113,8 @@
         },
         "title": "SmsData",
         "additionalProperties": false,
-        "description": "SmsData contains configuration for SMS notifications."
+        "description": "Deprecated: SMS is no longer offered; use WhatsappData. Kept for existing channels.",
+        "deprecated": true
       },
       "openstatus.notification.v1.TelegramData": {
         "type": "object",
@@ -4706,7 +4729,8 @@
           "LOCALE_DE",
           "LOCALE_TR",
           "LOCALE_HI",
-          "LOCALE_KO"
+          "LOCALE_KO",
+          "LOCALE_JA"
         ],
         "description": "Locale defines the supported languages for a status page."
       },
@@ -6148,6 +6172,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -6185,6 +6212,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -6226,6 +6256,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -6265,6 +6298,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -6309,6 +6345,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -6346,6 +6385,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -6390,6 +6432,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -6427,6 +6472,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -6468,6 +6516,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -6507,6 +6558,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -6548,6 +6602,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -6587,6 +6644,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -6628,6 +6688,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -6668,6 +6731,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -6707,6 +6773,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -6751,6 +6820,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -6788,6 +6860,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -6832,6 +6907,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -6869,6 +6947,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -6913,6 +6994,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -6950,6 +7034,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -6994,6 +7081,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7031,6 +7121,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -7075,6 +7168,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7112,6 +7208,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -7156,6 +7255,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7193,6 +7295,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -7234,6 +7339,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7273,6 +7381,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -7314,6 +7425,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7353,6 +7467,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -7394,6 +7511,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7433,6 +7553,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -7477,6 +7600,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7514,6 +7640,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -7555,6 +7684,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7594,6 +7726,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -7638,6 +7773,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7675,6 +7813,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -7719,6 +7860,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7756,6 +7900,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -7797,6 +7944,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7836,6 +7986,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -7877,6 +8030,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7916,6 +8072,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -7960,6 +8119,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -7997,6 +8159,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -8041,6 +8206,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -8078,6 +8246,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -8119,6 +8290,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -8158,6 +8332,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -8199,6 +8376,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -8238,6 +8418,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -8279,6 +8462,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -8318,6 +8504,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -8359,6 +8548,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -8398,6 +8590,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -8442,6 +8637,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -8479,6 +8677,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -8523,6 +8724,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -8560,6 +8764,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -8604,6 +8811,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -8641,6 +8851,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -8685,6 +8898,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -8722,6 +8938,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -8766,6 +8985,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -8803,6 +9025,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -8847,6 +9072,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -8884,6 +9112,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -8928,6 +9159,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -8965,6 +9199,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -9009,6 +9246,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -9046,6 +9286,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -9087,6 +9330,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -9126,6 +9372,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -9167,6 +9416,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -9206,6 +9458,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -9247,6 +9502,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -9286,6 +9544,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -9327,6 +9588,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -9367,6 +9631,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -9406,6 +9673,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -9450,6 +9720,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -9487,6 +9760,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -9531,6 +9807,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "default": {
             "description": "Error",
             "content": {
@@ -9568,6 +9847,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",
@@ -9608,6 +9890,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "default": {
             "description": "Error",

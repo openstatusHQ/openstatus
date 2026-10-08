@@ -178,12 +178,14 @@ export function trackingInterceptor(): Interceptor {
     setupAnalytics({
       userId: `api_${rpcCtx.workspace.id}`,
       workspaceId: `${rpcCtx.workspace.id}`,
+      workspaceName: rpcCtx.workspace.name || rpcCtx.workspace.slug,
       plan: rpcCtx.workspace.plan,
+      source: "api",
       location: req.header.get("x-forwarded-for") ?? undefined,
       userAgent: req.header.get("user-agent") ?? undefined,
     })
       .then((analytics) =>
-        analytics.track({ ...mapping.event, additionalProps }),
+        analytics.track({ ...additionalProps, ...mapping.event }),
       )
       .catch(() => {
         logger.warn(

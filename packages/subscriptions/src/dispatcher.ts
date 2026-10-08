@@ -47,18 +47,25 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
     (i) => i.pageComponent,
   );
 
+  // impacts as of this update: a late dispatch must not show later updates
   const currentImpacts = currentImpactsFromUpdates(
-    update.statusReport.statusReportUpdates.map((u) => ({
-      id: u.id,
-      date: u.date,
-      componentImpacts: u.statusReportUpdateToPageComponents,
-    })),
+    update.statusReport.statusReportUpdates
+      .filter((u) => u.date.getTime() <= update.date.getTime())
+      .map((u) => ({
+        id: u.id,
+        date: u.date,
+        componentImpacts: u.statusReportUpdateToPageComponents,
+      })),
   );
-  const componentsWithImpact = pageComponents.map((c) => ({
-    id: c.id,
-    name: c.name,
-    impact: currentImpacts.get(c.id) ?? "operational",
-  }));
+  // legacy report (no impact rows): channels fall back to bare names
+  const componentsWithImpact =
+    currentImpacts.size > 0
+      ? pageComponents.map((c) => ({
+          id: c.id,
+          name: c.name,
+          impact: currentImpacts.get(c.id) ?? ("operational" as const),
+        }))
+      : undefined;
 
   await dispatchPageUpdate({
     id: update.statusReport.id,

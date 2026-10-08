@@ -1,7 +1,7 @@
 ---
 category: Tutorials
 title: Get Started with openstatus CLI
-description: "Step-by-step tutorial to install and use the openstatus CLI for monitoring as code"
+description: "Step-by-step tutorial to install the openstatus CLI and export your workspace to Terraform"
 ---
 
 
@@ -9,11 +9,11 @@ description: "Step-by-step tutorial to install and use the openstatus CLI for mo
 |---|---|
 | **Time** | ~10 minutes |
 | **Level** | Intermediate |
-| **Prerequisites** | openstatus account, command-line experience, API key from your workspace (Settings → General → API Keys) |
+| **Prerequisites** | openstatus account, command-line experience, API key from your workspace (Settings > General > API Keys) |
 
-In this tutorial, you'll use the openstatus CLI to manage your monitors as code. This lets you version-control your monitoring configuration, automate deployments, and implement GitOps workflows.
+In this tutorial, you'll install the openstatus CLI and use it to export your existing workspace into Terraform configuration. That gives you a version-controlled, reviewable definition of your monitoring you can then manage with the standard `plan` / `apply` workflow.
 
-By the end you'll have the openstatus CLI installed on your system, your monitors exported to a YAML configuration file, and a working sense of the monitoring-as-code workflow.
+By the end you'll have the openstatus CLI installed and authenticated, and your monitors, status pages, and notification channels written out as `.tf` files.
 
 <Image
   src="/docs/tutorial/get-started-with-openstatus-cli/CLI.png"
@@ -64,7 +64,7 @@ openstatus version x.x.x
 
 ## Configure API authentication
 
-1. In your openstatus dashboard, go to **Settings → General** and find the **API Keys** card.
+1. In your openstatus dashboard, go to **Settings > General** and find the **API Keys** card.
 2. Click **Create** and copy the value — you won't see it again after closing the dialog.
 3. Make it available to the CLI as an environment variable:
 
@@ -82,39 +82,46 @@ $env:OPENSTATUS_API_TOKEN="<your-api-token>"
 
 <Aside type="note">The CLI reads `OPENSTATUS_API_TOKEN`. The openstatus SDKs (Node.js, Python, PHP) read the same API key value from `OPENSTATUS_API_KEY` instead — you can set both to the same value if you use both tools.</Aside>
 
-## Import existing monitors
+## Export your workspace to Terraform
 
-Start by importing your existing monitors from your workspace to a YAML file:
-
-```bash
-openstatus monitors import
-```
-
-You should see output confirming the import:
-
-```
-Successfully imported X monitors to openstatus.yaml
-```
-
-This creates an `openstatus.yaml` file containing all your current monitors. This file becomes your single source of truth for monitoring configuration.
-
-**Checkpoint:** Open the `openstatus.yaml` file and verify it contains your monitors. You should see entries with your monitor names and URLs.
-
-## Manage monitors as code
-
-Now you can add, remove, or update monitors in the YAML file and apply your changes:
+The CLI can write your existing workspace out as ready-to-use Terraform configuration, so you
+don't have to translate your monitors by hand:
 
 ```bash
-openstatus monitors apply
+openstatus terraform generate
 ```
 
-The CLI will show you a diff of changes before applying them, ensuring you're aware of what will be modified.
+Files are written to `./openstatus-terraform/` by default; pass `--output-dir` to choose another
+directory, and `--force` to overwrite an existing one. The export covers monitors, status pages,
+component groups, notification channels, and private locations.
+
+**Checkpoint:** open the generated `.tf` files and confirm your monitors are there, with the names
+and URLs you expect.
+
+## Manage it with Terraform
+
+From the output directory, the standard Terraform workflow takes over:
+
+```bash
+terraform init    # download the openstatus provider
+terraform plan    # preview what will change
+terraform apply   # apply the changes
+```
+
+To adopt resources that already exist rather than recreate them, import them into state first:
+
+```bash
+terraform import openstatus_http_monitor.website <monitor_id>
+```
+
+From here on, edit the `.tf` files, open a pull request, and let `terraform plan` show the diff
+before anything reaches your workspace.
 
 ## What you've accomplished
 
 - Installed the openstatus CLI
 - Configured API authentication
-- Imported monitors to a YAML file
+- Exported your workspace to Terraform configuration
 - Learned the monitoring-as-code workflow
 
 ## Troubleshooting
@@ -139,22 +146,23 @@ export PATH="$HOME/.local/bin:$PATH"
 
 **Fix:**
 1. Verify the token is set: `echo $OPENSTATUS_API_TOKEN`
-2. Regenerate the key in your workspace settings (Settings → General → API Keys)
+2. Regenerate the key in your workspace settings (Settings > General > API Keys)
 3. Make sure there are no extra spaces or newlines in the token value
 
-### "no monitors found" on import
+### The export is empty
 
-**Cause:** Your workspace has no monitors, or the token belongs to a different workspace.
+**Cause:** Your workspace has no resources yet, or the token belongs to a different workspace.
 
-**Fix:** Create at least one monitor in the dashboard first, then retry the import.
+**Fix:** Confirm which workspace the token belongs to with `openstatus whoami`, create at least one
+monitor in the dashboard, then re-run the export.
 
 ## What's next
 
-- **[Monitor your MCP server](/docs/guides/how-to-monitor-mcp-server)** — example of CLI-based monitor configuration.
-- **[Run synthetic tests in GitHub Actions](/docs/guides/how-to-run-synthetic-test-github-action)** — automate monitoring in your pipeline.
+- **[Manage openstatus with Terraform](/docs/guides/how-to-manage-openstatus-with-terraform)** — the end-to-end Terraform workflow.
+- **[Monitor your MCP server](/docs/guides/how-to-monitor-mcp-server)** — a worked monitor definition.
 
 ### Learn more
 
 - **[Monitoring-as-code concept](/docs/concept/uptime-monitoring-as-code)** — why manage monitors as code.
 - **[CLI reference](/docs/reference/cli-reference)** — all available commands.
-- **[YAML configuration examples](https://github.com/openstatusHQ/cli-template)** — sample configurations.
+- **[Terraform provider reference](/docs/reference/terraform)** — every resource, argument, and block.

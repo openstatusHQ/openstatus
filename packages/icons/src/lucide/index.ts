@@ -28,6 +28,7 @@ export {
   ChevronUp,
   Clock,
   X as Close,
+  CloudOff,
   Code,
   ChevronsDownUp as Collapse,
   Command,

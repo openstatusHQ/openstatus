@@ -4,6 +4,8 @@ import type { ServiceContext } from "@openstatus/services";
 import packageJson from "../../../package.json" with { type: "json" };
 import { registerPublicResources } from "./resources";
 import { registerAuditTools } from "./tools/audit";
+import { registerContentTools } from "./tools/content";
+import { registerIncidentTools } from "./tools/incident";
 import { registerMaintenanceTools } from "./tools/maintenance";
 import { registerMonitorTools } from "./tools/monitor";
 import { registerNotificationTools } from "./tools/notification";
@@ -30,26 +32,12 @@ export function createMcpServer(ctx: ServiceContext): McpServer {
   registerPublicResources(server);
   registerPageTools(server, ctx);
   registerStatusReportTools(server, ctx);
+  registerIncidentTools(server, ctx);
   registerMaintenanceTools(server, ctx);
   registerMonitorTools(server, ctx);
   registerNotificationTools(server, ctx);
   registerPrivateLocationTools(server, ctx);
   registerAuditTools(server, ctx);
-  return server;
-}
-
-/**
- * Server for a request that carried no `x-openstatus-key`. MCP clients
- * `initialize` before they have a credential, and an endpoint that refuses the
- * handshake reads as unreachable rather than as protected. No tool is
- * registered, so `tools/list` and `tools/call` are absent — not empty — and
- * nothing workspace-scoped is reachable without a key.
- */
-export function createPublicMcpServer(): McpServer {
-  const server = new McpServer({
-    name: "openstatus",
-    version: packageJson.version,
-  });
-  registerPublicResources(server);
+  registerContentTools(server, ctx);
   return server;
 }

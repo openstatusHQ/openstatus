@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@libsql/client": "catalog:",
+    "@openstatus/ai": "workspace:*",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
@@ -42,6 +43,7 @@
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@slack/web-api": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
@@ -49,9 +51,11 @@
     "@trpc/tanstack-react-query": "catalog:",
     "@unkey/api": "catalog:",
     "@vercel/blob": "catalog:",
+    "ai": "catalog:",
     "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
     "isomorphic-dompurify": "catalog:",
+    "mailchecker": "catalog:",
     "nanoid": "catalog:",
     "nanoid-dictionary": "catalog:",
     "next": "catalog:",
@@ -67,7 +71,6 @@
     "@std/testing": "jsr:^1.0.19",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "bun-types": "catalog:",
     "typescript": "catalog:"
   }
 }

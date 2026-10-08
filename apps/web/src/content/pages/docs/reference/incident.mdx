@@ -28,11 +28,18 @@ An incident's lifecycle is tracked with timestamps rather than a manual workflow
 
 - **Open** — created when the failure threshold is met. `resolvedAt` is null.
 - **Acknowledged** — a team member has taken ownership. `acknowledgedAt` and `acknowledgedBy` are set.
-- **Resolved** — either auto-resolved when the monitor recovers (`autoResolved: true`) or manually resolved, setting `resolvedAt` and `resolvedBy`.
+- **Resolved** — either auto-resolved (`autoResolved: true`) or manually resolved, setting `resolvedAt` and `resolvedBy`.
+
+Auto-resolution fires when the monitor leaves the `error` state by the same region-agreement rule
+that opened the incident. That includes a transition to `degraded`, not only to `active`: a monitor
+that improves from down to slow closes its open incident. The notification that goes out matches the
+new state — a recovery alert for `active`, a degraded alert for `degraded`.
 
 The stored `status` field accepts `triage` (the default), `investigating`, `identified`, `monitoring`, `resolved`, and `duplicated`.
 
-Incidents are distinct from status reports. Status reports are the manual, public communication channel on your status page and are not linked to an incident record — see the [Status report reference](/docs/reference/status-report).
+Incidents are distinct from status reports. Status reports are the manual, public communication channel on your status page and are not linked to a monitor's incident record — see the [Status report reference](/docs/reference/status-report).
+
+This page covers the incident a monitor opens on its own. The incident your team declares, with a severity, a commander, a timeline and a postmortem, is a separate object: see the [Incident management reference](/docs/reference/incident-management).
 
 ## Properties
 
@@ -48,3 +55,4 @@ While an incident is active, it collects and displays key information related to
 ## Related resources
 
 - **[Status report reference](/docs/reference/status-report)** — how to communicate an incident publicly on your status page.
+- **[Incident management reference](/docs/reference/incident-management)** — declared incidents, their timeline and postmortem.

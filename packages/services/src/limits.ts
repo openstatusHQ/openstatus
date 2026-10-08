@@ -93,7 +93,7 @@ export async function getWorkspaceLimit(
  * The `default` branch is unreachable — `never` makes a new `LimitKey`
  * without a counter a compile error rather than a runtime surprise.
  */
-async function countCurrent(
+export async function countWorkspaceUsage(
   tx: DB,
   workspaceId: number,
   limit: LimitKey,
@@ -148,7 +148,7 @@ async function countCurrent(
     default: {
       const unhandled: never = limit;
       throw new Error(
-        `assertWithinLimit: counter for "${unhandled}" not implemented. Add a case in countCurrent in packages/services/src/limits.ts.`,
+        `assertWithinLimit: counter for "${unhandled}" not implemented. Add a case in countWorkspaceUsage in packages/services/src/limits.ts.`,
       );
     }
   }
@@ -163,7 +163,7 @@ export async function assertWithinLimit(args: {
   const { tx, workspaceId, limit, delta = 1 } = args;
 
   const max = await getWorkspaceLimit(tx, workspaceId, limit);
-  const current = await countCurrent(tx, workspaceId, limit);
+  const current = await countWorkspaceUsage(tx, workspaceId, limit);
   if (current + delta > max) {
     throw new LimitExceededError(limit, max, current);
   }

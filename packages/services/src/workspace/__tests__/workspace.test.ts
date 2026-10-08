@@ -335,6 +335,35 @@ async function insertPlanWorkspace(
 }
 
 describe("updateWorkspacePlan", () => {
+  test("writes trialEndsAt only when given", async () => {
+    await withTestTransaction(async (tx) => {
+      const ws = await insertPlanWorkspace(tx, {
+        plan: "free",
+        slug: "svc-plan-trial",
+      });
+      const ctx = { ...makeSystemCtx(ws, { job: "signup-trial" }), db: tx };
+      const trialEndsAt = new Date("2027-01-15T00:00:00Z");
+      const base = {
+        plan: "starter" as const,
+        subscriptionId: "sub_trial",
+        paidUntil: trialEndsAt,
+        endsAt: trialEndsAt,
+        limits: getLimits("starter"),
+      };
+      const read = () =>
+        tx.select().from(workspace).where(eq(workspace.id, ws.id)).get();
+
+      await updateWorkspacePlan({ ctx, input: { ...base, trialEndsAt } });
+      expect((await read())?.trialEndsAt).toEqual(trialEndsAt);
+
+      await updateWorkspacePlan({ ctx, input: base });
+      expect((await read())?.trialEndsAt).toEqual(trialEndsAt);
+
+      await updateWorkspacePlan({ ctx, input: { ...base, trialEndsAt: null } });
+      expect((await read())?.trialEndsAt).toBeNull();
+    });
+  });
+
   test("writes the new plan + limits and audits the change", async () => {
     await withTestTransaction(async (tx) => {
       const ws = await insertPlanWorkspace(tx, {

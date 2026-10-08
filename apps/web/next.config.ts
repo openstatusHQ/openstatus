@@ -121,6 +121,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/docs/guides/how-to-connect-openstatus-to-claude-code",
+        destination: "/docs/guides/how-to-connect-openstatus-to-your-agent",
+        permanent: true,
+      },
+      {
         source: "/legal/terms",
         destination: "/terms",
         permanent: true,
@@ -202,7 +207,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/docs/tutorial/how-to-connect-openstatus-to-claude-code",
-        destination: "/docs/guides/how-to-connect-openstatus-to-claude-code",
+        destination: "/docs/guides/how-to-connect-openstatus-to-your-agent",
         permanent: true,
       },
       {
@@ -386,10 +391,12 @@ const nextConfig: NextConfig = {
           source: "/:path*\\.md",
           destination: "/api/markdown/:path*",
         },
-        // Markdown content negotiation for AI tools
+        // Markdown content negotiation for AI tools. beforeFiles rewrites
+        // chain, so skip paths the .md rule above already rewrote — otherwise
+        // /pricing.md + Accept: text/markdown ends up at /api/markdown/api/markdown/pricing
         {
-          source: "/:path*",
-          destination: "/api/markdown/:path*",
+          source: "/:path((?!api/markdown(?:/|$)).+)",
+          destination: "/api/markdown/:path",
           has: [
             {
               type: "header",

@@ -1,9 +1,20 @@
-import { getLimits } from "@openstatus/db/src/schema/plan/utils";
+import {
+  getAddonPackSize,
+  getLimits,
+} from "@openstatus/db/src/schema/plan/utils";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 import type Stripe from "stripe";
 
-import { FEATURES, PLANS, buildLimitsFromSubscription } from "./utils";
+import {
+  FEATURES,
+  PLANS,
+  billingProps,
+  buildLimitsFromSubscription,
+  buildPlanChangeItems,
+  getPriceIdForFeature,
+  resolveAddonQuantity,
+} from "./utils";
 
 // Derive test-env price ids from the source tables so the test breaks loudly
 // (assertion failure) rather than silently if a price id changes.
@@ -15,6 +26,7 @@ const featurePriceId = (feature: string) =>
 const STARTER = planPriceId("starter");
 const WHITE_LABEL = featurePriceId("white-label");
 const STATUS_PAGES = featurePriceId("status-pages");
+const MONITORS = featurePriceId("monitors");
 
 function subscriptionWith(
   items: { priceId: string | undefined; quantity?: number }[],
@@ -34,6 +46,7 @@ describe("buildLimitsFromSubscription", () => {
     expect(STARTER).toBeDefined();
     expect(WHITE_LABEL).toBeDefined();
     expect(STATUS_PAGES).toBeDefined();
+    expect(MONITORS).toBeDefined();
   });
 
   test("returns null when no plan line item is present", () => {
@@ -91,11 +104,291 @@ describe("buildLimitsFromSubscription", () => {
     expect(built?.limits["status-pages"]).toBe(planDefault + 5);
   });
 
-  test("throws on an unsupported price when a plan is present", () => {
+  test("reports a custom price instead of throwing", () => {
+    const built = buildLimitsFromSubscription(
+      subscriptionWith([{ priceId: STARTER }, { priceId: "price_custom" }]),
+    );
+    expect(built?.plan).toBe("starter");
+    expect(built?.customPriceIds).toEqual(["price_custom"]);
+    expect(built?.limits).toEqual(getLimits("starter"));
+  });
+
+  test("one pack addon unit grants `packSize` limit units", () => {
+    const planDefault = getLimits("starter").monitors;
+    const built = buildLimitsFromSubscription(
+      subscriptionWith([
+        { priceId: STARTER },
+        { priceId: MONITORS, quantity: 3 },
+      ]),
+    );
+    expect(built?.limits.monitors).toBe(planDefault + 30);
+  });
+
+  test("missing quantity on a pack addon falls back to one pack", () => {
+    const planDefault = getLimits("starter").monitors;
+    const built = buildLimitsFromSubscription(
+      subscriptionWith([{ priceId: STARTER }, { priceId: MONITORS }]),
+    );
+    expect(built?.limits.monitors).toBe(planDefault + 10);
+  });
+
+  test("repeated pack addon items accumulate", () => {
+    const planDefault = getLimits("starter").monitors;
+    const built = buildLimitsFromSubscription(
+      subscriptionWith([
+        { priceId: STARTER },
+        { priceId: MONITORS, quantity: 2 },
+        { priceId: MONITORS, quantity: 3 },
+      ]),
+    );
+    expect(built?.limits.monitors).toBe(planDefault + 50);
+  });
+
+  test("a pack addon does not affect unrelated limits", () => {
+    const built = buildLimitsFromSubscription(
+      subscriptionWith([
+        { priceId: STARTER },
+        { priceId: MONITORS, quantity: 3 },
+      ]),
+    );
+    expect(built?.limits["synthetic-checks"]).toBe(
+      getLimits("starter")["synthetic-checks"],
+    );
+    expect(built?.limits["status-pages"]).toBe(
+      getLimits("starter")["status-pages"],
+    );
+  });
+});
+
+describe("getAddonPackSize", () => {
+  test("returns the pack size for a pack addon", () => {
+    expect(getAddonPackSize("monitors")).toBe(10);
+  });
+
+  test("defaults to 1 for single-unit and boolean addons", () => {
+    expect(getAddonPackSize("status-pages")).toBe(1);
+    expect(getAddonPackSize("white-label")).toBe(1);
+  });
+});
+
+describe("resolveAddonQuantity", () => {
+  test("packs map to the stripe quantity untouched", () => {
+    const resolved = resolveAddonQuantity({
+      addon: "monitors",
+      plan: "starter",
+      packs: 3,
+    });
+    expect(resolved.quantity).toBe(3);
+    expect(resolved.packSize).toBe(10);
+    expect(resolved.maxPacks).toBe(10);
+  });
+
+  test("newLimit is the plan default plus packs times pack size", () => {
+    const planDefault = getLimits("team").monitors;
+    const resolved = resolveAddonQuantity({
+      addon: "monitors",
+      plan: "team",
+      packs: 4,
+    });
+    expect(resolved.newLimit).toBe(planDefault + 40);
+  });
+
+  test("zero packs resolves to the plan default", () => {
+    const resolved = resolveAddonQuantity({
+      addon: "monitors",
+      plan: "starter",
+      packs: 0,
+    });
+    expect(resolved.quantity).toBe(0);
+    expect(resolved.newLimit).toBe(getLimits("starter").monitors);
+  });
+
+  test("single-unit addons are unaffected by the pack multiplier", () => {
+    const planDefault = getLimits("starter")["status-pages"];
+    const resolved = resolveAddonQuantity({
+      addon: "status-pages",
+      plan: "starter",
+      packs: 3,
+    });
+    expect(resolved.newLimit).toBe(planDefault + 3);
+    expect(resolved.maxPacks).toBeNull();
+  });
+
+  test("rejects more packs than the self-serve ceiling", () => {
     expect(() =>
-      buildLimitsFromSubscription(
-        subscriptionWith([{ priceId: STARTER }, { priceId: "price_unknown" }]),
+      resolveAddonQuantity({ addon: "monitors", plan: "starter", packs: 11 }),
+    ).toThrow(/up to 100/);
+  });
+
+  test("allows exactly the ceiling", () => {
+    const resolved = resolveAddonQuantity({
+      addon: "monitors",
+      plan: "starter",
+      packs: 10,
+    });
+    expect(resolved.newLimit).toBe(getLimits("starter").monitors + 100);
+  });
+
+  test("rejects negative and fractional pack counts", () => {
+    expect(() =>
+      resolveAddonQuantity({ addon: "monitors", plan: "starter", packs: -1 }),
+    ).toThrow(/whole number of packs/);
+    expect(() =>
+      resolveAddonQuantity({ addon: "monitors", plan: "starter", packs: 1.5 }),
+    ).toThrow(/whole number of packs/);
+  });
+});
+
+describe("getPriceIdForFeature", () => {
+  test("defaults to the monthly price", () => {
+    expect(getPriceIdForFeature("status-pages")).toBe(STATUS_PAGES);
+  });
+
+  test("returns the yearly price when the addon has one", () => {
+    const yearly = getPriceIdForFeature("status-pages", "yearly");
+    expect(yearly).toBeDefined();
+    expect(yearly).not.toBe(STATUS_PAGES);
+  });
+
+  test("every addon has a yearly price", () => {
+    for (const { feature } of FEATURES) {
+      expect(getPriceIdForFeature(feature, "yearly")).toBeDefined();
+    }
+  });
+
+  test("a yearly addon item still counts towards the limits", () => {
+    const built = buildLimitsFromSubscription(
+      subscriptionWith([
+        { priceId: STARTER },
+        {
+          priceId: getPriceIdForFeature("status-pages", "yearly"),
+          quantity: 2,
+        },
+      ]),
+    );
+    expect(built?.limits["status-pages"]).toBe(
+      getLimits("starter")["status-pages"] +
+        2 * getAddonPackSize("status-pages"),
+    );
+  });
+});
+
+describe("buildPlanChangeItems", () => {
+  const yearlyPlanPrice = PLANS.find((p) => p.plan === "starter")?.price.yearly
+    .priceIds.test as string;
+  const monthlyFeature = (feature: string) =>
+    FEATURES.find((f) => f.feature === feature)?.price.monthly.priceIds.test;
+  const yearlyFeature = (feature: string) =>
+    FEATURES.find((f) => f.feature === feature)?.price.yearly.priceIds.test;
+
+  function subscription(
+    items: { id: string; priceId: string | undefined; quantity?: number }[],
+  ) {
+    return {
+      items: {
+        data: items.map(({ id, priceId, quantity }) => ({
+          id,
+          price: { id: priceId },
+          quantity,
+        })),
+      },
+    } as unknown as Stripe.Subscription;
+  }
+
+  test("monthly → yearly moves the plan and every addon to yearly", () => {
+    const items = buildPlanChangeItems({
+      subscription: subscription([
+        { id: "si_plan", priceId: STARTER, quantity: 1 },
+        ...FEATURES.map(({ feature }, i) => ({
+          id: `si_${feature}`,
+          priceId: monthlyFeature(feature),
+          quantity: i + 1,
+        })),
+      ]),
+      planItemId: "si_plan",
+      planPriceId: yearlyPlanPrice,
+      interval: "yearly",
+    });
+
+    expect(items).toEqual([
+      { id: "si_plan", price: yearlyPlanPrice },
+      ...FEATURES.map(({ feature }, i) => ({
+        id: `si_${feature}`,
+        price: yearlyFeature(feature),
+        quantity: i + 1,
+      })),
+    ]);
+  });
+
+  test("yearly → monthly moves every addon back to monthly", () => {
+    const items = buildPlanChangeItems({
+      subscription: subscription([
+        { id: "si_plan", priceId: yearlyPlanPrice },
+        { id: "si_pages", priceId: yearlyFeature("status-pages"), quantity: 3 },
+      ]),
+      planItemId: "si_plan",
+      planPriceId: STARTER as string,
+      interval: "monthly",
+    });
+
+    expect(items).toEqual([
+      { id: "si_plan", price: STARTER },
+      { id: "si_pages", price: STATUS_PAGES, quantity: 3 },
+    ]);
+  });
+
+  test("throws on an addon item with an unknown price", () => {
+    expect(() =>
+      buildPlanChangeItems({
+        subscription: subscription([
+          { id: "si_plan", priceId: STARTER },
+          { id: "si_legacy", priceId: "price_legacy" },
+        ]),
+        planItemId: "si_plan",
+        planPriceId: yearlyPlanPrice,
+        interval: "yearly",
+      }),
+    ).toThrow();
+  });
+});
+
+describe("billingProps", () => {
+  const subscription = (
+    interval: "month" | "year",
+    items: { unit_amount: number | null; quantity?: number }[],
+  ) =>
+    ({
+      currency: "usd",
+      items: {
+        data: items.map(({ unit_amount, quantity }) => ({
+          price: { unit_amount, recurring: { interval } },
+          quantity,
+        })),
+      },
+    }) as unknown as Stripe.Subscription;
+
+  test("sums monthly items times quantity, in major units", () => {
+    expect(
+      billingProps(
+        subscription("month", [
+          { unit_amount: 3000 },
+          { unit_amount: 500, quantity: 2 },
+        ]),
       ),
-    ).toThrow(/unsupported stripe price/i);
+    ).toEqual({ interval: "month", currency: "usd", mrr: 40 });
+  });
+
+  test("normalises yearly prices to a monthly amount", () => {
+    expect(
+      billingProps(subscription("year", [{ unit_amount: 36000 }])).mrr,
+    ).toBe(30);
+  });
+
+  test("counts items without a unit amount as zero", () => {
+    expect(
+      billingProps(
+        subscription("month", [{ unit_amount: null }, { unit_amount: 1000 }]),
+      ).mrr,
+    ).toBe(10);
   });
 });

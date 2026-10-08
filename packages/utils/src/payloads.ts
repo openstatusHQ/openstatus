@@ -15,7 +15,7 @@ export const httpPayloadSchema = z.object({
   assertions: z.array(base).nullable(),
   timeout: z.number().prefault(45000),
   degradedAfter: z.number().nullable(),
-  trigger: z.enum(["cron", "api"]).optional().nullable().prefault("cron"),
+  trigger: z.enum(["cron", "api"]).nullable().prefault("cron"),
   otelConfig: z
     .object({
       endpoint: z.string(),
@@ -37,7 +37,7 @@ export const tpcPayloadSchema = z.object({
   cronTimestamp: z.number(),
   timeout: z.number().prefault(45000),
   degradedAfter: z.number().nullable(),
-  trigger: z.enum(["cron", "api"]).optional().nullable().prefault("cron"),
+  trigger: z.enum(["cron", "api"]).nullable().prefault("cron"),
   otelConfig: z
     .object({
       endpoint: z.string(),
@@ -58,7 +58,7 @@ export const DNSPayloadSchema = z.object({
   cronTimestamp: z.number(),
   timeout: z.number().prefault(45000),
   degradedAfter: z.number().nullable(),
-  trigger: z.enum(["cron", "api"]).optional().nullable().prefault("cron"),
+  trigger: z.enum(["cron", "api"]).nullable().prefault("cron"),
   otelConfig: z
     .object({
       endpoint: z.string(),
@@ -78,7 +78,7 @@ export const icmpPayloadSchema = z.object({
   cronTimestamp: z.number(),
   timeout: z.number().prefault(45000),
   degradedAfter: z.number().nullable(),
-  trigger: z.enum(["cron", "api"]).optional().nullable().prefault("cron"),
+  trigger: z.enum(["cron", "api"]).nullable().prefault("cron"),
   otelConfig: z
     .object({
       endpoint: z.string(),
@@ -103,7 +103,7 @@ export const grpcPayloadSchema = z.object({
   cronTimestamp: z.number(),
   timeout: z.number().prefault(45000),
   degradedAfter: z.number().nullable(),
-  trigger: z.enum(["cron", "api"]).optional().nullable().prefault("cron"),
+  trigger: z.enum(["cron", "api"]).nullable().prefault("cron"),
   otelConfig: z
     .object({
       endpoint: z.string(),

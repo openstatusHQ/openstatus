@@ -1,3 +1,1 @@
-export function createProtectedCookieKey(value: string) {
-  return `secured-${value}`;
-}
+export { pageAccessCookieKey as createProtectedCookieKey } from "@openstatus/services/page-access/cookie-key";

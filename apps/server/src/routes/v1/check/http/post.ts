@@ -69,7 +69,9 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
       .returning()
       .get();
 
-    const result = [];
+    // Consume each run's fetches immediately so raw `Response`s are never
+    // retained across runCount × regions; only the last entry keeps body/headers.
+    const fulfilledRequest: z.infer<typeof ResponseSchema>[] = [];
 
     for (let count = 0; count < input.runCount; count++) {
       const currentFetch = [];
@@ -103,28 +105,29 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
       }
 
       const allResults = await Promise.allSettled(currentFetch);
-      result.push(...allResults);
-    }
 
-    const fulfilledRequest: z.infer<typeof ResponseSchema>[] = [];
+      for (const r of allResults) {
+        if (r.status !== "fulfilled") continue;
 
-    const filteredResult = result.filter((r) => r.status === "fulfilled");
-    for await (const r of filteredResult) {
-      if (r.status !== "fulfilled") throw new Error("No value");
+        const json = await r.value.json();
+        const parsed = ResponseSchema.safeParse(json);
 
-      const json = await r.value.json();
-      const parsed = ResponseSchema.safeParse(json);
+        if (!parsed.success) {
+          logger.error("Failed to parse check response", {
+            check_id: newCheck.id,
+            workspace_id: workspaceId,
+            validation_errors: parsed.error,
+          });
+          throw new Error(`Failed to parse response: ${parsed.error.message}`);
+        }
 
-      if (!parsed.success) {
-        logger.error("Failed to parse check response", {
-          check_id: newCheck.id,
-          workspace_id: workspaceId,
-          validation_errors: parsed.error,
-        });
-        throw new Error(`Failed to parse response: ${parsed.error.message}`);
+        const previous = fulfilledRequest[fulfilledRequest.length - 1];
+        if (previous) {
+          previous.body = undefined;
+          previous.headers = undefined;
+        }
+        fulfilledRequest.push(parsed.data);
       }
-
-      fulfilledRequest.push(parsed.data);
     }
 
     let aggregatedResponse = null;
