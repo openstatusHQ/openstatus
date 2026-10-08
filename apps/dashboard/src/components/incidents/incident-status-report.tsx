@@ -161,9 +161,9 @@ function LinkedReport({
     <ActionCard>
       <ActionCardHeader>
         <ActionCardTitle className="flex items-center gap-2 text-sm">
-          <StatusDot variant={statusVariants[report.status]} />
           Published
-          <span className="text-muted-foreground ml-auto font-mono text-xs font-normal capitalize">
+          <span className="text-muted-foreground ml-auto flex items-center gap-2 font-mono text-xs font-normal capitalize">
+            <StatusDot variant={statusVariants[report.status]} />
             {report.status}
           </span>
         </ActionCardTitle>
