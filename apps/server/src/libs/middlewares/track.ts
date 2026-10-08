@@ -6,7 +6,8 @@ import {
 } from "@openstatus/analytics";
 import type { Context, Next } from "hono";
 
-import { claimCliCommandEvent, parseCliHeaders } from "@/libs/cli-telemetry";
+import { apiAnalyticsIdentity } from "@/libs/analytics-identity";
+import { parseCliHeaders, trackCliCommand } from "@/libs/cli-telemetry";
 import type { Variables } from "@/types";
 
 const logger = getLogger("api-server");
@@ -31,15 +32,7 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
       const additionalProps = parseInputToProps(json, eventProps);
       const workspace = c.get("workspace");
 
-      setupAnalytics({
-        userId: `api_${workspace.id}`,
-        workspaceId: `${workspace.id}`,
-        workspaceName: workspace.name || workspace.slug,
-        plan: workspace.plan,
-        source: "api",
-        location: c.req.raw.headers.get("x-forwarded-for") ?? undefined,
-        userAgent: c.req.raw.headers.get("user-agent") ?? undefined,
-      })
+      setupAnalytics(apiAnalyticsIdentity(workspace, c.req.raw.headers))
         .then((analytics) => analytics.track({ ...additionalProps, ...event }))
         .catch(() => {
           logger.warn(
@@ -63,20 +56,8 @@ export function cliTrackMiddleware() {
     const workspace = c.get("workspace");
 
     if (cli && workspace) {
-      claimCliCommandEvent(workspace.id, cli)
-        .then(async (event) => {
-          if (!event) return;
-          const analytics = await setupAnalytics({
-            userId: `api_${workspace.id}`,
-            workspaceId: `${workspace.id}`,
-            workspaceName: workspace.name || workspace.slug,
-            plan: workspace.plan,
-            source: "api",
-            location: c.req.raw.headers.get("x-forwarded-for") ?? undefined,
-            userAgent: c.req.raw.headers.get("user-agent") ?? undefined,
-          });
-          await analytics.track(event);
-        })
+      setupAnalytics(apiAnalyticsIdentity(workspace, c.req.raw.headers))
+        .then((analytics) => trackCliCommand(analytics, workspace.id, cli))
         .catch(() => {
           logger.warn(
             "Failed to send CLI analytics event for workspace {workspaceId}",

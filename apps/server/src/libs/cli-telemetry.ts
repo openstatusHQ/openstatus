@@ -52,7 +52,8 @@ export function parseCliHeaders(headers: Headers): CliInfo | undefined {
  * the same run already claimed it. One CLI command can make several requests
  * (possibly to different machines); the Redis `NX` claim makes the first one
  * win so each run counts once. A Redis failure drops the event rather than
- * risk counting a run twice.
+ * risk counting a run twice. Prefer `trackCliCommand`, which also gives the
+ * claim back when the send fails.
  */
 export async function claimCliCommandEvent(
   workspaceId: number,
@@ -80,4 +81,31 @@ export async function claimCliCommandEvent(
     ...(cli.os ? { os: cli.os } : {}),
     ...(cli.arch ? { arch: cli.arch } : {}),
   };
+}
+
+type Analytics = {
+  track: (event: EventProps & Record<string, unknown>) => Promise<unknown>;
+};
+
+/**
+ * Sends this run's `cli_command` through `analytics` if this request is the
+ * first of the run to claim it. Claim only once analytics is set up, and give
+ * the claim back if the send rejects, so a later request of the same run can
+ * still count it instead of the run being lost for the claim's TTL.
+ */
+export async function trackCliCommand(
+  analytics: Analytics,
+  workspaceId: number,
+  cli: CliInfo,
+): Promise<void> {
+  const event = await claimCliCommandEvent(workspaceId, cli);
+  if (!event) return;
+  try {
+    await analytics.track(event);
+  } catch (error) {
+    await redis
+      .del(cacheKeys.cliInvocation(workspaceId, cli.invocation))
+      .catch(() => {});
+    throw error;
+  }
 }

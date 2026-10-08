@@ -2,7 +2,11 @@ import { Events } from "@openstatus/analytics";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 
-import { claimCliCommandEvent, parseCliHeaders } from "./cli-telemetry";
+import {
+  claimCliCommandEvent,
+  parseCliHeaders,
+  trackCliCommand,
+} from "./cli-telemetry";
 
 function cliHeaders(overrides: Record<string, string> = {}) {
   return new Headers({
@@ -67,5 +71,26 @@ describe("claimCliCommandEvent", () => {
     expect(await claimCliCommandEvent(1, cli)).toBe(undefined);
     // Keyed per workspace: another workspace can't swallow this run.
     expect(await claimCliCommandEvent(2, cli)).not.toBe(undefined);
+  });
+});
+
+describe("trackCliCommand", () => {
+  test("releases the claim when the send fails so a later request retries", async () => {
+    const cli = parseCliHeaders(cliHeaders());
+    if (!cli) throw new Error("expected CLI headers to parse");
+    const sent: unknown[] = [];
+    const failing = { track: () => Promise.reject(new Error("down")) };
+    const working = {
+      track: (event: unknown) => {
+        sent.push(event);
+        return Promise.resolve();
+      },
+    };
+
+    await expect(trackCliCommand(failing, 1, cli)).rejects.toThrow("down");
+    await trackCliCommand(working, 1, cli);
+    await trackCliCommand(working, 1, cli);
+
+    expect(sent).toHaveLength(1);
   });
 });

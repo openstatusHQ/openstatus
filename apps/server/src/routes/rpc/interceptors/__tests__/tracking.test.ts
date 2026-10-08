@@ -25,6 +25,9 @@ const { track: mockTrack, setupAnalytics: mockSetupAnalytics } = (
 
 type NextFn = Parameters<ReturnType<Interceptor>>[0];
 
+/** Let the fire-and-forget analytics chain (several awaits deep) settle. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 /** Create a mock `next` that resolves with the given value. */
 function mockNext(response: unknown): NextFn {
   return mock(() => Promise.resolve(response)) as unknown as NextFn;
@@ -110,7 +113,7 @@ describe("trackingInterceptor", () => {
     });
 
     // Flush the .then() chain
-    await Promise.resolve();
+    await flush();
 
     expect(mockTrack).toHaveBeenCalledTimes(2);
     expect(mockTrack).toHaveBeenCalledWith({
@@ -134,7 +137,7 @@ describe("trackingInterceptor", () => {
     const next = mockNext({});
 
     await interceptor(next)(req as never);
-    await Promise.resolve();
+    await flush();
 
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.CreateMonitor,
@@ -153,7 +156,7 @@ describe("trackingInterceptor", () => {
     const next = mockNext({});
 
     await interceptor(next)(req as never);
-    await Promise.resolve();
+    await flush();
 
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.CreateMonitor,
@@ -172,7 +175,7 @@ describe("trackingInterceptor", () => {
     const next = mockNext(mockResponse);
 
     const result = await interceptor(next)(req as never);
-    await Promise.resolve();
+    await flush();
 
     expect(result).toEqual(mockResponse);
     expect(mockTrack).toHaveBeenCalledTimes(1);
@@ -193,7 +196,7 @@ describe("trackingInterceptor", () => {
     const next = mockNextReject(new Error("not found"));
 
     await expect(interceptor(next)(req as never)).rejects.toThrow("not found");
-    await Promise.resolve();
+    await flush();
 
     expect(mockSetupAnalytics).toHaveBeenCalledTimes(1);
     expect(mockTrack).toHaveBeenCalledTimes(1);
@@ -213,7 +216,6 @@ describe("trackingInterceptor", () => {
       "x-openstatus-cli-command": "monitors list",
       "x-openstatus-cli-invocation": invocation,
     };
-    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
     for (let i = 0; i < 2; i++) {
       const req = createMockRequest(
@@ -280,7 +282,7 @@ describe("trackingInterceptor", () => {
     expect(result).toEqual(mockResponse);
 
     // Flush the .catch() chain — should not throw
-    await Promise.resolve();
+    await flush();
 
     expect(mockTrack).not.toHaveBeenCalled();
   });
@@ -307,7 +309,7 @@ describe("trackingInterceptor", () => {
     });
 
     // Flush the .then() chain
-    await Promise.resolve();
+    await flush();
 
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.CreateNotification,

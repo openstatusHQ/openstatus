@@ -7,10 +7,8 @@ import {
   setupAnalytics,
 } from "@openstatus/analytics";
 
-import {
-  claimCliCommandEvent,
-  parseCliHeaders,
-} from "../../../libs/cli-telemetry";
+import { apiAnalyticsIdentity } from "../../../libs/analytics-identity";
+import { parseCliHeaders, trackCliCommand } from "../../../libs/cli-telemetry";
 import { RPC_CONTEXT_KEY } from "./auth";
 
 const logger = getLogger("api-server");
@@ -177,7 +175,14 @@ export function trackingInterceptor(): Interceptor {
       success = true;
       return response;
     } finally {
-      trackRpcCall(req, success);
+      // Tracking must never replace the call's own result or error.
+      try {
+        trackRpcCall(req, success);
+      } catch {
+        logger.warn("Failed to track RPC call {method}", {
+          method: `${req.service.typeName}/${req.method.name}`,
+        });
+      }
     }
   };
 }
@@ -201,7 +206,8 @@ function trackRpcCall(req: TrackedRequest, success: boolean) {
       service: req.service.typeName,
       method: req.method.name,
       success,
-      ...(cli ? { cliCommand: cli.command, cliVersion: cli.version } : {}),
+      ...(cli ? { cliCommand: cli.command } : {}),
+      ...(cli?.version ? { cliVersion: cli.version } : {}),
     },
   ];
 
@@ -211,24 +217,13 @@ function trackRpcCall(req: TrackedRequest, success: boolean) {
     events.push({ ...additionalProps, ...mapping.event });
   }
 
-  const cliEvent = cli
-    ? claimCliCommandEvent(rpcCtx.workspace.id, cli)
-    : Promise.resolve(undefined);
-
-  setupAnalytics({
-    userId: `api_${rpcCtx.workspace.id}`,
-    workspaceId: `${rpcCtx.workspace.id}`,
-    workspaceName: rpcCtx.workspace.name || rpcCtx.workspace.slug,
-    plan: rpcCtx.workspace.plan,
-    source: "api",
-    location: req.header.get("x-forwarded-for") ?? undefined,
-    userAgent: req.header.get("user-agent") ?? undefined,
-  })
-    .then(async (analytics) => {
-      const cliCommand = await cliEvent;
-      if (cliCommand) events.push(cliCommand);
-      return Promise.all(events.map((event) => analytics.track(event)));
-    })
+  setupAnalytics(apiAnalyticsIdentity(rpcCtx.workspace, req.header))
+    .then((analytics) =>
+      Promise.all([
+        ...events.map((event) => analytics.track(event)),
+        ...(cli ? [trackCliCommand(analytics, rpcCtx.workspace.id, cli)] : []),
+      ]),
+    )
     .catch(() => {
       logger.warn(
         "Failed to send analytics events for {method} in workspace {workspaceId}",
