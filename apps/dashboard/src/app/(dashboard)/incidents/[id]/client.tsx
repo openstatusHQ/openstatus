@@ -84,7 +84,7 @@ export function Client({ id }: { id: number }) {
   const timeline = (
     <DetailSection>
       <DetailSectionTitle variant="heading">
-        Timeline
+        Activity
         {events ? (
           <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
             {events.length}
@@ -99,7 +99,11 @@ export function Client({ id }: { id: number }) {
           />
         )}
         {events?.map((event) => (
-          <IncidentTimelineItem key={event.id} event={event} />
+          <IncidentTimelineItem
+            key={event.id}
+            event={event}
+            incident={incident}
+          />
         ))}
       </Timeline>
     </DetailSection>

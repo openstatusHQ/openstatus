@@ -19,26 +19,35 @@ const statusBadgeVariants = cva("", {
   },
 });
 
-/** Tinted by `variant`; with `dot` it stays neutral and the dot carries the color. */
+/**
+ * Tinted by `variant`; with `dot` it stays neutral and the dot carries the
+ * color. `plain` drops the chrome for inline use in a sentence.
+ */
 export function StatusBadge({
   children,
   className,
   variant,
   dot = false,
+  plain = false,
   ...props
 }: Omit<React.ComponentProps<typeof Badge>, "variant"> &
-  VariantProps<typeof statusBadgeVariants> & { dot?: boolean }) {
+  VariantProps<typeof statusBadgeVariants> & {
+    dot?: boolean;
+    plain?: boolean;
+  }) {
   return (
     <Badge
       variant="outline"
       className={cn(
         "font-mono",
-        dot ? "gap-1.5" : statusBadgeVariants({ variant }),
+        dot || plain ? "gap-1.5" : statusBadgeVariants({ variant }),
+        plain &&
+          "rounded-none border-0 px-0 py-0 text-sm font-normal text-inherit",
         className,
       )}
       {...props}
     >
-      {dot ? <StatusDot variant={variant} /> : null}
+      {dot || plain ? <StatusDot variant={variant} /> : null}
       {children}
     </Badge>
   );

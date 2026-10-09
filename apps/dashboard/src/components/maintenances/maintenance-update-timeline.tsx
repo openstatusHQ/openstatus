@@ -3,19 +3,20 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { Maintenance as MaintenanceIcon } from "@openstatus/icons";
 import { useMutation } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { useState } from "react";
 
 import { ProcessMessage } from "@/components/content/process-message";
 import {
+  TimelineActions,
   TimelineActor,
   TimelineBody,
-  TimelineContent,
+  TimelineCard,
   TimelineHeader,
+  TimelineHighlight,
   TimelineIndicator,
   TimelineItem,
-  TimelineMeta,
   TimelineTime,
-  TimelineTitle,
 } from "@/components/content/timeline";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetMaintenanceUpdate } from "@/components/forms/maintenance-update/sheet";
@@ -52,38 +53,38 @@ export function MaintenanceUpdateTimelineItem({
 
   return (
     <TimelineItem>
-      <TimelineIndicator variant="info">
-        <MaintenanceIcon />
-      </TimelineIndicator>
-      <TimelineContent>
+      <TimelineCard>
         <TimelineHeader>
-          <TimelineTitle>
-            <span>Update</span>
-            {author ? <TimelineActor actor={author} /> : null}
-            {editor ? (
-              <TimelineMeta className="inline-flex items-center gap-1.5">
-                edited by <TimelineActor actor={editor} />
-              </TimelineMeta>
-            ) : null}
-          </TimelineTitle>
+          {author ? (
+            <>
+              <TimelineActor actor={author} avatar /> posted
+            </>
+          ) : (
+            "Posted"
+          )}
           <TimelineTime date={update.date} />
+          {editor ? (
+            <>
+              · edited by <TimelineActor actor={editor} />
+            </>
+          ) : null}
+          <TimelineActions>
+            <span>#{index}</span>
+            <QuickActions
+              actions={getActions({ edit: () => setEditing(true) })}
+              deleteAction={{
+                description: `Permanently remove update #${index} from the status page.`,
+                submitAction: async () => {
+                  await remove.mutateAsync({ id: update.id });
+                },
+              }}
+            />
+          </TimelineActions>
         </TimelineHeader>
-        <TimelineBody className="prose prose-sm dark:prose-invert max-w-none">
+        <TimelineBody>
           <ProcessMessage value={update.message} />
         </TimelineBody>
-        <div className="text-muted-foreground flex items-center justify-between gap-2 font-mono text-xs">
-          <span>#{index}</span>
-          <QuickActions
-            actions={getActions({ edit: () => setEditing(true) })}
-            deleteAction={{
-              description: `Permanently remove update #${index} from the status page.`,
-              submitAction: async () => {
-                await remove.mutateAsync({ id: update.id });
-              },
-            }}
-          />
-        </div>
-      </TimelineContent>
+      </TimelineCard>
       <FormSheetMaintenanceUpdate
         open={editing}
         onOpenChange={setEditing}
@@ -96,6 +97,38 @@ export function MaintenanceUpdateTimelineItem({
           });
         }}
       />
+    </TimelineItem>
+  );
+}
+
+/** Closing row: who scheduled the window, and when it runs. */
+export function MaintenanceScheduledTimelineItem({
+  maintenance,
+}: {
+  maintenance: Maintenance;
+}) {
+  return (
+    <TimelineItem>
+      <TimelineIndicator>
+        <MaintenanceIcon />
+      </TimelineIndicator>
+      <TimelineHeader>
+        {maintenance.createdByUser ? (
+          <>
+            <TimelineActor actor={maintenance.createdByUser} /> scheduled the
+            maintenance for
+          </>
+        ) : (
+          "Maintenance scheduled for"
+        )}
+        <TimelineHighlight>
+          {format(maintenance.from, "LLL dd, HH:mm")} –{" "}
+          {format(maintenance.to, "LLL dd, HH:mm")}
+        </TimelineHighlight>
+        {maintenance.createdAt ? (
+          <TimelineTime date={maintenance.createdAt} />
+        ) : null}
+      </TimelineHeader>
     </TimelineItem>
   );
 }

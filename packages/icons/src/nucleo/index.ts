@@ -80,6 +80,7 @@ export { More } from "./more";
 export { Network } from "./network";
 export { Next } from "./next";
 export { Notification } from "./notification";
+export { NotificationOff } from "./notification-off";
 export { Overview } from "./overview";
 export { Pending } from "./pending";
 export { Play } from "./play";

@@ -7,10 +7,22 @@ import {
   pageComponentImpact,
 } from "@openstatus/db/src/schema/page_components/constants";
 import { statusReportStatus } from "@openstatus/db/src/schema/status_reports/constants";
-import { Close } from "@openstatus/icons";
+import { Close, Components } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
-import { Label } from "@openstatus/ui/components/ui/label";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@openstatus/ui/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@openstatus/ui/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -18,8 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
-import { personName } from "@openstatus/utils";
-import { useQuery } from "@tanstack/react-query";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -29,27 +44,32 @@ import {
   ComponentImpact,
   ComponentList,
   ComponentListActions,
-  ComponentListAdd,
   ComponentListItem,
   ComponentListName,
   ComponentListSelectTrigger,
 } from "@/components/content/component-list";
 import {
   Composer,
+  ComposerActions,
   ComposerFooter,
-  ComposerHeader,
+  ComposerNotifyToggle,
   ComposerPreview,
+  ComposerPreviewToggle,
   ComposerSection,
+  ComposerSubmit,
   ComposerTextarea,
+  useComposerDraft,
 } from "@/components/content/composer";
-import { TimelineAvatar, TimelineItem } from "@/components/content/timeline";
-import { toGroupNameLookup } from "@/data/page-components.client";
+import { TimelineItem } from "@/components/content/timeline";
+import {
+  toComponentSections,
+  toGroupNameLookup,
+} from "@/data/page-components.client";
 import {
   getNextStatus,
   statusVariants,
   toCreateStatusReportUpdateInput,
 } from "@/data/status-report-updates.client";
-import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
 import { usePublishUpdate } from "./use-publish-update";
@@ -65,8 +85,8 @@ type Component = {
 
 /**
  * Publishes a status report update. Impact rows default to "No change"
- * (carry the current impact; all operational once resolved); switching
- * status resets the overrides.
+ * (carry the current impact; all operational once resolved); a picked value
+ * reads in the foreground. Switching status resets the overrides.
  */
 export function StatusReportComposer({
   report,
@@ -83,9 +103,7 @@ export function StatusReportComposer({
   /** Whether the plan includes subscriber notifications. */
   canNotify: boolean;
 }) {
-  const trpc = useTRPC();
-  const { data: user } = useQuery(trpc.user.get.queryOptions());
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useComposerDraft(`status-report:${report.id}`);
   const [notifyChecked, setNotifyChecked] = useState(true);
   const [selected, setSelected] = useState<StatusReportStatus | null>(null);
   // null = now, resolved at publish time so an open composer never backdates.
@@ -158,12 +176,7 @@ export function StatusReportComposer({
 
   return (
     <TimelineItem>
-      <TimelineAvatar
-        name={user ? personName(user) : null}
-        src={user?.photoUrl}
-      />
-      <Composer>
-        <ComposerHeader />
+      <Composer className="col-span-full">
         <ComposerTextarea
           placeholder="What changed? Customers will read this on the status page."
           value={message}
@@ -171,33 +184,37 @@ export function StatusReportComposer({
           onSubmit={() => submit().catch(console.error)}
         />
         <ComposerPreview value={message} />
-        {pageComponents.length ? (
+        {components.length ? (
           <ComposerSection>
-            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-              <span className="text-muted-foreground text-xs font-light tracking-wide uppercase">
-                Affected components
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground -my-1 ml-auto h-7 font-normal"
-                disabled={components.length === 0}
-                onClick={() =>
-                  setOverrides(
-                    new Map(components.map((c) => [c.id, "operational"])),
-                  )
-                }
-              >
-                Mark all operational
-              </Button>
-            </div>
             <ComponentList>
               {components.map((component) => {
+                const current = currentImpacts.get(component.id);
                 const override = overrides.get(component.id);
+                const effective = impactFor(component.id);
+                // a legacy row (no current impact) only changes once a value is picked
+                const changed = current
+                  ? effective !== current
+                  : override !== undefined;
+                const value = changed ? (
+                  <ComponentImpact
+                    impact={effective}
+                    className="text-foreground"
+                  />
+                ) : current ? (
+                  <ComponentImpact
+                    impact={current}
+                    className="text-muted-foreground"
+                  />
+                ) : (
+                  <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                    <StatusDot />
+                    No change
+                  </span>
+                );
                 return (
                   <ComponentListItem
                     key={component.id}
-                    // phones: name + current impact on one row, the picker below
+                    // phones: name on one row, the picker below
                     className="flex-wrap sm:flex-nowrap"
                   >
                     <ComponentListName
@@ -206,9 +223,6 @@ export function StatusReportComposer({
                     >
                       {component.name}
                     </ComponentListName>
-                    <ComponentImpact
-                      impact={currentImpacts.get(component.id)}
-                    />
                     <ComponentListActions className="basis-full sm:basis-auto">
                       <Select
                         value={override ?? ""}
@@ -224,25 +238,10 @@ export function StatusReportComposer({
                       >
                         <ComponentListSelectTrigger
                           aria-label={`${component.name} impact`}
-                          // phones: -ml-3 puts the text on the name's edge; from sm a
-                          // fixed width keeps chevrons and close buttons in a column
-                          className="text-foreground -ml-3 w-auto min-w-0 flex-1 font-mono sm:ml-0 sm:w-52 sm:flex-none"
+                          // phones: -ml-3 puts the text on the name's edge
+                          className="-ml-3 w-auto min-w-0 flex-1 font-mono sm:ml-0 sm:flex-none"
                         >
-                          <SelectValue
-                            placeholder={
-                              status === "resolved" ? (
-                                <ComponentImpact
-                                  impact="operational"
-                                  className="text-muted-foreground"
-                                />
-                              ) : (
-                                <span className="text-muted-foreground inline-flex items-center gap-1.5">
-                                  <StatusDot />
-                                  No change
-                                </span>
-                              )
-                            }
-                          />
+                          <SelectValue placeholder={value}>{value}</SelectValue>
                         </ComponentListSelectTrigger>
                         <SelectContent>
                           {pageComponentImpact.map((impact) => (
@@ -270,26 +269,10 @@ export function StatusReportComposer({
                 );
               })}
             </ComponentList>
-            <ComponentListAdd
-              components={addable}
-              groups={groups}
-              className="-ml-3 sm:ml-0"
-              onAdd={(id) => {
-                setIds([...componentIds, id]);
-                // a component joins the report with a concrete impact
-                if (!report.pageComponents.some((c) => c.id === id)) {
-                  setOverrides((prev) =>
-                    new Map(prev).set(id, "degraded_performance"),
-                  );
-                }
-              }}
-            />
           </ComposerSection>
         ) : null}
         <ComposerFooter>
-          {/* phones: label column + field column so both fields share a left edge */}
-          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 sm:flex sm:flex-wrap">
-            <span>Status</span>
+          <div className="flex flex-wrap items-center gap-2">
             <Select
               value={status}
               onValueChange={(value) => {
@@ -315,47 +298,158 @@ export function StatusReportComposer({
                 ))}
               </SelectContent>
             </Select>
-            <span>at</span>
-            <DateTimePicker
-              key={now.getTime()}
-              aria-label="Date"
-              value={date ?? now}
-              max={new Date()}
-              onChange={setDate}
-              className="bg-background text-foreground h-8 w-fit font-mono"
-            />
-          </div>
-          <div className="ml-auto flex w-full flex-wrap items-center justify-between gap-3 sm:w-auto sm:justify-start">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="notify-subscribers"
-                checked={notify}
-                disabled={!canNotify}
-                onCheckedChange={(value) => setNotifyChecked(value === true)}
+            {/* "at" wraps together with its date on phones */}
+            <span className="flex items-center gap-2">
+              at
+              <DateTimePicker
+                key={now.getTime()}
+                aria-label="Date"
+                value={date ?? now}
+                max={new Date()}
+                onChange={setDate}
+                className="bg-background text-foreground h-8 w-fit font-mono"
               />
-              <Label
-                htmlFor="notify-subscribers"
-                className="text-xs font-normal whitespace-nowrap"
-                title={
-                  canNotify
-                    ? undefined
-                    : "Subscriber notifications are not included in your plan."
+            </span>
+          </div>
+          <ComposerActions>
+            <ComposerPreviewToggle />
+            <ComponentsMenu
+              addable={addable}
+              groups={groups}
+              onAdd={(id) => {
+                setIds([...componentIds, id]);
+                // a component joins the report with a concrete impact
+                if (!report.pageComponents.some((c) => c.id === id)) {
+                  setOverrides((prev) =>
+                    new Map(prev).set(id, "degraded_performance"),
+                  );
                 }
-              >
-                Notify subscribers
-              </Label>
-            </div>
-            <Button
-              size="sm"
-              className="ml-auto"
+              }}
+              // bulk restore only once there is something to restore
+              onMarkAllOperational={
+                components.length > 1 &&
+                components.some((c) => impactFor(c.id) !== "operational")
+                  ? () =>
+                      setOverrides(
+                        new Map(components.map((c) => [c.id, "operational"])),
+                      )
+                  : undefined
+              }
+            />
+            <ComposerNotifyToggle
+              canNotify={canNotify}
+              pressed={notifyChecked}
+              onPressedChange={setNotifyChecked}
+            />
+            <ComposerSubmit
+              label="Publish update"
               disabled={disabled}
               onClick={() => submit().catch(console.error)}
-            >
-              Publish update
-            </Button>
-          </div>
+            />
+          </ComposerActions>
         </ComposerFooter>
       </Composer>
     </TimelineItem>
+  );
+}
+
+/**
+ * Footer icon button for the affected components: a searchable picker of
+ * the page's components not yet on the update, plus the bulk restore when
+ * the composer offers one. Disabled with nothing to offer; always titled.
+ */
+function ComponentsMenu({
+  addable,
+  groups,
+  onAdd,
+  onMarkAllOperational,
+}: {
+  addable: Component[];
+  groups: { id: number; name: string }[];
+  onAdd: (id: number) => void;
+  onMarkAllOperational?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const sections = toComponentSections(addable, groups);
+  const disabled = addable.length === 0 && !onMarkAllOperational;
+  const label = addable.length
+    ? "Add component"
+    : onMarkAllOperational
+      ? "Affected components"
+      : "All components added";
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            {/* aria-disabled (not disabled) so the tooltip still explains why */}
+            <Button
+              variant="outline"
+              size="icon-sm"
+              role="combobox"
+              aria-expanded={open}
+              aria-label={label}
+              aria-disabled={disabled}
+              className="text-muted-foreground data-[state=open]:text-foreground aria-disabled:opacity-50"
+              onClick={(e) => {
+                if (disabled) e.preventDefault();
+              }}
+            >
+              <Components />
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="top">{label}</TooltipContent>
+      </Tooltip>
+      <PopoverContent align="end" className="w-64 p-0">
+        <Command>
+          {addable.length ? (
+            <CommandInput placeholder="Search components..." className="h-9" />
+          ) : null}
+          <CommandList>
+            <CommandEmpty>No components found.</CommandEmpty>
+            {onMarkAllOperational ? (
+              <CommandGroup>
+                <CommandItem
+                  value="mark-all-operational"
+                  onSelect={() => {
+                    onMarkAllOperational();
+                    setOpen(false);
+                  }}
+                >
+                  <StatusDot variant="success" />
+                  Mark all operational
+                </CommandItem>
+              </CommandGroup>
+            ) : null}
+            {onMarkAllOperational && sections.length ? (
+              <CommandSeparator />
+            ) : null}
+            {sections.map((section, i) => (
+              <CommandGroup
+                key={section.group?.id ?? `ungrouped-${i}`}
+                heading={section.group?.name}
+              >
+                {section.items.map((c) => (
+                  <CommandItem
+                    key={c.id}
+                    // unique per item; cmdk filters on this string
+                    value={`${c.name} ${c.id}`}
+                    className="font-mono"
+                    onSelect={() => {
+                      onAdd(c.id);
+                      setOpen(false);
+                    }}
+                  >
+                    {c.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -71,7 +71,6 @@ export function MaintenanceComponents({
         <ComponentListEmpty />
       )}
       <ComponentListAdd
-        className="-ml-2"
         components={addable}
         groups={groups}
         disabled={isPending}
