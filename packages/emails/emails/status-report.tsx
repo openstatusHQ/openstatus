@@ -5,7 +5,11 @@ import { z } from "zod";
 import { Actions } from "./_components/actions";
 import { Eyebrow } from "./_components/eyebrow";
 import { Footer } from "./_components/footer";
-import { formatDateTime, formatElapsed } from "./_components/format";
+import {
+  formatDateTime,
+  formatDateTimeRange,
+  formatElapsed,
+} from "./_components/format";
 import { Heading } from "./_components/heading";
 import { KeyValue } from "./_components/key-value";
 import { Layout, statusPageBrand } from "./_components/layout";
@@ -46,6 +50,9 @@ export const StatusReportSchema = z.object({
   /** 1-based position of this update within the report. */
   updateIndex: z.number().optional(),
   reportStartedAt: z.string().optional(),
+  /** Maintenance window; `date` stays the timestamp of the update itself. */
+  startsAt: z.string().optional(),
+  endsAt: z.string().optional(),
 });
 
 export type StatusReportProps = z.infer<typeof StatusReportSchema>;
@@ -106,9 +113,18 @@ function StatusReportEmail({
   statusPageUrl,
   updateIndex,
   reportStartedAt,
+  startsAt,
+  endsAt,
 }: StatusReportProps) {
   const tone = statusTone[status];
   const dated = isDate(date);
+  // legacy callers pass a pre-formatted window as `date`
+  const window =
+    startsAt && endsAt
+      ? formatDateTimeRange(startsAt, endsAt)
+      : dated
+        ? undefined
+        : date;
   const elapsed =
     dated && reportStartedAt && isDate(reportStartedAt)
       ? formatElapsed(reportStartedAt, date)
@@ -139,7 +155,7 @@ function StatusReportEmail({
         ]}
       />
       <Heading title={reportTitle} />
-      {!dated ? <KeyValue rows={[{ label: "Window", value: date }]} /> : null}
+      {window ? <KeyValue rows={[{ label: "Window", value: window }]} /> : null}
       {pageComponents.length > 0 ? (
         <KeyValue
           rows={pageComponents.map((name) => {

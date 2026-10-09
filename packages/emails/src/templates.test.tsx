@@ -457,7 +457,24 @@ describe("status report", () => {
     expect(html).not.toContain("●");
   });
 
-  test("maintenance renders its window instead of a timestamp", async () => {
+  test("maintenance formats its window and keeps the update timestamp", async () => {
+    const html = await render(
+      <StatusReportEmail
+        {...report}
+        status="maintenance"
+        date="2026-09-18T12:37:00Z"
+        startsAt="2026-09-21T10:00:00.000Z"
+        endsAt="2026-09-21T12:00:00.000Z"
+      />,
+    );
+    expect(html).toContain("MAINTENANCE");
+    expect(html).toContain("Window");
+    expect(html).toContain("21 Sep, 10:00 - 12:00 UTC");
+    expect(html).toContain("18 Sep, 12:37 UTC");
+    expect(html).not.toContain("2026-09-21T10:00:00.000Z");
+  });
+
+  test("a pre-formatted window string still renders verbatim", async () => {
     const html = await render(
       <StatusReportEmail
         {...report}
@@ -465,7 +482,6 @@ describe("status report", () => {
         date="Mon 21 Sep, 10:00 - 12:00"
       />,
     );
-    expect(html).toContain("MAINTENANCE");
     expect(html).toContain("Window");
     expect(html).toContain("Mon 21 Sep, 10:00 - 12:00");
   });

@@ -39,7 +39,7 @@ export interface PageUpdate {
   message: string;
   pageComponentIds: number[];
   pageComponents: string[];
-  date: string; // can be single string or "from - to"
+  date: string; // ISO timestamp of the update itself
 
   // Optional fields consumed by the prepared (staged) generic webhook payload.
   // Populated by the matching dispatcher; ignored by email/Slack/Discord

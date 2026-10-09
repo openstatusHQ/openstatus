@@ -196,6 +196,24 @@ describe("sendEmailNotifications", () => {
     expect(keys[0]).not.toBe(keys[1]);
   });
 
+  test("passes the maintenance window alongside the update date", async () => {
+    await sendEmailNotifications(
+      [makeSub()],
+      makeUpdate({
+        updateId: 77,
+        status: "maintenance",
+        date: "2026-07-16T11:00:00Z",
+        startsAt: "2026-07-20T10:00:00Z",
+        endsAt: "2026-07-20T11:00:00Z",
+      }),
+    );
+
+    const [args] = sendStatusReportUpdateMock.calls[0].args;
+    expect(args.date).toBe("2026-07-16T11:00:00Z");
+    expect(args.startsAt).toBe("2026-07-20T10:00:00Z");
+    expect(args.endsAt).toBe("2026-07-20T11:00:00Z");
+  });
+
   test("changes the key when the maintenance window changes", async () => {
     const base = {
       updateId: 77,

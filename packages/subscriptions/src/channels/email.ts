@@ -115,13 +115,10 @@ export async function sendEmailNotifications(
     reportTitle: pageUpdate.title,
     status: pageUpdate.status,
     message: pageUpdate.message,
-    // the template prints non-date strings verbatim, so the window reads "from - to"
-    date:
-      pageUpdate.status === "maintenance" &&
-      pageUpdate.startsAt &&
-      pageUpdate.endsAt
-        ? `${pageUpdate.startsAt} - ${pageUpdate.endsAt}`
-        : pageUpdate.date,
+    date: pageUpdate.date,
+    // the template formats the maintenance window as its own row
+    startsAt: pageUpdate.startsAt,
+    endsAt: pageUpdate.endsAt,
     pageComponents: pageUpdate.pageComponents,
     componentImpacts: pageUpdate.componentsWithImpact,
     idempotencyKey: `${idempotencyKeyFor(pageUpdate)}:${payloadHash}`,

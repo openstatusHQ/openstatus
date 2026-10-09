@@ -283,9 +283,9 @@ describe("dispatchMaintenanceUpdate", () => {
 
       const args = sendStatusReportUpdateMock.calls[0].args[0];
       expect(args.message).toBe("specific update message");
-      expect(args.date).toBe(
-        `${startsAt.toISOString()} - ${endsAt.toISOString()}`,
-      );
+      expect(args.date).toBe(occurredAt.toISOString());
+      expect(args.startsAt).toBe(startsAt.toISOString());
+      expect(args.endsAt).toBe(endsAt.toISOString());
       expect(args.pageComponents).toContain(COMPONENT_1_NAME);
       expect(args.idempotencyKey).toMatch(
         new RegExp(`^maintenance-update:${update.id}:`),
