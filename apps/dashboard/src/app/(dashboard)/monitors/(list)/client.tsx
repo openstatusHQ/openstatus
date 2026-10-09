@@ -31,6 +31,9 @@ import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
 
+// job types with a tinybird metrics pipe (udp/ssl have none yet)
+const METRIC_TYPES = ["http", "tcp", "dns", "icmp", "grpc"] as const;
+
 const icons = {
   default: {
     active: Success,
@@ -50,55 +53,20 @@ export function Client() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  const monitorsByType = {
-    http:
-      monitors
-        ?.filter((m) => m.jobType === "http")
-        .map((m) => m.id.toString()) ?? [],
-    tcp:
-      monitors
-        ?.filter((m) => m.jobType === "tcp")
-        .map((m) => m.id.toString()) ?? [],
-    dns:
-      monitors
-        ?.filter((m) => m.jobType === "dns")
-        .map((m) => m.id.toString()) ?? [],
-  };
-  const {
-    http: httpMonitors,
-    tcp: tcpMonitors,
-    dns: dnsMonitors,
-  } = monitorsByType;
-
-  const [
-    { data: globalHttpMetrics, isLoading: isLoadingHttp },
-    { data: globalTcpMetrics, isLoading: isLoadingTcp },
-    { data: globalDnsMetrics, isLoading: isLoadingDns },
-  ] = useQueries({
-    queries: [
-      {
-        ...trpc.tinybird.globalMetrics.queryOptions({
-          monitorIds: httpMonitors,
-          type: "http",
-        }),
-        enabled: httpMonitors.length > 0,
-      },
-      {
-        ...trpc.tinybird.globalMetrics.queryOptions({
-          monitorIds: tcpMonitors,
-          type: "tcp",
-        }),
-        enabled: tcpMonitors.length > 0,
-      },
-      {
-        ...trpc.tinybird.globalMetrics.queryOptions({
-          monitorIds: dnsMonitors,
-          type: "dns",
-        }),
-        enabled: dnsMonitors.length > 0,
-      },
-    ],
+  const metricQueries = useQueries({
+    queries: METRIC_TYPES.map((type) => {
+      const monitorIds =
+        monitors
+          ?.filter((m) => m.jobType === type)
+          .map((m) => m.id.toString()) ?? [];
+      return {
+        ...trpc.tinybird.globalMetrics.queryOptions({ monitorIds, type }),
+        enabled: monitorIds.length > 0,
+      };
+    }),
   });
+  const isLoadingMetrics = metricQueries.some((q) => q.isLoading);
+  const globalMetrics = metricQueries.flatMap((q) => q.data?.data ?? []);
 
   // TODO: ideally we read from the searchParamsCache and there is no layout shift
   useEffect(() => {
@@ -113,11 +81,7 @@ export function Client() {
 
   if (!monitors) return null;
 
-  const metrics = getMonitorListMetrics(monitors, [
-    ...(globalHttpMetrics?.data ?? []),
-    ...(globalTcpMetrics?.data ?? []),
-    ...(globalDnsMetrics?.data ?? []),
-  ]);
+  const metrics = getMonitorListMetrics(monitors, globalMetrics);
 
   return (
     <SectionGroup>
@@ -174,8 +138,7 @@ export function Client() {
                   </MetricCardTitle>
                   <Icon className="size-4" />
                 </MetricCardHeader>
-                {metric.key === "p95" &&
-                (isLoadingHttp || isLoadingTcp || isLoadingDns) ? (
+                {metric.key === "p95" && isLoadingMetrics ? (
                   <MetricCardSkeleton className="h-6 w-12" />
                 ) : (
                   <MetricCardValue>{metric.value}</MetricCardValue>
@@ -190,20 +153,11 @@ export function Client() {
           columns={columns}
           data={monitors.map((monitor) => ({
             ...monitor,
-            globalMetrics:
-              isLoadingHttp || isLoadingTcp || isLoadingDns
-                ? undefined
-                : monitor.jobType === "http"
-                  ? (globalHttpMetrics?.data?.find(
-                      (m) => m.monitorId === monitor.id.toString(),
-                    ) ?? false)
-                  : monitor.jobType === "tcp"
-                    ? (globalTcpMetrics?.data?.find(
-                        (m) => m.monitorId === monitor.id.toString(),
-                      ) ?? false)
-                    : (globalDnsMetrics?.data?.find(
-                        (m) => m.monitorId === monitor.id.toString(),
-                      ) ?? false),
+            globalMetrics: isLoadingMetrics
+              ? undefined
+              : (globalMetrics.find(
+                  (m) => m.monitorId === monitor.id.toString(),
+                ) ?? false),
           }))}
           actionBar={MonitorDataTableActionBar}
           toolbarComponent={(props) => (
