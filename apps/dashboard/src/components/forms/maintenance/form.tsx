@@ -46,7 +46,8 @@ import { useTRPC } from "@/lib/trpc/client";
 const schema = z
   .object({
     title: z.string().trim().min(1, "Title is required"),
-    message: z.string(),
+    /** Create only: becomes the first timeline update. */
+    message: z.string().trim().min(1, "Message is required").optional(),
     startDate: z.date(),
     endDate: z.date(),
     pageComponents: z.array(z.number()),
@@ -215,39 +216,46 @@ export function FormMaintenance({
             )}
           />
         </FormCardContent>
-        <FormCardSeparator />
-        <FormCardContent>
-          <Tabs defaultValue="tab-1">
-            <TabsList>
-              <TabsTrigger value="tab-1">Writing</TabsTrigger>
-              <TabsTrigger value="tab-2">Preview</TabsTrigger>
-            </TabsList>
-            <TabsContent value="tab-1">
-              <FormField
-                control={form.control}
-                name="message"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Message</FormLabel>
-                    <FormControl>
-                      <Textarea rows={6} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    <FormDescription>Markdown support</FormDescription>
-                  </FormItem>
-                )}
-              />
-            </TabsContent>
-            <TabsContent value="tab-2">
-              <div className="grid gap-2">
-                <Label>Preview</Label>
-                <div className="prose dark:prose-invert prose-sm text-foreground rounded-md border px-3 py-2 text-sm">
-                  <ProcessMessage value={watchMessage} />
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </FormCardContent>
+        {!defaultValues ? (
+          <>
+            <FormCardSeparator />
+            <FormCardContent>
+              <Tabs defaultValue="tab-1">
+                <TabsList>
+                  <TabsTrigger value="tab-1">Writing</TabsTrigger>
+                  <TabsTrigger value="tab-2">Preview</TabsTrigger>
+                </TabsList>
+                <TabsContent value="tab-1">
+                  <FormField
+                    control={form.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Message</FormLabel>
+                        <FormControl>
+                          <Textarea rows={6} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        <FormDescription>
+                          Markdown support. Posted as the first update; later
+                          updates are added on the maintenance page.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+                <TabsContent value="tab-2">
+                  <div className="grid gap-2">
+                    <Label>Preview</Label>
+                    <div className="prose dark:prose-invert prose-sm text-foreground rounded-md border px-3 py-2 text-sm">
+                      <ProcessMessage value={watchMessage ?? ""} />
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </FormCardContent>
+          </>
+        ) : null}
         <FormCardSeparator />
         <FormCardContent>
           <FormField

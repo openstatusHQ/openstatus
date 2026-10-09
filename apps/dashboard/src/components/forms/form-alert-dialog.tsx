@@ -35,9 +35,14 @@ export function FormAlertDialog({
   const { copy, isCopied } = useCopyToClipboard();
   const [open, setOpen] = useState(false);
 
-  const handleDelete = async () => {
-    try {
-      startTransition(async () => {
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (!next) setValue("");
+  };
+
+  const handleDelete = () => {
+    startTransition(async () => {
+      try {
         const promise = submitAction();
         toast.promise(promise, {
           loading: "Deleting...",
@@ -50,15 +55,15 @@ export function FormAlertDialog({
           },
         });
         await promise;
-        setOpen(false);
-      });
-    } catch (error) {
-      console.error("Failed to revoke:", error);
-    }
+        handleOpenChange(false);
+      } catch (error) {
+        console.error("Failed to delete:", error);
+      }
+    });
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger asChild>
         {children ?? (
           <Button variant="destructive" size="sm">

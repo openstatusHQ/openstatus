@@ -6,7 +6,7 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import { file_gnostic_openapi_v3_annotations } from "../../../gnostic/openapi/v3/annotations_pb.ts";
-import type { Maintenance, MaintenanceSummary } from "./maintenance_pb.ts";
+import type { Maintenance, MaintenanceSummary, MaintenanceUpdate } from "./maintenance_pb.ts";
 import { file_openstatus_maintenance_v1_maintenance } from "./maintenance_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/maintenance/v1/service.proto.
  */
 export const file_openstatus_maintenance_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CidvcGVuc3RhdHVzL21haW50ZW5hbmNlL3YxL3NlcnZpY2UucHJvdG8SGW9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEirAMKGENyZWF0ZU1haW50ZW5hbmNlUmVxdWVzdBIyCgV0aXRsZRgBIAEoCUIjukcWOhQSEkRhdGFiYXNlIE1pZ3JhdGlvbrpIB3IFEAEYgAISGAoHbWVzc2FnZRgCIAEoCUIHukgEcgIQARJ2CgRmcm9tGAMgASgJQmi6Rxo6GBIWIjIwMjQtMDMtMDFUMDI6MDA6MDBaIrpISHJGMkReXGR7NH0tXGR7Mn0tXGR7Mn1UXGR7Mn06XGR7Mn06XGR7Mn0oXC5cZHsxLDl9KT8oWnxbKy1dXGR7Mn06XGR7Mn0pJBJ0CgJ0bxgEIAEoCUJoukcaOhgSFiIyMDI0LTAzLTAxVDA2OjAwOjAwWiK6SEhyRjJEXlxkezR9LVxkezJ9LVxkezJ9VFxkezJ9OlxkezJ9OlxkezJ9KFwuXGR7MSw5fSk/KFp8WystXVxkezJ9OlxkezJ9KSQSGAoHcGFnZV9pZBgFIAEoCUIHukgEcgIQARIaChJwYWdlX2NvbXBvbmVudF9pZHMYBiADKAkSEwoGbm90aWZ5GAcgASgISACIAQFCCQoHX25vdGlmeSJYChlDcmVhdGVNYWludGVuYW5jZVJlc3BvbnNlEjsKC21haW50ZW5hbmNlGAEgASgLMiYub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5NYWludGVuYW5jZSIsChVHZXRNYWludGVuYW5jZVJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiVQoWR2V0TWFpbnRlbmFuY2VSZXNwb25zZRI7CgttYWludGVuYW5jZRgBIAEoCzImLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTWFpbnRlbmFuY2UijQEKF0xpc3RNYWludGVuYW5jZXNSZXF1ZXN0Eh0KBWxpbWl0GAEgASgFQgm6SAYaBBhkKAFIAIgBARIcCgZvZmZzZXQYAiABKAVCB7pIBBoCKABIAYgBARIUCgdwYWdlX2lkGAMgASgJSAKIAQFCCAoGX2xpbWl0QgkKB19vZmZzZXRCCgoIX3BhZ2VfaWQicwoYTGlzdE1haW50ZW5hbmNlc1Jlc3BvbnNlEkMKDG1haW50ZW5hbmNlcxgBIAMoCzItLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTWFpbnRlbmFuY2VTdW1tYXJ5EhIKCnRvdGFsX3NpemUYAiABKAUi0QMKGFVwZGF0ZU1haW50ZW5hbmNlUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARIeCgV0aXRsZRgCIAEoCUIKukgHcgUQARiAAkgAiAEBEhQKB21lc3NhZ2UYAyABKAlIAYgBARJeCgRmcm9tGAQgASgJQku6SEhyRjJEXlxkezR9LVxkezJ9LVxkezJ9VFxkezJ9OlxkezJ9OlxkezJ9KFwuXGR7MSw5fSk/KFp8WystXVxkezJ9OlxkezJ9KSRIAogBARJcCgJ0bxgFIAEoCUJLukhIckYyRF5cZHs0fS1cZHsyfS1cZHsyfVRcZHsyfTpcZHsyfTpcZHsyfShcLlxkezEsOX0pPyhafFsrLV1cZHsyfTpcZHsyfSkkSAOIAQESGAoHcGFnZV9pZBgGIAEoCUICGAFIBIgBARIaChJwYWdlX2NvbXBvbmVudF9pZHMYByADKAkSJgoZdXBkYXRlX3BhZ2VfY29tcG9uZW50X2lkcxgIIAEoCEgFiAEBQggKBl90aXRsZUIKCghfbWVzc2FnZUIHCgVfZnJvbUIFCgNfdG9CCgoIX3BhZ2VfaWRCHAoaX3VwZGF0ZV9wYWdlX2NvbXBvbmVudF9pZHMiWAoZVXBkYXRlTWFpbnRlbmFuY2VSZXNwb25zZRI7CgttYWludGVuYW5jZRgBIAEoCzImLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTWFpbnRlbmFuY2UiLwoYRGVsZXRlTWFpbnRlbmFuY2VSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIiwKGURlbGV0ZU1haW50ZW5hbmNlUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCDKTBQoSTWFpbnRlbmFuY2VTZXJ2aWNlEn4KEUNyZWF0ZU1haW50ZW5hbmNlEjMub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5DcmVhdGVNYWludGVuYW5jZVJlcXVlc3QaNC5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLkNyZWF0ZU1haW50ZW5hbmNlUmVzcG9uc2USegoOR2V0TWFpbnRlbmFuY2USMC5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLkdldE1haW50ZW5hbmNlUmVxdWVzdBoxLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuR2V0TWFpbnRlbmFuY2VSZXNwb25zZSIDkAIBEoABChBMaXN0TWFpbnRlbmFuY2VzEjIub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5MaXN0TWFpbnRlbmFuY2VzUmVxdWVzdBozLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTGlzdE1haW50ZW5hbmNlc1Jlc3BvbnNlIgOQAgESfgoRVXBkYXRlTWFpbnRlbmFuY2USMy5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLlVwZGF0ZU1haW50ZW5hbmNlUmVxdWVzdBo0Lm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuVXBkYXRlTWFpbnRlbmFuY2VSZXNwb25zZRJ+ChFEZWxldGVNYWludGVuYW5jZRIzLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuRGVsZXRlTWFpbnRlbmFuY2VSZXF1ZXN0GjQub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5EZWxldGVNYWludGVuYW5jZVJlc3BvbnNlQltaWWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tYWludGVuYW5jZS92MTttYWludGVuYW5jZXYxYgZwcm90bzM", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_maintenance_v1_maintenance]);
+  fileDesc("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fFsrLV1cZHsyfTpcZHsyfSkkSACIAQESEwoGbm90aWZ5GAQgASgISAGIAQFCBwoFX2RhdGVCCQoHX25vdGlmeSJoChxBZGRNYWludGVuYW5jZVVwZGF0ZVJlc3BvbnNlEkgKEm1haW50ZW5hbmNlX3VwZGF0ZRgBIAEoCzIsLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTWFpbnRlbmFuY2VVcGRhdGUiyQEKHlVwZGF0ZU1haW50ZW5hbmNlVXBkYXRlUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARIdCgdtZXNzYWdlGAIgASgJQge6SARyAhABSACIAQESXgoEZGF0ZRgDIAEoCUJLukhIckYyRF5cZHs0fS1cZHsyfS1cZHsyfVRcZHsyfTpcZHsyfTpcZHsyfShcLlxkezEsOX0pPyhafFsrLV1cZHsyfTpcZHsyfSkkSAGIAQFCCgoIX21lc3NhZ2VCBwoFX2RhdGUiawofVXBkYXRlTWFpbnRlbmFuY2VVcGRhdGVSZXNwb25zZRJIChJtYWludGVuYW5jZV91cGRhdGUYASABKAsyLC5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLk1haW50ZW5hbmNlVXBkYXRlIjUKHkRlbGV0ZU1haW50ZW5hbmNlVXBkYXRlUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASIyCh9EZWxldGVNYWludGVuYW5jZVVwZGF0ZVJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgywwgKEk1haW50ZW5hbmNlU2VydmljZRJ+ChFDcmVhdGVNYWludGVuYW5jZRIzLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuQ3JlYXRlTWFpbnRlbmFuY2VSZXF1ZXN0GjQub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5DcmVhdGVNYWludGVuYW5jZVJlc3BvbnNlEnoKDkdldE1haW50ZW5hbmNlEjAub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5HZXRNYWludGVuYW5jZVJlcXVlc3QaMS5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLkdldE1haW50ZW5hbmNlUmVzcG9uc2UiA5ACARKAAQoQTGlzdE1haW50ZW5hbmNlcxIyLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTGlzdE1haW50ZW5hbmNlc1JlcXVlc3QaMy5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLkxpc3RNYWludGVuYW5jZXNSZXNwb25zZSIDkAIBEn4KEVVwZGF0ZU1haW50ZW5hbmNlEjMub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5VcGRhdGVNYWludGVuYW5jZVJlcXVlc3QaNC5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLlVwZGF0ZU1haW50ZW5hbmNlUmVzcG9uc2USfgoRRGVsZXRlTWFpbnRlbmFuY2USMy5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLkRlbGV0ZU1haW50ZW5hbmNlUmVxdWVzdBo0Lm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuRGVsZXRlTWFpbnRlbmFuY2VSZXNwb25zZRKHAQoUQWRkTWFpbnRlbmFuY2VVcGRhdGUSNi5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLkFkZE1haW50ZW5hbmNlVXBkYXRlUmVxdWVzdBo3Lm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuQWRkTWFpbnRlbmFuY2VVcGRhdGVSZXNwb25zZRKQAQoXVXBkYXRlTWFpbnRlbmFuY2VVcGRhdGUSOS5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLlVwZGF0ZU1haW50ZW5hbmNlVXBkYXRlUmVxdWVzdBo6Lm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuVXBkYXRlTWFpbnRlbmFuY2VVcGRhdGVSZXNwb25zZRKQAQoXRGVsZXRlTWFpbnRlbmFuY2VVcGRhdGUSOS5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLkRlbGV0ZU1haW50ZW5hbmNlVXBkYXRlUmVxdWVzdBo6Lm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuRGVsZXRlTWFpbnRlbmFuY2VVcGRhdGVSZXNwb25zZUJbWllnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbWFpbnRlbmFuY2UvdjE7bWFpbnRlbmFuY2V2MWIGcHJvdG8z", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_maintenance_v1_maintenance]);
 
 /**
  * CreateMaintenanceRequest is the request to create a new maintenance window.
@@ -30,7 +30,8 @@ export type CreateMaintenanceRequest = Message<"openstatus.maintenance.v1.Create
   title: string;
 
   /**
-   * Message describing the maintenance (required).
+   * Message describing the maintenance (required). Posted as the first
+   * maintenance update.
    *
    * @generated from field: string message = 2;
    */
@@ -226,7 +227,7 @@ export type UpdateMaintenanceRequest = Message<"openstatus.maintenance.v1.Update
   title?: string | undefined;
 
   /**
-   * New message for the maintenance (optional).
+   * Replaces the message of the newest maintenance update (optional).
    *
    * @generated from field: optional string message = 3;
    */
@@ -342,6 +343,167 @@ export const DeleteMaintenanceResponseSchema: GenMessage<DeleteMaintenanceRespon
   messageDesc(file_openstatus_maintenance_v1_service, 9);
 
 /**
+ * AddMaintenanceUpdateRequest is the request to append a maintenance update.
+ *
+ * @generated from message openstatus.maintenance.v1.AddMaintenanceUpdateRequest
+ */
+export type AddMaintenanceUpdateRequest = Message<"openstatus.maintenance.v1.AddMaintenanceUpdateRequest"> & {
+  /**
+   * ID of the maintenance to update (required).
+   *
+   * @generated from field: string maintenance_id = 1;
+   */
+  maintenanceId: string;
+
+  /**
+   * Public update message (required).
+   *
+   * @generated from field: string message = 2;
+   */
+  message: string;
+
+  /**
+   * Optional date for the update (RFC 3339 format). Defaults to current time.
+   *
+   * @generated from field: optional string date = 3;
+   */
+  date?: string | undefined;
+
+  /**
+   * Whether to notify subscribers about this update.
+   *
+   * @generated from field: optional bool notify = 4;
+   */
+  notify?: boolean | undefined;
+};
+
+/**
+ * Describes the message openstatus.maintenance.v1.AddMaintenanceUpdateRequest.
+ * Use `create(AddMaintenanceUpdateRequestSchema)` to create a new message.
+ */
+export const AddMaintenanceUpdateRequestSchema: GenMessage<AddMaintenanceUpdateRequest> = /*@__PURE__*/
+  messageDesc(file_openstatus_maintenance_v1_service, 10);
+
+/**
+ * AddMaintenanceUpdateResponse is the response after appending an update.
+ *
+ * @generated from message openstatus.maintenance.v1.AddMaintenanceUpdateResponse
+ */
+export type AddMaintenanceUpdateResponse = Message<"openstatus.maintenance.v1.AddMaintenanceUpdateResponse"> & {
+  /**
+   * The created update.
+   *
+   * @generated from field: openstatus.maintenance.v1.MaintenanceUpdate maintenance_update = 1;
+   */
+  maintenanceUpdate?: MaintenanceUpdate | undefined;
+};
+
+/**
+ * Describes the message openstatus.maintenance.v1.AddMaintenanceUpdateResponse.
+ * Use `create(AddMaintenanceUpdateResponseSchema)` to create a new message.
+ */
+export const AddMaintenanceUpdateResponseSchema: GenMessage<AddMaintenanceUpdateResponse> = /*@__PURE__*/
+  messageDesc(file_openstatus_maintenance_v1_service, 11);
+
+/**
+ * UpdateMaintenanceUpdateRequest is the request to edit an update.
+ *
+ * @generated from message openstatus.maintenance.v1.UpdateMaintenanceUpdateRequest
+ */
+export type UpdateMaintenanceUpdateRequest = Message<"openstatus.maintenance.v1.UpdateMaintenanceUpdateRequest"> & {
+  /**
+   * ID of the update to edit (required).
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * New public message.
+   *
+   * @generated from field: optional string message = 2;
+   */
+  message?: string | undefined;
+
+  /**
+   * New update date (RFC 3339 format).
+   *
+   * @generated from field: optional string date = 3;
+   */
+  date?: string | undefined;
+};
+
+/**
+ * Describes the message openstatus.maintenance.v1.UpdateMaintenanceUpdateRequest.
+ * Use `create(UpdateMaintenanceUpdateRequestSchema)` to create a new message.
+ */
+export const UpdateMaintenanceUpdateRequestSchema: GenMessage<UpdateMaintenanceUpdateRequest> = /*@__PURE__*/
+  messageDesc(file_openstatus_maintenance_v1_service, 12);
+
+/**
+ * UpdateMaintenanceUpdateResponse is the response after editing an update.
+ *
+ * @generated from message openstatus.maintenance.v1.UpdateMaintenanceUpdateResponse
+ */
+export type UpdateMaintenanceUpdateResponse = Message<"openstatus.maintenance.v1.UpdateMaintenanceUpdateResponse"> & {
+  /**
+   * The updated timeline entry.
+   *
+   * @generated from field: openstatus.maintenance.v1.MaintenanceUpdate maintenance_update = 1;
+   */
+  maintenanceUpdate?: MaintenanceUpdate | undefined;
+};
+
+/**
+ * Describes the message openstatus.maintenance.v1.UpdateMaintenanceUpdateResponse.
+ * Use `create(UpdateMaintenanceUpdateResponseSchema)` to create a new message.
+ */
+export const UpdateMaintenanceUpdateResponseSchema: GenMessage<UpdateMaintenanceUpdateResponse> = /*@__PURE__*/
+  messageDesc(file_openstatus_maintenance_v1_service, 13);
+
+/**
+ * DeleteMaintenanceUpdateRequest is the request to remove an update.
+ *
+ * @generated from message openstatus.maintenance.v1.DeleteMaintenanceUpdateRequest
+ */
+export type DeleteMaintenanceUpdateRequest = Message<"openstatus.maintenance.v1.DeleteMaintenanceUpdateRequest"> & {
+  /**
+   * ID of the update to remove (required).
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message openstatus.maintenance.v1.DeleteMaintenanceUpdateRequest.
+ * Use `create(DeleteMaintenanceUpdateRequestSchema)` to create a new message.
+ */
+export const DeleteMaintenanceUpdateRequestSchema: GenMessage<DeleteMaintenanceUpdateRequest> = /*@__PURE__*/
+  messageDesc(file_openstatus_maintenance_v1_service, 14);
+
+/**
+ * DeleteMaintenanceUpdateResponse is the response after removing an update.
+ *
+ * @generated from message openstatus.maintenance.v1.DeleteMaintenanceUpdateResponse
+ */
+export type DeleteMaintenanceUpdateResponse = Message<"openstatus.maintenance.v1.DeleteMaintenanceUpdateResponse"> & {
+  /**
+   * Whether the deletion was successful.
+   *
+   * @generated from field: bool success = 1;
+   */
+  success: boolean;
+};
+
+/**
+ * Describes the message openstatus.maintenance.v1.DeleteMaintenanceUpdateResponse.
+ * Use `create(DeleteMaintenanceUpdateResponseSchema)` to create a new message.
+ */
+export const DeleteMaintenanceUpdateResponseSchema: GenMessage<DeleteMaintenanceUpdateResponse> = /*@__PURE__*/
+  messageDesc(file_openstatus_maintenance_v1_service, 15);
+
+/**
  * MaintenanceService provides CRUD operations for maintenance windows.
  *
  * @generated from service openstatus.maintenance.v1.MaintenanceService
@@ -396,6 +558,36 @@ export const MaintenanceService: GenService<{
     methodKind: "unary";
     input: typeof DeleteMaintenanceRequestSchema;
     output: typeof DeleteMaintenanceResponseSchema;
+  },
+  /**
+   * AddMaintenanceUpdate appends a public update to a maintenance timeline.
+   *
+   * @generated from rpc openstatus.maintenance.v1.MaintenanceService.AddMaintenanceUpdate
+   */
+  addMaintenanceUpdate: {
+    methodKind: "unary";
+    input: typeof AddMaintenanceUpdateRequestSchema;
+    output: typeof AddMaintenanceUpdateResponseSchema;
+  },
+  /**
+   * UpdateMaintenanceUpdate edits an existing maintenance update.
+   *
+   * @generated from rpc openstatus.maintenance.v1.MaintenanceService.UpdateMaintenanceUpdate
+   */
+  updateMaintenanceUpdate: {
+    methodKind: "unary";
+    input: typeof UpdateMaintenanceUpdateRequestSchema;
+    output: typeof UpdateMaintenanceUpdateResponseSchema;
+  },
+  /**
+   * DeleteMaintenanceUpdate removes an existing maintenance update.
+   *
+   * @generated from rpc openstatus.maintenance.v1.MaintenanceService.DeleteMaintenanceUpdate
+   */
+  deleteMaintenanceUpdate: {
+    methodKind: "unary";
+    input: typeof DeleteMaintenanceUpdateRequestSchema;
+    output: typeof DeleteMaintenanceUpdateResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_openstatus_maintenance_v1_service, 0);

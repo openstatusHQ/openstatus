@@ -17,7 +17,13 @@ import {
   setIncidentStatusTool,
   updateIncidentTool,
 } from "./incident";
-import { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
+import {
+  addMaintenanceUpdateTool,
+  createMaintenanceTool,
+  deleteMaintenanceUpdateTool,
+  listMaintenancesTool,
+  updateMaintenanceUpdateTool,
+} from "./maintenance";
 import {
   getMonitorStatusTool,
   getMonitorSummaryTool,
@@ -54,7 +60,13 @@ export {
   setIncidentStatusTool,
   updateIncidentTool,
 } from "./incident";
-export { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
+export {
+  addMaintenanceUpdateTool,
+  createMaintenanceTool,
+  deleteMaintenanceUpdateTool,
+  listMaintenancesTool,
+  updateMaintenanceUpdateTool,
+} from "./maintenance";
 export {
   getMonitorStatusTool,
   getMonitorSummaryTool,
@@ -120,6 +132,9 @@ export const agentTools = {
   approve_postmortem: approvePostmortemTool,
   list_maintenances: listMaintenancesTool,
   create_maintenance: createMaintenanceTool,
+  add_maintenance_update: addMaintenanceUpdateTool,
+  update_maintenance_update: updateMaintenanceUpdateTool,
+  delete_maintenance_update: deleteMaintenanceUpdateTool,
   list_monitors: listMonitorsTool,
   get_monitor: getMonitorTool,
   get_monitor_status: getMonitorStatusTool,

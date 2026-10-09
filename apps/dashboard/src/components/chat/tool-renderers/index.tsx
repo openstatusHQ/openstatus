@@ -35,6 +35,11 @@ import { listPrivateLocationsTable } from "./list-private-locations";
 import { listResponseLogsTable } from "./list-response-logs";
 import { listStatusPagesTable } from "./list-status-pages";
 import { listStatusReportsTable } from "./list-status-reports";
+import {
+  addMaintenanceUpdateChanges,
+  deleteMaintenanceUpdateChanges,
+  updateMaintenanceUpdateChanges,
+} from "./maintenance-update";
 import { resolveStatusReportChanges } from "./resolve-status-report";
 import { ResultTable } from "./result-table";
 import { searchContentTable } from "./search-content";
@@ -147,6 +152,32 @@ export const toolRenderers: ToolRendererRegistry = {
       />
     ),
     summary: (o) => `ID ${o.id}`,
+  },
+  add_maintenance_update: {
+    renderDraft: (input) => addMaintenanceUpdateChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable
+        changes={addMaintenanceUpdateChanges(input, {
+          id: output.id,
+          notified: output.notified ?? false,
+        })}
+      />
+    ),
+    summary: (o) => `update #${o.id}`,
+  },
+  update_maintenance_update: {
+    renderDraft: (input) => updateMaintenanceUpdateChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={updateMaintenanceUpdateChanges(input)} />
+    ),
+    summary: (o) => `update #${o.id}`,
+  },
+  delete_maintenance_update: {
+    renderDraft: (input) => deleteMaintenanceUpdateChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={deleteMaintenanceUpdateChanges(input)} />
+    ),
+    summary: (o) => `deleted #${o.id}`,
   },
   list_incidents: {
     renderResult: ({ output }) => (

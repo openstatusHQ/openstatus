@@ -96,6 +96,12 @@ const page = {
       title: "DB upgrade",
       from: new Date("2026-06-20T00:00:00.000Z"),
       to: new Date("2026-06-20T01:00:00.000Z"),
+      maintenanceUpdates: [
+        {
+          message: "Upgrade scheduled.",
+          date: new Date("2026-06-19T12:00:00.000Z"),
+        },
+      ],
     },
   ],
 } as unknown as Page;
@@ -143,6 +149,12 @@ describe("toSummary", () => {
       status: "scheduled",
       scheduled_for: "2026-06-20T00:00:00.000Z",
     });
+    expect(summary.scheduled_maintenances[0].maintenance_updates).toEqual([
+      {
+        body: "Upgrade scheduled.",
+        created_at: "2026-06-19T12:00:00.000Z",
+      },
+    ]);
   });
 });
 

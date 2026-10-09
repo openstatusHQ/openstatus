@@ -1,6 +1,7 @@
 import type {
   Maintenance,
   MaintenanceSummary,
+  MaintenanceUpdate,
 } from "@openstatus/proto/maintenance/v1";
 
 type DBMaintenance = {
@@ -42,6 +43,7 @@ export function dbMaintenanceToProtoSummary(
 export function dbMaintenanceToProto(
   maintenance: DBMaintenance,
   pageComponentIds: string[],
+  updates: DBMaintenanceUpdate[],
 ): Maintenance {
   return {
     $typeName: "openstatus.maintenance.v1.Maintenance" as const,
@@ -54,5 +56,29 @@ export function dbMaintenanceToProto(
     pageComponentIds,
     createdAt: maintenance.createdAt?.toISOString() ?? "",
     updatedAt: maintenance.updatedAt?.toISOString() ?? "",
+    updates: updates.map(dbMaintenanceUpdateToProto),
+  };
+}
+
+type DBMaintenanceUpdate = {
+  id: number;
+  message: string;
+  date: Date;
+  maintenanceId: number;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+};
+
+export function dbMaintenanceUpdateToProto(
+  update: DBMaintenanceUpdate,
+): MaintenanceUpdate {
+  return {
+    $typeName: "openstatus.maintenance.v1.MaintenanceUpdate" as const,
+    id: String(update.id),
+    message: update.message,
+    date: update.date.toISOString(),
+    maintenanceId: String(update.maintenanceId),
+    createdAt: update.createdAt?.toISOString() ?? "",
+    updatedAt: update.updatedAt?.toISOString() ?? "",
   };
 }

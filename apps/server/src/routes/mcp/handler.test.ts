@@ -120,11 +120,13 @@ describe("MCP transport", () => {
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
       "add_incident_note",
+      "add_maintenance_update",
       "add_status_report_update",
       "approve_postmortem",
       "create_maintenance",
       "create_status_report",
       "declare_incident",
+      "delete_maintenance_update",
       "draft_postmortem",
       "get_audit_log",
       "get_content_page",
@@ -151,6 +153,7 @@ describe("MCP transport", () => {
       "search_docs",
       "set_incident_status",
       "update_incident",
+      "update_maintenance_update",
       "update_status_report",
     ]);
   });

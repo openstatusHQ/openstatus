@@ -47,7 +47,6 @@ export function useUpdateMaintenance(
       queryClient.setQueryData(queryKey, {
         ...maintenance,
         title: input.title,
-        message: input.message,
         from: input.startDate,
         to: input.endDate,
         pageComponentIds: input.pageComponents ?? maintenance.pageComponentIds,

@@ -253,6 +253,14 @@ export function Client() {
                     (maintenance) => maintenance.id === e.id,
                   );
                   if (!maintenance) return null;
+                  // banner shows only the newest update; the block renders a
+                  // single update as the body under the title
+                  const lastUpdate = [
+                    ...(maintenance.maintenanceUpdates ?? []),
+                  ].sort(
+                    (a, b) =>
+                      b.date.getTime() - a.date.getTime() || b.id - a.id,
+                  )[0];
                   return (
                     <StatusBannerTabsContent
                       value={`${e.type}-${e.id}`}
@@ -266,7 +274,12 @@ export function Client() {
                         <StatusBannerContainer status={e.status}>
                           <StatusBannerContent>
                             <StatusEventTimelineMaintenance
-                              maintenance={maintenance}
+                              maintenance={{
+                                ...maintenance,
+                                maintenanceUpdates: lastUpdate
+                                  ? [lastUpdate]
+                                  : [],
+                              }}
                               withDot={false}
                             />
                             {maintenance.maintenancesToPageComponents.length >

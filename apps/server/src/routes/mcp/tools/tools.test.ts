@@ -653,6 +653,9 @@ describe("scope filter", () => {
     expect(reportTools.has("update_status_report")).toBe(false);
     expect(reportTools.has("resolve_status_report")).toBe(false);
     expect(maintenanceTools.has("create_maintenance")).toBe(false);
+    expect(maintenanceTools.has("add_maintenance_update")).toBe(false);
+    expect(maintenanceTools.has("update_maintenance_update")).toBe(false);
+    expect(maintenanceTools.has("delete_maintenance_update")).toBe(false);
   });
 
   test("write key sees both read and write tools", () => {

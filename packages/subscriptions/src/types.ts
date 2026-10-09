@@ -44,7 +44,7 @@ export interface PageUpdate {
   // Optional fields consumed by the prepared (staged) generic webhook payload.
   // Populated by the matching dispatcher; ignored by email/Slack/Discord
   // builders, which key off the fields above.
-  updateId?: number; // statusReportUpdate.id (status reports only)
+  updateId?: number; // entity-specific update row id
   pageComponentsWithId?: { id: number; name: string }[];
   // Current impact per component as of this update (not the raw delta).
   componentsWithImpact?: {

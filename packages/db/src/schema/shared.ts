@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { selectMaintenanceSchema } from "./maintenances";
+import {
+  selectMaintenanceSchema,
+  selectMaintenanceUpdateSchema,
+} from "./maintenances";
 import { selectMonitorGroupSchema } from "./monitor_groups";
 import { selectMonitorIncidentSchema } from "./monitor_incidents/validation";
 import { selectMonitorSchema } from "./monitors";
@@ -62,6 +65,9 @@ export const selectStatusReportPageSchema = selectStatusReportSchema
 export const selectMaintenancePageSchema = selectMaintenanceSchema
   .omit(authorColumns)
   .extend({
+    maintenanceUpdates: z
+      .array(selectMaintenanceUpdateSchema.omit(authorColumns))
+      .prefault([]),
     maintenancesToPageComponents: z
       .array(
         z.object({

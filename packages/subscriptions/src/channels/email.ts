@@ -24,13 +24,14 @@ export async function validateEmailConfig(config: unknown) {
   return { valid: email.success, error: email.error?.message };
 }
 
-// Stable per status-report update / maintenance so Resend dedupes the email
-// retry path. Status reports key off the specific update; maintenance has no
-// update row, so fall back to its id + status.
+// Stable per entity update so Resend dedupes the email retry path.
 function idempotencyKeyFor(pageUpdate: PageUpdate): string {
-  return pageUpdate.updateId != null
-    ? `status-report-update:${pageUpdate.updateId}`
-    : `page-update:${pageUpdate.id}:${pageUpdate.status}`;
+  if (pageUpdate.updateId == null) {
+    return `page-update:${pageUpdate.id}:${pageUpdate.status}`;
+  }
+  return pageUpdate.status === "maintenance"
+    ? `maintenance-update:${pageUpdate.updateId}`
+    : `status-report-update:${pageUpdate.updateId}`;
 }
 
 // FNV-1a, Edge-safe (no node:crypto). Resend 409s when a key is reused within
@@ -94,6 +95,9 @@ export async function sendEmailNotifications(
       pageUpdate.status,
       pageUpdate.message,
       pageUpdate.date,
+      // the maintenance window is rendered instead of `date` below
+      pageUpdate.startsAt ?? null,
+      pageUpdate.endsAt ?? null,
       pageUpdate.pageComponents,
       pageUpdate.componentsWithImpact?.map((c) => c.impact),
     ]),
@@ -111,7 +115,13 @@ export async function sendEmailNotifications(
     reportTitle: pageUpdate.title,
     status: pageUpdate.status,
     message: pageUpdate.message,
-    date: pageUpdate.date,
+    // the template prints non-date strings verbatim, so the window reads "from - to"
+    date:
+      pageUpdate.status === "maintenance" &&
+      pageUpdate.startsAt &&
+      pageUpdate.endsAt
+        ? `${pageUpdate.startsAt} - ${pageUpdate.endsAt}`
+        : pageUpdate.date,
     pageComponents: pageUpdate.pageComponents,
     componentImpacts: pageUpdate.componentsWithImpact,
     idempotencyKey: `${idempotencyKeyFor(pageUpdate)}:${payloadHash}`,

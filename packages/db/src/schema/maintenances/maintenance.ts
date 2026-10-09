@@ -11,6 +11,8 @@ export const maintenance = sqliteTable(
   {
     id: integer("id").primaryKey(),
     title: text("title", { length: 256 }).notNull(),
+    // deprecated: mirror of the first `maintenance_update` (backfilled in
+    // migration 0092); dropped in a follow-up
     message: text("message").notNull(),
 
     from: integer("from", { mode: "timestamp" }).notNull(),
@@ -37,8 +39,32 @@ export const maintenance = sqliteTable(
   ],
 );
 
+export const maintenanceUpdate = sqliteTable(
+  "maintenance_update",
+  {
+    id: integer("id").primaryKey(),
+    message: text("message").notNull(),
+    date: integer("date", { mode: "timestamp" }).notNull(),
+    maintenanceId: integer("maintenance_id")
+      .references(() => maintenance.id, { onDelete: "cascade" })
+      .notNull(),
+
+    createdBy: integer("created_by").references(() => user.id),
+    updatedBy: integer("updated_by").references(() => user.id),
+
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+  },
+  (t) => [index("maintenance_update_maintenance_id_idx").on(t.maintenanceId)],
+);
+
 export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
   maintenancesToPageComponents: many(maintenancesToPageComponents),
+  maintenanceUpdates: many(maintenanceUpdate),
   page: one(page, {
     fields: [maintenance.pageId],
     references: [page.id],
@@ -58,3 +84,23 @@ export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
     relationName: "maintenanceUpdatedBy",
   }),
 }));
+
+export const maintenanceUpdateRelations = relations(
+  maintenanceUpdate,
+  ({ one }) => ({
+    maintenance: one(maintenance, {
+      fields: [maintenanceUpdate.maintenanceId],
+      references: [maintenance.id],
+    }),
+    createdByUser: one(user, {
+      fields: [maintenanceUpdate.createdBy],
+      references: [user.id],
+      relationName: "maintenanceUpdateCreatedBy",
+    }),
+    updatedByUser: one(user, {
+      fields: [maintenanceUpdate.updatedBy],
+      references: [user.id],
+      relationName: "maintenanceUpdateUpdatedBy",
+    }),
+  }),
+);

@@ -158,7 +158,7 @@ describe("sendEmailNotifications", () => {
     expect(args.idempotencyKey).toMatch(/^status-report-update:77:[0-9a-z]+$/);
   });
 
-  test("falls back to a page-update key when there is no update id (maintenance)", async () => {
+  test("falls back to a page-update key when there is no update id", async () => {
     const sub = makeSub();
     await sendEmailNotifications(
       [sub],
@@ -188,6 +188,28 @@ describe("sendEmailNotifications", () => {
     await sendEmailNotifications(
       [makeSub(), makeSub({ id: 2, email: "b@example.com", token: "token-b" })],
       update,
+    );
+
+    const keys = sendStatusReportUpdateMock.calls.map(
+      (c) => c.args[0].idempotencyKey,
+    );
+    expect(keys[0]).not.toBe(keys[1]);
+  });
+
+  test("changes the key when the maintenance window changes", async () => {
+    const base = {
+      updateId: 77,
+      status: "maintenance" as const,
+      date: "2026-07-16T11:00:00Z",
+      startsAt: "2026-07-20T10:00:00Z",
+    };
+    await sendEmailNotifications(
+      [makeSub()],
+      makeUpdate({ ...base, endsAt: "2026-07-20T11:00:00Z" }),
+    );
+    await sendEmailNotifications(
+      [makeSub()],
+      makeUpdate({ ...base, endsAt: "2026-07-20T12:00:00Z" }),
     );
 
     const keys = sendStatusReportUpdateMock.calls.map(

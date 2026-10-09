@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "@openstatus/db";
 import {
   maintenance,
+  maintenanceUpdate,
   maintenancesToPageComponents,
   page,
   pageComponent,
@@ -114,4 +115,25 @@ export async function getMaintenanceInWorkspace(args: {
     .get();
   if (!row) throw new NotFoundError("maintenance", id);
   return row;
+}
+
+export async function getMaintenanceUpdateInWorkspace(args: {
+  tx: DB;
+  id: number;
+  workspaceId: number;
+}) {
+  const { tx, id, workspaceId } = args;
+  const row = await tx
+    .select({ update: maintenanceUpdate })
+    .from(maintenanceUpdate)
+    .innerJoin(maintenance, eq(maintenance.id, maintenanceUpdate.maintenanceId))
+    .where(
+      and(
+        eq(maintenanceUpdate.id, id),
+        eq(maintenance.workspaceId, workspaceId),
+      ),
+    )
+    .get();
+  if (!row) throw new NotFoundError("maintenance_update", id);
+  return row.update;
 }
