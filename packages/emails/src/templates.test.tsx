@@ -457,7 +457,7 @@ describe("status report", () => {
     expect(html).not.toContain("●");
   });
 
-  test("maintenance formats its window and keeps the update timestamp", async () => {
+  test("maintenance shows its window in the eyebrow instead of the update time", async () => {
     const html = await render(
       <StatusReportEmail
         {...report}
@@ -468,9 +468,9 @@ describe("status report", () => {
       />,
     );
     expect(html).toContain("MAINTENANCE");
-    expect(html).toContain("Window");
-    expect(html).toContain("21 Sep, 10:00 - 12:00 UTC");
-    expect(html).toContain("18 Sep, 12:37 UTC");
+    expect(html).toContain("Update 3 · 21 Sep, 10:00 - 12:00 UTC");
+    expect(html).not.toContain("Window");
+    expect(html).not.toContain("18 Sep, 12:37 UTC");
     expect(html).not.toContain("2026-09-21T10:00:00.000Z");
   });
 
@@ -482,7 +482,7 @@ describe("status report", () => {
         date="Mon 21 Sep, 10:00 - 12:00"
       />,
     );
-    expect(html).toContain("Window");
+    expect(html).not.toContain("Window");
     expect(html).toContain("Mon 21 Sep, 10:00 - 12:00");
   });
 
@@ -530,12 +530,12 @@ describe("status report", () => {
     expect(html).not.toContain("&amp;amp;");
   });
 
-  test("maintenance without eyebrow items renders no empty eyebrow", async () => {
+  test("no eyebrow items renders no empty eyebrow", async () => {
     const html = await render(
       <StatusReportEmail
         {...report}
         status="maintenance"
-        date="Mon 21 Sep, 10:00 - 12:00"
+        date=""
         updateIndex={undefined}
         reportStartedAt={undefined}
       />,

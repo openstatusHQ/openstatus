@@ -118,12 +118,13 @@ function StatusReportEmail({
 }: StatusReportProps) {
   const tone = statusTone[status];
   const dated = isDate(date);
+  // a maintenance shows its window where a report shows the update time;
   // legacy callers pass a pre-formatted window as `date`
-  const window =
+  const when =
     startsAt && endsAt
       ? formatDateTimeRange(startsAt, endsAt)
       : dated
-        ? undefined
+        ? formatDateTime(date)
         : date;
   const elapsed =
     dated && reportStartedAt && isDate(reportStartedAt)
@@ -150,12 +151,11 @@ function StatusReportEmail({
       <Eyebrow
         items={[
           updateIndex ? `Update ${updateIndex}` : undefined,
-          dated ? formatDateTime(date) : undefined,
+          when,
           elapsed && elapsed !== "0m" ? `${elapsed} in` : undefined,
         ]}
       />
       <Heading title={reportTitle} />
-      {window ? <KeyValue rows={[{ label: "Window", value: window }]} /> : null}
       {pageComponents.length > 0 ? (
         <KeyValue
           rows={pageComponents.map((name) => {
