@@ -1,37 +1,86 @@
 import { db, eq } from "@openstatus/db";
-import { notification } from "@openstatus/db/src/schema";
+import {
+  notification,
+  notificationsToMonitors,
+} from "@openstatus/db/src/schema";
+import {
+  createMonitor,
+  createTestWorkspace,
+} from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
+import { afterEach, beforeAll, test } from "@std/testing/bdd";
 
 import { app } from "@/index";
 
 import { NotificationSchema } from "./schema";
 
-test("create a notification", async () => {
-  const res = await app.request("/v1/notification", {
+let workspaceId: number;
+let monitorId: number;
+
+beforeAll(async () => {
+  const { workspace } = await createTestWorkspace();
+  workspaceId = workspace.id;
+  monitorId = (await createMonitor(workspaceId)).id;
+});
+
+afterEach(async () => {
+  await db
+    .delete(notificationsToMonitors)
+    .where(eq(notificationsToMonitors.monitorId, monitorId));
+  await db
+    .delete(notification)
+    .where(eq(notification.workspaceId, workspaceId));
+});
+
+function createChannel(input: unknown) {
+  return app.request("/v1/notification", {
     method: "POST",
     headers: {
-      "x-openstatus-key": "1",
+      "x-openstatus-key": String(workspaceId),
       "content-type": "application/json",
     },
-    body: JSON.stringify({
-      name: "OpenStatus",
-      provider: "email",
-      payload: { email: "ping@openstatus.dev" },
-      monitors: [1],
-    }),
+    body: JSON.stringify(input),
   });
+}
 
-  const result = NotificationSchema.safeParse(await res.json());
+for (const { provider, payload } of [
+  { provider: "email", payload: { email: "ping@openstatus.dev" } },
+  { provider: "sms", payload: { sms: "+12025550123" } },
+  {
+    provider: "webhook",
+    payload: {
+      webhook: {
+        endpoint: "https://example.com/notify",
+        headers: [{ key: "x-channel", value: "test" }],
+      },
+    },
+  },
+  {
+    provider: "email",
+    payload: {
+      email: "ping@openstatus.dev",
+      discord: "https://example.com/notify",
+    },
+  },
+]) {
+  test(`create and read a ${provider} notification with ${JSON.stringify(payload)}`, async () => {
+    const res = await createChannel({
+      name: "OpenStatus",
+      provider,
+      payload,
+      monitors: [monitorId],
+    });
+    expect(res.status).toBe(200);
+    const result = NotificationSchema.parse(await res.json());
+    expect(result).toMatchObject({ provider, payload, monitors: [monitorId] });
 
-  expect(res.status).toBe(200);
-  expect(result.success).toBe(true);
-
-  // Cleanup: delete the created notification
-  if (result.success) {
-    await db.delete(notification).where(eq(notification.id, result.data.id));
-  }
-});
+    const read = await app.request(`/v1/notification/${result.id}`, {
+      headers: { "x-openstatus-key": String(workspaceId) },
+    });
+    expect(read.status).toBe(200);
+    expect(await read.json()).toEqual(result);
+  });
+}
 
 test("create a deprecated sms notification should return a 400", async () => {
   const res = await app.request("/v1/notification", {
@@ -51,47 +100,81 @@ test("create a deprecated sms notification should return a 400", async () => {
 });
 
 test("create a notification with invalid monitor ids should return a 400", async () => {
-  const res = await app.request("/v1/notification", {
-    method: "POST",
-    headers: {
-      "x-openstatus-key": "1",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      name: "OpenStatus",
-      provider: "email",
-      payload: { email: "ping@openstatus.dev" },
-      monitors: [404],
-    }),
+  const res = await createChannel({
+    name: "OpenStatus",
+    provider: "email",
+    payload: { email: "ping@openstatus.dev" },
+    monitors: [-1],
   });
-
   expect(res.status).toBe(400);
 });
 
-test("create a email notification with invalid payload should return a 400", async () => {
-  const res = await app.request("/v1/notification", {
-    method: "POST",
-    headers: {
-      "x-openstatus-key": "1",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
+for (const { name, payload } of [
+  { name: "unknown payload key", payload: { hello: "world" } },
+  { name: "wrong provider", payload: { sms: "+12025550123" } },
+  {
+    name: "invalid selected provider with valid alternate provider",
+    payload: { email: "invalid", sms: "+12025550123" },
+  },
+  { name: "null payload", payload: null },
+  { name: "missing payload", payload: undefined },
+]) {
+  test(`reject ${name} before persisting a notification or monitor link`, async () => {
+    const res = await createChannel({
       name: "OpenStatus",
       provider: "email",
-      payload: { hello: "world" },
-    }),
-  });
+      payload,
+      monitors: [monitorId],
+    });
+    const rows = await db
+      .select()
+      .from(notification)
+      .where(eq(notification.workspaceId, workspaceId));
+    const links = await db
+      .select()
+      .from(notificationsToMonitors)
+      .where(eq(notificationsToMonitors.monitorId, monitorId));
 
-  expect(res.status).toBe(400);
-});
+    expect({ status: res.status, rows, links }).toEqual({
+      status: 400,
+      rows: [],
+      links: [],
+    });
+  });
+}
+
+for (const { provider, channelLimit } of [
+  { provider: "sms", channelLimit: 1 },
+  { provider: "email", channelLimit: 0 },
+]) {
+  test(`preserve payment errors for invalid ${provider} payloads`, async () => {
+    const { workspace } = await createTestWorkspace({
+      plan: "free",
+      limits: JSON.stringify({ "notification-channels": channelLimit }),
+    });
+    const res = await app.request("/v1/notification", {
+      method: "POST",
+      headers: {
+        "x-openstatus-key": String(workspace.id),
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ name: "OpenStatus", provider, payload: {} }),
+    });
+
+    expect(res.status).toBe(402);
+    expect(await res.json()).toMatchObject({ code: "PAYMENT_REQUIRED" });
+    const rows = await db
+      .select()
+      .from(notification)
+      .where(eq(notification.workspaceId, workspace.id));
+    expect(rows).toEqual([]);
+  });
+}
 
 test("no auth key should return 401", async () => {
   const res = await app.request("/v1/notification", {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
+    headers: { "content-type": "application/json" },
   });
-
   expect(res.status).toBe(401);
 });
