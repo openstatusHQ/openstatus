@@ -138,17 +138,7 @@ export async function getPage(args: {
   };
 }
 
-/**
- * Narrow "just the customDomain" read, scoped to the caller's workspace.
- *
- * The tRPC `updateCustomDomain` procedure needs the *pre-update* domain
- * so it can call Vercel add/remove before the db write — it can't use
- * the `existingDomain` returned from `updatePageCustomDomain` because
- * Vercel needs the old value up front. Using `getPage` (the full-
- * relations read) here would fire 3 extra batched queries for
- * maintenances / pageComponents / pageComponentGroups we don't need.
- * This one-column select replaces that with a single indexed lookup.
- */
+/** One-column read of the page's custom domain, scoped to the workspace. */
 export async function getPageCustomDomain(args: {
   ctx: ServiceContext;
   input: GetPageInput;
