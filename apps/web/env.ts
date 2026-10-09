@@ -1,1 +1,3 @@
-await Deno.copyFile("./.env.example", "./.env");
+import { copyFile } from "node:fs/promises";
+
+await copyFile("./.env.example", "./.env");

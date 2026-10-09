@@ -1,5 +1,4 @@
-/// <reference lib="deno.ns" />
-
+import { serve } from "@hono/node-server";
 import { getLogger } from "@logtape/logtape";
 
 import { shutdownOutbox, startOutboxConsumer } from "./checker/outbox";
@@ -19,13 +18,13 @@ logger.info("Starting server", {
 startOutboxConsumer();
 startScheduler();
 
-const server = Deno.serve({ port: PORT }, app.fetch);
+const server = serve({ fetch: app.fetch, port: PORT });
 
-Deno.addSignalListener("SIGTERM", () => {
+process.on("SIGTERM", () => {
   void (async () => {
     logger.info("SIGTERM received, releasing outbox claims");
     await stopScheduler();
     await shutdownOutbox();
-    await server.shutdown();
+    server.close();
   })();
 });

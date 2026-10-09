@@ -1,5 +1,12 @@
 {
   "extends": "@openstatus/tsconfig/base.json",
   "include": ["src", "*.ts"],
-  "exclude": ["**/*.test.ts"]
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/*.mock.ts",
+    "**/test-preload.ts"
+  ]
 }

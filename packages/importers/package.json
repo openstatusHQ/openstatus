@@ -16,7 +16,7 @@
     "./checkly/fixtures": "./src/providers/checkly/fixtures.ts"
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
+    "check": "tsc --noEmit",
     "test": "deno test --parallel -A --no-check --sloppy-imports",
     "test:watch": "deno test --parallel -A --no-check --sloppy-imports --watch",
     "tsc": "tsc --noEmit"

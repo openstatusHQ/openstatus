@@ -1,6 +1,6 @@
 # AGENTS.md — apps/server
 
-Hono, running on Deno. Four surfaces under `apps/server/src/routes/`: `v1`
+Hono, running on Node. Four surfaces under `apps/server/src/routes/`: `v1`
 (public REST), `rpc` (ConnectRPC), `mcp`, and `slack`.
 
 ## API-key scopes

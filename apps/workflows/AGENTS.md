@@ -1,15 +1,15 @@
 # AGENTS.md — apps/workflows
 
-Runs on **Deno**, not Node. `pnpm check` here is
-`deno check --sloppy-imports src/serve.ts`, and it must pass — it is the only
-type gate this app has (`pnpm test` runs with `--no-check`).
+Runs on **Node**, through oxc-node in dev and as a tsdown bundle in production.
+`pnpm check` here is `tsc --noEmit`, and it must pass — it is the only type gate
+this app has (`pnpm test` runs with `--no-check`).
 
-Constraints that follow from the runtime:
+Constraints that follow from the build:
 
-- No `node:*` built-ins, and no dependency that reaches for one. This app
-  imports `@openstatus/services`, so a `node:*` import added there breaks the
-  build here — run `pnpm check` in both packages after touching services.
-- Sentry comes from `@sentry/deno`, not `@sentry/node`.
+- `@libsql/client`, `libsql` and `@google-cloud/tasks` stay external in
+  `tsdown.config.ts` (native addon, CJS `__dirname` reads) and ship as a
+  side-car `node_modules` in the image. A new dependency with either trait
+  joins that list and the side-car in `dofigen.yml`.
 - Tests run `deno test --parallel`, so test files share one process
   environment. Never drive a branch by assigning to `process.env` mid-test —
   the assignment leaks into whatever else is running. Resolve config once at

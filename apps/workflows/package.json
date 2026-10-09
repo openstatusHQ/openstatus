@@ -1,13 +1,15 @@
 {
   "name": "@openstatus/workflows",
   "scripts": {
-    "check": "deno check --sloppy-imports src/serve.ts",
-    "dev": "NODE_ENV=development deno run -A --watch src/serve.ts",
-    "start": "NODE_ENV=production deno run -A src/serve.ts",
-    "test": "NODE_ENV=test RESEND_API_KEY=test-key CRON_SECRET=test-secret deno test --parallel -A --no-check --sloppy-imports"
+    "check": "tsc --noEmit",
+    "dev": "NODE_ENV=development node --import @oxc-node/core/register --watch src/serve.ts",
+    "start": "NODE_ENV=production node dist/serve.mjs",
+    "test": "NODE_ENV=test RESEND_API_KEY=test-key CRON_SECRET=test-secret deno test --parallel -A --no-check --sloppy-imports",
+    "build": "tsdown"
   },
   "dependencies": {
     "@google-cloud/tasks": "catalog:",
+    "@hono/node-server": "catalog:",
     "@libsql/client": "catalog:",
     "@logtape/logtape": "catalog:",
     "@logtape/otel": "catalog:",
@@ -43,7 +45,7 @@
     "@opentelemetry/resources": "catalog:",
     "@opentelemetry/sdk-logs": "catalog:",
     "@opentelemetry/semantic-conventions": "catalog:",
-    "@sentry/deno": "catalog:",
+    "@sentry/node": "catalog:",
     "@slack/web-api": "catalog:",
     "@upstash/qstash": "catalog:",
     "drizzle-orm": "catalog:",
@@ -55,6 +57,8 @@
   "devDependencies": {
     "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
+    "@oxc-node/core": "catalog:",
+    "tsdown": "catalog:",
     "typescript": "catalog:"
   }
 }

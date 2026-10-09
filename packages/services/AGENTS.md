@@ -64,10 +64,10 @@ request inside their own workspace.
 
 ## Runtime constraints
 
-- **No `node:*` imports.** `apps/workflows` runs this code on Deno, and the
-  package is written to stay Edge-safe so a Next.js route can adopt it without a
-  rewrite — no Edge route imports it today. That is why `deepEqual` is
-  hand-rolled rather than pulled from `node:util`.
+- **No `node:*` imports.** The package is written to stay Edge-safe so a
+  Next.js route can adopt it without a rewrite — no Edge route imports it
+  today. That is why `deepEqual` is hand-rolled rather than pulled from
+  `node:util`.
 - **No logtape here.** It breaks Edge builds; use `console.warn`.
 
 ## Query plans

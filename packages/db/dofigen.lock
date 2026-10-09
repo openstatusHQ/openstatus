@@ -5,13 +5,14 @@ effective: |
     install:
       fromImage:
         path: node
-        digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+        digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
       label:
-        org.opencontainers.image.base.name: docker.io/node:24-slim
         org.opencontainers.image.stage: install
-        org.opencontainers.image.base.digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+        org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
+        org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
       workdir: /app/
       run:
+      - npm install -g corepack@0.36.0
       - corepack enable pnpm
       - pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --loglevel debug
       cache:
@@ -36,20 +37,18 @@ effective: |
       - target: packages/utils/package.json
         source: packages/utils/package.json
   fromImage:
-    path: denoland/deno
-    digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
+    path: node
+    digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
   label:
-    org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.7
-    io.dofigen.version: 2.8.0
-    org.opencontainers.image.description: One-shot database migration runner for OpenStatus
-    org.opencontainers.image.title: OpenStatus DB Migrate
-    org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.base.digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    io.dofigen.version: 2.8.0
+    org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.title: OpenStatus DB Migrate
+    org.opencontainers.image.description: One-shot database migration runner for OpenStatus
+    org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
+    org.opencontainers.image.authors: OpenStatus Team
   workdir: /app/packages/db
-  env:
-    DENO_DIR: /tmp/deno-dir
   copy:
   - paths:
     - packages/db
@@ -77,29 +76,30 @@ effective: |
     paths:
     - /app/packages
     target: /app/packages
+  root:
+    run:
+    - apt-get update
+    - apt-get install -y --no-install-recommends ca-certificates
+    - rm -rf /var/lib/apt/lists/*
   entrypoint:
-  - deno
-  - task
+  - npm
+  - run
   - migrate
 images:
   docker.io:
     library:
       node:
-        24-slim:
-          digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
-    denoland:
-      deno:
-        2.9.7:
-          digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
+        26.8.1-slim:
+          digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
 resources:
   dofigen.yml:
-    hash: 0726894ce94078edb23f99504defdbbb9ed0c312d689fe21f6efa64d8455ecc0
+    hash: 1f8d52bdd2971e24666ce0741b1cfa6eaf207a64e02d022019c341d93c27eaae
     content: |
       ignore:
         - node_modules
       builders:
         install:
-          fromImage: node:24-slim
+          fromImage: node:26.8.1-slim
           workdir: /app/
           labels:
             org.opencontainers.image.stage: install
@@ -114,6 +114,8 @@ resources:
             - packages/theme-store/package.json
             - packages/utils/package.json
           run:
+            # Node 25+ no longer bundles corepack
+            - npm install -g corepack@0.36.0
             - corepack enable pnpm
             - pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --loglevel debug
           cache:
@@ -121,7 +123,13 @@ resources:
 
       # One-shot migration runner: drizzle's migrator reads drizzle/ from disk at
       # runtime, so the image ships source + node_modules instead of a compiled binary.
-      fromImage: denoland/deno:2.9.7
+      fromImage: node:26.8.1-slim
+      # libsql's native TLS reads the system CA store, which the slim image lacks.
+      root:
+        run:
+          - apt-get update
+          - apt-get install -y --no-install-recommends ca-certificates
+          - rm -rf /var/lib/apt/lists/*
       workdir: /app/packages/db
 
       labels:
@@ -147,13 +155,8 @@ resources:
           source: /app/packages
           target: /app/packages
 
-      # /deno-dir (image default) is root-owned; the runtime user needs a writable
-      # cache dir for the .mts transpile emit.
-      env:
-        DENO_DIR: /tmp/deno-dir
-
-      # deno task keeps package.json's migrate script the single source of truth.
+      # npm run keeps package.json's migrate script the single source of truth.
       entrypoint:
-        - deno
-        - task
+        - npm
+        - run
         - migrate
