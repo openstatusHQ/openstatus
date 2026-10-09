@@ -48,7 +48,10 @@ export function formatDateTimeRange(
   }
   const s = parts(time, start);
   const e = parts(time, end);
-  const sameDay = s("day") === e("day") && s("month") === e("month");
+  const sameDay =
+    start.getUTCFullYear() === end.getUTCFullYear() &&
+    s("day") === e("day") &&
+    s("month") === e("month");
   const startLabel = `${s("day")} ${s("month")}, ${s("hour")}:${s("minute")}`;
   const endLabel = sameDay
     ? `${e("hour")}:${e("minute")}`

@@ -45,6 +45,10 @@ describe("email date formatting", () => {
     expect(
       formatDateTimeRange("2026-10-12T22:00:00Z", "2026-10-12T23:30:00Z"),
     ).toBe("12 Oct, 22:00 - 23:30 UTC");
+    // same calendar day in another year must still show the end date
+    expect(
+      formatDateTimeRange("2026-12-31T22:00:00Z", "2027-12-31T01:00:00Z"),
+    ).toBe("31 Dec, 22:00 - 31 Dec, 01:00 UTC");
   });
 
   test("elapsed time", () => {
