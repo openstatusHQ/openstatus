@@ -109,9 +109,6 @@ export function StatusBlocksProvider({
 
       calendarTitle: t("Calendar"),
 
-      durationIn: (duration: string) => t("(in {duration})", { duration }),
-      durationEarlier: (timeFromLast: string) =>
-        t("({timeFromLast} earlier)", { timeFromLast }),
       durationFor: (duration: string) => t("(for {duration})", { duration }),
       durationAcross: (duration: string) =>
         t("across {duration}", { duration }),
