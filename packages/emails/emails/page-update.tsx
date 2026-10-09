@@ -5,14 +5,18 @@ import { z } from "zod";
 import { Actions } from "./_components/actions";
 import { Eyebrow } from "./_components/eyebrow";
 import { Footer } from "./_components/footer";
-import { formatDateTime, formatElapsed } from "./_components/format";
+import {
+  formatDateTime,
+  formatDateTimeRange,
+  formatElapsed,
+} from "./_components/format";
 import { Heading } from "./_components/heading";
 import { KeyValue } from "./_components/key-value";
 import { Layout, statusPageBrand } from "./_components/layout";
 import { Markdown } from "./_components/markdown";
 import type { Tone } from "./_components/styles";
 
-export const StatusReportSchema = z.object({
+export const PageUpdateSchema = z.object({
   pageTitle: z.string(),
   // statusReportStatus from db
   status: z.enum([
@@ -46,9 +50,12 @@ export const StatusReportSchema = z.object({
   /** 1-based position of this update within the report. */
   updateIndex: z.number().optional(),
   reportStartedAt: z.string().optional(),
+  /** Maintenance window; `date` stays the timestamp of the update itself. */
+  startsAt: z.string().optional(),
+  endsAt: z.string().optional(),
 });
 
-export type StatusReportProps = z.infer<typeof StatusReportSchema>;
+export type PageUpdateProps = z.infer<typeof PageUpdateSchema>;
 
 const statusTone = {
   investigating: "danger",
@@ -56,10 +63,10 @@ const statusTone = {
   monitoring: "info",
   resolved: "success",
   maintenance: "info",
-} satisfies Record<StatusReportProps["status"], Tone>;
+} satisfies Record<PageUpdateProps["status"], Tone>;
 
 type Impact = NonNullable<
-  StatusReportProps["componentImpacts"]
+  PageUpdateProps["componentImpacts"]
 >[number]["impact"];
 
 const impactRow = {
@@ -75,14 +82,14 @@ const componentLabel = {
   monitoring: "Monitoring",
   resolved: "Resolved",
   maintenance: "Maintenance",
-} satisfies Record<StatusReportProps["status"], string>;
+} satisfies Record<PageUpdateProps["status"], string>;
 
 function isDate(value: string) {
   return !Number.isNaN(new Date(value).getTime());
 }
 
-export function statusReportPreheader(
-  props: Pick<StatusReportProps, "status" | "pageTitle" | "pageComponents">,
+export function pageUpdatePreheader(
+  props: Pick<PageUpdateProps, "status" | "pageTitle" | "pageComponents">,
 ): string {
   const components =
     props.pageComponents.length > 0
@@ -93,7 +100,7 @@ export function statusReportPreheader(
   return `${componentLabel[props.status]}: ${components}.`;
 }
 
-function StatusReportEmail({
+function PageUpdateEmail({
   status,
   date,
   message,
@@ -106,9 +113,19 @@ function StatusReportEmail({
   statusPageUrl,
   updateIndex,
   reportStartedAt,
-}: StatusReportProps) {
+  startsAt,
+  endsAt,
+}: PageUpdateProps) {
   const tone = statusTone[status];
   const dated = isDate(date);
+  // a maintenance shows its window where a report shows the update time;
+  // legacy callers pass a pre-formatted window as `date`
+  const when =
+    startsAt && endsAt
+      ? formatDateTimeRange(startsAt, endsAt)
+      : dated
+        ? formatDateTime(date)
+        : date;
   const elapsed =
     dated && reportStartedAt && isDate(reportStartedAt)
       ? formatElapsed(reportStartedAt, date)
@@ -121,7 +138,7 @@ function StatusReportEmail({
 
   return (
     <Layout
-      preview={statusReportPreheader({ status, pageTitle, pageComponents })}
+      preview={pageUpdatePreheader({ status, pageTitle, pageComponents })}
       brand={statusPageBrand(pageTitle, statusPageUrl ?? manageUrl)}
       pill={{ tone, label: status }}
       footer={
@@ -134,12 +151,11 @@ function StatusReportEmail({
       <Eyebrow
         items={[
           updateIndex ? `Update ${updateIndex}` : undefined,
-          dated ? formatDateTime(date) : undefined,
+          when,
           elapsed && elapsed !== "0m" ? `${elapsed} in` : undefined,
         ]}
       />
       <Heading title={reportTitle} />
-      {!dated ? <KeyValue rows={[{ label: "Window", value: date }]} /> : null}
       {pageComponents.length > 0 ? (
         <KeyValue
           rows={pageComponents.map((name) => {
@@ -162,7 +178,7 @@ function StatusReportEmail({
   );
 }
 
-StatusReportEmail.PreviewProps = {
+PageUpdateEmail.PreviewProps = {
   pageTitle: "openstatus",
   reportTitle: "API unavailable — service partially restored",
   status: "monitoring",
@@ -191,6 +207,6 @@ Nothing. Pin the previous action version if your pipeline is blocked — next up
     "https://status.openstatus.dev/unsubscribe/550e8400-e29b-41d4-a716-446655440000",
   manageUrl:
     "https://status.openstatus.dev/manage/550e8400-e29b-41d4-a716-446655440000",
-} satisfies StatusReportProps;
+} satisfies PageUpdateProps;
 
-export default StatusReportEmail;
+export default PageUpdateEmail;

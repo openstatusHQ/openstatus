@@ -27,14 +27,14 @@ import MonitorDeactivationEmail, {
 } from "../emails/monitor-deactivation";
 import MonitorPausedEmail from "../emails/monitor-paused";
 import PageSubscriptionEmail from "../emails/page-subscription";
+import PageUpdateEmail, {
+  type PageUpdateProps,
+  pageUpdatePreheader,
+} from "../emails/page-update";
 import PrivateLocationAlertEmail, {
   privateLocationAlertSubject,
 } from "../emails/private-location-alert";
 import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
-import StatusReportEmail, {
-  type StatusReportProps,
-  statusReportPreheader,
-} from "../emails/status-report";
 import TeamInvitationEmail from "../emails/team-invitation";
 import WelcomeEmail from "../emails/welcome";
 
@@ -69,7 +69,7 @@ const report = {
   statusPageUrl: "https://acme.openstatus.dev",
   unsubscribeUrl: "https://acme.openstatus.dev/unsubscribe/t",
   manageUrl: "https://acme.openstatus.dev/manage/t",
-} satisfies StatusReportProps;
+} satisfies PageUpdateProps;
 
 describe("primitives", () => {
   test("pill maps tone to colour and uppercases its label", async () => {
@@ -393,9 +393,9 @@ describe("private location alert", () => {
   });
 });
 
-describe("status report", () => {
+describe("page update", () => {
   test("eyebrow, components, markdown, links", async () => {
-    const html = await render(<StatusReportEmail {...report} />);
+    const html = await render(<PageUpdateEmail {...report} />);
     expect(html).toContain("Acme Status");
     expect(html).toContain("MONITORING");
     expect(html).toContain("Update 3 · 18 Sep, 12:37 UTC · 2h 14m in");
@@ -421,9 +421,9 @@ describe("status report", () => {
     };
     for (const [status, tone] of Object.entries(expected)) {
       const html = await render(
-        <StatusReportEmail
+        <PageUpdateEmail
           {...report}
-          status={status as StatusReportProps["status"]}
+          status={status as PageUpdateProps["status"]}
         />,
       );
       expect(html).toContain(status.toUpperCase());
@@ -433,7 +433,7 @@ describe("status report", () => {
 
   test("unknown impact drops the value cell", async () => {
     const html = await render(
-      <StatusReportEmail {...report} componentImpacts={undefined} />,
+      <PageUpdateEmail {...report} componentImpacts={undefined} />,
     );
     expect(html).toContain("Runners");
     expect(html).toContain('colSpan="2"');
@@ -443,7 +443,7 @@ describe("status report", () => {
 
   test("optional blocks disappear", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         {...report}
         pageComponents={[]}
         statusPageUrl={undefined}
@@ -457,22 +457,38 @@ describe("status report", () => {
     expect(html).not.toContain("●");
   });
 
-  test("maintenance renders its window instead of a timestamp", async () => {
+  test("maintenance shows its window in the eyebrow instead of the update time", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
+        {...report}
+        status="maintenance"
+        date="2026-09-18T12:37:00Z"
+        startsAt="2026-09-21T10:00:00.000Z"
+        endsAt="2026-09-21T12:00:00.000Z"
+      />,
+    );
+    expect(html).toContain("MAINTENANCE");
+    expect(html).toContain("Update 3 · 21 Sep, 10:00 - 12:00 UTC");
+    expect(html).not.toContain("Window");
+    expect(html).not.toContain("18 Sep, 12:37 UTC");
+    expect(html).not.toContain("2026-09-21T10:00:00.000Z");
+  });
+
+  test("a pre-formatted window string still renders verbatim", async () => {
+    const html = await render(
+      <PageUpdateEmail
         {...report}
         status="maintenance"
         date="Mon 21 Sep, 10:00 - 12:00"
       />,
     );
-    expect(html).toContain("MAINTENANCE");
-    expect(html).toContain("Window");
+    expect(html).not.toContain("Window");
     expect(html).toContain("Mon 21 Sep, 10:00 - 12:00");
   });
 
   test("markdown headings and lists are styled, raw HTML is escaped", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         {...report}
         message={
           "### What we're doing\n\n- Retrying\n\n<script>alert(1)</script><img src=x onerror=alert(1)>"
@@ -488,7 +504,7 @@ describe("status report", () => {
 
   test("a crafted autolink cannot inject an attribute into the email", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         {...report}
         message={
           '<https://evil.com/x"onmouseover=alert(1)> [x](javascript:alert(1))'
@@ -504,7 +520,7 @@ describe("status report", () => {
 
   test("autolinks and entities in the message survive escaping", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         {...report}
         message="See <https://status.acme.dev/x> — R&amp;D"
       />,
@@ -514,12 +530,12 @@ describe("status report", () => {
     expect(html).not.toContain("&amp;amp;");
   });
 
-  test("maintenance without eyebrow items renders no empty eyebrow", async () => {
+  test("no eyebrow items renders no empty eyebrow", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         {...report}
         status="maintenance"
-        date="Mon 21 Sep, 10:00 - 12:00"
+        date=""
         updateIndex={undefined}
         reportStartedAt={undefined}
       />,
@@ -528,12 +544,12 @@ describe("status report", () => {
   });
 
   test("preheader never repeats the subject", () => {
-    expect(statusReportPreheader(report)).toBe("Monitoring: API, Runners.");
-    expect(statusReportPreheader({ ...report, status: "resolved" })).toBe(
+    expect(pageUpdatePreheader(report)).toBe("Monitoring: API, Runners.");
+    expect(pageUpdatePreheader({ ...report, status: "resolved" })).toBe(
       "Resolved for API, Runners.",
     );
     expect(
-      statusReportPreheader({ ...report, pageComponents: [] }),
+      pageUpdatePreheader({ ...report, pageComponents: [] }),
     ).not.toContain(report.reportTitle);
   });
 });
@@ -686,7 +702,7 @@ describe("every transactional template", () => {
         lastSeenAt="2026-07-23T10:00:00Z"
       />
     ),
-    statusReport: <StatusReportEmail {...report} />,
+    pageUpdate: <PageUpdateEmail {...report} />,
     deactivation: (
       <MonitorDeactivationEmail deactivateAt={new Date("2026-09-25")} />
     ),
