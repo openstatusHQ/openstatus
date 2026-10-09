@@ -11,7 +11,7 @@
     "./types": "./src/types.ts"
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
+    "check": "tsc --noEmit",
     "test": "deno test --parallel -A --no-check --sloppy-imports",
     "test:watch": "deno test --parallel -A --no-check --sloppy-imports --watch",
     "tsc": "tsc --noEmit"
@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19"
+    "@std/testing": "jsr:^1.0.19",
+    "typescript": "catalog:"
   }
 }

@@ -6,13 +6,18 @@
     "moduleResolution": "bundler",
     "declaration": true,
     "declarationMap": true,
-    "outDir": "gen/ts",
-    "rootDir": "gen/ts",
     "strict": true,
     "skipLibCheck": true,
-    "emitDeclarationOnly": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["gen/ts/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["gen/ts/**/*.ts", "scripts/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/*.mock.ts",
+    "**/test-preload.ts"
+  ]
 }

@@ -1,5 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import * as Sentry from "@sentry/deno";
+import * as Sentry from "@sentry/node";
 import { Effect, Fiber, Schedule } from "effect";
 
 import { runIncidentRemindersTick } from "./incident-reminders";

@@ -1,5 +1,5 @@
 /**
- * MCP tool-selection eval. Standalone bun script — `pnpm eval:mcp`.
+ * MCP tool-selection eval. Standalone Node script — `pnpm eval:mcp`.
  *
  * Runs each case in `cases.ts` against Claude Opus 5 (via the AI
  * Gateway), asserting the model picks the expected tool and includes

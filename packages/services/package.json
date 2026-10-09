@@ -159,7 +159,7 @@
     }
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
+    "check": "tsc --noEmit",
     "test": "NODE_ENV=test RESEND_API_KEY=test-key deno test --parallel -A --no-check --sloppy-imports",
     "tsc": "tsc --noEmit"
   },

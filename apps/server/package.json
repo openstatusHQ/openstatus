@@ -5,16 +5,17 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "env": "deno run -A env.ts",
-    "dev": "deno run -A --watch --sloppy-imports --env-file=.env src/serve.ts",
-    "start": "NODE_ENV=production deno run -A --sloppy-imports src/serve.ts",
+    "env": "node env.ts",
+    "dev": "node --import @oxc-node/core/register --watch --env-file=.env src/serve.ts",
+    "start": "NODE_ENV=production node dist/serve.mjs",
     "test": "deno test --parallel -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json",
-    "check": "deno check --sloppy-imports src/serve.ts",
+    "check": "tsc --noEmit",
     "slack:manifest:prod": "cat slack-manifest.json",
-    "slack:manifest:dev": "deno run --env-file=.env --allow-env --allow-write=slack-manifest.dev.json scripts/slack-manifest-dev.ts",
-    "eval:mcp": "deno run -A --sloppy-imports src/routes/mcp/evals/run.ts",
-    "openapi:json": "deno run -A scripts/build-openapi-json.ts && pnpm exec oxfmt static/openapi.json static/openapi-yaml.ts",
-    "openapi:v1": "deno run -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json scripts/build-openapi-v1-json.ts && pnpm exec oxfmt static/openapi-v1.json"
+    "slack:manifest:dev": "node --import @oxc-node/core/register --env-file=.env scripts/slack-manifest-dev.ts",
+    "eval:mcp": "node --import @oxc-node/core/register src/routes/mcp/evals/run.ts",
+    "openapi:json": "node --import @oxc-node/core/register scripts/build-openapi-json.ts && pnpm exec oxfmt static/openapi.json static/openapi-yaml.ts",
+    "openapi:v1": "node --env-file=.env.test --import @oxc-node/core/register scripts/build-openapi-v1-json.ts && pnpm exec oxfmt static/openapi-v1.json",
+    "build": "tsdown"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "catalog:",
@@ -24,6 +25,7 @@
     "@connectrpc/connect-node": "catalog:",
     "@connectrpc/validate": "catalog:",
     "@hono/mcp": "catalog:",
+    "@hono/node-server": "catalog:",
     "@hono/sentry": "catalog:",
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "catalog:",
@@ -84,9 +86,13 @@
   "devDependencies": {
     "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
+    "@oxc-node/core": "catalog:",
     "@std/expect": "jsr:^1.0.19",
     "@std/testing": "jsr:^1.0.19",
+    "@std/yaml": "jsr:1.3.0",
     "@types/validator": "catalog:",
-    "dotenv": "catalog:"
+    "dotenv": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
   }
 }
