@@ -912,6 +912,7 @@ export const statusPageRouter = createTRPCRouter({
           events,
           barType: effectiveBarType,
           cardType: effectiveCardType,
+          privateLocationOnly: c.monitor?.regions.length === 0,
         });
 
         return {

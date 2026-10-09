@@ -1749,6 +1749,151 @@ describe("componentImpacts", () => {
     });
   });
 
+  describe("getUptime - duration mode probe downtime", () => {
+    const day2 = dayStartUTC(2);
+    // day 2: 6 of 24 hourly checks failed; day 1: all ok
+    const twoDayData = [createStatusData(2, 18, 0, 6), createStatusData(1, 24)];
+    const incident = {
+      id: 1,
+      name: "Downtime",
+      from: hoursAfter(day2, 6),
+      to: hoursAfter(day2, 12),
+      type: "incident" as const,
+      status: "error" as const,
+    };
+
+    it("public monitor: incident covering the failed checks counts once", () => {
+      // pre-fix the day-wide probe weight stacked on the incident: 10.5h/48h
+      expect(
+        getUptime({
+          data: twoDayData,
+          events: [incident],
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("87.5%");
+    });
+
+    it("public monitor: failed checks without an incident do not count", () => {
+      expect(
+        getUptime({
+          data: twoDayData,
+          events: [],
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("100%");
+    });
+
+    it("private-only monitor: failed checks count since probes never open incidents", () => {
+      expect(
+        getUptime({
+          data: twoDayData,
+          events: [],
+          barType: "absolute",
+          cardType: "duration",
+          privateLocationOnly: true,
+        }),
+      ).toBe("87.5%");
+    });
+
+    it("private-only monitor: incident covering the failed checks counts once", () => {
+      const fullDay = { ...incident, from: day2, to: hoursAfter(day2, 24) };
+      expect(
+        getUptime({
+          data: twoDayData,
+          events: [fullDay],
+          barType: "absolute",
+          cardType: "duration",
+          privateLocationOnly: true,
+        }),
+      ).toBe("50%");
+    });
+
+    it("private-only monitor: incident on another day adds to the failed checks", () => {
+      const day1 = dayStartUTC(1);
+      const other = { ...incident, from: day1, to: hoursAfter(day1, 12) };
+      // 6h probe (day 2) + 12h incident (day 1) = 18h / 48h
+      expect(
+        getUptime({
+          data: twoDayData,
+          events: [other],
+          barType: "absolute",
+          cardType: "duration",
+          privateLocationOnly: true,
+        }),
+      ).toBe("62.5%");
+    });
+
+    it("private-only monitor: worst weight wins between a report and failed checks", () => {
+      // partial_outage (0.5) across day 2 outweighs the 0.25 probe error ratio
+      const events = [
+        createImpactEvent(1, day2, hoursAfter(day2, 24), [
+          { from: day2, to: hoursAfter(day2, 24), impact: "partial_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+          privateLocationOnly: true,
+        }),
+      ).toBe("75%");
+    });
+
+    it("private-only monitor: degraded checks count as up", () => {
+      expect(
+        getUptime({
+          data: [createStatusData(2, 18, 6, 0), createStatusData(1, 24)],
+          events: [],
+          barType: "absolute",
+          cardType: "duration",
+          privateLocationOnly: true,
+        }),
+      ).toBe("100%");
+    });
+
+    it("private-only monitor: a day without checks adds no downtime", () => {
+      expect(
+        getUptime({
+          data: [createStatusData(2, 0, 0, 0), createStatusData(1, 24)],
+          events: [],
+          barType: "absolute",
+          cardType: "duration",
+          privateLocationOnly: true,
+        }),
+      ).toBe("100%");
+    });
+
+    it("flag is ignored in requests mode", () => {
+      for (const privateLocationOnly of [true, false]) {
+        expect(
+          getUptime({
+            data: twoDayData,
+            events: [],
+            barType: "absolute",
+            cardType: "requests",
+            privateLocationOnly,
+          }),
+        ).toBe("87.5%");
+      }
+    });
+
+    it("flag is ignored in manual mode: reports only", () => {
+      expect(
+        getUptime({
+          data: twoDayData,
+          events: [incident],
+          barType: "manual",
+          cardType: "manual",
+          privateLocationOnly: true,
+        }),
+      ).toBe("100%");
+    });
+  });
+
   describe("getEvents - impact projection", () => {
     const day = dayStartUTC(1);
 

@@ -677,11 +677,14 @@ export function getUptime({
   events,
   barType,
   cardType,
+  privateLocationOnly = false,
 }: {
   data: StatusData[];
   events: Event[];
   barType: "absolute" | "dominant" | "manual";
   cardType: "requests" | "duration" | "dominant" | "manual";
+  /** monitor has no public regions, so probe errors are its only downtime signal */
+  privateLocationOnly?: boolean;
 }): string {
   if (barType === "manual" || cardType === "duration") {
     // Clamp event durations to the data lookback window to avoid
@@ -702,10 +705,14 @@ export function getUptime({
       // Manual mode: only count manually created reports
       duration = reportsOnlyDowntimeMs(events, window, coverage);
     } else {
-      // Duration mode: merge both event-based and probe-based downtime
-      // to capture both manual incidents/reports AND automated probe failures
+      // Duration mode = detected incidents + impact-weighted reports. Private
+      // probes never open incidents, so private-only monitors fall back to probe
+      // errors; for public monitors the day-wide probe weight would stack on top
+      // of the incident covering the same outage and nearly double it (#2481).
       const eventIntervals = downtimeIntervals(events, window, false);
-      const probeIntervals = probeDowntimeIntervals(data, window);
+      const probeIntervals = privateLocationOnly
+        ? probeDowntimeIntervals(data, window)
+        : [];
       const allIntervals = [...eventIntervals, ...probeIntervals];
       duration = mergedDowntimeMs(
         coverage ? clipToCoverage(allIntervals, coverage) : allIntervals,
