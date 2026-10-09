@@ -23,12 +23,10 @@ import {
 } from "@openstatus/ui/components/ui/sheet";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { useExtracted } from "next-intl";
 import NextLink from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { usePathnamePrefix } from "../../hooks/use-pathname-prefix";
 import { useTRPC } from "../../lib/trpc/client";
@@ -94,28 +92,8 @@ export function Header({
   });
   const prefix = usePathnamePrefix();
 
-  const sendPageSubscriptionMutation = useMutation(
-    trpc.emailRouter.sendPageSubscriptionVerification.mutationOptions({}),
-  );
-
   const subscribeMutation = useMutation(
-    trpc.statusPage.subscribe.mutationOptions({
-      onSuccess: (data) => {
-        if (!data?.id || !data?.token) return;
-        sendPageSubscriptionMutation.mutate(
-          { id: data.id, token: data.token },
-          {
-            onError: (error) => {
-              if (isTRPCClientError(error)) {
-                toast.error(error.message);
-              } else {
-                toast.error(t("Failed to subscribe"));
-              }
-            },
-          },
-        );
-      },
-    }),
+    trpc.statusPage.subscribe.mutationOptions({}),
   );
 
   return (
