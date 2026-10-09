@@ -20,7 +20,7 @@ describe("StatusBadge", () => {
         Up
       </StatusBadge>,
     );
-    expect(html).not.toContain("bg-success/10");
+    expect(html).not.toMatch(/bg-(?:success|warning|destructive|info)\/10/);
     expect(html).toMatch(/data-slot="status-dot"[^>]*bg-success/);
   });
 

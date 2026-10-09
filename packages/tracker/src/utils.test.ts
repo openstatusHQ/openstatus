@@ -54,8 +54,8 @@ describe("isSameDay", () => {
   test("compares in UTC regardless of the input offset", () => {
     expect(
       isSameDay(
-        new Date("2024-03-10T23:30:00-05:00"),
-        new Date("2024-03-11T04:30:00Z"),
+        new Date("2024-03-10T20:00:00-05:00"),
+        new Date("2024-03-11T23:30:00Z"),
       ),
     ).toBe(true);
   });

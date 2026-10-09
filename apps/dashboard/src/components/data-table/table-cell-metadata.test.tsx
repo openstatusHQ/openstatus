@@ -39,6 +39,9 @@ describe("TableCellMetadata", () => {
     const html = renderToStaticMarkup(
       <TableCellMetadata value={{ a: "1", b: "2" }} />,
     );
+    for (const part of ["a", "1", "b", "2"]) {
+      expect(html).toContain(`>${part}<`);
+    }
     expect(html).not.toMatch(/>\+\d+</);
   });
 });

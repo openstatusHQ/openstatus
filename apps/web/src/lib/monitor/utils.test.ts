@@ -1,5 +1,6 @@
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
+import { FakeTime } from "@std/testing/time";
 
 import {
   getDateByPeriod,
@@ -26,24 +27,39 @@ describe("periodFormatter", () => {
 });
 
 describe("getDateByPeriod", () => {
-  test("covers the period's hours and ends at the end of today", () => {
+  // mid-June, local time, so no DST transition falls inside any period
+  const now = new Date(2024, 5, 15, 13, 27, 45, 123);
+
+  function at<T>(fn: () => T) {
+    const time = new FakeTime(now);
+    try {
+      return fn();
+    } finally {
+      time.restore();
+    }
+  }
+
+  test("ends every period at the end of today", () => {
     for (const period of periods) {
-      const { from, to } = getDateByPeriod(period);
-      const end = new Date();
-      end.setHours(23, 59, 59, 999);
-      expect(to.getTime()).toBe(end.getTime());
-      const hours = (to.getTime() - from.getTime()) / 3_600_000;
-      expect(hours).toBeGreaterThanOrEqual(getHoursByPeriod(period));
-      expect(hours).toBeLessThanOrEqual(getHoursByPeriod(period) + 49);
+      expect(at(() => getDateByPeriod(period)).to).toEqual(
+        new Date(2024, 5, 15, 23, 59, 59, 999),
+      );
     }
   });
 
-  test("starts 1d on an hour boundary and longer periods at midnight", () => {
-    expect(getDateByPeriod("1d").from.getMinutes()).toBe(0);
-    for (const period of ["7d", "14d"] as const) {
-      const { from } = getDateByPeriod(period);
-      expect([from.getHours(), from.getMinutes()]).toEqual([0, 0]);
-    }
+  test("starts 1d a day before the current hour", () => {
+    expect(at(() => getDateByPeriod("1d")).from).toEqual(
+      new Date(2024, 5, 14, 13, 0, 0, 0),
+    );
+  });
+
+  test("starts longer periods at midnight, n days back", () => {
+    expect(at(() => getDateByPeriod("7d")).from).toEqual(
+      new Date(2024, 5, 8, 0, 0, 0, 0),
+    );
+    expect(at(() => getDateByPeriod("14d")).from).toEqual(
+      new Date(2024, 5, 1, 0, 0, 0, 0),
+    );
   });
 });
 

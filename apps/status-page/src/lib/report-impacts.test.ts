@@ -13,6 +13,7 @@ describe("updatesWithImpactChanges", () => {
       statusReportUpdates: [
         {
           id: 10,
+          message: "Investigating",
           statusReportUpdateToPageComponents: [
             { pageComponentId: 2, impact: "major_outage" as const },
             { pageComponentId: 1, impact: "operational" as const },
@@ -22,6 +23,7 @@ describe("updatesWithImpactChanges", () => {
     });
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe(10);
+    expect(result[0].message).toBe("Investigating");
     expect(result[0].impactChanges).toEqual([
       { name: "Dashboard", impact: "major_outage" },
       { name: "API", impact: "operational" },

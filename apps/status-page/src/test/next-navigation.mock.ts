@@ -39,6 +39,10 @@ export function useSearchParams() {
   return navigationState.searchParams;
 }
 
+export function unauthorized(): never {
+  throw new Error("NEXT_UNAUTHORIZED");
+}
+
 export function notFound(): never {
   throw new Error("NEXT_NOT_FOUND");
 }

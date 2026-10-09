@@ -39,7 +39,9 @@ describe("summarizeToolOutput", () => {
   });
 
   it("prefers the search error over the count", () => {
-    expect(summarizeToolOutput("search_docs", { error: "down" })).toBe("down");
+    expect(
+      summarizeToolOutput("search_docs", { error: "down", results: [{}] }),
+    ).toBe("down");
     expect(summarizeToolOutput("search_docs", { results: [{}] })).toBe(
       "1 result",
     );

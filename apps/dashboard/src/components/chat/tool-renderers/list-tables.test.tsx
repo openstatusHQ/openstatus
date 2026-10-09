@@ -97,7 +97,7 @@ describe("listPageComponentsTable", () => {
 
   it("shows the monitor id, or a placeholder for static components", () => {
     expect(text(table.rows[0].cells.monitor)).toContain("4");
-    expect(text(table.rows[1].cells.monitor)).not.toContain("4");
+    expect(text(table.rows[1].cells.monitor).trim()).toBe("-");
   });
 });
 

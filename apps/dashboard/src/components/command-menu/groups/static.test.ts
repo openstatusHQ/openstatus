@@ -26,8 +26,19 @@ describe("navigationGroup", () => {
   });
 
   it("navigates to each item's href", () => {
-    const overview = navigationGroup().items[0];
-    expect(overview.action).toEqual({ type: "navigate", href: "/overview" });
+    expect(navigationGroup().items.map((item) => item.action)).toEqual(
+      [
+        "/overview",
+        "/incidents",
+        "/monitors",
+        "/status-pages",
+        "/notifications",
+        "/chat",
+        "/agents/slack",
+        "/agents/cli",
+        "/agents/mcp",
+      ].map((href) => ({ type: "navigate", href })),
+    );
   });
 
   it("keeps values unique", () => {
