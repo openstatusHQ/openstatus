@@ -484,6 +484,35 @@ describe("deleteStatusReportUpdate", () => {
       expect(remaining).toHaveLength(0);
     });
   });
+
+  test("the last update cannot be removed", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report, initialUpdate: first } =
+        await createStatusReport({
+          ctx,
+          input: {
+            title: `${TEST_PREFIX}-delete-last-update`,
+            status: "investigating",
+            message: "only one",
+            date: new Date(),
+            pageId: testPageId,
+            pageComponentIds: [],
+          },
+        });
+
+      await expect(
+        deleteStatusReportUpdate({ ctx, input: { id: first.id } }),
+      ).rejects.toBeInstanceOf(ConflictError);
+
+      const remaining = await tx
+        .select()
+        .from(statusReportUpdate)
+        .where(eq(statusReportUpdate.statusReportId, report.id))
+        .all();
+      expect(remaining).toHaveLength(1);
+    });
+  });
 });
 
 describe("updateStatusReportUpdate", () => {
