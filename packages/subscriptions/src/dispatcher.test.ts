@@ -38,7 +38,7 @@ import type { PageUpdate } from "./types";
 // RESEND_API_KEY is set in test-preload.ts (see bunfig.toml) so @openstatus/emails
 // loads successfully and EmailClient prototype methods can be spied on.
 
-let sendStatusReportUpdateMock: Stub<EmailClient>;
+let sendPageUpdateMock: Stub<EmailClient>;
 let rejectNextSend: Error | null = null;
 
 // Built in `beforeAll` — a private page keeps the subscriber set this suite
@@ -133,9 +133,9 @@ afterAll(cleanAll);
 
 beforeEach(() => {
   rejectNextSend = null;
-  sendStatusReportUpdateMock = stub(
+  sendPageUpdateMock = stub(
     EmailClient.prototype,
-    "sendStatusReportUpdate",
+    "sendPageUpdate",
     () => {
       if (rejectNextSend) {
         const error = rejectNextSend;
@@ -148,7 +148,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  sendStatusReportUpdateMock.restore();
+  sendPageUpdateMock.restore();
 });
 
 // ─── dispatchPageUpdate - component filtering ─────────────────────────────────
@@ -159,8 +159,8 @@ describe("dispatchPageUpdate - component filtering", () => {
       makePageUpdate({ pageComponentIds: [COMPONENT_1] }),
     );
 
-    assertSpyCalls(sendStatusReportUpdateMock, 1);
-    const { subscribers } = sendStatusReportUpdateMock.calls[0].args[0];
+    assertSpyCalls(sendPageUpdateMock, 1);
+    const { subscribers } = sendPageUpdateMock.calls[0].args[0];
     const emails = subscribers.map((s: { email: string }) => s.email);
 
     expect(emails).toContain(EMAILS.entirePage);
@@ -173,7 +173,7 @@ describe("dispatchPageUpdate - component filtering", () => {
       makePageUpdate({ pageComponentIds: [COMPONENT_2] }),
     );
 
-    const { subscribers } = sendStatusReportUpdateMock.calls[0].args[0];
+    const { subscribers } = sendPageUpdateMock.calls[0].args[0];
     const emails = subscribers.map((s: { email: string }) => s.email);
 
     expect(emails).toContain(EMAILS.entirePage);
@@ -186,7 +186,7 @@ describe("dispatchPageUpdate - component filtering", () => {
       makePageUpdate({ pageComponentIds: [COMPONENT_1, COMPONENT_2] }),
     );
 
-    const { subscribers } = sendStatusReportUpdateMock.calls[0].args[0];
+    const { subscribers } = sendPageUpdateMock.calls[0].args[0];
     const emails = subscribers.map((s: { email: string }) => s.email);
 
     expect(emails).toContain(EMAILS.entirePage);
@@ -197,8 +197,8 @@ describe("dispatchPageUpdate - component filtering", () => {
   test("notifies only the entire-page subscriber when update has no affected components", async () => {
     await dispatchPageUpdate(makePageUpdate({ pageComponentIds: [] }));
 
-    assertSpyCalls(sendStatusReportUpdateMock, 1);
-    const { subscribers } = sendStatusReportUpdateMock.calls[0].args[0];
+    assertSpyCalls(sendPageUpdateMock, 1);
+    const { subscribers } = sendPageUpdateMock.calls[0].args[0];
     const emails = subscribers.map((s: { email: string }) => s.email);
 
     // Assert only against this suite's own subscribers — package test suites
@@ -216,7 +216,7 @@ describe("dispatchPageUpdate - component filtering", () => {
       makePageUpdate({ pageComponentIds: [COMPONENT_1] }),
     );
 
-    const { subscribers } = sendStatusReportUpdateMock.calls[0].args[0];
+    const { subscribers } = sendPageUpdateMock.calls[0].args[0];
     const emails = subscribers.map((s: { email: string }) => s.email);
 
     expect(emails).not.toContain(EMAILS.component2);
@@ -231,10 +231,10 @@ describe("dispatchPageUpdate - edge cases", () => {
       makePageUpdate({ pageId: 99999, pageComponentIds: [COMPONENT_1] }),
     );
 
-    assertSpyCalls(sendStatusReportUpdateMock, 0);
+    assertSpyCalls(sendPageUpdateMock, 0);
   });
 
-  test("does not propagate channel failure — resolves even when sendStatusReportUpdate throws", async () => {
+  test("does not propagate channel failure — resolves even when sendPageUpdate throws", async () => {
     rejectNextSend = new Error("SMTP failure");
 
     await expect(
@@ -281,7 +281,7 @@ describe("dispatchMaintenanceUpdate", () => {
 
       await dispatchMaintenanceUpdate(update.id);
 
-      const args = sendStatusReportUpdateMock.calls[0].args[0];
+      const args = sendPageUpdateMock.calls[0].args[0];
       expect(args.message).toBe("specific update message");
       expect(args.date).toBe(occurredAt.toISOString());
       expect(args.startsAt).toBe(startsAt.toISOString());
@@ -347,8 +347,8 @@ describe("dispatchStatusReportUpdate - impacts", () => {
 
     try {
       await dispatchStatusReportUpdate(earlier.id);
-      assertSpyCalls(sendStatusReportUpdateMock, 1);
-      const args = sendStatusReportUpdateMock.calls[0].args[0];
+      assertSpyCalls(sendPageUpdateMock, 1);
+      const args = sendPageUpdateMock.calls[0].args[0];
       expect(
         args.componentImpacts.map((c: { impact: string }) => c.impact),
       ).toEqual(["major_outage"]);

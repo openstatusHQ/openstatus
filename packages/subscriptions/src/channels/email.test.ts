@@ -15,7 +15,7 @@ import {
 // loads successfully and EmailClient prototype methods can be spied on.
 
 let sendPageSubscriptionMock: Stub<EmailClient>;
-let sendStatusReportUpdateMock: Stub<EmailClient>;
+let sendPageUpdateMock: Stub<EmailClient>;
 
 function makeSub(overrides: Partial<Subscription> = {}): Subscription {
   return {
@@ -51,16 +51,16 @@ beforeEach(() => {
     "sendPageSubscription",
     () => Promise.resolve(undefined),
   );
-  sendStatusReportUpdateMock = stub(
+  sendPageUpdateMock = stub(
     EmailClient.prototype,
-    "sendStatusReportUpdate",
+    "sendPageUpdate",
     () => Promise.resolve(undefined),
   );
 });
 
 afterEach(() => {
   sendPageSubscriptionMock.restore();
-  sendStatusReportUpdateMock.restore();
+  sendPageUpdateMock.restore();
 });
 
 // ─── validateEmailConfig ──────────────────────────────────────────────────────
@@ -115,24 +115,24 @@ describe("sendEmailVerification", () => {
 describe("sendEmailNotifications", () => {
   test("does nothing for an empty subscriptions array", async () => {
     await sendEmailNotifications([], makeUpdate());
-    assertSpyCalls(sendStatusReportUpdateMock, 0);
+    assertSpyCalls(sendPageUpdateMock, 0);
   });
 
   test("filters out subscriptions without an email address", async () => {
     const sub = makeSub({ email: undefined });
     await sendEmailNotifications([sub], makeUpdate());
-    assertSpyCalls(sendStatusReportUpdateMock, 0);
+    assertSpyCalls(sendPageUpdateMock, 0);
   });
 
-  test("calls sendStatusReportUpdate once with all valid subscribers", async () => {
+  test("calls sendPageUpdate once with all valid subscribers", async () => {
     const sub1 = makeSub({ email: "a@example.com", token: "token-a" });
     const sub2 = makeSub({ email: "b@example.com", token: "token-b" });
     const update = makeUpdate({ title: "Outage", status: "resolved" });
 
     await sendEmailNotifications([sub1, sub2], update);
 
-    assertSpyCalls(sendStatusReportUpdateMock, 1);
-    const [args] = sendStatusReportUpdateMock.calls[0].args;
+    assertSpyCalls(sendPageUpdateMock, 1);
+    const [args] = sendPageUpdateMock.calls[0].args;
     expect(args.subscribers).toHaveLength(2);
     expect(args.subscribers[0].email).toBe("a@example.com");
     expect(args.subscribers[1].email).toBe("b@example.com");
@@ -140,13 +140,13 @@ describe("sendEmailNotifications", () => {
     expect(args.status).toBe("resolved");
   });
 
-  test("passes page components to sendStatusReportUpdate", async () => {
+  test("passes page components to sendPageUpdate", async () => {
     const sub = makeSub({ email: "user@example.com" });
     const update = makeUpdate({ pageComponents: ["API", "Database"] });
 
     await sendEmailNotifications([sub], update);
 
-    const [args] = sendStatusReportUpdateMock.calls[0].args;
+    const [args] = sendPageUpdateMock.calls[0].args;
     expect(args.pageComponents).toEqual(["API", "Database"]);
   });
 
@@ -154,7 +154,7 @@ describe("sendEmailNotifications", () => {
     const sub = makeSub();
     await sendEmailNotifications([sub], makeUpdate({ updateId: 77 }));
 
-    const [args] = sendStatusReportUpdateMock.calls[0].args;
+    const [args] = sendPageUpdateMock.calls[0].args;
     expect(args.idempotencyKey).toMatch(/^status-report-update:77:[0-9a-z]+$/);
   });
 
@@ -165,7 +165,7 @@ describe("sendEmailNotifications", () => {
       makeUpdate({ id: 17, updateId: undefined, status: "maintenance" }),
     );
 
-    const [args] = sendStatusReportUpdateMock.calls[0].args;
+    const [args] = sendPageUpdateMock.calls[0].args;
     expect(args.idempotencyKey).toMatch(
       /^page-update:17:maintenance:[0-9a-z]+$/,
     );
@@ -176,7 +176,7 @@ describe("sendEmailNotifications", () => {
     await sendEmailNotifications([makeSub()], update);
     await sendEmailNotifications([makeSub()], update);
 
-    const keys = sendStatusReportUpdateMock.calls.map(
+    const keys = sendPageUpdateMock.calls.map(
       (c) => c.args[0].idempotencyKey,
     );
     expect(keys[0]).toBe(keys[1]);
@@ -190,7 +190,7 @@ describe("sendEmailNotifications", () => {
       update,
     );
 
-    const keys = sendStatusReportUpdateMock.calls.map(
+    const keys = sendPageUpdateMock.calls.map(
       (c) => c.args[0].idempotencyKey,
     );
     expect(keys[0]).not.toBe(keys[1]);
@@ -208,7 +208,7 @@ describe("sendEmailNotifications", () => {
       }),
     );
 
-    const [args] = sendStatusReportUpdateMock.calls[0].args;
+    const [args] = sendPageUpdateMock.calls[0].args;
     expect(args.date).toBe("2026-07-16T11:00:00Z");
     expect(args.startsAt).toBe("2026-07-20T10:00:00Z");
     expect(args.endsAt).toBe("2026-07-20T11:00:00Z");
@@ -230,7 +230,7 @@ describe("sendEmailNotifications", () => {
       makeUpdate({ ...base, endsAt: "2026-07-20T12:00:00Z" }),
     );
 
-    const keys = sendStatusReportUpdateMock.calls.map(
+    const keys = sendPageUpdateMock.calls.map(
       (c) => c.args[0].idempotencyKey,
     );
     expect(keys[0]).not.toBe(keys[1]);
@@ -247,7 +247,7 @@ describe("sendEmailNotifications", () => {
       makeUpdate({ updateId: 77, date, message: "Root cause identified." }),
     );
 
-    const keys = sendStatusReportUpdateMock.calls.map(
+    const keys = sendPageUpdateMock.calls.map(
       (c) => c.args[0].idempotencyKey,
     );
     expect(keys[0]).not.toBe(keys[1]);

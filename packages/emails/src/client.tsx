@@ -21,14 +21,14 @@ import type { PrivateLocationAlertProps } from "../emails/private-location-alert
 import SlackFeedbackEmail from "../emails/slack-feedback";
 import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
 import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link";
-import StatusReportEmail from "../emails/status-report";
-import type { StatusReportProps } from "../emails/status-report";
+import PageUpdateEmail from "../emails/page-update";
+import type { PageUpdateProps } from "../emails/page-update";
 import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
 import { env } from "./env";
 
-export function statusReportSubject(req: {
-  status: StatusReportProps["status"];
+export function pageUpdateSubject(req: {
+  status: PageUpdateProps["status"];
   reportTitle: string;
 }): string {
   if (req.status === "resolved") return `RESOLVED: ${req.reportTitle}`;
@@ -187,9 +187,9 @@ export class EmailClient {
     console.log(`Sent slack feedback emails to ${req.to}`);
   }
 
-  public async sendStatusReportUpdate(
+  public async sendPageUpdate(
     req: Omit<
-      StatusReportProps,
+      PageUpdateProps,
       "unsubscribeUrl" | "manageUrl" | "statusPageUrl"
     > & {
       subscribers: Array<{ email: string; token: string }>;
@@ -207,7 +207,7 @@ export class EmailClient {
 
     if (env.NODE_ENV === "development") {
       console.log(
-        `Sending status report update emails to ${req.subscribers
+        `Sending page update emails to ${req.subscribers
           .map((s) => s.email)
           .join(", ")}`,
       );
@@ -230,10 +230,10 @@ export class EmailClient {
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
                 from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
-                subject: statusReportSubject(req),
+                subject: pageUpdateSubject(req),
                 to: subscriber.email,
                 react: (
-                  <StatusReportEmail
+                  <PageUpdateEmail
                     {...req}
                     statusPageUrl={statusPageBaseUrl}
                     unsubscribeUrl={unsubscribeUrl}
@@ -246,7 +246,7 @@ export class EmailClient {
           ),
         catch: (_unknown) =>
           new Error(
-            `Error sending status report update batch to ${recipients.map(
+            `Error sending page update batch to ${recipients.map(
               (r) => r.email,
             )}`,
           ),
@@ -264,7 +264,7 @@ export class EmailClient {
     }
 
     console.log(
-      `Sent status report update email to ${req.subscribers.length} subscribers`,
+      `Sent page update email to ${req.subscribers.length} subscribers`,
     );
   }
 

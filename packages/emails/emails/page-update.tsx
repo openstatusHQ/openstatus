@@ -16,7 +16,7 @@ import { Layout, statusPageBrand } from "./_components/layout";
 import { Markdown } from "./_components/markdown";
 import type { Tone } from "./_components/styles";
 
-export const StatusReportSchema = z.object({
+export const PageUpdateSchema = z.object({
   pageTitle: z.string(),
   // statusReportStatus from db
   status: z.enum([
@@ -55,7 +55,7 @@ export const StatusReportSchema = z.object({
   endsAt: z.string().optional(),
 });
 
-export type StatusReportProps = z.infer<typeof StatusReportSchema>;
+export type PageUpdateProps = z.infer<typeof PageUpdateSchema>;
 
 const statusTone = {
   investigating: "danger",
@@ -63,10 +63,10 @@ const statusTone = {
   monitoring: "info",
   resolved: "success",
   maintenance: "info",
-} satisfies Record<StatusReportProps["status"], Tone>;
+} satisfies Record<PageUpdateProps["status"], Tone>;
 
 type Impact = NonNullable<
-  StatusReportProps["componentImpacts"]
+  PageUpdateProps["componentImpacts"]
 >[number]["impact"];
 
 const impactRow = {
@@ -82,14 +82,14 @@ const componentLabel = {
   monitoring: "Monitoring",
   resolved: "Resolved",
   maintenance: "Maintenance",
-} satisfies Record<StatusReportProps["status"], string>;
+} satisfies Record<PageUpdateProps["status"], string>;
 
 function isDate(value: string) {
   return !Number.isNaN(new Date(value).getTime());
 }
 
-export function statusReportPreheader(
-  props: Pick<StatusReportProps, "status" | "pageTitle" | "pageComponents">,
+export function pageUpdatePreheader(
+  props: Pick<PageUpdateProps, "status" | "pageTitle" | "pageComponents">,
 ): string {
   const components =
     props.pageComponents.length > 0
@@ -100,7 +100,7 @@ export function statusReportPreheader(
   return `${componentLabel[props.status]}: ${components}.`;
 }
 
-function StatusReportEmail({
+function PageUpdateEmail({
   status,
   date,
   message,
@@ -115,7 +115,7 @@ function StatusReportEmail({
   reportStartedAt,
   startsAt,
   endsAt,
-}: StatusReportProps) {
+}: PageUpdateProps) {
   const tone = statusTone[status];
   const dated = isDate(date);
   // a maintenance shows its window where a report shows the update time;
@@ -138,7 +138,7 @@ function StatusReportEmail({
 
   return (
     <Layout
-      preview={statusReportPreheader({ status, pageTitle, pageComponents })}
+      preview={pageUpdatePreheader({ status, pageTitle, pageComponents })}
       brand={statusPageBrand(pageTitle, statusPageUrl ?? manageUrl)}
       pill={{ tone, label: status }}
       footer={
@@ -178,7 +178,7 @@ function StatusReportEmail({
   );
 }
 
-StatusReportEmail.PreviewProps = {
+PageUpdateEmail.PreviewProps = {
   pageTitle: "openstatus",
   reportTitle: "API unavailable — service partially restored",
   status: "monitoring",
@@ -207,6 +207,6 @@ Nothing. Pin the previous action version if your pipeline is blocked — next up
     "https://status.openstatus.dev/unsubscribe/550e8400-e29b-41d4-a716-446655440000",
   manageUrl:
     "https://status.openstatus.dev/manage/550e8400-e29b-41d4-a716-446655440000",
-} satisfies StatusReportProps;
+} satisfies PageUpdateProps;
 
-export default StatusReportEmail;
+export default PageUpdateEmail;

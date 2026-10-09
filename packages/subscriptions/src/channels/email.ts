@@ -104,7 +104,7 @@ export async function sendEmailNotifications(
   );
 
   const client = getEmailClient();
-  await client.sendStatusReportUpdate({
+  await client.sendPageUpdate({
     subscribers: validSubscriptions.map((sub) => ({
       email: sub.email,
       token: sub.token,
