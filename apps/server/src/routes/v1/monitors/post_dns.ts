@@ -1,15 +1,14 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
+import { DnsRecordAssertion, serialize } from "@openstatus/assertions";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
-// import { serialize } from "@openstatus/assertions";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 
 import type { monitorsApi } from "./index";
 import { DNSMonitorSchema, MonitorSchema } from "./schema";
-// import { getAssertionNew } from "./utils";
 
 const postRoute = createRoute({
   method: "post",
@@ -94,7 +93,17 @@ export function registerPostMonitorDNS(api: typeof monitorsApi) {
         }))
       : undefined;
 
-    // const assert = assertions ? getAssertionNew(assertions) : [];
+    const assert =
+      assertions?.map(
+        ({ recordType, compare, target }) =>
+          new DnsRecordAssertion({
+            version: "v1",
+            type: "dnsRecord",
+            key: recordType,
+            compare,
+            target,
+          }),
+      ) ?? [];
 
     const _newMonitor = await db
       .insert(monitor)
@@ -105,7 +114,7 @@ export function registerPostMonitorDNS(api: typeof monitorsApi) {
         url: input.request.uri,
         workspaceId: workspaceId,
         regions: regions ? regions.join(",") : undefined,
-        // assertions: assert.length > 0 ? serialize(assert) : undefined,
+        assertions: assert.length > 0 ? serialize(assert) : undefined,
         timeout: input.timeout || 45000,
         otelEndpoint: openTelemetry?.endpoint,
         otelHeaders: otelHeadersEntries
