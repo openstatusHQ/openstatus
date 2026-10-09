@@ -1,18 +1,19 @@
-import type { ErrorCode } from "@openstatus/error";
+import { type ErrorCode, errorDocsUrl } from "@openstatus/error";
 import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { ErrorSchema } from "@/libs/errors";
-
-/** Connect clients parse a JSON error body on non-200; without it the code comes from the status alone. */
-const CONNECT_CODES: Partial<Record<ErrorCode, string>> = {
-  TOO_MANY_REQUESTS: "resource_exhausted",
-  SERVICE_UNAVAILABLE: "unavailable",
-};
+import {
+  ERROR_CODE_TO_CONNECT,
+  connectErrorToJson,
+  rpcError,
+  withErrorInfo,
+} from "@/libs/errors/rpc";
 
 /**
  * Same envelope as `handleError`, returned directly instead of thrown so the
- * Sentry middleware does not capture every shed request.
+ * Sentry middleware does not capture every shed request. `/rpc` gets the
+ * Connect error shape, which clients parse on any non-200 JSON body.
  */
 export function shedResponse(
   c: Context,
@@ -24,12 +25,16 @@ export function shedResponse(
   },
 ) {
   c.header("Retry-After", String(Math.max(1, opts.retryAfterSeconds)));
+  const requestId = (c.get("requestId" as never) as string | undefined) ?? "";
   if (c.req.path.startsWith("/rpc/")) {
+    const err = rpcError({
+      code: ERROR_CODE_TO_CONNECT[opts.code],
+      reason: opts.code,
+      message: opts.message,
+      retryAfterSeconds: opts.retryAfterSeconds,
+    });
     return c.json(
-      {
-        code: CONNECT_CODES[opts.code] ?? "unavailable",
-        message: opts.message,
-      },
+      connectErrorToJson(withErrorInfo(err, requestId)),
       opts.status,
     );
   }
@@ -37,8 +42,8 @@ export function shedResponse(
     {
       code: opts.code,
       message: opts.message,
-      docs: `https://www.openstatus.dev/docs/api-references/errors/code/${opts.code}`,
-      requestId: (c.get("requestId" as never) as string | undefined) ?? "",
+      docs: errorDocsUrl(opts.code),
+      requestId,
     },
     opts.status,
   );

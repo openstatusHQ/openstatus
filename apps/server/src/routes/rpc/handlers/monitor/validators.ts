@@ -1,9 +1,10 @@
-import { Code, ConnectError } from "@connectrpc/connect";
+import { Code } from "@connectrpc/connect";
 import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 import { monitorMethods } from "@openstatus/db/src/schema/monitors/constants";
 import type { Periodicity, Region } from "@openstatus/proto/monitor/v1";
 import type { UpdateMonitorConfigInput } from "@openstatus/services/monitor";
 
+import { ErrorReason, rpcError } from "../../errors";
 import {
   MONITOR_DEFAULTS,
   getDeprecatedRegions,
@@ -58,10 +59,12 @@ export function validateCommonMonitorFields(mon: { regions?: Region[] }): void {
     }
     const invalidRegions = validateRegions(regionStrings);
     if (invalidRegions.length > 0) {
-      throw new ConnectError(
-        `Invalid regions: ${invalidRegions.join(", ")}`,
-        Code.InvalidArgument,
-      );
+      throw rpcError({
+        code: Code.InvalidArgument,
+        reason: ErrorReason.INVALID_REGION,
+        message: `Invalid regions: ${invalidRegions.join(", ")}`,
+        metadata: { regions: invalidRegions.join(",") },
+      });
     }
   }
 }
@@ -89,7 +92,11 @@ const MONITOR_BOUNDS = {
 } as const;
 
 function invalidArgument(message: string): never {
-  throw new ConnectError(message, Code.InvalidArgument);
+  throw rpcError({
+    code: Code.InvalidArgument,
+    reason: ErrorReason.VALIDATION_FAILED,
+    message,
+  });
 }
 
 /**

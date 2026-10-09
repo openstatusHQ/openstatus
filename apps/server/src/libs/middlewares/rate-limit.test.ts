@@ -1,3 +1,4 @@
+import { errorDocsUrl } from "@openstatus/error";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 import { FakeTime } from "@std/testing/time";
@@ -127,7 +128,7 @@ describe("rate limit", () => {
     expect(limited.status).toBe(429);
     expect(limited.headers.get("retry-after")).not.toBeNull();
     // Connect clients read the code from the body, so /rpc gets the Connect shape
-    expect(await limited.json()).toEqual({
+    expect(await limited.json()).toMatchObject({
       code: "resource_exhausted",
       message: "Rate limit exceeded, retry later",
     });
@@ -221,7 +222,7 @@ describe("rate limit", () => {
     expect(retryAfter).toBeLessThanOrEqual(10);
     expect(await limited.json()).toMatchObject({
       message: "Rate limit exceeded, retry later",
-      docs: "https://www.openstatus.dev/docs/api-references/errors/code/TOO_MANY_REQUESTS",
+      docs: errorDocsUrl("TOO_MANY_REQUESTS"),
     });
   });
 

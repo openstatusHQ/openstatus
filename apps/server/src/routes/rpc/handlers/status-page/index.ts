@@ -36,7 +36,6 @@ import {
 } from "@openstatus/proto/status_page/v1";
 import {
   ConflictError,
-  LimitExceededError,
   NotFoundError,
   ServiceError,
   withTransaction,
@@ -81,6 +80,11 @@ import {
 } from "@openstatus/theme-store";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
+import {
+  ErrorReason,
+  planFeatureNotAvailableError,
+  rpcError,
+} from "../../errors";
 import { getRpcContext } from "../../interceptors";
 import { dbImpactToProto } from "../status-report/converters";
 import {
@@ -216,10 +220,17 @@ function validateAuthEmailDomains(domains: string[]): string[] {
   }
   for (const domain of trimmed) {
     if (!domain.includes(".")) {
-      throw new ConnectError(
-        `Invalid email domain: "${domain}"`,
-        Code.InvalidArgument,
-      );
+      throw rpcError({
+        code: Code.InvalidArgument,
+        reason: ErrorReason.VALIDATION_FAILED,
+        message: `Invalid email domain: "${domain}"`,
+        fieldViolations: [
+          {
+            field: "authEmailDomains",
+            description: `Invalid email domain: "${domain}"`,
+          },
+        ],
+      });
     }
   }
   return trimmed;
@@ -235,10 +246,17 @@ function validateAllowedIpRanges(ranges: string): string[] {
     .map((s) => s.trim())
     .filter(Boolean);
   if (entries.length === 0) {
-    throw new ConnectError(
-      "At least one IP range is required for IP restriction",
-      Code.InvalidArgument,
-    );
+    throw rpcError({
+      code: Code.InvalidArgument,
+      reason: ErrorReason.VALIDATION_FAILED,
+      message: "At least one IP range is required for IP restriction",
+      fieldViolations: [
+        {
+          field: "ipRestriction",
+          description: "At least one IP range is required for IP restriction",
+        },
+      ],
+    });
   }
   const cidrRegex =
     /^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)\/(3[0-2]|[12]?\d)$/;
@@ -246,10 +264,17 @@ function validateAllowedIpRanges(ranges: string): string[] {
   for (const entry of entries) {
     const value = entry.includes("/") ? entry : `${entry}/32`;
     if (!cidrRegex.test(value)) {
-      throw new ConnectError(
-        `Invalid IPv4 CIDR range: "${entry}"`,
-        Code.InvalidArgument,
-      );
+      throw rpcError({
+        code: Code.InvalidArgument,
+        reason: ErrorReason.VALIDATION_FAILED,
+        message: `Invalid IPv4 CIDR range: "${entry}"`,
+        fieldViolations: [
+          {
+            field: "ipRestriction",
+            description: `Invalid IPv4 CIDR range: "${entry}"`,
+          },
+        ],
+      });
     }
     normalized.push(value);
   }
@@ -269,7 +294,15 @@ function validateProtoCustomTheme(customTheme: CustomTheme): {
   };
   const result = validateCustomTheme(input);
   if (!result.valid) {
-    throw new ConnectError(result.errors.join(" "), Code.InvalidArgument);
+    throw rpcError({
+      code: Code.InvalidArgument,
+      reason: ErrorReason.VALIDATION_FAILED,
+      message: result.errors.join(" "),
+      fieldViolations: result.errors.map((description) => ({
+        field: "customTheme",
+        description,
+      })),
+    });
   }
   return input;
 }
@@ -521,19 +554,19 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         throw slugAlreadyExistsError(req.slug);
       }
 
-      // i18n — keep at handler to preserve PermissionDenied over the
-      // service's LimitExceededError → ResourceExhausted mapping.
+      // i18n — keep at handler so the reason is PLAN_FEATURE_NOT_AVAILABLE
+      // rather than the service's generic PLAN_LIMIT_REACHED.
       if (!limits.i18n) {
         if (req.defaultLocale !== undefined && req.defaultLocale !== 0) {
-          throw new ConnectError(
+          throw planFeatureNotAvailableError(
             "Upgrade to configure locales.",
-            Code.PermissionDenied,
+            "i18n",
           );
         }
         if (req.locales.length > 0) {
-          throw new ConnectError(
+          throw planFeatureNotAvailableError(
             "Upgrade to configure locales.",
-            Code.PermissionDenied,
+            "i18n",
           );
         }
       }
@@ -548,10 +581,18 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           ? [...new Set(validLocales.map(protoLocaleToDb))]
           : null;
       if (locales && !locales.includes(defaultLocale)) {
-        throw new ConnectError(
-          "Default locale must be included in the locales list",
-          Code.InvalidArgument,
-        );
+        throw rpcError({
+          code: Code.InvalidArgument,
+          reason: ErrorReason.VALIDATION_FAILED,
+          message: "Default locale must be included in the locales list",
+          fieldViolations: [
+            {
+              field: "defaultLocale",
+              description:
+                "Default locale must be included in the locales list",
+            },
+          ],
+        });
       }
 
       // Proto-specific format validations (regex / URL shape) — these
@@ -636,23 +677,6 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           allowIndex,
           customTheme,
         },
-      }).catch((err) => {
-        // Same handler-layer remap as the `i18n` pre-check above —
-        // preserve `PermissionDenied` (403) for "plan quota reached"
-        // on `status-pages`. The service throws `LimitExceededError`
-        // which the Connect adapter maps to `ResourceExhausted`
-        // (429), but the gRPC contract here is 403 for "upgrade
-        // required".
-        if (
-          err instanceof LimitExceededError &&
-          err.message.startsWith("status-pages")
-        ) {
-          throw new ConnectError(
-            "Upgrade for more status pages.",
-            Code.PermissionDenied,
-          );
-        }
-        throw err;
       });
 
       return { statusPage: dbPageToProto(serviceToConverterPage(created)) };
@@ -724,15 +748,15 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       // i18n — keep at handler to preserve PermissionDenied.
       if (!limits.i18n) {
         if (req.defaultLocale !== undefined && req.defaultLocale !== 0) {
-          throw new ConnectError(
+          throw planFeatureNotAvailableError(
             "Upgrade to configure locales.",
-            Code.PermissionDenied,
+            "i18n",
           );
         }
         if (req.locales.length > 0) {
-          throw new ConnectError(
+          throw planFeatureNotAvailableError(
             "Upgrade to configure locales.",
-            Code.PermissionDenied,
+            "i18n",
           );
         }
       }
@@ -828,10 +852,18 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           ? [...new Set(validLocales.map(protoLocaleToDb))]
           : existing.locales;
       if (nextLocales && !nextLocales.includes(nextDefaultLocale)) {
-        throw new ConnectError(
-          "Default locale must be included in the locales list",
-          Code.InvalidArgument,
-        );
+        throw rpcError({
+          code: Code.InvalidArgument,
+          reason: ErrorReason.VALIDATION_FAILED,
+          message: "Default locale must be included in the locales list",
+          fieldViolations: [
+            {
+              field: "defaultLocale",
+              description:
+                "Default locale must be included in the locales list",
+            },
+          ],
+        });
       }
       const localesChanged =
         limits.i18n === true &&
@@ -1361,10 +1393,19 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       req.channel.case !== "emailChannel" &&
       req.channel.case !== "webhookChannel"
     ) {
-      throw new ConnectError(
-        "channel oneof must be set to email_channel or webhook_channel",
-        Code.InvalidArgument,
-      );
+      throw rpcError({
+        code: Code.InvalidArgument,
+        reason: ErrorReason.VALIDATION_FAILED,
+        message:
+          "channel oneof must be set to email_channel or webhook_channel",
+        fieldViolations: [
+          {
+            field: "channel",
+            description:
+              "channel oneof must be set to email_channel or webhook_channel",
+          },
+        ],
+      });
     }
 
     let result: Awaited<ReturnType<typeof createPageSubscriber>>;

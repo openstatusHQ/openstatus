@@ -1,3 +1,7 @@
+import { Code, ConnectError } from "@connectrpc/connect";
+import { errorFromJson } from "@connectrpc/connect/protocol-connect";
+import { errorDocsUrl } from "@openstatus/error";
+import { ErrorInfoSchema, RetryInfoSchema } from "@openstatus/proto/google/rpc";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
@@ -101,14 +105,14 @@ describe("concurrency guard", () => {
     expect(await shed.json()).toEqual({
       code: "SERVICE_UNAVAILABLE",
       message: "Server is busy, retry shortly",
-      docs: "https://www.openstatus.dev/docs/api-references/errors/code/SERVICE_UNAVAILABLE",
+      docs: errorDocsUrl("SERVICE_UNAVAILABLE"),
       requestId: expect.any(String),
     });
     release();
     await held;
   });
 
-  test("sheds /rpc with a Connect error body", async () => {
+  test("sheds /rpc with a Connect error body carrying ErrorInfo and RetryInfo", async () => {
     const { app, release } = build(1);
     const held = app.request("/slow");
     await tick();
@@ -120,10 +124,26 @@ describe("concurrency guard", () => {
     );
     expect(shed.status).toBe(503);
     expect(shed.headers.get("retry-after")).toBe("5");
-    expect(await shed.json()).toEqual({
+    const body = await shed.json();
+    expect(body).toMatchObject({
       code: "unavailable",
       message: "Server is busy, retry shortly",
     });
+    const err = errorFromJson(
+      body,
+      undefined,
+      new ConnectError("fallback", Code.Unknown),
+    );
+    expect(err.code).toBe(Code.Unavailable);
+    expect(err.findDetails(ErrorInfoSchema)[0]).toMatchObject({
+      reason: "SERVICE_UNAVAILABLE",
+      domain: "openstatus.dev",
+      metadata: {
+        docs: errorDocsUrl("SERVICE_UNAVAILABLE"),
+        requestId: shed.headers.get("x-request-id"),
+      },
+    });
+    expect(err.findDetails(RetryInfoSchema)[0].retryDelay?.seconds).toBe(5n);
     release();
     await held;
   });

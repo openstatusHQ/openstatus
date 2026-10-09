@@ -1,0 +1,201 @@
+---
+category: Reference
+title: API Errors
+description: "Every error the openstatus API returns: HTTP and Connect codes, the ErrorInfo detail, stable reasons, and how to handle each."
+---
+
+Every error from `api.openstatus.dev` is machine-readable and uses one contract on both surfaces. The v1 REST API answers with a JSON envelope. The RPC API under `/rpc`, which the SDKs, the CLI and the Terraform provider speak, answers with a [Connect error](https://connectrpc.com/docs/protocol#error-end-stream) carrying a `google.rpc.ErrorInfo` detail. Both name the same error class, both include a request id, and both link back to the matching section of this page.
+
+## v1 envelope
+
+```http
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{
+  "code": "NOT_FOUND",
+  "message": "Monitor not found",
+  "docs": "https://www.openstatus.dev/docs/reference/api-errors#not-found",
+  "requestId": "1c4b8f1e-3f4b-4f79-9f9d-2a6d7f0b6c1a"
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `code` | One of the codes in the [table below](#codes). Switch on this, never on `message`. |
+| `message` | Human-readable, may change between releases. |
+| `docs` | Link to the section of this page for `code`. |
+| `requestId` | Quote it when you contact support; it is the key into our logs. |
+
+## Connect errors
+
+On `/rpc` the body is a Connect error. The HTTP status follows the Connect code, so a `not_found` is still a `404`, and the `x-request-id` response header carries the same id as the detail.
+
+```json
+{
+  "code": "not_found",
+  "message": "Monitor not found",
+  "details": [
+    {
+      "type": "google.rpc.ErrorInfo",
+      "value": "<base64 protobuf>",
+      "debug": {
+        "reason": "MONITOR_NOT_FOUND",
+        "domain": "openstatus.dev",
+        "metadata": {
+          "monitorId": "42",
+          "requestId": "1c4b8f1e-3f4b-4f79-9f9d-2a6d7f0b6c1a",
+          "docs": "https://www.openstatus.dev/docs/reference/api-errors#not-found"
+        }
+      }
+    }
+  ]
+}
+```
+
+Every RPC error carries exactly one `google.rpc.ErrorInfo`:
+
+| Field | Meaning |
+|---|---|
+| `reason` | A stable identifier from the [reasons table](#reasons). More specific than the code; switch on it when you need to. |
+| `domain` | Always `openstatus.dev`. |
+| `metadata.requestId` | Same value as the `x-request-id` response header. |
+| `metadata.docs` | Link to the section of this page for the code. |
+| other `metadata` keys | Ids of the resources involved (`monitorId`, `pageId`, ...), plan limits (`limit`, `max`, `current`), or the field that failed. |
+
+Depending on the error, more standard details ride along:
+
+- **`google.rpc.RetryInfo`** on `resource_exhausted` and `unavailable`: the delay to wait before retrying, matching the `Retry-After` header.
+- **`google.rpc.BadRequest`** on `invalid_argument` raised by the server: one `fieldViolations` entry per bad field.
+- **`buf.validate.Violations`** on `invalid_argument` raised by the request schema: the [protovalidate](https://buf.build/docs/protovalidate) constraint that failed.
+
+Connect clients decode the details for you:
+
+```typescript
+import { ConnectError } from "@connectrpc/connect";
+import { ErrorInfoSchema } from "@buf/googleapis_googleapis.bufbuild_es/google/rpc/error_details_pb";
+
+try {
+  await client.getMonitor({ id: "42" });
+} catch (error) {
+  if (error instanceof ConnectError) {
+    const [info] = error.findDetails(ErrorInfoSchema);
+    console.error(error.code, info?.reason, info?.metadata.requestId);
+  }
+}
+```
+
+<Aside type="note">
+The `google.rpc` schemas are published on the Buf registry. Add `@buf:registry=https://buf.build/gen/npm/v1/` to your `.npmrc`, then install `@buf/googleapis_googleapis.bufbuild_es`. The `debug` object in the JSON body is a convenience for humans and logs; do not parse it in code.
+</Aside>
+
+## Codes
+
+| v1 `code` | HTTP | Connect `code` | Retry? |
+|---|---|---|---|
+| [`BAD_REQUEST`](#bad-request) | 400 | `invalid_argument` | No, fix the request |
+| [`UNAUTHORIZED`](#unauthorized) | 401 | `unauthenticated` | No, fix the credential |
+| [`PAYMENT_REQUIRED`](#payment-required) | 402 | `resource_exhausted` | No, upgrade the plan |
+| [`FORBIDDEN`](#forbidden) | 403 | `permission_denied` | No |
+| [`NOT_FOUND`](#not-found) | 404 | `not_found` | No |
+| [`METHOD_NOT_ALLOWED`](#method-not-allowed) | 405 | `unimplemented` | No |
+| [`CONFLICT`](#conflict) | 409 | `already_exists` | No, change the input |
+| [`UNPROCESSABLE_ENTITY`](#unprocessable-entity) | 422 | `failed_precondition` | No, change the state first |
+| [`TOO_MANY_REQUESTS`](#too-many-requests) | 429 | `resource_exhausted` | Yes, after `Retry-After` |
+| [`INTERNAL_SERVER_ERROR`](#internal-server-error) | 500 | `internal` | Once, with backoff |
+| [`SERVICE_UNAVAILABLE`](#service-unavailable) | 503 | `unavailable` | Yes, after `Retry-After` |
+
+### Bad request
+
+The request is malformed or fails validation: a missing required field, a value out of range, an unknown enum, an id that is not a number. The message names the field. On `/rpc` a `google.rpc.BadRequest` or `buf.validate.Violations` detail lists every violation. Fix the request; retrying the same payload will fail the same way.
+
+### Unauthorized
+
+No credential, or a credential that does not resolve to a workspace. Send the API key in `x-openstatus-key` or an OAuth access token as a bearer token. Reasons: `MISSING_CREDENTIALS`, `INVALID_API_KEY`. Repeated `401`s from one IP count against the [failed-authentication limit](/docs/reference/api-rate-limits).
+
+### Payment required
+
+Reserved by the v1 envelope for plan gating. The RPC API reports plan limits under [Forbidden](#forbidden) with a `PLAN_*` reason instead.
+
+### Forbidden
+
+The credential is valid but may not do this: a read-only key calling a write, a feature the workspace plan does not include (`PLAN_FEATURE_NOT_AVAILABLE`), or a quota that is used up (`PLAN_LIMIT_REACHED`, with `limit`, `max` and, when known, `current` in the metadata). Upgrade the plan or use a key with the right scope.
+
+### Not found
+
+The resource does not exist, was deleted, or belongs to another workspace. The reason names the resource type and the metadata carries the id you sent. Cross-workspace access always looks like a missing resource, never like a permission error.
+
+### Method not allowed
+
+The HTTP method is wrong for the route. Connect procedures are `POST`, and only idempotent `Get*` and `List*` procedures also accept `GET`.
+
+### Conflict
+
+The write collides with existing data: a status page slug that is already taken (`SLUG_ALREADY_EXISTS`), a subscriber that already exists. Change the input rather than retrying.
+
+### Unprocessable entity
+
+The request is well-formed but the system is not in a state that allows it, for example deleting a workspace with an active subscription. Change the state first, then retry.
+
+### Too many requests
+
+A [rate limit](/docs/reference/api-rate-limits) was exceeded. Wait for `Retry-After` seconds, then retry with backoff. On `/rpc` the `google.rpc.RetryInfo` detail carries the same delay.
+
+### Internal server error
+
+Something failed on our side. The message never includes internals; the `requestId` is the handle we use to find the cause. Retry once with backoff, and contact [ping@openstatus.dev](mailto:ping@openstatus.dev) with the request id if it persists.
+
+### Service unavailable
+
+The server is shedding load. Treat it exactly like [Too many requests](#too-many-requests): honour `Retry-After` and back off.
+
+## Reasons
+
+The `reason` values the RPC API can return. Generic reasons share their name with the v1 code and are used when nothing more specific applies.
+
+| Reason | Connect code | Metadata |
+|---|---|---|
+| `BAD_REQUEST` | `invalid_argument` | |
+| `UNAUTHORIZED` | `unauthenticated` | |
+| `PAYMENT_REQUIRED` | `resource_exhausted` | |
+| `FORBIDDEN` | `permission_denied` | |
+| `NOT_FOUND` | `not_found` | `resource` |
+| `METHOD_NOT_ALLOWED` | `unimplemented` | |
+| `CONFLICT` | `invalid_argument` | |
+| `UNPROCESSABLE_ENTITY` | `failed_precondition` | |
+| `TOO_MANY_REQUESTS` | `resource_exhausted` | plus `RetryInfo` |
+| `INTERNAL_SERVER_ERROR` | `internal` | |
+| `SERVICE_UNAVAILABLE` | `unavailable` | plus `RetryInfo` |
+| `MISSING_CREDENTIALS` | `unauthenticated` | |
+| `INVALID_API_KEY` | `unauthenticated` | |
+| `VALIDATION_FAILED` | `invalid_argument` | plus `BadRequest` or `Violations` |
+| `INVALID_REGION` | `invalid_argument` | `regions` |
+| `INVALID_DATE_FORMAT` | `invalid_argument` | `value` |
+| `INVALID_STATUS` | `invalid_argument` | `status` |
+| `INVALID_CUSTOM_DOMAIN` | `invalid_argument` | `customDomain` |
+| `INVALID_ICON_URL` | `invalid_argument` | |
+| `INVALID_MONITOR_ID` | `invalid_argument` | `monitorId` |
+| `INVALID_NOTIFICATION_DATA` | `invalid_argument` | |
+| `PASSWORD_REQUIRED` | `invalid_argument` | |
+| `AUTH_EMAIL_DOMAINS_REQUIRED` | `invalid_argument` | |
+| `IDENTIFIER_REQUIRED` | `invalid_argument` | |
+| `MONITOR_TYPE_MISMATCH` | `invalid_argument` | `monitorId`, `expectedType`, `actualType` |
+| `PROVIDER_NOT_SUPPORTED` | `invalid_argument` | `provider` |
+| `PLAN_LIMIT_REACHED` | `permission_denied` | `limit`, `max`, `current` |
+| `PLAN_FEATURE_NOT_AVAILABLE` | `permission_denied` | `feature` |
+| `MONITOR_NOT_FOUND` | `not_found` | `monitorId` |
+| `RESPONSE_LOG_NOT_FOUND` | `not_found` | `monitorId`, `logId` |
+| `NOTIFICATION_NOT_FOUND` | `not_found` | `notificationId` |
+| `STATUS_PAGE_NOT_FOUND` | `not_found` | `pageId` |
+| `STATUS_PAGE_NOT_PUBLISHED` | `not_found` | `slug` |
+| `STATUS_PAGE_ACCESS_DENIED` | `permission_denied` | `slug`, `accessType` |
+| `SLUG_ALREADY_EXISTS` | `already_exists` | `slug` |
+| `PAGE_COMPONENT_NOT_FOUND` | `not_found` | `pageComponentId` |
+| `COMPONENT_GROUP_NOT_FOUND` | `not_found` | `groupId` |
+| `SUBSCRIBER_NOT_FOUND` | `not_found` | `identifier` |
+| `STATUS_REPORT_NOT_FOUND` | `not_found` | `statusReportId` |
+| `MAINTENANCE_NOT_FOUND` | `not_found` | `maintenanceId` |
+| `PRIVATE_LOCATION_NOT_FOUND` | `not_found` | `privateLocationId` |
+| `TEST_NOTIFICATION_FAILED` | `internal` | |
+
+Reasons are append-only: new ones may appear in a release, existing ones are never renamed. Treat an unknown reason like its Connect code.

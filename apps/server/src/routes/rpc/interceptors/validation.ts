@@ -1,6 +1,8 @@
 import { ConnectError, type Interceptor } from "@connectrpc/connect";
 import { createValidateInterceptor } from "@connectrpc/validate";
 
+import { ErrorReason, rpcError } from "@/libs/errors/rpc";
+
 // Methods that skip standard protovalidate (they do manual validation in handlers)
 // These methods use partial updates where nested message fields are optional
 const SKIP_VALIDATION_METHODS = new Set([
@@ -18,6 +20,16 @@ function normalizeValidationMessage(message: string): string {
   return message.replace(
     /(^|: )does not match regex pattern/g,
     "$1value does not match regex pattern",
+  );
+}
+
+const VIOLATIONS_TYPE = "buf.validate.Violations";
+
+function isProtovalidateError(err: ConnectError): boolean {
+  return err.details.some((d) =>
+    "desc" in d
+      ? d.desc.typeName === VIOLATIONS_TYPE
+      : d.type === VIOLATIONS_TYPE,
   );
 }
 
@@ -44,17 +56,18 @@ export function validationInterceptor(): Interceptor {
     try {
       return await baseInterceptor(next)(req);
     } catch (err) {
-      if (err instanceof ConnectError) {
-        const normalized = normalizeValidationMessage(err.rawMessage);
-        if (normalized !== err.rawMessage) {
-          throw new ConnectError(
-            normalized,
-            err.code,
-            err.metadata,
-            undefined,
-            err.cause,
-          );
-        }
+      // Handler errors also pass through here; only protovalidate's own
+      // rejection (recognisable by its Violations detail) gets rebuilt.
+      if (err instanceof ConnectError && isProtovalidateError(err)) {
+        const rebuilt = rpcError({
+          code: err.code,
+          reason: ErrorReason.VALIDATION_FAILED,
+          message: normalizeValidationMessage(err.rawMessage),
+          cause: err.cause,
+        });
+        err.metadata.forEach((value, key) => rebuilt.metadata.set(key, value));
+        rebuilt.details.push(...err.details);
+        throw rebuilt;
       }
       throw err;
     }

@@ -1,5 +1,7 @@
-import { Code, ConnectError, type Interceptor } from "@connectrpc/connect";
+import { Code, type Interceptor } from "@connectrpc/connect";
 import { nanoid } from "nanoid";
+
+import { ErrorReason, rpcError } from "@/libs/errors/rpc";
 
 import { lookupWorkspace, validateKey } from "../../../libs/middlewares/auth";
 import {
@@ -25,23 +27,39 @@ export function authInterceptor(): Interceptor {
     const credential = extractCredential(req.header);
 
     if (!credential) {
-      throw new ConnectError(MISSING_CREDENTIALS_MESSAGE, Code.Unauthenticated);
+      throw rpcError({
+        code: Code.Unauthenticated,
+        reason: ErrorReason.MISSING_CREDENTIALS,
+        message: MISSING_CREDENTIALS_MESSAGE,
+      });
     }
 
     const { error, result } = await validateKey(credential.token);
 
     if (error) {
-      throw new ConnectError(error.message, Code.Unauthenticated);
+      throw rpcError({
+        code: Code.Unauthenticated,
+        reason: ErrorReason.INVALID_API_KEY,
+        message: error.message,
+      });
     }
 
     if (!result.valid || !result.ownerId) {
-      throw new ConnectError("Invalid API Key", Code.Unauthenticated);
+      throw rpcError({
+        code: Code.Unauthenticated,
+        reason: ErrorReason.INVALID_API_KEY,
+        message: "Invalid API Key",
+      });
     }
 
     const ownerId = Number.parseInt(result.ownerId);
 
     if (Number.isNaN(ownerId)) {
-      throw new ConnectError("Invalid API Key format", Code.Unauthenticated);
+      throw rpcError({
+        code: Code.Unauthenticated,
+        reason: ErrorReason.INVALID_API_KEY,
+        message: "Invalid API Key format",
+      });
     }
 
     // lookupWorkspace throws OpenStatusApiError if not found

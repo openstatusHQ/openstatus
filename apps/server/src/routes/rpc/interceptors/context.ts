@@ -1,5 +1,7 @@
-import { Code, ConnectError, createContextKey } from "@connectrpc/connect";
+import { Code, createContextKey } from "@connectrpc/connect";
 import type { Scope, Workspace } from "@openstatus/db/src/schema";
+
+import { ErrorReason, rpcError } from "@/libs/errors/rpc";
 
 /**
  * RPC context containing workspace and request information.
@@ -36,10 +38,11 @@ export function getRpcContext(ctx: {
 }): RpcContext {
   const rpcCtx = ctx.values.get(RPC_CONTEXT_KEY);
   if (!rpcCtx) {
-    throw new ConnectError(
-      "RPC context not found - auth interceptor may not have run",
-      Code.Internal,
-    );
+    throw rpcError({
+      code: Code.Internal,
+      reason: ErrorReason.INTERNAL_SERVER_ERROR,
+      message: "RPC context not found - auth interceptor may not have run",
+    });
   }
   return rpcCtx;
 }

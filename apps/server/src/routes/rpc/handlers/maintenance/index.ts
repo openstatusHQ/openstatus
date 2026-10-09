@@ -1,4 +1,4 @@
-import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
+import { Code, type ServiceImpl } from "@connectrpc/connect";
 import type { MaintenanceService } from "@openstatus/proto/maintenance/v1";
 import {
   createMaintenance,
@@ -10,6 +10,7 @@ import {
 } from "@openstatus/services/maintenance";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
+import { ErrorReason, rpcError } from "../../errors";
 import { getRpcContext } from "../../interceptors";
 import {
   dbMaintenanceToProto,
@@ -35,10 +36,17 @@ function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
     // and surfaces the correct `InvalidArgument` here.
     const n = Number.parseInt(id, 10);
     if (!Number.isFinite(n)) {
-      throw new ConnectError(
-        `Invalid page component id: "${id}"`,
-        Code.InvalidArgument,
-      );
+      throw rpcError({
+        code: Code.InvalidArgument,
+        reason: ErrorReason.VALIDATION_FAILED,
+        message: `Invalid page component id: "${id}"`,
+        fieldViolations: [
+          {
+            field: "pageComponentIds",
+            description: `Invalid page component id: "${id}"`,
+          },
+        ],
+      });
     }
     return n;
   });
