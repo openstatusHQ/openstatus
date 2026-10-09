@@ -51,10 +51,8 @@ beforeEach(() => {
     "sendPageSubscription",
     () => Promise.resolve(undefined),
   );
-  sendPageUpdateMock = stub(
-    EmailClient.prototype,
-    "sendPageUpdate",
-    () => Promise.resolve(undefined),
+  sendPageUpdateMock = stub(EmailClient.prototype, "sendPageUpdate", () =>
+    Promise.resolve(undefined),
   );
 });
 
@@ -176,9 +174,7 @@ describe("sendEmailNotifications", () => {
     await sendEmailNotifications([makeSub()], update);
     await sendEmailNotifications([makeSub()], update);
 
-    const keys = sendPageUpdateMock.calls.map(
-      (c) => c.args[0].idempotencyKey,
-    );
+    const keys = sendPageUpdateMock.calls.map((c) => c.args[0].idempotencyKey);
     expect(keys[0]).toBe(keys[1]);
   });
 
@@ -190,9 +186,7 @@ describe("sendEmailNotifications", () => {
       update,
     );
 
-    const keys = sendPageUpdateMock.calls.map(
-      (c) => c.args[0].idempotencyKey,
-    );
+    const keys = sendPageUpdateMock.calls.map((c) => c.args[0].idempotencyKey);
     expect(keys[0]).not.toBe(keys[1]);
   });
 
@@ -230,9 +224,7 @@ describe("sendEmailNotifications", () => {
       makeUpdate({ ...base, endsAt: "2026-07-20T12:00:00Z" }),
     );
 
-    const keys = sendPageUpdateMock.calls.map(
-      (c) => c.args[0].idempotencyKey,
-    );
+    const keys = sendPageUpdateMock.calls.map((c) => c.args[0].idempotencyKey);
     expect(keys[0]).not.toBe(keys[1]);
   });
 
@@ -247,9 +239,7 @@ describe("sendEmailNotifications", () => {
       makeUpdate({ updateId: 77, date, message: "Root cause identified." }),
     );
 
-    const keys = sendPageUpdateMock.calls.map(
-      (c) => c.args[0].idempotencyKey,
-    );
+    const keys = sendPageUpdateMock.calls.map((c) => c.args[0].idempotencyKey);
     expect(keys[0]).not.toBe(keys[1]);
   });
 });

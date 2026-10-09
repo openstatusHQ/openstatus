@@ -14,6 +14,8 @@ import MonitorAlertEmail, {
 import type { MonitorAlertProps } from "../emails/monitor-alert";
 import PageSubscriptionEmail from "../emails/page-subscription";
 import type { PageSubscriptionProps } from "../emails/page-subscription";
+import PageUpdateEmail from "../emails/page-update";
+import type { PageUpdateProps } from "../emails/page-update";
 import PrivateLocationAlertEmail, {
   privateLocationAlertSubject,
 } from "../emails/private-location-alert";
@@ -21,8 +23,6 @@ import type { PrivateLocationAlertProps } from "../emails/private-location-alert
 import SlackFeedbackEmail from "../emails/slack-feedback";
 import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
 import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link";
-import PageUpdateEmail from "../emails/page-update";
-import type { PageUpdateProps } from "../emails/page-update";
 import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
 import { env } from "./env";

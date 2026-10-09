@@ -133,18 +133,14 @@ afterAll(cleanAll);
 
 beforeEach(() => {
   rejectNextSend = null;
-  sendPageUpdateMock = stub(
-    EmailClient.prototype,
-    "sendPageUpdate",
-    () => {
-      if (rejectNextSend) {
-        const error = rejectNextSend;
-        rejectNextSend = null;
-        return Promise.reject(error);
-      }
-      return Promise.resolve(undefined);
-    },
-  );
+  sendPageUpdateMock = stub(EmailClient.prototype, "sendPageUpdate", () => {
+    if (rejectNextSend) {
+      const error = rejectNextSend;
+      rejectNextSend = null;
+      return Promise.reject(error);
+    }
+    return Promise.resolve(undefined);
+  });
 });
 
 afterEach(() => {

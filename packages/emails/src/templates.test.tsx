@@ -27,14 +27,14 @@ import MonitorDeactivationEmail, {
 } from "../emails/monitor-deactivation";
 import MonitorPausedEmail from "../emails/monitor-paused";
 import PageSubscriptionEmail from "../emails/page-subscription";
-import PrivateLocationAlertEmail, {
-  privateLocationAlertSubject,
-} from "../emails/private-location-alert";
-import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
 import PageUpdateEmail, {
   type PageUpdateProps,
   pageUpdatePreheader,
 } from "../emails/page-update";
+import PrivateLocationAlertEmail, {
+  privateLocationAlertSubject,
+} from "../emails/private-location-alert";
+import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
 import TeamInvitationEmail from "../emails/team-invitation";
 import WelcomeEmail from "../emails/welcome";
 
