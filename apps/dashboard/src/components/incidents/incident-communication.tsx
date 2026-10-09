@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Add, ArrowUpRight, Linked, Send, Unlinked } from "@openstatus/icons";
+import { Add, Linked, Report as ReportIcon, Unlinked } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -141,7 +141,7 @@ function LinkedReport({
             className="w-[var(--radix-dropdown-menu-trigger-width)]"
           >
             <DropdownMenuItem onSelect={() => setComposing(true)}>
-              <Send />
+              <Add />
               Post public update
             </DropdownMenuItem>
             {report.pageId ? (
@@ -149,7 +149,7 @@ function LinkedReport({
                 <NextLink
                   href={`/status-pages/${report.pageId}/status-reports/${report.id}`}
                 >
-                  <ArrowUpRight />
+                  <ReportIcon />
                   Open report
                 </NextLink>
               </DropdownMenuItem>
