@@ -126,6 +126,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/docs/reference/api",
+        destination: "https://api.openstatus.dev/openapi",
+        permanent: true,
+      },
+      {
         source: "/legal/terms",
         destination: "/terms",
         permanent: true,
