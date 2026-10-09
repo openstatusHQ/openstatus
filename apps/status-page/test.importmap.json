@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "@/": "./src/",
+    "./src/hooks/use-pathname-prefix": "./src/test/use-pathname-prefix.mock.ts",
+    "./src/hooks/use-pathname-prefix.ts": "./src/test/use-pathname-prefix.mock.ts",
+    "next/link": "./src/test/next-link.mock.tsx",
+    "next/navigation": "./src/test/next-navigation.mock.ts",
+    "next-intl": "./src/test/next-intl.mock.tsx"
+  }
+}
