@@ -683,7 +683,7 @@ export function getUptime({
   events: Event[];
   barType: "absolute" | "dominant" | "manual";
   cardType: "requests" | "duration" | "dominant" | "manual";
-  /** monitor has no public regions, so probe errors are its only downtime signal */
+  /** no public regions and ≥1 private location: probe errors are the only downtime signal */
   privateLocationOnly?: boolean;
 }): string {
   if (barType === "manual" || cardType === "duration") {

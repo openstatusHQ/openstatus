@@ -858,6 +858,27 @@ export const statusPageRouter = createTRPCRouter({
         input.days ??
         (parsedConfiguration.success ? parsedConfiguration.data.days : 45);
 
+      // No public regions alone doesn't make a monitor private-only: it may
+      // have no locations at all, so confirm an active private assignment.
+      const noRegionMonitorIds = monitors
+        .filter((c) => c.monitor.regions.length === 0)
+        .map((c) => c.monitor.id);
+      const privateOnlyMonitorIds = new Set<number>();
+      if (noRegionMonitorIds.length > 0) {
+        const rows = await opts.ctx.db.query.privateLocationToMonitors.findMany(
+          {
+            where: and(
+              inArray(privateLocationToMonitors.monitorId, noRegionMonitorIds),
+              isNull(privateLocationToMonitors.deletedAt),
+            ),
+            columns: { monitorId: true },
+          },
+        );
+        for (const row of rows) {
+          if (row.monitorId !== null) privateOnlyMonitorIds.add(row.monitorId);
+        }
+      }
+
       return pageComponents.map((c) => {
         const events = getEvents({
           maintenances: _page.maintenances,
@@ -912,7 +933,8 @@ export const statusPageRouter = createTRPCRouter({
           events,
           barType: effectiveBarType,
           cardType: effectiveCardType,
-          privateLocationOnly: c.monitor?.regions.length === 0,
+          privateLocationOnly:
+            c.monitor != null && privateOnlyMonitorIds.has(c.monitor.id),
         });
 
         return {
