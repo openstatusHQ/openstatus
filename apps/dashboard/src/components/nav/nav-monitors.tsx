@@ -164,8 +164,11 @@ export function NavMonitors() {
                   },
                 });
               },
-              // export: () => setOpenDialog(true),
-            }).filter((action) => action.id !== "copy-curl" || isHttp);
+            }).filter(
+              (action) =>
+                (action.id !== "copy-curl" || isHttp) &&
+                action.id !== "copy-badge",
+            );
             return (
               <SidebarMenuItem key={item.id}>
                 <SidebarMenuButton
