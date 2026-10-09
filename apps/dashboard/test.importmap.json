@@ -1,6 +1,9 @@
 {
   "imports": {
     "@/": "./src/",
-    "@openstatus/upstash": "./src/test/upstash.mock.ts"
+    "@openstatus/upstash": "./src/test/upstash.mock.ts",
+    "@openstatus/tinybird/src/schema": "../../packages/tinybird/src/schema.ts",
+    "next/link": "./src/test/next-link.mock.tsx",
+    "next/navigation": "./src/test/next-navigation.mock.ts"
   }
 }

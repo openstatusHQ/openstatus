@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "deno test --parallel -A --no-check --sloppy-imports",
+    "test": "deno test --parallel -A --no-check --sloppy-imports --import-map=test.importmap.json",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
