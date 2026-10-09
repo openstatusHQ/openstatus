@@ -1,5 +1,6 @@
 "use client";
 
+import type { RouterInputs } from "@openstatus/api";
 import { ArrowDown, Success, ListFilter } from "@openstatus/icons";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
@@ -31,8 +32,19 @@ import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
 
-// job types with a tinybird metrics pipe (udp/ssl have none yet)
-const METRIC_TYPES = ["http", "tcp", "dns", "icmp", "grpc"] as const;
+type MetricType = NonNullable<
+  RouterInputs["tinybird"]["globalMetrics"]["type"]
+>;
+
+// Job types with a tinybird metrics pipe (udp/ssl have none yet). The record
+// is keyed by the server enum so a type added there fails typecheck here.
+const METRIC_TYPES = Object.keys({
+  http: true,
+  tcp: true,
+  dns: true,
+  icmp: true,
+  grpc: true,
+} satisfies Record<MetricType, true>) as MetricType[];
 
 const icons = {
   default: {
