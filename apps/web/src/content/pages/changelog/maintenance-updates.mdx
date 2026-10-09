@@ -1,0 +1,23 @@
+---
+title: "Maintenance updates"
+description: "Post dated progress notes on a maintenance window, from the dashboard, the API, or an agent."
+publishedAt: "2026-10-09"
+category: "statuspage"
+author: "openstatus"
+image: "/assets/changelog/maintenance-updates.png"
+---
+
+A maintenance is now a timeline, like a status report.
+
+The message you write when scheduling the window becomes the first update. While the work is running, you post follow-ups from the same composer: "Work started", "Taking longer than expected", "Completed early". Each one is dated, shows on the public status page, and can notify subscribers.
+
+The status page, the feeds, and the Markdown view render the full timeline, oldest first.
+
+## For the API
+
+- The `message` field still exists on create, read, and update. On create it is posted as the first update, on read it returns the newest one, on update it rewrites the newest one. Existing integrations and Terraform configs keep working unchanged.
+- New entries are added through dedicated update endpoints, not by editing `message`. The RPC API gains `AddMaintenanceUpdate`, `UpdateMaintenanceUpdate` and `DeleteMaintenanceUpdate`, and the maintenance resource returns the full timeline under `updates`, newest first.
+- The MCP server exposes the same three as `add_maintenance_update`, `update_maintenance_update` and `delete_maintenance_update`. Posting a note requires an explicit `notify` choice.
+- A maintenance always keeps at least one update. Deleting the last one is rejected, delete the maintenance instead.
+
+Read the [maintenance reference](/docs/reference/maintenance#updates) for the details.
