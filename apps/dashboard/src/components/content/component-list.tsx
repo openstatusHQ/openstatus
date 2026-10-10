@@ -15,16 +15,11 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { Fragment } from "react";
 
 import { StatusDot } from "@/components/common/status-dot";
-import { toComponentSections } from "@/data/page-components.client";
+import {
+  type OrderedComponent,
+  toComponentSections,
+} from "@/data/page-components.client";
 import { impactDisplay } from "@/data/status-report-updates.client";
-
-type Component = {
-  id: number;
-  name: string;
-  groupId?: number | null;
-  order?: number | null;
-  groupOrder?: number | null;
-};
 
 export function ComponentList({
   children,
@@ -167,7 +162,7 @@ export function ComponentListAdd({
   placeholder,
   className,
 }: {
-  components: Component[];
+  components: OrderedComponent[];
   groups?: { id: number; name: string }[];
   onAdd: (id: number) => void;
   disabled?: boolean;
@@ -192,7 +187,7 @@ export function ComponentListAdd({
     );
   }
 
-  const item = (c: Component) => (
+  const item = (c: OrderedComponent) => (
     <DropdownMenuItem
       key={c.id}
       className="font-mono"

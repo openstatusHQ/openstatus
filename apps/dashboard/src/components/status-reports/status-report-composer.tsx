@@ -62,6 +62,7 @@ import {
 } from "@/components/content/composer";
 import { TimelineItem } from "@/components/content/timeline";
 import {
+  type OrderedComponent,
   toComponentSections,
   toGroupNameLookup,
 } from "@/data/page-components.client";
@@ -75,13 +76,6 @@ import { errorMessage } from "@/lib/trpc/error";
 import { usePublishUpdate } from "./use-publish-update";
 
 type StatusReport = NonNullable<RouterOutputs["statusReport"]["get"]>;
-type Component = {
-  id: number;
-  name: string;
-  groupId?: number | null;
-  order?: number | null;
-  groupOrder?: number | null;
-};
 
 /**
  * Publishes a status report update. Impact rows default to "No change"
@@ -98,7 +92,7 @@ export function StatusReportComposer({
   report: StatusReport;
   currentImpacts: Map<number, PageComponentImpact>;
   /** Every component on the page; the ones not on the report can be added. */
-  pageComponents: Component[];
+  pageComponents: OrderedComponent[];
   groups: { id: number; name: string }[];
   /** Whether the plan includes subscriber notifications. */
   canNotify: boolean;
@@ -122,7 +116,7 @@ export function StatusReportComposer({
   const invalidDate = date !== null && date > new Date();
   const disabled = publish.isPending || !message.trim() || invalidDate;
 
-  const byId = new Map<number, Component>(
+  const byId = new Map<number, OrderedComponent>(
     [...report.pageComponents, ...pageComponents].map((c) => [c.id, c]),
   );
   const componentIds = ids ?? report.pageComponents.map((c) => c.id);
@@ -366,7 +360,7 @@ function ComponentsMenu({
   onAdd,
   onMarkAllOperational,
 }: {
-  addable: Component[];
+  addable: OrderedComponent[];
   groups: { id: number; name: string }[];
   onAdd: (id: number) => void;
   onMarkAllOperational?: () => void;
