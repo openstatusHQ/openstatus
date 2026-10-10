@@ -153,7 +153,7 @@ export const listStatusReportsTool: AgentTool<
 > = {
   name: "list_status_reports",
   description:
-    "List status reports in this workspace, newest first. Filter by status (e.g. exclude 'resolved' to see active incidents). Returns each report's timeline newest-first under `updates`, capped at the 10 most recent entries (ids feed update_status_report_update / delete_status_report_update), plus `latestUpdate` with its author. Paginated via `page` (1-indexed) and `perPage`.",
+    "List status reports in this workspace, newest first. Filter by status (e.g. exclude 'resolved' to see active incidents). Returns each report's timeline newest-first under `updates`, capped at the 10 most recent entries (ids feed update_status_report_update / delete_status_report_update; call get_status_report for the full timeline), plus `latestUpdate` with its author. Paginated via `page` (1-indexed) and `perPage`.",
   scope: "read",
   destructive: false,
   inputSchema: ListStatusReportsInputShape,
@@ -205,6 +205,70 @@ export const listStatusReportsTool: AgentTool<
         totalSize: result.totalSize,
         totalPages: Math.max(1, Math.ceil(result.totalSize / perPage)),
       },
+    };
+  },
+};
+
+const GetStatusReportInput = z.object({
+  id: z
+    .number()
+    .int()
+    .describe("Status report id from list_status_reports — never guess."),
+});
+
+const GetStatusReportOutput = z.object({
+  id: z.number().int(),
+  title: z.string(),
+  status: statusReportStatusSchema,
+  pageId: z.number().int().nullable(),
+  pageComponentIds: z.array(z.number().int()),
+  createdAt: z.string().nullable(),
+  updatedAt: z.string().nullable(),
+  createdBy: attributedUserSchema.nullable(),
+  updatedBy: attributedUserSchema.nullable(),
+  updates: z.array(
+    z.object({
+      id: z.number().int(),
+      status: statusReportStatusSchema,
+      message: z.string(),
+      date: z.string().nullable(),
+      createdBy: attributedUserSchema.nullable(),
+      componentImpacts: componentImpactsSchema,
+    }),
+  ),
+});
+
+export const getStatusReportTool: AgentTool<
+  z.infer<typeof GetStatusReportInput>,
+  z.infer<typeof GetStatusReportOutput>
+> = {
+  name: "get_status_report",
+  description:
+    "Get one status report with its FULL timeline newest-first under `updates` (no cap — list_status_reports stops at the 10 most recent). Use it to find the id of an older entry for update_status_report_update / delete_status_report_update.",
+  scope: "read",
+  destructive: false,
+  inputSchema: GetStatusReportInput,
+  outputSchema: GetStatusReportOutput,
+  async run({ ctx, input }) {
+    const r = await getStatusReport({ ctx, input: { id: input.id } });
+    return {
+      id: r.id,
+      title: r.title,
+      status: r.status,
+      pageId: r.pageId,
+      pageComponentIds: r.pageComponentIds,
+      createdAt: r.createdAt?.toISOString() ?? null,
+      updatedAt: r.updatedAt?.toISOString() ?? null,
+      createdBy: toAgentUser(r.createdByUser),
+      updatedBy: toAgentUser(r.updatedByUser),
+      updates: r.updates.map((u) => ({
+        id: u.id,
+        status: u.status,
+        message: u.message,
+        date: u.date?.toISOString() ?? null,
+        createdBy: toAgentUser(u.createdByUser),
+        componentImpacts: u.componentImpacts,
+      })),
     };
   },
 };

@@ -19,6 +19,7 @@ import { getMonitorDetails } from "./get-monitor";
 import { getMonitorStatusTable } from "./get-monitor-status";
 import { getMonitorSummaryDetails } from "./get-monitor-summary";
 import { getResponseLogDetails } from "./get-response-log";
+import { getStatusReportDetails } from "./get-status-report";
 import {
   declareIncidentChanges,
   getIncidentDetails,
@@ -92,6 +93,12 @@ export const toolRenderers: ToolRendererRegistry = {
       <ResultTable {...listStatusReportsTable(output)} />
     ),
     summary: (o) => itemsCountSummary(o.items),
+  },
+  get_status_report: {
+    renderResult: ({ output }) => (
+      <DetailsTable {...getStatusReportDetails(output)} />
+    ),
+    summary: (o) => `${o.status} · ${o.updates.length} updates`,
   },
   list_maintenances: {
     renderResult: ({ output }) => (

@@ -779,6 +779,18 @@ describe("StatusReportService.GetStatusReport", () => {
 
     expect(res.status).toBe(400);
   });
+
+  test("rejects a report id beyond the safe integer range", async () => {
+    const res = await connectRequest(
+      "GetStatusReport",
+      { id: "9007199254740993" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("Invalid status report id");
+  });
 });
 
 describe("StatusReportService.ListStatusReports", () => {

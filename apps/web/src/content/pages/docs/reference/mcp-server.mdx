@@ -76,6 +76,7 @@ The server exposes 26 tools (24 on plans without the `audit-log` feature), group
 | Tool                       | Type     | Purpose |
 |----------------------------|----------|---------|
 | `list_status_reports`      | read     | List status reports newest-first, each with its `updates` timeline (newest first, with ids, capped at the 10 most recent) and `latestUpdate`. `filter: "active" \| "all"` (defaults to active = excludes resolved). Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
+| `get_status_report`        | read     | Get one status report with its full `updates` timeline (newest first, with ids, uncapped) and `pageComponentIds`. Use it to reach entries older than the 10 that `list_status_reports` returns. |
 | `create_status_report`     | mutation | Create a new status report on a status page with an initial public update. |
 | `add_status_report_update` | mutation | Append a public update to an existing status report and bump its status. |
 | `update_status_report`     | mutation | Edit a report's title, status, or affected components without posting a public update. |

@@ -82,10 +82,10 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
         const rpcCtx = getRpcContext(ctx);
         const sCtx = toServiceCtx(rpcCtx);
 
-        const pageId = req.pageId?.trim() ? Number(req.pageId.trim()) : null;
-        if (pageId === null) {
+        if (!req.pageId?.trim()) {
           throw statusReportIdRequiredError();
         }
+        const pageId = parseId(req.pageId, "page id");
 
         const { statusReport, initialUpdate } = await createStatusReport({
           ctx: sCtx,
@@ -132,7 +132,7 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
 
         const full = await getStatusReport({
           ctx: toServiceCtx(rpcCtx),
-          input: { id: Number(req.id) },
+          input: { id: parseId(req.id, "status report id") },
         });
         return {
           statusReport: dbReportToProto(
@@ -186,7 +186,7 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
           throw statusReportIdRequiredError();
         }
 
-        const id = Number(req.id);
+        const id = parseId(req.id, "status report id");
         await updateStatusReport({
           ctx: sCtx,
           input: {
@@ -222,7 +222,7 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
         }
         await deleteStatusReport({
           ctx: toServiceCtx(rpcCtx),
-          input: { id: Number(req.id) },
+          input: { id: parseId(req.id, "status report id") },
         });
         return { success: true };
       } catch (err) {
@@ -238,7 +238,7 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
           throw statusReportIdRequiredError();
         }
 
-        const statusReportId = Number(req.statusReportId);
+        const statusReportId = parseId(req.statusReportId, "status report id");
         const { statusReport: updatedReport, statusReportUpdate: newUpdate } =
           await addStatusReportUpdate({
             ctx: sCtx,

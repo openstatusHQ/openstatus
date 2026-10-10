@@ -138,6 +138,7 @@ describe("MCP transport", () => {
       "get_monitor_summary",
       "get_postmortem",
       "get_response_log",
+      "get_status_report",
       "list_audit_logs",
       "list_incidents",
       "list_maintenances",

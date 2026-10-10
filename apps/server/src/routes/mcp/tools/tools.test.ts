@@ -293,6 +293,64 @@ describe("list_status_reports", () => {
   });
 });
 
+describe("get_status_report", () => {
+  test("returns every update id, past the list cap", async () => {
+    await withTestTransaction(async (tx) => {
+      const sr = await tx
+        .insert(statusReport)
+        .values({
+          workspaceId: teamWorkspace.id,
+          pageId: testPageId,
+          title: `${TEST_PREFIX}-long`,
+          status: "investigating",
+        })
+        .returning()
+        .get();
+      const rows = await tx
+        .insert(statusReportUpdate)
+        .values(
+          Array.from({ length: 12 }, (_, i) => ({
+            statusReportId: sr.id,
+            status: "investigating" as const,
+            message: `update ${i}`,
+            date: new Date(Date.UTC(2026, 0, 1 + i)),
+          })),
+        )
+        .returning()
+        .all();
+      const newestFirst = [...rows]
+        .sort((a, b) => b.date.getTime() - a.date.getTime())
+        .map((u) => u.id);
+
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("status-report", ctx);
+      const listed = await callTool(tools, "list_status_reports", {});
+      const item = (
+        listed.structuredContent as {
+          items: { id: number; updates: { id: number }[] }[];
+        }
+      ).items.find((i) => i.id === sr.id);
+      expect(item?.updates.map((u) => u.id)).toEqual(newestFirst.slice(0, 10));
+
+      const result = await callTool(tools, "get_status_report", { id: sr.id });
+      expect(result.isError).toBeUndefined();
+      const report = result.structuredContent as {
+        id: number;
+        updates: { id: number }[];
+      };
+      expect(report.id).toBe(sr.id);
+      expect(report.updates.map((u) => u.id)).toEqual(newestFirst);
+    });
+  });
+
+  test("errors for a report outside the workspace", async () => {
+    const ctx = makeMcpToolCtx(teamWorkspace);
+    const tools = registered("status-report", ctx);
+    const result = await callTool(tools, "get_status_report", { id: 999999 });
+    expect(result.isError).toBe(true);
+  });
+});
+
 describe("create_status_report", () => {
   test("creates a report + initial update and emits audit with transport=mcp", async () => {
     await withTestTransaction(async (tx) => {

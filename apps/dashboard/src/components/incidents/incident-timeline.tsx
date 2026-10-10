@@ -227,8 +227,9 @@ function parseEvent(event: Event): Parsed {
 
 /**
  * One event as a `TimelineItem`; the page composes the `Timeline` around it.
- * `incident` resolves ids in the message to the report and Slack channel
- * still attached today; older ones stay as plain ids.
+ * `incident` resolves a report id in the message to the report still linked
+ * today (older ones stay as plain ids) and supplies the Slack team for the
+ * channel link, whose channel id is read from the event message.
  */
 export function IncidentTimelineItem({
   event,
