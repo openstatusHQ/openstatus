@@ -26,6 +26,8 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -86,7 +88,47 @@ export function useComposerDraft(key: string) {
 const ComposerContext = createContext<{
   view: ComposerView;
   setView: (view: ComposerView) => void;
+  /** Switch views and focus the pane that mounts, so a follow-up E lands. */
+  toggleView: () => void;
+  /** True once after `toggleView`; the pane mounting next takes it. */
+  claimFocus: () => boolean;
 } | null>(null);
+
+// Radix mounts tab content a render after the switch, so each pane claims
+// focus itself on mount instead of the switcher reaching for it.
+function useFocusOnMount() {
+  const { claimFocus } = useComposer();
+  return useCallback(
+    (el: HTMLElement | null) => {
+      if (el && claimFocus()) el.focus();
+    },
+    [claimFocus],
+  );
+}
+
+// A bare E anywhere on the page flips write/preview, unless a field has
+// focus and the letter is typed instead.
+function isPreviewHotkey(e: KeyboardEvent) {
+  if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return false;
+  if (e.key.toLowerCase() !== "e" || e.isComposing) return false;
+  return !(
+    e.target instanceof HTMLElement &&
+    (e.target.isContentEditable || e.target.matches("input, textarea, select"))
+  );
+}
+
+// With several composers on a page (incident notes and postmortem) the key
+// goes to the one last focused or clicked, else the first mounted.
+const composers: Array<() => void> = [];
+let activeComposer: (() => void) | null = null;
+
+/** "⌘" on Apple platforms, "Ctrl" elsewhere; ⌘ until hydrated. */
+function useModifierKey() {
+  const hydrated = useHydrated();
+  return hydrated && !/Mac|iPhone|iPad|iPod/.test(navigator.userAgent)
+    ? "Ctrl"
+    : "⌘";
+}
 
 function useComposer() {
   const ctx = useContext(ComposerContext);
@@ -105,19 +147,65 @@ export function Composer({
   className,
   size = "default",
   defaultValue = "write",
+  onKeyDown,
+  onFocusCapture,
+  onPointerDownCapture,
   ...props
 }: Omit<React.ComponentProps<typeof Tabs>, "value" | "onValueChange"> & {
   size?: "default" | "lg";
   defaultValue?: ComposerView;
 }) {
   const [view, setView] = useState<ComposerView>(defaultValue);
+  const focusNext = useRef(false);
+  const toggleView = useCallback(() => {
+    focusNext.current = true;
+    setView((v) => (v === "write" ? "preview" : "write"));
+  }, []);
+  const claimFocus = useCallback(() => {
+    if (!focusNext.current) return false;
+    focusNext.current = false;
+    return true;
+  }, []);
+  useEffect(() => {
+    composers.push(toggleView);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!isPreviewHotkey(e)) return;
+      if ((activeComposer ?? composers[0]) !== toggleView) return;
+      e.preventDefault();
+      toggleView();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      composers.splice(composers.indexOf(toggleView), 1);
+      if (activeComposer === toggleView) activeComposer = null;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [toggleView]);
   return (
-    <ComposerContext.Provider value={{ view, setView }}>
+    <ComposerContext.Provider value={{ view, setView, toggleView, claimFocus }}>
       <Tabs
         value={view}
         onValueChange={(value) => setView(value as ComposerView)}
         data-size={size}
         className={cn("min-w-0 flex-1", className)}
+        // Escape leaves the composer so the page's own keys (E, F, …) apply;
+        // an open menu or tooltip has already consumed it by then
+        onKeyDown={(e) => {
+          onKeyDown?.(e);
+          if (e.defaultPrevented || e.nativeEvent.isComposing) return;
+          if (e.key !== "Escape") return;
+          e.preventDefault();
+          if (document.activeElement instanceof HTMLElement)
+            document.activeElement.blur();
+        }}
+        onFocusCapture={(e) => {
+          onFocusCapture?.(e);
+          activeComposer = toggleView;
+        }}
+        onPointerDownCapture={(e) => {
+          onPointerDownCapture?.(e);
+          activeComposer = toggleView;
+        }}
         {...props}
       >
         <InputGroup className="bg-background items-stretch overflow-hidden">
@@ -137,9 +225,11 @@ export function ComposerTextarea({
 }: React.ComponentProps<typeof InputGroupTextarea> & {
   onSubmit?: () => void;
 }) {
+  const focusOnMount = useFocusOnMount();
   return (
     <TabsContent value="write">
       <InputGroupTextarea
+        ref={focusOnMount}
         // leading-6 matches prose-sm so text sits where the preview renders it
         className={cn(
           "min-h-24 leading-6 in-data-[size=lg]:min-h-96",
@@ -164,12 +254,16 @@ export function ComposerPreview({
   className,
   ...props
 }: Omit<React.ComponentProps<"div">, "children"> & { value: string }) {
+  const focusOnMount = useFocusOnMount();
   return (
     <TabsContent value="preview">
       <div
+        ref={focusOnMount}
         data-slot="composer-preview"
+        // focusable so the hotkey can flip back without a pointer
+        tabIndex={-1}
         className={cn(
-          "prose prose-sm dark:prose-invert min-h-24 max-w-none px-3 py-3 in-data-[size=lg]:min-h-96",
+          "prose prose-sm dark:prose-invert min-h-24 max-w-none px-3 py-3 outline-none in-data-[size=lg]:min-h-96",
           className,
         )}
         {...props}
@@ -249,12 +343,7 @@ export function ComposerSubmit({
   className,
   ...props
 }: Omit<React.ComponentProps<typeof Button>, "children"> & { label: string }) {
-  // the platform is only known in the browser; ⌘ until then
-  const hydrated = useHydrated();
-  const modifier =
-    hydrated && !/Mac|iPhone|iPad|iPod/.test(navigator.userAgent)
-      ? "Ctrl"
-      : "⌘";
+  const modifier = useModifierKey();
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -282,13 +371,17 @@ export function ComposerSubmit({
 const footerToggleClassName =
   "text-muted-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-disabled:opacity-50 aria-pressed:border aria-pressed:shadow-xs";
 
-/** Ghost icon button for the footer; the tooltip carries the label. */
+/** Ghost icon button for the footer; the tooltip carries the label and keys. */
 export function ComposerIconButton({
   label,
+  shortcut,
   className,
   children,
   ...props
-}: React.ComponentProps<typeof Button> & { label: string }) {
+}: React.ComponentProps<typeof Button> & {
+  label: string;
+  shortcut?: React.ReactNode;
+}) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -302,7 +395,10 @@ export function ComposerIconButton({
           {children}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="top">{label}</TooltipContent>
+      <TooltipContent side="top" className="flex items-center gap-1.5">
+        {label}
+        {shortcut}
+      </TooltipContent>
     </Tooltip>
   );
 }
@@ -312,12 +408,13 @@ export function ComposerIconButton({
  * (eye = preview, pencil = write), so it is a plain button, not a pressed toggle.
  */
 export function ComposerPreviewToggle() {
-  const { view, setView } = useComposer();
+  const { view, toggleView } = useComposer();
   const previewing = view === "preview";
   return (
     <ComposerIconButton
       label={previewing ? "Back to writing" : "Preview markdown"}
-      onClick={() => setView(previewing ? "write" : "preview")}
+      shortcut={<Kbd>E</Kbd>}
+      onClick={toggleView}
     >
       {previewing ? <Edit /> : <Show />}
     </ComposerIconButton>
