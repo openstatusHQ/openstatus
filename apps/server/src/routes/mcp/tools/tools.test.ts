@@ -344,10 +344,24 @@ describe("get_status_report", () => {
   });
 
   test("errors for a report outside the workspace", async () => {
-    const ctx = makeMcpToolCtx(teamWorkspace);
-    const tools = registered("status-report", ctx);
-    const result = await callTool(tools, "get_status_report", { id: 999999 });
-    expect(result.isError).toBe(true);
+    await withTestTransaction(async (tx) => {
+      const other = await tx
+        .insert(statusReport)
+        .values({
+          workspaceId: SEEDED_WORKSPACE_FREE_ID,
+          title: `${TEST_PREFIX}-other-ws-report`,
+          status: "investigating",
+        })
+        .returning()
+        .get();
+
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("status-report", ctx);
+      const result = await callTool(tools, "get_status_report", {
+        id: other.id,
+      });
+      expect(result.isError).toBe(true);
+    });
   });
 });
 
@@ -660,15 +674,24 @@ describe("update_status_report_update / delete_status_report_update", () => {
     });
   });
 
-  test("rejects status 'resolved' via Zod refine", async () => {
+  test("setting the latest entry to 'resolved' resolves the report", async () => {
     await withTestTransaction(async (tx) => {
-      const { tools, firstUpdateId } = await seedReport(tx);
+      const { tools, reportId, firstUpdateId } = await seedReport(tx);
       const result = await callTool(tools, "update_status_report_update", {
         id: firstUpdateId,
         status: "resolved",
       });
-      expect(result.isError).toBe(true);
-      expect(JSON.stringify(result.content)).toContain("resolve_status_report");
+      expect(result.isError).toBeUndefined();
+      expect((result.structuredContent as { status: string }).status).toBe(
+        "resolved",
+      );
+
+      const report = await tx
+        .select()
+        .from(statusReport)
+        .where(eq(statusReport.id, reportId))
+        .get();
+      expect(report?.status).toBe("resolved");
     });
   });
 

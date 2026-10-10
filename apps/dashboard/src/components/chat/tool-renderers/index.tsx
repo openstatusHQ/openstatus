@@ -98,7 +98,8 @@ export const toolRenderers: ToolRendererRegistry = {
     renderResult: ({ output }) => (
       <DetailsTable {...getStatusReportDetails(output)} />
     ),
-    summary: (o) => `${o.status} · ${o.updates.length} updates`,
+    summary: (o) =>
+      `${o.status} · ${o.updates.length} update${o.updates.length === 1 ? "" : "s"}`,
   },
   list_maintenances: {
     renderResult: ({ output }) => (

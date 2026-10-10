@@ -34,6 +34,7 @@ import {
 
 import { ProcessMessage } from "@/components/content/process-message";
 import { useHydrated } from "@/hooks/use-hydrated";
+import { useComposedRefs } from "@/lib/composition";
 
 type ComposerView = "write" | "preview";
 
@@ -107,13 +108,18 @@ function useFocusOnMount() {
 }
 
 // A bare E anywhere on the page flips write/preview, unless a field has
-// focus and the letter is typed instead.
+// focus and the letter is typed instead, or an overlay (select, menu,
+// dialog) owns the keyboard.
 function isPreviewHotkey(e: KeyboardEvent) {
   if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return false;
-  if (e.key.toLowerCase() !== "e" || e.isComposing) return false;
+  if (e.key.toLowerCase() !== "e" || e.isComposing || e.repeat) return false;
   return !(
     e.target instanceof HTMLElement &&
-    (e.target.isContentEditable || e.target.matches("input, textarea, select"))
+    (e.target.isContentEditable ||
+      e.target.matches("input, textarea, select") ||
+      e.target.closest(
+        '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="combobox"]',
+      ))
   );
 }
 
@@ -221,11 +227,12 @@ export function ComposerTextarea({
   className,
   onSubmit,
   onKeyDown,
+  ref,
   ...props
 }: React.ComponentProps<typeof InputGroupTextarea> & {
   onSubmit?: () => void;
 }) {
-  const focusOnMount = useFocusOnMount();
+  const focusOnMount = useComposedRefs(ref, useFocusOnMount());
   return (
     <TabsContent value="write">
       <InputGroupTextarea
@@ -252,9 +259,10 @@ export function ComposerTextarea({
 export function ComposerPreview({
   value,
   className,
+  ref,
   ...props
 }: Omit<React.ComponentProps<"div">, "children"> & { value: string }) {
-  const focusOnMount = useFocusOnMount();
+  const focusOnMount = useComposedRefs(ref, useFocusOnMount());
   return (
     <TabsContent value="preview">
       <div

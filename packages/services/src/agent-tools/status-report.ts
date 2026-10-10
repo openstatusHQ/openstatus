@@ -737,12 +737,10 @@ const UpdateStatusReportUpdateInputShape = z.object({
       "Status report update id from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result — never guess.",
     ),
   status: statusReportStatusSchema
-    .refine((s) => s !== "resolved", {
-      error:
-        "update_status_report_update cannot set status to 'resolved' — use resolve_status_report instead, which publishes a resolution update.",
-    })
     .optional()
-    .describe("New status for this entry. Cannot be 'resolved'."),
+    .describe(
+      "New status for this entry. 'resolved' is allowed: on the latest entry it resolves the report without notifying subscribers (use resolve_status_report to publish a new resolution update).",
+    ),
   message: z.string().min(1).optional().describe("New public message."),
   date: z.iso.datetime().optional().describe("New date for this entry."),
   componentImpacts: componentImpactsSchema
@@ -766,7 +764,7 @@ export const updateStatusReportUpdateTool: AgentTool<
 > = {
   name: "update_status_report_update",
   description:
-    "Edit an existing status report timeline entry (message, date, status, component impacts). PUBLIC and AUDIT-LOGGED. Does not notify subscribers. Editing the latest entry's status re-derives the report's status. The update id MUST come from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result.",
+    "Edit an existing status report timeline entry (message, date, status, component impacts). PUBLIC and AUDIT-LOGGED. Does not notify subscribers. Editing the latest entry's status re-derives the report's status, including to 'resolved'. The update id MUST come from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result.",
   scope: "write",
   destructive: true,
   inputSchema: UpdateStatusReportUpdateInputShape,

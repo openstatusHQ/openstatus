@@ -82,7 +82,7 @@ A status report is a timeline of dated entries. The first one is written at crea
 
 The report's status is derived from its latest update by date, so editing or removing an update can change it. A report always keeps at least one update: deleting the last one is rejected; delete the report instead. Reads return the entries newest-first under `updates` (RPC), and the public status page renders them in order.
 
-Entries are edited and removed from the dashboard timeline, through the `UpdateStatusReportUpdate` and `DeleteStatusReportUpdate` RPC methods, and through the `update_status_report_update` and `delete_status_report_update` [MCP tools](/docs/reference/mcp-server). The MCP tool refuses to set an entry to `resolved` so the agent resolves through `resolve_status_report`; the RPC method and the dashboard accept it.
+Entries are edited and removed from the dashboard timeline, through the `UpdateStatusReportUpdate` and `DeleteStatusReportUpdate` RPC methods, and through the `update_status_report_update` and `delete_status_report_update` [MCP tools](/docs/reference/mcp-server). All three accept `resolved`: setting the latest entry to `resolved` resolves the report without notifying subscribers, whereas `resolve_status_report` appends a new resolution update and notifies.
 
 ## Component impacts
 
