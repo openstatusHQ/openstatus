@@ -13,15 +13,16 @@ effective: |
     install:
       fromImage:
         path: node
-        digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+        digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
       label:
+        org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
         org.opencontainers.image.stage: install
-        org.opencontainers.image.base.name: docker.io/node:24-slim
-        org.opencontainers.image.base.digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+        org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
       workdir: /app/
       run:
+      - npm install -g corepack@0.36.0
       - corepack enable pnpm
-      - pnpm install --prod --frozen-lockfile --filter=@openstatus/server... --loglevel debug
+      - pnpm install --frozen-lockfile --filter=@openstatus/server... --loglevel debug
       cache:
       - target: /root/.local/share/pnpm/store
       bind:
@@ -97,12 +98,12 @@ effective: |
         source: packages/importers/package.json
     build:
       fromImage:
-        path: denoland/deno
-        digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
+        path: node
+        digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
       label:
-        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.7
+        org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
         org.opencontainers.image.stage: build
-        org.opencontainers.image.base.digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
+        org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
       workdir: /app/apps/server
       env:
         NODE_ENV: production
@@ -123,32 +124,38 @@ effective: |
         - /app/packages
         target: /app/packages
       run:
-      - deno bundle --platform=deno --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
-      - deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi.json --include static/openapi-v1.json --output app src/_serve.bundle.mjs
+      - ./node_modules/.bin/tsdown
   fromImage:
-    host: registry.access.redhat.com
-    port: 443
-    path: hi/curl
-    digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+    path: node
+    digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
   label:
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.title: OpenStatus Server
     org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
-    io.dofigen.version: 2.8.0
+    org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
+    org.opencontainers.image.title: OpenStatus Server
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
+    org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
+    io.dofigen.version: 2.8.0
   user:
     user: '1000'
     group: '1000'
+  workdir: /app/
+  env:
+    NODE_ENV: production
   copy:
   - fromBuilder: build
     paths:
-    - /app/apps/server/app
-    target: /bin/
-    chmod: '555'
+    - /app/apps/server/dist
+    target: /app/dist
+  root:
+    run:
+    - apt-get update
+    - apt-get install -y --no-install-recommends curl ca-certificates
+    - rm -rf /var/lib/apt/lists/*
   entrypoint:
-  - /bin/app
+  - node
+  - /app/dist/serve.mjs
   expose:
   - port: 3000
   healthcheck:
@@ -159,17 +166,13 @@ effective: |
     retries: 3
 images:
   docker.io:
-    denoland:
-      deno:
-        2.9.7:
-          digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
     library:
       node:
-        24-slim:
-          digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+        26.8.1-slim:
+          digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
 resources:
   dofigen.yml:
-    hash: fcdbbd75320dc75f953ef46785f13b2074d77e280ff609f767ae87727918b785
+    hash: 6f243f9d700b71a850285b6473a2d45abe1b8e10efe4757416fcce51cced1916
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -184,9 +187,9 @@ resources:
         - /packages/integrations/vercel
 
       builders:
-        # Stage 1: Install production dependencies
+        # Stage 1: Install dependencies (dev included: the build stage needs tsdown)
         install:
-          fromImage: node:24-slim
+          fromImage: node:26.8.1-slim
           workdir: /app/
           labels:
             org.opencontainers.image.stage: install
@@ -227,14 +230,16 @@ resources:
             - packages/services/package.json
             - packages/importers/package.json
           run:
+            # Node 25+ no longer bundles corepack
+            - npm install -g corepack@0.36.0
             - corepack enable pnpm
-            - pnpm install --prod --frozen-lockfile --filter=@openstatus/server... --loglevel debug
+            - pnpm install --frozen-lockfile --filter=@openstatus/server... --loglevel debug
           cache:
             - /root/.local/share/pnpm/store
 
-        # Stage 2: Build application (compile to binary with Deno)
+        # Stage 2: Bundle the app with tsdown into dist/ (every dependency inlined)
         build:
-          fromImage: denoland/deno:2.9.7
+          fromImage: node:26.8.1-slim
           workdir: /app/apps/server
           labels:
             org.opencontainers.image.stage: build
@@ -251,16 +256,18 @@ resources:
             - fromBuilder: install
               source: /app/packages
               target: /app/packages
-          # 1) bundle to a self-contained mjs; manual node_modules resolves pnpm catalog: + workspace deps, sloppy-imports the extensionless relative imports.
-          #    no --minify: it makes deno 2.9 drop its createRequire shim, so CJS deps requiring node: builtins throw "Dynamic require of ... is not supported".
-          # 2) compile the bundle with node-modules-dir=none so node_modules is NOT embedded — keeps the binary ~110MB instead of ~390MB.
           run:
-            - deno bundle --platform=deno --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
-            - deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi.json --include static/openapi-v1.json --output app src/_serve.bundle.mjs
+            - ./node_modules/.bin/tsdown
 
-      # Runtime stage: distroless glibc base that already ships curl (for the healthcheck).
-      # Pinned to the multi-arch index digest of hi/curl:latest — dofigen mis-resolves this registry's tag to an unpullable digest.
-      fromImage: registry.access.redhat.com/hi/curl@sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+      # Runtime stage: Node plus curl (healthcheck) and the system CA store, which libsql's native
+      # TLS reads — Node's own fetch bundles its CAs, the addon does not.
+      fromImage: node:26.8.1-slim
+      root:
+        run:
+          - apt-get update
+          - apt-get install -y --no-install-recommends curl ca-certificates
+          - rm -rf /var/lib/apt/lists/*
+      workdir: /app/
 
       # Metadata labels
       labels:
@@ -270,12 +277,14 @@ resources:
         org.opencontainers.image.vendor: OpenStatus
         org.opencontainers.image.authors: OpenStatus Team
 
-      # Copy compiled binary
+      env:
+        NODE_ENV: production
+
+      # Copy the bundle
       copy:
         - fromBuilder: build
-          source: /app/apps/server/app
-          target: /bin/
-          chmod: "555"
+          source: /app/apps/server/dist
+          target: /app/dist
 
       # Security: run as non-root user
       user: "1000:1000"
@@ -283,7 +292,6 @@ resources:
       # Expose port
       expose: "3000"
 
-      # Health check — exec form (JSON array) because the base has no shell for CMD-SHELL
       healthcheck:
         interval: 30s
         timeout: 10s
@@ -292,4 +300,4 @@ resources:
         cmd: '["curl", "-f", "http://localhost:3000/ping"]'
 
       # Start application
-      entrypoint: /bin/app
+      entrypoint: ["node", "/app/dist/serve.mjs"]

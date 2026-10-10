@@ -3,7 +3,7 @@ import { db, sql } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import { monitor, monitorStatusTable } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
-import * as Sentry from "@sentry/deno";
+import * as Sentry from "@sentry/node";
 
 import { triggerNotifications } from "../checker/alerting";
 import { enqueueOutbox } from "../checker/outbox";

@@ -16,7 +16,7 @@ import {
 } from "@opentelemetry/sdk-logs";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
-import * as Sentry from "@sentry/deno";
+import * as Sentry from "@sentry/node";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 import { requestId } from "hono/request-id";
@@ -66,9 +66,9 @@ function shouldSample(event: Record<string, unknown>): boolean {
   return Math.random() < 0.2;
 }
 
-// Build the LoggerProvider with a static OTLP exporter import so `deno bundle`
-// includes it. Letting @logtape/otel create the exporter triggers a dynamic
-// import of a bare specifier, which the compiled --node-modules-dir=none binary
+// Build the LoggerProvider with a static OTLP exporter import so tsdown
+// bundles it. Letting @logtape/otel create the exporter triggers a dynamic
+// import of a bare specifier, which the image (shipped without node_modules)
 // can't resolve.
 const loggerProvider = new LoggerProvider({
   resource: resourceFromAttributes({

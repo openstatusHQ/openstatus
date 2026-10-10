@@ -7,7 +7,7 @@ this file never restates them.
 ## Verify your change
 
 ```sh
-pnpm verify        # oxfmt + oxlint + doc refs + deno check. No database, seconds.
+pnpm verify        # oxfmt + oxlint + doc refs + tsc. No database, seconds.
 pnpm verify:test   # tests for packages affected by your diff. Needs a database.
 ```
 
@@ -19,7 +19,7 @@ are in `apps/dashboard/README.md`.
 
 `devbox.json` pins exact node, deno, bun, turso-cli and sqld versions; the CI
 workflows pin the same node and deno. Never float one back to `@latest` or
-`v2.x` — `deno check` results differ by deno version, so a drifting pin makes
+`v2.x` — `tsc` and `deno test` results differ by version, so a drifting pin makes
 `pnpm verify` disagree with CI for reasons unrelated to your change.
 
 ## Architecture
@@ -82,7 +82,7 @@ boundaries with external SDKs or at registry-style dispatch. When you need one:
 - `apps/dashboard/AGENTS.md` — Next.js runtimes, client boundary, UI verification
 - `apps/server/AGENTS.md` — Hono API, API-key scopes
 - `apps/status-page/AGENTS.md` — public surfaces and gated content
-- `apps/workflows/AGENTS.md` — Deno runtime constraints
+- `apps/workflows/AGENTS.md` — bundling constraints, native side-car
 - `apps/checker/AGENTS.md` — Go probing tier
 - `apps/web/AGENTS.md` — marketing site, `.well-known`, search, content pages
 

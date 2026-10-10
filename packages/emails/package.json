@@ -12,7 +12,7 @@
     "./src/*": "./src/*.ts"
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
+    "check": "tsc --noEmit",
     "dev:email": "email dev",
     "test": "deno test --parallel -A --no-check --sloppy-imports"
   },

@@ -20,13 +20,13 @@
     "./src/*": "./src/*.ts"
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
+    "check": "tsc --noEmit",
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",
-    "migrate": "deno run -A --env-file src/migrate.mts",
+    "migrate": "node --env-file-if-exists=.env src/migrate.mts",
     "studio": "drizzle-kit studio",
-    "env": "deno run -A env.ts",
-    "seed": "deno run -A --env-file --sloppy-imports  src/seed.mts",
+    "env": "node env.ts",
+    "seed": "node --import @oxc-node/core/register --env-file-if-exists=.env src/seed.mts",
     "dev": "turso dev --db-file ../../openstatus-dev.db"
   },
   "dependencies": {
@@ -36,6 +36,7 @@
     "@openstatus/regions": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@oxc-node/core": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "bcryptjs": "catalog:",
     "drizzle-orm": "catalog:",

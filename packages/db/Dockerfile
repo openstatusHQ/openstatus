@@ -3,10 +3,10 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM node@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS install
+FROM node@sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146 AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6" \
-    org.opencontainers.image.base.name="docker.io/node:24-slim" \
+    org.opencontainers.image.base.digest="sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146" \
+    org.opencontainers.image.base.name="docker.io/node:26.8.1-slim" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
 RUN \
@@ -21,22 +21,22 @@ RUN \
     --mount=type=bind,target=packages/utils/package.json,source=packages/utils/package.json \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
+npm install -g corepack@0.36.0
 corepack enable pnpm
 pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --loglevel debug
 EOF
 
 # runtime
-FROM denoland/deno@sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432 AS runtime
+FROM node@sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146 AS runtime
 LABEL \
     io.dofigen.version="2.8.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432" \
-    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.7" \
+    org.opencontainers.image.base.digest="sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146" \
+    org.opencontainers.image.base.name="docker.io/node:26.8.1-slim" \
     org.opencontainers.image.description="One-shot database migration runner for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
     org.opencontainers.image.title="OpenStatus DB Migrate" \
     org.opencontainers.image.vendor="OpenStatus"
-ENV DENO_DIR="/tmp/deno-dir"
 WORKDIR /app/packages/db
 COPY \
     --chown=1000:1000 \
@@ -72,5 +72,11 @@ COPY \
     --chown=1000:1000 \
     --link \
     "/app/packages" "/app/packages"
+USER 0:0
+RUN <<EOF
+apt-get update
+apt-get install -y --no-install-recommends ca-certificates
+rm -rf /var/lib/apt/lists/*
+EOF
 USER 1000:1000
-ENTRYPOINT ["deno", "task", "migrate"]
+ENTRYPOINT ["npm", "run", "migrate"]

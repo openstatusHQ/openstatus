@@ -11,9 +11,9 @@
     "./src/*": "./src/*.ts"
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
+    "check": "tsc --noEmit",
     "test": "deno test --parallel -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json",
-    "env": "deno run -A env.ts"
+    "env": "node env.ts"
   },
   "dependencies": {
     "@libsql/client": "catalog:",

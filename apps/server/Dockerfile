@@ -3,10 +3,10 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM node@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS install
+FROM node@sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146 AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6" \
-    org.opencontainers.image.base.name="docker.io/node:24-slim" \
+    org.opencontainers.image.base.digest="sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146" \
+    org.opencontainers.image.base.name="docker.io/node:26.8.1-slim" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
 RUN \
@@ -47,15 +47,16 @@ RUN \
     --mount=type=bind,target=packages/importers/package.json,source=packages/importers/package.json \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
+npm install -g corepack@0.36.0
 corepack enable pnpm
-pnpm install --prod --frozen-lockfile --filter=@openstatus/server... --loglevel debug
+pnpm install --frozen-lockfile --filter=@openstatus/server... --loglevel debug
 EOF
 
 # build
-FROM denoland/deno@sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432 AS build
+FROM node@sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146 AS build
 LABEL \
-    org.opencontainers.image.base.digest="sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432" \
-    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.7" \
+    org.opencontainers.image.base.digest="sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146" \
+    org.opencontainers.image.base.name="docker.io/node:26.8.1-slim" \
     org.opencontainers.image.stage="build"
 ENV NODE_ENV="production"
 WORKDIR /app/apps/server
@@ -74,27 +75,32 @@ COPY \
     --from=install \
     --link \
     "/app/packages" "/app/packages"
-RUN <<EOF
-deno bundle --platform=deno --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
-deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi.json --include static/openapi-v1.json --output app src/_serve.bundle.mjs
-EOF
+RUN ./node_modules/.bin/tsdown
 
 # runtime
-FROM registry.access.redhat.com/hi/curl@sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4 AS runtime
+FROM node@sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146 AS runtime
 LABEL \
     io.dofigen.version="2.8.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4" \
+    org.opencontainers.image.base.digest="sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146" \
+    org.opencontainers.image.base.name="docker.io/node:26.8.1-slim" \
     org.opencontainers.image.description="REST API server with Hono framework for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
     org.opencontainers.image.title="OpenStatus Server" \
     org.opencontainers.image.vendor="OpenStatus"
+ENV NODE_ENV="production"
+WORKDIR /app/
 COPY \
     --from=build \
     --chown=1000:1000 \
-    --chmod=555 \
     --link \
-    "/app/apps/server/app" "/bin/"
+    "/app/apps/server/dist" "/app/dist"
+USER 0:0
+RUN <<EOF
+apt-get update
+apt-get install -y --no-install-recommends curl ca-certificates
+rm -rf /var/lib/apt/lists/*
+EOF
 USER 1000:1000
 EXPOSE 3000
 HEALTHCHECK \
@@ -103,4 +109,4 @@ HEALTHCHECK \
     --start-period=30s \
     --retries=3 \
     CMD ["curl", "-f", "http://localhost:3000/ping"]
-ENTRYPOINT ["/bin/app"]
+ENTRYPOINT ["node", "/app/dist/serve.mjs"]

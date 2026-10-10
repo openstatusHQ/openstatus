@@ -12,7 +12,7 @@ ignore:
   - /packages/tracker
 builders:
   install:
-    fromImage: node:24-slim
+    fromImage: node:26.8.1-slim
     workdir: /app/
     labels:
       org.opencontainers.image.stage: install
@@ -50,16 +50,18 @@ builders:
       - packages/locales/package.json
       - packages/status-fetcher/package.json
 
-    # Install dependencies (scoped to the workflows subgraph so node_modules — and the binary that embeds it — stays small)
+    # Install dependencies scoped to the workflows subgraph (dev included: the build stage needs tsdown)
     run:
+      # Node 25+ no longer bundles corepack
+      - npm install -g corepack@0.36.0
       - corepack enable pnpm
-      - pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --loglevel debug
+      - pnpm install --frozen-lockfile --filter=@openstatus/workflows... --loglevel debug
     cache:
       - /root/.local/share/pnpm/store
 
-  # Stage 4: Build application (compile to binary with Deno)
+  # Stage 4: Bundle the app with tsdown into dist/
   build:
-    fromImage: denoland/deno:2.9.7
+    fromImage: node:26.8.1-slim
     workdir: /app/apps/workflows
     labels:
       org.opencontainers.image.stage: build
@@ -76,21 +78,23 @@ builders:
         target: /app/packages
     env:
       NODE_ENV: production
-    # Bundle the app to self-contained JS, EXTERNALISING the 3 packages that can't be inlined:
-    # @libsql/client + libsql (native .node loader) and @google-cloud/tasks (google-proto-files reads
-    # files via CJS __dirname). They ship as a minimal side-car node_modules (deno install, ~46MB,
-    # platform-aware so Fly amd64 works) instead of embedding all node_modules. Binary ~146MB vs ~360MB.
+    # Everything is inlined except the 3 packages that can't be (see tsdown.config.ts). They ship as
+    # a minimal side-car node_modules, installed by npm on the build platform so Fly amd64 gets the
+    # right libsql native binary, at the exact versions pnpm resolved.
     run:
-      - mkdir -p /tmp/sc
-      - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
-      - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
-      - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
-      - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
-      - mkdir -p /app/data
+      - ./node_modules/.bin/tsdown
+      - mkdir -p /tmp/sc /app/data
+      - node scripts/sidecar-package.mjs /tmp/sc/package.json
+      - npm install --prefix /tmp/sc --omit=dev --no-package-lock --no-audit --no-fund
 
-# Runtime: distroless glibc base that already ships curl + CA certs (Deno's HTTPS works on it; no apt needed).
-# Pinned to the multi-arch index digest of hi/curl:latest — dofigen mis-resolves this registry's tag to an unpullable digest.
-fromImage: registry.access.redhat.com/hi/curl@sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+# Runtime stage: Node plus curl (healthcheck) and the system CA store, which libsql's native
+# TLS reads — Node's own fetch bundles its CAs, the addon does not.
+fromImage: node:26.8.1-slim
+root:
+  run:
+    - apt-get update
+    - apt-get install -y --no-install-recommends curl ca-certificates
+    - rm -rf /var/lib/apt/lists/*
 workdir: /app/
 
 # Metadata labels
@@ -101,12 +105,17 @@ labels:
   org.opencontainers.image.vendor: OpenStatus
   org.opencontainers.image.authors: OpenStatus Team
 
-# Copy the self-contained compiled binary (native addon embedded by deno compile)
+env:
+  NODE_ENV: production
+
+# The bundle resolves its externals from the side-car node_modules one level up from dist/
 copy:
   - fromBuilder: build
-    source: /app/apps/workflows/app
-    target: /app/apps/workflows/
-    chmod: "555"
+    source: /app/apps/workflows/dist
+    target: /app/apps/workflows/dist
+  - fromBuilder: build
+    source: /tmp/sc/node_modules
+    target: /app/apps/workflows/node_modules
   - fromBuilder: build
     source: /app/data
     target: /app/data
@@ -114,7 +123,6 @@ copy:
 user: "1000:1000"
 expose: "3000"
 
-# Health check — exec form (JSON array) because the base has no shell for CMD-SHELL
 healthcheck:
   interval: 1m
   timeout: 10s
@@ -122,4 +130,4 @@ healthcheck:
   retries: 3
   cmd: '["curl", "-f", "http://localhost:3000/ping"]'
 
-entrypoint: /app/apps/workflows/app
+entrypoint: ["node", "/app/apps/workflows/dist/serve.mjs"]

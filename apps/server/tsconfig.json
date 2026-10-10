@@ -8,15 +8,17 @@
     "moduleResolution": "bundler",
     "jsxImportSource": "react",
     "allowJs": true,
-    "types": [],
     "paths": {
-      "@/*": ["./src/*"],
-      "@modelcontextprotocol/sdk/server/mcp.js": [
-        "./node_modules/@modelcontextprotocol/sdk/dist/esm/server/mcp.d.ts"
-      ],
-      "@modelcontextprotocol/sdk/types.js": [
-        "./node_modules/@modelcontextprotocol/sdk/dist/esm/types.d.ts"
-      ]
+      "@/*": ["./src/*"]
     }
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/*.mock.ts",
+    "**/test-preload.ts"
+  ]
 }

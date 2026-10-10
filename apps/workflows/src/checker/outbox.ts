@@ -16,7 +16,7 @@ import {
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
-import * as Sentry from "@sentry/deno";
+import * as Sentry from "@sentry/node";
 import { Effect, Exit, Queue } from "effect";
 
 import { env } from "../env";
