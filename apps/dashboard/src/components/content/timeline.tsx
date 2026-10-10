@@ -149,20 +149,32 @@ type Actor = {
   photoUrl?: string | null;
 };
 
+/** Where the actor acted from, when not the dashboard itself. */
+export type ActorSource = {
+  label: string;
+  icon: React.ComponentType<React.ComponentProps<"svg">>;
+  /** Deep link to the original, e.g. a Slack permalink. */
+  href?: string;
+};
+
 // Renders nothing for a missing actor; the caller phrases the sentence
-// without one. Email on hover when the name is shown instead.
+// without one. Email on hover when the name is shown instead. A source
+// overlays the avatar's corner so the sentence keeps its own verb.
 export function TimelineActor({
   actor,
   avatar = false,
+  source,
   className,
   ...props
 }: Omit<React.ComponentProps<"span">, "children"> & {
   actor: Actor | null;
   avatar?: boolean;
+  source?: ActorSource;
 }) {
   if (!actor) return null;
   const label = actor.name ?? actor.email ?? "Unknown";
-  const node = (
+  const name = <span className="truncate">{label}</span>;
+  return (
     <span
       data-slot="timeline-actor"
       className={cn(
@@ -172,23 +184,65 @@ export function TimelineActor({
       {...props}
     >
       {avatar ? (
-        <UserAvatar name={label} src={actor.photoUrl} className="size-5" />
+        <span className="relative shrink-0">
+          <UserAvatar name={label} src={actor.photoUrl} className="size-5" />
+          {source ? <TimelineActorSource source={source} /> : null}
+        </span>
       ) : null}
-      <span className="truncate">{label}</span>
+      {!actor.email || actor.email === label ? (
+        name
+      ) : (
+        <Tooltip>
+          <TooltipTrigger
+            asChild
+            // focusable so the tooltip opens from the keyboard
+            tabIndex={0}
+            className="focus-visible:ring-ring/50 rounded-sm outline-none focus-visible:ring-[3px]"
+          >
+            {name}
+          </TooltipTrigger>
+          <TooltipContent side="top">{actor.email}</TooltipContent>
+        </Tooltip>
+      )}
     </span>
   );
-  if (!actor.email || actor.email === label) return node;
+}
+
+function TimelineActorSource({ source }: { source: ActorSource }) {
+  const className = cn(
+    "text-foreground absolute -right-1 -bottom-1 flex size-3 items-center justify-center rounded-full ring-1",
+    // fill and ring match the surface behind so the badge reads as a cut-out
+    "bg-background ring-background in-data-[slot=timeline-card]:bg-card in-data-[slot=timeline-card]:ring-card",
+    "focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px]",
+  );
+  // brand icons carry an svg <title>; no pointer events keeps the native tooltip away
+  const icon = <source.icon className="pointer-events-none size-2" />;
   return (
     <Tooltip>
-      <TooltipTrigger
-        asChild
-        // focusable so the tooltip opens from the keyboard
-        tabIndex={0}
-        className="focus-visible:ring-ring/50 rounded-sm outline-none focus-visible:ring-[3px]"
-      >
-        {node}
+      <TooltipTrigger asChild>
+        {source.href ? (
+          <a
+            href={source.href}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Open in ${source.label}`}
+            className={cn(className, "hover:bg-muted")}
+          >
+            {icon}
+          </a>
+        ) : (
+          <span
+            tabIndex={0}
+            aria-label={`via ${source.label}`}
+            className={className}
+          >
+            {icon}
+          </span>
+        )}
       </TooltipTrigger>
-      <TooltipContent side="top">{actor.email}</TooltipContent>
+      <TooltipContent side="top">
+        {source.href ? `Open in ${source.label}` : `via ${source.label}`}
+      </TooltipContent>
     </Tooltip>
   );
 }

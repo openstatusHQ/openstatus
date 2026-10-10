@@ -272,21 +272,17 @@ export function IncidentTimelineItem({
           Agent
         </TimelineHighlight>
       ) : (
-        <TimelineActor actor={actor} avatar={message !== null} />
+        <TimelineActor
+          actor={actor}
+          avatar={message !== null}
+          source={
+            slackUrl
+              ? { label: "Slack", icon: SlackIcon, href: slackUrl }
+              : undefined
+          }
+        />
       )}
-      {slackUrl ? (
-        <a
-          href={slackUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="decoration-muted-foreground/50 hover:text-foreground inline-flex items-center gap-1 underline decoration-dashed underline-offset-2"
-        >
-          <SlackIcon className="size-3.5" />
-          via Slack
-        </a>
-      ) : (
-        (phrase ?? "posted")
-      )}
+      {phrase ?? "posted"}
       {report ? (
         <TimelineHighlight>
           <Link
