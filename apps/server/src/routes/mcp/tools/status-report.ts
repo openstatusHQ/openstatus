@@ -6,9 +6,11 @@ import type { ServiceContext } from "@openstatus/services";
 import {
   addStatusReportUpdateTool,
   createStatusReportTool,
+  deleteStatusReportUpdateTool,
   listStatusReportsTool,
   resolveStatusReportTool,
   updateStatusReportTool,
+  updateStatusReportUpdateTool,
 } from "@openstatus/services/agent-tools";
 
 import { registerRegistryTools } from "./registry-adapter";
@@ -23,5 +25,7 @@ export function registerStatusReportTools(
     addStatusReportUpdateTool,
     updateStatusReportTool,
     resolveStatusReportTool,
+    updateStatusReportUpdateTool,
+    deleteStatusReportUpdateTool,
   ]);
 }

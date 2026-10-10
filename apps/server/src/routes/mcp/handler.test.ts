@@ -127,6 +127,7 @@ describe("MCP transport", () => {
       "create_status_report",
       "declare_incident",
       "delete_maintenance_update",
+      "delete_status_report_update",
       "draft_postmortem",
       "get_audit_log",
       "get_content_page",
@@ -155,6 +156,7 @@ describe("MCP transport", () => {
       "update_incident",
       "update_maintenance_update",
       "update_status_report",
+      "update_status_report_update",
     ]);
   });
 

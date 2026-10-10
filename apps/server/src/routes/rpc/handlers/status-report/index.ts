@@ -8,10 +8,12 @@ import {
   addStatusReportUpdate,
   createStatusReport,
   deleteStatusReport,
+  deleteStatusReportUpdate,
   getStatusReport,
   listStatusReports,
   notifyStatusReport,
   updateStatusReport,
+  updateStatusReportUpdate,
 } from "@openstatus/services/status-report";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
@@ -19,10 +21,15 @@ import { getRpcContext } from "../../interceptors";
 import {
   dbReportToProto,
   dbReportToProtoSummary,
+  dbUpdateToProto,
   protoImpactToDb,
   protoStatusToDb,
 } from "./converters";
-import { invalidDateFormatError, statusReportIdRequiredError } from "./errors";
+import {
+  invalidDateFormatError,
+  statusReportIdRequiredError,
+  statusReportUpdateIdRequiredError,
+} from "./errors";
 
 function parseDate(dateString: string): Date {
   const date = new Date(dateString);
@@ -35,19 +42,21 @@ function parseDate(dateString: string): Date {
 // Match the digits explicitly: `Number("")` is 0 (finite!), so a blank id used
 // to slip through and target component 0, and `Number.parseInt("1.5")` is 1, so
 // swapping in parseInt alone would still truncate a malformed id silently.
-const PAGE_COMPONENT_ID = /^\d+$/;
+const DECIMAL_ID = /^\d+$/;
+
+function parseId(value: string, label: string): number {
+  const trimmed = value.trim();
+  if (!DECIMAL_ID.test(trimmed)) {
+    throw new ConnectError(
+      `Invalid ${label}: "${value}"`,
+      Code.InvalidArgument,
+    );
+  }
+  return Number(trimmed);
+}
 
 function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
-  return ids.map((id) => {
-    const trimmed = id.trim();
-    if (!PAGE_COMPONENT_ID.test(trimmed)) {
-      throw new ConnectError(
-        `Invalid page component id: "${id}"`,
-        Code.InvalidArgument,
-      );
-    }
-    return Number(trimmed);
-  });
+  return ids.map((id) => parseId(id, "page component id"));
 }
 
 // empty list ⇒ undefined: an old client omitting the field must produce a
@@ -59,7 +68,7 @@ function parseComponentImpacts(
   | undefined {
   if (impacts.length === 0) return undefined;
   return impacts.map((ci) => ({
-    pageComponentId: parsePageComponentIds([ci.pageComponentId])[0],
+    pageComponentId: parseId(ci.pageComponentId, "page component id"),
     impact: protoImpactToDb(ci.impact),
   }));
 }
@@ -258,6 +267,58 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
             full.updates,
           ),
         };
+      } catch (err) {
+        toConnectError(err);
+      }
+    },
+
+    async updateStatusReportUpdate(req, ctx) {
+      try {
+        const rpcCtx = getRpcContext(ctx);
+        const sCtx = toServiceCtx(rpcCtx);
+        if (!req.id?.trim()) {
+          throw statusReportUpdateIdRequiredError();
+        }
+        const id = parseId(req.id, "status report update id");
+        const edited = await updateStatusReportUpdate({
+          ctx: sCtx,
+          input: {
+            id,
+            status:
+              req.status !== undefined
+                ? protoStatusToDb(req.status)
+                : undefined,
+            message: req.message,
+            date: req.date ? parseDate(req.date) : undefined,
+            // repeated can't distinguish empty from absent, so the flag decides
+            componentImpacts: req.updateComponentImpacts
+              ? (parseComponentImpacts(req.componentImpacts) ?? [])
+              : undefined,
+          },
+        });
+        // the row alone has no impact rows; re-read through the report
+        const full = await getStatusReport({
+          ctx: sCtx,
+          input: { id: edited.statusReportId },
+        });
+        const update = full.updates.find((u) => u.id === id) ?? edited;
+        return { statusReportUpdate: dbUpdateToProto(update) };
+      } catch (err) {
+        toConnectError(err);
+      }
+    },
+
+    async deleteStatusReportUpdate(req, ctx) {
+      try {
+        const rpcCtx = getRpcContext(ctx);
+        if (!req.id?.trim()) {
+          throw statusReportUpdateIdRequiredError();
+        }
+        await deleteStatusReportUpdate({
+          ctx: toServiceCtx(rpcCtx),
+          input: { id: parseId(req.id, "status report update id") },
+        });
+        return { success: true };
       } catch (err) {
         toConnectError(err);
       }

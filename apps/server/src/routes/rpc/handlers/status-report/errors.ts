@@ -6,6 +6,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 export const ErrorReason = {
   STATUS_REPORT_NOT_FOUND: "STATUS_REPORT_NOT_FOUND",
   STATUS_REPORT_ID_REQUIRED: "STATUS_REPORT_ID_REQUIRED",
+  STATUS_REPORT_UPDATE_ID_REQUIRED: "STATUS_REPORT_UPDATE_ID_REQUIRED",
   STATUS_REPORT_CREATE_FAILED: "STATUS_REPORT_CREATE_FAILED",
   STATUS_REPORT_UPDATE_FAILED: "STATUS_REPORT_UPDATE_FAILED",
   PAGE_COMPONENT_NOT_FOUND: "PAGE_COMPONENT_NOT_FOUND",
@@ -64,6 +65,17 @@ export function statusReportIdRequiredError(): ConnectError {
     "Status report ID is required",
     Code.InvalidArgument,
     ErrorReason.STATUS_REPORT_ID_REQUIRED,
+  );
+}
+
+/**
+ * Creates a "status report update ID required" error.
+ */
+export function statusReportUpdateIdRequiredError(): ConnectError {
+  return createError(
+    "Status report update ID is required",
+    Code.InvalidArgument,
+    ErrorReason.STATUS_REPORT_UPDATE_ID_REQUIRED,
   );
 }
 

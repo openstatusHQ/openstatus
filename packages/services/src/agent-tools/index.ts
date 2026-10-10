@@ -39,9 +39,11 @@ import { listPrivateLocationsTool } from "./private-location";
 import {
   addStatusReportUpdateTool,
   createStatusReportTool,
+  deleteStatusReportUpdateTool,
   listStatusReportsTool,
   resolveStatusReportTool,
   updateStatusReportTool,
+  updateStatusReportUpdateTool,
 } from "./status-report";
 import type { AnyAgentTool } from "./types";
 
@@ -82,9 +84,11 @@ export { listPrivateLocationsTool } from "./private-location";
 export {
   addStatusReportUpdateTool,
   createStatusReportTool,
+  deleteStatusReportUpdateTool,
   listStatusReportsTool,
   resolveStatusReportTool,
   updateStatusReportTool,
+  updateStatusReportUpdateTool,
 } from "./status-report";
 export type {
   AgentTool,
@@ -120,6 +124,8 @@ export const agentTools = {
   add_status_report_update: addStatusReportUpdateTool,
   update_status_report: updateStatusReportTool,
   resolve_status_report: resolveStatusReportTool,
+  update_status_report_update: updateStatusReportUpdateTool,
+  delete_status_report_update: deleteStatusReportUpdateTool,
   list_incidents: listIncidentsTool,
   get_incident: getIncidentTool,
   declare_incident: declareIncidentTool,

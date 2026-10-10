@@ -236,6 +236,57 @@ describe("list_status_reports", () => {
       expect(ids).not.toContain(resolved.id);
     });
   });
+
+  test("returns the full timeline newest-first with update ids", async () => {
+    await withTestTransaction(async (tx) => {
+      const sr = await tx
+        .insert(statusReport)
+        .values({
+          workspaceId: teamWorkspace.id,
+          pageId: testPageId,
+          title: `${TEST_PREFIX}-timeline`,
+          status: "identified",
+        })
+        .returning()
+        .get();
+      const [older, newer] = await tx
+        .insert(statusReportUpdate)
+        .values([
+          {
+            statusReportId: sr.id,
+            status: "investigating",
+            message: "first",
+            date: new Date("2026-01-01T00:00:00Z"),
+          },
+          {
+            statusReportId: sr.id,
+            status: "identified",
+            message: "second",
+            date: new Date("2026-01-02T00:00:00Z"),
+          },
+        ])
+        .returning()
+        .all();
+
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("status-report", ctx);
+      const result = await callTool(tools, "list_status_reports", {});
+      expect(result.isError).toBeUndefined();
+      const items = (
+        result.structuredContent as {
+          items: {
+            id: number;
+            latestUpdate: { id: number } | null;
+            updates: { id: number; status: string; message: string }[];
+          }[];
+        }
+      ).items;
+      const item = items.find((i) => i.id === sr.id);
+      expect(item?.updates.map((u) => u.id)).toEqual([newer.id, older.id]);
+      expect(item?.updates[0].status).toBe("identified");
+      expect(item?.latestUpdate?.id).toBe(newer.id);
+    });
+  });
 });
 
 describe("create_status_report", () => {
@@ -487,6 +538,124 @@ describe("resolve_status_report", () => {
   });
 });
 
+describe("update_status_report_update / delete_status_report_update", () => {
+  async function seedReport(tx: ServiceContext["db"]) {
+    const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+    const tools = registered("status-report", ctx);
+    const created = await callTool(tools, "create_status_report", {
+      title: `${TEST_PREFIX}-edit-updates`,
+      status: "investigating",
+      message: "first",
+      pageId: testPageId,
+      pageComponentIds: [testPageComponentId],
+      notify: false,
+    });
+    expect(created.isError).toBeUndefined();
+    const { statusReport: sr, initialUpdateId } = created.structuredContent as {
+      statusReport: { id: number };
+      initialUpdateId: number;
+    };
+    return { tools, reportId: sr.id, firstUpdateId: initialUpdateId };
+  }
+
+  test("edits an entry and re-derives the report status", async () => {
+    await withTestTransaction(async (tx) => {
+      const { tools, reportId, firstUpdateId } = await seedReport(tx);
+      const added = await callTool(tools, "add_status_report_update", {
+        statusReportId: reportId,
+        status: "identified",
+        message: "second",
+        notify: false,
+      });
+      const { statusReportUpdateId } = added.structuredContent as {
+        statusReportUpdateId: number;
+      };
+
+      const edited = await callTool(tools, "update_status_report_update", {
+        id: statusReportUpdateId,
+        status: "monitoring",
+        message: "second, corrected",
+      });
+      expect(edited.isError).toBeUndefined();
+      const out = edited.structuredContent as {
+        id: number;
+        statusReportId: number;
+        status: string;
+        message: string;
+      };
+      expect(out.id).toBe(statusReportUpdateId);
+      expect(out.statusReportId).toBe(reportId);
+      expect(out.status).toBe("monitoring");
+      expect(out.message).toBe("second, corrected");
+
+      const report = await tx
+        .select()
+        .from(statusReport)
+        .where(eq(statusReport.id, reportId))
+        .get();
+      expect(report?.status).toBe("monitoring");
+      expect(firstUpdateId).toBeGreaterThan(0);
+    });
+  });
+
+  test("rejects status 'resolved' via Zod refine", async () => {
+    await withTestTransaction(async (tx) => {
+      const { tools, firstUpdateId } = await seedReport(tx);
+      const result = await callTool(tools, "update_status_report_update", {
+        id: firstUpdateId,
+        status: "resolved",
+      });
+      expect(result.isError).toBe(true);
+      expect(JSON.stringify(result.content)).toContain("resolve_status_report");
+    });
+  });
+
+  test("deletes a non-last entry and refuses the last one", async () => {
+    await withTestTransaction(async (tx) => {
+      const { tools, reportId, firstUpdateId } = await seedReport(tx);
+      const added = await callTool(tools, "add_status_report_update", {
+        statusReportId: reportId,
+        status: "identified",
+        message: "second",
+        notify: false,
+      });
+      const { statusReportUpdateId } = added.structuredContent as {
+        statusReportUpdateId: number;
+      };
+
+      const deleted = await callTool(tools, "delete_status_report_update", {
+        id: statusReportUpdateId,
+      });
+      expect(deleted.isError).toBeUndefined();
+      expect(deleted.structuredContent).toEqual({
+        id: statusReportUpdateId,
+        success: true,
+      });
+      const rows = await readAuditLog({
+        workspaceId: teamWorkspace.id,
+        entityType: "status_report_update",
+        entityId: statusReportUpdateId,
+        db: tx,
+      });
+      expect(rows.some((r) => r.action === "status_report_update.delete")).toBe(
+        true,
+      );
+
+      const last = await callTool(tools, "delete_status_report_update", {
+        id: firstUpdateId,
+      });
+      expect(last.isError).toBe(true);
+      expect(JSON.stringify(last.content)).toContain("at least one update");
+      const remaining = await tx
+        .select()
+        .from(statusReportUpdate)
+        .where(eq(statusReportUpdate.statusReportId, reportId))
+        .all();
+      expect(remaining).toHaveLength(1);
+    });
+  });
+});
+
 describe("list_maintenances", () => {
   test("returns items and pagination metadata", async () => {
     await withTestTransaction(async (tx) => {
@@ -652,6 +821,8 @@ describe("scope filter", () => {
     expect(reportTools.has("add_status_report_update")).toBe(false);
     expect(reportTools.has("update_status_report")).toBe(false);
     expect(reportTools.has("resolve_status_report")).toBe(false);
+    expect(reportTools.has("update_status_report_update")).toBe(false);
+    expect(reportTools.has("delete_status_report_update")).toBe(false);
     expect(maintenanceTools.has("create_maintenance")).toBe(false);
     expect(maintenanceTools.has("add_maintenance_update")).toBe(false);
     expect(maintenanceTools.has("update_maintenance_update")).toBe(false);

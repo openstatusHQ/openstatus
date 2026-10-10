@@ -1726,6 +1726,305 @@ describe("StatusReportService.AddStatusReportUpdate", () => {
   });
 });
 
+describe("StatusReportService status report update CRUD", () => {
+  const AUTH = { "x-openstatus-key": "1" };
+
+  type WireUpdate = {
+    id: string;
+    status: string;
+    message: string;
+    date: string;
+    componentImpacts: { pageComponentId: string; impact: string }[];
+  };
+
+  async function createReport(suffix: string) {
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-${suffix}`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "first entry",
+        date: new Date(Date.now() - 60_000).toISOString(),
+        pageId: "1",
+        pageComponentIds: [String(testPageComponentId)],
+      },
+      AUTH,
+    );
+    expect(res.status).toBe(200);
+    const { statusReport: report } = await res.json();
+    return report as { id: string; updates: WireUpdate[] };
+  }
+
+  async function addUpdate(reportId: string, message: string) {
+    const res = await connectRequest(
+      "AddStatusReportUpdate",
+      {
+        statusReportId: reportId,
+        status: "STATUS_REPORT_STATUS_IDENTIFIED",
+        message,
+        date: new Date().toISOString(),
+      },
+      AUTH,
+    );
+    expect(res.status).toBe(200);
+    const { statusReport: report } = await res.json();
+    const created = (report.updates as WireUpdate[]).find(
+      (u) => u.message === message,
+    );
+    if (!created) throw new Error("update not returned");
+    return created;
+  }
+
+  async function getReport(reportId: string) {
+    const res = await connectRequest("GetStatusReport", { id: reportId }, AUTH);
+    expect(res.status).toBe(200);
+    const { statusReport: report } = await res.json();
+    return report as { status: string; updates: WireUpdate[] };
+  }
+
+  async function cleanupReport(reportId: string) {
+    await connectRequest("DeleteStatusReport", { id: reportId }, AUTH);
+  }
+
+  test("edits and removes timeline entries, re-deriving the report status", async () => {
+    const report = await createReport("update-crud");
+    try {
+      const second = await addUpdate(report.id, "second entry");
+      expect((await getReport(report.id)).status).toBe(
+        "STATUS_REPORT_STATUS_IDENTIFIED",
+      );
+
+      // dates persist at second precision
+      const editedDate = new Date(
+        Math.floor(Date.now() / 1000) * 1000,
+      ).toISOString();
+      const edited = await connectRequest(
+        "UpdateStatusReportUpdate",
+        {
+          id: second.id,
+          status: "STATUS_REPORT_STATUS_MONITORING",
+          message: "corrected entry",
+          date: editedDate,
+        },
+        AUTH,
+      );
+      expect(edited.status).toBe(200);
+      const { statusReportUpdate: row } = await edited.json();
+      expect(row.id).toBe(second.id);
+      expect(row.status).toBe("STATUS_REPORT_STATUS_MONITORING");
+      expect(row.message).toBe("corrected entry");
+      expect(new Date(row.date).toISOString()).toBe(editedDate);
+
+      // editing the latest update's status re-derives the report
+      let full = await getReport(report.id);
+      expect(full.status).toBe("STATUS_REPORT_STATUS_MONITORING");
+      expect(full.updates).toHaveLength(2);
+
+      const deleted = await connectRequest(
+        "DeleteStatusReportUpdate",
+        { id: second.id },
+        AUTH,
+      );
+      expect(deleted.status).toBe(200);
+      expect(await deleted.json()).toEqual({ success: true });
+
+      full = await getReport(report.id);
+      expect(full.updates).toHaveLength(1);
+      expect(full.status).toBe("STATUS_REPORT_STATUS_INVESTIGATING");
+    } finally {
+      await cleanupReport(report.id);
+    }
+  });
+
+  test("replaces component impacts only when updateComponentImpacts is set", async () => {
+    const report = await createReport("update-impacts");
+    const updateId = report.updates[0].id;
+    try {
+      const set = await connectRequest(
+        "UpdateStatusReportUpdate",
+        {
+          id: updateId,
+          componentImpacts: [
+            {
+              pageComponentId: String(testPageComponentId),
+              impact: "PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE",
+            },
+          ],
+          updateComponentImpacts: true,
+        },
+        AUTH,
+      );
+      expect(set.status).toBe(200);
+      expect((await set.json()).statusReportUpdate.componentImpacts).toEqual([
+        {
+          pageComponentId: String(testPageComponentId),
+          impact: "PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE",
+        },
+      ]);
+
+      // no flag ⇒ impacts untouched even though the list is empty on the wire
+      const untouched = await connectRequest(
+        "UpdateStatusReportUpdate",
+        { id: updateId, message: "message only" },
+        AUTH,
+      );
+      expect(untouched.status).toBe(200);
+      const kept = (await untouched.json()).statusReportUpdate;
+      expect(kept.message).toBe("message only");
+      expect(kept.componentImpacts).toHaveLength(1);
+
+      const cleared = await connectRequest(
+        "UpdateStatusReportUpdate",
+        { id: updateId, componentImpacts: [], updateComponentImpacts: true },
+        AUTH,
+      );
+      expect(cleared.status).toBe(200);
+      // an empty repeated field is omitted on the JSON wire
+      expect(
+        (await cleared.json()).statusReportUpdate.componentImpacts ?? [],
+      ).toEqual([]);
+      const rows = await db
+        .select()
+        .from(statusReportUpdateToPageComponents)
+        .where(
+          eq(
+            statusReportUpdateToPageComponents.statusReportUpdateId,
+            Number(updateId),
+          ),
+        )
+        .all();
+      expect(rows).toHaveLength(0);
+    } finally {
+      await cleanupReport(report.id);
+    }
+  });
+
+  test("refuses to delete the last update", async () => {
+    const report = await createReport("last-update");
+    try {
+      expect(report.updates).toHaveLength(1);
+      const res = await connectRequest(
+        "DeleteStatusReportUpdate",
+        { id: report.updates[0].id },
+        AUTH,
+      );
+      expect(res.status).toBe(400);
+      expect((await res.json()).message).toContain("at least one update");
+      expect((await getReport(report.id)).updates).toHaveLength(1);
+    } finally {
+      await cleanupReport(report.id);
+    }
+  });
+
+  test("rejects an UNSPECIFIED status and a malformed date", async () => {
+    const report = await createReport("update-validation");
+    const updateId = report.updates[0].id;
+    try {
+      const status = await connectRequest(
+        "UpdateStatusReportUpdate",
+        { id: updateId, status: "STATUS_REPORT_STATUS_UNSPECIFIED" },
+        AUTH,
+      );
+      expect(status.status).toBe(400);
+
+      const date = await connectRequest(
+        "UpdateStatusReportUpdate",
+        { id: updateId, date: "not-a-date" },
+        AUTH,
+      );
+      expect(date.status).toBe(400);
+    } finally {
+      await cleanupReport(report.id);
+    }
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const edit = await connectRequest("UpdateStatusReportUpdate", {
+      id: "1",
+      message: "x",
+    });
+    expect(edit.status).toBe(401);
+    const del = await connectRequest("DeleteStatusReportUpdate", { id: "1" });
+    expect(del.status).toBe(401);
+  });
+
+  test("rejects empty, blank and non-decimal ids", async () => {
+    for (const method of [
+      "UpdateStatusReportUpdate",
+      "DeleteStatusReportUpdate",
+    ]) {
+      for (const id of ["", "   ", "abc", "1e3"]) {
+        const res = await connectRequest(method, { id }, AUTH);
+        expect(res.status).toBe(400);
+      }
+    }
+  });
+
+  test("returns 404 for an unknown update", async () => {
+    const edit = await connectRequest(
+      "UpdateStatusReportUpdate",
+      { id: "999999", message: "x" },
+      AUTH,
+    );
+    expect(edit.status).toBe(404);
+    const del = await connectRequest(
+      "DeleteStatusReportUpdate",
+      { id: "999999" },
+      AUTH,
+    );
+    expect(del.status).toBe(404);
+  });
+
+  test("scopes update mutations to the authenticated workspace", async () => {
+    const otherReport = await db
+      .insert(statusReport)
+      .values({
+        workspaceId: OTHER_WORKSPACE_ID,
+        title: `${TEST_PREFIX}-other-workspace-update`,
+        status: "investigating",
+      })
+      .returning()
+      .get();
+    const otherUpdate = await db
+      .insert(statusReportUpdate)
+      .values({
+        statusReportId: otherReport.id,
+        status: "investigating",
+        date: new Date(),
+        message: "foreign",
+      })
+      .returning()
+      .get();
+    try {
+      // the update lookup answers with ForbiddenError, not NotFoundError
+      const edit = await connectRequest(
+        "UpdateStatusReportUpdate",
+        { id: String(otherUpdate.id), message: "hijacked" },
+        AUTH,
+      );
+      expect(edit.status).toBe(403);
+      const del = await connectRequest(
+        "DeleteStatusReportUpdate",
+        { id: String(otherUpdate.id) },
+        AUTH,
+      );
+      expect(del.status).toBe(403);
+
+      const still = await db
+        .select()
+        .from(statusReportUpdate)
+        .where(eq(statusReportUpdate.id, otherUpdate.id))
+        .get();
+      expect(still?.message).toBe("foreign");
+    } finally {
+      await db
+        .delete(statusReportUpdate)
+        .where(eq(statusReportUpdate.statusReportId, otherReport.id));
+      await db.delete(statusReport).where(eq(statusReport.id, otherReport.id));
+    }
+  });
+});
+
 describe("StatusReportService component impacts", () => {
   async function cleanupReport(id: number) {
     // update deletion cascades the impact join rows
