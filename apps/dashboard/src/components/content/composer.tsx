@@ -237,9 +237,10 @@ export function ComposerTextarea({
     <TabsContent value="write">
       <InputGroupTextarea
         ref={focusOnMount}
-        // leading-6 matches prose-sm so text sits where the preview renders it
+        // leading-6 matches prose-sm so text sits where the preview renders it;
+        // px-4 is the timeline card's padding so text lines up with its avatar
         className={cn(
-          "min-h-24 leading-6 in-data-[size=lg]:min-h-96",
+          "min-h-24 px-4 leading-6 in-data-[size=lg]:min-h-96",
           className,
         )}
         onKeyDown={(e) => {
@@ -271,7 +272,7 @@ export function ComposerPreview({
         // focusable so the hotkey can flip back without a pointer
         tabIndex={-1}
         className={cn(
-          "prose prose-sm dark:prose-invert min-h-24 max-w-none px-3 py-3 outline-none in-data-[size=lg]:min-h-96",
+          "prose prose-sm dark:prose-invert min-h-24 max-w-none px-4 py-3 outline-none in-data-[size=lg]:min-h-96",
           className,
         )}
         {...props}
@@ -298,7 +299,7 @@ export function ComposerSection({
       className={cn(
         // no bottom padding: the footer's pt-1.5 keeps its row on the same
         // 6px rhythm as the rows in here
-        "flex-col items-stretch gap-1.5 border-t px-3 pt-2 pb-0 font-normal [.border-t]:pt-2",
+        "flex-col items-stretch gap-1.5 border-t px-4 pt-2 pb-0 font-normal [.border-t]:pt-2",
         className,
       )}
       {...props}
@@ -317,9 +318,9 @@ export function ComposerFooter({
     <InputGroupAddon
       align="block-end"
       className={cn(
-        // pl-1 + a ghost control's own px-2 puts its dot on the text column;
-        // pr-3 puts the solid send button on the close button's edge
-        "flex-wrap justify-between pt-1.5 pr-3 pb-2 pl-1 font-normal",
+        // pl-2 + a ghost control's own px-2 puts its dot on the text column;
+        // pr-4 puts the solid send button on the section rows' edge
+        "flex-wrap justify-between pt-1.5 pr-4 pb-2 pl-2 font-normal",
         className,
       )}
       {...props}
