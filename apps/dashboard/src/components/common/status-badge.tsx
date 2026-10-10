@@ -29,11 +29,13 @@ export function StatusBadge({
   variant,
   dot = false,
   plain = false,
+  dotClassName,
   ...props
 }: Omit<React.ComponentProps<typeof Badge>, "variant"> &
   VariantProps<typeof statusBadgeVariants> & {
     dot?: boolean;
     plain?: boolean;
+    dotClassName?: string;
   }) {
   return (
     <Badge
@@ -47,7 +49,9 @@ export function StatusBadge({
       )}
       {...props}
     >
-      {dot || plain ? <StatusDot variant={variant} /> : null}
+      {dot || plain ? (
+        <StatusDot variant={variant} className={dotClassName} />
+      ) : null}
       {children}
     </Badge>
   );
