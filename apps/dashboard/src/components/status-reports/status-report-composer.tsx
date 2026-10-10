@@ -195,6 +195,8 @@ export function StatusReportComposer({
                 const changed = current
                   ? effective !== current
                   : override !== undefined;
+                // legacy rows stay unselected until picked, see "No change"
+                const selectValue = current ? effective : (override ?? "");
                 const value = changed ? (
                   <ComponentImpact
                     impact={effective}
@@ -225,7 +227,7 @@ export function StatusReportComposer({
                     </ComponentListName>
                     <ComponentListActions className="basis-full sm:basis-auto">
                       <Select
-                        value={override ?? ""}
+                        value={selectValue}
                         onValueChange={(value) => {
                           const impact = pageComponentImpact.find(
                             (i) => i === value,
