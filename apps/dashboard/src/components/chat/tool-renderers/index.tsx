@@ -44,6 +44,10 @@ import { resolveStatusReportChanges } from "./resolve-status-report";
 import { ResultTable } from "./result-table";
 import { searchContentTable } from "./search-content";
 import { searchDocsTable } from "./search-docs";
+import {
+  deleteStatusReportUpdateChanges,
+  updateStatusReportUpdateChanges,
+} from "./status-report-update";
 import { updateStatusReportChanges } from "./update-status-report";
 
 /**
@@ -140,6 +144,20 @@ export const toolRenderers: ToolRendererRegistry = {
       />
     ),
     summary: (o) => `resolved · update #${o.statusReportUpdateId}`,
+  },
+  update_status_report_update: {
+    renderDraft: (input) => updateStatusReportUpdateChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={updateStatusReportUpdateChanges(input)} />
+    ),
+    summary: (o) => `update #${o.id}`,
+  },
+  delete_status_report_update: {
+    renderDraft: (input) => deleteStatusReportUpdateChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={deleteStatusReportUpdateChanges(input)} />
+    ),
+    summary: (o) => `deleted #${o.id}`,
   },
   create_maintenance: {
     renderDraft: (input) => createMaintenanceChanges(input),
