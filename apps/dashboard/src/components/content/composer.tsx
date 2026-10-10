@@ -14,12 +14,7 @@ import {
   InputGroupTextarea,
 } from "@openstatus/ui/components/ui/input-group";
 import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
+import { Tabs, TabsContent } from "@openstatus/ui/components/ui/tabs";
 import { Toggle } from "@openstatus/ui/components/ui/toggle";
 import {
   Tooltip,
@@ -78,7 +73,7 @@ export function useComposerDraft(key: string) {
   return [value, setValue] as const;
 }
 
-// Shared by the header tabs and the footer toggle; Radix keeps its own private.
+// Shared by the preview toggle and the Tabs; Radix keeps its own private.
 const ComposerContext = createContext<{
   view: ComposerView;
   setView: (view: ComposerView) => void;
@@ -93,9 +88,8 @@ function useComposer() {
 
 /**
  * Markdown composer: a textarea with a footer for actions, switchable to a
- * rendered preview. Short-form composers toggle the preview from the footer
- * (`ComposerPreviewToggle`); `size="lg"` long-form documents (postmortem)
- * use header tabs (`ComposerHeader`) instead.
+ * rendered preview via `ComposerPreviewToggle`. `size="lg"` is for long-form
+ * documents (postmortem) and only raises the minimum height.
  */
 export function Composer({
   children,
@@ -122,68 +116,6 @@ export function Composer({
         </InputGroup>
       </Tabs>
     </ComposerContext.Provider>
-  );
-}
-
-/** Write/Preview tabs on the left; `children` replaces the "Markdown" hint on the right. */
-export function ComposerHeader({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<typeof InputGroupAddon>) {
-  return (
-    <InputGroupAddon
-      align="block-start"
-      className={cn(
-        "justify-between border-b px-2 py-1.5 [.border-b]:pb-1.5",
-        className,
-      )}
-      {...props}
-    >
-      <ComposerTabs />
-      {children ?? <ComposerHint>Markdown</ComposerHint>}
-    </InputGroupAddon>
-  );
-}
-
-const tabsTriggerClassName =
-  "text-muted-foreground hover:text-foreground data-[state=active]:text-foreground dark:data-[state=active]:bg-transparent h-7 flex-none data-[state=active]:bg-transparent data-[state=active]:shadow-none dark:data-[state=active]:border-transparent";
-
-function ComposerTabs({
-  className,
-  ...props
-}: Omit<React.ComponentProps<typeof TabsList>, "children">) {
-  return (
-    <TabsList
-      className={cn("h-auto rounded-none bg-transparent p-0", className)}
-      {...props}
-    >
-      <TabsTrigger value="write" className={tabsTriggerClassName}>
-        Write
-      </TabsTrigger>
-      <TabsTrigger value="preview" className={tabsTriggerClassName}>
-        Preview
-      </TabsTrigger>
-    </TabsList>
-  );
-}
-
-export function ComposerHint({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"span">) {
-  return (
-    <span
-      data-slot="composer-hint"
-      className={cn(
-        "text-muted-foreground px-1 text-xs font-normal",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </span>
   );
 }
 
@@ -335,14 +267,13 @@ export function ComposerSubmit({
 const footerToggleClassName =
   "text-muted-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-disabled:opacity-50 aria-pressed:border aria-pressed:shadow-xs";
 
-/**
- * Swaps the textarea for the rendered markdown. The icon is the next action
- * (eye = preview, pencil = write), so it is a plain button, not a pressed toggle.
- */
-export function ComposerPreviewToggle() {
-  const { view, setView } = useComposer();
-  const previewing = view === "preview";
-  const label = previewing ? "Back to writing" : "Preview markdown";
+/** Ghost icon button for the footer; the tooltip carries the label. */
+export function ComposerIconButton({
+  label,
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof Button> & { label: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -350,14 +281,31 @@ export function ComposerPreviewToggle() {
           variant="ghost"
           size="icon-sm"
           aria-label={label}
-          onClick={() => setView(previewing ? "write" : "preview")}
-          className="text-muted-foreground"
+          className={cn("text-muted-foreground", className)}
+          {...props}
         >
-          {previewing ? <Edit /> : <Show />}
+          {children}
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top">{label}</TooltipContent>
     </Tooltip>
+  );
+}
+
+/**
+ * Swaps the textarea for the rendered markdown. The icon is the next action
+ * (eye = preview, pencil = write), so it is a plain button, not a pressed toggle.
+ */
+export function ComposerPreviewToggle() {
+  const { view, setView } = useComposer();
+  const previewing = view === "preview";
+  return (
+    <ComposerIconButton
+      label={previewing ? "Back to writing" : "Preview markdown"}
+      onClick={() => setView(previewing ? "write" : "preview")}
+    >
+      {previewing ? <Edit /> : <Show />}
+    </ComposerIconButton>
   );
 }
 
