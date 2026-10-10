@@ -4,10 +4,13 @@ import { MonitorService } from "@openstatus/proto/monitor/v1";
 // @ts-nocheck — ConnectRPC's deep generic types (AnyFn, UnaryResponse, etc.)
 // are incompatible with the test mocks. All runtime behavior is correct.
 import {
+  afterEach,
   beforeEach,
   describe,
   expect,
   mock,
+  type Stub,
+  stub,
   test,
 } from "@openstatus/test-utils";
 
@@ -84,9 +87,17 @@ function createMockRequest(
 }
 
 describe("trackingInterceptor", () => {
+  let random: Stub<Math, [], number>;
+
   beforeEach(() => {
     mockSetupAnalytics.mockClear();
     mockTrack.mockClear();
+    // Keep every sampled request unless a test says otherwise.
+    random = stub(Math, "random", () => 0);
+  });
+
+  afterEach(() => {
+    random.restore();
   });
 
   test("tracks mapped event on success", async () => {
@@ -121,6 +132,7 @@ describe("trackingInterceptor", () => {
       service: "openstatus.monitor.v1.MonitorService",
       method: "DeleteMonitor",
       success: true,
+      sampleRate: 0.1,
     });
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.DeleteMonitor,
@@ -184,6 +196,7 @@ describe("trackingInterceptor", () => {
       service: "openstatus.monitor.v1.MonitorService",
       method: "ListMonitors",
       success: true,
+      sampleRate: 0.1,
     });
   });
 
@@ -205,6 +218,7 @@ describe("trackingInterceptor", () => {
       service: "openstatus.monitor.v1.MonitorService",
       method: "DeleteMonitor",
       success: false,
+      sampleRate: 0.1,
     });
   });
 
@@ -233,6 +247,7 @@ describe("trackingInterceptor", () => {
       service: "openstatus.monitor.v1.MonitorService",
       method: "ListMonitors",
       success: true,
+      sampleRate: 1,
       cliCommand: "monitors list",
       cliVersion: "1.3.2",
     });
@@ -248,6 +263,66 @@ describe("trackingInterceptor", () => {
       os: "darwin",
       arch: "arm64",
     });
+  });
+
+  test("drops non-CLI api_request outside the sample", async () => {
+    random.restore();
+    random = stub(Math, "random", () => 0.5);
+
+    const interceptor = trackingInterceptor();
+    const req = createMockRequest(
+      "openstatus.monitor.v1.MonitorService",
+      "ListMonitors",
+    );
+
+    await interceptor(mockNext({}))(req as never);
+    await flush();
+
+    expect(mockSetupAnalytics).not.toHaveBeenCalled();
+    expect(mockTrack).not.toHaveBeenCalled();
+  });
+
+  test("keeps the domain event when api_request is sampled out", async () => {
+    random.restore();
+    random = stub(Math, "random", () => 0.5);
+
+    const interceptor = trackingInterceptor();
+    const req = createMockRequest(
+      "openstatus.monitor.v1.MonitorService",
+      "DeleteMonitor",
+    );
+
+    await interceptor(mockNext({}))(req as never);
+    await flush();
+
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockTrack).toHaveBeenCalledWith({ ...Events.DeleteMonitor });
+  });
+
+  test("always tracks CLI api_request", async () => {
+    random.restore();
+    random = stub(Math, "random", () => 0.99);
+
+    const interceptor = trackingInterceptor();
+    const req = createMockRequest(
+      "openstatus.monitor.v1.MonitorService",
+      "ListMonitors",
+      {},
+      {
+        headers: {
+          "user-agent": "openstatus-cli/v1.3.2 (darwin; arm64)",
+          "x-openstatus-cli-command": "monitors list",
+          "x-openstatus-cli-invocation": crypto.randomUUID(),
+        },
+      },
+    );
+
+    await interceptor(mockNext({}))(req as never);
+    await flush();
+
+    expect(mockTrack).toHaveBeenCalledWith(
+      expect.objectContaining({ ...Events.ApiRequest, sampleRate: 1 }),
+    );
   });
 
   test("skips tracking when no RPC context", async () => {
