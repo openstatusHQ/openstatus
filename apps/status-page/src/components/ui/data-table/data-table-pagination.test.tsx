@@ -1,5 +1,3 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 import {
   type ColumnDef,
   type SortingState,
@@ -9,6 +7,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
 
 import { DataTableColumnHeader } from "./data-table-column-header";
 import {

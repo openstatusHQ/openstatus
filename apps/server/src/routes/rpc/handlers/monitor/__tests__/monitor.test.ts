@@ -14,14 +14,14 @@ import {
   createMonitor,
   createWorkspace,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
 import {
   afterAll,
   beforeAll,
   beforeEach,
   describe,
+  expect,
   test,
-} from "@std/testing/bdd";
+} from "vitest";
 
 import { app } from "../../../../../index";
 
@@ -3062,16 +3062,16 @@ describe("MonitorService.GetMonitor", () => {
     // Insert a monitor with invalid data that will fail selectMonitorSchema parsing
     const corruptedMon = await db
       .insert(monitor)
-      // @ts-expect-error - intentionally invalid periodicity to test parse failure
       .values({
         workspaceId: 1,
         name: `${TEST_PREFIX}-corrupted-data`,
         url: "https://corrupted.example.com",
+        // intentionally invalid periodicity to test parse failure
         periodicity: "invalid-periodicity",
         active: true,
         regions: "ams",
         jobType: "http",
-      })
+      } as unknown as typeof monitor.$inferInsert)
       .returning()
       .get();
 

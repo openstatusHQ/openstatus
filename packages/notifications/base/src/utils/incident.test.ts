@@ -1,6 +1,5 @@
 import type { MonitorIncident } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import { describe, expect, it } from "vitest";
 
 import { getIncidentDuration } from "./incident";
 

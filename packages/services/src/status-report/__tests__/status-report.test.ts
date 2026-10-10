@@ -8,14 +8,14 @@ import {
   statusReportUpdate,
   statusReportUpdateToPageComponents,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
 import {
   afterAll,
   beforeAll,
   beforeEach,
   describe,
+  expect,
   test,
-} from "@std/testing/bdd";
+} from "vitest";
 
 import {
   createWorkspaceFixture,

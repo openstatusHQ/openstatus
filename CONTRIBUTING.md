@@ -33,8 +33,6 @@ To contribute code changes, follow these steps:
    no database and takes seconds. `pnpm verify:test` runs the tests for the
    packages your diff touches; those do need a local libSQL server.
 
-   Note: `packages/test-utils` still type-checks with [Deno](https://deno.com/),
-   so `pnpm verify` needs it installed locally.
    See the [Requirements](./README.md#requirements) list in the README for the
    full toolchain (Node.js, pnpm, Bun, Deno, Turso CLI).
 4. Make commits with clear and descriptive messages. Each commit should have a single logical purpose.

@@ -1,7 +1,6 @@
 import type { Workspace } from "@openstatus/db/src/schema";
 import { ForbiddenError, NotFoundError } from "@openstatus/services";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { mapError, toServiceCtx } from "./adapter";
 

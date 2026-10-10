@@ -13,7 +13,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "deno test --parallel -A --no-check --sloppy-imports",
+    "test": "vitest run",
     "lint": "oxlint",
     "tsc": "tsc --noEmit"
   },
@@ -23,10 +23,10 @@
   },
   "devDependencies": {
     "@openstatus/db": "workspace:*",
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@types/node": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

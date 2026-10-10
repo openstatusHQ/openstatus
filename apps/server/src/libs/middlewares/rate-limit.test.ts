@@ -1,8 +1,6 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
-import { FakeTime } from "@std/testing/time";
 import { type Context, Hono } from "hono";
 import { requestId } from "hono/request-id";
+import { describe, expect, test, vi } from "vitest";
 
 import { createRateLimit, credentialKey } from "./rate-limit";
 
@@ -227,23 +225,23 @@ describe("rate limit", () => {
 
   test("the 10 s bucket recovers after its window while the minute window keeps counting", async () => {
     const { app } = recovery;
-    const time = new FakeTime();
+    vi.useFakeTimers();
     try {
       const init = { headers: keyHeaders("a") };
       expect((await app.request("/v1/monitor", init)).status).toBe(200);
       expect((await app.request("/v1/monitor", init)).status).toBe(429);
 
-      time.tick(10_001);
+      vi.advanceTimersByTime(10_001);
       expect((await app.request("/v1/monitor", init)).status).toBe(200);
 
       // minute window (limit 2) is now full even though the burst bucket reset
-      time.tick(10_001);
+      vi.advanceTimersByTime(10_001);
       expect((await app.request("/v1/monitor", init)).status).toBe(429);
 
-      time.tick(60_001);
+      vi.advanceTimersByTime(60_001);
       expect((await app.request("/v1/monitor", init)).status).toBe(200);
     } finally {
-      time.restore();
+      vi.useRealTimers();
     }
   });
 

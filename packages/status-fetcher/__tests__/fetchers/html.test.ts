@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { beforeEach, describe, it } from "@std/testing/bdd";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { HtmlScraperFetcher } from "../../src/fetchers/html";
 import type { StatusPageEntry } from "../../src/types";
@@ -93,9 +92,9 @@ describe("HtmlScraperFetcher", () => {
       expect(result.description).toBe("All Systems Operational");
       expect(result.timezone).toBe("UTC");
       expect(typeof result.updated_at).toBe("number");
-      const call = fetchMock.calls[fetchMock.calls.length - 1];
-      expect(call.args[0]).toBe("https://status.test.com");
-      expect(call.args[1]).toEqual(
+      const call = fetchMock.mock.lastCall;
+      expect(call?.[0]).toBe("https://status.test.com");
+      expect(call?.[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
             "User-Agent": "Mozilla/5.0 (compatible; OpenStatus-Bot/1.0)",

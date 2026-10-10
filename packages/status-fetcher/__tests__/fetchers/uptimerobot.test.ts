@@ -1,6 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
-import { spy } from "@std/testing/mock";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { UptimeRobotFetcher } from "../../src/fetchers/uptimerobot";
 import type { StatusPageEntry } from "../../src/types";
@@ -140,9 +138,9 @@ describe("UptimeRobotFetcher", () => {
       expect(result.description).toBe("0 monitors down (3 total)");
       expect(result.timezone).toBe("UTC");
       expect(typeof result.updated_at).toBe("number");
-      const lastCall = fetchMock.calls[fetchMock.calls.length - 1];
-      expect(lastCall.args[0]).toBe(ENDPOINT);
-      expect(lastCall.args[1]).toEqual(
+      const lastCall = fetchMock.mock.lastCall;
+      expect(lastCall?.[0]).toBe(ENDPOINT);
+      expect(lastCall?.[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
             "User-Agent": "OpenStatus-Directory/1.0",
@@ -275,7 +273,7 @@ describe("UptimeRobotFetcher", () => {
     });
 
     it("unknown statusClass folds to operational with a warn", async () => {
-      const warnSpy = spy(() => {});
+      const warnSpy = vi.fn(() => {});
       const originalWarn = console.warn;
       console.warn = warnSpy;
 
@@ -290,7 +288,7 @@ describe("UptimeRobotFetcher", () => {
 
         expect(result.severity).toBe("none");
         expect(result.status).toBe("operational");
-        expect(warnSpy.calls.length).toBeGreaterThan(0);
+        expect(warnSpy.mock.calls.length).toBeGreaterThan(0);
       } finally {
         console.warn = originalWarn;
       }

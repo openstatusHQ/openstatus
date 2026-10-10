@@ -2,8 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 // Pages built from the section pattern (heading, text cell, `Demo` cell). Blog
 // posts and docs are prose and stay out of scope.

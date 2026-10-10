@@ -1,18 +1,23 @@
 import "@/test-preload";
 import { AuthError } from "@auth/core/errors";
 import { redis } from "@openstatus/upstash";
-import { expect } from "@std/expect";
-import { afterEach, describe, test } from "@std/testing/bdd";
-import { type Stub, stub } from "@std/testing/mock";
+import {
+  afterEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import { ResendProvider } from "./providers";
 
-let evalStub: Stub | undefined;
-let logStub: Stub | undefined;
+let evalStub: MockInstance | undefined;
+let logStub: MockInstance | undefined;
 
 afterEach(() => {
-  evalStub?.restore();
-  logStub?.restore();
+  evalStub?.mockRestore();
+  logStub?.mockRestore();
 });
 
 function sendTo(identifier: string, ip = "1.2.3.4") {
@@ -34,17 +39,21 @@ function sendTo(identifier: string, ip = "1.2.3.4") {
 
 describe("ResendProvider.sendVerificationRequest", () => {
   test("refuses disposable domains before touching the rate limit", async () => {
-    evalStub = stub(redis, "eval");
+    evalStub = vi
+      .spyOn(redis, "eval")
+      .mockImplementation(() => undefined as never);
 
     await expect(sendTo("a@mailinator.com")).rejects.toThrow(AuthError);
     await expect(sendTo("a@mailinator.com")).rejects.toThrow(
       "disposable domain",
     );
-    expect(evalStub.calls).toHaveLength(0);
+    expect(evalStub.mock.calls).toHaveLength(0);
   });
 
   test("refuses throttled addresses", async () => {
-    evalStub = stub(redis, "eval", () => Promise.resolve([1, 4]));
+    evalStub = vi
+      .spyOn(redis, "eval")
+      .mockImplementation(() => Promise.resolve([1, 4]));
 
     await expect(sendTo("gilfoyle@piedpiper.dev")).rejects.toThrow(
       "rate limited",
@@ -52,16 +61,20 @@ describe("ResendProvider.sendVerificationRequest", () => {
   });
 
   test("sends when screening passes, keyed by client ip and address", async () => {
-    evalStub = stub(redis, "eval", () => Promise.resolve([1, 1]));
-    logStub = stub(console, "log");
+    evalStub = vi
+      .spyOn(redis, "eval")
+      .mockImplementation(() => Promise.resolve([1, 1]));
+    logStub = vi
+      .spyOn(console, "log")
+      .mockImplementation(() => undefined as never);
 
     await sendTo("gilfoyle@piedpiper.dev", "9.9.9.9");
 
-    expect(evalStub.calls[0]?.args[1]).toEqual([
+    expect(evalStub.mock.calls[0]?.[1]).toEqual([
       "ratelimit:magic-link:ip:9.9.9.9",
       "ratelimit:magic-link:email:gilfoyle@piedpiper.dev",
     ]);
-    const printed = logStub.calls.map((c) => String(c.args[0])).join("\n");
+    const printed = logStub.mock.calls.map((c) => String(c[0])).join("\n");
     expect(printed).toContain(
       "https://app.openstatus.dev/api/auth/callback/resend?token=t",
     );

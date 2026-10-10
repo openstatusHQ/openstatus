@@ -12,10 +12,16 @@ import {
   createUser,
 } from "@openstatus/db/src/test/factories";
 import { delivery, resend } from "@openstatus/emails/src/send";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 import type Stripe from "stripe";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import { createInnerTRPCContext } from "../../trpc";
 import { stripe } from "./shared";
@@ -28,7 +34,7 @@ const DAY = 86_400;
 const now = () => Math.floor(Date.now() / 1000);
 
 // biome-ignore lint/suspicious/noExplicitAny: stubs over the Stripe and Resend clients
-type AnyStub = Stub<any>;
+type AnyStub = MockInstance;
 
 // `current_period_end` lives on the items since API version 2025-03-31.
 function subscription(
@@ -84,26 +90,32 @@ describe("stripe webhook emails", () => {
     live = [];
     // biome-ignore lint/suspicious/noExplicitAny: Resend result double
     const ok = { data: { id: "email_reminder_1" }, error: null } as any;
-    send = stub(resend.emails, "send", () => Promise.resolve(ok));
-    batch = stub(resend.batch, "send", () => Promise.resolve(ok));
-    cancelEmail = stub(resend.emails, "cancel", () => Promise.resolve(ok));
-    updateSubscription = stub(stripe.subscriptions, "update", () =>
-      // biome-ignore lint/suspicious/noExplicitAny: Stripe response double
-      Promise.resolve({ cancel_at_period_end: true } as any),
-    );
+    send = vi
+      .spyOn(resend.emails, "send")
+      .mockImplementation(() => Promise.resolve(ok));
+    batch = vi
+      .spyOn(resend.batch, "send")
+      .mockImplementation(() => Promise.resolve(ok));
+    cancelEmail = vi
+      .spyOn(resend.emails, "cancel")
+      .mockImplementation(() => Promise.resolve(ok));
+    updateSubscription = vi
+      .spyOn(stripe.subscriptions, "update")
+      .mockImplementation(() =>
+        // biome-ignore lint/suspicious/noExplicitAny: Stripe response double
+        Promise.resolve({ cancel_at_period_end: true } as any),
+      );
     stubs = [
       send,
       batch,
       cancelEmail,
       updateSubscription,
-      stub(delivery, "enabled", () => true),
-      stub(
-        stripe.subscriptions,
-        "list",
+      vi.spyOn(delivery, "enabled").mockImplementation(() => true),
+      vi.spyOn(stripe.subscriptions, "list").mockImplementation(
         // biome-ignore lint/suspicious/noExplicitAny: auto-paging list double
         () => ({ autoPagingToArray: () => Promise.resolve(live) }) as any,
       ),
-      stub(stripe.customers, "retrieve", () =>
+      vi.spyOn(stripe.customers, "retrieve").mockImplementation(() =>
         Promise.resolve({
           deleted: false,
           email: "Billing-Contact@example.test",
@@ -114,19 +126,19 @@ describe("stripe webhook emails", () => {
   });
 
   afterEach(() => {
-    for (const s of stubs) s.restore();
+    for (const s of stubs) s.mockRestore();
   });
 
   function failSends() {
-    send.restore();
-    batch.restore();
+    send.mockRestore();
+    batch.mockRestore();
     stubs = stubs.filter((s) => s !== send && s !== batch);
-    send = stub(resend.emails, "send", () =>
-      Promise.reject(new Error("resend is down")),
-    );
-    batch = stub(resend.batch, "send", () =>
-      Promise.reject(new Error("resend is down")),
-    );
+    send = vi
+      .spyOn(resend.emails, "send")
+      .mockImplementation(() => Promise.reject(new Error("resend is down")));
+    batch = vi
+      .spyOn(resend.batch, "send")
+      .mockImplementation(() => Promise.reject(new Error("resend is down")));
     stubs.push(send, batch);
   }
 
@@ -159,8 +171,8 @@ describe("stripe webhook emails", () => {
         .where(eq(workspace.id, s.workspace.id))
         .get();
       expect(ws?.plan).toBe("team");
-      assertSpyCalls(send, 0);
-      assertSpyCalls(batch, 0);
+      expect(send).toHaveBeenCalledTimes(0);
+      expect(batch).toHaveBeenCalledTimes(0);
     });
 
     test("none left → plan-downgraded to owners + customer, member-removed per trimmed member", async () => {
@@ -190,8 +202,8 @@ describe("stripe webhook emails", () => {
       );
       await caller().customerSubscriptionDeleted(evt);
 
-      assertSpyCalls(send, 1);
-      const [payload, options] = send.calls[0].args;
+      expect(send).toHaveBeenCalledTimes(1);
+      const [payload, options] = send.mock.calls[0];
       expect(payload.to).toEqual([
         s.ownerEmail,
         "Billing-Contact@example.test",
@@ -204,8 +216,8 @@ describe("stripe webhook emails", () => {
       });
       expect(payload.react.props.loss.membersRemoved).toBe(2);
 
-      assertSpyCalls(batch, 1);
-      const [emails, batchOptions] = batch.calls[0].args;
+      expect(batch).toHaveBeenCalledTimes(1);
+      const [emails, batchOptions] = batch.mock.calls[0];
       expect(emails.map((e: { to: string }) => e.to)).toEqual([memberEmail]);
       expect(emails[0].html).toContain(s.ownerEmail);
       expect(batchOptions).toEqual({
@@ -243,8 +255,8 @@ describe("stripe webhook emails", () => {
         .where(eq(workspace.id, s.workspace.id))
         .get();
       expect(ws?.plan).toBe("free");
-      assertSpyCalls(send, 1);
-      assertSpyCalls(batch, 1);
+      expect(send).toHaveBeenCalledTimes(1);
+      expect(batch).toHaveBeenCalledTimes(1);
       const members = await db
         .select()
         .from(usersToWorkspaces)
@@ -270,8 +282,8 @@ describe("stripe webhook emails", () => {
       });
       await caller().customerSubscriptionUpdated(evt);
 
-      assertSpyCalls(send, 2);
-      const [confirmation, confirmationOptions] = send.calls[0].args;
+      expect(send).toHaveBeenCalledTimes(2);
+      const [confirmation, confirmationOptions] = send.mock.calls[0];
       expect(confirmation.subject).toBe("Your openstatus cancellation");
       expect(confirmation.to).toEqual([
         s.ownerEmail,
@@ -281,7 +293,7 @@ describe("stripe webhook emails", () => {
         idempotencyKey: `stripe:${evt.event.id}:cancellation-scheduled`,
       });
 
-      const [reminder, reminderOptions] = send.calls[1].args;
+      const [reminder, reminderOptions] = send.mock.calls[1];
       expect(new Date(reminder.scheduledAt).getTime()).toBe(
         (sub.items.data[0].current_period_end - 3 * DAY) * 1000,
       );
@@ -289,8 +301,8 @@ describe("stripe webhook emails", () => {
         idempotencyKey: `stripe:${evt.event.id}:plan-ending-soon`,
       });
 
-      assertSpyCalls(updateSubscription, 1);
-      expect(updateSubscription.calls[0].args).toEqual([
+      expect(updateSubscription).toHaveBeenCalledTimes(1);
+      expect(updateSubscription.mock.calls[0]).toEqual([
         sub.id,
         { metadata: { reminder_email_id: "email_reminder_1" } },
       ]);
@@ -310,9 +322,9 @@ describe("stripe webhook emails", () => {
         }),
       );
 
-      assertSpyCalls(send, 1);
-      expect(send.calls[0].args[0].scheduledAt).toBeUndefined();
-      assertSpyCalls(updateSubscription, 0);
+      expect(send).toHaveBeenCalledTimes(1);
+      expect(send.mock.calls[0][0].scheduledAt).toBeUndefined();
+      expect(updateSubscription).toHaveBeenCalledTimes(0);
     });
 
     test("true → false: the scheduled reminder is cancelled and the id cleared", async () => {
@@ -328,10 +340,10 @@ describe("stripe webhook emails", () => {
         }),
       );
 
-      assertSpyCalls(send, 0);
-      assertSpyCalls(cancelEmail, 1);
-      expect(cancelEmail.calls[0].args[0]).toBe("email_reminder_1");
-      expect(updateSubscription.calls[0].args).toEqual([
+      expect(send).toHaveBeenCalledTimes(0);
+      expect(cancelEmail).toHaveBeenCalledTimes(1);
+      expect(cancelEmail.mock.calls[0][0]).toBe("email_reminder_1");
+      expect(updateSubscription.mock.calls[0]).toEqual([
         sub.id,
         { metadata: { reminder_email_id: "" } },
       ]);
@@ -349,20 +361,22 @@ describe("stripe webhook emails", () => {
         ),
       );
 
-      assertSpyCalls(send, 0);
-      assertSpyCalls(updateSubscription, 0);
+      expect(send).toHaveBeenCalledTimes(0);
+      expect(updateSubscription).toHaveBeenCalledTimes(0);
     });
 
     test("a resume racing the metadata write cancels the fresh reminder", async () => {
       const s = await seed();
       const sub = subscription(s.stripeId, { cancel_at_period_end: true });
       live = [sub];
-      updateSubscription.restore();
+      updateSubscription.mockRestore();
       stubs = stubs.filter((x) => x !== updateSubscription);
-      updateSubscription = stub(stripe.subscriptions, "update", () =>
-        // biome-ignore lint/suspicious/noExplicitAny: Stripe response double
-        Promise.resolve({ cancel_at_period_end: false } as any),
-      );
+      updateSubscription = vi
+        .spyOn(stripe.subscriptions, "update")
+        .mockImplementation(() =>
+          // biome-ignore lint/suspicious/noExplicitAny: Stripe response double
+          Promise.resolve({ cancel_at_period_end: false } as any),
+        );
       stubs.push(updateSubscription);
 
       await caller().customerSubscriptionUpdated(
@@ -371,8 +385,8 @@ describe("stripe webhook emails", () => {
         }),
       );
 
-      expect(cancelEmail.calls[0].args[0]).toBe("email_reminder_1");
-      expect(updateSubscription.calls.map((c) => c.args[1])).toEqual([
+      expect(cancelEmail.mock.calls[0][0]).toBe("email_reminder_1");
+      expect(updateSubscription.mock.calls.map((c) => c[1])).toEqual([
         { metadata: { reminder_email_id: "email_reminder_1" } },
         { metadata: { reminder_email_id: "" } },
       ]);
@@ -384,9 +398,9 @@ describe("stripe webhook emails", () => {
         metadata: { reminder_email_id: "email_reminder_1" },
       });
       live = [sub];
-      cancelEmail.restore();
+      cancelEmail.mockRestore();
       stubs = stubs.filter((x) => x !== cancelEmail);
-      cancelEmail = stub(resend.emails, "cancel", () =>
+      cancelEmail = vi.spyOn(resend.emails, "cancel").mockImplementation(() =>
         Promise.resolve({
           data: null,
           error: { name: "application_error" },
@@ -401,18 +415,18 @@ describe("stripe webhook emails", () => {
         }),
       );
 
-      assertSpyCalls(cancelEmail, 1);
-      assertSpyCalls(updateSubscription, 0);
+      expect(cancelEmail).toHaveBeenCalledTimes(1);
+      expect(updateSubscription).toHaveBeenCalledTimes(0);
     });
 
     test("a failed confirmation does not suppress the reminder", async () => {
       const s = await seed();
       const sub = subscription(s.stripeId, { cancel_at_period_end: true });
       live = [sub];
-      send.restore();
+      send.mockRestore();
       stubs = stubs.filter((x) => x !== send);
       let calls = 0;
-      send = stub(resend.emails, "send", () =>
+      send = vi.spyOn(resend.emails, "send").mockImplementation(() =>
         calls++ === 0
           ? Promise.reject(new Error("resend is down"))
           : // biome-ignore lint/suspicious/noExplicitAny: Resend result double
@@ -429,9 +443,9 @@ describe("stripe webhook emails", () => {
         }),
       );
 
-      assertSpyCalls(send, 2);
-      expect(send.calls[1].args[0].scheduledAt).toBeDefined();
-      assertSpyCalls(updateSubscription, 1);
+      expect(send).toHaveBeenCalledTimes(2);
+      expect(send.mock.calls[1][0].scheduledAt).toBeDefined();
+      expect(updateSubscription).toHaveBeenCalledTimes(1);
     });
 
     test("metadata-only update and unrelated updates send nothing", async () => {
@@ -446,9 +460,9 @@ describe("stripe webhook emails", () => {
         event("customer.subscription.updated", sub),
       );
 
-      assertSpyCalls(send, 0);
-      assertSpyCalls(cancelEmail, 0);
-      assertSpyCalls(updateSubscription, 0);
+      expect(send).toHaveBeenCalledTimes(0);
+      expect(cancelEmail).toHaveBeenCalledTimes(0);
+      expect(updateSubscription).toHaveBeenCalledTimes(0);
     });
 
     test("a replayed event reuses the same idempotency keys", async () => {
@@ -462,7 +476,7 @@ describe("stripe webhook emails", () => {
       await caller().customerSubscriptionUpdated(evt);
       await caller().customerSubscriptionUpdated(evt);
 
-      const keys = send.calls.map((c) => c.args[1].idempotencyKey);
+      const keys = send.mock.calls.map((c) => c[1].idempotencyKey);
       expect(keys.slice(0, 2)).toEqual(keys.slice(2, 4));
     });
 
@@ -547,8 +561,8 @@ describe("stripe webhook emails", () => {
 
       await caller().customerSubscriptionTrialWillEnd(evt);
 
-      assertSpyCalls(send, 1);
-      const [payload, options] = send.calls[0].args;
+      expect(send).toHaveBeenCalledTimes(1);
+      const [payload, options] = send.mock.calls[0];
       expect(payload.subject).toContain("add a payment method to keep");
       expect(payload.to).toContain(s.ownerEmail);
       expect(payload.react.props).toMatchObject({
@@ -584,8 +598,8 @@ describe("stripe webhook emails", () => {
         ),
       );
 
-      assertSpyCalls(send, 1);
-      const [payload] = send.calls[0].args;
+      expect(send).toHaveBeenCalledTimes(1);
+      const [payload] = send.mock.calls[0];
       expect(payload.subject).toContain("plan continues");
       expect(payload.react.props).toMatchObject({ hasPaymentMethod: true });
       expect(payload.react.props.loss).toBeUndefined();
@@ -598,7 +612,7 @@ describe("stripe webhook emails", () => {
         subscription(s.stripeId, { status: "active", trial_end: now() - 1 }),
       );
       await caller().customerSubscriptionTrialWillEnd(evt);
-      assertSpyCalls(send, 0);
+      expect(send).toHaveBeenCalledTimes(0);
     });
 
     test("a mail failure fails the webhook so Stripe redelivers", async () => {
@@ -616,9 +630,9 @@ describe("stripe webhook emails", () => {
 
     test("a Resend error response fails the webhook too", async () => {
       const s = await seed();
-      send.restore();
+      send.mockRestore();
       stubs = stubs.filter((x) => x !== send);
-      send = stub(resend.emails, "send", () =>
+      send = vi.spyOn(resend.emails, "send").mockImplementation(() =>
         Promise.resolve({
           data: null,
           error: { name: "application_error", message: "boom" },
@@ -648,7 +662,7 @@ describe("stripe webhook emails", () => {
           subscription(s.stripeId, { trial_end: null }),
         ),
       );
-      assertSpyCalls(send, 0);
+      expect(send).toHaveBeenCalledTimes(0);
     });
   });
 });

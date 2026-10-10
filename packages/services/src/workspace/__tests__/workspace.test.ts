@@ -9,8 +9,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { getLimits } from "@openstatus/db/src/schema/plan/utils";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import {
   createWorkspaceFixture,

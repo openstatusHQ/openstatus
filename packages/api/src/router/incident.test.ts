@@ -2,9 +2,8 @@ import { db, eq, inArray } from "@openstatus/db";
 import { incident, incidentEvent } from "@openstatus/db/src/schema";
 import { createIncident } from "@openstatus/db/src/test/factories";
 import { clearAuditLogFor } from "@openstatus/services/test/helpers";
-import { expect } from "@std/expect";
-import { afterAll, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
+import { afterAll, expect, test } from "vitest";
 
 import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";

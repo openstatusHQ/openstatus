@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import { describe, expect, it } from "vitest";
 
 import { addStatusReportUpdateChanges } from "./add-status-report-update";
 import { createStatusReportChanges } from "./create-status-report";

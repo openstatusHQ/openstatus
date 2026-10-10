@@ -1,6 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { spy } from "@std/testing/mock";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   MOCK_INCIDENTS,
@@ -26,7 +24,7 @@ function makePaginated(data: unknown[]) {
 }
 
 function setupMockFetch() {
-  globalThis.fetch = spy((url: string) => {
+  globalThis.fetch = vi.fn((url: string) => {
     const path = new URL(url as string).pathname;
     let body: unknown;
 
@@ -88,7 +86,7 @@ describe("BetterstackProvider", () => {
   });
 
   test("validate returns friendly 401 error", async () => {
-    globalThis.fetch = spy(() =>
+    globalThis.fetch = vi.fn(() =>
       Promise.resolve(
         new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,

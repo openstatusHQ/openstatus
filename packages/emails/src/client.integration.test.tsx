@@ -1,9 +1,8 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
 import "./test-preload.ts";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import { render } from "react-email";
+import { describe, expect, test } from "vitest";
 
 import PageUpdateEmail from "../emails/page-update";
 import { pageUpdateSubject } from "./client";

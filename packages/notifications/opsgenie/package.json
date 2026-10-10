@@ -4,7 +4,7 @@
   "main": "src/index.ts",
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "deno test --parallel -A --no-check --sloppy-imports",
+    "test": "vitest run",
     "tsc": "tsc"
   },
   "dependencies": {
@@ -16,12 +16,12 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

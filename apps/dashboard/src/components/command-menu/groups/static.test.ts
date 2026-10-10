@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import { describe, expect, it } from "vitest";
 
 import { HELP_LINKS } from "@/config/help";
 import { SETTINGS_TABS } from "@/config/settings";

@@ -1,10 +1,16 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
 import "./test-preload.ts";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 import { render } from "react-email";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import type { PlanLoss } from "../emails/_components/plan-loss";
 import CancellationScheduledEmail from "../emails/cancellation-scheduled";
@@ -288,20 +294,25 @@ describe("reminderScheduledAt", () => {
 });
 
 describe("send plumbing", () => {
-  let send: Stub, batch: Stub, cancel: Stub, enabled: Stub;
+  let send: MockInstance,
+    batch: MockInstance,
+    cancel: MockInstance,
+    enabled: MockInstance;
   // safe because the verbs only read `data.id` and `error.name`
   const result = (value: unknown) => Promise.resolve(value as never);
   const ok = { data: { id: "email_123" }, error: null };
 
   beforeEach(() => {
-    enabled = stub(delivery, "enabled", () => true);
-    send = stub(resend.emails, "send", () => result(ok));
-    batch = stub(resend.batch, "send", () => result(ok));
-    cancel = stub(resend.emails, "cancel", () => result(ok));
+    enabled = vi.spyOn(delivery, "enabled").mockImplementation(() => true);
+    send = vi.spyOn(resend.emails, "send").mockImplementation(() => result(ok));
+    batch = vi.spyOn(resend.batch, "send").mockImplementation(() => result(ok));
+    cancel = vi
+      .spyOn(resend.emails, "cancel")
+      .mockImplementation(() => result(ok));
   });
 
   afterEach(() => {
-    for (const s of [enabled, send, batch, cancel]) s.restore();
+    for (const s of [enabled, send, batch, cancel]) s.mockRestore();
   });
 
   const email = {
@@ -324,43 +335,45 @@ describe("send plumbing", () => {
       { idempotencyKey: "k", scheduledAt: "2026-09-22T00:00:00.000Z" },
     );
     expect(id).toBe("email_123");
-    expect(send.calls[0].args[0].scheduledAt).toBe("2026-09-22T00:00:00.000Z");
-    expect(send.calls[0].args[0].replyTo).toBe("r@openstatus.dev");
-    expect(send.calls[0].args[1]).toEqual({ idempotencyKey: "k" });
+    expect(send.mock.calls[0][0].scheduledAt).toBe("2026-09-22T00:00:00.000Z");
+    expect(send.mock.calls[0][0].replyTo).toBe("r@openstatus.dev");
+    expect(send.mock.calls[0][1]).toEqual({ idempotencyKey: "k" });
   });
 
   test("sendEmail omits both when not given", async () => {
     await sendEmail(email);
-    expect("scheduledAt" in send.calls[0].args[0]).toBe(false);
-    expect(send.calls[0].args[1]).toBeUndefined();
+    expect("scheduledAt" in send.mock.calls[0][0]).toBe(false);
+    expect(send.mock.calls[0][1]).toBeUndefined();
   });
 
   test("sendEmail does nothing outside production", async () => {
-    enabled.restore();
-    enabled = stub(delivery, "enabled", () => false);
+    enabled.mockRestore();
+    enabled = vi.spyOn(delivery, "enabled").mockImplementation(() => false);
     expect(await sendEmail(email)).toBeUndefined();
-    assertSpyCalls(send, 0);
+    expect(send).toHaveBeenCalledTimes(0);
   });
 
   test("an idempotency conflict or Resend error never throws", async () => {
     for (const name of ["invalid_idempotent_request", "application_error"]) {
-      send.restore();
-      send = stub(resend.emails, "send", () =>
-        result({ data: null, error: { name } }),
-      );
+      send.mockRestore();
+      send = vi
+        .spyOn(resend.emails, "send")
+        .mockImplementation(() => result({ data: null, error: { name } }));
       expect(await sendEmail(email, { idempotencyKey: "k" })).toBeUndefined();
-      assertSpyCalls(send, 1);
+      expect(send).toHaveBeenCalledTimes(1);
     }
   });
 
   test("cancelScheduledEmail wraps emails.cancel and reports success", async () => {
     expect(await cancelScheduledEmail("email_123")).toBe(true);
-    expect(cancel.calls[0].args[0]).toBe("email_123");
+    expect(cancel.mock.calls[0][0]).toBe("email_123");
 
-    cancel.restore();
-    cancel = stub(resend.emails, "cancel", () =>
-      result({ data: null, error: { name: "application_error" } }),
-    );
+    cancel.mockRestore();
+    cancel = vi
+      .spyOn(resend.emails, "cancel")
+      .mockImplementation(() =>
+        result({ data: null, error: { name: "application_error" } }),
+      );
     expect(await cancelScheduledEmail("email_123")).toBe(false);
   });
 
@@ -372,9 +385,9 @@ describe("send plumbing", () => {
       reason: "downgrade",
       owners: [],
     });
-    assertSpyCalls(batch, 3);
-    expect(batch.calls.map((c) => c.args[0].length)).toEqual([100, 100, 50]);
-    expect(batch.calls.map((c) => c.args[1].idempotencyKey)).toEqual([
+    expect(batch).toHaveBeenCalledTimes(3);
+    expect(batch.mock.calls.map((c) => c[0].length)).toEqual([100, 100, 50]);
+    expect(batch.mock.calls.map((c) => c[1].idempotencyKey)).toEqual([
       "stripe:evt_1:member-removed:0",
       "stripe:evt_1:member-removed:1",
       "stripe:evt_1:member-removed:2",
@@ -382,17 +395,19 @@ describe("send plumbing", () => {
   });
 
   test("a batch error is swallowed, not thrown", async () => {
-    batch.restore();
-    batch = stub(resend.batch, "send", () =>
-      result({ data: null, error: { name: "application_error" } }),
-    );
+    batch.mockRestore();
+    batch = vi
+      .spyOn(resend.batch, "send")
+      .mockImplementation(() =>
+        result({ data: null, error: { name: "application_error" } }),
+      );
     await sendMemberRemoved({
       to: ["a@acme.dev"],
       workspaceName: "Acme",
       reason: "downgrade",
       owners: [],
     });
-    assertSpyCalls(batch, 1);
+    expect(batch).toHaveBeenCalledTimes(1);
   });
 
   test("sendPlanDowngraded", async () => {
@@ -403,7 +418,7 @@ describe("send plumbing", () => {
       previousPlan: "team",
       loss,
     });
-    const [payload, options] = send.calls[0].args;
+    const [payload, options] = send.mock.calls[0];
     expect(payload.to).toEqual(["max@acme.dev"]);
     expect(payload.from).toBe(
       "Thibault from openstatus <thibault@notifications.openstatus.dev>",
@@ -423,7 +438,7 @@ describe("send plumbing", () => {
       reason: "downgrade",
       owners: ["max@acme.dev"],
     });
-    const [emails, options] = batch.calls[0].args;
+    const [emails, options] = batch.mock.calls[0];
     expect(emails.map((e: { to: string }) => e.to)).toEqual([
       "a@acme.dev",
       "b@acme.dev",
@@ -449,7 +464,7 @@ describe("send plumbing", () => {
       endsAt,
       loss,
     });
-    const [payload, options] = send.calls[0].args;
+    const [payload, options] = send.mock.calls[0];
     expect(payload.from).toBe(
       "Thibault from openstatus <thibault@openstatus.dev>",
     );
@@ -470,7 +485,7 @@ describe("send plumbing", () => {
       now: new Date("2026-09-01T00:00:00Z"),
     });
     expect(id).toBe("email_123");
-    const [payload, options] = send.calls[0].args;
+    const [payload, options] = send.mock.calls[0];
     expect(payload.from).toBe(
       "openstatus <notifications@notifications.openstatus.dev>",
     );
@@ -492,7 +507,7 @@ describe("send plumbing", () => {
       now: new Date("2026-09-01T00:00:00Z"),
     });
     expect(id).toBeUndefined();
-    assertSpyCalls(send, 0);
+    expect(send).toHaveBeenCalledTimes(0);
   });
 
   test("sendTrialEnding", async () => {
@@ -505,7 +520,7 @@ describe("send plumbing", () => {
       hasPaymentMethod: false,
       loss,
     });
-    const [payload, options] = send.calls[0].args;
+    const [payload, options] = send.mock.calls[0];
     expect(payload.from).toBe(
       "openstatus <notifications@notifications.openstatus.dev>",
     );
@@ -538,7 +553,7 @@ describe("send plumbing", () => {
       plan: "starter",
       hasPaymentMethod: false,
     });
-    assertSpyCalls(send, 0);
-    assertSpyCalls(batch, 0);
+    expect(send).toHaveBeenCalledTimes(0);
+    expect(batch).toHaveBeenCalledTimes(0);
   });
 });

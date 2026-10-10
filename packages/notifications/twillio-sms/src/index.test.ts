@@ -1,12 +1,18 @@
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
 describe("Twilio SMS Notifications", () => {
-  let fetchMock: Stub<typeof globalThis>;
+  let fetchMock: MockInstance;
   const originalEnv = {
     TWILLIO_ACCOUNT_ID: process.env.TWILLIO_ACCOUNT_ID,
     TWILLIO_AUTH_TOKEN: process.env.TWILLIO_AUTH_TOKEN,
@@ -15,13 +21,15 @@ describe("Twilio SMS Notifications", () => {
   beforeEach(() => {
     process.env.TWILLIO_ACCOUNT_ID = "test-account-id";
     process.env.TWILLIO_AUTH_TOKEN = "test-auth-token";
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.resolve(new Response(null, { status: 200 })),
-    );
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(new Response(null, { status: 200 })),
+      );
   });
 
   afterEach(() => {
-    fetchMock.restore();
+    fetchMock.mockRestore();
     if (originalEnv.TWILLIO_ACCOUNT_ID) {
       process.env.TWILLIO_ACCOUNT_ID = originalEnv.TWILLIO_ACCOUNT_ID;
     } else {
@@ -71,8 +79,8 @@ describe("Twilio SMS Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe(
       "https://api.twilio.com/2010-04-01/Accounts/test-account-id/Messages.json",
     );
@@ -102,8 +110,8 @@ describe("Twilio SMS Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const formData = callArgs[1].body as FormData;
     expect(formData.get("Body")).toContain("error: Connection timeout");
   });
@@ -123,8 +131,8 @@ describe("Twilio SMS Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const formData = callArgs[1].body as FormData;
     expect(formData.get("Body")).toContain("is up again");
     expect(formData.get("Body")).toContain("API Health Check");
@@ -145,25 +153,25 @@ describe("Twilio SMS Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const formData = callArgs[1].body as FormData;
     expect(formData.get("Body")).toContain("is degraded");
     expect(formData.get("Body")).toContain("API Health Check");
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.reject(new Error("Network error")),
-    );
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.reject(new Error("Network error")));
 
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
 
-    expect(
+    await expect(
       sendAlert({
         // @ts-expect-error
         monitor,
@@ -174,6 +182,6 @@ describe("Twilio SMS Notifications", () => {
       }),
     ).rejects.toThrow();
 
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

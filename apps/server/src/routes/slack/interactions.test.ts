@@ -18,14 +18,8 @@ import {
   createUser,
 } from "@openstatus/db/src/test/factories";
 import { declareIncident } from "@openstatus/services/incident";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "@openstatus/test-utils";
 import { Hono } from "hono";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 // workspace-resolver / @slack/web-api are swapped for doubles via the test
 // import map; behavior is driven through this shared mutable state.

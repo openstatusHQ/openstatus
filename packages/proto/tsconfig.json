@@ -11,13 +11,5 @@
     "allowImportingTsExtensions": true
   },
   "include": ["gen/ts/**/*.ts", "scripts/**/*.ts"],
-  "exclude": [
-    "node_modules",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/__tests__/**",
-    "**/test/**",
-    "**/*.mock.ts",
-    "**/test-preload.ts"
-  ]
+  "exclude": ["node_modules"]
 }

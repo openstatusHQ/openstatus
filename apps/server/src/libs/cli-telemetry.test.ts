@@ -1,6 +1,5 @@
 import { Events } from "@openstatus/analytics";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import {
   claimCliCommandEvent,

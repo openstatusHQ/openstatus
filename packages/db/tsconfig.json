@@ -1,14 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@openstatus/tsconfig/base.json",
-  "exclude": [
-    "dist",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/__tests__/**",
-    "**/*.mock.ts",
-    "**/test-preload.ts"
-  ],
+  "exclude": ["dist"],
   "compilerOptions": {
     "outDir": "dist",
     "target": "es2021",

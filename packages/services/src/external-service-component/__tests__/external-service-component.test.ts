@@ -4,8 +4,7 @@ import {
   externalService,
   externalServiceComponent,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, describe, test } from "@std/testing/bdd";
+import { afterEach, describe, expect, test } from "vitest";
 
 import {
   getExternalComponentBySlug,
