@@ -1,7 +1,6 @@
-import { expect } from "@std/expect";
-import { afterEach, describe, it } from "@std/testing/bdd";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { renderToStaticMarkup } from "react-dom/server";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { pathnamePrefix } from "@/test/use-pathname-prefix.mock";
 

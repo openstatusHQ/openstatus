@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 // The double stands in for @slack/web-api via the test import map.
 import { WebClient } from "@slack/web-api";
+import { beforeEach, describe, expect, test } from "vitest";
 
 import { slackTestState } from "@/libs/test/doubles/slack-test-state";
 

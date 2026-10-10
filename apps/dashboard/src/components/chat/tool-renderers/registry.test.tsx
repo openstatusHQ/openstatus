@@ -1,7 +1,13 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
-import { type Stub, stub } from "@std/testing/mock";
 import { renderToStaticMarkup } from "react-dom/server";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import {
   renderToolDraft,
@@ -10,11 +16,13 @@ import {
   toolRenderers,
 } from "./index";
 
-let warnStub: Stub | undefined;
+let warnStub: MockInstance | undefined;
 beforeEach(() => {
-  warnStub = stub(console, "warn");
+  warnStub = vi
+    .spyOn(console, "warn")
+    .mockImplementation(() => undefined as never);
 });
-afterEach(() => warnStub?.restore());
+afterEach(() => warnStub?.mockRestore());
 
 describe("summarizeToolOutput", () => {
   it("pluralises item counts", () => {
@@ -129,7 +137,7 @@ describe("unknown tools", () => {
     expect(summarizeToolOutput("not_a_tool", {})).toBeUndefined();
     expect(renderToolDraft("not_a_tool", {})).toBeUndefined();
     expect(renderToolResult("not_a_tool", {}, {})).toBeUndefined();
-    expect(warnStub?.calls).toHaveLength(1);
+    expect(warnStub?.mock.calls).toHaveLength(1);
   });
 });
 

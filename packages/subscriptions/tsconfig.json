@@ -7,15 +7,5 @@
     "jsx": "react-jsx"
   },
   "include": [".", "src"],
-  "exclude": [
-    "dist",
-    "build",
-    "node_modules",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/__tests__/**",
-    "**/test/**",
-    "**/*.mock.ts",
-    "**/test-preload.ts"
-  ]
+  "exclude": ["dist", "build", "node_modules"]
 }

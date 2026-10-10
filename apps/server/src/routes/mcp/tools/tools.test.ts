@@ -17,8 +17,7 @@ import {
   readAuditLog,
   withTestTransaction,
 } from "@openstatus/services/test/helpers";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { toServiceCtx } from "../adapter";
 import { registerMaintenanceTools } from "./maintenance";

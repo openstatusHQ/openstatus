@@ -15,9 +15,15 @@ import {
   PageComponentImpact,
   StatusReportStatus,
 } from "@openstatus/proto/status_report/v1";
-import { mock } from "@openstatus/test-utils";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+  type Mock,
+} from "vitest";
 
 import { app } from "../../../../../index";
 import {
@@ -28,8 +34,8 @@ import {
 
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as {
-  dispatchStatusReportUpdate: ReturnType<typeof mock>;
-  dispatchMaintenanceUpdate: ReturnType<typeof mock>;
+  dispatchStatusReportUpdate: Mock;
+  dispatchMaintenanceUpdate: Mock;
 };
 
 /**

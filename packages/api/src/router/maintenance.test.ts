@@ -7,9 +7,8 @@ import {
   pageComponent,
 } from "@openstatus/db/src/schema";
 import { clearAuditLogFor } from "@openstatus/services/test/helpers";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
+import { afterAll, beforeAll, expect, test } from "vitest";
 
 import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";

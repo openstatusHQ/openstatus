@@ -1,6 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
 
 import { ChartTooltipNumber } from "../chart/chart-tooltip-number";
 import { PopoverQuantile } from "../popover/popover-quantile";

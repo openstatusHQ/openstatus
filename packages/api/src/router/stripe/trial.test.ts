@@ -2,10 +2,16 @@ import { db, eq } from "@openstatus/db";
 import { invitation, workspace } from "@openstatus/db/src/schema";
 import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 import type Stripe from "stripe";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import { stripe } from "./shared";
 import { TRIAL_DAYS, maybeStartSignupTrial } from "./trial";
@@ -27,10 +33,10 @@ describe("maybeStartSignupTrial", () => {
   let customerId: string;
   let customers: Stripe.Customer[];
   let price: Partial<Stripe.Price>;
-  let stubs: Stub[];
-  let list: Stub;
-  let createCustomer: Stub;
-  let createSubscription: Stub;
+  let stubs: MockInstance[];
+  let list: MockInstance;
+  let createCustomer: MockInstance;
+  let createSubscription: MockInstance;
   // Runs inside `customers.create`, to interleave work with the Stripe call.
   let onCreateCustomer: (() => Promise<void>) | undefined;
 
@@ -39,46 +45,52 @@ describe("maybeStartSignupTrial", () => {
     customers = [];
     onCreateCustomer = undefined;
     price = { currency: "usd", currency_options: {} };
-    list = stub(
-      stripe.customers,
-      "list",
-      () =>
-        Promise.resolve({ data: customers } as Stripe.Response<
-          Stripe.ApiList<Stripe.Customer>
-        >) as Stripe.ApiListPromise<Stripe.Customer>,
-    );
-    createCustomer = stub(stripe.customers, "create", async () => {
-      await onCreateCustomer?.();
-      return { id: customerId } as Stripe.Response<Stripe.Customer>;
-    });
-    createSubscription = stub(stripe.subscriptions, "create", () =>
-      Promise.resolve({
-        id: "sub_trial",
-        status: "trialing",
-        trial_end: trialEnd,
-        items: {
-          data: [
-            {
-              price: { id: STARTER_PRICE },
-              quantity: 1,
-              current_period_end: trialEnd,
-            },
-          ],
-        },
-      } as Stripe.Response<Stripe.Subscription>),
-    );
+    list = vi
+      .spyOn(stripe.customers, "list")
+      .mockImplementation(
+        () =>
+          Promise.resolve({ data: customers } as Stripe.Response<
+            Stripe.ApiList<Stripe.Customer>
+          >) as Stripe.ApiListPromise<Stripe.Customer>,
+      );
+    createCustomer = vi
+      .spyOn(stripe.customers, "create")
+      .mockImplementation(async () => {
+        await onCreateCustomer?.();
+        return { id: customerId } as Stripe.Response<Stripe.Customer>;
+      });
+    createSubscription = vi
+      .spyOn(stripe.subscriptions, "create")
+      .mockImplementation(() =>
+        Promise.resolve({
+          id: "sub_trial",
+          status: "trialing",
+          trial_end: trialEnd,
+          items: {
+            data: [
+              {
+                price: { id: STARTER_PRICE },
+                quantity: 1,
+                current_period_end: trialEnd,
+              },
+            ],
+          },
+        } as Stripe.Response<Stripe.Subscription>),
+      );
     stubs = [
       list,
       createCustomer,
       createSubscription,
-      stub(stripe.prices, "retrieve", () =>
-        Promise.resolve(price as Stripe.Response<Stripe.Price>),
-      ),
+      vi
+        .spyOn(stripe.prices, "retrieve")
+        .mockImplementation(() =>
+          Promise.resolve(price as Stripe.Response<Stripe.Price>),
+        ),
     ];
   });
 
   afterEach(() => {
-    for (const s of stubs) s.restore();
+    for (const s of stubs) s.mockRestore();
   });
 
   test("starts a Starter trial on the owner's workspace", async () => {
@@ -100,8 +112,8 @@ describe("maybeStartSignupTrial", () => {
     const trialEndsAt = new Date(trialEnd * 1000);
     expect(result).toEqual({ started: true, trialEndsAt });
 
-    assertSpyCalls(createCustomer, 1);
-    expect(createCustomer.calls[0]?.args).toEqual([
+    expect(createCustomer).toHaveBeenCalledTimes(1);
+    expect(createCustomer.mock.calls[0]).toEqual([
       {
         email: user.email,
         metadata: { workspaceId: String(ws.id), trialed: "true" },
@@ -109,8 +121,8 @@ describe("maybeStartSignupTrial", () => {
       { idempotencyKey: `trial-customer:ws_${ws.id}` },
     ]);
 
-    assertSpyCalls(createSubscription, 1);
-    const [params, options] = createSubscription.calls[0]?.args ?? [];
+    expect(createSubscription).toHaveBeenCalledTimes(1);
+    const [params, options] = createSubscription.mock.calls[0] ?? [];
     expect(params).toMatchObject({
       customer: customerId,
       currency: "eur",
@@ -143,7 +155,7 @@ describe("maybeStartSignupTrial", () => {
       currency: "USD",
     });
 
-    expect(createSubscription.calls[0]?.args[0]).toMatchObject({
+    expect(createSubscription.mock.calls[0]?.[0]).toMatchObject({
       currency: "eur",
     });
   });
@@ -159,7 +171,7 @@ describe("maybeStartSignupTrial", () => {
     });
 
     expect(result).toEqual({ started: false, reason: "sso" });
-    assertSpyCalls(createCustomer, 0);
+    expect(createCustomer).toHaveBeenCalledTimes(0);
   });
 
   test("skips magic-link sign-ins", async () => {
@@ -173,7 +185,7 @@ describe("maybeStartSignupTrial", () => {
     });
 
     expect(result).toEqual({ started: false, reason: "email" });
-    assertSpyCalls(createCustomer, 0);
+    expect(createCustomer).toHaveBeenCalledTimes(0);
   });
 
   test("skips users with a pending invitation", async () => {
@@ -192,7 +204,7 @@ describe("maybeStartSignupTrial", () => {
     });
 
     expect(result).toEqual({ started: false, reason: "invited" });
-    assertSpyCalls(createCustomer, 0);
+    expect(createCustomer).toHaveBeenCalledTimes(0);
   });
 
   test("skips disposable email domains", async () => {
@@ -205,7 +217,7 @@ describe("maybeStartSignupTrial", () => {
     });
 
     expect(result).toEqual({ started: false, reason: "disposable" });
-    assertSpyCalls(list, 0);
+    expect(list).toHaveBeenCalledTimes(0);
   });
 
   test("skips emails that already had a trial", async () => {
@@ -222,11 +234,11 @@ describe("maybeStartSignupTrial", () => {
     });
 
     expect(result).toEqual({ started: false, reason: "already_trialed" });
-    expect(list.calls[0]?.args[0]).toEqual({
+    expect(list.mock.calls[0]?.[0]).toEqual({
       email: "o'brien@example.com",
       limit: 100,
     });
-    assertSpyCalls(createCustomer, 0);
+    expect(createCustomer).toHaveBeenCalledTimes(0);
   });
 
   test("ignores customers for the email that never trialed", async () => {
@@ -240,7 +252,7 @@ describe("maybeStartSignupTrial", () => {
     });
 
     expect(result).toMatchObject({ started: true });
-    assertSpyCalls(createCustomer, 1);
+    expect(createCustomer).toHaveBeenCalledTimes(1);
   });
 
   test("drops its customer when another request linked one first", async () => {
@@ -253,9 +265,11 @@ describe("maybeStartSignupTrial", () => {
         .set({ stripeId: linked })
         .where(eq(workspace.id, ws.id));
     };
-    const delCustomer = stub(stripe.customers, "del", () =>
-      Promise.resolve({} as Stripe.Response<Stripe.DeletedCustomer>),
-    );
+    const delCustomer = vi
+      .spyOn(stripe.customers, "del")
+      .mockImplementation(() =>
+        Promise.resolve({} as Stripe.Response<Stripe.DeletedCustomer>),
+      );
     stubs.push(delCustomer);
 
     const result = await maybeStartSignupTrial({
@@ -265,8 +279,8 @@ describe("maybeStartSignupTrial", () => {
     });
 
     expect(result).toEqual({ started: false, reason: "not_eligible" });
-    expect(delCustomer.calls[0]?.args[0]).toBe(customerId);
-    assertSpyCalls(createSubscription, 0);
+    expect(delCustomer.mock.calls[0]?.[0]).toBe(customerId);
+    expect(createSubscription).toHaveBeenCalledTimes(0);
     const after = await db
       .select({ stripeId: workspace.stripeId })
       .from(workspace)
@@ -285,6 +299,6 @@ describe("maybeStartSignupTrial", () => {
     });
 
     expect(result).toEqual({ started: false, reason: "not_eligible" });
-    assertSpyCalls(createCustomer, 0);
+    expect(createCustomer).toHaveBeenCalledTimes(0);
   });
 });

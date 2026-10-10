@@ -1,13 +1,7 @@
 import { Events } from "@openstatus/analytics";
 import type { Workspace } from "@openstatus/db/src/schema";
-import {
-  beforeEach,
-  describe,
-  expect,
-  type mock,
-  test,
-} from "@openstatus/test-utils";
 import { Hono } from "hono";
+import { beforeEach, describe, expect, test, vi, type Mock } from "vitest";
 
 import type { Variables } from "@/types";
 
@@ -18,8 +12,8 @@ import { apiTrackMiddleware } from "./track";
 const { track: mockTrack, setupAnalytics: mockSetupAnalytics } = (
   globalThis as Record<string, unknown>
 ).__analyticsSpies as {
-  track: ReturnType<typeof mock>;
-  setupAnalytics: ReturnType<typeof mock>;
+  track: Mock;
+  setupAnalytics: Mock;
 };
 
 /** Let the fire-and-forget analytics chain settle. */

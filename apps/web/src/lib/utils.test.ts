@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import {
   cn,
@@ -97,7 +96,7 @@ describe("manipulateDate", () => {
 
   // midnight is detected by the timestamp ending in "00000", which also
   // matches any time on a 100-second boundary, e.g. 10:00:00
-  test.ignore("keeps a whole-hour end date as is", () => {
+  test.skip("keeps a whole-hour end date as is", () => {
     const to = new Date(2024, 0, 2, 10);
     expect(manipulateDate({ from: undefined, to }).toDate).toBe(to.getTime());
   });
@@ -138,7 +137,7 @@ describe("hashIP", () => {
   );
 
   // the `?? ""` fallback feeds a zero-length key to importKey, which throws
-  test.ignore(
+  test.skip(
     "hashes without a configured secret",
     withSalt(undefined, async () => {
       const prev = process.env.CRON_SECRET;

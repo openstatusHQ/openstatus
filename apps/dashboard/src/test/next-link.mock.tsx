@@ -1,5 +1,5 @@
-// Test double for next/link, swapped in via --import-map: Deno cannot resolve
-// Next's extensionless CJS entrypoints. Renders a plain anchor.
+// Test double for next/link, swapped in via test.importmap.json. Renders a
+// plain anchor.
 import type * as React from "react";
 
 type LinkProps = Omit<React.ComponentProps<"a">, "href"> & {

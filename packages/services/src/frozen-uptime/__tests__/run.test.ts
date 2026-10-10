@@ -1,7 +1,6 @@
 import { eq } from "@openstatus/db";
 import { frozenMonitorUptime, monitor } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import { withTestTransaction } from "../../../test/helpers";

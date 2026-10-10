@@ -1,7 +1,6 @@
 import { selectWorkspaceSchema } from "@openstatus/db/src/schema";
 import { createWorkspace } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import { makeUserCtx, withTestTransaction } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";

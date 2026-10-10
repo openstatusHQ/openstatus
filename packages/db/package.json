@@ -45,12 +45,11 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@types/bcryptjs": "catalog:",
     "@types/node": "catalog:",
     "drizzle-kit": "catalog:",
     "next-auth": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -1,6 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, spy } from "@std/testing/mock";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import type { ServiceContext } from "../../context";
 import { getDocPageTool, searchDocsTool } from "../docs";
@@ -15,7 +13,7 @@ afterEach(() => {
 });
 
 function mockFetch(response: Response) {
-  const fn = spy(async () => response);
+  const fn = vi.fn(async () => response);
   globalThis.fetch = fn as unknown as typeof fetch;
   return fn;
 }
@@ -163,6 +161,6 @@ describe("get_doc_page", () => {
       );
       expect(getDocPageTool.outputSchema.safeParse(result).success).toBe(true);
     }
-    assertSpyCalls(fn, 0);
+    expect(fn).toHaveBeenCalledTimes(0);
   });
 });

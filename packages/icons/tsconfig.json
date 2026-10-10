@@ -1,17 +1,7 @@
 {
   "extends": "@openstatus/tsconfig/react-library.json",
   "include": ["."],
-  "exclude": [
-    "dist",
-    "build",
-    "node_modules",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/__tests__/**",
-    "**/test/**",
-    "**/*.mock.ts",
-    "**/test-preload.ts"
-  ],
+  "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"]
