@@ -8,6 +8,7 @@ import {
 } from "@openstatus/analytics";
 
 import { apiAnalyticsIdentity } from "../../../libs/analytics-identity";
+import { apiRequestSampleRate } from "../../../libs/api-request-sampling";
 import { parseCliHeaders, trackCliCommand } from "../../../libs/cli-telemetry";
 import { RPC_CONTEXT_KEY } from "./auth";
 
@@ -171,6 +172,8 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
  *
  * Requests from the openstatus CLI also carry `cliCommand`/`cliVersion` on
  * `api_request`, and the first request of each CLI run fires one `cli_command`.
+ * CLI requests always fire `api_request`; the rest are sampled (see
+ * `apiRequestSampleRate`). Domain events are never sampled.
  *
  * Must be placed after authInterceptor (needs workspace context) and
  * validationInterceptor (requests it rejects never reach here, so they are not
@@ -209,23 +212,29 @@ function trackRpcCall(req: TrackedRequest, success: boolean) {
   const key = `${req.service.typeName}/${req.method.name}`;
   const mapping = success ? RPC_EVENT_MAP[key] : undefined;
   const cli = parseCliHeaders(req.header);
+  const sampleRate = apiRequestSampleRate(cli);
 
-  const events: (EventProps & Record<string, unknown>)[] = [
-    {
+  const events: (EventProps & Record<string, unknown>)[] = [];
+
+  if (sampleRate !== undefined) {
+    events.push({
       ...Events.ApiRequest,
       service: req.service.typeName,
       method: req.method.name,
       success,
+      sampleRate,
       ...(cli ? { cliCommand: cli.command } : {}),
       ...(cli?.version ? { cliVersion: cli.version } : {}),
-    },
-  ];
+    });
+  }
 
   if (mapping) {
     const input = mapping.normalizeInput?.(req.message) ?? req.message;
     const additionalProps = parseInputToProps(input, mapping.eventProps);
     events.push({ ...additionalProps, ...mapping.event });
   }
+
+  if (events.length === 0) return;
 
   setupAnalytics(apiAnalyticsIdentity(rpcCtx.workspace, req.header))
     .then((analytics) =>
