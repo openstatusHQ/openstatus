@@ -17,10 +17,6 @@ import {
   DetailSection,
   DetailSectionTitle,
 } from "@/components/content/detail";
-import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
 import { SectionGroup } from "@/components/content/section";
 import { Timeline } from "@/components/content/timeline";
 import {
@@ -40,24 +36,12 @@ import { useTRPC } from "@/lib/trpc/client";
 export function Client({ id }: { id: number }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const { data: incident, isError } = useQuery({
-    ...trpc.incident.get.queryOptions({ id }),
-    retry: false,
-  });
+  const { data: incident } = useQuery(trpc.incident.get.queryOptions({ id }));
   const { data: events } = useQuery(
     trpc.incident.listEvents.queryOptions({ id }),
   );
   const [followUp, setFollowUp] = useState<{ note: string } | null>(null);
 
-  if (isError) {
-    return (
-      <SectionGroup>
-        <EmptyStateContainer>
-          <EmptyStateTitle>Incident not found</EmptyStateTitle>
-        </EmptyStateContainer>
-      </SectionGroup>
-    );
-  }
   if (!incident) return null;
 
   const canNotify = workspace?.limits["status-subscribers"] === true;
