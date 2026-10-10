@@ -104,7 +104,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
             <DetailSectionTitle variant="heading">
               Updates
               <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
-                {updates.length + 1}
+                {updates.length}
               </span>
             </DetailSectionTitle>
             <Timeline>

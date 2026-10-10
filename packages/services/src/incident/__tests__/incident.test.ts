@@ -753,6 +753,8 @@ describe("reads", () => {
       );
       const ctx = as(memberId, tx);
       const ids = (await listIncidents({ ctx })).map((i) => i.id);
+      expect(ids).toContain(newer.id);
+      expect(ids).toContain(older.id);
       expect(ids.indexOf(newer.id)).toBeLessThan(ids.indexOf(older.id));
       const onlyResolved = await listIncidents({
         ctx,

@@ -24,8 +24,8 @@ const { statusReport } = await client.statusReport.v1.StatusReportService
     status: StatusReportStatus.INVESTIGATING,
     message: "We are investigating reports of increased latency.",
     date: "2024-01-15T10:30:00Z",
-    pageId: "page_123",
-    pageComponentIds: ["comp_456"],
+    pageId: "1",
+    pageComponentIds: ["12"],
     notify: true,
   });
 
@@ -41,7 +41,7 @@ import { StatusReportStatus } from "@openstatus/sdk-node";
 
 const { statusReport } = await client.statusReport.v1.StatusReportService
   .addStatusReportUpdate({
-    statusReportId: "sr_123",
+    statusReportId: "123",
     status: StatusReportStatus.IDENTIFIED,
     message: "The issue has been identified as a database connection problem.",
     date: "2024-01-15T11:00:00Z",
@@ -60,7 +60,7 @@ import { StatusReportStatus } from "@openstatus/sdk-node";
 
 const { statusReportUpdate } = await client.statusReport.v1.StatusReportService
   .updateStatusReportUpdate({
-    id: "sru_456",
+    id: "456",
     status: StatusReportStatus.MONITORING,
     message: "A fix has been deployed and we are monitoring.",
   });
@@ -74,7 +74,7 @@ A report always keeps at least one update. Deleting the last one fails with `inv
 
 ```typescript
 const { success } = await client.statusReport.v1.StatusReportService
-  .deleteStatusReportUpdate({ id: "sru_456" });
+  .deleteStatusReportUpdate({ id: "456" });
 ```
 
 ## List Status Reports
@@ -104,7 +104,7 @@ Returns the full report including the updates timeline.
 import { StatusReportStatus } from "@openstatus/sdk-node";
 
 const { statusReport } = await client.statusReport.v1.StatusReportService
-  .getStatusReport({ id: "sr_123" });
+  .getStatusReport({ id: "123" });
 
 console.log(`Title: ${statusReport?.title}`);
 console.log(`Status: ${StatusReportStatus[statusReport?.status ?? 0]}`);
@@ -119,9 +119,9 @@ for (const update of statusReport?.updates ?? []) {
 ```typescript
 const { statusReport } = await client.statusReport.v1.StatusReportService
   .updateStatusReport({
-    id: "sr_123",
+    id: "123",
     title: "Updated Title",
-    pageComponentIds: ["comp_456", "comp_789"],
+    pageComponentIds: ["12", "13"],
   });
 ```
 
@@ -129,5 +129,5 @@ const { statusReport } = await client.statusReport.v1.StatusReportService
 
 ```typescript
 const { success } = await client.statusReport.v1.StatusReportService
-  .deleteStatusReport({ id: "sr_123" });
+  .deleteStatusReport({ id: "123" });
 ```

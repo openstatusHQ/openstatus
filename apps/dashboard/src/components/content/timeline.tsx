@@ -116,8 +116,8 @@ export function TimelineHeader({
         "in-data-[slot=timeline-card]:px-4 in-data-[slot=timeline-card]:pt-3 in-data-[slot=timeline-card]:pb-1.5",
         // room for the pinned actions so the sentence wraps before them
         "has-[>[data-slot=timeline-actions]]:pr-16",
-        // compact rows separate the time with a middle dot
-        "[li>&>time]:before:mr-1.5 [li>&>time]:before:content-['·']",
+        // compact rows separate the time with a middle dot, once it has rendered
+        "[li>&>time:not(:empty)]:before:mr-1.5 [li>&>time:not(:empty)]:before:content-['·']",
         className,
       )}
       {...props}

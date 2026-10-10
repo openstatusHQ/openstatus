@@ -114,6 +114,7 @@ export function IncidentComposer({
         <ComposerTextarea
           placeholder="What's happening? Impact, what you've found, what's next."
           value={message}
+          disabled={pending}
           onChange={(e) => setMessage(e.target.value)}
           onSubmit={requestSubmit}
         />

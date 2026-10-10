@@ -19,19 +19,23 @@ export default async function Page({
   if (!Number.isInteger(incidentId)) return notFound();
 
   const queryClient = getQueryClient();
-  const [incident] = await Promise.all([
-    fetchQueryOrNotFound(trpc.incident.get.queryOptions({ id: incidentId })),
+  await Promise.all([
+    (async () => {
+      const incident = await fetchQueryOrNotFound(
+        trpc.incident.get.queryOptions({ id: incidentId }),
+      );
+      // the postmortem query is only enabled once resolved
+      if (incident.status === "resolved") {
+        await queryClient.prefetchQuery(
+          trpc.incident.getPostmortem.queryOptions({ id: incidentId }),
+        );
+      }
+    })(),
     queryClient.prefetchQuery(
       trpc.incident.listEvents.queryOptions({ id: incidentId }),
     ),
     queryClient.prefetchQuery(trpc.member.list.queryOptions()),
   ]);
-  // the postmortem query is only enabled once resolved
-  if (incident.status === "resolved") {
-    await queryClient.prefetchQuery(
-      trpc.incident.getPostmortem.queryOptions({ id: incidentId }),
-    );
-  }
 
   return (
     <HydrateClient>

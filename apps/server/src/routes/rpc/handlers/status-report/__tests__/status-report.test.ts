@@ -1161,6 +1161,18 @@ describe("StatusReportService.UpdateStatusReport", () => {
     expect(res.status).toBe(404);
   });
 
+  test("rejects an update id beyond the safe integer range", async () => {
+    const res = await connectRequest(
+      "UpdateStatusReportUpdate",
+      { id: "9007199254740993", message: "rounded" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("Invalid status report update id");
+  });
+
   test("rejects a malformed page component id on update", async () => {
     const res = await connectRequest(
       "UpdateStatusReport",

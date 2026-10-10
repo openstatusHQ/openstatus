@@ -77,6 +77,9 @@ const ACTIVE_STATUSES = statusReportStatusSchema.options.filter(
   (s) => s !== "resolved",
 );
 
+// keeps list output bounded for long-running incidents
+const LIST_UPDATES_LIMIT = 10;
+
 const ListStatusReportsInputShape = z.object({
   filter: z
     .enum(["active", "all"])
@@ -150,7 +153,7 @@ export const listStatusReportsTool: AgentTool<
 > = {
   name: "list_status_reports",
   description:
-    "List status reports in this workspace, newest first. Filter by status (e.g. exclude 'resolved' to see active incidents). Returns each report's full timeline newest-first under `updates` (ids feed update_status_report_update / delete_status_report_update) plus `latestUpdate` so the current public message is visible without a follow-up call. Paginated via `page` (1-indexed) and `perPage`.",
+    "List status reports in this workspace, newest first. Filter by status (e.g. exclude 'resolved' to see active incidents). Returns each report's timeline newest-first under `updates`, capped at the 10 most recent entries (ids feed update_status_report_update / delete_status_report_update), plus `latestUpdate` with its author. Paginated via `page` (1-indexed) and `perPage`.",
   scope: "read",
   destructive: false,
   inputSchema: ListStatusReportsInputShape,
@@ -188,7 +191,7 @@ export const listStatusReportsTool: AgentTool<
                 createdBy: toAgentUser(latestUpdate.createdByUser),
               }
             : null,
-          updates: r.updates.map((u) => ({
+          updates: r.updates.slice(0, LIST_UPDATES_LIMIT).map((u) => ({
             id: u.id,
             status: u.status,
             message: u.message,
@@ -667,7 +670,7 @@ const UpdateStatusReportUpdateInputShape = z.object({
     .number()
     .int()
     .describe(
-      "Status report update id from list_status_reports (latestUpdate.id) or a prior create/add result — never guess.",
+      "Status report update id from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result — never guess.",
     ),
   status: statusReportStatusSchema
     .refine((s) => s !== "resolved", {
@@ -699,7 +702,7 @@ export const updateStatusReportUpdateTool: AgentTool<
 > = {
   name: "update_status_report_update",
   description:
-    "Edit an existing status report timeline entry (message, date, status, component impacts). PUBLIC and AUDIT-LOGGED. Does not notify subscribers. Editing the latest entry's status re-derives the report's status. The update id MUST come from list_status_reports (latestUpdate.id) or a prior create/add result.",
+    "Edit an existing status report timeline entry (message, date, status, component impacts). PUBLIC and AUDIT-LOGGED. Does not notify subscribers. Editing the latest entry's status re-derives the report's status. The update id MUST come from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result.",
   scope: "write",
   destructive: true,
   inputSchema: UpdateStatusReportUpdateInputShape,
@@ -755,7 +758,7 @@ const DeleteStatusReportUpdateInputShape = z.object({
     .number()
     .int()
     .describe(
-      "Status report update id from list_status_reports (latestUpdate.id) or a prior create/add result — never guess.",
+      "Status report update id from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result — never guess.",
     ),
 });
 
@@ -770,7 +773,7 @@ export const deleteStatusReportUpdateTool: AgentTool<
 > = {
   name: "delete_status_report_update",
   description:
-    "Delete a status report timeline entry. PUBLIC, AUDIT-LOGGED, AND IRREVERSIBLE. The report's status is re-derived from the remaining entries. A report must retain at least one update — to remove the only entry, delete the report from the dashboard instead. The update id MUST come from list_status_reports (latestUpdate.id) or a prior create/add result.",
+    "Delete a status report timeline entry. PUBLIC, AUDIT-LOGGED, AND IRREVERSIBLE. The report's status is re-derived from the remaining entries. A report must retain at least one update — to remove the only entry, delete the report from the dashboard instead. The update id MUST come from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result.",
   scope: "write",
   destructive: true,
   inputSchema: DeleteStatusReportUpdateInputShape,

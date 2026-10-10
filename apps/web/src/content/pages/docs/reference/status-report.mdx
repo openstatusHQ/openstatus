@@ -78,11 +78,11 @@ A status report is a timeline of dated entries. The first one is written at crea
 - **Message** — String (required). The public note.
 - **Date** — Datetime (optional). When the entry applies. Defaults to the time it is posted.
 - **Component impacts** — per-component impact declared by this entry (see [below](#component-impacts)).
-- **Notify** — Boolean (optional, write-only). Sends the entry to status page subscribers. Only new entries notify; editing one never does.
+- **Notify** — Boolean (write-only). Sends the entry to status page subscribers. Optional over RPC and from the dashboard; the MCP tools require it so the agent states the choice explicitly. Only new entries notify; editing one never does.
 
-The report's status is derived from its latest update by date, so editing or removing an update can change it. A report always keeps at least one update: deleting the last one is rejected, delete the report instead. Reads return the entries newest-first under `updates` (RPC), and the public status page renders them in order.
+The report's status is derived from its latest update by date, so editing or removing an update can change it. A report always keeps at least one update: deleting the last one is rejected; delete the report instead. Reads return the entries newest-first under `updates` (RPC), and the public status page renders them in order.
 
-Entries are edited and removed from the dashboard timeline, through the `UpdateStatusReportUpdate` and `DeleteStatusReportUpdate` RPC methods, and through the `update_status_report_update` and `delete_status_report_update` [MCP tools](/docs/reference/mcp-server).
+Entries are edited and removed from the dashboard timeline, through the `UpdateStatusReportUpdate` and `DeleteStatusReportUpdate` RPC methods, and through the `update_status_report_update` and `delete_status_report_update` [MCP tools](/docs/reference/mcp-server). The MCP tool refuses to set an entry to `resolved` so the agent resolves through `resolve_status_report`; the RPC method and the dashboard accept it.
 
 ## Component impacts
 

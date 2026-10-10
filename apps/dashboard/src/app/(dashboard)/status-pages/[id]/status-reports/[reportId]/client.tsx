@@ -112,7 +112,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
             <DetailSectionTitle variant="heading">
               Updates
               <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
-                {updates.length + 1}
+                {updates.length}
               </span>
             </DetailSectionTitle>
             <Timeline>
@@ -128,7 +128,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
                   key={update.id}
                   report={report}
                   update={update}
-                  previous={updates[i + 1] ?? null}
+                  before={currentImpactsFromUpdates(updates.slice(i + 1))}
                   index={updates.length - i}
                   groupOf={groupOf}
                 />

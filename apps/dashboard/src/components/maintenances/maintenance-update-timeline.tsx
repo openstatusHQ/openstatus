@@ -22,6 +22,7 @@ import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetMaintenanceUpdate } from "@/components/forms/maintenance-update/sheet";
 import { distinctEditor } from "@/data/attribution.client";
 import { getActions } from "@/data/maintenances.client";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { useInvalidateMaintenance } from "./use-invalidate-maintenance";
@@ -112,6 +113,8 @@ export function MaintenanceScheduledTimelineItem({
 }: {
   maintenance: Maintenance;
 }) {
+  // local-time text differs between server and browser
+  const hydrated = useHydrated();
   return (
     <TimelineItem>
       <TimelineIndicator>
@@ -127,8 +130,9 @@ export function MaintenanceScheduledTimelineItem({
           "Maintenance scheduled for"
         )}
         <TimelineHighlight>
-          {format(maintenance.from, "LLL dd, HH:mm")} –{" "}
-          {format(maintenance.to, "LLL dd, HH:mm")}
+          {hydrated
+            ? `${format(maintenance.from, "LLL dd, HH:mm")} – ${format(maintenance.to, "LLL dd, HH:mm")}`
+            : null}
         </TimelineHighlight>
         {maintenance.createdAt ? (
           <TimelineTime date={maintenance.createdAt} />

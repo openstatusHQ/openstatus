@@ -36,16 +36,14 @@ import { useInvalidateStatusReport } from "./use-invalidate-status-report";
 type StatusReport = NonNullable<RouterOutputs["statusReport"]["get"]>;
 type StatusReportUpdate = StatusReport["updates"][number];
 
-// Components whose impact this update moved; a page starts operational, so
-// the first update lists everything it degraded and a resolve lists what it
-// restored. Legacy updates carry no rows and change nothing.
+// Components whose impact this update moved against `before`, the state the
+// older updates left behind (an omitted component keeps its last impact). A
+// page starts operational, so the first update lists everything it degraded
+// and a resolve lists what it restored. Legacy updates carry no rows.
 function changedImpacts(
   update: StatusReportUpdate,
-  previous: StatusReportUpdate | null,
+  before: ReadonlyMap<number, PageComponentImpact>,
 ): { pageComponentId: number; impact: PageComponentImpact }[] {
-  const before = new Map(
-    previous?.componentImpacts.map((ci) => [ci.pageComponentId, ci.impact]),
-  );
   return update.componentImpacts.filter(
     (ci) => ci.impact !== (before.get(ci.pageComponentId) ?? "operational"),
   );
@@ -54,14 +52,14 @@ function changedImpacts(
 export function StatusReportTimelineItem({
   report,
   update,
-  previous,
+  before,
   index,
   groupOf,
 }: {
   report: StatusReport;
   update: StatusReportUpdate;
-  /** The update before this one, oldest first; `null` for the first. */
-  previous: StatusReportUpdate | null;
+  /** Impact per component as the older updates left it. */
+  before: ReadonlyMap<number, PageComponentImpact>;
   /** 1-based, counted from the oldest update. */
   index: number;
   /** component id → group name, for disambiguating same-named components */
@@ -84,7 +82,7 @@ export function StatusReportTimelineItem({
   }));
   const author = update.createdByUser;
   const editor = distinctEditor(update);
-  const changes = changedImpacts(update, previous).flatMap((ci) => {
+  const changes = changedImpacts(update, before).flatMap((ci) => {
     const component = components.find((c) => c.id === ci.pageComponentId);
     return component ? [{ ...component, impact: ci.impact }] : [];
   });

@@ -42,7 +42,7 @@ export function StatusBadge({
         "font-mono",
         dot || plain ? "gap-1.5" : statusBadgeVariants({ variant }),
         plain &&
-          "rounded-none border-0 px-0 py-0 text-sm font-normal text-inherit",
+          "rounded-none border-0 px-0 py-0 font-sans text-sm font-normal text-inherit",
         className,
       )}
       {...props}

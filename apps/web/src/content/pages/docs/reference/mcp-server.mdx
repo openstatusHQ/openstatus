@@ -75,7 +75,7 @@ The server exposes 26 tools (24 on plans without the `audit-log` feature), group
 
 | Tool                       | Type     | Purpose |
 |----------------------------|----------|---------|
-| `list_status_reports`      | read     | List status reports newest-first, each with its full `updates` timeline (newest first, with ids) and `latestUpdate`. `filter: "active" \| "all"` (defaults to active = excludes resolved). Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
+| `list_status_reports`      | read     | List status reports newest-first, each with its `updates` timeline (newest first, with ids, capped at the 10 most recent) and `latestUpdate`. `filter: "active" \| "all"` (defaults to active = excludes resolved). Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
 | `create_status_report`     | mutation | Create a new status report on a status page with an initial public update. |
 | `add_status_report_update` | mutation | Append a public update to an existing status report and bump its status. |
 | `update_status_report`     | mutation | Edit a report's title, status, or affected components without posting a public update. |
@@ -99,7 +99,7 @@ Registered only when incident management is enabled for the workspace — otherw
 
 | Tool                  | Type     | Purpose |
 |-----------------------|----------|---------|
-| `list_incidents`      | read     | List declared incidents, open ones first. Optional `status` filter; `limit` ≤ 100 and `offset`. |
+| `list_incidents`      | read     | List declared incidents, newest declared first. Optional `status` filter; `limit` ≤ 100 and `offset`. |
 | `get_incident`        | read     | One incident with its timeline (newest first, up to 50 events) and linked status report. |
 | `declare_incident`    | mutation | Declare an incident with a `title` and `severity` (`critical` / `major` / `minor`), optionally a summary, commander, start time and status report to link. |
 | `update_incident`     | mutation | Change the title, severity, summary, commander or start time. |

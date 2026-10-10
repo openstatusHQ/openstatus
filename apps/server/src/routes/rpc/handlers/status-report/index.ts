@@ -46,13 +46,15 @@ const DECIMAL_ID = /^\d+$/;
 
 function parseId(value: string, label: string): number {
   const trimmed = value.trim();
-  if (!DECIMAL_ID.test(trimmed)) {
+  // past 2^53 the digits round to a neighbouring id
+  const id = Number(trimmed);
+  if (!DECIMAL_ID.test(trimmed) || !Number.isSafeInteger(id)) {
     throw new ConnectError(
       `Invalid ${label}: "${value}"`,
       Code.InvalidArgument,
     );
   }
-  return Number(trimmed);
+  return id;
 }
 
 function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
@@ -301,7 +303,13 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
           ctx: sCtx,
           input: { id: edited.statusReportId },
         });
-        const update = full.updates.find((u) => u.id === id) ?? edited;
+        const update = full.updates.find((u) => u.id === id);
+        if (!update) {
+          throw new ConnectError(
+            `Status report update ${id} was deleted concurrently`,
+            Code.NotFound,
+          );
+        }
         return { statusReportUpdate: dbUpdateToProto(update) };
       } catch (err) {
         toConnectError(err);

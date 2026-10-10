@@ -45,8 +45,11 @@ import { IncidentSeverityBadge, IncidentStatusBadge } from "./incident-badge";
 type Event = NonNullable<RouterOutputs["incident"]["listEvents"]>[number];
 type Incident = NonNullable<RouterOutputs["incident"]["get"]>;
 
-function slackChannelUrl(teamId: string, channelId: string): string {
-  return `https://slack.com/app_redirect?team=${teamId}&channel=${channelId}`;
+// `team` is optional for app_redirect; without it Slack uses the signed-in one.
+function slackChannelUrl(teamId: string | null, channelId: string): string {
+  const params = new URLSearchParams({ channel: channelId });
+  if (teamId) params.set("team", teamId);
+  return `https://slack.com/app_redirect?${params}`;
 }
 
 const TRANSITION = /^\w+ changed from \w+ to (\w+)(?:\n\n([\s\S]+))?$/;
@@ -54,6 +57,7 @@ const DECLARED = /^Declared as (\w+): /;
 const COMMANDER = /^Commander set to (.+)$/;
 const STARTED_AT = /^Start time changed to (\S+)$/;
 const REPORT = /^(?:Linked|Unlinked) status report #(\d+)$/;
+const CHANNEL = /<#([A-Z0-9]+)>/;
 // Slack-mirrored notes end with a permalink line appended by the bot.
 const FROM_SLACK = /\n\n\[From Slack\]\((https?:\/\/\S+)\)$/;
 // Events without a user come from the service itself.
@@ -72,6 +76,8 @@ type Parsed = {
   /** Authored text, rendered as a card. */
   message: string | null;
   slackUrl?: string;
+  /** Channel id read from a bound/unbound message. */
+  channelId?: string;
   /** Message text that already carries the actor's name. */
   agent?: boolean;
 };
@@ -176,11 +182,19 @@ function parseEvent(event: Event): Parsed {
         message: null,
       };
     }
-    // The message only repeats the label around a raw Slack channel id.
+    // The message names the channel; the link follows it rather than the
+    // incident's current binding, which may be gone or a different channel.
     case "slack_channel_bound":
-      return { icon: Plug, phrase: "bound the", message: null };
-    case "slack_channel_unbound":
-      return { icon: Plug, phrase: "unbound the", message: null };
+    case "slack_channel_unbound": {
+      const channelId = message ? CHANNEL.exec(message)?.[1] : undefined;
+      return {
+        icon: Plug,
+        phrase:
+          event.type === "slack_channel_bound" ? "bound the" : "unbound the",
+        message: null,
+        channelId,
+      };
+    }
     case "postmortem_drafted":
     case "postmortem_updated":
     case "postmortem_approved": {
@@ -221,7 +235,7 @@ export function IncidentTimelineItem({
   incident,
 }: {
   event: Event;
-  incident: Pick<Incident, "statusReport" | "slackTeamId" | "slackChannelId">;
+  incident: Pick<Incident, "statusReport" | "slackTeamId">;
 }) {
   const {
     icon: Icon,
@@ -230,6 +244,7 @@ export function IncidentTimelineItem({
     severity,
     message,
     slackUrl,
+    channelId,
     agent,
     reportId,
   } = parseEvent(event);
@@ -245,8 +260,8 @@ export function IncidentTimelineItem({
   const channelUrl =
     event.type === "slack_channel_bound" ||
     event.type === "slack_channel_unbound"
-      ? incident.slackTeamId && incident.slackChannelId
-        ? slackChannelUrl(incident.slackTeamId, incident.slackChannelId)
+      ? channelId
+        ? slackChannelUrl(incident.slackTeamId, channelId)
         : null
       : undefined;
 

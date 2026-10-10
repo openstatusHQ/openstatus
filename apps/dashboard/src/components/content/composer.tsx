@@ -31,10 +31,14 @@ import {
 } from "react";
 
 import { ProcessMessage } from "@/components/content/process-message";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 type ComposerView = "write" | "preview";
 
 const DRAFT_EVENT = "composer-draft";
+// Drafts localStorage refused (quota, private mode) live here instead, so the
+// controlled textarea never snaps back to the stored snapshot.
+const memoryDrafts = new Map<string, string>();
 
 /**
  * Message text that survives navigation, like Linear's unsent comments.
@@ -52,6 +56,8 @@ export function useComposerDraft(key: string) {
       };
     },
     () => {
+      const memory = memoryDrafts.get(storageKey);
+      if (memory !== undefined) return memory;
       try {
         return localStorage.getItem(storageKey) ?? "";
       } catch {
@@ -65,7 +71,10 @@ export function useComposerDraft(key: string) {
       try {
         if (next) localStorage.setItem(storageKey, next);
         else localStorage.removeItem(storageKey);
-      } catch {}
+        memoryDrafts.delete(storageKey);
+      } catch {
+        memoryDrafts.set(storageKey, next);
+      }
       window.dispatchEvent(new Event(DRAFT_EVENT));
     },
     [storageKey],
@@ -234,12 +243,18 @@ export function ComposerActions({
   );
 }
 
-/** Icon send button; the tooltip carries the label and the ⌘↵ shortcut. */
+/** Icon send button; the tooltip carries the label and the ⌘/Ctrl+↵ shortcut. */
 export function ComposerSubmit({
   label,
   className,
   ...props
 }: Omit<React.ComponentProps<typeof Button>, "children"> & { label: string }) {
+  // the platform is only known in the browser; ⌘ until then
+  const hydrated = useHydrated();
+  const modifier =
+    hydrated && !/Mac|iPhone|iPad|iPod/.test(navigator.userAgent)
+      ? "Ctrl"
+      : "⌘";
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -255,7 +270,7 @@ export function ComposerSubmit({
       <TooltipContent side="top" className="flex items-center gap-1.5">
         {label}
         <KbdGroup>
-          <Kbd>⌘</Kbd>
+          <Kbd>{modifier}</Kbd>
           <Kbd>↵</Kbd>
         </KbdGroup>
       </TooltipContent>

@@ -174,6 +174,7 @@ export function StatusReportComposer({
         <ComposerTextarea
           placeholder="What changed? Customers will read this on the status page."
           value={message}
+          disabled={publish.isPending}
           onChange={(e) => setMessage(e.target.value)}
           onSubmit={() => submit().catch(console.error)}
         />

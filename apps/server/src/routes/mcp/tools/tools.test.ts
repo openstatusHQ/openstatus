@@ -249,7 +249,8 @@ describe("list_status_reports", () => {
         })
         .returning()
         .get();
-      const [older, newer] = await tx
+      // RETURNING order is unspecified, so pick the rows by date
+      const rows = await tx
         .insert(statusReportUpdate)
         .values([
           {
@@ -267,6 +268,9 @@ describe("list_status_reports", () => {
         ])
         .returning()
         .all();
+      const [older, newer] = [...rows].sort(
+        (a, b) => a.date.getTime() - b.date.getTime(),
+      );
 
       const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("status-report", ctx);
