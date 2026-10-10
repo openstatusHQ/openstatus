@@ -81,6 +81,7 @@ export {
   Network,
   ArrowRight as Next,
   Bell as Notification,
+  BellOff as NotificationOff,
   LayoutGrid as Overview,
   CircleDashed as Pending,
   Play,

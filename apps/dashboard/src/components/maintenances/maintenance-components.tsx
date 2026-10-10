@@ -50,7 +50,7 @@ export function MaintenanceComponents({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground invisible size-7 group-hover:visible focus-visible:visible"
+                  className="text-muted-foreground size-7"
                   aria-label={`Remove ${component.name}`}
                   disabled={isPending}
                   onClick={() =>
@@ -71,7 +71,6 @@ export function MaintenanceComponents({
         <ComponentListEmpty />
       )}
       <ComponentListAdd
-        className="-ml-2"
         components={addable}
         groups={groups}
         disabled={isPending}

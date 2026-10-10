@@ -195,6 +195,7 @@ const tools = [
     group: "Status reports",
     items: [
       "list_status_reports",
+      "get_status_report",
       "create_status_report",
       "add_status_report_update",
       "update_status_report",

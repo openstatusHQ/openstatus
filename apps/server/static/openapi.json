@@ -5980,6 +5980,33 @@
         "additionalProperties": false,
         "description": "DeleteStatusReportResponse is the response after deleting a status report."
       },
+      "openstatus.status_report.v1.DeleteStatusReportUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "minLength": 1,
+            "description": "ID of the update to remove (required)."
+          }
+        },
+        "title": "DeleteStatusReportUpdateRequest",
+        "additionalProperties": false,
+        "description": "DeleteStatusReportUpdateRequest is the request to remove a status report update."
+      },
+      "openstatus.status_report.v1.DeleteStatusReportUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "success",
+            "description": "Whether the deletion was successful."
+          }
+        },
+        "title": "DeleteStatusReportUpdateResponse",
+        "additionalProperties": false,
+        "description": "DeleteStatusReportUpdateResponse is the response after removing a status report update."
+      },
       "openstatus.status_report.v1.GetStatusReportRequest": {
         "type": "object",
         "properties": {
@@ -6259,6 +6286,70 @@
         "title": "UpdateStatusReportResponse",
         "additionalProperties": false,
         "description": "UpdateStatusReportResponse is the response after updating a status report."
+      },
+      "openstatus.status_report.v1.UpdateStatusReportUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "minLength": 1,
+            "description": "ID of the update to edit (required)."
+          },
+          "status": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/openstatus.status_report.v1.StatusReportStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "status",
+            "description": "New status for this entry (optional)."
+          },
+          "message": {
+            "type": ["string", "null"],
+            "title": "message",
+            "minLength": 1,
+            "description": "New message (optional)."
+          },
+          "date": {
+            "type": ["string", "null"],
+            "title": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$",
+            "description": "New date for this entry (RFC 3339 format, optional)."
+          },
+          "componentImpacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/openstatus.status_report.v1.ComponentImpact"
+            },
+            "title": "component_impacts",
+            "description": "Replacement impact set for this update (optional, see update_component_impacts)."
+          },
+          "updateComponentImpacts": {
+            "type": ["boolean", "null"],
+            "title": "update_component_impacts",
+            "description": "Set to true to replace the update's component impacts with component_impacts\n (empty clears them). When false or unset, component_impacts is ignored."
+          }
+        },
+        "title": "UpdateStatusReportUpdateRequest",
+        "additionalProperties": false,
+        "description": "UpdateStatusReportUpdateRequest is the request to edit a status report update."
+      },
+      "openstatus.status_report.v1.UpdateStatusReportUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "statusReportUpdate": {
+            "title": "status_report_update",
+            "description": "The edited timeline entry.",
+            "$ref": "#/components/schemas/openstatus.status_report.v1.StatusReportUpdate"
+          }
+        },
+        "title": "UpdateStatusReportUpdateResponse",
+        "additionalProperties": false,
+        "description": "UpdateStatusReportUpdateResponse is the response after editing a status report update."
       }
     }
   },
@@ -9975,6 +10066,49 @@
         }
       }
     },
+    "/rpc/openstatus.status_report.v1.StatusReportService/DeleteStatusReportUpdate": {
+      "post": {
+        "tags": ["StatusReportService"],
+        "summary": "DeleteStatusReportUpdate",
+        "description": "Removes a status report update. The report's status is re-derived from the remaining updates. Deleting the last remaining update is rejected with INVALID_ARGUMENT: delete the status report instead.",
+        "operationId": "StatusReportService_DeleteStatusReportUpdate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/openstatus.status_report.v1.DeleteStatusReportUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openstatus.status_report.v1.DeleteStatusReportUpdateResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/rpc/openstatus.status_report.v1.StatusReportService/GetStatusReport": {
       "get": {
         "tags": ["StatusReportService"],
@@ -10172,6 +10306,49 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/openstatus.status_report.v1.UpdateStatusReportResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rpc/openstatus.status_report.v1.StatusReportService/UpdateStatusReportUpdate": {
+      "post": {
+        "tags": ["StatusReportService"],
+        "summary": "UpdateStatusReportUpdate",
+        "description": "Edits an existing status report update in place. Editing the status or date of the latest update re-derives the report's overall status. Subscribers are not notified.",
+        "operationId": "StatusReportService_UpdateStatusReportUpdate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/openstatus.status_report.v1.UpdateStatusReportUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openstatus.status_report.v1.UpdateStatusReportUpdateResponse"
                 }
               }
             }

@@ -62,7 +62,7 @@ For AI agents that should only observe state — health summaries, paging on-cal
 
 ## Tools
 
-The server exposes 26 tools (24 on plans without the `audit-log` feature), grouped by resource: 22 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). Workspaces with incident management enabled get 10 more (see [Incidents](#incidents)). Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
+The server exposes 29 tools (27 on plans without the `audit-log` feature), grouped by resource: 25 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). Workspaces with incident management enabled get 10 more (see [Incidents](#incidents)). Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
 
 ### Pages
 
@@ -75,11 +75,14 @@ The server exposes 26 tools (24 on plans without the `audit-log` feature), group
 
 | Tool                       | Type     | Purpose |
 |----------------------------|----------|---------|
-| `list_status_reports`      | read     | List status reports newest-first. `filter: "active" \| "all"` (defaults to active = excludes resolved). Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
+| `list_status_reports`      | read     | List status reports newest-first, each with its `updates` timeline (newest first, with ids, capped at the 10 most recent) and `latestUpdate`. `filter: "active" \| "all"` (defaults to active = excludes resolved). Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
+| `get_status_report`        | read     | Get one status report with its full `updates` timeline (newest first, with ids, uncapped) and `pageComponentIds`. Use it to reach entries older than the 10 that `list_status_reports` returns. |
 | `create_status_report`     | mutation | Create a new status report on a status page with an initial public update. |
 | `add_status_report_update` | mutation | Append a public update to an existing status report and bump its status. |
 | `update_status_report`     | mutation | Edit a report's title, status, or affected components without posting a public update. |
 | `resolve_status_report`    | mutation | Mark a report resolved and post a final public update with the supplied message. |
+| `update_status_report_update` | mutation | Edit the status, message, date or component impacts of an existing update. |
+| `delete_status_report_update` | mutation | Remove an update. A report keeps at least one; the report's status is re-derived. |
 
 ### Maintenance
 
@@ -97,7 +100,7 @@ Registered only when incident management is enabled for the workspace — otherw
 
 | Tool                  | Type     | Purpose |
 |-----------------------|----------|---------|
-| `list_incidents`      | read     | List declared incidents, open ones first. Optional `status` filter; `limit` ≤ 100 and `offset`. |
+| `list_incidents`      | read     | List declared incidents, newest declared first. Optional `status` filter; `limit` ≤ 100 and `offset`. |
 | `get_incident`        | read     | One incident with its timeline (newest first, up to 50 events) and linked status report. |
 | `declare_incident`    | mutation | Declare an incident with a `title` and `severity` (`critical` / `major` / `minor`), optionally a summary, commander, start time and status report to link. |
 | `update_incident`     | mutation | Change the title, severity, summary, commander or start time. |
@@ -188,6 +191,7 @@ The mutation and the notify dispatch are sequential, not transactional. The muta
 | `create_maintenance`       | Maintenance scheduled notification |
 | `add_maintenance_update`   | Notification for the new note |
 | `update_status_report`     | n/a — metadata-only edit, never has a notify path |
+| `update_status_report_update` / `delete_status_report_update` | n/a — edits to existing entries never notify |
 
 The required `notify` field, combined with the mandatory draft-and-confirm workflow in each tool's description, encodes the contract that LLMs must:
 

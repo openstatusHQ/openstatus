@@ -29,7 +29,7 @@ export function useCommandMenuData({ open }: { open: boolean }) {
   const { data: maintenances } = useQuery(
     trpc.maintenance.list.queryOptions(undefined, { enabled: open }),
   );
-  // Server order is already open → mitigated → newest declared.
+  // Server order is newest declared first.
   const { data: incidents } = useQuery(
     trpc.incident.list.queryOptions(undefined, { enabled: open }),
   );

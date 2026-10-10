@@ -1,28 +1,25 @@
 import type { PageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
+import { Add } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@openstatus/ui/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@openstatus/ui/components/ui/dropdown-menu";
+import { SelectTrigger } from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
 import { Fragment } from "react";
 
 import { StatusDot } from "@/components/common/status-dot";
-import { toComponentSections } from "@/data/page-components.client";
+import {
+  type OrderedComponent,
+  toComponentSections,
+} from "@/data/page-components.client";
 import { impactDisplay } from "@/data/status-report-updates.client";
-
-type Component = {
-  id: number;
-  name: string;
-  groupId?: number | null;
-  order?: number | null;
-  groupOrder?: number | null;
-};
 
 export function ComponentList({
   children,
@@ -152,9 +149,10 @@ export function ComponentListSelectTrigger({
 }
 
 /**
- * Picker for `components` not yet on the list, in page order: a group's
+ * Adds one of `components` not yet on the list, in page order: a group's
  * members sit under its label, runs of ungrouped components in between,
- * separated.
+ * separated. Renders nothing once everything is added, unless a
+ * `placeholder` explains the empty state.
  */
 export function ComponentListAdd({
   components,
@@ -164,56 +162,74 @@ export function ComponentListAdd({
   placeholder,
   className,
 }: {
-  components: Component[];
+  components: OrderedComponent[];
   groups?: { id: number; name: string }[];
   onAdd: (id: number) => void;
   disabled?: boolean;
-  /** Replaces the "Add component" / "All components added" copy. */
+  /** Shown as a disabled button when there is nothing to add. */
   placeholder?: string;
   className?: string;
 }) {
   const sections = toComponentSections(components, groups);
-  const option = (c: Component) => (
-    <SelectItem key={c.id} value={String(c.id)} className="font-mono">
+  // -ml-2.5 puts the label on the names' edge
+  const buttonClassName = cn(
+    "text-muted-foreground -ml-2.5 h-7 self-start font-normal",
+    className,
+  );
+
+  if (components.length === 0) {
+    if (!placeholder) return null;
+    return (
+      <Button variant="ghost" size="sm" className={buttonClassName} disabled>
+        <Add />
+        {placeholder}
+      </Button>
+    );
+  }
+
+  const item = (c: OrderedComponent) => (
+    <DropdownMenuItem
+      key={c.id}
+      className="font-mono"
+      onSelect={() => onAdd(c.id)}
+    >
       {c.name}
-    </SelectItem>
+    </DropdownMenuItem>
   );
 
   return (
-    <Select
-      value=""
-      disabled={disabled || components.length === 0}
-      onValueChange={(value) => onAdd(Number(value))}
-    >
-      <ComponentListSelectTrigger
-        aria-label="Add component"
-        className={cn("text-muted-foreground", className)}
-      >
-        <SelectValue
-          placeholder={
-            placeholder ??
-            (components.length ? "Add component" : "All components added")
-          }
-        />
-      </ComponentListSelectTrigger>
-      <SelectContent>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={buttonClassName}
+          disabled={disabled}
+        >
+          <Add />
+          {placeholder ?? "Add component"}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
         {sections.map((section, i) => {
           const key = section.group?.id ?? `ungrouped-${i}`;
           return (
             <Fragment key={key}>
-              {i > 0 ? <SelectSeparator /> : null}
+              {i > 0 ? <DropdownMenuSeparator /> : null}
               {section.group ? (
-                <SelectGroup>
-                  <SelectLabel>{section.group.name}</SelectLabel>
-                  {section.items.map(option)}
-                </SelectGroup>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
+                    {section.group.name}
+                  </DropdownMenuLabel>
+                  {section.items.map(item)}
+                </DropdownMenuGroup>
               ) : (
-                section.items.map(option)
+                section.items.map(item)
               )}
             </Fragment>
           );
         })}
-      </SelectContent>
-    </Select>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

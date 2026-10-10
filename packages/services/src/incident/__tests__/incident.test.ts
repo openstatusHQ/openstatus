@@ -739,21 +739,23 @@ describe("deleteIncident", () => {
 });
 
 describe("reads", () => {
-  test("list puts open incidents first and filters by status", async () => {
+  test("list orders newest declared first and filters by status", async () => {
     await withTestTransaction(async (tx) => {
-      const resolved = await createIncident(
-        workspace.id,
-        { status: "resolved", declaredAt: new Date() },
-        tx,
-      );
-      const open = await createIncident(
+      const older = await createIncident(
         workspace.id,
         { status: "open", declaredAt: new Date(Date.now() - 86_400_000) },
         tx,
       );
+      const newer = await createIncident(
+        workspace.id,
+        { status: "resolved", declaredAt: new Date() },
+        tx,
+      );
       const ctx = as(memberId, tx);
       const ids = (await listIncidents({ ctx })).map((i) => i.id);
-      expect(ids.indexOf(open.id)).toBeLessThan(ids.indexOf(resolved.id));
+      expect(ids).toContain(newer.id);
+      expect(ids).toContain(older.id);
+      expect(ids.indexOf(newer.id)).toBeLessThan(ids.indexOf(older.id));
       const onlyResolved = await listIncidents({
         ctx,
         input: { status: ["resolved"] },

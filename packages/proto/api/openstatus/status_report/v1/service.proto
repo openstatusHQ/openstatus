@@ -39,6 +39,20 @@ service StatusReportService {
       description: "Adds a new update entry to an existing status report and transitions the report to the specified status. Status reports follow a lifecycle: investigating -> identified -> monitoring -> resolved. If notify is true, subscribers of the associated page are notified by email about the update."
     };
   }
+
+  // UpdateStatusReportUpdate edits an existing timeline entry (status, message, date, component impacts).
+  rpc UpdateStatusReportUpdate(UpdateStatusReportUpdateRequest) returns (UpdateStatusReportUpdateResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Edits an existing status report update in place. Editing the status or date of the latest update re-derives the report's overall status. Subscribers are not notified."
+    };
+  }
+
+  // DeleteStatusReportUpdate removes a timeline entry. A report always keeps at least one update.
+  rpc DeleteStatusReportUpdate(DeleteStatusReportUpdateRequest) returns (DeleteStatusReportUpdateResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Removes a status report update. The report's status is re-derived from the remaining updates. Deleting the last remaining update is rejected with INVALID_ARGUMENT: delete the status report instead."
+    };
+  }
 }
 
 // CreateStatusReportRequest is the request to create a new status report.
@@ -183,4 +197,44 @@ message AddStatusReportUpdateRequest {
 message AddStatusReportUpdateResponse {
   // The updated status report with the new update included.
   StatusReport status_report = 1;
+}
+
+// UpdateStatusReportUpdateRequest is the request to edit a status report update.
+message UpdateStatusReportUpdateRequest {
+  // ID of the update to edit (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // New status for this entry (optional).
+  optional StatusReportStatus status = 2 [(buf.validate.field).enum.defined_only = true];
+
+  // New message (optional).
+  optional string message = 3 [(buf.validate.field).string.min_len = 1];
+
+  // New date for this entry (RFC 3339 format, optional).
+  optional string date = 4 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
+
+  // Replacement impact set for this update (optional, see update_component_impacts).
+  repeated ComponentImpact component_impacts = 5;
+
+  // Set to true to replace the update's component impacts with component_impacts
+  // (empty clears them). When false or unset, component_impacts is ignored.
+  optional bool update_component_impacts = 6;
+}
+
+// UpdateStatusReportUpdateResponse is the response after editing a status report update.
+message UpdateStatusReportUpdateResponse {
+  // The edited timeline entry.
+  StatusReportUpdate status_report_update = 1;
+}
+
+// DeleteStatusReportUpdateRequest is the request to remove a status report update.
+message DeleteStatusReportUpdateRequest {
+  // ID of the update to remove (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// DeleteStatusReportUpdateResponse is the response after removing a status report update.
+message DeleteStatusReportUpdateResponse {
+  // Whether the deletion was successful.
+  bool success = 1;
 }
