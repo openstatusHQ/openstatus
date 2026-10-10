@@ -70,6 +70,20 @@ A status report can be attached to one or more [page components](/docs/reference
 
 All attached components must belong to the same status page. Adding a component impact in a later update (see below) automatically adds that component to the report's affected set.
 
+## Updates
+
+A status report is a timeline of dated entries. The first one is written at creation; later ones track progress until the resolution. Each update has:
+
+- **Status** — the [status](#status) the report moves to with this entry.
+- **Message** — String (required). The public note.
+- **Date** — Datetime (optional). When the entry applies. Defaults to the time it is posted.
+- **Component impacts** — per-component impact declared by this entry (see [below](#component-impacts)).
+- **Notify** — Boolean (optional, write-only). Sends the entry to status page subscribers. Only new entries notify; editing one never does.
+
+The report's status is derived from its latest update by date, so editing or removing an update can change it. A report always keeps at least one update: deleting the last one is rejected, delete the report instead. Reads return the entries newest-first under `updates` (RPC), and the public status page renders them in order.
+
+Entries are edited and removed from the dashboard timeline, through the `UpdateStatusReportUpdate` and `DeleteStatusReportUpdate` RPC methods, and through the `update_status_report_update` and `delete_status_report_update` [MCP tools](/docs/reference/mcp-server).
+
 ## Component impacts
 
 Beyond marking a component as affected, each update of a status report can declare **how badly** each component is affected. This per-component impact drives the component's live status, the report's overall indicator, and the uptime percentage. Reports only uses these impacts as its uptime source, while Monitor checks with **Time per status** also includes report intervals alongside monitor downtime.

@@ -4,7 +4,7 @@ title: Maintenance Service
 description: "Manage scheduled maintenance windows with the openstatus Node.js SDK"
 ---
 
-Manage scheduled maintenance windows. The Maintenance Service provides 5 RPC methods.
+Manage scheduled maintenance windows. The Maintenance Service provides 8 RPC methods.
 
 ## Create Maintenance Window
 
@@ -69,4 +69,36 @@ const { maintenance } = await client.maintenance.v1.MaintenanceService
 ```typescript
 const { success } = await client.maintenance.v1.MaintenanceService
   .deleteMaintenance({ id: "maint_123" });
+```
+
+## Maintenance Updates
+
+A maintenance is a timeline of dated notes; the first one is written at creation. A maintenance always keeps at least one update: deleting the last one fails with `invalid_argument`, delete the maintenance instead.
+
+### Add Maintenance Update
+
+```typescript
+const { maintenanceUpdate } = await client.maintenance.v1.MaintenanceService
+  .addMaintenanceUpdate({
+    maintenanceId: "maint_123",
+    message: "Work has started.",
+    notify: true,
+  });
+```
+
+### Update Maintenance Update
+
+```typescript
+const { maintenanceUpdate } = await client.maintenance.v1.MaintenanceService
+  .updateMaintenanceUpdate({
+    id: "mu_456",
+    message: "Work has started, running 30 minutes behind.",
+  });
+```
+
+### Delete Maintenance Update
+
+```typescript
+const { success } = await client.maintenance.v1.MaintenanceService
+  .deleteMaintenanceUpdate({ id: "mu_456" });
 ```

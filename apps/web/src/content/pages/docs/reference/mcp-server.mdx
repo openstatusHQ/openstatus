@@ -75,11 +75,13 @@ The server exposes 26 tools (24 on plans without the `audit-log` feature), group
 
 | Tool                       | Type     | Purpose |
 |----------------------------|----------|---------|
-| `list_status_reports`      | read     | List status reports newest-first. `filter: "active" \| "all"` (defaults to active = excludes resolved). Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
+| `list_status_reports`      | read     | List status reports newest-first, each with its full `updates` timeline (newest first, with ids) and `latestUpdate`. `filter: "active" \| "all"` (defaults to active = excludes resolved). Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
 | `create_status_report`     | mutation | Create a new status report on a status page with an initial public update. |
 | `add_status_report_update` | mutation | Append a public update to an existing status report and bump its status. |
 | `update_status_report`     | mutation | Edit a report's title, status, or affected components without posting a public update. |
 | `resolve_status_report`    | mutation | Mark a report resolved and post a final public update with the supplied message. |
+| `update_status_report_update` | mutation | Edit the status, message, date or component impacts of an existing update. |
+| `delete_status_report_update` | mutation | Remove an update. A report keeps at least one; the report's status is re-derived. |
 
 ### Maintenance
 
@@ -188,6 +190,7 @@ The mutation and the notify dispatch are sequential, not transactional. The muta
 | `create_maintenance`       | Maintenance scheduled notification |
 | `add_maintenance_update`   | Notification for the new note |
 | `update_status_report`     | n/a — metadata-only edit, never has a notify path |
+| `update_status_report_update` / `delete_status_report_update` | n/a — edits to existing entries never notify |
 
 The required `notify` field, combined with the mandatory draft-and-confirm workflow in each tool's description, encodes the contract that LLMs must:
 

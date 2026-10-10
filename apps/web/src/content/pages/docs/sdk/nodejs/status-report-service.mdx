@@ -4,7 +4,7 @@ title: Status Report Service
 description: "Manage incident reports and status updates with the openstatus Node.js SDK"
 ---
 
-Manage incident reports with update timelines. The Status Report Service provides 6 RPC methods.
+Manage incident reports with update timelines. The Status Report Service provides 8 RPC methods.
 
 ## Create Status Report
 
@@ -47,6 +47,34 @@ const { statusReport } = await client.statusReport.v1.StatusReportService
     date: "2024-01-15T11:00:00Z",
     notify: true,
   });
+```
+
+## Edit / Delete Status Report Updates
+
+Entries in the timeline can be corrected or removed. Editing never notifies subscribers; editing the latest entry's status re-derives the report's status.
+
+### Update Status Report Update
+
+```typescript
+import { StatusReportStatus } from "@openstatus/sdk-node";
+
+const { statusReportUpdate } = await client.statusReport.v1.StatusReportService
+  .updateStatusReportUpdate({
+    id: "sru_456",
+    status: StatusReportStatus.MONITORING,
+    message: "A fix has been deployed and we are monitoring.",
+  });
+```
+
+To replace the entry's component impacts, pass `componentImpacts` together with `updateComponentImpacts: true` (an empty list clears them). Without the flag the impacts stay untouched.
+
+### Delete Status Report Update
+
+A report always keeps at least one update. Deleting the last one fails with `invalid_argument`; delete the report instead.
+
+```typescript
+const { success } = await client.statusReport.v1.StatusReportService
+  .deleteStatusReportUpdate({ id: "sru_456" });
 ```
 
 ## List Status Reports
