@@ -154,13 +154,9 @@ export function IncidentPostmortem({
       />
       <ComposerPreview value={content} />
       <ComposerFooter>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pl-1">
           {postmortem ? (
-            <StatusBadge
-              dot
-              variant={approved ? "success" : "default"}
-              className="bg-background"
-            >
+            <StatusBadge dot variant={approved ? "success" : "default"}>
               {approved ? "Approved" : "Draft"}
             </StatusBadge>
           ) : null}

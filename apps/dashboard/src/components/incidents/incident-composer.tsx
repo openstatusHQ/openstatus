@@ -17,6 +17,7 @@ import {
   Composer,
   ComposerActions,
   ComposerFooter,
+  composerControlClassName,
   ComposerPreview,
   ComposerPreviewToggle,
   ComposerSubmit,
@@ -130,7 +131,7 @@ export function IncidentComposer({
             <SelectTrigger
               size="sm"
               aria-label="Status"
-              className="bg-background text-foreground font-mono"
+              className={composerControlClassName}
             >
               <SelectValue />
             </SelectTrigger>
@@ -144,9 +145,6 @@ export function IncidentComposer({
             </SelectContent>
           </Select>
           <ComposerActions>
-            <span className="hidden text-xs sm:inline">
-              Only your team sees notes
-            </span>
             <ComposerPreviewToggle />
             <ComposerSubmit
               label={label}

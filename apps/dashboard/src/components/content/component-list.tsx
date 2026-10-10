@@ -29,7 +29,7 @@ export function ComponentList({
   return (
     <ul
       data-slot="component-list"
-      className={cn("flex flex-col gap-1 text-sm", className)}
+      className={cn("flex flex-col gap-1.5 text-sm", className)}
       {...props}
     >
       {children}
@@ -107,7 +107,7 @@ export function ComponentListActions({
   return (
     <div
       data-slot="component-list-actions"
-      className={cn("ml-auto flex shrink-0 items-center gap-1", className)}
+      className={cn("ml-auto flex shrink-0 items-center gap-1.5", className)}
       {...props}
     >
       {children}

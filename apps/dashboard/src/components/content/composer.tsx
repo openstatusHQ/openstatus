@@ -296,7 +296,9 @@ export function ComposerSection({
     <InputGroupAddon
       align="block-end"
       className={cn(
-        "flex-col items-stretch gap-1 border-t px-3 py-2 font-normal [.border-t]:pt-2",
+        // no bottom padding: the footer's pt-1.5 keeps its row on the same
+        // 6px rhythm as the rows in here
+        "flex-col items-stretch gap-1.5 border-t px-3 pt-2 pb-0 font-normal [.border-t]:pt-2",
         className,
       )}
       {...props}
@@ -315,7 +317,9 @@ export function ComposerFooter({
     <InputGroupAddon
       align="block-end"
       className={cn(
-        "bg-muted/50 flex-wrap justify-between border-t px-2 py-2 font-normal [.border-t]:pt-2",
+        // pl-1 + a ghost control's own px-2 puts its dot on the text column;
+        // pr-3 puts the solid send button on the close button's edge
+        "flex-wrap justify-between pt-1.5 pr-3 pb-2 pl-1 font-normal",
         className,
       )}
       {...props}
@@ -335,7 +339,7 @@ export function ComposerActions({
     <div
       data-slot="composer-actions"
       className={cn(
-        "ml-auto flex w-full flex-wrap items-center justify-between gap-3 sm:w-auto sm:justify-start",
+        "ml-auto flex w-full flex-wrap items-center justify-between gap-1.5 sm:w-auto sm:justify-start",
         className,
       )}
       {...props}
@@ -375,9 +379,13 @@ export function ComposerSubmit({
   );
 }
 
-// on: bordered like the neighbouring controls; off: flat and muted
+/** Strips border/shadow from a select trigger or outline button in the footer. */
+export const composerControlClassName =
+  "text-foreground hover:bg-muted border-0 bg-transparent px-2 font-mono shadow-none dark:bg-transparent dark:hover:bg-muted";
+
+// on: tinted like a hovered control; off: flat and muted
 const footerToggleClassName =
-  "text-muted-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-disabled:opacity-50 aria-pressed:border aria-pressed:shadow-xs";
+  "text-muted-foreground aria-pressed:bg-muted aria-pressed:text-foreground aria-disabled:opacity-50";
 
 /** Ghost icon button for the footer; the tooltip carries the label and keys. */
 export function ComposerIconButton({

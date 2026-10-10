@@ -35,6 +35,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -52,6 +53,8 @@ import {
   Composer,
   ComposerActions,
   ComposerFooter,
+  ComposerIconButton,
+  composerControlClassName,
   ComposerNotifyToggle,
   ComposerPreview,
   ComposerPreviewToggle,
@@ -70,6 +73,7 @@ import {
   getNextStatus,
   statusVariants,
   toCreateStatusReportUpdateInput,
+  impactDisplay,
 } from "@/data/status-report-updates.client";
 import { errorMessage } from "@/lib/trpc/error";
 
@@ -214,6 +218,8 @@ export function StatusReportComposer({
                     // phones: name on one row, the picker below
                     className="flex-wrap sm:flex-nowrap"
                   >
+                    {/* where the component stands now; the picker on the right is where it goes */}
+                    <StatusDot variant={impactDisplay(current).variant} />
                     <ComponentListName
                       group={groupOf.get(component.id)}
                       className="min-w-0 flex-1 sm:flex-initial"
@@ -248,11 +254,8 @@ export function StatusReportComposer({
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground size-7"
-                        aria-label={`Leave ${component.name} out of this update`}
+                      <ComposerIconButton
+                        label="Leave out of this update"
                         onClick={() =>
                           setIds(
                             componentIds.filter((id) => id !== component.id),
@@ -260,7 +263,7 @@ export function StatusReportComposer({
                         }
                       >
                         <Close />
-                      </Button>
+                      </ComposerIconButton>
                     </ComponentListActions>
                   </ComponentListItem>
                 );
@@ -282,7 +285,7 @@ export function StatusReportComposer({
               <SelectTrigger
                 size="sm"
                 aria-label="Status"
-                className="bg-background text-foreground font-mono"
+                className={composerControlClassName}
               >
                 <SelectValue />
               </SelectTrigger>
@@ -304,7 +307,7 @@ export function StatusReportComposer({
                 value={date ?? now}
                 max={new Date()}
                 onChange={setDate}
-                className="bg-background text-foreground h-8 w-fit font-mono"
+                className={cn(composerControlClassName, "h-8 w-fit")}
               />
             </span>
           </div>
@@ -382,7 +385,7 @@ function ComponentsMenu({
           <PopoverTrigger asChild>
             {/* aria-disabled (not disabled) so the tooltip still explains why */}
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon-sm"
               role="combobox"
               aria-expanded={open}

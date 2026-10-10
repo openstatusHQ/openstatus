@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -9,6 +10,7 @@ import {
   Composer,
   ComposerActions,
   ComposerFooter,
+  composerControlClassName,
   ComposerNotifyToggle,
   ComposerPreview,
   ComposerPreviewToggle,
@@ -80,14 +82,14 @@ export function MaintenanceUpdateComposer({
         <ComposerPreview value={message} />
         <ComposerFooter>
           <div className="flex flex-wrap items-center gap-2">
-            <span>Posted</span>
+            <span className="pl-2">Posted</span>
             <DateTimePicker
               key={now.getTime()}
               aria-label="Date"
               value={date ?? now}
               onChange={setDate}
               max={new Date()}
-              className="bg-background text-foreground h-8 w-fit font-mono"
+              className={cn(composerControlClassName, "h-8 w-fit")}
             />
           </div>
           <ComposerActions>
