@@ -72,12 +72,17 @@ export function MaintenanceUpdateTimelineItem({
             <span>#{index}</span>
             <QuickActions
               actions={getActions({ edit: () => setEditing(true) })}
-              deleteAction={{
-                description: `Permanently remove update #${index} from the status page.`,
-                submitAction: async () => {
-                  await remove.mutateAsync({ id: update.id });
-                },
-              }}
+              deleteAction={
+                // a maintenance keeps at least one update; delete it instead
+                maintenance.updates.length > 1
+                  ? {
+                      description: `Permanently remove update #${index} from the status page.`,
+                      submitAction: async () => {
+                        await remove.mutateAsync({ id: update.id });
+                      },
+                    }
+                  : undefined
+              }
             />
           </TimelineActions>
         </TimelineHeader>

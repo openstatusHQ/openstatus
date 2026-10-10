@@ -111,12 +111,17 @@ export function StatusReportTimelineItem({
             <span>#{index}</span>
             <QuickActions
               actions={getActions({ edit: () => setEditing(true) })}
-              deleteAction={{
-                description: `Permanently remove update #${index}. The report status is recomputed from the remaining updates.`,
-                submitAction: async () => {
-                  await remove.mutateAsync({ id: update.id });
-                },
-              }}
+              deleteAction={
+                // a report keeps at least one update; delete the report instead
+                report.updates.length > 1
+                  ? {
+                      description: `Permanently remove update #${index}. The report status is recomputed from the remaining updates.`,
+                      submitAction: async () => {
+                        await remove.mutateAsync({ id: update.id });
+                      },
+                    }
+                  : undefined
+              }
             />
           </TimelineActions>
         </TimelineHeader>
