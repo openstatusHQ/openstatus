@@ -1,6 +1,7 @@
 import type { AgentToolOutput } from "@openstatus/services/agent-tools";
 
 import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellMetadata } from "@/components/data-table/table-cell-metadata";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
@@ -46,7 +47,7 @@ export function listPrivateLocationsTable(
         lastSeenAt: location.lastSeenAt ? (
           <TableCellDate value={new Date(location.lastSeenAt)} />
         ) : (
-          <TableCellText value="never" className="text-muted-foreground" />
+          <TableCellEmpty>Never</TableCellEmpty>
         ),
         id: <TableCellNumber value={location.id} />,
       },

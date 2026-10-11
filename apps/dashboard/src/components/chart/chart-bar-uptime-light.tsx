@@ -11,6 +11,7 @@ import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Bar, BarChart, XAxis } from "recharts";
 
+import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { mapUptime } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 // import { startOfDay, subDays } from "date-fns";
@@ -59,7 +60,7 @@ export function ChartBarUptimeLight({
   const refinedUptime = uptime ? mapUptime(uptime) : [];
 
   if (refinedUptime.length === 0) {
-    return <span className="text-muted-foreground">-</span>;
+    return <TableCellEmpty>No data</TableCellEmpty>;
   }
 
   return (

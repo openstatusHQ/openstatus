@@ -62,7 +62,7 @@ export const columns: ColumnDef<ManagedIncident>[] = [
           : row.original.status === "canceled"
             ? row.original.closedAt
             : new Date();
-      if (!end) return <TableCellText value={null} />;
+      if (!end) return <TableCellText value={null} empty="Unknown" />;
       const [amount, unit] = formatDistanceStrict(
         row.original.startedAt,
         end,

@@ -1,14 +1,21 @@
 import { cn } from "@/lib/utils";
 
+import { TableCellEmpty } from "./table-cell-empty";
+
 export function TableCellNumber({
   value,
   className,
   unit,
+  empty = "No data",
   ...props
-}: React.ComponentProps<"div"> & { value: unknown; unit?: string }) {
+}: React.ComponentProps<"div"> & {
+  value: unknown;
+  unit?: string;
+  empty?: string;
+}) {
   const _value = Number(value);
   if (Number.isNaN(_value)) {
-    return <div className="text-muted-foreground font-mono">N/A</div>;
+    return <TableCellEmpty className="font-mono">{empty}</TableCellEmpty>;
   }
 
   return (

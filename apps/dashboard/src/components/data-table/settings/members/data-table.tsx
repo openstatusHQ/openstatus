@@ -13,6 +13,8 @@ import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { TableCellEmpty } from "../../table-cell-empty";
+
 export function DataTable() {
   const trpc = useTRPC();
   const { data: members, refetch } = useQuery(trpc.member.list.queryOptions());
@@ -51,9 +53,7 @@ export function DataTable() {
             <TableRow key={item.user.id}>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  {item.user.name ?? (
-                    <span className="text-muted-foreground">-</span>
-                  )}
+                  {item.user.name ?? <TableCellEmpty>No name</TableCellEmpty>}
                   {isMe ? <Badge variant="secondary">You</Badge> : null}
                 </div>
               </TableCell>

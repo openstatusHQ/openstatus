@@ -18,6 +18,7 @@ import {
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
+import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import {
   FormCard,
@@ -115,7 +116,11 @@ export function ConnectedAppsCard() {
                       {userLabel(grant.user)}
                     </TableCell>
                     <TableCell className="text-sm">
-                      {grant.createdAt ? formatDate(grant.createdAt) : "-"}
+                      {grant.createdAt ? (
+                        formatDate(grant.createdAt)
+                      ) : (
+                        <TableCellEmpty>Unknown</TableCellEmpty>
+                      )}
                     </TableCell>
                     <TableCell className="text-sm">
                       {grant.lastUsedAt

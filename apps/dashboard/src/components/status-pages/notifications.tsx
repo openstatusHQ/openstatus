@@ -9,6 +9,7 @@ import {
   PropertyList,
   PropertyValue,
 } from "@/components/content/property-list";
+import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { useTRPC } from "@/lib/trpc/client";
 
 /** Who gets told when something is published on the page. */
@@ -34,7 +35,7 @@ export function Notifications({ pageId }: { pageId: number }) {
               {active.length.toLocaleString()}
             </Link>
           ) : (
-            <span className="text-muted-foreground">–</span>
+            <TableCellEmpty>No subscribers</TableCellEmpty>
           )}
         </PropertyValue>
       </Property>

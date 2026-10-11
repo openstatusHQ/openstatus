@@ -1,10 +1,13 @@
 import { cn } from "@/lib/utils";
 
+import { TableCellEmpty } from "./table-cell-empty";
+
 export function TableCellText({
   value,
+  empty,
   className,
   ...props
-}: React.ComponentProps<"div"> & { value: unknown }) {
+}: React.ComponentProps<"div"> & { value: unknown; empty?: string }) {
   if (typeof value === "string" && value.length > 0) {
     return (
       <div className={cn(className)} {...props}>
@@ -19,9 +22,5 @@ export function TableCellText({
       </div>
     );
   }
-  return (
-    <div className={cn("text-muted-foreground", className)} {...props}>
-      -
-    </div>
-  );
+  return <TableCellEmpty className={className}>{empty}</TableCellEmpty>;
 }

@@ -147,7 +147,9 @@ const baseColumns: ColumnDef<OverviewEvent>[] = [
     id: "endsAt",
     accessorFn: (row) => getResolvedAt(row),
     header: "End",
-    cell: ({ row }) => <TableCellDate value={row.getValue("endsAt")} />,
+    cell: ({ row }) => (
+      <TableCellDate value={row.getValue("endsAt")} empty="Ongoing" />
+    ),
     enableSorting: false,
     meta: {
       cellClassName: "w-[170px]",
