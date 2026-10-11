@@ -210,7 +210,8 @@ export function ComponentListAdd({
           {placeholder ?? "Add component"}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      {/* long pages: cap the list so the menu scrolls instead of filling the viewport */}
+      <DropdownMenuContent align="start" className="max-h-80">
         {sections.map((section, i) => {
           const key = section.group?.id ?? `ungrouped-${i}`;
           return (
