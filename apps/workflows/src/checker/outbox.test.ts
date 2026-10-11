@@ -19,19 +19,19 @@ import {
   beforeEach,
   describe,
   expect,
-  type Stub,
-  stub,
   test,
-} from "@openstatus/test-utils";
+  vi,
+  type MockInstance,
+} from "vitest";
 
-import { checkerAudit } from "../utils/audit-log";
+import { stubPublishAuditLog } from "../test/stub-audit-log";
 import { drainOutbox, shutdownOutbox, sweepExpiredOutbox } from "./outbox";
 import { providerToFunction } from "./utils";
 
-// Deno has no module mocking; stub the singleton the drainer resolves at call
-// time, as alerting.test.ts does.
+// Stub the singleton the drainer resolves at call time, as alerting.test.ts
+// does.
 // biome-ignore lint/suspicious/noExplicitAny: heterogeneous provider stubs
-type AnyStub = Stub<any>;
+type AnyStub = MockInstance;
 let stubs: AnyStub[] = [];
 
 let workspaceId: number;
@@ -56,13 +56,11 @@ afterAll(async () => {
 
 beforeEach(() => {
   stubs = [];
-  stubs.push(
-    stub(checkerAudit, "publishAuditLog", () => Promise.resolve()) as AnyStub,
-  );
+  stubs.push(stubPublishAuditLog());
 });
 
 afterEach(async () => {
-  for (const s of stubs) s.restore();
+  for (const s of stubs) s.mockRestore();
   stubs = [];
   await db
     .delete(notificationOutbox)
@@ -119,7 +117,9 @@ async function insertOutboxRow(overrides: {
 describe("drainOutbox", () => {
   test("delivers a row, marks it done and records the send", async () => {
     stubs.push(
-      stub(providerToFunction.email, "sendAlert", () => Promise.resolve()),
+      vi
+        .spyOn(providerToFunction.email, "sendAlert")
+        .mockImplementation(() => Promise.resolve()),
     );
     await insertOutboxRow({ cronTimestamp: Date.now() });
 
@@ -151,9 +151,9 @@ describe("drainOutbox", () => {
 
   test("dead-letters a row past its deadline and frees the channel", async () => {
     stubs.push(
-      stub(providerToFunction.email, "sendAlert", () =>
-        Promise.reject(new Error("provider down")),
-      ),
+      vi
+        .spyOn(providerToFunction.email, "sendAlert")
+        .mockImplementation(() => Promise.reject(new Error("provider down"))),
     );
     // `attempts` caps the backoff (>=15s), so the failed send's retry lands
     // past the deadline below without the claim racing a 1s deadline under
@@ -190,11 +190,9 @@ describe("drainOutbox", () => {
 
   test("a hanging provider is bounded by the timeout", async () => {
     stubs.push(
-      stub(
-        providerToFunction.email,
-        "sendAlert",
-        () => new Promise<void>(() => {}),
-      ),
+      vi
+        .spyOn(providerToFunction.email, "sendAlert")
+        .mockImplementation(() => new Promise<void>(() => {})),
     );
     await insertOutboxRow({
       cronTimestamp: Date.now(),
@@ -215,10 +213,14 @@ describe("drainOutbox", () => {
 
   test("claims only the oldest pending row per channel", async () => {
     stubs.push(
-      stub(providerToFunction.email, "sendAlert", () => Promise.resolve()),
+      vi
+        .spyOn(providerToFunction.email, "sendAlert")
+        .mockImplementation(() => Promise.resolve()),
     );
     stubs.push(
-      stub(providerToFunction.email, "sendRecovery", () => Promise.resolve()),
+      vi
+        .spyOn(providerToFunction.email, "sendRecovery")
+        .mockImplementation(() => Promise.resolve()),
     );
 
     const base = Date.now();
@@ -261,7 +263,9 @@ describe("drainOutbox", () => {
 
   test("an sms row over quota is recorded, not delivered", async () => {
     stubs.push(
-      stub(providerToFunction.sms, "sendAlert", () => Promise.resolve()),
+      vi
+        .spyOn(providerToFunction.sms, "sendAlert")
+        .mockImplementation(() => Promise.resolve()),
     );
 
     const { workspace: smsWorkspace } = await createTestWorkspace({
@@ -329,9 +333,9 @@ describe("drainOutbox", () => {
 describe("retry", () => {
   test("a failed send is handed back with its backoff recorded", async () => {
     stubs.push(
-      stub(providerToFunction.email, "sendAlert", () =>
-        Promise.reject(new Error("provider down")),
-      ),
+      vi
+        .spyOn(providerToFunction.email, "sendAlert")
+        .mockImplementation(() => Promise.reject(new Error("provider down"))),
     );
     await insertOutboxRow({ cronTimestamp: Date.now() });
 
@@ -369,7 +373,9 @@ describe("retry", () => {
 
   test("a lapsed lease lets the other machine take the row over", async () => {
     stubs.push(
-      stub(providerToFunction.email, "sendAlert", () => Promise.resolve()),
+      vi
+        .spyOn(providerToFunction.email, "sendAlert")
+        .mockImplementation(() => Promise.resolve()),
     );
     // A worker that died mid-attempt: still claimed, lease already expired.
     await insertOutboxRow({
@@ -398,7 +404,9 @@ describe("retry", () => {
 
   test("a live lease is left alone", async () => {
     stubs.push(
-      stub(providerToFunction.email, "sendAlert", () => Promise.resolve()),
+      vi
+        .spyOn(providerToFunction.email, "sendAlert")
+        .mockImplementation(() => Promise.resolve()),
     );
     await insertOutboxRow({
       cronTimestamp: Date.now(),
@@ -433,7 +441,7 @@ describe("shutdownOutbox", () => {
       release = resolve;
     });
     stubs.push(
-      stub(providerToFunction.email, "sendAlert", () => {
+      vi.spyOn(providerToFunction.email, "sendAlert").mockImplementation(() => {
         dispatched = true;
         return pending;
       }),
@@ -476,7 +484,9 @@ describe("shutdownOutbox", () => {
 
   test("hands claimed work back instead of delivering it", async () => {
     stubs.push(
-      stub(providerToFunction.email, "sendAlert", () => Promise.resolve()),
+      vi
+        .spyOn(providerToFunction.email, "sendAlert")
+        .mockImplementation(() => Promise.resolve()),
     );
     await insertOutboxRow({ cronTimestamp: Date.now() });
 

@@ -12,9 +12,8 @@ import {
   verifyAccessToken,
 } from "@openstatus/services/oauth";
 import { clearAuditLogFor } from "@openstatus/services/test/helpers";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 import { NextRequest } from "next/server.js";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { edgeRouter } from "../edge";
 import { createInnerTRPCContext, createTRPCContext } from "../trpc";

@@ -1,15 +1,9 @@
+// @ts-nocheck — ConnectRPC's deep generic types (AnyFn, UnaryResponse, etc.)
+// are incompatible with the test mocks. All runtime behavior is correct.
 import type { Interceptor } from "@connectrpc/connect";
 import { Events } from "@openstatus/analytics";
 import { MonitorService } from "@openstatus/proto/monitor/v1";
-// @ts-nocheck — ConnectRPC's deep generic types (AnyFn, UnaryResponse, etc.)
-// are incompatible with the test mocks. All runtime behavior is correct.
-import {
-  beforeEach,
-  describe,
-  expect,
-  mock,
-  test,
-} from "@openstatus/test-utils";
+import { beforeEach, describe, expect, test, vi, type Mock } from "vitest";
 
 import { RPC_CONTEXT_KEY } from "../auth";
 import { RPC_EVENT_MAP, trackingInterceptor } from "../tracking";
@@ -19,8 +13,8 @@ import { RPC_EVENT_MAP, trackingInterceptor } from "../tracking";
 const { track: mockTrack, setupAnalytics: mockSetupAnalytics } = (
   globalThis as Record<string, unknown>
 ).__analyticsSpies as {
-  track: ReturnType<typeof mock>;
-  setupAnalytics: ReturnType<typeof mock>;
+  track: Mock;
+  setupAnalytics: Mock;
 };
 
 type NextFn = Parameters<ReturnType<Interceptor>>[0];
@@ -30,12 +24,12 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 /** Create a mock `next` that resolves with the given value. */
 function mockNext(response: unknown): NextFn {
-  return mock(() => Promise.resolve(response)) as unknown as NextFn;
+  return vi.fn(() => Promise.resolve(response)) as unknown as NextFn;
 }
 
 /** Create a mock `next` that rejects with the given error. */
 function mockNextReject(error: Error): NextFn {
-  return mock(() => Promise.reject(error)) as unknown as NextFn;
+  return vi.fn(() => Promise.reject(error)) as unknown as NextFn;
 }
 
 const TEST_WORKSPACE = {

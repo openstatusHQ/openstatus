@@ -1,6 +1,5 @@
 import { THEMES } from "@openstatus/theme-store";
-import { expect } from "@std/expect";
-import { afterEach, describe, it } from "@std/testing/bdd";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   THEME_DRAFT_STORAGE_KEY,
@@ -9,7 +8,24 @@ import {
   saveThemeDraft,
 } from "./theme-draft";
 
-afterEach(() => sessionStorage.clear());
+// Node only exposes Web Storage by default from v25; a Map-backed stand-in
+// keeps the suite independent of the runtime version.
+function memoryStorage(): Storage {
+  const items = new Map<string, string>();
+  return {
+    get length() {
+      return items.size;
+    },
+    clear: () => items.clear(),
+    getItem: (key) => items.get(key) ?? null,
+    key: (index) => [...items.keys()][index] ?? null,
+    removeItem: (key) => void items.delete(key),
+    setItem: (key, value) => void items.set(key, String(value)),
+  };
+}
+
+beforeEach(() => vi.stubGlobal("sessionStorage", memoryStorage()));
+afterEach(() => vi.unstubAllGlobals());
 
 const theme = Object.values(THEMES)[0];
 

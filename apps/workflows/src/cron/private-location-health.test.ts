@@ -11,15 +11,14 @@ import {
 } from "@openstatus/db/src/test/factories";
 import {
   afterEach,
-  assertSpyCalls,
   beforeAll,
   beforeEach,
   describe,
   expect,
-  type Stub,
-  stub,
   test,
-} from "@openstatus/test-utils";
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import {
   emailClient,
@@ -34,7 +33,7 @@ const FRESH = new Date(NOW.getTime() - 60 * 1000);
 const STALE = new Date(NOW.getTime() - STALE_THRESHOLD_MS - 60 * 1000);
 
 // biome-ignore lint/suspicious/noExplicitAny: email stub
-type AnyStub = Stub<any>;
+type AnyStub = MockInstance;
 
 async function seedLocation(
   status: "active" | "error",
@@ -73,13 +72,13 @@ describe("runPrivateLocationHealth", () => {
   });
 
   beforeEach(() => {
-    mockEmail = stub(emailClient, "sendPrivateLocationAlert", () =>
-      Promise.resolve(),
-    ) as AnyStub;
+    mockEmail = vi
+      .spyOn(emailClient, "sendPrivateLocationAlert")
+      .mockImplementation(() => Promise.resolve()) as AnyStub;
   });
 
   afterEach(async () => {
-    mockEmail.restore();
+    mockEmail.mockRestore();
     await db
       .delete(auditLog)
       .where(eq(auditLog.entityId, String(TEST_LOCATION_ID)));
@@ -94,12 +93,12 @@ describe("runPrivateLocationHealth", () => {
     await runPrivateLocationHealth(NOW);
 
     expect((await readStatus())?.status).toBe("error");
-    assertSpyCalls(mockEmail, 1);
-    expect(mockEmail.calls[0].args[0].status).toBe("error");
-    expect(mockEmail.calls[0].args[0].locationName).toBe(
+    expect(mockEmail).toHaveBeenCalledTimes(1);
+    expect(mockEmail.mock.calls[0][0].status).toBe("error");
+    expect(mockEmail.mock.calls[0][0].locationName).toBe(
       "health-test-location",
     );
-    expect(mockEmail.calls[0].args[0].monitorCount).toBe(0);
+    expect(mockEmail.mock.calls[0][0].monitorCount).toBe(0);
   });
 
   test("passes the number of monitors scheduled on the location", async () => {
@@ -122,7 +121,7 @@ describe("runPrivateLocationHealth", () => {
 
     try {
       await runPrivateLocationHealth(NOW);
-      expect(mockEmail.calls[0].args[0].monitorCount).toBe(1);
+      expect(mockEmail.mock.calls[0][0].monitorCount).toBe(1);
     } finally {
       await db.delete(monitor).where(eq(monitor.id, linked.id));
       await db.delete(monitor).where(eq(monitor.id, unlinked.id));
@@ -136,8 +135,8 @@ describe("runPrivateLocationHealth", () => {
     await runPrivateLocationHealth(NOW);
 
     expect((await readStatus())?.status).toBe("active");
-    assertSpyCalls(mockEmail, 1);
-    expect(mockEmail.calls[0].args[0].status).toBe("recovered");
+    expect(mockEmail).toHaveBeenCalledTimes(1);
+    expect(mockEmail.mock.calls[0][0].status).toBe("recovered");
   });
 
   test("active + fresh → untouched, no email", async () => {
@@ -146,7 +145,7 @@ describe("runPrivateLocationHealth", () => {
     await runPrivateLocationHealth(NOW);
 
     expect((await readStatus())?.status).toBe("active");
-    assertSpyCalls(mockEmail, 0);
+    expect(mockEmail).toHaveBeenCalledTimes(0);
   });
 
   test("error + stale → untouched, no email", async () => {
@@ -155,7 +154,7 @@ describe("runPrivateLocationHealth", () => {
     await runPrivateLocationHealth(NOW);
 
     expect((await readStatus())?.status).toBe("error");
-    assertSpyCalls(mockEmail, 0);
+    expect(mockEmail).toHaveBeenCalledTimes(0);
   });
 
   test("lastSeenAt NULL → skipped regardless of status", async () => {
@@ -164,6 +163,6 @@ describe("runPrivateLocationHealth", () => {
     await runPrivateLocationHealth(NOW);
 
     expect((await readStatus())?.status).toBe("error");
-    assertSpyCalls(mockEmail, 0);
+    expect(mockEmail).toHaveBeenCalledTimes(0);
   });
 });

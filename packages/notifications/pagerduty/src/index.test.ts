@@ -1,21 +1,29 @@
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("PagerDuty Notifications", () => {
-  let fetchMock: Stub<typeof globalThis>;
+  let fetchMock: MockInstance;
 
   beforeEach(() => {
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.resolve(new Response(null, { status: 200 })),
-    );
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(new Response(null, { status: 200 })),
+      );
   });
 
   afterEach(() => {
-    fetchMock.restore();
+    fetchMock.mockRestore();
   });
 
   const createMockMonitor = () => ({
@@ -68,8 +76,8 @@ describe("PagerDuty Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe("https://events.pagerduty.com/v2/enqueue");
     expect(callArgs[1].method).toBe("POST");
 
@@ -107,9 +115,9 @@ describe("PagerDuty Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 2);
-    expect(fetchMock.calls[0].args[1].body).toContain("key1");
-    expect(fetchMock.calls[1].args[1].body).toContain("key2");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][1].body).toContain("key1");
+    expect(fetchMock.mock.calls[1][1].body).toContain("key2");
   });
 
   test("Send Degraded", async () => {
@@ -130,8 +138,8 @@ describe("PagerDuty Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.payload.summary).toBe("API Health Check is degraded");
     expect(body.payload.severity).toBe("warning");
@@ -156,8 +164,8 @@ describe("PagerDuty Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe("https://events.pagerduty.com/v2/enqueue");
     const body = JSON.parse(callArgs[1].body);
     expect(body.routing_key).toBe("my_key");
@@ -171,8 +179,8 @@ describe("PagerDuty Notifications", () => {
     });
 
     expect(result).toBe(true);
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe("https://events.pagerduty.com/v2/enqueue");
     expect(callArgs[1].method).toBe("POST");
 
@@ -186,24 +194,24 @@ describe("PagerDuty Notifications", () => {
   });
 
   test("Send Test returns false on error", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.reject(new Error("Network error")),
-    );
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.reject(new Error("Network error")));
 
     const result = await sendTest({
       integrationKey: "test-key",
     });
 
     expect(result).toBe(false);
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.reject(new Error("Network error")),
-    );
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.reject(new Error("Network error")));
 
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(
@@ -211,7 +219,7 @@ describe("PagerDuty Notifications", () => {
     );
     const incident = createMockIncident();
 
-    expect(
+    await expect(
       sendAlert({
         // @ts-expect-error
         monitor,
@@ -224,6 +232,6 @@ describe("PagerDuty Notifications", () => {
       }),
     ).rejects.toThrow();
 
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,6 +1,5 @@
 import "../test-preload.ts";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { getChannel } from "./index";
 

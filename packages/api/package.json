@@ -12,7 +12,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "deno test --parallel -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json",
+    "test": "vitest run",
     "env": "node env.ts"
   },
   "dependencies": {
@@ -66,11 +66,11 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

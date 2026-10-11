@@ -1,14 +1,22 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
-import { type Stub, stub } from "@std/testing/mock";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import { extractDomain, getApexDomain, getSubdomain } from "./domains";
 
-let errorStub: Stub | undefined;
+let errorStub: MockInstance | undefined;
 beforeEach(() => {
-  errorStub = stub(console, "error");
+  errorStub = vi
+    .spyOn(console, "error")
+    .mockImplementation(() => undefined as never);
 });
-afterEach(() => errorStub?.restore());
+afterEach(() => errorStub?.mockRestore());
 
 describe("getSubdomain", () => {
   it("returns null for the apex itself", () => {

@@ -1,6 +1,6 @@
 import type { z } from "@hono/zod-openapi";
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
-import { expect, test } from "@openstatus/test-utils";
+import { expect, test } from "vitest";
 
 import { OpenStatusApiError } from "@/libs/errors";
 
