@@ -520,10 +520,19 @@ function PrivateLocationStatusDot({
   status: "active" | "error";
   lastSeenAt?: Date | null;
 }) {
+  const lastSeen = lastSeenAt
+    ? `last seen ${formatDistanceToNow(lastSeenAt, { addSuffix: true })}`
+    : null;
   return (
     <Tooltip delayDuration={0}>
       <TooltipTrigger asChild>
-        <span className="relative inline-flex shrink-0">
+        {/* span, not button: a button inside the <label> is invalid HTML */}
+        <span
+          tabIndex={0}
+          role="img"
+          aria-label={lastSeen ? `${status} · ${lastSeen}` : status}
+          className="focus-visible:ring-ring/50 relative inline-flex shrink-0 rounded-full outline-none focus-visible:ring-[3px]"
+        >
           <span
             className={cn(
               "relative inline-flex size-2 rounded-full",
@@ -534,11 +543,8 @@ function PrivateLocationStatusDot({
       </TooltipTrigger>
       <TooltipContent className="font-sans">
         <span className="capitalize">{status}</span>
-        {lastSeenAt ? (
-          <span className="text-primary-foreground/70">
-            {" "}
-            · last seen {formatDistanceToNow(lastSeenAt, { addSuffix: true })}
-          </span>
+        {lastSeen ? (
+          <span className="text-primary-foreground/70"> · {lastSeen}</span>
         ) : null}
       </TooltipContent>
     </Tooltip>
