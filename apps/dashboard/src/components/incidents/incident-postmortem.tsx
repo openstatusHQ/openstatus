@@ -155,7 +155,7 @@ export function IncidentPostmortem({
         {/* px-2 like a ghost control so the dot sits on the text column */}
         <div className="flex items-center gap-2 px-2">
           {postmortem ? (
-            <span className="flex items-center gap-2 font-mono text-foreground">
+            <span className="text-foreground flex items-center gap-2 font-mono">
               <StatusDot variant={approved ? "success" : "default"} />
               {approved ? "Approved" : "Draft"}
             </span>
