@@ -17,9 +17,9 @@ are in `apps/dashboard/README.md`.
 
 ## Toolchain
 
-`devbox.json` pins exact node, deno, bun, turso-cli and sqld versions; the CI
-workflows pin the same node and deno. Never float one back to `@latest` or
-`v2.x` — `tsc` and test results differ by version, so a drifting pin makes
+`devbox.json` pins exact node, bun, turso-cli and sqld versions; the CI
+workflows pin the same node. Never float one back to `@latest` or
+`v26.x` — `tsc` and test results differ by version, so a drifting pin makes
 `pnpm verify` disagree with CI for reasons unrelated to your change.
 
 ## Architecture
