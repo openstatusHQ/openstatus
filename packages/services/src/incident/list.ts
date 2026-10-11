@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNotNull, sql } from "@openstatus/db";
+import { and, desc, eq, inArray, isNotNull } from "@openstatus/db";
 import { incident } from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb } from "../context";
@@ -14,9 +14,7 @@ const userColumns = {
   deletedAt: true,
 } as const;
 
-const statusOrder = sql`case ${incident.status} when 'open' then 0 when 'mitigated' then 1 when 'resolved' then 2 else 3 end`;
-
-/** Open incidents first, then newest declared. */
+/** Newest declared first. */
 export async function listIncidents(args: {
   ctx: ServiceContext;
   input?: ListIncidentsInput;
@@ -30,7 +28,7 @@ export async function listIncidents(args: {
   );
   return getReadDb(ctx).query.incident.findMany({
     where,
-    orderBy: [statusOrder, desc(incident.declaredAt), desc(incident.id)],
+    orderBy: [desc(incident.declaredAt), desc(incident.id)],
     limit: input.limit,
     offset: input.offset,
     with: {

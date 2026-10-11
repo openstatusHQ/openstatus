@@ -39,13 +39,15 @@ const DECIMAL_ID = /^\d+$/;
 
 function parseId(value: string, label: string): number {
   const trimmed = value.trim();
-  if (!DECIMAL_ID.test(trimmed)) {
+  // past 2^53 the digits round to a neighbouring id
+  const id = Number(trimmed);
+  if (!DECIMAL_ID.test(trimmed) || !Number.isSafeInteger(id)) {
     throw new ConnectError(
       `Invalid ${label}: "${value}"`,
       Code.InvalidArgument,
     );
   }
-  return Number(trimmed);
+  return id;
 }
 
 function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {

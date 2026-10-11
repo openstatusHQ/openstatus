@@ -30,8 +30,10 @@ export function IncidentSeverityBadge({
   ...props
 }: StatusBadgeProps & { severity: IncidentSeverity }) {
   const config = severityConfig[severity];
+  // plain rows: square dot = severity, round dot = status (properties sidebar);
+  // elsewhere it stays a tinted pill, so dotClassName only applies with plain
   return (
-    <StatusBadge variant={config.variant} {...props}>
+    <StatusBadge variant={config.variant} dotClassName="rounded-xs" {...props}>
       {config.label}
     </StatusBadge>
   );
