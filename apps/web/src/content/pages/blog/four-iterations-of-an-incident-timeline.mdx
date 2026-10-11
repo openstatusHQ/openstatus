@@ -9,6 +9,29 @@ image: "/assets/posts/four-iterations-of-an-incident-timeline/04-hierarchy.png"
 
 We've been building incidents into openstatus. The activity timeline is the part you stare at most during an incident, so it got the most iterations. Here's how it went.
 
+<Grid cols={4}>
+<div>
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/01-plain-list.png" alt="1. Plain list" className="img-fit" />
+
+</div>
+<div>
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/02-timeline-rail.png" alt="2. Timeline rail" className="img-fit" />
+
+</div>
+<div>
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/03-avatars.png" alt="3. Avatars" className="img-fit" />
+
+</div>
+<div>
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/04-hierarchy.png" alt="4. Hierarchy" className="img-fit" />
+
+</div>
+</Grid>
+
 ## Iteration 1: the plain list
 
 Part of a larger stack of PRs that Claude Code worked through from our plan. No design input yet.
@@ -37,15 +60,19 @@ Everything after builds on that kit.
 
 ## Iteration 3: avatars
 
-> Notes show an author avatar and a type icon side by side. That's redundant. Make the avatar the timeline node, with the type as a small badge.
+A small step, but the one that made the timeline about people.
 
-Done, and the same rail went to maintenances and status reports.
+> Notes show an author avatar and a type icon side by side. That's redundant. Make the avatar the timeline node, with the type as a small badge. On hover, show the email.
+
+The first pass still rendered both. "There is redundancy, check again" fixed it. With the avatar as the node, who did what reads at a glance without parsing a name in the meta line. It also surfaced a problem for later: older rows without an author had nothing to show.
+
+The same day the rail went to status reports and maintenances. Add the timeline rail like the incident page, composer at the top, and the notify checkbox became "Notify subscribers on publish" because we send more than email.
 
 <Image src="/assets/posts/four-iterations-of-an-incident-timeline/03-avatars.png" alt="Iteration 3: the author avatar is the timeline node, the type a small badge" className="img-fit" />
 
 ## Iteration 4: hierarchy
 
-Before this one I asked for feedback on X. Marc from [Papermark](https://www.papermark.com) reminded me of the [Linear](https://linear.app) timeline.
+Before this one I asked for feedback on X. Marc from [Papermark](https://www.papermark.com) pointed me at [Linear](https://linear.app). I knew Linear, and I knew their activity timeline is great. Sometimes you need one more nudge.
 
 So I opened an issue in Linear and stared at it. Why is it so good? Why don't I get tired of reading it? The answer was simple: the hierarchy of events. Comments are loud, everything else is quiet. You read the conversation and skim the plumbing. And because the shape repeats on every issue, you learn the workflow without anyone explaining it. Our timeline had no levels, so every event asked for the same attention and taught nothing.
 
