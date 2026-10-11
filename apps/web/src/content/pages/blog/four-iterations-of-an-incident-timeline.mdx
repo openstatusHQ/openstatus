@@ -1,0 +1,68 @@
+---
+title: "Four iterations of an incident timeline"
+description: "How the incident activity timeline in openstatus went from a log-file list to a Linear-style hierarchy in four iterations, and the prompts that shaped each one."
+author: "Maximilian Kaske"
+publishedAt: "2026-10-11"
+category: "engineering"
+image: "/assets/posts/four-iterations-of-an-incident-timeline/04-hierarchy.png"
+---
+
+We've been building incidents into openstatus. The activity timeline is the part you stare at most during an incident, so it got the most iterations. Here's how it went.
+
+## Iteration 1: the plain list
+
+Part of a larger stack of PRs that Claude Code worked through from our plan. No design input yet.
+
+Every event rendered the same way: a left border, Type · Name · time, body text. Notes from Slack showed up as a bare "From Slack" link. The sidebar was a key/value dump.
+
+It worked. It also looked like a log file.
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/01-plain-list.png" alt="Iteration 1: every event as a bordered block with type, name and time" className="img-fit" />
+
+## Iteration 2: a real timeline
+
+A vertical rail with an icon per event type, status pills, timestamps on the right, and some structure around the page: a header with declared by and duration, a sidebar split into Properties and Communication.
+
+Two prompts shaped this one. The first was asking to think, not code:
+
+> I like how the incident details are displayed. The same layout would work for status reports and maintenances. Don't code yet, think about what a shared structure looks like.
+
+The second was about the implementation:
+
+> This is a lot of one-off markup. Would compound components be leaner? I want one timeline kit every page uses, not three copies that drift.
+
+Everything after builds on that kit.
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/02-timeline-rail.png" alt="Iteration 2: a vertical rail with an icon per event type and status pills" className="img-fit" />
+
+## Iteration 3: avatars
+
+> Notes show an author avatar and a type icon side by side. That's redundant. Make the avatar the timeline node, with the type as a small badge.
+
+Done, and the same rail went to maintenances and status reports.
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/03-avatars.png" alt="Iteration 3: the author avatar is the timeline node, the type a small badge" className="img-fit" />
+
+## Iteration 4: hierarchy
+
+Before this one I asked for feedback on X. Marc from [Papermark](https://www.papermark.com) pointed me at [Linear](https://linear.app).
+
+> Improve the activity timeline across incidents, maintenances, and status reports. Use Linear as the reference. Keep our compound components. Don't commit, I'll give feedback after each pass.
+
+Then one observation at a time:
+
+> Too crowded. Every event takes the same space whether it matters or not.
+
+> Linear only highlights comments. Everything else is a plain line. Do the same.
+
+> Some notes came from Slack and nothing shows it. Linear marks GitHub activity with a small icon on the avatar. Do that for Slack.
+
+We were emphasizing every event the same way. Notes and status changes became cards written as sentences: Thibault marked Resolved. System events collapsed into one-liners: linked status report #3473. Slack got a badge on the avatar.
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/04-hierarchy.png" alt="Iteration 4: notes and status changes as cards, system events as one-liners" className="img-fit" />
+
+The timeline is less tall and less loud because it has levels. The important stuff reads like a story. The plumbing stays out of the way.
+
+## What we learned
+
+AI gets you to a reasonable version fast. Iterations 2 and 3 are roughly what you get with little steering. Iteration 4 took a few days of looking at it, one hint from outside, and a handful of short prompts that said what was wrong, not what to build.
