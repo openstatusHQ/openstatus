@@ -34,7 +34,7 @@ To contribute code changes, follow these steps:
    packages your diff touches; those do need a local libSQL server.
 
    See the [Requirements](./README.md#requirements) list in the README for the
-   full toolchain (Node.js, pnpm, Bun, Deno, Turso CLI).
+   full toolchain (Node.js, pnpm, Bun, Turso CLI).
 4. Make commits with clear and descriptive messages. Each commit should have a single logical purpose.
 5. Push your branch to your forked repository.
 6. Open a pull request (PR) from your branch to the original repository's `main` branch.
