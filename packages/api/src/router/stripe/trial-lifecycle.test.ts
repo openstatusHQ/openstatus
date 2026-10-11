@@ -454,11 +454,7 @@ describe("trial lifecycle", () => {
       ]);
     });
 
-    test("setup checkout with a taxable address → automatic tax on", async () => {
-      customer = {
-        ...customer,
-        tax: { automatic_tax: "supported" },
-      } as Stripe.Customer;
+    function stubSetup() {
       stubs.push(
         stub(stripe.setupIntents, "retrieve", () =>
           Promise.resolve({
@@ -477,19 +473,47 @@ describe("trial lifecycle", () => {
           Promise.resolve({} as Stripe.Response<Stripe.Customer>),
         ),
       );
+    }
 
-      await caller().sessionCompleted(
-        event("checkout.session.completed", {
-          mode: "setup",
-          customer: "cus_setup",
-          setup_intent: "seti_1",
-        } as Stripe.Checkout.Session),
-      );
+    const setupCompleted = () =>
+      event("checkout.session.completed", {
+        mode: "setup",
+        customer: "cus_setup",
+        setup_intent: "seti_1",
+      } as Stripe.Checkout.Session);
 
-      expect(updateSubscription.calls[0]?.args).toEqual([
-        "sub_setup",
-        { default_payment_method: "pm_new", automatic_tax: { enabled: true } },
+    test("setup checkout completed → automatic tax on after the card", async () => {
+      stubSetup();
+
+      await caller().sessionCompleted(setupCompleted());
+
+      expect(updateSubscription.calls.map((c) => c.args)).toEqual([
+        ["sub_setup", { default_payment_method: "pm_new" }],
+        ["sub_setup", { automatic_tax: { enabled: true } }],
       ]);
+    });
+
+    test("Stripe rejecting the tax location still keeps the card", async () => {
+      stubSetup();
+      stubs = stubs.filter((s) => s !== updateSubscription);
+      updateSubscription.restore();
+      const update = stub(
+        stripe.subscriptions,
+        "update",
+        (_id: string, params?: Stripe.SubscriptionUpdateParams) =>
+          params?.automatic_tax
+            ? Promise.reject(new Error("customer_tax_location_invalid"))
+            : Promise.resolve({} as Stripe.Response<Stripe.Subscription>),
+      );
+      stubs.push(update);
+
+      await caller().sessionCompleted(setupCompleted());
+
+      expect(update.calls[0]?.args).toEqual([
+        "sub_setup",
+        { default_payment_method: "pm_new" },
+      ]);
+      assertSpyCalls(update, 2);
     });
 
     test("trialing → active clears trialEndsAt", async () => {

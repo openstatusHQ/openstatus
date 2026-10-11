@@ -26,7 +26,6 @@ import { removeDomainFromVercelIfUnused } from "../../lib/vercel";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import {
   buildFromSubscriptionOrThrow,
-  canAutomateTax,
   cancelSupersededSubscriptions,
   customerIdOf,
   getCurrentPeriodEnd,
@@ -222,13 +221,25 @@ async function attachSetupPaymentMethod(session: Stripe.Checkout.Session) {
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   if (customerIdOf(subscription) !== customerId) return;
 
-  // The setup session collected the billing address, so tax can start here.
   await stripe.subscriptions.update(subscriptionId, {
     default_payment_method: paymentMethod,
-    ...((await canAutomateTax(customerId)) && {
-      automatic_tax: { enabled: true },
-    }),
   });
+
+  // The card now carries the billing address the setup session required, and
+  // Stripe Tax falls back to it. Just try: Stripe rejects a location it cannot
+  // place, and that must not undo the card we already attached.
+  if (!subscription.automatic_tax?.enabled) {
+    try {
+      await stripe.subscriptions.update(subscriptionId, {
+        automatic_tax: { enabled: true },
+      });
+    } catch (err) {
+      console.error(
+        `Failed to enable automatic tax on ${subscriptionId}:`,
+        err,
+      );
+    }
+  }
   return subscription;
 }
 
