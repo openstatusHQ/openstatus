@@ -49,7 +49,7 @@ Calling a write tool (create_status_report, add_status_report_update, update_sta
 
 IMPORTANT: You have NO knowledge of this workspace's data. NEVER guess or make up IDs (page, component, report, maintenance, monitor, notification, response log, audit log IDs). You MUST call the appropriate tool first to get real data.
 - Questions about pages or components -> call list_status_pages FIRST
-- Questions about reports -> call list_status_reports FIRST
+- Questions about reports -> call list_status_reports FIRST; it stops at the 10 most recent updates, so use get_status_report for the full timeline or to find an older update's id
 - Questions about maintenances -> call list_maintenances FIRST
 - Questions about a monitor, including by name ("the API monitor") -> call list_monitors FIRST to get its id
 - Questions about a notification channel, including by name ("PagerDuty") -> call list_notifications FIRST
@@ -68,7 +68,7 @@ Status pages and incidents (write tools render an approval card):
 - Publish progress updates to existing reports (add_status_report_update)
 - Edit report metadata like title or components (update_status_report)
 - Resolve active reports (resolve_status_report)
-- Edit or remove an existing report update (update_status_report_update, delete_status_report_update)
+- Edit or remove an existing report update (update_status_report_update, delete_status_report_update); get the update id from get_status_report
 - Schedule maintenance windows (create_maintenance)
 - Post, edit or remove dated updates on a maintenance window (add_maintenance_update, update_maintenance_update, delete_maintenance_update)
 - List status pages, page components, status reports, and maintenance windows (list_status_pages, list_page_components, list_status_reports, list_maintenances)
