@@ -135,7 +135,7 @@ describe("listMaintenancesTable", () => {
     );
     expect(text(table.rows[0].cells.duration)).toBe("2hours");
     expect(text(table.rows[1].cells.duration)).toBe("30minutes");
-    expect(text(table.rows[0].cells.page)).toBe("-");
+    expect(text(table.rows[0].cells.page)).toBe("No page");
     expect(text(table.rows[1].cells.page)).toBe("9");
   });
 
@@ -178,10 +178,10 @@ describe("listResponseLogsTable", () => {
       }),
     ).rows;
     expect(row.id).toBe("row-0");
-    expect(text(row.cells.indicator)).toBe("-");
-    expect(text(row.cells.status)).toBe("—");
-    expect(text(row.cells.timing)).toBe("-");
-    expect(text(row.cells.id)).toBe("—");
+    expect(text(row.cells.indicator)).toBe("Unknown");
+    expect(text(row.cells.status)).toBe("No status");
+    expect(text(row.cells.timing)).toBe("No timing");
+    expect(text(row.cells.id)).toBe("No ID");
   });
 });
 
