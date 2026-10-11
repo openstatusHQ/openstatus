@@ -255,7 +255,7 @@ export function StatusReportComposer({
                         </SelectContent>
                       </Select>
                       <ComposerIconButton
-                        label="Leave out of this update"
+                        label={`Leave ${component.name} out of this update`}
                         onClick={() =>
                           setIds(
                             componentIds.filter((id) => id !== component.id),

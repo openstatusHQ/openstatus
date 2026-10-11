@@ -8,7 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { StatusBadge } from "@/components/common/status-badge";
+import { StatusDot } from "@/components/common/status-dot";
 import {
   Composer,
   ComposerActions,
@@ -134,11 +134,9 @@ export function IncidentPostmortem({
     ? "Unsaved changes"
     : approved && incident.closedAt === null
       ? "Close the incident from the header"
-      : postmortem?.draftedBy === "agent"
-        ? "Drafted by the agent"
-        : postmortem
-          ? null
-          : "No postmortem yet";
+      : postmortem
+        ? null
+        : "No postmortem yet";
 
   return (
     <Composer size="lg" defaultValue={postmortem ? "preview" : "write"}>
@@ -154,13 +152,15 @@ export function IncidentPostmortem({
       />
       <ComposerPreview value={content} />
       <ComposerFooter>
-        <div className="flex items-center gap-2 pl-1">
+        {/* px-2 like a ghost control so the dot sits on the text column */}
+        <div className="flex items-center gap-2 px-2">
           {postmortem ? (
-            <StatusBadge dot variant={approved ? "success" : "default"}>
+            <span className="flex items-center gap-2 font-mono text-foreground">
+              <StatusDot variant={approved ? "success" : "default"} />
               {approved ? "Approved" : "Draft"}
-            </StatusBadge>
+            </span>
           ) : null}
-          {hint ? <span className="text-xs">{hint}</span> : null}
+          {hint ? <span>{hint}</span> : null}
         </div>
         <ComposerActions>
           <div className="flex items-center gap-1">
