@@ -123,9 +123,11 @@ export function ConnectedAppsCard() {
                       )}
                     </TableCell>
                     <TableCell className="text-sm">
-                      {grant.lastUsedAt
-                        ? formatDate(grant.lastUsedAt)
-                        : "Never"}
+                      {grant.lastUsedAt ? (
+                        formatDate(grant.lastUsedAt)
+                      ) : (
+                        <TableCellEmpty>Never</TableCellEmpty>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end">

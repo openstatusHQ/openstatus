@@ -22,5 +22,9 @@ export function TableCellText({
       </div>
     );
   }
-  return <TableCellEmpty className={className}>{empty}</TableCellEmpty>;
+  return (
+    <TableCellEmpty className={className} {...props}>
+      {empty}
+    </TableCellEmpty>
+  );
 }

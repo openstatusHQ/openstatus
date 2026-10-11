@@ -15,7 +15,11 @@ export function TableCellNumber({
 }) {
   const _value = Number(value);
   if (Number.isNaN(_value)) {
-    return <TableCellEmpty className="font-mono">{empty}</TableCellEmpty>;
+    return (
+      <TableCellEmpty className={cn("font-mono", className)} {...props}>
+        {empty}
+      </TableCellEmpty>
+    );
   }
 
   return (

@@ -64,7 +64,7 @@ export const columns: ColumnDef<StatusReport>[] = [
         "impact",
       );
       if (impact === undefined)
-        return <div className="text-muted-foreground">-</div>;
+        return <TableCellEmpty>No impact</TableCellEmpty>;
       return <StatusReportImpactBadge impact={impact} />;
     },
   },

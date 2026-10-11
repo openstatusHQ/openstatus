@@ -74,7 +74,9 @@ export function DataTable({
             <TableRow key={apiKey.id}>
               <TableCell className="font-medium">{apiKey.name}</TableCell>
               <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                {apiKey.description ?? (
+                {apiKey.description ? (
+                  apiKey.description
+                ) : (
                   <TableCellEmpty>No description</TableCellEmpty>
                 )}
               </TableCell>
