@@ -28,6 +28,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import {
   buildFromSubscriptionOrThrow,
+  canAutomateTax,
   getCurrentPeriodEnd,
   getCurrentSubscription,
   hasPaymentMethod,
@@ -104,6 +105,9 @@ async function createPaymentMethodSetupSession(args: {
     mode: "setup",
     payment_method_types: ["card"],
     customer: args.customer,
+    // The address lets Stripe Tax place the customer once the trial converts.
+    billing_address_collection: "required",
+    customer_update: { name: "auto", address: "auto" },
     setup_intent_data: { metadata: { subscriptionId: args.subscriptionId } },
     success_url: args.successUrl,
     cancel_url: args.cancelUrl,
@@ -262,6 +266,9 @@ export const stripeRouter = createTRPCRouter({
           items,
           proration_behavior: "create_prorations",
           cancel_at_period_end: false,
+          ...((await canAutomateTax(stripeId)) && {
+            automatic_tax: { enabled: true },
+          }),
           ...(isTrialing && {
             trial_end: "now",
             payment_behavior: "error_if_incomplete",
@@ -305,6 +312,8 @@ export const stripeRouter = createTRPCRouter({
           name: "auto",
           address: "auto",
         },
+        billing_address_collection: "required",
+        automatic_tax: { enabled: true },
         line_items: [
           {
             price: priceId,
