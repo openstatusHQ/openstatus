@@ -454,6 +454,44 @@ describe("trial lifecycle", () => {
       ]);
     });
 
+    test("setup checkout with a taxable address → automatic tax on", async () => {
+      customer = {
+        ...customer,
+        tax: { automatic_tax: "supported" },
+      } as Stripe.Customer;
+      stubs.push(
+        stub(stripe.setupIntents, "retrieve", () =>
+          Promise.resolve({
+            payment_method: "pm_new",
+            metadata: { subscriptionId: "sub_setup" },
+          } as unknown as Stripe.Response<Stripe.SetupIntent>),
+        ),
+        stub(stripe.subscriptions, "retrieve", () =>
+          Promise.resolve(
+            subscription("cus_setup", {
+              id: "sub_setup",
+            }) as Stripe.Response<Stripe.Subscription>,
+          ),
+        ),
+        stub(stripe.customers, "update", () =>
+          Promise.resolve({} as Stripe.Response<Stripe.Customer>),
+        ),
+      );
+
+      await caller().sessionCompleted(
+        event("checkout.session.completed", {
+          mode: "setup",
+          customer: "cus_setup",
+          setup_intent: "seti_1",
+        } as Stripe.Checkout.Session),
+      );
+
+      expect(updateSubscription.calls[0]?.args).toEqual([
+        "sub_setup",
+        { default_payment_method: "pm_new", automatic_tax: { enabled: true } },
+      ]);
+    });
+
     test("trialing → active clears trialEndsAt", async () => {
       const s = await seedTrial();
       const sub = subscription(s.stripeId, { status: "active" });

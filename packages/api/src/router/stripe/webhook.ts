@@ -26,6 +26,7 @@ import { removeDomainFromVercelIfUnused } from "../../lib/vercel";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import {
   buildFromSubscriptionOrThrow,
+  canAutomateTax,
   cancelSupersededSubscriptions,
   customerIdOf,
   getCurrentPeriodEnd,
@@ -221,8 +222,12 @@ async function attachSetupPaymentMethod(session: Stripe.Checkout.Session) {
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   if (customerIdOf(subscription) !== customerId) return;
 
+  // The setup session collected the billing address, so tax can start here.
   await stripe.subscriptions.update(subscriptionId, {
     default_payment_method: paymentMethod,
+    ...((await canAutomateTax(customerId)) && {
+      automatic_tax: { enabled: true },
+    }),
   });
   return subscription;
 }
