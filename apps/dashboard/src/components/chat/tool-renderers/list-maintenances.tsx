@@ -36,7 +36,7 @@ export function listMaintenancesTable(
             m.pageId !== null ? (
               <TableCellNumber value={m.pageId} />
             ) : (
-              <TableCellText value={null} />
+              <TableCellText value={null} empty="No page" />
             ),
           id: <TableCellNumber value={m.id} />,
         },

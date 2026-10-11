@@ -19,6 +19,7 @@ import {
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { reportStartedAt } from "@/data/status-reports.client";
 
+import { TableCellEmpty } from "../table-cell-empty";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
@@ -63,7 +64,7 @@ export const columns: ColumnDef<StatusReport>[] = [
         "impact",
       );
       if (impact === undefined)
-        return <div className="text-muted-foreground">-</div>;
+        return <TableCellEmpty>No impact</TableCellEmpty>;
       return <StatusReportImpactBadge impact={impact} />;
     },
   },
@@ -101,7 +102,7 @@ export const columns: ColumnDef<StatusReport>[] = [
           </div>
         );
       }
-      return <div className="text-muted-foreground">-</div>;
+      return <TableCellEmpty>No components</TableCellEmpty>;
     },
   },
   {

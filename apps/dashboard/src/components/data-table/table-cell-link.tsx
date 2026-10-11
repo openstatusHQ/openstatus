@@ -3,12 +3,16 @@ import { ArrowUpRight, ChevronRight } from "@openstatus/icons";
 import { Link } from "@/components/common/link";
 import { cn } from "@/lib/utils";
 
+import { TableCellEmpty } from "./table-cell-empty";
+
 export function TableCellLink({
   value,
+  empty,
   className,
   ...props
 }: React.ComponentProps<typeof Link> & {
   value: unknown;
+  empty?: string;
 }) {
   if (typeof value === "string") {
     const isExternal = props.href?.toString().startsWith("http");
@@ -30,5 +34,5 @@ export function TableCellLink({
       </Link>
     );
   }
-  return <div className="text-muted-foreground">-</div>;
+  return <TableCellEmpty>{empty}</TableCellEmpty>;
 }

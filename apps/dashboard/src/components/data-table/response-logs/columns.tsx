@@ -18,6 +18,8 @@ import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellRegion } from "@/components/data-table/table-cell-region";
 import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 
+import { TableCellEmpty } from "../table-cell-empty";
+
 type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
 
 // export const columns: ColumnDef<ResponseLog>[] =
@@ -41,7 +43,7 @@ export function getColumns(
         if (value === "success") {
           return <div className="bg-success h-2.5 w-2.5 rounded-xs" />;
         }
-        return <div className="text-muted-foreground">-</div>;
+        return <TableCellEmpty>Unknown</TableCellEmpty>;
       },
     },
     {
@@ -75,7 +77,7 @@ export function getColumns(
             <TableCellNumber value={value} className={textColors[variant]} />
           );
         }
-        return <div className="text-muted-foreground">-</div>;
+        return <TableCellEmpty>No status</TableCellEmpty>;
       },
     },
     {
@@ -111,7 +113,7 @@ export function getColumns(
         if (log.type === "http" && log.timing) {
           return <HoverCardTiming timing={log.timing} latency={log.latency} />;
         }
-        return <div className="text-muted-foreground">-</div>;
+        return <TableCellEmpty>No timing</TableCellEmpty>;
       },
       enableSorting: false,
       enableHiding: false,
@@ -137,7 +139,7 @@ export function getColumns(
             </TooltipProvider>
           );
         }
-        return <div className="text-muted-foreground">-</div>;
+        return <TableCellEmpty>Unknown</TableCellEmpty>;
       },
       enableSorting: false,
       enableHiding: false,

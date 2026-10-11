@@ -97,7 +97,7 @@ describe("listPageComponentsTable", () => {
 
   it("shows the monitor id, or a placeholder for static components", () => {
     expect(text(table.rows[0].cells.monitor)).toContain("4");
-    expect(text(table.rows[1].cells.monitor).trim()).toBe("-");
+    expect(text(table.rows[1].cells.monitor).trim()).toBe("No monitor");
   });
 });
 
@@ -122,8 +122,8 @@ describe("listPrivateLocationsTable", () => {
     );
   });
 
-  it("shows 'never' for a location that never reported", () => {
-    expect(text(table.rows[0].cells.lastSeenAt)).toBe("never");
+  it("shows 'Never' for a location that never reported", () => {
+    expect(text(table.rows[0].cells.lastSeenAt)).toBe("Never");
     expect(text(table.rows[0].cells.monitors)).toBe("none");
   });
 

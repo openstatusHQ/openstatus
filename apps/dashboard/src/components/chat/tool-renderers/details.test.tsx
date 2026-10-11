@@ -112,7 +112,7 @@ describe("getMonitorSummaryDetails", () => {
       ["p50", "p75", "p90", "p95", "p99"],
     ]);
     expect(value(data, "Window")).toBe("7d");
-    expect(value(data, "Last check")).toBe("-");
+    expect(value(data, "Last check")).toBe("None");
     expect(value(data, "Failed")).toBe("5");
     expect(value(data, "p99")).toBe("400ms");
   });

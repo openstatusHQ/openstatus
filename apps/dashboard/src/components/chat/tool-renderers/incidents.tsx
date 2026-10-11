@@ -32,7 +32,9 @@ export function listIncidentsTable(
         status: (
           <TableCellText value={i.closed ? `${i.status} · closed` : i.status} />
         ),
-        commander: <TableCellText value={i.commander?.name ?? null} />,
+        commander: (
+          <TableCellText value={i.commander?.name ?? null} empty="Unassigned" />
+        ),
         id: <TableCellNumber value={i.id} />,
       },
     })),
@@ -55,7 +57,12 @@ export function getIncidentDetails(
           { label: "Status", value: <TableCellText value={output.status} /> },
           {
             label: "Commander",
-            value: <TableCellText value={output.commander?.name ?? null} />,
+            value: (
+              <TableCellText
+                value={output.commander?.name ?? null}
+                empty="Unassigned"
+              />
+            ),
           },
           {
             label: "Summary",

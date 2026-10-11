@@ -41,7 +41,7 @@ export function listPageComponentsTable(
           c.monitorId !== null ? (
             <TableCellNumber value={c.monitorId} />
           ) : (
-            <TableCellText value={null} />
+            <TableCellText value={null} empty="No monitor" />
           ),
         id: <TableCellNumber value={c.id} />,
       },

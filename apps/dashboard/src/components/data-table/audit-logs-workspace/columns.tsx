@@ -19,6 +19,7 @@ import type { ComponentType } from "react";
 import { cn } from "@/lib/utils";
 
 import { TableCellDate } from "../table-cell-date";
+import { TableCellEmpty } from "../table-cell-empty";
 
 type AuditLog = RouterOutputs["auditLog"]["list"]["items"][number];
 
@@ -116,7 +117,7 @@ export const columns: ColumnDef<AuditLog>[] = [
             </div>
           );
         }
-        return <span className="text-muted-foreground">-</span>;
+        return <TableCellEmpty>Unknown</TableCellEmpty>;
       }
       const via = viaSource[type];
       const imgSrc =

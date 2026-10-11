@@ -14,6 +14,8 @@ import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { TableCellEmpty } from "../../table-cell-empty";
+
 type ApiKey = RouterOutputs["apiKey"]["list"][number];
 
 /**
@@ -72,7 +74,11 @@ export function DataTable({
             <TableRow key={apiKey.id}>
               <TableCell className="font-medium">{apiKey.name}</TableCell>
               <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                {apiKey.description ?? "-"}
+                {apiKey.description ? (
+                  apiKey.description
+                ) : (
+                  <TableCellEmpty>No description</TableCellEmpty>
+                )}
               </TableCell>
               <TableCell>
                 <code className="text-xs">{apiKey.prefix}...</code>
@@ -81,7 +87,11 @@ export function DataTable({
                 <Badge variant="secondary">{scopeLabel(apiKey.scopes)}</Badge>
               </TableCell>
               <TableCell className="text-sm">
-                {apiKey.expiresAt ? formatDate(apiKey.expiresAt) : "-"}
+                {apiKey.expiresAt ? (
+                  formatDate(apiKey.expiresAt)
+                ) : (
+                  <TableCellEmpty>Never</TableCellEmpty>
+                )}
               </TableCell>
               <TableCell>
                 <div className="flex justify-end">
