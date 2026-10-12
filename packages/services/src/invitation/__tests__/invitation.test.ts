@@ -74,6 +74,18 @@ describe("createInvitation", () => {
     });
   });
 
+  test("stores the email trimmed and lowercased", async () => {
+    await withTestTransaction(async (tx) => {
+      const email = `${TEST_PREFIX}-case-${Date.now()}@example.com`;
+      const row = await createInvitation({
+        ctx: { ...teamCtx, db: tx },
+        input: { email: `  ${email.toUpperCase()} ` },
+      });
+
+      expect(row.email).toBe(email);
+    });
+  });
+
   test("rejects read-only actor", async () => {
     await withTestTransaction(async (tx) => {
       const readOnlyCtx = {
@@ -143,6 +155,39 @@ describe("getInvitationByToken", () => {
       });
       expect(row.id).toBe(created.id);
       expect(row.workspace.id).toBe(teamCtx.workspace.id);
+    });
+  });
+
+  test("matches a legacy mixed-case invitation case-insensitively", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const email = `${TEST_PREFIX}-legacy-${Date.now()}@example.com`;
+      const token = crypto.randomUUID();
+      const legacy = await tx
+        .insert(invitation)
+        .values({
+          email: email.toUpperCase(),
+          workspaceId: teamCtx.workspace.id,
+          token,
+          expiresAt: new Date(Date.now() + 60_000),
+        })
+        .returning()
+        .get();
+
+      const row = await getInvitationByToken({
+        ctx,
+        input: { token, email },
+      });
+      expect(row.id).toBe(legacy.id);
+
+      const workspaceRow = await acceptInvitation({
+        ctx: {
+          ...makeUserCtx(teamCtx.workspace, { userId: acceptingUserId }),
+          db: tx,
+        },
+        input: { id: legacy.id, email },
+      });
+      expect(workspaceRow.id).toBe(teamCtx.workspace.id);
     });
   });
 
