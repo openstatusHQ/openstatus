@@ -129,6 +129,14 @@ Deploy the full stack (dashboard, status pages, API, workflows, probes, libSQL, 
 
 The template source and the setup instructions are in [ephraimduncan/openstatus-railway](https://github.com/ephraimduncan/openstatus-railway).
 
+### Self-Hosting with ZopDay
+
+Run openstatus in your own AWS or GCP account, or on managed ZopCloud. The button opens a deploy screen with the dashboard image (`ghcr.io/openstatushq/openstatus-dashboard`) and port 3002 already set:
+
+[![Deploy to ZopDay](https://zop.dev/deploytozopday-inkhard.svg)](https://zop.dev/zopday/app/deploy?image=ghcr.io/openstatushq/openstatus-dashboard:latest&port=3002&name=openstatus-dashboard&utm_source=github&utm_medium=one_click&utm_content=openstatus)
+
+The dashboard needs the rest of the stack to work. Deploy the other images listed under [Self-Hosting with Coolify](#self-hosting-with-coolify) the same way (server on 3001, workflows on 3000, status page on 3003, private location on 8081), and run libSQL and Tinybird Local alongside them, using the environment variables in [DOCKER.md](DOCKER.md).
+
 ### Manual Setup
 
 #### Requirements
