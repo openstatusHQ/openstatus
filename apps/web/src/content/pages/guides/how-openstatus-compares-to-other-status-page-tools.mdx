@@ -10,11 +10,11 @@ updatedAt: "2026-08-26"
 category: "pricing"
 faq:
   - question: "How much does a status page cost?"
-    answer: "It ranges from free to $349/month depending on what you need. Free tiers exist at openstatus, Instatus and Better Stack but are limited to a public page and a handful of components. A private, branded page on a custom domain starts at $30/month with openstatus, $50/month with Instatus, $99/month with Atlassian Statuspage, and $349/month with Status.io. Per-seat charges and monitoring are extra almost everywhere except openstatus."
+    answer: "It ranges from free to $349/month depending on what you need. Free tiers exist at openstatus, Instatus and Better Stack but are limited to a public page and a handful of components. A private, branded page on a custom domain starts at $50/month with Instatus, $99/month with Atlassian Statuspage, $100/month with openstatus (Pro plan), and $349/month with Status.io. Per-seat charges and monitoring are extra almost everywhere except openstatus, where the $100 already includes monitoring and unlimited seats."
   - question: "Why is Atlassian Statuspage so expensive?"
     answer: "Three multipliers stack. The $29/month entry plan caps you at 100 subscribers and the price climbs as that audience grows. A private page needs the $99/month tier. Custom HTML and CSS only appear on the $399/month plan. Seats are billed on top at roughly $20 each, and because Statuspage ships no monitoring, you also pay a separate monitoring vendor to feed it."
   - question: "Which status page provider is cheapest?"
-    answer: "For a public page with no private access and a small component count, the free tiers at openstatus, Instatus and Better Stack all cost nothing. Once you need a private page, a custom domain, more than a couple of seats, and monitoring behind it, openstatus at $30/month is usually the lowest total because seats are unlimited and monitoring is included rather than billed separately."
+    answer: "For a public page with no private access and a small component count, the free tiers at openstatus, Instatus and Better Stack all cost nothing. Once you need a private page, a custom domain, more than a couple of seats, and monitoring behind it, openstatus Pro at $100/month is usually the lowest total because seats are unlimited and monitoring is included rather than billed separately. If monitoring is already solved elsewhere and you need few seats, Instatus at $50/month is the cheaper private page."
   - question: "Does the price include uptime monitoring?"
     answer: "Usually not. Atlassian Statuspage, Instatus and Status.io ship no monitoring at all, so the checks that drive your components come from a separate tool you pay for on top. Better Stack and Datadog include monitoring but bill it per seat or per run. openstatus includes monitoring from 28 regions in the base price."
   - question: "What hidden costs should I watch for?"
@@ -49,12 +49,12 @@ Every other tool on this list is missing at least two of these. If those bullets
 | OpenTelemetry Export | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | Private Locations | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | MCP Server (AI agents) | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Private Status Page | $30/m | $99/m | $50/m | Add-on $42/m | ✅ | $349/m |
+| Private Status Page | $100/m (Pro plan, includes monitoring) | $99/m | $50/m | Add-on $42/m | ✅ | $349/m |
 | Team Members | Unlimited | $20+/seat | 25 on $50/m | $29/seat | $42/seat | 50 on $349/m |
 | Open-Source | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Self-Hosting | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
-Prices reflect publicly listed plans at time of writing and change frequently — always confirm with the vendor.
+Prices reflect publicly listed plans at time of writing and change frequently — always confirm with the vendor. Private status pages on openstatus are part of the **Pro plan ($100/m)**, not an add-on: that price also covers 50 monitors, 5 status pages, unlimited team members and the monitoring behind the page. The $30/m Starter plan is for public pages only.
 
 ## Where the cost actually comes from
 
@@ -98,7 +98,7 @@ Datadog also ships MCP. None of the others do.
 
 ### The bill at scale
 
-openstatus is **$30/month with unlimited team members** and includes monitoring. Compare that to:
+openstatus is **$30/month for a public page** and **$100/month (Pro) for a private page**, with unlimited team members and monitoring included at both tiers. For a private page, compare that $100 to:
 
 - Atlassian Statuspage: $99/month for a private page, plus $20+/seat
 - Instatus: $50/month for the tier with private pages, 25 seats included
@@ -106,7 +106,7 @@ openstatus is **$30/month with unlimited team members** and includes monitoring.
 - Status.io: $349/month for the tier with private pages, custom styling, and 50 seats
 - Datadog: $42/seat plus the broader Datadog spend
 
-For teams of 5+, openstatus is typically the cheapest option that also includes monitoring.
+On list price alone Instatus is cheaper for a private page. Add the seats and the separate monitoring bill and, for teams of 5+, openstatus Pro is typically the lowest total that also includes monitoring: Atlassian is $199+ for five seats before monitoring, Betterstack is $187 with the private-page add-on, and Status.io is $349.
 
 **openstatus wins on**: total cost of ownership for growing teams.
 
@@ -199,7 +199,7 @@ If you need help along the way, feel free to join our [Discord community](https:
 
 <Details summary="How much does a status page cost?">
 
-It ranges from free to $349/month depending on what you need. Free tiers exist at openstatus, Instatus and Better Stack but are limited to a public page and a handful of components. A private, branded page on a custom domain starts at $30/month with openstatus, $50/month with Instatus, $99/month with Atlassian Statuspage, and $349/month with Status.io. Per-seat charges and monitoring are extra almost everywhere except openstatus.
+It ranges from free to $349/month depending on what you need. Free tiers exist at openstatus, Instatus and Better Stack but are limited to a public page and a handful of components. A private, branded page on a custom domain starts at $50/month with Instatus, $99/month with Atlassian Statuspage, $100/month with openstatus (Pro plan), and $349/month with Status.io. Per-seat charges and monitoring are extra almost everywhere except openstatus, where the $100 already includes monitoring and unlimited seats.
 
 </Details>
 
@@ -211,7 +211,7 @@ Three multipliers stack. The $29/month entry plan caps you at 100 subscribers an
 
 <Details summary="Which status page provider is cheapest?">
 
-For a public page with no private access and a small component count, the free tiers at openstatus, Instatus and Better Stack all cost nothing. Once you need a private page, a custom domain, more than a couple of seats, and monitoring behind it, openstatus at $30/month is usually the lowest total because seats are unlimited and monitoring is included rather than billed separately.
+For a public page with no private access and a small component count, the free tiers at openstatus, Instatus and Better Stack all cost nothing. Once you need a private page, a custom domain, more than a couple of seats, and monitoring behind it, openstatus Pro at $100/month is usually the lowest total because seats are unlimited and monitoring is included rather than billed separately. If monitoring is already solved elsewhere and you need few seats, Instatus at $50/month is the cheaper private page.
 
 </Details>
 
