@@ -119,6 +119,10 @@ A URL starting with `https://hooks.slack.com/services/` is treated as a Slack in
 
 A URL starting with `https://discord.com/api/webhooks/` is treated as a Discord webhook. The payload uses a Discord embed with a status-colored sidebar, a title linking to the event, status and page fields, the update message, affected components, and manage/unsubscribe links.
 
+### Microsoft Teams
+
+A URL whose hostname ends with `.logic.azure.com`, `.powerplatform.com`, or `.webhook.office.com` is treated as a Microsoft Teams webhook (Teams Workflows or the legacy Office connector). The payload is an [Adaptive Card 1.5](https://adaptivecards.io/) wrapped in the standard Teams message envelope — a status-colored header container, a FactSet with status, page, and timestamp, the update message, affected components, manage/unsubscribe links, and a `View details` action button.
+
 ### Generic
 
 Any other URL receives a versioned, channel-agnostic JSON payload. Use this to forward updates into your own systems. The body is shaped as:
