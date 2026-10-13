@@ -5,18 +5,7 @@
 //   node scripts/screenshot.mjs --app web /pricing --full-page
 //   node scripts/screenshot.mjs --app status-page /acme
 //
-// Flags: --app dashboard|web|status-page (default dashboard), --base <url>,
-// --selector <css>, --theme both|light|dark, --out <dir>, --width <px>,
-// --full-page, --user <email>, --workspace <slug>, --token <session token>,
-// --db <sqld http url>, --login <email> --log <dev server log file>.
-//
-// The dashboard needs a login. In order: --token, a live row in the `session`
-// table (the seed creates seed-session-max and seed-session-thibault; narrow
-// with --user), a saved storage state, or --login, which submits the email
-// form and follows the `>>> Magic Link:` line the dev server prints to --log.
-// Playwright is borrowed from apps/screenshot-service so the version follows
-// that package; the browser is the system Chrome, or Playwright's bundled
-// Chromium where there is none.
+// Flags, auth order and fixtures: .agents/skills/screenshot/SKILL.md.
 
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -65,6 +54,10 @@ const themes =
     ? [flags.theme]
     : ["light", "dark"];
 const width = Number(flags.width ?? 1400);
+if (!Number.isFinite(width) || width <= 0) {
+  console.error(`--width must be a positive number, got ${flags.width}`);
+  process.exit(2);
+}
 const stateFile = resolve(flags.state ?? join(out, "state.json"));
 const wantsAuth = app.auth || Boolean(flags.token || flags.login);
 mkdirSync(out, { recursive: true });
@@ -96,7 +89,7 @@ async function sessionCookies() {
       q: `select s.session_token as token, u.id as user_id, u.email as email
           from session s join user u on u.id = s.user_id
           where s.expires > unixepoch() * 1000 ${where}
-          order by s.expires desc limit 1`,
+          order by s.expires desc, s.user_id limit 1`,
       params,
     },
   ]);
@@ -107,7 +100,7 @@ async function sessionCookies() {
     const [ws] = await sql([
       {
         q: `select w.slug as slug from users_to_workspaces m join workspace w on w.id = m.workspace_id
-            where m.user_id = ? order by m.workspace_id limit 1`,
+            where m.user_id = ? order by m.created_at, m.workspace_id limit 1`,
         params: [user_id],
       },
     ]);
@@ -154,14 +147,25 @@ async function magicLinkLogin(context) {
   );
 }
 
-// apps/web and the dashboard both default to :3001 on this machine; the
-// dashboard's /login is a form, everything else answers 404 there.
+// Three apps, two default ports, and on this machine any of them may sit on
+// :3001. Only the dashboard serves a form at /login; use that to tell them apart.
 const probe = await fetch(base + (app.probe ?? paths[0])).catch(() => null);
 if (!probe || probe.status === 404 || probe.status >= 500) {
   console.error(
     `nothing usable at ${base}${app.probe ?? paths[0]} (${probe?.status ?? "unreachable"}); start the ${flags.app ?? "dashboard"} dev server or pass --base`,
   );
   process.exit(1);
+}
+if (!app.auth) {
+  const login = await fetch(`${base}/login`, { redirect: "manual" }).catch(
+    () => null,
+  );
+  if (login?.status === 200) {
+    console.error(
+      `${base} serves the dashboard, not ${flags.app}; pass --base`,
+    );
+    process.exit(1);
+  }
 }
 
 // System Chrome locally; a remote VM has none, so fall back to Playwright's
@@ -180,18 +184,25 @@ const browser = await chromium
     });
   });
 let auth = null;
-if (flags.token) auth = cookies(flags.token, flags.workspace);
-else if (wantsAuth && !flags.login)
+if (flags.token) {
+  auth = cookies(flags.token, flags.workspace);
+  console.error("auth: --token");
+} else if (wantsAuth && !flags.login) {
   auth = await sessionCookies().catch(
     (e) => (console.error(`auth: ${e.message}`), null),
   );
+}
 // One login for all themes: the dashboard rate-limits magic-link emails.
-if (flags.login) {
+if (flags.login && !auth) {
   const context = await browser.newContext();
   await magicLinkLogin(context);
   await context.close();
 }
-const useState = wantsAuth && !auth && existsSync(stateFile);
+// A saved state is only a fallback; an explicit identity must not silently
+// become whoever logged in last.
+const useState =
+  wantsAuth && !auth && !flags.user && !flags.token && existsSync(stateFile);
+if (useState) console.error(`auth: saved state ${stateFile}`);
 if (wantsAuth && !auth && !useState) {
   console.error(
     "auth: no session found; seed the database, pass --token, or --login <email> --log <file>",
@@ -218,14 +229,12 @@ for (const theme of themes) {
   const page = await context.newPage();
   for (const path of paths) {
     await page.goto(base + path, { waitUntil: "networkidle" });
-    // Only the dashboard has a login page, so landing there means auth
-    // failed or --base points at the dashboard for another app.
-    if (page.url().includes("/login"))
-      throw new Error(
-        app.auth
-          ? `redirected to login for ${path}; auth failed`
-          : `${base} serves the dashboard, not ${flags.app}; pass --base`,
-      );
+    if (
+      app.auth &&
+      new URL(page.url()).pathname === "/login" &&
+      !path.startsWith("/login")
+    )
+      throw new Error(`redirected to login for ${path}; auth failed`);
     const name =
       path.replace(/^\/+/, "").replace(/[^a-z0-9]+/gi, "-") || "root";
     if (flags.selector) {
