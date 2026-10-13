@@ -34,21 +34,21 @@ We've been building incident response into openstatus. The activity timeline is 
 
 ## How I work with Claude
 
-I'm riding Claude Code raw. No additional harness, no additional configuration. I like to keep my setup simple. It's easy to adapt, easy to switch, and it doesn't bind me to anything concrete. My terminal and settings look the same. I don't see me missing out on something. It evolves daily, and I'm sure I'm not using it to its full potential.
+I'm riding Claude Code **raw**. No additional harness, no additional configuration. I like to keep my setup *simple*. It's easy to adapt, easy to switch, and it doesn't bind me to anything concrete. My terminal and settings look the same. I don't see me missing out on something. It evolves daily, and I'm sure I'm not using it to its full potential.
 
 For deterministic tasks and fixes I use Claude Code remote. It spins up a VM and works isolated from the rest. When I'm hands-down on UI, or I want to test and navigate the codebase, I run Claude Code in the terminal. No worktrees either.
 
-I am obsessed with proper `PLAN.md` files to `/loop` over once I'm afk. I keep plenty of Claude Code tabs open, grilling me on different ideas with Matt Pocock's goated grill-me skill. I rarely read those plans extensively, except when it's a collaboration with Thibault on a bigger-picture feature like incident response. We worked on that plan for a couple of days, with the idea spelled out for weeks before. Leave it, iterate the next day.
+I am **obsessed** with proper `PLAN.md` files to `/loop` over once I'm afk. I keep plenty of Claude Code tabs open, grilling me on different ideas with Matt Pocock's goated grill-me skill. I rarely read those plans extensively, except when it's a collaboration with Thibault on a bigger-picture feature like incident response. We worked on that plan for a couple of days, with the idea spelled out for weeks before. Leave it, iterate the next day.
 
-Claude Code has eyes on the dashboard. It drives a browser against the local dev server, logs in, and takes a screenshot after every change. My feedback is the same format in reverse: a screenshot with the offending part boxed in red and one sentence. While a loop runs I go bouldering or for a walk. When I'm back I test on my machine, not on a preview link. This is detail work, and localhost is where I can poke at it.
+Claude Code has **eyes on the dashboard**. It drives a browser against the local dev server, logs in, and takes a screenshot after every change. My feedback is the same format in reverse: a screenshot with the offending part **boxed in red** and one sentence. While a loop runs I go bouldering or for a walk. When I'm back I test on my machine, not on a preview link. This is detail work, and localhost is where I can poke at it.
 
-When it comes to UI/UX, I use Claude Design for a first feeling. Without steering it looks very claudy, gradients and italics, so most of the time it's purely for inspiration. I usually ask for three or four variations. For dashboard work we have our design system attached, so it can't go off the rails too much. But it stays rather plain if I don't give enough details.
+When it comes to UI/UX, I use Claude Design for a first feeling. Without steering it looks very *claudy*, gradients and italics, so most of the time it's purely for inspiration. I usually ask for three or four variations. For dashboard work we have our design system attached, so it can't go off the rails too much. But it stays rather plain if I don't give enough details.
 
 ## Phase 1: from the plan
 
-Phase 1 came from the plan. Thibault ran Claude through it and we were gifted 21 stacked PRs to merge. And it was good. Really good. The incidents page was feature-flagged to our workspace, and we merged one PR after the other. Thibault focused on the Slack app, me on the dashboard.
+Phase 1 came from the plan. Thibault ran Claude through it and we were gifted 21 stacked PRs to merge. And it was good. **Really good.** The incidents page was feature-flagged to our workspace, and we merged one PR after the other. Thibault focused on the Slack app, me on the dashboard.
 
-The UI came out raw, but the plan was followed to the letter. The two-column layout, the composer above the timeline, the properties on the right, the linked status report: all of that is in the spec. The buttons, badges and selects are ours, because the design system is in the repo and every session reads it. What was missing is hierarchy. Every event rendered the same: a left border, Type · Name · time, body text. Notes from Slack showed up as a bare "From Slack" link. It worked. It also looked like a log file.
+The UI came out raw, but the plan was followed *to the letter*. The two-column layout, the composer above the timeline, the properties on the right, the linked status report: all of that is in the spec. The buttons, badges and selects are ours, because the design system is in the repo and every session reads it. What was missing is **hierarchy**. Every event rendered the same: a left border, Type · Name · time, body text. Notes from Slack showed up as a bare "From Slack" link. It worked. It also looked like a *log file*.
 
 <Image src="/assets/posts/four-iterations-of-an-incident-timeline/01-plain-list.png" alt="Phase 1: every event as a bordered block with type, name and time" className="img-fit" />
 
@@ -62,7 +62,7 @@ A few minutes later:
 
 <Image src="/assets/posts/four-iterations-of-an-incident-timeline/claude-design-mock.png" alt="The first Claude Design output: status pill and severity chip in the header, ghost inputs on the right, composer with a Set status to footer, icon discs on a rail" className="img-fit" />
 
-Miles better than what we had. Ghost inputs on the right, the status change in the composer footer, icon discs on a rail, status chips. Next, I pasted a screenshot of it into Claude Code:
+**Miles better** than what we had. Ghost inputs on the right, the status change in the composer footer, icon discs on a rail, status chips. Next, I pasted a screenshot of it into Claude Code:
 
 > This image is really good. Take your time and figure out how we get there. Be thoughtful about the React components, the way we do it in general: structure, compound components, cva. Don't commit, implement until you believe it's good. The components will be reused for status reports and maintenances later on.
 
@@ -76,17 +76,17 @@ A minor visual step. I kept the core Claude Design returned and focused on the u
 
 > Notes show an author avatar and a type icon side by side. That's redundant. Make the avatar the timeline node, with the type as a small badge.
 
-The first pass still rendered both. "There is redundancy, check again" fixed it. More important than the avatars: this phase migrated status reports and maintenances onto the same timeline, composer and aside components.
+The first pass still rendered both. "There is redundancy, check again" fixed it. *More important than the avatars:* this phase migrated status reports and maintenances onto the same timeline, composer and aside components.
 
 <Image src="/assets/posts/four-iterations-of-an-incident-timeline/03-avatars.png" alt="Phase 3: the author avatar is the timeline node, the type a small badge" className="img-fit" />
 
 ## Phase 4: hierarchy
 
-The last big push. I shared the current visuals on X and Marc from [Papermark](https://www.papermark.com) pointed me to [Linear](https://linear.app). I've been using Linear and I know their great timeline. Which just shows: sometimes you need a small nudge in the right direction. It was the final piece of the puzzle.
+The last big push. I shared the current visuals on X and Marc from [Papermark](https://www.papermark.com) pointed me to [Linear](https://linear.app). I've been using Linear and I know their great timeline. Which just shows: sometimes you need a *small nudge* in the right direction. It was the final piece of the puzzle.
 
-I stared a while at their timeline. What makes it so good, and why don't I get bored watching it? It's the hierarchy of events. Comments are loud, everything else is quiet. You read the conversation and skim the plumbing. And because the shape repeats on every issue, you learn the workflow without anyone explaining it. Our timeline had no levels, so every event asked for the same attention.
+I stared a while at their timeline. What makes it so good, and why don't I get bored watching it? It's the **hierarchy of events**. Comments are *loud*, everything else is *quiet*. You read the conversation and skim the plumbing. And because the shape repeats on every issue, you learn the workflow without anyone explaining it. Our timeline had no levels, so every event asked for the same attention.
 
-It was clear: we need it too. I gave Claude Design some Linear screenshots and a few of our current designs:
+It was clear: **we need it too**. I gave Claude Design some Linear screenshots and a few of our current designs:
 
 > Design our timelines closer to Linear. The composer is always the first thing, and the activity is newest first.
 
@@ -111,6 +111,6 @@ What changed:
 
 <Image src="/assets/posts/four-iterations-of-an-incident-timeline/04-hierarchy.png" alt="Phase 4: notes and status changes as cards, system events as one-liners" className="img-fit" />
 
-The timeline is less tall and less loud because it has levels. The important stuff reads like a story.
+The timeline is less tall and less loud because it has levels. The important stuff reads like a *story*.
 
-I'm still feeling like a meat proxy. I manually juggle between Claude Code, Claude Design and localhost, adding instructions and being a mostly useless human in the loop. But four phases, a handful of prompts that said what was wrong rather than what to build, and the timeline is where I want it.
+I'm still feeling like a **meat proxy**. I manually juggle between Claude Code, Claude Design and localhost, adding instructions and being a mostly useless human in the loop. Useless in the typing sense only. I'm in *full control* of what happens and what doesn't: what gets built, what gets dropped, what ships. Four phases, a handful of prompts that said what was wrong rather than what to build, and the timeline is where I want it.
