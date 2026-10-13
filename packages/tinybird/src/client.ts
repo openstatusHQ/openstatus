@@ -39,7 +39,10 @@ function isWholeHourTimeZone(timeZone: string): boolean {
 
 const wholeHourTimeZone = z
   .string()
-  .refine(isWholeHourTimeZone, "timezone offset must be a whole hour");
+  .refine(
+    isWholeHourTimeZone,
+    "timezone must be an IANA name whose UTC offset is a whole hour",
+  );
 
 // Daily-aggregate columns shared by the external-status history pipes (page-
 // level and per-component). One shape so the `day` GMT-parse can't drift.
