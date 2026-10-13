@@ -220,7 +220,7 @@ Specialized functionality components.
 Presentation-only chrome blocks for assembling a complete status page around the body components above. All routing-, theme-, and locale-agnostic — caller wires their own `next/link`, `next-themes`, `next-intl`, etc.
 
 #### Shell
-- **StatusPageShell**: Outer `<div>` wrapper (full-height column with gap)
+- **StatusPageShell**: Outer `<div>` wrapper (full-height column with gap). It is the `@container/status-page` query container for `StatusEventAside`; set `data-width="wide"` to widen the main, header and footer columns from `max-w-2xl` to `max-w-4xl`
 - **StatusPageMain**: Inner `<main>` content column with embed-aware Tailwind classes that activate only when an ancestor sets `data-embed=true` on a `group/embed` element
 
 #### Header

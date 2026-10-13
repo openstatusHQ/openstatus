@@ -31,7 +31,7 @@ export function StatusPageFooterContent({
     <div
       data-slot="status-page-footer-content"
       className={cn(
-        "mx-auto flex max-w-2xl items-center justify-between gap-4 px-3 py-2",
+        "mx-auto flex max-w-2xl items-center justify-between gap-4 px-3 py-2 group-data-[width=wide]/status-page:max-w-4xl",
         className,
       )}
       {...props}

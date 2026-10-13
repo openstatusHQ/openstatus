@@ -311,7 +311,10 @@ export function StatusEventDate({
   return (
     <div
       data-slot="status-event-date"
-      className={cn("flex gap-2 lg:flex-col", className)}
+      className={cn(
+        "flex gap-2 group-data-[width=wide]/status-page:flex-row @5xl/status-page:flex-col group-data-[width=wide]/status-page:@7xl/status-page:flex-col",
+        className,
+      )}
       {...props}
     >
       <div className="text-foreground font-medium">
@@ -334,9 +337,10 @@ export function StatusEventDate({
 /**
  * StatusEventAside - Sidebar date container (desktop only)
  *
- * Positions the date to the left of event content on desktop screens (lg breakpoint).
- * On mobile, it appears inline. Uses sticky positioning on desktop to keep dates
- * visible while scrolling through long events.
+ * Positions the date to the left of event content once the `StatusPageShell`
+ * container is 64rem wide (80rem in a wide shell, which needs a wider gutter).
+ * Below that, it appears inline. Uses sticky positioning on desktop to keep
+ * dates visible while scrolling through long events.
  *
  * @example
  * ```tsx
@@ -358,9 +362,19 @@ export function StatusEventAside({
   return (
     <div
       data-slot="status-event-aside"
-      className="border border-transparent lg:absolute lg:top-0 lg:-left-32 lg:h-full"
+      className={cn(
+        "border border-transparent @5xl/status-page:absolute @5xl/status-page:top-0 @5xl/status-page:-left-32 @5xl/status-page:h-full",
+        "group-data-[width=wide]/status-page:static group-data-[width=wide]/status-page:@7xl/status-page:absolute",
+      )}
     >
-      <div className={cn("lg:sticky lg:top-0 lg:left-0", className)} {...props}>
+      <div
+        className={cn(
+          "@5xl/status-page:sticky @5xl/status-page:top-0 @5xl/status-page:left-0",
+          "group-data-[width=wide]/status-page:static group-data-[width=wide]/status-page:@7xl/status-page:sticky",
+          className,
+        )}
+        {...props}
+      >
         {children}
       </div>
     </div>
