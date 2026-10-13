@@ -807,6 +807,30 @@ export class OSTinybird {
     });
   }
 
+  /**
+   * Hourly status buckets grouped into days of `timezone` at read time. Returns
+   * the same columns as the 45d pipe; `day` arrives as epoch ms of the local
+   * midnight (an instant), not a zone-less date string.
+   */
+  public get httpStatus60m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_status_60m__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+        timezone: z.string().prefault("UTC"),
+      }),
+      data: z.object({
+        day: z.number().transform((ms) => new Date(ms).toISOString()),
+        count: z.number().prefault(0),
+        ok: z.number().prefault(0),
+        degraded: z.number().prefault(0),
+        error: z.number().prefault(0),
+        monitorId: z.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get httpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_status_45d__v1",
@@ -1374,6 +1398,25 @@ export class OSTinybird {
     });
   }
 
+  public get tcpStatus60m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_status_60m__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+        timezone: z.string().prefault("UTC"),
+      }),
+      data: z.object({
+        day: z.number().transform((ms) => new Date(ms).toISOString()),
+        count: z.number().prefault(0),
+        ok: z.number().prefault(0),
+        degraded: z.number().prefault(0),
+        error: z.number().prefault(0),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get tcpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_45d__v1",
@@ -1769,6 +1812,25 @@ export class OSTinybird {
         p90Latency: z.int(),
         p95Latency: z.int(),
         p99Latency: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpStatus60m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_status_60m__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+        timezone: z.string().prefault("UTC"),
+      }),
+      data: z.object({
+        day: z.number().transform((ms) => new Date(ms).toISOString()),
+        count: z.number().prefault(0),
+        ok: z.number().prefault(0),
+        degraded: z.number().prefault(0),
+        error: z.number().prefault(0),
+        monitorId: z.coerce.string(),
       }),
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -2240,6 +2302,25 @@ export class OSTinybird {
         p90Latency: z.int(),
         p95Latency: z.int(),
         p99Latency: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcStatus60m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_status_60m__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+        timezone: z.string().prefault("UTC"),
+      }),
+      data: z.object({
+        day: z.number().transform((ms) => new Date(ms).toISOString()),
+        count: z.number().prefault(0),
+        ok: z.number().prefault(0),
+        degraded: z.number().prefault(0),
+        error: z.number().prefault(0),
+        monitorId: z.coerce.string(),
       }),
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -3528,6 +3609,25 @@ export class OSTinybird {
         p99Connect: z.int().nullable().prefault(0),
         p99Tls: z.int().nullable().prefault(0),
       }),
+    });
+  }
+
+  public get dnsStatus60m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_status_60m__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+        timezone: z.string().prefault("UTC"),
+      }),
+      data: z.object({
+        day: z.number().transform((ms) => new Date(ms).toISOString()),
+        count: z.number().prefault(0),
+        ok: z.number().prefault(0),
+        degraded: z.number().prefault(0),
+        error: z.number().prefault(0),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 

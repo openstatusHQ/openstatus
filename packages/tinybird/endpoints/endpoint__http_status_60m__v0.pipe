@@ -1,0 +1,19 @@
+NODE endpoint
+SQL >
+
+%
+SELECT
+    -- epoch ms of local midnight in the requested zone: an unambiguous instant,
+    -- unlike a zone-less "YYYY-MM-DD 00:00:00" string the client would misread as UTC
+    toUnixTimestamp(toStartOfDay(toTimeZone(time, {{ String(timezone, 'UTC') }}))) * 1000 AS day,
+    monitorId,
+    countMerge(count) AS count,
+    countMerge(success) AS ok,
+    countMerge(error) AS error,
+    countMerge(degraded) AS degraded
+FROM mv__http_status_60m__v0
+WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
+GROUP BY day, monitorId
+ORDER BY day DESC
+
+TYPE endpoint
