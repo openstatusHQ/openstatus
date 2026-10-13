@@ -156,3 +156,51 @@ describe("response-log facet pipes", () => {
     });
   }
 });
+
+const status60mGetters = [
+  "httpStatus60m",
+  "tcpStatus60m",
+  "dnsStatus60m",
+  "icmpStatus60m",
+  "grpcStatus60m",
+] as const;
+
+describe("hourly status pipes", () => {
+  const tb = new OSTinybird({ token: "a-token" });
+
+  for (const name of status60mGetters) {
+    for (const timezone of [
+      "Asia/Kolkata",
+      "Asia/Kathmandu",
+      "Australia/Lord_Howe",
+      "Mars/Olympus",
+    ]) {
+      test(`${name} rejects ${timezone}, whose days don't start on a UTC hour`, async () => {
+        await expect(
+          tb[name]({ monitorIds: ["1"], timezone }),
+        ).rejects.toThrow();
+      });
+    }
+
+    test(`${name} accepts whole-hour timezones, with or without DST`, async () => {
+      for (const timezone of [
+        "UTC",
+        "Asia/Tokyo",
+        "Europe/Berlin",
+        "America/New_York",
+      ]) {
+        expect(await tb[name]({ monitorIds: ["1"], timezone })).toEqual({
+          meta: [],
+          data: [],
+        });
+      }
+    });
+
+    test(`${name} defaults to UTC`, async () => {
+      expect(await tb[name]({ monitorIds: ["1"] })).toEqual({
+        meta: [],
+        data: [],
+      });
+    });
+  }
+});

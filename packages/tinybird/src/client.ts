@@ -14,6 +14,33 @@ const PUBLIC_CACHE = 300; // 5 * 60 = 300s = 5m
 const DEV_CACHE = 10 * 60; // 10m
 const REVALIDATE = env.NODE_ENV === "development" ? DEV_CACHE : 0;
 
+// The 60m pipes group UTC-hour buckets into local days, which only lines up
+// when every offset the zone uses is a whole number of hours. January and
+// July cover both sides of DST.
+function isWholeHourTimeZone(timeZone: string): boolean {
+  let format: Intl.DateTimeFormat;
+  try {
+    format = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      timeZoneName: "longOffset",
+    });
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+  const year = new Date().getUTCFullYear();
+  return [0, 6].every((month) => {
+    const offset = format
+      .formatToParts(new Date(Date.UTC(year, month, 1)))
+      .find((p) => p.type === "timeZoneName")?.value;
+    return offset === "GMT" || /^GMT[+-]\d{2}:00$/.test(offset ?? "");
+  });
+}
+
+const wholeHourTimeZone = z
+  .string()
+  .refine(isWholeHourTimeZone, "timezone offset must be a whole hour");
+
 // Daily-aggregate columns shared by the external-status history pipes (page-
 // level and per-component). One shape so the `day` GMT-parse can't drift.
 const externalStatusHistoryDailyShape = {
@@ -817,7 +844,7 @@ export class OSTinybird {
       pipe: "endpoint__http_status_60m__v0",
       parameters: z.object({
         monitorIds: z.string().array(),
-        timezone: z.string().prefault("UTC"),
+        timezone: wholeHourTimeZone.prefault("UTC"),
       }),
       data: z.object({
         day: z.number().transform((ms) => new Date(ms).toISOString()),
@@ -1403,7 +1430,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_status_60m__v0",
       parameters: z.object({
         monitorIds: z.string().array(),
-        timezone: z.string().prefault("UTC"),
+        timezone: wholeHourTimeZone.prefault("UTC"),
       }),
       data: z.object({
         day: z.number().transform((ms) => new Date(ms).toISOString()),
@@ -1822,7 +1849,7 @@ export class OSTinybird {
       pipe: "endpoint__icmp_status_60m__v0",
       parameters: z.object({
         monitorIds: z.string().array(),
-        timezone: z.string().prefault("UTC"),
+        timezone: wholeHourTimeZone.prefault("UTC"),
       }),
       data: z.object({
         day: z.number().transform((ms) => new Date(ms).toISOString()),
@@ -2312,7 +2339,7 @@ export class OSTinybird {
       pipe: "endpoint__grpc_status_60m__v0",
       parameters: z.object({
         monitorIds: z.string().array(),
-        timezone: z.string().prefault("UTC"),
+        timezone: wholeHourTimeZone.prefault("UTC"),
       }),
       data: z.object({
         day: z.number().transform((ms) => new Date(ms).toISOString()),
@@ -3617,7 +3644,7 @@ export class OSTinybird {
       pipe: "endpoint__dns_status_60m__v0",
       parameters: z.object({
         monitorIds: z.string().array(),
-        timezone: z.string().prefault("UTC"),
+        timezone: wholeHourTimeZone.prefault("UTC"),
       }),
       data: z.object({
         day: z.number().transform((ms) => new Date(ms).toISOString()),
