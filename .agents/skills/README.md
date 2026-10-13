@@ -1,0 +1,21 @@
+# Skills
+
+Skills live here as real directories. `.claude/skills/` holds symlinks to them
+(`.claude/skills/<name> -> ../../.agents/skills/<name>`), which is the only path
+Claude Code reads; that directory stays untracked. Most entries are personal
+installs via `npx skills add` and stay gitignored; the ones re-included in
+`.gitignore` ship with the repo. A fresh clone (a teammate, a cloud session)
+needs the symlinks once:
+
+```sh
+mkdir -p .claude/skills && for d in .agents/skills/*/; do n=$(basename "$d"); ln -sfn "../../.agents/skills/$n" ".claude/skills/$n"; done
+```
+
+| Skill | Source | License |
+|---|---|---|
+| `screenshot` | this repo, wraps `scripts/screenshot.mjs` | MIT (repo) |
+| `grill-me`, `codebase-design`, `improve-codebase-architecture` | github.com/mattpocock/skills | MIT |
+
+To ship another one: install it, then add `!.agents/skills/<name>/` and
+`!.claude/skills/<name>` to `.gitignore`, and a row here with its license.
+Update a vendored skill by re-installing and committing the diff.
