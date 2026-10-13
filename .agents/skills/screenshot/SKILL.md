@@ -89,4 +89,21 @@ re-seed to reset.
   that state; say so when you do.
 - A redirect to `/login` means auth failed. Fix auth; do not screenshot the
   login page and call it done.
-- Stop any dev server you started.
+- Stop any dev server you started. Match by port, never by process name,
+  so the user's own servers survive.
+
+## Sharing
+
+The PNGs are gitignored, so where the user sees them depends on where the
+session runs.
+
+- **Local machine (terminal or desktop app):** leave them in `.screenshots/`
+  and name the files in the final message. The user opens them directly.
+- **Cloud session:** nothing leaves the sandbox except git, so the files
+  vanish with the VM. Publish them with the Artifact tool: one page, the
+  shots side by side with "before" and "after" captions, uploaded as assets,
+  and put the link in the final message. Never commit screenshots to make
+  them visible.
+- **Review evidence for a PR:** when a reviewer needs the image, publish it
+  as an artifact and link it from the PR description; the PR text is the
+  one place a screenshot link belongs in the repo.
