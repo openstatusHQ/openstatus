@@ -28,7 +28,10 @@ It prints the PNG paths. Read them with the Read tool and judge against
    `pnpm -w dev:dashboard`, `dev:web` or `dev:status-page` (each also starts
    sqld on :8080), logged to a file, stopped when done. If the default port is
    taken, start the app alone on another port and pass `--base`:
-   `PORT=3002 pnpm --filter @openstatus/dashboard dev`.
+   `PORT=3002 pnpm --filter @openstatus/dashboard dev`. Use that direct form
+   whenever you also need a different `DATABASE_URL`: the root `pnpm -w
+   dev:dashboard` runs through turbo, which passes `PORT` through but drops
+   other variables, so the app reads its `.env` database.
 2. Database, dashboard only: the script reads live sessions from sqld over
    HTTP, default `--db http://127.0.0.1:8080`. A second sqld on :8099 is the
    throwaway seeded one; pass `--db http://127.0.0.1:8099` and point the

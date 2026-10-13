@@ -210,9 +210,8 @@ async function main() {
     .onConflictDoNothing()
     .run();
 
-  // The two maintainers, with sessions that outlive any local database, so
-  // the dashboard and scripts/screenshot.mjs log in without a magic link. Tokens are fixed on purpose: this seed only runs against
-  // localhost.
+  // Fixed tokens so the dashboard and scripts/screenshot.mjs log in without a
+  // magic link; main() refuses non-local databases.
   await db
     .insert(user)
     .values([
