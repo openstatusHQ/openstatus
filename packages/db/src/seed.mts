@@ -17,6 +17,7 @@ import {
   pageComponent,
   privateLocation,
   privateLocationToMonitors,
+  session,
   statusReport,
   statusReportUpdate,
   statusReportsToPageComponents,
@@ -206,6 +207,55 @@ async function main() {
   await db
     .insert(usersToWorkspaces)
     .values({ workspaceId: 1, userId: 1 })
+    .onConflictDoNothing()
+    .run();
+
+  // The two maintainers, with sessions that outlive any local database, so
+  // the dashboard and scripts/screenshot.mjs log in without a magic link. Tokens are fixed on purpose: this seed only runs against
+  // localhost.
+  await db
+    .insert(user)
+    .values([
+      {
+        id: 2,
+        tenantId: "2",
+        name: "Maximilian Kaske",
+        firstName: "Maximilian",
+        lastName: "Kaske",
+        email: "max@openstatus.dev",
+        emailVerified: new Date(),
+        photoUrl: "https://github.com/mxkaske.png",
+      },
+      {
+        id: 3,
+        tenantId: "3",
+        name: "Thibault Le Ouay Ducasse",
+        firstName: "Thibault",
+        lastName: "Le Ouay Ducasse",
+        email: "thibault@openstatus.dev",
+        emailVerified: new Date(),
+        photoUrl: "https://github.com/thibaultleouay.png",
+      },
+    ])
+    .onConflictDoNothing()
+    .run();
+  await db
+    .insert(usersToWorkspaces)
+    .values([
+      { workspaceId: 1, userId: 2, role: "owner" },
+      { workspaceId: 1, userId: 3, role: "admin" },
+      { workspaceId: 2, userId: 2, role: "owner" },
+      { workspaceId: 3, userId: 3, role: "owner" },
+    ])
+    .onConflictDoNothing()
+    .run();
+  const farFuture = new Date("2099-01-01T00:00:00Z");
+  await db
+    .insert(session)
+    .values([
+      { sessionToken: "seed-session-max", userId: 2, expires: farFuture },
+      { sessionToken: "seed-session-thibault", userId: 3, expires: farFuture },
+    ])
     .onConflictDoNothing()
     .run();
 
@@ -507,8 +557,8 @@ async function main() {
       severity: "major",
       status: "mitigated",
       summary: "Increased 5xx responses on the public API.",
-      commanderId: 1,
-      declaredBy: 1,
+      commanderId: 2,
+      declaredBy: 3,
       declaredAt: twoHoursAgo,
       startedAt: new Date(twoHoursAgo.getTime() - 10 * 60 * 1000),
       mitigatedAt: new Date(twoHoursAgo.getTime() + 45 * 60 * 1000),
@@ -516,29 +566,72 @@ async function main() {
     })
     .onConflictDoNothing()
     .run();
+  // Messages follow the service formats so the timeline parses them into
+  // sentences; one row of every kind the incident page renders.
+  const minutesAfterDeclare = (m: number) =>
+    new Date(twoHoursAgo.getTime() + m * 60 * 1000);
   await db
     .insert(incidentEvent)
     .values([
       {
         incidentId: 1,
         type: "declared",
-        message: "Incident declared",
-        createdBy: 1,
+        message: "Declared as major: Elevated API error rates",
+        createdBy: 3,
         createdAt: twoHoursAgo,
       },
       {
         incidentId: 1,
-        type: "note",
-        message: "Rolling back the latest API deploy.",
-        createdBy: 1,
-        createdAt: new Date(twoHoursAgo.getTime() + 20 * 60 * 1000),
+        type: "slack_channel_bound",
+        message: "Slack channel <#C0C7Y4CG6F2> bound",
+        createdBy: null,
+        createdAt: minutesAfterDeclare(1),
       },
       {
         incidentId: 1,
-        type: "mitigated",
-        message: "Rollback done, error rate back to baseline.",
-        createdBy: 1,
-        createdAt: new Date(twoHoursAgo.getTime() + 45 * 60 * 1000),
+        type: "status_report_linked",
+        message: "Linked status report #2",
+        createdBy: 3,
+        createdAt: minutesAfterDeclare(2),
+      },
+      {
+        incidentId: 1,
+        type: "note",
+        message:
+          "Rolling back the latest API deploy, 5xx started right after it went out.\n\n[From Slack](https://openstatus.slack.com/archives/C0C7Y4CG6F2/p1700000000000100)",
+        createdBy: 2,
+        createdAt: minutesAfterDeclare(12),
+      },
+      {
+        incidentId: 1,
+        type: "commander_changed",
+        message: "Commander set to Maximilian Kaske",
+        createdBy: 3,
+        createdAt: minutesAfterDeclare(15),
+      },
+      {
+        incidentId: 1,
+        type: "status_changed",
+        message:
+          "Status changed from open to mitigated\n\nRollback done, error rate back to baseline.",
+        createdBy: 2,
+        createdAt: minutesAfterDeclare(45),
+      },
+      {
+        incidentId: 1,
+        type: "note",
+        message:
+          "Baseline for 30 minutes now. Keeping the incident open until p99 latency recovers too.",
+        createdBy: 2,
+        createdAt: minutesAfterDeclare(75),
+      },
+      // Unbound again so the timeline and the incident's (empty) Slack binding agree.
+      {
+        incidentId: 1,
+        type: "slack_channel_unbound",
+        message: "Slack channel <#C0C7Y4CG6F2> unbound",
+        createdBy: null,
+        createdAt: minutesAfterDeclare(80),
       },
     ])
     .run();
