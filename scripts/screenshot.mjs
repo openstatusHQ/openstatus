@@ -15,7 +15,8 @@
 // with --user), a saved storage state, or --login, which submits the email
 // form and follows the `>>> Magic Link:` line the dev server prints to --log.
 // Playwright is borrowed from apps/screenshot-service so the version follows
-// that package; the browser is the system Chrome.
+// that package; the browser is the system Chrome, or Playwright's bundled
+// Chromium where there is none.
 
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -34,6 +35,7 @@ const APPS = {
   "status-page": { base: "http://localhost:3000", auth: false },
 };
 
+const BOOLEAN_FLAGS = new Set(["full-page"]);
 const args = process.argv.slice(2);
 const flags = {};
 const paths = [];
@@ -42,7 +44,8 @@ for (let i = 0; i < args.length; i++) {
   if (a.startsWith("--")) {
     const key = a.slice(2);
     const next = args[i + 1];
-    if (next === undefined || next.startsWith("--")) flags[key] = true;
+    if (BOOLEAN_FLAGS.has(key) || next === undefined || next.startsWith("--"))
+      flags[key] = true;
     else flags[key] = args[++i];
   } else paths.push(a);
 }
@@ -128,7 +131,10 @@ async function magicLinkLogin(context) {
   if (!flags.log) throw new Error("--login needs --log <dev server log file>");
   const page = await context.newPage();
   await page.goto(`${base}/login`);
+  // The form opens closed; the email input appears after the mode button.
   const input = page.locator('input[name="email"]');
+  if (!(await input.isVisible()))
+    await page.getByRole("button", { name: "Continue with email" }).click();
   await input.fill(flags.login);
   const seen = readFileSync(flags.log, "utf8").length;
   await input.press("Enter");
@@ -179,32 +185,47 @@ else if (wantsAuth && !flags.login)
   auth = await sessionCookies().catch(
     (e) => (console.error(`auth: ${e.message}`), null),
   );
-if (wantsAuth && !auth && !flags.login && !existsSync(stateFile)) {
+// One login for all themes: the dashboard rate-limits magic-link emails.
+if (flags.login) {
+  const context = await browser.newContext();
+  await magicLinkLogin(context);
+  await context.close();
+}
+const useState = wantsAuth && !auth && existsSync(stateFile);
+if (wantsAuth && !auth && !useState) {
   console.error(
     "auth: no session found; seed the database, pass --token, or --login <email> --log <file>",
   );
 }
 
 const written = [];
+process.on("uncaughtException", async (e) => {
+  console.error(e.message);
+  await browser.close().catch(() => {});
+  process.exit(1);
+});
 for (const theme of themes) {
   const context = await browser.newContext({
     viewport: { width, height: 1000 },
     deviceScaleFactor: 2,
     colorScheme: theme,
-    ...(wantsAuth && !auth && !flags.login && existsSync(stateFile)
-      ? { storageState: stateFile }
-      : {}),
+    ...(useState ? { storageState: stateFile } : {}),
   });
   if (auth) await context.addCookies(auth);
-  if (flags.login) await magicLinkLogin(context);
   // Every app uses next-themes with the default storage key.
   await context.addInitScript((t) => localStorage.setItem("theme", t), theme);
 
   const page = await context.newPage();
   for (const path of paths) {
     await page.goto(base + path, { waitUntil: "networkidle" });
-    if (app.auth && page.url().includes("/login"))
-      throw new Error(`redirected to login for ${path}; auth failed`);
+    // Only the dashboard has a login page, so landing there means auth
+    // failed or --base points at the dashboard for another app.
+    if (page.url().includes("/login"))
+      throw new Error(
+        app.auth
+          ? `redirected to login for ${path}; auth failed`
+          : `${base} serves the dashboard, not ${flags.app}; pass --base`,
+      );
     const name =
       path.replace(/^\/+/, "").replace(/[^a-z0-9]+/gi, "-") || "root";
     if (flags.selector) {
@@ -220,8 +241,10 @@ for (const theme of themes) {
         written.push(file);
         k++;
       }
-      if (k === 0)
+      if (k === 0) {
         console.error(`no visible match for ${flags.selector} on ${path}`);
+        process.exitCode = 1;
+      }
     } else {
       const file = join(out, `${name}-${theme}.png`);
       await page.screenshot({

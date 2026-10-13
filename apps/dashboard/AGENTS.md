@@ -9,7 +9,8 @@ visible behaviour, screenshot it before reporting it done:
 node scripts/screenshot.mjs --app dashboard /incidents/1 --selector "[data-slot=timeline]"
 ```
 
-It runs system Chrome through Playwright against the local dev server, logs in
+It runs system Chrome (or Playwright's bundled Chromium where there is none)
+against the local dev server, logs in
 with a seeded session (`--user max@openstatus.dev` or
 `thibault@openstatus.dev`), shoots light and dark, and prints the PNG paths.
 Look at them. The `screenshot` skill has the flags, ports and fixtures; the

@@ -210,9 +210,8 @@ async function main() {
     .onConflictDoNothing()
     .run();
 
-  // The two maintainers, with sessions that never expire locally, so the
-  // dashboard and apps/dashboard/scripts/screenshot.mjs log in without a
-  // magic link. Tokens are fixed on purpose: this seed only runs against
+  // The two maintainers, with sessions that outlive any local database, so
+  // the dashboard and scripts/screenshot.mjs log in without a magic link. Tokens are fixed on purpose: this seed only runs against
   // localhost.
   await db
     .insert(user)
@@ -250,12 +249,12 @@ async function main() {
     ])
     .onConflictDoNothing()
     .run();
-  const inOneYear = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+  const farFuture = new Date("2099-01-01T00:00:00Z");
   await db
     .insert(session)
     .values([
-      { sessionToken: "seed-session-max", userId: 2, expires: inOneYear },
-      { sessionToken: "seed-session-thibault", userId: 3, expires: inOneYear },
+      { sessionToken: "seed-session-max", userId: 2, expires: farFuture },
+      { sessionToken: "seed-session-thibault", userId: 3, expires: farFuture },
     ])
     .onConflictDoNothing()
     .run();
@@ -625,6 +624,14 @@ async function main() {
           "Baseline for 30 minutes now. Keeping the incident open until p99 latency recovers too.",
         createdBy: 2,
         createdAt: minutesAfterDeclare(75),
+      },
+      // Unbound again so the timeline and the incident's (empty) Slack binding agree.
+      {
+        incidentId: 1,
+        type: "slack_channel_unbound",
+        message: "Slack channel <#C0C7Y4CG6F2> unbound",
+        createdBy: null,
+        createdAt: minutesAfterDeclare(80),
       },
     ])
     .run();

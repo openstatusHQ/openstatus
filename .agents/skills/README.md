@@ -13,9 +13,12 @@ mkdir -p .claude/skills && for d in .agents/skills/*/; do n=$(basename "$d"); ln
 
 | Skill | Source | License |
 |---|---|---|
-| `screenshot` | this repo, wraps `scripts/screenshot.mjs` | MIT (repo) |
-| `grill-me`, `codebase-design`, `improve-codebase-architecture` | github.com/mattpocock/skills | MIT |
+| `screenshot` | this repo, wraps `scripts/screenshot.mjs` | AGPL-3.0 (repo) |
+| `grill-me`, `codebase-design` | github.com/mattpocock/skills | MIT |
 
-To ship another one: install it, then add `!.agents/skills/<name>/` and
-`!.claude/skills/<name>` to `.gitignore`, and a row here with its license.
-Update a vendored skill by re-installing and committing the diff.
+To ship another one: install it, add `!.agents/skills/<name>/` to
+`.gitignore`, and a row here with its license. Only self-contained skills
+qualify: one that invokes another skill by name (`/grilling`,
+`/domain-modeling`) breaks in a clone that lacks it. Update a vendored skill
+by re-installing and committing the diff; do not edit vendored text, raise it
+upstream.

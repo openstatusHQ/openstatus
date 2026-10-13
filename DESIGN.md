@@ -29,8 +29,8 @@ rule, and the exception is in review.
 
 | Layer | Path | Rule |
 |---|---|---|
-| shadcn primitives | `packages/ui/src/components/ui/` | Never customized. See `packages/ui/AGENTS.md`. |
-| Public blocks | `packages/ui/src/components/blocks/` | Published registry. No app imports. |
+| shadcn primitives | `packages/ui/src/components/ui/` | Stock. Edited only as a documented last resort, see `packages/ui/AGENTS.md`. |
+| Public blocks | `packages/ui/src/components/blocks/` | Published registry. Imports nothing from an app; apps import them freely. |
 | Shared custom | `packages/ui/src/components/custom/` | Ours, used by more than one app. |
 | App kits | `apps/*/src/components/content/`, `common/` | Compound kits a whole app composes from. |
 | Feature rows | `apps/*/src/components/<feature>/` | What a feature renders with the kits. |
@@ -120,7 +120,7 @@ primitive (`docs/adr/0003`).
 ## Color
 
 - Tokens only: `background`, `foreground`, `muted`, `muted-foreground`,
-  `border`, `success`, `warning`, `info`, `destructive`. They are OKLCH in
+  `border`, `ring`, `success`, `warning`, `info`, `destructive`. They are OKLCH in
   `packages/ui/src/globals.css`. Never a raw palette class (`text-emerald-600`).
 - Dark mode comes from the tokens. No `dark:` color overrides in components.
   Images in content pages get a `.dark` sibling file.
@@ -272,10 +272,12 @@ lines, and a last row clipped mid-glyph.
 ## Verify by looking
 
 An agent cannot judge rendering from a diff. For any visible change,
-`scripts/screenshot.mjs` (the `screenshot` skill) shoots the element
-(`[data-slot=timeline]`, not the viewport) in both themes on the local dev
-server of the dashboard, the marketing site or the status page, logging in
-with a seeded session where needed. Compare against the previous state. Feedback
+`scripts/screenshot.mjs` (the `screenshot` skill) shoots the element, not the
+viewport, in both themes on the local dev server of the dashboard, the
+marketing site or the status page, logging in with a seeded session where
+needed. Selectors differ per app: `[data-slot=timeline]` and the other
+dashboard slots, `main` or a section on the marketing site, the block slots
+from `packages/ui/src/components/blocks/` on the status page. Compare against the previous state. Feedback
 goes back the same way: a screenshot with the problem boxed and one sentence.
 Marketing and docs pages render every component on `/kitchen-sink` so drift
 is visible there first.

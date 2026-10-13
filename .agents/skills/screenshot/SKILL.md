@@ -35,12 +35,13 @@ It prints the PNG paths. Read them with the Read tool and judge against
    dashboard at it with `DATABASE_URL`.
 3. Auth, dashboard only. The seed (`pnpm --filter @openstatus/db seed`,
    through `devbox run --` because of the deno pin) creates two maintainers
-   with sessions that do not expire: `max@openstatus.dev` (token
+   with sessions that expire in 2099: `max@openstatus.dev` (token
    `seed-session-max`, owner of workspace 1 `love-openstatus`) and
    `thibault@openstatus.dev` (token `seed-session-thibault`, admin of 1).
    Pass `--user max@openstatus.dev` and the script finds the row, or skip the
    DB with `--token seed-session-max --workspace love-openstatus`. Without
-   `--user` it takes the newest live session of anyone. No session at all:
+   `--user` it takes any live session, and the two seeded ones tie, so name
+   the user when identity matters. No session at all:
    `--login <email> --log <dev log>` submits the email form, follows the
    `>>> Magic Link:` line the dev server prints and saves a storage state next
    to the output. A database that predates the seed change has no `max@`
@@ -59,7 +60,8 @@ It prints the PNG paths. Read them with the Read tool and judge against
 | `--full-page` | off | full-page capture when no selector |
 | `--base` | per app | override the dev server URL |
 | `--db` | `http://127.0.0.1:8080` | sqld HTTP endpoint for the session lookup |
-| `--user`, `--workspace` | | narrow the session lookup |
+| `--user` | | pick the session of this email |
+| `--workspace` | first membership | slug for the `workspace-slug` cookie |
 | `--token` | | explicit session token, skips the lookup |
 | `--login`, `--log` | | magic-link login fallback |
 
@@ -75,9 +77,9 @@ It prints the PNG paths. Read them with the Read tool and judge against
 ## Fixtures
 
 Seeded, workspace 1 `love-openstatus`: incident #1 (`/incidents/1`, declared
-by Thibault, commander Max, seven events covering declare, Slack bind, linked
-report #2, a Slack note, a commander change, a mitigation with a note and a
-plain note), status reports #1 (resolved) and #2 (linked), maintenances, status pages
+by Thibault, commander Max, eight events covering declare, Slack bind, linked
+report #2, a Slack note, a commander change, a mitigation with a note, a
+plain note and a Slack unbind), status reports #1 (resolved) and #2 (linked), maintenances, status pages
 `/status` (page 1, with components) and `/acme` (page 2). Safe to mutate;
 re-seed to reset.
 
