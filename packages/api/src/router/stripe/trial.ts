@@ -1,5 +1,5 @@
 import type { DB, ServiceContext } from "@openstatus/services";
-import { getUser, listUserProviders } from "@openstatus/services/user";
+import { listUserProviders } from "@openstatus/services/user";
 import {
   downgradeWorkspaceToFree,
   isTrialEligibleWorkspace,
@@ -58,9 +58,9 @@ async function hasEverSubscribed(customerId: string) {
 }
 
 /**
- * DB guards first, so an ineligible user costs no Stripe call. `stripe: false`
- * skips the Stripe guards, which only catch trials from before `trialedAt`
- * and ex-subscribers; the Checkout mutation always runs them.
+ * Cheapest first: the workspace row, then DB reads, then Stripe. `stripe:
+ * false` skips the Stripe guards, which only catch trials from before
+ * `trialedAt` and ex-subscribers; the Checkout mutation always runs them.
  */
 export async function checkTrialEligibility(args: {
   ctx: ServiceContext;
@@ -77,6 +77,13 @@ export async function checkTrialEligibility(args: {
   const userId = "userId" in ctx.actor ? ctx.actor.userId : undefined;
   if (!userId) return { eligible: false, reason: "not_eligible" };
 
+  const ws = ctx.workspace;
+  if (ws.trialedAt) return { eligible: false, reason: "already_trialed" };
+  // A fresh signup workspace has no plan column yet — that is free.
+  if ((ws.plan && ws.plan !== "free") || ws.subscriptionId || ws.trialEndsAt) {
+    return { eligible: false, reason: "not_eligible" };
+  }
+
   const providers = await listUserProviders({ input: { userId }, db: ctx.db });
   if (!providers.some((p) => TRIAL_PROVIDERS.includes(p))) {
     const sso = providers.includes("workos") || providers.includes("oidc");
@@ -87,10 +94,6 @@ export async function checkTrialEligibility(args: {
   }
   if (!(await isTrialEligibleWorkspace({ ctx }))) {
     return { eligible: false, reason: "not_eligible" };
-  }
-  const record = await getUser({ ctx, input: { userId } });
-  if (record?.trialedAt) {
-    return { eligible: false, reason: "already_trialed" };
   }
   if (args.stripe === false) return { eligible: true };
   if (await hasTrialedBefore(email)) {
@@ -111,14 +114,13 @@ export const TRIAL_SKIP_MESSAGE: Record<TrialSkipReason, string> = {
   sso: "Trials are not available for SSO accounts.",
   email: "Sign in with GitHub or Google to start a trial.",
   disposable: "Trials are not available for this email address.",
-  already_trialed: "This email has already used a trial.",
+  already_trialed: "This workspace or email has already used a trial.",
   already_subscribed: "This workspace has already had a subscription.",
   not_eligible: "Only the owner of a free workspace can start a trial.",
 };
 
 /** The Checkout fields that turn a Starter subscription into a card-less trial. */
 export function trialCheckoutParams(args: {
-  userId: number;
   surface?: TrialSurface;
   intent?: string;
 }): Pick<
@@ -134,7 +136,6 @@ export function trialCheckoutParams(args: {
       },
       metadata: {
         source: "trial_opt_in",
-        userId: String(args.userId),
         ...(args.surface && { surface: args.surface }),
         ...(args.intent && { intent: args.intent }),
       },

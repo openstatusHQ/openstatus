@@ -12,6 +12,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import type { DB, ServiceContext } from "../context";
 import type { Workspace } from "../types";
 import { OwnedWorkspacesInput } from "./schemas";
@@ -53,6 +54,7 @@ export async function isTrialEligibleWorkspace(args: {
         eq(usersToWorkspaces.role, "owner"),
         isNull(workspace.subscriptionId),
         isNull(workspace.trialEndsAt),
+        isNull(workspace.trialedAt),
         // A fresh signup workspace has no plan column yet — that is free.
         or(isNull(workspace.plan), eq(workspace.plan, "free")),
       ),
@@ -60,6 +62,21 @@ export async function isTrialEligibleWorkspace(args: {
     .get();
 
   return row !== undefined;
+}
+
+/** Records that the workspace used its trial. Keeps the first date on redelivery. */
+export async function markWorkspaceTrialed(args: {
+  ctx: ServiceContext;
+}): Promise<void> {
+  const { ctx } = args;
+  requireScope(ctx, "write");
+  const db = ctx.db ?? defaultDb;
+
+  await db
+    .update(workspace)
+    .set({ trialedAt: new Date() })
+    .where(and(eq(workspace.id, ctx.workspace.id), isNull(workspace.trialedAt)))
+    .run();
 }
 
 /** Workspaces the user owns that are mid-trial. */

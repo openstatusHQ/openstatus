@@ -383,7 +383,6 @@ export const stripeRouter = createTRPCRouter({
         cancel_url: opts.input.cancelUrl || billingUrl,
         ...(opts.input.trial &&
           trialCheckoutParams({
-            userId: opts.ctx.user.id,
             surface: opts.input.surface,
             intent: opts.input.intent || undefined,
           })),
@@ -391,20 +390,6 @@ export const stripeRouter = createTRPCRouter({
 
       return { type: "checkout" as const, session };
     }),
-
-  // Read by every surface that offers the trial. DB only, so page views never
-  // reach Stripe; the mutation adds the Stripe guards on click.
-  trialEligibility: protectedProcedure.query(({ ctx }) =>
-    checkTrialEligibility({
-      ctx: {
-        workspace: ctx.workspace,
-        actor: { type: "user", userId: ctx.user.id },
-        db: ctx.db,
-      },
-      email: ctx.user.email,
-      stripe: false,
-    }),
-  ),
 
   getPaymentMethodSetupSession: protectedProcedure
     .input(

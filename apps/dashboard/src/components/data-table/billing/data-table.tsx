@@ -63,10 +63,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
     trpc.stripeRouter.getBillingInterval.queryOptions(),
   );
   const currentInterval = intervalQuery.data;
-  const { data: trialEligibility } = useQuery(
-    trpc.stripeRouter.trialEligibility.queryOptions(),
-  );
-  const canTrial = trialEligibility?.eligible === true;
+  const canTrial = workspace?.trial.eligible === true;
 
   const checkoutSessionMutation = useMutation(
     trpc.stripeRouter.getCheckoutSession.mutationOptions({

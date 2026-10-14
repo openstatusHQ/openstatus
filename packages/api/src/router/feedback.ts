@@ -1,4 +1,5 @@
 import { Events } from "@openstatus/analytics";
+import { and, eq } from "@openstatus/db";
 import {
   feedback,
   feedbackSource,
@@ -10,6 +11,23 @@ import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const feedbackRouter = createTRPCRouter({
+  // Lets one-time prompts ask only until the user has answered once.
+  hasSubmitted: protectedProcedure
+    .input(z.object({ source: z.enum(feedbackSource) }))
+    .query(async (opts) => {
+      const row = await opts.ctx.db
+        .select({ id: feedback.id })
+        .from(feedback)
+        .where(
+          and(
+            eq(feedback.userId, opts.ctx.user.id),
+            eq(feedback.source, opts.input.source),
+          ),
+        )
+        .get();
+      return row !== undefined;
+    }),
+
   submit: protectedProcedure
     .meta({
       track: Events.SubmitFeedback,

@@ -18,6 +18,7 @@ export {
   getTrialDaysLeft,
   isTrialEligibleWorkspace,
   listOwnedTrialWorkspaces,
+  markWorkspaceTrialed,
 } from "./trial";
 export {
   updateWorkspaceLimits,

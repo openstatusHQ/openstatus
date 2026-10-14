@@ -10,8 +10,5 @@ export type GetUserInput = z.infer<typeof GetUserInput>;
 export const DeleteAccountInput = z.object({}).strict();
 export type DeleteAccountInput = z.infer<typeof DeleteAccountInput>;
 
-export const MarkUserTrialedInput = z.object({ userId: z.number().int() });
-export type MarkUserTrialedInput = z.infer<typeof MarkUserTrialedInput>;
-
 export const ListUserProvidersInput = z.object({ userId: z.number().int() });
 export type ListUserProvidersInput = z.infer<typeof ListUserProvidersInput>;

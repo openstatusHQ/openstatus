@@ -36,9 +36,6 @@ export function UpgradeDialog(
 ) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const { data: trialEligibility } = useQuery(
-    trpc.stripeRouter.trialEligibility.queryOptions(),
-  );
 
   if (!workspace) return null;
 
@@ -52,7 +49,7 @@ export function UpgradeDialog(
 
   const restrictTo = getRestrictTo();
   const canTrial =
-    trialEligibility?.eligible === true && restrictTo.includes("starter");
+    workspace?.trial.eligible === true && restrictTo.includes("starter");
 
   const addon =
     props.limit && Object.prototype.hasOwnProperty.call(planAddons, props.limit)

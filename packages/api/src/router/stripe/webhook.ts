@@ -10,12 +10,12 @@ import {
   stripeIdempotencyKey,
 } from "@openstatus/emails";
 import type { ServiceContext } from "@openstatus/services";
-import { markUserTrialed } from "@openstatus/services/user";
 import {
   type DowngradeTrim,
   downgradeWorkspaceToFree,
   getWorkspaceByStripeId,
   listWorkspaceOwners,
+  markWorkspaceTrialed,
   previewWorkspaceDowngrade,
   updateWorkspacePlan,
 } from "@openstatus/services/workspace";
@@ -473,13 +473,14 @@ export const webhookRouter = createTRPCRouter({
 
     const isTrial =
       subscription.status === "trialing" && !!subscription.trial_end;
+    const wsCtx: ServiceContext = {
+      workspace: ws,
+      actor: { type: "system", job: "stripe-session-completed" },
+      db: opts.ctx.db,
+    };
 
     await updateWorkspacePlan({
-      ctx: {
-        workspace: ws,
-        actor: { type: "system", job: "stripe-session-completed" },
-        db: opts.ctx.db,
-      },
+      ctx: wsCtx,
       input: {
         plan: built.plan,
         subscriptionId: subscription.id,
@@ -493,14 +494,11 @@ export const webhookRouter = createTRPCRouter({
 
     if (isTrial) {
       // Stamped on completion, not when the Checkout opens, so an abandoned
-      // page does not burn the one trial per email.
+      // page does not burn the trial.
       await stripe.customers.update(customerId, {
         metadata: { trialed: "true" },
       });
-      const userId = Number(subscription.metadata.userId);
-      if (Number.isInteger(userId) && userId > 0) {
-        await markUserTrialed({ input: { userId }, db: opts.ctx.db });
-      }
+      await markWorkspaceTrialed({ ctx: wsCtx });
       await trackForWorkspaceOwner({
         db: opts.ctx.db,
         ws: { ...ws, plan: built.plan },

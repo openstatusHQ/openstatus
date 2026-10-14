@@ -16,6 +16,7 @@ import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 import type Stripe from "stripe";
 
 import { createInnerTRPCContext } from "../../trpc";
+import { workspaceRouter } from "../workspace";
 import { stripeRouter } from "./index";
 import { stripe } from "./shared";
 import { TRIAL_DAYS } from "./trial";
@@ -149,7 +150,6 @@ describe("trial checkout", () => {
           },
           metadata: {
             source: "trial_opt_in",
-            userId: String(f.user.id),
             surface: "billing",
             intent: "Slack alerts",
           },
@@ -165,7 +165,7 @@ describe("trial checkout", () => {
 
       expect(
         createSession.calls[0]?.args[0]?.subscription_data?.metadata,
-      ).toEqual({ source: "trial_opt_in", userId: String(f.user.id) });
+      ).toEqual({ source: "trial_opt_in" });
     });
 
     test("a regular checkout carries no trial parameters", async () => {
@@ -267,7 +267,7 @@ describe("trial checkout", () => {
         asCaller(f).getCheckoutSession(trialInput(f)),
       ).rejects.toMatchObject({
         code: "PRECONDITION_FAILED",
-        message: "This email has already used a trial.",
+        message: "This workspace or email has already used a trial.",
       });
       expect(listCustomers.calls[0]?.args[0]).toEqual({
         email: f.user.email,
@@ -289,18 +289,14 @@ describe("trial checkout", () => {
       ]);
     });
 
-    test("refuses a user who already trialed, before asking Stripe", async () => {
-      const f = await freeWorkspace();
-      await db
-        .update(user)
-        .set({ trialedAt: new Date() })
-        .where(eq(user.id, f.user.id));
+    test("refuses a workspace that already trialed, before asking Stripe", async () => {
+      const f = await freeWorkspace({ trialedAt: new Date() });
 
       await expect(
         asCaller(f).getCheckoutSession(trialInput(f)),
       ).rejects.toMatchObject({
         code: "PRECONDITION_FAILED",
-        message: "This email has already used a trial.",
+        message: "This workspace or email has already used a trial.",
       });
       assertSpyCalls(listCustomers, 0);
     });
@@ -341,23 +337,33 @@ describe("trial checkout", () => {
     });
   });
 
-  describe("trialEligibility", () => {
+  describe("workspace.get trial", () => {
+    function getWorkspace(fixture: Fixture) {
+      return workspaceRouter
+        .createCaller(
+          createInnerTRPCContext({
+            session: { user: { id: String(fixture.user.id) } },
+            workspace: selectWorkspaceSchema.parse(fixture.workspace),
+            user: selectUserSchema.parse(fixture.user),
+          }),
+        )
+        .get();
+    }
+
     test("eligible for an owner signed in with GitHub, without Stripe", async () => {
       const f = await freeWorkspace();
       customers = [customer("cus_old", { trialed: "true" })];
 
-      expect(await asCaller(f).trialEligibility()).toEqual({ eligible: true });
+      expect((await getWorkspace(f)).trial).toEqual({
+        eligible: true,
+      });
       assertSpyCalls(listCustomers, 0);
     });
 
-    test("not eligible once the user has trialed", async () => {
-      const f = await freeWorkspace();
-      await db
-        .update(user)
-        .set({ trialedAt: new Date() })
-        .where(eq(user.id, f.user.id));
+    test("not eligible once the workspace has trialed", async () => {
+      const f = await freeWorkspace({ trialedAt: new Date() });
 
-      expect(await asCaller(f).trialEligibility()).toEqual({
+      expect((await getWorkspace(f)).trial).toEqual({
         eligible: false,
         reason: "already_trialed",
       });
@@ -365,7 +371,8 @@ describe("trial checkout", () => {
 
     test("names the reason otherwise", async () => {
       const f = await freeWorkspace({}, ["resend"]);
-      expect(await asCaller(f).trialEligibility()).toEqual({
+
+      expect((await getWorkspace(f)).trial).toEqual({
         eligible: false,
         reason: "email",
       });

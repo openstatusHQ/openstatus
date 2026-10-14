@@ -22,6 +22,9 @@ export const workspace = sqliteTable(
     endsAt: integer("ends_at", { mode: "timestamp" }),
     paidUntil: integer("paid_until", { mode: "timestamp" }),
     trialEndsAt: integer("trial_ends_at", { mode: "timestamp" }),
+    // Set once when a trial Checkout completes and never cleared, unlike
+    // `trialEndsAt`, which only means "trial in effect".
+    trialedAt: integer("trialed_at", { mode: "timestamp" }),
     limits: text("limits").default("{}").notNull(),
 
     workosOrganizationId: text("workos_organization_id").unique(),

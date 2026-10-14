@@ -115,11 +115,11 @@ function asCaller(fixture: Awaited<ReturnType<typeof seedTrial>>) {
   });
 }
 
-async function readTrialedAt(userId: number) {
+async function readTrialedAt(workspaceId: number) {
   const row = await db
-    .select({ trialedAt: user.trialedAt })
-    .from(user)
-    .where(eq(user.id, userId))
+    .select({ trialedAt: workspace.trialedAt })
+    .from(workspace)
+    .where(eq(workspace.id, workspaceId))
     .get();
   return row?.trialedAt;
 }
@@ -536,7 +536,6 @@ describe("trial lifecycle", () => {
       const sub = subscription(stripeId, {
         metadata: {
           source: "trial_opt_in",
-          userId: String(f.user.id),
           surface: "billing",
           intent: "Slack alerts",
         },
@@ -568,7 +567,7 @@ describe("trial lifecycle", () => {
         { metadata: { trialed: "true" } },
       ]);
 
-      const trialedAt = await readTrialedAt(f.user.id);
+      const trialedAt = await readTrialedAt(f.workspace.id);
       expect(trialedAt).toBeInstanceOf(Date);
 
       // A redelivered event stamps again and changes nothing else.
@@ -577,7 +576,7 @@ describe("trial lifecycle", () => {
       );
       assertSpyCalls(updateCustomer, 2);
       expect((await readWorkspace(f.workspace.id))?.plan).toBe("starter");
-      expect(await readTrialedAt(f.user.id)).toEqual(trialedAt);
+      expect(await readTrialedAt(f.workspace.id)).toEqual(trialedAt);
     });
 
     test("checkout completed with a paid subscription is not a trial", async () => {

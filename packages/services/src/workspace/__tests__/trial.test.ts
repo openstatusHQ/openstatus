@@ -1,4 +1,5 @@
-import { selectWorkspaceSchema } from "@openstatus/db/src/schema";
+import { db, eq } from "@openstatus/db";
+import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
 import {
   addUserToWorkspace,
   createTestWorkspace,
@@ -13,6 +14,7 @@ import {
   getTrialDaysLeft,
   isTrialEligibleWorkspace,
   listOwnedTrialWorkspaces,
+  markWorkspaceTrialed,
 } from "../index.ts";
 
 const DAY_MS = 86_400_000;
@@ -93,6 +95,19 @@ describe("isTrialEligibleWorkspace", () => {
     );
   });
 
+  test("false once the workspace has trialed before", async () => {
+    const { workspace: ws, user } = await createTestWorkspace({
+      plan: "free",
+      stripeId: null,
+      subscriptionId: null,
+      trialEndsAt: null,
+      trialedAt: new Date(),
+    });
+    expect(await isTrialEligibleWorkspace({ ctx: ctxFor(ws, user.id) })).toBe(
+      false,
+    );
+  });
+
   test("false when the workspace is on a paid plan", async () => {
     const { workspace: ws, user } = await createTestWorkspace({
       plan: "team",
@@ -157,5 +172,37 @@ describe("listOwnedTrialWorkspaces", () => {
 
     expect(rows.map((r) => r.id)).toEqual([trial.id]);
     expect(rows[0]?.trialEndsAt).toEqual(trialEndsAt);
+  });
+});
+
+describe("markWorkspaceTrialed", () => {
+  test("sets trialedAt once and keeps the first date", async () => {
+    const first = new Date("2026-01-01T00:00:00Z");
+    const { workspace: ws, user } = await createTestWorkspace({
+      trialedAt: null,
+    });
+    const ctx = makeUserCtx(selectWorkspaceSchema.parse(ws), {
+      userId: user.id,
+    });
+
+    await markWorkspaceTrialed({ ctx });
+    const stamped = await db
+      .select({ trialedAt: workspace.trialedAt })
+      .from(workspace)
+      .where(eq(workspace.id, ws.id))
+      .get();
+    expect(stamped?.trialedAt).toBeInstanceOf(Date);
+
+    await db
+      .update(workspace)
+      .set({ trialedAt: first })
+      .where(eq(workspace.id, ws.id));
+    await markWorkspaceTrialed({ ctx });
+    const kept = await db
+      .select({ trialedAt: workspace.trialedAt })
+      .from(workspace)
+      .where(eq(workspace.id, ws.id))
+      .get();
+    expect(kept?.trialedAt).toEqual(first);
   });
 });

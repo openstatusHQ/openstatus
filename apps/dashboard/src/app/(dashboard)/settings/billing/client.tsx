@@ -25,6 +25,7 @@ import {
 } from "@/components/content/section";
 import { DataTable } from "@/components/data-table/billing/data-table";
 import { TRIAL_DAYS, TrialIntentField } from "@/components/dialogs/start-trial";
+import { UpgradeIntentDialog } from "@/components/dialogs/upgrade-intent";
 import {
   FormCard,
   FormCardContent,
@@ -81,9 +82,12 @@ export function Client() {
   const [{ success, setup, trial }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const { data: trialEligibility } = useQuery(
-    trpc.stripeRouter.trialEligibility.queryOptions(),
-  );
+  // Captured on mount: the toasts clear the params while the dialog is open.
+  const [askIntent, setAskIntent] = useState(Boolean(success || trial));
+  const { data: hasIntent } = useQuery({
+    ...trpc.feedback.hasSubmitted.queryOptions({ source: "upgrade-intent" }),
+    enabled: askIntent,
+  });
   const [currency] = useCookieState("x-currency", "USD");
   const [trialIntent, setTrialIntent] = useState("");
   const trialCheckoutMutation = useMutation(
@@ -144,7 +148,6 @@ export function Client() {
       for (const queryKey of [
         trpc.workspace.get.queryKey(),
         trpc.stripeRouter.getBillingInterval.queryKey(),
-        trpc.stripeRouter.trialEligibility.queryKey(),
       ]) {
         queryClient.invalidateQueries({ queryKey });
       }
@@ -193,6 +196,10 @@ export function Client() {
 
   return (
     <SectionGroup>
+      <UpgradeIntentDialog
+        open={askIntent && hasIntent === false}
+        onOpenChange={setAskIntent}
+      />
       <Section>
         <SectionHeader>
           <SectionTitle>Billing</SectionTitle>
@@ -201,7 +208,7 @@ export function Client() {
           </SectionDescription>
         </SectionHeader>
         <FormCardGroup>
-          {trialEligibility?.eligible ? (
+          {workspace?.trial.eligible ? (
             <FormCard>
               <FormCardHeader>
                 <FormCardTitle>
