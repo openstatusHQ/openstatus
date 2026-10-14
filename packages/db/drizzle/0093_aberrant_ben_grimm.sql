@@ -1,0 +1,1 @@
+ALTER TABLE `workspace` ADD `trialed_at` integer;

@@ -24,7 +24,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { DataTable } from "@/components/data-table/billing/data-table";
-import { TRIAL_DAYS, TrialIntentField } from "@/components/dialogs/start-trial";
+import { TRIAL_DAYS } from "@/components/dialogs/start-trial";
 import { UpgradeIntentDialog } from "@/components/dialogs/upgrade-intent";
 import {
   FormCard,
@@ -89,7 +89,6 @@ export function Client() {
     enabled: askIntent,
   });
   const [currency] = useCookieState("x-currency", "USD");
-  const [trialIntent, setTrialIntent] = useState("");
   const trialCheckoutMutation = useMutation(
     trpc.stripeRouter.getCheckoutSession.mutationOptions({
       onSuccess: (data) => {
@@ -219,13 +218,6 @@ export function Client() {
                   integrations.
                 </FormCardDescription>
               </FormCardHeader>
-              <FormCardContent>
-                <TrialIntentField
-                  value={trialIntent}
-                  onChange={setTrialIntent}
-                  disabled={trialCheckoutMutation.isPending}
-                />
-              </FormCardContent>
               <FormCardFooter>
                 <FormCardFooterInfo>
                   No card needed. You will see the price on the next page. The
@@ -240,7 +232,6 @@ export function Client() {
                       plan: "starter",
                       interval: "monthly",
                       surface: "billing",
-                      intent: trialIntent.trim() || undefined,
                       currency: currency || "USD",
                       workspaceSlug: workspace.slug,
                       successUrl: `${window.location.origin}/settings/billing?trial=true`,
