@@ -225,7 +225,7 @@ const HIDE_DEV_CHROME = `(() => {
 // viewport's top-left at its own size, hide everything else, and let the
 // caller size the viewport to it.
 const isolate = (selector, k) => `(() => {
-  const els = [...document.querySelectorAll(${JSON.stringify(selector)})].filter((e) => e.getClientRects().length);
+  const els = [...document.querySelectorAll(${JSON.stringify(selector)})].filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== "hidden");
   const el = els[${k}];
   if (!el) return JSON.stringify({ count: els.length });
   const r = el.getBoundingClientRect();
@@ -343,6 +343,7 @@ function writeGallery() {
   const git = (...a) =>
     execFileSync("git", a, { cwd: repo, encoding: "utf8" }).trim();
   const facts = [
+    ["App", flags.app ?? "dashboard"],
     ["Branch", git("rev-parse", "--abbrev-ref", "HEAD")],
     ["Commit", git("rev-parse", "--short", "HEAD")],
     ["Taken", new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC"],
@@ -376,7 +377,7 @@ function writeGallery() {
   @media (max-width: 480px) { dl { grid-template-columns: 1fr; gap: 0 } dt { margin-top: 8px } }
 </style>
 <main>
-  <h1>Dashboard screenshots</h1>
+  <h1>Screenshots</h1>
   <dl>${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
 ${[...groups.values()]
   .sort((a, b) => b.mtime - a.mtime)

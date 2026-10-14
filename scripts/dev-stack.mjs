@@ -217,21 +217,39 @@ function alive(pid) {
   }
 }
 
-function stop(name, pid) {
-  if (!pid || !alive(pid)) return;
+// The recorded pid leads a process group. The launcher (pnpm) can exit before
+// next does, and after a reboot the pid can belong to something else, so the
+// group's members decide, not the leader.
+function groupMembers(pgid) {
+  const r = spawnSync("pgrep", ["-l", "-g", String(pgid)], {
+    encoding: "utf8",
+  });
+  return r.status === 0 ? r.stdout.trim().split("\n").filter(Boolean) : [];
+}
+
+const SQLD_GROUP = /\bsqld\b/;
+const DASHBOARD_GROUP = /\b(pnpm|node|next-server)\b/;
+const ours = (pid, expected) =>
+  Boolean(pid) && groupMembers(pid).some((m) => expected.test(m));
+
+function stop(name, pid, expected) {
+  if (!pid) return;
+  const members = groupMembers(pid);
+  if (members.length === 0) return;
+  if (!members.some((m) => expected.test(m))) {
+    log(`not stopping ${name}: pid ${pid} now belongs to "${members[0]}"`);
+    return;
+  }
   for (const signal of ["SIGTERM", "SIGKILL"]) {
     try {
       process.kill(-pid, signal);
     } catch {
-      try {
-        process.kill(pid, signal);
-      } catch {
-        return;
-      }
+      return;
     }
     const until = Date.now() + 5000;
-    while (alive(pid) && Date.now() < until) spawnSync("sleep", ["0.2"]);
-    if (!alive(pid)) break;
+    while (groupMembers(pid).length && Date.now() < until)
+      spawnSync("sleep", ["0.2"]);
+    if (groupMembers(pid).length === 0) break;
   }
   log(`stopped ${name} (pid ${pid})`);
 }
@@ -241,18 +259,25 @@ async function up() {
   mkdirSync(stackDir, { recursive: true });
   const deno = ensureDeno();
   const sqld = ensureSqld();
+  ensureAgentBrowser();
   ensureEnvFiles();
   const toolPath = [dirname(deno), dirname(sqld), process.env.PATH].join(
     delimiter,
   );
   const state = readState();
 
+  // The seed wipes every table, so only a database this run created is seeded
+  // without being asked; a reused server may hold someone's real data.
+  let fresh = false;
   if (await sql(["select 1"])) {
     log(`reusing sqld at ${dbUrl}`);
+    if (!ours(state.sqld, SQLD_GROUP)) delete state.sqld;
   } else {
+    const dbPath = join(stackDir, "openstatus-dev.db");
+    fresh = !existsSync(dbPath);
     state.sqld = launch("sqld", sqld, [
       "--db-path",
-      join(stackDir, "openstatus-dev.db"),
+      dbPath,
       "--http-listen-addr",
       `127.0.0.1:${dbPort}`,
     ]);
@@ -282,12 +307,18 @@ async function up() {
   const [sessions] = (await sql([
     "select count(*) from session where session_token = 'seed-session-max'",
   ])) ?? [[[0]]];
-  if (flags.reseed || sessions[0][0] === 0) run("seed");
+  const seeded = sessions[0][0] > 0;
+  if (flags.reseed || (fresh && !seeded)) run("seed");
+  else if (!seeded)
+    log(
+      `no seeded session in the existing database at ${dbUrl}; pass --reseed to wipe and seed it`,
+    );
   else
     log("seed present (seed-session-max); pass --reseed to reset the fixtures");
 
   if (await dashboardUp()) {
     log(`reusing dashboard at ${base}`);
+    if (!ours(state.dashboard, DASHBOARD_GROUP)) delete state.dashboard;
   } else {
     state.dashboard = launch(
       "dashboard",
@@ -314,13 +345,14 @@ async function up() {
     }).catch(() => null);
     log(`warmed ${path}: ${res?.status ?? "unreachable"} in ${since(t)}`);
   }
+  writeState(state);
   log(`ready in ${since(started)}: dashboard ${base}, sqld ${dbUrl}`);
 }
 
 async function down() {
   const state = readState();
-  stop("dashboard", state.dashboard);
-  stop("sqld", state.sqld);
+  stop("dashboard", state.dashboard, DASHBOARD_GROUP);
+  stop("sqld", state.sqld, SQLD_GROUP);
   if (!state.dashboard && !state.sqld)
     log("nothing started by this script is running");
   rmSync(stateFile, { force: true });
