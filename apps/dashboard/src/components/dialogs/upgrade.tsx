@@ -18,6 +18,7 @@ import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
 import { BillingAddons } from "@/components/content/billing-addons";
 import { DataTable } from "@/components/data-table/billing/data-table";
+import { TRIAL_DAYS } from "@/components/dialogs/start-trial";
 import { useTRPC } from "@/lib/trpc/client";
 
 const PLANS = {
@@ -35,6 +36,9 @@ export function UpgradeDialog(
 ) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: trialEligibility } = useQuery(
+    trpc.stripeRouter.trialEligibility.queryOptions(),
+  );
 
   if (!workspace) return null;
 
@@ -47,6 +51,8 @@ export function UpgradeDialog(
   };
 
   const restrictTo = getRestrictTo();
+  const canTrial =
+    trialEligibility?.eligible === true && restrictTo.includes("starter");
 
   const addon =
     props.limit && Object.prototype.hasOwnProperty.call(planAddons, props.limit)
@@ -57,10 +63,16 @@ export function UpgradeDialog(
     <Dialog {...props}>
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Upgrade Workspace</DialogTitle>
+          <DialogTitle>
+            {canTrial
+              ? `Try Starter free for ${TRIAL_DAYS} days`
+              : "Upgrade Workspace"}
+          </DialogTitle>
           <DialogDescription>
-            Upgrade your workspace to support more monitors, status pages,
-            regions, and much more. Get an overview within your{" "}
+            {canTrial
+              ? "No card needed. Start the trial from the Starter column, or pick another plan. "
+              : "Upgrade your workspace to support more monitors, status pages, regions, and much more. "}
+            Get an overview within your{" "}
             <Link
               onClick={() => props.onOpenChange?.(false)}
               href="/settings/billing"

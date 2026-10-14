@@ -10,6 +10,7 @@ import {
   stripeIdempotencyKey,
 } from "@openstatus/emails";
 import type { ServiceContext } from "@openstatus/services";
+import { markUserTrialed } from "@openstatus/services/user";
 import {
   type DowngradeTrim,
   downgradeWorkspaceToFree,
@@ -470,6 +471,9 @@ export const webhookRouter = createTRPCRouter({
     // for an unrelated `customer.subscription.updated` to come along.
     await cancelSupersededSubscriptions(live, subscription);
 
+    const isTrial =
+      subscription.status === "trialing" && !!subscription.trial_end;
+
     await updateWorkspacePlan({
       ctx: {
         workspace: ws,
@@ -483,9 +487,33 @@ export const webhookRouter = createTRPCRouter({
         paidUntil: getCurrentPeriodEnd(subscription),
         trialEndsAt: trialEndsAtOf(subscription),
         limits: syncedLimits(subscription, built),
-        reason: "checkout_session_completed",
+        reason: isTrial ? "trial_started" : "checkout_session_completed",
       },
     });
+
+    if (isTrial) {
+      // Stamped on completion, not when the Checkout opens, so an abandoned
+      // page does not burn the one trial per email.
+      await stripe.customers.update(customerId, {
+        metadata: { trialed: "true" },
+      });
+      const userId = Number(subscription.metadata.userId);
+      if (Number.isInteger(userId) && userId > 0) {
+        await markUserTrialed({ input: { userId }, db: opts.ctx.db });
+      }
+      await trackForWorkspaceOwner({
+        db: opts.ctx.db,
+        ws: { ...ws, plan: built.plan },
+        event: Events.StartTrial,
+        props: {
+          surface: subscription.metadata.surface,
+          intent: subscription.metadata.intent,
+          trialEndsAt: trialEndsAtOf(subscription)?.toISOString(),
+          ...billingProps(subscription),
+        },
+      });
+      return;
+    }
 
     await trackForWorkspaceOwner({
       db: opts.ctx.db,
@@ -494,7 +522,6 @@ export const webhookRouter = createTRPCRouter({
       props: {
         fromPlan: ws.plan,
         toPlan: built.plan,
-        trialing: subscription.status === "trialing",
         ...billingProps(subscription),
       },
     });

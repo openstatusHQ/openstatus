@@ -15,8 +15,8 @@ export {
   previewWorkspaceDowngrade,
 } from "./downgrade";
 export {
-  findTrialEligibleWorkspace,
   getTrialDaysLeft,
+  isTrialEligibleWorkspace,
   listOwnedTrialWorkspaces,
 } from "./trial";
 export {

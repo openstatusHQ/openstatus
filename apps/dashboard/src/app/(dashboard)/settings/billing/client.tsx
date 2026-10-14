@@ -3,10 +3,11 @@
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
-import { useEffect, useMemo, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { BillingAddons } from "@/components/content/billing-addons";
@@ -23,6 +24,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { DataTable } from "@/components/data-table/billing/data-table";
+import { TRIAL_DAYS, TrialIntentField } from "@/components/dialogs/start-trial";
 import {
   FormCard,
   FormCardContent,
@@ -76,9 +78,24 @@ export function Client() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
-  const [{ success, setup }, setSearchParams] =
+  const [{ success, setup, trial }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: trialEligibility } = useQuery(
+    trpc.stripeRouter.trialEligibility.queryOptions(),
+  );
+  const [currency] = useCookieState("x-currency", "USD");
+  const [trialIntent, setTrialIntent] = useState("");
+  const trialCheckoutMutation = useMutation(
+    trpc.stripeRouter.getCheckoutSession.mutationOptions({
+      onSuccess: (data) => {
+        if (data?.type === "checkout" && data.session.url) {
+          window.location.assign(data.session.url);
+        }
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
   const { data: usage } = useQuery(trpc.workspace.usage.queryOptions());
   const paymentMethodSetupMutation = useMutation(
     trpc.stripeRouter.getPaymentMethodSetupSession.mutationOptions({
@@ -123,6 +140,25 @@ export function Client() {
   }, [success, setSearchParams]);
 
   useEffect(() => {
+    if (trial) {
+      for (const queryKey of [
+        trpc.workspace.get.queryKey(),
+        trpc.stripeRouter.getBillingInterval.queryKey(),
+        trpc.stripeRouter.trialEligibility.queryKey(),
+      ]) {
+        queryClient.invalidateQueries({ queryKey });
+      }
+      setTimeout(() => {
+        toast.success(`Your ${TRIAL_DAYS}-day Starter trial has started`, {
+          duration: 5_000,
+          onAutoClose: () => setSearchParams({ trial: null }),
+          onDismiss: () => setSearchParams({ trial: null }),
+        });
+      }, 500);
+    }
+  }, [trial, setSearchParams, queryClient, trpc]);
+
+  useEffect(() => {
     if (setup) {
       queryClient.invalidateQueries({
         queryKey: trpc.workspace.get.queryKey(),
@@ -165,6 +201,54 @@ export function Client() {
           </SectionDescription>
         </SectionHeader>
         <FormCardGroup>
+          {trialEligibility?.eligible ? (
+            <FormCard>
+              <FormCardHeader>
+                <FormCardTitle>
+                  Try Starter free for {TRIAL_DAYS} days
+                </FormCardTitle>
+                <FormCardDescription>
+                  1 min checks, more monitors, custom domain, Slack and on-call
+                  integrations.
+                </FormCardDescription>
+              </FormCardHeader>
+              <FormCardContent>
+                <TrialIntentField
+                  value={trialIntent}
+                  onChange={setTrialIntent}
+                  disabled={trialCheckoutMutation.isPending}
+                />
+              </FormCardContent>
+              <FormCardFooter>
+                <FormCardFooterInfo>
+                  No card needed. You will see the price on the next page. The
+                  workspace returns to Hobby after {TRIAL_DAYS} days unless you
+                  add a card.
+                </FormCardFooterInfo>
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    trialCheckoutMutation.mutate({
+                      trial: true,
+                      plan: "starter",
+                      interval: "monthly",
+                      surface: "billing",
+                      intent: trialIntent.trim() || undefined,
+                      currency: currency || "USD",
+                      workspaceSlug: workspace.slug,
+                      successUrl: `${window.location.origin}/settings/billing?trial=true`,
+                      cancelUrl: `${window.location.origin}/settings/billing`,
+                    })
+                  }
+                  disabled={trialCheckoutMutation.isPending}
+                >
+                  {trialCheckoutMutation.isPending
+                    ? "Loading..."
+                    : "Start trial"}
+                </Button>
+              </FormCardFooter>
+            </FormCard>
+          ) : null}
           {workspace.trialEndsAt && trialDaysLeft ? (
             <FormCard>
               <FormCardHeader>

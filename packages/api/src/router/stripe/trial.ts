@@ -1,158 +1,145 @@
-import {
-  ConflictError,
-  type DB,
-  type ServiceContext,
-} from "@openstatus/services";
-import { hasPendingInvitation } from "@openstatus/services/invitation";
+import type { DB, ServiceContext } from "@openstatus/services";
+import { getUser, listUserProviders } from "@openstatus/services/user";
 import {
   downgradeWorkspaceToFree,
-  findTrialEligibleWorkspace,
+  isTrialEligibleWorkspace,
   listOwnedTrialWorkspaces,
-  updateWorkspacePlan,
-  updateWorkspaceStripeId,
 } from "@openstatus/services/workspace";
 import MailChecker from "mailchecker";
+import type Stripe from "stripe";
 
 import { env } from "../../env";
-import {
-  buildFromSubscriptionOrThrow,
-  cancelSubscription,
-  stripe,
-} from "./shared";
-import { getPriceIdForPlan } from "./utils";
+import { cancelSubscription, stripe } from "./shared";
 
 export const TRIAL_DAYS = 14;
+
+// A magic link proves only inbox access and SSO members are provisioned by
+// their org, so only these sign-ins can open a trial.
+const TRIAL_PROVIDERS = ["github", "google"];
 
 export type TrialSkipReason =
   | "disabled"
   | "sso"
   | "email"
-  | "invited"
   | "disposable"
   | "already_trialed"
-  | "not_eligible"
-  | "stripe_error";
+  | "already_subscribed"
+  | "not_eligible";
 
-export type SignupTrialResult =
-  | { started: true; trialEndsAt: Date }
-  | { started: false; reason: TrialSkipReason };
+export type TrialEligibility =
+  | { eligible: true }
+  | { eligible: false; reason: TrialSkipReason };
+
+export type TrialSurface = "billing" | "plan_table";
 
 // `customers.list` is read-after-write consistent; the Search API is not, so
-// a re-signup right after a trial could slip past it.
+// a re-signup right after a trial could slip past it. Its email filter is
+// case-sensitive and customers keep the email as stored, so both spellings
+// are checked.
 async function hasTrialedBefore(email: string) {
-  const result = await stripe.customers.list({ email, limit: 100 });
-  return result.data.some((c) => c.metadata.trialed === "true");
-}
-
-async function resolveCurrency(priceId: string, requested: "USD" | "EUR") {
-  const price = await stripe.prices.retrieve(priceId, {
-    expand: ["currency_options"],
-  });
-  const wanted = requested.toLowerCase();
-  return wanted === price.currency || price.currency_options?.[wanted]
-    ? wanted
-    : price.currency;
-}
-
-export async function maybeStartSignupTrial(args: {
-  userId: number;
-  email: string;
-  provider?: string;
-  currency: "USD" | "EUR";
-  db?: DB;
-}): Promise<SignupTrialResult> {
-  const { db } = args;
-  const email = args.email.trim().toLowerCase();
-
-  if (
-    env.SELF_HOST ||
-    env.NODE_ENV === "development" ||
-    !env.STRIPE_SECRET_KEY
-  ) {
-    return { started: false, reason: "disabled" };
-  }
-  if (args.provider === "workos") return { started: false, reason: "sso" };
-  // A magic link proves only inbox access, so email signups start on free and
-  // upgrade through checkout.
-  if (args.provider === "resend") return { started: false, reason: "email" };
-  if (await hasPendingInvitation({ email, db })) {
-    return { started: false, reason: "invited" };
-  }
-  if (!MailChecker.isValid(email)) {
-    return { started: false, reason: "disposable" };
-  }
-  if (await hasTrialedBefore(email)) {
-    return { started: false, reason: "already_trialed" };
-  }
-
-  const ws = await findTrialEligibleWorkspace({
-    input: { userId: args.userId },
-    db,
-  });
-  if (!ws) return { started: false, reason: "not_eligible" };
-
-  const ctx: ServiceContext = {
-    workspace: ws,
-    actor: { type: "system", job: "signup-trial" },
-    db,
-  };
-
-  const priceId = getPriceIdForPlan("starter", "monthly");
-  if (!priceId) throw new Error("Missing Starter monthly price");
-  const currency = await resolveCurrency(priceId, args.currency);
-
-  const customer = await stripe.customers.create(
-    { email, metadata: { workspaceId: String(ws.id), trialed: "true" } },
-    { idempotencyKey: `trial-customer:ws_${ws.id}` },
+  const emails = [...new Set([email, email.toLowerCase()])];
+  const results = await Promise.all(
+    emails.map((e) => stripe.customers.list({ email: e, limit: 100 })),
   );
+  return results.some((r) => r.data.some((c) => c.metadata.trialed === "true"));
+}
 
-  try {
-    await updateWorkspaceStripeId({ ctx, input: { stripeId: customer.id } });
-  } catch (err) {
-    if (!(err instanceof ConflictError)) throw err;
-    // Another request (a checkout, say) linked a customer since the
-    // eligibility read. Drop ours so its `trialed` flag doesn't block a
-    // later trial for this email.
-    await stripe.customers.del(customer.id).catch(() => undefined);
-    return { started: false, reason: "not_eligible" };
+// `incomplete` is what an abandoned checkout leaves behind; it never entitled
+// anything and must not burn the trial.
+async function hasEverSubscribed(customerId: string) {
+  const result = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 100,
+  });
+  return result.data.some(
+    (sub) => sub.status !== "incomplete" && sub.status !== "incomplete_expired",
+  );
+}
+
+/**
+ * DB guards first, so an ineligible user costs no Stripe call. `stripe: false`
+ * skips the Stripe guards, which only catch trials from before `trialedAt`
+ * and ex-subscribers; the Checkout mutation always runs them.
+ */
+export async function checkTrialEligibility(args: {
+  ctx: ServiceContext;
+  email: string | null;
+  stripe?: boolean;
+}): Promise<TrialEligibility> {
+  const { ctx } = args;
+  const email = args.email?.trim() ?? "";
+
+  if (env.SELF_HOST || !env.STRIPE_SECRET_KEY) {
+    return { eligible: false, reason: "disabled" };
   }
 
-  const subscription = await stripe.subscriptions.create(
-    {
-      customer: customer.id,
-      currency,
-      items: [{ price: priceId }],
+  const userId = "userId" in ctx.actor ? ctx.actor.userId : undefined;
+  if (!userId) return { eligible: false, reason: "not_eligible" };
+
+  const providers = await listUserProviders({ input: { userId }, db: ctx.db });
+  if (!providers.some((p) => TRIAL_PROVIDERS.includes(p))) {
+    const sso = providers.includes("workos") || providers.includes("oidc");
+    return { eligible: false, reason: sso ? "sso" : "email" };
+  }
+  if (!email || !MailChecker.isValid(email.toLowerCase())) {
+    return { eligible: false, reason: "disposable" };
+  }
+  if (!(await isTrialEligibleWorkspace({ ctx }))) {
+    return { eligible: false, reason: "not_eligible" };
+  }
+  const record = await getUser({ ctx, input: { userId } });
+  if (record?.trialedAt) {
+    return { eligible: false, reason: "already_trialed" };
+  }
+  if (args.stripe === false) return { eligible: true };
+  if (await hasTrialedBefore(email)) {
+    return { eligible: false, reason: "already_trialed" };
+  }
+  if (
+    ctx.workspace.stripeId &&
+    (await hasEverSubscribed(ctx.workspace.stripeId))
+  ) {
+    return { eligible: false, reason: "already_subscribed" };
+  }
+
+  return { eligible: true };
+}
+
+export const TRIAL_SKIP_MESSAGE: Record<TrialSkipReason, string> = {
+  disabled: "Trials are not available on this installation.",
+  sso: "Trials are not available for SSO accounts.",
+  email: "Sign in with GitHub or Google to start a trial.",
+  disposable: "Trials are not available for this email address.",
+  already_trialed: "This email has already used a trial.",
+  already_subscribed: "This workspace has already had a subscription.",
+  not_eligible: "Only the owner of a free workspace can start a trial.",
+};
+
+/** The Checkout fields that turn a Starter subscription into a card-less trial. */
+export function trialCheckoutParams(args: {
+  userId: number;
+  surface?: TrialSurface;
+  intent?: string;
+}): Pick<
+  Stripe.Checkout.SessionCreateParams,
+  "payment_method_collection" | "subscription_data"
+> {
+  return {
+    payment_method_collection: "if_required",
+    subscription_data: {
       trial_period_days: TRIAL_DAYS,
       trial_settings: {
         end_behavior: { missing_payment_method: "cancel" },
       },
-      payment_settings: { save_default_payment_method: "on_subscription" },
-      metadata: { source: "signup_trial", workspaceId: String(ws.id) },
+      metadata: {
+        source: "trial_opt_in",
+        userId: String(args.userId),
+        ...(args.surface && { surface: args.surface }),
+        ...(args.intent && { intent: args.intent }),
+      },
     },
-    { idempotencyKey: `trial-sub:ws_${ws.id}` },
-  );
-
-  const built = buildFromSubscriptionOrThrow(subscription);
-  if (!built || !subscription.trial_end) {
-    throw new Error(`Trial subscription ${subscription.id} is not a trial`);
-  }
-
-  const trialEndsAt = new Date(subscription.trial_end * 1000);
-
-  await updateWorkspacePlan({
-    ctx,
-    input: {
-      plan: built.plan,
-      subscriptionId: subscription.id,
-      endsAt: trialEndsAt,
-      paidUntil: trialEndsAt,
-      trialEndsAt,
-      limits: built.limits,
-      reason: "trial_started",
-    },
-  });
-
-  return { started: true, trialEndsAt };
+  };
 }
 
 export async function cancelOwnedTrials(args: {

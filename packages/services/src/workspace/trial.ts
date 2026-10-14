@@ -12,7 +12,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 
-import type { DB } from "../context";
+import type { DB, ServiceContext } from "../context";
 import type { Workspace } from "../types";
 import { OwnedWorkspacesInput } from "./schemas";
 
@@ -30,34 +30,36 @@ export function getTrialDaysLeft(
 }
 
 /**
- * The workspace a signup trial can be started on: owned by the user, on the
- * free plan, and never linked to Stripe. Runs at signup, before any
- * `ctx.workspace` is resolved.
+ * Whether the actor can start a trial on `ctx.workspace`: they own it, it is
+ * on the free plan and it never had a subscription or a trial. A Stripe
+ * customer alone (an abandoned checkout) does not disqualify.
  */
-export async function findTrialEligibleWorkspace(args: {
-  input: OwnedWorkspacesInput;
-  db?: DB;
-}): Promise<Workspace | null> {
-  const input = OwnedWorkspacesInput.parse(args.input);
-  const db = args.db ?? defaultDb;
+export async function isTrialEligibleWorkspace(args: {
+  ctx: ServiceContext;
+}): Promise<boolean> {
+  const { ctx } = args;
+  const db = ctx.db ?? defaultDb;
+  const userId = "userId" in ctx.actor ? ctx.actor.userId : undefined;
+  if (!userId) return false;
 
   const row = await db
-    .select({ workspace })
+    .select({ id: workspace.id })
     .from(usersToWorkspaces)
     .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
     .where(
       and(
-        eq(usersToWorkspaces.userId, input.userId),
+        eq(usersToWorkspaces.userId, userId),
+        eq(usersToWorkspaces.workspaceId, ctx.workspace.id),
         eq(usersToWorkspaces.role, "owner"),
-        isNull(workspace.stripeId),
         isNull(workspace.subscriptionId),
+        isNull(workspace.trialEndsAt),
         // A fresh signup workspace has no plan column yet — that is free.
         or(isNull(workspace.plan), eq(workspace.plan, "free")),
       ),
     )
     .get();
 
-  return row ? selectWorkspaceSchema.parse(row.workspace) : null;
+  return row !== undefined;
 }
 
 /** Workspaces the user owns that are mid-trial. */

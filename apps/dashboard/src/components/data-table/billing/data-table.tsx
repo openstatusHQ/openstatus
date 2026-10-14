@@ -30,6 +30,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import { StartTrialDialog, TRIAL_DAYS } from "@/components/dialogs/start-trial";
 import { config as featureGroups, plans } from "@/data/plans";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,7 @@ function getQuantitySuffix(addon: keyof Addons, interval: BillingInterval) {
 
 export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
+  const [trialOpen, setTrialOpen] = useState(false);
   const [currency] = useCookieState("x-currency", "USD");
   const trpc = useTRPC();
   const router = useRouter();
@@ -61,6 +63,10 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
     trpc.stripeRouter.getBillingInterval.queryOptions(),
   );
   const currentInterval = intervalQuery.data;
+  const { data: trialEligibility } = useQuery(
+    trpc.stripeRouter.trialEligibility.queryOptions(),
+  );
+  const canTrial = trialEligibility?.eligible === true;
 
   const checkoutSessionMutation = useMutation(
     trpc.stripeRouter.getCheckoutSession.mutationOptions({
@@ -128,7 +134,9 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
         <TableCaption>
           {isTrialing
             ? "Upgrading ends your trial and charges your card today."
-            : "A list to compare the different features by plan."}
+            : canTrial && interval === "monthly"
+              ? `Starter can be tried free for ${TRIAL_DAYS} days, no card needed.`
+              : "A list to compare the different features by plan."}
         </TableCaption>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -157,6 +165,8 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                 currentInterval !== null &&
                 currentInterval !== interval;
               const price = getPriceConfig(id, currency, interval);
+              const isTrialOffer =
+                canTrial && id === "starter" && interval === "monthly";
               return (
                 <TableHead
                   key={id}
@@ -194,6 +204,10 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                       type="button"
                       variant={id === "starter" ? "default" : "outline"}
                       onClick={() => {
+                        if (isTrialOffer) {
+                          setTrialOpen(true);
+                          return;
+                        }
                         startTransition(async () => {
                           try {
                             if (id === "free") {
@@ -232,9 +246,11 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                             ? "Choosing..."
                             : isIntervalSwitch
                               ? `Switch to ${interval}`
-                              : isTrialing && !isFreePlan
-                                ? "Upgrade now"
-                                : "Choose"}
+                              : isTrialOffer
+                                ? `Start ${TRIAL_DAYS}-day trial`
+                                : isTrialing && !isFreePlan
+                                  ? "Upgrade now"
+                                  : "Choose"}
                     </Button>
                   </div>
                 </TableHead>
@@ -363,6 +379,11 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
           )}
         </TableBody>
       </Table>
+      <StartTrialDialog
+        open={trialOpen}
+        onOpenChange={setTrialOpen}
+        surface="plan_table"
+      />
     </div>
   );
 }

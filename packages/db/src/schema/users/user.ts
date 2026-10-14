@@ -33,6 +33,9 @@ export const user = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
     deletedAt: integer("deleted_at", { mode: "timestamp" }),
+    // Set once when a trial Checkout completes and never cleared, unlike
+    // `workspace.trialEndsAt`, which only means "trial in effect".
+    trialedAt: integer("trialed_at", { mode: "timestamp" }),
   },
   // Plain, not LOWER(email): @auth/drizzle-adapter's getUserByEmail does an
   // exact eq() match, which an expression index would not serve.

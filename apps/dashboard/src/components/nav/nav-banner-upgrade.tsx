@@ -16,6 +16,7 @@ import { useState } from "react";
 
 import { useTRPC } from "@/lib/trpc/client";
 
+import { TRIAL_DAYS } from "../dialogs/start-trial";
 import { UpgradeDialog } from "../dialogs/upgrade";
 
 const plan = allPlans.starter;
@@ -34,6 +35,9 @@ const features = [
 export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: trialEligibility } = useQuery(
+    trpc.stripeRouter.trialEligibility.queryOptions(),
+  );
   const [open, setOpen] = useState(false);
 
   if (!workspace) return null;
@@ -41,7 +45,11 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
   return (
     <SidebarGroup className="bg-background rounded-lg border px-2 py-1.5 group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel className="flex h-7 items-center justify-between pr-0 pl-0">
-        <span>Upgrade to {plan.title}</span>
+        <span>
+          {trialEligibility?.eligible
+            ? `Try ${plan.title} free for ${TRIAL_DAYS} days`
+            : `Upgrade to ${plan.title}`}
+        </span>
         <SidebarMenuAction
           onClick={handleClose}
           className="relative top-0 right-0"
@@ -65,7 +73,7 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
             data-active="true"
             onClick={() => setOpen(true)}
           >
-            Upgrade
+            {trialEligibility?.eligible ? "Start trial" : "Upgrade"}
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
