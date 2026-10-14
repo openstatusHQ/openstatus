@@ -237,8 +237,8 @@ export function Client() {
                   <span className="text-foreground font-medium">
                     No credit card needed.
                   </span>{" "}
-                  The workspace returns
-                  to Hobby after {TRIAL_DAYS} days unless you add a card.
+                  The workspace returns to Hobby after {TRIAL_DAYS} days unless
+                  you add a card.
                 </FormCardFooterInfo>
                 <Button
                   size="sm"
