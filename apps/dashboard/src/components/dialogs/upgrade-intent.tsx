@@ -54,6 +54,7 @@ export function UpgradeIntentDialog(props: DialogProps) {
           </Label>
           <Textarea
             id={id}
+            className="min-h-21"
             value={message}
             placeholder="A status page for our API, alerts for our on-call team, ..."
             onChange={(e) => setMessage(e.target.value)}
@@ -62,7 +63,7 @@ export function UpgradeIntentDialog(props: DialogProps) {
         </div>
         <DialogFooter>
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={() => props.onOpenChange?.(false)}
             disabled={feedbackMutation.isPending}
           >
