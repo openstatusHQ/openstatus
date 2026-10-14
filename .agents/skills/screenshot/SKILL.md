@@ -15,8 +15,34 @@ node scripts/screenshot.mjs --app web /pricing --full-page
 node scripts/screenshot.mjs --app status-page /acme
 ```
 
-It prints the PNG paths. Read them with the Read tool and judge against
-`DESIGN.md`. Both themes by default; `--theme light` for one.
+It prints the PNG paths and writes `.screenshots/index.html`, a gallery of
+every shot in the output directory. Read the PNGs with the Read tool and
+judge against `DESIGN.md`. Both themes by default; `--theme light` for one.
+
+## Cloud session (nothing installed, nothing running)
+
+One command brings up everything the dashboard needs, then shoot:
+
+```sh
+node scripts/dev-stack.mjs up --warm /incidents/1
+node scripts/screenshot.mjs --app dashboard /incidents/1 --user max@openstatus.dev
+node scripts/dev-stack.mjs down      # when finished; stops only what `up` started
+```
+
+`up` fetches the devbox-pinned deno and sqld from npm when they are not on
+PATH (the official download hosts are blocked in the sandbox; the npm
+packages are not), creates the two `.env` files from their examples, starts
+sqld on :8080, migrates, seeds once (`--reseed` wipes and reseeds), starts the
+dashboard on :3001 and warms the given routes. Servers already answering are
+reused and left alone by `down`. The session-start hook has usually already
+fetched the tools, so `up` takes about 10 seconds plus the first compile.
+`status` shows what is up; logs are in `.screenshots/stack/`. `--port` and
+`--db-port` move the two servers.
+
+`pnpm -w dev:dashboard` does not work there: it runs `turso dev`, which the
+sandbox lacks. The script also falls back to the sandbox's preinstalled
+Chromium (`/opt/pw-browsers/chromium`, or `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`)
+when Playwright's pinned build is missing; no `playwright install` needed.
 
 ## Before running
 
@@ -86,6 +112,16 @@ plain note and a Slack unbind), status reports #1 (resolved) and #2 (linked), ma
 `/status` (page 1, with components) and `/acme` (page 2). Safe to mutate;
 re-seed to reset.
 
+## What the script already handles
+
+- Each route is fetched once with the session cookies before the browser
+  navigates, so a cold Turbopack compile (10s+) never trips the navigation
+  timeout (120s).
+- The dev-only Tailwind breakpoint badge (`[data-slot=tailwind-indicator]`)
+  and the Next.js dev indicator are hidden before the capture.
+- Not handled: avatar images from blocked hosts render as alt text in the
+  sandbox. Say so when it shows; do not chase it.
+
 ## Rules
 
 - Shoot the element, not the viewport, unless layout is the question.
@@ -105,10 +141,12 @@ session runs.
 - **Local machine (terminal or desktop app):** leave them in `.screenshots/`
   and name the files in the final message. The user opens them directly.
 - **Cloud session:** nothing leaves the sandbox except git, so the files
-  vanish with the VM. Publish them with the Artifact tool: one page, the
-  shots side by side with "before" and "after" captions, uploaded as assets,
-  and put the link in the final message. Never commit screenshots to make
-  them visible.
+  vanish with the VM. Publish the generated gallery with the Artifact tool:
+  `file_path` `.screenshots/index.html`, `root` `.screenshots`, and every PNG
+  it shows passed in `files` under its own name (`{"incidents-1-light.png":
+  "incidents-1-light.png", ...}`). The gallery is written as a page fragment
+  (title, style, body) for exactly that. Put the link in the final message.
+  Never commit screenshots to make them visible.
 - **Review evidence for a PR:** when a reviewer needs the image, publish it
   as an artifact and link it from the PR description; the PR text is the
   one place a screenshot link belongs in the repo.

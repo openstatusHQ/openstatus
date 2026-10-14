@@ -7,7 +7,15 @@
 //
 // Flags, auth order and fixtures: .agents/skills/screenshot/SKILL.md.
 
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -169,20 +177,34 @@ if (!app.auth) {
 }
 
 // System Chrome locally; a remote VM has none, so fall back to Playwright's
-// bundled Chromium (`cd apps/screenshot-service && npx playwright install chromium`).
-const browser = await chromium
-  .launch({ channel: "chrome" })
-  .catch(async (e) => {
-    console.error(
-      `chrome: ${e.message.split("\n")[0]}; trying bundled chromium`,
-    );
-    return chromium.launch().catch((e2) => {
-      console.error(
-        `chromium: ${e2.message.split("\n")[0]}\nrun: cd apps/screenshot-service && npx playwright install chromium`,
-      );
-      process.exit(1);
-    });
+// bundled Chromium, and when that build is missing too (the cloud sandbox
+// ships one Chromium under /opt/pw-browsers, usually not the pinned build) to
+// an explicit executable.
+const preinstalled = [
+  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+  "/opt/pw-browsers/chromium",
+].find((p) => p && existsSync(p));
+const attempts = [
+  ["chrome", () => chromium.launch({ channel: "chrome" })],
+  ["bundled chromium", () => chromium.launch()],
+  ...(preinstalled
+    ? [[preinstalled, () => chromium.launch({ executablePath: preinstalled })]]
+    : []),
+];
+let browser;
+for (const [label, launch] of attempts) {
+  browser = await launch().catch((e) => {
+    console.error(`${label}: ${e.message.split("\n")[0]}`);
+    return null;
   });
+  if (browser) break;
+}
+if (!browser) {
+  console.error(
+    "no browser: cd apps/screenshot-service && npx playwright install chromium, or set PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH",
+  );
+  process.exit(1);
+}
 let auth = null;
 if (flags.token) {
   auth = cookies(flags.token, flags.workspace);
@@ -215,6 +237,22 @@ process.on("uncaughtException", async (e) => {
   await browser.close().catch(() => {});
   process.exit(1);
 });
+// The first request to a route pays the dev server's compile (10s+ on a cold
+// Turbopack cache); take it here so the navigation below never races a timeout.
+if (!useState) {
+  const headers = auth
+    ? { cookie: auth.map((c) => `${c.name}=${c.value}`).join("; ") }
+    : {};
+  for (const path of paths) {
+    const t = Date.now();
+    const res = await fetch(base + path, { headers, redirect: "manual" }).catch(
+      () => null,
+    );
+    console.error(
+      `warm ${path}: ${res?.status ?? "unreachable"} in ${((Date.now() - t) / 1000).toFixed(1)}s`,
+    );
+  }
+}
 for (const theme of themes) {
   const context = await browser.newContext({
     viewport: { width, height: 1000 },
@@ -227,6 +265,7 @@ for (const theme of themes) {
   await context.addInitScript((t) => localStorage.setItem("theme", t), theme);
 
   const page = await context.newPage();
+  page.setDefaultNavigationTimeout(120000);
   for (const path of paths) {
     await page.goto(base + path, { waitUntil: "networkidle" });
     if (
@@ -235,6 +274,12 @@ for (const theme of themes) {
       !path.startsWith("/login")
     )
       throw new Error(`redirected to login for ${path}; auth failed`);
+    // Dev-only chrome floats over the bottom-left corner: the apps' Tailwind
+    // breakpoint badge and the Next.js dev indicator.
+    await page.addStyleTag({
+      content:
+        "[data-slot=tailwind-indicator],nextjs-portal{display:none!important}",
+    });
     const name =
       path.replace(/^\/+/, "").replace(/[^a-z0-9]+/gi, "-") || "root";
     if (flags.selector) {
@@ -266,4 +311,84 @@ for (const theme of themes) {
   await context.close();
 }
 await browser.close();
+writeGallery();
 for (const f of written) console.log(f);
+
+// A gallery of every PNG in the output directory, written as a page fragment
+// (title + style + body) so the Artifact tool can publish it as is, with the
+// PNGs passed as `files`. Browsers render the fragment fine locally too.
+function writeGallery() {
+  const shots = readdirSync(out)
+    .filter((f) => f.endsWith(".png"))
+    .map((f) => ({ file: f, mtime: statSync(join(out, f)).mtimeMs }));
+  if (shots.length === 0) return;
+  const groups = new Map();
+  for (const s of shots) {
+    const m = s.file.match(/^(.*?)-(light|dark)(-\d+)?\.png$/);
+    const key = m ? `${m[1]}${m[3] ?? ""}` : s.file;
+    const g = groups.get(key) ?? { key, shots: [], mtime: 0 };
+    g.shots.push({ ...s, theme: m?.[2] ?? "" });
+    g.mtime = Math.max(g.mtime, s.mtime);
+    groups.set(key, g);
+  }
+  const git = (...a) =>
+    execFileSync("git", a, { cwd: repo, encoding: "utf8" }).trim();
+  const facts = [
+    ["Branch", git("rev-parse", "--abbrev-ref", "HEAD")],
+    ["Commit", git("rev-parse", "--short", "HEAD")],
+    ["Taken", new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC"],
+    [
+      "Viewport",
+      `${width} px wide, 2× scale${flags["full-page"] ? ", full page" : ""}`,
+    ],
+  ];
+  const esc = (s) =>
+    s.replace(
+      /[&<>"]/g,
+      (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+    );
+  const html = `<title>Screenshots ${esc(facts[1][1])}</title>
+<style>
+  :root { --bg: #f7f7f5; --fg: #1c1c1a; --muted: #6b6b66; --line: #dcdcd6; --panel: #ffffff; --accent: #c2410c; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141413; --fg: #ecece8; --muted: #9c9c95; --line: #2d2d2a; --panel: #1d1d1b; --accent: #fb923c; color-scheme: dark; } }
+  :root[data-theme="dark"] { --bg: #141413; --fg: #ecece8; --muted: #9c9c95; --line: #2d2d2a; --panel: #1d1d1b; --accent: #fb923c; color-scheme: dark; }
+  body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, system-ui, sans-serif; line-height: 1.5; }
+  main { max-width: 1120px; margin: 0 auto; padding-block: 32px 64px; padding-inline: 16px; display: grid; gap: 32px; }
+  h1, h2 { margin: 0; font-weight: 600; text-wrap: balance; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1rem; font-family: ui-monospace, Menlo, monospace; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 20px; margin: 0; font-size: 0.875rem; font-family: ui-monospace, Menlo, monospace; border-block: 1px solid var(--line); padding-block: 10px; }
+  dt { color: var(--muted); } dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+  section { display: grid; gap: 12px; }
+  figure { margin: 0; display: grid; gap: 8px; }
+  figcaption { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; color: var(--accent); }
+  .frame { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; overflow: hidden; }
+  .frame img { display: block; width: 100%; height: auto; max-width: 100%; }
+  @media (max-width: 480px) { dl { grid-template-columns: 1fr; gap: 0 } dt { margin-top: 8px } }
+</style>
+<main>
+  <h1>Dashboard screenshots</h1>
+  <dl>${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+${[...groups.values()]
+  .sort((a, b) => b.mtime - a.mtime)
+  .map(
+    (g) => `  <section>
+    <h2>${esc(g.key)}</h2>
+${g.shots
+  .sort((a, b) => a.theme.localeCompare(b.theme) * -1)
+  .map(
+    (s) => `    <figure>
+      <figcaption>${esc(s.theme || s.file)}</figcaption>
+      <div class="frame"><img src="${esc(s.file)}" alt="${esc(g.key)} ${esc(s.theme)}" loading="lazy"></div>
+    </figure>`,
+  )
+  .join("\n")}
+  </section>`,
+  )
+  .join("\n")}
+</main>
+`;
+  const index = join(out, "index.html");
+  writeFileSync(index, html);
+  console.error(`gallery: ${index}`);
+}

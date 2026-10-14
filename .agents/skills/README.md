@@ -4,8 +4,9 @@ Skills live here as real directories. `.claude/skills/` holds symlinks to them
 (`.claude/skills/<name> -> ../../.agents/skills/<name>`), which is the only path
 Claude Code reads; that directory stays untracked. Most entries are personal
 installs via `npx skills add` and stay gitignored; the ones re-included in
-`.gitignore` ship with the repo. A fresh clone (a teammate, a cloud session)
-needs the symlinks once:
+`.gitignore` ship with the repo. A fresh clone needs the symlinks once; the
+session-start hook in `.claude/hooks/session-start.sh` creates them in cloud
+sessions, a teammate runs:
 
 ```sh
 mkdir -p .claude/skills && for d in .agents/skills/*/; do n=$(basename "$d"); ln -sfn "../../.agents/skills/$n" ".claude/skills/$n"; done
