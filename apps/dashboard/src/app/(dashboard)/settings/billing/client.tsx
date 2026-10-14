@@ -1,5 +1,6 @@
 "use client";
 
+import { TRIAL_DAYS } from "@openstatus/api/src/router/stripe/trial-config";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -24,7 +25,6 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { DataTable } from "@/components/data-table/billing/data-table";
-import { TRIAL_DAYS } from "@/components/dialogs/start-trial";
 import { UpgradeIntentDialog } from "@/components/dialogs/upgrade-intent";
 import {
   FormCard,
@@ -143,21 +143,35 @@ export function Client() {
   }, [success, setSearchParams]);
 
   useEffect(() => {
-    if (trial) {
-      for (const queryKey of [
-        trpc.workspace.get.queryKey(),
-        trpc.stripeRouter.getBillingInterval.queryKey(),
-      ]) {
-        queryClient.invalidateQueries({ queryKey });
-      }
-      setTimeout(() => {
-        toast.success(`Your ${TRIAL_DAYS}-day Starter trial has started`, {
-          duration: 5_000,
-          onAutoClose: () => setSearchParams({ trial: null }),
-          onDismiss: () => setSearchParams({ trial: null }),
+    if (!trial) return;
+    let cancelled = false;
+    queryClient.invalidateQueries({
+      queryKey: trpc.stripeRouter.getBillingInterval.queryKey(),
+    });
+    // The webhook can land after the redirect, and anyone can open
+    // `?trial=true`, so only toast once the workspace is actually trialing.
+    (async () => {
+      for (let attempt = 0; attempt < 5 && !cancelled; attempt++) {
+        const ws = await queryClient.fetchQuery({
+          ...trpc.workspace.get.queryOptions(),
+          staleTime: 0,
         });
-      }, 500);
-    }
+        if (cancelled) return;
+        if (ws.trialDaysLeft !== null) {
+          toast.success(`Your ${TRIAL_DAYS}-day Starter trial has started`, {
+            duration: 5_000,
+            onAutoClose: () => setSearchParams({ trial: null }),
+            onDismiss: () => setSearchParams({ trial: null }),
+          });
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1_000));
+      }
+      if (!cancelled) setSearchParams({ trial: null });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [trial, setSearchParams, queryClient, trpc]);
 
   useEffect(() => {
@@ -223,7 +237,7 @@ export function Client() {
                   <span className="text-foreground font-medium">
                     No credit card needed.
                   </span>{" "}
-                  You will see the price on the next page. The workspace returns
+                  The workspace returns
                   to Hobby after {TRIAL_DAYS} days unless you add a card.
                 </FormCardFooterInfo>
                 <Button

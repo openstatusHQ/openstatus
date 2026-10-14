@@ -10,8 +10,9 @@ import type Stripe from "stripe";
 
 import { env } from "../../env";
 import { cancelSubscription, stripe } from "./shared";
+import { TRIAL_DAYS, type TrialSurface } from "./trial-config";
 
-export const TRIAL_DAYS = 14;
+export { TRIAL_DAYS, type TrialSurface };
 
 // A magic link proves only inbox access and SSO members are provisioned by
 // their org, so only these sign-ins can open a trial.
@@ -29,8 +30,6 @@ export type TrialSkipReason =
 export type TrialEligibility =
   | { eligible: true }
   | { eligible: false; reason: TrialSkipReason };
-
-export type TrialSurface = "billing" | "plan_table" | "upgrade_dialog";
 
 // `customers.list` is read-after-write consistent; the Search API is not, so
 // a re-signup right after a trial could slip past it. Its email filter is

@@ -1,5 +1,6 @@
 "use client";
 
+import { TRIAL_DAYS } from "@openstatus/api/src/router/stripe/trial-config";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { Clock, Close, Globe, Notification, Team } from "@openstatus/icons";
 import { SlackIcon } from "@openstatus/icons/brand";
@@ -16,7 +17,6 @@ import { useState } from "react";
 
 import { useTRPC } from "@/lib/trpc/client";
 
-import { TRIAL_DAYS } from "../dialogs/start-trial";
 import { UpgradeDialog } from "../dialogs/upgrade";
 
 const plan = allPlans.starter;

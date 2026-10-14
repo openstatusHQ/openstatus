@@ -45,7 +45,7 @@ export function UpgradeIntentDialog(props: DialogProps) {
         <DialogHeader>
           <DialogTitle>What are you using openstatus for?</DialogTitle>
           <DialogDescription>
-            A sentence or two helps us shape what comes next.
+            A sentence or two helps us tailor openstatus to you.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-2">

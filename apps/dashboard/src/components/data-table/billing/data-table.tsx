@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  TRIAL_DAYS,
+  type TrialSurface,
+} from "@openstatus/api/src/router/stripe/trial-config";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
 import type {
   Addons,
@@ -30,10 +34,6 @@ import { useRouter } from "next/navigation";
 import { Fragment, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import {
-  TRIAL_DAYS,
-  type TrialSurface,
-} from "@/components/dialogs/start-trial";
 import { config as featureGroups, plans } from "@/data/plans";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";

@@ -1,3 +1,4 @@
+import { TRIAL_DAYS } from "@openstatus/api/src/router/stripe/trial-config";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Addons, Limits } from "@openstatus/db/src/schema/plan/schema";
@@ -18,7 +19,6 @@ import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
 import { BillingAddons } from "@/components/content/billing-addons";
 import { DataTable } from "@/components/data-table/billing/data-table";
-import { TRIAL_DAYS } from "@/components/dialogs/start-trial";
 import { useTRPC } from "@/lib/trpc/client";
 
 const PLANS = {
