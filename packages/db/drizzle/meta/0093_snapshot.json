@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "f62167ff-2bbf-45d3-a1b6-d310892e25ac",
+  "id": "29a4b4ca-df88-4161-a2aa-7aba5e6403b6",
   "prevId": "94dd2640-d257-4088-ac88-7cb99df6d1b7",
   "tables": {
     "workspace": {
@@ -316,7 +316,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "account_user_id_idx": {
+          "name": "account_user_id_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "account_user_id_user_id_fk": {
           "name": "account_user_id_user_id_fk",
