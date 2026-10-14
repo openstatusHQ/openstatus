@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Screenshot pages of a local Next.js dev server, in light and dark.
+// Screenshot pages of a local Next.js dev server, in light and dark, through
+// agent-browser (https://github.com/vercel-labs/agent-browser).
 //
 //   node scripts/screenshot.mjs --app dashboard /incidents/1 --selector "[data-slot=timeline]"
 //   node scripts/screenshot.mjs --app web /pricing --full-page
@@ -7,15 +8,18 @@
 //
 // Flags, auth order and fixtures: .agents/skills/screenshot/SKILL.md.
 
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
-import { createRequire } from "node:module";
+import { execFileSync, spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const { chromium } = createRequire(
-  join(repo, "apps/screenshot-service/package.json"),
-)("playwright");
 
 const APPS = {
   dashboard: { base: "http://localhost:3001", auth: true, probe: "/login" },
@@ -58,9 +62,47 @@ if (!Number.isFinite(width) || width <= 0) {
   console.error(`--width must be a positive number, got ${flags.width}`);
   process.exit(2);
 }
-const stateFile = resolve(flags.state ?? join(out, "state.json"));
-const wantsAuth = app.auth || Boolean(flags.token || flags.login);
+const wantsAuth = app.auth || Boolean(flags.token || flags.state);
 mkdirSync(out, { recursive: true });
+
+// agent-browser from PATH, else the copy `dev-stack.mjs tools` fetched.
+const bin = (() => {
+  const which = spawnSync("which", ["agent-browser"], { encoding: "utf8" });
+  if (which.status === 0) return which.stdout.trim();
+  const cached = join(
+    repo,
+    "node_modules/.cache/openstatus-tools/node_modules/.bin/agent-browser",
+  );
+  if (existsSync(cached)) return cached;
+  console.error(
+    "agent-browser not found: node scripts/dev-stack.mjs tools, or npm i -g agent-browser",
+  );
+  process.exit(1);
+})();
+const env = { ...process.env, AGENT_BROWSER_DEFAULT_TIMEOUT: "120000" };
+// The cloud sandbox ships a Chromium that agent-browser does not find by itself.
+if (
+  !env.AGENT_BROWSER_EXECUTABLE_PATH &&
+  existsSync("/opt/pw-browsers/chromium")
+)
+  env.AGENT_BROWSER_EXECUTABLE_PATH = "/opt/pw-browsers/chromium";
+
+function ab(session, ...cmd) {
+  const r = spawnSync(bin, ["--session", session, ...cmd], {
+    encoding: "utf8",
+    env,
+  });
+  if (r.status !== 0)
+    throw new Error(
+      `agent-browser ${cmd.join(" ")}: ${(r.stderr || r.stdout).trim()}`,
+    );
+  return r.stdout.trim();
+}
+// `eval` prints the result as JSON; page code returns JSON strings for objects.
+function evalJs(session, js) {
+  const v = JSON.parse(ab(session, "eval", js));
+  return typeof v === "string" && v.startsWith("{") ? JSON.parse(v) : v;
+}
 
 async function sql(statements) {
   const res = await fetch(db, {
@@ -111,40 +153,9 @@ async function sessionCookies() {
 }
 
 function cookies(token, slug) {
-  const host = new URL(base).hostname;
-  const list = [
-    { name: "authjs.session-token", value: token, domain: host, path: "/" },
-  ];
-  if (slug)
-    list.push({ name: "workspace-slug", value: slug, domain: host, path: "/" });
+  const list = [{ name: "authjs.session-token", value: token }];
+  if (slug) list.push({ name: "workspace-slug", value: slug });
   return list;
-}
-
-async function magicLinkLogin(context) {
-  if (!flags.log) throw new Error("--login needs --log <dev server log file>");
-  const page = await context.newPage();
-  await page.goto(`${base}/login`);
-  // The form opens closed; the email input appears after the mode button.
-  const input = page.locator('input[name="email"]');
-  if (!(await input.isVisible()))
-    await page.getByRole("button", { name: "Continue with email" }).click();
-  await input.fill(flags.login);
-  const seen = readFileSync(flags.log, "utf8").length;
-  await input.press("Enter");
-  let url;
-  for (let i = 0; i < 40 && !url; i++) {
-    await page.waitForTimeout(500);
-    url = readFileSync(flags.log, "utf8")
-      .slice(seen)
-      .match(/Magic Link: (http\S+)/)?.[1];
-  }
-  if (!url) throw new Error("no `>>> Magic Link:` line appeared in the log");
-  await page.goto(url, { waitUntil: "networkidle" });
-  await page.close();
-  await context.storageState({ path: stateFile });
-  console.error(
-    `auth: magic link for ${flags.login}, state saved to ${stateFile}`,
-  );
 }
 
 // Three apps, two default ports, and on this machine any of them may sit on
@@ -168,102 +179,227 @@ if (!app.auth) {
   }
 }
 
-// System Chrome locally; a remote VM has none, so fall back to Playwright's
-// bundled Chromium (`cd apps/screenshot-service && npx playwright install chromium`).
-const browser = await chromium
-  .launch({ channel: "chrome" })
-  .catch(async (e) => {
-    console.error(
-      `chrome: ${e.message.split("\n")[0]}; trying bundled chromium`,
-    );
-    return chromium.launch().catch((e2) => {
-      console.error(
-        `chromium: ${e2.message.split("\n")[0]}\nrun: cd apps/screenshot-service && npx playwright install chromium`,
-      );
-      process.exit(1);
-    });
-  });
 let auth = null;
 if (flags.token) {
   auth = cookies(flags.token, flags.workspace);
   console.error("auth: --token");
-} else if (wantsAuth && !flags.login) {
+} else if (flags.state) {
+  console.error(`auth: agent-browser state ${flags.state}`);
+} else if (wantsAuth) {
   auth = await sessionCookies().catch(
     (e) => (console.error(`auth: ${e.message}`), null),
   );
+  if (!auth)
+    console.error(
+      "auth: no session found; seed the database, pass --token, or --state <agent-browser state file>",
+    );
 }
-// One login for all themes: the dashboard rate-limits magic-link emails.
-if (flags.login && !auth) {
-  const context = await browser.newContext();
-  await magicLinkLogin(context);
-  await context.close();
+
+// The first request to a route pays the dev server's compile (10s+ on a cold
+// Turbopack cache); take it here so no browser command waits on it.
+if (auth) {
+  const headers = {
+    cookie: auth.map((c) => `${c.name}=${c.value}`).join("; "),
+  };
+  for (const path of paths) {
+    const t = Date.now();
+    const res = await fetch(base + path, { headers, redirect: "manual" }).catch(
+      () => null,
+    );
+    console.error(
+      `warm ${path}: ${res?.status ?? "unreachable"} in ${((Date.now() - t) / 1000).toFixed(1)}s`,
+    );
+  }
 }
-// A saved state is only a fallback; an explicit identity must not silently
-// become whoever logged in last.
-const useState =
-  wantsAuth && !auth && !flags.user && !flags.token && existsSync(stateFile);
-if (useState) console.error(`auth: saved state ${stateFile}`);
-if (wantsAuth && !auth && !useState) {
-  console.error(
-    "auth: no session found; seed the database, pass --token, or --login <email> --log <file>",
-  );
-}
+
+// Dev-only chrome floats over the bottom-left corner: the apps' Tailwind
+// breakpoint badge and the Next.js dev indicator.
+const HIDE_DEV_CHROME = `(() => {
+  const st = document.createElement("style");
+  st.textContent = "[data-slot=tailwind-indicator],nextjs-portal{display:none!important}";
+  document.head.appendChild(st);
+  return "ok";
+})()`;
+
+// agent-browser shoots viewports, not elements. Pin the k-th match to the
+// viewport's top-left at its own size, hide everything else, and let the
+// caller size the viewport to it.
+const isolate = (selector, k) => `(() => {
+  const els = [...document.querySelectorAll(${JSON.stringify(selector)})].filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== "hidden");
+  const el = els[${k}];
+  if (!el) return JSON.stringify({ count: els.length });
+  const r = el.getBoundingClientRect();
+  const w = Math.ceil(r.width), h = Math.ceil(r.height);
+  const st = document.createElement("style");
+  st.id = "__shot";
+  st.textContent = "html{background:" + getComputedStyle(document.body).backgroundColor + "!important}"
+    + "body{visibility:hidden!important;overflow:hidden!important}"
+    + "[data-shot-target]{visibility:visible!important;position:fixed!important;top:0!important;left:0!important;margin:0!important;width:" + w + "px!important;height:" + h + "px!important;z-index:2147483647!important}";
+  el.setAttribute("data-shot-target", "");
+  document.head.appendChild(st);
+  return JSON.stringify({ count: els.length, w, h });
+})()`;
+const RESTORE = `(() => {
+  document.getElementById("__shot")?.remove();
+  document.querySelector("[data-shot-target]")?.removeAttribute("data-shot-target");
+  return "ok";
+})()`;
+
+// next-themes follows prefers-color-scheme until the user picks a theme; a
+// saved choice (from --state) would win, so pin the storage key too.
+const pinTheme = (theme) => `(() => {
+  localStorage.setItem("theme", ${JSON.stringify(theme)});
+  return document.documentElement.classList.contains(${JSON.stringify(theme)}) ? "ok" : "reload";
+})()`;
+
+const LOADED = `document.readyState === "complete" && document.fonts.status === "loaded"`;
 
 const written = [];
-process.on("uncaughtException", async (e) => {
-  console.error(e.message);
-  await browser.close().catch(() => {});
-  process.exit(1);
-});
 for (const theme of themes) {
-  const context = await browser.newContext({
-    viewport: { width, height: 1000 },
-    deviceScaleFactor: 2,
-    colorScheme: theme,
-    ...(useState ? { storageState: stateFile } : {}),
-  });
-  if (auth) await context.addCookies(auth);
-  // Every app uses next-themes with the default storage key.
-  await context.addInitScript((t) => localStorage.setItem("theme", t), theme);
-
-  const page = await context.newPage();
-  for (const path of paths) {
-    await page.goto(base + path, { waitUntil: "networkidle" });
-    if (
-      app.auth &&
-      new URL(page.url()).pathname === "/login" &&
-      !path.startsWith("/login")
-    )
-      throw new Error(`redirected to login for ${path}; auth failed`);
-    const name =
-      path.replace(/^\/+/, "").replace(/[^a-z0-9]+/gi, "-") || "root";
-    if (flags.selector) {
-      const all = page.locator(flags.selector);
-      const n = await all.count();
-      let k = 0;
-      for (let i = 0; i < n; i++) {
-        const el = all.nth(i);
-        if (!(await el.isVisible())) continue;
-        await el.scrollIntoViewIfNeeded();
-        const file = join(out, `${name}-${theme}${n > 1 ? `-${k}` : ""}.png`);
-        await el.screenshot({ path: file });
+  // One isolated browser per theme; sessions survive this process, so close it.
+  const session = `openstatus-shot-${theme}-${process.pid}`;
+  try {
+    ab(session, "set", "viewport", String(width), "1000", "2");
+    ab(session, "set", "media", theme);
+    for (const c of auth ?? [])
+      ab(session, "cookies", "set", c.name, c.value, "--url", base);
+    for (const path of paths) {
+      const open = flags.state ? ["--state", flags.state] : [];
+      ab(session, ...open, "open", base + path);
+      ab(session, "wait", "--fn", LOADED);
+      const url = ab(session, "get", "url");
+      if (
+        app.auth &&
+        new URL(url).pathname === "/login" &&
+        !path.startsWith("/login")
+      )
+        throw new Error(`redirected to login for ${path}; auth failed`);
+      if (evalJs(session, pinTheme(theme)) === "reload") {
+        ab(session, "reload");
+        ab(session, "wait", "--fn", LOADED);
+      }
+      evalJs(session, HIDE_DEV_CHROME);
+      const name =
+        path.replace(/^\/+/, "").replace(/[^a-z0-9]+/gi, "-") || "root";
+      if (flags.selector) {
+        let k = 0;
+        for (;;) {
+          const box = evalJs(session, isolate(flags.selector, k));
+          if (!box.w) break;
+          ab(session, "set", "viewport", String(box.w), String(box.h), "2");
+          const file = join(
+            out,
+            `${name}-${theme}${box.count > 1 ? `-${k}` : ""}.png`,
+          );
+          ab(session, "screenshot", file);
+          written.push(file);
+          evalJs(session, RESTORE);
+          ab(session, "set", "viewport", String(width), "1000", "2");
+          if (++k >= box.count) break;
+        }
+        if (k === 0) {
+          console.error(`no visible match for ${flags.selector} on ${path}`);
+          process.exitCode = 1;
+        }
+      } else {
+        const file = join(out, `${name}-${theme}.png`);
+        ab(
+          session,
+          "screenshot",
+          file,
+          ...(flags["full-page"] ? ["--full"] : []),
+        );
         written.push(file);
-        k++;
       }
-      if (k === 0) {
-        console.error(`no visible match for ${flags.selector} on ${path}`);
-        process.exitCode = 1;
-      }
-    } else {
-      const file = join(out, `${name}-${theme}.png`);
-      await page.screenshot({
-        path: file,
-        fullPage: Boolean(flags["full-page"]),
-      });
-      written.push(file);
     }
+  } catch (e) {
+    console.error(e.message);
+    process.exitCode = 1;
+    break;
+  } finally {
+    spawnSync(bin, ["--session", session, "close"], { env });
   }
-  await context.close();
 }
-await browser.close();
+writeGallery();
 for (const f of written) console.log(f);
+
+// A gallery of every PNG in the output directory, written as a page fragment
+// (title + style + body) so the Artifact tool can publish it as is, with the
+// PNGs passed as `files`. Browsers render the fragment fine locally too.
+function writeGallery() {
+  const shots = readdirSync(out)
+    .filter((f) => f.endsWith(".png"))
+    .map((f) => ({ file: f, mtime: statSync(join(out, f)).mtimeMs }));
+  if (shots.length === 0) return;
+  const groups = new Map();
+  for (const s of shots) {
+    const m = s.file.match(/^(.*?)-(light|dark)(-\d+)?\.png$/);
+    const key = m ? `${m[1]}${m[3] ?? ""}` : s.file;
+    const g = groups.get(key) ?? { key, shots: [], mtime: 0 };
+    g.shots.push({ ...s, theme: m?.[2] ?? "" });
+    g.mtime = Math.max(g.mtime, s.mtime);
+    groups.set(key, g);
+  }
+  const git = (...a) =>
+    execFileSync("git", a, { cwd: repo, encoding: "utf8" }).trim();
+  const commit = git("rev-parse", "--short", "HEAD");
+  const facts = [
+    ["App", flags.app ?? "dashboard"],
+    ["Branch", git("rev-parse", "--abbrev-ref", "HEAD")],
+    ["Commit", commit],
+    ["Taken", new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC"],
+    [
+      "Viewport",
+      `${width} px wide, 2× scale${flags["full-page"] ? ", full page" : ""}`,
+    ],
+  ];
+  const esc = (s) =>
+    s.replace(
+      /[&<>"]/g,
+      (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+    );
+  const html = `<title>Screenshots ${esc(commit)}</title>
+<style>
+  :root { --bg: #f7f7f5; --fg: #1c1c1a; --muted: #6b6b66; --line: #dcdcd6; --panel: #ffffff; --accent: #c2410c; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141413; --fg: #ecece8; --muted: #9c9c95; --line: #2d2d2a; --panel: #1d1d1b; --accent: #fb923c; color-scheme: dark; } }
+  :root[data-theme="dark"] { --bg: #141413; --fg: #ecece8; --muted: #9c9c95; --line: #2d2d2a; --panel: #1d1d1b; --accent: #fb923c; color-scheme: dark; }
+  body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, system-ui, sans-serif; line-height: 1.5; }
+  main { max-width: 1120px; margin: 0 auto; padding-block: 32px 64px; padding-inline: 16px; display: grid; gap: 32px; }
+  h1, h2 { margin: 0; font-weight: 600; text-wrap: balance; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1rem; font-family: ui-monospace, Menlo, monospace; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 20px; margin: 0; font-size: 0.875rem; font-family: ui-monospace, Menlo, monospace; border-block: 1px solid var(--line); padding-block: 10px; }
+  dt { color: var(--muted); } dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+  section { display: grid; gap: 12px; }
+  figure { margin: 0; display: grid; gap: 8px; }
+  figcaption { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; color: var(--accent); }
+  .frame { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; overflow: hidden; }
+  .frame img { display: block; width: 100%; height: auto; max-width: 100%; }
+  @media (max-width: 480px) { dl { grid-template-columns: 1fr; gap: 0 } dt { margin-top: 8px } }
+</style>
+<main>
+  <h1>Screenshots</h1>
+  <dl>${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+${[...groups.values()]
+  .sort((a, b) => b.mtime - a.mtime)
+  .map(
+    (g) => `  <section>
+    <h2>${esc(g.key)}</h2>
+${g.shots
+  .sort((a, b) => a.theme.localeCompare(b.theme) * -1)
+  .map(
+    (s) => `    <figure>
+      <figcaption>${esc(s.theme || s.file)}</figcaption>
+      <div class="frame"><img src="${esc(s.file)}" alt="${esc(g.key)} ${esc(s.theme)}" loading="lazy"></div>
+    </figure>`,
+  )
+  .join("\n")}
+  </section>`,
+  )
+  .join("\n")}
+</main>
+`;
+  const index = join(out, "index.html");
+  writeFileSync(index, html);
+  console.error(`gallery: ${index}`);
+}
