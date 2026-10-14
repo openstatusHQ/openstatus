@@ -10,11 +10,7 @@ export type WebhookFlavor = "slack" | "discord" | "teams" | "generic";
 
 const SLACK_PREFIX = "https://hooks.slack.com/services/";
 const DISCORD_PREFIX = "https://discord.com/api/webhooks/";
-// Teams Workflows URLs look like
-//   https://prod-xx.<region>.logic.azure.com:443/workflows/<id>/...
-//   https://<tenant>.webhook.office.com/webhookb2/...
-//   https://<flow>.<region>.logic.azure.com/... (any .logic.azure.com host)
-// so we detect by hostname suffix rather than a hard prefix.
+// Teams hosts vary by tenant and region, so match by hostname suffix.
 const TEAMS_HOST_SUFFIXES = [
   ".logic.azure.com",
   ".powerplatform.com",
