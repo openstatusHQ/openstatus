@@ -220,9 +220,9 @@ export function Client() {
               </FormCardHeader>
               <FormCardFooter>
                 <FormCardFooterInfo>
-                  No card needed. You will see the price on the next page. The
-                  workspace returns to Hobby after {TRIAL_DAYS} days unless you
-                  add a card.
+                  <span className="text-foreground font-medium">No credit card needed.</span> You will see the price on the next
+                  page. The workspace returns to Hobby after {TRIAL_DAYS} days
+                  unless you add a card.
                 </FormCardFooterInfo>
                 <Button
                   size="sm"

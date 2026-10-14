@@ -64,19 +64,24 @@ export async function isTrialEligibleWorkspace(args: {
   return row !== undefined;
 }
 
-/** Records that the workspace used its trial. Keeps the first date on redelivery. */
+/**
+ * Records that the workspace used its trial. Keeps the first date on
+ * redelivery; returns false when it was already marked.
+ */
 export async function markWorkspaceTrialed(args: {
   ctx: ServiceContext;
-}): Promise<void> {
+}): Promise<boolean> {
   const { ctx } = args;
   requireScope(ctx, "write");
   const db = ctx.db ?? defaultDb;
 
-  await db
+  const rows = await db
     .update(workspace)
     .set({ trialedAt: new Date() })
     .where(and(eq(workspace.id, ctx.workspace.id), isNull(workspace.trialedAt)))
-    .run();
+    .returning({ id: workspace.id })
+    .all();
+  return rows.length > 0;
 }
 
 /** Workspaces the user owns that are mid-trial. */

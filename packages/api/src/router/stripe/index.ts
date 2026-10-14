@@ -145,7 +145,7 @@ const checkoutSessionInput = z.object({
   successUrl: z.string().optional(),
   cancelUrl: z.string().optional(),
   trial: z.boolean().default(false),
-  surface: z.enum(["billing", "plan_table"]).optional(),
+  surface: z.enum(["billing", "plan_table", "upgrade_dialog"]).optional(),
   // Stripe caps a metadata value at 500 characters.
   intent: z.string().trim().max(500).optional(),
 });

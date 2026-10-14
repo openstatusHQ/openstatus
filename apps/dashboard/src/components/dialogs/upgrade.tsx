@@ -67,7 +67,7 @@ export function UpgradeDialog(
           </DialogTitle>
           <DialogDescription>
             {canTrial
-              ? "No card needed. Start the trial from the Starter column, or pick another plan. "
+              ? "No credit card needed. Start the trial from the Starter column, or pick another plan. "
               : "Upgrade your workspace to support more monitors, status pages, regions, and much more. "}
             Get an overview within your{" "}
             <Link
@@ -106,7 +106,7 @@ export function UpgradeDialog(
             </NoteButton>
           </Note>
         ) : (
-          <DataTable restrictTo={restrictTo} />
+          <DataTable restrictTo={restrictTo} surface="upgrade_dialog" />
         )}
       </DialogContent>
     </Dialog>

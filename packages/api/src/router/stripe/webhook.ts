@@ -471,8 +471,8 @@ export const webhookRouter = createTRPCRouter({
     // for an unrelated `customer.subscription.updated` to come along.
     await cancelSupersededSubscriptions(live, subscription);
 
-    const isTrial =
-      subscription.status === "trialing" && !!subscription.trial_end;
+    // Not the live status: a late delivery can land after the trial ended.
+    const isTrial = subscription.metadata.source === "trial_opt_in";
     const wsCtx: ServiceContext = {
       workspace: ws,
       actor: { type: "system", job: "stripe-session-completed" },
@@ -498,18 +498,21 @@ export const webhookRouter = createTRPCRouter({
       await stripe.customers.update(customerId, {
         metadata: { trialed: "true" },
       });
-      await markWorkspaceTrialed({ ctx: wsCtx });
-      await trackForWorkspaceOwner({
-        db: opts.ctx.db,
-        ws: { ...ws, plan: built.plan },
-        event: Events.StartTrial,
-        props: {
-          surface: subscription.metadata.surface,
-          intent: subscription.metadata.intent,
-          trialEndsAt: trialEndsAtOf(subscription)?.toISOString(),
-          ...billingProps(subscription),
-        },
-      });
+      const firstMark = await markWorkspaceTrialed({ ctx: wsCtx });
+      // A redelivered event must not count the trial twice.
+      if (firstMark) {
+        await trackForWorkspaceOwner({
+          db: opts.ctx.db,
+          ws: { ...ws, plan: built.plan },
+          event: Events.StartTrial,
+          props: {
+            surface: subscription.metadata.surface,
+            intent: subscription.metadata.intent,
+            trialEndsAt: trialEndsAtOf(subscription)?.toISOString(),
+            ...billingProps(subscription),
+          },
+        });
+      }
       return;
     }
 

@@ -30,7 +30,10 @@ import { useRouter } from "next/navigation";
 import { Fragment, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { StartTrialDialog, TRIAL_DAYS } from "@/components/dialogs/start-trial";
+import {
+  TRIAL_DAYS,
+  type TrialSurface,
+} from "@/components/dialogs/start-trial";
 import { config as featureGroups, plans } from "@/data/plans";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -50,9 +53,14 @@ function getQuantitySuffix(addon: keyof Addons, interval: BillingInterval) {
   return packSize > 1 ? `${period}/${packSize}` : `${period}/each`;
 }
 
-export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
+export function DataTable({
+  restrictTo,
+  surface = "plan_table",
+}: {
+  restrictTo?: WorkspacePlan[];
+  surface?: TrialSurface;
+}) {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
-  const [trialOpen, setTrialOpen] = useState(false);
   const [currency] = useCookieState("x-currency", "USD");
   const trpc = useTRPC();
   const router = useRouter();
@@ -131,8 +139,10 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
         <TableCaption>
           {isTrialing
             ? "Upgrading ends your trial and charges your card today."
-            : canTrial && interval === "monthly"
-              ? `Starter can be tried free for ${TRIAL_DAYS} days, no card needed.`
+            : canTrial &&
+                interval === "monthly" &&
+                filteredPlans.some(({ id }) => id === "starter")
+              ? `Starter can be tried free for ${TRIAL_DAYS} days, no credit card needed.`
               : "A list to compare the different features by plan."}
         </TableCaption>
         <TableHeader>
@@ -178,6 +188,11 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                       <p className="text-muted-foreground text-xs font-normal text-wrap">
                         {plan.description}
                       </p>
+                      {isTrialOffer ? (
+                        <p className="text-xs font-normal text-wrap">
+                          Free for {TRIAL_DAYS} days. No credit card needed.
+                        </p>
+                      ) : null}
                     </div>
                     <div className="text-right">
                       {isFreePlan ? (
@@ -201,12 +216,21 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                       type="button"
                       variant={id === "starter" ? "default" : "outline"}
                       onClick={() => {
-                        if (isTrialOffer) {
-                          setTrialOpen(true);
-                          return;
-                        }
                         startTransition(async () => {
                           try {
+                            if (isTrialOffer) {
+                              await checkoutSessionMutation.mutateAsync({
+                                trial: true,
+                                plan: "starter",
+                                interval: "monthly",
+                                surface,
+                                currency: currency || "USD",
+                                workspaceSlug: workspace.slug,
+                                successUrl: `${BASE_URL}/settings/billing?trial=true`,
+                                cancelUrl: `${BASE_URL}/settings/billing`,
+                              });
+                              return;
+                            }
                             if (id === "free") {
                               await customerPortalMutation.mutateAsync({
                                 workspaceSlug: workspace.slug,
@@ -376,11 +400,6 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
           )}
         </TableBody>
       </Table>
-      <StartTrialDialog
-        open={trialOpen}
-        onOpenChange={setTrialOpen}
-        surface="plan_table"
-      />
     </div>
   );
 }

@@ -30,7 +30,7 @@ export type TrialEligibility =
   | { eligible: true }
   | { eligible: false; reason: TrialSkipReason };
 
-export type TrialSurface = "billing" | "plan_table";
+export type TrialSurface = "billing" | "plan_table" | "upgrade_dialog";
 
 // `customers.list` is read-after-write consistent; the Search API is not, so
 // a re-signup right after a trial could slip past it. Its email filter is

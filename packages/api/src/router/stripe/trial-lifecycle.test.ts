@@ -608,6 +608,7 @@ describe("trial lifecycle", () => {
         "checkout_session_completed",
       );
       assertSpyCalls(updateCustomer, 0);
+      expect(await readTrialedAt(f.workspace.id)).toBeNull();
     });
 
     test("trialing → active clears trialEndsAt", async () => {

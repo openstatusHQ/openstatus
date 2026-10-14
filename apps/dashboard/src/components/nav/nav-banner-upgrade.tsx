@@ -73,6 +73,11 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
             {workspace?.trial.eligible ? "Start trial" : "Upgrade"}
           </SidebarMenuButton>
         </SidebarMenuItem>
+        {workspace?.trial.eligible ? (
+          <SidebarMenuItem className="text-muted-foreground text-center text-[10px]">
+            No credit card needed
+          </SidebarMenuItem>
+        ) : null}
       </SidebarMenu>
       <UpgradeDialog open={open} onOpenChange={setOpen} />
     </SidebarGroup>
