@@ -342,10 +342,11 @@ function writeGallery() {
   }
   const git = (...a) =>
     execFileSync("git", a, { cwd: repo, encoding: "utf8" }).trim();
+  const commit = git("rev-parse", "--short", "HEAD");
   const facts = [
     ["App", flags.app ?? "dashboard"],
     ["Branch", git("rev-parse", "--abbrev-ref", "HEAD")],
-    ["Commit", git("rev-parse", "--short", "HEAD")],
+    ["Commit", commit],
     ["Taken", new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC"],
     [
       "Viewport",
@@ -357,7 +358,7 @@ function writeGallery() {
       /[&<>"]/g,
       (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
     );
-  const html = `<title>Screenshots ${esc(facts[1][1])}</title>
+  const html = `<title>Screenshots ${esc(commit)}</title>
 <style>
   :root { --bg: #f7f7f5; --fg: #1c1c1a; --muted: #6b6b66; --line: #dcdcd6; --panel: #ffffff; --accent: #c2410c; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141413; --fg: #ecece8; --muted: #9c9c95; --line: #2d2d2a; --panel: #1d1d1b; --accent: #fb923c; color-scheme: dark; } }

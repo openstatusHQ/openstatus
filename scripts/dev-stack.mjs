@@ -224,6 +224,12 @@ function groupMembers(pgid) {
   const r = spawnSync("pgrep", ["-l", "-g", String(pgid)], {
     encoding: "utf8",
   });
+  // pgrep exits 1 for "no match"; anything else means it could not answer,
+  // and guessing "empty" would make `down` drop the state while the stack runs.
+  if (r.error || (r.status !== 0 && r.status !== 1))
+    throw new Error(
+      `pgrep is needed to stop the stack: ${r.error?.message ?? r.stderr.trim()}`,
+    );
   return r.status === 0 ? r.stdout.trim().split("\n").filter(Boolean) : [];
 }
 
