@@ -7,6 +7,6 @@ SCHEMA >
     `count_state` AggregateFunction(count)
 
 ENGINE "AggregatingMergeTree"
-ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_PARTITION_KEY "toYYYYMMDD(time)"
 ENGINE_SORTING_KEY "workspaceId, time, trigger"
 ENGINE_TTL "time + toIntervalDay(30)"

@@ -9,6 +9,6 @@ SCHEMA >
     `error` AggregateFunction(count, Nullable(UInt8))
 
 ENGINE "AggregatingMergeTree"
-ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_PARTITION_KEY "toYYYYMMDD(time)"
 ENGINE_SORTING_KEY "monitorId, time"
 ENGINE_TTL "time + toIntervalDay(14)"
