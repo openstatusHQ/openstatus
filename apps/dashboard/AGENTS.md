@@ -10,8 +10,7 @@ node scripts/dev-stack.mjs up --warm /incidents/1   # only when nothing is runni
 node scripts/screenshot.mjs --app dashboard /incidents/1 --selector "[data-slot=timeline]"
 ```
 
-It runs system Chrome (or a Chromium it can find where there is none)
-against the local dev server, logs in
+It drives agent-browser against the local dev server, logs in
 with a seeded session (`--user max@openstatus.dev` or
 `thibault@openstatus.dev`), shoots light and dark, and prints the PNG paths.
 Look at them. `dev-stack.mjs` provisions the database and dashboard from a

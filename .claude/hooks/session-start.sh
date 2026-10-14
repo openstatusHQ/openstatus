@@ -19,9 +19,9 @@ done
 
 pnpm install
 
-# deno (pnpm verify, migrations, seed) and sqld (local libSQL) are not on the
-# image; dev-stack fetches the devbox-pinned versions from npm into
-# node_modules/.cache and prints their paths.
+# deno (pnpm verify, migrations, seed), sqld (local libSQL) and agent-browser
+# (screenshots) are not on the image; dev-stack fetches pinned versions from
+# npm into node_modules/.cache and prints their paths.
 node scripts/dev-stack.mjs tools
 
 # Seed the database and compile the dashboard once, so the cached container
@@ -36,4 +36,8 @@ fi
 tools="$CLAUDE_PROJECT_DIR/node_modules/.cache/openstatus-tools"
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   echo "export PATH=\"$tools/node_modules/.bin:$tools/sqld:\$PATH\"" >> "$CLAUDE_ENV_FILE"
+  # The sandbox's Chromium; agent-browser does not look there on its own.
+  if [ -x /opt/pw-browsers/chromium ]; then
+    echo 'export AGENT_BROWSER_EXECUTABLE_PATH=/opt/pw-browsers/chromium' >> "$CLAUDE_ENV_FILE"
+  fi
 fi

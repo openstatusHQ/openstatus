@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Screenshot pages of a local Next.js dev server, in light and dark.
+// Screenshot pages of a local Next.js dev server, in light and dark, through
+// agent-browser (https://github.com/vercel-labs/agent-browser).
 //
 //   node scripts/screenshot.mjs --app dashboard /incidents/1 --selector "[data-slot=timeline]"
 //   node scripts/screenshot.mjs --app web /pricing --full-page
@@ -7,23 +8,18 @@
 //
 // Flags, auth order and fixtures: .agents/skills/screenshot/SKILL.md.
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
-  readFileSync,
   readdirSync,
   statSync,
   writeFileSync,
 } from "node:fs";
-import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const { chromium } = createRequire(
-  join(repo, "apps/screenshot-service/package.json"),
-)("playwright");
 
 const APPS = {
   dashboard: { base: "http://localhost:3001", auth: true, probe: "/login" },
@@ -66,9 +62,47 @@ if (!Number.isFinite(width) || width <= 0) {
   console.error(`--width must be a positive number, got ${flags.width}`);
   process.exit(2);
 }
-const stateFile = resolve(flags.state ?? join(out, "state.json"));
-const wantsAuth = app.auth || Boolean(flags.token || flags.login);
+const wantsAuth = app.auth || Boolean(flags.token || flags.state);
 mkdirSync(out, { recursive: true });
+
+// agent-browser from PATH, else the copy `dev-stack.mjs tools` fetched.
+const bin = (() => {
+  const which = spawnSync("which", ["agent-browser"], { encoding: "utf8" });
+  if (which.status === 0) return which.stdout.trim();
+  const cached = join(
+    repo,
+    "node_modules/.cache/openstatus-tools/node_modules/.bin/agent-browser",
+  );
+  if (existsSync(cached)) return cached;
+  console.error(
+    "agent-browser not found: node scripts/dev-stack.mjs tools, or npm i -g agent-browser",
+  );
+  process.exit(1);
+})();
+const env = { ...process.env, AGENT_BROWSER_DEFAULT_TIMEOUT: "120000" };
+// The cloud sandbox ships a Chromium that agent-browser does not find by itself.
+if (
+  !env.AGENT_BROWSER_EXECUTABLE_PATH &&
+  existsSync("/opt/pw-browsers/chromium")
+)
+  env.AGENT_BROWSER_EXECUTABLE_PATH = "/opt/pw-browsers/chromium";
+
+function ab(session, ...cmd) {
+  const r = spawnSync(bin, ["--session", session, ...cmd], {
+    encoding: "utf8",
+    env,
+  });
+  if (r.status !== 0)
+    throw new Error(
+      `agent-browser ${cmd.join(" ")}: ${(r.stderr || r.stdout).trim()}`,
+    );
+  return r.stdout.trim();
+}
+// `eval` prints the result as JSON; page code returns JSON strings for objects.
+function evalJs(session, js) {
+  const v = JSON.parse(ab(session, "eval", js));
+  return typeof v === "string" && v.startsWith("{") ? JSON.parse(v) : v;
+}
 
 async function sql(statements) {
   const res = await fetch(db, {
@@ -119,40 +153,9 @@ async function sessionCookies() {
 }
 
 function cookies(token, slug) {
-  const host = new URL(base).hostname;
-  const list = [
-    { name: "authjs.session-token", value: token, domain: host, path: "/" },
-  ];
-  if (slug)
-    list.push({ name: "workspace-slug", value: slug, domain: host, path: "/" });
+  const list = [{ name: "authjs.session-token", value: token }];
+  if (slug) list.push({ name: "workspace-slug", value: slug });
   return list;
-}
-
-async function magicLinkLogin(context) {
-  if (!flags.log) throw new Error("--login needs --log <dev server log file>");
-  const page = await context.newPage();
-  await page.goto(`${base}/login`);
-  // The form opens closed; the email input appears after the mode button.
-  const input = page.locator('input[name="email"]');
-  if (!(await input.isVisible()))
-    await page.getByRole("button", { name: "Continue with email" }).click();
-  await input.fill(flags.login);
-  const seen = readFileSync(flags.log, "utf8").length;
-  await input.press("Enter");
-  let url;
-  for (let i = 0; i < 40 && !url; i++) {
-    await page.waitForTimeout(500);
-    url = readFileSync(flags.log, "utf8")
-      .slice(seen)
-      .match(/Magic Link: (http\S+)/)?.[1];
-  }
-  if (!url) throw new Error("no `>>> Magic Link:` line appeared in the log");
-  await page.goto(url, { waitUntil: "networkidle" });
-  await page.close();
-  await context.storageState({ path: stateFile });
-  console.error(
-    `auth: magic link for ${flags.login}, state saved to ${stateFile}`,
-  );
 }
 
 // Three apps, two default ports, and on this machine any of them may sit on
@@ -176,73 +179,28 @@ if (!app.auth) {
   }
 }
 
-// System Chrome locally; a remote VM has none, so fall back to Playwright's
-// bundled Chromium, and when that build is missing too (the cloud sandbox
-// ships one Chromium under /opt/pw-browsers, usually not the pinned build) to
-// an explicit executable.
-const preinstalled = [
-  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
-  "/opt/pw-browsers/chromium",
-].find((p) => p && existsSync(p));
-const attempts = [
-  ["chrome", () => chromium.launch({ channel: "chrome" })],
-  ["bundled chromium", () => chromium.launch()],
-  ...(preinstalled
-    ? [[preinstalled, () => chromium.launch({ executablePath: preinstalled })]]
-    : []),
-];
-let browser;
-for (const [label, launch] of attempts) {
-  browser = await launch().catch((e) => {
-    console.error(`${label}: ${e.message.split("\n")[0]}`);
-    return null;
-  });
-  if (browser) break;
-}
-if (!browser) {
-  console.error(
-    "no browser: cd apps/screenshot-service && npx playwright install chromium, or set PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH",
-  );
-  process.exit(1);
-}
 let auth = null;
 if (flags.token) {
   auth = cookies(flags.token, flags.workspace);
   console.error("auth: --token");
-} else if (wantsAuth && !flags.login) {
+} else if (flags.state) {
+  console.error(`auth: agent-browser state ${flags.state}`);
+} else if (wantsAuth) {
   auth = await sessionCookies().catch(
     (e) => (console.error(`auth: ${e.message}`), null),
   );
-}
-// One login for all themes: the dashboard rate-limits magic-link emails.
-if (flags.login && !auth) {
-  const context = await browser.newContext();
-  await magicLinkLogin(context);
-  await context.close();
-}
-// A saved state is only a fallback; an explicit identity must not silently
-// become whoever logged in last.
-const useState =
-  wantsAuth && !auth && !flags.user && !flags.token && existsSync(stateFile);
-if (useState) console.error(`auth: saved state ${stateFile}`);
-if (wantsAuth && !auth && !useState) {
-  console.error(
-    "auth: no session found; seed the database, pass --token, or --login <email> --log <file>",
-  );
+  if (!auth)
+    console.error(
+      "auth: no session found; seed the database, pass --token, or --state <agent-browser state file>",
+    );
 }
 
-const written = [];
-process.on("uncaughtException", async (e) => {
-  console.error(e.message);
-  await browser.close().catch(() => {});
-  process.exit(1);
-});
 // The first request to a route pays the dev server's compile (10s+ on a cold
-// Turbopack cache); take it here so the navigation below never races a timeout.
-if (!useState) {
-  const headers = auth
-    ? { cookie: auth.map((c) => `${c.name}=${c.value}`).join("; ") }
-    : {};
+// Turbopack cache); take it here so no browser command waits on it.
+if (auth) {
+  const headers = {
+    cookie: auth.map((c) => `${c.name}=${c.value}`).join("; "),
+  };
   for (const path of paths) {
     const t = Date.now();
     const res = await fetch(base + path, { headers, redirect: "manual" }).catch(
@@ -253,64 +211,115 @@ if (!useState) {
     );
   }
 }
-for (const theme of themes) {
-  const context = await browser.newContext({
-    viewport: { width, height: 1000 },
-    deviceScaleFactor: 2,
-    colorScheme: theme,
-    ...(useState ? { storageState: stateFile } : {}),
-  });
-  if (auth) await context.addCookies(auth);
-  // Every app uses next-themes with the default storage key.
-  await context.addInitScript((t) => localStorage.setItem("theme", t), theme);
 
-  const page = await context.newPage();
-  page.setDefaultNavigationTimeout(120000);
-  for (const path of paths) {
-    await page.goto(base + path, { waitUntil: "networkidle" });
-    if (
-      app.auth &&
-      new URL(page.url()).pathname === "/login" &&
-      !path.startsWith("/login")
-    )
-      throw new Error(`redirected to login for ${path}; auth failed`);
-    // Dev-only chrome floats over the bottom-left corner: the apps' Tailwind
-    // breakpoint badge and the Next.js dev indicator.
-    await page.addStyleTag({
-      content:
-        "[data-slot=tailwind-indicator],nextjs-portal{display:none!important}",
-    });
-    const name =
-      path.replace(/^\/+/, "").replace(/[^a-z0-9]+/gi, "-") || "root";
-    if (flags.selector) {
-      const all = page.locator(flags.selector);
-      const n = await all.count();
-      let k = 0;
-      for (let i = 0; i < n; i++) {
-        const el = all.nth(i);
-        if (!(await el.isVisible())) continue;
-        await el.scrollIntoViewIfNeeded();
-        const file = join(out, `${name}-${theme}${n > 1 ? `-${k}` : ""}.png`);
-        await el.screenshot({ path: file });
+// Dev-only chrome floats over the bottom-left corner: the apps' Tailwind
+// breakpoint badge and the Next.js dev indicator.
+const HIDE_DEV_CHROME = `(() => {
+  const st = document.createElement("style");
+  st.textContent = "[data-slot=tailwind-indicator],nextjs-portal{display:none!important}";
+  document.head.appendChild(st);
+  return "ok";
+})()`;
+
+// agent-browser shoots viewports, not elements. Pin the k-th match to the
+// viewport's top-left at its own size, hide everything else, and let the
+// caller size the viewport to it.
+const isolate = (selector, k) => `(() => {
+  const els = [...document.querySelectorAll(${JSON.stringify(selector)})].filter((e) => e.getClientRects().length);
+  const el = els[${k}];
+  if (!el) return JSON.stringify({ count: els.length });
+  const r = el.getBoundingClientRect();
+  const w = Math.ceil(r.width), h = Math.ceil(r.height);
+  const st = document.createElement("style");
+  st.id = "__shot";
+  st.textContent = "html{background:" + getComputedStyle(document.body).backgroundColor + "!important}"
+    + "body{visibility:hidden!important;overflow:hidden!important}"
+    + "[data-shot-target]{visibility:visible!important;position:fixed!important;top:0!important;left:0!important;margin:0!important;width:" + w + "px!important;height:" + h + "px!important;z-index:2147483647!important}";
+  el.setAttribute("data-shot-target", "");
+  document.head.appendChild(st);
+  return JSON.stringify({ count: els.length, w, h });
+})()`;
+const RESTORE = `(() => {
+  document.getElementById("__shot")?.remove();
+  document.querySelector("[data-shot-target]")?.removeAttribute("data-shot-target");
+  return "ok";
+})()`;
+
+// next-themes follows prefers-color-scheme until the user picks a theme; a
+// saved choice (from --state) would win, so pin the storage key too.
+const pinTheme = (theme) => `(() => {
+  localStorage.setItem("theme", ${JSON.stringify(theme)});
+  return document.documentElement.classList.contains(${JSON.stringify(theme)}) ? "ok" : "reload";
+})()`;
+
+const LOADED = `document.readyState === "complete" && document.fonts.status === "loaded"`;
+
+const written = [];
+for (const theme of themes) {
+  // One isolated browser per theme; sessions survive this process, so close it.
+  const session = `openstatus-shot-${theme}-${process.pid}`;
+  try {
+    ab(session, "set", "viewport", String(width), "1000", "2");
+    ab(session, "set", "media", theme);
+    for (const c of auth ?? [])
+      ab(session, "cookies", "set", c.name, c.value, "--url", base);
+    for (const path of paths) {
+      const open = flags.state ? ["--state", flags.state] : [];
+      ab(session, ...open, "open", base + path);
+      ab(session, "wait", "--fn", LOADED);
+      const url = ab(session, "get", "url");
+      if (
+        app.auth &&
+        new URL(url).pathname === "/login" &&
+        !path.startsWith("/login")
+      )
+        throw new Error(`redirected to login for ${path}; auth failed`);
+      if (evalJs(session, pinTheme(theme)) === "reload") {
+        ab(session, "reload");
+        ab(session, "wait", "--fn", LOADED);
+      }
+      evalJs(session, HIDE_DEV_CHROME);
+      const name =
+        path.replace(/^\/+/, "").replace(/[^a-z0-9]+/gi, "-") || "root";
+      if (flags.selector) {
+        let k = 0;
+        for (;;) {
+          const box = evalJs(session, isolate(flags.selector, k));
+          if (!box.w) break;
+          ab(session, "set", "viewport", String(box.w), String(box.h), "2");
+          const file = join(
+            out,
+            `${name}-${theme}${box.count > 1 ? `-${k}` : ""}.png`,
+          );
+          ab(session, "screenshot", file);
+          written.push(file);
+          evalJs(session, RESTORE);
+          ab(session, "set", "viewport", String(width), "1000", "2");
+          if (++k >= box.count) break;
+        }
+        if (k === 0) {
+          console.error(`no visible match for ${flags.selector} on ${path}`);
+          process.exitCode = 1;
+        }
+      } else {
+        const file = join(out, `${name}-${theme}.png`);
+        ab(
+          session,
+          "screenshot",
+          file,
+          ...(flags["full-page"] ? ["--full"] : []),
+        );
         written.push(file);
-        k++;
       }
-      if (k === 0) {
-        console.error(`no visible match for ${flags.selector} on ${path}`);
-        process.exitCode = 1;
-      }
-    } else {
-      const file = join(out, `${name}-${theme}.png`);
-      await page.screenshot({
-        path: file,
-        fullPage: Boolean(flags["full-page"]),
-      });
-      written.push(file);
     }
+  } catch (e) {
+    console.error(e.message);
+    process.exitCode = 1;
+    break;
+  } finally {
+    spawnSync(bin, ["--session", session, "close"], { env });
   }
-  await context.close();
 }
-await browser.close();
 writeGallery();
 for (const f of written) console.log(f);
 

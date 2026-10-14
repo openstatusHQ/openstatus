@@ -5,7 +5,7 @@
 //   node scripts/dev-stack.mjs up [--reseed] [--warm /incidents/1 ...]
 //   node scripts/dev-stack.mjs down
 //   node scripts/dev-stack.mjs status
-//   node scripts/dev-stack.mjs tools      # only fetch deno + sqld (session hook)
+//   node scripts/dev-stack.mjs tools      # only fetch deno, sqld, agent-browser
 //
 // Servers already answering on their port are reused and left alone by `down`;
 // only processes this script started are stopped. Flags, ports and fixtures:
@@ -35,6 +35,8 @@ const toolsDir = join(repo, "node_modules", ".cache", "openstatus-tools");
 // The sqld npm wrapper's postinstall is broken, so the platform tarball is
 // unpacked by hand. Its binary reports the devbox-pinned sqld version.
 const SQLD_NPM_VERSION = "0.24.1-pre.42";
+// Capture engine of scripts/screenshot.mjs; not in devbox.json, pinned here.
+const AGENT_BROWSER_VERSION = "0.39.1";
 
 const args = process.argv.slice(2);
 const command = args.shift();
@@ -79,29 +81,32 @@ function onPath(bin) {
   return r.status === 0 ? r.stdout.trim().split("\n")[0] : null;
 }
 
-function ensureDeno() {
-  const found = onPath("deno");
+// The cache has one package.json for every npm-installed tool, so a later
+// install never prunes an earlier one.
+function ensureNpmTool(name, version) {
+  const found = onPath(name);
   if (found) return found;
-  const version = pinnedVersion("deno");
-  const bin = join(toolsDir, "node_modules", ".bin", "deno");
+  const bin = join(toolsDir, "node_modules", ".bin", name);
   if (existsSync(bin)) return bin;
-  log(`fetching deno ${version} from npm into ${toolsDir}`);
   mkdirSync(toolsDir, { recursive: true });
+  const manifest = join(toolsDir, "package.json");
+  const pkg = existsSync(manifest)
+    ? JSON.parse(readFileSync(manifest, "utf8"))
+    : { name: "openstatus-tools", private: true, dependencies: {} };
+  pkg.dependencies[name] = version;
+  writeFileSync(manifest, JSON.stringify(pkg, null, 2));
+  log(`fetching ${name} ${version} from npm into ${toolsDir}`);
   execFileSync(
     "npm",
-    [
-      "install",
-      "--prefix",
-      toolsDir,
-      "--no-audit",
-      "--no-fund",
-      "--no-save",
-      `deno@${version}`,
-    ],
+    ["install", "--prefix", toolsDir, "--no-audit", "--no-fund"],
     { stdio: "inherit" },
   );
   return bin;
 }
+
+const ensureDeno = () => ensureNpmTool("deno", pinnedVersion("deno"));
+const ensureAgentBrowser = () =>
+  ensureNpmTool("agent-browser", AGENT_BROWSER_VERSION);
 
 function ensureSqld() {
   const found = onPath("sqld");
@@ -334,6 +339,7 @@ async function status() {
 function tools() {
   console.log(`deno: ${ensureDeno()}`);
   console.log(`sqld: ${ensureSqld()}`);
+  console.log(`agent-browser: ${ensureAgentBrowser()}`);
 }
 
 try {

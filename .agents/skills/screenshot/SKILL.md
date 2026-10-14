@@ -5,9 +5,14 @@ description: Screenshot pages of the local dev server of any Next.js app here (d
 
 # Screenshots
 
-One script does the loop: find Playwright, use system Chrome (or the bundled
-Chromium on a machine without it), log in if the app needs it, set the theme,
-shoot an element or the page.
+The engine is [agent-browser](https://github.com/vercel-labs/agent-browser),
+a CLI that drives Chrome over CDP. Two ways in:
+
+- `scripts/screenshot.mjs` for the standard evidence shots. It logs in with
+  a seeded session, shoots light and dark at 2×, hides dev-only chrome,
+  takes the element or the page, and writes a gallery.
+- `agent-browser` directly for a state the script cannot reach: a dropdown
+  open, a dialog, a filled composer. See **Interactive shots**.
 
 ```sh
 node scripts/screenshot.mjs --app dashboard /incidents/1 --selector "[data-slot=timeline]"
@@ -29,22 +34,22 @@ node scripts/screenshot.mjs --app dashboard /incidents/1 --user max@openstatus.d
 node scripts/dev-stack.mjs down      # when finished; stops only what `up` started
 ```
 
-`up` fetches the devbox-pinned deno and sqld from npm when they are not on
-PATH (the official download hosts are blocked in the sandbox; the npm
-packages are not), creates the two `.env` files from their examples, starts
-sqld on :8080, migrates, seeds once (`--reseed` wipes and reseeds), starts the
-dashboard on :3001 and warms the given routes. Servers already answering are
-reused and left alone by `down`. The session-start hook has usually already
-fetched the tools, so `up` takes about 10 seconds plus the first compile.
-`status` shows what is up; logs are in `.screenshots/stack/`. `--port` and
-`--db-port` move the two servers.
+`up` fetches pinned deno, sqld and agent-browser from npm when they are not
+on PATH (the official download hosts are blocked in the sandbox; npm is
+not), creates the two `.env` files from their examples, starts sqld on
+:8080, migrates, seeds once (`--reseed` wipes and reseeds), starts the
+dashboard on :3001 and warms the given routes. Servers already answering
+are reused and left alone by `down`. The session-start hook has usually
+already fetched the tools and compiled the dashboard, so `up` takes about
+15 seconds. `status` shows what is up; logs are in `.screenshots/stack/`.
+`--port` and `--db-port` move the two servers.
 
 `pnpm -w dev:dashboard` does not work there: it runs `turso dev`, which the
-sandbox lacks. The script also falls back to the sandbox's preinstalled
-Chromium (`/opt/pw-browsers/chromium`, or `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`)
-when Playwright's pinned build is missing; no `playwright install` needed.
+sandbox lacks. agent-browser uses the sandbox's Chromium through
+`AGENT_BROWSER_EXECUTABLE_PATH=/opt/pw-browsers/chromium`; the hook exports
+it and the script sets it itself when unset. No `agent-browser install`.
 
-## Before running
+## Before running (local machine)
 
 1. Find the dev server: `lsof -nP -iTCP:3000 -iTCP:3001 -iTCP:3002 -sTCP:LISTEN`.
    Defaults are dashboard `:3001`, web and status page `:3000`, but `apps/web`
@@ -70,11 +75,14 @@ when Playwright's pinned build is missing; no `playwright install` needed.
    Pass `--user max@openstatus.dev` and the script finds the row, or skip the
    DB with `--token seed-session-max --workspace love-openstatus`. Without
    `--user` it takes any live session, and the two seeded ones tie, so name
-   the user when identity matters. No session at all:
-   `--login <email> --log <dev log>` submits the email form, follows the
-   `>>> Magic Link:` line the dev server prints and saves a storage state next
-   to the output. A database that predates the seed change has no `max@`
-   session: re-seed or `--login`.
+   the user when identity matters. No seeded session: log in once with
+   agent-browser (`open http://localhost:3001/login`, submit the email, follow
+   the `>>> Magic Link:` line from the dev server log with `open`), run
+   `agent-browser state save .screenshots/auth.json`, and pass
+   `--state .screenshots/auth.json`.
+4. agent-browser: `npm i -g agent-browser` (it wants node 24, the devbox
+   pin), or let `node scripts/dev-stack.mjs tools` fetch the pinned copy
+   into `node_modules/.cache`. It finds Chrome on its own locally.
 
 ## Flags
 
@@ -82,7 +90,7 @@ when Playwright's pinned build is missing; no `playwright install` needed.
 |---|---|---|
 | `--app` | `dashboard` | `dashboard`, `web` or `status-page`; sets base and whether to log in |
 | `<path> …` | required | one or more paths; on the status page the slug is the first segment in dev |
-| `--selector` | page | CSS selector; every visible match is shot |
+| `--selector` | page | CSS selector; every visible match is shot on its own |
 | `--theme` | `both` | `light` or `dark` |
 | `--out` | `.screenshots` | gitignored |
 | `--width` | `1400` | viewport width, 2× device scale |
@@ -92,7 +100,35 @@ when Playwright's pinned build is missing; no `playwright install` needed.
 | `--user` | | pick the session of this email |
 | `--workspace` | first membership | slug for the `workspace-slug` cookie |
 | `--token` | | explicit session token, skips the lookup |
-| `--login`, `--log` | | magic-link login fallback |
+| `--state` | | agent-browser state file (cookies + storage) instead of a seeded session |
+
+## Interactive shots
+
+For a state the script cannot reach, drive agent-browser yourself. The
+sequence below is what the script does, minus the gallery; `agent-browser
+skills get core` has the full command set.
+
+```sh
+agent-browser set viewport 1400 1000 2        # 2× like the script
+agent-browser set media dark                  # or light; next-themes follows it
+agent-browser cookies set authjs.session-token seed-session-max --url http://localhost:3001
+agent-browser cookies set workspace-slug love-openstatus --url http://localhost:3001
+agent-browser open http://localhost:3001/incidents/1
+agent-browser wait --fn "document.fonts.status === 'loaded'"
+agent-browser eval "document.head.insertAdjacentHTML('beforeend','<style>[data-slot=tailwind-indicator],nextjs-portal{display:none!important}</style>')"
+agent-browser snapshot -i                     # refs for the interactive elements
+agent-browser click @e12                      # e.g. the severity select
+agent-browser screenshot .screenshots/incidents-1-severity-dark.png
+agent-browser close                           # sessions outlive the shell
+```
+
+- `wait --load networkidle` times out against the dev server (the HMR
+  socket never goes idle). Wait for fonts, an element (`wait @ref`) or text.
+- `--session <name>` isolates a browser; the script uses one per theme and
+  closes it. Close the ones you open.
+- agent-browser shoots viewports, not elements. The script's `--selector`
+  pins the match to the viewport's top-left at its own size and hides the
+  rest; for an ad-hoc element shot, `scrollintoview` and shoot the viewport.
 
 ## Selectors worth knowing
 
@@ -115,12 +151,11 @@ re-seed to reset.
 ## What the script already handles
 
 - Each route is fetched once with the session cookies before the browser
-  navigates, so a cold Turbopack compile (10s+) never trips the navigation
-  timeout (120s).
+  opens it, so a cold Turbopack compile (10s+) never trips a timeout.
 - The dev-only Tailwind breakpoint badge (`[data-slot=tailwind-indicator]`)
   and the Next.js dev indicator are hidden before the capture.
-- Not handled: avatar images from blocked hosts render as alt text in the
-  sandbox. Say so when it shows; do not chase it.
+- Not handled: avatar images from blocked hosts render as initials or alt
+  text in the sandbox. Say so when it shows; do not chase it.
 
 ## Rules
 
@@ -130,8 +165,8 @@ re-seed to reset.
   that state; say so when you do.
 - A redirect to `/login` means auth failed. Fix auth; do not screenshot the
   login page and call it done.
-- Stop any dev server you started. Match by port, never by process name,
-  so the user's own servers survive.
+- Stop any dev server you started (`dev-stack down`, or by port, never by
+  process name) and close any agent-browser session you opened.
 
 ## Sharing
 
