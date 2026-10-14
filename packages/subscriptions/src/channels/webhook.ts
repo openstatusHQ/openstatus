@@ -276,12 +276,7 @@ function buildDiscordPayload(
 }
 
 type TeamsContainerStyle = "attention" | "warning" | "good" | "accent";
-type TeamsTextColor =
-  | "Default"
-  | "Accent"
-  | "Good"
-  | "Warning"
-  | "Attention";
+type TeamsTextColor = "Default" | "Accent" | "Good" | "Warning" | "Attention";
 
 function teamsStyleForStatus(color: StatusColor): {
   containerStyle: TeamsContainerStyle;
