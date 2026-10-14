@@ -43,20 +43,20 @@ export function UpgradeIntentDialog(props: DialogProps) {
     <Dialog {...props}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>What are you building?</DialogTitle>
+          <DialogTitle>What are you using openstatus for?</DialogTitle>
           <DialogDescription>
-            A sentence or two helps us decide what to build next.
+            A sentence or two helps us shape what comes next.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-2">
           <Label htmlFor={id} className="sr-only">
-            What are you building?
+            What are you using openstatus for?
           </Label>
           <Textarea
             id={id}
-            className="min-h-21"
+            className="min-h-28"
             value={message}
-            placeholder="A status page for our API, alerts for our on-call team, ..."
+            placeholder="Incident response with Slack alerts for on-call, a public status page for customers, uptime checks for our API from multiple regions, uptime reports for compliance, ..."
             onChange={(e) => setMessage(e.target.value)}
             disabled={feedbackMutation.isPending}
           />
