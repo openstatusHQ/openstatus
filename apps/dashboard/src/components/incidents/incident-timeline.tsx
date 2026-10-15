@@ -43,7 +43,6 @@ import {
 } from "@/components/content/timeline";
 
 import { IncidentSeverityBadge, IncidentStatusBadge } from "./incident-badge";
-import { type EventOrigin, eventOrigin } from "./incident-event-origin";
 
 type Event = NonNullable<RouterOutputs["incident"]["listEvents"]>[number];
 type Incident = NonNullable<RouterOutputs["incident"]["get"]>;
@@ -82,11 +81,23 @@ type Parsed = {
   agent?: boolean;
 };
 
-const SOURCES: Record<EventOrigin["kind"], Omit<ActorSource, "href">> = {
-  slack: { label: "Slack", icon: SlackIcon },
-  api: { label: "API", icon: Api },
-  mcp: { label: "MCP", icon: ModelContextProtocolIcon },
-};
+// The service already lifts legacy "[From Slack]" notes into these columns.
+function eventSource(event: Event): ActorSource | undefined {
+  switch (event.source) {
+    case "slack":
+      return {
+        label: "Slack",
+        icon: SlackIcon,
+        href: event.sourceRef ?? undefined,
+      };
+    case "api":
+      return { label: "API", icon: Api };
+    case "mcp":
+      return { label: "MCP", icon: ModelContextProtocolIcon };
+    default:
+      return undefined;
+  }
+}
 
 // Events carry no structured payload, so the subject of a change is read back
 // from the service's own message. An unknown shape falls back to the raw text.
@@ -239,7 +250,6 @@ export function IncidentTimelineItem({
   event: Event;
   incident: Pick<Incident, "statusReport" | "slackTeamId">;
 }) {
-  const { origin, message: text } = eventOrigin(event);
   const {
     icon: Icon,
     phrase,
@@ -249,7 +259,7 @@ export function IncidentTimelineItem({
     channelId,
     agent,
     reportId,
-  } = parseEvent({ ...event, message: text });
+  } = parseEvent(event);
   const user = event.createdByUser;
   const actor = user
     ? { name: personName(user), email: user.email, photoUrl: user.photoUrl }
@@ -278,11 +288,7 @@ export function IncidentTimelineItem({
           actor={actor}
           avatar={!compact}
           // compact rows read as one sentence; the source badge needs the avatar
-          source={
-            compact || !origin
-              ? undefined
-              : { ...SOURCES[origin.kind], href: origin.href }
-          }
+          source={compact ? undefined : eventSource(event)}
         />
       )}
       {phrase ?? "posted"}
