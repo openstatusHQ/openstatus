@@ -11,7 +11,7 @@ At the end of last year, we said we wanted to [move openstatus upstream](/blog/2
 
 Until now, we did two things: tell you when something broke (monitors) and tell your users about it (status pages). Everything in between happened in a messy Slack thread.
 
-Today we're shipping incident management.
+Today we're shipping [incident management](/incident-management).
 
 ## Why?
 
@@ -35,7 +35,7 @@ We kept the workflow as small as possible:
 2. openstatus creates a dedicated channel: `#inc-2026-10-14-gcp-queue`.
 3. Everyone jumps in, debugging stays in one room, and the channel gets archived when you close the incident.
 
-`[TODO: Screenshot or GIF of declaring an incident in Slack and the bot opening #inc-2026-10-14-gcp-queue]`
+<Image src="/assets/posts/launching-incident-management/slack-declare-incident.png" alt="Slack 'Declare an incident' modal from openstatus with title, severity, summary, and commander fields" />
 
 ### I was wrong about slash commands
 
@@ -90,8 +90,8 @@ We wrote a whole post on why [status pages are politics](/blog/status-pages-is-p
 
 So we kept the two objects separate in the data model:
 
-- **Incident (internal):** `open` → `mitigated` → `resolved` (or `canceled` for false alarms). Has a severity, a commander, internal notes, and a post-mortem.
-- **Status report (public):** `investigating` → `identified` → `monitoring` → `resolved`. What customers actually read.
+- **Incident (internal):** `open` → `mitigated` → `resolved` . Has a severity, a commander, internal notes, and a post-mortem.
+- **Status report (public):** `investigating` → `monitoring` → `resolved`. What customers actually read.
 
 You can link them, and each keeps its own state. You can mark the incident `mitigated` internally while the public status page still says `monitoring`. Or you can never publish a status report at all.
 
@@ -143,7 +143,7 @@ Connection leak in `v2.14.2` exhausted the worker Redis pool under burst load.
 - [ ] Cap max concurrent jobs per worker (@max)
 ```
 
-`[TODO: Screenshot of the post-mortem draft view in the dashboard]`
+<Image src="/assets/posts/launching-incident-management/dashboard-postmortem-draft.png" alt="AI-drafted post-mortem in the openstatus dashboard with summary, impact, timeline, root cause, and action items, ready to approve" />
 
 You edit the markdown, fix whatever the LLM got wrong, approve it, and close the incident. Closing freezes the record and archives the Slack channel.
 
