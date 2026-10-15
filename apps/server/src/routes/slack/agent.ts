@@ -51,8 +51,6 @@ export interface AgentOptions {
   tools?: Record<string, Tool>;
   /** Appended to the system prompt: what the user is looking at right now. */
   contextNote?: string;
-  /** Permalink of the thread root, stamped on the events the turn writes. */
-  originRef?: string;
 }
 
 function convertThreadToMessages(
@@ -84,12 +82,7 @@ export async function runAgent(
   actor: SlackActor,
   options?: AgentOptions,
 ): Promise<AgentResult> {
-  const ctx: ServiceContext = {
-    workspace,
-    actor,
-    tb,
-    origin: { ref: options?.originRef },
-  };
+  const ctx: ServiceContext = { workspace, actor, tb };
   const tools = buildSlackTools(ctx, options?.tools);
   let messages = convertThreadToMessages(thread, botUserId);
 

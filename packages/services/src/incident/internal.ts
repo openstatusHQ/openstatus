@@ -87,7 +87,15 @@ function actorSource(actor: Actor): IncidentEventSource {
 }
 
 function actorSourceRef(actor: Actor): string | null {
-  return actor.type === "apiKey" || actor.type === "mcp" ? actor.keyId : null;
+  switch (actor.type) {
+    case "apiKey":
+    case "mcp":
+      return actor.keyId;
+    case "slack":
+      return actor.permalink ?? null;
+    default:
+      return null;
+  }
 }
 
 /** The only way an event is written: the row and its audit entry together. */
@@ -111,11 +119,10 @@ export async function appendIncidentEvent(
       type: args.type,
       message: args.message ?? null,
       source: args.source ?? actorSource(ctx.actor),
-      // A request's own origin (a Slack message) beats the actor's identity.
       sourceRef:
         args.sourceRef !== undefined
           ? args.sourceRef
-          : (ctx.origin?.ref ?? actorSourceRef(ctx.actor)),
+          : actorSourceRef(ctx.actor),
       createdBy: args.createdBy ?? tryGetActorUserId(ctx.actor),
       createdAt: args.createdAt ?? new Date(),
     })

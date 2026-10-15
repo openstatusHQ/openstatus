@@ -235,8 +235,7 @@ async function noteMessage(args: {
 
     const ctx: ServiceContext = {
       workspace: resolved.workspace,
-      actor,
-      origin: { ref: permalink },
+      actor: { ...actor, permalink },
     };
     await addIncidentNote({
       ctx,

@@ -722,7 +722,8 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
       return;
     }
 
-    const originRef = permalinkFor(slack, event.channel, threadTs);
+    // the thread root: events the turn writes link back to where it was asked
+    const permalink = permalinkFor(slack, event.channel, threadTs);
     let thread: ThreadMessage[] = [];
     if (prefetchedThread) {
       thread = prefetchedThread;
@@ -761,7 +762,7 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
       thread,
       botUserId,
       event.text,
-      actor,
+      { ...actor, permalink: await permalink },
       {
         events: reply.progress,
         signal: turn.signal,
@@ -769,7 +770,6 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
         contextNote:
           [context?.contextNote, incidentNote].filter(Boolean).join("\n\n") ||
           undefined,
-        originRef: await originRef,
       },
     );
 

@@ -405,9 +405,9 @@ describe("handleSlackEvent", () => {
   });
 
   test("the turn's writes link back to the thread it was asked in", async () => {
-    let options: { originRef?: string } | undefined;
-    slackTestState.runAgentOverride = (o) => {
-      options = o as typeof options;
+    let actor: { permalink?: string } | undefined;
+    slackTestState.runAgentOverride = (_o, a) => {
+      actor = a as typeof actor;
       return Promise.resolve({
         text: "Done",
         toolResults: [],
@@ -432,11 +432,11 @@ describe("handleSlackEvent", () => {
       },
     });
     const deadline = Date.now() + 5000;
-    while (options === undefined && Date.now() < deadline) {
+    while (actor === undefined && Date.now() < deadline) {
       await new Promise((r) => setTimeout(r, 10));
     }
 
-    expect(options?.originRef).toBe(
+    expect(actor?.permalink).toBe(
       `https://slack.test/archives/C1/p${ts.replace(".", "")}`,
     );
   });

@@ -31,7 +31,7 @@ export async function permalinkFor(
  * Build a `ServiceContext` for a Slack-originated action. Loads the
  * workspace fresh since `PendingAction` only stores its id, and we want
  * services to see the latest plan/limits state at execution time. The
- * card is updated in place with the result, so its permalink is the origin.
+ * card is updated in place with the result, so its permalink is the actor's.
  */
 export async function toServiceCtx(args: {
   pending: PendingAction;
@@ -41,7 +41,7 @@ export async function toServiceCtx(args: {
   messageTs: string;
   requestId?: string;
 }): Promise<ServiceContext> {
-  const [row, ref] = await Promise.all([
+  const [row, permalink] = await Promise.all([
     db
       .select()
       .from(workspaceTable)
@@ -56,8 +56,7 @@ export async function toServiceCtx(args: {
   }
   return {
     workspace: selectWorkspaceSchema.parse(row),
-    actor: args.actor,
-    origin: { ref },
+    actor: { ...args.actor, permalink },
     requestId: args.requestId,
   };
 }

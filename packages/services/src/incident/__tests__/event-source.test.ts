@@ -121,7 +121,7 @@ describe("incident event source", () => {
     });
   });
 
-  test("the context's origin ref lands on the event", async () => {
+  test("the Slack actor's permalink lands on the event", async () => {
     await withTestTransaction(async (tx) => {
       const row = await declare(tx);
       const note = await addIncidentNote({
@@ -130,8 +130,8 @@ describe("incident event source", () => {
             teamId: "T1",
             slackUserId: "U1",
             userId: memberId,
+            permalink: "https://slack.test/archives/C1/p1",
           }),
-          origin: { ref: "https://slack.test/archives/C1/p1" },
           db: tx,
         },
         input: { id: row.id, message: "Rolled back" },
@@ -154,8 +154,8 @@ describe("incident event source", () => {
           teamId: "T1",
           slackUserId: "U1",
           userId: memberId,
+          permalink: "https://slack.test/archives/C1/p2",
         }),
-        origin: { ref: "https://slack.test/archives/C1/p2" },
         db: tx,
       };
       await draftPostmortem({
