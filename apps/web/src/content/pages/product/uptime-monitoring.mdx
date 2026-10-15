@@ -96,7 +96,7 @@ The monitor overview for Checkout API, checked every minute: 99.94% uptime, 4 of
 
 ## 28 regions, three clouds
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 Probes run on Fly.io, Koyeb and Railway, so a provider incident never blinds you. Pick the regions your customers are in and see latency per region, not an average.
@@ -119,7 +119,7 @@ Per-region latency for the last check: London 4,388 ms, Amsterdam 4,102 ms, Pari
 
 ## API monitoring with assertions
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Demo type="assertions" />
@@ -142,7 +142,7 @@ Any method, custom headers, a request body. Assert on status code, header and bo
 
 ## Alerts where you already are
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 A failed assertion from one region is noise; from half your regions it is an alert. Route it to Slack, Discord, PagerDuty, Opsgenie, email, SMS or a webhook, with the failing requests attached.
@@ -167,7 +167,7 @@ The alert as it reaches Slack, PagerDuty, email and a webhook: "Checkout API is 
 
 ## Where the time went
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Demo type="timing" />
@@ -190,7 +190,7 @@ Every check records DNS, connect, TLS, time to first byte and transfer separatel
 
 ## Monitoring as code
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 Declare monitors in HCL with the Terraform provider, or from the CLI in CI. Monitor changes get code-reviewed in the PR that ships the service they watch.
@@ -226,7 +226,7 @@ resource "openstatus_http_monitor" "checkout" {
 
 ## Private locations
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Demo type="private-location" />
