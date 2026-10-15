@@ -118,6 +118,7 @@ describe("mapIncidentStatus", () => {
     ["IDENTIFIED", "identified"],
     ["MONITORING", "monitoring"],
     ["RESOLVED", "resolved"],
+    ["unknown", "investigating"],
   ] as const) {
     it(`maps ${input} to ${expected}`, () => {
       expect(mapIncidentStatus(input)).toBe(expected);

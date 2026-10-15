@@ -48,7 +48,7 @@ export function listStatusReportsTable(
           r.pageId !== null ? (
             <TableCellNumber value={r.pageId} />
           ) : (
-            <TableCellText value={null} />
+            <TableCellText value={null} empty="No page" />
           ),
         id: <TableCellNumber value={r.id} />,
       },

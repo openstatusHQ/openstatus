@@ -18,7 +18,7 @@ function makeSubscribers(n: number) {
 }
 
 function baseReq(
-  overrides: Partial<Parameters<EmailClient["sendStatusReportUpdate"]>[0]> = {},
+  overrides: Partial<Parameters<EmailClient["sendPageUpdate"]>[0]> = {},
 ) {
   return {
     subscribers: makeSubscribers(1),
@@ -43,7 +43,7 @@ const idempotencyConflict = {
   error: { name: "invalid_idempotent_request" },
 } as any;
 
-describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
+describe("EmailClient.sendPageUpdate - idempotency & chunking", () => {
   let client: EmailClient;
   // biome-ignore lint/suspicious/noExplicitAny: stub over the Resend batch method
   let batchSend: Stub<any>;
@@ -62,7 +62,7 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
   });
 
   test("passes the base idempotency key suffixed with the batch index", async () => {
-    await client.sendStatusReportUpdate(
+    await client.sendPageUpdate(
       baseReq({ idempotencyKey: "status-report-update:5" }),
     );
 
@@ -72,7 +72,7 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
   });
 
   test("gives each 100-recipient chunk a distinct key and its own slice", async () => {
-    await client.sendStatusReportUpdate(
+    await client.sendPageUpdate(
       baseReq({
         subscribers: makeSubscribers(250),
         idempotencyKey: "status-report-update:9",
@@ -91,7 +91,7 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
   });
 
   test("omits the option entirely when no base key is provided", async () => {
-    await client.sendStatusReportUpdate(baseReq());
+    await client.sendPageUpdate(baseReq());
 
     const options = batchSend.calls[0].args[1];
     expect(options).toBeUndefined();
@@ -105,7 +105,7 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
       returnsNext([Promise.resolve(fail), Promise.resolve(ok)]),
     );
 
-    await client.sendStatusReportUpdate(
+    await client.sendPageUpdate(
       baseReq({ idempotencyKey: "status-report-update:7" }),
     );
 
@@ -125,7 +125,7 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
       Promise.resolve(idempotencyConflict),
     );
 
-    await client.sendStatusReportUpdate(
+    await client.sendPageUpdate(
       baseReq({ idempotencyKey: "status-report-update:7" }),
     );
 

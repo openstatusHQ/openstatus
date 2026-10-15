@@ -1,4 +1,4 @@
-import { eq } from "@openstatus/db";
+import { and, eq } from "@openstatus/db";
 import {
   pageSubscriber,
   selectPageSubscriberSchema,
@@ -75,10 +75,17 @@ export async function verifySelfSignupSubscriber(args: {
     const updated = await tx
       .update(pageSubscriber)
       .set({ acceptedAt: new Date(), updatedAt: new Date() })
-      .where(eq(pageSubscriber.id, row.id))
+      // Signup may rotate the token after the lookup above.
+      .where(
+        and(
+          eq(pageSubscriber.id, row.id),
+          eq(pageSubscriber.token, input.token),
+        ),
+      )
       .returning()
       .get();
-    const after = selectPageSubscriberSchema.parse(updated ?? row);
+    if (!updated) return null;
+    const after = selectPageSubscriberSchema.parse(updated);
 
     const auditCtx: ServiceContext = {
       workspace: pageData.workspace,
@@ -101,11 +108,11 @@ export async function verifySelfSignupSubscriber(args: {
       pageName: pageData.title,
       pageSlug: pageData.slug,
       customDomain: pageData.customDomain,
-      channelType: updated?.channelType ?? row.channelType,
-      email: updated?.email ?? row.email,
-      webhookUrl: updated?.webhookUrl ?? row.webhookUrl,
-      token: updated?.token ?? row.token,
-      acceptedAt: updated?.acceptedAt ?? new Date(),
+      channelType: updated.channelType,
+      email: updated.email,
+      webhookUrl: updated.webhookUrl,
+      token: updated.token,
+      acceptedAt: updated.acceptedAt,
       componentIds: components,
     };
   });

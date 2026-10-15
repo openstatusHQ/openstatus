@@ -135,12 +135,12 @@ export function FormTags({
               Add tags to categorize and organize your monitor.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent className="grid gap-4 md:grid-cols-2">
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="tags"
               render={({ field }) => (
-                <FormItem className="flex flex-col md:col-span-1">
+                <FormItem className="flex flex-col sm:col-span-2">
                   <FormLabel>Tags</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>

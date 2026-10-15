@@ -109,10 +109,12 @@ export default async function RootLayout({
                 {process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID && (
                   <OpenPanelComponent
                     clientId={process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
+                    profileId={
+                      session?.user?.id ? `usr_${session.user.id}` : undefined
+                    }
                     trackScreenViews
                     trackOutgoingLinks
                     trackAttributes
-                    sessionReplay={{ enabled: true }}
                   />
                 )}
               </ThemeProvider>

@@ -69,7 +69,6 @@ export function MaintenanceRowActions({
         )}
         defaultValues={{
           title: maintenance.title,
-          message: maintenance.message,
           startDate: maintenance.from,
           endDate: maintenance.to,
           pageComponents: maintenance.pageComponents?.map((c) => c.id) ?? [],
@@ -78,7 +77,6 @@ export function MaintenanceRowActions({
           await updateMaintenanceMutation.mutateAsync({
             id: maintenance.id,
             title: values.title,
-            message: values.message,
             startDate: values.startDate,
             endDate: values.endDate,
             pageComponents: values.pageComponents,

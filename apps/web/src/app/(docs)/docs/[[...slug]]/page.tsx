@@ -18,6 +18,7 @@ import { DocsFeedback } from "../../../../content/docs-feedback";
 import { DocsSubNav } from "../../../../content/docs-sub-nav";
 import { TableOfContents } from "../../../../content/docs-toc";
 import {
+  DOCS_DESCRIPTION,
   type DocsNavNode,
   docsNavTree,
   findDocsNode,
@@ -47,9 +48,6 @@ export const dynamicParams = false;
 
 const EDIT_BASE =
   "https://github.com/openstatusHQ/openstatus/edit/main/apps/web/src/content/pages/docs";
-
-const DOCS_DESCRIPTION =
-  "Infra as code for uptime monitoring and status pages. Let your agents update them. Learn how to monitor your endpoints, create your status page, configure notifications, and drive it all from the CLI, Terraform, API, or MCP.";
 
 type Params = { slug?: string[] };
 

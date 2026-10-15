@@ -2,11 +2,7 @@ import { desc, eq } from "@openstatus/db";
 import { incidentEvent } from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb } from "../context";
-import {
-  getIncidentInWorkspace,
-  incidentUserColumns,
-  requireIncidentFeature,
-} from "./internal";
+import { getIncidentInWorkspace, incidentUserColumns } from "./internal";
 import { ListIncidentEventsInput } from "./schemas";
 
 /** The incident's timeline, newest first. */
@@ -15,7 +11,6 @@ export async function listIncidentEvents(args: {
   input: ListIncidentEventsInput;
 }) {
   const { ctx } = args;
-  requireIncidentFeature(ctx);
   const input = ListIncidentEventsInput.parse(args.input);
   const db = getReadDb(ctx);
   const existing = await getIncidentInWorkspace(db, ctx.workspace.id, input.id);

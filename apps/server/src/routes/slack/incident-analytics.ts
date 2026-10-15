@@ -18,12 +18,12 @@ export function trackSlackIncident(
 ): void {
   const userId = tryGetActorUserId(ctx.actor);
   setupAnalytics({
-    userId: userId ? `usr_${userId}` : `slack_${ctx.workspace.id}`,
+    userId: userId ? `usr_${userId}` : undefined,
     workspaceId: String(ctx.workspace.id),
+    workspaceName: ctx.workspace.name || ctx.workspace.slug,
     plan: ctx.workspace.plan,
+    source: "slack",
   })
-    .then((analytics) =>
-      analytics.track({ ...EVENTS[kind], source: "slack", ...props }),
-    )
+    .then((analytics) => analytics.track({ ...props, ...EVENTS[kind] }))
     .catch(() => undefined);
 }

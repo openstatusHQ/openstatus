@@ -1,9 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import {
-  isFeatureEnabled,
-  type ServiceContext,
-  ServiceError,
-} from "@openstatus/services";
+import { type ServiceContext, ServiceError } from "@openstatus/services";
 import { escapeMrkdwn } from "@openstatus/services/incident";
 import { type ModalView, WebClient } from "@slack/web-api";
 import { z } from "zod";
@@ -31,7 +27,7 @@ import { resolveWorkspace, type SlackWorkspace } from "./workspace-resolver";
 
 const logger = getLogger(["api-server", "slack", "incident-modal"]);
 
-const NOT_CONNECTED =
+export const NOT_CONNECTED =
   "openstatus isn't connected to this Slack workspace. Connect it from the openstatus dashboard.";
 
 /** Callback id of the global shortcut, the message shortcut and the modal. */
@@ -151,45 +147,41 @@ export function buildDeclareIncidentModal(args: {
   };
 }
 
-function noticeModal(text: string, blocks?: Block[]): View {
+export function noticeModal(
+  text: string,
+  blocks?: Block[],
+  title = "Declare an incident",
+): View {
   return {
     type: "modal",
-    title: { type: "plain_text", text: "Declare an incident" },
+    title: { type: "plain_text", text: title },
     close: { type: "plain_text", text: "Close" },
     blocks: blocks ?? [{ type: "section", text: { type: "mrkdwn", text } }],
   };
 }
 
-type Gate =
+export type Gate =
   | { ok: true; resolved: SlackWorkspace; actor: SlackActor }
   | { ok: false; view: View; botToken?: string };
 
-/** Everything the modal needs before it can declare; a notice view otherwise. */
-async function gate(
+/** Everything a modal needs before it can write; a notice view otherwise. */
+export async function gate(
   teamId: string,
   slackUserId: string,
   config: SlackConfig,
+  title?: string,
 ): Promise<Gate> {
   const resolved = await resolveWorkspace(teamId);
   if (!resolved) {
     return {
       ok: false,
-      view: noticeModal(NOT_CONNECTED),
+      view: noticeModal(NOT_CONNECTED, undefined, title),
     };
   }
   if (!slackAgentAllowed(resolved.workspace)) {
     return {
       ok: false,
-      view: noticeModal(planRequiredMessage(config).text),
-      botToken: resolved.botToken,
-    };
-  }
-  if (!isFeatureEnabled(resolved.workspace, "incident-management")) {
-    return {
-      ok: false,
-      view: noticeModal(
-        "Incident management isn't available for this workspace yet.",
-      ),
+      view: noticeModal(planRequiredMessage(config).text, undefined, title),
       botToken: resolved.botToken,
     };
   }
@@ -207,7 +199,7 @@ async function gate(
     });
     return {
       ok: false,
-      view: noticeModal(LINK_ACCOUNT_TEXT, buildLinkAccountBlocks(url)),
+      view: noticeModal(LINK_ACCOUNT_TEXT, buildLinkAccountBlocks(url), title),
       botToken: resolved.botToken,
     };
   }
@@ -246,7 +238,7 @@ export async function openDeclareIncidentModal(args: {
   });
 }
 
-type StateValues = Record<
+export type StateValues = Record<
   string,
   Record<
     string,
@@ -254,6 +246,7 @@ type StateValues = Record<
       value?: string | null;
       selected_option?: { value: string } | null;
       selected_user?: string | null;
+      selected_options?: { value: string }[] | null;
     }
   >
 >;

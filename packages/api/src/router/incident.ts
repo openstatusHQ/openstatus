@@ -35,6 +35,7 @@ import {
   linkIncidentStatusReport,
   listIncidentEvents,
   listIncidents,
+  listLinkedStatusReportIds,
   type IncidentEffects,
   resolveDashboardUrl,
   setIncidentStatus,
@@ -124,6 +125,14 @@ export const incidentRouter = createTRPCRouter({
         toTRPCError(err);
       }
     }),
+
+  linkedStatusReportIds: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      return await listLinkedStatusReportIds({ ctx: toServiceCtx(ctx) });
+    } catch (err) {
+      toTRPCError(err);
+    }
+  }),
 
   listEvents: protectedProcedure
     .input(IncidentIdInput)

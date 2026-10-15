@@ -14,6 +14,9 @@ import {
   SetIncidentStatusRequestSchema,
 } from "@openstatus/proto/incident/v1";
 
+import { apiAnalyticsIdentity } from "../../../libs/analytics-identity";
+import { apiRequestSampleRate } from "../../../libs/api-request-sampling";
+import { parseCliHeaders, trackCliCommand } from "../../../libs/cli-telemetry";
 import { RPC_CONTEXT_KEY } from "./auth";
 
 const logger = getLogger("api-server");
@@ -145,6 +148,15 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
   "openstatus.maintenance.v1.MaintenanceService/DeleteMaintenance": {
     event: Events.DeleteMaintenance,
   },
+  "openstatus.maintenance.v1.MaintenanceService/AddMaintenanceUpdate": {
+    event: Events.CreateMaintenanceUpdate,
+  },
+  "openstatus.maintenance.v1.MaintenanceService/UpdateMaintenanceUpdate": {
+    event: Events.UpdateMaintenanceUpdate,
+  },
+  "openstatus.maintenance.v1.MaintenanceService/DeleteMaintenanceUpdate": {
+    event: Events.DeleteMaintenanceUpdate,
+  },
 
   // NotificationService
   "openstatus.notification.v1.NotificationService/CreateNotification": {
@@ -213,53 +225,93 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
 
 /**
  * Tracking interceptor for ConnectRPC.
- * Fires OpenPanel analytics events on successful RPC calls.
- * Must be placed after authInterceptor (needs workspace context)
- * and validationInterceptor (only track valid requests).
+ *
+ * Every authenticated call fires an `api_request` event — reads included, and
+ * failures too (`success: false`) — so API volume is countable per workspace
+ * the same way `mcp_request` counts MCP traffic. V1 REST fires the same event
+ * from `apiTrackMiddleware`. Successful calls listed in
+ * `RPC_EVENT_MAP` additionally fire their domain event (e.g. `monitor_created`).
+ *
+ * Requests from the openstatus CLI also carry `cliCommand`/`cliVersion` on
+ * `api_request`, and the first request of each CLI run fires one `cli_command`.
+ * CLI requests always fire `api_request`; the rest are sampled (see
+ * `apiRequestSampleRate`). Domain events are never sampled.
+ *
+ * Must be placed after authInterceptor (needs workspace context) and
+ * validationInterceptor (requests it rejects never reach here, so they are not
+ * counted). Unauthenticated calls (HealthService) carry no context and are
+ * skipped.
  */
 export function trackingInterceptor(): Interceptor {
   return (next) => async (req) => {
-    const response = await next(req);
-
-    const key = `${req.service.typeName}/${req.method.name}`;
-    const mapping = RPC_EVENT_MAP[key];
-
-    if (!mapping) {
+    let success = false;
+    try {
+      const response = await next(req);
+      success = true;
       return response;
+    } finally {
+      // Tracking must never replace the call's own result or error.
+      try {
+        trackRpcCall(req, success);
+      } catch {
+        logger.warn("Failed to track RPC call {method}", {
+          method: `${req.service.typeName}/${req.method.name}`,
+        });
+      }
     }
+  };
+}
 
-    const rpcCtx = req.contextValues.get(RPC_CONTEXT_KEY);
+type TrackedRequest = Parameters<Parameters<Interceptor>[0]>[0];
 
-    if (!rpcCtx) {
-      return response;
-    }
+function trackRpcCall(req: TrackedRequest, success: boolean) {
+  const rpcCtx = req.contextValues.get(RPC_CONTEXT_KEY);
 
+  if (!rpcCtx) {
+    return;
+  }
+
+  const key = `${req.service.typeName}/${req.method.name}`;
+  const mapping = success ? RPC_EVENT_MAP[key] : undefined;
+  const cli = parseCliHeaders(req.header);
+  const sampleRate = apiRequestSampleRate(cli);
+
+  const events: (EventProps & Record<string, unknown>)[] = [];
+
+  if (sampleRate !== undefined) {
+    events.push({
+      ...Events.ApiRequest,
+      service: req.service.typeName,
+      method: req.method.name,
+      success,
+      sampleRate,
+      ...(cli ? { cliCommand: cli.command } : {}),
+      ...(cli?.version ? { cliVersion: cli.version } : {}),
+    });
+  }
+
+  if (mapping) {
     const input = mapping.normalizeInput?.(req.message) ?? req.message;
     const additionalProps = {
       ...parseInputToProps(input, mapping.eventProps),
       ...(mapping.props && !req.stream ? mapping.props(req.message) : {}),
     };
+    events.push({ ...additionalProps, ...mapping.event });
+  }
 
-    setupAnalytics({
-      userId: `api_${rpcCtx.workspace.id}`,
-      workspaceId: `${rpcCtx.workspace.id}`,
-      plan: rpcCtx.workspace.plan,
-      location: req.header.get("x-forwarded-for") ?? undefined,
-      userAgent: req.header.get("user-agent") ?? undefined,
-    })
-      .then((analytics) =>
-        analytics.track({ ...mapping.event, additionalProps }),
-      )
-      .catch(() => {
-        logger.warn(
-          "Failed to send analytics event {event} for workspace {workspaceId}",
-          {
-            event: mapping.event.name,
-            workspaceId: rpcCtx.workspace.id,
-          },
-        );
-      });
+  if (events.length === 0) return;
 
-    return response;
-  };
+  setupAnalytics(apiAnalyticsIdentity(rpcCtx.workspace, req.header))
+    .then((analytics) =>
+      Promise.all([
+        ...events.map((event) => analytics.track(event)),
+        ...(cli ? [trackCliCommand(analytics, rpcCtx.workspace.id, cli)] : []),
+      ]),
+    )
+    .catch(() => {
+      logger.warn(
+        "Failed to send analytics events for {method} in workspace {workspaceId}",
+        { method: key, workspaceId: rpcCtx.workspace.id },
+      );
+    });
 }

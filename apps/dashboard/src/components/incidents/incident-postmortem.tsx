@@ -1,19 +1,21 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { AI } from "@openstatus/icons";
+import { AI, Check, Copy, Loading } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { InputGroupButton } from "@openstatus/ui/components/ui/input-group";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { StatusBadge } from "@/components/common/status-badge";
+import { StatusDot } from "@/components/common/status-dot";
 import {
   Composer,
+  ComposerActions,
   ComposerFooter,
-  ComposerHeader,
+  ComposerIconButton,
   ComposerPreview,
+  ComposerPreviewToggle,
   ComposerTextarea,
 } from "@/components/content/composer";
 import {
@@ -63,6 +65,7 @@ export function IncidentPostmortem({
   // refetch never clobbers unsaved edits.
   const [draft, setDraft] = useState<string | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
+  const { copy, isCopied } = useCopyToClipboard();
   const server = postmortem?.content ?? TEMPLATE;
   const content = draft ?? server;
 
@@ -125,30 +128,18 @@ export function IncidentPostmortem({
   const canSave = !busy && dirty && content.trim().length > 0;
   const canApprove = postmortem !== null && !approved;
 
+  const showAgent = agentAllowed && !approved;
+
   const hint = dirty
     ? "Unsaved changes"
     : approved && incident.closedAt === null
       ? "Close the incident from the header"
-      : postmortem?.draftedBy === "agent"
-        ? "Drafted by the agent"
-        : postmortem
-          ? null
-          : "No postmortem yet";
+      : postmortem
+        ? null
+        : "No postmortem yet";
 
   return (
-    <Composer size="lg" defaultValue={approved ? "preview" : "write"}>
-      <ComposerHeader>
-        {agentAllowed && !approved ? (
-          <InputGroupButton
-            variant="outline"
-            disabled={busy}
-            onClick={() => draftWithAgent.mutate({ id: incident.id })}
-          >
-            <AI />
-            {draftWithAgent.isPending ? "Drafting..." : "Draft with agent"}
-          </InputGroupButton>
-        ) : null}
-      </ComposerHeader>
+    <Composer size="lg" defaultValue={postmortem ? "preview" : "write"}>
       <ComposerTextarea
         aria-label="Postmortem"
         value={content}
@@ -161,58 +152,85 @@ export function IncidentPostmortem({
       />
       <ComposerPreview value={content} />
       <ComposerFooter>
-        <div className="flex items-center gap-2">
+        {/* px-2 like a ghost control so the dot sits on the text column */}
+        <div className="flex items-center gap-2 px-2">
           {postmortem ? (
-            <StatusBadge
-              dot
-              variant={approved ? "success" : "default"}
-              className="bg-background"
-            >
+            <span className="text-foreground flex items-center gap-2 font-mono">
+              <StatusDot variant={approved ? "success" : "default"} />
               {approved ? "Approved" : "Draft"}
-            </StatusBadge>
+            </span>
           ) : null}
-          {hint ? <span className="text-xs">{hint}</span> : null}
+          {hint ? <span>{hint}</span> : null}
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            size="sm"
-            variant={canApprove ? "outline" : "default"}
-            disabled={!canSave}
-            onClick={() =>
-              save.mutate({ id: incident.id, content, draftedBy: "user" })
-            }
-          >
-            Save
-          </Button>
-          {canApprove ? (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={busy || dirty}
-                onClick={() => approve.mutate({ id: incident.id })}
-              >
-                Approve
-              </Button>
-              <Button
-                size="sm"
-                disabled={busy || dirty || incident.closedAt !== null}
-                onClick={() => setConfirmClose(true)}
-              >
-                Approve & close
-              </Button>
-              <ConfirmCloseDialog
-                kind="close"
-                open={confirmClose}
-                onOpenChange={setConfirmClose}
-                pending={approve.isPending}
-                onConfirm={() =>
-                  approve.mutate({ id: incident.id, close: true })
+        <ComposerActions>
+          <div className="flex items-center gap-1">
+            <ComposerPreviewToggle />
+            {postmortem ? (
+              <ComposerIconButton
+                label={isCopied ? "Copied" : "Copy markdown"}
+                onClick={() =>
+                  copy(content, { withToast: "Postmortem copied" })
                 }
-              />
-            </>
-          ) : null}
-        </div>
+              >
+                {isCopied ? <Check /> : <Copy />}
+              </ComposerIconButton>
+            ) : null}
+            {showAgent ? (
+              <ComposerIconButton
+                label="Draft with agent"
+                disabled={busy}
+                onClick={() => draftWithAgent.mutate({ id: incident.id })}
+              >
+                {draftWithAgent.isPending ? (
+                  <Loading className="animate-spin" />
+                ) : (
+                  <AI />
+                )}
+              </ComposerIconButton>
+            ) : null}
+          </div>
+          {/* Three verbs that differ in consequence; icons alone would not tell them apart. */}
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={canApprove ? "outline" : "default"}
+              disabled={!canSave}
+              onClick={() =>
+                save.mutate({ id: incident.id, content, draftedBy: "user" })
+              }
+            >
+              Save
+            </Button>
+            {canApprove ? (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy || dirty}
+                  onClick={() => approve.mutate({ id: incident.id })}
+                >
+                  Approve
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={busy || dirty || incident.closedAt !== null}
+                  onClick={() => setConfirmClose(true)}
+                >
+                  Approve & close
+                </Button>
+                <ConfirmCloseDialog
+                  kind="close"
+                  open={confirmClose}
+                  onOpenChange={setConfirmClose}
+                  pending={approve.isPending}
+                  onConfirm={() =>
+                    approve.mutate({ id: incident.id, close: true })
+                  }
+                />
+              </>
+            ) : null}
+          </div>
+        </ComposerActions>
       </ComposerFooter>
     </Composer>
   );

@@ -34,7 +34,6 @@ export function toUpdateInput(maintenance: Maintenance) {
   return {
     id: maintenance.id,
     title: maintenance.title,
-    message: maintenance.message,
     startDate: maintenance.from,
     endDate: maintenance.to,
     pageComponents: maintenance.pageComponentIds,

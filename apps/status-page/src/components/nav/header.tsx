@@ -1,6 +1,5 @@
 "use client";
 
-import type { RouterOutputs } from "@openstatus/api";
 import { Menu, Chat } from "@openstatus/icons";
 import { StatusPageGetInTouchIcon } from "@openstatus/ui/components/blocks/status-page-get-in-touch";
 import {
@@ -33,12 +32,7 @@ import { toast } from "sonner";
 import { usePathnamePrefix } from "../../hooks/use-pathname-prefix";
 import { useTRPC } from "../../lib/trpc/client";
 import { Link } from "../common/link";
-import {
-  type StatusUpdateType,
-  StatusUpdates,
-} from "../status-page/status-updates";
-
-type Page = RouterOutputs["statusPage"]["get"];
+import { StatusUpdates } from "../status-page/status-updates";
 
 function useNav() {
   const t = useExtracted();
@@ -65,21 +59,6 @@ function useNav() {
       isActive: pathname.startsWith(`${prefix ? `/${prefix}` : ""}/monitors`),
     },
   ];
-}
-
-function getStatusUpdateTypes(page: Page): StatusUpdateType[] {
-  if (!page) return [];
-
-  // NOTE: rss or json are not supported because of authentication
-  if (page?.accessType === "email-domain") {
-    return ["email"] as const;
-  }
-
-  if (page?.workspacePlan === "free") {
-    return ["slack", "rss", "json"] as const;
-  }
-
-  return ["email", "slack", "rss", "json"] as const;
 }
 
 export function Header({
@@ -158,7 +137,6 @@ export function Header({
             </StatusPageGetInTouchIcon>
           ) : null}
           <StatusUpdates
-            types={getStatusUpdateTypes(page)}
             onSubscribe={async (values) => {
               await subscribeMutation.mutateAsync({ slug: domain, ...values });
             }}

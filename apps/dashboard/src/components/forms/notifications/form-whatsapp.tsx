@@ -15,6 +15,7 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
+import Link from "next/link";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -48,6 +49,8 @@ export function FormWhatsApp({
   onSubmit: (values: FormValues) => Promise<void>;
   monitors: { id: number; name: string }[];
 }) {
+  // Sender number shown in the anti-spam hint; unset on self-hosted installs.
+  const senderPhoneNumber = process.env.NEXT_PUBLIC_WHATSAPP_PHONE_NUMBER;
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
@@ -165,6 +168,28 @@ export function FormWhatsApp({
                 <FormMessage />
                 <FormDescription>
                   Enter the phone number to send notifications to.
+                  {senderPhoneNumber ? (
+                    <>
+                      {" "}
+                      Not receiving messages? Send a message to our number{" "}
+                      <Link
+                        href={`https://wa.me/${senderPhoneNumber.replace(/\D/g, "")}`}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        {senderPhoneNumber}
+                      </Link>{" "}
+                      first so WhatsApp knows it&apos;s not spam.{" "}
+                      <Link
+                        href="https://www.openstatus.dev/docs/reference/notification/#whatsapp"
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        Read more
+                      </Link>
+                      .
+                    </>
+                  ) : null}
                 </FormDescription>
               </FormItem>
             )}

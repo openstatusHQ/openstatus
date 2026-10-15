@@ -120,11 +120,14 @@ describe("MCP transport", () => {
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
       "add_incident_note",
+      "add_maintenance_update",
       "add_status_report_update",
       "approve_postmortem",
       "create_maintenance",
       "create_status_report",
       "declare_incident",
+      "delete_maintenance_update",
+      "delete_status_report_update",
       "draft_postmortem",
       "get_audit_log",
       "get_content_page",
@@ -135,6 +138,7 @@ describe("MCP transport", () => {
       "get_monitor_summary",
       "get_postmortem",
       "get_response_log",
+      "get_status_report",
       "list_audit_logs",
       "list_incidents",
       "list_maintenances",
@@ -151,7 +155,9 @@ describe("MCP transport", () => {
       "search_docs",
       "set_incident_status",
       "update_incident",
+      "update_maintenance_update",
       "update_status_report",
+      "update_status_report_update",
     ]);
   });
 
@@ -281,6 +287,8 @@ describe("MCP transport — analytics", () => {
       unknown
     >;
     expect(identify?.userId).toBe(`api_${SEEDED_WORKSPACE_TEAM_ID}`);
+    expect(identify?.workspaceId).toBe(`${SEEDED_WORKSPACE_TEAM_ID}`);
+    expect(identify?.source).toBe("mcp");
 
     const event = analyticsSpies.track.mock.calls[0]?.[0] as Record<
       string,

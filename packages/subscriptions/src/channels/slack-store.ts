@@ -11,29 +11,36 @@ export interface SlackThreadAnchor {
   pendingRootReply?: SlackReplyMessage;
 }
 
+// The entity a thread belongs to. Report and maintenance ids come from
+// different tables, so the kind keeps their anchors apart.
+export interface SlackThreadEvent {
+  kind: "report" | "maintenance";
+  id: number;
+}
+
 export interface SlackAnchorStore {
   getAnchor(
-    reportId: number,
+    event: SlackThreadEvent,
     subscriberId: number,
   ): Promise<SlackThreadAnchor | null>;
   setAnchor(
-    reportId: number,
+    event: SlackThreadEvent,
     subscriberId: number,
     anchor: SlackThreadAnchor,
   ): Promise<void>;
-  clearAnchor(reportId: number, subscriberId: number): Promise<void>;
-  // Atomically claim delivery of (report, subscriber, update). Returns true only
+  clearAnchor(event: SlackThreadEvent, subscriberId: number): Promise<void>;
+  // Atomically claim delivery of (event, subscriber, update). Returns true only
   // for the caller that wins the claim; concurrent callers get false and must
   // skip. This is the dedupe reservation — a single atomic op, not a
   // read-then-write pair, so two dispatchers can't both post the same message.
   reserveDelivery(
-    reportId: number,
+    event: SlackThreadEvent,
     subscriberId: number,
     updateId: number,
   ): Promise<boolean>;
   // Release a reservation whose post failed, so the delivery can be retried.
   releaseDelivery(
-    reportId: number,
+    event: SlackThreadEvent,
     subscriberId: number,
     updateId: number,
   ): Promise<void>;
@@ -41,16 +48,16 @@ export interface SlackAnchorStore {
 
 const TTL_SECONDS = 90 * 24 * 60 * 60;
 
-function anchorKey(reportId: number, subscriberId: number): string {
-  return `slack:report:${reportId}:sub:${subscriberId}`;
+function anchorKey(event: SlackThreadEvent, subscriberId: number): string {
+  return `slack:${event.kind}:${event.id}:sub:${subscriberId}`;
 }
 
 function deliveredKey(
-  reportId: number,
+  event: SlackThreadEvent,
   subscriberId: number,
   updateId: number,
 ): string {
-  return `${anchorKey(reportId, subscriberId)}:update:${updateId}`;
+  return `${anchorKey(event, subscriberId)}:update:${updateId}`;
 }
 
 let redisClient: Redis | null = null;
@@ -64,30 +71,30 @@ function getRedis(): Redis {
 
 export function createRedisAnchorStore(): SlackAnchorStore {
   return {
-    async getAnchor(reportId, subscriberId) {
+    async getAnchor(event, subscriberId) {
       const raw = await getRedis().get<SlackThreadAnchor>(
-        anchorKey(reportId, subscriberId),
+        anchorKey(event, subscriberId),
       );
       return raw ?? null;
     },
-    async setAnchor(reportId, subscriberId, anchor) {
-      await getRedis().set(anchorKey(reportId, subscriberId), anchor, {
+    async setAnchor(event, subscriberId, anchor) {
+      await getRedis().set(anchorKey(event, subscriberId), anchor, {
         ex: TTL_SECONDS,
       });
     },
-    async clearAnchor(reportId, subscriberId) {
-      await getRedis().del(anchorKey(reportId, subscriberId));
+    async clearAnchor(event, subscriberId) {
+      await getRedis().del(anchorKey(event, subscriberId));
     },
-    async reserveDelivery(reportId, subscriberId, updateId) {
+    async reserveDelivery(event, subscriberId, updateId) {
       const res = await getRedis().set(
-        deliveredKey(reportId, subscriberId, updateId),
+        deliveredKey(event, subscriberId, updateId),
         1,
         { ex: TTL_SECONDS, nx: true },
       );
       return res === "OK";
     },
-    async releaseDelivery(reportId, subscriberId, updateId) {
-      await getRedis().del(deliveredKey(reportId, subscriberId, updateId));
+    async releaseDelivery(event, subscriberId, updateId) {
+      await getRedis().del(deliveredKey(event, subscriberId, updateId));
     },
   };
 }
@@ -96,23 +103,23 @@ export function createMemoryAnchorStore(): SlackAnchorStore {
   const anchors = new Map<string, SlackThreadAnchor>();
   const delivered = new Set<string>();
   return {
-    async getAnchor(reportId, subscriberId) {
-      return anchors.get(anchorKey(reportId, subscriberId)) ?? null;
+    async getAnchor(event, subscriberId) {
+      return anchors.get(anchorKey(event, subscriberId)) ?? null;
     },
-    async setAnchor(reportId, subscriberId, anchor) {
-      anchors.set(anchorKey(reportId, subscriberId), anchor);
+    async setAnchor(event, subscriberId, anchor) {
+      anchors.set(anchorKey(event, subscriberId), anchor);
     },
-    async clearAnchor(reportId, subscriberId) {
-      anchors.delete(anchorKey(reportId, subscriberId));
+    async clearAnchor(event, subscriberId) {
+      anchors.delete(anchorKey(event, subscriberId));
     },
-    async reserveDelivery(reportId, subscriberId, updateId) {
-      const key = deliveredKey(reportId, subscriberId, updateId);
+    async reserveDelivery(event, subscriberId, updateId) {
+      const key = deliveredKey(event, subscriberId, updateId);
       if (delivered.has(key)) return false;
       delivered.add(key);
       return true;
     },
-    async releaseDelivery(reportId, subscriberId, updateId) {
-      delivered.delete(deliveredKey(reportId, subscriberId, updateId));
+    async releaseDelivery(event, subscriberId, updateId) {
+      delivered.delete(deliveredKey(event, subscriberId, updateId));
     },
   };
 }

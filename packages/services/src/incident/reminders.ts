@@ -10,12 +10,10 @@ import {
 } from "@openstatus/db/src/schema";
 
 import type { DB, ServiceContext } from "../context";
-import { isFeatureEnabled } from "../features";
 import {
   type SlackConnection,
   getSlackConnection,
 } from "../integration/slack-connection";
-import { INCIDENT_FEATURE } from "./internal";
 import type { SlackClientFactory } from "./slack-flow";
 
 const HOUR = 60 * 60 * 1000;
@@ -80,7 +78,6 @@ async function reminderConnection(
   );
   if (!parsed.success) return null;
   const ws = parsed.data;
-  if (!isFeatureEnabled(ws, INCIDENT_FEATURE)) return null;
   if (!ws.limits["slack-agent"]) return null;
   const ctx: ServiceContext = {
     workspace: ws,

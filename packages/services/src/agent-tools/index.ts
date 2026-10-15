@@ -17,7 +17,13 @@ import {
   setIncidentStatusTool,
   updateIncidentTool,
 } from "./incident";
-import { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
+import {
+  addMaintenanceUpdateTool,
+  createMaintenanceTool,
+  deleteMaintenanceUpdateTool,
+  listMaintenancesTool,
+  updateMaintenanceUpdateTool,
+} from "./maintenance";
 import {
   getMonitorStatusTool,
   getMonitorSummaryTool,
@@ -33,9 +39,12 @@ import { listPrivateLocationsTool } from "./private-location";
 import {
   addStatusReportUpdateTool,
   createStatusReportTool,
+  deleteStatusReportUpdateTool,
+  getStatusReportTool,
   listStatusReportsTool,
   resolveStatusReportTool,
   updateStatusReportTool,
+  updateStatusReportUpdateTool,
 } from "./status-report";
 import type { AnyAgentTool } from "./types";
 
@@ -54,7 +63,13 @@ export {
   setIncidentStatusTool,
   updateIncidentTool,
 } from "./incident";
-export { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
+export {
+  addMaintenanceUpdateTool,
+  createMaintenanceTool,
+  deleteMaintenanceUpdateTool,
+  listMaintenancesTool,
+  updateMaintenanceUpdateTool,
+} from "./maintenance";
 export {
   getMonitorStatusTool,
   getMonitorSummaryTool,
@@ -70,9 +85,12 @@ export { listPrivateLocationsTool } from "./private-location";
 export {
   addStatusReportUpdateTool,
   createStatusReportTool,
+  deleteStatusReportUpdateTool,
+  getStatusReportTool,
   listStatusReportsTool,
   resolveStatusReportTool,
   updateStatusReportTool,
+  updateStatusReportUpdateTool,
 } from "./status-report";
 export type {
   AgentTool,
@@ -104,10 +122,13 @@ export const agentTools = {
   list_status_pages: listStatusPagesTool,
   list_page_components: listPageComponentsTool,
   list_status_reports: listStatusReportsTool,
+  get_status_report: getStatusReportTool,
   create_status_report: createStatusReportTool,
   add_status_report_update: addStatusReportUpdateTool,
   update_status_report: updateStatusReportTool,
   resolve_status_report: resolveStatusReportTool,
+  update_status_report_update: updateStatusReportUpdateTool,
+  delete_status_report_update: deleteStatusReportUpdateTool,
   list_incidents: listIncidentsTool,
   get_incident: getIncidentTool,
   declare_incident: declareIncidentTool,
@@ -120,6 +141,9 @@ export const agentTools = {
   approve_postmortem: approvePostmortemTool,
   list_maintenances: listMaintenancesTool,
   create_maintenance: createMaintenanceTool,
+  add_maintenance_update: addMaintenanceUpdateTool,
+  update_maintenance_update: updateMaintenanceUpdateTool,
+  delete_maintenance_update: deleteMaintenanceUpdateTool,
   list_monitors: listMonitorsTool,
   get_monitor: getMonitorTool,
   get_monitor_status: getMonitorStatusTool,

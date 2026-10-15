@@ -907,6 +907,45 @@ components:
       title: UpdatePostmortemResponse
       additionalProperties: false
       description: UpdatePostmortemResponse is the response after writing the postmortem.
+    openstatus.maintenance.v1.AddMaintenanceUpdateRequest:
+      type: object
+      properties:
+        maintenanceId:
+          type: string
+          title: maintenance_id
+          minLength: 1
+          description: ID of the maintenance to update (required).
+        message:
+          type: string
+          title: message
+          minLength: 1
+          description: Public update message (required).
+        date:
+          type:
+            - string
+            - "null"
+          title: date
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: Optional date for the update (RFC 3339 format). Defaults to current time.
+        notify:
+          type:
+            - boolean
+            - "null"
+          title: notify
+          description: Whether to notify subscribers about this update.
+      title: AddMaintenanceUpdateRequest
+      additionalProperties: false
+      description: AddMaintenanceUpdateRequest is the request to append a maintenance update.
+    openstatus.maintenance.v1.AddMaintenanceUpdateResponse:
+      type: object
+      properties:
+        maintenanceUpdate:
+          title: maintenance_update
+          description: The created update.
+          $ref: '#/components/schemas/openstatus.maintenance.v1.MaintenanceUpdate'
+      title: AddMaintenanceUpdateResponse
+      additionalProperties: false
+      description: AddMaintenanceUpdateResponse is the response after appending an update.
     openstatus.maintenance.v1.CreateMaintenanceRequest:
       type: object
       properties:
@@ -922,7 +961,9 @@ components:
           type: string
           title: message
           minLength: 1
-          description: Message describing the maintenance (required).
+          description: |-
+            Message describing the maintenance (required). Posted as the first
+             maintenance update.
         from:
           type: string
           examples:
@@ -988,6 +1029,27 @@ components:
       title: DeleteMaintenanceResponse
       additionalProperties: false
       description: DeleteMaintenanceResponse is the response after deleting a maintenance window.
+    openstatus.maintenance.v1.DeleteMaintenanceUpdateRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the update to remove (required).
+      title: DeleteMaintenanceUpdateRequest
+      additionalProperties: false
+      description: DeleteMaintenanceUpdateRequest is the request to remove an update.
+    openstatus.maintenance.v1.DeleteMaintenanceUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteMaintenanceUpdateResponse
+      additionalProperties: false
+      description: DeleteMaintenanceUpdateResponse is the response after removing an update.
     openstatus.maintenance.v1.GetMaintenanceRequest:
       type: object
       properties:
@@ -1069,7 +1131,7 @@ components:
         message:
           type: string
           title: message
-          description: Message describing the maintenance.
+          description: Message of the newest maintenance update.
         from:
           type: string
           title: from
@@ -1096,6 +1158,12 @@ components:
           type: string
           title: updated_at
           description: Timestamp when the maintenance was last updated (RFC 3339 format).
+        updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.maintenance.v1.MaintenanceUpdate'
+          title: updates
+          description: Full maintenance update timeline, newest first.
       title: Maintenance
       additionalProperties: false
       description: Maintenance represents a maintenance window with full details.
@@ -1113,7 +1181,7 @@ components:
         message:
           type: string
           title: message
-          description: Message describing the maintenance.
+          description: Message of the newest maintenance update.
         from:
           type: string
           title: from
@@ -1143,6 +1211,36 @@ components:
       title: MaintenanceSummary
       additionalProperties: false
       description: MaintenanceSummary represents metadata for a maintenance window (used in list responses).
+    openstatus.maintenance.v1.MaintenanceUpdate:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the update.
+        message:
+          type: string
+          title: message
+          description: Public update message.
+        date:
+          type: string
+          title: date
+          description: Date of the update (RFC 3339 format).
+        maintenanceId:
+          type: string
+          title: maintenance_id
+          description: ID of the maintenance this update belongs to.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the update was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the update was last updated (RFC 3339 format).
+      title: MaintenanceUpdate
+      additionalProperties: false
+      description: MaintenanceUpdate represents a timeline entry for a maintenance window.
     openstatus.maintenance.v1.UpdateMaintenanceRequest:
       type: object
       properties:
@@ -1164,7 +1262,7 @@ components:
             - string
             - "null"
           title: message
-          description: New message for the maintenance (optional).
+          description: Replaces the message of the newest maintenance update (optional).
         from:
           type:
             - string
@@ -1214,6 +1312,41 @@ components:
       title: UpdateMaintenanceResponse
       additionalProperties: false
       description: UpdateMaintenanceResponse is the response after updating a maintenance window.
+    openstatus.maintenance.v1.UpdateMaintenanceUpdateRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the update to edit (required).
+        message:
+          type:
+            - string
+            - "null"
+          title: message
+          minLength: 1
+          description: New public message.
+        date:
+          type:
+            - string
+            - "null"
+          title: date
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: New update date (RFC 3339 format).
+      title: UpdateMaintenanceUpdateRequest
+      additionalProperties: false
+      description: UpdateMaintenanceUpdateRequest is the request to edit an update.
+    openstatus.maintenance.v1.UpdateMaintenanceUpdateResponse:
+      type: object
+      properties:
+        maintenanceUpdate:
+          title: maintenance_update
+          description: The updated timeline entry.
+          $ref: '#/components/schemas/openstatus.maintenance.v1.MaintenanceUpdate'
+      title: UpdateMaintenanceUpdateResponse
+      additionalProperties: false
+      description: UpdateMaintenanceUpdateResponse is the response after editing an update.
     openstatus.monitor.v1.BodyAssertion:
       type: object
       properties:
@@ -5684,6 +5817,27 @@ components:
       title: DeleteStatusReportResponse
       additionalProperties: false
       description: DeleteStatusReportResponse is the response after deleting a status report.
+    openstatus.status_report.v1.DeleteStatusReportUpdateRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the update to remove (required).
+      title: DeleteStatusReportUpdateRequest
+      additionalProperties: false
+      description: DeleteStatusReportUpdateRequest is the request to remove a status report update.
+    openstatus.status_report.v1.DeleteStatusReportUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteStatusReportUpdateResponse
+      additionalProperties: false
+      description: DeleteStatusReportUpdateResponse is the response after removing a status report update.
     openstatus.status_report.v1.GetStatusReportRequest:
       type: object
       properties:
@@ -5929,6 +6083,61 @@ components:
       title: UpdateStatusReportResponse
       additionalProperties: false
       description: UpdateStatusReportResponse is the response after updating a status report.
+    openstatus.status_report.v1.UpdateStatusReportUpdateRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the update to edit (required).
+        status:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+            - type: "null"
+          title: status
+          description: New status for this entry (optional).
+        message:
+          type:
+            - string
+            - "null"
+          title: message
+          minLength: 1
+          description: New message (optional).
+        date:
+          type:
+            - string
+            - "null"
+          title: date
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: New date for this entry (RFC 3339 format, optional).
+        componentImpacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.ComponentImpact'
+          title: component_impacts
+          description: Replacement impact set for this update (optional, see update_component_impacts).
+        updateComponentImpacts:
+          type:
+            - boolean
+            - "null"
+          title: update_component_impacts
+          description: |-
+            Set to true to replace the update's component impacts with component_impacts
+             (empty clears them). When false or unset, component_impacts is ignored.
+      title: UpdateStatusReportUpdateRequest
+      additionalProperties: false
+      description: UpdateStatusReportUpdateRequest is the request to edit a status report update.
+    openstatus.status_report.v1.UpdateStatusReportUpdateResponse:
+      type: object
+      properties:
+        statusReportUpdate:
+          title: status_report_update
+          description: The edited timeline entry.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportUpdate'
+      title: UpdateStatusReportUpdateResponse
+      additionalProperties: false
+      description: UpdateStatusReportUpdateResponse is the response after editing a status report update.
 security:
   - ApiKeyAuth: []
 tags:
@@ -6467,6 +6676,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.incident.v1.UpdatePostmortemResponse'
+  /rpc/openstatus.maintenance.v1.MaintenanceService/AddMaintenanceUpdate:
+    post:
+      tags:
+        - MaintenanceService
+      summary: AddMaintenanceUpdate
+      description: AddMaintenanceUpdate appends a public update to a maintenance timeline.
+      operationId: MaintenanceService_AddMaintenanceUpdate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.maintenance.v1.AddMaintenanceUpdateRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.maintenance.v1.AddMaintenanceUpdateResponse'
   /rpc/openstatus.maintenance.v1.MaintenanceService/CreateMaintenance:
     post:
       tags:
@@ -6523,6 +6760,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.maintenance.v1.DeleteMaintenanceResponse'
+  /rpc/openstatus.maintenance.v1.MaintenanceService/DeleteMaintenanceUpdate:
+    post:
+      tags:
+        - MaintenanceService
+      summary: DeleteMaintenanceUpdate
+      description: DeleteMaintenanceUpdate removes an existing maintenance update.
+      operationId: MaintenanceService_DeleteMaintenanceUpdate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.maintenance.v1.DeleteMaintenanceUpdateRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.maintenance.v1.DeleteMaintenanceUpdateResponse'
   /rpc/openstatus.maintenance.v1.MaintenanceService/GetMaintenance:
     get:
       tags:
@@ -6663,6 +6928,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.maintenance.v1.UpdateMaintenanceResponse'
+  /rpc/openstatus.maintenance.v1.MaintenanceService/UpdateMaintenanceUpdate:
+    post:
+      tags:
+        - MaintenanceService
+      summary: UpdateMaintenanceUpdate
+      description: UpdateMaintenanceUpdate edits an existing maintenance update.
+      operationId: MaintenanceService_UpdateMaintenanceUpdate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.maintenance.v1.UpdateMaintenanceUpdateRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.maintenance.v1.UpdateMaintenanceUpdateResponse'
   /rpc/openstatus.monitor.v1.MonitorService/CreateDNSMonitor:
     post:
       tags:
@@ -8719,6 +9012,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.status_report.v1.DeleteStatusReportResponse'
+  /rpc/openstatus.status_report.v1.StatusReportService/DeleteStatusReportUpdate:
+    post:
+      tags:
+        - StatusReportService
+      summary: DeleteStatusReportUpdate
+      description: 'Removes a status report update. The report''s status is re-derived from the remaining updates. Deleting the last remaining update is rejected with INVALID_ARGUMENT: delete the status report instead.'
+      operationId: StatusReportService_DeleteStatusReportUpdate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_report.v1.DeleteStatusReportUpdateRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_report.v1.DeleteStatusReportUpdateResponse'
   /rpc/openstatus.status_report.v1.StatusReportService/GetStatusReport:
     get:
       tags:
@@ -8859,3 +9180,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.status_report.v1.UpdateStatusReportResponse'
+  /rpc/openstatus.status_report.v1.StatusReportService/UpdateStatusReportUpdate:
+    post:
+      tags:
+        - StatusReportService
+      summary: UpdateStatusReportUpdate
+      description: Edits an existing status report update in place. Editing the status or date of the latest update re-derives the report's overall status. Subscribers are not notified.
+      operationId: StatusReportService_UpdateStatusReportUpdate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_report.v1.UpdateStatusReportUpdateRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_report.v1.UpdateStatusReportUpdateResponse'

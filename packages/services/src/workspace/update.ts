@@ -87,7 +87,9 @@ export async function updateWorkspacePlan(args: {
         ...(input.trialEndsAt !== undefined && {
           trialEndsAt: input.trialEndsAt,
         }),
-        limits: JSON.stringify(input.limits),
+        ...(input.limits !== undefined && {
+          limits: JSON.stringify(input.limits),
+        }),
         updatedAt: new Date(),
       })
       .where(eq(workspace.id, ctx.workspace.id))

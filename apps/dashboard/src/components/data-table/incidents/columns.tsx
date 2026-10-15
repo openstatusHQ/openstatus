@@ -46,7 +46,9 @@ const baseColumns: ColumnDef<Incident>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Acknowledged" />
     ),
-    cell: ({ row }) => <TableCellDate value={row.getValue("acknowledgedAt")} />,
+    cell: ({ row }) => (
+      <TableCellDate value={row.getValue("acknowledgedAt")} empty="Pending" />
+    ),
     enableHiding: false,
   },
   {
@@ -54,7 +56,9 @@ const baseColumns: ColumnDef<Incident>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Resolved At" />
     ),
-    cell: ({ row }) => <TableCellDate value={row.getValue("resolvedAt")} />,
+    cell: ({ row }) => (
+      <TableCellDate value={row.getValue("resolvedAt")} empty="Ongoing" />
+    ),
     enableHiding: false,
   },
   {
@@ -100,9 +104,4 @@ const actionsColumn: ColumnDef<Incident> = {
   },
 };
 
-/** `declare` adds the incident-management quick action; omit it when the feature is off. */
-export function getColumns({ declare }: { declare: boolean }) {
-  return declare
-    ? [...baseColumns, declareColumn, actionsColumn]
-    : [...baseColumns, actionsColumn];
-}
+export const columns = [...baseColumns, declareColumn, actionsColumn];

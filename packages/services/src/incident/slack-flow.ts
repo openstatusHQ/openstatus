@@ -2,13 +2,12 @@ import { and, eq, isNull } from "@openstatus/db";
 import { type Incident, slackUser, user } from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb } from "../context";
-import { isFeatureEnabled } from "../features";
 import {
   type SlackConnection,
   getSlackConnection,
 } from "../integration/slack-connection";
 import { createSlackUserMapping } from "../slack-user/create";
-import { getIncidentInWorkspace, INCIDENT_FEATURE } from "./internal";
+import { getIncidentInWorkspace } from "./internal";
 import { bindIncidentSlackChannel } from "./slack-channel";
 
 type SlackText = { type: "mrkdwn" | "plain_text"; text: string };
@@ -121,11 +120,10 @@ function errorCode(err: Error | string): string {
   return err.message;
 }
 
-/** Channel automation needs the feature, the plan, and a fully-scoped install. */
+/** Channel automation needs the plan and a fully-scoped install. */
 export async function incidentSlackReady(
   ctx: ServiceContext,
 ): Promise<SlackConnection | null> {
-  if (!isFeatureEnabled(ctx.workspace, INCIDENT_FEATURE)) return null;
   if (!ctx.workspace.limits["slack-agent"]) return null;
   const connection = await getSlackConnection({ ctx });
   if (!connection || connection.missingScopes.length > 0) return null;
@@ -307,14 +305,31 @@ export async function openIncidentSlackChannel(args: {
   return { status: "unbound", channelId, error: lastError };
 }
 
+/** Action ids of the pinned card's buttons; the value is the incident id. */
+export const INCIDENT_CARD_ACTIONS = {
+  updateStatus: "incident_card_update_status",
+  statusPage: "incident_card_status_page",
+  open: "incident_card_open",
+} as const;
+
 export function headerBlocks(
-  incident: Pick<Incident, "title" | "severity" | "status" | "summary">,
+  incident: Pick<
+    Incident,
+    "id" | "title" | "severity" | "status" | "summary" | "closedAt"
+  >,
   url: string,
 ): SlackIncidentBlock[] {
   const status = `*Severity:* ${incident.severity}   *Status:* ${incident.status}`;
   const summary = incident.summary
     ? `\n${escapeTruncated(incident.summary, SECTION_TEXT_MAX - status.length - 1)}`
     : "";
+  const value = String(incident.id);
+  const open = {
+    type: "button" as const,
+    text: { type: "plain_text" as const, text: "Open in openstatus" },
+    url,
+    action_id: INCIDENT_CARD_ACTIONS.open,
+  };
   return [
     {
       type: "header",
@@ -325,11 +340,31 @@ export function headerBlocks(
     },
     { type: "section", text: { type: "mrkdwn", text: `${status}${summary}` } },
     {
+      type: "actions",
+      elements: incident.closedAt
+        ? [open]
+        : [
+            {
+              type: "button",
+              text: { type: "plain_text", text: "Update status" },
+              action_id: INCIDENT_CARD_ACTIONS.updateStatus,
+              value,
+            },
+            {
+              type: "button",
+              text: { type: "plain_text", text: "Update status page" },
+              action_id: INCIDENT_CARD_ACTIONS.statusPage,
+              value,
+            },
+            open,
+          ],
+    },
+    {
       type: "context",
       elements: [
         {
           type: "mrkdwn",
-          text: `<${url}|Open in openstatus> · Pin a message with :pushpin: to add it to the timeline.`,
+          text: "Add a message to the timeline: ⋯ → *Add to incident timeline*, or react :pushpin:.",
         },
       ],
     },

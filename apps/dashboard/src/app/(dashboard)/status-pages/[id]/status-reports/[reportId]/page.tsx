@@ -29,16 +29,9 @@ export default async function Page({
     queryClient.prefetchQuery(
       trpc.pageSubscriber.list.queryOptions({ pageId }),
     ),
-    // forStatusReport throws FORBIDDEN without the feature; skip it then.
-    queryClient
-      .fetchQuery(trpc.workspace.get.queryOptions())
-      .then((workspace) =>
-        workspace.features.includes("incident-management")
-          ? queryClient.prefetchQuery(
-              trpc.incident.forStatusReport.queryOptions({ statusReportId }),
-            )
-          : undefined,
-      ),
+    queryClient.prefetchQuery(
+      trpc.incident.forStatusReport.queryOptions({ statusReportId }),
+    ),
   ]);
   // the URL's page must own the report
   if (report.pageId !== pageId) notFound();

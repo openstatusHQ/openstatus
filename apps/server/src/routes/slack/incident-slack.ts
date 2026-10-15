@@ -9,6 +9,7 @@ import {
   afterPostmortemApproved,
   announceIncidentChange,
   bindIncidentSlackChannel,
+  escapeMrkdwn,
   getIncident,
   type IncidentEffects,
   type OpenChannelResult,
@@ -37,8 +38,12 @@ const incidentOutput = z.object({
 });
 const incidentInput = z.object({ note: z.string().optional() });
 
-function who(ctx: ServiceContext): string {
+export function who(ctx: ServiceContext): string {
   return ctx.actor.type === "slack" ? `<@${ctx.actor.slackUserId}>` : "Someone";
+}
+
+export function quote(note: string | undefined): string {
+  return note ? `\n>${escapeMrkdwn(note).replaceAll("\n", "\n>")}` : "";
 }
 
 async function slackEffects(
@@ -77,7 +82,7 @@ export async function afterIncidentTool(args: {
   slack: WebClient;
   teamId: string;
   channelId: string;
-  threadTs: string;
+  threadTs?: string;
 }): Promise<void> {
   const { ctx, toolName, config } = args;
   if (toolName === "approve_postmortem") {
@@ -178,7 +183,7 @@ async function offerStatusReportResolve(args: {
   slack: WebClient;
   teamId: string;
   channelId: string;
-  threadTs: string;
+  threadTs?: string;
   statusReportId: number;
   note: string | undefined;
   status: string;

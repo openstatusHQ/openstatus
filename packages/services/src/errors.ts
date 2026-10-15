@@ -57,7 +57,7 @@ export class ValidationError extends ServiceError {
 
 export class LimitExceededError extends ServiceError {
   constructor(
-    limit: string,
+    public limit: string,
     public max: number,
     /** Actual usage when the caller counted it — surfaced in client error metadata. */
     public current?: number,

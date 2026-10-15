@@ -148,7 +148,12 @@ export default function Page() {
                     ? "Add it to connect Okta, Entra ID, or any SAML provider."
                     : "Upgrade to connect Okta, Entra ID, or any SAML provider."}
                 </FormCardFooterInfo>
-                <Button size="sm" onClick={() => setUpgradeOpen(true)}>
+                <Button
+                  data-track="paywall_viewed"
+                  data-limit="sso"
+                  size="sm"
+                  onClick={() => setUpgradeOpen(true)}
+                >
                   {ssoAddon ? "Add SSO" : "Upgrade"}
                 </Button>
               </FormCardFooter>

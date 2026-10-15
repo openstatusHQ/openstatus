@@ -26,7 +26,10 @@ donates domain authority and leaks the conversion.
 The home and product pages (`pages/home.mdx`, `pages/product/*.mdx`) follow one
 section pattern: an `h2` outside the grid, a text cell with two sentences and a
 short list of internal links, and one `<Demo type="…" />` in the other cell of
-a `<Grid variant="borderless">`. `content-lint.test.ts` enforces the structural
+a `<Grid variant="borderless">`. Inside a `<Timeline>` (the home page story)
+the `Eyebrow` and `h2` move into the text cell instead, and the text cell comes
+first, so the label, heading and copy stick together beside the demo and every
+marker lands on the rail. `content-lint.test.ts` enforces the structural
 rules on those pages (registered tags, `SrOnly` next to every demo, no raw
 `className`, every demo type in the kitchen sink); the rest of the rules below
 are kept by hand and in review. `/kitchen-sink` (noindex) renders every
@@ -56,3 +59,19 @@ component once so drift is visible.
 - Every capitalised tag must be registered in `mdx-components/index.tsx`.
 - No new colours beyond tokens, no font sizes beyond the prose scale, no radius.
   Dark mode comes from tokens only; images get a `.dark` sibling.
+
+## Screenshots
+
+For any visible change, shoot it before reporting it done:
+`node scripts/screenshot.mjs --app web /pricing` (the `screenshot` skill has the
+flags). Judge against the root `DESIGN.md`.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

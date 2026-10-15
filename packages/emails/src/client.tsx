@@ -5,6 +5,8 @@ import { type Duration, Effect, Schedule } from "effect";
 import { render } from "react-email";
 import { Resend } from "resend";
 
+import DashboardMagicLinkEmail from "../emails/dashboard-magic-link";
+import type { DashboardMagicLinkProps } from "../emails/dashboard-magic-link";
 import FollowUpEmail from "../emails/followup";
 import MonitorAlertEmail, {
   monitorAlertSubject,
@@ -12,6 +14,8 @@ import MonitorAlertEmail, {
 import type { MonitorAlertProps } from "../emails/monitor-alert";
 import PageSubscriptionEmail from "../emails/page-subscription";
 import type { PageSubscriptionProps } from "../emails/page-subscription";
+import PageUpdateEmail from "../emails/page-update";
+import type { PageUpdateProps } from "../emails/page-update";
 import PrivateLocationAlertEmail, {
   privateLocationAlertSubject,
 } from "../emails/private-location-alert";
@@ -19,14 +23,12 @@ import type { PrivateLocationAlertProps } from "../emails/private-location-alert
 import SlackFeedbackEmail from "../emails/slack-feedback";
 import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
 import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link";
-import StatusReportEmail from "../emails/status-report";
-import type { StatusReportProps } from "../emails/status-report";
 import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
 import { env } from "./env";
 
-export function statusReportSubject(req: {
-  status: StatusReportProps["status"];
+export function pageUpdateSubject(req: {
+  status: PageUpdateProps["status"];
   reportTitle: string;
 }): string {
   if (req.status === "resolved") return `RESOLVED: ${req.reportTitle}`;
@@ -185,9 +187,9 @@ export class EmailClient {
     console.log(`Sent slack feedback emails to ${req.to}`);
   }
 
-  public async sendStatusReportUpdate(
+  public async sendPageUpdate(
     req: Omit<
-      StatusReportProps,
+      PageUpdateProps,
       "unsubscribeUrl" | "manageUrl" | "statusPageUrl"
     > & {
       subscribers: Array<{ email: string; token: string }>;
@@ -205,7 +207,7 @@ export class EmailClient {
 
     if (env.NODE_ENV === "development") {
       console.log(
-        `Sending status report update emails to ${req.subscribers
+        `Sending page update emails to ${req.subscribers
           .map((s) => s.email)
           .join(", ")}`,
       );
@@ -228,10 +230,10 @@ export class EmailClient {
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
                 from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
-                subject: statusReportSubject(req),
+                subject: pageUpdateSubject(req),
                 to: subscriber.email,
                 react: (
-                  <StatusReportEmail
+                  <PageUpdateEmail
                     {...req}
                     statusPageUrl={statusPageBaseUrl}
                     unsubscribeUrl={unsubscribeUrl}
@@ -244,7 +246,7 @@ export class EmailClient {
           ),
         catch: (_unknown) =>
           new Error(
-            `Error sending status report update batch to ${recipients.map(
+            `Error sending page update batch to ${recipients.map(
               (r) => r.email,
             )}`,
           ),
@@ -262,7 +264,7 @@ export class EmailClient {
     }
 
     console.log(
-      `Sent status report update email to ${req.subscribers.length} subscribers`,
+      `Sent page update email to ${req.subscribers.length} subscribers`,
     );
   }
 
@@ -385,86 +387,32 @@ export class EmailClient {
     }
   }
 
-  public async sendMaintenanceNotification(req: {
-    subscribers: Array<{ email: string; token: string }>;
-    pageTitle: string;
-    pageSlug: string;
-    customDomain?: string | null;
-    maintenanceTitle: string;
-    message: string;
-    from: string;
-    to: string;
-    pageComponents: string[];
-    idempotencyKey?: string;
-  }) {
-    const statusPageBaseUrl = req.customDomain
-      ? `https://${req.customDomain}`
-      : `https://${req.pageSlug}.openstatus.dev`;
-
+  /** Throws on a Resend failure so the login form can say the email did not go out. */
+  public async sendDashboardMagicLink(
+    req: DashboardMagicLinkProps & { to: string },
+  ) {
     if (env.NODE_ENV === "development") {
-      console.log(
-        `Sending maintenance notification emails to ${req.subscribers
-          .map((s) => s.email)
-          .join(", ")}`,
-      );
+      console.log(`Sending dashboard magic link email to ${req.to}`);
+      console.log(`>>> Magic Link: ${req.link}`);
       return;
     }
 
-    const chunks = chunk(req.subscribers, 100);
-    for (let i = 0; i < chunks.length; i++) {
-      const recipients = chunks[i];
-      const batchKey = req.idempotencyKey
-        ? `${req.idempotencyKey}:${i}`
-        : undefined;
-      const sendEmail = Effect.tryPromise({
-        try: () =>
-          this.client.batch.send(
-            recipients.map((subscriber) => {
-              const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
-              const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
-              return {
-                from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
-                subject: `Scheduled Maintenance: ${req.maintenanceTitle}`,
-                to: subscriber.email,
-                react: (
-                  <StatusReportEmail
-                    pageTitle={req.pageTitle}
-                    reportTitle={req.maintenanceTitle}
-                    status="maintenance"
-                    date={`${req.from} - ${req.to}`}
-                    message={req.message}
-                    pageComponents={req.pageComponents}
-                    statusPageUrl={statusPageBaseUrl}
-                    unsubscribeUrl={unsubscribeUrl}
-                    manageUrl={manageUrl}
-                  />
-                ),
-              };
-            }),
-            batchKey ? { idempotencyKey: batchKey } : undefined,
-          ),
-        catch: (_unknown) =>
-          new Error(
-            `Error sending maintenance notification batch to ${recipients.map(
-              (r) => r.email,
-            )}`,
-          ),
-      }).pipe(
-        Effect.andThen((result) =>
-          result.error ? Effect.fail(result.error) : Effect.succeed(result),
-        ),
-        Effect.retry({
-          times: 3,
-          schedule: Schedule.exponential(this.retryBackoff),
-          while: isRetryableSendError,
-        }),
-      );
-      await Effect.runPromise(sendEmail).catch(console.error);
-    }
+    const html = await render(<DashboardMagicLinkEmail link={req.link} />);
+    const result = await this.client.emails.send({
+      from: SYSTEM_FROM,
+      subject: "Sign in to openstatus",
+      to: req.to,
+      html,
+    });
 
-    console.log(
-      `Sent maintenance notification email to ${req.subscribers.length} subscribers`,
-    );
+    if (result.error) {
+      console.error(
+        `Error sending dashboard magic link to ${req.to}`,
+        result.error,
+      );
+      throw result.error;
+    }
+    console.log(`Sent dashboard magic link email to ${req.to}`);
   }
 
   public async sendPrivateLocationAlert(

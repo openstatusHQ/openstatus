@@ -18,7 +18,7 @@ const RAILWAY_CHECKER_URL =
 // ============================================================================
 
 export function latencyFormatter(value: number) {
-  return `${new Intl.NumberFormat("us").format(value).toString()}ms`;
+  return `${new Intl.NumberFormat("en-US").format(value).toString()}ms`;
 }
 
 export function timestampFormatter(timestamp: number) {

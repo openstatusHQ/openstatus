@@ -3,7 +3,6 @@
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 
-import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 
 import {
@@ -24,13 +23,11 @@ export function DeclareFromRow({
   statusReportId?: number;
 }) {
   const trpc = useTRPC();
-  const enabled = useFeature("incident-management");
   // A report can belong to one incident; declaring another would fail on submit.
   const { data: incidents } = useQuery({
     ...trpc.incident.list.queryOptions(),
-    enabled: enabled && statusReportId !== undefined,
+    enabled: statusReportId !== undefined,
   });
-  if (!enabled) return null;
   if (incidents?.some((i) => i.statusReport?.id === statusReportId)) {
     return null;
   }

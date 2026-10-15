@@ -25,7 +25,6 @@ import { NavStatusPages } from "@/components/nav/nav-status-pages";
 import { NavUser } from "@/components/nav/nav-user";
 import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
 import { NAV } from "@/config/nav";
-import { useFeature } from "@/hooks/use-feature";
 
 import { NavBanner } from "./nav-banner";
 import { NavHelp } from "./nav-help";
@@ -59,19 +58,16 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const incidents = useFeature("incident-management");
-  const overview = incidents
-    ? [
-        ...data.overview.slice(0, 3),
-        {
-          name: NAV.incidents.label,
-          url: NAV.incidents.href,
-          icon: NAV.incidents.icon,
-          badge: "New",
-        },
-        ...data.overview.slice(3),
-      ]
-    : data.overview;
+  const overview = [
+    ...data.overview.slice(0, 3),
+    {
+      name: NAV.incidents.label,
+      url: NAV.incidents.href,
+      icon: NAV.incidents.icon,
+      badge: "New",
+    },
+    ...data.overview.slice(3),
+  ];
 
   return (
     <Sidebar collapsible="icon" {...props}>

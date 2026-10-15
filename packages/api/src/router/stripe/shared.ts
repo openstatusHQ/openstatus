@@ -14,8 +14,8 @@ export const stripe = new Stripe(env.STRIPE_SECRET_KEY || "sk_unset", {
   },
 });
 
-// An unsupported price is a permanent misconfiguration; surface it as a 400 so
-// Stripe stops retrying instead of hammering the endpoint on a 5xx.
+// A subscription we cannot classify is a permanent misconfiguration; surface
+// it as a 400 so Stripe stops retrying instead of hammering the endpoint.
 export function buildFromSubscriptionOrThrow(
   subscription: Stripe.Subscription,
 ) {
@@ -28,6 +28,18 @@ export function buildFromSubscriptionOrThrow(
       message: e instanceof Error ? e.message : "Invalid subscription",
     });
   }
+}
+
+/** The limits to write, or undefined to keep a custom deal's hand-set ones. */
+export function syncedLimits(
+  subscription: Stripe.Subscription,
+  built: NonNullable<ReturnType<typeof buildLimitsFromSubscription>>,
+) {
+  if (built.customPriceIds.length === 0) return built.limits;
+  console.warn(
+    `Subscription ${subscription.id} has custom prices (${built.customPriceIds.join(", ")}); keeping workspace limits`,
+  );
+  return undefined;
 }
 
 // Statuses that mean the customer still has a subscription. `incomplete` and
@@ -180,6 +192,18 @@ export async function hasPaymentMethod(subscription: Stripe.Subscription) {
     !customer.deleted &&
     Boolean(customer.invoice_settings?.default_payment_method)
   );
+}
+
+// Stripe rejects automatic tax on a subscription whose customer it cannot
+// place (no address yet, e.g. a card-less trial), so only opt in once it can.
+// `not_collecting` is a valid location where we are not registered: no tax.
+export async function canAutomateTax(customerId: string) {
+  const customer = await stripe.customers.retrieve(customerId, {
+    expand: ["tax"],
+  });
+  if (customer.deleted) return false;
+  const status = customer.tax?.automatic_tax;
+  return status === "supported" || status === "not_collecting";
 }
 
 export function trialEndsAtOf(subscription: Stripe.Subscription) {

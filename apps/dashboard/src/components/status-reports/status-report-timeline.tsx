@@ -1,15 +1,8 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import {
-  type PageComponentImpact,
-  worstImpact,
-} from "@openstatus/db/src/schema/page_components/constants";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@openstatus/ui/components/ui/hover-card";
+import type { PageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
+import { Report } from "@openstatus/icons";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -19,76 +12,54 @@ import {
 } from "@/components/content/component-list";
 import { ProcessMessage } from "@/components/content/process-message";
 import {
+  TimelineActions,
   TimelineActor,
   TimelineBody,
-  TimelineContent,
+  TimelineCard,
+  TimelineFooter,
   TimelineHeader,
+  TimelineHighlight,
   TimelineIndicator,
   TimelineItem,
-  TimelineMeta,
   TimelineTime,
-  TimelineTitle,
 } from "@/components/content/timeline";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
 import { distinctEditor } from "@/data/attribution.client";
-import { icons } from "@/data/icons";
-import {
-  getActions,
-  impactsEqual,
-  statusVariants,
-} from "@/data/status-report-updates.client";
+import { getActions, impactsEqual } from "@/data/status-report-updates.client";
+import { reportStartedAt } from "@/data/status-reports.client";
 import { useTRPC } from "@/lib/trpc/client";
 
-import { StatusReportImpactBadge } from "./status-report-badge";
+import { StatusReportStatusBadge } from "./status-report-badge";
 import { useInvalidateStatusReport } from "./use-invalidate-status-report";
 
 type StatusReport = NonNullable<RouterOutputs["statusReport"]["get"]>;
 type StatusReportUpdate = StatusReport["updates"][number];
 
-/** Worst impact of the update; hover lists each component's own impact. */
-function TimelineImpact({
-  impacts,
-}: {
-  impacts: {
-    id: number;
-    name: string;
-    group?: string;
-    impact: PageComponentImpact;
-  }[];
-}) {
-  const worst = worstImpact(impacts.map((i) => i.impact));
-  return (
-    <HoverCard openDelay={100} closeDelay={100}>
-      <HoverCardTrigger asChild>
-        <StatusReportImpactBadge
-          impact={worst}
-          tabIndex={0}
-          className="focus-visible:ring-ring/50 cursor-default outline-none focus-visible:ring-[3px]"
-        />
-      </HoverCardTrigger>
-      <HoverCardContent align="start" className="w-auto min-w-56 p-3">
-        <ul className="flex flex-col gap-1.5 text-xs">
-          {impacts.map((ci) => (
-            <li key={ci.id} className="flex items-center justify-between gap-4">
-              <ComponentListName group={ci.group}>{ci.name}</ComponentListName>
-              <ComponentImpact impact={ci.impact} />
-            </li>
-          ))}
-        </ul>
-      </HoverCardContent>
-    </HoverCard>
+// Components whose impact this update moved against `before`, the state the
+// older updates left behind (an omitted component keeps its last impact). A
+// page starts operational, so the first update lists everything it degraded
+// and a resolve lists what it restored. Legacy updates carry no rows.
+function changedImpacts(
+  update: StatusReportUpdate,
+  before: ReadonlyMap<number, PageComponentImpact>,
+): { pageComponentId: number; impact: PageComponentImpact }[] {
+  return update.componentImpacts.filter(
+    (ci) => ci.impact !== (before.get(ci.pageComponentId) ?? "operational"),
   );
 }
 
 export function StatusReportTimelineItem({
   report,
   update,
+  before,
   index,
   groupOf,
 }: {
   report: StatusReport;
   update: StatusReportUpdate;
+  /** Impact per component as the older updates left it. */
+  before: ReadonlyMap<number, PageComponentImpact>;
   /** 1-based, counted from the oldest update. */
   index: number;
   /** component id → group name, for disambiguating same-named components */
@@ -109,62 +80,70 @@ export function StatusReportTimelineItem({
     id: c.id,
     name: c.name,
   }));
-  const Icon = icons.status[update.status];
-  // Every update is a status change, so the colored indicator keeps the rail
-  // and the author sits inline, as on incident state-change rows.
   const author = update.createdByUser;
   const editor = distinctEditor(update);
-  const impacts = update.componentImpacts.flatMap((ci) => {
+  const changes = changedImpacts(update, before).flatMap((ci) => {
     const component = components.find((c) => c.id === ci.pageComponentId);
-    return component
-      ? [
-          {
-            id: component.id,
-            name: component.name,
-            group: groupOf?.get(component.id),
-            impact: ci.impact,
-          },
-        ]
-      : [];
+    return component ? [{ ...component, impact: ci.impact }] : [];
   });
 
   return (
     <TimelineItem>
-      <TimelineIndicator variant={statusVariants[update.status]}>
-        <Icon />
-      </TimelineIndicator>
-      <TimelineContent>
+      <TimelineCard>
         <TimelineHeader>
-          <TimelineTitle>
-            <span className="capitalize">{update.status}</span>
-            {impacts.length ? <TimelineImpact impacts={impacts} /> : null}
-            {author ? <TimelineActor actor={author} /> : null}
-            {editor ? (
-              <TimelineMeta className="inline-flex items-center gap-1.5">
-                edited by <TimelineActor actor={editor} />
-              </TimelineMeta>
-            ) : null}
-          </TimelineTitle>
+          {author ? (
+            <>
+              <TimelineActor actor={author} avatar /> posted
+            </>
+          ) : (
+            "Posted"
+          )}
+          <StatusReportStatusBadge status={update.status} />
           <TimelineTime date={update.date} />
+          {editor ? (
+            <>
+              · edited by <TimelineActor actor={editor} />
+            </>
+          ) : null}
+          <TimelineActions>
+            <span>#{index}</span>
+            <QuickActions
+              actions={getActions({ edit: () => setEditing(true) })}
+              deleteAction={
+                // a report keeps at least one update; delete the report instead
+                report.updates.length > 1
+                  ? {
+                      description: `Permanently remove update #${index}. The report status is recomputed from the remaining updates.`,
+                      submitAction: async () => {
+                        await remove.mutateAsync({ id: update.id });
+                      },
+                    }
+                  : undefined
+              }
+            />
+          </TimelineActions>
         </TimelineHeader>
         {update.message ? (
-          <TimelineBody className="prose prose-sm dark:prose-invert max-w-none">
+          <TimelineBody>
             <ProcessMessage value={update.message} />
           </TimelineBody>
         ) : null}
-        <div className="text-muted-foreground flex items-center justify-between gap-2 font-mono text-xs">
-          <span>#{index}</span>
-          <QuickActions
-            actions={getActions({ edit: () => setEditing(true) })}
-            deleteAction={{
-              description: `Permanently remove update #${index}. The report status is recomputed from the remaining updates.`,
-              submitAction: async () => {
-                await remove.mutateAsync({ id: update.id });
-              },
-            }}
-          />
-        </div>
-      </TimelineContent>
+        {changes.length ? (
+          <TimelineFooter>
+            {changes.map((c) => (
+              <span key={c.id} className="inline-flex items-center gap-2">
+                <ComponentListName group={groupOf?.get(c.id)}>
+                  {c.name}
+                </ComponentListName>
+                <ComponentImpact
+                  impact={c.impact}
+                  className="text-foreground"
+                />
+              </span>
+            ))}
+          </TimelineFooter>
+        ) : null}
+      </TimelineCard>
       <FormSheetStatusReportUpdate
         open={editing}
         onOpenChange={setEditing}
@@ -196,6 +175,32 @@ export function StatusReportTimelineItem({
           });
         }}
       />
+    </TimelineItem>
+  );
+}
+
+/** Closing row: who opened the report, and on which page. */
+export function StatusReportOpenedTimelineItem({
+  report,
+}: {
+  report: StatusReport;
+}) {
+  return (
+    <TimelineItem>
+      <TimelineIndicator>
+        <Report />
+      </TimelineIndicator>
+      <TimelineHeader>
+        {report.createdByUser ? (
+          <>
+            <TimelineActor actor={report.createdByUser} /> opened the report on
+          </>
+        ) : (
+          "Report opened on"
+        )}
+        <TimelineHighlight>{report.page.title}</TimelineHighlight>
+        <TimelineTime date={reportStartedAt(report)} />
+      </TimelineHeader>
     </TimelineItem>
   );
 }

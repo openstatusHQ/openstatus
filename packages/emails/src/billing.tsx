@@ -197,8 +197,8 @@ export async function schedulePlanEndingSoon(
   if (!scheduledAt) return;
   return sendEmail(
     {
-      from: SIGNED_FROM,
-      reply_to: SIGNED_REPLY_TO,
+      from: SYSTEM_FROM,
+      reply_to: SUPPORT_EMAIL,
       to,
       subject: planEndingSoonSubject(props),
       react: <PlanEndingSoonEmail {...props} />,
@@ -217,12 +217,15 @@ export async function sendTrialEnding(
   const { to, eventId, ...props } = req;
   return sendEmail(
     {
-      from: SIGNED_FROM,
-      reply_to: SIGNED_REPLY_TO,
+      from: SYSTEM_FROM,
+      reply_to: SUPPORT_EMAIL,
       to,
       subject: trialEndingSubject(props),
       react: <TrialEndingEmail {...props} />,
     },
-    { idempotencyKey: stripeIdempotencyKey(eventId, "trial-ending") },
+    {
+      idempotencyKey: stripeIdempotencyKey(eventId, "trial-ending"),
+      throwOnError: true,
+    },
   );
 }

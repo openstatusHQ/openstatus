@@ -1,9 +1,9 @@
 "use client";
 
-import { Add } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
 
 import { Link } from "@/components/common/link";
 import {
@@ -19,10 +19,12 @@ import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const { data: statusPage } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
@@ -32,15 +34,22 @@ export default function Page() {
     }),
   );
   const sendMaintenanceUpdateMutation = useMutation(
-    trpc.subscriberNotification.maintenance.mutationOptions(),
+    trpc.subscriberNotification.maintenance.mutationOptions({
+      onError: (error) => {
+        toast.error(errorMessage(error, "Failed to notify subscribers"));
+      },
+    }),
   );
   const createMaintenanceMutation = useMutation(
     trpc.maintenance.new.mutationOptions({
       onSuccess: (maintenance) => {
         refetch();
+        queryClient.invalidateQueries({
+          queryKey: trpc.page.list.queryKey(),
+        });
         if (maintenance.notifySubscribers) {
           sendMaintenanceUpdateMutation.mutate({
-            id: maintenance.id,
+            id: maintenance.initialUpdateId,
           });
         }
       },
@@ -73,7 +82,7 @@ export default function Page() {
                 await createMaintenanceMutation.mutateAsync({
                   pageId: Number.parseInt(id),
                   title: values.title,
-                  message: values.message,
+                  message: values.message ?? "",
                   startDate: values.startDate,
                   endDate: values.endDate,
                   pageComponents: values.pageComponents,
@@ -82,7 +91,6 @@ export default function Page() {
               }}
             >
               <Button data-section="action" size="sm">
-                <Add />
                 Create Maintenance
               </Button>
             </FormSheetMaintenance>

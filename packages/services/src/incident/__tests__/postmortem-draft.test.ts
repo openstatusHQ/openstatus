@@ -162,6 +162,7 @@ describe("generatePostmortemDraft", () => {
       expect(prompts).toHaveLength(1);
       expect(prompts[0]).toContain("Checkout down");
       expect(prompts[0]).toContain("DB failover");
+      expect(prompts[0]).not.toContain("slack_channel_bound");
       expect(draft.draftedBy).toBe("agent");
       expect(draft.sourceTranscript).toContain("DB failover");
       expect(draft.content).toContain("Drafted by the openstatus agent");

@@ -167,7 +167,7 @@ export async function POST(request: Request) {
       console.error("mcp-health redis store failed", error);
     }
     try {
-      const analytics = await setupAnalytics({});
+      const analytics = await setupAnalytics({ source: "web" });
       await analytics.track({
         ...Events.MCPHealthCheck,
         url: normalizeUrlForStorage(parsed.url),

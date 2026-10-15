@@ -19,12 +19,9 @@ let otherWorkspaceReportId: number;
 let otherWorkspaceComponentId: number;
 
 // Track ids the service writes so afterAll can scrub the resulting
-// audit rows. `caller.statusReport.create` returns the initial-update
-// row (not the report), so the original cleanup-via-`result.id` never
-// reached the parent — leaving an orphan report and an orphan audit row.
-// SQLite recycles INTEGER PRIMARY KEY ids on delete, so a later test
-// inserting a status_report could land on the orphan's id and inherit
-// its `actor_type=user` attribution. See packages/services/AGENTS.md.
+// audit rows. SQLite recycles INTEGER PRIMARY KEY ids on delete, so a
+// later test inserting a status_report could land on an orphan's id and
+// inherit its `actor_type=user` attribution. See packages/services/AGENTS.md.
 const createdReportIds: number[] = [];
 const updatedReportIds: number[] = [];
 
@@ -174,20 +171,7 @@ test("statusReport.create succeeds for own workspace page", async () => {
   });
 
   expect(result).toBeDefined();
-
-  // `result.id` is the initial status_report_update id, not the parent
-  // report — recover the report id via the FK so afterAll can scrub both
-  // it and its audit row.
-  if (result) {
-    const updateRow = await db
-      .select({ statusReportId: statusReportUpdate.statusReportId })
-      .from(statusReportUpdate)
-      .where(eq(statusReportUpdate.id, result.id))
-      .get();
-    if (updateRow?.statusReportId != null) {
-      createdReportIds.push(updateRow.statusReportId);
-    }
-  }
+  if (result) createdReportIds.push(result.id);
 });
 
 test("statusReport.updateStatus rejects report from another workspace", async () => {

@@ -75,6 +75,21 @@ describe("InstatusClient", () => {
     expect(incidents[1].status).toBe("IDENTIFIED");
   });
 
+  test("getIncidents parses unrecognised statuses as unknown", async () => {
+    const [incident] = MOCK_INCIDENTS;
+    const updates = incident.updates ?? [];
+    mockFetchPaginated([
+      {
+        ...incident,
+        status: "POSTMORTEM",
+        updates: [{ ...updates[0], status: "POSTMORTEM" }],
+      },
+    ]);
+    const incidents = await client.getIncidents("in_page_001");
+    expect(incidents[0].status).toBe("unknown");
+    expect(incidents[0].updates?.[0].status).toBe("unknown");
+  });
+
   test("getMaintenances returns parsed maintenances", async () => {
     mockFetchPaginated(MOCK_MAINTENANCES);
     const maintenances = await client.getMaintenances("in_page_001");

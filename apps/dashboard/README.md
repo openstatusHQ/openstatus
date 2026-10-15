@@ -23,7 +23,7 @@ cp apps/dashboard/.env.example apps/dashboard/.env
 
 The defaults in `.env.example` are dummy values that work for local dev — no real API keys needed.
 Fill them in before deployment to enable optional functionality (Resend for real magic-link emails, Stripe, Tinybird analytics, Sentry, GitHub/Google OAuth, etc.).
-Email/Magic Link login is only available in dev.
+Magic-link login works everywhere; in dev the link is printed to the terminal instead of emailed.
 
 ### Startup
 
@@ -67,9 +67,9 @@ Turbo runs the dashboard (`apps/dashboard`) and `@openstatus/db` together.
 
 ## Logging in
 
-The dashboard uses NextAuth with GitHub, Google, and — in dev mode — a Resend magic-link provider.
+The dashboard uses NextAuth with GitHub, Google, SSO and a Resend magic-link provider.
 
-In `NODE_ENV=development` or `SELF_HOST=true`, `src/lib/auth/providers.ts` configures the Resend provider with `apiKey: undefined` and overrides `sendVerificationRequest` to **print the magic link to the dashboard's terminal stdout** instead of sending an email. No OAuth credentials required.
+In `NODE_ENV=development`, `src/lib/auth/providers.ts` **prints the magic link to the dashboard's terminal stdout** instead of emailing it; the dummy `RESEND_API_KEY` from `.env.example` is enough and no OAuth credentials are required. Everywhere else the link is emailed through Resend. A self-hosted deployment (`SELF_HOST=true`) whose Resend send fails still tells the user to check their inbox but prints the link to the server log instead, so look there when running without a real key.
 
 To log in:
 
@@ -82,6 +82,7 @@ To log in:
 - **Port 8080 already in use** — a leftover libSQL server from step 2. Kill that terminal and re-run `pnpm -w dev:dashboard`.
 - **Magic link doesn't arrive** — it isn't emailed in dev. Look in the dashboard terminal stdout for `>>> Magic Link: ...`.
 - **Reset the dev DB** — stop the libSQL server, delete `openstatus-dev.db` at the repo root, restart libSQL, re-run `pnpm -w dx`.
+- **No Turso CLI or Deno on the machine** (a cloud sandbox) — `node scripts/dev-stack.mjs up` does steps 2 to 5 with sqld and deno fetched from npm; `down` stops them. Its database is `.screenshots/stack/openstatus-dev.db`: `up --reseed` resets the fixtures, or delete the directory while the stack is down.
 
 ## Related services (optional for dashboard development)
 

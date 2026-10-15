@@ -153,6 +153,32 @@ export const demo = {
       message: string;
     }[],
   },
+  // The internal incident behind the public report: the team's side of the story.
+  response: {
+    id: 42,
+    title: "Checkout API 503s in EU",
+    channelSlug: "checkout-api-503s-in-eu",
+    severity: "major",
+    commander: company.oncall.name,
+    note: "Edge config deploy at 09:38 changed EU routing. Rolling back.",
+    mitigation: "Rollback complete in eu-west-1 and eu-west-2.",
+    // Hours without an update before a major incident gets a reminder.
+    staleAfterHours: 4,
+    postmortem: {
+      summary:
+        "A configuration change in the European edge made the Checkout API return 503 for requests routed through Europe.",
+      rootCause:
+        "The 09:38 edge config deploy changed EU routing and was not validated against a European region before rollout.",
+      wentWell:
+        "The monitor alerted within a minute and the first public update went out three minutes later.",
+      wentWrong:
+        "The deploy had no canary, so every European region failed at once.",
+      actionItems: [
+        "Canary edge config changes in one EU region first",
+        "Add a pre-deploy check from lhr and koyeb_fra",
+      ],
+    },
+  },
   maintenance: {
     title: "Database upgrade",
     affected: ["Checkout API", "Webhooks"],
@@ -203,9 +229,33 @@ export const demo = {
   subscribers,
   audit: [
     {
+      time: "11:20:48",
+      action: "incident_postmortem.update",
+      detail: "→ approved",
+      actor,
+    },
+    {
+      time: "11:02:14",
+      action: "incident_postmortem.create",
+      detail: "draft · agent",
+      actor,
+    },
+    {
+      time: "10:36:20",
+      action: "incident.update",
+      detail: "→ resolved",
+      actor,
+    },
+    {
       time: "10:36:00",
       action: "status_report.update",
       detail: "→ resolved",
+      actor,
+    },
+    {
+      time: "10:14:25",
+      action: "incident.update",
+      detail: "→ mitigated",
       actor,
     },
     {
@@ -227,6 +277,12 @@ export const demo = {
       actor,
     },
     {
+      time: "09:49:17",
+      action: "incident_event.create",
+      detail: "note · pinned in slack",
+      actor,
+    },
+    {
       time: "09:44:31",
       action: "notification.send",
       detail: `email ${subscribers.email.toLocaleString("en-US")} · rss · slack-connect`,
@@ -236,6 +292,12 @@ export const demo = {
       time: "09:44:30",
       action: "status_report.create",
       detail: "investigating · Checkout API",
+      actor,
+    },
+    {
+      time: "09:43:08",
+      action: "incident.create",
+      detail: "major · Checkout API 503s in EU",
       actor,
     },
     {
@@ -359,6 +421,67 @@ export function auditRow(action: string, detail?: string) {
 /** `HH:MM` of an `HH:MM:SS` audit time. */
 export function hhmm(time: string) {
   return time.slice(0, 5);
+}
+
+/** Whole minutes between two `HH:MM:SS` audit times on the same day. */
+export function minutesBetween(from: string, to: string) {
+  const day = new Date(0);
+  return Math.floor(
+    (atTime(day, to).getTime() - atTime(day, from).getTime()) / 60_000,
+  );
+}
+
+/** `#inc-<date>-<slug>`, the name openstatus gives the incident's Slack channel. */
+export function getResponseChannel(now = new Date()) {
+  const date = getIncidentDay(now).toISOString().slice(0, 10);
+  return `#inc-${date}-${demo.response.channelSlug}`;
+}
+
+/** The internal incident's timeline, newest first, as the dashboard lists it. */
+export function getResponseEvents() {
+  const { response, incident } = demo;
+  const by = company.oncall.name;
+  return [
+    {
+      label: "Postmortem approved",
+      time: auditRow("incident_postmortem.update", "→ approved").time,
+      by,
+    },
+    {
+      label: "Postmortem drafted",
+      time: auditRow("incident_postmortem.create").time,
+      by: "Agent",
+    },
+    {
+      label: "Resolved",
+      time: auditRow("incident.update", "→ resolved").time,
+      by,
+    },
+    {
+      label: "Mitigated",
+      time: auditRow("incident.update", "→ mitigated").time,
+      by,
+      message: response.mitigation,
+    },
+    {
+      label: "Note",
+      time: auditRow("incident_event.create").time,
+      by: `${by} · via Slack`,
+      message: response.note,
+    },
+    {
+      label: "Status report linked",
+      time: auditRow("status_report.create").time,
+      by,
+      message: incident.title,
+    },
+    {
+      label: "Declared",
+      time: auditRow("incident.create").time,
+      by,
+      message: `${capitalize(response.severity)} · ${response.title}`,
+    },
+  ];
 }
 
 const DAYS = 45;

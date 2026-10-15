@@ -350,11 +350,7 @@ export function FormGeneral({
                           </Tooltip>
                         );
                       })}
-                      <div
-                        className={cn(
-                          "text-muted-foreground col-span-1 self-end text-xs sm:place-self-end",
-                        )}
-                      >
+                      <div className="text-muted-foreground col-span-full text-xs">
                         Missing a type?{" "}
                         <a href="mailto:ping@openstatus.dev">Contact us</a>
                       </div>

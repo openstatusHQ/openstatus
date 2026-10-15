@@ -1,4 +1,8 @@
 export { createPage, newPage } from "./create";
+export {
+  getStatusUpdateTypes,
+  type StatusUpdateType,
+} from "./status-update-types";
 export { deletePage } from "./delete";
 export {
   type MaintenanceContent,

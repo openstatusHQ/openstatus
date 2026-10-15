@@ -19,6 +19,7 @@ import { getMonitorDetails } from "./get-monitor";
 import { getMonitorStatusTable } from "./get-monitor-status";
 import { getMonitorSummaryDetails } from "./get-monitor-summary";
 import { getResponseLogDetails } from "./get-response-log";
+import { getStatusReportDetails } from "./get-status-report";
 import {
   declareIncidentChanges,
   getIncidentDetails,
@@ -35,10 +36,19 @@ import { listPrivateLocationsTable } from "./list-private-locations";
 import { listResponseLogsTable } from "./list-response-logs";
 import { listStatusPagesTable } from "./list-status-pages";
 import { listStatusReportsTable } from "./list-status-reports";
+import {
+  addMaintenanceUpdateChanges,
+  deleteMaintenanceUpdateChanges,
+  updateMaintenanceUpdateChanges,
+} from "./maintenance-update";
 import { resolveStatusReportChanges } from "./resolve-status-report";
 import { ResultTable } from "./result-table";
 import { searchContentTable } from "./search-content";
 import { searchDocsTable } from "./search-docs";
+import {
+  deleteStatusReportUpdateChanges,
+  updateStatusReportUpdateChanges,
+} from "./status-report-update";
 import { updateStatusReportChanges } from "./update-status-report";
 
 /**
@@ -83,6 +93,13 @@ export const toolRenderers: ToolRendererRegistry = {
       <ResultTable {...listStatusReportsTable(output)} />
     ),
     summary: (o) => itemsCountSummary(o.items),
+  },
+  get_status_report: {
+    renderResult: ({ output }) => (
+      <DetailsTable {...getStatusReportDetails(output)} />
+    ),
+    summary: (o) =>
+      `${o.status} · ${o.updates.length} update${o.updates.length === 1 ? "" : "s"}`,
   },
   list_maintenances: {
     renderResult: ({ output }) => (
@@ -136,6 +153,20 @@ export const toolRenderers: ToolRendererRegistry = {
     ),
     summary: (o) => `resolved · update #${o.statusReportUpdateId}`,
   },
+  update_status_report_update: {
+    renderDraft: (input) => updateStatusReportUpdateChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={updateStatusReportUpdateChanges(input)} />
+    ),
+    summary: (o) => `update #${o.id}`,
+  },
+  delete_status_report_update: {
+    renderDraft: (input) => deleteStatusReportUpdateChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={deleteStatusReportUpdateChanges(input)} />
+    ),
+    summary: (o) => `deleted #${o.id}`,
+  },
   create_maintenance: {
     renderDraft: (input) => createMaintenanceChanges(input),
     renderResult: ({ input, output }) => (
@@ -147,6 +178,32 @@ export const toolRenderers: ToolRendererRegistry = {
       />
     ),
     summary: (o) => `ID ${o.id}`,
+  },
+  add_maintenance_update: {
+    renderDraft: (input) => addMaintenanceUpdateChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable
+        changes={addMaintenanceUpdateChanges(input, {
+          id: output.id,
+          notified: output.notified ?? false,
+        })}
+      />
+    ),
+    summary: (o) => `update #${o.id}`,
+  },
+  update_maintenance_update: {
+    renderDraft: (input) => updateMaintenanceUpdateChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={updateMaintenanceUpdateChanges(input)} />
+    ),
+    summary: (o) => `update #${o.id}`,
+  },
+  delete_maintenance_update: {
+    renderDraft: (input) => deleteMaintenanceUpdateChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={deleteMaintenanceUpdateChanges(input)} />
+    ),
+    summary: (o) => `deleted #${o.id}`,
   },
   list_incidents: {
     renderResult: ({ output }) => (

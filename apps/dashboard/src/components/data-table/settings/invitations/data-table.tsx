@@ -17,6 +17,8 @@ import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { TableCellEmpty } from "../../table-cell-empty";
+
 export function DataTable() {
   const trpc = useTRPC();
   const { data: invitations, refetch } = useQuery(
@@ -61,11 +63,19 @@ export function DataTable() {
             <TableCell>{item.email}</TableCell>
             <TableCell>{item.role}</TableCell>
             <TableCell>
-              {item.createdAt ? formatDate(item.createdAt) : "-"}
+              {item.createdAt ? (
+                formatDate(item.createdAt)
+              ) : (
+                <TableCellEmpty>Unknown</TableCellEmpty>
+              )}
             </TableCell>
             <TableCell>{formatDate(item.expiresAt)}</TableCell>
             <TableCell>
-              {item.acceptedAt ? formatDate(item.acceptedAt) : "-"}
+              {item.acceptedAt ? (
+                formatDate(item.acceptedAt)
+              ) : (
+                <TableCellEmpty>Pending</TableCellEmpty>
+              )}
             </TableCell>
             <TableCell>
               <div className="flex justify-end">

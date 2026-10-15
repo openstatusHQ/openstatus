@@ -131,6 +131,11 @@ describe("mapMonitor", () => {
     const result = mapMonitor(MOCK_MONITORS[1], 42);
     expect(result.headers).toBe("");
   });
+
+  test("carries over the monitor's follow_redirects setting", () => {
+    expect(mapMonitor(MOCK_MONITORS[0], 42).followRedirects).toBe(true);
+    expect(mapMonitor(MOCK_MONITORS[2], 42).followRedirects).toBe(false);
+  });
 });
 
 describe("mapMonitorGroup", () => {

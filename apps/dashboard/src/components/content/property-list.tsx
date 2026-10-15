@@ -1,4 +1,4 @@
-import { ArrowUpRight } from "@openstatus/icons";
+import { ArrowUpRight, ChevronDown } from "@openstatus/icons";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { SelectTrigger } from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
@@ -118,6 +118,29 @@ export function PropertySelectTrigger({
     >
       {children}
     </SelectTrigger>
+  );
+}
+
+// Same chrome as PropertySelectTrigger, for rows that open a menu instead.
+export function PropertyMenuTrigger({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"button">) {
+  return (
+    <button
+      type="button"
+      data-slot="property-menu-trigger"
+      className={cn(
+        propertyControlClassName,
+        "focus-visible:border-ring focus-visible:ring-ring/50 data-[state=open]:bg-accent flex items-center justify-between gap-2 rounded-md border text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        className,
+      )}
+      {...props}
+    >
+      <span className="flex min-w-0 flex-1 items-center gap-2">{children}</span>
+      <ChevronDown className="size-4 opacity-50" />
+    </button>
   );
 }
 

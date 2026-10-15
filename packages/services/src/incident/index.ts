@@ -40,6 +40,7 @@ export {
   getIncidentForStatusReport,
   getIncidentOrThrow,
   listIncidents,
+  listLinkedStatusReportIds,
   toIncidentView,
 } from "./list";
 export {
@@ -80,6 +81,7 @@ export {
   announceInChannel,
   escapeMrkdwn,
   headerBlocks,
+  INCIDENT_CARD_ACTIONS,
   incidentChannelName,
   incidentSlackReady,
   type OpenChannelResult,

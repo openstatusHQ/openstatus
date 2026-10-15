@@ -8,7 +8,11 @@ import { WebClient } from "@slack/web-api";
 
 import type { PageUpdate, Subscription } from "../types";
 import { buildReplyMessage, buildRootMessage } from "./slack-blocks";
-import { type SlackAnchorStore, createRedisAnchorStore } from "./slack-store";
+import {
+  type SlackAnchorStore,
+  type SlackThreadEvent,
+  createRedisAnchorStore,
+} from "./slack-store";
 
 interface SlackPostResult {
   ts?: string;
@@ -124,40 +128,29 @@ export function createSlackChannel(deps: SlackChannelDeps) {
     }
   }
 
-  async function deliverMaintenance(
+  // Every event kind threads: the first delivered update becomes the root,
+  // later ones reply under it and re-render the root.
+  async function deliverThreaded(
     client: SlackClient,
     sub: Subscription,
     channelId: string,
     pageUpdate: PageUpdate,
   ): Promise<DeliveryOutcome> {
-    const root = buildRootMessage(pageUpdate, sub);
-    const res = await runSlack(sub.id, () =>
-      client.postMessage({
-        channel: channelId,
-        attachments: root.attachments,
-      }),
-    );
-    if (res === TEAM_TOKEN_INVALID) return TEAM_TOKEN_INVALID;
-  }
-
-  async function deliverReport(
-    client: SlackClient,
-    sub: Subscription,
-    channelId: string,
-    pageUpdate: PageUpdate,
-  ): Promise<DeliveryOutcome> {
-    const reportId = pageUpdate.id;
+    const event: SlackThreadEvent = {
+      kind: pageUpdate.status === "maintenance" ? "maintenance" : "report",
+      id: pageUpdate.id,
+    };
     const updateId = pageUpdate.updateId;
     if (updateId == null) {
-      console.error(`slack: status report update ${reportId} missing updateId`);
+      console.error(`slack: ${event.kind} ${event.id} missing updateId`);
       return;
     }
 
     // Atomic dedupe: only the caller that wins this reservation posts. On a
     // failed post we release it below so the delivery stays retriable.
-    if (!(await deps.store.reserveDelivery(reportId, sub.id, updateId))) return;
+    if (!(await deps.store.reserveDelivery(event, sub.id, updateId))) return;
 
-    const anchor = await deps.store.getAnchor(reportId, sub.id);
+    const anchor = await deps.store.getAnchor(event, sub.id);
     const root = buildRootMessage(pageUpdate, sub);
 
     if (!anchor) {
@@ -168,13 +161,13 @@ export function createSlackChannel(deps: SlackChannelDeps) {
         }),
       );
       if (!res || res === TEAM_TOKEN_INVALID) {
-        await deps.store.releaseDelivery(reportId, sub.id, updateId);
+        await deps.store.releaseDelivery(event, sub.id, updateId);
         return res === TEAM_TOKEN_INVALID ? TEAM_TOKEN_INVALID : undefined;
       }
       if (res.ts) {
         // Stash this first update so the next one can backfill it into the
         // thread before the root is re-rendered and its content lost.
-        await deps.store.setAnchor(reportId, sub.id, {
+        await deps.store.setAnchor(event, sub.id, {
           ts: res.ts,
           channelId,
           pendingRootReply: buildReplyMessage(pageUpdate),
@@ -196,14 +189,14 @@ export function createSlackChannel(deps: SlackChannelDeps) {
         }),
       );
       if (!backfillRes || backfillRes === TEAM_TOKEN_INVALID) {
-        await deps.store.releaseDelivery(reportId, sub.id, updateId);
+        await deps.store.releaseDelivery(event, sub.id, updateId);
         return backfillRes === TEAM_TOKEN_INVALID
           ? TEAM_TOKEN_INVALID
           : undefined;
       }
       // Clear before posting the current reply: if that reply fails and the
       // delivery is retried, the first update must not be backfilled twice.
-      await deps.store.setAnchor(reportId, sub.id, {
+      await deps.store.setAnchor(event, sub.id, {
         ts: anchor.ts,
         channelId: anchor.channelId,
       });
@@ -219,7 +212,7 @@ export function createSlackChannel(deps: SlackChannelDeps) {
       }),
     );
     if (!replyRes || replyRes === TEAM_TOKEN_INVALID) {
-      await deps.store.releaseDelivery(reportId, sub.id, updateId);
+      await deps.store.releaseDelivery(event, sub.id, updateId);
       return replyRes === TEAM_TOKEN_INVALID ? TEAM_TOKEN_INVALID : undefined;
     }
 
@@ -266,10 +259,12 @@ export function createSlackChannel(deps: SlackChannelDeps) {
         // Sequential per team so a token failure aborts the batch before
         // hammering Slack with N calls that will all fail identically.
         for (const { sub, channelId } of members) {
-          const outcome =
-            pageUpdate.status === "maintenance"
-              ? await deliverMaintenance(client, sub, channelId, pageUpdate)
-              : await deliverReport(client, sub, channelId, pageUpdate);
+          const outcome = await deliverThreaded(
+            client,
+            sub,
+            channelId,
+            pageUpdate,
+          );
           if (outcome === TEAM_TOKEN_INVALID) {
             console.error(
               `slack: team ${teamId} bot token invalid — aborting ${members.length} deliveries; subscribers left intact (reconnect the Slack app)`,

@@ -1,11 +1,11 @@
 "use client";
 
 import type { IncidentStatus } from "@openstatus/db/src/schema/incidents/constants";
+import { personName } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 
-import { Link } from "@/components/common/link";
 import {
   DetailAside,
   DetailContent,
@@ -17,61 +17,31 @@ import {
   DetailSection,
   DetailSectionTitle,
 } from "@/components/content/detail";
-import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import {
-  Property,
-  PropertyLabel,
-  PropertyList,
-  PropertyValue,
-} from "@/components/content/property-list";
 import { SectionGroup } from "@/components/content/section";
 import { Timeline } from "@/components/content/timeline";
 import {
   IncidentActions,
   hasIncidentActions,
 } from "@/components/incidents/incident-actions";
+import { IncidentCommunication } from "@/components/incidents/incident-communication";
 import { IncidentComposer } from "@/components/incidents/incident-composer";
 import { IncidentHeading } from "@/components/incidents/incident-heading";
 import { IncidentPostmortem } from "@/components/incidents/incident-postmortem";
 import { IncidentProperties } from "@/components/incidents/incident-properties";
-import { IncidentStatusReport } from "@/components/incidents/incident-status-report";
 import { IncidentTimelineItem } from "@/components/incidents/incident-timeline";
 import { ResolveReportDialog } from "@/components/incidents/resolve-report-dialog";
-import { incidentEndedAt, personName } from "@/data/managed-incidents.client";
-import { useFeature } from "@/hooks/use-feature";
+import { incidentEndedAt } from "@/data/managed-incidents.client";
 import { useTRPC } from "@/lib/trpc/client";
-
-function slackChannelUrl(teamId: string, channelId: string): string {
-  return `https://slack.com/app_redirect?team=${teamId}&channel=${channelId}`;
-}
 
 export function Client({ id }: { id: number }) {
   const trpc = useTRPC();
-  const enabled = useFeature("incident-management");
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const { data: incident, isError } = useQuery({
-    ...trpc.incident.get.queryOptions({ id }),
-    enabled,
-    retry: false,
-  });
-  const { data: events } = useQuery({
-    ...trpc.incident.listEvents.queryOptions({ id }),
-    enabled,
-  });
+  const { data: incident } = useQuery(trpc.incident.get.queryOptions({ id }));
+  const { data: events } = useQuery(
+    trpc.incident.listEvents.queryOptions({ id }),
+  );
   const [followUp, setFollowUp] = useState<{ note: string } | null>(null);
 
-  if (isError) {
-    return (
-      <SectionGroup>
-        <EmptyStateContainer>
-          <EmptyStateTitle>Incident not found</EmptyStateTitle>
-        </EmptyStateContainer>
-      </SectionGroup>
-    );
-  }
   if (!incident) return null;
 
   const canNotify = workspace?.limits["status-subscribers"] === true;
@@ -98,7 +68,7 @@ export function Client({ id }: { id: number }) {
   const timeline = (
     <DetailSection>
       <DetailSectionTitle variant="heading">
-        Timeline
+        Activity
         {events ? (
           <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
             {events.length}
@@ -113,7 +83,11 @@ export function Client({ id }: { id: number }) {
           />
         )}
         {events?.map((event) => (
-          <IncidentTimelineItem key={event.id} event={event} />
+          <IncidentTimelineItem
+            key={event.id}
+            event={event}
+            incident={incident}
+          />
         ))}
       </Timeline>
     </DetailSection>
@@ -173,9 +147,11 @@ export function Client({ id }: { id: number }) {
       </DetailHeader>
       <DetailContent>
         <DetailMain>
-          {/* Resolved incidents lead with the postmortem; open ones with the timeline. */}
+          {/* Resolved incidents lead with the postmortem; open ones with the
+              timeline. A canceled one is a false alarm: no postmortem. */}
           {resolved ? postmortem : timeline}
-          {resolved ? timeline : postmortem}
+          {resolved ? timeline : null}
+          {resolved || incident.status === "canceled" ? null : postmortem}
         </DetailMain>
         <DetailAside>
           <DetailSection>
@@ -188,26 +164,7 @@ export function Client({ id }: { id: number }) {
           </DetailSection>
           <DetailSection>
             <DetailSectionTitle>Communication</DetailSectionTitle>
-            <IncidentStatusReport incident={incident} canNotify={canNotify} />
-            <PropertyList>
-              <Property>
-                <PropertyLabel>Slack</PropertyLabel>
-                <PropertyValue>
-                  {incident.slackTeamId && incident.slackChannelId ? (
-                    <Link
-                      href={slackChannelUrl(
-                        incident.slackTeamId,
-                        incident.slackChannelId,
-                      )}
-                    >
-                      Open channel
-                    </Link>
-                  ) : (
-                    <span className="text-muted-foreground">No channel</span>
-                  )}
-                </PropertyValue>
-              </Property>
-            </PropertyList>
+            <IncidentCommunication incident={incident} />
           </DetailSection>
         </DetailAside>
       </DetailContent>

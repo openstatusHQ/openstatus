@@ -1,5 +1,5 @@
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
-import { isFeatureEnabled, type ServiceContext } from "@openstatus/services";
+import type { ServiceContext } from "@openstatus/services";
 import { stepCountIs, streamText } from "ai";
 import type { ModelMessage, Tool } from "ai";
 
@@ -105,9 +105,7 @@ export async function runAgent(
 
   const result = streamText({
     model: SLACK_AGENT_MODEL,
-    system: buildSystemPrompt(workspace.name ?? "Unknown", contextNote, {
-      incidentManagement: isFeatureEnabled(workspace, "incident-management"),
-    }),
+    system: buildSystemPrompt(workspace.name ?? "Unknown", contextNote),
     messages,
     tools,
     stopWhen: stepCountIs(MAX_STEPS),

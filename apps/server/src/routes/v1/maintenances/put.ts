@@ -19,6 +19,7 @@ import {
   dateRangeError,
   refineDateRange,
 } from "./schema";
+import { rewriteLatestUpdate, withLatestMessage } from "./updates";
 
 const putRoute = createRoute({
   method: "put",
@@ -58,7 +59,8 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
-    const { monitorIds, pageId } = input;
+    const { monitorIds, message, ...columns } = input;
+    const { pageId } = input;
 
     const _maintenance = await db.query.maintenance.findFirst({
       with: {
@@ -67,6 +69,7 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
             pageComponent: true,
           },
         },
+        maintenanceUpdates: true,
       },
       where: and(
         eq(maintenance.id, Number(id)),
@@ -131,13 +134,17 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
       const updated = await tx
         .update(maintenance)
         .set({
-          ...input,
+          ...columns,
           updatedAt: new Date(),
           updatedBy: actorUserId,
         })
         .where(eq(maintenance.id, Number(id)))
         .returning()
         .get();
+
+      if (message !== undefined) {
+        await rewriteLatestUpdate(tx, Number(id), message, actorUserId);
+      }
 
       if (monitorIds) {
         // Delete from maintenancesToPageComponents
@@ -180,6 +187,7 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
 
     const data = MaintenanceSchema.parse({
       ...updatedMaintenance,
+      message: message ?? withLatestMessage(_maintenance).message,
       monitorIds:
         monitorIds ??
         _maintenance.maintenancesToPageComponents

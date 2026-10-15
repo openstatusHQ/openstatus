@@ -1,45 +1,96 @@
 import { db, eq } from "@openstatus/db";
-import { invitation, workspace } from "@openstatus/db/src/schema";
-import { getLimits } from "@openstatus/db/src/schema/plan/utils";
-import { createTestWorkspace } from "@openstatus/db/src/test/factories";
+import {
+  account,
+  selectUserSchema,
+  selectWorkspaceSchema,
+  user,
+} from "@openstatus/db/src/schema";
+import {
+  addUserToWorkspace,
+  createTestWorkspace,
+  createUser,
+} from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
 import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
 import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 import type Stripe from "stripe";
 
+import { createInnerTRPCContext } from "../../trpc";
+import { workspaceRouter } from "../workspace";
+import { stripeRouter } from "./index";
 import { stripe } from "./shared";
-import { TRIAL_DAYS, maybeStartSignupTrial } from "./trial";
+import { TRIAL_DAYS } from "./trial";
 import { PLANS } from "./utils";
 
 const STARTER_PRICE = PLANS.find((p) => p.plan === "starter")?.price.monthly
   .priceIds.test;
-const trialEnd = Math.floor(Date.now() / 1000) + TRIAL_DAYS * 86_400;
 
-async function freeWorkspace() {
-  return createTestWorkspace({ plan: "free", stripeId: null });
+type Fixture = Awaited<ReturnType<typeof createTestWorkspace>>;
+
+function asCaller(fixture: Fixture, userId = fixture.user.id) {
+  const ws = selectWorkspaceSchema.parse(fixture.workspace);
+  return stripeRouter.createCaller(
+    createInnerTRPCContext({
+      session: { user: { id: String(userId) } },
+      workspace: ws,
+      user: selectUserSchema.parse({ ...fixture.user, id: userId }),
+    }),
+  );
+}
+
+async function link(userId: number, provider: string) {
+  await db.insert(account).values({
+    userId,
+    type: "oauth",
+    provider,
+    providerAccountId: crypto.randomUUID(),
+  });
+}
+
+async function freeWorkspace(
+  overrides: Parameters<typeof createTestWorkspace>[0] = {},
+  providers: string[] = ["github"],
+) {
+  const fixture = await createTestWorkspace({
+    plan: "free",
+    stripeId: null,
+    subscriptionId: null,
+    trialEndsAt: null,
+    ...overrides,
+  });
+  for (const provider of providers) await link(fixture.user.id, provider);
+  return fixture;
 }
 
 function customer(id: string, metadata: Record<string, string> = {}) {
   return { id, metadata } as unknown as Stripe.Customer;
 }
 
-describe("maybeStartSignupTrial", () => {
+function trialInput(fixture: Fixture, extra: Record<string, unknown> = {}) {
+  return {
+    trial: true,
+    plan: "starter" as const,
+    interval: "monthly" as const,
+    currency: "USD",
+    workspaceSlug: fixture.workspace.slug,
+    ...extra,
+  };
+}
+
+describe("trial checkout", () => {
   let customerId: string;
   let customers: Stripe.Customer[];
-  let price: Partial<Stripe.Price>;
+  let subscriptions: Partial<Stripe.Subscription>[];
   let stubs: Stub[];
-  let list: Stub;
+  let listCustomers: Stub;
   let createCustomer: Stub;
-  let createSubscription: Stub;
-  // Runs inside `customers.create`, to interleave work with the Stripe call.
-  let onCreateCustomer: (() => Promise<void>) | undefined;
+  let createSession: Stub;
 
   beforeEach(() => {
     customerId = `cus_${crypto.randomUUID()}`;
     customers = [];
-    onCreateCustomer = undefined;
-    price = { currency: "usd", currency_options: {} };
-    list = stub(
+    subscriptions = [];
+    listCustomers = stub(
       stripe.customers,
       "list",
       () =>
@@ -47,32 +98,26 @@ describe("maybeStartSignupTrial", () => {
           Stripe.ApiList<Stripe.Customer>
         >) as Stripe.ApiListPromise<Stripe.Customer>,
     );
-    createCustomer = stub(stripe.customers, "create", async () => {
-      await onCreateCustomer?.();
-      return { id: customerId } as Stripe.Response<Stripe.Customer>;
-    });
-    createSubscription = stub(stripe.subscriptions, "create", () =>
+    createCustomer = stub(stripe.customers, "create", () =>
+      Promise.resolve({ id: customerId } as Stripe.Response<Stripe.Customer>),
+    );
+    createSession = stub(stripe.checkout.sessions, "create", () =>
       Promise.resolve({
-        id: "sub_trial",
-        status: "trialing",
-        trial_end: trialEnd,
-        items: {
-          data: [
-            {
-              price: { id: STARTER_PRICE },
-              quantity: 1,
-              current_period_end: trialEnd,
-            },
-          ],
-        },
-      } as Stripe.Response<Stripe.Subscription>),
+        url: "https://checkout.stripe.test/session",
+      } as Stripe.Response<Stripe.Checkout.Session>),
     );
     stubs = [
-      list,
+      listCustomers,
       createCustomer,
-      createSubscription,
-      stub(stripe.prices, "retrieve", () =>
-        Promise.resolve(price as Stripe.Response<Stripe.Price>),
+      createSession,
+      stub(
+        stripe.subscriptions,
+        "list",
+        // Awaited for the eligibility scan, auto-paged for the live lookup.
+        () =>
+          Object.assign(Promise.resolve({ data: subscriptions }), {
+            autoPagingToArray: () => Promise.resolve([]),
+          }) as unknown as Stripe.ApiListPromise<Stripe.Subscription>,
       ),
     ];
   });
@@ -81,196 +126,256 @@ describe("maybeStartSignupTrial", () => {
     for (const s of stubs) s.restore();
   });
 
-  test("starts a Starter trial on the owner's workspace", async () => {
-    const { workspace: ws, user } = await freeWorkspace();
-    price = {
-      currency: "usd",
-      currency_options: {
-        eur: {} as Stripe.Price.CurrencyOptions,
-      },
-    };
+  describe("getCheckoutSession", () => {
+    test("opens a card-less Starter trial checkout", async () => {
+      const f = await freeWorkspace();
 
-    const result = await maybeStartSignupTrial({
-      userId: user.id,
-      email: user.email ?? "",
-      provider: "github",
-      currency: "EUR",
+      const result = await asCaller(f).getCheckoutSession(
+        trialInput(f, { surface: "billing", intent: "  Slack alerts  " }),
+      );
+
+      expect(result?.type).toBe("checkout");
+      assertSpyCalls(createCustomer, 1);
+      assertSpyCalls(createSession, 1);
+      const params = createSession.calls[0]?.args[0];
+      expect(params).toMatchObject({
+        mode: "subscription",
+        customer: customerId,
+        line_items: [{ price: STARTER_PRICE, quantity: 1 }],
+        payment_method_collection: "if_required",
+        subscription_data: {
+          trial_period_days: TRIAL_DAYS,
+          trial_settings: {
+            end_behavior: { missing_payment_method: "cancel" },
+          },
+          metadata: {
+            source: "trial_opt_in",
+            surface: "billing",
+            intent: "Slack alerts",
+          },
+        },
+      });
+      expect(params?.success_url).toContain("?trial=true");
     });
 
-    const trialEndsAt = new Date(trialEnd * 1000);
-    expect(result).toEqual({ started: true, trialEndsAt });
+    test("omits an empty intent and surface", async () => {
+      const f = await freeWorkspace();
 
-    assertSpyCalls(createCustomer, 1);
-    expect(createCustomer.calls[0]?.args).toEqual([
-      {
-        email: user.email,
-        metadata: { workspaceId: String(ws.id), trialed: "true" },
-      },
-      { idempotencyKey: `trial-customer:ws_${ws.id}` },
-    ]);
+      await asCaller(f).getCheckoutSession(trialInput(f, { intent: "   " }));
 
-    assertSpyCalls(createSubscription, 1);
-    const [params, options] = createSubscription.calls[0]?.args ?? [];
-    expect(params).toMatchObject({
-      customer: customerId,
-      currency: "eur",
-      items: [{ price: STARTER_PRICE }],
-      trial_period_days: TRIAL_DAYS,
-      trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
-    });
-    expect(options).toEqual({ idempotencyKey: `trial-sub:ws_${ws.id}` });
-
-    const after = await db
-      .select()
-      .from(workspace)
-      .where(eq(workspace.id, ws.id))
-      .get();
-    expect(after?.plan).toBe("starter");
-    expect(after?.stripeId).toBe(customerId);
-    expect(after?.subscriptionId).toBe("sub_trial");
-    expect(after?.trialEndsAt).toEqual(trialEndsAt);
-    expect(after?.endsAt).toEqual(trialEndsAt);
-    expect(JSON.parse(after?.limits ?? "{}")).toEqual(getLimits("starter"));
-  });
-
-  test("falls back to the price currency when the requested one is missing", async () => {
-    const { user } = await freeWorkspace();
-    price = { currency: "eur", currency_options: {} };
-
-    await maybeStartSignupTrial({
-      userId: user.id,
-      email: user.email ?? "",
-      currency: "USD",
+      expect(
+        createSession.calls[0]?.args[0]?.subscription_data?.metadata,
+      ).toEqual({ source: "trial_opt_in" });
     });
 
-    expect(createSubscription.calls[0]?.args[0]).toMatchObject({
-      currency: "eur",
-    });
-  });
+    test("a regular checkout carries no trial parameters", async () => {
+      const f = await freeWorkspace();
 
-  test("skips SSO sign-ins", async () => {
-    const { user } = await freeWorkspace();
+      await asCaller(f).getCheckoutSession({
+        currency: "USD",
+        workspaceSlug: f.workspace.slug,
+        plan: "team",
+      });
 
-    const result = await maybeStartSignupTrial({
-      userId: user.id,
-      email: user.email ?? "",
-      provider: "workos",
-      currency: "USD",
-    });
-
-    expect(result).toEqual({ started: false, reason: "sso" });
-    assertSpyCalls(createCustomer, 0);
-  });
-
-  test("skips users with a pending invitation", async () => {
-    const { workspace: ws, user } = await freeWorkspace();
-    await db.insert(invitation).values({
-      email: (user.email ?? "").toUpperCase(),
-      workspaceId: ws.id,
-      token: crypto.randomUUID(),
-      expiresAt: new Date(Date.now() + 86_400_000),
+      const params = createSession.calls[0]?.args[0];
+      expect(params?.payment_method_collection).toBeUndefined();
+      expect(params?.subscription_data).toBeUndefined();
+      expect(params?.success_url).toContain("?success=true");
     });
 
-    const result = await maybeStartSignupTrial({
-      userId: user.id,
-      email: user.email ?? "",
-      currency: "USD",
+    test("reuses the customer an abandoned checkout left behind", async () => {
+      const stripeId = `cus_${crypto.randomUUID()}`;
+      const f = await freeWorkspace({ stripeId });
+      subscriptions = [{ status: "incomplete_expired" }];
+
+      const result = await asCaller(f).getCheckoutSession(trialInput(f));
+
+      expect(result?.type).toBe("checkout");
+      assertSpyCalls(createCustomer, 0);
+      expect(createSession.calls[0]?.args[0]).toMatchObject({
+        customer: stripeId,
+      });
     });
 
-    expect(result).toEqual({ started: false, reason: "invited" });
-    assertSpyCalls(createCustomer, 0);
-  });
+    test("refuses a customer that ever had a subscription", async () => {
+      const f = await freeWorkspace({ stripeId: `cus_${crypto.randomUUID()}` });
+      subscriptions = [{ status: "canceled" }];
 
-  test("skips disposable email domains", async () => {
-    const { user } = await freeWorkspace();
-
-    const result = await maybeStartSignupTrial({
-      userId: user.id,
-      email: "someone@mailinator.com",
-      currency: "USD",
+      await expect(
+        asCaller(f).getCheckoutSession(trialInput(f)),
+      ).rejects.toMatchObject({
+        code: "PRECONDITION_FAILED",
+        message: "This workspace has already had a subscription.",
+      });
+      assertSpyCalls(createSession, 0);
     });
 
-    expect(result).toEqual({ started: false, reason: "disposable" });
-    assertSpyCalls(list, 0);
-  });
+    test("refuses a magic-link-only account", async () => {
+      const f = await freeWorkspace({}, ["resend"]);
 
-  test("skips emails that already had a trial", async () => {
-    const { user } = await freeWorkspace();
-    customers = [
-      customer("cus_paid"),
-      customer("cus_old", { trialed: "true" }),
-    ];
-
-    const result = await maybeStartSignupTrial({
-      userId: user.id,
-      email: "O'Brien@example.com",
-      currency: "USD",
+      await expect(
+        asCaller(f).getCheckoutSession(trialInput(f)),
+      ).rejects.toMatchObject({
+        code: "PRECONDITION_FAILED",
+        message: "Sign in with GitHub or Google to start a trial.",
+      });
+      assertSpyCalls(listCustomers, 0);
+      assertSpyCalls(createCustomer, 0);
     });
 
-    expect(result).toEqual({ started: false, reason: "already_trialed" });
-    expect(list.calls[0]?.args[0]).toEqual({
-      email: "o'brien@example.com",
-      limit: 100,
-    });
-    assertSpyCalls(createCustomer, 0);
-  });
+    test("refuses an SSO-only account", async () => {
+      const f = await freeWorkspace({}, ["workos"]);
 
-  test("ignores customers for the email that never trialed", async () => {
-    const { user } = await freeWorkspace();
-    customers = [customer("cus_paid")];
-
-    const result = await maybeStartSignupTrial({
-      userId: user.id,
-      email: user.email ?? "",
-      currency: "USD",
+      await expect(
+        asCaller(f).getCheckoutSession(trialInput(f)),
+      ).rejects.toMatchObject({
+        code: "PRECONDITION_FAILED",
+        message: "Trials are not available for SSO accounts.",
+      });
+      assertSpyCalls(createCustomer, 0);
     });
 
-    expect(result).toMatchObject({ started: true });
-    assertSpyCalls(createCustomer, 1);
-  });
+    test("an account linked to both GitHub and a magic link qualifies", async () => {
+      const f = await freeWorkspace({}, ["resend", "github"]);
 
-  test("drops its customer when another request linked one first", async () => {
-    const { workspace: ws, user } = await freeWorkspace();
-    const linked = `cus_${crypto.randomUUID()}`;
-    // Simulate the race: a checkout links its customer while ours is created.
-    onCreateCustomer = async () => {
+      const result = await asCaller(f).getCheckoutSession(trialInput(f));
+
+      expect(result?.type).toBe("checkout");
+    });
+
+    test("refuses a disposable email", async () => {
+      const f = await freeWorkspace();
       await db
-        .update(workspace)
-        .set({ stripeId: linked })
-        .where(eq(workspace.id, ws.id));
-    };
-    const delCustomer = stub(stripe.customers, "del", () =>
-      Promise.resolve({} as Stripe.Response<Stripe.DeletedCustomer>),
-    );
-    stubs.push(delCustomer);
+        .update(user)
+        .set({ email: `someone-${f.user.id}@mailinator.com` })
+        .where(eq(user.id, f.user.id));
 
-    const result = await maybeStartSignupTrial({
-      userId: user.id,
-      email: user.email ?? "",
-      currency: "USD",
+      await expect(
+        asCaller(f).getCheckoutSession(trialInput(f)),
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+      assertSpyCalls(listCustomers, 0);
     });
 
-    expect(result).toEqual({ started: false, reason: "not_eligible" });
-    expect(delCustomer.calls[0]?.args[0]).toBe(customerId);
-    assertSpyCalls(createSubscription, 0);
-    const after = await db
-      .select({ stripeId: workspace.stripeId })
-      .from(workspace)
-      .where(eq(workspace.id, ws.id))
-      .get();
-    expect(after?.stripeId).toBe(linked);
+    test("refuses an email that already had a trial", async () => {
+      const f = await freeWorkspace();
+      customers = [
+        customer("cus_paid"),
+        customer("cus_old", { trialed: "true" }),
+      ];
+
+      await expect(
+        asCaller(f).getCheckoutSession(trialInput(f)),
+      ).rejects.toMatchObject({
+        code: "PRECONDITION_FAILED",
+        message: "This workspace or email has already used a trial.",
+      });
+      expect(listCustomers.calls[0]?.args[0]).toEqual({
+        email: f.user.email,
+        limit: 100,
+      });
+      assertSpyCalls(createCustomer, 0);
+    });
+
+    test("checks both spellings of a mixed-case email", async () => {
+      const f = await freeWorkspace();
+      const email = `Someone-${f.user.id}@Example.com`;
+      await db.update(user).set({ email }).where(eq(user.id, f.user.id));
+
+      await asCaller(f).getCheckoutSession(trialInput(f));
+
+      expect(listCustomers.calls.map((c) => c.args[0])).toEqual([
+        { email, limit: 100 },
+        { email: email.toLowerCase(), limit: 100 },
+      ]);
+    });
+
+    test("refuses a workspace that already trialed, before asking Stripe", async () => {
+      const f = await freeWorkspace({ trialedAt: new Date() });
+
+      await expect(
+        asCaller(f).getCheckoutSession(trialInput(f)),
+      ).rejects.toMatchObject({
+        code: "PRECONDITION_FAILED",
+        message: "This workspace or email has already used a trial.",
+      });
+      assertSpyCalls(listCustomers, 0);
+    });
+
+    test("refuses a member who is not the owner", async () => {
+      const f = await freeWorkspace();
+      const member = await createUser();
+      await addUserToWorkspace(member.id, f.workspace.id, "member");
+      await link(member.id, "github");
+
+      await expect(
+        asCaller(f, member.id).getCheckoutSession(trialInput(f)),
+      ).rejects.toMatchObject({
+        code: "PRECONDITION_FAILED",
+        message: "Only the owner of a free workspace can start a trial.",
+      });
+    });
+
+    test("refuses a paid workspace", async () => {
+      const f = await freeWorkspace({ plan: "team" });
+
+      await expect(
+        asCaller(f).getCheckoutSession(trialInput(f)),
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+      assertSpyCalls(createCustomer, 0);
+    });
+
+    test("refuses a trial on any plan but Starter monthly", async () => {
+      const f = await freeWorkspace();
+
+      await expect(
+        asCaller(f).getCheckoutSession(trialInput(f, { plan: "team" })),
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+      await expect(
+        asCaller(f).getCheckoutSession(trialInput(f, { interval: "yearly" })),
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+      assertSpyCalls(createSession, 0);
+    });
   });
 
-  test("leaves an already-billed workspace alone", async () => {
-    const { user } = await createTestWorkspace({ plan: "team" });
+  describe("workspace.get trial", () => {
+    function getWorkspace(fixture: Fixture) {
+      return workspaceRouter
+        .createCaller(
+          createInnerTRPCContext({
+            session: { user: { id: String(fixture.user.id) } },
+            workspace: selectWorkspaceSchema.parse(fixture.workspace),
+            user: selectUserSchema.parse(fixture.user),
+          }),
+        )
+        .get();
+    }
 
-    const result = await maybeStartSignupTrial({
-      userId: user.id,
-      email: user.email ?? "",
-      currency: "USD",
+    test("eligible for an owner signed in with GitHub, without Stripe", async () => {
+      const f = await freeWorkspace();
+      customers = [customer("cus_old", { trialed: "true" })];
+
+      expect((await getWorkspace(f)).trial).toEqual({
+        eligible: true,
+      });
+      assertSpyCalls(listCustomers, 0);
     });
 
-    expect(result).toEqual({ started: false, reason: "not_eligible" });
-    assertSpyCalls(createCustomer, 0);
+    test("not eligible once the workspace has trialed", async () => {
+      const f = await freeWorkspace({ trialedAt: new Date() });
+
+      expect((await getWorkspace(f)).trial).toEqual({
+        eligible: false,
+        reason: "already_trialed",
+      });
+    });
+
+    test("names the reason otherwise", async () => {
+      const f = await freeWorkspace({}, ["resend"]);
+
+      expect((await getWorkspace(f)).trial).toEqual({
+        eligible: false,
+        reason: "email",
+      });
+    });
   });
 });

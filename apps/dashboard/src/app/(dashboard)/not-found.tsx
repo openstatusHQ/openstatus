@@ -1,13 +1,13 @@
-import { Monitor, Settings, Overview, StatusPage } from "@openstatus/icons";
+import { Incident, Monitor, Overview, StatusPage } from "@openstatus/icons";
 import Link from "next/link";
 
 import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
 
 const quickLinks = [
   { name: "Overview", href: "/overview", icon: Overview },
-  { name: "Monitors", href: "/monitors", icon: Monitor },
+  { name: "Incidents", href: "/incidents", icon: Incident },
   { name: "Status Pages", href: "/status-pages", icon: StatusPage },
-  { name: "Settings", href: "/settings/general", icon: Settings },
+  { name: "Monitors", href: "/monitors", icon: Monitor },
 ];
 
 export default function NotFound() {

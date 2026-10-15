@@ -1,11 +1,16 @@
 import crypto from "node:crypto";
 
-import { and, db, eq } from "@openstatus/db";
+import { and, db, eq, inArray } from "@openstatus/db";
 import {
   auditLog,
   incident,
   incidentEvent,
   selectWorkspaceSchema,
+  slackUser,
+  statusReport,
+  statusReportUpdate,
+  user,
+  usersToWorkspaces,
   workspace as workspaceTable,
 } from "@openstatus/db/src/schema";
 import {
@@ -15,7 +20,13 @@ import {
   createUser,
 } from "@openstatus/db/src/test/factories";
 import { declareIncident } from "@openstatus/services/incident";
-import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "@openstatus/test-utils";
 import { Hono } from "hono";
 
 import { settleBackgroundTasks } from "@/libs/background";
@@ -779,5 +790,648 @@ describe("declare incident modal", () => {
         await db.delete(incident).where(eq(incident.id, row.id));
       }
     }
+  });
+});
+
+/** Drops an incident's events and the audit rows they wrote (no FK on those). */
+async function deleteIncidentEvents(incidentId: number) {
+  const events = await db
+    .select({ id: incidentEvent.id })
+    .from(incidentEvent)
+    .where(eq(incidentEvent.incidentId, incidentId))
+    .all();
+  if (events.length > 0) {
+    await db.delete(auditLog).where(
+      and(
+        eq(auditLog.entityType, "incident_event"),
+        inArray(
+          auditLog.entityId,
+          events.map((e) => String(e.id)),
+        ),
+      ),
+    );
+  }
+  await db
+    .delete(incidentEvent)
+    .where(eq(incidentEvent.incidentId, incidentId));
+}
+
+describe("add to incident timeline shortcut", () => {
+  const app = createTestApp();
+  const realFetch = globalThis.fetch;
+  let replies: { text?: string; blocks?: unknown[] }[];
+  let incidentId: number;
+  let channelId: string;
+
+  beforeEach(async () => {
+    configureSlackDoubles();
+    redisStore.clear();
+    slackTestState.resolveWorkspace = (teamId: string) =>
+      teamId === "T_KNOWN"
+        ? Promise.resolve({
+            botToken: "xoxb-fallback",
+            botUserId: "UBOT",
+            workspace: { id: 1, limits: { "slack-agent": true } },
+          })
+        : Promise.resolve(null);
+    slackTestState.reactionsGetImpl = () =>
+      Promise.resolve({ ok: true, message: {} });
+    slackTestState.conversationsInfoImpl = () =>
+      Promise.resolve({ ok: true, channel: {} });
+    replies = [];
+    globalThis.fetch = ((url: string | URL | Request, init?: RequestInit) => {
+      expect(String(url)).toBe("https://hooks.slack.test/response");
+      replies.push(JSON.parse(String(init?.body)));
+      return Promise.resolve(new Response("ok"));
+    }) as typeof fetch;
+    channelId = `C_TIMELINE_${crypto.randomUUID()}`;
+    const [row] = await db
+      .insert(incident)
+      .values({
+        workspaceId: 1,
+        title: "Timeline incident",
+        severity: "major",
+        declaredAt: new Date(),
+        startedAt: new Date(),
+        slackTeamId: "T_KNOWN",
+        slackChannelId: channelId,
+      })
+      .returning();
+    incidentId = row.id;
+  });
+
+  afterEach(async () => {
+    globalThis.fetch = realFetch;
+    await deleteIncidentEvents(incidentId);
+    await db.delete(incident).where(eq(incident.id, incidentId));
+  });
+
+  async function notes() {
+    return db
+      .select()
+      .from(incidentEvent)
+      .where(eq(incidentEvent.incidentId, incidentId))
+      .all();
+  }
+
+  function addToTimeline(
+    message: Record<string, unknown>,
+    opts: { user?: string; channel?: string } = {},
+  ) {
+    return signAndPost(app, {
+      type: "message_action",
+      callback_id: "add_to_incident_timeline",
+      trigger_id: "trig-timeline",
+      response_url: "https://hooks.slack.test/response",
+      team: { id: "T_KNOWN" },
+      user: { id: opts.user ?? "U1" },
+      channel: { id: opts.channel ?? channelId },
+      message,
+    });
+  }
+
+  function reacted() {
+    return slackTestState.calls.some((c) => c.method === "reactions.add");
+  }
+
+  test("copies the message onto the timeline and confirms with ✅", async () => {
+    const res = await addToTimeline({
+      ts: "500.1",
+      text: "Rolled back to v41",
+      user: "U2",
+    });
+    expect(res.status).toBe(200);
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].message).toContain("Rolled back to v41");
+    expect(rows[0].message).toContain("https://slack.test/archives/");
+    const reaction = slackTestState.calls.find(
+      (c) => c.method === "reactions.add",
+    );
+    expect(reaction?.args).toMatchObject({
+      channel: channelId,
+      timestamp: "500.1",
+      name: "white_check_mark",
+    });
+    expect(replies).toHaveLength(0);
+  });
+
+  test("rich_text wins over mrkdwn: emoji, styles, mentions and channels", async () => {
+    // U1 runs the shortcut and must stay linked; U9 has no email, so the
+    // profile name is the only thing we know about them.
+    slackTestState.usersInfoImpl = (args) =>
+      Promise.resolve(
+        args.user === "U9"
+          ? { ok: true, user: { real_name: "Jane Doe", profile: {} } }
+          : { ok: true, user: { profile: { email: "ping@openstatus.dev" } } },
+      );
+    slackTestState.conversationsInfoImpl = () =>
+      Promise.resolve({ ok: true, channel: { name: "inc-db" } });
+    await addToTimeline({
+      ts: "503.1",
+      user: "U2",
+      text: "*rolled back* :face_holding_back_tears: <@U9> see <#C7|inc-db>",
+      blocks: [
+        {
+          type: "rich_text",
+          elements: [
+            {
+              type: "rich_text_section",
+              elements: [
+                { type: "text", text: "rolled back", style: { bold: true } },
+                { type: "text", text: " " },
+                {
+                  type: "emoji",
+                  name: "face_holding_back_tears",
+                  unicode: "1f979",
+                },
+                { type: "text", text: " " },
+                { type: "user", user_id: "U9" },
+                { type: "text", text: " see " },
+                { type: "channel", channel_id: "C7" },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].message).toContain(
+      "**rolled back** 🥹 @Jane Doe see #inc-db",
+    );
+    expect(rows[0].message).not.toContain(":face_holding_back_tears:");
+  });
+
+  test("the note keeps the time the message was said", async () => {
+    const saidAt = Math.floor(Date.now() / 1000) - 3600;
+    await addToTimeline({ ts: `${saidAt}.000100`, text: "an hour ago" });
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    expect(Math.abs(rows[0].createdAt.getTime() - saidAt * 1000)).toBeLessThan(
+      1000,
+    );
+  });
+
+  test("the note belongs to the author, not whoever ran the shortcut", async () => {
+    const author = await createUser();
+    await addUserToWorkspace(author.id, 1, "member");
+    const authorSlackId = `U_AUTHOR_${crypto.randomUUID()}`;
+    slackTestState.usersInfoImpl = (args) =>
+      Promise.resolve({
+        ok: true,
+        user: {
+          profile: {
+            email:
+              args.user === authorSlackId
+                ? author.email
+                : "ping@openstatus.dev",
+          },
+        },
+      });
+    try {
+      await addToTimeline({
+        ts: "508.1",
+        text: "I rolled it back",
+        user: authorSlackId,
+      });
+      const rows = await notes();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].createdBy).toBe(author.id);
+    } finally {
+      // The note references the author; drop it before the user.
+      await deleteIncidentEvents(incidentId);
+      await db
+        .delete(slackUser)
+        .where(eq(slackUser.slackUserId, authorSlackId));
+      await db
+        .delete(usersToWorkspaces)
+        .where(eq(usersToWorkspaces.userId, author.id));
+      await db.delete(user).where(eq(user.id, author.id));
+    }
+  });
+
+  test("a bot message is attributed to whoever ran the shortcut, without a lookup", async () => {
+    // Apps with a bot user carry both `bot_id` and `user`.
+    await addToTimeline({
+      ts: "509.1",
+      text: "[FIRING] api 5xx",
+      bot_id: "B1",
+      user: "U_BOT",
+    });
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    const [runner] = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.email, "ping@openstatus.dev"));
+    expect(rows[0].createdBy).toBe(runner.id);
+    expect(
+      slackTestState.calls.some(
+        (m) => m.method === "users.info" && m.args.user === "U_BOT",
+      ),
+    ).toBe(false);
+  });
+
+  test("a failed author lookup tells the user and can be retried", async () => {
+    const author = await createUser();
+    await addUserToWorkspace(author.id, 1, "member");
+    const authorSlackId = `U_AUTHOR_${crypto.randomUUID()}`;
+    let flaky = true;
+    slackTestState.usersInfoImpl = (args) => {
+      if (args.user !== authorSlackId) {
+        return Promise.resolve({
+          ok: true,
+          user: { profile: { email: "ping@openstatus.dev" } },
+        });
+      }
+      if (flaky) {
+        const err = new Error("An API error occurred: ratelimited");
+        Object.assign(err, { data: { ok: false, error: "ratelimited" } });
+        return Promise.reject(err);
+      }
+      return Promise.resolve({
+        ok: true,
+        user: { profile: { email: author.email } },
+      });
+    };
+    const message = { ts: "510.1", text: "flaky lookup", user: authorSlackId };
+    try {
+      await addToTimeline(message);
+      expect(await notes()).toHaveLength(0);
+      expect(reacted()).toBe(false);
+      expect(replies.at(-1)?.text).toContain("Please try again");
+
+      flaky = false;
+      await addToTimeline(message);
+      const rows = await notes();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].createdBy).toBe(author.id);
+    } finally {
+      await deleteIncidentEvents(incidentId);
+      await db
+        .delete(slackUser)
+        .where(eq(slackUser.slackUserId, authorSlackId));
+      await db
+        .delete(usersToWorkspaces)
+        .where(eq(usersToWorkspaces.userId, author.id));
+      await db.delete(user).where(eq(user.id, author.id));
+    }
+  });
+
+  test("a message with only attachments is noted from their fallback", async () => {
+    await addToTimeline({
+      ts: "505.1",
+      text: "",
+      attachments: [{ fallback: "[FIRING] db latency > 2s" }],
+    });
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].message).toContain("[FIRING] db latency > 2s");
+  });
+
+  test("an attachment with an empty fallback is noted from its text", async () => {
+    await addToTimeline({
+      ts: "507.1",
+      text: "",
+      attachments: [{ fallback: "", text: "Deploy 1234 failed" }],
+    });
+    const rows = await notes();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].message).toContain("Deploy 1234 failed");
+  });
+
+  test("a message with nothing to copy tells the user", async () => {
+    await addToTimeline({ ts: "506.1", text: "" });
+    expect(replies.map((r) => r.text)).toEqual([
+      "Nothing to copy from that message.",
+    ]);
+    expect(reacted()).toBe(false);
+    expect(await notes()).toHaveLength(0);
+  });
+
+  test("a message already confirmed is not noted twice", async () => {
+    slackTestState.reactionsGetImpl = () =>
+      Promise.resolve({
+        ok: true,
+        message: {
+          reactions: [{ name: "white_check_mark", users: ["UBOT"] }],
+        },
+      });
+    await addToTimeline({ ts: "501.1", text: "Twice" });
+    expect(replies.at(-1)?.text).toContain("already on the timeline");
+    expect(reacted()).toBe(false);
+    expect(await notes()).toHaveLength(0);
+  });
+
+  test("two clicks racing on one message note it once", async () => {
+    await Promise.all([
+      addToTimeline({ ts: "502.1", text: "Once" }),
+      addToTimeline({ ts: "502.1", text: "Once" }, { user: "U3" }),
+    ]);
+    expect(await notes()).toHaveLength(1);
+  });
+
+  test("outside an incident channel it says where it works", async () => {
+    await addToTimeline(
+      { ts: "511.1", text: "hello" },
+      { channel: "C_RANDOM" },
+    );
+    expect(replies.at(-1)?.text).toContain("isn't an open incident's channel");
+    expect(slackTestState.calls).toHaveLength(0);
+  });
+
+  test("a closed incident's channel is refused", async () => {
+    await db
+      .update(incident)
+      .set({ closedAt: new Date() })
+      .where(eq(incident.id, incidentId));
+    await addToTimeline({ ts: "512.1", text: "too late" });
+    expect(replies.at(-1)?.text).toContain("isn't an open incident's channel");
+    expect(await notes()).toHaveLength(0);
+  });
+
+  test("an unlinked user gets the link card", async () => {
+    slackTestState.usersInfoImpl = () =>
+      Promise.resolve({ ok: true, user: { profile: {} } });
+    await addToTimeline(
+      { ts: "513.1", text: "who am I" },
+      { user: "U_STRANGER" },
+    );
+    expect(JSON.stringify(replies.at(-1)?.blocks)).toContain("Link account");
+    expect(await notes()).toHaveLength(0);
+  });
+
+  test("a workspace openstatus isn't connected to is told so", async () => {
+    slackTestState.resolveWorkspace = () => Promise.resolve(null);
+    await addToTimeline({ ts: "515.1", text: "anyone there" });
+    expect(replies.at(-1)?.text).toContain("isn't connected");
+    expect(slackTestState.calls).toHaveLength(0);
+  });
+
+  test("a workspace without the Slack plan is told to upgrade", async () => {
+    slackTestState.resolveWorkspace = () =>
+      Promise.resolve({
+        botToken: "xoxb-fallback",
+        botUserId: "UBOT",
+        workspace: { id: 1, limits: { "slack-agent": false } },
+      });
+    await addToTimeline({ ts: "514.1", text: "upgrade me" });
+    expect(replies.at(-1)?.text).toContain("Upgrade");
+    expect(await notes()).toHaveLength(0);
+  });
+});
+
+describe("pinned incident card buttons", () => {
+  const app = createTestApp();
+  let workspace: ReturnType<typeof selectWorkspaceSchema.parse>;
+  let incidentId: number;
+
+  beforeEach(async () => {
+    configureSlackDoubles();
+    redisStore.clear();
+    workspace = selectWorkspaceSchema.parse(
+      await db.query.workspace.findFirst({ where: eq(workspaceTable.id, 1) }),
+    );
+    const created = await declareIncident({
+      ctx: { workspace, actor: { type: "system", job: "test" } },
+      input: { title: `Card ${crypto.randomUUID()}`, severity: "major" },
+    });
+    incidentId = created.id;
+  });
+
+  afterEach(async () => {
+    const row = await db
+      .select({ statusReportId: incident.statusReportId })
+      .from(incident)
+      .where(eq(incident.id, incidentId))
+      .get();
+    await deleteIncidentEvents(incidentId);
+    await db
+      .delete(auditLog)
+      .where(
+        and(
+          eq(auditLog.entityType, "incident"),
+          eq(auditLog.entityId, String(incidentId)),
+        ),
+      );
+    await db.delete(incident).where(eq(incident.id, incidentId));
+    if (row?.statusReportId) {
+      await db
+        .delete(statusReportUpdate)
+        .where(eq(statusReportUpdate.statusReportId, row.statusReportId));
+      await db
+        .delete(statusReport)
+        .where(eq(statusReport.id, row.statusReportId));
+    }
+  });
+
+  function click(actionId: string) {
+    return signAndPost(app, {
+      type: "block_actions",
+      trigger_id: "trig-card",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      channel: { id: "C_INC" },
+      message: { ts: "77.7" },
+      actions: [{ action_id: actionId, value: String(incidentId) }],
+    });
+  }
+
+  function submit(
+    callbackId: string,
+    values: Record<string, unknown>,
+    extraMeta: Record<string, unknown> = {},
+  ) {
+    return signAndPost(app, {
+      type: "view_submission",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      view: {
+        callback_id: callbackId,
+        private_metadata: JSON.stringify({
+          incidentId,
+          channelId: "C_INC",
+          messageTs: "77.7",
+          ...extraMeta,
+        }),
+        state: { values },
+      },
+    });
+  }
+
+  function openedView() {
+    const open = slackTestState.calls.find((c) => c.method === "views.open");
+    return open?.args.view as {
+      callback_id?: string;
+      private_metadata?: string;
+      blocks: unknown[];
+    };
+  }
+
+  test("Update status opens a form offering only allowed transitions", async () => {
+    await click("incident_card_update_status");
+    const view = openedView();
+    expect(view.callback_id).toBe("incident_card_update_status");
+    expect(JSON.parse(view.private_metadata ?? "{}")).toEqual({
+      incidentId,
+      channelId: "C_INC",
+      messageTs: "77.7",
+    });
+    const blocks = JSON.stringify(view.blocks);
+    for (const status of ["open", "mitigated", "resolved", "canceled"]) {
+      expect(blocks).toContain(`"value":"${status}"`);
+    }
+  });
+
+  test("submitting a new status moves the incident and redraws the card", async () => {
+    const res = await submit("incident_card_update_status", {
+      status: { value: { selected_option: { value: "mitigated" } } },
+      severity: { value: { selected_option: { value: "critical" } } },
+      note: { value: { value: "Rolled back" } },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("");
+    const row = await db
+      .select()
+      .from(incident)
+      .where(eq(incident.id, incidentId))
+      .get();
+    expect(row?.status).toBe("mitigated");
+    expect(row?.severity).toBe("critical");
+    const card = slackTestState.calls.find(
+      (c) => c.method === "update" && c.args.ts === "77.7",
+    );
+    expect(card?.args.channel).toBe("C_INC");
+    expect(JSON.stringify(card?.args.blocks)).toContain("*Status:* mitigated");
+  });
+
+  test("submitting without any change is rejected on the form", async () => {
+    const res = await submit("incident_card_update_status", {
+      status: { value: { selected_option: { value: "open" } } },
+      severity: { value: { selected_option: { value: "major" } } },
+    });
+    expect(await res.json()).toEqual({
+      response_action: "errors",
+      errors: { note: "Change the status or severity, or write an update." },
+    });
+  });
+
+  test("Update status page offers to create a report when none is linked", async () => {
+    await click("incident_card_status_page");
+    const view = openedView();
+    expect(view.callback_id).toBe("incident_card_status_page");
+    expect(JSON.stringify(view.blocks)).toContain('"block_id":"page"');
+  });
+
+  test("publishing creates a status report linked to the incident", async () => {
+    const res = await submit("incident_card_status_page", {
+      page: { incident_card_page: { selected_option: { value: "1" } } },
+      title: { value: { value: "Elevated errors" } },
+      status: { value: { selected_option: { value: "investigating" } } },
+      message: { value: { value: "We are looking into it." } },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("");
+    const row = await db
+      .select()
+      .from(incident)
+      .where(eq(incident.id, incidentId))
+      .get();
+    expect(row?.statusReportId).not.toBeNull();
+    const report = await db
+      .select()
+      .from(statusReport)
+      .where(eq(statusReport.id, row?.statusReportId ?? -1))
+      .get();
+    expect(report?.title).toBe("Elevated errors");
+    expect(report?.pageId).toBe(1);
+  });
+
+  test("with a linked report, the button adds an update to it", async () => {
+    await submit("incident_card_status_page", {
+      page: { incident_card_page: { selected_option: { value: "1" } } },
+      title: { value: { value: "Elevated errors" } },
+      status: { value: { selected_option: { value: "investigating" } } },
+      message: { value: { value: "We are looking into it." } },
+    });
+    slackTestState.calls = [];
+    await click("incident_card_status_page");
+    const view = openedView();
+    const meta = JSON.parse(view.private_metadata ?? "{}");
+    expect(meta.statusReportId).toBeGreaterThan(0);
+    expect(JSON.stringify(view.blocks)).not.toContain('"block_id":"page"');
+
+    const res = await submit(
+      "incident_card_status_page",
+      {
+        status: { value: { selected_option: { value: "identified" } } },
+        message: { value: { value: "Found the bad deploy." } },
+      },
+      { statusReportId: meta.statusReportId },
+    );
+    expect(await res.text()).toBe("");
+    const report = await db
+      .select()
+      .from(statusReport)
+      .where(eq(statusReport.id, meta.statusReportId))
+      .get();
+    expect(report?.status).toBe("identified");
+    const updates = await db
+      .select()
+      .from(statusReportUpdate)
+      .where(eq(statusReportUpdate.statusReportId, meta.statusReportId))
+      .all();
+    expect(updates.map((u) => u.message)).toContain("Found the bad deploy.");
+  });
+
+  test("picking another status page redraws the form for that page", async () => {
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      view: {
+        id: "V_FORM",
+        hash: "h1",
+        private_metadata: JSON.stringify({ incidentId }),
+      },
+      actions: [
+        { action_id: "incident_card_page", selected_option: { value: "1" } },
+      ],
+    });
+    expect(res.status).toBe(200);
+    const update = slackTestState.calls.find(
+      (c) => c.method === "views.update",
+    );
+    expect(update?.args.view_id).toBe("V_FORM");
+    expect(update?.args.hash).toBe("h1");
+    const view = update?.args.view as {
+      callback_id?: string;
+      blocks: unknown[];
+    };
+    expect(view.callback_id).toBe("incident_card_status_page");
+    expect(JSON.stringify(view.blocks)).toContain(
+      '"initial_option":{"text":{"type":"plain_text","text":',
+    );
+  });
+
+  test("a refused status change leaves the severity untouched", async () => {
+    await db
+      .update(incident)
+      .set({ status: "resolved", resolvedAt: new Date() })
+      .where(eq(incident.id, incidentId));
+    const res = await submit("incident_card_update_status", {
+      status: { value: { selected_option: { value: "mitigated" } } },
+      severity: { value: { selected_option: { value: "critical" } } },
+    });
+    const body = await res.json();
+    expect(body.response_action).toBe("errors");
+    expect(body.errors.status).toBeDefined();
+    const row = await db
+      .select()
+      .from(incident)
+      .where(eq(incident.id, incidentId))
+      .get();
+    expect(row?.severity).toBe("major");
   });
 });

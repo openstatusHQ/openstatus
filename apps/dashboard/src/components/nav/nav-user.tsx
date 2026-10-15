@@ -34,6 +34,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
+import { personName } from "@openstatus/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
@@ -59,7 +60,7 @@ export function NavUser() {
 
   if (!user || !workspace) return null;
 
-  const userName = user?.name ?? `${user?.firstName} ${user?.lastName}`.trim();
+  const userName = personName(user) ?? "";
   const isTrialing = workspace.trialDaysLeft !== null;
 
   return (

@@ -32,6 +32,10 @@ export const BetterstackMonitorSchema = z.object({
       .nullish()
       .transform((v) => v ?? []),
     required_keyword: z.string().nullable().default(null),
+    follow_redirects: z
+      .boolean()
+      .nullish()
+      .transform((v) => v ?? true),
     verify_ssl: z.boolean().default(true),
     regions: z
       .array(z.string())

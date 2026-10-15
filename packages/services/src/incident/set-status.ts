@@ -18,7 +18,6 @@ import {
   appendIncidentEvent,
   assertTransition,
   getIncidentInWorkspace,
-  requireIncidentFeature,
 } from "./internal";
 import { SetIncidentStatusInput } from "./schemas";
 
@@ -50,7 +49,6 @@ export async function setIncidentStatus(args: {
 }): Promise<Incident> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  requireIncidentFeature(ctx);
   const input = SetIncidentStatusInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

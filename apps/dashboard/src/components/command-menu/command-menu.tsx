@@ -153,8 +153,8 @@ export function CommandMenu() {
         statusPagesGroup(data.statusPages),
         statusReportsGroup(data.sortedStatusReports),
         maintenancesGroup(data.sortedMaintenances, data.pageTitleById),
-        navigationGroup({ incidents: data.incidentsEnabled }),
-        createGroup({ incidents: data.incidentsEnabled }),
+        navigationGroup(),
+        createGroup(),
         settingsGroup(),
         workspacesGroup(data.otherWorkspaces, switchWorkspace),
         helpGroup(),
@@ -259,7 +259,7 @@ export function CommandMenu() {
         onOpenChange={(o) => setActiveSheet(o ? { sheet: "support" } : null)}
       />
       {/* Mounted on demand: the sheet fetches integrations as soon as it renders. */}
-      {data.incidentsEnabled && activeSheet?.sheet === "declare-incident" ? (
+      {activeSheet?.sheet === "declare-incident" ? (
         <DeclareIncidentButton
           open
           onOpenChange={(o) => {

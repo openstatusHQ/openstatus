@@ -88,7 +88,7 @@ export function FormLinks({
               control={form.control}
               name="homepageUrl"
               render={({ field }) => (
-                <FormItem className="sm:col-span-full">
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Homepage URL</FormLabel>
                   <FormControl>
                     <Input placeholder="https://acme.com" {...field} />
@@ -104,7 +104,7 @@ export function FormLinks({
               control={form.control}
               name="contactUrl"
               render={({ field }) => (
-                <FormItem className="sm:col-span-full">
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Contact URL</FormLabel>
                   <FormControl>
                     <Input placeholder="https://acme.com/contact" {...field} />

@@ -40,7 +40,7 @@ export const subscriberNotificationRouter = createTRPCRouter({
       try {
         await notifyMaintenance({
           ctx: toServiceCtx(ctx),
-          input: { maintenanceId: input.id },
+          input: { maintenanceUpdateId: input.id },
         });
         return { success: true };
       } catch (err) {

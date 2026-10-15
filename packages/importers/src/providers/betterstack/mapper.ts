@@ -109,6 +109,7 @@ export function mapMonitor(monitor: BetterstackMonitor, workspaceId: number) {
     headers,
     body: attrs.request_body,
     method: mapMethod(attrs.http_method),
+    followRedirects: attrs.follow_redirects,
     timeout: attrs.request_timeout * 1000,
   };
 }

@@ -16,6 +16,7 @@ import {
   selectWorkspaceSchema,
   statusReport,
 } from "@openstatus/db/src/schema";
+import { getStatusUpdateTypes } from "@openstatus/services/page";
 import { constantTimeEqual } from "@openstatus/services/page-access";
 import {
   getSubscriberByToken,
@@ -112,6 +113,12 @@ export const statusPageRouter = createTRPCRouter({
           },
           maintenances: {
             with: {
+              maintenanceUpdates: {
+                orderBy: (updates, { desc }) => [
+                  desc(updates.date),
+                  desc(updates.id),
+                ],
+              },
               maintenancesToPageComponents: { with: { pageComponent: true } },
             },
             orderBy: (maintenances, { desc }) => desc(maintenances.from),
@@ -516,6 +523,11 @@ export const statusPageRouter = createTRPCRouter({
         statusReports,
         maintenances,
         workspacePlan: _page.workspace.plan,
+        statusUpdateTypes: getStatusUpdateTypes({
+          accessType: _page.accessType ?? "public",
+          emailSubscriptionsEnabled:
+            ws.data?.limits["status-subscribers"] ?? false,
+        }),
         status,
         lastEvents,
         openEvents,
@@ -551,6 +563,12 @@ export const statusPageRouter = createTRPCRouter({
           },
           maintenances: {
             with: {
+              maintenanceUpdates: {
+                orderBy: (updates, { desc }) => [
+                  desc(updates.date),
+                  desc(updates.id),
+                ],
+              },
               maintenancesToPageComponents: { with: { pageComponent: true } },
             },
             orderBy: (maintenances, { desc }) => desc(maintenances.from),
@@ -690,6 +708,12 @@ export const statusPageRouter = createTRPCRouter({
           eq(maintenance.pageId, _page.id),
         ),
         with: {
+          maintenanceUpdates: {
+            orderBy: (updates, { desc }) => [
+              desc(updates.date),
+              desc(updates.id),
+            ],
+          },
           maintenancesToPageComponents: {
             with: { pageComponent: { with: { monitor: true } } },
           },
@@ -840,6 +864,27 @@ export const statusPageRouter = createTRPCRouter({
         input.days ??
         (parsedConfiguration.success ? parsedConfiguration.data.days : 45);
 
+      // No public regions alone doesn't make a monitor private-only: it may
+      // have no locations at all, so confirm an active private assignment.
+      const noRegionMonitorIds = monitors
+        .filter((c) => c.monitor.regions.length === 0)
+        .map((c) => c.monitor.id);
+      const privateOnlyMonitorIds = new Set<number>();
+      if (noRegionMonitorIds.length > 0) {
+        const rows = await opts.ctx.db.query.privateLocationToMonitors.findMany(
+          {
+            where: and(
+              inArray(privateLocationToMonitors.monitorId, noRegionMonitorIds),
+              isNull(privateLocationToMonitors.deletedAt),
+            ),
+            columns: { monitorId: true },
+          },
+        );
+        for (const row of rows) {
+          if (row.monitorId !== null) privateOnlyMonitorIds.add(row.monitorId);
+        }
+      }
+
       return pageComponents.map((c) => {
         const events = getEvents({
           maintenances: _page.maintenances,
@@ -894,6 +939,8 @@ export const statusPageRouter = createTRPCRouter({
           events,
           barType: effectiveBarType,
           cardType: effectiveCardType,
+          privateLocationOnly:
+            c.monitor != null && privateOnlyMonitorIds.has(c.monitor.id),
         });
 
         return {
@@ -1323,7 +1370,7 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   subscribe: publicProcedure
-    .meta({ track: Events.SubscribePage, trackProps: ["slug", "email"] })
+    .meta({ track: Events.SubscribePage, trackProps: ["slug"] })
     .input(
       z.object({
         slug: z.string().toLowerCase(),
@@ -1458,7 +1505,7 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   validateEmailDomain: publicProcedure
-    .meta({ track: Events.ValidateEmailDomain, trackProps: ["slug", "email"] })
+    .meta({ track: Events.ValidateEmailDomain, trackProps: ["slug"] })
     .input(z.object({ slug: z.string().toLowerCase(), email: z.string() }))
     .query(async (opts) => {
       if (!opts.input.slug) return null;

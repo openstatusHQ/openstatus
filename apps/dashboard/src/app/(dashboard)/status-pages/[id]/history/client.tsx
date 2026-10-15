@@ -169,7 +169,11 @@ export function Client() {
               />
             </div>
             <BillingOverlay>
-              <BillingOverlayButton onClick={() => setOpenDialog(true)}>
+              <BillingOverlayButton
+                data-track="paywall_viewed"
+                data-limit="uptime-history"
+                onClick={() => setOpenDialog(true)}
+              >
                 <Lock />
                 Upgrade
               </BillingOverlayButton>

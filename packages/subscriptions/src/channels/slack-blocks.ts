@@ -95,15 +95,19 @@ export function buildRootMessage(
     });
   }
 
-  // Maintenance carries a scheduled window, not an update timestamp.
-  const dateLabel =
-    pageUpdate.status === "maintenance" ? "Scheduled" : "Updated";
+  // Maintenance carries a scheduled window, not an update timestamp. The root
+  // is re-rendered on every update, so it must not pick up the update's date.
+  const isMaintenance = pageUpdate.status === "maintenance";
+  const dateLabel = isMaintenance ? "Scheduled" : "Updated";
+  const dateValue = isMaintenance
+    ? (pageUpdate.startsAt ?? pageUpdate.date)
+    : pageUpdate.date;
   blocks.push({
     type: "context",
     elements: [
       {
         type: "mrkdwn",
-        text: `${dateLabel} ${pageUpdate.date} · <${eventUrl(pageUpdate, subscription)}|View details> · Manage with \`/openstatus unsubscribe\``,
+        text: `${dateLabel} ${dateValue} · <${eventUrl(pageUpdate, subscription)}|View details> · Manage with \`/openstatus unsubscribe\``,
       },
     ],
   });

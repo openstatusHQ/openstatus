@@ -212,8 +212,22 @@
   @apply mt-12 mb-2 pt-8 border-t border-border/60;
 }
 
-.prose [data-slot="eyebrow"] + h2 {
+.prose [data-slot="eyebrow"] + :is(h2, h3) {
   @apply mt-0 pt-0 border-t-0;
+}
+
+/* In a `Timeline` each step is a grid whose text cell opens with the eyebrow
+   and heading, so they stick with it; the rail replaces the rule. */
+.prose [data-slot="timeline"] [data-slot="eyebrow"] {
+  @apply relative mt-0 pt-0 border-t-0;
+}
+
+.prose [data-slot="timeline"] h2 {
+  @apply text-balance;
+}
+
+.prose [data-slot="timeline"] > * + * {
+  @apply mt-20;
 }
 
 .prose h3 {

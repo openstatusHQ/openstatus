@@ -265,6 +265,10 @@ export const docsNav: DocsNavSection[] = [
         label: "Notification Channels Reference",
       },
       { slug: "reference/incident", label: "Incident Reference" },
+      {
+        slug: "reference/incident-management",
+        label: "Incident Management Reference",
+      },
       { slug: "reference/location", label: "Location Reference" },
       {
         slug: "reference/private-location",
@@ -333,6 +337,9 @@ export function sectionForParentSlug(
   return docsNav.find((s) => sectionParentSlug(s) === parentSlug);
 }
 
+export const DOCS_DESCRIPTION =
+  "Infra as code for uptime monitoring, status pages and incident response. Let your agents update them. Learn how to monitor your endpoints, create your status page, run incidents from Slack, configure notifications, and drive it all from the CLI, Terraform, API, or MCP.";
+
 // Parent/section landing slugs (concept, tutorial, …) for static generation.
 export function getParentSlugs(): string[] {
   return docsNav.map(sectionParentSlug).filter((s): s is string => Boolean(s));
@@ -355,8 +362,7 @@ export function docsNavTree(): DocsNavNode {
   return {
     label: "openstatus documentation",
     href: "/docs",
-    description:
-      "Infra as code for uptime monitoring and status pages. Let your agents update them. Learn how to monitor your endpoints, create your status page, configure notifications, and drive it all from the CLI, Terraform, API, or MCP.",
+    description: DOCS_DESCRIPTION,
     children: docsNav.map((section) => {
       const parent = sectionParentSlug(section);
       return {

@@ -1,5 +1,6 @@
 import { db, eq, inArray } from "@openstatus/db";
 import {
+  maintenanceUpdate,
   maintenancesToPageComponents,
   page,
   pageComponent,
@@ -23,11 +24,14 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../errors";
+import { addMaintenanceUpdate } from "../add-update";
 import { createMaintenance } from "../create";
 import { deleteMaintenance } from "../delete";
+import { deleteMaintenanceUpdate } from "../delete-update";
 import { getMaintenance, listMaintenances } from "../list";
 import { notifyMaintenance } from "../notify";
 import { updateMaintenance } from "../update";
+import { updateMaintenanceUpdate } from "../update-update";
 
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as
@@ -137,7 +141,7 @@ describe("createMaintenance", () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const range = futureRange();
-      const record = await createMaintenance({
+      const { maintenance: record, initialUpdate } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-happy`,
@@ -150,6 +154,9 @@ describe("createMaintenance", () => {
 
       expect(record.title).toBe(`${TEST_PREFIX}-happy`);
       expect(record.pageId).toBe(testPageId);
+      expect(initialUpdate.maintenanceId).toBe(record.id);
+      expect(initialUpdate.message).toBe("planned work");
+      expect(initialUpdate.createdBy).toBe(1);
 
       const assoc = await tx
         .select()
@@ -165,6 +172,13 @@ describe("createMaintenance", () => {
         action: "maintenance.create",
         entityType: "maintenance",
         entityId: record.id,
+        db: tx,
+      });
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "maintenance_update.create",
+        entityType: "maintenance_update",
+        entityId: initialUpdate.id,
         db: tx,
       });
     });
@@ -212,7 +226,7 @@ describe("createMaintenance", () => {
       // Duplicate ids in the input would violate the composite PK on
       // `maintenances_to_page_components` if not deduped. Guard against a
       // regression where the `Set` in `validatePageComponentIds` is dropped.
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx: { ...teamCtx, db: tx },
         input: {
           title: `${TEST_PREFIX}-dedupe`,
@@ -280,7 +294,7 @@ describe("updateMaintenance", () => {
   test("updates title + replaces associations", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-update`,
@@ -310,10 +324,53 @@ describe("updateMaintenance", () => {
     });
   });
 
+  test("message rewrites the newest update and audits it", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { maintenance: record, initialUpdate } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-update-message`,
+          message: "first",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+      const later = await addMaintenanceUpdate({
+        ctx,
+        input: {
+          maintenanceId: record.id,
+          message: "second",
+          date: new Date(Date.now() + 1000),
+        },
+      });
+
+      await updateMaintenance({
+        ctx,
+        input: { id: record.id, message: "second, edited" },
+      });
+
+      const full = await getMaintenance({ ctx, input: { id: record.id } });
+      expect(full.message).toBe("second, edited");
+      expect(full.updates.map((u) => [u.id, u.message])).toEqual([
+        [later.id, "second, edited"],
+        [initialUpdate.id, "first"],
+      ]);
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "maintenance_update.update",
+        entityType: "maintenance_update",
+        entityId: later.id,
+        db: tx,
+      });
+    });
+  });
+
   test("keeps pageId when clearing all components", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-keep-page`,
@@ -342,7 +399,7 @@ describe("updateMaintenance", () => {
   test("moves pageId when components belong to another page", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-move-page`,
@@ -363,7 +420,7 @@ describe("updateMaintenance", () => {
 
   test("throws NotFoundError for cross-workspace update", async () => {
     await withTestTransaction(async (tx) => {
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx: { ...teamCtx, db: tx },
         input: {
           title: `${TEST_PREFIX}-cross-ws-update`,
@@ -390,7 +447,7 @@ describe("updateMaintenance", () => {
       // `{from, to}` submissions. A partial update that moves only `to`
       // earlier than the stored `from` has to be rejected by the service's
       // own effective-range check. Regression guard for that code path.
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-range-update`,
@@ -413,7 +470,7 @@ describe("updateMaintenance", () => {
   test("throws ConflictError when pageComponentIds span multiple pages", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-update-mixed-pages`,
@@ -441,7 +498,7 @@ describe("deleteMaintenance", () => {
   test("cascades associations", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-delete`,
@@ -469,7 +526,7 @@ describe("list / get", () => {
     await withTestTransaction(async (tx) => {
       const teamCtxTx = { ...teamCtx, db: tx };
       const freeCtxTx = { ...freeCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx: teamCtxTx,
         input: {
           title: `${TEST_PREFIX}-isolation`,
@@ -500,7 +557,7 @@ describe("list / get", () => {
   test("list returns totalSize and enriched relations", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const record = await createMaintenance({
+      const { maintenance: record } = await createMaintenance({
         ctx,
         input: {
           title: `${TEST_PREFIX}-list-enrich`,
@@ -524,9 +581,9 @@ describe("list / get", () => {
 });
 
 describe("notifyMaintenance", () => {
-  test("throws when maintenance belongs to another workspace", async () => {
+  test("throws when the announcement belongs to another workspace", async () => {
     await withTestTransaction(async (tx) => {
-      const record = await createMaintenance({
+      const { initialUpdate } = await createMaintenance({
         ctx: { ...teamCtx, db: tx },
         input: {
           title: `${TEST_PREFIX}-notify-cross-ws`,
@@ -540,42 +597,308 @@ describe("notifyMaintenance", () => {
       await expect(
         notifyMaintenance({
           ctx: { ...freeCtx, db: tx },
-          input: { maintenanceId: record.id },
+          input: { maintenanceUpdateId: initialUpdate.id },
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
-});
 
-describe("slack actor path", () => {
-  test("createMaintenance succeeds with a slack actor", async () => {
-    await withTestTransaction(async (tx) => {
-      const ctx = {
-        ...makeSlackCtx(teamCtx.workspace, {
-          teamId: "T123",
-          slackUserId: "U123",
-          userId: 1,
-        }),
-        db: tx,
-      };
-      const record = await createMaintenance({
+  describe("slack actor path", () => {
+    test("createMaintenance succeeds with a slack actor", async () => {
+      await withTestTransaction(async (tx) => {
+        const ctx = {
+          ...makeSlackCtx(teamCtx.workspace, {
+            teamId: "T123",
+            slackUserId: "U123",
+            userId: 1,
+          }),
+          db: tx,
+        };
+        const { maintenance: record } = await createMaintenance({
+          ctx,
+          input: {
+            title: `${TEST_PREFIX}-slack`,
+            message: "scheduled via slack",
+            ...futureRange(),
+            pageId: testPageId,
+            pageComponentIds: [],
+          },
+        });
+        await expectAuditRow({
+          workspaceId: teamCtx.workspace.id,
+          action: "maintenance.create",
+          entityType: "maintenance",
+          entityId: record.id,
+          actorType: "slack",
+          db: tx,
+        });
+      });
+    });
+  });
+
+  describe("maintenance updates", () => {
+    async function createParent(ctx: ServiceContext, suffix: string) {
+      const { maintenance } = await createMaintenance({
         ctx,
         input: {
-          title: `${TEST_PREFIX}-slack`,
-          message: "scheduled via slack",
+          title: `${TEST_PREFIX}-${suffix}`,
+          message: "announcement",
           ...futureRange(),
           pageId: testPageId,
           pageComponentIds: [],
         },
       });
-      await expectAuditRow({
-        workspaceId: teamCtx.workspace.id,
-        action: "maintenance.create",
-        entityType: "maintenance",
-        entityId: record.id,
-        actorType: "slack",
-        db: tx,
+      return maintenance;
+    }
+
+    test("creates, edits, deletes, stamps attribution, touches parent, audits", async () => {
+      await withTestTransaction(async (tx) => {
+        const ctx = { ...teamCtx, db: tx };
+        // a second actor on the same workspace: every timeline write must
+        // flip the parent's `updatedBy`, which the creator alone cannot show
+        const editorCtx = {
+          ...makeUserCtx(teamCtx.workspace, { userId: 2 }),
+          db: tx,
+        };
+        const parent = await createParent(ctx, "updates");
+        const before = await getMaintenance({ ctx, input: { id: parent.id } });
+        expect(before.updates.map((u) => u.message)).toEqual(["announcement"]);
+        expect(before.updatedBy).toBe(1);
+
+        const date = new Date("2026-06-20T00:15:00.000Z");
+        const created = await addMaintenanceUpdate({
+          ctx: editorCtx,
+          input: { maintenanceId: parent.id, message: "work started", date },
+        });
+        expect(created.message).toBe("work started");
+        expect(created.date.getTime()).toBe(date.getTime());
+        expect(created.createdBy).toBe(2);
+        expect(created.updatedBy).toBe(2);
+        const afterAdd = await getMaintenance({
+          ctx,
+          input: { id: parent.id },
+        });
+        expect(afterAdd.updatedBy).toBe(2);
+
+        const edited = await updateMaintenanceUpdate({
+          ctx,
+          input: { id: created.id, message: "work resumed" },
+        });
+        expect(edited.message).toBe("work resumed");
+        expect(edited.date.getTime()).toBe(date.getTime());
+
+        // `message` follows the newest update by date — the backdated note
+        // does not become the public message
+        const full = await getMaintenance({ ctx, input: { id: parent.id } });
+        expect(full.message).toBe("announcement");
+        expect(full.updates.map((u) => u.message)).toEqual([
+          "announcement",
+          "work resumed",
+        ]);
+        // the edit by user 1 flipped the parent back from the editor
+        expect(full.updatedBy).toBe(1);
+
+        await deleteMaintenanceUpdate({
+          ctx: editorCtx,
+          input: { id: created.id },
+        });
+        const gone = await tx
+          .select()
+          .from(maintenanceUpdate)
+          .where(eq(maintenanceUpdate.id, created.id))
+          .get();
+        expect(gone).toBeUndefined();
+        const afterDelete = await getMaintenance({
+          ctx,
+          input: { id: parent.id },
+        });
+        expect(afterDelete.updatedBy).toBe(2);
+
+        for (const action of [
+          "maintenance_update.create",
+          "maintenance_update.update",
+          "maintenance_update.delete",
+        ] as const) {
+          await expectAuditRow({
+            workspaceId: teamCtx.workspace.id,
+            action,
+            entityType: "maintenance_update",
+            entityId: created.id,
+            db: tx,
+          });
+        }
       });
+    });
+
+    test("rejects future-dated updates", async () => {
+      await withTestTransaction(async (tx) => {
+        const ctx = { ...teamCtx, db: tx };
+        const parent = await createParent(ctx, "future-update");
+        const future = new Date(Date.now() + 10 * 60 * 1000);
+        await expect(
+          addMaintenanceUpdate({
+            ctx,
+            input: { maintenanceId: parent.id, message: "later", date: future },
+          }),
+        ).rejects.toThrow("Date cannot be in the future.");
+        const [first] = (
+          await getMaintenance({ ctx, input: { id: parent.id } })
+        ).updates;
+        await expect(
+          updateMaintenanceUpdate({
+            ctx,
+            input: { id: first.id, date: future },
+          }),
+        ).rejects.toThrow("Date cannot be in the future.");
+      });
+    });
+
+    test("the last update cannot be removed", async () => {
+      await withTestTransaction(async (tx) => {
+        const ctx = { ...teamCtx, db: tx };
+        const parent = await createParent(ctx, "last-update");
+        const note = await addMaintenanceUpdate({
+          ctx,
+          input: {
+            maintenanceId: parent.id,
+            message: "note",
+            date: new Date(Date.now() + 1000),
+          },
+        });
+        let full = await getMaintenance({ ctx, input: { id: parent.id } });
+        expect(full.message).toBe("note");
+
+        await deleteMaintenanceUpdate({ ctx, input: { id: note.id } });
+        full = await getMaintenance({ ctx, input: { id: parent.id } });
+        expect(full.updates).toHaveLength(1);
+        expect(full.message).toBe("announcement");
+
+        await expect(
+          deleteMaintenanceUpdate({ ctx, input: { id: full.updates[0].id } }),
+        ).rejects.toBeInstanceOf(ConflictError);
+      });
+    });
+
+    test("scopes update rows to the workspace", async () => {
+      await withTestTransaction(async (tx) => {
+        const ctx = { ...teamCtx, db: tx };
+        const parent = await createParent(ctx, "scoped");
+        const created = await addMaintenanceUpdate({
+          ctx,
+          input: { maintenanceId: parent.id, message: "team only" },
+        });
+        const foreign = { ...freeCtx, db: tx };
+
+        await expect(
+          addMaintenanceUpdate({
+            ctx: foreign,
+            input: { maintenanceId: parent.id, message: "nope" },
+          }),
+        ).rejects.toBeInstanceOf(NotFoundError);
+        await expect(
+          updateMaintenanceUpdate({
+            ctx: foreign,
+            input: { id: created.id, message: "nope" },
+          }),
+        ).rejects.toBeInstanceOf(NotFoundError);
+        await expect(
+          deleteMaintenanceUpdate({ ctx: foreign, input: { id: created.id } }),
+        ).rejects.toBeInstanceOf(NotFoundError);
+      });
+    });
+
+    test("rejects read-only actors", async () => {
+      await withTestTransaction(async (tx) => {
+        const ctx = { ...teamCtx, db: tx };
+        const parent = await createParent(ctx, "read-only");
+        const created = await addMaintenanceUpdate({
+          ctx,
+          input: { maintenanceId: parent.id, message: "x" },
+        });
+        const readOnly = {
+          ...makeApiKeyCtx(teamCtx.workspace, {
+            keyId: "k-read",
+            userId: 1,
+            scopes: ["read"],
+          }),
+          db: tx,
+        };
+
+        await expect(
+          addMaintenanceUpdate({
+            ctx: readOnly,
+            input: { maintenanceId: parent.id, message: "x" },
+          }),
+        ).rejects.toBeInstanceOf(ForbiddenError);
+        await expect(
+          updateMaintenanceUpdate({
+            ctx: readOnly,
+            input: { id: created.id, message: "x" },
+          }),
+        ).rejects.toBeInstanceOf(ForbiddenError);
+        await expect(
+          deleteMaintenanceUpdate({ ctx: readOnly, input: { id: created.id } }),
+        ).rejects.toBeInstanceOf(ForbiddenError);
+      });
+    });
+  });
+
+  test("throws when a later update belongs to another workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { maintenance: parent } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-notify-update-ws`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+      const created = await addMaintenanceUpdate({
+        ctx,
+        input: { maintenanceId: parent.id, message: "x" },
+      });
+      await expect(
+        notifyMaintenance({
+          ctx: { ...freeCtx, db: tx },
+          input: { maintenanceUpdateId: created.id },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("returns false when the plan disables status-subscribers", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { maintenance: parent } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-notify-update-gated`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+      const created = await addMaintenanceUpdate({
+        ctx,
+        input: { maintenanceId: parent.id, message: "x" },
+      });
+      const gated: ServiceContext = {
+        ...ctx,
+        workspace: {
+          ...teamCtx.workspace,
+          limits: { ...teamCtx.workspace.limits, "status-subscribers": false },
+        },
+      };
+      expect(
+        await notifyMaintenance({
+          ctx: gated,
+          input: { maintenanceUpdateId: created.id },
+        }),
+      ).toBe(false);
     });
   });
 });

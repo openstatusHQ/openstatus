@@ -1,6 +1,7 @@
 import { db, eq } from "@openstatus/db";
 import {
   maintenance,
+  maintenanceUpdate,
   maintenancesToPageComponents,
   page,
   pageComponent,
@@ -24,6 +25,7 @@ let otherWorkspaceComponentId: number;
 // inherit its actor attribution. See packages/services/AGENTS.md.
 const createdMaintenanceIds: number[] = [];
 const updatedMaintenanceIds: number[] = [];
+const createdMaintenanceUpdateIds: number[] = [];
 
 beforeAll(async () => {
   const p = await db
@@ -105,6 +107,12 @@ afterAll(async () => {
       entityIds: updatedMaintenanceIds,
     });
   }
+  if (createdMaintenanceUpdateIds.length > 0) {
+    await clearAuditLogFor({
+      entityType: "maintenance_update",
+      entityIds: createdMaintenanceUpdateIds,
+    });
+  }
 });
 
 test("maintenance.update rejects maintenance from another workspace", async () => {
@@ -120,7 +128,6 @@ test("maintenance.update rejects maintenance from another workspace", async () =
     await caller.maintenance.update({
       id: otherWorkspaceMaintenanceId,
       title: "Unauthorized Modification",
-      message: "Should not work",
       startDate: new Date(),
       endDate: new Date(Date.now() + 3_600_000),
       pageComponents: [],
@@ -154,7 +161,6 @@ test("maintenance.update succeeds for own workspace maintenance", async () => {
   await caller.maintenance.update({
     id: 1,
     title: "Updated Maintenance Title",
-    message: "Updated message",
     startDate: new Date(),
     endDate: new Date(Date.now() + 7_200_000),
     pageComponents: [1],
@@ -218,4 +224,62 @@ test("maintenance.new succeeds for own workspace page", async () => {
     .delete(maintenancesToPageComponents)
     .where(eq(maintenancesToPageComponents.maintenanceId, result.id));
   await db.delete(maintenance).where(eq(maintenance.id, result.id));
+});
+
+test("maintenance update procedures provide full CRUD", async () => {
+  const ctx = createInnerTRPCContext({
+    req: undefined,
+    session: { user: { id: "1" } },
+    // @ts-expect-error - minimal workspace for test
+    workspace: { id: 1 },
+  });
+  const caller = edgeRouter.createCaller(ctx);
+  const created = await caller.maintenance.new({
+    title: "Maintenance update CRUD",
+    message: "Initial update",
+    pageId: 1,
+    startDate: new Date(),
+    endDate: new Date(Date.now() + 3_600_000),
+    pageComponents: [1],
+  });
+  createdMaintenanceIds.push(created.id);
+
+  const added = await caller.maintenance.createUpdate({
+    maintenanceId: created.id,
+    message: "Second update",
+    date: new Date(),
+    notifySubscribers: true,
+  });
+  createdMaintenanceUpdateIds.push(added.id);
+  expect(added.notifySubscribers).toBe(true);
+
+  const edited = await caller.maintenance.updateUpdate({
+    id: added.id,
+    message: "Edited update",
+  });
+  expect(edited.message).toBe("Edited update");
+
+  const found = await caller.maintenance.get({ id: created.id });
+  expect(found.updates.map((u) => u.message)).toEqual([
+    "Edited update",
+    "Initial update",
+  ]);
+  // `message` is the newest update
+  expect(found.message).toBe("Edited update");
+
+  await caller.maintenance.deleteUpdate({ id: added.id });
+  const deleted = await db.query.maintenanceUpdate.findFirst({
+    where: eq(maintenanceUpdate.id, added.id),
+  });
+  expect(deleted).toBeUndefined();
+
+  try {
+    await caller.maintenance.deleteUpdate({ id: added.id });
+    throw new Error("Should have thrown");
+  } catch (error) {
+    expect(error).toBeInstanceOf(TRPCError);
+    expect((error as TRPCError).code).toBe("NOT_FOUND");
+  }
+
+  await caller.maintenance.delete({ id: created.id });
 });

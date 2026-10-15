@@ -11,6 +11,7 @@ import {
   SelectItem,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
+import { personName } from "@openstatus/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   format,
@@ -32,7 +33,6 @@ import {
 } from "@/components/content/property-list";
 import {
   incidentEndedAt,
-  personName,
   severityConfig,
   statusConfig,
 } from "@/data/managed-incidents.client";

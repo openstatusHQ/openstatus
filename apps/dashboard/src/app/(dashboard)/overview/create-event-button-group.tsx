@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Add } from "@openstatus/icons";
+import { ChevronDown } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { ButtonGroup } from "@openstatus/ui/components/ui/button-group";
 import {
@@ -14,19 +14,16 @@ import { useState } from "react";
 import { FormSheetMaintenanceCreate } from "@/components/forms/maintenance/sheet-create";
 import { FormSheetStatusReportCreate } from "@/components/forms/status-report/sheet-create";
 import { DeclareIncidentButton } from "@/components/incidents/declare-incident-button";
-import { useFeature } from "@/hooks/use-feature";
 
 export function CreateEventButtonGroup() {
   const [maintenanceOpen, setMaintenanceOpen] = useState(false);
   const [incidentOpen, setIncidentOpen] = useState(false);
-  const incidentsEnabled = useFeature("incident-management");
 
   return (
     <div>
       <ButtonGroup>
         <FormSheetStatusReportCreate>
           <Button data-section="action" variant="outline" size="sm">
-            <Add />
             Create Status Report
           </Button>
         </FormSheetStatusReportCreate>
@@ -43,15 +40,11 @@ export function CreateEventButtonGroup() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => setMaintenanceOpen(true)}>
-              <Add className="text-muted-foreground" />
               Create Maintenance
             </DropdownMenuItem>
-            {incidentsEnabled ? (
-              <DropdownMenuItem onSelect={() => setIncidentOpen(true)}>
-                <Add className="text-muted-foreground" />
-                Declare Incident
-              </DropdownMenuItem>
-            ) : null}
+            <DropdownMenuItem onSelect={() => setIncidentOpen(true)}>
+              Declare Incident
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </ButtonGroup>
@@ -60,7 +53,7 @@ export function CreateEventButtonGroup() {
         onOpenChange={setMaintenanceOpen}
       />
       {/* Mounted on demand: the sheet fetches integrations as soon as it renders. */}
-      {incidentsEnabled && incidentOpen ? (
+      {incidentOpen ? (
         <DeclareIncidentButton open onOpenChange={setIncidentOpen} />
       ) : null}
     </div>

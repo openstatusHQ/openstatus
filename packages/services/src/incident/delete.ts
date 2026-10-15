@@ -6,7 +6,7 @@ import { requireScope } from "../auth";
 import { requireRole } from "../auth/require-role";
 import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError } from "../errors";
-import { getIncidentInWorkspace, requireIncidentFeature } from "./internal";
+import { getIncidentInWorkspace } from "./internal";
 import { IncidentIdInput } from "./schemas";
 
 /**
@@ -20,7 +20,6 @@ export async function deleteIncident(args: {
 }): Promise<void> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  requireIncidentFeature(ctx);
   const input = IncidentIdInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

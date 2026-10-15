@@ -91,12 +91,12 @@ export function FormOtel({
               Configure your OpenTelemetry Exporter.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent className="grid grid-cols-4 gap-4">
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="endpoint"
               render={({ field }) => (
-                <FormItem className="col-span-full">
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Endpoint</FormLabel>
                   <FormControl>
                     <Input
@@ -183,7 +183,7 @@ export function FormOtel({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button asChild>
+              <Button data-track="paywall_viewed" data-limit="otel" asChild>
                 <NextLink href="/settings/billing">
                   <Lock className="size-4" />
                   Upgrade

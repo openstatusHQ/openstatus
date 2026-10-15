@@ -181,8 +181,11 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 		return nil, connect.NewError(connect.CodeUnauthenticated, ErrMissingToken)
 	}
 
+	locationCtx, cancelLocation := context.WithTimeout(ctx, dbTimeout)
+	defer cancelLocation()
+
 	var location database.PrivateLocation
-	if err := h.db.Get(&location, "SELECT id, name FROM private_location WHERE token = ?", token); err != nil {
+	if err := h.db.GetContext(locationCtx, &location, "SELECT id, name FROM private_location WHERE token = ?", token); err != nil {
 		// An unknown token used to fall through to an empty monitor list, so a
 		// probe configured with a typo looked healthy while checking nothing.
 		if errors.Is(err, sql.ErrNoRows) {
@@ -191,8 +194,11 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
+	monitorsCtx, cancelMonitors := context.WithTimeout(ctx, dbTimeout)
+	defer cancelMonitors()
+
 	var monitors []database.Monitor
-	err := h.db.Select(&monitors, "SELECT monitor.id, monitor.job_type, monitor.url, monitor.periodicity, monitor.method, monitor.body, monitor.timeout, monitor.degraded_after, monitor.follow_redirects, monitor.headers, monitor.assertions, monitor.workspace_id, monitor.retry, monitor.otel_endpoint, monitor.otel_headers, monitor.grpc_service, monitor.grpc_tls FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.token = ? AND monitor.deleted_at IS NULL and monitor.active = 1", token)
+	err := h.db.SelectContext(monitorsCtx, &monitors, "SELECT monitor.id, monitor.job_type, monitor.url, monitor.periodicity, monitor.method, monitor.body, monitor.timeout, monitor.degraded_after, monitor.follow_redirects, monitor.headers, monitor.assertions, monitor.workspace_id, monitor.retry, monitor.otel_endpoint, monitor.otel_headers, monitor.grpc_service, monitor.grpc_tls FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.token = ? AND monitor.deleted_at IS NULL and monitor.active = 1", token)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}

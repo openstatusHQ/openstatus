@@ -1,6 +1,7 @@
 import { db, eq } from "@openstatus/db";
 import {
   maintenance,
+  maintenanceUpdate,
   maintenancesToPageComponents,
   page,
   pageComponent,
@@ -154,6 +155,14 @@ beforeAll(async () => {
     .returning()
     .get();
   testMaintenanceId = maintenanceRecord.id;
+  await db
+    .insert(maintenanceUpdate)
+    .values({
+      maintenanceId: maintenanceRecord.id,
+      message: "Test maintenance message",
+      date: new Date(),
+    })
+    .run();
 
   // Create page component association
   await db.insert(maintenancesToPageComponents).values({
@@ -175,6 +184,14 @@ beforeAll(async () => {
     .returning()
     .get();
   testMaintenanceToDeleteId = deleteRecord.id;
+  await db
+    .insert(maintenanceUpdate)
+    .values({
+      maintenanceId: deleteRecord.id,
+      message: "Maintenance to delete",
+      date: new Date(),
+    })
+    .run();
 
   // Create maintenance to update
   const updateRecord = await db
@@ -190,6 +207,14 @@ beforeAll(async () => {
     .returning()
     .get();
   testMaintenanceToUpdateId = updateRecord.id;
+  await db
+    .insert(maintenanceUpdate)
+    .values({
+      maintenanceId: updateRecord.id,
+      message: "Maintenance to update",
+      date: new Date(),
+    })
+    .run();
 
   await db.insert(maintenancesToPageComponents).values({
     maintenanceId: updateRecord.id,
@@ -370,6 +395,28 @@ describe("MaintenanceService.CreateMaintenance", () => {
     expect(res.status).toBe(404);
   });
 
+  test("rejects page component ids that are not plain decimal digits", async () => {
+    const fromDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const toDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000);
+
+    for (const id of ["1e3", "0x10", "1.5", ""]) {
+      const res = await connectRequest(
+        "CreateMaintenance",
+        {
+          title: "Malformed component id",
+          message: "Test message",
+          from: fromDate.toISOString(),
+          to: toDate.toISOString(),
+          pageId: String(testPageId),
+          pageComponentIds: [id],
+        },
+        { "x-openstatus-key": authKey },
+      );
+      expect(res.status).toBe(400);
+      expect((await res.json()).code).toBe("invalid_argument");
+    }
+  });
+
   test("returns error when page components are from different pages", async () => {
     const fromDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const toDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000);
@@ -528,8 +575,12 @@ describe("MaintenanceService.CreateMaintenance", () => {
     expect(data.maintenance.title).toBe(`${TEST_PREFIX}-with-notify`);
 
     // Verify dispatcher was called (dispatchers are mocked in preload.ts)
+    // the announcement is the first update, not the maintenance row
     expect(subscriptionSpies.dispatchMaintenanceUpdate).toHaveBeenCalledTimes(
       1,
+    );
+    expect(subscriptionSpies.dispatchMaintenanceUpdate).toHaveBeenCalledWith(
+      Number(data.maintenance.updates[0].id),
     );
 
     // Clean up
@@ -672,6 +723,7 @@ describe("MaintenanceService.GetMaintenance", () => {
     expect(data.maintenance).toHaveProperty("updatedAt");
     expect(data.maintenance).toHaveProperty("from");
     expect(data.maintenance).toHaveProperty("to");
+    expect(Array.isArray(data.maintenance.updates)).toBe(true);
   });
 
   test("returns 401 when no auth key provided", async () => {
@@ -680,6 +732,35 @@ describe("MaintenanceService.GetMaintenance", () => {
     });
 
     expect(res.status).toBe(401);
+  });
+
+  test("rejects ids that are not plain decimal digits", async () => {
+    const calls: Array<[string, Record<string, unknown>]> = [
+      ["GetMaintenance", { id: "1e3" }],
+      [
+        "CreateMaintenance",
+        {
+          title: "x",
+          message: "x",
+          from: "2026-10-09T00:00:00Z",
+          to: "2026-10-10T00:00:00Z",
+          pageId: "1e3",
+          pageComponentIds: [],
+        },
+      ],
+      ["ListMaintenances", { pageId: "0x10" }],
+      ["DeleteMaintenance", { id: "0x10" }],
+      ["AddMaintenanceUpdate", { maintenanceId: "1.5", message: "x" }],
+      ["UpdateMaintenanceUpdate", { id: "1e3", message: "x" }],
+      ["DeleteMaintenanceUpdate", { id: "0x10" }],
+    ];
+    for (const [method, body] of calls) {
+      const res = await connectRequest(method, body, {
+        "x-openstatus-key": authKey,
+      });
+      expect(res.status).toBe(400);
+      expect((await res.json()).code).toBe("invalid_argument");
+    }
   });
 
   test("returns 404 for non-existent maintenance", async () => {
@@ -737,6 +818,108 @@ describe("MaintenanceService.GetMaintenance", () => {
     );
 
     expect(res.status).toBe(400);
+  });
+});
+
+describe("MaintenanceService maintenance update CRUD", () => {
+  test("adds, updates, and deletes timeline entries", async () => {
+    const first = await connectRequest(
+      "AddMaintenanceUpdate",
+      {
+        maintenanceId: String(testMaintenanceId),
+        message: "First timeline entry",
+        notify: false,
+      },
+      { "x-openstatus-key": authKey },
+    );
+    expect(first.status).toBe(200);
+
+    const second = await connectRequest(
+      "AddMaintenanceUpdate",
+      {
+        maintenanceId: String(testMaintenanceId),
+        message: "Second timeline entry",
+        notify: false,
+      },
+      { "x-openstatus-key": authKey },
+    );
+    expect(second.status).toBe(200);
+    const created = await second.json();
+
+    const updated = await connectRequest(
+      "UpdateMaintenanceUpdate",
+      {
+        id: created.maintenanceUpdate.id,
+        message: "Corrected timeline entry",
+      },
+      { "x-openstatus-key": authKey },
+    );
+    expect(updated.status).toBe(200);
+    expect((await updated.json()).maintenanceUpdate.message).toBe(
+      "Corrected timeline entry",
+    );
+
+    const deleted = await connectRequest(
+      "DeleteMaintenanceUpdate",
+      { id: created.maintenanceUpdate.id },
+      { "x-openstatus-key": authKey },
+    );
+    expect(deleted.status).toBe(200);
+    expect(await deleted.json()).toEqual({ success: true });
+
+    const firstDeleted = await connectRequest(
+      "DeleteMaintenanceUpdate",
+      { id: (await first.json()).maintenanceUpdate.id },
+      { "x-openstatus-key": authKey },
+    );
+    expect(firstDeleted.status).toBe(200);
+  });
+
+  test("refuses to delete the last update", async () => {
+    const full = await connectRequest(
+      "GetMaintenance",
+      { id: String(testMaintenanceId) },
+      { "x-openstatus-key": authKey },
+    );
+    const { updates } = (await full.json()).maintenance;
+    expect(updates).toHaveLength(1);
+
+    const res = await connectRequest(
+      "DeleteMaintenanceUpdate",
+      { id: updates[0].id },
+      { "x-openstatus-key": authKey },
+    );
+    expect(res.status).toBe(400);
+    expect((await res.json()).message).toContain("at least one update");
+  });
+
+  test("scopes update mutations to the authenticated workspace", async () => {
+    const otherMaintenance = await db
+      .insert(maintenance)
+      .values({
+        workspaceId: OTHER_WORKSPACE_ID,
+        title: `${TEST_PREFIX}-other-update`,
+        message: "Other",
+        from: new Date(Date.now() + 1000),
+        to: new Date(Date.now() + 2000),
+      })
+      .returning()
+      .get();
+    try {
+      const res = await connectRequest(
+        "AddMaintenanceUpdate",
+        {
+          maintenanceId: String(otherMaintenance.id),
+          message: "Not allowed",
+        },
+        { "x-openstatus-key": authKey },
+      );
+      expect(res.status).toBe(404);
+    } finally {
+      await db
+        .delete(maintenance)
+        .where(eq(maintenance.id, otherMaintenance.id));
+    }
   });
 });
 
@@ -921,12 +1104,16 @@ describe("MaintenanceService.UpdateMaintenance", () => {
 
     const data = await res.json();
     expect(data.maintenance.message).toBe("Updated maintenance message");
+    // rewrites the newest update instead of appending one
+    expect(
+      data.maintenance.updates.map((u: { message: string }) => u.message),
+    ).toEqual(["Updated maintenance message"]);
 
     // Restore original message
     await db
-      .update(maintenance)
+      .update(maintenanceUpdate)
       .set({ message: "Maintenance to update" })
-      .where(eq(maintenance.id, testMaintenanceToUpdateId));
+      .where(eq(maintenanceUpdate.maintenanceId, testMaintenanceToUpdateId));
   });
 
   test("updates page component associations", async () => {

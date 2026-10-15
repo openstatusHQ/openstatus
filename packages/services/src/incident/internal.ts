@@ -13,10 +13,7 @@ import { displayName } from "../attribution";
 import { emitAudit } from "../audit";
 import { type DB, type ServiceContext, tryGetActorUserId } from "../context";
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
-import { requireFeature } from "../features";
 import { getMembership } from "../member/membership";
-
-export const INCIDENT_FEATURE = "incident-management";
 
 export const incidentUserColumns = {
   id: true,
@@ -27,10 +24,6 @@ export const incidentUserColumns = {
   photoUrl: true,
   deletedAt: true,
 } as const;
-
-export function requireIncidentFeature(ctx: ServiceContext): void {
-  requireFeature(ctx, INCIDENT_FEATURE);
-}
 
 export async function getIncidentInWorkspace(
   tx: DB,

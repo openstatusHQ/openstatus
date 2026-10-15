@@ -5,6 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 
+import { TableCellEmpty } from "../table-cell-empty";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type PageComponent = RouterOutputs["pageComponent"]["list"][number];
@@ -22,9 +23,10 @@ export const columns: ColumnDef<PageComponent>[] = [
     enableSorting: false,
     cell: ({ row }) => {
       const value = row.getValue("description");
+      if (!value) return <TableCellEmpty>No description</TableCellEmpty>;
       return (
         <span className="text-muted-foreground max-w-[200px] truncate">
-          {value ? String(value) : "-"}
+          {String(value)}
         </span>
       );
     },
@@ -46,7 +48,8 @@ export const columns: ColumnDef<PageComponent>[] = [
     ),
     cell: ({ row }) => {
       const value = row.getValue("order");
-      return <span>{value != null ? String(value) : "-"}</span>;
+      if (value == null) return <TableCellEmpty>Unset</TableCellEmpty>;
+      return <span>{String(value)}</span>;
     },
   },
   {

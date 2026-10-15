@@ -59,6 +59,8 @@ export function Grid({
           // A demo with an unbreakable string must truncate, never widen the page.
           "[&>*]:min-w-0",
           "[&>*>*:first-child]:!mt-0 [&>*>*:last-child]:!mb-0",
+          // The shorter cell follows the taller one down; equal heights don't move.
+          "md:[&>*]:sticky md:[&>*]:top-8",
           sm && smColsClass[sm],
           colsClass[cols],
           className,

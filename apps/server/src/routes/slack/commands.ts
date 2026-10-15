@@ -11,14 +11,10 @@ import { z } from "zod";
 
 import { runInBackground } from "@/libs/background";
 
-import {
-  type Block,
-  buildLinkAccountBlocks,
-  LINK_ACCOUNT_TEXT,
-} from "./blocks";
+import { buildLinkAccountBlocks, LINK_ACCOUNT_TEXT } from "./blocks";
 import type { SlackConfig, SlackEnv } from "./config";
 import { runIncidentCommand } from "./incident-commands";
-import { openDeclareIncidentModal } from "./incident-modal";
+import { NOT_CONNECTED, openDeclareIncidentModal } from "./incident-modal";
 import {
   linkAccountUrl,
   planRequiredMessage,
@@ -26,6 +22,7 @@ import {
   slackAgentAllowed,
 } from "./require-slack-member";
 import { resolvePageFromUrl } from "./resolve-page";
+import { type EphemeralReply, respondLater } from "./response-url";
 import { resolveWorkspace } from "./workspace-resolver";
 
 const logger = getLogger("api-server");
@@ -51,28 +48,10 @@ const HELP = [
   "• `/openstatus subscriptions` — show this channel's subscriptions",
 ].join("\n");
 
-type CommandReply = { text: string; blocks?: Block[] };
+type CommandReply = EphemeralReply;
 
 function ephemeral(c: Context, reply: CommandReply) {
   return c.json({ response_type: "ephemeral", ...reply });
-}
-
-/** Deliver a reply after the ack, via the command's single-use response URL. */
-async function respondLater(
-  responseUrl: string,
-  reply: CommandReply,
-): Promise<void> {
-  const res = await fetch(responseUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ response_type: "ephemeral", ...reply }),
-  });
-  if (!res.ok) {
-    logger.error("slack response_url delivery failed", {
-      status: res.status,
-      body: await res.text().catch(() => ""),
-    });
-  }
 }
 
 async function joinChannel(teamId: string, channelId: string): Promise<void> {
@@ -203,7 +182,7 @@ async function runMemberCommand(
   const resolved = await resolveWorkspace(command.team_id);
   if (!resolved) {
     return {
-      text: "openstatus isn't connected to this Slack workspace. Connect it from the openstatus dashboard.",
+      text: NOT_CONNECTED,
     };
   }
   if (!slackAgentAllowed(resolved.workspace)) {

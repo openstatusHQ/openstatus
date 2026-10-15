@@ -1,11 +1,14 @@
 import { Events } from "@openstatus/analytics";
 import { NotFoundError } from "@openstatus/services";
 import {
+  addMaintenanceUpdate,
   createMaintenance,
   deleteMaintenance,
+  deleteMaintenanceUpdate,
   getMaintenance,
   listMaintenances,
   updateMaintenance,
+  updateMaintenanceUpdate,
 } from "@openstatus/services/maintenance";
 import { z } from "zod";
 
@@ -14,6 +17,32 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { periods } from "./utils";
 
 export const maintenanceRouter = createTRPCRouter({
+  createUpdate: protectedProcedure
+    .meta({ track: Events.CreateMaintenanceUpdate })
+    .input(
+      z.object({
+        maintenanceId: z.number(),
+        message: z.string().min(1),
+        date: z.date().optional(),
+        notifySubscribers: z.boolean().nullish(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const update = await addMaintenanceUpdate({
+          ctx: toServiceCtx(ctx),
+          input: {
+            maintenanceId: input.maintenanceId,
+            message: input.message,
+            date: input.date,
+          },
+        });
+        return { ...update, notifySubscribers: input.notifySubscribers };
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
   delete: protectedProcedure
     .meta({ track: Events.DeleteMaintenance })
     .input(z.object({ id: z.number() }))
@@ -32,6 +61,20 @@ export const maintenanceRouter = createTRPCRouter({
         // delete silently succeeded when the row was already gone. Connect
         // still returns 404 on missing; external API semantics preserved.
         if (err instanceof NotFoundError) return [] as Array<never>;
+        toTRPCError(err);
+      }
+    }),
+
+  deleteUpdate: protectedProcedure
+    .meta({ track: Events.DeleteMaintenanceUpdate })
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await deleteMaintenanceUpdate({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
+        });
+      } catch (err) {
         toTRPCError(err);
       }
     }),
@@ -94,7 +137,7 @@ export const maintenanceRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const record = await createMaintenance({
+        const { maintenance, initialUpdate } = await createMaintenance({
           ctx: toServiceCtx(ctx),
           input: {
             title: input.title,
@@ -105,7 +148,12 @@ export const maintenanceRouter = createTRPCRouter({
             pageComponentIds: input.pageComponents ?? [],
           },
         });
-        return { ...record, notifySubscribers: input.notifySubscribers };
+        // subscriberNotification.maintenance is keyed by update id
+        return {
+          ...maintenance,
+          initialUpdateId: initialUpdate.id,
+          notifySubscribers: input.notifySubscribers,
+        };
       } catch (err) {
         toTRPCError(err);
       }
@@ -117,7 +165,6 @@ export const maintenanceRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         title: z.string(),
-        message: z.string(),
         startDate: z.coerce.date(),
         endDate: z.coerce.date(),
         pageComponents: z.array(z.number()).optional(),
@@ -130,11 +177,35 @@ export const maintenanceRouter = createTRPCRouter({
           input: {
             id: input.id,
             title: input.title,
-            message: input.message,
             from: input.startDate,
             to: input.endDate,
             pageComponentIds: input.pageComponents,
           },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  updateUpdate: protectedProcedure
+    .meta({ track: Events.UpdateMaintenanceUpdate })
+    .input(
+      z
+        .object({
+          id: z.number(),
+          message: z.string().min(1).optional(),
+          date: z.date().optional(),
+        })
+        .refine(
+          (input) => input.message !== undefined || input.date !== undefined,
+          { message: "At least one field must be provided." },
+        ),
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await updateMaintenanceUpdate({
+          ctx: toServiceCtx(ctx),
+          input,
         });
       } catch (err) {
         toTRPCError(err);

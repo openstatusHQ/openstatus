@@ -22,9 +22,15 @@ import {
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
 import { Slider } from "@openstatus/ui/components/ui/slider";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
+import { formatDistanceToNow } from "date-fns";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -56,6 +62,8 @@ const PERIODICITY = monitorPeriodicity.filter((p) => p !== "other");
 const DEFAULT_PRIVATE_LOCATIONS = [] satisfies {
   id: number;
   name: string;
+  status: "active" | "error";
+  lastSeenAt?: Date | null;
   metadata?: Record<string, string> | null;
 }[];
 
@@ -78,6 +86,8 @@ export function FormSchedulingRegions({
   privateLocations: {
     id: number;
     name: string;
+    status: "active" | "error";
+    lastSeenAt?: Date | null;
     metadata?: Record<string, string> | null;
   }[];
 }) {
@@ -188,7 +198,12 @@ export function FormSchedulingRegions({
               <Note color="error">
                 <Error />
                 The periodicity you are selecting is not allowed for your plan.
-                <NoteButton type="button" onClick={() => setOpenDialog(true)}>
+                <NoteButton
+                  data-track="paywall_viewed"
+                  data-limit="periodicity"
+                  type="button"
+                  onClick={() => setOpenDialog(true)}
+                >
                   Upgrade your plan
                 </NoteButton>
               </Note>
@@ -439,6 +454,10 @@ export function FormSchedulingRegions({
                                   <span className="text-nowrap">
                                     {item.name}
                                   </span>
+                                  <PrivateLocationStatusDot
+                                    status={item.status}
+                                    lastSeenAt={item.lastSeenAt}
+                                  />
                                   {getMetadataEntries(item.metadata).length >
                                   0 ? (
                                     <TableCellMetadata value={item.metadata} />
@@ -491,5 +510,43 @@ export function FormSchedulingRegions({
       </form>
       <UpgradeDialog open={openDialog} onOpenChange={setOpenDialog} />
     </Form>
+  );
+}
+
+function PrivateLocationStatusDot({
+  status,
+  lastSeenAt,
+}: {
+  status: "active" | "error";
+  lastSeenAt?: Date | null;
+}) {
+  const lastSeen = lastSeenAt
+    ? `last seen ${formatDistanceToNow(lastSeenAt, { addSuffix: true })}`
+    : null;
+  return (
+    <Tooltip delayDuration={0}>
+      <TooltipTrigger asChild>
+        {/* span, not button: a button inside the <label> is invalid HTML */}
+        <span
+          tabIndex={0}
+          role="img"
+          aria-label={lastSeen ? `${status} · ${lastSeen}` : status}
+          className="focus-visible:ring-ring/50 relative inline-flex shrink-0 rounded-full outline-none focus-visible:ring-[3px]"
+        >
+          <span
+            className={cn(
+              "relative inline-flex size-2 rounded-full",
+              status === "active" ? "bg-success" : "bg-destructive",
+            )}
+          />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="font-sans">
+        <span className="capitalize">{status}</span>
+        {lastSeen ? (
+          <span className="text-primary-foreground/70"> · {lastSeen}</span>
+        ) : null}
+      </TooltipContent>
+    </Tooltip>
   );
 }

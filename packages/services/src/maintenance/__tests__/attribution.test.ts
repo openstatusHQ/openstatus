@@ -47,7 +47,7 @@ function range() {
 }
 
 async function create(ctx: ServiceContext, title: string) {
-  return createMaintenance({
+  const { maintenance } = await createMaintenance({
     ctx,
     input: {
       title: `${TEST_PREFIX}-${title}`,
@@ -57,6 +57,7 @@ async function create(ctx: ServiceContext, title: string) {
       pageComponentIds: [],
     },
   });
+  return maintenance;
 }
 
 describe("maintenance attribution", () => {

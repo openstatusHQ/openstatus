@@ -130,7 +130,15 @@ async function* makeIterator({
       );
     } catch (error) {
       console.log(error);
-      return encoder.encode("");
+      // Stream the failure so the client doesn't stop at N-1 regions.
+      return encoder.encode(
+        `${JSON.stringify({
+          state: "error",
+          region,
+          message: "Check failed in this region",
+          index,
+        })}\n`,
+      );
     }
   });
 
@@ -247,7 +255,7 @@ export async function POST(request: Request) {
   const compact = new URL(request.url).searchParams.get("compact") === "true";
   const uuid = crypto.randomUUID().replace(/-/g, "");
   after(async () => {
-    const analytics = await setupAnalytics({});
+    const analytics = await setupAnalytics({ source: "web" });
     const additionalProps = { url, uuid, compact };
     await analytics.track({ ...Events.GlobalSpeedChecker, ...additionalProps });
   });

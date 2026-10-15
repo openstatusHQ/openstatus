@@ -9,6 +9,7 @@ export { default as MonitorPausedEmail } from "../emails/monitor-paused";
 export { default as MonitorDeactivationEmail } from "../emails/monitor-deactivation";
 export { default as PrivateLocationAlertEmail } from "../emails/private-location-alert";
 export { default as StatusPageMagicLinkEmail } from "../emails/status-page-magic-link";
+export { default as DashboardMagicLinkEmail } from "../emails/dashboard-magic-link";
 
 export { monitorDeactivationEmail, monitorPausedEmail } from "./render";
 export {

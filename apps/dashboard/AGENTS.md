@@ -1,11 +1,24 @@
 # AGENTS.md — apps/dashboard
 
-## Visual changes need a human
+## Visual changes need a screenshot
 
-An agent cannot verify rendering. If a change alters layout, styling or any
-visible behaviour, say so and ask for confirmation rather than reporting it as
-done. Prefer taking on work in `packages/services`, `packages/api` and the route
-handlers, where `pnpm verify` and the test suites are real evidence.
+A diff does not show rendering. If a change alters layout, styling or any
+visible behaviour, screenshot it before reporting it done:
+
+```sh
+node scripts/dev-stack.mjs up --warm /incidents/1   # only when nothing is running
+node scripts/screenshot.mjs --app dashboard /incidents/1 --selector "[data-slot=timeline]"
+```
+
+It drives agent-browser against the local dev server, logs in
+with a seeded session (`--user max@openstatus.dev` or
+`thibault@openstatus.dev`), shoots light and dark, and prints the PNG paths.
+Look at them. `dev-stack.mjs` provisions the database and dashboard from a
+bare clone, which a cloud session is. The `screenshot` skill has the flags,
+ports and fixtures; the root `DESIGN.md` says what to judge against. Taste calls (spacing, hierarchy,
+whether something should exist) still go to a human, with the screenshot
+attached. `pnpm verify` and the test suites remain the evidence for everything
+that is not visual.
 
 ## Runtimes
 
@@ -31,3 +44,13 @@ Reuse the dashboard's own primitives — `TableCell*`, `ResultTable`,
 Persisted chat messages are validated on write, which is what makes the
 `asUIMessages` cast in `apps/dashboard/src/components/chat/use-chat-session.ts`
 safe. Keep casts of that kind in one named helper.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

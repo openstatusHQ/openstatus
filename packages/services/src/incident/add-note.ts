@@ -7,7 +7,6 @@ import {
   assertMember,
   assertNotClosed,
   getIncidentInWorkspace,
-  requireIncidentFeature,
 } from "./internal";
 import { AddIncidentNoteInput } from "./schemas";
 
@@ -19,7 +18,6 @@ export async function addIncidentNote(args: {
 }): Promise<IncidentEvent> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  requireIncidentFeature(ctx);
   const input = AddIncidentNoteInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

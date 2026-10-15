@@ -52,6 +52,17 @@ function avg(values: number[]): number | null {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
+// Dates have second precision, so the id breaks ties.
+function newestMaintenanceUpdates<
+  T extends { date: Date | string | number; id?: number },
+>(updates: T[] | undefined): T[] {
+  return [...(updates ?? [])].sort(
+    (a, b) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime() ||
+      (b.id ?? 0) - (a.id ?? 0),
+  );
+}
+
 export function generateOverview(
   page: OverviewPage,
   components: UptimeComponent[],
@@ -144,7 +155,11 @@ export function generateOverview(
         mdUrl(`events/maintenance/${m.id}`),
       ].filter(Boolean);
       out.push(head.join(" · "));
-      if (m.message) out.push(`  ${m.message}`);
+      const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
+      if (updates.length === 0 && m.message) out.push(`  ${m.message}`);
+      for (const update of updates) {
+        out.push(`  - ${formatDayTime(update.date)} — ${update.message}`);
+      }
     }
     out.push("");
   }
@@ -339,6 +354,15 @@ export function generateEventsList(
       ref: `maintenance/${m.id}`,
       title: m.title,
     });
+    for (const update of newestMaintenanceUpdates(m.maintenanceUpdates)) {
+      logRows.push({
+        timestamp: update.date,
+        label: "MAINTENANCE",
+        glyph: statusGlyph("info"),
+        ref: `maintenance/${m.id}`,
+        title: m.title,
+      });
+    }
     // Only log a COMPLETED entry once the window has actually ended. (`m.to`
     // is non-null per schema; the truthy check is just defensive.)
     if (m.to && new Date(m.to).getTime() <= now) {
@@ -436,6 +460,13 @@ export function generateEventsList(
         `### [${escapeLinkLabel(m.title)}](${mdUrl(`events/maintenance/${m.id}`)})`,
       );
       out.push(meta.join(" · "));
+      const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
+      if (updates.length === 0 && m.message) out.push(m.message);
+      for (const update of updates) {
+        // indent continuation lines so a blank line does not end the item
+        const message = update.message.replace(/\n/g, "\n  ");
+        out.push(`- ${formatDayTime(update.date)} — ${message}`);
+      }
       out.push("");
     }
   }
@@ -561,8 +592,19 @@ export function generateMaintenance(
     out.push(`**Affected components:** ${components.join(", ")}\n`);
   }
 
-  out.push("## Details\n");
-  out.push(`${maintenance.message}\n`);
+  // the oldest update is the announcement; `message` only serves rows that
+  // predate the timeline
+  const updates = newestMaintenanceUpdates(maintenance.maintenanceUpdates);
+  if (updates.length > 0) {
+    out.push("## Updates\n");
+    for (const update of updates) {
+      out.push(`### ${formatDayTime(update.date)}\n`);
+      out.push(`${update.message}\n`);
+    }
+  } else {
+    out.push("## Details\n");
+    out.push(`${maintenance.message}\n`);
+  }
 
   return `${out.join("\n").trimEnd()}\n`;
 }

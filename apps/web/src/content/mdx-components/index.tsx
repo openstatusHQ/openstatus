@@ -21,6 +21,7 @@ import { SrOnly } from "./sr-only";
 import { MDXStatusPageExample } from "./status-page-example";
 import { Subtle } from "./subtle";
 import { Table } from "./table";
+import { Timeline } from "./timeline";
 import { ShowcaseYouTube } from "./youtube";
 
 export { slugify } from "./heading";
@@ -56,5 +57,6 @@ export const components = {
   PricingTabs,
   Subtle,
   Eyebrow,
+  Timeline,
   Suspense: Suspense,
 };

@@ -2,7 +2,7 @@
 
   <h3 align="center">openstatus</h3>
 
-  <p align="center">The open-source status page and uptime monitoring platform.
+  <p align="center">The open-source status page, incident response and uptime monitoring platform.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
@@ -26,7 +26,7 @@
 
 ## About openstatus
 
-openstatus is the open-source **uptime monitoring** and **status page** platform built for **infra as code**. Declare monitors and status pages in code. Let your agents update them.
+openstatus is the open-source **status page**, **incident response** and **uptime monitoring** platform built for **infra as code**. Run incidents from Slack or your AI agent. Declare monitors and status pages in code. Let your agents update them.
 
 Monitors, status pages, and notification channels are declared in YAML or Terraform, applied from the CLI or CI, and operable from Claude, ChatGPT, or Cursor over MCP. Available as a managed service or self-hosted.
 
@@ -42,7 +42,7 @@ Monitors, status pages, and notification channels are declared in YAML or Terraf
 - **28 global regions** checking in parallel across 3 cloud providers
 - **Flat pricing, unlimited members** — no per-seat or per-subscriber charges
 - **Open source & self-hostable** — AGPL-3.0, private-locations run in a single 8.5MB Docker image
-- **Incident management** — declare and run incidents from the dashboard or Slack, with severity, commander, and a full timeline
+- **Incident response** — declare and run incidents from the dashboard or Slack, with severity, commander, and a full timeline
 - **Incident communication** — subscriber notifications via email, RSS, and webhooks
 
 ### Status pages
@@ -53,7 +53,7 @@ Beautiful, customizable status pages with custom domains, password protection, m
 
 Monitor your servers, websites and APIs from 28 regions across multiple cloud providers globally. Get notified via Slack, Discord, PagerDuty, email, and more when your services are down or slow.
 
-### Incident management
+### Incident response
 
 Declare, coordinate, and resolve incidents from the dashboard or right inside Slack.
 

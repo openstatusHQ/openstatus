@@ -152,5 +152,9 @@ export class WebClient {
       s.calls.push({ method: "views.open", args });
       return Promise.resolve({ ok: true });
     },
+    update: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "views.update", args });
+      return Promise.resolve({ ok: true });
+    },
   };
 }
