@@ -2,14 +2,14 @@
 title: "Four iterations of an incident timeline"
 description: "How the incident activity timeline in openstatus went from a log-file list to a Linear-style hierarchy in four phases, and how I work with Claude Code and Claude Design to get there."
 author: "Maximilian Kaske"
-publishedAt: "2026-10-11"
+publishedAt: "2026-10-16"
 category: "engineering"
-image: "/assets/posts/four-iterations-of-an-incident-timeline/04-hierarchy.png"
+image: "/assets/posts/four-iterations-of-an-incident-timeline/four-iterations-of-an-incident-timeline.png"
 ---
 
-We've been building incident response into openstatus. The activity timeline is the part you stare at most during an incident, so it got the most iterations. Four phases until we got where we are now. There are still some inconsistent paddings, but the core is done.
+We've been building [incident response into openstatus](/blog/launching-incident-management). The activity timeline is the part you stare at most during an incident, so it got the most iterations. Four phases until we got where we are now. There are still some inconsistent paddings, but the core is done.
 
-<Grid cols={4} variant="borderless">
+<Grid cols={2} variant="borderless">
 <div>
 
 <Image src="/assets/posts/four-iterations-of-an-incident-timeline/01-plain-list.png" alt="1. From the plan" className="img-fit" />
@@ -40,9 +40,9 @@ For deterministic tasks and fixes I use Claude Code remote. It spins up a VM and
 
 I write a lot of `PLAN.md` files and `/loop` over them once I'm *afk*. I keep several Claude Code tabs open, each grilling me on a different idea with Matt Pocock's grill-me skill. I rarely read those plans in full, except when it's a collaboration with Thibault on a bigger feature like incident response. We worked on that plan for a couple of days, with the idea spelled out for weeks before. Leave it, iterate the next day.
 
-For dashboard work, the feedback is a screenshot from me: the broken part **boxed in red**, one sentence. While a loop runs I go bouldering or for a walk. When I'm back I click through the local dev server myself, because the details only show up when you use the real thing. Most loops run locally, and nothing gets pushed for a preview deployment until it feels right. When the work runs in a remote Claude Code session, I pull the branch and click through it locally before merging anything heavy on the dashboard.
+While a loop runs I go bouldering or for a walk. When I'm back I click through the local dev server myself, because the details only show up when you use the real thing. Whatever feels off, I send as a screenshot: the broken part **boxed in red**, one sentence. Those small fixes happen right there in the session, no loop needed. Most loops run locally, and nothing gets pushed for a preview deployment until it feels right. When the work runs in a remote Claude Code session, I pull the branch and click through it locally before merging anything heavy on the dashboard.
 
-For UI I use Claude Design for a first feeling. Without steering it looks very *claudy*, gradients and italics, so most of the time it's inspiration only. I usually ask for three or four variations. For dashboard work both tools know our design system, and both read it from the same place: the repo. In Claude Design I linked our GitHub repo, and it builds the design system from the code, so the mocks come out in our tokens, fonts and spacing. Claude Code works in the repo directly: shadcn primitives in `@openstatus/ui`, our own blocks on top, and `AGENTS.md` files that say to compose from those and never fork a primitive into an app. Neither goes off the rails much, and both stay plain if I don't give enough detail.
+For UI I use Claude Design for a first feeling, usually three or four variations. It's linked to our GitHub repo, so the mocks come out in our own design system.
 
 ## Phase 1: from the plan
 
@@ -64,7 +64,7 @@ A few minutes later:
 
 **A lot better** than what we had. Ghost inputs on the right, the status change in the composer footer, icon discs on a rail, status chips. Next, I pasted a screenshot of it into Claude Code:
 
-> This image is really good. Take your time and figure out how we get there. Be thoughtful about the React components, the way we do it in general: structure, compound components, cva. Don't commit, implement until you believe it's good. The components will be reused for status reports and maintenances later on.
+> The draft is good. Take your time and figure out how we get there. Be thoughtful about the React components, the way we do it in general: structure, compound components, cva. Don't commit, implement until you believe it's good. The components will be reused for status reports and maintenances later on.
 
 What came back is the mock in our components, minus what didn't survive the data model. The incident ID went, since our IDs are autoincrement and "INC-011" would be a lie. Affected monitors went, since the incident doesn't link to monitors yet. Good enough for a first real update.
 
@@ -76,13 +76,13 @@ A minor visual step. I kept the core Claude Design returned and focused on the u
 
 > Notes show an author avatar and a type icon side by side. That's redundant. Make the avatar the timeline node, with the type as a small badge.
 
-The first pass still rendered both. "There is redundancy, check again" fixed it. More important than the avatars, this phase migrated status reports and maintenances onto the same timeline, composer and aside components.
+The first pass still rendered both. "There is redundancy, check again" fixed it. *More important than the avatars*, this phase migrated status reports and maintenances onto the **same timeline, composer and aside components**.
 
 <Image src="/assets/posts/four-iterations-of-an-incident-timeline/03-avatars.png" alt="Phase 3: the author avatar is the timeline node, the type a small badge" className="img-fit" />
 
 ## Phase 4: hierarchy
 
-The last big push. I shared the current visuals on X and Marc from [Papermark](https://www.papermark.com) pointed me to [Linear](https://linear.app). I've been using Linear for a while and I know their timeline. Sometimes you need a *small nudge* in the right direction.
+The last big push. I shared the current visuals on X and [@mfts0](https://x.com/mfts0) pointed me to [Linear](https://linear.app). I've been using Linear for a while and I know their timeline. Sometimes you need a *small nudge* in the right direction.
 
 I stared at their timeline for a while. What makes it good is the hierarchy of events. Comments are *loud*, everything else is *quiet*. You read the conversation and skim the plumbing. And because the shape repeats on every issue, you learn the workflow without anyone explaining it. Our timeline had no levels, so every event asked for the same attention.
 
