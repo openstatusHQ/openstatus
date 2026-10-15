@@ -3,11 +3,10 @@ import { describe, test } from "@std/testing/bdd";
 import { z } from "zod";
 
 import {
-  isWholeHourTimeZone,
   noopFlagSchema,
   OSTinybird,
-  status60mParameters,
-  status60mShape,
+  status15mParameters,
+  status15mShape,
 } from "./client";
 
 describe("noopFlagSchema", () => {
@@ -164,66 +163,38 @@ describe("response-log facet pipes", () => {
   }
 });
 
-const status60mGetters = [
-  "httpStatus60m",
-  "tcpStatus60m",
-  "dnsStatus60m",
-  "icmpStatus60m",
-  "grpcStatus60m",
+const status15mGetters = [
+  "httpStatus15m",
+  "tcpStatus15m",
+  "dnsStatus15m",
+  "icmpStatus15m",
+  "grpcStatus15m",
 ] as const;
 
-describe("isWholeHourTimeZone", () => {
-  test("accepts zones whose standard and DST offsets are both whole hours", () => {
-    for (const tz of ["UTC", "Etc/GMT+1", "Asia/Tokyo", "Europe/Berlin"]) {
-      expect(isWholeHourTimeZone(tz)).toBe(true);
-    }
-    expect(isWholeHourTimeZone("America/New_York")).toBe(true);
-    expect(isWholeHourTimeZone("Australia/Sydney")).toBe(true);
-  });
-
-  test("rejects half- and quarter-hour offsets, on either side of DST", () => {
-    expect(isWholeHourTimeZone("Asia/Kolkata")).toBe(false);
-    expect(isWholeHourTimeZone("Asia/Kathmandu")).toBe(false);
-    expect(isWholeHourTimeZone("Pacific/Chatham")).toBe(false);
-    // +10:30 standard, +11:00 daylight: whole-hour for half the year only
-    expect(isWholeHourTimeZone("Australia/Lord_Howe")).toBe(false);
-  });
-
-  test("rejects unknown zones and fixed offsets instead of throwing", () => {
-    expect(isWholeHourTimeZone("Mars/Olympus")).toBe(false);
-    expect(isWholeHourTimeZone("")).toBe(false);
-  });
-});
-
-describe("status60mParameters", () => {
+describe("status15mParameters", () => {
   test("defaults timezone to UTC", () => {
-    expect(status60mParameters.parse({ monitorIds: ["1"] })).toEqual({
+    expect(status15mParameters.parse({ monitorIds: ["1"] })).toEqual({
       monitorIds: ["1"],
       timezone: "UTC",
     });
   });
 
-  test("forwards a whole-hour timezone untouched", () => {
-    expect(
-      status60mParameters.parse({
-        monitorIds: ["1", "2"],
-        timezone: "Europe/Berlin",
-      }).timezone,
-    ).toBe("Europe/Berlin");
-  });
-
-  test("names the whole-hour requirement when rejecting", () => {
-    const result = status60mParameters.safeParse({
-      monitorIds: ["1"],
-      timezone: "Asia/Kolkata",
-    });
-    expect(result.success).toBe(false);
-    expect(JSON.stringify(result.error?.issues)).toContain("whole hour");
+  test("forwards any zone untouched, fractional offsets included", () => {
+    for (const timezone of [
+      "Europe/Berlin",
+      "Asia/Kolkata",
+      "Asia/Kathmandu",
+    ]) {
+      expect(
+        status15mParameters.parse({ monitorIds: ["1", "2"], timezone })
+          .timezone,
+      ).toBe(timezone);
+    }
   });
 });
 
-describe("status60mShape", () => {
-  const shape = status60mShape(z.coerce.string());
+describe("status15mShape", () => {
+  const shape = status15mShape(z.coerce.string());
 
   test("re-keys the local calendar date as UTC midnight, like the 45d pipes", () => {
     const row = shape.parse({
@@ -269,19 +240,13 @@ describe("status60mShape", () => {
   });
 });
 
-describe("hourly status pipes", () => {
+describe("15m status pipes", () => {
   const tb = new OSTinybird({ token: "a-token" });
 
-  for (const name of status60mGetters) {
-    test(`${name} validates timezone before the request`, async () => {
-      await expect(
-        tb[name]({ monitorIds: ["1"], timezone: "Asia/Kolkata" }),
-      ).rejects.toThrow("whole hour");
-    });
-
-    test(`${name} resolves for whole-hour zones and when timezone is omitted`, async () => {
+  for (const name of status15mGetters) {
+    test(`${name} resolves for any zone and when timezone is omitted`, async () => {
       expect(
-        await tb[name]({ monitorIds: ["1"], timezone: "Europe/Berlin" }),
+        await tb[name]({ monitorIds: ["1"], timezone: "Asia/Kolkata" }),
       ).toEqual({ meta: [], data: [] });
       expect(await tb[name]({ monitorIds: ["1"] })).toEqual({
         meta: [],

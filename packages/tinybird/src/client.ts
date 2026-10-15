@@ -14,45 +14,11 @@ const PUBLIC_CACHE = 300; // 5 * 60 = 300s = 5m
 const DEV_CACHE = 10 * 60; // 10m
 const REVALIDATE = env.NODE_ENV === "development" ? DEV_CACHE : 0;
 
-// The 60m pipes group UTC-hour buckets into local days, which only lines up
-// when every offset the zone uses is a whole number of hours. January and
-// July cover both sides of DST. The endpoints enforce the same rule server-side.
-const wholeHourTimeZoneCache = new Map<string, boolean>();
-
-export function isWholeHourTimeZone(timeZone: string): boolean {
-  const cached = wholeHourTimeZoneCache.get(timeZone);
-  if (cached !== undefined) return cached;
-
-  let format: Intl.DateTimeFormat;
-  try {
-    format = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      timeZoneName: "longOffset",
-    });
-  } catch (error) {
-    if (error instanceof RangeError) return false;
-    throw error;
-  }
-  const year = new Date().getUTCFullYear();
-  const result = [0, 6].every((month) => {
-    const offset = format
-      .formatToParts(new Date(Date.UTC(year, month, 1)))
-      .find((p) => p.type === "timeZoneName")?.value;
-    return offset === "GMT" || /^GMT[+-]\d{2}:00$/.test(offset ?? "");
-  });
-  wholeHourTimeZoneCache.set(timeZone, result);
-  return result;
-}
-
-export const status60mParameters = z.object({
+// 15-minute buckets regroup into local days for every IANA zone: all current
+// offsets are multiples of 15 minutes. ClickHouse rejects unknown zone names.
+export const status15mParameters = z.object({
   monitorIds: z.string().array(),
-  timezone: z
-    .string()
-    .refine(
-      isWholeHourTimeZone,
-      "timezone must be an IANA name whose UTC offset is a whole hour",
-    )
-    .prefault("UTC"),
+  timezone: z.string().prefault("UTC"),
 });
 
 /**
@@ -60,7 +26,7 @@ export const status60mParameters = z.object({
  * UTC midnight, the convention day-keyed consumers already read — a Berlin
  * 2026-10-14 stays "2026-10-14", not the 22:00Z instant of local midnight.
  */
-export function status60mShape(monitorId: z.ZodType<string>) {
+export function status15mShape(monitorId: z.ZodType<string>) {
   return z.object({
     day: z
       .string()
@@ -867,12 +833,12 @@ export class OSTinybird {
     });
   }
 
-  /** Hourly buckets regrouped into days of `timezone`; see {@link status60mShape}. */
-  public get httpStatus60m() {
+  /** 15m buckets regrouped into days of `timezone`; see {@link status15mShape}. */
+  public get httpStatus15m() {
     return this.tb.buildPipe({
-      pipe: "endpoint__http_status_60m__v0",
-      parameters: status60mParameters,
-      data: status60mShape(z.string()),
+      pipe: "endpoint__http_status_15m__v0",
+      parameters: status15mParameters,
+      data: status15mShape(z.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -1444,12 +1410,12 @@ export class OSTinybird {
     });
   }
 
-  /** Hourly buckets regrouped into days of `timezone`; see {@link status60mShape}. */
-  public get tcpStatus60m() {
+  /** 15m buckets regrouped into days of `timezone`; see {@link status15mShape}. */
+  public get tcpStatus15m() {
     return this.tb.buildPipe({
-      pipe: "endpoint__tcp_status_60m__v0",
-      parameters: status60mParameters,
-      data: status60mShape(z.coerce.string()),
+      pipe: "endpoint__tcp_status_15m__v0",
+      parameters: status15mParameters,
+      data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -1854,12 +1820,12 @@ export class OSTinybird {
     });
   }
 
-  /** Hourly buckets regrouped into days of `timezone`; see {@link status60mShape}. */
-  public get icmpStatus60m() {
+  /** 15m buckets regrouped into days of `timezone`; see {@link status15mShape}. */
+  public get icmpStatus15m() {
     return this.tb.buildPipe({
-      pipe: "endpoint__icmp_status_60m__v0",
-      parameters: status60mParameters,
-      data: status60mShape(z.coerce.string()),
+      pipe: "endpoint__icmp_status_15m__v0",
+      parameters: status15mParameters,
+      data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -2335,12 +2301,12 @@ export class OSTinybird {
     });
   }
 
-  /** Hourly buckets regrouped into days of `timezone`; see {@link status60mShape}. */
-  public get grpcStatus60m() {
+  /** 15m buckets regrouped into days of `timezone`; see {@link status15mShape}. */
+  public get grpcStatus15m() {
     return this.tb.buildPipe({
-      pipe: "endpoint__grpc_status_60m__v0",
-      parameters: status60mParameters,
-      data: status60mShape(z.coerce.string()),
+      pipe: "endpoint__grpc_status_15m__v0",
+      parameters: status15mParameters,
+      data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -3631,12 +3597,12 @@ export class OSTinybird {
     });
   }
 
-  /** Hourly buckets regrouped into days of `timezone`; see {@link status60mShape}. */
-  public get dnsStatus60m() {
+  /** 15m buckets regrouped into days of `timezone`; see {@link status15mShape}. */
+  public get dnsStatus15m() {
     return this.tb.buildPipe({
-      pipe: "endpoint__dns_status_60m__v0",
-      parameters: status60mParameters,
-      data: status60mShape(z.coerce.string()),
+      pipe: "endpoint__dns_status_15m__v0",
+      parameters: status15mParameters,
+      data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }

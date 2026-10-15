@@ -1,0 +1,18 @@
+NODE endpoint
+SQL >
+
+%
+SELECT
+    -- calendar date of the local day; the client re-keys it as UTC midnight like the 45d pipes
+    toDate(toTimeZone(time, {{ String(timezone, 'UTC') }})) AS day,
+    monitorId,
+    countMerge(count) AS count,
+    countMerge(success) AS ok,
+    countMerge(error) AS error,
+    countMerge(degraded) AS degraded
+FROM mv__icmp_status_15m__v0
+WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
+GROUP BY day, monitorId
+ORDER BY day DESC
+
+TYPE endpoint

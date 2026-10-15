@@ -1,4 +1,4 @@
-# Data Source created from Pipe 'aggregate__icmp_status_60m__v0'
+# Data Source created from Pipe 'aggregate__grpc_status_15m__v0'
 
 SCHEMA >
     `time` DateTime('UTC'),

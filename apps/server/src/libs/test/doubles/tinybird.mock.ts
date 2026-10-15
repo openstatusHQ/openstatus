@@ -17,19 +17,19 @@ export class OSTinybird {
   get legacy_tcpStatus45d() {
     return empty;
   }
-  get httpStatus60m() {
+  get httpStatus15m() {
     return empty;
   }
-  get tcpStatus60m() {
+  get tcpStatus15m() {
     return empty;
   }
-  get dnsStatus60m() {
+  get dnsStatus15m() {
     return empty;
   }
-  get icmpStatus60m() {
+  get icmpStatus15m() {
     return empty;
   }
-  get grpcStatus60m() {
+  get grpcStatus15m() {
     return empty;
   }
   get httpListBiweekly() {
