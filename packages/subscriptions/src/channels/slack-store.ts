@@ -29,42 +29,52 @@ export interface SlackAnchorStore {
     anchor: SlackThreadAnchor,
   ): Promise<void>;
   clearAnchor(event: SlackThreadEvent, subscriberId: number): Promise<void>;
-  // Atomically claim the right to post the thread root. Returns true only for
-  // the caller that wins; the winner must `setAnchor` or `releaseAnchorClaim`.
-  // `getAnchor` reads a held claim as null.
-  claimAnchor(event: SlackThreadEvent, subscriberId: number): Promise<boolean>;
-  // Drop a claim whose root post failed. No-op once a real anchor is set.
+  // Atomically claim the right to post the thread root. Returns a token only
+  // for the caller that wins; the winner must `setAnchor` or
+  // `releaseAnchorClaim`. `getAnchor` reads a held claim as null.
+  claimAnchor(
+    event: SlackThreadEvent,
+    subscriberId: number,
+  ): Promise<string | null>;
+  // Drop a claim whose root post failed. No-op unless the key still holds
+  // this token, so an expired claimant can't release a newer claim.
   releaseAnchorClaim(
     event: SlackThreadEvent,
     subscriberId: number,
+    token: string,
   ): Promise<void>;
-  // Atomically claim delivery of (event, subscriber, update). Returns true only
+  // Atomically claim delivery of (event, subscriber, update). `update` is an
+  // update id, or a string key for a delivery that isn't one (root backfill). Returns true only
   // for the caller that wins the claim; concurrent callers get false and must
   // skip. This is the dedupe reservation — a single atomic op, not a
   // read-then-write pair, so two dispatchers can't both post the same message.
   reserveDelivery(
     event: SlackThreadEvent,
     subscriberId: number,
-    updateId: number,
+    updateId: number | string,
   ): Promise<boolean>;
   // Release a reservation whose post failed, so the delivery can be retried.
   releaseDelivery(
     event: SlackThreadEvent,
     subscriberId: number,
-    updateId: number,
+    updateId: number | string,
   ): Promise<void>;
 }
 
 const TTL_SECONDS = 90 * 24 * 60 * 60;
-// Short so a winner that crashes mid-post doesn't block the thread for long;
-// `setAnchor` replaces the claim with the full TTL.
+// Short so a winner that dies mid-post doesn't block the thread for long;
+// `setAnchor` replaces the claim with the full TTL. A root post retried by the
+// Slack client past this can open a second root — preferred over losers
+// dropping their updates for the length of the client's retry window.
 const CLAIM_TTL_SECONDS = 60;
 
-const ANCHOR_CLAIM = { pending: true } as const;
-type SlackAnchorClaim = typeof ANCHOR_CLAIM;
+interface SlackAnchorClaim {
+  pending: string;
+}
 
-// Delete only while the key still holds the claim, never a real anchor.
-// Upstash JSON-serializes values, so ARGV[1] is the stringified claim.
+// Delete only while the key still holds this claim, never a real anchor or a
+// newer claim. Upstash JSON-serializes values, so ARGV[1] is the stringified
+// claim.
 const RELEASE_CLAIM = `
 if redis.call("GET", KEYS[1]) == ARGV[1] then
   return redis.call("DEL", KEYS[1])
@@ -79,7 +89,7 @@ function anchorKey(event: SlackThreadEvent, subscriberId: number): string {
 function deliveredKey(
   event: SlackThreadEvent,
   subscriberId: number,
-  updateId: number,
+  updateId: number | string,
 ): string {
   return `${anchorKey(event, subscriberId)}:update:${updateId}`;
 }
@@ -111,18 +121,19 @@ export function createRedisAnchorStore(): SlackAnchorStore {
       await getRedis().del(anchorKey(event, subscriberId));
     },
     async claimAnchor(event, subscriberId) {
-      const res = await getRedis().set(
-        anchorKey(event, subscriberId),
-        ANCHOR_CLAIM,
-        { ex: CLAIM_TTL_SECONDS, nx: true },
-      );
-      return res === "OK";
+      const claim: SlackAnchorClaim = { pending: crypto.randomUUID() };
+      const res = await getRedis().set(anchorKey(event, subscriberId), claim, {
+        ex: CLAIM_TTL_SECONDS,
+        nx: true,
+      });
+      return res === "OK" ? claim.pending : null;
     },
-    async releaseAnchorClaim(event, subscriberId) {
+    async releaseAnchorClaim(event, subscriberId, token) {
+      const claim: SlackAnchorClaim = { pending: token };
       await getRedis().eval(
         RELEASE_CLAIM,
         [anchorKey(event, subscriberId)],
-        [JSON.stringify(ANCHOR_CLAIM)],
+        [JSON.stringify(claim)],
       );
     },
     async reserveDelivery(event, subscriberId, updateId) {
@@ -141,7 +152,7 @@ export function createRedisAnchorStore(): SlackAnchorStore {
 
 export function createMemoryAnchorStore(): SlackAnchorStore {
   const anchors = new Map<string, SlackThreadAnchor>();
-  const claims = new Set<string>();
+  const claims = new Map<string, string>();
   const delivered = new Set<string>();
   return {
     async getAnchor(event, subscriberId) {
@@ -159,12 +170,14 @@ export function createMemoryAnchorStore(): SlackAnchorStore {
     },
     async claimAnchor(event, subscriberId) {
       const key = anchorKey(event, subscriberId);
-      if (anchors.has(key) || claims.has(key)) return false;
-      claims.add(key);
-      return true;
+      if (anchors.has(key) || claims.has(key)) return null;
+      const token = crypto.randomUUID();
+      claims.set(key, token);
+      return token;
     },
-    async releaseAnchorClaim(event, subscriberId) {
-      claims.delete(anchorKey(event, subscriberId));
+    async releaseAnchorClaim(event, subscriberId, token) {
+      const key = anchorKey(event, subscriberId);
+      if (claims.get(key) === token) claims.delete(key);
     },
     async reserveDelivery(event, subscriberId, updateId) {
       const key = deliveredKey(event, subscriberId, updateId);

@@ -391,6 +391,46 @@ describe("createSlackChannel", () => {
     });
   }
 
+  test("losers woken together backfill the first update once", async () => {
+    let openGate = () => {};
+    const gate = new Promise<void>((resolve) => {
+      openGate = resolve;
+    });
+    const { client, calls } = makeClient();
+    const gatedClient: SlackClient = {
+      ...client,
+      async postMessage(args) {
+        // Thread posts yield too, so woken losers interleave mid-backfill.
+        if (args.thread_ts)
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        else await gate;
+        return client.postMessage(args);
+      },
+    };
+    const store = createMemoryAnchorStore();
+    const channel = createSlackChannel({
+      store,
+      createClient: () => gatedClient,
+      getBotToken: token,
+      softUnsubscribe: noopUnsub,
+      sleep: async () => {
+        openGate();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      },
+    });
+
+    await Promise.all(
+      [100, 101, 102].map((updateId) =>
+        channel.sendNotifications([makeSub()], makeUpdate({ updateId })),
+      ),
+    );
+
+    const posts = calls.filter((c) => c.method === "post");
+    expect(posts.filter((c) => c.thread_ts === undefined).length).toBe(1);
+    // One backfill of the root's update plus one reply per loser.
+    expect(posts.filter((c) => c.thread_ts !== undefined).length).toBe(3);
+  });
+
   test("failed root post releases the claim so a retry opens the thread", async () => {
     let attempts = 0;
     const roots: (string | undefined)[] = [];
@@ -445,7 +485,7 @@ describe("createSlackChannel", () => {
         sleeps += 1;
       },
     });
-    expect(await store.claimAnchor(REPORT, 1)).toBe(true);
+    expect(await store.claimAnchor(REPORT, 1)).not.toBeNull();
 
     await channel.sendNotifications([makeSub()], makeUpdate({ updateId: 100 }));
 
@@ -504,26 +544,28 @@ describe("reserveDelivery (memory store)", () => {
 describe("claimAnchor (memory store)", () => {
   test("only the first claim wins and reads as no anchor", async () => {
     const store = createMemoryAnchorStore();
-    expect(await store.claimAnchor(REPORT, 2)).toBe(true);
-    expect(await store.claimAnchor(REPORT, 2)).toBe(false);
+    expect(await store.claimAnchor(REPORT, 2)).not.toBeNull();
+    expect(await store.claimAnchor(REPORT, 2)).toBeNull();
     expect(await store.getAnchor(REPORT, 2)).toBeNull();
     // Kinds are namespaced: a maintenance with the same id claims separately.
-    expect(await store.claimAnchor(MAINTENANCE, 2)).toBe(true);
+    expect(await store.claimAnchor(MAINTENANCE, 2)).not.toBeNull();
   });
 
   test("setAnchor replaces the claim; a set anchor can't be claimed", async () => {
     const store = createMemoryAnchorStore();
-    expect(await store.claimAnchor(REPORT, 2)).toBe(true);
+    const token = await store.claimAnchor(REPORT, 2);
     await store.setAnchor(REPORT, 2, { ts: "1.0", channelId: "C1" });
-    await store.releaseAnchorClaim(REPORT, 2);
+    await store.releaseAnchorClaim(REPORT, 2, token ?? "");
     expect((await store.getAnchor(REPORT, 2))?.ts).toBe("1.0");
-    expect(await store.claimAnchor(REPORT, 2)).toBe(false);
+    expect(await store.claimAnchor(REPORT, 2)).toBeNull();
   });
 
-  test("releaseAnchorClaim makes the anchor claimable again", async () => {
+  test("releaseAnchorClaim frees only its own claim", async () => {
     const store = createMemoryAnchorStore();
-    expect(await store.claimAnchor(REPORT, 2)).toBe(true);
-    await store.releaseAnchorClaim(REPORT, 2);
-    expect(await store.claimAnchor(REPORT, 2)).toBe(true);
+    const token = await store.claimAnchor(REPORT, 2);
+    await store.releaseAnchorClaim(REPORT, 2, "stale-token");
+    expect(await store.claimAnchor(REPORT, 2)).toBeNull();
+    await store.releaseAnchorClaim(REPORT, 2, token ?? "");
+    expect(await store.claimAnchor(REPORT, 2)).not.toBeNull();
   });
 });
