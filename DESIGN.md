@@ -273,7 +273,7 @@ lines, and a last row clipped mid-glyph.
 
 An agent cannot judge rendering from a diff. For any visible change,
 `scripts/screenshot.mjs` (the `screenshot` skill) shoots the element, not the
-viewport, in both themes on the local dev server of the dashboard, the
+viewport, on desktop and mobile (light; dark on request) on the local dev server of the dashboard, the
 marketing site or the status page, logging in with a seeded session where
 needed. Selectors differ per app: `[data-slot=timeline]` and the other
 dashboard slots, `main` or a section on the marketing site, the block slots
