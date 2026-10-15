@@ -194,7 +194,7 @@ describe("status15mParameters", () => {
   });
 
   test("rejects zone names ClickHouse would 400 on, before the request", () => {
-    for (const timezone of ["Mars/Olympus", "", "GMT+1"]) {
+    for (const timezone of ["Mars/Olympus", "", "GMT+1", "+05:30", "-03:00"]) {
       const result = status15mParameters.safeParse({
         monitorIds: ["1"],
         timezone,

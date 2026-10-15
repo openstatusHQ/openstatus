@@ -18,6 +18,8 @@ const REVALIDATE = env.NODE_ENV === "development" ? DEV_CACHE : 0;
 const timeZoneValidity = new Map<string, boolean>();
 
 export function isValidTimeZone(timeZone: string): boolean {
+  // Intl also takes `+05:30`-style offsets; ClickHouse only knows zone names.
+  if (/^[+-]/.test(timeZone)) return false;
   let valid = timeZoneValidity.get(timeZone);
   if (valid === undefined) {
     try {
