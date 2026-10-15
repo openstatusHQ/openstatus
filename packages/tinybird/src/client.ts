@@ -16,8 +16,13 @@ const REVALIDATE = env.NODE_ENV === "development" ? DEV_CACHE : 0;
 
 // The 60m pipes group UTC-hour buckets into local days, which only lines up
 // when every offset the zone uses is a whole number of hours. January and
-// July cover both sides of DST.
-function isWholeHourTimeZone(timeZone: string): boolean {
+// July cover both sides of DST. The endpoints enforce the same rule server-side.
+const wholeHourTimeZoneCache = new Map<string, boolean>();
+
+export function isWholeHourTimeZone(timeZone: string): boolean {
+  const cached = wholeHourTimeZoneCache.get(timeZone);
+  if (cached !== undefined) return cached;
+
   let format: Intl.DateTimeFormat;
   try {
     format = new Intl.DateTimeFormat("en-US", {
@@ -29,20 +34,45 @@ function isWholeHourTimeZone(timeZone: string): boolean {
     throw error;
   }
   const year = new Date().getUTCFullYear();
-  return [0, 6].every((month) => {
+  const result = [0, 6].every((month) => {
     const offset = format
       .formatToParts(new Date(Date.UTC(year, month, 1)))
       .find((p) => p.type === "timeZoneName")?.value;
     return offset === "GMT" || /^GMT[+-]\d{2}:00$/.test(offset ?? "");
   });
+  wholeHourTimeZoneCache.set(timeZone, result);
+  return result;
 }
 
-const wholeHourTimeZone = z
-  .string()
-  .refine(
-    isWholeHourTimeZone,
-    "timezone must be an IANA name whose UTC offset is a whole hour",
-  );
+export const status60mParameters = z.object({
+  monitorIds: z.string().array(),
+  timezone: z
+    .string()
+    .refine(
+      isWholeHourTimeZone,
+      "timezone must be an IANA name whose UTC offset is a whole hour",
+    )
+    .prefault("UTC"),
+});
+
+/**
+ * Same columns as the 45d pipes. `day` is the local calendar date re-keyed as
+ * UTC midnight, the convention day-keyed consumers already read — a Berlin
+ * 2026-10-14 stays "2026-10-14", not the 22:00Z instant of local midnight.
+ */
+export function status60mShape(monitorId: z.ZodType<string>) {
+  return z.object({
+    day: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .transform((val) => new Date(`${val}T00:00:00.000Z`).toISOString()),
+    count: z.number().prefault(0),
+    ok: z.number().prefault(0),
+    degraded: z.number().prefault(0),
+    error: z.number().prefault(0),
+    monitorId,
+  });
+}
 
 // Daily-aggregate columns shared by the external-status history pipes (page-
 // level and per-component). One shape so the `day` GMT-parse can't drift.
@@ -837,26 +867,12 @@ export class OSTinybird {
     });
   }
 
-  /**
-   * Hourly status buckets grouped into days of `timezone` at read time. Returns
-   * the same columns as the 45d pipe; `day` arrives as epoch ms of the local
-   * midnight (an instant), not a zone-less date string.
-   */
+  /** Hourly buckets regrouped into days of `timezone`; see {@link status60mShape}. */
   public get httpStatus60m() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_status_60m__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-        timezone: wholeHourTimeZone.prefault("UTC"),
-      }),
-      data: z.object({
-        day: z.number().transform((ms) => new Date(ms).toISOString()),
-        count: z.number().prefault(0),
-        ok: z.number().prefault(0),
-        degraded: z.number().prefault(0),
-        error: z.number().prefault(0),
-        monitorId: z.string(),
-      }),
+      parameters: status60mParameters,
+      data: status60mShape(z.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -1428,21 +1444,12 @@ export class OSTinybird {
     });
   }
 
+  /** Hourly buckets regrouped into days of `timezone`; see {@link status60mShape}. */
   public get tcpStatus60m() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_60m__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-        timezone: wholeHourTimeZone.prefault("UTC"),
-      }),
-      data: z.object({
-        day: z.number().transform((ms) => new Date(ms).toISOString()),
-        count: z.number().prefault(0),
-        ok: z.number().prefault(0),
-        degraded: z.number().prefault(0),
-        error: z.number().prefault(0),
-        monitorId: z.coerce.string(),
-      }),
+      parameters: status60mParameters,
+      data: status60mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -1847,21 +1854,12 @@ export class OSTinybird {
     });
   }
 
+  /** Hourly buckets regrouped into days of `timezone`; see {@link status60mShape}. */
   public get icmpStatus60m() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_status_60m__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-        timezone: wholeHourTimeZone.prefault("UTC"),
-      }),
-      data: z.object({
-        day: z.number().transform((ms) => new Date(ms).toISOString()),
-        count: z.number().prefault(0),
-        ok: z.number().prefault(0),
-        degraded: z.number().prefault(0),
-        error: z.number().prefault(0),
-        monitorId: z.coerce.string(),
-      }),
+      parameters: status60mParameters,
+      data: status60mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -2337,21 +2335,12 @@ export class OSTinybird {
     });
   }
 
+  /** Hourly buckets regrouped into days of `timezone`; see {@link status60mShape}. */
   public get grpcStatus60m() {
     return this.tb.buildPipe({
       pipe: "endpoint__grpc_status_60m__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-        timezone: wholeHourTimeZone.prefault("UTC"),
-      }),
-      data: z.object({
-        day: z.number().transform((ms) => new Date(ms).toISOString()),
-        count: z.number().prefault(0),
-        ok: z.number().prefault(0),
-        degraded: z.number().prefault(0),
-        error: z.number().prefault(0),
-        monitorId: z.coerce.string(),
-      }),
+      parameters: status60mParameters,
+      data: status60mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -3642,21 +3631,12 @@ export class OSTinybird {
     });
   }
 
+  /** Hourly buckets regrouped into days of `timezone`; see {@link status60mShape}. */
   public get dnsStatus60m() {
     return this.tb.buildPipe({
       pipe: "endpoint__dns_status_60m__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-        timezone: wholeHourTimeZone.prefault("UTC"),
-      }),
-      data: z.object({
-        day: z.number().transform((ms) => new Date(ms).toISOString()),
-        count: z.number().prefault(0),
-        ok: z.number().prefault(0),
-        degraded: z.number().prefault(0),
-        error: z.number().prefault(0),
-        monitorId: z.coerce.string(),
-      }),
+      parameters: status60mParameters,
+      data: status60mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }

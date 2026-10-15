@@ -17,6 +17,21 @@ export class OSTinybird {
   get legacy_tcpStatus45d() {
     return empty;
   }
+  get httpStatus60m() {
+    return empty;
+  }
+  get tcpStatus60m() {
+    return empty;
+  }
+  get dnsStatus60m() {
+    return empty;
+  }
+  get icmpStatus60m() {
+    return empty;
+  }
+  get grpcStatus60m() {
+    return empty;
+  }
   get httpListBiweekly() {
     return (params: unknown) => {
       calls.httpListBiweekly.push(params);

@@ -2,10 +2,10 @@ NODE endpoint
 SQL >
 
 %
+WITH {{ String(timezone, 'UTC') }} AS tz
 SELECT
-    -- epoch ms of local midnight in the requested zone: an unambiguous instant,
-    -- unlike a zone-less "YYYY-MM-DD 00:00:00" string the client would misread as UTC
-    toUnixTimestamp(toStartOfDay(toTimeZone(time, {{ String(timezone, 'UTC') }}))) * 1000 AS day,
+    -- calendar date of the local day; the client re-keys it as UTC midnight like the 45d pipes
+    toDate(toTimeZone(time, tz)) AS day,
     monitorId,
     countMerge(count) AS count,
     countMerge(success) AS ok,
@@ -13,6 +13,15 @@ SELECT
     countMerge(degraded) AS degraded
 FROM mv__icmp_status_60m__v0
 WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
+    -- hourly buckets only regroup cleanly into days when every offset the zone
+    -- uses is a whole hour; January and July cover both sides of DST
+    AND (
+        SELECT throwIf(
+            timeZoneOffset(toTimeZone(makeDateTime(toYear(now()), 1, 1, 0, 0, 0), tz)) % 3600 != 0
+            OR timeZoneOffset(toTimeZone(makeDateTime(toYear(now()), 7, 1, 0, 0, 0), tz)) % 3600 != 0,
+            'timezone must be an IANA name whose UTC offset is a whole hour'
+        )
+    ) = 0
 GROUP BY day, monitorId
 ORDER BY day DESC
 

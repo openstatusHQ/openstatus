@@ -1,7 +1,14 @@
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
+import { z } from "zod";
 
-import { noopFlagSchema, OSTinybird } from "./client";
+import {
+  isWholeHourTimeZone,
+  noopFlagSchema,
+  OSTinybird,
+  status60mParameters,
+  status60mShape,
+} from "./client";
 
 describe("noopFlagSchema", () => {
   test("treats the string 'false' as disabled, not as a truthy string", () => {
@@ -165,38 +172,117 @@ const status60mGetters = [
   "grpcStatus60m",
 ] as const;
 
+describe("isWholeHourTimeZone", () => {
+  test("accepts zones whose standard and DST offsets are both whole hours", () => {
+    for (const tz of ["UTC", "Etc/GMT+1", "Asia/Tokyo", "Europe/Berlin"]) {
+      expect(isWholeHourTimeZone(tz)).toBe(true);
+    }
+    expect(isWholeHourTimeZone("America/New_York")).toBe(true);
+    expect(isWholeHourTimeZone("Australia/Sydney")).toBe(true);
+  });
+
+  test("rejects half- and quarter-hour offsets, on either side of DST", () => {
+    expect(isWholeHourTimeZone("Asia/Kolkata")).toBe(false);
+    expect(isWholeHourTimeZone("Asia/Kathmandu")).toBe(false);
+    expect(isWholeHourTimeZone("Pacific/Chatham")).toBe(false);
+    // +10:30 standard, +11:00 daylight: whole-hour for half the year only
+    expect(isWholeHourTimeZone("Australia/Lord_Howe")).toBe(false);
+  });
+
+  test("rejects unknown zones and fixed offsets instead of throwing", () => {
+    expect(isWholeHourTimeZone("Mars/Olympus")).toBe(false);
+    expect(isWholeHourTimeZone("")).toBe(false);
+  });
+});
+
+describe("status60mParameters", () => {
+  test("defaults timezone to UTC", () => {
+    expect(status60mParameters.parse({ monitorIds: ["1"] })).toEqual({
+      monitorIds: ["1"],
+      timezone: "UTC",
+    });
+  });
+
+  test("forwards a whole-hour timezone untouched", () => {
+    expect(
+      status60mParameters.parse({
+        monitorIds: ["1", "2"],
+        timezone: "Europe/Berlin",
+      }).timezone,
+    ).toBe("Europe/Berlin");
+  });
+
+  test("names the whole-hour requirement when rejecting", () => {
+    const result = status60mParameters.safeParse({
+      monitorIds: ["1"],
+      timezone: "Asia/Kolkata",
+    });
+    expect(result.success).toBe(false);
+    expect(JSON.stringify(result.error?.issues)).toContain("whole hour");
+  });
+});
+
+describe("status60mShape", () => {
+  const shape = status60mShape(z.coerce.string());
+
+  test("re-keys the local calendar date as UTC midnight, like the 45d pipes", () => {
+    const row = shape.parse({
+      day: "2026-10-14",
+      count: 10,
+      ok: 9,
+      degraded: 0,
+      error: 1,
+      monitorId: 1,
+    });
+    expect(row.day).toBe("2026-10-14T00:00:00.000Z");
+    // the key every day-indexed consumer derives must be the local date itself
+    expect(new Date(row.day).toISOString().split("T")[0]).toBe("2026-10-14");
+    expect(row.monitorId).toBe("1");
+  });
+
+  test("rejects a datetime or epoch `day`, which would re-introduce the UTC shift", () => {
+    for (const day of [
+      "2026-10-13 22:00:00",
+      "2026-10-13T22:00:00.000Z",
+      1760392800000,
+    ]) {
+      expect(
+        shape.safeParse({
+          day,
+          count: 0,
+          ok: 0,
+          degraded: 0,
+          error: 0,
+          monitorId: "1",
+        }).success,
+      ).toBe(false);
+    }
+  });
+
+  test("defaults missing counters to 0", () => {
+    expect(shape.parse({ day: "2026-01-01", monitorId: "1" })).toMatchObject({
+      count: 0,
+      ok: 0,
+      degraded: 0,
+      error: 0,
+    });
+  });
+});
+
 describe("hourly status pipes", () => {
   const tb = new OSTinybird({ token: "a-token" });
 
   for (const name of status60mGetters) {
-    for (const timezone of [
-      "Asia/Kolkata",
-      "Asia/Kathmandu",
-      "Australia/Lord_Howe",
-      "Mars/Olympus",
-    ]) {
-      test(`${name} rejects ${timezone}, whose days don't start on a UTC hour`, async () => {
-        await expect(
-          tb[name]({ monitorIds: ["1"], timezone }),
-        ).rejects.toThrow();
-      });
-    }
-
-    test(`${name} accepts whole-hour timezones, with or without DST`, async () => {
-      for (const timezone of [
-        "UTC",
-        "Asia/Tokyo",
-        "Europe/Berlin",
-        "America/New_York",
-      ]) {
-        expect(await tb[name]({ monitorIds: ["1"], timezone })).toEqual({
-          meta: [],
-          data: [],
-        });
-      }
+    test(`${name} validates timezone before the request`, async () => {
+      await expect(
+        tb[name]({ monitorIds: ["1"], timezone: "Asia/Kolkata" }),
+      ).rejects.toThrow("whole hour");
     });
 
-    test(`${name} defaults to UTC`, async () => {
+    test(`${name} resolves for whole-hour zones and when timezone is omitted`, async () => {
+      expect(
+        await tb[name]({ monitorIds: ["1"], timezone: "Europe/Berlin" }),
+      ).toEqual({ meta: [], data: [] });
       expect(await tb[name]({ monitorIds: ["1"] })).toEqual({
         meta: [],
         data: [],
