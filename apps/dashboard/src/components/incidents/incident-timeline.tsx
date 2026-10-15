@@ -30,7 +30,6 @@ import { format } from "date-fns";
 import Link from "next/link";
 
 import { ProcessMessage } from "@/components/content/process-message";
-import { type EventOrigin, eventOrigin } from "./incident-event-origin";
 import {
   type ActorSource,
   TimelineActor,
@@ -44,6 +43,7 @@ import {
 } from "@/components/content/timeline";
 
 import { IncidentSeverityBadge, IncidentStatusBadge } from "./incident-badge";
+import { type EventOrigin, eventOrigin } from "./incident-event-origin";
 
 type Event = NonNullable<RouterOutputs["incident"]["listEvents"]>[number];
 type Incident = NonNullable<RouterOutputs["incident"]["get"]>;
