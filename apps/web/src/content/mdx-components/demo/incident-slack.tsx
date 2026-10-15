@@ -169,9 +169,20 @@ export function IncidentChannelDemo() {
                     <SlackFieldValue>Open</SlackFieldValue>
                   </SlackField>
                 </SlackFields>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant="outline">
+                    Update status
+                  </Button>
+                  <Button type="button" size="sm" variant="outline">
+                    Update status page
+                  </Button>
+                  <Button type="button" size="sm" variant="outline">
+                    Open in openstatus
+                  </Button>
+                </div>
                 <div className="text-muted-foreground text-xs">
-                  <SlackLink>Open in openstatus</SlackLink> · Add a message to
-                  the timeline: ⋯ → Add to incident timeline, or react 📌.
+                  Add a message to the timeline: ⋯ → Add to incident timeline,
+                  or react 📌.
                 </div>
               </SlackAttachment>
             </SlackMessageBody>

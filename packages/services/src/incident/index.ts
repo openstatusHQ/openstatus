@@ -63,6 +63,7 @@ export {
   announceInChannel,
   escapeMrkdwn,
   headerBlocks,
+  INCIDENT_CARD_ACTIONS,
   incidentChannelName,
   incidentSlackReady,
   type OpenChannelResult,

@@ -20,6 +20,7 @@ import {
   declareIncident,
   getIncident,
   headerBlocks,
+  INCIDENT_CARD_ACTIONS,
   incidentChannelName,
   listIncidentEvents,
   openIncidentSlackChannel,
@@ -350,6 +351,8 @@ describe("headerBlocks", () => {
   test("escapes mrkdwn and keeps within Block Kit limits", () => {
     const blocks = headerBlocks(
       {
+        id: 1,
+        closedAt: null,
         title: "t".repeat(200),
         severity: "major",
         status: "open",
@@ -367,5 +370,25 @@ describe("headerBlocks", () => {
     expect(section.text.text).not.toContain("<!channel>");
     expect(section.text.text).toContain("&lt;!channel&gt;");
     expect(section.text.text).not.toMatch(/&[a-z]*…$/);
+  });
+
+  test("offers status and status page buttons until the incident closes", () => {
+    const base = {
+      id: 7,
+      title: "API down",
+      severity: "major" as const,
+      status: "open" as const,
+      summary: null,
+    };
+    const actionIds = (closedAt: Date | null) =>
+      headerBlocks({ ...base, closedAt }, "https://app.test/incidents/7")
+        .flatMap((b) => (b.type === "actions" ? b.elements : []))
+        .map((e) => e.action_id);
+    expect(actionIds(null)).toEqual([
+      INCIDENT_CARD_ACTIONS.updateStatus,
+      INCIDENT_CARD_ACTIONS.statusPage,
+      INCIDENT_CARD_ACTIONS.open,
+    ]);
+    expect(actionIds(new Date())).toEqual([INCIDENT_CARD_ACTIONS.open]);
   });
 });
