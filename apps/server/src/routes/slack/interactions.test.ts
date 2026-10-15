@@ -561,6 +561,76 @@ describe("registry-runner execution paths", () => {
     }
   });
 
+  for (const { toolName, input, type } of [
+    { toolName: "resolve_incident", input: {}, type: "resolved" },
+    {
+      toolName: "update_incident",
+      input: { severity: "critical" },
+      type: "severity_changed",
+    },
+  ] as const) {
+    test(`an approved ${toolName} links its event to the card`, async () => {
+      const created = await declareIncident({
+        ctx: {
+          workspace: selectWorkspaceSchema.parse(
+            await db
+              .select()
+              .from(workspaceTable)
+              .where(eq(workspaceTable.id, 1))
+              .get(),
+          ),
+          actor: { type: "system", job: "test" },
+        },
+        input: { title: "Card origin", severity: "minor" },
+      });
+      const id = `inc-${crypto.randomUUID()}`;
+      redisStore.set(
+        `slack:action:${id}`,
+        JSON.stringify({
+          ...basePending,
+          id,
+          threadTs: "4.1",
+          messageTs: "4.2",
+          payload: { toolName, input: { id: created.id, ...input } },
+        }),
+      );
+      try {
+        const res = await signAndPost(app, {
+          type: "block_actions",
+          user: { id: "U_OWNER" },
+          channel: { id: "C1" },
+          message: { ts: "4.2" },
+          team: { id: "T_KNOWN" },
+          actions: [{ action_id: `approve_${id}` }],
+        });
+        expect(res.status).toBe(200);
+        const event = await db
+          .select()
+          .from(incidentEvent)
+          .where(
+            and(
+              eq(incidentEvent.incidentId, created.id),
+              eq(incidentEvent.type, type),
+            ),
+          )
+          .get();
+        expect(event?.source).toBe("slack");
+        expect(event?.sourceRef).toBe("https://slack.test/archives/C1/p42");
+      } finally {
+        await deleteIncidentEvents(created.id);
+        await db
+          .delete(auditLog)
+          .where(
+            and(
+              eq(auditLog.entityType, "incident"),
+              eq(auditLog.entityId, String(created.id)),
+            ),
+          );
+        await db.delete(incident).where(eq(incident.id, created.id));
+      }
+    });
+  }
+
   test("from after to surfaces typed validation error", async () => {
     const now = Date.now();
     seedCreateMaintenance("maint-bad-time", {
@@ -768,6 +838,18 @@ describe("declare incident modal", () => {
     try {
       expect(row?.severity).toBe("critical");
       expect(row?.summary).toBe("Checkout is down");
+      const declared = await db
+        .select()
+        .from(incidentEvent)
+        .where(
+          and(
+            eq(incidentEvent.incidentId, row?.id ?? -1),
+            eq(incidentEvent.type, "declared"),
+          ),
+        )
+        .get();
+      expect(declared?.source).toBe("slack");
+      expect(declared?.sourceRef).toBeNull();
       expect(row?.workspaceId).toBe(1);
       const ephemeral = slackTestState.calls.find(
         (c) => c.method === "postEphemeral",
@@ -903,8 +985,11 @@ describe("add to incident timeline shortcut", () => {
     expect(res.status).toBe(200);
     const rows = await notes();
     expect(rows).toHaveLength(1);
-    expect(rows[0].message).toContain("Rolled back to v41");
-    expect(rows[0].message).toContain("https://slack.test/archives/");
+    expect(rows[0].message).toBe("Rolled back to v41");
+    expect(rows[0].source).toBe("slack");
+    expect(rows[0].sourceRef).toBe(
+      `https://slack.test/archives/${channelId}/p5001`,
+    );
     const reaction = slackTestState.calls.find(
       (c) => c.method === "reactions.add",
     );

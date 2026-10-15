@@ -19,7 +19,14 @@ export type Actor =
   | { type: "mcp"; keyId: string; userId?: number; scopes: Scope[] }
   // `userId`: the linked member (`slack_user`), or the installing user during
   // OAuth. Unlinked Slack users never reach a service call.
-  | { type: "slack"; teamId: string; slackUserId: string; userId: number }
+  | {
+      type: "slack";
+      teamId: string;
+      slackUserId: string;
+      userId: number;
+      /** The message that triggered this call; unset for slash commands and modals. */
+      permalink?: string;
+    }
   | { type: "system"; job: string }
   | { type: "webhook"; source: string; externalId?: string }
   | { type: "subscriber"; subscriberId: number };

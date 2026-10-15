@@ -18,8 +18,10 @@ export interface SlackTestState {
   streamAppendFailAfter: number | null;
   /** Make `stop` reject, as Slack does once it has closed the stream itself. */
   streamStopFail: boolean;
-  /** Receives runAgent's options, so a test can drive the stream or abort. */
-  runAgentOverride: ((options?: unknown) => Promise<unknown>) | null;
+  /** Receives runAgent's options and actor, so a test can drive the stream or abort. */
+  runAgentOverride:
+    | ((options?: unknown, actor?: unknown) => Promise<unknown>)
+    | null;
   repliesImpl: (args?: Record<string, unknown>) => Promise<unknown>;
   historyImpl: () => Promise<unknown>;
   /** `users.info` result; the default has no email, so no mapping is created. */

@@ -3,9 +3,10 @@ import { incidentEvent } from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb } from "../context";
 import { getIncidentInWorkspace, incidentUserColumns } from "./internal";
+import { withLegacySource } from "./legacy-source";
 import { GetIncidentEventInput, ListIncidentEventsInput } from "./schemas";
 
-/** The incident's timeline, newest first. */
+/** The incident's timeline, newest first, with legacy Slack notes normalized. */
 export async function listIncidentEvents(args: {
   ctx: ServiceContext;
   input: ListIncidentEventsInput;
@@ -14,7 +15,7 @@ export async function listIncidentEvents(args: {
   const input = ListIncidentEventsInput.parse(args.input);
   const db = getReadDb(ctx);
   const existing = await getIncidentInWorkspace(db, ctx.workspace.id, input.id);
-  return db.query.incidentEvent.findMany({
+  const rows = await db.query.incidentEvent.findMany({
     where: eq(incidentEvent.incidentId, existing.id),
     orderBy: [desc(incidentEvent.createdAt), desc(incidentEvent.id)],
     limit: input.limit,
@@ -22,6 +23,7 @@ export async function listIncidentEvents(args: {
       createdByUser: { columns: incidentUserColumns },
     },
   });
+  return rows.map(withLegacySource);
 }
 
 /** One timeline event of the incident, or null when it isn't on it. */
@@ -42,5 +44,5 @@ export async function getIncidentEvent(args: {
       createdByUser: { columns: incidentUserColumns },
     },
   });
-  return event ?? null;
+  return event ? withLegacySource(event) : null;
 }

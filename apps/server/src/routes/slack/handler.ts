@@ -57,6 +57,7 @@ import {
   slackAgentAllowed,
 } from "./require-slack-member";
 import { abortTurn, broadcastStop, endTurn, startTurn } from "./running-turns";
+import { permalinkFor } from "./service-adapter";
 import {
   buildThreadTitle,
   isThreadTitled,
@@ -721,6 +722,8 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
       return;
     }
 
+    // the thread root: events the turn writes link back to where it was asked
+    const permalink = permalinkFor(slack, event.channel, threadTs);
     let thread: ThreadMessage[] = [];
     if (prefetchedThread) {
       thread = prefetchedThread;
@@ -759,7 +762,7 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
       thread,
       botUserId,
       event.text,
-      actor,
+      { ...actor, permalink: await permalink },
       {
         events: reply.progress,
         signal: turn.signal,

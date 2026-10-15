@@ -9,11 +9,11 @@ export const runAgent = (
   _thread?: unknown,
   _botUserId?: unknown,
   _userText?: unknown,
-  _origin?: unknown,
+  actor?: unknown,
   options?: unknown,
 ) => {
   if (slackTestState.runAgentOverride) {
-    return slackTestState.runAgentOverride(options);
+    return slackTestState.runAgentOverride(options, actor);
   }
   return Promise.resolve({
     text: "Here is my response",

@@ -404,6 +404,43 @@ describe("handleSlackEvent", () => {
     expect(slackTestState.calls.some((m) => m.method === "update")).toBe(false);
   });
 
+  test("the turn's writes link back to the thread it was asked in", async () => {
+    let actor: { permalink?: string } | undefined;
+    slackTestState.runAgentOverride = (_o, a) => {
+      actor = a as typeof actor;
+      return Promise.resolve({
+        text: "Done",
+        toolResults: [],
+        finishReason: "stop",
+        stepCount: 1,
+        hitStepLimit: false,
+        aborted: false,
+      });
+    };
+    const ts = `${Date.now()}.62`;
+
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_origin_${ts}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> raise it to critical",
+        user: "U1",
+        channel: "C1",
+        ts,
+      },
+    });
+    const deadline = Date.now() + 5000;
+    while (actor === undefined && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
+
+    expect(actor?.permalink).toBe(
+      `https://slack.test/archives/C1/p${ts.replace(".", "")}`,
+    );
+  });
+
   test("hands the agent session back as active when runAgent throws", async () => {
     slackTestState.sessionStatusOverride = null;
     slackTestState.runAgentOverride = () =>
@@ -2128,8 +2165,11 @@ describe("incident channel events", () => {
     await waitForCall("reactions.add");
     const rows = await notes();
     expect(rows).toHaveLength(1);
-    expect(rows[0].message).toContain("Rolled back to v41");
-    expect(rows[0].message).toContain("https://slack.test/archives/");
+    expect(rows[0].message).toBe("Rolled back to v41");
+    expect(rows[0].source).toBe("slack");
+    expect(rows[0].sourceRef).toBe(
+      `https://slack.test/archives/${channelId}/p5001`,
+    );
   });
 
   test("a mention whose lookup fails keeps the raw id", async () => {

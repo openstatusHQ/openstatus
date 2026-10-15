@@ -9,6 +9,7 @@ import {
 } from "@openstatus/db/src/schema/incidents/constants";
 import {
   Account,
+  Api,
   Chat,
   Check,
   Clock,
@@ -23,13 +24,14 @@ import {
   Plug,
   Unlinked,
 } from "@openstatus/icons";
-import { SlackIcon } from "@openstatus/icons/brand";
+import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons/brand";
 import { personName } from "@openstatus/utils";
 import { format } from "date-fns";
 import Link from "next/link";
 
 import { ProcessMessage } from "@/components/content/process-message";
 import {
+  type ActorSource,
   TimelineActor,
   TimelineBody,
   TimelineCard,
@@ -58,8 +60,6 @@ const COMMANDER = /^Commander set to (.+)$/;
 const STARTED_AT = /^Start time changed to (\S+)$/;
 const REPORT = /^(?:Linked|Unlinked) status report #(\d+)$/;
 const CHANNEL = /<#([A-Z0-9]+)>/;
-// Slack-mirrored notes end with a permalink line appended by the bot.
-const FROM_SLACK = /\n\n\[From Slack\]\((https?:\/\/\S+)\)$/;
 // Events without a user come from the service itself.
 const SYSTEM = { name: "System", email: null };
 // Service placeholders when a transition carried no note.
@@ -75,27 +75,37 @@ type Parsed = {
   severity?: IncidentSeverity;
   /** Authored text, rendered as a card. */
   message: string | null;
-  slackUrl?: string;
   /** Channel id read from a bound/unbound message. */
   channelId?: string;
   /** Message text that already carries the actor's name. */
   agent?: boolean;
 };
 
+// The service already lifts legacy "[From Slack]" notes into these columns.
+function eventSource(event: Event): ActorSource | undefined {
+  switch (event.source) {
+    case "slack":
+      return {
+        label: "Slack",
+        icon: SlackIcon,
+        href: event.sourceRef ?? undefined,
+      };
+    case "api":
+      return { label: "API", icon: Api };
+    case "mcp":
+      return { label: "MCP", icon: ModelContextProtocolIcon };
+    default:
+      return undefined;
+  }
+}
+
 // Events carry no structured payload, so the subject of a change is read back
 // from the service's own message. An unknown shape falls back to the raw text.
 function parseEvent(event: Event): Parsed {
   const message = event.message;
   switch (event.type) {
-    case "note": {
-      const match = message ? FROM_SLACK.exec(message) : null;
-      return {
-        icon: Chat,
-        phrase: null,
-        message: message?.replace(FROM_SLACK, "") ?? null,
-        slackUrl: match?.[1],
-      };
-    }
+    case "note":
+      return { icon: Chat, phrase: null, message };
     case "declared": {
       const severity = incidentSeverity.find(
         (s) => s === (message ? DECLARED.exec(message)?.[1] : undefined),
@@ -198,7 +208,9 @@ function parseEvent(event: Event): Parsed {
     case "postmortem_drafted":
     case "postmortem_updated":
     case "postmortem_approved": {
-      const agent = message?.includes("by the agent") ?? false;
+      const agent =
+        event.source === "agent" ||
+        (event.source === null && (message?.includes("by the agent") ?? false));
       const verb =
         event.type === "postmortem_approved"
           ? "approved"
@@ -244,7 +256,6 @@ export function IncidentTimelineItem({
     status,
     severity,
     message,
-    slackUrl,
     channelId,
     agent,
     reportId,
@@ -275,12 +286,9 @@ export function IncidentTimelineItem({
       ) : (
         <TimelineActor
           actor={actor}
-          avatar={message !== null}
-          source={
-            slackUrl
-              ? { label: "Slack", icon: SlackIcon, href: slackUrl }
-              : undefined
-          }
+          avatar={!compact}
+          // compact rows read as one sentence; the source badge needs the avatar
+          source={compact ? undefined : eventSource(event)}
         />
       )}
       {phrase ?? "posted"}
