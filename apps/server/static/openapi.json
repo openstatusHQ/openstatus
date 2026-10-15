@@ -284,7 +284,8 @@
             "type": ["string", "null"],
             "title": "summary",
             "maxLength": 4000,
-            "description": "Short human summary (optional, up to 4000 characters)."
+            "minLength": 1,
+            "description": "Short human summary (optional, 1-4000 characters)."
           },
           "commanderEmail": {
             "type": ["string", "null"],
@@ -1071,7 +1072,7 @@
         },
         "title": "UpdateIncidentRequest",
         "additionalProperties": false,
-        "description": "UpdateIncidentRequest is the request to edit an incident."
+        "description": "UpdateIncidentRequest is the request to edit an incident.\ncommander_email_or_clear_commander // set either commander_email or clear_commander, not both\nsummary_or_clear_summary // set either summary or clear_summary, not both\n"
       },
       "openstatus.incident.v1.UpdateIncidentResponse": {
         "type": "object",
