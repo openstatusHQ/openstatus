@@ -16,6 +16,7 @@ import {
   selectWorkspaceSchema,
   statusReport,
 } from "@openstatus/db/src/schema";
+import { getStatusUpdateTypes } from "@openstatus/services/page";
 import { constantTimeEqual } from "@openstatus/services/page-access";
 import {
   getSubscriberByToken,
@@ -522,8 +523,11 @@ export const statusPageRouter = createTRPCRouter({
         statusReports,
         maintenances,
         workspacePlan: _page.workspace.plan,
-        emailSubscriptionsEnabled:
-          ws.data?.limits["status-subscribers"] ?? false,
+        statusUpdateTypes: getStatusUpdateTypes({
+          accessType: _page.accessType ?? "public",
+          emailSubscriptionsEnabled:
+            ws.data?.limits["status-subscribers"] ?? false,
+        }),
         status,
         lastEvents,
         openEvents,

@@ -147,7 +147,7 @@ describe("statusPage over HTTP", () => {
 });
 
 describe("statusPage access gate", () => {
-  test("public page exposes effective email subscription capability", async () => {
+  test("public page exposes subscription options from effective limits", async () => {
     const enabled = await createTestWorkspace({
       plan: "free",
       limits: JSON.stringify({ "status-subscribers": true }),
@@ -156,14 +156,19 @@ describe("statusPage access gate", () => {
     const enabledResult = await caller().statusPage.get({
       slug: enabledPage.slug,
     });
-    expect(enabledResult?.emailSubscriptionsEnabled).toBe(true);
+    expect(enabledResult?.statusUpdateTypes).toEqual([
+      "email",
+      "slack",
+      "rss",
+      "json",
+    ]);
 
     const disabled = await createTestWorkspace({ plan: "free" });
     const disabledPage = await createPage(disabled.workspace.id);
     const disabledResult = await caller().statusPage.get({
       slug: disabledPage.slug,
     });
-    expect(disabledResult?.emailSubscriptionsEnabled).toBe(false);
+    expect(disabledResult?.statusUpdateTypes).toEqual(["slack", "rss", "json"]);
   });
 
   for (const accessType of Object.keys(authorized) as (keyof typeof slugs)[]) {

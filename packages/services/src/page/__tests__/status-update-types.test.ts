@@ -1,9 +1,9 @@
 import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
 
-import { getStatusUpdateTypes } from "./status-update-types";
+import { getStatusUpdateTypes } from "../status-update-types";
 
-test("free workspace with email subscriptions enabled shows Email", () => {
+test("public pages include Email when subscriptions are enabled", () => {
   expect(
     getStatusUpdateTypes({
       accessType: "public",
@@ -12,7 +12,7 @@ test("free workspace with email subscriptions enabled shows Email", () => {
   ).toEqual(["email", "slack", "rss", "json"]);
 });
 
-test("disabled email subscriptions are hidden even on a paid plan", () => {
+test("public pages omit Email when subscriptions are disabled", () => {
   expect(
     getStatusUpdateTypes({
       accessType: "public",
@@ -21,7 +21,7 @@ test("disabled email subscriptions are hidden even on a paid plan", () => {
   ).toEqual(["slack", "rss", "json"]);
 });
 
-test("email-domain pages show only Email when subscriptions are enabled", () => {
+test("email-domain pages only include Email when subscriptions are enabled", () => {
   expect(
     getStatusUpdateTypes({
       accessType: "email-domain",
@@ -30,7 +30,7 @@ test("email-domain pages show only Email when subscriptions are enabled", () => 
   ).toEqual(["email"]);
 });
 
-test("email-domain pages hide subscriptions when disabled", () => {
+test("email-domain pages have no subscription options when disabled", () => {
   expect(
     getStatusUpdateTypes({
       accessType: "email-domain",

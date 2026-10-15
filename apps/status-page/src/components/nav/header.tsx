@@ -33,7 +33,6 @@ import { usePathnamePrefix } from "../../hooks/use-pathname-prefix";
 import { useTRPC } from "../../lib/trpc/client";
 import { Link } from "../common/link";
 import { StatusUpdates } from "../status-page/status-updates";
-import { getStatusUpdateTypes } from "./status-update-types";
 
 function useNav() {
   const t = useExtracted();
@@ -138,7 +137,7 @@ export function Header({
             </StatusPageGetInTouchIcon>
           ) : null}
           <StatusUpdates
-            types={getStatusUpdateTypes(page)}
+            types={page?.statusUpdateTypes ?? []}
             onSubscribe={async (values) => {
               await subscribeMutation.mutateAsync({ slug: domain, ...values });
             }}
