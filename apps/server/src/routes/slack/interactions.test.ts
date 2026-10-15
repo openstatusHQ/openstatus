@@ -1238,7 +1238,11 @@ describe("pinned incident card buttons", () => {
     });
   }
 
-  function submit(callbackId: string, values: Record<string, unknown>) {
+  function submit(
+    callbackId: string,
+    values: Record<string, unknown>,
+    extraMeta: Record<string, unknown> = {},
+  ) {
     return signAndPost(app, {
       type: "view_submission",
       team: { id: "T_KNOWN" },
@@ -1249,6 +1253,7 @@ describe("pinned incident card buttons", () => {
           incidentId,
           channelId: "C_INC",
           messageTs: "77.7",
+          ...extraMeta,
         }),
         state: { values },
       },
@@ -1356,5 +1361,77 @@ describe("pinned incident card buttons", () => {
     const meta = JSON.parse(view.private_metadata ?? "{}");
     expect(meta.statusReportId).toBeGreaterThan(0);
     expect(JSON.stringify(view.blocks)).not.toContain('"block_id":"page"');
+
+    const res = await submit(
+      "incident_card_status_page",
+      {
+        status: { value: { selected_option: { value: "identified" } } },
+        message: { value: { value: "Found the bad deploy." } },
+      },
+      { statusReportId: meta.statusReportId },
+    );
+    expect(await res.text()).toBe("");
+    const report = await db
+      .select()
+      .from(statusReport)
+      .where(eq(statusReport.id, meta.statusReportId))
+      .get();
+    expect(report?.status).toBe("identified");
+    const updates = await db
+      .select()
+      .from(statusReportUpdate)
+      .where(eq(statusReportUpdate.statusReportId, meta.statusReportId))
+      .all();
+    expect(updates.map((u) => u.message)).toContain("Found the bad deploy.");
+  });
+
+  test("picking another status page redraws the form for that page", async () => {
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      view: {
+        id: "V_FORM",
+        hash: "h1",
+        private_metadata: JSON.stringify({ incidentId }),
+      },
+      actions: [
+        { action_id: "incident_card_page", selected_option: { value: "1" } },
+      ],
+    });
+    expect(res.status).toBe(200);
+    const update = slackTestState.calls.find(
+      (c) => c.method === "views.update",
+    );
+    expect(update?.args.view_id).toBe("V_FORM");
+    expect(update?.args.hash).toBe("h1");
+    const view = update?.args.view as {
+      callback_id?: string;
+      blocks: unknown[];
+    };
+    expect(view.callback_id).toBe("incident_card_status_page");
+    expect(JSON.stringify(view.blocks)).toContain(
+      '"initial_option":{"text":{"type":"plain_text","text":',
+    );
+  });
+
+  test("a refused status change leaves the severity untouched", async () => {
+    await db
+      .update(incident)
+      .set({ status: "resolved", resolvedAt: new Date() })
+      .where(eq(incident.id, incidentId));
+    const res = await submit("incident_card_update_status", {
+      status: { value: { selected_option: { value: "mitigated" } } },
+      severity: { value: { selected_option: { value: "critical" } } },
+    });
+    const body = await res.json();
+    expect(body.response_action).toBe("errors");
+    expect(body.errors.status).toBeDefined();
+    const row = await db
+      .select()
+      .from(incident)
+      .where(eq(incident.id, incidentId))
+      .get();
+    expect(row?.severity).toBe("major");
   });
 });

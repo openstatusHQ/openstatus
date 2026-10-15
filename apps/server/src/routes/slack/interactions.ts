@@ -34,7 +34,6 @@ import {
   DECLARE_INCIDENT_CALLBACK,
   DECLARE_INCIDENT_FROM_MESSAGE_CALLBACK,
   NOT_CONNECTED,
-  noticeModal,
   openDeclareIncidentModal,
   submitDeclareIncident,
   type ViewSubmissionPayload,
@@ -176,16 +175,26 @@ const CARD_BUTTONS: Record<string, IncidentCardAction> = {
   [INCIDENT_CARD_ACTIONS.statusPage]: "status_page",
 };
 
+/** Each form's submit, and the field an unexpected failure is shown on. */
 const MODAL_SUBMITS: Record<
   string,
-  (
-    payload: ViewSubmissionPayload,
-    config: SlackConfig,
-  ) => Promise<ViewSubmissionResponse>
+  {
+    submit: (
+      payload: ViewSubmissionPayload,
+      config: SlackConfig,
+    ) => Promise<ViewSubmissionResponse>;
+    errorField: string;
+  }
 > = {
-  [DECLARE_INCIDENT_CALLBACK]: submitDeclareIncident,
-  [UPDATE_STATUS_CALLBACK]: submitUpdateStatus,
-  [STATUS_PAGE_CALLBACK]: submitStatusPage,
+  [DECLARE_INCIDENT_CALLBACK]: {
+    submit: submitDeclareIncident,
+    errorField: "title",
+  },
+  [UPDATE_STATUS_CALLBACK]: {
+    submit: submitUpdateStatus,
+    errorField: "status",
+  },
+  [STATUS_PAGE_CALLBACK]: { submit: submitStatusPage, errorField: "message" },
 };
 
 interface SlackViewActionPayload {
@@ -202,7 +211,7 @@ interface SlackViewActionPayload {
   }>;
 }
 
-/** Card buttons and in-modal selects. Awaited: `trigger_id` lives 3s. */
+/** Card buttons, awaited since `trigger_id` lives 3s, and in-modal selects. */
 async function handleIncidentCardAction(
   payload: SlackViewActionPayload,
   config: SlackConfig,
@@ -212,16 +221,23 @@ async function handleIncidentCardAction(
   if (!teamId) return;
   if (action.action_id === STATUS_PAGE_PAGE_ACTION) {
     const pageId = Number(action.selected_option?.value);
-    if (!payload.view || !Number.isInteger(pageId)) return;
-    await changeStatusPagePage({
-      teamId,
-      slackUserId: payload.user.id,
-      viewId: payload.view.id,
-      hash: payload.view.hash,
-      privateMetadata: payload.view.private_metadata,
-      pageId,
-      config,
-    });
+    const view = payload.view;
+    if (!view || !Number.isInteger(pageId)) return;
+    // No trigger_id to keep alive: ack now, redraw the form after.
+    runInBackground(
+      "incident-card-page",
+      () =>
+        changeStatusPagePage({
+          teamId,
+          slackUserId: payload.user.id,
+          viewId: view.id,
+          hash: view.hash,
+          privateMetadata: view.private_metadata,
+          pageId,
+          config,
+        }),
+      { teamId },
+    );
     return;
   }
   const incidentId = Number(action.value);
@@ -248,21 +264,20 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
   if (body.type === "view_submission") {
     const submission = body as ViewSubmissionPayload;
     const callbackId = submission.view?.callback_id;
-    const submit = callbackId ? MODAL_SUBMITS[callbackId] : undefined;
-    if (!submit) return c.body(null, 200);
-    const response = await submit(submission, config).catch(
-      (error): ViewSubmissionResponse => {
+    const modal = callbackId ? MODAL_SUBMITS[callbackId] : undefined;
+    if (!modal) return c.body(null, 200);
+    // A field error keeps the form open with what the user typed.
+    const response = await modal
+      .submit(submission, config)
+      .catch((error): ViewSubmissionResponse => {
         logger.error("slack modal submit failed", { error, callbackId });
         return {
-          response_action: "update",
-          view: noticeModal(
-            "Something went wrong. Please try again.",
-            undefined,
-            "openstatus",
-          ),
+          response_action: "errors",
+          errors: {
+            [modal.errorField]: "Something went wrong. Please try again.",
+          },
         };
-      },
-    );
+      });
     return response ? c.json(response) : c.body(null, 200);
   }
 

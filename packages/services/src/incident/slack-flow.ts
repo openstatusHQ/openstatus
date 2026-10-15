@@ -346,10 +346,7 @@ export function headerBlocks(
         : [
             {
               type: "button",
-              text: {
-                type: "plain_text",
-                text: "Update status",
-              },
+              text: { type: "plain_text", text: "Update status" },
               action_id: INCIDENT_CARD_ACTIONS.updateStatus,
               value,
             },

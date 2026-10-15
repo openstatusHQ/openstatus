@@ -1,5 +1,9 @@
 import { getLogger } from "@logtape/logtape";
-import { type ServiceContext, ServiceError } from "@openstatus/services";
+import {
+  type ServiceContext,
+  ServiceError,
+  withTransaction,
+} from "@openstatus/services";
 import {
   addIncidentNote,
   allowedTransitions,
@@ -12,6 +16,7 @@ import {
 } from "@openstatus/services/incident";
 import { listPages } from "@openstatus/services/page";
 import { listPageComponents } from "@openstatus/services/page-component";
+import { notifyStatusReport } from "@openstatus/services/status-report";
 import { type ModalView, WebClient } from "@slack/web-api";
 import { z } from "zod";
 
@@ -612,17 +617,27 @@ export async function submitUpdateStatus(
   }
 
   try {
-    if (severityChanged) {
-      await updateIncident({ ctx, input: { id: incident.id, severity } });
-    }
-    if (statusChanged) {
-      await setIncidentStatus({
-        ctx,
-        input: { id: incident.id, status, note },
-      });
-    } else if (note) {
-      await addIncidentNote({ ctx, input: { id: incident.id, message: note } });
-    }
+    // One transaction: a refused transition must not leave the severity changed.
+    await withTransaction(ctx, async (tx) => {
+      const txCtx: ServiceContext = { ...ctx, db: tx };
+      if (severityChanged) {
+        await updateIncident({
+          ctx: txCtx,
+          input: { id: incident.id, severity },
+        });
+      }
+      if (statusChanged) {
+        await setIncidentStatus({
+          ctx: txCtx,
+          input: { id: incident.id, status, note },
+        });
+      } else if (note) {
+        await addIncidentNote({
+          ctx: txCtx,
+          input: { id: incident.id, message: note },
+        });
+      }
+    });
   } catch (error) {
     if (!(error instanceof ServiceError)) {
       logger.error("slack incident update failed", {
@@ -760,6 +775,33 @@ function readStatusPageWrite(
   };
 }
 
+const writtenUpdate = z.union([
+  z.object({ initialUpdateId: z.number().int() }),
+  z.object({ statusReportUpdateId: z.number().int() }),
+]);
+
+async function notifySubscribers(
+  ctx: ServiceContext,
+  output: unknown,
+): Promise<boolean> {
+  const parsed = writtenUpdate.safeParse(output);
+  if (!parsed.success) return false;
+  const statusReportUpdateId =
+    "initialUpdateId" in parsed.data
+      ? parsed.data.initialUpdateId
+      : parsed.data.statusReportUpdateId;
+  try {
+    await notifyStatusReport({ ctx, input: { statusReportUpdateId } });
+    return true;
+  } catch (error) {
+    logger.warn("slack status page notify failed", {
+      error,
+      statusReportUpdateId,
+    });
+    return false;
+  }
+}
+
 export async function submitStatusPage(
   payload: ViewSubmissionPayload,
   config: SlackConfig,
@@ -784,7 +826,8 @@ export async function submitStatusPage(
       tool,
       ctx,
       draftInput: write.input,
-      flags: { notify },
+      // Subscriber fan-out can outlast Slack's 3s window: it runs after the ack.
+      flags: { notify: false },
     });
   } catch (error) {
     if (!(error instanceof ServiceError)) {
@@ -800,8 +843,7 @@ export async function submitStatusPage(
   runInBackground(
     "incident-card-status-page",
     async () => {
-      const notified =
-        (result.output as { notified?: boolean }).notified ?? false;
+      const notified = notify && (await notifySubscribers(ctx, result.output));
       const rendered = await renderToolResult({
         tool,
         ctx,
