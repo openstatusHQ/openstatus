@@ -149,7 +149,7 @@ type Actor = {
   photoUrl?: string | null;
 };
 
-/** Where the actor acted from, when not the dashboard itself. */
+/** Where the actor acted from, when not the dashboard itself. Shown with an avatar only. */
 export type ActorSource = {
   label: string;
   icon: React.ComponentType<React.ComponentProps<"svg">>;
@@ -159,7 +159,7 @@ export type ActorSource = {
 
 // Renders nothing for a missing actor; the caller phrases the sentence
 // without one. Email on hover when the name is shown instead. A source
-// overlays the avatar's corner, or follows the name without one.
+// overlays the avatar's corner; a compact row keeps its sentence clean.
 export function TimelineActor({
   actor,
   avatar = false,
@@ -186,7 +186,7 @@ export function TimelineActor({
       {avatar ? (
         <span className="relative shrink-0">
           <UserAvatar name={label} src={actor.photoUrl} className="size-5" />
-          {source ? <TimelineActorSource source={source} overlay /> : null}
+          {source ? <TimelineActorSource source={source} /> : null}
         </span>
       ) : null}
       {!actor.email || actor.email === label ? (
@@ -204,36 +204,19 @@ export function TimelineActor({
           <TooltipContent side="top">{actor.email}</TooltipContent>
         </Tooltip>
       )}
-      {source && !avatar ? <TimelineActorSource source={source} /> : null}
     </span>
   );
 }
 
-function TimelineActorSource({
-  source,
-  overlay = false,
-}: {
-  source: ActorSource;
-  /** Badge on the avatar's corner instead of an icon after the name. */
-  overlay?: boolean;
-}) {
+function TimelineActorSource({ source }: { source: ActorSource }) {
   const className = cn(
-    "flex shrink-0 items-center justify-center",
+    "text-foreground absolute -right-1 -bottom-1 flex size-3 items-center justify-center rounded-full ring-1",
+    // fill and ring match the surface behind so the badge reads as a cut-out
+    "bg-background ring-background in-data-[slot=timeline-card]:bg-card in-data-[slot=timeline-card]:ring-card",
     "focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px]",
-    overlay
-      ? [
-          "text-foreground absolute -right-1 -bottom-1 size-3 rounded-full ring-1",
-          // fill and ring match the surface behind so the badge reads as a cut-out
-          "bg-background ring-background in-data-[slot=timeline-card]:bg-card in-data-[slot=timeline-card]:ring-card",
-        ]
-      : "text-muted-foreground hover:text-foreground size-4 rounded-sm",
   );
   // brand icons carry an svg <title>; no pointer events keeps the native tooltip away
-  const icon = (
-    <source.icon
-      className={cn("pointer-events-none", overlay ? "size-2" : "size-3")}
-    />
-  );
+  const icon = <source.icon className="pointer-events-none size-2" />;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -243,7 +226,7 @@ function TimelineActorSource({
             target="_blank"
             rel="noreferrer"
             aria-label={`Open in ${source.label}`}
-            className={cn(className, overlay && "hover:bg-muted")}
+            className={cn(className, "hover:bg-muted")}
           >
             {icon}
           </a>

@@ -612,6 +612,16 @@ async function main() {
         createdBy: 3,
         createdAt: minutesAfterDeclare(15),
       },
+      // Written before `source` existed: the Slack link lives in the message
+      // until `scripts/backfill-incident-event-source.mts` moves it.
+      {
+        incidentId: 1,
+        type: "note",
+        message:
+          "Rollback is out in all regions, watching the error rate.\n\n[From Slack](https://openstatus.slack.com/archives/C0C7Y4CG6F2/p1700000000000200)",
+        createdBy: 3,
+        createdAt: minutesAfterDeclare(20),
+      },
       {
         incidentId: 1,
         type: "status_changed",

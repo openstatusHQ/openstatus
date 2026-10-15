@@ -30,6 +30,7 @@ import { format } from "date-fns";
 import Link from "next/link";
 
 import { ProcessMessage } from "@/components/content/process-message";
+import { type EventOrigin, eventOrigin } from "./incident-event-origin";
 import {
   type ActorSource,
   TimelineActor,
@@ -60,8 +61,6 @@ const COMMANDER = /^Commander set to (.+)$/;
 const STARTED_AT = /^Start time changed to (\S+)$/;
 const REPORT = /^(?:Linked|Unlinked) status report #(\d+)$/;
 const CHANNEL = /<#([A-Z0-9]+)>/;
-// Notes mirrored from Slack before `source` existed end with a permalink line.
-const FROM_SLACK = /\n\n\[From Slack\]\((https?:\/\/\S+)\)$/;
 // Events without a user come from the service itself.
 const SYSTEM = { name: "System", email: null };
 // Service placeholders when a transition carried no note.
@@ -77,49 +76,25 @@ type Parsed = {
   severity?: IncidentSeverity;
   /** Authored text, rendered as a card. */
   message: string | null;
-  /** Read from a legacy note's suffix; newer events carry `sourceRef`. */
-  slackUrl?: string;
   /** Channel id read from a bound/unbound message. */
   channelId?: string;
   /** Message text that already carries the actor's name. */
   agent?: boolean;
 };
 
-function eventSource(event: Event, slackUrl?: string): ActorSource | undefined {
-  switch (event.source) {
-    case "slack":
-      return {
-        label: "Slack",
-        icon: SlackIcon,
-        href: event.sourceRef ?? undefined,
-      };
-    case "api":
-      return { label: "API", icon: Api };
-    case "mcp":
-      return { label: "MCP", icon: ModelContextProtocolIcon };
-    case null:
-      return slackUrl
-        ? { label: "Slack", icon: SlackIcon, href: slackUrl }
-        : undefined;
-    default:
-      return undefined;
-  }
-}
+const SOURCES: Record<EventOrigin["kind"], Omit<ActorSource, "href">> = {
+  slack: { label: "Slack", icon: SlackIcon },
+  api: { label: "API", icon: Api },
+  mcp: { label: "MCP", icon: ModelContextProtocolIcon },
+};
 
 // Events carry no structured payload, so the subject of a change is read back
 // from the service's own message. An unknown shape falls back to the raw text.
 function parseEvent(event: Event): Parsed {
   const message = event.message;
   switch (event.type) {
-    case "note": {
-      const match = message ? FROM_SLACK.exec(message) : null;
-      return {
-        icon: Chat,
-        phrase: null,
-        message: message?.replace(FROM_SLACK, "") ?? null,
-        slackUrl: match?.[1],
-      };
-    }
+    case "note":
+      return { icon: Chat, phrase: null, message };
     case "declared": {
       const severity = incidentSeverity.find(
         (s) => s === (message ? DECLARED.exec(message)?.[1] : undefined),
@@ -264,17 +239,17 @@ export function IncidentTimelineItem({
   event: Event;
   incident: Pick<Incident, "statusReport" | "slackTeamId">;
 }) {
+  const { origin, message: text } = eventOrigin(event);
   const {
     icon: Icon,
     phrase,
     status,
     severity,
     message,
-    slackUrl,
     channelId,
     agent,
     reportId,
-  } = parseEvent(event);
+  } = parseEvent({ ...event, message: text });
   const user = event.createdByUser;
   const actor = user
     ? { name: personName(user), email: user.email, photoUrl: user.photoUrl }
@@ -301,8 +276,13 @@ export function IncidentTimelineItem({
       ) : (
         <TimelineActor
           actor={actor}
-          avatar={message !== null}
-          source={eventSource(event, slackUrl)}
+          avatar={!compact}
+          // compact rows read as one sentence; the source badge needs the avatar
+          source={
+            compact || !origin
+              ? undefined
+              : { ...SOURCES[origin.kind], href: origin.href }
+          }
         />
       )}
       {phrase ?? "posted"}
