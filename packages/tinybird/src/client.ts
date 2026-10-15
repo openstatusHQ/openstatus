@@ -14,17 +14,40 @@ const PUBLIC_CACHE = 300; // 5 * 60 = 300s = 5m
 const DEV_CACHE = 10 * 60; // 10m
 const REVALIDATE = env.NODE_ENV === "development" ? DEV_CACHE : 0;
 
+// Cheaper than a Tinybird 400 round trip for a zone ClickHouse won't know.
+const timeZoneValidity = new Map<string, boolean>();
+
+export function isValidTimeZone(timeZone: string): boolean {
+  let valid = timeZoneValidity.get(timeZone);
+  if (valid === undefined) {
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone });
+      valid = true;
+    } catch (error) {
+      if (!(error instanceof RangeError)) throw error;
+      valid = false;
+    }
+    timeZoneValidity.set(timeZone, valid);
+  }
+  return valid;
+}
+
 // 15-minute buckets regroup into local days for every IANA zone: all current
-// offsets are multiples of 15 minutes. ClickHouse rejects unknown zone names.
+// offsets are multiples of 15 minutes.
 export const status15mParameters = z.object({
   monitorIds: z.string().array(),
-  timezone: z.string().prefault("UTC"),
+  timezone: z
+    .string()
+    .refine(isValidTimeZone, "timezone must be an IANA zone name")
+    .prefault("UTC"),
 });
 
 /**
  * Same columns as the 45d pipes. `day` is the local calendar date re-keyed as
  * UTC midnight, the convention day-keyed consumers already read — a Berlin
  * 2026-10-14 stays "2026-10-14", not the 22:00Z instant of local midnight.
+ * `monitorId` is a String column in the http datasource and Int32 elsewhere,
+ * so the non-http getters pass `z.coerce.string()`.
  */
 export function status15mShape(monitorId: z.ZodType<string>) {
   return z.object({

@@ -3,6 +3,7 @@ import { describe, test } from "@std/testing/bdd";
 import { z } from "zod";
 
 import {
+  isValidTimeZone,
   noopFlagSchema,
   OSTinybird,
   status15mParameters,
@@ -190,6 +191,17 @@ describe("status15mParameters", () => {
           .timezone,
       ).toBe(timezone);
     }
+  });
+
+  test("rejects zone names ClickHouse would 400 on, before the request", () => {
+    for (const timezone of ["Mars/Olympus", "", "GMT+1"]) {
+      const result = status15mParameters.safeParse({
+        monitorIds: ["1"],
+        timezone,
+      });
+      expect(result.success).toBe(false);
+    }
+    expect(isValidTimeZone("Etc/GMT+1")).toBe(true);
   });
 });
 
