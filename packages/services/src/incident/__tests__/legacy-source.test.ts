@@ -72,7 +72,12 @@ describe("withLegacySource", () => {
   });
 
   test("never rewrites a row from another source", () => {
-    const event = { type: "note", source: "api", sourceRef: "key", message: LEGACY };
+    const event = {
+      type: "note",
+      source: "api",
+      sourceRef: "key",
+      message: LEGACY,
+    };
     expect(withLegacySource(event)).toBe(event);
   });
 
