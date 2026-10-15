@@ -51,8 +51,14 @@ test("declare, move and read an incident through tRPC", async () => {
   expect(got?.allowedTransitions).toEqual(["resolved", "open", "canceled"]);
   expect(got?.deletable).toBe(false);
 
+  await api.incident.addNote({ id: row.id, message: "Looking into it" });
   const events = await api.incident.listEvents({ id: row.id });
-  expect(events?.map((e) => e.type)).toEqual(["status_changed", "declared"]);
+  expect(events?.map((e) => e.type)).toEqual([
+    "note",
+    "status_changed",
+    "declared",
+  ]);
+  expect(events?.[0]).toMatchObject({ source: "dashboard", sourceRef: null });
 });
 
 test("another workspace's incident is not found", async () => {

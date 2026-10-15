@@ -159,7 +159,7 @@ export type ActorSource = {
 
 // Renders nothing for a missing actor; the caller phrases the sentence
 // without one. Email on hover when the name is shown instead. A source
-// overlays the avatar's corner so the sentence keeps its own verb.
+// overlays the avatar's corner, or follows the name as "via …" without one.
 export function TimelineActor({
   actor,
   avatar = false,
@@ -203,6 +203,27 @@ export function TimelineActor({
           </TooltipTrigger>
           <TooltipContent side="top">{actor.email}</TooltipContent>
         </Tooltip>
+      )}
+      {source && !avatar ? <TimelineActorVia source={source} /> : null}
+    </span>
+  );
+}
+
+function TimelineActorVia({ source }: { source: ActorSource }) {
+  return (
+    <span className="text-muted-foreground shrink-0 font-normal">
+      via{" "}
+      {source.href ? (
+        <a
+          href={source.href}
+          target="_blank"
+          rel="noreferrer"
+          className="decoration-muted-foreground/50 hover:text-foreground underline decoration-dashed underline-offset-2"
+        >
+          {source.label}
+        </a>
+      ) : (
+        source.label
       )}
     </span>
   );

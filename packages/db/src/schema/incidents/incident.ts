@@ -11,6 +11,7 @@ import { statusReport } from "../status_reports";
 import { user } from "../users";
 import { workspace } from "../workspaces";
 import {
+  incidentEventSource,
   incidentEventType,
   incidentSeverity,
   incidentStatus,
@@ -73,6 +74,8 @@ export const incidentEvent = sqliteTable(
       .references(() => incident.id, { onDelete: "cascade" }),
     type: text("type", { enum: incidentEventType }).notNull(),
     message: text("message"),
+    source: text("source", { enum: incidentEventSource }),
+    sourceRef: text("source_ref"),
     createdBy: integer("created_by").references(() => user.id),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   },

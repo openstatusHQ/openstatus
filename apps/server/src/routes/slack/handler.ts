@@ -57,6 +57,7 @@ import {
   slackAgentAllowed,
 } from "./require-slack-member";
 import { abortTurn, broadcastStop, endTurn, startTurn } from "./running-turns";
+import { permalinkFor } from "./service-adapter";
 import {
   buildThreadTitle,
   isThreadTitled,
@@ -721,6 +722,7 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
       return;
     }
 
+    const originRef = permalinkFor(slack, event.channel, threadTs);
     let thread: ThreadMessage[] = [];
     if (prefetchedThread) {
       thread = prefetchedThread;
@@ -767,6 +769,7 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
         contextNote:
           [context?.contextNote, incidentNote].filter(Boolean).join("\n\n") ||
           undefined,
+        originRef: await originRef,
       },
     );
 

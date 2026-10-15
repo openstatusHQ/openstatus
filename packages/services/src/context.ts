@@ -27,6 +27,8 @@ export type Actor =
 export type ServiceContext = {
   workspace: Workspace;
   actor: Actor;
+  /** Where the request came from beyond the actor, e.g. a Slack permalink. */
+  origin?: { ref?: string };
   requestId?: string;
   span?: unknown;
   db?: DB;

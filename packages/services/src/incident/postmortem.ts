@@ -1,6 +1,7 @@
 import { eq } from "@openstatus/db";
 import {
   type IncidentPostmortem,
+  type PostmortemAuthor,
   incidentPostmortem,
 } from "@openstatus/db/src/schema";
 
@@ -32,6 +33,14 @@ async function findPostmortem(
     .from(incidentPostmortem)
     .where(eq(incidentPostmortem.incidentId, incidentId))
     .get();
+}
+
+// The actor is whoever asked for the draft; the event credits the agent. Its
+// ref would be a run id, which no caller has yet.
+function agentSource(draftedBy: PostmortemAuthor) {
+  return draftedBy === "agent"
+    ? { source: "agent" as const, sourceRef: null }
+    : {};
 }
 
 /**
@@ -80,6 +89,7 @@ export async function draftPostmortem(args: {
       await appendIncidentEvent(tx, ctx, {
         incidentId: row.id,
         type: "postmortem_drafted",
+        ...agentSource(input.draftedBy),
         message:
           input.draftedBy === "agent"
             ? "Postmortem drafted by the agent"
@@ -122,6 +132,7 @@ export async function draftPostmortem(args: {
         existing.status === "approved"
           ? "postmortem_updated"
           : "postmortem_drafted",
+      ...agentSource(input.draftedBy),
       message:
         existing.status === "approved"
           ? "Postmortem edited"
