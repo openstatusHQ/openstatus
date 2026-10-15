@@ -28,7 +28,6 @@ import {
   closeIncident,
   declareIncident,
   deleteIncident,
-  escapeMrkdwn,
   getIncident,
   getIncidentForStatusReport,
   getIncidentOrThrow,
@@ -37,6 +36,7 @@ import {
   listIncidents,
   listLinkedStatusReportIds,
   type IncidentEffects,
+  incidentEffects,
   resolveDashboardUrl,
   setIncidentStatus,
   unbindIncidentSlackChannel,
@@ -72,14 +72,12 @@ function afterResponse(task: () => Promise<unknown>) {
 }
 
 function effectsFor(ctx: AuthedCtx): IncidentEffects {
-  const name = ctx.user.name || ctx.user.email || "A teammate";
-  return {
+  return incidentEffects({
     clientFor: (token) => new WebClient(token),
     dashboardUrl: DASHBOARD_URL,
     sendCommanderEmail: sendIncidentCommander,
-    actorLabel: escapeMrkdwn(name),
-    assignedBy: escapeMrkdwn(name),
-  };
+    name: ctx.user.name || ctx.user.email || "A teammate",
+  });
 }
 
 export const incidentRouter = createTRPCRouter({

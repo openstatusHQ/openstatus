@@ -19,7 +19,7 @@ import type {
   listIncidentEvents,
   listIncidents,
 } from "@openstatus/services/incident";
-import { displayName } from "@openstatus/services/incident";
+import { toAttributedUserDetail } from "@openstatus/services/incident";
 
 import { dbStatusToProto as dbReportStatusToProto } from "../status-report/converters";
 import { invalidEnumError } from "./errors";
@@ -36,6 +36,7 @@ type DbStatus = IncidentView["status"];
 type DbEventType = IncidentEventRow["type"];
 
 type UserRow = {
+  id: number;
   name: string | null;
   firstName: string | null;
   lastName: string | null;
@@ -151,18 +152,12 @@ export function dbEventTypeToProto(type: DbEventType): IncidentEventType {
 export function toIncidentUser(
   row: UserRow | null | undefined,
 ): IncidentUser | undefined {
-  if (!row) return undefined;
-  if (row.deletedAt) {
-    return {
-      $typeName: "openstatus.incident.v1.IncidentUser",
-      email: "",
-      name: "Deleted user",
-    };
-  }
+  const user = toAttributedUserDetail(row);
+  if (!user) return undefined;
   return {
     $typeName: "openstatus.incident.v1.IncidentUser",
-    email: row.email ?? "",
-    name: displayName(row),
+    email: user.email ?? "",
+    name: user.name,
   };
 }
 

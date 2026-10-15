@@ -13,7 +13,7 @@ service IncidentService {
   // DeclareIncident declares a new incident.
   rpc DeclareIncident(DeclareIncidentRequest) returns (DeclareIncidentResponse) {
     option (gnostic.openapi.v3.operation) = {
-      description: "Declares a new incident in the open status. The commander is set by email and must be a member of the workspace; without one the incident is unassigned. A newly assigned commander is emailed unless they own the API key. When open_slack_channel is true and Slack is connected, a dedicated channel is created and the team invited. started_at defaults to now and can be set in the past for a retroactive declare."
+      description: "Declares a new incident in the open status. The commander is set by email and must be a member of the workspace; without one the incident is unassigned. A newly assigned commander is emailed unless they own the API key. When open_slack_channel is true and Slack is connected, a dedicated channel is created and the team invited. started_at defaults to now and can be set in the past for a retroactive declare. A status_report_id that does not exist in the workspace fails with not_found; one already linked to another incident fails with failed_precondition."
     };
   }
 
@@ -22,7 +22,7 @@ service IncidentService {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
 
-  // ListIncidents returns the incidents of the workspace (metadata only), open first.
+  // ListIncidents returns the incidents of the workspace (metadata only), newest declared first.
   rpc ListIncidents(ListIncidentsRequest) returns (ListIncidentsResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
@@ -41,6 +41,7 @@ service IncidentService {
   rpc AddIncidentNote(AddIncidentNoteRequest) returns (AddIncidentNoteResponse);
 
   // LinkStatusReport links a public status report to the incident.
+  // A report already linked to another incident fails with failed_precondition.
   rpc LinkStatusReport(LinkStatusReportRequest) returns (LinkStatusReportResponse);
 
   // UnlinkStatusReport removes the link to the incident's status report.
@@ -71,7 +72,7 @@ service IncidentService {
   // ApprovePostmortem approves the postmortem and optionally closes the incident.
   rpc ApprovePostmortem(ApprovePostmortemRequest) returns (ApprovePostmortemResponse) {
     option (gnostic.openapi.v3.operation) = {
-      description: "Approves the draft postmortem of a resolved incident. With close set to true the incident is closed in the same step. Allowed for workspace owners and admins and for the incident commander. The API key acts as its creator, with the creator's current role; keys without a creator cannot call this."
+      description: "Approves the draft postmortem of a resolved incident. With close set to true the incident is closed in the same step. Fails with not_found when no postmortem has been written, and with failed_precondition when the incident is not resolved or the postmortem is already approved. Allowed for workspace owners and admins and for the incident commander. The API key acts as its creator, with the creator's current role; keys without a creator cannot call this."
     };
   }
 }

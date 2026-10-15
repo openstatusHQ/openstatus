@@ -479,7 +479,7 @@
               }
             ],
             "title": "resolved_by",
-            "description": "Member who last resolved the incident."
+            "description": "Member who last resolved the incident (unset again when the incident is reopened)."
           },
           "declaredAt": {
             "type": "string",
@@ -499,7 +499,7 @@
           "resolvedAt": {
             "type": ["string", "null"],
             "title": "resolved_at",
-            "description": "Timestamp of the last resolution (RFC 3339 format)."
+            "description": "Timestamp of the last resolution (RFC 3339 format). Kept when the incident is reopened."
           },
           "closedAt": {
             "type": ["string", "null"],
@@ -667,7 +667,7 @@
           "pageId": {
             "type": "string",
             "title": "page_id",
-            "description": "ID of the status page the report belongs to."
+            "description": "ID of the status page the report belongs to (empty in ListIncidents results)."
           }
         },
         "title": "IncidentStatusReport",
@@ -722,7 +722,7 @@
           "resolvedAt": {
             "type": ["string", "null"],
             "title": "resolved_at",
-            "description": "Timestamp of the last resolution (RFC 3339 format)."
+            "description": "Timestamp of the last resolution (RFC 3339 format). Kept when the incident is reopened."
           },
           "closedAt": {
             "type": ["string", "null"],
@@ -7505,7 +7505,7 @@
       "post": {
         "tags": ["IncidentService"],
         "summary": "ApprovePostmortem",
-        "description": "Approves the draft postmortem of a resolved incident. With close set to true the incident is closed in the same step. Allowed for workspace owners and admins and for the incident commander. The API key acts as its creator, with the creator's current role; keys without a creator cannot call this.",
+        "description": "Approves the draft postmortem of a resolved incident. With close set to true the incident is closed in the same step. Fails with not_found when no postmortem has been written, and with failed_precondition when the incident is not resolved or the postmortem is already approved. Allowed for workspace owners and admins and for the incident commander. The API key acts as its creator, with the creator's current role; keys without a creator cannot call this.",
         "operationId": "IncidentService_ApprovePostmortem",
         "requestBody": {
           "content": {
@@ -7591,7 +7591,7 @@
       "post": {
         "tags": ["IncidentService"],
         "summary": "DeclareIncident",
-        "description": "Declares a new incident in the open status. The commander is set by email and must be a member of the workspace; without one the incident is unassigned. A newly assigned commander is emailed unless they own the API key. When open_slack_channel is true and Slack is connected, a dedicated channel is created and the team invited. started_at defaults to now and can be set in the past for a retroactive declare.",
+        "description": "Declares a new incident in the open status. The commander is set by email and must be a member of the workspace; without one the incident is unassigned. A newly assigned commander is emailed unless they own the API key. When open_slack_channel is true and Slack is connected, a dedicated channel is created and the team invited. started_at defaults to now and can be set in the past for a retroactive declare. A status_report_id that does not exist in the workspace fails with not_found; one already linked to another incident fails with failed_precondition.",
         "operationId": "IncidentService_DeclareIncident",
         "requestBody": {
           "content": {
@@ -7851,7 +7851,7 @@
       "post": {
         "tags": ["IncidentService"],
         "summary": "LinkStatusReport",
-        "description": "LinkStatusReport links a public status report to the incident.",
+        "description": "LinkStatusReport links a public status report to the incident.\n A report already linked to another incident fails with failed_precondition.",
         "operationId": "IncidentService_LinkStatusReport",
         "requestBody": {
           "content": {
@@ -7894,7 +7894,7 @@
       "get": {
         "tags": ["IncidentService"],
         "summary": "ListIncidents",
-        "description": "ListIncidents returns the incidents of the workspace (metadata only), open first.",
+        "description": "ListIncidents returns the incidents of the workspace (metadata only), newest declared first.",
         "operationId": "IncidentService_ListIncidents.get",
         "parameters": [
           {
@@ -7938,7 +7938,7 @@
       "post": {
         "tags": ["IncidentService"],
         "summary": "ListIncidents",
-        "description": "ListIncidents returns the incidents of the workspace (metadata only), open first.",
+        "description": "ListIncidents returns the incidents of the workspace (metadata only), newest declared first.",
         "operationId": "IncidentService_ListIncidents",
         "requestBody": {
           "content": {

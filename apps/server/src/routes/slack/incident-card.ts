@@ -11,6 +11,7 @@ import {
   escapeMrkdwn,
   getIncident,
   headerBlocks,
+  quoteNote,
   setIncidentStatus,
   updateIncident,
 } from "@openstatus/services/incident";
@@ -31,7 +32,7 @@ import {
   type ViewSubmissionPayload,
   type ViewSubmissionResponse,
 } from "./incident-modal";
-import { afterIncidentTool, quote, who } from "./incident-slack";
+import { afterIncidentTool, who } from "./incident-slack";
 import { renderToolResult } from "./presenters";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
 
@@ -680,8 +681,8 @@ async function afterUpdateStatus(args: {
   if (severity || !status) {
     if (!status && note) trackSlackIncident(ctx, "note");
     const text = severity
-      ? `${who(ctx)} changed the severity to *${severity}*.${status ? "" : quote(note)}`
-      : `${who(ctx)} posted an update.${quote(note)}`;
+      ? `${who(ctx)} changed the severity to *${severity}*.${status ? "" : quoteNote(note)}`
+      : `${who(ctx)} posted an update.${quoteNote(note)}`;
     await announceIncidentChange({
       ctx,
       incidentId,

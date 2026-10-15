@@ -9,9 +9,9 @@ import {
   afterPostmortemApproved,
   announceIncidentChange,
   bindIncidentSlackChannel,
-  escapeMrkdwn,
   getIncident,
   type IncidentEffects,
+  incidentEffects,
   type OpenChannelResult,
   type SlackClientFactory,
 } from "@openstatus/services/incident";
@@ -42,21 +42,17 @@ export function who(ctx: ServiceContext): string {
   return ctx.actor.type === "slack" ? `<@${ctx.actor.slackUserId}>` : "Someone";
 }
 
-export function quote(note: string | undefined): string {
-  return note ? `\n>${escapeMrkdwn(note).replaceAll("\n", "\n>")}` : "";
-}
-
 async function slackEffects(
   ctx: ServiceContext,
   config: SlackConfig,
 ): Promise<IncidentEffects> {
-  return {
+  return incidentEffects({
     clientFor: slackClientFor,
     dashboardUrl: config.dashboardUrl,
     sendCommanderEmail: sendIncidentCommander,
+    name: (await actorDisplayName(ctx)) ?? "A teammate",
     actorLabel: who(ctx),
-    assignedBy: (await actorDisplayName(ctx)) ?? "A teammate",
-  };
+  });
 }
 
 const INCIDENT_TOOLS = new Set([

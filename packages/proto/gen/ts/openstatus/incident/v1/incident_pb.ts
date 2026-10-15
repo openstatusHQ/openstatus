@@ -70,7 +70,7 @@ export type IncidentStatusReport = Message<"openstatus.incident.v1.IncidentStatu
   status: StatusReportStatus;
 
   /**
-   * ID of the status page the report belongs to.
+   * ID of the status page the report belongs to (empty in ListIncidents results).
    *
    * @generated from field: string page_id = 4;
    */
@@ -189,7 +189,7 @@ export type IncidentSummary = Message<"openstatus.incident.v1.IncidentSummary"> 
   startedAt: string;
 
   /**
-   * Timestamp of the last resolution (RFC 3339 format).
+   * Timestamp of the last resolution (RFC 3339 format). Kept when the incident is reopened.
    *
    * @generated from field: optional string resolved_at = 8;
    */
@@ -287,7 +287,7 @@ export type Incident = Message<"openstatus.incident.v1.Incident"> & {
   declaredBy?: IncidentUser | undefined;
 
   /**
-   * Member who last resolved the incident.
+   * Member who last resolved the incident (unset again when the incident is reopened).
    *
    * @generated from field: optional openstatus.incident.v1.IncidentUser resolved_by = 8;
    */
@@ -315,7 +315,7 @@ export type Incident = Message<"openstatus.incident.v1.Incident"> & {
   mitigatedAt?: string | undefined;
 
   /**
-   * Timestamp of the last resolution (RFC 3339 format).
+   * Timestamp of the last resolution (RFC 3339 format). Kept when the incident is reopened.
    *
    * @generated from field: optional string resolved_at = 12;
    */

@@ -14,11 +14,12 @@ export {
   describeIncidentChanges,
   incidentDashboardUrl,
   type IncidentEffects,
+  incidentEffects,
   notifyIncidentCommander,
   quoteNote,
   resolveDashboardUrl,
 } from "./effects";
-export { displayName } from "../attribution";
+export { displayName, toAttributedUserDetail } from "../attribution";
 export { allowedTransitions } from "./internal";
 export {
   linkIncidentStatusReport,

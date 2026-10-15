@@ -16,10 +16,10 @@ import {
   declareIncident,
   deleteIncident,
   draftPostmortem,
-  escapeMrkdwn,
   getIncidentOrThrow,
   getPostmortem,
   type IncidentEffects,
+  incidentEffects,
   linkIncidentStatusReport,
   listIncidentEvents,
   listIncidents,
@@ -60,8 +60,12 @@ const NUMERIC_ID = /^\d+$/;
 
 function parseId(field: string, value: string): number {
   const trimmed = value.trim();
-  if (!NUMERIC_ID.test(trimmed)) throw invalidIdError(field, value);
-  return Number(trimmed);
+  // past 2^53 the digits round to a neighbouring id
+  const id = Number(trimmed);
+  if (!NUMERIC_ID.test(trimmed) || !Number.isSafeInteger(id)) {
+    throw invalidIdError(field, value);
+  }
+  return id;
 }
 
 function parseDate(value: string): Date {
@@ -80,14 +84,12 @@ async function resolveCommander(
 }
 
 async function effectsFor(ctx: ServiceContext): Promise<IncidentEffects> {
-  const name = (await actorDisplayName(ctx)) ?? "An API key";
-  return {
+  return incidentEffects({
     clientFor: (token) => new WebClient(token),
     dashboardUrl: DASHBOARD_URL,
     sendCommanderEmail: sendIncidentCommander,
-    actorLabel: escapeMrkdwn(name),
-    assignedBy: name,
-  };
+    name: (await actorDisplayName(ctx)) ?? "An API key",
+  });
 }
 
 function afterResponse(

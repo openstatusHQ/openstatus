@@ -79,7 +79,7 @@ message IncidentStatusReport {
   // Current status of the status report.
   openstatus.status_report.v1.StatusReportStatus status = 3;
 
-  // ID of the status page the report belongs to.
+  // ID of the status page the report belongs to (empty in ListIncidents results).
   string page_id = 4;
 }
 
@@ -124,7 +124,7 @@ message IncidentSummary {
   // Timestamp when the impact began (RFC 3339 format).
   string started_at = 7;
 
-  // Timestamp of the last resolution (RFC 3339 format).
+  // Timestamp of the last resolution (RFC 3339 format). Kept when the incident is reopened.
   optional string resolved_at = 8;
 
   // Timestamp when the incident was closed or canceled (RFC 3339 format).
@@ -163,7 +163,7 @@ message Incident {
   // Member who declared the incident (unset for API keys without a creator).
   optional IncidentUser declared_by = 7;
 
-  // Member who last resolved the incident.
+  // Member who last resolved the incident (unset again when the incident is reopened).
   optional IncidentUser resolved_by = 8;
 
   // Timestamp when the incident was declared (RFC 3339 format).
@@ -175,7 +175,7 @@ message Incident {
   // Timestamp when the incident was first mitigated (RFC 3339 format).
   optional string mitigated_at = 11;
 
-  // Timestamp of the last resolution (RFC 3339 format).
+  // Timestamp of the last resolution (RFC 3339 format). Kept when the incident is reopened.
   optional string resolved_at = 12;
 
   // Timestamp when the incident was closed or canceled (RFC 3339 format).

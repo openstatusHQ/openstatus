@@ -38,6 +38,26 @@ export type IncidentEffects = {
   assignedBy: string;
 };
 
+/**
+ * Effects for an actor named `name`. Channel messages get the name escaped
+ * for mrkdwn unless `actorLabel` overrides it (e.g. a Slack `<@U…>` mention);
+ * the email gets it verbatim.
+ */
+export function incidentEffects(args: {
+  clientFor: SlackClientFactory;
+  dashboardUrl: string;
+  sendCommanderEmail: IncidentEffects["sendCommanderEmail"];
+  name: string;
+  actorLabel?: string;
+}): IncidentEffects {
+  const { name, actorLabel, ...deps } = args;
+  return {
+    ...deps,
+    actorLabel: actorLabel ?? escapeMrkdwn(name),
+    assignedBy: name,
+  };
+}
+
 type EffectArgs = { ctx: ServiceContext; effects: IncidentEffects };
 
 export function resolveDashboardUrl(env: {
