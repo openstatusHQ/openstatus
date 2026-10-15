@@ -194,6 +194,18 @@ export async function hasPaymentMethod(subscription: Stripe.Subscription) {
   );
 }
 
+// Stripe rejects automatic tax on a subscription whose customer it cannot
+// place (no address yet, e.g. a card-less trial), so only opt in once it can.
+// `not_collecting` is a valid location where we are not registered: no tax.
+export async function canAutomateTax(customerId: string) {
+  const customer = await stripe.customers.retrieve(customerId, {
+    expand: ["tax"],
+  });
+  if (customer.deleted) return false;
+  const status = customer.tax?.automatic_tax;
+  return status === "supported" || status === "not_collecting";
+}
+
 export function trialEndsAtOf(subscription: Stripe.Subscription) {
   return subscription.status === "trialing" && subscription.trial_end
     ? new Date(subscription.trial_end * 1000)

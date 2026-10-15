@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull } from "@openstatus/db";
+import { and, eq, gte, isNull, sql } from "@openstatus/db";
 import {
   invitation,
   selectWorkspaceSchema,
@@ -58,7 +58,8 @@ export async function acceptInvitation(args: {
     const existing = await tx.query.invitation.findFirst({
       where: and(
         eq(invitation.id, input.id),
-        eq(invitation.email, input.email),
+        // Rows created before emails were normalized keep their original casing.
+        sql`lower(${invitation.email}) = ${input.email}`,
         isNull(invitation.acceptedAt),
         gte(invitation.expiresAt, new Date()),
       ),

@@ -82,6 +82,7 @@ To log in:
 - **Port 8080 already in use** — a leftover libSQL server from step 2. Kill that terminal and re-run `pnpm -w dev:dashboard`.
 - **Magic link doesn't arrive** — it isn't emailed in dev. Look in the dashboard terminal stdout for `>>> Magic Link: ...`.
 - **Reset the dev DB** — stop the libSQL server, delete `openstatus-dev.db` at the repo root, restart libSQL, re-run `pnpm -w dx`.
+- **No Turso CLI or Deno on the machine** (a cloud sandbox) — `node scripts/dev-stack.mjs up` does steps 2 to 5 with sqld and deno fetched from npm; `down` stops them. Its database is `.screenshots/stack/openstatus-dev.db`: `up --reseed` resets the fixtures, or delete the directory while the stack is down.
 
 ## Related services (optional for dashboard development)
 

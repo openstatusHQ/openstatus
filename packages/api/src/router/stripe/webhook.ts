@@ -15,6 +15,7 @@ import {
   downgradeWorkspaceToFree,
   getWorkspaceByStripeId,
   listWorkspaceOwners,
+  markWorkspaceTrialed,
   previewWorkspaceDowngrade,
   updateWorkspacePlan,
 } from "@openstatus/services/workspace";
@@ -224,6 +225,22 @@ async function attachSetupPaymentMethod(session: Stripe.Checkout.Session) {
   await stripe.subscriptions.update(subscriptionId, {
     default_payment_method: paymentMethod,
   });
+
+  // The card now carries the billing address the setup session required, and
+  // Stripe Tax falls back to it. Just try: Stripe rejects a location it cannot
+  // place, and that must not undo the card we already attached.
+  if (!subscription.automatic_tax?.enabled) {
+    try {
+      await stripe.subscriptions.update(subscriptionId, {
+        automatic_tax: { enabled: true },
+      });
+    } catch (err) {
+      console.error(
+        `Failed to enable automatic tax on ${subscriptionId}:`,
+        err,
+      );
+    }
+  }
   return subscription;
 }
 
@@ -454,12 +471,16 @@ export const webhookRouter = createTRPCRouter({
     // for an unrelated `customer.subscription.updated` to come along.
     await cancelSupersededSubscriptions(live, subscription);
 
+    // Not the live status: a late delivery can land after the trial ended.
+    const isTrial = subscription.metadata.source === "trial_opt_in";
+    const wsCtx: ServiceContext = {
+      workspace: ws,
+      actor: { type: "system", job: "stripe-session-completed" },
+      db: opts.ctx.db,
+    };
+
     await updateWorkspacePlan({
-      ctx: {
-        workspace: ws,
-        actor: { type: "system", job: "stripe-session-completed" },
-        db: opts.ctx.db,
-      },
+      ctx: wsCtx,
       input: {
         plan: built.plan,
         subscriptionId: subscription.id,
@@ -467,9 +488,33 @@ export const webhookRouter = createTRPCRouter({
         paidUntil: getCurrentPeriodEnd(subscription),
         trialEndsAt: trialEndsAtOf(subscription),
         limits: syncedLimits(subscription, built),
-        reason: "checkout_session_completed",
+        reason: isTrial ? "trial_started" : "checkout_session_completed",
       },
     });
+
+    if (isTrial) {
+      // Stamped on completion, not when the Checkout opens, so an abandoned
+      // page does not burn the trial.
+      await stripe.customers.update(customerId, {
+        metadata: { trialed: "true" },
+      });
+      const firstMark = await markWorkspaceTrialed({ ctx: wsCtx });
+      // A redelivered event must not count the trial twice.
+      if (firstMark) {
+        await trackForWorkspaceOwner({
+          db: opts.ctx.db,
+          ws: { ...ws, plan: built.plan },
+          event: Events.StartTrial,
+          props: {
+            surface: subscription.metadata.surface,
+            intent: subscription.metadata.intent,
+            trialEndsAt: trialEndsAtOf(subscription)?.toISOString(),
+            ...billingProps(subscription),
+          },
+        });
+      }
+      return;
+    }
 
     await trackForWorkspaceOwner({
       db: opts.ctx.db,
@@ -478,7 +523,6 @@ export const webhookRouter = createTRPCRouter({
       props: {
         fromPlan: ws.plan,
         toPlan: built.plan,
-        trialing: subscription.status === "trialing",
         ...billingProps(subscription),
       },
     });
