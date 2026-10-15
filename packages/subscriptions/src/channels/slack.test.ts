@@ -328,6 +328,131 @@ describe("createSlackChannel", () => {
     expect((await store.getAnchor(REPORT, 1))?.ts).toBe("1700000000.0001");
     expect((await store.getAnchor(MAINTENANCE, 1))?.ts).toBe("1700000000.0002");
   });
+
+  for (const { kind, status } of [
+    { kind: REPORT, status: "investigating" },
+    { kind: MAINTENANCE, status: "maintenance" },
+  ] as const) {
+    test(`concurrent updates of one ${kind.kind} open a single root`, async () => {
+      // The winner's root post blocks until the loser starts waiting, so both
+      // deliveries are in flight before any anchor exists.
+      let openGate = () => {};
+      const gate = new Promise<void>((resolve) => {
+        openGate = resolve;
+      });
+      const { client, calls } = makeClient();
+      let roots = 0;
+      const gatedClient: SlackClient = {
+        ...client,
+        async postMessage(args) {
+          if (!args.thread_ts) {
+            // A second root means the race is back; don't hang the test on it.
+            roots += 1;
+            if (roots > 1) openGate();
+            await gate;
+          }
+          return client.postMessage(args);
+        },
+      };
+      let sleeps = 0;
+      const store = createMemoryAnchorStore();
+      const channel = createSlackChannel({
+        store,
+        createClient: () => gatedClient,
+        getBotToken: token,
+        softUnsubscribe: noopUnsub,
+        sleep: async () => {
+          sleeps += 1;
+          openGate();
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        },
+      });
+
+      await Promise.all([
+        channel.sendNotifications(
+          [makeSub()],
+          makeUpdate({ status, updateId: 100 }),
+        ),
+        channel.sendNotifications(
+          [makeSub()],
+          makeUpdate({ status, updateId: 101 }),
+        ),
+      ]);
+
+      const posts = calls.filter((c) => c.method === "post");
+      expect(sleeps).toBeGreaterThan(0);
+      expect(posts.filter((c) => c.thread_ts === undefined).length).toBe(1);
+      // Loser backfills the winner's update, then replies with its own.
+      expect(
+        posts.filter((c) => c.thread_ts === "1700000000.0001").length,
+      ).toBe(2);
+      expect(calls.filter((c) => c.method === "update").length).toBe(1);
+      expect((await store.getAnchor(kind, 1))?.ts).toBe("1700000000.0001");
+    });
+  }
+
+  test("failed root post releases the claim so a retry opens the thread", async () => {
+    let attempts = 0;
+    const roots: (string | undefined)[] = [];
+    const client: SlackClient = {
+      async postMessage(args) {
+        attempts += 1;
+        roots.push(args.thread_ts);
+        if (attempts === 1) {
+          const error = new Error("slack error") as Error & {
+            data?: { error?: string };
+          };
+          error.data = { error: "ratelimited" };
+          throw error;
+        }
+        return { ts: "1700000000.0001" };
+      },
+      async update(args) {
+        return { ts: args.ts };
+      },
+    };
+    let sleeps = 0;
+    const store = createMemoryAnchorStore();
+    const channel = createSlackChannel({
+      store,
+      createClient: () => client,
+      getBotToken: token,
+      softUnsubscribe: noopUnsub,
+      sleep: async () => {
+        sleeps += 1;
+      },
+    });
+
+    await channel.sendNotifications([makeSub()], makeUpdate({ updateId: 100 }));
+    expect(await store.getAnchor(REPORT, 1)).toBeNull();
+    await channel.sendNotifications([makeSub()], makeUpdate({ updateId: 100 }));
+
+    expect(sleeps).toBe(0);
+    expect(roots).toEqual([undefined, undefined]);
+    expect((await store.getAnchor(REPORT, 1))?.ts).toBe("1700000000.0001");
+  });
+
+  test("claim held for the whole wait releases the delivery without posting", async () => {
+    const { client, calls } = makeClient();
+    let sleeps = 0;
+    const store = createMemoryAnchorStore();
+    const channel = createSlackChannel({
+      store,
+      createClient: () => client,
+      getBotToken: token,
+      softUnsubscribe: noopUnsub,
+      sleep: async () => {
+        sleeps += 1;
+      },
+    });
+    expect(await store.claimAnchor(REPORT, 1)).toBe(true);
+
+    await channel.sendNotifications([makeSub()], makeUpdate({ updateId: 100 }));
+
+    expect(calls.length).toBe(0);
+    expect(sleeps).toBeGreaterThan(0);
+    expect(await store.reserveDelivery(REPORT, 1, 100)).toBe(true);
+  });
 });
 
 describe("validateSlackConfig", () => {
@@ -373,5 +498,32 @@ describe("reserveDelivery (memory store)", () => {
     expect(await store.reserveDelivery(REPORT, 2, 3)).toBe(true);
     await store.releaseDelivery(REPORT, 2, 3);
     expect(await store.reserveDelivery(REPORT, 2, 3)).toBe(true);
+  });
+});
+
+describe("claimAnchor (memory store)", () => {
+  test("only the first claim wins and reads as no anchor", async () => {
+    const store = createMemoryAnchorStore();
+    expect(await store.claimAnchor(REPORT, 2)).toBe(true);
+    expect(await store.claimAnchor(REPORT, 2)).toBe(false);
+    expect(await store.getAnchor(REPORT, 2)).toBeNull();
+    // Kinds are namespaced: a maintenance with the same id claims separately.
+    expect(await store.claimAnchor(MAINTENANCE, 2)).toBe(true);
+  });
+
+  test("setAnchor replaces the claim; a set anchor can't be claimed", async () => {
+    const store = createMemoryAnchorStore();
+    expect(await store.claimAnchor(REPORT, 2)).toBe(true);
+    await store.setAnchor(REPORT, 2, { ts: "1.0", channelId: "C1" });
+    await store.releaseAnchorClaim(REPORT, 2);
+    expect((await store.getAnchor(REPORT, 2))?.ts).toBe("1.0");
+    expect(await store.claimAnchor(REPORT, 2)).toBe(false);
+  });
+
+  test("releaseAnchorClaim makes the anchor claimable again", async () => {
+    const store = createMemoryAnchorStore();
+    expect(await store.claimAnchor(REPORT, 2)).toBe(true);
+    await store.releaseAnchorClaim(REPORT, 2);
+    expect(await store.claimAnchor(REPORT, 2)).toBe(true);
   });
 });
