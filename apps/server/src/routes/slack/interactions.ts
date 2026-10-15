@@ -19,6 +19,7 @@ import {
   changeStatusPagePage,
   type IncidentCardAction,
   openIncidentCardModal,
+  openPublishStatusUpdateModal,
   STATUS_PAGE_CALLBACK,
   STATUS_PAGE_PAGE_ACTION,
   submitStatusPage,
@@ -55,6 +56,7 @@ import {
 } from "./require-slack-member";
 import { respondLater } from "./response-url";
 import { toServiceCtx } from "./service-adapter";
+import { PUBLISH_STATUS_UPDATE_ACTION } from "./welcome";
 import { resolveWorkspace } from "./workspace-resolver";
 
 const logger = getLogger("api-server");
@@ -289,6 +291,26 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
     });
   }
   const actionId = payload.actions?.[0]?.action_id;
+  if (actionId === PUBLISH_STATUS_UPDATE_ACTION) {
+    const shortcut = body as SlackShortcutPayload;
+    const teamId = shortcut.team?.id ?? shortcut.user?.team_id;
+    if (teamId && shortcut.user?.id) {
+      // Awaited, not backgrounded: `trigger_id` dies with the 3s ack window.
+      await openPublishStatusUpdateModal({
+        teamId,
+        slackUserId: shortcut.user.id,
+        triggerId: shortcut.trigger_id,
+        channelId: shortcut.channel?.id,
+        config,
+      }).catch((error) =>
+        logger.error("slack publish status update modal failed", {
+          error,
+          teamId,
+        }),
+      );
+    }
+    return c.json({ ok: true });
+  }
   if (
     actionId &&
     (actionId in CARD_BUTTONS || actionId === STATUS_PAGE_PAGE_ACTION)

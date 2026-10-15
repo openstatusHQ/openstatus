@@ -1520,3 +1520,86 @@ describe("pinned incident card buttons", () => {
     expect(row?.severity).toBe("major");
   });
 });
+
+describe("publish status update button", () => {
+  const app = createTestApp();
+  const created: number[] = [];
+
+  beforeEach(() => {
+    configureSlackDoubles();
+    redisStore.clear();
+  });
+
+  afterEach(async () => {
+    for (const id of created.splice(0)) {
+      await db
+        .delete(statusReportUpdate)
+        .where(eq(statusReportUpdate.statusReportId, id));
+      await db.delete(statusReport).where(eq(statusReport.id, id));
+    }
+  });
+
+  test("opens the form with no incident attached", async () => {
+    await signAndPost(app, {
+      type: "block_actions",
+      trigger_id: "trig-welcome",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      channel: { id: "C_NEW" },
+      actions: [{ action_id: "open_publish_status_update" }],
+    });
+    const open = slackTestState.calls.find((c) => c.method === "views.open");
+    expect(open?.args.trigger_id).toBe("trig-welcome");
+    const view = open?.args.view as {
+      callback_id?: string;
+      private_metadata?: string;
+      blocks: unknown[];
+    };
+    expect(view.callback_id).toBe("incident_card_status_page");
+    expect(JSON.parse(view.private_metadata ?? "{}")).toEqual({
+      channelId: "C_NEW",
+    });
+    expect(JSON.stringify(view.blocks)).not.toContain(
+      "linked to this incident",
+    );
+  });
+
+  test("publishing creates an unlinked report and posts it in the channel", async () => {
+    const title = `Welcome ${crypto.randomUUID()}`;
+    const res = await signAndPost(app, {
+      type: "view_submission",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      view: {
+        callback_id: "incident_card_status_page",
+        private_metadata: JSON.stringify({ channelId: "C_NEW" }),
+        state: {
+          values: {
+            page: { incident_card_page: { selected_option: { value: "1" } } },
+            title: { value: { value: title } },
+            status: { value: { selected_option: { value: "investigating" } } },
+            message: { value: { value: "We are looking into it." } },
+          },
+        },
+      },
+    });
+    expect(await res.text()).toBe("");
+    const report = await db
+      .select()
+      .from(statusReport)
+      .where(eq(statusReport.title, title))
+      .get();
+    expect(report?.pageId).toBe(1);
+    if (report) created.push(report.id);
+    const linked = await db
+      .select()
+      .from(incident)
+      .where(eq(incident.statusReportId, report?.id ?? -1))
+      .get();
+    expect(linked).toBeUndefined();
+    const post = slackTestState.calls.find(
+      (c) => c.method === "postMessage" && c.args.channel === "C_NEW",
+    );
+    expect(String(post?.args.text)).toContain("published a status page update");
+  });
+});

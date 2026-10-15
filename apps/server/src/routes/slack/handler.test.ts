@@ -199,6 +199,46 @@ describe("handleSlackEvent", () => {
     expect(publish?.args.user_id).toBe("U1");
   });
 
+  test("welcomes whoever adds the bot to a channel", async () => {
+    await settleBackgroundTasks();
+    slackTestState.calls = [];
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_join_${Date.now()}`,
+      event: {
+        type: "member_joined_channel",
+        user: "UBOT",
+        inviter: "U1",
+        channel: "C_NEW",
+      },
+    });
+    const welcome = await waitForCall("postEphemeral");
+    expect(welcome?.args.channel).toBe("C_NEW");
+    expect(welcome?.args.user).toBe("U1");
+    expect(JSON.stringify(welcome?.args.blocks)).toContain(
+      "open_publish_status_update",
+    );
+  });
+
+  test("stays quiet when the bot joins on its own or a person joins", async () => {
+    await settleBackgroundTasks();
+    slackTestState.calls = [];
+    for (const [i, event] of [
+      { user: "UBOT", channel: "C_INC" },
+      { user: "U2", inviter: "U1", channel: "C_NEW" },
+    ].entries()) {
+      await signAndPost(app, {
+        type: "event_callback",
+        team_id: "T_KNOWN",
+        event_id: `evt_join_quiet_${i}_${Date.now()}`,
+        event: { type: "member_joined_channel", ...event },
+      });
+    }
+    await settleBackgroundTasks();
+    expect(slackTestState.calls.length).toBe(0);
+  });
+
   test("ignores app_home_opened for the messages tab", async () => {
     // Earlier tests' events may still be posting; only this one's calls count.
     await settleBackgroundTasks();

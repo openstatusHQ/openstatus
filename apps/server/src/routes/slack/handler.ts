@@ -64,6 +64,7 @@ import {
   markThreadTitled,
   renameThread,
 } from "./thread-title";
+import { buildWelcomeBlocks, WELCOME_TEXT } from "./welcome";
 import { resolveWorkspace, type SlackWorkspace } from "./workspace-resolver";
 
 const logger = getLogger("api-server");
@@ -96,6 +97,8 @@ const slackEventSchema = z.object({
       subtype: z.string().optional(),
       text: z.string().optional(),
       user: z.string().optional(),
+      // `member_joined_channel`: absent when the member joined on their own.
+      inviter: z.string().optional(),
       channel: z.string().optional(),
       channel_type: z.string().optional(),
       ts: z.string().optional(),
@@ -371,6 +374,25 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
       channel: event.channel,
       slackUserId: event.user,
     });
+    return;
+  }
+
+  // The bot also joins channels on its own (incident channels, `subscribe`);
+  // those carry no inviter, so only a person adding it gets the welcome.
+  if (event.type === "member_joined_channel") {
+    const teamId = body.team_id;
+    const { channel, inviter } = event;
+    if (!teamId || !channel || !inviter) return;
+    const resolved = await resolveWorkspace(teamId);
+    if (!resolved || event.user !== resolved.botUserId) return;
+    if (inviter === resolved.botUserId) return;
+    await new WebClient(resolved.botToken).chat.postEphemeral({
+      channel,
+      user: inviter,
+      text: WELCOME_TEXT,
+      blocks: buildWelcomeBlocks(resolved.botUserId),
+    });
+    logger.info("slack welcome sent", { teamId, channel });
     return;
   }
 
