@@ -484,7 +484,13 @@ async function runAndPresent(args: {
     );
   }
 
-  const ctx = await toServiceCtx({ pending, actor });
+  const ctx = await toServiceCtx({
+    pending,
+    actor,
+    slack,
+    channelId,
+    messageTs,
+  });
   const flagId = tool.approval?.extraFlags?.[0]?.id;
   const flags: Record<string, boolean> = flagId ? { [flagId]: flag } : {};
 

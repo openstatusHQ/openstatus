@@ -400,10 +400,14 @@ export const incidentRouter = createTRPCRouter({
 
   draftPostmortem: protectedProcedure
     .meta({ track: Events.DraftManagedPostmortem })
-    .input(DraftPostmortemInput)
+    // An agent draft goes through `draftPostmortemWithAgent`; this is a person typing.
+    .input(DraftPostmortemInput.omit({ draftedBy: true }))
     .mutation(async ({ ctx, input }) => {
       try {
-        return await draftPostmortem({ ctx: toServiceCtx(ctx), input });
+        return await draftPostmortem({
+          ctx: toServiceCtx(ctx),
+          input: { ...input, draftedBy: "user" },
+        });
       } catch (err) {
         toTRPCError(err);
       }

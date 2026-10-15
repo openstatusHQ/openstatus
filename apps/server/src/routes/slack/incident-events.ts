@@ -30,6 +30,7 @@ import {
   mentionLabelsFromText,
   richTextToMarkdown,
 } from "./rich-text";
+import { permalinkFor } from "./service-adapter";
 import type { SlackWorkspace } from "./workspace-resolver";
 
 const logger = getLogger(["api-server", "slack", "incident-events"]);
@@ -220,10 +221,7 @@ async function noteMessage(args: {
         ? message.user
         : null;
     const [permalink, author] = await Promise.all([
-      slack.chat
-        .getPermalink({ channel, message_ts: ts })
-        .then((res) => res.permalink)
-        .catch(() => undefined),
+      permalinkFor(slack, channel, ts),
       authorSlackId
         ? resolveSlackMember({
             workspace: resolved.workspace,
@@ -235,12 +233,15 @@ async function noteMessage(args: {
         : null,
     ]);
 
-    const ctx: ServiceContext = { workspace: resolved.workspace, actor };
+    const ctx: ServiceContext = {
+      workspace: resolved.workspace,
+      actor: { ...actor, permalink },
+    };
     await addIncidentNote({
       ctx,
       input: {
         id: args.incidentId,
-        message: permalink ? `${body}\n\n[From Slack](${permalink})` : body,
+        message: body,
         createdAt: messageDate(ts),
         createdBy: author ?? undefined,
       },

@@ -149,7 +149,7 @@ type Actor = {
   photoUrl?: string | null;
 };
 
-/** Where the actor acted from, when not the dashboard itself. */
+/** Where the actor acted from, when not the dashboard itself. Shown with an avatar only. */
 export type ActorSource = {
   label: string;
   icon: React.ComponentType<React.ComponentProps<"svg">>;
@@ -159,7 +159,7 @@ export type ActorSource = {
 
 // Renders nothing for a missing actor; the caller phrases the sentence
 // without one. Email on hover when the name is shown instead. A source
-// overlays the avatar's corner so the sentence keeps its own verb.
+// overlays the avatar's corner; a compact row keeps its sentence clean.
 export function TimelineActor({
   actor,
   avatar = false,

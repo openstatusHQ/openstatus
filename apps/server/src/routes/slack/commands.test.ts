@@ -214,9 +214,9 @@ describe("/openstatus incident", () => {
         .from(incidentEvent)
         .where(eq(incidentEvent.incidentId, created.id))
         .all();
-      expect(events.some((e) => e.message === "rolled back the deploy")).toBe(
-        true,
-      );
+      const note = events.find((e) => e.message === "rolled back the deploy");
+      expect(note?.source).toBe("slack");
+      expect(note?.sourceRef).toBeNull();
     } finally {
       await db
         .delete(auditLog)
