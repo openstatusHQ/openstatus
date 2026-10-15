@@ -13,6 +13,7 @@ import {
   type IncidentEffects,
   incidentEffects,
   type OpenChannelResult,
+  openIncidentSlackChannel,
   type SlackClientFactory,
 } from "@openstatus/services/incident";
 import { WebClient } from "@slack/web-api";
@@ -161,14 +162,29 @@ export async function onIncidentDeclared(
   config: SlackConfig,
 ): Promise<OpenChannelResult> {
   trackSlackIncident(ctx, "declare");
-  const incident = await getIncident({ ctx, input: { id: incidentId } });
-  const result = (incident &&
-    (await afterIncidentDeclared({
-      ctx,
-      effects: await slackEffects(ctx, config),
-      incident,
-      openSlackChannel: true,
-    }))) ?? { status: "skipped" as const };
+  const effects = await slackEffects(ctx, config);
+  // The incident has committed: a failed read skips the commander email
+  // (best effort) but must not keep the channel from opening.
+  const incident = await getIncident({ ctx, input: { id: incidentId } }).catch(
+    (error: unknown) => {
+      logger.warn("slack incident read failed", { error, incidentId });
+      return undefined;
+    },
+  );
+  const result = (incident === undefined
+    ? await openIncidentSlackChannel({
+        ctx,
+        incidentId,
+        clientFor: effects.clientFor,
+        dashboardUrl: effects.dashboardUrl,
+      })
+    : incident &&
+      (await afterIncidentDeclared({
+        ctx,
+        effects,
+        incident,
+        openSlackChannel: true,
+      }))) ?? { status: "skipped" as const };
   logger.info("slack incident channel", { incidentId, ...result });
   return result;
 }

@@ -96,7 +96,7 @@ const { incidents, totalSize } = await client.incident.v1.IncidentService
   });
 ```
 
-Incidents are listed open first, then by most recently declared. Combine `statuses: [RESOLVED]` with `closed: false` to find the incidents that still need a postmortem.
+Incidents are listed by most recently declared. Combine `statuses: [RESOLVED]` with `closed: false` to find resolved incidents that are not closed yet, then call `getPostmortem` to check whether a postmortem is still needed.
 
 How long an incident lasted is `startedAt` to `resolvedAt` (or `closedAt` when canceled), or to now while it is ongoing.
 
@@ -162,7 +162,7 @@ Closing needs a resolved incident and an approved postmortem, or `skipPostmortem
 await client.incident.v1.IncidentService.deleteIncident({ id: "42" });
 ```
 
-Delete is for incidents declared by mistake: it only works while the incident is open and was never mitigated, resolved or closed (`deletable` is true). Cancel the incident otherwise; that keeps the record.
+Delete is for incidents declared by mistake: it only works while the incident is open and was never mitigated, resolved or closed (`deletable` is true). Otherwise, cancel an `OPEN` or `MITIGATED` incident instead; that keeps the record. A resolved incident has to be reopened before it can be canceled, and a closed one cannot be canceled.
 
 ## Permissions
 
@@ -178,4 +178,4 @@ Keys that were created before keys had an owner cannot close, delete or approve;
 
 ## Slack
 
-When the [Slack agent](/docs/guides/how-to-setup-slack-agent) is connected, changes made through the API are announced in the incident's channel, and closing, canceling or deleting the incident archives it, just like changes made in the dashboard. Incidents return `slackChannelUrl` when a channel is bound.
+When the [Slack agent](/docs/guides/how-to-setup-slack-agent) is connected, edits, status changes, closing, deleting and postmortem approvals made through the API are announced in the incident's channel (notes and status report links are not), and closing, canceling or deleting the incident archives it, just like changes made in the dashboard. Incidents return `slackChannelUrl` when a channel is bound.

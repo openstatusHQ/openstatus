@@ -1,6 +1,7 @@
 import { Code, ConnectError } from "@connectrpc/connect";
 import type { Workspace } from "@openstatus/db/src/schema";
 import {
+  ConcurrentUpdateError,
   ConflictError,
   ForbiddenError,
   NotFoundError,
@@ -98,6 +99,15 @@ describe("toConnectError", () => {
       toConnectError(new ConflictError("Incident #1 is closed")),
     );
     expect((err as ConnectError).code).toBe(Code.FailedPrecondition);
+  });
+
+  test("ConcurrentUpdateError → ConnectError(Aborted)", () => {
+    const err = captureThrow(() =>
+      toConnectError(
+        new ConcurrentUpdateError("Incident #1 changed concurrently"),
+      ),
+    );
+    expect((err as ConnectError).code).toBe(Code.Aborted);
   });
 
   test("re-throws an existing ConnectError unchanged", () => {

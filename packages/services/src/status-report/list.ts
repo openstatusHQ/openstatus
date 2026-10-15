@@ -90,6 +90,7 @@ export type ListStatusReportsResult = {
  */
 async function enrichReportsBatch(
   db: DB,
+  workspaceId: number,
   rows: StatusReport[],
 ): Promise<StatusReportWithRelations[]> {
   if (rows.length === 0) return [];
@@ -98,7 +99,7 @@ async function enrichReportsBatch(
   const pageIdsSet = new Set<number>();
   for (const r of rows) if (r.pageId != null) pageIdsSet.add(r.pageId);
   const pageIds = Array.from(pageIdsSet);
-  // Keeps the batch a fixed four statements when no report carries a pageId;
+  // Keeps the batch a fixed five statements when no report carries a pageId;
   // `inArray` with an empty list is not a valid predicate.
   const anyPage = pageIds.length > 0 ? inArray(pageTable.id, pageIds) : sql`0`;
   const anyPageComponent =
@@ -136,7 +137,12 @@ async function enrichReportsBatch(
       db
         .select({ id: incident.id, statusReportId: incident.statusReportId })
         .from(incident)
-        .where(inArray(incident.statusReportId, reportIds)),
+        .where(
+          and(
+            eq(incident.workspaceId, workspaceId),
+            inArray(incident.statusReportId, reportIds),
+          ),
+        ),
     ]);
   const incidentByReport = new Map<number, number>();
   for (const row of incidentRows) {
@@ -293,7 +299,7 @@ export async function listStatusReports(args: {
     totalSize = countRow?.count ?? totalSize;
   }
 
-  const items = await enrichReportsBatch(db, rows);
+  const items = await enrichReportsBatch(db, ctx.workspace.id, rows);
   return { items, totalSize };
 }
 
@@ -310,7 +316,7 @@ export async function getStatusReport(args: {
     id: input.id,
     workspaceId: ctx.workspace.id,
   });
-  const [enriched] = await enrichReportsBatch(db, [report]);
+  const [enriched] = await enrichReportsBatch(db, ctx.workspace.id, [report]);
   // `enrichReportsBatch` guarantees a 1:1 mapping for a non-empty input.
   // oxlint-disable-next-line typescript/no-non-null-assertion -- always non-null for len === 1
   return enriched!;

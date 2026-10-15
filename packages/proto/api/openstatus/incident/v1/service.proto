@@ -94,8 +94,11 @@ message DeclareIncidentRequest {
     not_in: [0]
   }];
 
-  // Short human summary (optional, up to 4000 characters).
-  optional string summary = 3 [(buf.validate.field).string.max_len = 4000];
+  // Short human summary (optional, 1-4000 characters).
+  optional string summary = 3 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 4000
+  }];
 
   // Email of the member who leads the response (optional, defaults to unassigned).
   optional string commander_email = 4 [
@@ -166,6 +169,17 @@ message ListIncidentsResponse {
 
 // UpdateIncidentRequest is the request to edit an incident.
 message UpdateIncidentRequest {
+  option (buf.validate.message).cel = {
+    id: "summary_or_clear_summary"
+    message: "set either summary or clear_summary, not both"
+    expression: "!(has(this.summary) && has(this.clear_summary) && this.clear_summary)"
+  };
+  option (buf.validate.message).cel = {
+    id: "commander_email_or_clear_commander"
+    message: "set either commander_email or clear_commander, not both"
+    expression: "!(has(this.commander_email) && has(this.clear_commander) && this.clear_commander)"
+  };
+
   // ID of the incident to update (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
 

@@ -1,5 +1,9 @@
 import { Code, ConnectError } from "@connectrpc/connect";
-import { type ServiceContext, ServiceError } from "@openstatus/services";
+import {
+  ConcurrentUpdateError,
+  type ServiceContext,
+  ServiceError,
+} from "@openstatus/services";
 import { ZodError } from "zod";
 
 import { tb } from "@/libs/clients";
@@ -39,6 +43,10 @@ export function toConnectError(err: unknown): never {
       `Invalid request: ${err.message}`,
       Code.InvalidArgument,
     );
+  }
+  // A lost race is retryable; other conflicts need the caller to change state.
+  if (err instanceof ConcurrentUpdateError) {
+    throw new ConnectError(err.message, Code.Aborted);
   }
   if (err instanceof ServiceError) {
     switch (err.code) {

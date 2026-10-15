@@ -90,6 +90,9 @@ export const ListIncidentEventsInput = IncidentIdInput.extend({
 });
 export type ListIncidentEventsInput = z.infer<typeof ListIncidentEventsInput>;
 
+export const GetIncidentEventInput = IncidentIdInput.extend({ eventId: id });
+export type GetIncidentEventInput = z.infer<typeof GetIncidentEventInput>;
+
 export const BindIncidentSlackChannelInput = z.object({
   id,
   teamId: z.string().min(1),

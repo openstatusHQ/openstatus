@@ -1,7 +1,7 @@
 import type { ServiceImpl } from "@connectrpc/connect";
 import { sendIncidentCommander } from "@openstatus/emails";
 import type { IncidentService } from "@openstatus/proto/incident/v1";
-import type { ServiceContext } from "@openstatus/services";
+import { NotFoundError, type ServiceContext } from "@openstatus/services";
 import {
   actorDisplayName,
   addIncidentNote,
@@ -16,6 +16,7 @@ import {
   declareIncident,
   deleteIncident,
   draftPostmortem,
+  getIncidentEvent,
   getIncidentOrThrow,
   getPostmortem,
   type IncidentEffects,
@@ -36,6 +37,7 @@ import { runInBackground } from "@/libs/background";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
+import { parseDate as parseRpcDate, parseId as parseRpcId } from "../../parse";
 import {
   incidentEventToProto,
   incidentSummaryToProto,
@@ -46,6 +48,7 @@ import {
 } from "./converters";
 import {
   conflictingFieldsError,
+  incidentNotFoundError,
   invalidCommanderError,
   invalidDateFormatError,
   invalidIdError,
@@ -56,22 +59,12 @@ const DASHBOARD_URL = resolveDashboardUrl({
   override: env.DASHBOARD_URL,
 });
 
-const NUMERIC_ID = /^\d+$/;
-
 function parseId(field: string, value: string): number {
-  const trimmed = value.trim();
-  // past 2^53 the digits round to a neighbouring id
-  const id = Number(trimmed);
-  if (!NUMERIC_ID.test(trimmed) || !Number.isSafeInteger(id)) {
-    throw invalidIdError(field, value);
-  }
-  return id;
+  return parseRpcId(value, () => invalidIdError(field, value));
 }
 
 function parseDate(value: string): Date {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) throw invalidDateFormatError(value);
-  return date;
+  return parseRpcDate(value, () => invalidDateFormatError(value));
 }
 
 async function resolveCommander(
@@ -105,6 +98,14 @@ function afterResponse(
     },
     { incidentId },
   );
+}
+
+/** Missing incidents carry the structured `INCIDENT_NOT_FOUND` reason. */
+function toIncidentError(err: unknown, incidentId: string): never {
+  if (err instanceof NotFoundError && err.entity === "incident") {
+    throw incidentNotFoundError(incidentId);
+  }
+  toConnectError(err);
 }
 
 async function readIncident(ctx: ServiceContext, id: number) {
@@ -155,7 +156,7 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
       const events = await listIncidentEvents({ ctx: sCtx, input: { id } });
       return { incident: incidentToProto(view, events) };
     } catch (err) {
-      toConnectError(err);
+      toIncidentError(err, req.id);
     }
   },
 
@@ -212,7 +213,7 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
       );
       return { incident: await readIncident(sCtx, id) };
     } catch (err) {
-      toConnectError(err);
+      toIncidentError(err, req.id);
     }
   },
 
@@ -236,7 +237,7 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
       );
       return { incident: await readIncident(sCtx, id) };
     } catch (err) {
-      toConnectError(err);
+      toIncidentError(err, req.id);
     }
   },
 
@@ -248,13 +249,15 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
         ctx: sCtx,
         input: { id, message: req.message },
       });
-      const events = await listIncidentEvents({ ctx: sCtx, input: { id } });
-      const event = events.find((e) => e.id === added.id);
+      const event = await getIncidentEvent({
+        ctx: sCtx,
+        input: { id, eventId: added.id },
+      });
       return {
         event: incidentEventToProto(event ?? { ...added, createdByUser: null }),
       };
     } catch (err) {
-      toConnectError(err);
+      toIncidentError(err, req.id);
     }
   },
 
@@ -271,7 +274,7 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
       });
       return { incident: await readIncident(sCtx, id) };
     } catch (err) {
-      toConnectError(err);
+      toIncidentError(err, req.id);
     }
   },
 
@@ -282,7 +285,7 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
       await unlinkIncidentStatusReport({ ctx: sCtx, input: { id } });
       return { incident: await readIncident(sCtx, id) };
     } catch (err) {
-      toConnectError(err);
+      toIncidentError(err, req.id);
     }
   },
 
@@ -299,7 +302,7 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
       );
       return { incident: await readIncident(sCtx, id) };
     } catch (err) {
-      toConnectError(err);
+      toIncidentError(err, req.id);
     }
   },
 
@@ -314,7 +317,7 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
       );
       return { success: true };
     } catch (err) {
-      toConnectError(err);
+      toIncidentError(err, req.id);
     }
   },
 
@@ -325,7 +328,7 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
       const row = await getPostmortem({ ctx: sCtx, input: { id } });
       return { postmortem: row ? postmortemToProto(row) : undefined };
     } catch (err) {
-      toConnectError(err);
+      toIncidentError(err, req.incidentId);
     }
   },
 
@@ -340,7 +343,7 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
       const row = await getPostmortem({ ctx: sCtx, input: { id } });
       return { postmortem: row ? postmortemToProto(row) : undefined };
     } catch (err) {
-      toConnectError(err);
+      toIncidentError(err, req.incidentId);
     }
   },
 
@@ -361,7 +364,7 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
         incident: await readIncident(sCtx, id),
       };
     } catch (err) {
-      toConnectError(err);
+      toIncidentError(err, req.incidentId);
     }
   },
 };

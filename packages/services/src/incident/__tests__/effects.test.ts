@@ -165,7 +165,7 @@ describe("notifyIncidentCommander", () => {
       await notifyIncidentCommander({
         ctx: ctxFor(tx),
         effects,
-        incidentId: row.id,
+        incident: row,
       });
       expect(emails).toHaveLength(1);
       expect(emails[0]).toMatchObject({
@@ -175,9 +175,26 @@ describe("notifyIncidentCommander", () => {
         assignedBy: "Jane Doe",
         url: `https://dash.test/incidents/${row.id}`,
       });
-      expect(emails[0]?.idempotencyKey).toBe(
-        `incident-commander:${row.id}:${memberId}:${row.updatedAt.getTime()}`,
+      expect(emails[0]?.idempotencyKey).toMatch(
+        new RegExp(`^incident-commander:${row.id}:${memberId}:[1-9]\\d*$`),
       );
+    });
+  });
+
+  test("each reassignment gets its own idempotency key", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx, memberId);
+      const ctx = ctxFor(tx);
+      const { effects, emails } = makeEffects();
+      await notifyIncidentCommander({ ctx, effects, incident: row });
+      await updateIncident({ ctx, input: { id: row.id, commanderId: null } });
+      const again = await updateIncident({
+        ctx,
+        input: { id: row.id, commanderId: memberId },
+      });
+      await notifyIncidentCommander({ ctx, effects, incident: again });
+      expect(emails).toHaveLength(2);
+      expect(emails[0]?.idempotencyKey).not.toBe(emails[1]?.idempotencyKey);
     });
   });
 
@@ -188,7 +205,7 @@ describe("notifyIncidentCommander", () => {
       await notifyIncidentCommander({
         ctx: ctxFor(tx),
         effects,
-        incidentId: row.id,
+        incident: row,
       });
       expect(emails).toHaveLength(0);
     });
@@ -201,7 +218,7 @@ describe("notifyIncidentCommander", () => {
       await notifyIncidentCommander({
         ctx: ctxFor(tx),
         effects,
-        incidentId: row.id,
+        incident: row,
       });
       expect(emails).toHaveLength(0);
     });
@@ -214,7 +231,7 @@ describe("notifyIncidentCommander", () => {
       await notifyIncidentCommander({
         ctx: ctxFor(tx),
         effects,
-        incidentId: row.id,
+        incident: row,
       });
     });
   });
@@ -334,6 +351,10 @@ describe("channel announcements", () => {
       await connectSlack(tx);
       const row = await declare(tx);
       await bind(tx, row.id);
+      await tx
+        .update(incident)
+        .set({ status: "mitigated" })
+        .where(eq(incident.id, row.id));
       const { effects, calls } = makeEffects();
       await afterIncidentStatusChanged({
         ctx: ctxFor(tx),
@@ -346,6 +367,7 @@ describe("channel announcements", () => {
       expect(calls[0]?.args.text).toBe(
         "Jane marked the incident *mitigated*.\n>rolled back",
       );
+      expect(calls[1]?.args.topic).toContain("· mitigated ·");
     });
   });
 

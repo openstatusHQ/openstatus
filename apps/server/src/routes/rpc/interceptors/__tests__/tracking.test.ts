@@ -492,7 +492,8 @@ describe("IncidentService tracking", () => {
     await Promise.resolve();
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.DeclareManagedIncident,
-      additionalProps: { source: "api", severity: "critical" },
+      source: "api",
+      severity: "critical",
     });
   });
 
@@ -510,7 +511,8 @@ describe("IncidentService tracking", () => {
     await Promise.resolve();
     expect(mockTrack).toHaveBeenCalledWith({
       ...Events.ChangeManagedIncidentStatus,
-      additionalProps: { source: "api", status: "resolved" },
+      source: "api",
+      status: "resolved",
     });
   });
 });

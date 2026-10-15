@@ -1,13 +1,14 @@
-import type {
-  Incident,
-  IncidentSeverity,
-  IncidentStatus,
+import { and, desc, eq, inArray } from "@openstatus/db";
+import {
+  type Incident,
+  type IncidentSeverity,
+  type IncidentStatus,
+  incidentEvent,
+  user,
 } from "@openstatus/db/src/schema";
 
-import { displayName } from "../attribution";
 import { type ServiceContext, getReadDb, tryGetActorUserId } from "../context";
 import { userDisplayName } from "./internal";
-import { getIncident } from "./list";
 import {
   type OpenChannelResult,
   type SlackClientFactory,
@@ -64,7 +65,12 @@ export function resolveDashboardUrl(env: {
   nodeEnv?: string;
   override?: string;
 }): string {
-  if (env.override) return env.override.replace(/\/+$/, "");
+  if (env.override) {
+    // a loop, not /\/+$/: that regex backtracks quadratically on many slashes
+    let end = env.override.length;
+    while (end > 0 && env.override[end - 1] === "/") end--;
+    return env.override.slice(0, end);
+  }
   return env.nodeEnv === "production"
     ? "https://app.openstatus.dev"
     : "http://localhost:3001";
@@ -87,40 +93,69 @@ export function quoteNote(note: string | undefined): string {
   return note ? `\n>${escapeMrkdwn(note).replaceAll("\n", "\n>")}` : "";
 }
 
-/** Best effort: a failed email never fails the mutation that assigned them. */
+type CommanderSnapshot = Pick<
+  Incident,
+  "id" | "title" | "severity" | "commanderId"
+>;
+
+/**
+ * Best effort: a failed email never fails the mutation that assigned them.
+ * Reads the recipient from the mutation's own snapshot, never a reload, so an
+ * overlapping reassignment can't redirect this email to the later commander.
+ */
 export async function notifyIncidentCommander(
-  args: EffectArgs & { incidentId: number },
+  args: EffectArgs & { incident: CommanderSnapshot },
 ): Promise<void> {
-  const { ctx, effects, incidentId } = args;
+  const { ctx, effects, incident } = args;
+  const commanderId = incident.commanderId;
+  if (commanderId === null) return;
+  if (commanderId === tryGetActorUserId(ctx.actor)) return;
   try {
-    const row = await getIncident({ ctx, input: { id: incidentId } });
-    const commander = row?.commander;
-    if (!row || !commander?.email) return;
-    if (commander.id === tryGetActorUserId(ctx.actor)) return;
+    const db = getReadDb(ctx);
+    const commander = await db
+      .select({ email: user.email, deletedAt: user.deletedAt })
+      .from(user)
+      .where(eq(user.id, commanderId))
+      .get();
+    if (!commander?.email || commander.deletedAt) return;
+    // Each assignment writes its own event, so its id is unique per
+    // assignment yet stable if this effect is retried.
+    const assignment = await db
+      .select({ id: incidentEvent.id })
+      .from(incidentEvent)
+      .where(
+        and(
+          eq(incidentEvent.incidentId, incident.id),
+          inArray(incidentEvent.type, ["declared", "commander_changed"]),
+        ),
+      )
+      .orderBy(desc(incidentEvent.id))
+      .get();
     await effects.sendCommanderEmail({
       to: commander.email,
-      incidentTitle: row.title,
-      severity: row.severity,
+      incidentTitle: incident.title,
+      severity: incident.severity,
       workspaceName: ctx.workspace.name ?? ctx.workspace.slug,
       assignedBy: effects.assignedBy,
-      url: incidentDashboardUrl(effects.dashboardUrl, row.id),
-      idempotencyKey: `incident-commander:${row.id}:${commander.id}:${row.updatedAt.getTime()}`,
+      url: incidentDashboardUrl(effects.dashboardUrl, incident.id),
+      idempotencyKey: `incident-commander:${incident.id}:${commanderId}:${assignment?.id ?? 0}`,
     });
   } catch (err) {
-    console.warn("incident commander email failed", { incidentId, err });
+    console.warn("incident commander email failed", {
+      incidentId: incident.id,
+      err,
+    });
   }
 }
 
 export async function afterIncidentDeclared(
   args: EffectArgs & {
-    incident: Pick<Incident, "id" | "commanderId">;
+    incident: CommanderSnapshot;
     openSlackChannel: boolean;
   },
 ): Promise<OpenChannelResult | undefined> {
   const { ctx, effects, incident } = args;
-  if (incident.commanderId !== null) {
-    await notifyIncidentCommander({ ctx, effects, incidentId: incident.id });
-  }
+  await notifyIncidentCommander({ ctx, effects, incident });
   if (!args.openSlackChannel) return undefined;
   return openIncidentSlackChannel({
     ctx,
@@ -173,9 +208,8 @@ export async function afterIncidentUpdated(
   const commanderChanged = after.commanderId !== before.commanderId;
   let commanderName: string | null = null;
   if (commanderChanged && after.commanderId !== null) {
-    await notifyIncidentCommander({ ctx, effects, incidentId: after.id });
-    const fresh = await getIncident({ ctx, input: { id: after.id } });
-    commanderName = fresh?.commander ? displayName(fresh.commander) : null;
+    await notifyIncidentCommander({ ctx, effects, incident: after });
+    commanderName = await userDisplayName(getReadDb(ctx), after.commanderId);
   }
   const changes = describeIncidentChanges(before, after, commanderName);
   if (!changes.length) return;

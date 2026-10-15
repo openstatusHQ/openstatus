@@ -763,7 +763,7 @@ describe("IncidentService: list", () => {
       owner,
     );
     const ids = all.incidents.map((i) => i.id);
-    expect(ids.indexOf(open)).toBeLessThan(ids.indexOf(resolved));
+    expect(ids.indexOf(open)).toBeGreaterThan(ids.indexOf(resolved));
     expect(all.totalSize).toBe(all.incidents.length);
 
     const page1 = await rpc(

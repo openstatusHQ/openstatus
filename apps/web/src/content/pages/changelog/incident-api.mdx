@@ -15,7 +15,7 @@ Everything you do from the dashboard works from your scripts and integrations to
 - Add timeline notes, link the public status report, and write and approve the postmortem.
 - Close the incident, or delete one declared by mistake.
 
-Changes made through the API send the same commander emails and Slack channel messages as the dashboard. `createStatusReport` now takes an `incidentId`, and status reports return the incident they are linked to.
+Changes made through the API send the same commander emails and Slack channel messages as the dashboard. `createStatusReport` now takes an `incidentId`, and status reports return their linked `incidentId`.
 
 Read the [Incident Service guide](/docs/sdk/nodejs/incident-service) to get started.
 

@@ -26,7 +26,7 @@ export {
   unlinkIncidentFromStatusReport,
   unlinkIncidentStatusReport,
 } from "./link-status-report";
-export { listIncidentEvents } from "./list-events";
+export { getIncidentEvent, listIncidentEvents } from "./list-events";
 export { clearIncidentCommander } from "./members";
 export {
   type ClaimOnce,
