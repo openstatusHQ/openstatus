@@ -146,36 +146,41 @@ export function buildDeclareIncidentModal(args: {
   };
 }
 
-function noticeModal(text: string, blocks?: Block[]): View {
+export function noticeModal(
+  text: string,
+  blocks?: Block[],
+  title = "Declare an incident",
+): View {
   return {
     type: "modal",
-    title: { type: "plain_text", text: "Declare an incident" },
+    title: { type: "plain_text", text: title },
     close: { type: "plain_text", text: "Close" },
     blocks: blocks ?? [{ type: "section", text: { type: "mrkdwn", text } }],
   };
 }
 
-type Gate =
+export type Gate =
   | { ok: true; resolved: SlackWorkspace; actor: SlackActor }
   | { ok: false; view: View; botToken?: string };
 
-/** Everything the modal needs before it can declare; a notice view otherwise. */
-async function gate(
+/** Everything a modal needs before it can write; a notice view otherwise. */
+export async function gate(
   teamId: string,
   slackUserId: string,
   config: SlackConfig,
+  title?: string,
 ): Promise<Gate> {
   const resolved = await resolveWorkspace(teamId);
   if (!resolved) {
     return {
       ok: false,
-      view: noticeModal(NOT_CONNECTED),
+      view: noticeModal(NOT_CONNECTED, undefined, title),
     };
   }
   if (!slackAgentAllowed(resolved.workspace)) {
     return {
       ok: false,
-      view: noticeModal(planRequiredMessage(config).text),
+      view: noticeModal(planRequiredMessage(config).text, undefined, title),
       botToken: resolved.botToken,
     };
   }
@@ -193,7 +198,7 @@ async function gate(
     });
     return {
       ok: false,
-      view: noticeModal(LINK_ACCOUNT_TEXT, buildLinkAccountBlocks(url)),
+      view: noticeModal(LINK_ACCOUNT_TEXT, buildLinkAccountBlocks(url), title),
       botToken: resolved.botToken,
     };
   }
@@ -232,7 +237,7 @@ export async function openDeclareIncidentModal(args: {
   });
 }
 
-type StateValues = Record<
+export type StateValues = Record<
   string,
   Record<
     string,
@@ -240,6 +245,7 @@ type StateValues = Record<
       value?: string | null;
       selected_option?: { value: string } | null;
       selected_user?: string | null;
+      selected_options?: { value: string }[] | null;
     }
   >
 >;
