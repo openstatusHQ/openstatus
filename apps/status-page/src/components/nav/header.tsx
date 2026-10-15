@@ -137,7 +137,6 @@ export function Header({
             </StatusPageGetInTouchIcon>
           ) : null}
           <StatusUpdates
-            types={page?.statusUpdateTypes ?? []}
             onSubscribe={async (values) => {
               await subscribeMutation.mutateAsync({ slug: domain, ...values });
             }}
