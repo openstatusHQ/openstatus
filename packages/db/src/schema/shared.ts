@@ -233,6 +233,7 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
       .nullable()
       .prefault("free")
       .transform((val) => val ?? "free"),
+    emailSubscriptionsEnabled: z.boolean(),
     whiteLabel: z.boolean().prefault(false),
   })
   .omit({ password: true });

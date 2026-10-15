@@ -522,6 +522,8 @@ export const statusPageRouter = createTRPCRouter({
         statusReports,
         maintenances,
         workspacePlan: _page.workspace.plan,
+        emailSubscriptionsEnabled:
+          ws.data?.limits["status-subscribers"] ?? false,
         status,
         lastEvents,
         openEvents,

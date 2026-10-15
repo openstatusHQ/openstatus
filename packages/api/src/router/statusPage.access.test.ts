@@ -147,6 +147,25 @@ describe("statusPage over HTTP", () => {
 });
 
 describe("statusPage access gate", () => {
+  test("public page exposes effective email subscription capability", async () => {
+    const enabled = await createTestWorkspace({
+      plan: "free",
+      limits: JSON.stringify({ "status-subscribers": true }),
+    });
+    const enabledPage = await createPage(enabled.workspace.id);
+    const enabledResult = await caller().statusPage.get({
+      slug: enabledPage.slug,
+    });
+    expect(enabledResult?.emailSubscriptionsEnabled).toBe(true);
+
+    const disabled = await createTestWorkspace({ plan: "free" });
+    const disabledPage = await createPage(disabled.workspace.id);
+    const disabledResult = await caller().statusPage.get({
+      slug: disabledPage.slug,
+    });
+    expect(disabledResult?.emailSubscriptionsEnabled).toBe(false);
+  });
+
   for (const accessType of Object.keys(authorized) as (keyof typeof slugs)[]) {
     test(`${accessType}: authorized caller gets the full page`, async () => {
       const c = authorized[accessType]();
