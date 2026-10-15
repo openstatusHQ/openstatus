@@ -21,8 +21,11 @@ export function eventOrigin(event: {
   sourceRef: string | null;
   message: string | null;
 }): { origin?: EventOrigin; message: string | null } {
+  // Only Slack wrote the suffix; elsewhere it is the author's own text.
   const legacy =
-    event.type === "note" && event.message
+    event.type === "note" &&
+    event.message &&
+    (event.source === null || event.source === "slack")
       ? FROM_SLACK.exec(event.message)?.[1]
       : undefined;
   const message = legacy

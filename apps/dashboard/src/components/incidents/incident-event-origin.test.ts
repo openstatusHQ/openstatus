@@ -98,4 +98,15 @@ describe("eventOrigin", () => {
       ).toBeUndefined();
     }
   });
+
+  it("keeps the suffix text on a note written outside Slack", () => {
+    expect(
+      eventOrigin({
+        type: "note",
+        source: "dashboard",
+        sourceRef: null,
+        message: LEGACY,
+      }),
+    ).toEqual({ origin: undefined, message: LEGACY });
+  });
 });
