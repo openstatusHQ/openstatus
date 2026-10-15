@@ -111,6 +111,7 @@ export async function appendIncidentEvent(
       type: args.type,
       message: args.message ?? null,
       source: args.source ?? actorSource(ctx.actor),
+      // A request's own origin (a Slack message) beats the actor's identity.
       sourceRef:
         args.sourceRef !== undefined
           ? args.sourceRef

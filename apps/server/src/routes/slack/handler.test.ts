@@ -431,7 +431,10 @@ describe("handleSlackEvent", () => {
         ts,
       },
     });
-    await new Promise((r) => setTimeout(r, 100));
+    const deadline = Date.now() + 5000;
+    while (options === undefined && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
 
     expect(options?.originRef).toBe(
       `https://slack.test/archives/C1/p${ts.replace(".", "")}`,

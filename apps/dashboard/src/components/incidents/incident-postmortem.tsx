@@ -145,9 +145,7 @@ export function IncidentPostmortem({
         value={content}
         onChange={(e) => setDraft(e.target.value)}
         onSubmit={
-          canSave
-            ? () => save.mutate({ id: incident.id, content, draftedBy: "user" })
-            : undefined
+          canSave ? () => save.mutate({ id: incident.id, content }) : undefined
         }
       />
       <ComposerPreview value={content} />
@@ -195,9 +193,7 @@ export function IncidentPostmortem({
               size="sm"
               variant={canApprove ? "outline" : "default"}
               disabled={!canSave}
-              onClick={() =>
-                save.mutate({ id: incident.id, content, draftedBy: "user" })
-              }
+              onClick={() => save.mutate({ id: incident.id, content })}
             >
               Save
             </Button>
