@@ -159,7 +159,7 @@ export type ActorSource = {
 
 // Renders nothing for a missing actor; the caller phrases the sentence
 // without one. Email on hover when the name is shown instead. A source
-// overlays the avatar's corner, or follows the name as "via …" without one.
+// overlays the avatar's corner, or follows the name without one.
 export function TimelineActor({
   actor,
   avatar = false,
@@ -186,7 +186,7 @@ export function TimelineActor({
       {avatar ? (
         <span className="relative shrink-0">
           <UserAvatar name={label} src={actor.photoUrl} className="size-5" />
-          {source ? <TimelineActorSource source={source} /> : null}
+          {source ? <TimelineActorSource source={source} overlay /> : null}
         </span>
       ) : null}
       {!actor.email || actor.email === label ? (
@@ -204,40 +204,36 @@ export function TimelineActor({
           <TooltipContent side="top">{actor.email}</TooltipContent>
         </Tooltip>
       )}
-      {source && !avatar ? <TimelineActorVia source={source} /> : null}
+      {source && !avatar ? <TimelineActorSource source={source} /> : null}
     </span>
   );
 }
 
-function TimelineActorVia({ source }: { source: ActorSource }) {
-  return (
-    <span className="text-muted-foreground shrink-0 font-normal">
-      via{" "}
-      {source.href ? (
-        <a
-          href={source.href}
-          target="_blank"
-          rel="noreferrer"
-          className="decoration-muted-foreground/50 hover:text-foreground underline decoration-dashed underline-offset-2"
-        >
-          {source.label}
-        </a>
-      ) : (
-        source.label
-      )}
-    </span>
-  );
-}
-
-function TimelineActorSource({ source }: { source: ActorSource }) {
+function TimelineActorSource({
+  source,
+  overlay = false,
+}: {
+  source: ActorSource;
+  /** Badge on the avatar's corner instead of an icon after the name. */
+  overlay?: boolean;
+}) {
   const className = cn(
-    "text-foreground absolute -right-1 -bottom-1 flex size-3 items-center justify-center rounded-full ring-1",
-    // fill and ring match the surface behind so the badge reads as a cut-out
-    "bg-background ring-background in-data-[slot=timeline-card]:bg-card in-data-[slot=timeline-card]:ring-card",
+    "flex shrink-0 items-center justify-center",
     "focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px]",
+    overlay
+      ? [
+          "text-foreground absolute -right-1 -bottom-1 size-3 rounded-full ring-1",
+          // fill and ring match the surface behind so the badge reads as a cut-out
+          "bg-background ring-background in-data-[slot=timeline-card]:bg-card in-data-[slot=timeline-card]:ring-card",
+        ]
+      : "text-muted-foreground hover:text-foreground size-4 rounded-sm",
   );
   // brand icons carry an svg <title>; no pointer events keeps the native tooltip away
-  const icon = <source.icon className="pointer-events-none size-2" />;
+  const icon = (
+    <source.icon
+      className={cn("pointer-events-none", overlay ? "size-2" : "size-3")}
+    />
+  );
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -247,7 +243,7 @@ function TimelineActorSource({ source }: { source: ActorSource }) {
             target="_blank"
             rel="noreferrer"
             aria-label={`Open in ${source.label}`}
-            className={cn(className, "hover:bg-muted")}
+            className={cn(className, overlay && "hover:bg-muted")}
           >
             {icon}
           </a>
