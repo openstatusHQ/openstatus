@@ -20,6 +20,7 @@ type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
 const FLAVOR_LABELS = {
   slack: "Slack",
   discord: "Discord",
+  teams: "Microsoft Teams",
   generic: "Webhook",
 } as const;
 

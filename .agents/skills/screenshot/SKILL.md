@@ -1,6 +1,6 @@
 ---
 name: screenshot
-description: Screenshot pages of the local dev server of any Next.js app here (dashboard, marketing web, status page) in light and dark, logged in where needed. Use after any visible change, when asked to "take a screenshot", "show me", or to verify a layout before reporting it done.
+description: Screenshot pages of the local dev server of any Next.js app here (dashboard, marketing web, status page) on desktop and mobile, logged in where needed. Use after any visible change, when asked to "take a screenshot", "show me", or to verify a layout before reporting it done.
 ---
 
 # Screenshots
@@ -9,7 +9,8 @@ The engine is [agent-browser](https://github.com/vercel-labs/agent-browser),
 a CLI that drives Chrome over CDP. Two ways in:
 
 - `scripts/screenshot.mjs` for the standard evidence shots. It logs in with
-  a seeded session, shoots light and dark at 2×, hides dev-only chrome,
+  a seeded session, shoots desktop (1400 px, 2×) and mobile (390 px,
+  3×, iPhone user agent) in light, hides dev-only chrome,
   takes the element or the page, and writes a gallery.
 - `agent-browser` directly for a state the script cannot reach: a dropdown
   open, a dialog, a filled composer. See **Interactive shots**.
@@ -22,7 +23,11 @@ node scripts/screenshot.mjs --app status-page /acme
 
 It prints the PNG paths and writes `.screenshots/index.html`, a gallery of
 every shot in the output directory. Read the PNGs with the Read tool and
-judge against `DESIGN.md`. Both themes by default; `--theme light` for one.
+judge against `DESIGN.md`. Files are `<name>.desktop.png` and
+`<name>.mobile.png`, where the name is the path with every run of non-word
+characters turned into `-` (`/incidents/1` gives `incidents-1`). Light only by
+default; `--theme dark` or `--theme both` adds `<name>.<device>.dark.png`.
+`--device desktop` or `--device mobile` shoots one.
 
 ## Cloud session (nothing installed, nothing running)
 
@@ -91,9 +96,10 @@ it and the script sets it itself when unset. No `agent-browser install`.
 | `--app` | `dashboard` | `dashboard`, `web` or `status-page`; sets base and whether to log in |
 | `<path> …` | required | one or more paths; on the status page the slug is the first segment in dev |
 | `--selector` | page | CSS selector; every visible match is shot on its own |
-| `--theme` | `both` | `light` or `dark` |
+| `--device` | `both` | `desktop` or `mobile` (390×844, 3×, iPhone 14 user agent) |
+| `--theme` | `light` | `dark` or `both` |
 | `--out` | `.screenshots` | gitignored |
-| `--width` | `1400` | viewport width, 2× device scale |
+| `--width` | `1400` | desktop viewport width, 2× device scale |
 | `--full-page` | off | full-page capture when no selector |
 | `--base` | per app | override the dev server URL |
 | `--db` | `http://127.0.0.1:8080` | sqld HTTP endpoint for the session lookup |
@@ -109,7 +115,8 @@ sequence below is what the script does, minus the gallery; `agent-browser
 skills get core` has the full command set.
 
 ```sh
-agent-browser set viewport 1400 1000 2        # 2× like the script
+agent-browser set viewport 1400 1000 2        # desktop, 2× like the script
+# mobile: agent-browser set device "iPhone 14" && agent-browser set viewport 390 844 3
 agent-browser set media dark                  # or light; next-themes follows it
 agent-browser cookies set authjs.session-token seed-session-max --url http://localhost:3001
 agent-browser cookies set workspace-slug love-openstatus --url http://localhost:3001
@@ -124,8 +131,8 @@ agent-browser close                           # sessions outlive the shell
 
 - `wait --load networkidle` times out against the dev server (the HMR
   socket never goes idle). Wait for fonts, an element (`wait @ref`) or text.
-- `--session <name>` isolates a browser; the script uses one per theme and
-  closes it. Close the ones you open.
+- `--session <name>` isolates a browser; the script uses one per device and
+  theme, and closes it. Close the ones you open.
 - agent-browser shoots viewports, not elements. The script's `--selector`
   pins the match to the viewport's top-left at its own size and hides the
   rest; for an ad-hoc element shot, `scrollintoview` and shoot the viewport.
@@ -152,15 +159,17 @@ re-seed to reset.
 
 - Each route is fetched once with the session cookies before the browser
   opens it, so a cold Turbopack compile (10s+) never trips a timeout.
-- The dev-only Tailwind breakpoint badge (`[data-slot=tailwind-indicator]`)
-  and the Next.js dev indicator are hidden before the capture.
+- The dev-only Tailwind breakpoint badge (`[data-slot=tailwind-indicator]`),
+  the Next.js dev indicator and the React Query devtools button (the beach
+  logo, `.tsqd-open-btn-container`) are hidden before the capture.
 - Not handled: avatar images from blocked hosts render as initials or alt
   text in the sandbox. Say so when it shows; do not chase it.
 
 ## Rules
 
 - Shoot the element, not the viewport, unless layout is the question.
-- Shoot before and after, both themes, and compare.
+- Shoot before and after, desktop and mobile, and compare. Add dark when
+  the change touches color.
 - Do not post, edit or delete on the fixtures unless the screenshot needs
   that state; say so when you do.
 - A redirect to `/login` means auth failed. Fix auth; do not screenshot the
@@ -178,8 +187,8 @@ session runs.
 - **Cloud session:** nothing leaves the sandbox except git, so the files
   vanish with the VM. Publish the generated gallery with the Artifact tool:
   `file_path` `.screenshots/index.html`, `root` `.screenshots`, and every PNG
-  it shows passed in `files` under its own name (`{"incidents-1-light.png":
-  "incidents-1-light.png", ...}`). The gallery is written as a page fragment
+  it shows passed in `files` under its own name (`{"incidents-1.desktop.png":
+  "incidents-1.desktop.png", ...}`). The gallery is written as a page fragment
   (title, style, body) for exactly that. Put the link in the final message.
   Never commit screenshots to make them visible.
 - **Review evidence for a PR:** when a reviewer needs the image, publish it

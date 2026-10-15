@@ -16,6 +16,10 @@ import {
 
 const SLACK_URL = "https://hooks.slack.com/services/T1/B1/XXX";
 const DISCORD_URL = "https://discord.com/api/webhooks/1/xxx";
+const TEAMS_WORKFLOWS_URL =
+  "https://prod-123.westus.logic.azure.com:443/workflows/abc/triggers/manual/paths/invoke";
+const TEAMS_LEGACY_URL =
+  "https://acme.webhook.office.com/webhookb2/abc@def/IncomingWebhook/xyz/pid";
 
 let fetchMock: Stub<typeof globalThis>;
 
@@ -330,6 +334,32 @@ describe("detectWebhookFlavor", () => {
   test("falls back to generic for unknown hosts", () => {
     expect(detectWebhookFlavor("https://example.com/webhook")).toBe("generic");
   });
+
+  test("detects Teams Workflows URLs on *.logic.azure.com", () => {
+    expect(detectWebhookFlavor(TEAMS_WORKFLOWS_URL)).toBe("teams");
+  });
+
+  test("detects legacy Office connector URLs on *.webhook.office.com", () => {
+    expect(detectWebhookFlavor(TEAMS_LEGACY_URL)).toBe("teams");
+  });
+
+  test("detects Power Automate URLs on *.powerplatform.com", () => {
+    expect(
+      detectWebhookFlavor(
+        "https://default-abc.flow.europe.powerplatform.com/manual/paths/invoke",
+      ),
+    ).toBe("teams");
+  });
+
+  test("does not misclassify URLs that merely contain a Teams host as a path segment", () => {
+    expect(
+      detectWebhookFlavor("https://example.com/proxy?to=webhook.office.com"),
+    ).toBe("generic");
+  });
+
+  test("falls back to generic for malformed URLs", () => {
+    expect(detectWebhookFlavor("not-a-url")).toBe("generic");
+  });
 });
 
 // ─── flavor-specific notification payloads ────────────────────────────────────
@@ -430,6 +460,84 @@ describe("sendWebhookNotifications (flavor detection)", () => {
     );
     expect(body.embeds[0].fields[1].value).toBe(
       "[Demo](https://demo.openstatus.dev)",
+    );
+  });
+
+  test("emits Teams Adaptive Card envelope for Teams URLs", async () => {
+    resolveFetch(new Response(null, { status: 200 }));
+    const sub = makeSub({
+      webhookUrl: TEAMS_WORKFLOWS_URL,
+      pageSlug: "demo",
+      pageName: "Demo",
+    });
+
+    await sendWebhookNotifications([sub], makeUpdate({ id: 42 }));
+
+    const [, init] = fetchMock.calls[0].args;
+    const body = JSON.parse(init?.body as string);
+    expect(body.type).toBe("message");
+    expect(body.attachments[0].contentType).toBe(
+      "application/vnd.microsoft.card.adaptive",
+    );
+    const card = body.attachments[0].content;
+    expect(card.type).toBe("AdaptiveCard");
+    expect(card.version).toBe("1.5");
+    expect(card.body[0]).toMatchObject({
+      type: "Container",
+      style: "attention", // "investigating" → red → attention
+      items: [
+        {
+          type: "TextBlock",
+          text: "Test Incident",
+          weight: "Bolder",
+        },
+      ],
+    });
+    expect(card.actions[0]).toMatchObject({
+      type: "Action.OpenUrl",
+      title: "View details",
+      url: "https://demo.openstatus.dev/events/report/42",
+    });
+  });
+
+  test("Teams payload includes manage/unsubscribe links in a TextBlock", async () => {
+    resolveFetch(new Response(null, { status: 200 }));
+    const sub = makeSub({
+      webhookUrl: TEAMS_LEGACY_URL,
+      token: "tok-123",
+      pageSlug: "demo",
+    });
+
+    await sendWebhookNotifications([sub], makeUpdate());
+
+    const [, init] = fetchMock.calls[0].args;
+    const stringified = init?.body as string;
+    expect(stringified).toContain(
+      "[Manage](https://demo.openstatus.dev/manage/tok-123)",
+    );
+    expect(stringified).toContain(
+      "[Unsubscribe](https://demo.openstatus.dev/unsubscribe/tok-123)",
+    );
+  });
+
+  test("Teams payload uses the maintenance deep-link and a blue/accent header for maintenance", async () => {
+    resolveFetch(new Response(null, { status: 200 }));
+    const sub = makeSub({
+      webhookUrl: TEAMS_WORKFLOWS_URL,
+      pageSlug: "demo",
+    });
+
+    await sendWebhookNotifications(
+      [sub],
+      makeUpdate({ id: 7, status: "maintenance" }),
+    );
+
+    const [, init] = fetchMock.calls[0].args;
+    const body = JSON.parse(init?.body as string);
+    const card = body.attachments[0].content;
+    expect(card.body[0].style).toBe("accent");
+    expect(card.actions[0].url).toBe(
+      "https://demo.openstatus.dev/events/maintenance/7",
     );
   });
 });
@@ -582,6 +690,22 @@ describe("buildTestPayload", () => {
   test("Discord flavor returns embeds", () => {
     const payload = buildTestPayload("discord") as { embeds: unknown[] };
     expect(payload.embeds).toBeInstanceOf(Array);
+  });
+
+  test("Teams flavor returns an Adaptive Card wrapped in a Teams message envelope", () => {
+    const payload = buildTestPayload("teams") as {
+      type: string;
+      attachments: {
+        contentType: string;
+        content: { type: string; version: string };
+      }[];
+    };
+    expect(payload.type).toBe("message");
+    expect(payload.attachments[0].contentType).toBe(
+      "application/vnd.microsoft.card.adaptive",
+    );
+    expect(payload.attachments[0].content.type).toBe("AdaptiveCard");
+    expect(payload.attachments[0].content.version).toBe("1.5");
   });
 
   test("generic flavor returns enveloped type='test' JSON", () => {

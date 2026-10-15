@@ -305,14 +305,31 @@ export async function openIncidentSlackChannel(args: {
   return { status: "unbound", channelId, error: lastError };
 }
 
+/** Action ids of the pinned card's buttons; the value is the incident id. */
+export const INCIDENT_CARD_ACTIONS = {
+  updateStatus: "incident_card_update_status",
+  statusPage: "incident_card_status_page",
+  open: "incident_card_open",
+} as const;
+
 export function headerBlocks(
-  incident: Pick<Incident, "title" | "severity" | "status" | "summary">,
+  incident: Pick<
+    Incident,
+    "id" | "title" | "severity" | "status" | "summary" | "closedAt"
+  >,
   url: string,
 ): SlackIncidentBlock[] {
   const status = `*Severity:* ${incident.severity}   *Status:* ${incident.status}`;
   const summary = incident.summary
     ? `\n${escapeTruncated(incident.summary, SECTION_TEXT_MAX - status.length - 1)}`
     : "";
+  const value = String(incident.id);
+  const open = {
+    type: "button" as const,
+    text: { type: "plain_text" as const, text: "Open in openstatus" },
+    url,
+    action_id: INCIDENT_CARD_ACTIONS.open,
+  };
   return [
     {
       type: "header",
@@ -323,11 +340,31 @@ export function headerBlocks(
     },
     { type: "section", text: { type: "mrkdwn", text: `${status}${summary}` } },
     {
+      type: "actions",
+      elements: incident.closedAt
+        ? [open]
+        : [
+            {
+              type: "button",
+              text: { type: "plain_text", text: "Update status" },
+              action_id: INCIDENT_CARD_ACTIONS.updateStatus,
+              value,
+            },
+            {
+              type: "button",
+              text: { type: "plain_text", text: "Update status page" },
+              action_id: INCIDENT_CARD_ACTIONS.statusPage,
+              value,
+            },
+            open,
+          ],
+    },
+    {
       type: "context",
       elements: [
         {
           type: "mrkdwn",
-          text: `<${url}|Open in openstatus> · Add a message to the timeline: ⋯ → *Add to incident timeline*, or react :pushpin:.`,
+          text: "Add a message to the timeline: ⋯ → *Add to incident timeline*, or react :pushpin:.",
         },
       ],
     },
