@@ -7,6 +7,8 @@ import {
   incidentEvent,
   selectWorkspaceSchema,
   slackUser,
+  statusReport,
+  statusReportUpdate,
   user,
   usersToWorkspaces,
   workspace as workspaceTable,
@@ -1177,5 +1179,182 @@ describe("add to incident timeline shortcut", () => {
     await addToTimeline({ ts: "514.1", text: "upgrade me" });
     expect(replies.at(-1)?.text).toContain("Upgrade");
     expect(await notes()).toHaveLength(0);
+  });
+});
+
+describe("pinned incident card buttons", () => {
+  const app = createTestApp();
+  let workspace: ReturnType<typeof selectWorkspaceSchema.parse>;
+  let incidentId: number;
+
+  beforeEach(async () => {
+    configureSlackDoubles();
+    redisStore.clear();
+    workspace = selectWorkspaceSchema.parse(
+      await db.query.workspace.findFirst({ where: eq(workspaceTable.id, 1) }),
+    );
+    const created = await declareIncident({
+      ctx: { workspace, actor: { type: "system", job: "test" } },
+      input: { title: `Card ${crypto.randomUUID()}`, severity: "major" },
+    });
+    incidentId = created.id;
+  });
+
+  afterEach(async () => {
+    const row = await db
+      .select({ statusReportId: incident.statusReportId })
+      .from(incident)
+      .where(eq(incident.id, incidentId))
+      .get();
+    await deleteIncidentEvents(incidentId);
+    await db
+      .delete(auditLog)
+      .where(
+        and(
+          eq(auditLog.entityType, "incident"),
+          eq(auditLog.entityId, String(incidentId)),
+        ),
+      );
+    await db.delete(incident).where(eq(incident.id, incidentId));
+    if (row?.statusReportId) {
+      await db
+        .delete(statusReportUpdate)
+        .where(eq(statusReportUpdate.statusReportId, row.statusReportId));
+      await db
+        .delete(statusReport)
+        .where(eq(statusReport.id, row.statusReportId));
+    }
+  });
+
+  function click(actionId: string) {
+    return signAndPost(app, {
+      type: "block_actions",
+      trigger_id: "trig-card",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      channel: { id: "C_INC" },
+      message: { ts: "77.7" },
+      actions: [{ action_id: actionId, value: String(incidentId) }],
+    });
+  }
+
+  function submit(callbackId: string, values: Record<string, unknown>) {
+    return signAndPost(app, {
+      type: "view_submission",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      view: {
+        callback_id: callbackId,
+        private_metadata: JSON.stringify({
+          incidentId,
+          channelId: "C_INC",
+          messageTs: "77.7",
+        }),
+        state: { values },
+      },
+    });
+  }
+
+  function openedView() {
+    const open = slackTestState.calls.find((c) => c.method === "views.open");
+    return open?.args.view as {
+      callback_id?: string;
+      private_metadata?: string;
+      blocks: unknown[];
+    };
+  }
+
+  test("Update status opens a form offering only allowed transitions", async () => {
+    await click("incident_card_update_status");
+    const view = openedView();
+    expect(view.callback_id).toBe("incident_card_update_status");
+    expect(JSON.parse(view.private_metadata ?? "{}")).toEqual({
+      incidentId,
+      channelId: "C_INC",
+      messageTs: "77.7",
+    });
+    const blocks = JSON.stringify(view.blocks);
+    for (const status of ["open", "mitigated", "resolved", "canceled"]) {
+      expect(blocks).toContain(`"value":"${status}"`);
+    }
+  });
+
+  test("submitting a new status moves the incident and redraws the card", async () => {
+    const res = await submit("incident_card_update_status", {
+      status: { value: { selected_option: { value: "mitigated" } } },
+      severity: { value: { selected_option: { value: "critical" } } },
+      note: { value: { value: "Rolled back" } },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("");
+    const row = await db
+      .select()
+      .from(incident)
+      .where(eq(incident.id, incidentId))
+      .get();
+    expect(row?.status).toBe("mitigated");
+    expect(row?.severity).toBe("critical");
+    const card = slackTestState.calls.find(
+      (c) => c.method === "update" && c.args.ts === "77.7",
+    );
+    expect(card?.args.channel).toBe("C_INC");
+    expect(JSON.stringify(card?.args.blocks)).toContain("*Status:* mitigated");
+  });
+
+  test("submitting without any change is rejected on the form", async () => {
+    const res = await submit("incident_card_update_status", {
+      status: { value: { selected_option: { value: "open" } } },
+      severity: { value: { selected_option: { value: "major" } } },
+    });
+    expect(await res.json()).toEqual({
+      response_action: "errors",
+      errors: { note: "Change the status or severity, or write an update." },
+    });
+  });
+
+  test("Update status page offers to create a report when none is linked", async () => {
+    await click("incident_card_status_page");
+    const view = openedView();
+    expect(view.callback_id).toBe("incident_card_status_page");
+    expect(JSON.stringify(view.blocks)).toContain('"block_id":"page"');
+  });
+
+  test("publishing creates a status report linked to the incident", async () => {
+    const res = await submit("incident_card_status_page", {
+      page: { incident_card_page: { selected_option: { value: "1" } } },
+      title: { value: { value: "Elevated errors" } },
+      status: { value: { selected_option: { value: "investigating" } } },
+      message: { value: { value: "We are looking into it." } },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("");
+    const row = await db
+      .select()
+      .from(incident)
+      .where(eq(incident.id, incidentId))
+      .get();
+    expect(row?.statusReportId).not.toBeNull();
+    const report = await db
+      .select()
+      .from(statusReport)
+      .where(eq(statusReport.id, row?.statusReportId ?? -1))
+      .get();
+    expect(report?.title).toBe("Elevated errors");
+    expect(report?.pageId).toBe(1);
+  });
+
+  test("with a linked report, the button adds an update to it", async () => {
+    await submit("incident_card_status_page", {
+      page: { incident_card_page: { selected_option: { value: "1" } } },
+      title: { value: { value: "Elevated errors" } },
+      status: { value: { selected_option: { value: "investigating" } } },
+      message: { value: { value: "We are looking into it." } },
+    });
+    slackTestState.calls = [];
+    await click("incident_card_status_page");
+    const view = openedView();
+    const meta = JSON.parse(view.private_metadata ?? "{}");
+    expect(meta.statusReportId).toBeGreaterThan(0);
+    expect(JSON.stringify(view.blocks)).not.toContain('"block_id":"page"');
   });
 });

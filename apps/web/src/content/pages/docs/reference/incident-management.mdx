@@ -80,6 +80,7 @@ Requires the [Slack agent](/docs/guides/how-to-setup-slack-agent), which is avai
 
 Declaring an incident, from Slack or the dashboard, opens a channel named `inc-YYYY-MM-DD-<title-slug>` (UTC date). The declarer is invited, the topic shows severity, status and a link to the incident, and the incident card is pinned.
 
+- Use the pinned card's buttons. **Update status** changes the status or severity, or posts an update to the channel and timeline. **Update status page** publishes a status report linked to the incident, or adds an update to the one already linked. You can notify subscribers from the same form. The card redraws with the new status after the change.
 - Add a message to the timeline from its ⋯ menu (**Add to incident timeline**) or by reacting with 📌 (`:pushpin:`). It becomes a timeline note, attributed to its author and linked back to Slack. Thread replies work too. The bot confirms with ✅.
 - Status changes are announced in the channel and the topic is kept in sync.
 - The channel is archived when the incident is closed or canceled.
