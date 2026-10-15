@@ -41,7 +41,7 @@ export default function Page() {
       onSuccess: (statusReport) => {
         if (statusReport.notifySubscribers) {
           sendStatusReportUpdateMutation.mutate({
-            id: statusReport.id,
+            id: statusReport.initialUpdateId,
           });
         }
         refetch();
