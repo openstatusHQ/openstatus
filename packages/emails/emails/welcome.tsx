@@ -3,7 +3,6 @@
 import { Link, Text } from "react-email";
 
 import { Footer } from "./_components/footer";
-import { formatDay } from "./_components/format";
 import { Heading } from "./_components/heading";
 import { Layout } from "./_components/layout";
 import { Signature } from "./_components/signature";
@@ -36,11 +35,7 @@ const links = [
   },
 ];
 
-export interface WelcomeEmailProps {
-  trialEndsAt?: Date;
-}
-
-const WelcomeEmail = ({ trialEndsAt }: WelcomeEmailProps = {}) => {
+const WelcomeEmail = () => {
   return (
     <Layout
       preview="Agents, docs and where to find us"
@@ -53,12 +48,6 @@ const WelcomeEmail = ({ trialEndsAt }: WelcomeEmailProps = {}) => {
         Thanks for signing up. A few places worth knowing about while you get
         set up.
       </Heading>
-      {trialEndsAt ? (
-        <Text style={styles.text}>
-          Your workspace is on a 14-day Starter trial until{" "}
-          {formatDay(trialEndsAt)}, no card needed.
-        </Text>
-      ) : null}
       <Steps
         label="Links"
         variant="dashed"
@@ -79,9 +68,5 @@ const WelcomeEmail = ({ trialEndsAt }: WelcomeEmailProps = {}) => {
     </Layout>
   );
 };
-
-WelcomeEmail.PreviewProps = {
-  trialEndsAt: new Date("2026-10-07T00:00:00Z"),
-} satisfies WelcomeEmailProps;
 
 export default WelcomeEmail;

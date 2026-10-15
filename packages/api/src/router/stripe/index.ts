@@ -1,4 +1,4 @@
-import { Events } from "@openstatus/analytics";
+import { Events, setupAnalytics } from "@openstatus/analytics";
 import { workspacePlans } from "@openstatus/db/src/schema";
 import type {
   AddonQuantityKey,
@@ -37,6 +37,12 @@ import {
   trialEndsAtOf,
 } from "./shared";
 import {
+  TRIAL_SKIP_MESSAGE,
+  type TrialSkipReason,
+  checkTrialEligibility,
+  trialCheckoutParams,
+} from "./trial";
+import {
   buildPlanChangeItems,
   getPlanFromPriceId,
   getPriceIdForFeature,
@@ -71,6 +77,23 @@ async function resolveWorkspaceCtx(opts: {
     db: opts.ctx.db,
   };
   return { ctx, email: access.email };
+}
+
+// The tracking middleware only fires on success, and a refused trial throws.
+async function trackSkipTrial(ctx: ServiceContext, reason: TrialSkipReason) {
+  const userId = "userId" in ctx.actor ? ctx.actor.userId : undefined;
+  try {
+    const analytics = await setupAnalytics({
+      userId: userId ? `usr_${userId}` : undefined,
+      workspaceId: String(ctx.workspace.id),
+      workspaceName: ctx.workspace.name || ctx.workspace.slug,
+      plan: ctx.workspace.plan,
+      source: "dashboard",
+    });
+    await analytics.track({ ...Events.SkipTrial, reason });
+  } catch (err) {
+    console.error("Failed to track trial_skipped:", err);
+  }
 }
 
 async function ensureStripeCustomer(ctx: ServiceContext, email: string | null) {
@@ -121,6 +144,10 @@ const checkoutSessionInput = z.object({
   interval: z.enum(billingIntervals).default("monthly"),
   successUrl: z.string().optional(),
   cancelUrl: z.string().optional(),
+  trial: z.boolean().default(false),
+  surface: z.enum(["billing", "plan_table", "upgrade_dialog"]).optional(),
+  // Stripe caps a metadata value at 500 characters.
+  intent: z.string().trim().max(500).optional(),
 });
 
 export const stripeRouter = createTRPCRouter({
@@ -173,8 +200,8 @@ export const stripeRouter = createTRPCRouter({
         }
         const parsed = checkoutSessionInput.safeParse(input);
         if (!parsed.success) return {};
-        const { plan, interval, currency } = parsed.data;
-        return { plan, interval, currency };
+        const { plan, interval, currency, trial, surface } = parsed.data;
+        return { plan, interval, currency, trial, surface };
       },
     })
     .input(checkoutSessionInput)
@@ -182,6 +209,32 @@ export const stripeRouter = createTRPCRouter({
       const resolved = await resolveWorkspaceCtx(opts);
       if (!resolved) return;
       const result = resolved.ctx.workspace;
+
+      // Checked before the customer exists, so a refused trial leaves no
+      // Stripe customer behind.
+      if (opts.input.trial) {
+        if (
+          opts.input.plan !== "starter" ||
+          opts.input.interval !== "monthly"
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "The trial is only available on Starter monthly.",
+          });
+        }
+        const eligibility = await checkTrialEligibility({
+          ctx: resolved.ctx,
+          email: resolved.email,
+        });
+        if (!eligibility.eligible) {
+          await trackSkipTrial(resolved.ctx, eligibility.reason);
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: TRIAL_SKIP_MESSAGE[eligibility.reason],
+          });
+        }
+      }
+
       const stripeId = await ensureStripeCustomer(resolved.ctx, resolved.email);
 
       const priceId = getPriceIdForPlan(opts.input.plan, opts.input.interval);
@@ -324,8 +377,15 @@ export const stripeRouter = createTRPCRouter({
           enabled: true,
         },
         mode: "subscription",
-        success_url: opts.input.successUrl || `${billingUrl}?success=true`,
+        success_url:
+          opts.input.successUrl ||
+          `${billingUrl}?${opts.input.trial ? "trial" : "success"}=true`,
         cancel_url: opts.input.cancelUrl || billingUrl,
+        ...(opts.input.trial &&
+          trialCheckoutParams({
+            surface: opts.input.surface,
+            intent: opts.input.intent || undefined,
+          })),
       });
 
       return { type: "checkout" as const, session };

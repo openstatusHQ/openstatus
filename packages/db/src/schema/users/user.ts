@@ -100,6 +100,7 @@ export const account = sqliteTable(
     primaryKey({
       columns: [account.provider, account.providerAccountId],
     }),
+    index("account_user_id_idx").on(account.userId),
   ],
 );
 
