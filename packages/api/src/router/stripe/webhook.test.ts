@@ -144,6 +144,14 @@ describe("stripe webhook emails", () => {
     };
   }
 
+  async function addMember(workspaceId: number) {
+    const member = await createUser();
+    const email = `member-${member.id}@example.test`;
+    await db.update(user).set({ email }).where(eq(user.id, member.id));
+    await addUserToWorkspace(member.id, workspaceId, "member");
+    return email;
+  }
+
   describe("customer.subscription.deleted", () => {
     test("live subscriptions left → no downgrade, no email", async () => {
       const s = await seed();
@@ -293,6 +301,75 @@ describe("stripe webhook emails", () => {
       expect(updateSubscription.calls[0].args).toEqual([
         sub.id,
         { metadata: { reminder_email_id: "email_reminder_1" } },
+      ]);
+    });
+
+    test("cancellation scheduled → members get a reminder 3 days before, id stored", async () => {
+      const s = await seed();
+      const memberEmail = await addMember(s.workspace.id);
+      const sub = subscription(s.stripeId, { cancel_at_period_end: true });
+      live = [sub];
+      send.restore();
+      stubs = stubs.filter((x) => x !== send);
+      let n = 0;
+      send = stub(resend.emails, "send", () =>
+        // biome-ignore lint/suspicious/noExplicitAny: Resend result double
+        Promise.resolve({ data: { id: `email_${n++}` }, error: null } as any),
+      );
+      stubs.push(send);
+
+      const evt = event("customer.subscription.updated", sub, {
+        cancel_at_period_end: false,
+      });
+      await caller().customerSubscriptionUpdated(evt);
+
+      assertSpyCalls(send, 3);
+      const [warning, options] = send.calls[2].args;
+      expect(warning.to).toEqual([memberEmail]);
+      expect(warning.subject).toContain("ends on");
+      expect(warning.react.props.owners).toEqual([s.ownerEmail]);
+      expect(new Date(warning.scheduledAt).getTime()).toBe(
+        (sub.items.data[0].current_period_end - 3 * DAY) * 1000,
+      );
+      expect(options).toEqual({
+        idempotencyKey: `stripe:${evt.event.id}:member-access-ending:0`,
+      });
+      assertSpyCalls(batch, 0);
+      expect(updateSubscription.calls[0].args).toEqual([
+        sub.id,
+        {
+          metadata: {
+            reminder_email_id: "email_1",
+            member_reminder_email_ids: "email_2",
+          },
+        },
+      ]);
+    });
+
+    test("true → false: member reminders are cancelled with the owner one", async () => {
+      const s = await seed();
+      const sub = subscription(s.stripeId, {
+        metadata: {
+          reminder_email_id: "email_owner",
+          member_reminder_email_ids: "email_m1,email_m2",
+        },
+      });
+      live = [sub];
+
+      await caller().customerSubscriptionUpdated(
+        event("customer.subscription.updated", sub, {
+          cancel_at_period_end: true,
+        }),
+      );
+
+      expect(cancelEmail.calls.map((c) => c.args[0])).toEqual([
+        "email_owner",
+        "email_m1",
+        "email_m2",
+      ]);
+      expect(updateSubscription.calls[0].args).toEqual([
+        sub.id,
+        { metadata: { reminder_email_id: "", member_reminder_email_ids: "" } },
       ]);
     });
 
@@ -560,6 +637,38 @@ describe("stripe webhook emails", () => {
       expect(options).toEqual({
         idempotencyKey: `stripe:${evt.event.id}:trial-ending`,
       });
+    });
+
+    test("no card → non-owner members are warned now; card on file → not", async () => {
+      const s = await seed();
+      const memberEmail = await addMember(s.workspace.id);
+
+      const evt = event(
+        "customer.subscription.trial_will_end",
+        subscription(s.stripeId, { status: "trialing", trial_end: trialEnd }),
+      );
+      await caller().customerSubscriptionTrialWillEnd(evt);
+
+      assertSpyCalls(send, 2);
+      const [warning, options] = send.calls[1].args;
+      expect(warning.to).toEqual([memberEmail]);
+      expect(warning.react.props.reason).toBe("trial");
+      expect(warning.scheduledAt).toBeUndefined();
+      expect(options).toEqual({
+        idempotencyKey: `stripe:${evt.event.id}:member-access-ending:0`,
+      });
+
+      await caller().customerSubscriptionTrialWillEnd(
+        event(
+          "customer.subscription.trial_will_end",
+          subscription(s.stripeId, {
+            status: "trialing",
+            trial_end: trialEnd,
+            default_payment_method: "pm_test_1",
+          }),
+        ),
+      );
+      assertSpyCalls(send, 3);
     });
 
     test("card on file → plan continues, no loss lines", async () => {

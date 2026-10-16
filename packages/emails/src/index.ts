@@ -20,6 +20,7 @@ export {
 } from "./send";
 export {
   billingRecipients,
+  scheduleMemberAccessEnding,
   schedulePlanEndingSoon,
   sendCancellationScheduled,
   sendMemberRemoved,
