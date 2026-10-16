@@ -83,7 +83,8 @@ const IMPACTS = {
 type Impact = keyof typeof IMPACTS;
 
 const metadataSchema = z.object({
-  incidentId: z.number().int(),
+  // Absent for a status page update published outside any incident.
+  incidentId: z.number().int().optional(),
   channelId: z.string().optional(),
   messageTs: z.string().optional(),
   statusReportId: z.number().int().optional(),
@@ -281,9 +282,9 @@ export function buildStatusReportUpdateModal(
   };
 }
 
-/** Creates a status report linked to the incident. */
+/** Creates a status report, linked to the incident when there is one. */
 export function buildStatusReportCreateModal(args: {
-  incident: Incident;
+  incident?: Incident;
   pages: PageOption[];
   pageId: number;
   components: ComponentOption[];
@@ -359,7 +360,14 @@ export function buildStatusReportCreateModal(args: {
           type: "plain_text_input",
           action_id: "value",
           max_length: TITLE_MAX,
-          initial_value: incident.title.slice(0, TITLE_MAX),
+          ...(incident
+            ? { initial_value: incident.title.slice(0, TITLE_MAX) }
+            : {
+                placeholder: {
+                  type: "plain_text" as const,
+                  text: "Elevated API error rates",
+                },
+              }),
         },
       },
       {
@@ -388,7 +396,9 @@ export function buildStatusReportCreateModal(args: {
         elements: [
           {
             type: "mrkdwn",
-            text: ":warning: Public: published on your status page and linked to this incident.",
+            text: incident
+              ? ":warning: Public: published on your status page and linked to this incident."
+              : ":warning: Public: published on your status page.",
           },
         ],
       },
@@ -398,14 +408,14 @@ export function buildStatusReportCreateModal(args: {
 
 async function statusPageModal(
   ctx: ServiceContext,
-  incident: Incident,
+  incident: Incident | undefined,
   meta: Metadata,
   pageId?: number,
 ): Promise<ModalView> {
-  if (incident.statusReport) {
+  if (incident?.statusReport) {
     return buildStatusReportUpdateModal(incident.statusReport, meta);
   }
-  if (incident.closedAt) {
+  if (incident?.closedAt) {
     return noticeModal(
       "This incident is closed.",
       undefined,
@@ -479,6 +489,38 @@ export async function openIncidentCardModal(args: {
   });
 }
 
+/** Opens the form to publish a status report that belongs to no incident. */
+export async function openPublishStatusUpdateModal(args: {
+  teamId: string;
+  slackUserId: string;
+  triggerId: string;
+  channelId?: string;
+  config: SlackConfig;
+}): Promise<void> {
+  const checked = await gate(
+    args.teamId,
+    args.slackUserId,
+    args.config,
+    STATUS_PAGE_TITLE,
+  );
+  if (!checked.ok) {
+    if (!checked.botToken) return;
+    await new WebClient(checked.botToken).views.open({
+      trigger_id: args.triggerId,
+      view: checked.view,
+    });
+    return;
+  }
+  const ctx: ServiceContext = {
+    workspace: checked.resolved.workspace,
+    actor: checked.actor,
+  };
+  await new WebClient(checked.resolved.botToken).views.open({
+    trigger_id: args.triggerId,
+    view: await statusPageModal(ctx, undefined, { channelId: args.channelId }),
+  });
+}
+
 /** A new status page was picked: reload the form with its components. */
 export async function changeStatusPagePage(args: {
   teamId: string;
@@ -502,8 +544,12 @@ export async function changeStatusPagePage(args: {
     workspace: checked.resolved.workspace,
     actor: checked.actor,
   };
-  const incident = await getIncident({ ctx, input: { id: meta.incidentId } });
-  if (!incident) return;
+  let incident: Incident | undefined;
+  if (meta.incidentId !== undefined) {
+    const found = await getIncident({ ctx, input: { id: meta.incidentId } });
+    if (!found) return;
+    incident = found;
+  }
   await new WebClient(checked.resolved.botToken).views.update({
     view_id: args.viewId,
     ...(args.hash ? { hash: args.hash } : {}),
@@ -555,7 +601,8 @@ async function refreshCard(
   config: SlackConfig,
 ): Promise<void> {
   const { ctx, slack, meta } = submitted;
-  if (!meta.channelId || !meta.messageTs) return;
+  if (meta.incidentId === undefined || !meta.channelId || !meta.messageTs)
+    return;
   const incident = await getIncident({ ctx, input: { id: meta.incidentId } });
   if (!incident) return;
   await slack.chat
@@ -602,7 +649,10 @@ export async function submitUpdateStatus(
   }
   const note = values.note?.value?.value?.trim() || undefined;
 
-  const incident = await getIncident({ ctx, input: { id: meta.incidentId } });
+  const incident =
+    meta.incidentId === undefined
+      ? undefined
+      : await getIncident({ ctx, input: { id: meta.incidentId } });
   if (!incident) {
     return {
       response_action: "update",
@@ -716,7 +766,6 @@ type StatusPageWrite = {
 function readStatusPageWrite(
   meta: Metadata,
   values: StateValues,
-  incidentId: number,
 ): StatusPageWrite | { error: Record<string, string> } {
   const message = values.message?.value?.value?.trim();
   if (!message)
@@ -772,7 +821,7 @@ function readStatusPageWrite(
             })),
           }
         : {}),
-      incidentId,
+      ...(meta.incidentId !== undefined ? { incidentId: meta.incidentId } : {}),
     },
   };
 }
@@ -812,7 +861,7 @@ export async function submitStatusPage(
   if (!("ctx" in submitted)) return submitted;
   const { ctx, meta, values } = submitted;
 
-  const write = readStatusPageWrite(meta, values, meta.incidentId);
+  const write = readStatusPageWrite(meta, values);
   if ("error" in write) {
     return { response_action: "errors", errors: write.error };
   }
@@ -853,13 +902,20 @@ export async function submitStatusPage(
         output: result.output,
         notify: notified,
       });
-      await announceIncidentChange({
-        ctx,
-        incidentId: meta.incidentId,
-        text: `${who(ctx)} updated the status page.\n${rendered}`,
-        clientFor: (token) => new WebClient(token),
-        dashboardUrl: config.dashboardUrl,
-      });
+      if (meta.incidentId !== undefined) {
+        await announceIncidentChange({
+          ctx,
+          incidentId: meta.incidentId,
+          text: `${who(ctx)} updated the status page.\n${rendered}`,
+          clientFor: (token) => new WebClient(token),
+          dashboardUrl: config.dashboardUrl,
+        });
+      } else if (meta.channelId) {
+        await submitted.slack.chat.postMessage({
+          channel: meta.channelId,
+          text: `${who(ctx)} published a status page update.\n${rendered}`,
+        });
+      }
     },
     { incidentId: meta.incidentId, toolName: write.toolName },
   );
