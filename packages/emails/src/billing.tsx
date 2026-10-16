@@ -178,13 +178,15 @@ export async function scheduleMemberAccessEnding(
 ): Promise<string[]> {
   const { to, eventId, schedule = true, now, ...props } = req;
   const scheduledAt = schedule ? reminderScheduledAt(props.endsAt, now) : null;
+  // Chunk keys must name the same members on a redelivery.
+  const recipients = [...to].sort();
   const ids: string[] = [];
-  for (let i = 0; i < to.length; i += RESEND_MAX_RECIPIENTS) {
+  for (let i = 0; i < recipients.length; i += RESEND_MAX_RECIPIENTS) {
     const id = await sendEmail(
       {
         from: SYSTEM_FROM,
         reply_to: SUPPORT_EMAIL,
-        to: to.slice(i, i + RESEND_MAX_RECIPIENTS),
+        to: recipients.slice(i, i + RESEND_MAX_RECIPIENTS),
         subject: memberAccessEndingSubject(props),
         react: <MemberAccessEndingEmail {...props} />,
       },

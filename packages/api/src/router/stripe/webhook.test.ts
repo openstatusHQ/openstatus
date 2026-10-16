@@ -309,6 +309,14 @@ describe("stripe webhook emails", () => {
       const memberEmail = await addMember(s.workspace.id);
       const sub = subscription(s.stripeId, { cancel_at_period_end: true });
       live = [sub];
+      send.restore();
+      stubs = stubs.filter((x) => x !== send);
+      let n = 0;
+      send = stub(resend.emails, "send", () =>
+        // biome-ignore lint/suspicious/noExplicitAny: Resend result double
+        Promise.resolve({ data: { id: `email_${n++}` }, error: null } as any),
+      );
+      stubs.push(send);
 
       const evt = event("customer.subscription.updated", sub, {
         cancel_at_period_end: false,
@@ -331,8 +339,8 @@ describe("stripe webhook emails", () => {
         sub.id,
         {
           metadata: {
-            reminder_email_id: "email_reminder_1",
-            member_reminder_email_ids: "email_reminder_1",
+            reminder_email_id: "email_1",
+            member_reminder_email_ids: "email_2",
           },
         },
       ]);

@@ -440,6 +440,26 @@ describe("send plumbing", () => {
     expect(ids.length).toBe(2);
   });
 
+  test("scheduleMemberAccessEnding chunks a stable order across redeliveries", async () => {
+    const req = {
+      eventId: "evt_1",
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "trial" as const,
+      owners: [],
+    };
+    await scheduleMemberAccessEnding({
+      ...req,
+      to: ["b@acme.dev", "a@acme.dev"],
+    });
+    await scheduleMemberAccessEnding({
+      ...req,
+      to: ["a@acme.dev", "b@acme.dev"],
+    });
+    expect(send.calls[0].args[0].to).toEqual(send.calls[1].args[0].to);
+  });
+
   test("scheduleMemberAccessEnding inside the lead window sends now, no ids", async () => {
     const ids = await scheduleMemberAccessEnding({
       to: ["a@acme.dev"],
