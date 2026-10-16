@@ -71,7 +71,10 @@ export async function bindIncidentSlackChannel(args: {
     await appendIncidentEvent(tx, ctx, {
       incidentId: updated.id,
       type: "slack_channel_bound",
-      message: `Slack channel <#${input.channelId}> bound`,
+      message:
+        existing.slackChannelId && existing.slackTeamId === input.teamId
+          ? `Slack channel moved from <#${existing.slackChannelId}> to <#${input.channelId}>`
+          : `Slack channel <#${input.channelId}> bound`,
     });
     return updated;
   });

@@ -32,6 +32,13 @@ import {
   TEST_SIGNING_SECRET as SIGNING_SECRET,
   withSlackConfig,
 } from "@/libs/test/slack-config";
+import {
+  busyChannelHistory,
+  FIXTURE_CHANNEL_ID,
+  FIXTURE_MENTION_TS,
+  mentionOutsideThread,
+  whatIsTheIncident,
+} from "@/libs/test/slack-incident-fixtures";
 
 import type { SlackEnv } from "./config";
 import {
@@ -101,6 +108,8 @@ function resetSlackTestState() {
     Promise.resolve({
       messages: [{ user: "U1", text: "channel message", ts: "1.1" }],
     });
+  slackTestState.membersImpl = () =>
+    Promise.resolve({ ok: true, members: ["U1"] });
   slackTestState.streamAppendFailAfter = null;
   slackTestState.streamStopFail = false;
   slackTestState.repliesImpl = () =>
@@ -216,9 +225,11 @@ describe("handleSlackEvent", () => {
     const welcome = await waitForCall("postEphemeral");
     expect(welcome?.args.channel).toBe("C_NEW");
     expect(welcome?.args.user).toBe("U1");
-    expect(JSON.stringify(welcome?.args.blocks)).toContain(
-      "open_publish_status_update",
-    );
+    const blocks = JSON.stringify(welcome?.args.blocks);
+    expect(blocks).toContain("What do you want to do?");
+    expect(blocks).toContain("welcome_catch_up");
+    expect(blocks).toContain("open_publish_status_update");
+    expect(blocks).not.toContain("open_declare_incident");
   });
 
   test("stays quiet when the bot joins on its own or a person joins", async () => {
@@ -594,7 +605,9 @@ describe("handleSlackEvent", () => {
     });
     await new Promise((r) => setTimeout(r, 100));
 
-    expect(slackTestState.calls.length).toBe(0);
+    expect(
+      slackTestState.calls.filter((c) => c.method !== "conversations.replies"),
+    ).toHaveLength(0);
   });
 
   test("replies in the agent pane without a mention", async () => {
@@ -926,17 +939,21 @@ describe("handleSlackEvent", () => {
     });
 
     expect(res.status).toBe(200);
-    await new Promise((r) => setTimeout(r, 100));
 
     // Delivered as a fresh message when streaming, or by overwriting the
     // "Thinking..." placeholder when it isn't — either way the user sees it.
-    const errorMessage = slackTestState.calls.find(
-      (m) =>
-        (m.method === "update" || m.method === "postMessage") &&
-        typeof m.args.text === "string" &&
-        m.args.text.includes("Something went wrong"),
-    );
-    expect(errorMessage).toBeDefined();
+    const findError = () =>
+      slackTestState.calls.find(
+        (m) =>
+          (m.method === "update" || m.method === "postMessage") &&
+          typeof m.args.text === "string" &&
+          m.args.text.includes("Something went wrong"),
+      );
+    const deadline = Date.now() + 5000;
+    while (!findError() && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    expect(findError()).toBeDefined();
   });
 
   test("does not throw when both runAgent and error update fail", async () => {
@@ -1699,7 +1716,7 @@ describe("the channel the user is viewing", () => {
     ).toBe(false);
   });
 
-  test("leaves channel turns alone", async () => {
+  test("reads the mentioned channel, not the one being viewed", async () => {
     await contextChanged([
       { type: "slack#/types/channel_id", value: "C_INCIDENT" },
     ]);
@@ -1720,10 +1737,13 @@ describe("the channel the user is viewing", () => {
     });
     await new Promise((r) => setTimeout(r, 100));
 
-    // In a channel the agent already has the thread it was called into.
     expect(seen).toHaveLength(1);
-    expect(seen[0].contextNote).toBeUndefined();
-    expect(seen[0].tools).toBeUndefined();
+    expect(seen[0].contextNote).toContain("<#C_OTHER>");
+    expect(seen[0].contextNote).not.toContain("C_INCIDENT");
+    expect(Object.keys(seen[0].tools ?? {})).toEqual([
+      "read_slack_channel",
+      "read_slack_message",
+    ]);
   });
 });
 
@@ -2444,5 +2464,177 @@ describe("incident channel events", () => {
       bound = row?.slackChannelId ?? null;
     }
     expect(bound).toBeNull();
+  });
+});
+
+describe("channel history", () => {
+  const app = createTestApp();
+
+  beforeEach(resetSlackTestState);
+
+  async function waitFor(done: () => boolean, timeoutMs = 5000) {
+    const deadline = Date.now() + timeoutMs;
+    while (!done() && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
+  }
+
+  function captureNotes() {
+    const notes: Array<string | undefined> = [];
+    slackTestState.runAgentOverride = (options) => {
+      notes.push(
+        (options as { contextNote?: string } | undefined)?.contextNote,
+      );
+      return Promise.resolve({
+        text: "ok",
+        toolResults: [],
+        finishReason: "stop",
+        stepCount: 1,
+        hitStepLimit: false,
+        aborted: false,
+      });
+    };
+    return notes;
+  }
+
+  test("a mention outside a thread sees the channel before it, with times", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({ messages: busyChannelHistory });
+    const notes = captureNotes();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_history_${crypto.randomUUID()}`,
+      event: {
+        type: "app_mention",
+        ...mentionOutsideThread,
+        channel: FIXTURE_CHANNEL_ID,
+      },
+    });
+    await waitFor(() => notes.length > 0);
+    await settleBackgroundTasks();
+
+    const history = slackTestState.calls.find(
+      (c) => c.method === "conversations.history",
+    );
+    expect(history?.args).toMatchObject({
+      channel: FIXTURE_CHANNEL_ID,
+      limit: 50,
+      latest: FIXTURE_MENTION_TS,
+    });
+    expect(notes[0]).toContain(
+      "[2026-10-15 21:10 UTC] <@U_ENGINEER>: Seeing 500s on the dashboard API",
+    );
+    expect(notes[0]).toContain("Found it: the table rename in staging");
+    const first = notes[0]?.indexOf("Seeing 500s") ?? -1;
+    const last = notes[0]?.indexOf("Found it") ?? -1;
+    expect(first).toBeLessThan(last);
+  });
+
+  test("a mention in a thread also sees the messages before the thread", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({
+        messages: [
+          { user: "U2", text: "before the thread", ts: "1792000000.1" },
+        ],
+      });
+    const notes = captureNotes();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_history_thread_${crypto.randomUUID()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> summarize",
+        user: "U1",
+        channel: "C1",
+        ts: "1792139500.1",
+        thread_ts: "1792139400.1",
+      },
+    });
+    await waitFor(() => notes.length > 0);
+    await settleBackgroundTasks();
+
+    const history = slackTestState.calls.find(
+      (c) => c.method === "conversations.history",
+    );
+    expect(history?.args).toMatchObject({
+      channel: "C1",
+      limit: 20,
+      latest: "1792139400.1",
+    });
+    expect(notes[0]).toContain("before the thread");
+  });
+
+  test("a Slack link in the mention is read before the turn", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({ messages: busyChannelHistory });
+    slackTestState.conversationsInfoImpl = () =>
+      Promise.resolve({ ok: true, channel: { is_private: false } });
+    const notes = captureNotes();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_history_link_${crypto.randomUUID()}`,
+      event: {
+        type: "app_mention",
+        ...mentionOutsideThread,
+        ts: `${Date.now() / 1000}`,
+        channel: FIXTURE_CHANNEL_ID,
+      },
+    });
+    await waitFor(() => notes.length > 0);
+    await settleBackgroundTasks();
+
+    expect(notes[0]).toContain("Slack messages linked in the user's message");
+    expect(notes[0]).toContain(
+      "2026-10-15 21:10 UTC (2026-10-15T21:10:00.000Z), <@U_ENGINEER>: Seeing 500s",
+    );
+  });
+
+  test("a follow-up in the thread knows what was created there", async () => {
+    const redis = (globalThis as Record<string, unknown>)
+      .__testRedisStore as Map<string, string>;
+    redis.set(
+      `slack:created:${FIXTURE_MENTION_TS}`,
+      JSON.stringify([{ kind: "status_report", id: 12, label: "API errors" }]),
+    );
+    const notes = captureNotes();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_history_memory_${crypto.randomUUID()}`,
+      event: {
+        type: "app_mention",
+        ...whatIsTheIncident,
+        channel: FIXTURE_CHANNEL_ID,
+      },
+    });
+    await waitFor(() => notes.length > 0);
+    await settleBackgroundTasks();
+
+    expect(notes[0]).toContain('status report #12 "API errors"');
+  });
+
+  test("a history failure still answers, without the note", async () => {
+    slackTestState.historyImpl = () => Promise.reject(new Error("boom"));
+    const notes = captureNotes();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_history_fail_${crypto.randomUUID()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hi",
+        user: "U1",
+        channel: "C1",
+        ts: "1792139600.1",
+      },
+    });
+    await waitFor(() => notes.length > 0);
+    await settleBackgroundTasks();
+
+    expect(notes).toHaveLength(1);
+    expect(notes[0] ?? "").not.toContain("Recent messages");
   });
 });

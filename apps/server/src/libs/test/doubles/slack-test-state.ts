@@ -4,6 +4,21 @@
 type SlackCall = { method: string; args: Record<string, unknown> };
 type Override = ((args: Record<string, unknown>) => Promise<unknown>) | null;
 
+export type HistoryArgs = {
+  channel: string;
+  latest?: string;
+  oldest?: string;
+  inclusive?: boolean;
+  limit?: number;
+  cursor?: string;
+};
+export type MembersArgs = { channel: string; cursor?: string; limit?: number };
+export type MembersResult = {
+  ok: boolean;
+  members: string[];
+  response_metadata?: { next_cursor?: string };
+};
+
 export interface SlackTestState {
   resolveWorkspace: (teamId: string) => Promise<unknown>;
   calls: SlackCall[];
@@ -23,7 +38,10 @@ export interface SlackTestState {
     | ((options?: unknown, actor?: unknown) => Promise<unknown>)
     | null;
   repliesImpl: (args?: Record<string, unknown>) => Promise<unknown>;
-  historyImpl: () => Promise<unknown>;
+  historyImpl: (args?: HistoryArgs) => Promise<unknown>;
+  /** `conversations.members` result; the default lists only U1. */
+  membersImpl: (args: MembersArgs) => Promise<MembersResult>;
+  archiveImpl: (args: { channel: string }) => Promise<{ ok: boolean }>;
   /** `users.info` result; the default has no email, so no mapping is created. */
   usersInfoImpl: (args: Record<string, unknown>) => Promise<unknown>;
   /** `reactions.get` result; the default message has no reactions. */
@@ -57,6 +75,8 @@ if (!g.__slackTestState) {
     usersInfoImpl: () => Promise.resolve({ ok: true, user: { profile: {} } }),
     reactionsGetImpl: () => Promise.resolve({ ok: true, message: {} }),
     conversationsInfoImpl: () => Promise.resolve({ ok: true, channel: {} }),
+    membersImpl: () => Promise.resolve({ ok: true, members: ["U1"] }),
+    archiveImpl: () => Promise.resolve({ ok: true }),
   } satisfies SlackTestState;
 }
 

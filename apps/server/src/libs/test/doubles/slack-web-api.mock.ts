@@ -1,6 +1,10 @@
 // Test double for @slack/web-api (only WebClient is used), swapped in via
 // --import-map. Captures chat calls into the shared slack test state.
-import { slackTestState as s } from "./slack-test-state.ts";
+import {
+  type HistoryArgs,
+  type MembersArgs,
+  slackTestState as s,
+} from "./slack-test-state.ts";
 
 export class WebClient {
   chat = {
@@ -72,18 +76,25 @@ export class WebClient {
     };
   };
   conversations = {
-    replies: (args: Record<string, unknown>) => s.repliesImpl(args),
+    replies: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.replies", args });
+      return s.repliesImpl(args);
+    },
     join: (args: Record<string, unknown>) => {
       s.calls.push({ method: "conversations.join", args });
       return Promise.resolve({ ok: true });
     },
-    history: (args: Record<string, unknown>) => {
+    history: (args: HistoryArgs) => {
       s.calls.push({ method: "conversations.history", args });
-      return s.historyImpl();
+      return s.historyImpl(args);
     },
     info: (args: Record<string, unknown>) => {
       s.calls.push({ method: "conversations.info", args });
       return s.conversationsInfoImpl(args);
+    },
+    members: (args: MembersArgs) => {
+      s.calls.push({ method: "conversations.members", args });
+      return s.membersImpl(args);
     },
     create: (args: Record<string, unknown>) => {
       s.calls.push({ method: "conversations.create", args });
@@ -100,9 +111,9 @@ export class WebClient {
       s.calls.push({ method: "conversations.setTopic", args });
       return Promise.resolve({ ok: true });
     },
-    archive: (args: Record<string, unknown>) => {
+    archive: (args: { channel: string }) => {
       s.calls.push({ method: "conversations.archive", args });
-      return Promise.resolve({ ok: true });
+      return s.archiveImpl(args);
     },
   };
   pins = {

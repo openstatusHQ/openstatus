@@ -28,3 +28,15 @@ export async function respondLater(
     });
   }
 }
+
+/** Removes the ephemeral message a button was clicked on. */
+export async function deleteOriginal(responseUrl: string): Promise<void> {
+  const res = await fetch(responseUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ delete_original: true }),
+  });
+  if (!res.ok) {
+    logger.warn("slack response_url delete failed", { status: res.status });
+  }
+}

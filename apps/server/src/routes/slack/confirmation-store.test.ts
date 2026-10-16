@@ -6,6 +6,8 @@ import {
   draftKey,
   findByThread,
   get,
+  listCreated,
+  recordCreated,
   replace,
   store,
 } from "./confirmation-store";
@@ -255,5 +257,28 @@ describe("confirmation-store", () => {
       const result = await consume(id);
       expect(result?.payload.toolName).toBe("create_maintenance");
     });
+  });
+});
+
+describe("created records", () => {
+  beforeEach(() => {
+    redisStore.clear();
+  });
+
+  test("records per thread, newest last, without duplicates", async () => {
+    await recordCreated("9.1", { kind: "status_report", id: 12, label: "API" });
+    await recordCreated("9.1", { kind: "incident", id: 7, label: "API down" });
+    await recordCreated("9.1", { kind: "status_report", id: 12, label: "API" });
+
+    expect(await listCreated("9.1")).toEqual([
+      { kind: "incident", id: 7, label: "API down" },
+      { kind: "status_report", id: 12, label: "API" },
+    ]);
+    expect(await listCreated("9.2")).toEqual([]);
+  });
+
+  test("ignores a corrupted entry", async () => {
+    redisStore.set("slack:created:9.3", JSON.stringify([{ kind: "nope" }]));
+    expect(await listCreated("9.3")).toEqual([]);
   });
 });

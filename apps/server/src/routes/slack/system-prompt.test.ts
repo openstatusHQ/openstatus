@@ -20,6 +20,25 @@ describe("buildSystemPrompt", () => {
     expect(promptDate.getTime()).toBeLessThanOrEqual(after.getTime());
   });
 
+  test("explains the context notes it gets in Slack", () => {
+    const prompt = buildSystemPrompt("Acme Corp");
+    expect(prompt).toContain("[2026-10-16 08:30 UTC] <@U123>");
+    expect(prompt).toContain("read_slack_channel with `before`");
+    expect(prompt).toContain("read_slack_message");
+    expect(prompt).toContain("approved cards already created in this thread");
+    expect(prompt).toContain(
+      "pass that time as `date` to create_status_report",
+    );
+  });
+
+  test("never denies an incident without naming what exists", () => {
+    const prompt = buildSystemPrompt("Acme Corp");
+    expect(prompt).toContain(
+      "Check both (list_incidents and list_status_reports)",
+    );
+    expect(prompt).toContain("Never say there is no incident without naming");
+  });
+
   test("includes the workspace name", () => {
     const prompt = buildSystemPrompt("Acme Corp");
     expect(prompt).toContain('workspace "Acme Corp"');

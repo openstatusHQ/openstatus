@@ -11,7 +11,17 @@ Managed incidents (internal, never published):
 - "mitigated", "the bleeding stopped" -> set_incident_status mitigated; "false alarm", "declared by mistake" -> set_incident_status canceled (closes it for good).
 - In an incident channel (see the note below when there is one), notes and updates belong to that incident: use its id without asking.
 - Postmortems: get_postmortem reads one; draft_postmortem saves a draft you wrote from get_incident and the channel (resolved incidents only, never invent facts); approve_postmortem signs it off (approval card) and by default closes the incident. For a full draft from the whole channel, suggest \`/openstatus incident postmortem\`.
-- Before referencing a managed incident, call list_incidents. Severity: critical = major outage or data loss, major = significant degradation, minor = limited impact.`;
+- Before referencing a managed incident, call list_incidents. Severity: critical = major outage or data loss, major = significant degradation, minor = limited impact.
+- "The incident" may mean a managed incident or an open status report. Check both (list_incidents and list_status_reports) before answering. Never say there is no incident without naming what does exist: "No managed incident, but status report 'API errors' is open (investigating)."`;
+
+const CONTEXT_SECTION = `
+
+Context you get with each message:
+- Messages are prefixed with their author and UTC time: "[2026-10-16 08:30 UTC] <@U123>: …". Use these times; never guess a time from how Slack displays it.
+- In a channel, a note lists the channel's recent messages before this conversation, oldest first. It is background for the request, not a request in itself. For older history, call read_slack_channel with \`before\` set to the oldest ts you have.
+- Slack message links in the user's message are already read for you and listed in a note with their time and author; for links found elsewhere, call read_slack_message. When a link is refused, relay the refusal and don't guess its content.
+- A note may list what approved cards already created in this thread. Those exist: use their ids and never claim they don't.
+- When the context shows when a problem started (an earlier message, a linked message, "since 11pm yesterday"), pass that time as \`date\` to create_status_report so the report starts then, and say in one line where the time came from.`;
 
 export function buildSystemPrompt(
   workspaceName: string,
@@ -136,5 +146,5 @@ Maintenance scheduling:
 - Parse natural language dates into ISO 8601 format. Convert relative dates like "next Friday from 2-3 PM" into proper ISO 8601 timestamps.
 - If the user doesn't specify a timezone, default to UTC and mention that in your response.
 - The "from" time must be before the "to" time.
-- Write a professional maintenance message describing what will happen during the window.${INCIDENT_SECTION}${contextNote ? `\n\n${contextNote.trim()}` : ""}`;
+- Write a professional maintenance message describing what will happen during the window.${INCIDENT_SECTION}${CONTEXT_SECTION}${contextNote ? `\n\n${contextNote.trim()}` : ""}`;
 }

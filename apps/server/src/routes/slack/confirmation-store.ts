@@ -70,6 +70,28 @@ export interface CarrierStore {
     payload: PendingPayload,
   ): Promise<PendingAction | undefined>;
   replace(id: string, payload: PendingPayload): Promise<void>;
+  recordCreated(threadTs: string, record: CreatedRecord): Promise<void>;
+  listCreated(threadTs: string): Promise<CreatedRecord[]>;
+}
+
+const createdRecordSchema = z.object({
+  kind: z.enum(["status_report", "incident", "maintenance"]),
+  id: z.number().int(),
+  label: z.string().optional(),
+});
+
+export type CreatedRecord = z.infer<typeof createdRecordSchema>;
+
+const MAX_CREATED = 20;
+
+function appendCreated(
+  list: CreatedRecord[],
+  record: CreatedRecord,
+): CreatedRecord[] {
+  const rest = list.filter(
+    (r) => !(r.kind === record.kind && r.id === record.id),
+  );
+  return [...rest, record].slice(-MAX_CREATED);
 }
 
 /**
@@ -81,6 +103,7 @@ export interface CarrierStore {
 const TTL_SECONDS = 30 * 24 * 60 * 60;
 const ACTION_PREFIX = "slack:action:";
 const THREAD_PREFIX = "slack:thread:";
+const CREATED_PREFIX = "slack:created:";
 
 function parse(raw: unknown): PendingAction | undefined {
   const data = typeof raw === "string" ? JSON.parse(raw) : raw;
@@ -169,6 +192,24 @@ export function createRedisCarrierStore(): CarrierStore {
         ),
       ]);
     },
+
+    async recordCreated(threadTs, record) {
+      const list = await this.listCreated(threadTs);
+      await redis.set(
+        `${CREATED_PREFIX}${threadTs}`,
+        JSON.stringify(appendCreated(list, record)),
+        { ex: TTL_SECONDS },
+      );
+    },
+
+    async listCreated(threadTs) {
+      const raw = await redis.get<string>(`${CREATED_PREFIX}${threadTs}`);
+      if (!raw) return [];
+      const parsed = z
+        .array(createdRecordSchema)
+        .safeParse(typeof raw === "string" ? JSON.parse(raw) : raw);
+      return parsed.success ? parsed.data : [];
+    },
   };
 }
 
@@ -179,6 +220,7 @@ export function createRedisCarrierStore(): CarrierStore {
 export function createMemoryCarrierStore(): CarrierStore {
   const actions = new Map<string, PendingAction>();
   const threads = new Map<string, string>();
+  const created = new Map<string, CreatedRecord[]>();
 
   return {
     async put(action) {
@@ -222,6 +264,14 @@ export function createMemoryCarrierStore(): CarrierStore {
         createdAt: Date.now(),
       });
     },
+
+    async recordCreated(threadTs, record) {
+      created.set(threadTs, appendCreated(created.get(threadTs) ?? [], record));
+    },
+
+    async listCreated(threadTs) {
+      return created.get(threadTs) ?? [];
+    },
   };
 }
 
@@ -243,3 +293,9 @@ export const findByThread = (
   defaultStore.findByThread(threadTs, payload);
 export const replace = (id: string, payload: PendingPayload): Promise<void> =>
   defaultStore.replace(id, payload);
+export const recordCreated = (
+  threadTs: string,
+  record: CreatedRecord,
+): Promise<void> => defaultStore.recordCreated(threadTs, record);
+export const listCreated = (threadTs: string): Promise<CreatedRecord[]> =>
+  defaultStore.listCreated(threadTs);

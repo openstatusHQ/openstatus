@@ -642,6 +642,29 @@ describe("slack channel binding", () => {
   });
 });
 
+describe("slack channel moves", () => {
+  test("rebinding to another channel records the move", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = as(memberId, tx);
+      const row = await declare(tx);
+      await bindIncidentSlackChannel({
+        ctx,
+        input: { id: row.id, teamId: "T1", channelId: "C_NEW" },
+      });
+      const moved = await bindIncidentSlackChannel({
+        ctx,
+        input: { id: row.id, teamId: "T1", channelId: "C_SOURCE" },
+      });
+      expect(moved.slackChannelId).toBe("C_SOURCE");
+      const events = await listIncidentEvents({ ctx, input: { id: row.id } });
+      expect(events.map((e) => e.message)).toContain(
+        "Slack channel moved from <#C_NEW> to <#C_SOURCE>",
+      );
+      await expectInvariant(tx, row.id);
+    });
+  });
+});
+
 describe("closeIncident", () => {
   test("a member who isn't commander cannot close; the commander can", async () => {
     await withTestTransaction(async (tx) => {

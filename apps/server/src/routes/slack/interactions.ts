@@ -13,14 +13,18 @@ import {
   parseActionId,
 } from "./blocks";
 import type { SlackConfig, SlackEnv } from "./config";
-import { consume, get } from "./confirmation-store";
+import { consume, get, recordCreated } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
+import { catchUpChannel } from "./handler";
 import { OPEN_DECLARE_INCIDENT_ACTION } from "./home";
 import {
   changeStatusPagePage,
   type IncidentCardAction,
   openIncidentCardModal,
   openPublishStatusUpdateModal,
+  openReportFollowUpModal,
+  openReportUpdateModal,
+  settleFollowUp,
   STATUS_PAGE_CALLBACK,
   STATUS_PAGE_PAGE_ACTION,
   submitStatusPage,
@@ -37,6 +41,7 @@ import {
   DECLARE_INCIDENT_FROM_MESSAGE_CALLBACK,
   NOT_CONNECTED,
   openDeclareIncidentModal,
+  type StateValues,
   submitDeclareIncident,
   type ViewSubmissionPayload,
   type ViewSubmissionResponse,
@@ -45,9 +50,18 @@ import {
   afterIncidentTool,
   bindChannelFromButton,
   INCIDENT_BIND_ACTION_PREFIX,
+  INCIDENT_RELINK_ACTION,
+  relinkIncidentChannel,
 } from "./incident-slack";
+import { NEXT_STEP_ACTIONS, nextStepBlocks } from "./next-steps";
 import { renderToolResult } from "./presenters";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
+import { loadDraft } from "./report-draft";
+import {
+  readFollowUpValue,
+  REPORT_FOLLOW_UP_CREATE,
+  REPORT_FOLLOW_UP_SKIP,
+} from "./report-follow-up";
 import {
   linkAccountUrl,
   planRequiredMessage,
@@ -55,9 +69,14 @@ import {
   type SlackActor,
   slackAgentAllowed,
 } from "./require-slack-member";
-import { respondLater } from "./response-url";
+import { deleteOriginal, respondLater } from "./response-url";
 import { toServiceCtx } from "./service-adapter";
-import { PUBLISH_STATUS_UPDATE_ACTION } from "./welcome";
+import { createdRecordFrom } from "./thread-memory";
+import {
+  CATCH_UP_ACTION,
+  PUBLISH_STATUS_UPDATE_ACTION,
+  WELCOME_ACTIONS,
+} from "./welcome";
 import { resolveWorkspace } from "./workspace-resolver";
 
 const logger = getLogger("api-server");
@@ -92,6 +111,15 @@ async function processIncidentBind(payload: SlackInteractionPayload) {
 
 const TIMELINE_UNAVAILABLE =
   "Couldn't read that message from Slack. Please try again.";
+
+interface WelcomeClick {
+  response_url?: string;
+  container?: { is_ephemeral?: boolean };
+  team?: { id: string };
+  user?: { id: string; team_id?: string };
+  channel?: { id: string };
+  actions?: Array<{ action_id: string }>;
+}
 
 interface SlackShortcutPayload {
   type: "shortcut" | "message_action" | "block_actions";
@@ -206,12 +234,52 @@ interface SlackViewActionPayload {
   trigger_id?: string;
   channel?: { id: string };
   message?: { ts: string };
-  view?: { id: string; hash?: string; private_metadata?: string };
+  view?: {
+    id: string;
+    hash?: string;
+    private_metadata?: string;
+    state?: { values: StateValues };
+  };
   actions: Array<{
     action_id: string;
     value?: string;
     selected_option?: { value: string };
   }>;
+}
+
+/** The drafted report card posted after a declare. */
+async function handleReportFollowUp(
+  payload: SlackViewActionPayload,
+  config: SlackConfig,
+): Promise<void> {
+  const teamId = payload.team?.id ?? payload.user.team_id;
+  const action = payload.actions[0];
+  const value = readFollowUpValue(action.value);
+  const channelId = payload.channel?.id;
+  const followUpTs = payload.message?.ts;
+  if (!teamId || !value || !channelId || !followUpTs) return;
+  if (action.action_id === REPORT_FOLLOW_UP_CREATE) {
+    if (!payload.trigger_id) return;
+    await openReportFollowUpModal({
+      teamId,
+      slackUserId: payload.user.id,
+      triggerId: payload.trigger_id,
+      incidentId: value.incidentId,
+      channelId,
+      followUpTs,
+      draft: value.draftId ? await loadDraft(value.draftId) : undefined,
+      config,
+    });
+    return;
+  }
+  const resolved = await resolveWorkspace(teamId);
+  if (!resolved) return;
+  await settleFollowUp({
+    slack: new WebClient(resolved.botToken),
+    channelId,
+    ts: followUpTs,
+    text: `Status report skipped by <@${payload.user.id}>.`,
+  });
 }
 
 /** Card buttons, awaited since `trigger_id` lives 3s, and in-modal selects. */
@@ -237,6 +305,9 @@ async function handleIncidentCardAction(
           hash: view.hash,
           privateMetadata: view.private_metadata,
           pageId,
+          startedAt:
+            view.state?.values.started_at?.value?.selected_date_time ??
+            undefined,
           config,
         }),
       { teamId },
@@ -285,6 +356,30 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
   }
 
   const payload = body as SlackInteractionPayload;
+  const welcome = body as WelcomeClick;
+  if (
+    welcome.response_url &&
+    welcome.container?.is_ephemeral &&
+    WELCOME_ACTIONS.has(welcome.actions?.[0]?.action_id ?? "")
+  ) {
+    const responseUrl = welcome.response_url;
+    runInBackground("welcome-dismiss", () => deleteOriginal(responseUrl), {
+      teamId: welcome.team?.id,
+    });
+  }
+  if (payload.actions?.[0]?.action_id === CATCH_UP_ACTION) {
+    const teamId = welcome.team?.id ?? welcome.user?.team_id;
+    const channelId = welcome.channel?.id;
+    const slackUserId = welcome.user?.id;
+    if (teamId && channelId && slackUserId) {
+      runInBackground(
+        "welcome-catch-up",
+        () => catchUpChannel({ teamId, channelId, slackUserId, config }),
+        { teamId, channelId },
+      );
+    }
+    return c.json({ ok: true });
+  }
   if (payload.actions?.[0]?.action_id === OPEN_DECLARE_INCIDENT_ACTION) {
     return handleShortcut(c, {
       ...(body as SlackShortcutPayload),
@@ -313,6 +408,42 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
     return c.json({ ok: true });
   }
   if (
+    actionId === NEXT_STEP_ACTIONS.postUpdate ||
+    actionId === NEXT_STEP_ACTIONS.resolve
+  ) {
+    const action = body as SlackViewActionPayload;
+    const teamId = action.team?.id ?? action.user.team_id;
+    const statusReportId = Number(action.actions[0]?.value);
+    if (teamId && action.trigger_id && Number.isInteger(statusReportId)) {
+      // Awaited, not backgrounded: `trigger_id` dies with the 3s ack window.
+      await openReportUpdateModal({
+        teamId,
+        slackUserId: action.user.id,
+        triggerId: action.trigger_id,
+        statusReportId,
+        channelId: action.channel?.id,
+        resolve: actionId === NEXT_STEP_ACTIONS.resolve,
+        config,
+      }).catch((error) =>
+        logger.error("slack next step modal failed", { error, actionId }),
+      );
+    }
+    return c.json({ ok: true });
+  }
+  if (
+    actionId === REPORT_FOLLOW_UP_CREATE ||
+    actionId === REPORT_FOLLOW_UP_SKIP
+  ) {
+    await handleReportFollowUp(body as SlackViewActionPayload, config).catch(
+      (error) =>
+        logger.error("slack report follow-up action failed", {
+          error,
+          actionId,
+        }),
+    );
+    return c.json({ ok: true });
+  }
+  if (
     actionId &&
     (actionId in CARD_BUTTONS || actionId === STATUS_PAGE_PAGE_ACTION)
   ) {
@@ -325,6 +456,30 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
     return c.json({ ok: true });
   }
   if (payload.type !== "block_actions" || !payload.actions?.length) {
+    return c.json({ ok: true });
+  }
+
+  if (payload.actions[0].action_id === INCIDENT_RELINK_ACTION) {
+    const teamId = payload.team?.id;
+    if (teamId) {
+      runInBackground(
+        "incident-relink",
+        async () => {
+          const resolved = await resolveWorkspace(teamId);
+          if (!resolved) return;
+          await relinkIncidentChannel({
+            resolved,
+            config,
+            teamId,
+            slackUserId: payload.user.id,
+            channelId: payload.channel.id,
+            messageTs: payload.message.ts,
+            value: payload.actions[0].value,
+          });
+        },
+        { teamId },
+      );
+    }
     return c.json({ ok: true });
   }
 
@@ -546,8 +701,21 @@ async function runAndPresent(args: {
     channel: channelId,
     ts: messageTs,
     text,
-    blocks: [],
+    blocks:
+      (typeof output === "object" && output !== null
+        ? nextStepBlocks(tool.name, output, text)
+        : undefined) ?? [],
   });
+
+  const created =
+    typeof output === "object" && output !== null
+      ? createdRecordFrom(tool.name, output)
+      : undefined;
+  if (created) {
+    await recordCreated(pending.threadTs, created).catch((error) =>
+      logger.warn("slack created record failed", { error, ...created }),
+    );
+  }
 
   if (
     typeof output === "object" &&

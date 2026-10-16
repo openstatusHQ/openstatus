@@ -12,7 +12,7 @@ import {
   LINK_ACCOUNT_TEXT,
 } from "./blocks";
 import type { SlackConfig } from "./config";
-import { onIncidentDeclared } from "./incident-slack";
+import { offersRelink, onIncidentDeclared } from "./incident-slack";
 import { getIncidentDashboardUrl } from "./page-urls";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
 import {
@@ -247,6 +247,7 @@ export type StateValues = Record<
       selected_option?: { value: string } | null;
       selected_user?: string | null;
       selected_options?: { value: string }[] | null;
+      selected_date_time?: number | null;
     }
   >
 >;
@@ -376,7 +377,18 @@ export async function submitDeclareIncident(
   runInBackground(
     "incident-modal-declared",
     async () => {
-      const channel = await onIncidentDeclared(ctx, incidentId, config);
+      const channel = await onIncidentDeclared(ctx, incidentId, config, {
+        slack,
+        channelId: origin,
+      });
+      // The channel already got the relink notice, visible to everyone.
+      if (
+        origin &&
+        channel.status === "bound" &&
+        offersRelink(origin, channel.channelId)
+      ) {
+        return;
+      }
       const where =
         channel.status === "bound" || channel.status === "unbound"
           ? ` Join <#${channel.channelId}>.`
