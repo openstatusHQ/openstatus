@@ -1,5 +1,6 @@
 "use client";
 
+import { TRIAL_DAYS } from "@openstatus/api/src/router/stripe/trial-config";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Dialog,
@@ -19,7 +20,10 @@ import { toast } from "sonner";
 import { useTRPC } from "@/lib/trpc/client";
 
 /** Asked after an upgrade or trial start; stored as `upgrade-intent` feedback. */
-export function UpgradeIntentDialog(props: DialogProps) {
+export function UpgradeIntentDialog({
+  trial,
+  ...props
+}: DialogProps & { trial?: boolean }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const id = useId();
@@ -45,6 +49,9 @@ export function UpgradeIntentDialog(props: DialogProps) {
         <DialogHeader>
           <DialogTitle>What are you using openstatus for?</DialogTitle>
           <DialogDescription>
+            {trial
+              ? `Your ${TRIAL_DAYS}-day Starter trial has started.`
+              : "Your plan is active."}{" "}
             A sentence or two helps us tailor openstatus to you.
           </DialogDescription>
         </DialogHeader>
