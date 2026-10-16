@@ -20,6 +20,7 @@ SQL >
         AND servingStatus IS NOT NULL
         {% if fromDate %} AND time >= parseDateTimeBestEffortOrNull({{ String(fromDate) }}) {% end %}
         {% if toDate %} AND time <= parseDateTimeBestEffortOrNull({{ String(toDate) }}) {% end %}
+        {% if defined(regions) %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
     GROUP BY h
     ORDER BY h DESC
 

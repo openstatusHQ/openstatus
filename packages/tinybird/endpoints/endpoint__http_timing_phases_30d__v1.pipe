@@ -36,6 +36,7 @@ FROM mv__http_timing_phases_90d__v1
 WHERE
     monitorId = {{ String(monitorId, '141', required=True) }}
     AND time >= toDateTime64(now() - INTERVAL 30 DAY, 3)
+    {% if defined(regions) %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
 GROUP BY h
 ORDER BY h ASC
 
