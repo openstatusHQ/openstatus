@@ -21,6 +21,7 @@ export {
 export {
   billingRecipients,
   schedulePlanEndingSoon,
+  scheduleMemberAccessEnding,
   sendCancellationScheduled,
   sendMemberRemoved,
   sendPlanDowngraded,

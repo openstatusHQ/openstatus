@@ -8,6 +8,9 @@ import { render } from "react-email";
 
 import type { PlanLoss } from "../emails/_components/plan-loss";
 import CancellationScheduledEmail from "../emails/cancellation-scheduled";
+import MemberAccessEndingEmail, {
+  memberAccessEndingSubject,
+} from "../emails/member-access-ending";
 import MemberRemovedEmail from "../emails/member-removed";
 import PlanDowngradedEmail, {
   planDowngradedSubject,
@@ -21,6 +24,7 @@ import {
   planLossLines,
   reminderScheduledAt,
   schedulePlanEndingSoon,
+  scheduleMemberAccessEnding,
   sendCancellationScheduled,
   sendMemberRemoved,
   sendPlanDowngraded,
@@ -126,6 +130,33 @@ describe("billing templates", () => {
     expect(planEndingSoonSubject(props)).toBe(
       "Your team plan ends on 25 Sep — resume to keep everything",
     );
+  });
+
+  test("member-access-ending: dated, names owners, trial vs cancellation", async () => {
+    const props = {
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "cancellation" as const,
+      owners: ["max@acme.dev", "thibault@acme.dev"],
+    };
+    const html = await render(<MemberAccessEndingEmail {...props} />);
+    expect(html).toContain("HEADS UP");
+    expect(html).toContain("You lose access to Acme on Friday 25 September");
+    expect(html).toContain("team subscription is cancelled");
+    expect(html).toContain("Fri 25 Sep 2026");
+    expect(html).toContain("max@acme.dev, thibault@acme.dev");
+    expect(html).toContain("you are a member of this workspace");
+    expect(memberAccessEndingSubject(props)).toBe(
+      "Your access to Acme on openstatus ends on 25 Sep",
+    );
+
+    const trial = await render(
+      <MemberAccessEndingEmail {...props} reason="trial" owners={[]} />,
+    );
+    expect(trial).toContain("team trial ends without a payment method");
+    expect(trial).toContain("Ask a workspace owner");
+    expect(trial).not.toContain("Ask to keep it");
   });
 
   test("member-removed: one line, who to ask, no CTA", async () => {
@@ -386,6 +417,56 @@ describe("send plumbing", () => {
       result({ data: null, error: { name: "application_error" } }),
     );
     expect(await cancelScheduledEmail("email_123")).toBe(false);
+  });
+
+  test("scheduleMemberAccessEnding: 3 days ahead, 50 recipients per email", async () => {
+    const now = new Date(endsAt.getTime() - 10 * 86_400_000);
+    const ids = await scheduleMemberAccessEnding({
+      to: Array.from({ length: 60 }, (_, i) => `m${i}@acme.dev`),
+      eventId: "evt_1",
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "cancellation",
+      owners: ["max@acme.dev"],
+      now,
+    });
+    assertSpyCalls(send, 2);
+    expect(send.calls.map((c) => c.args[0].to.length)).toEqual([50, 10]);
+    expect(send.calls[0].args[0].scheduledAt).toBe("2026-09-22T00:00:00.000Z");
+    expect(send.calls[1].args[1]).toEqual({
+      idempotencyKey: "stripe:evt_1:member-access-ending:1",
+    });
+    expect(ids.length).toBe(2);
+  });
+
+  test("scheduleMemberAccessEnding inside the lead window sends now, no ids", async () => {
+    const ids = await scheduleMemberAccessEnding({
+      to: ["a@acme.dev"],
+      eventId: "evt_1",
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "trial",
+      owners: [],
+      now: new Date(endsAt.getTime() - 86_400_000),
+    });
+    assertSpyCalls(send, 1);
+    expect("scheduledAt" in send.calls[0].args[0]).toBe(false);
+    expect(ids).toEqual([]);
+
+    expect(
+      await scheduleMemberAccessEnding({
+        to: [],
+        eventId: "evt_2",
+        workspaceName: "Acme",
+        plan: "team",
+        endsAt,
+        reason: "trial",
+        owners: [],
+      }),
+    ).toEqual([]);
+    assertSpyCalls(send, 1);
   });
 
   test("sendMemberRemoved chunks at Resend's 100-email batch limit", async () => {

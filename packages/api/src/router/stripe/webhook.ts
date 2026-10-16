@@ -3,6 +3,7 @@ import {
   billingRecipients,
   cancelScheduledEmail,
   schedulePlanEndingSoon,
+  scheduleMemberAccessEnding,
   sendCancellationScheduled,
   sendMemberRemoved,
   sendPlanDowngraded,
@@ -60,6 +61,35 @@ const webhookProcedure = publicProcedure.input(
 // "plan ends in 3 days" reminder, so a resume can cancel it without a schema
 // change.
 const REMINDER_METADATA_KEY = "reminder_email_id";
+// Comma-separated: one scheduled email per 50 members.
+const MEMBER_REMINDER_METADATA_KEY = "member_reminder_email_ids";
+
+/**
+ * Cancels the scheduled owner and member reminders and clears the ids that
+ * were cancelled; a failed cancel keeps its id so a retry can still cancel it.
+ */
+async function cancelReminders(
+  subscriptionId: string,
+  metadata: Record<string, string | undefined>,
+) {
+  const cleared: Record<string, string> = {};
+  const reminderId = metadata[REMINDER_METADATA_KEY];
+  if (reminderId && (await cancelScheduledEmail(reminderId))) {
+    cleared[REMINDER_METADATA_KEY] = "";
+  }
+  const memberIds =
+    metadata[MEMBER_REMINDER_METADATA_KEY]?.split(",").filter(Boolean) ?? [];
+  const kept: string[] = [];
+  for (const id of memberIds) {
+    if (!(await cancelScheduledEmail(id))) kept.push(id);
+  }
+  if (kept.length < memberIds.length) {
+    cleared[MEMBER_REMINDER_METADATA_KEY] = kept.join(",");
+  }
+  if (Object.keys(cleared).length > 0) {
+    await stripe.subscriptions.update(subscriptionId, { metadata: cleared });
+  }
+}
 
 type Db = Parameters<typeof getWorkspaceByStripeId>[0]["db"];
 
@@ -89,7 +119,10 @@ async function getBillingRecipients(
 ) {
   const owners = await getOwnerEmails(db, workspaceId);
   const customer = await stripe.customers.retrieve(customerId);
-  return billingRecipients(owners, customer.deleted ? null : customer.email);
+  return {
+    to: billingRecipients(owners, customer.deleted ? null : customer.email),
+    owners: billingRecipients(owners),
+  };
 }
 
 function toPlanLoss(
@@ -154,7 +187,7 @@ async function sendCancellationEmails(args: {
 }) {
   const { db, ws, customerId, current, plan, eventId } = args;
   const endsAt = getCurrentPeriodEnd(current);
-  const to = await getBillingRecipients(db, ws.id, customerId);
+  const { to, owners } = await getBillingRecipients(db, ws.id, customerId);
   const preview = await previewWorkspaceDowngrade({
     ctx: {
       workspace: ws,
@@ -179,20 +212,33 @@ async function sendCancellationEmails(args: {
     endsAt,
     loss,
   });
-  if (!reminderId) return;
-
-  const updated = await stripe.subscriptions.update(current.id, {
-    metadata: { [REMINDER_METADATA_KEY]: reminderId },
-  });
-  // A resume handled while we were scheduling found no id to cancel. The
-  // update response is the state after our write, so undo the reminder here.
-  if (
-    !updated.cancel_at_period_end &&
-    (await cancelScheduledEmail(reminderId))
-  ) {
-    await stripe.subscriptions.update(current.id, {
-      metadata: { [REMINDER_METADATA_KEY]: "" },
+  let memberIds: string[] = [];
+  try {
+    memberIds = await scheduleMemberAccessEnding({
+      to: preview.membersRemoved,
+      eventId,
+      workspaceName: ws.name || ws.slug,
+      plan,
+      endsAt,
+      reason: "cancellation",
+      owners,
     });
+  } catch (err) {
+    console.error("Failed to schedule member-access-ending emails:", err);
+  }
+
+  const metadata: Record<string, string> = {};
+  if (reminderId) metadata[REMINDER_METADATA_KEY] = reminderId;
+  if (memberIds.length > 0) {
+    metadata[MEMBER_REMINDER_METADATA_KEY] = memberIds.join(",");
+  }
+  if (Object.keys(metadata).length === 0) return;
+
+  const updated = await stripe.subscriptions.update(current.id, { metadata });
+  // A resume handled while we were scheduling found no id to cancel. The
+  // update response is the state after our write, so undo the reminders here.
+  if (!updated.cancel_at_period_end) {
+    await cancelReminders(current.id, metadata);
   }
 }
 
@@ -349,13 +395,7 @@ export const webhookRouter = createTRPCRouter({
             eventId: opts.input.event.id,
           });
         } else {
-          const reminderId = current.metadata?.[REMINDER_METADATA_KEY];
-          // Keep the id when the cancel fails, so a retry can still cancel it.
-          if (reminderId && (await cancelScheduledEmail(reminderId))) {
-            await stripe.subscriptions.update(current.id, {
-              metadata: { [REMINDER_METADATA_KEY]: "" },
-            });
-          }
+          await cancelReminders(current.id, current.metadata ?? {});
         }
       } catch (err) {
         console.error("Failed to handle cancellation emails:", err);
@@ -567,17 +607,42 @@ export const webhookRouter = createTRPCRouter({
           console.error("Failed to preview trial downgrade:", err);
           return undefined;
         });
+    const { to, owners } = await getBillingRecipients(
+      opts.ctx.db,
+      ws.id,
+      customerId,
+    );
+    const trialEnd = new Date(subscription.trial_end * 1000);
+    const plan = ws.plan ?? "starter";
     await sendTrialEnding({
-      to: await getBillingRecipients(opts.ctx.db, ws.id, customerId),
+      to,
       eventId: opts.input.event.id,
       workspaceSlug: ws.slug,
-      trialEnd: new Date(subscription.trial_end * 1000),
-      plan: ws.plan ?? "starter",
+      trialEnd,
+      plan,
       hasPaymentMethod: withCard,
       loss: preview
         ? toPlanLoss(preview, preview.customDomains, preview.ssoEnabled)
         : undefined,
     });
+
+    // Best-effort: a failed member warning must not fail the webhook. The
+    // trial ends within the reminder lead, so this sends right away.
+    if (preview) {
+      try {
+        await scheduleMemberAccessEnding({
+          to: preview.membersRemoved,
+          eventId: opts.input.event.id,
+          workspaceName: ws.name || ws.slug,
+          plan,
+          endsAt: trialEnd,
+          reason: "trial",
+          owners,
+        });
+      } catch (err) {
+        console.error("Failed to send member-access-ending emails:", err);
+      }
+    }
 
     await trackForWorkspaceOwner({
       db: opts.ctx.db,

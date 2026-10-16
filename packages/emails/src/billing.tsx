@@ -7,6 +7,10 @@ import type { PlanLoss } from "../emails/_components/plan-loss";
 import CancellationScheduledEmail, {
   CANCELLATION_SCHEDULED_SUBJECT,
 } from "../emails/cancellation-scheduled";
+import MemberAccessEndingEmail, {
+  type MemberAccessEndingProps,
+  memberAccessEndingSubject,
+} from "../emails/member-access-ending";
 import MemberRemovedEmail, {
   type MemberRemovedProps,
   memberRemovedSubject,
@@ -37,6 +41,7 @@ const DAY_MS = 86_400_000;
 export const REMINDER_LEAD_DAYS = 3;
 const RESEND_MAX_SCHEDULE_DAYS = 30;
 const RESEND_BATCH_SIZE = 100;
+const RESEND_MAX_RECIPIENTS = 50;
 
 /** `stripe:<event.id>:<template>` — a Stripe redelivery reuses the event id. */
 export function stripeIdempotencyKey(eventId: string, template: string) {
@@ -155,6 +160,37 @@ export async function sendMemberRemoved(
       },
     );
   }
+}
+
+/**
+ * Warns members `REMINDER_LEAD_DAYS` before `endsAt`, or right away when that
+ * cannot be scheduled. Returns the ids of the scheduled sends, to cancel on
+ * resume. The batch API cannot schedule, so members share one email per 50
+ * recipients — they already see each other in the workspace.
+ */
+export async function scheduleMemberAccessEnding(
+  req: MemberAccessEndingProps & { to: string[]; eventId: string; now?: Date },
+): Promise<string[]> {
+  const { to, eventId, now, ...props } = req;
+  const scheduledAt = reminderScheduledAt(props.endsAt, now);
+  const ids: string[] = [];
+  for (let i = 0; i < to.length; i += RESEND_MAX_RECIPIENTS) {
+    const id = await sendEmail(
+      {
+        from: SYSTEM_FROM,
+        reply_to: SUPPORT_EMAIL,
+        to: to.slice(i, i + RESEND_MAX_RECIPIENTS),
+        subject: memberAccessEndingSubject(props),
+        react: <MemberAccessEndingEmail {...props} />,
+      },
+      {
+        idempotencyKey: `${stripeIdempotencyKey(eventId, "member-access-ending")}:${i / RESEND_MAX_RECIPIENTS}`,
+        scheduledAt: scheduledAt?.toISOString(),
+      },
+    );
+    if (id && scheduledAt) ids.push(id);
+  }
+  return ids;
 }
 
 export async function sendCancellationScheduled(req: {
