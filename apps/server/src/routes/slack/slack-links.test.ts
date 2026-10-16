@@ -213,4 +213,18 @@ describe("readPermalink", () => {
       await linkedMessagesNote({ slack, text: "no links", requesterId: "U1" }),
     ).toBeUndefined();
   });
+
+  test("the note relays a private-channel refusal", async () => {
+    slackTestState.conversationsInfoImpl = () =>
+      Promise.resolve({ ok: true, channel: { is_private: true } });
+    const note = await linkedMessagesNote({
+      slack,
+      text: `started here <${firstErrorPermalink}>`,
+      requesterId: "U9",
+    });
+    expect(note).toContain(
+      "I can't share messages from a channel you're not in.",
+    );
+    expect(note).not.toContain("500s");
+  });
 });

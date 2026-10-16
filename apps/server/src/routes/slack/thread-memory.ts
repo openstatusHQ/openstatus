@@ -47,5 +47,5 @@ export function createdNote(records: CreatedRecord[]): string | undefined {
   const items = records.map(
     (r) => `${NOUNS[r.kind]} #${r.id}${r.label ? ` "${r.label}"` : ""}`,
   );
-  return `Earlier in this thread, approved cards created or updated: ${items.join(", ")}. These exist now: refer to them by id, and don't tell the user they don't exist.`;
+  return `Earlier in this thread, approved cards created or updated: ${items.join(", ")}. These exist now: use their ids only in subsequent tool calls, never show the ids in replies, and don't tell the user they don't exist.`;
 }

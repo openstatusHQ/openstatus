@@ -12,7 +12,7 @@ import {
   LINK_ACCOUNT_TEXT,
 } from "./blocks";
 import type { SlackConfig } from "./config";
-import { offersRelink, onIncidentDeclared } from "./incident-slack";
+import { onIncidentDeclared } from "./incident-slack";
 import { getIncidentDashboardUrl } from "./page-urls";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
 import {
@@ -382,13 +382,7 @@ export async function submitDeclareIncident(
         channelId: origin,
       });
       // The channel already got the relink notice, visible to everyone.
-      if (
-        origin &&
-        channel.status === "bound" &&
-        offersRelink(origin, channel.channelId)
-      ) {
-        return;
-      }
+      if (channel.relinkPosted) return;
       const where =
         channel.status === "bound" || channel.status === "unbound"
           ? ` Join <#${channel.channelId}>.`

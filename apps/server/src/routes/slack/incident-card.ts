@@ -314,9 +314,10 @@ export function buildStatusReportCreateModal(args: {
   prefill?: ReportPrefill;
 }): ModalView {
   const { incident, pages, pageId, components, meta, prefill } = args;
-  const preselected = components.filter((c) =>
-    prefill?.componentIds?.includes(c.id),
-  );
+  // Slack rejects an initial option missing from `options`.
+  const preselected = components
+    .slice(0, OPTIONS_MAX)
+    .filter((c) => prefill?.componentIds?.includes(c.id));
   const impact = prefill?.impact ?? "partial_outage";
   const startedAt =
     args.startedAt ??
@@ -342,9 +343,9 @@ export function buildStatusReportCreateModal(args: {
               .map((c) => option(String(c.id), c.name)),
             ...(preselected.length
               ? {
-                  initial_options: preselected
-                    .slice(0, OPTIONS_MAX)
-                    .map((c) => option(String(c.id), c.name)),
+                  initial_options: preselected.map((c) =>
+                    option(String(c.id), c.name),
+                  ),
                 }
               : {}),
           },
@@ -1126,7 +1127,9 @@ export async function submitStatusPage(
           slack: submitted.slack,
           channelId: meta.channelId,
           ts: meta.followUpTs,
-          text: `:white_check_mark: Status report created by ${who(ctx)}.`,
+          text: `:white_check_mark: Status report ${
+            write.toolName === "create_status_report" ? "created" : "updated"
+          } by ${who(ctx)}.`,
         });
       }
       const notified = notify && (await notifySubscribers(ctx, result.output));

@@ -43,7 +43,7 @@ describe("convertThreadToMessages", () => {
   test("drops leading bot messages and empty ones", () => {
     const messages = convertThreadToMessages(
       [
-        { bot_id: "B1", text: "Welcome", ts: "1.0" },
+        { user: "UBOT", bot_id: "B1", text: "Welcome", ts: "1.0" },
         { user: "U1", ts: "2.0" },
         { user: "U1", text: "hi", ts: "3.0" },
       ],

@@ -153,7 +153,7 @@ export function validateDraft(
       ? {
           startedAt: Math.floor(startedAt.getTime() / 1000),
           ...(draft.startedAtSource
-            ? { startedAtSource: draft.startedAtSource }
+            ? { startedAtSource: draft.startedAtSource.slice(0, 200) }
             : {}),
         }
       : {}),

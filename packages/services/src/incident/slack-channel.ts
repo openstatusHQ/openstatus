@@ -28,6 +28,14 @@ export async function bindIncidentSlackChannel(args: {
     );
     assertNotClosed(existing);
     if (
+      input.expectedChannelId !== undefined &&
+      existing.slackChannelId !== input.expectedChannelId
+    ) {
+      throw new ConflictError(
+        "This incident has moved to another channel since.",
+      );
+    }
+    if (
       existing.slackTeamId === input.teamId &&
       existing.slackChannelId === input.channelId
     ) {

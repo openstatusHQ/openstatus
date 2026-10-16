@@ -205,7 +205,7 @@ export async function onIncidentDeclared(
   incidentId: number,
   config: SlackConfig,
   source?: { slack: WebClient; channelId?: string; threadTs?: string },
-): Promise<OpenChannelResult> {
+): Promise<OpenChannelResult & { relinkPosted?: boolean }> {
   trackSlackIncident(ctx, "declare");
   const effects = await slackEffects(ctx, config);
   // The incident has committed: a failed read skips the commander email
@@ -231,21 +231,24 @@ export async function onIncidentDeclared(
         openSlackChannel: true,
       }))) ?? { status: "skipped" as const };
   logger.info("slack incident channel", { incidentId, ...result });
+  let relinkPosted = false;
   if (
     source?.channelId &&
     result.status === "bound" &&
     offersRelink(source.channelId, result.channelId)
   ) {
-    await source.slack.chat
+    relinkPosted = await source.slack.chat
       .postMessage({
         channel: source.channelId,
         ...(source.threadTs ? { thread_ts: source.threadTs } : {}),
         text: `Incident #${incidentId} opened in <#${result.channelId}>.`,
         blocks: relinkNoticeBlocks(incidentId, result.channelId),
       })
-      .catch((error) =>
-        logger.warn("slack relink notice failed", { error, incidentId }),
-      );
+      .then(() => true)
+      .catch((error) => {
+        logger.warn("slack relink notice failed", { error, incidentId });
+        return false;
+      });
   }
   if (source && (result.status === "bound" || result.status === "unbound")) {
     await postReportFollowUp({
@@ -258,7 +261,7 @@ export async function onIncidentDeclared(
       logger.warn("slack report follow-up failed", { error, incidentId }),
     );
   }
-  return result;
+  return { ...result, relinkPosted };
 }
 
 /** A linked status report still open gets a resolve card; never automatic. */
@@ -407,7 +410,7 @@ export async function relinkIncidentChannel(args: {
   try {
     moved = await bindIncidentSlackChannel({
       ctx,
-      input: { id: incidentId, teamId, channelId },
+      input: { id: incidentId, teamId, channelId, expectedChannelId: from },
     });
   } catch (error) {
     await tell(

@@ -33,7 +33,8 @@ export function convertThreadToMessages(
   const messages: ModelMessage[] = [];
   for (const msg of thread) {
     if (!msg.text) continue;
-    if (msg.bot_id || msg.user === botUserId) {
+    // Other apps' bots carry a `bot_id` too: only our own user is the agent.
+    if (msg.user === botUserId) {
       messages.push({ role: "assistant", content: msg.text });
     } else {
       messages.push({ role: "user", content: formatSlackLine(msg) });

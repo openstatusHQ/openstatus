@@ -697,16 +697,7 @@ async function runAndPresent(args: {
     notify: notified,
   });
 
-  await slack.chat.update({
-    channel: channelId,
-    ts: messageTs,
-    text,
-    blocks:
-      (typeof output === "object" && output !== null
-        ? nextStepBlocks(tool.name, output, text)
-        : undefined) ?? [],
-  });
-
+  // Before the card update: the record exists even if Slack fails to redraw.
   const created =
     typeof output === "object" && output !== null
       ? createdRecordFrom(tool.name, output)
@@ -716,6 +707,16 @@ async function runAndPresent(args: {
       logger.warn("slack created record failed", { error, ...created }),
     );
   }
+
+  await slack.chat.update({
+    channel: channelId,
+    ts: messageTs,
+    text,
+    blocks:
+      (typeof output === "object" && output !== null
+        ? nextStepBlocks(tool.name, output, text)
+        : undefined) ?? [],
+  });
 
   if (
     typeof output === "object" &&

@@ -643,6 +643,28 @@ describe("slack channel binding", () => {
 });
 
 describe("slack channel moves", () => {
+  test("a move expecting another channel conflicts", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = as(memberId, tx);
+      const row = await declare(tx);
+      await bindIncidentSlackChannel({
+        ctx,
+        input: { id: row.id, teamId: "T1", channelId: "C_OTHER" },
+      });
+      await expect(
+        bindIncidentSlackChannel({
+          ctx,
+          input: {
+            id: row.id,
+            teamId: "T1",
+            channelId: "C_SOURCE",
+            expectedChannelId: "C_NEW",
+          },
+        }),
+      ).rejects.toThrow(ConflictError);
+    });
+  });
+
   test("rebinding to another channel records the move", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = as(memberId, tx);

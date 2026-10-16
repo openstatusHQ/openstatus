@@ -7,7 +7,7 @@ export const modelDraftSchema = z.object({
   pageId: z.number().int().nullable(),
   componentIds: z.array(z.number().int()),
   impact: z.enum(["degraded_performance", "partial_outage", "major_outage"]),
-  message: z.string(),
+  message: z.string().trim().min(1),
   startedAt: z
     .string()
     .nullable()

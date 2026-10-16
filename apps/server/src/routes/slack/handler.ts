@@ -355,8 +355,17 @@ export async function catchUpChannel(args: {
 }): Promise<void> {
   const { teamId, channelId, slackUserId, config } = args;
   const resolved = await resolveWorkspace(teamId);
-  if (!resolved || !slackAgentAllowed(resolved.workspace)) return;
+  if (!resolved) return;
   const slack = new WebClient(resolved.botToken);
+  // The welcome card is already gone: say why nothing happens.
+  if (!slackAgentAllowed(resolved.workspace)) {
+    await slack.chat.postEphemeral({
+      channel: channelId,
+      user: slackUserId,
+      ...planRequiredMessage(config),
+    });
+    return;
+  }
   const actor = await requireSlackMember({
     workspace: resolved.workspace,
     teamId,

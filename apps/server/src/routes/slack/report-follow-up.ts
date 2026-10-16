@@ -21,7 +21,8 @@ export const REPORT_FOLLOW_UP_TEXT =
   "Customers haven't been told yet. Create a status report?";
 
 const SOURCE_MESSAGES = 50;
-const QUOTE_MAX = 2_500;
+// Slack caps a section's text at 3,000 characters, after escaping.
+const QUOTE_MAX = 2_900;
 
 export const followUpValueSchema = z.object({
   incidentId: z.number().int(),
@@ -38,7 +39,10 @@ export function readFollowUpValue(raw: string | undefined) {
 }
 
 function quote(text: string): string {
-  return `>${escapeMrkdwn(text.slice(0, QUOTE_MAX)).replaceAll("\n", "\n>")}`;
+  const quoted = `>${escapeMrkdwn(text).replaceAll("\n", "\n>")}`;
+  if (quoted.length <= QUOTE_MAX) return quoted;
+  // Don't leave half an entity like `&am` at the cut.
+  return `${quoted.slice(0, QUOTE_MAX - 1).replace(/&[a-z]*$/, "")}…`;
 }
 
 export function buildFollowUpBlocks(args: {
@@ -125,6 +129,8 @@ export async function postReportFollowUp(args: {
   const sourceMessages: ChannelMessage[] = sourceChannelId
     ? await fetchChannelHistory(slack, sourceChannelId, {
         limit: SOURCE_MESSAGES,
+        // The relink notice lands there first; the draft reads what came before.
+        before: String(incident.createdAt.getTime() / 1000),
       }).catch((error) => {
         logger.info("slack follow-up could not read the source channel", {
           error,
@@ -133,7 +139,16 @@ export async function postReportFollowUp(args: {
         return [];
       })
     : [];
-  const candidates = await loadDraftCandidates(ctx);
+  // Without candidates the card still offers the form, just without a draft.
+  const candidates = await loadDraftCandidates(ctx).catch(
+    (error): DraftCandidates => {
+      logger.warn("slack follow-up could not load pages", {
+        error,
+        incidentId,
+      });
+      return { pages: [], components: [] };
+    },
+  );
   const draft = await draftStatusReport({
     incident,
     sourceMessages,

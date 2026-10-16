@@ -49,12 +49,12 @@ The available slash commands are:
 
 A channel subscribed this way receives updates for the whole page. For component scoping, and for the other ways a status page can be followed (email, feeds, webhooks), see the [subscriber reference](/docs/reference/subscriber).
 
-Whoever adds the bot to a channel gets a private **What do you want to do?** card:
+When someone invites the bot to a channel, that person gets a private **What do you want to do?** card:
 
 - **Catch up on this channel**: the agent reads the recent messages, posts a summary in a thread, and drafts a status report if something is going on.
 - **Publish status update**: opens the status report form.
 
-The channel is only read when someone clicks **Catch up**.
+The welcome card does not read the channel until someone clicks **Catch up**.
 
 ### 4. Verify the installation
 
@@ -118,7 +118,7 @@ The examples above publish to your status page. An incident is the internal side
 
 Approve the card and the incident exists. openstatus opens a channel named `inc-YYYY-MM-DD-<title>`, invites you, sets the severity and status as the topic and pins the incident card. Run `/openstatus incident declare` without a title to get a form instead.
 
-If your team already runs the incident in the channel you declared from, click **Link this channel instead** there: the incident moves to that channel and the `inc-` channel is archived. The incident channel also gets a **Create a status report?** card with a drafted first update, including when the problem started, so you can tell customers in one click.
+If your team already runs the incident in the channel you declared from, click **Link this channel instead** there: the incident moves to that channel and the `inc-` channel is archived. The incident channel also gets a **Create a status report?** card with a drafted first update, including when the problem started: **Create status report** opens the form filled in, and nothing is published until you review and submit it.
 
 #### Keep the timeline
 
