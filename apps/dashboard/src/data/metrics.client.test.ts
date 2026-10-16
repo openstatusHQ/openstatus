@@ -128,6 +128,10 @@ describe("getRegionAxisMax", () => {
     ).toBe(500);
   });
 
+  it("averages the two middle P99s for an even count", () => {
+    expect(getRegionAxisMax([metric(50, 100), metric(50, 210)])).toBe(300);
+  });
+
   it("ignores regions without data", () => {
     expect(getRegionAxisMax([metric(0, 0, 0)])).toBe(100);
     expect(getRegionAxisMax([metric(50, 80), metric(0, 9000, 0)])).toBe(80);

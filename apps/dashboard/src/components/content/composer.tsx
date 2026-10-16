@@ -33,9 +33,8 @@ import {
 } from "react";
 
 import { ProcessMessage } from "@/components/content/process-message";
-import { useHydrated } from "@/hooks/use-hydrated";
 import { useComposedRefs } from "@/lib/composition";
-import { isKeyboardOwned } from "@/lib/keyboard";
+import { isKeyboardOwned, useModifierKey } from "@/lib/keyboard";
 
 type ComposerView = "write" | "preview";
 
@@ -121,14 +120,6 @@ function isPreviewHotkey(e: KeyboardEvent) {
 // goes to the one last focused or clicked, else the first mounted.
 const composers: Array<() => void> = [];
 let activeComposer: (() => void) | null = null;
-
-/** "⌘" on Apple platforms, "Ctrl" elsewhere; ⌘ until hydrated. */
-function useModifierKey() {
-  const hydrated = useHydrated();
-  return hydrated && !/Mac|iPhone|iPad|iPod/.test(navigator.userAgent)
-    ? "Ctrl"
-    : "⌘";
-}
 
 function useComposer() {
   const ctx = useContext(ComposerContext);

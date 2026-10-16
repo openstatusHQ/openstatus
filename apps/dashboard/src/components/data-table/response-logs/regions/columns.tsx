@@ -119,6 +119,7 @@ function SpreadCell({
         <RangePlot
           max={max}
           tabIndex={0}
+          role="img"
           aria-label={`${formatRegionCode(region.code)}: ${PERCENTILES.map(
             ({ key }) => `${key.toUpperCase()} ${metric[key]} ms`,
           ).join(", ")}`}
@@ -137,7 +138,12 @@ function SpreadCell({
           <RangePlotRange variant="box" from={p75} to={p95} />
           {clipped ? null : <RangePlotMarker value={p99} variant="end" />}
           <HoverCardTrigger asChild>
-            <RangePlotMarker value={p90} variant="tick" />
+            {/* lifted over the overflow badge, ringed so it reads on top of it */}
+            <RangePlotMarker
+              value={p90}
+              variant="tick"
+              className={cn(clipped && "ring-background z-10 ring-2")}
+            />
           </HoverCardTrigger>
           <RangePlotMarker value={p50} variant="dot" />
           {clipped ? (
@@ -149,10 +155,11 @@ function SpreadCell({
           ) : null}
         </RangePlot>
       </div>
-      {/* same card as the uptime cell; duration-0 so moving down the rows swaps cards instead of re-animating */}
+      {/* same card as the uptime cell; duration-0 so moving down the rows swaps cards instead of re-animating.
+          Read-only and pointer-transparent: it mirrors the hovered plot, so the pointer passes through to the rows it covers */}
       <HoverCardContent
         side="top"
-        className="border-border/50 grid w-auto min-w-40 gap-1.5 rounded-lg p-0 px-2.5 py-1.5 text-xs shadow-xl duration-0"
+        className="border-border/50 pointer-events-none grid w-auto min-w-40 gap-1.5 rounded-lg p-0 px-2.5 py-1.5 text-xs shadow-xl duration-0"
       >
         <RegionLabel region={region} />
         <ul className="grid gap-1.5">

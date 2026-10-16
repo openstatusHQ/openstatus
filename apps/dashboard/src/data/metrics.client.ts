@@ -169,7 +169,9 @@ export function getRegionAxisMax(metrics: RegionMetric[]) {
   const reporting = metrics.filter((m) => m.buckets > 0);
   if (!reporting.length) return 100;
   const p99s = reporting.map((m) => m.p99).sort((a, b) => a - b);
-  const median = p99s[Math.floor((p99s.length - 1) / 2)];
+  const mid = p99s.length / 2;
+  const median =
+    p99s.length % 2 ? p99s[Math.floor(mid)] : (p99s[mid - 1] + p99s[mid]) / 2;
   const value = Math.max(
     ...p99s.filter((p99) => p99 <= median * 2),
     ...reporting.map((m) => m.p90),

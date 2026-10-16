@@ -11,6 +11,11 @@ import { ChartAreaLatency } from "@/components/chart/chart-area-latency";
 import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phases";
 import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
 import {
+  EmptyStateContainer,
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
   Section,
   SectionDescription,
   SectionGroup,
@@ -93,16 +98,27 @@ export function Client() {
     enabled: !!monitor,
   } as const;
 
-  const { data: regionTimeline } = useQuery(regionTimelineQuery);
+  const { data: regionTimeline, isError: isRegionTimelineError } =
+    useQuery(regionTimelineQuery);
+
+  // free plans ignore the region filter server-side, so they keep every row
+  const filtersRegions =
+    workspace?.plan !== "free" && !!selectedRegions?.length;
 
   const regionMetrics: RegionMetric[] = React.useMemo(() => {
-    return mapRegionMetrics(regionTimeline, [
+    const configured = [
       ...(monitor?.regions ?? []),
       ...(monitor?.privateLocations?.map((location) =>
         location.id.toString(),
       ) ?? []),
-    ]);
-  }, [regionTimeline, monitor]);
+    ];
+    return mapRegionMetrics(
+      regionTimeline,
+      filtersRegions
+        ? configured.filter((region) => selectedRegions?.includes(region))
+        : configured,
+    );
+  }, [regionTimeline, monitor, filtersRegions, selectedRegions]);
 
   if (!monitor) return null;
 
@@ -203,12 +219,21 @@ export function Client() {
           </div>
           <RegionsLegend degradedAfter={monitor.degradedAfter} />
         </div>
-        <RegionsDataTable
-          data={regionMetrics}
-          privateLocations={monitor.privateLocations ?? []}
-          loading={!regionTimeline}
-          degradedAfter={monitor.degradedAfter}
-        />
+        {isRegionTimelineError ? (
+          <EmptyStateContainer>
+            <EmptyStateTitle>Couldn&apos;t load region metrics</EmptyStateTitle>
+            <EmptyStateDescription>
+              Try again in a moment or pick another period.
+            </EmptyStateDescription>
+          </EmptyStateContainer>
+        ) : (
+          <RegionsDataTable
+            data={regionMetrics}
+            privateLocations={monitor.privateLocations ?? []}
+            loading={!regionTimeline}
+            degradedAfter={monitor.degradedAfter}
+          />
+        )}
       </Section>
       <Section>
         <SectionHeader>

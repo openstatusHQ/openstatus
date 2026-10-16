@@ -12,11 +12,12 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useEffectEvent } from "react";
 
-import { isKeyboardOwned } from "@/lib/keyboard";
+import { isKeyboardOwned, useModifierKey } from "@/lib/keyboard";
 
 export function ButtonReset({ only }: { only?: string[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const modifier = useModifierKey();
 
   // Determine if at least one parameter that should be reset is present (or any parameter if `only` is undefined)
   const hasParamsToReset = only
@@ -75,7 +76,7 @@ export function ButtonReset({ only }: { only?: string[] }) {
         <TooltipContent className="flex items-center gap-2">
           Reset filters
           <KbdGroup>
-            <Kbd>⌘</Kbd>
+            <Kbd>{modifier}</Kbd>
             <Kbd>Esc</Kbd>
           </KbdGroup>
         </TooltipContent>

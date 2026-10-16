@@ -34,7 +34,7 @@ SELECT
     round(quantile(0.99)(tls)) as p99Tls
 FROM mv__http_timing_phases_14d__v1
 WHERE monitorId = {{ String(monitorId, '141', required=True) }}
-    {% if defined(regions) %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
+    {% if regions %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
 GROUP BY h
 ORDER BY h ASC
 
