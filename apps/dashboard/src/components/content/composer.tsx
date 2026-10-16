@@ -33,8 +33,8 @@ import {
 } from "react";
 
 import { ProcessMessage } from "@/components/content/process-message";
-import { useHydrated } from "@/hooks/use-hydrated";
 import { useComposedRefs } from "@/lib/composition";
+import { isKeyboardOwned, useModifierKey } from "@/lib/keyboard";
 
 type ComposerView = "write" | "preview";
 
@@ -113,28 +113,13 @@ function useFocusOnMount() {
 function isPreviewHotkey(e: KeyboardEvent) {
   if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return false;
   if (e.key.toLowerCase() !== "e" || e.isComposing || e.repeat) return false;
-  return !(
-    e.target instanceof HTMLElement &&
-    (e.target.isContentEditable ||
-      e.target.matches("input, textarea, select") ||
-      e.target.closest(
-        '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="combobox"]',
-      ))
-  );
+  return !isKeyboardOwned(e.target);
 }
 
 // With several composers on a page (incident notes and postmortem) the key
 // goes to the one last focused or clicked, else the first mounted.
 const composers: Array<() => void> = [];
 let activeComposer: (() => void) | null = null;
-
-/** "⌘" on Apple platforms, "Ctrl" elsewhere; ⌘ until hydrated. */
-function useModifierKey() {
-  const hydrated = useHydrated();
-  return hydrated && !/Mac|iPhone|iPad|iPod/.test(navigator.userAgent)
-    ? "Ctrl"
-    : "⌘";
-}
 
 function useComposer() {
   const ctx = useContext(ComposerContext);

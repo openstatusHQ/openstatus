@@ -1793,6 +1793,7 @@ export class OSTinybird {
       pipe: "endpoint__icmp_metrics_latency_7d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -1805,6 +1806,7 @@ export class OSTinybird {
       pipe: "endpoint__icmp_metrics_latency_30d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -1817,6 +1819,7 @@ export class OSTinybird {
       pipe: "endpoint__icmp_metrics_latency_90d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2274,6 +2277,7 @@ export class OSTinybird {
       pipe: "endpoint__grpc_metrics_latency_7d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2286,6 +2290,7 @@ export class OSTinybird {
       pipe: "endpoint__grpc_metrics_latency_30d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2298,6 +2303,7 @@ export class OSTinybird {
       pipe: "endpoint__grpc_metrics_latency_90d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2774,6 +2780,7 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_latency_1d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2793,6 +2800,7 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_latency_7d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2853,6 +2861,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_latency_7d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -3059,6 +3068,7 @@ export class OSTinybird {
       pipe: "endpoint__dns_metrics_latency_7d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -3473,6 +3483,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_latency_30d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -3492,6 +3503,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_latency_90d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -3511,6 +3523,7 @@ export class OSTinybird {
       pipe: "endpoint__dns_metrics_latency_30d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -3530,6 +3543,7 @@ export class OSTinybird {
       pipe: "endpoint__dns_metrics_latency_90d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
