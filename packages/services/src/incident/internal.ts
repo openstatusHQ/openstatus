@@ -21,6 +21,16 @@ import {
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
 import { getMembership } from "../member/membership";
 
+export const incidentUserColumns = {
+  id: true,
+  name: true,
+  firstName: true,
+  lastName: true,
+  email: true,
+  photoUrl: true,
+  deletedAt: true,
+} as const;
+
 export async function getIncidentInWorkspace(
   tx: DB,
   workspaceId: number,

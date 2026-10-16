@@ -29,6 +29,7 @@ import {
 } from "@openstatus/test-utils";
 import { Hono } from "hono";
 
+import { settleBackgroundTasks } from "@/libs/background";
 // workspace-resolver / @slack/web-api are swapped for doubles via the test
 // import map; behavior is driven through this shared mutable state.
 import { slackTestState } from "@/libs/test/doubles/slack-test-state";
@@ -37,7 +38,6 @@ import {
   withSlackConfig,
 } from "@/libs/test/slack-config";
 
-import { settleBackgroundTasks } from "./background";
 import type { SlackEnv } from "./config";
 import { handleSlackInteraction } from "./interactions";
 import { verifySlackSignature } from "./verify";

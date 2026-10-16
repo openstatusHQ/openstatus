@@ -8,6 +8,8 @@
     "@openstatus/subscriptions-real": "../../packages/subscriptions/src/index.ts",
     "@openstatus/analytics": "./src/libs/test/doubles/analytics.mock.ts",
     "@openstatus/analytics-real": "../../packages/analytics/src/index.ts",
+    "@openstatus/emails": "./src/libs/test/doubles/emails.mock.ts",
+    "@openstatus/emails-real": "../../packages/emails/src/index.ts",
     "./src/routes/slack/page-urls": "./src/libs/test/doubles/page-urls.mock.ts",
     "./src/routes/slack/workspace-resolver": "./src/libs/test/doubles/workspace-resolver.mock.ts",
     "./src/routes/slack/agent": "./src/libs/test/doubles/slack-agent.mock.ts",

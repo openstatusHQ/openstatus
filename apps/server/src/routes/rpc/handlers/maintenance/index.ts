@@ -14,6 +14,7 @@ import {
 
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
+import { parseDate as parseRpcDate, parseId as parseRpcId } from "../../parse";
 import {
   dbMaintenanceToProto,
   dbMaintenanceToProtoSummary,
@@ -26,28 +27,15 @@ import {
 } from "./errors";
 
 function parseDate(dateString: string): Date {
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) {
-    throw invalidDateFormatError(dateString);
-  }
-  return date;
+  return parseRpcDate(dateString, () => invalidDateFormatError(dateString));
 }
 
-// `Number("1e3")` is 1000 and `Number("0x10")` is 16 — both would silently
-// target another row, so only plain decimal digits are accepted.
-const DECIMAL_ID = /^\d+$/;
-
 function parseId(value: string, label: string): number {
-  const trimmed = value.trim();
-  // past 2^53 the digits round to a neighbouring id
-  const id = Number(trimmed);
-  if (!DECIMAL_ID.test(trimmed) || !Number.isSafeInteger(id)) {
-    throw new ConnectError(
-      `Invalid ${label}: "${value}"`,
-      Code.InvalidArgument,
-    );
-  }
-  return id;
+  return parseRpcId(
+    value,
+    () =>
+      new ConnectError(`Invalid ${label}: "${value}"`, Code.InvalidArgument),
+  );
 }
 
 function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {

@@ -17,7 +17,11 @@ import {
 } from "../context";
 import { ConflictError, NotFoundError } from "../errors";
 import { closeIncidentInTx } from "./close";
-import { appendIncidentEvent, getIncidentInWorkspace } from "./internal";
+import {
+  appendIncidentEvent,
+  getIncidentInWorkspace,
+  incidentUserColumns,
+} from "./internal";
 import {
   ApprovePostmortemInput,
   DraftPostmortemInput,
@@ -207,10 +211,13 @@ export async function approvePostmortem(args: {
 export async function getPostmortem(args: {
   ctx: ServiceContext;
   input: IncidentIdInput;
-}): Promise<IncidentPostmortem | undefined> {
+}) {
   const { ctx } = args;
   const input = IncidentIdInput.parse(args.input);
   const db = getReadDb(ctx);
   const row = await getIncidentInWorkspace(db, ctx.workspace.id, input.id);
-  return findPostmortem(db, row.id);
+  return db.query.incidentPostmortem.findFirst({
+    where: eq(incidentPostmortem.incidentId, row.id),
+    with: { approvedByUser: { columns: incidentUserColumns } },
+  });
 }

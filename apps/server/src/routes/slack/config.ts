@@ -1,3 +1,5 @@
+import { resolveDashboardUrl } from "@openstatus/services/incident";
+
 import { env } from "@/env";
 
 /**
@@ -33,9 +35,9 @@ export function slackConfigFromEnv(): SlackConfig {
     clientSecret: env.SLACK_CLIENT_SECRET,
     redirectUri: env.SLACK_REDIRECT_URI,
     aiGatewayApiKey: env.AI_GATEWAY_API_KEY,
-    dashboardUrl:
-      env.NODE_ENV === "production"
-        ? "https://app.openstatus.dev"
-        : "http://localhost:3001",
+    dashboardUrl: resolveDashboardUrl({
+      nodeEnv: env.NODE_ENV,
+      override: env.DASHBOARD_URL,
+    }),
   };
 }

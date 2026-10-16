@@ -216,6 +216,10 @@ export const docsNav: DocsNavSection[] = [
             label: "Maintenance Service",
           },
           {
+            slug: "sdk/nodejs/incident-service",
+            label: "Incident Service",
+          },
+          {
             slug: "sdk/nodejs/notification-service",
             label: "Notification Service",
           },

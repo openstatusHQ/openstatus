@@ -1,5 +1,9 @@
 import { Code, ConnectError } from "@connectrpc/connect";
-import { type ServiceContext, ServiceError } from "@openstatus/services";
+import {
+  ConcurrentUpdateError,
+  type ServiceContext,
+  ServiceError,
+} from "@openstatus/services";
 import { ZodError } from "zod";
 
 import { tb } from "@/libs/clients";
@@ -40,6 +44,10 @@ export function toConnectError(err: unknown): never {
       Code.InvalidArgument,
     );
   }
+  // A lost race is retryable; other conflicts need the caller to change state.
+  if (err instanceof ConcurrentUpdateError) {
+    throw new ConnectError(err.message, Code.Aborted);
+  }
   if (err instanceof ServiceError) {
     switch (err.code) {
       case "NOT_FOUND":
@@ -49,7 +57,7 @@ export function toConnectError(err: unknown): never {
       case "UNAUTHORIZED":
         throw new ConnectError(err.message, Code.Unauthenticated);
       case "CONFLICT":
-        throw new ConnectError(err.message, Code.InvalidArgument);
+        throw new ConnectError(err.message, Code.FailedPrecondition);
       case "VALIDATION":
         throw new ConnectError(err.message, Code.InvalidArgument);
       case "LIMIT_EXCEEDED":

@@ -1,3 +1,4 @@
+import { isMessage, type Message } from "@bufbuild/protobuf";
 import type { Interceptor } from "@connectrpc/connect";
 import { getLogger } from "@logtape/logtape";
 import {
@@ -6,6 +7,12 @@ import {
   parseInputToProps,
   setupAnalytics,
 } from "@openstatus/analytics";
+import {
+  DeclareIncidentRequestSchema,
+  IncidentSeverity,
+  IncidentStatus,
+  SetIncidentStatusRequestSchema,
+} from "@openstatus/proto/incident/v1";
 
 import { apiAnalyticsIdentity } from "../../../libs/analytics-identity";
 import { apiRequestSampleRate } from "../../../libs/api-request-sampling";
@@ -18,7 +25,24 @@ type RpcEventMapping = {
   event: EventProps;
   eventProps?: string[];
   normalizeInput?: (message: unknown) => Record<string, unknown>;
+  props?: (message: Message) => Record<string, string>;
 };
+
+function incidentProps(message: Message): Record<string, string> {
+  if (isMessage(message, DeclareIncidentRequestSchema)) {
+    return {
+      source: "api",
+      severity: IncidentSeverity[message.severity].toLowerCase(),
+    };
+  }
+  if (isMessage(message, SetIncidentStatusRequestSchema)) {
+    return {
+      source: "api",
+      status: IncidentStatus[message.status].toLowerCase(),
+    };
+  }
+  return { source: "api" };
+}
 
 // Create*Monitor requests nest the config under `monitor`, so top-level
 // extraction yields nothing; ICMP and gRPC name their target `uri` and none of
@@ -159,6 +183,44 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     {
       event: Events.DeletePrivateLocation,
     },
+
+  // IncidentService
+  "openstatus.incident.v1.IncidentService/DeclareIncident": {
+    event: Events.DeclareManagedIncident,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/UpdateIncident": {
+    event: Events.UpdateManagedIncident,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/SetIncidentStatus": {
+    event: Events.ChangeManagedIncidentStatus,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/AddIncidentNote": {
+    event: Events.AddManagedIncidentNote,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/LinkStatusReport": {
+    event: Events.LinkManagedIncidentReport,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/CloseIncident": {
+    event: Events.CloseManagedIncident,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/DeleteIncident": {
+    event: Events.DeleteManagedIncident,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/UpdatePostmortem": {
+    event: Events.DraftManagedPostmortem,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/ApprovePostmortem": {
+    event: Events.ApproveManagedPostmortem,
+    props: incidentProps,
+  },
 };
 
 /**
@@ -230,7 +292,10 @@ function trackRpcCall(req: TrackedRequest, success: boolean) {
 
   if (mapping) {
     const input = mapping.normalizeInput?.(req.message) ?? req.message;
-    const additionalProps = parseInputToProps(input, mapping.eventProps);
+    const additionalProps = {
+      ...parseInputToProps(input, mapping.eventProps),
+      ...(mapping.props && !req.stream ? mapping.props(req.message) : {}),
+    };
     events.push({ ...additionalProps, ...mapping.event });
   }
 

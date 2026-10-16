@@ -18,6 +18,7 @@ import {
 
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
+import { parseDate as parseRpcDate, parseId as parseRpcId } from "../../parse";
 import {
   dbReportToProto,
   dbReportToProtoSummary,
@@ -32,29 +33,15 @@ import {
 } from "./errors";
 
 function parseDate(dateString: string): Date {
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) {
-    throw invalidDateFormatError(dateString);
-  }
-  return date;
+  return parseRpcDate(dateString, () => invalidDateFormatError(dateString));
 }
 
-// Match the digits explicitly: `Number("")` is 0 (finite!), so a blank id used
-// to slip through and target component 0, and `Number.parseInt("1.5")` is 1, so
-// swapping in parseInt alone would still truncate a malformed id silently.
-const DECIMAL_ID = /^\d+$/;
-
 function parseId(value: string, label: string): number {
-  const trimmed = value.trim();
-  // past 2^53 the digits round to a neighbouring id
-  const id = Number(trimmed);
-  if (!DECIMAL_ID.test(trimmed) || !Number.isSafeInteger(id)) {
-    throw new ConnectError(
-      `Invalid ${label}: "${value}"`,
-      Code.InvalidArgument,
-    );
-  }
-  return id;
+  return parseRpcId(
+    value,
+    () =>
+      new ConnectError(`Invalid ${label}: "${value}"`, Code.InvalidArgument),
+  );
 }
 
 function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
@@ -97,6 +84,10 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
             pageId,
             pageComponentIds: parsePageComponentIds(req.pageComponentIds),
             componentImpacts: parseComponentImpacts(req.componentImpacts),
+            incidentId:
+              req.incidentId === undefined
+                ? undefined
+                : parseId(req.incidentId, "incident id"),
           },
         });
 

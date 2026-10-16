@@ -9,7 +9,8 @@ import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
 
-import { runInBackground } from "./background";
+import { runInBackground } from "@/libs/background";
+
 import { buildLinkAccountBlocks, LINK_ACCOUNT_TEXT } from "./blocks";
 import type { SlackConfig, SlackEnv } from "./config";
 import { runIncidentCommand } from "./incident-commands";

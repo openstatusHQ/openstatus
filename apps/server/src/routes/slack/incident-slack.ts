@@ -1,12 +1,17 @@
 import { getLogger } from "@logtape/logtape";
+import { incidentStatus } from "@openstatus/db/src/schema/incidents/constants";
 import { sendIncidentCommander } from "@openstatus/emails";
 import { ServiceError, type ServiceContext } from "@openstatus/services";
 import {
+  actorDisplayName,
+  afterIncidentDeclared,
+  afterIncidentStatusChanged,
+  afterPostmortemApproved,
   announceIncidentChange,
   bindIncidentSlackChannel,
-  displayName,
-  escapeMrkdwn,
   getIncident,
+  type IncidentEffects,
+  incidentEffects,
   type OpenChannelResult,
   openIncidentSlackChannel,
   type SlackClientFactory,
@@ -27,15 +32,28 @@ export const slackClientFor: SlackClientFactory = (token) =>
 
 export const INCIDENT_BIND_ACTION_PREFIX = "incident_bind_";
 
-const incidentOutput = z.object({ id: z.number().int(), status: z.string() });
+const incidentStatusSchema = z.enum(incidentStatus);
+const incidentOutput = z.object({
+  id: z.number().int(),
+  status: incidentStatusSchema,
+});
 const incidentInput = z.object({ note: z.string().optional() });
 
 export function who(ctx: ServiceContext): string {
   return ctx.actor.type === "slack" ? `<@${ctx.actor.slackUserId}>` : "Someone";
 }
 
-export function quote(note: string | undefined): string {
-  return note ? `\n>${escapeMrkdwn(note).replaceAll("\n", "\n>")}` : "";
+async function slackEffects(
+  ctx: ServiceContext,
+  config: SlackConfig,
+): Promise<IncidentEffects> {
+  return incidentEffects({
+    clientFor: slackClientFor,
+    dashboardUrl: config.dashboardUrl,
+    sendCommanderEmail: sendIncidentCommander,
+    name: (await actorDisplayName(ctx)) ?? "A teammate",
+    actorLabel: who(ctx),
+  });
 }
 
 const INCIDENT_TOOLS = new Set([
@@ -70,15 +88,11 @@ export async function afterIncidentTool(args: {
     const close = out.data.closed === true;
     trackSlackIncident(ctx, "approved");
     if (close) trackSlackIncident(ctx, "closed");
-    await announceIncidentChange({
+    await afterPostmortemApproved({
       ctx,
+      effects: await slackEffects(ctx, config),
       incidentId: out.data.incidentId,
-      text: close
-        ? `${who(ctx)} approved the postmortem and closed the incident.`
-        : `${who(ctx)} approved the postmortem.`,
-      clientFor: slackClientFor,
-      dashboardUrl: config.dashboardUrl,
-      archive: close,
+      closed: close,
     }).catch(() => undefined);
     return;
   }
@@ -120,12 +134,12 @@ export async function afterIncidentTool(args: {
     // An archived channel can't take the resolve card, so keep it open.
     const cardInIncidentChannel =
       !!report && row?.slackChannelId === args.channelId;
-    await announceIncidentChange({
+    await afterIncidentStatusChanged({
       ctx,
+      effects: await slackEffects(ctx, config),
       incidentId,
-      text: `${who(ctx)} marked the incident *${status}*.${quote(note)}`,
-      clientFor: slackClientFor,
-      dashboardUrl: config.dashboardUrl,
+      status,
+      note,
       archive: status === "canceled" && !cardInIncidentChannel,
     });
     if (report) {
@@ -148,15 +162,29 @@ export async function onIncidentDeclared(
   config: SlackConfig,
 ): Promise<OpenChannelResult> {
   trackSlackIncident(ctx, "declare");
-  await notifyCommander(ctx, incidentId, config).catch((error) =>
-    logger.warn("incident commander email failed", { error, incidentId }),
+  const effects = await slackEffects(ctx, config);
+  // The incident has committed: a failed read skips the commander email
+  // (best effort) but must not keep the channel from opening.
+  const incident = await getIncident({ ctx, input: { id: incidentId } }).catch(
+    (error: unknown) => {
+      logger.warn("slack incident read failed", { error, incidentId });
+      return undefined;
+    },
   );
-  const result = await openIncidentSlackChannel({
-    ctx,
-    incidentId,
-    clientFor: slackClientFor,
-    dashboardUrl: config.dashboardUrl,
-  });
+  const result = (incident === undefined
+    ? await openIncidentSlackChannel({
+        ctx,
+        incidentId,
+        clientFor: effects.clientFor,
+        dashboardUrl: effects.dashboardUrl,
+      })
+    : incident &&
+      (await afterIncidentDeclared({
+        ctx,
+        effects,
+        incident,
+        openSlackChannel: true,
+      }))) ?? { status: "skipped" as const };
   logger.info("slack incident channel", { incidentId, ...result });
   return result;
 }
@@ -190,27 +218,6 @@ async function offerStatusReportResolve(args: {
           : "This was a false alarm. Everything is operating normally."),
     },
   });
-}
-
-async function notifyCommander(
-  ctx: ServiceContext,
-  incidentId: number,
-  config: SlackConfig,
-): Promise<void> {
-  const row = await getIncident({ ctx, input: { id: incidentId } });
-  const commander = row?.commander;
-  const actorUserId = ctx.actor.type === "slack" ? ctx.actor.userId : null;
-  if (!row || !commander?.email || commander.id === actorUserId) return;
-  const declarer = row.declaredByUser ? displayName(row.declaredByUser) : null;
-  await sendIncidentCommander({
-    to: commander.email,
-    incidentTitle: row.title,
-    severity: row.severity,
-    workspaceName: ctx.workspace.name ?? ctx.workspace.slug,
-    assignedBy: declarer ?? "A teammate",
-    url: `${config.dashboardUrl}/incidents/${row.id}`,
-    idempotencyKey: `incident-commander:${row.id}:${commander.id}:${row.updatedAt.getTime()}`,
-  }).catch(() => undefined);
 }
 
 /** "Link this channel": the fallback when binding failed during declare. */
