@@ -142,6 +142,10 @@ The template source and the setup instructions are in [ephraimduncan/openstatus-
 
 See [apps/dashboard/README.md](apps/dashboard/README.md) for full steps (env, db, login, troubleshooting).
 
+The Next.js apps resolve credentials automatically with the SecretSpec SDK.
+The [environment setup](apps/dashboard/README.md#environment) covers providers,
+migration from `.env`, and production configuration.
+
 #### Status page
 
 1. Install dependencies

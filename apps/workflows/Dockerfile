@@ -16,6 +16,7 @@ RUN \
     --mount=type=bind,target=apps/workflows/package.json,source=apps/workflows/package.json \
     --mount=type=bind,target=packages/assertions/package.json,source=packages/assertions/package.json \
     --mount=type=bind,target=packages/db/package.json,source=packages/db/package.json \
+    --mount=type=bind,target=packages/credentials/package.json,source=packages/credentials/package.json \
     --mount=type=bind,target=packages/emails/package.json,source=packages/emails/package.json \
     --mount=type=bind,target=packages/notifications/base/package.json,source=packages/notifications/base/package.json \
     --mount=type=bind,target=packages/notifications/discord/package.json,source=packages/notifications/discord/package.json \

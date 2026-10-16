@@ -25,6 +25,8 @@ effective: |
         source: package.json
       - target: packages/db/package.json
         source: packages/db/package.json
+      - target: packages/credentials/package.json
+        source: packages/credentials/package.json
       - target: packages/assertions/package.json
         source: packages/assertions/package.json
       - target: packages/locales/package.json
@@ -54,6 +56,9 @@ effective: |
   - paths:
     - packages/db
     target: /app/packages/db
+  - paths:
+    - packages/credentials
+    target: /app/packages/credentials
   - paths:
     - packages/assertions
     target: /app/packages/assertions
@@ -93,7 +98,7 @@ images:
           digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
 resources:
   dofigen.yml:
-    hash: 0726894ce94078edb23f99504defdbbb9ed0c312d689fe21f6efa64d8455ecc0
+    hash: d6add8acf48ecfc08fb2ab43e781484e6120fd69fd6b124d410d3f261123e7d5
     content: |
       ignore:
         - node_modules
@@ -108,6 +113,7 @@ resources:
             - pnpm-lock.yaml
             - package.json
             - packages/db/package.json
+            - packages/credentials/package.json
             - packages/assertions/package.json
             - packages/locales/package.json
             - packages/regions/package.json
@@ -135,6 +141,7 @@ resources:
       # @openstatus/* symlinks resolve and seed.mts can run via the same image.
       copy:
         - packages/db /app/packages/db
+        - packages/credentials /app/packages/credentials
         - packages/assertions /app/packages/assertions
         - packages/locales /app/packages/locales
         - packages/regions /app/packages/regions
