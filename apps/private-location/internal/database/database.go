@@ -63,6 +63,10 @@ func Open(dsn string, token string) (*sqlx.DB, error) {
 	}
 	c.SetMaxOpenConns(maxOpenConns)
 	c.SetMaxIdleConns(maxIdleConns)
+	if u, err := url.Parse(dsn); err == nil && (u.Scheme == "http" || u.Scheme == "https" || u.Scheme == "libsql") {
+		// Remote Hrana streams can expire before the pool's idle timeout.
+		c.SetMaxIdleConns(0)
+	}
 	c.SetConnMaxIdleTime(connMaxIdleTime)
 
 	return sqlx.NewDb(c, "sqlite3"), nil
