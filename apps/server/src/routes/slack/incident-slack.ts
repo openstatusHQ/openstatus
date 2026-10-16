@@ -10,18 +10,20 @@ import {
   announceIncidentChange,
   bindIncidentSlackChannel,
   getIncident,
+  headerBlocks,
   type IncidentEffects,
   incidentEffects,
   type OpenChannelResult,
   openIncidentSlackChannel,
   type SlackClientFactory,
 } from "@openstatus/services/incident";
-import { WebClient } from "@slack/web-api";
+import { type KnownBlock, WebClient } from "@slack/web-api";
 import { z } from "zod";
 
 import type { SlackConfig } from "./config";
 import { postConfirmationCard } from "./confirmation-card";
 import { trackSlackIncident } from "./incident-analytics";
+import { postReportFollowUp } from "./report-follow-up";
 import { requireSlackMember, slackAgentAllowed } from "./require-slack-member";
 import type { SlackWorkspace } from "./workspace-resolver";
 
@@ -108,7 +110,11 @@ export async function afterIncidentTool(args: {
   const note = incidentInput.safeParse(args.input).data?.note;
   try {
     if (toolName === "declare_incident") {
-      await onIncidentDeclared(ctx, incidentId, config);
+      await onIncidentDeclared(ctx, incidentId, config, {
+        slack: args.slack,
+        channelId: args.channelId,
+        threadTs: args.threadTs,
+      });
       return;
     }
     if (toolName === "update_incident") {
@@ -155,12 +161,65 @@ export async function afterIncidentTool(args: {
   }
 }
 
+export const INCIDENT_RELINK_ACTION = "incident_relink";
+
+const relinkValue = z.object({
+  incidentId: z.number().int(),
+  from: z.string(),
+});
+
+/** Only a channel can become the incident's home, not a DM. */
+export function offersRelink(sourceId: string, incidentChannelId: string) {
+  return /^[CG]/.test(sourceId) && sourceId !== incidentChannelId;
+}
+
+/** `G…` is also a group DM's prefix: ask Slack. Unknown counts as no. */
+export async function isSlackChannel(slack: WebClient, channelId: string) {
+  const info = await slack.conversations
+    .info({ channel: channelId })
+    .catch(() => undefined);
+  const channel = info?.channel;
+  return Boolean(
+    channel &&
+    (channel.is_channel || channel.is_group) &&
+    !channel.is_mpim &&
+    !channel.is_im,
+  );
+}
+
+export function relinkNoticeBlocks(
+  incidentId: number,
+  incidentChannelId: string,
+): KnownBlock[] {
+  return [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `:rotating_light: Incident #${incidentId} opened in <#${incidentChannelId}>.`,
+      },
+    },
+    {
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: { type: "plain_text", text: "Link this channel instead" },
+          action_id: INCIDENT_RELINK_ACTION,
+          value: JSON.stringify({ incidentId, from: incidentChannelId }),
+        },
+      ],
+    },
+  ];
+}
+
 /** Commander email and the incident channel, after any Slack declare. */
 export async function onIncidentDeclared(
   ctx: ServiceContext,
   incidentId: number,
   config: SlackConfig,
-): Promise<OpenChannelResult> {
+  source?: { slack: WebClient; channelId?: string; threadTs?: string },
+): Promise<OpenChannelResult & { relinkPosted?: boolean }> {
   trackSlackIncident(ctx, "declare");
   const effects = await slackEffects(ctx, config);
   // The incident has committed: a failed read skips the commander email
@@ -186,7 +245,38 @@ export async function onIncidentDeclared(
         openSlackChannel: true,
       }))) ?? { status: "skipped" as const };
   logger.info("slack incident channel", { incidentId, ...result });
-  return result;
+  let relinkPosted = false;
+  if (
+    source?.channelId &&
+    result.status === "bound" &&
+    offersRelink(source.channelId, result.channelId) &&
+    (await isSlackChannel(source.slack, source.channelId))
+  ) {
+    relinkPosted = await source.slack.chat
+      .postMessage({
+        channel: source.channelId,
+        ...(source.threadTs ? { thread_ts: source.threadTs } : {}),
+        text: `Incident #${incidentId} opened in <#${result.channelId}>.`,
+        blocks: relinkNoticeBlocks(incidentId, result.channelId),
+      })
+      .then(() => true)
+      .catch((error) => {
+        logger.warn("slack relink notice failed", { error, incidentId });
+        return false;
+      });
+  }
+  if (source && (result.status === "bound" || result.status === "unbound")) {
+    await postReportFollowUp({
+      ctx,
+      slack: source.slack,
+      incidentId,
+      channelId: result.channelId,
+      sourceChannelId: source.channelId,
+    }).catch((error) =>
+      logger.warn("slack report follow-up failed", { error, incidentId }),
+    );
+  }
+  return { ...result, relinkPosted };
 }
 
 /** A linked status report still open gets a resolve card; never automatic. */
@@ -277,4 +367,109 @@ export async function bindChannelFromButton(args: {
         incidentId,
       }),
     );
+}
+
+/**
+ * "Link this channel instead": the incident moves to the channel it was
+ * declared in, and the channel opened for it is archived.
+ */
+export async function relinkIncidentChannel(args: {
+  resolved: SlackWorkspace;
+  config: SlackConfig;
+  teamId: string;
+  slackUserId: string;
+  channelId: string;
+  messageTs: string;
+  value: string | undefined;
+}): Promise<void> {
+  const { resolved, config, teamId, slackUserId, channelId, messageTs } = args;
+  let parsed: z.infer<typeof relinkValue> | undefined;
+  try {
+    parsed = relinkValue.safeParse(JSON.parse(args.value ?? "")).data;
+  } catch {
+    parsed = undefined;
+  }
+  if (!parsed || !slackAgentAllowed(resolved.workspace)) return;
+  const { incidentId, from } = parsed;
+  const slack = new WebClient(resolved.botToken);
+  const tell = (text: string) =>
+    slack.chat.postEphemeral({ channel: channelId, user: slackUserId, text });
+
+  const actor = await requireSlackMember({
+    workspace: resolved.workspace,
+    teamId,
+    slackUserId,
+    slack,
+  });
+  if (!actor) {
+    await tell(
+      "Link your openstatus account first: mention @openstatus to get the link.",
+    );
+    return;
+  }
+  const ctx: ServiceContext = { workspace: resolved.workspace, actor };
+  const current = await getIncident({ ctx, input: { id: incidentId } });
+  if (!current || current.closedAt) {
+    await tell(":x: This incident is closed.");
+    return;
+  }
+  if (current.slackChannelId !== from) {
+    await tell(
+      current.slackChannelId === channelId
+        ? "This channel is already the incident channel."
+        : ":x: This incident has moved to another channel since.",
+    );
+    return;
+  }
+  let moved: Awaited<ReturnType<typeof bindIncidentSlackChannel>>;
+  try {
+    moved = await bindIncidentSlackChannel({
+      ctx,
+      input: { id: incidentId, teamId, channelId, expectedChannelId: from },
+    });
+  } catch (error) {
+    await tell(
+      error instanceof ServiceError
+        ? `:x: ${error.message}`
+        : ":x: Could not link this channel. Please try again.",
+    );
+    return;
+  }
+
+  // The move has committed: what follows is cosmetic and must not undo it.
+  const url = `${config.dashboardUrl}/incidents/${incidentId}`;
+  const header = await slack.chat
+    .postMessage({
+      channel: channelId,
+      text: `Incident: ${moved.title}`,
+      blocks: headerBlocks(moved, url),
+    })
+    .catch((error) => {
+      logger.warn("slack relink card failed", { error, incidentId });
+      return undefined;
+    });
+  if (header?.ts) {
+    await slack.pins
+      .add({ channel: channelId, timestamp: header.ts })
+      .catch(() => undefined);
+  }
+  await slack.chat
+    .postMessage({
+      channel: from,
+      text: `${who(ctx)} moved this incident to <#${channelId}>. This channel is archived.`,
+    })
+    .catch(() => undefined);
+  await slack.conversations
+    .archive({ channel: from })
+    .catch((error) =>
+      logger.warn("slack relink archive failed", { error, incidentId, from }),
+    );
+  await slack.chat
+    .update({
+      channel: channelId,
+      ts: messageTs,
+      text: ":white_check_mark: This channel is now the incident channel.",
+      blocks: [],
+    })
+    .catch(() => undefined);
 }

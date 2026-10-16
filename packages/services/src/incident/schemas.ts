@@ -97,6 +97,8 @@ export const BindIncidentSlackChannelInput = z.object({
   id,
   teamId: z.string().min(1),
   channelId: z.string().min(1),
+  /** Only move the incident if it is still bound to this channel. */
+  expectedChannelId: z.string().min(1).optional(),
 });
 export type BindIncidentSlackChannelInput = z.infer<
   typeof BindIncidentSlackChannelInput

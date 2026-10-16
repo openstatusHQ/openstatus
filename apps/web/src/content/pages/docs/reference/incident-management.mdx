@@ -80,12 +80,24 @@ Requires the [Slack agent](/docs/guides/how-to-setup-slack-agent), which is avai
 
 Declaring an incident, from Slack or the dashboard, opens a channel named `inc-YYYY-MM-DD-<title-slug>` (UTC date). The declarer is invited, the topic shows severity, status and a link to the incident, and the incident card is pinned.
 
+- **Link this channel instead.** When you declare from an existing channel, that channel gets a notice with this button. Clicking it moves the incident there: the card is pinned in it, the `inc-` channel is told and archived, and the move is on the timeline.
+- **Create a status report?** The incident channel gets a card with a suggested first update, drafted from the incident and the channel you declared from. It suggests the page, components and **Started at** (the time users were first affected) when the draft has enough evidence; the form also pre-fills the impact. **Create status report** opens the form filled in. Nothing is published until you submit it. **Not needed** dismisses the card.
+
 - Use the pinned card's buttons. **Update status** changes the status or severity, or posts an update to the channel and timeline. **Update status page** publishes a status report linked to the incident, or adds an update to the one already linked. You can notify subscribers from the same form. The card redraws with the new status after the change.
+- **Started at** on a new status report sets when the report begins, defaulting to the incident's start. Picking an earlier time also moves the incident's start back. It can't be in the future.
 - Add a message to the timeline from its ⋯ menu (**Add to incident timeline**) or by reacting with 📌 (`:pushpin:`). It becomes a timeline note, attributed to its author and linked back to Slack. Thread replies work too. The bot confirms with ✅.
 - Status changes are announced in the channel and the topic is kept in sync.
 - The channel is archived when the incident is closed or canceled.
 
 A failure on Slack's side never loses the incident: it is declared first, the channel is opened after.
+
+### What the agent sees
+
+When you mention the agent in a channel, it reads the 50 messages before your mention, or the 20 before the thread you're in, each with its author and UTC time. It can page back further when it needs to.
+
+Slack message links in your message are read for you, with their time and author. A link to a private channel is only read if you are a member of it. In a thread, the agent also remembers what the cards it posted there created, so a follow-up question finds the status report or incident by id.
+
+After you approve a card, the result shows the usual next step with buttons: **Update status page** after a declare, **Post update** and **Resolve** after a status report.
 
 ### Commands
 

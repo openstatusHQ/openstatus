@@ -10,6 +10,7 @@ import {
   announceIncidentChange,
   escapeMrkdwn,
   getIncident,
+  getIncidentForStatusReport,
   headerBlocks,
   quoteNote,
   setIncidentStatus,
@@ -17,7 +18,10 @@ import {
 } from "@openstatus/services/incident";
 import { listPages } from "@openstatus/services/page";
 import { listPageComponents } from "@openstatus/services/page-component";
-import { notifyStatusReport } from "@openstatus/services/status-report";
+import {
+  getStatusReport,
+  notifyStatusReport,
+} from "@openstatus/services/status-report";
 import { type ModalView, WebClient } from "@slack/web-api";
 import { z } from "zod";
 
@@ -35,6 +39,7 @@ import {
 import { afterIncidentTool, who } from "./incident-slack";
 import { renderToolResult } from "./presenters";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
+import type { ReportDraft } from "./report-draft";
 
 const logger = getLogger(["api-server", "slack", "incident-card"]);
 
@@ -88,6 +93,7 @@ const metadataSchema = z.object({
   channelId: z.string().optional(),
   messageTs: z.string().optional(),
   statusReportId: z.number().int().optional(),
+  followUpTs: z.string().optional(),
 });
 type Metadata = z.infer<typeof metadataSchema>;
 
@@ -207,6 +213,11 @@ export function buildUpdateStatusModal(
 }
 
 type PageOption = { id: number; title: string };
+export type ReportPrefill = {
+  message?: string;
+  componentIds?: number[];
+  impact?: Impact;
+};
 type ComponentOption = { id: number; name: string };
 
 const notifyBlock = {
@@ -221,7 +232,7 @@ const notifyBlock = {
   },
 };
 
-function messageBlock(placeholder: string) {
+function messageBlock(placeholder: string, initial?: string) {
   return {
     type: "input" as const,
     block_id: "message",
@@ -232,15 +243,21 @@ function messageBlock(placeholder: string) {
       multiline: true,
       max_length: NOTE_MAX,
       placeholder: { type: "plain_text" as const, text: placeholder },
+      ...(initial ? { initial_value: initial.slice(0, NOTE_MAX) } : {}),
     },
   };
 }
 
 /** Adds an update to the incident's linked report. */
 export function buildStatusReportUpdateModal(
-  report: NonNullable<Incident["statusReport"]>,
+  report: Pick<
+    NonNullable<Incident["statusReport"]>,
+    "id" | "title" | "status"
+  >,
   meta: Metadata,
+  preset?: ReportStatus,
 ): ModalView {
+  const status = preset ?? report.status;
   return {
     type: "modal",
     callback_id: STATUS_PAGE_CALLBACK,
@@ -264,10 +281,14 @@ export function buildStatusReportUpdateModal(
           type: "static_select",
           action_id: "value",
           options: options(REPORT_STATUSES),
-          initial_option: option(report.status, REPORT_STATUSES[report.status]),
+          initial_option: option(status, REPORT_STATUSES[status]),
         },
       },
-      messageBlock("We have identified the cause and are rolling out a fix."),
+      messageBlock(
+        status === "resolved"
+          ? "The issue is resolved and everything is operating normally."
+          : "We have identified the cause and are rolling out a fix.",
+      ),
       notifyBlock,
       {
         type: "context",
@@ -289,8 +310,18 @@ export function buildStatusReportCreateModal(args: {
   pageId: number;
   components: ComponentOption[];
   meta: Metadata;
+  startedAt?: number;
+  prefill?: ReportPrefill;
 }): ModalView {
-  const { incident, pages, pageId, components, meta } = args;
+  const { incident, pages, pageId, components, meta, prefill } = args;
+  // Slack rejects an initial option missing from `options`.
+  const preselected = components
+    .slice(0, OPTIONS_MAX)
+    .filter((c) => prefill?.componentIds?.includes(c.id));
+  const impact = prefill?.impact ?? "partial_outage";
+  const startedAt =
+    args.startedAt ??
+    Math.floor((incident?.startedAt ?? new Date()).getTime() / 1000);
   const page = pages.find((p) => p.id === pageId) ?? pages[0];
   const componentBlocks = components.length
     ? [
@@ -310,6 +341,13 @@ export function buildStatusReportCreateModal(args: {
             options: components
               .slice(0, OPTIONS_MAX)
               .map((c) => option(String(c.id), c.name)),
+            ...(preselected.length
+              ? {
+                  initial_options: preselected.map((c) =>
+                    option(String(c.id), c.name),
+                  ),
+                }
+              : {}),
           },
         },
         {
@@ -325,7 +363,7 @@ export function buildStatusReportCreateModal(args: {
             type: "static_select" as const,
             action_id: "value",
             options: options(IMPACTS),
-            initial_option: option("partial_outage", IMPACTS.partial_outage),
+            initial_option: option(impact, IMPACTS[impact]),
           },
         },
       ]
@@ -388,8 +426,25 @@ export function buildStatusReportCreateModal(args: {
           ),
         },
       },
+      {
+        type: "input",
+        block_id: "started_at",
+        label: { type: "plain_text", text: "Started at" },
+        hint: {
+          type: "plain_text",
+          text: "When users were first affected. The report starts here.",
+        },
+        element: {
+          type: "datetimepicker",
+          action_id: "value",
+          initial_date_time: startedAt,
+        },
+      },
       ...componentBlocks,
-      messageBlock("We are investigating elevated error rates."),
+      messageBlock(
+        "We are investigating elevated error rates.",
+        prefill?.message,
+      ),
       notifyBlock,
       {
         type: "context",
@@ -411,6 +466,8 @@ async function statusPageModal(
   incident: Incident | undefined,
   meta: Metadata,
   pageId?: number,
+  startedAt?: number,
+  prefill?: ReportPrefill,
 ): Promise<ModalView> {
   if (incident?.statusReport) {
     return buildStatusReportUpdateModal(incident.statusReport, meta);
@@ -441,6 +498,8 @@ async function statusPageModal(
     pageId: page.id,
     components: components.map((c) => ({ id: c.id, name: c.name })),
     meta,
+    startedAt,
+    prefill,
   });
 }
 
@@ -489,6 +548,122 @@ export async function openIncidentCardModal(args: {
   });
 }
 
+/** The follow-up card's form: a new report for the incident, drafted. */
+export async function openReportFollowUpModal(args: {
+  teamId: string;
+  slackUserId: string;
+  triggerId: string;
+  incidentId: number;
+  channelId: string;
+  followUpTs: string;
+  draft?: ReportDraft;
+  config: SlackConfig;
+}): Promise<void> {
+  const checked = await gate(
+    args.teamId,
+    args.slackUserId,
+    args.config,
+    STATUS_PAGE_TITLE,
+  );
+  if (!checked.ok) {
+    if (!checked.botToken) return;
+    await new WebClient(checked.botToken).views.open({
+      trigger_id: args.triggerId,
+      view: checked.view,
+    });
+    return;
+  }
+  const ctx: ServiceContext = {
+    workspace: checked.resolved.workspace,
+    actor: checked.actor,
+  };
+  const incident = await getIncident({ ctx, input: { id: args.incidentId } });
+  const meta: Metadata = {
+    incidentId: args.incidentId,
+    channelId: args.channelId,
+    followUpTs: args.followUpTs,
+  };
+  const { draft } = args;
+  const view = !incident
+    ? noticeModal(GONE, undefined, STATUS_PAGE_TITLE)
+    : await statusPageModal(
+        ctx,
+        incident,
+        meta,
+        draft?.pageId,
+        draft?.startedAt,
+        draft && {
+          message: draft.message,
+          componentIds: draft.componentIds,
+          impact: draft.impact,
+        },
+      );
+  await new WebClient(checked.resolved.botToken).views.open({
+    trigger_id: args.triggerId,
+    view,
+  });
+}
+
+/** A next-step button: an update to a report, or its resolution. */
+export async function openReportUpdateModal(args: {
+  teamId: string;
+  slackUserId: string;
+  triggerId: string;
+  statusReportId: number;
+  channelId?: string;
+  resolve: boolean;
+  config: SlackConfig;
+}): Promise<void> {
+  const checked = await gate(
+    args.teamId,
+    args.slackUserId,
+    args.config,
+    STATUS_PAGE_TITLE,
+  );
+  if (!checked.ok) {
+    if (!checked.botToken) return;
+    await new WebClient(checked.botToken).views.open({
+      trigger_id: args.triggerId,
+      view: checked.view,
+    });
+    return;
+  }
+  const ctx: ServiceContext = {
+    workspace: checked.resolved.workspace,
+    actor: checked.actor,
+  };
+  const [report, incident] = await Promise.all([
+    getStatusReport({ ctx, input: { id: args.statusReportId } }).catch(
+      () => undefined,
+    ),
+    getIncidentForStatusReport({
+      ctx,
+      input: { statusReportId: args.statusReportId },
+    }),
+  ]);
+  const view = !report
+    ? noticeModal(
+        "This status report no longer exists.",
+        undefined,
+        STATUS_PAGE_TITLE,
+      )
+    : report.status === "resolved"
+      ? noticeModal(
+          "This status report is already resolved.",
+          undefined,
+          STATUS_PAGE_TITLE,
+        )
+      : buildStatusReportUpdateModal(
+          { id: report.id, title: report.title, status: report.status },
+          { incidentId: incident?.id, channelId: args.channelId },
+          args.resolve ? "resolved" : undefined,
+        );
+  await new WebClient(checked.resolved.botToken).views.open({
+    trigger_id: args.triggerId,
+    view,
+  });
+}
+
 /** Opens the form to publish a status report that belongs to no incident. */
 export async function openPublishStatusUpdateModal(args: {
   teamId: string;
@@ -529,6 +704,7 @@ export async function changeStatusPagePage(args: {
   hash?: string;
   privateMetadata?: string;
   pageId: number;
+  startedAt?: number;
   config: SlackConfig;
 }): Promise<void> {
   const meta = readMetadata(args.privateMetadata);
@@ -553,7 +729,13 @@ export async function changeStatusPagePage(args: {
   await new WebClient(checked.resolved.botToken).views.update({
     view_id: args.viewId,
     ...(args.hash ? { hash: args.hash } : {}),
-    view: await statusPageModal(ctx, incident, meta, args.pageId),
+    view: await statusPageModal(
+      ctx,
+      incident,
+      meta,
+      args.pageId,
+      args.startedAt,
+    ),
   });
 }
 
@@ -761,7 +943,11 @@ type StatusPageWrite = {
     | "add_status_report_update"
     | "resolve_status_report";
   input: object;
+  startedAt?: Date;
 };
+
+// Slack's picker has minute precision; "now" must not read as the future.
+const FUTURE_TOLERANCE_MS = 2 * 60 * 1000;
 
 function readStatusPageWrite(
   meta: Metadata,
@@ -805,13 +991,19 @@ function readStatusPageWrite(
   const impact: Impact =
     pick(IMPACTS, values.impact?.value?.selected_option?.value) ??
     "partial_outage";
+  const startedAt = values.started_at?.value?.selected_date_time;
+  if (startedAt && startedAt * 1000 > Date.now() + FUTURE_TOLERANCE_MS) {
+    return { error: { started_at: "Pick a time that isn't in the future." } };
+  }
   return {
     toolName: "create_status_report",
+    startedAt: startedAt ? new Date(startedAt * 1000) : undefined,
     input: {
       title,
       status,
       message,
       pageId,
+      ...(startedAt ? { date: new Date(startedAt * 1000).toISOString() } : {}),
       pageComponentIds: componentIds,
       ...(componentIds.length
         ? {
@@ -853,6 +1045,37 @@ async function notifySubscribers(
   }
 }
 
+/** Replaces the follow-up card's buttons with what happened. Best effort. */
+export async function settleFollowUp(args: {
+  slack: WebClient;
+  channelId: string;
+  ts: string;
+  text: string;
+}): Promise<void> {
+  await args.slack.chat
+    .update({
+      channel: args.channelId,
+      ts: args.ts,
+      text: args.text,
+      blocks: [],
+    })
+    .catch((error) =>
+      logger.warn("slack report follow-up update failed", { error }),
+    );
+}
+
+/** A report that started earlier than its incident moves the incident back. */
+async function backdateIncident(
+  ctx: ServiceContext,
+  incidentId: number | undefined,
+  startedAt: Date | undefined,
+): Promise<void> {
+  if (incidentId === undefined || !startedAt) return;
+  const incident = await getIncident({ ctx, input: { id: incidentId } });
+  if (!incident || startedAt >= incident.startedAt) return;
+  await updateIncident({ ctx, input: { id: incidentId, startedAt } });
+}
+
 export async function submitStatusPage(
   payload: ViewSubmissionPayload,
   config: SlackConfig,
@@ -873,12 +1096,17 @@ export async function submitStatusPage(
 
   let result: { input: unknown; output: unknown };
   try {
-    result = await executeRegistryAction({
-      tool,
-      ctx,
-      draftInput: write.input,
-      // Subscriber fan-out can outlast Slack's 3s window: it runs after the ack.
-      flags: { notify: false },
+    result = await withTransaction(ctx, async (tx) => {
+      const txCtx = { ...ctx, db: tx };
+      const written = await executeRegistryAction({
+        tool,
+        ctx: txCtx,
+        draftInput: write.input,
+        // Subscriber fan-out can outlast Slack's 3s window: it runs after the ack.
+        flags: { notify: false },
+      });
+      await backdateIncident(txCtx, meta.incidentId, write.startedAt);
+      return written;
     });
   } catch (error) {
     if (!(error instanceof ServiceError)) {
@@ -894,6 +1122,16 @@ export async function submitStatusPage(
   runInBackground(
     "incident-card-status-page",
     async () => {
+      if (meta.followUpTs && meta.channelId) {
+        await settleFollowUp({
+          slack: submitted.slack,
+          channelId: meta.channelId,
+          ts: meta.followUpTs,
+          text: `:white_check_mark: Status report ${
+            write.toolName === "create_status_report" ? "created" : "updated"
+          } by ${who(ctx)}.`,
+        });
+      }
       const notified = notify && (await notifySubscribers(ctx, result.output));
       const rendered = await renderToolResult({
         tool,
