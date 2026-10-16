@@ -459,7 +459,9 @@ describe("registry-runner execution paths", () => {
       team: { id: "T_KNOWN" },
       actions: [{ action_id: "approve_maint-001" }],
     });
-    const remembered = JSON.parse(redisStore.get("slack:created:2.1") ?? "[]");
+    const remembered = (
+      JSON.parse(redisStore.get("slack:created-list:2.1") ?? "[]") as string[]
+    ).map((item) => JSON.parse(item));
     expect(remembered).toEqual([
       { kind: "maintenance", id: expect.any(Number), label: "DB Maintenance" },
     ]);

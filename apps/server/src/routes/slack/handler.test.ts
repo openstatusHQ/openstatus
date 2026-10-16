@@ -2596,8 +2596,10 @@ describe("channel history", () => {
     const redis = (globalThis as Record<string, unknown>)
       .__testRedisStore as Map<string, string>;
     redis.set(
-      `slack:created:${FIXTURE_MENTION_TS}`,
-      JSON.stringify([{ kind: "status_report", id: 12, label: "API errors" }]),
+      `slack:created-list:${FIXTURE_MENTION_TS}`,
+      JSON.stringify([
+        JSON.stringify({ kind: "status_report", id: 12, label: "API errors" }),
+      ]),
     );
     const notes = captureNotes();
     await signAndPost(app, {
@@ -2613,7 +2615,8 @@ describe("channel history", () => {
     await waitFor(() => notes.length > 0);
     await settleBackgroundTasks();
 
-    expect(notes[0]).toContain('status report #12 "API errors"');
+    expect(notes[0]).toContain("status report #12");
+    expect(notes[0]).not.toContain("API errors");
   });
 
   test("a history failure still answers, without the note", async () => {
