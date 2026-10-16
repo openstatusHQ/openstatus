@@ -134,6 +134,13 @@ describe("getRegionAxisMax", () => {
     ).toBe(700);
   });
 
+  it("draws an outlier normally once the rounded axis covers it", () => {
+    const metrics = [50, 100, 100, 200, 201].map((p99) => metric(10, p99));
+    const max = getRegionAxisMax(metrics);
+    expect(max).toBe(300);
+    expect(metrics.some((m) => m.p99 > max)).toBe(false);
+  });
+
   it("averages the two middle P99s for an even count", () => {
     expect(getRegionAxisMax([metric(50, 100), metric(50, 210)])).toBe(300);
   });

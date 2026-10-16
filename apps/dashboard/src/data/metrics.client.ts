@@ -161,9 +161,10 @@ export function mapRegionMetrics(
 
 /**
  * Shared axis end for the regions range plot, rounded up to a readable value.
- * A P99 more than twice the median P99 is an outlier: it is clipped (and
- * flagged in the UI) instead of squashing every other region to the left.
- * Every P90 still fits, with 10% headroom when something is clipped.
+ * A P99 more than twice the median P99 is an outlier: the axis ignores it
+ * instead of squashing every other region to the left, plus 10% headroom for
+ * the overflow badge. Every P90 fits. An outlier that still lands under the
+ * rounded axis is drawn normally; the cell flags only `p99 > max`.
  */
 export function getRegionAxisMax(metrics: RegionMetric[]) {
   const reporting = metrics.filter((m) => m.buckets > 0);
