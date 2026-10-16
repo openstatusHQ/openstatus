@@ -12,7 +12,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useEffectEvent } from "react";
 
-import { isKeyboardOwned, useModifierKey } from "@/lib/keyboard";
+import { isResetShortcut, useModifierKey } from "@/lib/keyboard";
 
 export function ButtonReset({ only }: { only?: string[] }) {
   const searchParams = useSearchParams();
@@ -48,8 +48,7 @@ export function ButtonReset({ only }: { only?: string[] }) {
   useEffect(() => {
     if (!hasParamsToReset) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || !(e.metaKey || e.ctrlKey) || e.repeat) return;
-      if (isKeyboardOwned(e.target)) return;
+      if (!isResetShortcut(e)) return;
       e.preventDefault();
       onShortcut();
     };
@@ -63,12 +62,7 @@ export function ButtonReset({ only }: { only?: string[] }) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleClick}
-            // className="shrink-0"
-          >
+          <Button variant="outline" size="sm" onClick={handleClick}>
             <Close />
             Reset
           </Button>

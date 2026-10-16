@@ -128,6 +128,12 @@ describe("getRegionAxisMax", () => {
     ).toBe(500);
   });
 
+  it("adds headroom for the overflow badge when a P99 is clipped", () => {
+    expect(
+      getRegionAxisMax([metric(500, 600), metric(100, 200), metric(100, 2000)]),
+    ).toBe(700);
+  });
+
   it("averages the two middle P99s for an even count", () => {
     expect(getRegionAxisMax([metric(50, 100), metric(50, 210)])).toBe(300);
   });

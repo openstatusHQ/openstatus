@@ -163,7 +163,7 @@ export function mapRegionMetrics(
  * Shared axis end for the regions range plot, rounded up to a readable value.
  * A P99 more than twice the median P99 is an outlier: it is clipped (and
  * flagged in the UI) instead of squashing every other region to the left.
- * Every P90 still fits.
+ * Every P90 still fits, with 10% headroom when something is clipped.
  */
 export function getRegionAxisMax(metrics: RegionMetric[]) {
   const reporting = metrics.filter((m) => m.buckets > 0);
@@ -172,10 +172,11 @@ export function getRegionAxisMax(metrics: RegionMetric[]) {
   const mid = p99s.length / 2;
   const median =
     p99s.length % 2 ? p99s[Math.floor(mid)] : (p99s[mid - 1] + p99s[mid]) / 2;
-  const value = Math.max(
-    ...p99s.filter((p99) => p99 <= median * 2),
-    ...reporting.map((m) => m.p90),
-  );
+  const fits = p99s.filter((p99) => p99 <= median * 2);
+  // headroom on the right keeps the overflow badge clear of the markers
+  const value =
+    Math.max(...fits, ...reporting.map((m) => m.p90)) *
+    (fits.length < p99s.length ? 1.1 : 1);
   if (value <= 0) return 100;
   const step = 10 ** Math.floor(Math.log10(value));
   return Math.ceil(value / step) * step;
