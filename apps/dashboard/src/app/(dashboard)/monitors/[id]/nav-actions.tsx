@@ -17,6 +17,7 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { MonitorStatusDot } from "@/components/common/monitor-status-dot";
 import { DataTableSheetTest } from "@/components/data-table/response-logs/data-table-sheet-test";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { NavFeedback } from "@/components/nav/nav-feedback";
@@ -212,37 +213,7 @@ export function NavActions() {
     <div className="flex items-center gap-2 text-sm">
       <NavFeedback />
       <div className="text-muted-foreground hidden font-medium lg:inline-block">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            {!monitor.active ? (
-              <span className="relative ml-1.5 inline-flex">
-                <span className="bg-muted-foreground/70 relative inline-flex h-2.5 w-2.5 rounded-full" />
-              </span>
-            ) : monitor.status === "active" ? (
-              <span className="relative ml-1.5 inline-flex">
-                <span className="bg-success/80 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
-                <span className="bg-success relative inline-flex h-2.5 w-2.5 rounded-full" />
-              </span>
-            ) : monitor.status === "error" ? (
-              <span className="relative ml-1.5 inline-flex">
-                <span className="bg-destructive relative inline-flex h-2.5 w-2.5 rounded-full" />
-              </span>
-            ) : (
-              <span className="relative ml-1.5 inline-flex">
-                <span className="bg-warning relative inline-flex h-2.5 w-2.5 rounded-full" />
-              </span>
-            )}
-          </TooltipTrigger>
-          <TooltipContent>
-            {!monitor.active
-              ? "Inactive"
-              : monitor.status === "active"
-                ? "Normal"
-                : monitor.status === "error"
-                  ? "Failing"
-                  : "Degraded"}
-          </TooltipContent>
-        </Tooltip>
+        <MonitorStatusDot monitor={monitor} className="ml-1.5" />
       </div>
       <TooltipProvider>
         <Tooltip>
