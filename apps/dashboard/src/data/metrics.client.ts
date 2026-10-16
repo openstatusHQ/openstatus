@@ -121,79 +121,62 @@ export function mapUptime(status: RouterOutputs["tinybird"]["uptime"]) {
 
 /**
  * Transform Tinybird `metricsRegions` response into RegionMetric[] for UI.
+ * Every requested region is returned, with `buckets: 0` when it has no data.
  */
 export function mapRegionMetrics(
   timeline: RouterOutputs["tinybird"]["metricsRegions"] | undefined,
   regions: string[],
-  percentile: (typeof PERCENTILES)[number],
 ): RegionMetric[] {
-  if (!timeline)
-    return (regions
+  const map = new Map<string, RegionMetric>(
+    [...regions]
       .sort((a, b) => a.localeCompare(b))
-      .map((region) => ({
+      .map((region) => [
         region,
-        p50: 0,
-        p90: 0,
-        p99: 0,
-        trend: [] as {
-          latency: number;
-          timestamp: number;
-          [key: string]: number;
-        }[],
-      })) ?? []) satisfies RegionMetric[];
+        { region, p50: 0, p75: 0, p90: 0, p95: 0, p99: 0, buckets: 0 },
+      ]),
+  );
 
-  type TimelineRow = (typeof timeline.data)[number];
+  for (const row of timeline?.data ?? []) {
+    const entry = map.get(row.region);
+    if (!entry) continue;
+    entry.p50 += row.p50Latency ?? 0;
+    entry.p75 += row.p75Latency ?? 0;
+    entry.p90 += row.p90Latency ?? 0;
+    entry.p95 += row.p95Latency ?? 0;
+    entry.p99 += row.p99Latency ?? 0;
+    entry.buckets++;
+  }
 
-  const map = new Map<
-    string,
-    {
-      region: string;
-      p50: number;
-      p90: number;
-      p99: number;
-      trend: {
-        latency: number;
-        timestamp: number;
-        [key: string]: number;
-      }[];
-    }
-  >();
-
-  (timeline.data as TimelineRow[])
-    .filter((row) => regions.includes(row.region))
-    .sort((a, b) => a.region.localeCompare(b.region))
-    .forEach((row) => {
-      const region = row.region;
-      const entry = map.get(region) ?? {
-        region,
-        p50: 0,
-        p90: 0,
-        p99: 0,
-        trend: [],
-      };
-
-      entry.trend.push({
-        latency: row[PERCENTILE_MAP[percentile]] ?? 0,
-        timestamp: row.timestamp,
-        [region]: row[PERCENTILE_MAP[percentile]] ?? 0,
-      });
-
-      entry.p50 += row.p50Latency ?? 0;
-      entry.p90 += row.p90Latency ?? 0;
-      entry.p99 += row.p99Latency ?? 0;
-
-      map.set(region, entry);
-    });
-
-  map.forEach((entry) => {
-    const count = entry.trend.length || 1;
-    entry.trend.reverse();
+  for (const entry of map.values()) {
+    const count = entry.buckets || 1;
     entry.p50 = Math.round(entry.p50 / count);
+    entry.p75 = Math.round(entry.p75 / count);
     entry.p90 = Math.round(entry.p90 / count);
+    entry.p95 = Math.round(entry.p95 / count);
     entry.p99 = Math.round(entry.p99 / count);
-  });
+  }
 
-  return Array.from(map.values()) as RegionMetric[];
+  return Array.from(map.values());
+}
+
+/**
+ * Shared axis end for the regions range plot, rounded up to a readable value.
+ * A P99 more than twice the median P99 is an outlier: it is clipped (and
+ * flagged in the UI) instead of squashing every other region to the left.
+ * Every P90 still fits.
+ */
+export function getRegionAxisMax(metrics: RegionMetric[]) {
+  const reporting = metrics.filter((m) => m.buckets > 0);
+  if (!reporting.length) return 100;
+  const p99s = reporting.map((m) => m.p99).sort((a, b) => a - b);
+  const median = p99s[Math.floor((p99s.length - 1) / 2)];
+  const value = Math.max(
+    ...p99s.filter((p99) => p99 <= median * 2),
+    ...reporting.map((m) => m.p90),
+  );
+  if (value <= 0) return 100;
+  const step = 10 ** Math.floor(Math.log10(value));
+  return Math.ceil(value / step) * step;
 }
 
 export function mapGlobalMetrics(

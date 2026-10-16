@@ -35,6 +35,7 @@ import {
 import { ProcessMessage } from "@/components/content/process-message";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useComposedRefs } from "@/lib/composition";
+import { isKeyboardOwned } from "@/lib/keyboard";
 
 type ComposerView = "write" | "preview";
 
@@ -113,14 +114,7 @@ function useFocusOnMount() {
 function isPreviewHotkey(e: KeyboardEvent) {
   if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return false;
   if (e.key.toLowerCase() !== "e" || e.isComposing || e.repeat) return false;
-  return !(
-    e.target instanceof HTMLElement &&
-    (e.target.isContentEditable ||
-      e.target.matches("input, textarea, select") ||
-      e.target.closest(
-        '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="combobox"]',
-      ))
-  );
+  return !isKeyboardOwned(e.target);
 }
 
 // With several composers on a page (incident notes and postmortem) the key
