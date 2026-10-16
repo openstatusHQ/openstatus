@@ -181,9 +181,9 @@ export async function isSlackChannel(slack: WebClient, channelId: string) {
   const channel = info?.channel;
   return Boolean(
     channel &&
-      (channel.is_channel || channel.is_group) &&
-      !channel.is_mpim &&
-      !channel.is_im,
+    (channel.is_channel || channel.is_group) &&
+    !channel.is_mpim &&
+    !channel.is_im,
   );
 }
 
