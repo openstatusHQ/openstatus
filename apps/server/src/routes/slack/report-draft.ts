@@ -126,6 +126,8 @@ export function validateDraft(
   incidentStartedAt: Date,
   now = new Date(),
 ): ReportDraft | undefined {
+  // The model saw every page: its "no page fits" must not become a preselection.
+  if (draft.pageId === null) return undefined;
   const failingPage = candidates.components.find((c) => c.failing)?.pageId;
   const pageId =
     candidates.pages.find((p) => p.id === draft.pageId)?.id ??

@@ -64,6 +64,17 @@ describe("validateDraft", () => {
     expect(draft?.pageId).toBe(2);
   });
 
+  test("no page fits, no draft", () => {
+    expect(
+      validateDraft(
+        { ...modelDraft, pageId: null },
+        candidates,
+        incidentStartedAt,
+        now,
+      ),
+    ).toBeUndefined();
+  });
+
   test("keeps a start only when it is earlier, past and recent", () => {
     const at = (startedAt: string | null) =>
       validateDraft(

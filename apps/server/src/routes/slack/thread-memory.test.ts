@@ -47,7 +47,8 @@ describe("createdNote", () => {
       { kind: "status_report", id: 12, label: "API down" },
       { kind: "incident", id: 7 },
     ]);
-    expect(note).toContain('status report #12 "API down"');
+    expect(note).toContain("status report #12");
+    expect(note).not.toContain("API down");
     expect(note).toContain("managed incident #7");
     expect(createdNote([])).toBeUndefined();
   });

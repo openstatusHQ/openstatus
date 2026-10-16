@@ -45,7 +45,8 @@ const NOUNS: Record<CreatedRecord["kind"], string> = {
 export function createdNote(records: CreatedRecord[]): string | undefined {
   if (!records.length) return undefined;
   const items = records.map(
-    (r) => `${NOUNS[r.kind]} #${r.id}${r.label ? ` "${r.label}"` : ""}`,
+    // Titles are user-written: keep them out of the system prompt.
+    (r) => `${NOUNS[r.kind]} #${r.id}`,
   );
   return `Earlier in this thread, approved cards created or updated: ${items.join(", ")}. These exist now: use their ids only in subsequent tool calls, never show the ids in replies, and don't tell the user they don't exist.`;
 }

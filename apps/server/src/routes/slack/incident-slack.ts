@@ -173,6 +173,20 @@ export function offersRelink(sourceId: string, incidentChannelId: string) {
   return /^[CG]/.test(sourceId) && sourceId !== incidentChannelId;
 }
 
+/** `G…` is also a group DM's prefix: ask Slack. Unknown counts as no. */
+export async function isSlackChannel(slack: WebClient, channelId: string) {
+  const info = await slack.conversations
+    .info({ channel: channelId })
+    .catch(() => undefined);
+  const channel = info?.channel;
+  return Boolean(
+    channel &&
+      (channel.is_channel || channel.is_group) &&
+      !channel.is_mpim &&
+      !channel.is_im,
+  );
+}
+
 export function relinkNoticeBlocks(
   incidentId: number,
   incidentChannelId: string,
@@ -235,7 +249,8 @@ export async function onIncidentDeclared(
   if (
     source?.channelId &&
     result.status === "bound" &&
-    offersRelink(source.channelId, result.channelId)
+    offersRelink(source.channelId, result.channelId) &&
+    (await isSlackChannel(source.slack, source.channelId))
   ) {
     relinkPosted = await source.slack.chat
       .postMessage({

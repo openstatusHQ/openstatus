@@ -45,7 +45,11 @@ import {
 import { busyChannelHistory } from "@/libs/test/slack-incident-fixtures";
 
 import type { SlackEnv } from "./config";
-import { offersRelink, relinkNoticeBlocks } from "./incident-slack";
+import {
+  isSlackChannel,
+  offersRelink,
+  relinkNoticeBlocks,
+} from "./incident-slack";
 import { handleSlackInteraction } from "./interactions";
 import { postReportFollowUp } from "./report-follow-up";
 import { verifySlackSignature } from "./verify";
@@ -2162,6 +2166,21 @@ describe("link this channel instead", () => {
     expect(offersRelink("G1", "C2")).toBe(true);
     expect(offersRelink("D1", "C2")).toBe(false);
     expect(offersRelink("C2", "C2")).toBe(false);
+  });
+
+  test("a group DM is not a channel, even with a G id", async () => {
+    const slack = new WebClient("xoxb-test");
+    const as = (channel: unknown) => {
+      slackTestState.conversationsInfoImpl = () =>
+        Promise.resolve({ ok: true, channel });
+    };
+    as({ is_group: true });
+    expect(await isSlackChannel(slack, "G1")).toBe(true);
+    as({ is_group: true, is_mpim: true });
+    expect(await isSlackChannel(slack, "G1")).toBe(false);
+    slackTestState.conversationsInfoImpl = () =>
+      Promise.reject(new Error("missing_scope"));
+    expect(await isSlackChannel(slack, "G1")).toBe(false);
   });
 
   test("moves the incident, pins its card and archives the old channel", async () => {

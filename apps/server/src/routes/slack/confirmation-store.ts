@@ -94,6 +94,11 @@ function appendCreated(
   return [...rest, record].slice(-MAX_CREATED);
 }
 
+/** Collapses repeats of the same record, keeping its latest position. */
+function dedupeCreated(list: CreatedRecord[]): CreatedRecord[] {
+  return list.reduce<CreatedRecord[]>(appendCreated, []);
+}
+
 /**
  * A storage backstop, not a deadline. Approving is the user's call and a draft
  * stays clickable for as long as they need — the card is a Slack message, so
@@ -103,7 +108,8 @@ function appendCreated(
 const TTL_SECONDS = 30 * 24 * 60 * 60;
 const ACTION_PREFIX = "slack:action:";
 const THREAD_PREFIX = "slack:thread:";
-const CREATED_PREFIX = "slack:created:";
+// A Redis list, so concurrent approvals append without overwriting each other.
+const CREATED_PREFIX = "slack:created-list:";
 
 function parse(raw: unknown): PendingAction | undefined {
   const data = typeof raw === "string" ? JSON.parse(raw) : raw;
@@ -194,21 +200,28 @@ export function createRedisCarrierStore(): CarrierStore {
     },
 
     async recordCreated(threadTs, record) {
-      const list = await this.listCreated(threadTs);
-      await redis.set(
-        `${CREATED_PREFIX}${threadTs}`,
-        JSON.stringify(appendCreated(list, record)),
-        { ex: TTL_SECONDS },
-      );
+      const key = `${CREATED_PREFIX}${threadTs}`;
+      await redis
+        .multi()
+        .rpush(key, JSON.stringify(record))
+        .ltrim(key, -MAX_CREATED, -1)
+        .expire(key, TTL_SECONDS)
+        .exec();
     },
 
     async listCreated(threadTs) {
-      const raw = await redis.get<string>(`${CREATED_PREFIX}${threadTs}`);
-      if (!raw) return [];
-      const parsed = z
-        .array(createdRecordSchema)
-        .safeParse(typeof raw === "string" ? JSON.parse(raw) : raw);
-      return parsed.success ? parsed.data : [];
+      const raw = await redis.lrange<unknown>(
+        `${CREATED_PREFIX}${threadTs}`,
+        0,
+        -1,
+      );
+      const records = raw.flatMap((item) => {
+        const parsed = createdRecordSchema.safeParse(
+          typeof item === "string" ? JSON.parse(item) : item,
+        );
+        return parsed.success ? [parsed.data] : [];
+      });
+      return dedupeCreated(records);
     },
   };
 }

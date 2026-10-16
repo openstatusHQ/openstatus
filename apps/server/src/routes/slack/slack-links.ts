@@ -8,10 +8,9 @@ import { formatSlackTime, slackTsToDate } from "./thread-messages";
 const logger = getLogger("api-server");
 
 const PERMALINK =
-  /https?:\/\/[\w-]+\.slack\.com\/archives\/([CDG][A-Z0-9]+)\/p(\d{16})(\?[^\s>|]*)?/g;
+  /https?:\/\/[\w-]+\.slack\.com\/archives\/([CG][A-Z0-9]+)\/p(\d{16})(\?[^\s>|]*)?/g;
 const MAX_LINKS = 5;
 const MAX_TEXT_CHARS = 2_000;
-const MAX_MEMBER_PAGES = 10;
 
 export type Permalink = {
   url: string;
@@ -76,7 +75,7 @@ async function isMember(
   userId: string,
 ): Promise<boolean> {
   let cursor: string | undefined;
-  for (let page = 0; page < MAX_MEMBER_PAGES; page++) {
+  do {
     const res = await slack.conversations.members({
       channel,
       limit: 1000,
@@ -84,8 +83,7 @@ async function isMember(
     });
     if (res.members?.includes(userId)) return true;
     cursor = res.response_metadata?.next_cursor || undefined;
-    if (!cursor) return false;
-  }
+  } while (cursor);
   return false;
 }
 

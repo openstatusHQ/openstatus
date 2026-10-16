@@ -278,7 +278,13 @@ describe("created records", () => {
   });
 
   test("ignores a corrupted entry", async () => {
-    redisStore.set("slack:created:9.3", JSON.stringify([{ kind: "nope" }]));
-    expect(await listCreated("9.3")).toEqual([]);
+    redisStore.set(
+      "slack:created-list:9.3",
+      JSON.stringify([
+        JSON.stringify({ kind: "nope" }),
+        JSON.stringify({ kind: "incident", id: 7 }),
+      ]),
+    );
+    expect(await listCreated("9.3")).toEqual([{ kind: "incident", id: 7 }]);
   });
 });
