@@ -84,6 +84,7 @@ export function Client() {
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   // Captured on mount: the toasts clear the params while the dialog is open.
   const [askIntent, setAskIntent] = useState(Boolean(success || trial));
+  const [startedTrial] = useState(Boolean(trial));
   const { data: hasIntent } = useQuery({
     ...trpc.feedback.hasSubmitted.queryOptions({ source: "upgrade-intent" }),
     enabled: askIntent,
@@ -167,7 +168,14 @@ export function Client() {
         }
         await new Promise((resolve) => setTimeout(resolve, 1_000));
       }
-      if (!cancelled) setSearchParams({ trial: null });
+      if (cancelled) return;
+      // Webhook still pending: confirm checkout without claiming the trial.
+      toast.success("Checkout complete", {
+        description: "Your trial starts as soon as Stripe confirms it.",
+        duration: 5_000,
+        onAutoClose: () => setSearchParams({ trial: null }),
+        onDismiss: () => setSearchParams({ trial: null }),
+      });
     })();
     return () => {
       cancelled = true;
@@ -212,6 +220,7 @@ export function Client() {
       <UpgradeIntentDialog
         open={askIntent && hasIntent === false}
         onOpenChange={setAskIntent}
+        trial={startedTrial}
       />
       <Section>
         <SectionHeader>
