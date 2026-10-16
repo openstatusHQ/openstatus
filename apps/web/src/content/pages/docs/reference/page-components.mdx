@@ -23,9 +23,9 @@ Page components come in two distinct types, each serving different purposes on y
 
 **Type:** `monitor`
 
-Monitor components are linked to an active monitor in your workspace. They automatically inherit the monitor's status and display real-time health information.
+Monitor components are linked to a monitor in your workspace. While the monitor is active, they automatically inherit its status and display real-time health information.
 
-**Characteristics:**
+**Characteristics (while the linked monitor is active):**
 - Display live monitor status (up, degraded, down).
 - Show active incidents from the linked monitor.
 - Include historical uptime data.
@@ -39,7 +39,7 @@ Monitor components are linked to an active monitor in your workspace. They autom
 - Monitoring infrastructure components.
 
 <Aside type="caution">
-A monitor component only shares data while its monitor is active. Inactive monitors don't run checks, so the component shows no uptime history and no incidents (status reports and maintenances still apply). To keep a service on your status page without monitoring it, use a [static component](#static-components) or set the status source to [**Reports only**](/docs/guides/how-to-configure-status-page#1-components-configuration).
+A monitor component only shares data while its monitor is active. Inactive monitors don't run checks, so the component shows no monitor-check history and no incidents. Status reports and maintenances still apply, and still populate the bars in **Reports only** mode. To keep a service on your status page without monitoring it, use a [static component](#static-components) or set the status source to [**Reports only**](/docs/guides/how-to-configure-status-page#1-components-configuration).
 </Aside>
 
 #### Configuring monitor components
