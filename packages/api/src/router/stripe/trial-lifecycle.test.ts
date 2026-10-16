@@ -683,6 +683,41 @@ describe("trial lifecycle", () => {
       expect(await lastPlanAuditReason(s.ws.id)).toBe("trial_cancelled");
     });
 
+    test("cancelled inside the slack after trial_end: card → churn, no card → trial", async () => {
+      const send = stub(resend.emails, "send");
+      const enabled = stub(delivery, "enabled", () => true);
+      stubs.push(send, enabled);
+      live = [];
+      const trialEnd = now() - 2 * 60 * 60;
+      const endedSoonAfter = (stripeId: string) =>
+        event(
+          "customer.subscription.deleted",
+          subscription(stripeId, {
+            status: "canceled",
+            trial_end: trialEnd,
+            ended_at: trialEnd + 30 * 60,
+            cancellation_details: {
+              reason: "cancellation_requested",
+            } as Stripe.Subscription.CancellationDetails,
+          }),
+        );
+
+      const cardless = await seedTrial();
+      await caller().customerSubscriptionDeleted(
+        endedSoonAfter(cardless.stripeId),
+      );
+      expect(await lastPlanAuditReason(cardless.ws.id)).toBe("trial_cancelled");
+
+      withCard();
+      const converted = await seedTrial();
+      await caller().customerSubscriptionDeleted(
+        endedSoonAfter(converted.stripeId),
+      );
+      expect(await lastPlanAuditReason(converted.ws.id)).toBe(
+        "subscription_deleted",
+      );
+    });
+
     test("a converted trial cancelled later is churn even if the marker is stale", async () => {
       const send = stub(resend.emails, "send");
       const enabled = stub(delivery, "enabled", () => true);

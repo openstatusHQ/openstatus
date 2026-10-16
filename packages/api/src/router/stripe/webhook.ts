@@ -2,8 +2,8 @@ import { type EventProps, Events, setupAnalytics } from "@openstatus/analytics";
 import {
   billingRecipients,
   cancelScheduledEmail,
-  schedulePlanEndingSoon,
   scheduleMemberAccessEnding,
+  schedulePlanEndingSoon,
   sendCancellationScheduled,
   sendMemberRemoved,
   sendPlanDowngraded,
@@ -63,6 +63,10 @@ const webhookProcedure = publicProcedure.input(
 const REMINDER_METADATA_KEY = "reminder_email_id";
 // Comma-separated: one scheduled email per 50 members.
 const MEMBER_REMINDER_METADATA_KEY = "member_reminder_email_ids";
+// Stripe caps a metadata value at 500 chars: 13 Resend ids (36 chars + comma).
+// Past that the warning goes out now, as an untracked schedule could not be
+// cancelled on resume.
+const MAX_SCHEDULED_MEMBERS = 13 * 50;
 
 /**
  * Cancels the scheduled owner and member reminders and clears the ids that
@@ -97,14 +101,20 @@ type Db = Parameters<typeof getWorkspaceByStripeId>[0]["db"];
 // processing can lag behind that timestamp by a little.
 const TRIAL_END_SLACK_S = 60 * 60;
 
-function endedDuringTrial(
+async function endedDuringTrial(
   subscription: Stripe.Subscription,
   eventCreated: number,
 ) {
   if (!subscription.trial_end) return false;
   const endedAt =
     subscription.ended_at ?? subscription.canceled_at ?? eventCreated;
-  return endedAt <= subscription.trial_end + TRIAL_END_SLACK_S;
+  if (endedAt <= subscription.trial_end) return true;
+  // Inside the slack, a trial with a card converted to paid before it was
+  // cancelled: that is churn, not a trial running out.
+  return (
+    endedAt <= subscription.trial_end + TRIAL_END_SLACK_S &&
+    !(await hasPaymentMethod(subscription))
+  );
 }
 
 async function getOwnerEmails(db: NonNullable<Db>, workspaceId: number) {
@@ -222,6 +232,7 @@ async function sendCancellationEmails(args: {
       endsAt,
       reason: "cancellation",
       owners,
+      schedule: preview.membersRemoved.length <= MAX_SCHEDULED_MEMBERS,
     });
   } catch (err) {
     console.error("Failed to schedule member-access-ending emails:", err);
@@ -626,8 +637,8 @@ export const webhookRouter = createTRPCRouter({
         : undefined,
     });
 
-    // Best-effort: a failed member warning must not fail the webhook. The
-    // trial ends within the reminder lead, so this sends right away.
+    // Best-effort: a failed member warning must not fail the webhook. Sent
+    // now, never scheduled: nothing stores the id to cancel it later.
     if (preview) {
       try {
         await scheduleMemberAccessEnding({
@@ -638,6 +649,7 @@ export const webhookRouter = createTRPCRouter({
           endsAt: trialEnd,
           reason: "trial",
           owners,
+          schedule: false,
         });
       } catch (err) {
         console.error("Failed to send member-access-ending emails:", err);
@@ -700,7 +712,10 @@ export const webhookRouter = createTRPCRouter({
     // not a paying customer churning — keep the audit trail honest. Read
     // off the subscription rather than `ws.trialEndsAt`: a delayed
     // trial-to-active webhook leaves that marker stale on a paying customer.
-    const reason = endedDuringTrial(subscription, opts.input.event.created)
+    const reason = (await endedDuringTrial(
+      subscription,
+      opts.input.event.created,
+    ))
       ? subscription.cancellation_details?.reason === "cancellation_requested"
         ? "trial_cancelled"
         : "trial_ended"

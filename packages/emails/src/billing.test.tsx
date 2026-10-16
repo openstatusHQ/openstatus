@@ -23,8 +23,8 @@ import {
   billingRecipients,
   planLossLines,
   reminderScheduledAt,
-  schedulePlanEndingSoon,
   scheduleMemberAccessEnding,
+  schedulePlanEndingSoon,
   sendCancellationScheduled,
   sendMemberRemoved,
   sendPlanDowngraded,
@@ -455,6 +455,21 @@ describe("send plumbing", () => {
     expect("scheduledAt" in send.calls[0].args[0]).toBe(false);
     expect(ids).toEqual([]);
 
+    const unscheduled = await scheduleMemberAccessEnding({
+      to: ["a@acme.dev"],
+      eventId: "evt_3",
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "cancellation",
+      owners: [],
+      schedule: false,
+      now: new Date(endsAt.getTime() - 10 * 86_400_000),
+    });
+    assertSpyCalls(send, 2);
+    expect("scheduledAt" in send.calls[1].args[0]).toBe(false);
+    expect(unscheduled).toEqual([]);
+
     expect(
       await scheduleMemberAccessEnding({
         to: [],
@@ -466,7 +481,7 @@ describe("send plumbing", () => {
         owners: [],
       }),
     ).toEqual([]);
-    assertSpyCalls(send, 1);
+    assertSpyCalls(send, 2);
   });
 
   test("sendMemberRemoved chunks at Resend's 100-email batch limit", async () => {

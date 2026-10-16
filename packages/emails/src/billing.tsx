@@ -164,15 +164,20 @@ export async function sendMemberRemoved(
 
 /**
  * Warns members `REMINDER_LEAD_DAYS` before `endsAt`, or right away when that
- * cannot be scheduled. Returns the ids of the scheduled sends, to cancel on
- * resume. The batch API cannot schedule, so members share one email per 50
- * recipients — they already see each other in the workspace.
+ * cannot be scheduled or `schedule` is false. Returns the ids of the scheduled
+ * sends, to cancel on resume. The batch API cannot schedule, so members share
+ * one email per 50 recipients — they already see each other in the workspace.
  */
 export async function scheduleMemberAccessEnding(
-  req: MemberAccessEndingProps & { to: string[]; eventId: string; now?: Date },
+  req: MemberAccessEndingProps & {
+    to: string[];
+    eventId: string;
+    schedule?: boolean;
+    now?: Date;
+  },
 ): Promise<string[]> {
-  const { to, eventId, now, ...props } = req;
-  const scheduledAt = reminderScheduledAt(props.endsAt, now);
+  const { to, eventId, schedule = true, now, ...props } = req;
+  const scheduledAt = schedule ? reminderScheduledAt(props.endsAt, now) : null;
   const ids: string[] = [];
   for (let i = 0; i < to.length; i += RESEND_MAX_RECIPIENTS) {
     const id = await sendEmail(
