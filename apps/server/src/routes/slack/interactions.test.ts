@@ -1564,6 +1564,37 @@ describe("publish status update button", () => {
     );
   });
 
+  test("picking another status page redraws the form without an incident", async () => {
+    await signAndPost(app, {
+      type: "block_actions",
+      team: { id: "T_KNOWN" },
+      user: { id: "U_OWNER" },
+      view: {
+        id: "V_WELCOME",
+        private_metadata: JSON.stringify({ channelId: "C_NEW" }),
+      },
+      actions: [
+        { action_id: "incident_card_page", selected_option: { value: "1" } },
+      ],
+    });
+    const update = slackTestState.calls.find(
+      (c) => c.method === "views.update",
+    );
+    expect(update?.args.view_id).toBe("V_WELCOME");
+    const view = update?.args.view as {
+      callback_id?: string;
+      private_metadata?: string;
+      blocks: unknown[];
+    };
+    expect(view.callback_id).toBe("incident_card_status_page");
+    expect(JSON.parse(view.private_metadata ?? "{}")).toEqual({
+      channelId: "C_NEW",
+    });
+    expect(JSON.stringify(view.blocks)).not.toContain(
+      "linked to this incident",
+    );
+  });
+
   test("publishing creates an unlinked report and posts it in the channel", async () => {
     const title = `Welcome ${crypto.randomUUID()}`;
     const res = await signAndPost(app, {
@@ -1589,8 +1620,8 @@ describe("publish status update button", () => {
       .from(statusReport)
       .where(eq(statusReport.title, title))
       .get();
-    expect(report?.pageId).toBe(1);
     if (report) created.push(report.id);
+    expect(report?.pageId).toBe(1);
     const linked = await db
       .select()
       .from(incident)

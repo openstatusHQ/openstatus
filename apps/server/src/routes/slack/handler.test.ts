@@ -239,6 +239,24 @@ describe("handleSlackEvent", () => {
     expect(slackTestState.calls.length).toBe(0);
   });
 
+  test("stays quiet when added to a channel in an unknown workspace", async () => {
+    await settleBackgroundTasks();
+    slackTestState.calls = [];
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_UNKNOWN",
+      event_id: `evt_join_unknown_${Date.now()}`,
+      event: {
+        type: "member_joined_channel",
+        user: "UBOT",
+        inviter: "U1",
+        channel: "C_NEW",
+      },
+    });
+    await settleBackgroundTasks();
+    expect(slackTestState.calls.length).toBe(0);
+  });
+
   test("ignores app_home_opened for the messages tab", async () => {
     // Earlier tests' events may still be posting; only this one's calls count.
     await settleBackgroundTasks();
