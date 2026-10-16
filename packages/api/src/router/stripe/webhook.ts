@@ -658,6 +658,7 @@ export const webhookRouter = createTRPCRouter({
         workspaceSlug: ws.slug,
         previousPlan: ws.plan ?? "paid",
         loss: toPlanLoss(trimmed, customDomains, ssoDisabled),
+        reason,
       });
     } catch (err) {
       console.error("Failed to send plan-downgraded email:", err);

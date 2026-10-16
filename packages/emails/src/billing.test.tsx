@@ -91,6 +91,30 @@ describe("billing templates", () => {
     );
   });
 
+  test("plan-downgraded after a trial says trial and offers upgrade", async () => {
+    const props = {
+      workspaceSlug: "acme-dev",
+      previousPlan: "team",
+      loss,
+      reason: "trial_ended" as const,
+    };
+    const html = await render(<PlanDowngradedEmail {...props} />);
+    expect(html).toContain("TRIAL");
+    expect(html).toContain("team trial ended without a payment method");
+    expect(html).toContain("team trial → free");
+    expect(html).toContain("Upgrade");
+    expect(html).not.toContain("subscription ended");
+    expect(html).not.toContain("Re-subscribe");
+    expect(planDowngradedSubject(props)).toBe(
+      "Your trial ended — 2 status pages deleted",
+    );
+
+    const cancelled = await render(
+      <PlanDowngradedEmail {...props} reason="trial_cancelled" />,
+    );
+    expect(cancelled).toContain("You cancelled your team trial");
+  });
+
   test("plan-ending-soon is dated and in the future tense", async () => {
     const props = { workspaceSlug: "acme-dev", plan: "team", endsAt, loss };
     const html = await render(<PlanEndingSoonEmail {...props} />);
