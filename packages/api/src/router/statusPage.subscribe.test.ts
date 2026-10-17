@@ -15,6 +15,10 @@ let workspaceId: number;
 let pageId: number;
 let slug: string;
 
+// No external email I/O in tests: capture outgoing requests instead.
+const realFetch = globalThis.fetch;
+const sent: { url: string; body: string }[] = [];
+
 function caller() {
   return appRouter.createCaller(
     createInnerTRPCContext({
@@ -25,6 +29,16 @@ function caller() {
 }
 
 beforeAll(async () => {
+  globalThis.fetch = (input, init) => {
+    const url = input instanceof Request ? input.url : String(input);
+    sent.push({ url, body: String(init?.body ?? "") });
+    return Promise.resolve(
+      new Response(JSON.stringify({ id: "email_test" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+  };
   const fixture = await createTestWorkspace();
   workspaceId = fixture.workspace.id;
   const _page = await createPage(workspaceId);
@@ -33,6 +47,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  globalThis.fetch = realFetch;
   await db.delete(pageSubscriber).where(eq(pageSubscriber.pageId, pageId));
   await db.delete(page).where(eq(page.workspaceId, workspaceId));
 });
@@ -55,6 +70,10 @@ describe("statusPage.subscribe", () => {
     expect(row?.token).toBeTruthy();
     expect(row?.acceptedAt).toBeNull();
     expect(JSON.stringify(result)).not.toContain(row?.token ?? "");
+
+    // The verification link went to the subscriber's mailbox instead.
+    const email = sent.find((r) => r.body.includes("someone-else@example.com"));
+    expect(email?.body).toContain(`/verify/${row?.token}`);
   });
 
   test("the public token-based verification email endpoint is gone", () => {

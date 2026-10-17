@@ -745,6 +745,34 @@ describe("notifyStatusReport", () => {
       expect(notified).toBe(false);
     });
   });
+
+  test("returns false when the report has no page", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report, initialUpdate } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-notify-no-page`,
+          status: "investigating",
+          message: "m",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+      await tx
+        .update(statusReport)
+        .set({ pageId: null })
+        .where(eq(statusReport.id, report.id))
+        .run();
+
+      const notified = await notifyStatusReport({
+        ctx,
+        input: { statusReportUpdateId: initialUpdate.id },
+      });
+      expect(notified).toBe(false);
+    });
+  });
 });
 
 // Same derivation as `listMonitors` — a second copy of the logic, so it gets

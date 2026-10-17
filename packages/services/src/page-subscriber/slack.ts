@@ -36,6 +36,15 @@ function channelLabel(channelId: string, channelName?: string): string {
   return channelName ? `#${channelName}` : channelId;
 }
 
+// A channel can't present a password, email or IP, so only public pages.
+function assertSlackSubscribable(accessType: string | null) {
+  if (accessType !== "public") {
+    throw new PreconditionFailedError(
+      "Protected status pages can't be subscribed to from Slack.",
+    );
+  }
+}
+
 /**
  * Self-signup for a Slack channel via `/openstatus subscribe <url>`. There is no
  * authenticated workspace at the call site — both workspace and audit actor
@@ -58,12 +67,7 @@ export async function createSlackSubscriber(args: {
   if (!pageData) {
     throw new NotFoundError("page", input.pageId);
   }
-  // A channel can't present a password, email or IP, so only public pages.
-  if (pageData.accessType && pageData.accessType !== "public") {
-    throw new PreconditionFailedError(
-      "Protected status pages can't be subscribed to from Slack.",
-    );
-  }
+  assertSlackSubscribable(pageData.accessType);
   const workspace = parseWorkspaceForContext(pageData.workspace);
   assertSubscribersAllowed(workspace);
 
@@ -75,6 +79,16 @@ export async function createSlackSubscriber(args: {
   const name = channelLabel(input.channelId, input.channelName);
 
   return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+    // Re-read inside the write so a page protected after the read above
+    // can't still gain a subscriber.
+    const current = await tx
+      .select({ accessType: page.accessType })
+      .from(page)
+      .where(eq(page.id, input.pageId))
+      .get();
+    if (!current) throw new NotFoundError("page", input.pageId);
+    assertSlackSubscribable(current.accessType);
+
     const existing = await tx.query.pageSubscriber.findFirst({
       where: and(
         eq(pageSubscriber.pageId, input.pageId),

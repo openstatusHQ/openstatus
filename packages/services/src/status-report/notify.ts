@@ -17,8 +17,8 @@ import { NotifyStatusReportInput } from "./schemas";
  *   - Workspace owns the target update (via join to the parent report).
  *   - Plan has `status-subscribers` enabled — otherwise no-op.
  *
- * Returns `true` when the update was dispatched, `false` when the plan
- * skipped it.
+ * Returns `true` when the update was dispatched, `false` when it was skipped
+ * (plan without subscribers, or a report not attached to a page).
  */
 export async function notifyStatusReport(args: {
   ctx: ServiceContext;
@@ -33,6 +33,7 @@ export async function notifyStatusReport(args: {
     .select({
       updateId: statusReportUpdate.id,
       reportWorkspaceId: statusReport.workspaceId,
+      reportPageId: statusReport.pageId,
     })
     .from(statusReportUpdate)
     .innerJoin(
@@ -56,6 +57,8 @@ export async function notifyStatusReport(args: {
     // `emailRouter.sendStatusReport` behaviour.
     return false;
   }
+  // The dispatcher silently drops reports without a page.
+  if (!row.reportPageId) return false;
 
   await dispatchStatusReportUpdate(input.statusReportUpdateId);
   return true;

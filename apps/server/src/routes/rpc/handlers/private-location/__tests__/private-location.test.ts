@@ -771,4 +771,18 @@ describe("PrivateLocationService - strict id parsing", () => {
       .all();
     expect(created.length).toBe(0);
   });
+
+  test("CreatePrivateLocation: a monitor id with CR/LF is InvalidArgument", async () => {
+    const res = await connectRequest(
+      "CreatePrivateLocation",
+      {
+        name: `${TEST_PREFIX}-crlf-monitor-ids`,
+        monitorIds: [`${testMonitorId}\r\nx-injected: 1`],
+      },
+      { "x-openstatus-key": authKey },
+    );
+
+    expect(res.status).toBe(400);
+    expect(res.headers.get("error-reason")).toBe("INVALID_MONITOR_ID");
+  });
 });

@@ -1,5 +1,5 @@
-import { eq } from "@openstatus/db";
-import { workspace } from "@openstatus/db/src/schema";
+import { db as defaultDb, eq } from "@openstatus/db";
+import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
@@ -74,6 +74,12 @@ export async function enableSso(args: {
         .where(eq(workspace.id, ctx.workspace.id))
         .get();
       if (!existing) throw new NotFoundError("workspace", ctx.workspace.id);
+      // The add-on may have been removed (downgrade) while WorkOS was called.
+      if (!selectWorkspaceSchema.parse(existing).limits.sso) {
+        throw new PreconditionFailedError(
+          "SSO has not been added to this workspace",
+        );
+      }
 
       // A concurrent enable may have persisted its own org between our read
       // and this transaction — keep theirs so there's exactly one.
@@ -118,7 +124,17 @@ export async function enableSso(args: {
       };
     });
   } catch (err) {
-    await discardCreated();
+    // The commit may have landed even though we saw an error (e.g. a lost
+    // response) — never delete an org the workspace now references.
+    const row = await (ctx.db ?? defaultDb)
+      .select({ workosOrganizationId: workspace.workosOrganizationId })
+      .from(workspace)
+      .where(eq(workspace.id, ctx.workspace.id))
+      .get()
+      .catch(() => undefined);
+    if (row && row.workosOrganizationId !== createdOrganizationId) {
+      await discardCreated();
+    }
     throw err;
   }
 

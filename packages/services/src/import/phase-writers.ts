@@ -1,4 +1,4 @@
-import { and, count, eq, isNull } from "@openstatus/db";
+import { and, asc, count, eq, isNull } from "@openstatus/db";
 import {
   maintenance,
   maintenanceUpdate,
@@ -120,18 +120,6 @@ export async function writePagePhase(
   if (!limits["custom-domain"]) {
     data.customDomain = "";
   }
-  // Same tolerance when another page already holds the domain.
-  if (data.customDomain) {
-    try {
-      await assertCustomDomainAvailable({
-        tx,
-        customDomain: data.customDomain,
-      });
-    } catch (err) {
-      if (!(err instanceof ConflictError)) throw err;
-      data.customDomain = "";
-    }
-  }
 
   if (existingPageId) {
     const existing = await tx
@@ -166,6 +154,21 @@ export async function writePagePhase(
     resource.status = "skipped";
     phase.status = computePhaseStatus(phase.resources);
     return existingBySlug.id;
+  }
+
+  // Same tolerance when another page already holds the domain. Checked only
+  // on the insert path: a skipped existing page never writes the domain.
+  if (data.customDomain) {
+    try {
+      await assertCustomDomainAvailable({
+        tx,
+        customDomain: data.customDomain,
+      });
+    } catch (err) {
+      if (!(err instanceof ConflictError)) throw err;
+      resource.error = `Custom domain ${data.customDomain} is already used by another status page; created without it.`;
+      data.customDomain = "";
+    }
   }
 
   const [inserted] = await tx
@@ -392,6 +395,49 @@ export async function writeComponentsPhase(
   phase.status = computePhaseStatus(phase.resources);
 }
 
+// A same-title report counts as this incident only when its *earliest*
+// update is at `firstUpdateDate` — a later update of another incident
+// landing on that instant must not match.
+async function findReportByFirstUpdate(
+  tx: DB,
+  args: {
+    pageId: number;
+    workspaceId: number;
+    title: string;
+    firstUpdateDate: Date;
+  },
+): Promise<{ id: number } | undefined> {
+  const candidates = await tx
+    .selectDistinct({ id: statusReport.id })
+    .from(statusReport)
+    .innerJoin(
+      statusReportUpdate,
+      eq(statusReportUpdate.statusReportId, statusReport.id),
+    )
+    .where(
+      and(
+        eq(statusReport.pageId, args.pageId),
+        eq(statusReport.workspaceId, args.workspaceId),
+        eq(statusReport.title, args.title),
+        eq(statusReportUpdate.date, args.firstUpdateDate),
+      ),
+    )
+    .all();
+  for (const candidate of candidates) {
+    const earliest = await tx
+      .select({ date: statusReportUpdate.date })
+      .from(statusReportUpdate)
+      .where(eq(statusReportUpdate.statusReportId, candidate.id))
+      .orderBy(asc(statusReportUpdate.date))
+      .limit(1)
+      .get();
+    if (earliest?.date.getTime() === args.firstUpdateDate.getTime()) {
+      return candidate;
+    }
+  }
+  return undefined;
+}
+
 export async function writeIncidentsPhase(
   pc: PhaseContext,
   phase: PhaseResult,
@@ -427,22 +473,12 @@ export async function writeIncidentsPhase(
       // incident, as `from/to` does for maintenances below.
       const firstUpdateDate = earliestDate(data.updates.map((u) => u.date));
       const existingReport = firstUpdateDate
-        ? await tx
-            .selectDistinct({ id: statusReport.id })
-            .from(statusReport)
-            .innerJoin(
-              statusReportUpdate,
-              eq(statusReportUpdate.statusReportId, statusReport.id),
-            )
-            .where(
-              and(
-                eq(statusReport.pageId, pageId),
-                eq(statusReport.workspaceId, workspaceId),
-                eq(statusReport.title, data.report.title),
-                eq(statusReportUpdate.date, firstUpdateDate),
-              ),
-            )
-            .get()
+        ? await findReportByFirstUpdate(tx, {
+            pageId,
+            workspaceId,
+            title: data.report.title,
+            firstUpdateDate,
+          })
         : await tx
             .select({ id: statusReport.id })
             .from(statusReport)

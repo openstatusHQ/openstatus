@@ -119,3 +119,17 @@ test("update the page keeping its own custom domain", async () => {
 
   expect(res.status).toBe(200);
 });
+
+test("update a missing page with a taken custom domain should return 404", async () => {
+  const res = await app.request("/v1/page/999999", {
+    method: "PUT",
+    headers: {
+      "x-openstatus-key": "1",
+      "Content-Type": "application/json",
+    },
+    // Seeded on page 2.
+    body: JSON.stringify({ customDomain: "status.acme.com" }),
+  });
+
+  expect(res.status).toBe(404);
+});

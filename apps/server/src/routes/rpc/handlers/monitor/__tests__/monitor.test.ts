@@ -2212,6 +2212,16 @@ describe("MonitorService - strict id parsing", () => {
     }
   });
 
+  test("an id with CR/LF is InvalidArgument, not Internal", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: `${testHttpMonitorId}\r\nx-injected: 1` },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res.status).toBe(400);
+    expect(res.headers.get("error-reason")).toBe("MONITOR_ID_INVALID");
+  });
+
   test("still accepts a plain decimal id", async () => {
     const res = await connectRequest(
       "GetMonitor",

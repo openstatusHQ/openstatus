@@ -11,14 +11,8 @@ import { type ServiceContext, withTransaction } from "../context";
 import { env } from "../env";
 import { LimitExceededError } from "../errors";
 import type { Invitation } from "../types";
+import { UNLIMITED_MEMBERS_EFFECTIVE_CAP } from "./constants";
 import { CreateInvitationInput } from "./schemas";
-
-/**
- * "Unlimited" members resolves to this effective cap — matches the legacy
- * behavior in `invitationRouter.create`. Large enough that enterprise plans
- * never brush against it in practice.
- */
-export const UNLIMITED_MEMBERS_EFFECTIVE_CAP = 420;
 
 /**
  * Invite a user to the caller's workspace.

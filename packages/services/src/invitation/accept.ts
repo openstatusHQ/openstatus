@@ -19,7 +19,7 @@ import {
   UnauthorizedError,
 } from "../errors";
 import type { Workspace } from "../types";
-import { UNLIMITED_MEMBERS_EFFECTIVE_CAP } from "./create";
+import { UNLIMITED_MEMBERS_EFFECTIVE_CAP } from "./constants";
 import { AcceptInvitationInput } from "./schemas";
 
 /**

@@ -219,6 +219,34 @@ describe("enableSso", () => {
     });
   });
 
+  test("refuses to enable when the add-on is removed mid-enable", async () => {
+    await withTestTransaction(async (tx) => {
+      const deleted: string[] = [];
+      const workos = fakeWorkOS({ organizationId: "org_downgraded", deleted });
+      // A downgrade drops the add-on while the WorkOS call is in flight.
+      workos.organizations.createOrganization = async () => {
+        await tx
+          .update(workspace)
+          .set({ limits: JSON.stringify({ sso: false }) })
+          .where(eq(workspace.id, scaleCtx.workspace.id));
+        return { id: "org_downgraded" };
+      };
+
+      await expect(
+        enableSso({ ctx: { ...scaleCtx, db: tx, workos } }),
+      ).rejects.toBeInstanceOf(PreconditionFailedError);
+      expect(deleted).toEqual(["org_downgraded"]);
+
+      const row = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, scaleCtx.workspace.id))
+        .get();
+      expect(row?.ssoEnabled).toBe(false);
+      expect(row?.workosOrganizationId).toBeNull();
+    });
+  });
+
   test("keeps a concurrently persisted org and deletes its own", async () => {
     await withTestTransaction(async (tx) => {
       const deleted: string[] = [];

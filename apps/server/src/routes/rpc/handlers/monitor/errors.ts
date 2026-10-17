@@ -92,7 +92,8 @@ export function monitorIdInvalidError(monitorId: string): ConnectError {
     `Invalid monitor id: "${monitorId}"`,
     Code.InvalidArgument,
     ErrorReason.MONITOR_ID_INVALID,
-    { "monitor-id": monitorId },
+    // Raw input may hold CR/LF, which `Headers` rejects.
+    { "monitor-id": encodeURIComponent(monitorId) },
   );
 }
 

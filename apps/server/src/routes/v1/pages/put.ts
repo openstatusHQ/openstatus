@@ -70,22 +70,6 @@ export function registerPutPage(api: typeof pagesApi) {
       });
     }
 
-    try {
-      await assertCustomDomainAvailable({
-        tx: db,
-        customDomain: input.customDomain,
-        excludePageId: Number(id),
-      });
-    } catch (err) {
-      if (err instanceof ConflictError) {
-        throw new OpenStatusApiError({
-          code: "CONFLICT",
-          message: err.message,
-        });
-      }
-      throw err;
-    }
-
     if (
       limits["password-protection"] === false &&
       input?.passwordProtected === true
@@ -127,6 +111,22 @@ export function registerPutPage(api: typeof pagesApi) {
         code: "NOT_FOUND",
         message: `Page ${id} not found`,
       });
+    }
+
+    try {
+      await assertCustomDomainAvailable({
+        tx: db,
+        customDomain: input.customDomain,
+        excludePageId: _page.id,
+      });
+    } catch (err) {
+      if (err instanceof ConflictError) {
+        throw new OpenStatusApiError({
+          code: "CONFLICT",
+          message: err.message,
+        });
+      }
+      throw err;
     }
 
     if (input.slug && _page.slug !== input.slug) {

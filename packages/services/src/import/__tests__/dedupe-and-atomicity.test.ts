@@ -130,6 +130,47 @@ describe("writeIncidentsPhase idempotency key", () => {
   });
 });
 
+describe("writeIncidentsPhase first-update match", () => {
+  test("a later update at the same instant doesn't make a new incident a duplicate", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const pageRow = await insertPage(tx, ctx.workspace.id, "later-update");
+      const title = `${TEST_PREFIX}-elevated-errors`;
+      const pc = { ctx, tx, provider: "statuspage" as const };
+
+      // First incident: starts Jan 1, its last update is Jan 2.
+      const first: PhaseResult = {
+        phase: "incidents",
+        status: "completed",
+        resources: [
+          incident("inc_a", title, pageRow.id, ctx.workspace.id, [
+            new Date("2024-01-01T00:00:00Z"),
+            new Date("2024-01-02T00:00:00Z"),
+          ]),
+        ],
+      };
+      await writeIncidentsPhase(pc, first, pageRow.id, new Map());
+
+      // A different incident that *starts* when the first one last updated.
+      const second: PhaseResult = {
+        phase: "incidents",
+        status: "completed",
+        resources: [
+          incident("inc_b", title, pageRow.id, ctx.workspace.id, [
+            new Date("2024-01-02T00:00:00Z"),
+          ]),
+        ],
+      };
+      await writeIncidentsPhase(pc, second, pageRow.id, new Map());
+
+      expect(second.resources[0].status).toBe("created");
+      expect(second.resources[0].openstatusId).not.toBe(
+        first.resources[0].openstatusId,
+      );
+    });
+  });
+});
+
 // These run on the committed db: inside `withTestTransaction` the writers
 // reuse the test's transaction, so a failed resource could not roll back on
 // its own and the half-written rows would stay visible.
@@ -563,6 +604,7 @@ describe("writePagePhase with a taken custom domain", () => {
       );
       const created = await tx.select().from(page).where(eq(page.id, id)).get();
       expect(created?.customDomain).toBe("");
+      expect(phase.resources[0].error).toContain("already used");
     });
   });
 });
