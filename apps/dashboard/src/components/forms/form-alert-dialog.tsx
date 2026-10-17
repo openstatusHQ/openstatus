@@ -43,6 +43,9 @@ import { toast } from "sonner";
 
 const FORM_ID = "form-alert-dialog";
 
+const DESTRUCTIVE_ACTION =
+  "bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 text-white shadow-xs";
+
 type FormAlertDialogContextValue = {
   confirmationValue: string;
   value: string;
@@ -157,7 +160,7 @@ export function FormAlertDialogConfirmInput({
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
-    <form id={FORM_ID} className={cn("space-y-1.5", className)} {...props}>
+    <form {...props} id={FORM_ID} className={cn("space-y-1.5", className)}>
       <p className="text-muted-foreground text-sm">
         Type{" "}
         <Button
@@ -172,7 +175,11 @@ export function FormAlertDialogConfirmInput({
         </Button>{" "}
         to confirm
       </p>
-      <Input value={value} onChange={(e) => setValue(e.target.value)} />
+      <Input
+        aria-label={`Type ${confirmationValue} to confirm`}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+      />
     </form>
   );
 }
@@ -197,10 +204,7 @@ export function FormAlertDialogAction({
 
   return (
     <AlertDialogAction
-      className={cn(
-        "bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 text-white shadow-xs",
-        className,
-      )}
+      className={className}
       {...props}
       disabled={value !== confirmationValue || isPending}
       form={FORM_ID}
@@ -250,7 +254,10 @@ export function FormAlertDialog({
         <FormAlertDialogConfirmInput />
         <FormAlertDialogFooter>
           <FormAlertDialogCancel />
-          <FormAlertDialogAction pendingLabel="Deleting...">
+          <FormAlertDialogAction
+            pendingLabel="Deleting..."
+            className={DESTRUCTIVE_ACTION}
+          >
             Delete
           </FormAlertDialogAction>
         </FormAlertDialogFooter>

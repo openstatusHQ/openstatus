@@ -39,7 +39,9 @@ export function TransferOwnershipDialog({
     }),
   );
 
-  const hasPaidPlan = !!workspace?.plan && workspace.plan !== "free";
+  // The router syncs the Stripe customer email whenever one is linked, paid
+  // plan or not.
+  const hasStripeCustomer = !!workspace?.stripeId;
   const workspaceName = workspace?.name || workspace?.slug || "this workspace";
 
   return (
@@ -70,7 +72,7 @@ export function TransferOwnershipDialog({
                 You become a member. You lose access to SSO settings and member
                 management, and you can&apos;t undo this yourself.
               </li>
-              {hasPaidPlan ? (
+              {hasStripeCustomer ? (
                 <li>
                   Billing emails go to the new owner. If the billing email on
                   your subscription is your address, it moves to them too. A

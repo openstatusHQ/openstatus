@@ -7,8 +7,13 @@ import { after } from "next/server.js";
  */
 export function createAfterResponse(label: string) {
   return (task: () => Promise<unknown>) => {
-    const run = () =>
-      task().catch((err) => console.warn(`${label} failed`, err));
+    const run = async () => {
+      try {
+        await task();
+      } catch (err) {
+        console.warn(`${label} failed`, err);
+      }
+    };
     try {
       after(run);
     } catch {

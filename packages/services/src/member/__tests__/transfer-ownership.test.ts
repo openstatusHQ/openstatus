@@ -1,4 +1,4 @@
-import { and, eq } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
 import {
   addUserToWorkspace,
@@ -291,42 +291,42 @@ describe("transferOwnership", () => {
 
 describe("transferOwnershipInWorkspace", () => {
   test("demote predicate mismatch is a conflict and rolls back the promote", async () => {
-    await withTestTransaction(async (tx) => {
-      // The former owner was already demoted by a concurrent request.
-      await tx
-        .update(usersToWorkspaces)
-        .set({ role: "member" })
-        .where(
-          and(
-            eq(usersToWorkspaces.workspaceId, teamCtx.workspace.id),
-            eq(usersToWorkspaces.userId, OWNER_USER_ID),
-          ),
-        );
+    // One top-level transaction (libSQL HTTP has no savepoints): the throw
+    // rolls back the setup demote and the promote together.
+    await expectRejects(
+      db.transaction(async (tx) => {
+        // The former owner was already demoted by a concurrent request.
+        await tx
+          .update(usersToWorkspaces)
+          .set({ role: "member" })
+          .where(
+            and(
+              eq(usersToWorkspaces.workspaceId, teamCtx.workspace.id),
+              eq(usersToWorkspaces.userId, OWNER_USER_ID),
+            ),
+          );
+        return transferOwnershipInWorkspace({
+          tx,
+          ctx: { ...teamCtx, db: tx },
+          fromUserId: OWNER_USER_ID,
+          toUserId: TARGET_USER_ID,
+          demoteTo: "member",
+        });
+      }),
+      ConflictError,
+    );
 
-      await expectRejects(
-        tx.transaction((inner) =>
-          transferOwnershipInWorkspace({
-            tx: inner,
-            ctx: { ...teamCtx, db: inner },
-            fromUserId: OWNER_USER_ID,
-            toUserId: TARGET_USER_ID,
-            demoteTo: "member",
-          }),
-        ),
-        ConflictError,
-      );
-
-      expect(await roleOf(tx, teamCtx.workspace.id, TARGET_USER_ID)).toBe(
-        "member",
-      );
-      const rows = await readAuditLog({
-        workspaceId: teamCtx.workspace.id,
-        entityType: "member",
-        entityId: TARGET_USER_ID,
-        db: tx,
-      });
-      expect(rows.filter((r) => r.action === "member.update")).toHaveLength(0);
+    expect(await roleOf(db, teamCtx.workspace.id, TARGET_USER_ID)).toBe(
+      "member",
+    );
+    expect(await roleOf(db, teamCtx.workspace.id, OWNER_USER_ID)).toBe("owner");
+    const rows = await readAuditLog({
+      workspaceId: teamCtx.workspace.id,
+      entityType: "member",
+      entityId: TARGET_USER_ID,
+      db,
     });
+    expect(rows.filter((r) => r.action === "member.update")).toHaveLength(0);
   });
 
   test("system actor (support path) transfers and is attributed as system", async () => {

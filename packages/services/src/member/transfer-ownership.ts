@@ -166,7 +166,11 @@ export async function transferOwnershipInWorkspace(args: {
     throw new ConflictError("Ownership was changed by another request");
   }
 
-  const metadata = { reason: "ownership_transfer", fromUserId, toUserId };
+  const metadata = {
+    reason: "ownership_transfer" as const,
+    fromUserId,
+    toUserId,
+  };
 
   // New owner first, former owner second: reads sort newest first, so the
   // former owner's row shows on top.
