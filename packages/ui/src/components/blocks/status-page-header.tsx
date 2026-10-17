@@ -32,7 +32,7 @@ export function StatusPageHeaderContent({
     <nav
       data-slot="status-page-header-content"
       className={cn(
-        "mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2",
+        "mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2 group-data-[width=wide]/status-page:max-w-4xl",
         className,
       )}
       {...props}
