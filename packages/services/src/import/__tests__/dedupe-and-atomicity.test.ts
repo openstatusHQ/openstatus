@@ -169,6 +169,34 @@ describe("writeIncidentsPhase first-update match", () => {
       );
     });
   });
+
+  test("a first update with milliseconds still matches on rerun", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const pageRow = await insertPage(tx, ctx.workspace.id, "millis");
+      const title = `${TEST_PREFIX}-millis`;
+      const pc = { ctx, tx, provider: "statuspage" as const };
+      const makePhase = (): PhaseResult => ({
+        phase: "incidents",
+        status: "completed",
+        resources: [
+          incident("inc_ms", title, pageRow.id, ctx.workspace.id, [
+            new Date("2024-03-01T00:00:00.123Z"),
+          ]),
+        ],
+      });
+
+      const firstRun = makePhase();
+      await writeIncidentsPhase(pc, firstRun, pageRow.id, new Map());
+      const secondRun = makePhase();
+      await writeIncidentsPhase(pc, secondRun, pageRow.id, new Map());
+
+      expect(secondRun.resources[0].status).toBe("skipped");
+      expect(secondRun.resources[0].openstatusId).toBe(
+        firstRun.resources[0].openstatusId,
+      );
+    });
+  });
 });
 
 // These run on the committed db: inside `withTestTransaction` the writers

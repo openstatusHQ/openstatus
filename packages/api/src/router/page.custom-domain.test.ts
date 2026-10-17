@@ -24,9 +24,10 @@ test("page.updateCustomDomain rejects a taken domain before touching Vercel", as
 
   const realFetch = globalThis.fetch;
   let fetchCalls = 0;
-  globalThis.fetch = (...args) => {
+  // Count, never send: a regression must not reach the real Vercel API.
+  globalThis.fetch = () => {
     fetchCalls++;
-    return realFetch(...args);
+    return Promise.reject(new Error("unexpected Vercel request"));
   };
   try {
     await caller.page.updateCustomDomain({

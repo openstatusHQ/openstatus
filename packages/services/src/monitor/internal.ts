@@ -185,19 +185,23 @@ export function pickDefaultRegions(workspace: Workspace): {
  * Enforce the plan's periodicity, region-count and region-access limits on
  * a monitor's scheduling. Shared by every path that writes them so a clone
  * (or a source that predates a downgrade) can't carry out-of-plan values.
+ * A field left `undefined` isn't being written and isn't checked, so a
+ * partial update of a monitor that predates a downgrade still goes through.
  */
 export function assertSchedulingWithinPlan(
   limits: Workspace["limits"],
-  scheduling: { periodicity: string; regions: ReadonlyArray<string> },
+  scheduling: { periodicity?: string; regions?: ReadonlyArray<string> },
 ): void {
   const { periodicity, regions } = scheduling;
   if (
+    periodicity !== undefined &&
     !limits.periodicity.includes(
       periodicity as (typeof limits)["periodicity"][number],
     )
   ) {
     throw new LimitExceededError("periodicity", limits.periodicity.length);
   }
+  if (regions === undefined) return;
   if (limits["max-regions"] < regions.length) {
     throw new LimitExceededError("max-regions", limits["max-regions"]);
   }

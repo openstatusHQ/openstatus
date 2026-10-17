@@ -100,9 +100,14 @@ export async function collectChannelTranscript(
   let count = 0;
   for (const message of top) {
     const block: string[] = [];
+    // An older block over the remaining budget is dropped whole, so stop
+    // paging its thread early. Only the newest block needs every page, to
+    // keep its newest replies.
+    const overBudget = () =>
+      blocks.length > 0 && count + block.length > MAX_MESSAGES;
     // A bot parent (the incident card) is left out, its human replies are not.
     if (!message.bot_id && message.text) block.push(line(message));
-    if (message.reply_count && message.ts) {
+    if (message.reply_count && message.ts && !overBudget()) {
       let replyCursor: string | undefined;
       do {
         const thread = await client.conversations.replies({
@@ -114,11 +119,12 @@ export async function collectChannelTranscript(
         for (const reply of thread.messages ?? []) {
           if (reply.ts === message.ts || reply.bot_id || !reply.text) continue;
           block.push(`    ${line(reply)}`);
+          if (overBudget()) break;
         }
         replyCursor = thread.has_more
           ? thread.response_metadata?.next_cursor
           : undefined;
-      } while (replyCursor);
+      } while (replyCursor && !overBudget());
     }
     if (block.length === 0) continue;
     if (count + block.length > MAX_MESSAGES) {

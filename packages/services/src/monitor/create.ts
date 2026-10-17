@@ -6,6 +6,7 @@ import { type ServiceContext, withTransaction } from "../context";
 import { assertWithinLimit } from "../limits";
 import type { Monitor } from "../types";
 import {
+  assertSchedulingWithinPlan,
   headersToDbJson,
   pickDefaultRegions,
   serialiseAssertions,
@@ -22,6 +23,9 @@ export async function createMonitor(args: {
   const input = CreateMonitorInput.parse(args.input);
 
   assertMonitorUrlSafe({ jobType: input.jobType, url: input.url });
+  // Only caller-supplied values: the plan defaults below are picked from the
+  // plan, and a workspace's stored limits can lag behind newly added regions.
+  assertSchedulingWithinPlan(ctx.workspace.limits, input);
 
   return withTransaction(ctx, async (tx) => {
     await assertWithinLimit({

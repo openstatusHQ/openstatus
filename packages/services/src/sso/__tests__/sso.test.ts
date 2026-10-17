@@ -1,4 +1,4 @@
-import { and, eq } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import {
   usersToWorkspaces,
   workspace,
@@ -217,6 +217,48 @@ describe("enableSso", () => {
         .get();
       expect(row?.workosOrganizationId).toBeNull();
     });
+  });
+
+  // Runs on the committed db: the keep branch only applies to a transaction
+  // enableSso owns. A fresh workspace keeps the commit away from seeded ones.
+  test("keeps the org when its commit landed despite an error", async () => {
+    const fixture = await createWorkspaceFixture("scale", {
+      limits: JSON.stringify({ sso: true }),
+    });
+    // Org ids are unique across workspaces and this commit outlives the test.
+    const organizationId = `org_landed_${fixture.workspace.id}`;
+    const deleted: string[] = [];
+    let transactions = 0;
+    // The persisting transaction commits, then the response is "lost".
+    const lossyDb = new Proxy(db, {
+      get(target, prop, receiver) {
+        if (prop !== "transaction") return Reflect.get(target, prop, receiver);
+        return async (fn: Parameters<typeof db.transaction>[0]) => {
+          const result = await target.transaction(fn);
+          transactions++;
+          if (transactions === 2) throw new Error("lost response");
+          return result;
+        };
+      },
+    });
+
+    await expect(
+      enableSso({
+        ctx: {
+          ...makeUserCtx(fixture.workspace, { userId: fixture.userId }),
+          db: lossyDb,
+          workos: fakeWorkOS({ organizationId, deleted }),
+        },
+      }),
+    ).rejects.toThrow("lost response");
+    expect(deleted).toEqual([]);
+
+    const row = await db
+      .select()
+      .from(workspace)
+      .where(eq(workspace.id, fixture.workspace.id))
+      .get();
+    expect(row?.workosOrganizationId).toBe(organizationId);
   });
 
   test("refuses to enable when the add-on is removed mid-enable", async () => {

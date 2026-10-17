@@ -431,7 +431,11 @@ async function findReportByFirstUpdate(
       .orderBy(asc(statusReportUpdate.date))
       .limit(1)
       .get();
-    if (earliest?.date.getTime() === args.firstUpdateDate.getTime()) {
+    // The column stores whole seconds; provider dates may carry milliseconds.
+    if (
+      earliest?.date.getTime() ===
+      Math.floor(args.firstUpdateDate.getTime() / 1000) * 1000
+    ) {
       return candidate;
     }
   }

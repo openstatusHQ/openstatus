@@ -3,7 +3,7 @@ import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import { isTx, type ServiceContext, withTransaction } from "../context";
 import {
   ConflictError,
   NotFoundError,
@@ -124,9 +124,17 @@ export async function enableSso(args: {
       };
     });
   } catch (err) {
-    // The commit may have landed even though we saw an error (e.g. a lost
-    // response) — never delete an org the workspace now references.
-    const row = await (ctx.db ?? defaultDb)
+    const db = ctx.db ?? defaultDb;
+    // Inside a caller's transaction the write is still uncommitted and the
+    // caller rolls back on this error, so the org is always an orphan.
+    if (isTx(db)) {
+      await discardCreated();
+      throw err;
+    }
+    // Our own commit may have landed even though we saw an error (e.g. a lost
+    // response) — never delete an org the workspace now references. If the
+    // re-read fails too, keep the org: a leak beats a dangling reference.
+    const row = await db
       .select({ workosOrganizationId: workspace.workosOrganizationId })
       .from(workspace)
       .where(eq(workspace.id, ctx.workspace.id))

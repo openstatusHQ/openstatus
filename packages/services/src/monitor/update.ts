@@ -6,6 +6,7 @@ import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import type { Monitor } from "../types";
 import {
+  assertSchedulingWithinPlan,
   getMonitorInWorkspace,
   headersToDbJson,
   serialiseAssertions,
@@ -33,6 +34,7 @@ export async function updateMonitorConfig(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = UpdateMonitorConfigInput.parse(args.input);
+  assertSchedulingWithinPlan(ctx.workspace.limits, input);
 
   return withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
