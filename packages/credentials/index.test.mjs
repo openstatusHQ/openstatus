@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -32,14 +38,15 @@ const manifest = parse(
 );
 for (const name of Object.keys(manifest.profiles.default)) delete env[name];
 delete env.SECRETSPEC_PROFILE;
+delete env.SELF_HOST;
 after(() => rmSync(state, { recursive: true, force: true }));
 
-function run(code, extraEnv = {}) {
+function run(code, extraEnv = {}, cwd = state) {
   const result = spawnSync(
     process.execPath,
     ["--input-type=module", "-e", code],
     {
-      cwd: state,
+      cwd,
       env: { ...env, ...extraEnv },
       encoding: "utf8",
       timeout: 10000,
@@ -215,3 +222,126 @@ test("Intel Mac remote providers fail explicitly instead of silently using envir
   assert.match(result.stderr, /native addon is unavailable on darwin\/x64/);
   assert.doesNotMatch(result.stderr, /private-test-value/);
 });
+
+for (const [platform, prefix] of [
+  ["host", ""],
+  ["Intel Mac", intelMac],
+]) {
+  function withDotenv(
+    code,
+    variables = {},
+    contents = 'DATABASE_URL=http://localhost:9876\nAUTH_SECRET="file-session-secret"\nRESEND_API_KEY=file-api-key\nSELF_HOST=true\n',
+  ) {
+    const directory = mkdtempSync(join(state, "dotenv-"));
+    writeFileSync(join(directory, ".env"), contents);
+    return run(
+      `${prefix} ${code}`,
+      {
+        SECRETSPEC_PROVIDER: undefined,
+        ...variables,
+      },
+      directory,
+    );
+  }
+
+  test(`${platform}: .env supplies production credentials by default`, () => {
+    const result = withDotenv(
+      `${dynamicInitialize} console.log(process.env.DATABASE_URL, process.env.SELF_HOST)`,
+      { NODE_ENV: "production" },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, "http://localhost:9876 true\n");
+    assert.doesNotMatch(
+      result.stdout + result.stderr,
+      /file-session-secret|file-api-key/,
+    );
+  });
+
+  test(`${platform}: deployment environment values and empty strings override .env`, () => {
+    const result = withDotenv(
+      `${dynamicInitialize} console.log(process.env.DATABASE_URL, JSON.stringify(process.env.RESEND_API_KEY))`,
+      {
+        DATABASE_URL: "http://localhost:4321",
+        RESEND_API_KEY: "",
+      },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, 'http://localhost:4321 ""\n');
+  });
+
+  test(`${platform}: an explicit provider bypasses .env fallback`, () => {
+    const result = withDotenv(dynamicInitialize, {
+      NODE_ENV: "production",
+      SECRETSPEC_PROVIDER: "env://",
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Missing required secrets:/);
+    assert.match(result.stderr, /DATABASE_URL/);
+    assert.match(result.stderr, /AUTH_SECRET/);
+    assert.doesNotMatch(
+      result.stdout + result.stderr,
+      /file-session-secret|file-api-key/,
+    );
+  });
+
+  test(`${platform}: null provider uses defaults instead of .env`, () => {
+    const result = withDotenv(
+      `${dynamicInitialize} console.log(process.env.DATABASE_URL, process.env.SELF_HOST)`,
+      { SECRETSPEC_PROVIDER: "null://" },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, "http://127.0.0.1:8080 undefined\n");
+  });
+
+  test(`${platform}: database tooling reads its working directory's .env`, () => {
+    const result = withDotenv(
+      `delete process.env.AUTH_SECRET; const { loadCredentials } = await import(${JSON.stringify(moduleUrl)}); loadCredentials({ scope: 'database' }); console.log(process.env.DATABASE_URL)`,
+      { NODE_ENV: "production" },
+      "DATABASE_URL=http://localhost:9876\n",
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, "http://localhost:9876\n");
+  });
+
+  test(`${platform}: repeated hooks do not reload .env`, () => {
+    const result = withDotenv(
+      `${dynamicInitialize} delete process.env.DATABASE_URL; loadCredentials(); console.log(process.env.DATABASE_URL === undefined)`,
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, "true\n");
+  });
+
+  test(`${platform}: no .env is required when no provider is configured`, () => {
+    const result = run(
+      `${prefix} ${dynamicInitialize} console.log(process.env.DATABASE_URL)`,
+      { SECRETSPEC_PROVIDER: undefined },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, "http://127.0.0.1:8080\n");
+  });
+
+  test(`${platform}: incomplete production .env fails without dummy credentials`, () => {
+    const result = withDotenv(
+      dynamicInitialize,
+      { NODE_ENV: "production" },
+      "RESEND_API_KEY=file-api-key\n",
+    );
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Missing required secrets:/);
+    assert.match(result.stderr, /DATABASE_URL/);
+    assert.match(result.stderr, /AUTH_SECRET/);
+    assert.doesNotMatch(result.stdout + result.stderr, /file-api-key/);
+  });
+
+  test(`${platform}: unreadable .env fails with a value-free error`, () => {
+    const directory = mkdtempSync(join(state, "dotenv-invalid-"));
+    mkdirSync(join(directory, ".env"));
+    const result = run(
+      `${prefix} ${dynamicInitialize}`,
+      { SECRETSPEC_PROVIDER: undefined },
+      directory,
+    );
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Unable to read the application's .env file/);
+  });
+}

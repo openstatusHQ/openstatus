@@ -15,23 +15,40 @@
 The dashboard, marketing site, and status page resolve application credentials
 with the [SecretSpec Node SDK](https://secretspec.dev/sdk/nodejs/) during Next.js
 configuration and server startup. Run the normal development and build commands;
-no wrapper command or `.env` file is needed.
+no wrapper command is needed. Existing `.env` files keep working without migration.
+
+[SecretSpec supports 35 providers](https://secretspec.dev/), including system
+keyrings, 1Password, AWS Secrets Manager, Vault, and Doppler. Teams can choose
+their existing secret store without adding provider-specific code to OpenStatus.
 
 Declarations live in `packages/credentials/secretspec.toml`. The root
 `secretspec.toml` inherits them for use with the SecretSpec CLI. Development uses
 the `development` profile with local dummy credentials; production uses `default`,
 which requires `DATABASE_URL` and `AUTH_SECRET` and has no dummy values.
 
-The default provider is `env://`, so existing deployment environments keep working.
-Environment credentials and local defaults also work when the SDK's native addon
-is unavailable, including on Intel Macs. External secret stores require a supported
-native addon; startup reports an error if the selected provider cannot run.
+By default, existing process environment values win, followed by `.env` in the
+current app or database package directory, then the profile's defaults. The `.env`
+fallback fills missing environment values before the SDK resolves its `env://`
+provider. Next.js also keeps its usual `.env.local` and environment-specific file
+loading and precedence. Existing deployment environment variables and Docker
+environment injection keep working; no file or secret-store setup is required.
+
 Select another provider using `SECRETSPEC_PROVIDER` in your shell or deployment
-configuration, for example `keyring://` or a configured SecretSpec provider alias.
+configuration, for example `keyring://` or `onepassword://Development`. An explicit
+provider disables the loader's automatic `.env` fallback; missing credentials or
+provider errors fail startup rather than silently falling back to that file.
+Use `SECRETSPEC_PROVIDER=env://` to resolve only the existing environment through
+the SDK. Next.js still performs its own environment-file loading.
 `SECRETSPEC_PROFILE` overrides the selected profile. For local defaults without
 reading environment credentials, use `SECRETSPEC_PROVIDER=null://`.
 
-To migrate existing values, install the [SecretSpec CLI](https://secretspec.dev/quick-start/)
+Environment credentials, `.env` fallback, and local defaults also work when the
+SDK's native addon is unavailable, including on Intel Macs. External secret stores
+require a supported native addon; startup reports an error if the selected
+provider cannot run.
+
+To optionally move existing values into a secret store, install the
+[SecretSpec CLI](https://secretspec.dev/quick-start/)
 and run from the repository root:
 
 ```sh
@@ -39,8 +56,8 @@ secretspec config global init
 secretspec import dotenv://apps/dashboard/.env --profile development
 ```
 
-Then select that provider with `SECRETSPEC_PROVIDER` and remove the old `.env`
-files so frameworks cannot load stale values. To update an individual value,
+Then select that provider with `SECRETSPEC_PROVIDER`. You can remove the old `.env`
+files after migration so frameworks cannot load stale values. To update an individual value,
 run `secretspec set RESEND_API_KEY --profile development`; the CLI prompts for it.
 The SDK makes resolved values available to the application's existing validated
 environment modules before they initialize.
