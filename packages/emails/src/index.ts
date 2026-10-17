@@ -24,6 +24,7 @@ export {
   schedulePlanEndingSoon,
   sendCancellationScheduled,
   sendMemberRemoved,
+  sendOwnershipTransferred,
   sendPlanDowngraded,
   sendTrialEnding,
   stripeIdempotencyKey,

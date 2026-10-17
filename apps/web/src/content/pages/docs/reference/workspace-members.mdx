@@ -1,0 +1,41 @@
+---
+category: Reference
+title: Workspace Members Reference
+description: Roles in a workspace, inviting members, and transferring ownership.
+---
+
+A workspace has one owner and any number of members. You manage both under **Settings > General > Members**.
+
+Inviting members requires a paid plan. The free plan holds a single member, and a downgrade to free removes every member except the owner.
+
+## Roles
+
+| Role | Can do |
+|---|---|
+| Owner | Everything an admin can, plus: remove members, configure SAML SSO, and start a trial. Receives billing emails. |
+| Admin | Everything a member can, plus: delete incidents, close incidents and approve postmortems (the incident commander can too), and revoke other members' OAuth grants. |
+| Member | Manage monitors, status pages, notifications, incidents, and billing. |
+
+## Invite a member
+
+1. Go to **Settings > General > Members** and invite the person by email.
+2. They accept the invitation from the email and join as a member.
+
+## Transfer ownership
+
+The owner can make another member the owner.
+
+1. Make sure the new owner has **accepted** their invitation. You cannot transfer ownership to a pending invitee.
+2. In **Settings > General > Members**, open the actions menu on their row and choose **Make owner**.
+3. Type their email address to confirm.
+
+What happens:
+
+- The transfer is immediate. The new owner doesn't need to accept it.
+- You become a member. You lose access to SSO settings and member management, and only the new owner can transfer ownership back.
+- We email both of you, and the change is recorded in the audit log.
+- If the billing email on your subscription is your own address, it moves to the new owner. A different billing address, such as a finance inbox you set in the billing portal, stays as it is.
+
+Members cannot leave a workspace on their own yet. After the transfer, the new owner can remove you if you no longer need access.
+
+If the owner of your workspace is no longer reachable, contact us at [ping@openstatus.dev](mailto:ping@openstatus.dev). We transfer ownership after verifying the request.

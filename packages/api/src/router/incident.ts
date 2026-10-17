@@ -46,9 +46,9 @@ import {
 import { WebClient } from "@slack/web-api";
 import { TRPCError } from "@trpc/server";
 import { generateText } from "ai";
-import { after } from "next/server.js";
 import { z } from "zod";
 
+import { createAfterResponse } from "../lib/after-response";
 import { chatRateLimit } from "../lib/chat-rate-limit";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -61,15 +61,7 @@ const DASHBOARD_URL = resolveDashboardUrl({
 type AuthedCtx = Parameters<typeof toServiceCtx>[0];
 
 /** Follow-ups run after the response; the incident is already saved. */
-function afterResponse(task: () => Promise<unknown>) {
-  const run = () =>
-    task().catch((err) => console.warn("incident follow-up failed", err));
-  try {
-    after(run);
-  } catch {
-    void run();
-  }
-}
+const afterResponse = createAfterResponse("incident follow-up");
 
 function effectsFor(ctx: AuthedCtx): IncidentEffects {
   return incidentEffects({

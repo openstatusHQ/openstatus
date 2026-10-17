@@ -280,6 +280,10 @@ export const docsNav: DocsNavSection[] = [
       { slug: "reference/maintenance", label: "Maintenance Reference" },
       { slug: "reference/subscriber", label: "Subscriber Reference" },
       { slug: "reference/terraform", label: "Terraform Provider Reference" },
+      {
+        slug: "reference/workspace-members",
+        label: "Workspace Members Reference",
+      },
     ],
   },
   {
