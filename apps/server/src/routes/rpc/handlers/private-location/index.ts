@@ -11,6 +11,7 @@ import {
 
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
+import { parseId as parseRpcId } from "../../parse";
 import {
   dbPrivateLocationToProto,
   dbPrivateLocationToProtoSummary,
@@ -32,20 +33,12 @@ function toPrivateLocationConnectError(err: unknown, id: string): never {
   toConnectError(err);
 }
 
-// `Number.parseInt` rather than `Number` — `Number("")` is 0 (finite!), which
-// would silently target row 0 instead of failing.
 function parseId(id: string): number {
-  const n = Number.parseInt(id, 10);
-  if (!Number.isFinite(n)) throw privateLocationIdRequiredError();
-  return n;
+  return parseRpcId(id, privateLocationIdRequiredError);
 }
 
 function parseMonitorIds(ids: ReadonlyArray<string>): number[] {
-  return ids.map((id) => {
-    const n = Number.parseInt(id, 10);
-    if (!Number.isFinite(n)) throw invalidMonitorIdError(id);
-    return n;
-  });
+  return ids.map((id) => parseRpcId(id, () => invalidMonitorIdError(id)));
 }
 
 function requireId(id: string): number {

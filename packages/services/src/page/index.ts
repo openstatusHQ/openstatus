@@ -4,6 +4,7 @@ export {
   type StatusUpdateType,
 } from "./status-update-types";
 export { deletePage } from "./delete";
+export { assertCustomDomainAvailable } from "./internal";
 export {
   type MaintenanceContent,
   type StatusPageContent,

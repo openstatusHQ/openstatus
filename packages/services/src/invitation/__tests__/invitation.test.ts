@@ -1,5 +1,9 @@
 import { eq } from "@openstatus/db";
-import { invitation, usersToWorkspaces } from "@openstatus/db/src/schema";
+import {
+  invitation,
+  usersToWorkspaces,
+  workspace,
+} from "@openstatus/db/src/schema";
 import { createUser } from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
@@ -300,6 +304,52 @@ describe("acceptInvitation", () => {
         db: tx,
       });
       expect(activeWorkspaceRows).toEqual([]);
+    });
+  });
+
+  test("re-checks the members cap when the plan shrank after the invite", async () => {
+    await withTestTransaction(async (tx) => {
+      const email = `${TEST_PREFIX}-downgraded-${Date.now()}@example.com`;
+      const created = await createInvitation({
+        ctx: { ...teamCtx, db: tx },
+        input: { email },
+      });
+      // Downgrade to free (`members: 1`) — the owner fills the only seat.
+      await tx
+        .update(workspace)
+        .set({ plan: "free", limits: "{}" })
+        .where(eq(workspace.id, teamCtx.workspace.id));
+
+      await expect(
+        acceptInvitation({
+          ctx: {
+            ...makeUserCtx(teamCtx.workspace, { userId: acceptingUserId }),
+            db: tx,
+          },
+          input: { id: created.id, email },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("lets an existing member redeem an invite after a downgrade", async () => {
+    await withTestTransaction(async (tx) => {
+      const email = `${TEST_PREFIX}-existing-member-${Date.now()}@example.com`;
+      const created = await createInvitation({
+        ctx: { ...teamCtx, db: tx },
+        input: { email },
+      });
+      await tx
+        .update(workspace)
+        .set({ plan: "free", limits: "{}" })
+        .where(eq(workspace.id, teamCtx.workspace.id));
+
+      // The owner already holds a seat, so redeeming adds nobody.
+      const row = await acceptInvitation({
+        ctx: { ...teamCtx, db: tx },
+        input: { id: created.id, email },
+      });
+      expect(row.id).toBe(teamCtx.workspace.id);
     });
   });
 

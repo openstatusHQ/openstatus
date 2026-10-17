@@ -35,6 +35,7 @@ import {
   resolvePageAccess,
   visitorFromCtx,
 } from "../lib/page-access";
+import { sendSubscriberVerification } from "../lib/subscriber-verification";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
@@ -1447,7 +1448,9 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      return { id: subscription.id, token: subscription.token };
+      await sendSubscriberVerification(opts.ctx.db, subscription.id);
+
+      return { id: subscription.id };
     }),
 
   getSubscriptionByToken: publicProcedure

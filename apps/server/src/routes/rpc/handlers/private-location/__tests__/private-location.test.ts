@@ -714,3 +714,75 @@ describe("PrivateLocationService.DeletePrivateLocation", () => {
     expect(res.status).toBe(401);
   });
 });
+
+// `Number.parseInt("1e3")` is 1 and `parseInt("12abc")` is 12: a loosely
+// parsed id silently targets another row instead of failing.
+describe("PrivateLocationService - strict id parsing", () => {
+  test("DeletePrivateLocation rejects non-decimal ids without deleting", async () => {
+    const target = await mkLocation(
+      `${TEST_PREFIX}-strict-id`,
+      entitledWorkspaceId,
+    );
+
+    try {
+      for (const id of [
+        `${target}abc`,
+        `${target}.9`,
+        `${target}e0`,
+        `0x${target.toString(16)}`,
+        `-${target}`,
+      ]) {
+        const res = await connectRequest(
+          "DeletePrivateLocation",
+          { id },
+          { "x-openstatus-key": authKey },
+        );
+        expect(res.status).toBe(400);
+      }
+
+      const remaining = await db
+        .select()
+        .from(privateLocation)
+        .where(eq(privateLocation.id, target))
+        .all();
+      expect(remaining.length).toBe(1);
+    } finally {
+      await db.delete(privateLocation).where(eq(privateLocation.id, target));
+    }
+  });
+
+  test("CreatePrivateLocation rejects a monitor id with trailing garbage", async () => {
+    const res = await connectRequest(
+      "CreatePrivateLocation",
+      {
+        name: `${TEST_PREFIX}-strict-monitor-ids`,
+        monitorIds: [`${testMonitorId}foo`],
+      },
+      { "x-openstatus-key": authKey },
+    );
+
+    expect(res.status).toBe(400);
+    expect(res.headers.get("error-reason")).toBe("INVALID_MONITOR_ID");
+
+    const created = await db
+      .select()
+      .from(privateLocation)
+      .where(eq(privateLocation.name, `${TEST_PREFIX}-strict-monitor-ids`))
+      .all();
+    expect(created.length).toBe(0);
+  });
+
+  test("CreatePrivateLocation: a monitor id with CR/LF is InvalidArgument", async () => {
+    const res = await connectRequest(
+      "CreatePrivateLocation",
+      {
+        name: `${TEST_PREFIX}-crlf-monitor-ids`,
+        monitorIds: [`${testMonitorId}\r\nx-injected: 1`],
+      },
+      { "x-openstatus-key": authKey },
+    );
+
+    expect(res.status).toBe(400);
+    expect(res.headers.get("error-reason")).toBe("INVALID_MONITOR_ID");
+  });
+});

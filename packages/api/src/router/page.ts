@@ -3,6 +3,7 @@ import { locales } from "@openstatus/locales";
 import { LimitExceededError, NotFoundError } from "@openstatus/services";
 import { getUptimeHistory } from "@openstatus/services/frozen-uptime";
 import {
+  assertCustomDomainAvailable,
   createPage,
   type CreatePageInput,
   // `CreatePageInput` re-exports the drizzle insert schema so routers
@@ -229,6 +230,14 @@ export const pageRouter = createTRPCRouter({
         // fails on Vercel; case-insensitive since DNS is and the schema
         // doesn't lowercase, so a case-only re-save must not re-add either
         if (newDomain.toLowerCase() === oldDomain.toLowerCase()) return;
+
+        // Before touching Vercel: a conflict after the add/remove below
+        // would leave Vercel out of sync with the row.
+        await assertCustomDomainAvailable({
+          tx: ctx.db,
+          customDomain: newDomain,
+          excludePageId: input.id,
+        });
 
         if (newDomain) {
           await addDomainToVercel(newDomain);

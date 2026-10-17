@@ -276,10 +276,12 @@ export async function listStatusReports(args: {
     .select()
     .from(statusReport)
     .where(whereClause)
+    // `createdAt` has second precision, so the `id` tie-break keeps pages
+    // stable across reports created in the same second.
     .orderBy(
-      input.order === "asc"
-        ? asc(statusReport.createdAt)
-        : desc(statusReport.createdAt),
+      ...(input.order === "asc"
+        ? [asc(statusReport.createdAt), asc(statusReport.id)]
+        : [desc(statusReport.createdAt), desc(statusReport.id)]),
     )
     .limit(input.limit)
     .offset(input.offset)
