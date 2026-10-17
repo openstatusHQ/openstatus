@@ -2,8 +2,11 @@ package server
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/database"
 )
 
@@ -12,8 +15,8 @@ const dbTimeout = 5 * time.Second
 
 // ingestContext holds common data needed for ingestion
 type ingestContext struct {
-	Monitor  database.Monitor
-	Region   database.PrivateLocation
+	Monitor database.Monitor
+	Region  database.PrivateLocation
 }
 
 // getIngestContext retrieves monitor and private location data for ingestion
@@ -31,12 +34,16 @@ func (h *privateLocationHandler) getIngestContext(ctx context.Context, token str
 				"type":    "monitor_lookup",
 			}
 		}
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, h.classifyLookupMiss(ctx, token)
+		}
 		return nil, err
 	}
 
-	var region database.PrivateLocation
 	regionCtx, cancelRegion := context.WithTimeout(ctx, dbTimeout)
 	defer cancelRegion()
+
+	var region database.PrivateLocation
 	err = h.db.GetContext(regionCtx, &region, "SELECT private_location.id FROM private_location join private_location_to_monitor a ON private_location.id = a.private_location_id WHERE a.monitor_id = ? AND private_location.token = ?", monitor.ID, token)
 	if err != nil {
 		if holder := GetEvent(ctx); holder != nil {
@@ -46,6 +53,9 @@ func (h *privateLocationHandler) getIngestContext(ctx context.Context, token str
 				"type":    "private_location_lookup",
 			}
 		}
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrMonitorNotFound
+		}
 		return nil, err
 	}
 
@@ -53,6 +63,39 @@ func (h *privateLocationHandler) getIngestContext(ctx context.Context, token str
 		Monitor: monitor,
 		Region:  region,
 	}, nil
+}
+
+// classifyLookupMiss tells an unknown token apart from a monitor that is no
+// longer linked to the private location. The token is checked on its own only
+// here, because private_location.token is not unique and a token-only lookup
+// could pick the wrong location while the joined lookup still matches.
+func (h *privateLocationHandler) classifyLookupMiss(ctx context.Context, token string) error {
+	tokenCtx, cancelToken := context.WithTimeout(ctx, dbTimeout)
+	defer cancelToken()
+
+	var id int
+	err := h.db.GetContext(tokenCtx, &id, "SELECT id FROM private_location WHERE token = ?", token)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrPrivateLocationNotFound
+		}
+		return err
+	}
+	return ErrMonitorNotFound
+}
+
+// ingestError maps a failed ingest lookup to a client error. A missing private
+// location or monitor is a not-found condition, not a server fault: a 500 here
+// hides real database failures behind a constant 5xx rate.
+func ingestError(err error) error {
+	switch {
+	case errors.Is(err, ErrPrivateLocationNotFound):
+		return connect.NewError(connect.CodeUnauthenticated, err)
+	case errors.Is(err, ErrMonitorNotFound):
+		return connect.NewError(connect.CodeNotFound, err)
+	default:
+		return connect.NewError(connect.CodeInternal, err)
+	}
 }
 
 // sendEventAndUpdateLastSeen sends the event to Tinybird and updates the last_seen_at timestamp
