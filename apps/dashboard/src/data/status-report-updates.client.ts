@@ -1,9 +1,13 @@
 import type { StatusReportStatus } from "@openstatus/db/src/schema";
-import type { PageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
+import {
+  type PageComponentImpact,
+  pageComponentImpact,
+} from "@openstatus/db/src/schema/page_components/constants";
 import { Settings, Delete } from "@openstatus/icons";
 
 import type { StatusVariant } from "@/components/common/status-dot";
 import type { FormValues as StatusReportUpdateFormValues } from "@/components/forms/status-report-update/form";
+import { toEntityId } from "@/data/entity-refs.client";
 
 export const impactConfig = {
   operational: {
@@ -26,6 +30,38 @@ export const impactConfig = {
   PageComponentImpact,
   { label: string; variant: StatusVariant }
 >;
+
+export type ComponentImpact = {
+  pageComponentId: number;
+  impact: PageComponentImpact;
+};
+
+export function isPageComponentImpact(
+  value: unknown,
+): value is PageComponentImpact {
+  return (
+    typeof value === "string" &&
+    (pageComponentImpact as readonly string[]).includes(value)
+  );
+}
+
+export function isComponentImpactList(
+  value: unknown,
+): value is ComponentImpact[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item: unknown) =>
+        typeof item === "object" &&
+        item !== null &&
+        "pageComponentId" in item &&
+        "impact" in item &&
+        typeof item.pageComponentId === "number" &&
+        toEntityId(item.pageComponentId) !== undefined &&
+        isPageComponentImpact(item.impact),
+    )
+  );
+}
 
 /** Set equality regardless of order — used to skip no-op impact writes. */
 export function impactsEqual(

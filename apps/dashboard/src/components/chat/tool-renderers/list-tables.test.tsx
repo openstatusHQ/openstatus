@@ -25,6 +25,12 @@ function text(node: ReactNode) {
   return html(node).replace(/<[^>]+>/g, "");
 }
 
+function refsOf(node: ReactNode) {
+  return [
+    ...html(node).matchAll(/data-slot="entity-ref"[^>]*aria-label="([^"]+)"/g),
+  ].map((m) => m[1]);
+}
+
 function hrefOf(node: ReactNode) {
   return html(node).match(/<a [^>]*href="([^"]+)"/)?.[1];
 }
@@ -71,13 +77,17 @@ describe("listNotificationsTable", () => {
     }),
   );
 
-  it("links to the notification", () => {
-    expect(hrefOf(table.rows[0].cells.name)).toBe("/notifications/1");
+  it("links to the notifications list", () => {
+    // Notifiers have no detail page; they open in a sheet on the list.
+    expect(hrefOf(table.rows[0].cells.name)).toBe("/notifications");
   });
 
-  it("summarises attached monitors", () => {
-    expect(text(table.rows[0].cells.monitors)).toBe("2 (4, 5)");
-    expect(text(table.rows[1].cells.monitors)).toBe("none");
+  it("references attached monitors", () => {
+    expect(refsOf(table.rows[0].cells.monitors)).toEqual([
+      "Monitor 4",
+      "Monitor 5",
+    ]);
+    expect(text(table.rows[1].cells.monitors)).toBe("None");
   });
 });
 
@@ -95,8 +105,9 @@ describe("listPageComponentsTable", () => {
     expect(hrefOf(table.rows[0].cells.name)).toBe("/status-pages/2/components");
   });
 
-  it("shows the monitor id, or a placeholder for static components", () => {
-    expect(text(table.rows[0].cells.monitor)).toContain("4");
+  it("references the page and monitor, or a placeholder for static components", () => {
+    expect(refsOf(table.rows[0].cells.page)).toEqual(["Status page 2"]);
+    expect(refsOf(table.rows[0].cells.monitor)).toEqual(["Monitor 4"]);
     expect(text(table.rows[1].cells.monitor).trim()).toBe("No monitor");
   });
 });
@@ -124,7 +135,7 @@ describe("listPrivateLocationsTable", () => {
 
   it("shows 'Never' for a location that never reported", () => {
     expect(text(table.rows[0].cells.lastSeenAt)).toBe("Never");
-    expect(text(table.rows[0].cells.monitors)).toBe("none");
+    expect(text(table.rows[0].cells.monitors)).toBe("None");
   });
 
   it("renders metadata as pills", () => {

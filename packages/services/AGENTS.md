@@ -39,6 +39,11 @@ Fail-closed: a failed audit insert rolls the mutation back.
 - **Strip secrets from snapshots** — credentials, bot tokens, raw API keys.
 - Action names are `{entity}.{verb}`; new variants go in the discriminated union
   at `packages/db/src/schema/audit_logs/validation.ts`.
+- An entity type the dashboard can show also gets an `entityKinds` entry in
+  `apps/dashboard/src/data/entity-refs.client.ts`. Its `auditType` resolves the
+  audit row's entity cell; its `fields` resolve diff fields by name. These are
+  separate: list every `*Id`/`*Ids` field, or diffs show raw ids. A new `*Id`/`*Ids` field in an agent-tool schema fails
+  `entity-refs.coverage.test.ts` until it is mapped there or listed as not a ref.
 
 A missing `emitAudit` or `requireScope` is a defect, not a style nit. Both are
 lint-enforced; if a verb genuinely needs neither, the inline disable must carry
