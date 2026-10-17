@@ -1,5 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import { ForbiddenError } from "@openstatus/services";
+import { ForbiddenError, PreconditionFailedError } from "@openstatus/services";
 import {
   createSlackSubscriber,
   listSlackSubscribersForChannel,
@@ -251,6 +251,9 @@ async function runCommand(command: SlashCommand): Promise<string> {
       }
       return `📡 This channel is now subscribed to *${page.title}*. Incident updates will appear here.`;
     } catch (error) {
+      if (error instanceof PreconditionFailedError) {
+        return `*${page.title}* is a protected status page and can't be subscribed to from Slack.`;
+      }
       if (error instanceof ForbiddenError) {
         return `*${page.title}* isn't on a plan that supports subscribers.`;
       }

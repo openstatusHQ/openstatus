@@ -12,7 +12,7 @@ import {
   getReadDb,
   withTransaction,
 } from "../context";
-import { NotFoundError } from "../errors";
+import { NotFoundError, PreconditionFailedError } from "../errors";
 import { assertSubscribersAllowed, parseWorkspaceForContext } from "./internal";
 import {
   type CreateSlackSubscriberInput,
@@ -57,6 +57,12 @@ export async function createSlackSubscriber(args: {
   });
   if (!pageData) {
     throw new NotFoundError("page", input.pageId);
+  }
+  // A channel can't present a password, email or IP, so only public pages.
+  if (pageData.accessType && pageData.accessType !== "public") {
+    throw new PreconditionFailedError(
+      "Protected status pages can't be subscribed to from Slack.",
+    );
   }
   const workspace = parseWorkspaceForContext(pageData.workspace);
   assertSubscribersAllowed(workspace);

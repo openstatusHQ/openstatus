@@ -8,6 +8,8 @@ import {
   pageComponent,
   subdomainSafeList,
 } from "@openstatus/db/src/schema";
+import { ConflictError } from "@openstatus/services";
+import { assertCustomDomainAvailable } from "@openstatus/services/page";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
@@ -66,6 +68,22 @@ export function registerPutPage(api: typeof pagesApi) {
         code: "BAD_REQUEST",
         message: "Domain cannot contain 'openstatus'",
       });
+    }
+
+    try {
+      await assertCustomDomainAvailable({
+        tx: db,
+        customDomain: input.customDomain,
+        excludePageId: Number(id),
+      });
+    } catch (err) {
+      if (err instanceof ConflictError) {
+        throw new OpenStatusApiError({
+          code: "CONFLICT",
+          message: err.message,
+        });
+      }
+      throw err;
     }
 
     if (

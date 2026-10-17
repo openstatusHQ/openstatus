@@ -405,6 +405,75 @@ describe("cloneMonitor", () => {
       expect(clone.status).toBe("active");
     });
   });
+
+  test("rejects a source whose periodicity is outside the current plan", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const source = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-clone-periodicity`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+      // Simulates a monitor that predates a downgrade.
+      await tx
+        .update(monitor)
+        .set({ periodicity: "30s" })
+        .where(eq(monitor.id, source.id));
+
+      const downgradedCtx: ServiceContext = {
+        ...ctx,
+        workspace: {
+          ...ctx.workspace,
+          limits: { ...ctx.workspace.limits, periodicity: ["10m", "30m"] },
+        },
+      };
+
+      await expect(
+        cloneMonitor({ ctx: downgradedCtx, input: { id: source.id } }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("rejects a source whose regions are outside the current plan", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const source = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-clone-regions`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+      await tx
+        .update(monitor)
+        .set({ regions: "ams,iad,gru" })
+        .where(eq(monitor.id, source.id));
+
+      const downgradedCtx: ServiceContext = {
+        ...ctx,
+        workspace: {
+          ...ctx.workspace,
+          limits: { ...ctx.workspace.limits, "max-regions": 2 },
+        },
+      };
+
+      await expect(
+        cloneMonitor({ ctx: downgradedCtx, input: { id: source.id } }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
 });
 
 describe("updateMonitorTags / updateMonitorNotifiers", () => {

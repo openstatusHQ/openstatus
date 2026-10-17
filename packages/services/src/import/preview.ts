@@ -1,8 +1,9 @@
-import { db as defaultDb } from "@openstatus/db";
+import { and, db as defaultDb, eq } from "@openstatus/db";
+import { page } from "@openstatus/db/src/schema";
 import type { ImportSummary } from "@openstatus/importers";
 
 import type { ServiceContext } from "../context";
-import { ValidationError } from "../errors";
+import { NotFoundError, ValidationError } from "../errors";
 import { addLimitWarnings } from "./limits";
 import { buildProviderConfig, createProvider } from "./provider";
 import { PreviewImportInput } from "./schemas";
@@ -20,6 +21,18 @@ export async function previewImport(args: {
   const { ctx } = args;
   const input = PreviewImportInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
+
+  if (input.pageId) {
+    const existing = await db
+      .select({ id: page.id })
+      .from(page)
+      .where(
+        and(eq(page.id, input.pageId), eq(page.workspaceId, ctx.workspace.id)),
+      )
+      .get();
+
+    if (!existing) throw new NotFoundError("page", input.pageId);
+  }
 
   const provider = createProvider(input.provider);
   const providerConfig = buildProviderConfig({

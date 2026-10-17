@@ -18,7 +18,7 @@ import { CreateInvitationInput } from "./schemas";
  * behavior in `invitationRouter.create`. Large enough that enterprise plans
  * never brush against it in practice.
  */
-const UNLIMITED_MEMBERS_EFFECTIVE_CAP = 420;
+export const UNLIMITED_MEMBERS_EFFECTIVE_CAP = 420;
 
 /**
  * Invite a user to the caller's workspace.

@@ -67,8 +67,9 @@ function line(message: { ts?: string; user?: string; text?: string }): string {
 
 /**
  * The channel, oldest first, bot messages left out and threads inlined under
- * their parent, capped at 500 messages (the most recent top-level ones) and
- * 1,000,000 characters.
+ * their parent, capped at 500 messages and 1,000,000 characters. The caps drop
+ * the oldest top-level messages first: the end of an incident (mitigation,
+ * resolution) matters more than its start.
  */
 export async function collectChannelTranscript(
   client: SlackHistoryClient,
@@ -91,16 +92,26 @@ export async function collectChannelTranscript(
     }
   } while (cursor);
 
-  const lines: string[] = [];
-  const push = (entry: string): boolean => {
-    if (lines.length >= MAX_MESSAGES) {
+  // Walk newest first so the cap drops the oldest top-level messages, then
+  // flip each kept block (a parent and its thread) back to oldest first.
+  const blocks: string[][] = [];
+  let count = 0;
+  collect: for (const message of top) {
+    if (count >= MAX_MESSAGES) {
       truncated = true;
-      return false;
+      break;
     }
-    lines.push(entry);
-    return true;
-  };
-  collect: for (const message of top.reverse()) {
+    const block: string[] = [];
+    blocks.push(block);
+    const push = (entry: string): boolean => {
+      if (count >= MAX_MESSAGES) {
+        truncated = true;
+        return false;
+      }
+      block.push(entry);
+      count += 1;
+      return true;
+    };
     // A bot parent (the incident card) is left out, its human replies are not.
     if (!message.bot_id && message.text && !push(line(message))) break;
     if (!message.reply_count || !message.ts) continue;
@@ -121,11 +132,16 @@ export async function collectChannelTranscript(
         : undefined;
     } while (replyCursor);
   }
-  let text = lines.join("\n");
-  if (text.length > MAX_TRANSCRIPT_CHARS) {
-    text = text.slice(0, MAX_TRANSCRIPT_CHARS);
+  const lines = blocks.reverse().flat();
+  // Over the character cap, drop whole lines from the oldest end.
+  let length = lines.reduce((sum, entry) => sum + entry.length + 1, -1);
+  let first = 0;
+  while (length > MAX_TRANSCRIPT_CHARS && first < lines.length) {
+    length -= lines[first].length + 1;
+    first += 1;
     truncated = true;
   }
+  const text = lines.slice(first).join("\n");
   return { text, truncated };
 }
 

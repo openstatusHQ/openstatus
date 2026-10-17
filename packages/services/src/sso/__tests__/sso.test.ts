@@ -49,12 +49,17 @@ function fakeWorkOS(
   overrides: {
     organizationId?: string;
     domains?: { domain: string; state: string }[];
+    deleted?: string[];
   } = {},
 ): WorkOSClient {
   const organizationId = overrides.organizationId ?? "org_test_1";
   return {
     organizations: {
       createOrganization: () => Promise.resolve({ id: organizationId }),
+      deleteOrganization: (id) => {
+        overrides.deleted?.push(id);
+        return Promise.resolve();
+      },
       getOrganization: () =>
         Promise.resolve({ domains: overrides.domains ?? [] }),
     },
@@ -178,6 +183,78 @@ describe("enableSso", () => {
       });
 
       expect(again.organizationId).toBe("org_test_1");
+    });
+  });
+
+  test("deletes the WorkOS org it created when persisting fails", async () => {
+    await withTestTransaction(async (tx) => {
+      const deleted: string[] = [];
+      const workos = fakeWorkOS({ organizationId: "org_orphan", deleted });
+      // Ownership is revoked while the WorkOS call is in flight, so the
+      // persisting transaction fails after the org already exists.
+      workos.organizations.createOrganization = async () => {
+        await tx
+          .update(usersToWorkspaces)
+          .set({ role: "member" })
+          .where(
+            and(
+              eq(usersToWorkspaces.workspaceId, scaleCtx.workspace.id),
+              eq(usersToWorkspaces.userId, SCALE_OWNER_ID),
+            ),
+          );
+        return { id: "org_orphan" };
+      };
+
+      await expect(
+        enableSso({ ctx: { ...scaleCtx, db: tx, workos } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      expect(deleted).toEqual(["org_orphan"]);
+
+      const row = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, scaleCtx.workspace.id))
+        .get();
+      expect(row?.workosOrganizationId).toBeNull();
+    });
+  });
+
+  test("keeps a concurrently persisted org and deletes its own", async () => {
+    await withTestTransaction(async (tx) => {
+      const deleted: string[] = [];
+      const workos = fakeWorkOS({ organizationId: "org_loser", deleted });
+      // A concurrent enable lands its org between our read and our write.
+      workos.organizations.createOrganization = async () => {
+        await tx
+          .update(workspace)
+          .set({ workosOrganizationId: "org_winner" })
+          .where(eq(workspace.id, scaleCtx.workspace.id));
+        return { id: "org_loser" };
+      };
+
+      const result = await enableSso({ ctx: { ...scaleCtx, db: tx, workos } });
+
+      expect(result.organizationId).toBe("org_winner");
+      expect(deleted).toEqual(["org_loser"]);
+    });
+  });
+
+  test("does not create or delete an org when one is already linked", async () => {
+    await withTestTransaction(async (tx) => {
+      await enableSso({ ctx: { ...scaleCtx, db: tx, workos: fakeWorkOS() } });
+
+      const deleted: string[] = [];
+      const workos = fakeWorkOS({ deleted });
+      let created = 0;
+      workos.organizations.createOrganization = () => {
+        created++;
+        return Promise.resolve({ id: "org_unused" });
+      };
+
+      await enableSso({ ctx: { ...scaleCtx, db: tx, workos } });
+
+      expect(created).toBe(0);
+      expect(deleted).toEqual([]);
     });
   });
 });

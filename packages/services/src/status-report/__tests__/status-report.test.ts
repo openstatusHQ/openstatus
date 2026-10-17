@@ -1,4 +1,4 @@
-import { db, eq } from "@openstatus/db";
+import { db, eq, inArray } from "@openstatus/db";
 import {
   page,
   pageComponent,
@@ -55,6 +55,16 @@ const subscriptionSpies = (globalThis as Record<string, unknown>)
   | undefined;
 
 const TEST_PREFIX = "svc-status-report-test";
+
+function withoutSubscribers(ctx: ServiceContext): ServiceContext {
+  return {
+    ...ctx,
+    workspace: {
+      ...ctx.workspace,
+      limits: { ...ctx.workspace.limits, "status-subscribers": false },
+    },
+  };
+}
 
 let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
@@ -712,6 +722,29 @@ describe("notifyStatusReport", () => {
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
+
+  test("returns false without dispatching when the plan has no subscribers", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { initialUpdate } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-notify-no-subscribers`,
+          status: "investigating",
+          message: "m",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+
+      const notified = await notifyStatusReport({
+        ctx: withoutSubscribers(ctx),
+        input: { statusReportUpdateId: initialUpdate.id },
+      });
+      expect(notified).toBe(false);
+    });
+  });
 });
 
 // Same derivation as `listMonitors` — a second copy of the logic, so it gets
@@ -777,6 +810,52 @@ describe("listStatusReports totalSize", () => {
       // Regression: deriving `offset + rows.length` here would report the
       // offset itself as the total.
       expect(totalSize).toBe(total);
+    });
+  });
+});
+
+describe("listStatusReports ordering", () => {
+  test("reports created in the same second page in id order", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const ids: number[] = [];
+      for (let i = 0; i < 4; i++) {
+        const { statusReport: report } = await createStatusReport({
+          ctx,
+          input: {
+            title: `${TEST_PREFIX}-same-second-${i}`,
+            status: "investigating",
+            message: "m",
+            date: new Date(),
+            pageId: otherPageId,
+            pageComponentIds: [],
+          },
+        });
+        ids.push(report.id);
+      }
+      await tx
+        .update(statusReport)
+        .set({ createdAt: new Date("2026-01-01T00:00:00Z") })
+        .where(inArray(statusReport.id, ids));
+
+      for (const order of ["asc", "desc"] as const) {
+        const paged: number[] = [];
+        for (let offset = 0; offset < ids.length; offset++) {
+          const { items } = await listStatusReports({
+            ctx,
+            input: {
+              limit: 1,
+              offset,
+              statuses: [],
+              order,
+              pageId: otherPageId,
+            },
+          });
+          paged.push(...items.map((item) => item.id));
+        }
+        const sorted = [...ids].sort((a, b) => a - b);
+        expect(paged).toEqual(order === "asc" ? sorted : sorted.reverse());
+      }
     });
   });
 });

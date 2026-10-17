@@ -21,7 +21,7 @@ import {
 import { regionDict } from "@openstatus/regions";
 
 import type { DB } from "../context";
-import { ForbiddenError, NotFoundError } from "../errors";
+import { ForbiddenError, LimitExceededError, NotFoundError } from "../errors";
 import type { Workspace } from "../types";
 
 /** Load a monitor by id, scoped to the workspace and excluding soft-deleted. */
@@ -179,4 +179,34 @@ export function pickDefaultRegions(workspace: Workspace): {
     regions,
     periodicity: workspace.plan === "free" ? "30m" : "1m",
   };
+}
+
+/**
+ * Enforce the plan's periodicity, region-count and region-access limits on
+ * a monitor's scheduling. Shared by every path that writes them so a clone
+ * (or a source that predates a downgrade) can't carry out-of-plan values.
+ */
+export function assertSchedulingWithinPlan(
+  limits: Workspace["limits"],
+  scheduling: { periodicity: string; regions: ReadonlyArray<string> },
+): void {
+  const { periodicity, regions } = scheduling;
+  if (
+    !limits.periodicity.includes(
+      periodicity as (typeof limits)["periodicity"][number],
+    )
+  ) {
+    throw new LimitExceededError("periodicity", limits.periodicity.length);
+  }
+  if (limits["max-regions"] < regions.length) {
+    throw new LimitExceededError("max-regions", limits["max-regions"]);
+  }
+  if (
+    regions.length > 0 &&
+    !regions.every((r) =>
+      limits.regions.includes(r as (typeof limits)["regions"][number]),
+    )
+  ) {
+    throw new LimitExceededError("regions", limits.regions.length);
+  }
 }

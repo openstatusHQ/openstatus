@@ -6,12 +6,13 @@ import { type ServiceContext, withTransaction } from "../context";
 import { InternalServiceError } from "../errors";
 import { assertWithinLimit } from "../limits";
 import type { Monitor } from "../types";
-import { getMonitorInWorkspace } from "./internal";
+import { assertSchedulingWithinPlan, getMonitorInWorkspace } from "./internal";
 import { CloneMonitorInput } from "./schemas";
 
 /**
  * Duplicate a monitor. Fails with `LimitExceededError` when cloning would
- * push the workspace past its monitor quota.
+ * push the workspace past its monitor quota, or when the source's
+ * periodicity / regions are outside the current plan (e.g. after a downgrade).
  */
 export async function cloneMonitor(args: {
   ctx: ServiceContext;
@@ -32,6 +33,11 @@ export async function cloneMonitor(args: {
       tx,
       id: input.id,
       workspaceId: ctx.workspace.id,
+    });
+
+    assertSchedulingWithinPlan(ctx.workspace.limits, {
+      periodicity: source.periodicity,
+      regions: source.regions.split(",").filter(Boolean),
     });
 
     const { id: _id, status: _status, ...rest } = source;

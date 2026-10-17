@@ -7,10 +7,12 @@ export const ErrorReason = {
   MONITOR_NOT_FOUND: "MONITOR_NOT_FOUND",
   MONITOR_REQUIRED: "MONITOR_REQUIRED",
   MONITOR_ID_REQUIRED: "MONITOR_ID_REQUIRED",
+  MONITOR_ID_INVALID: "MONITOR_ID_INVALID",
   MONITOR_CREATE_FAILED: "MONITOR_CREATE_FAILED",
   MONITOR_UPDATE_FAILED: "MONITOR_UPDATE_FAILED",
   MONITOR_PARSE_FAILED: "MONITOR_PARSE_FAILED",
   MONITOR_RUN_CREATE_FAILED: "MONITOR_RUN_CREATE_FAILED",
+  MONITOR_TRIGGER_FAILED: "MONITOR_TRIGGER_FAILED",
   MONITOR_INVALID_DATA: "MONITOR_INVALID_DATA",
   MONITOR_TYPE_MISMATCH: "MONITOR_TYPE_MISMATCH",
   RESPONSE_LOG_NOT_FOUND: "RESPONSE_LOG_NOT_FOUND",
@@ -79,6 +81,30 @@ export function monitorIdRequiredError(): ConnectError {
     "Monitor ID is required",
     Code.InvalidArgument,
     ErrorReason.MONITOR_ID_REQUIRED,
+  );
+}
+
+/**
+ * Creates an "invalid monitor ID" error for an id that is not a decimal integer.
+ */
+export function monitorIdInvalidError(monitorId: string): ConnectError {
+  return createError(
+    `Invalid monitor id: "${monitorId}"`,
+    Code.InvalidArgument,
+    ErrorReason.MONITOR_ID_INVALID,
+    { "monitor-id": monitorId },
+  );
+}
+
+/**
+ * Creates a "trigger failed" error when no region could be reached.
+ */
+export function monitorTriggerFailedError(monitorId: string): ConnectError {
+  return createError(
+    "Failed to trigger the monitor in any region",
+    Code.Unavailable,
+    ErrorReason.MONITOR_TRIGGER_FAILED,
+    { "monitor-id": monitorId },
   );
 }
 

@@ -1,4 +1,5 @@
 import type { ServiceImpl } from "@connectrpc/connect";
+import { getLogger } from "@logtape/logtape";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
@@ -45,6 +46,7 @@ import {
 } from "../../../../libs/checker";
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { type RpcContext, getRpcContext } from "../../interceptors";
+import { parseId } from "../../parse";
 import {
   MONITOR_DEFAULTS,
   dbMonitorToDnsProto,
@@ -64,11 +66,13 @@ import {
   timeRangeToKey,
 } from "./converters";
 import {
+  monitorIdInvalidError,
   monitorIdRequiredError,
   monitorInvalidDataError,
   monitorNotFoundError,
   monitorParseFailedError,
   monitorRequiredError,
+  monitorTriggerFailedError,
   monitorTypeMismatchError,
   rateLimitExceededError,
   responseLogNotFoundError,
@@ -86,6 +90,12 @@ import {
   validateCommonMonitorFields,
   validateMonitorPatchBounds,
 } from "./validators";
+
+const logger = getLogger("api-server");
+
+function parseMonitorId(id: string): number {
+  return parseId(id, () => monitorIdInvalidError(id));
+}
 
 /**
  * Helper to get a monitor by ID with workspace scope.
@@ -119,7 +129,7 @@ async function validateAndGetMonitor(
     throw monitorIdRequiredError();
   }
 
-  const dbMon = await getMonitorById(Number(id), workspaceId);
+  const dbMon = await getMonitorById(parseMonitorId(id), workspaceId);
   if (!dbMon) {
     throw monitorNotFoundError(id);
   }
@@ -374,6 +384,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     // Validate regions if provided
     validateCommonMonitorFields(mon);
+    // This method skips the protovalidate interceptor (see SKIP_VALIDATION_METHODS),
+    // so the message's own bounds have to be applied here.
+    validateMonitorPatchBounds(mon);
 
     // Check workspace limits if periodicity or regions are changing
     checkMonitorConfigLimits(
@@ -451,6 +464,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     // Validate regions if provided
     validateCommonMonitorFields(mon);
+    // This method skips the protovalidate interceptor (see SKIP_VALIDATION_METHODS),
+    // so the message's own bounds have to be applied here.
+    validateMonitorPatchBounds(mon);
 
     // Check workspace limits if periodicity or regions are changing
     checkMonitorConfigLimits(
@@ -500,6 +516,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     // Validate regions if provided
     validateCommonMonitorFields(mon);
+    // This method skips the protovalidate interceptor (see SKIP_VALIDATION_METHODS),
+    // so the message's own bounds have to be applied here.
+    validateMonitorPatchBounds(mon);
 
     // Check workspace limits if periodicity or regions are changing
     checkMonitorConfigLimits(
@@ -656,7 +675,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     try {
       run = await triggerMonitorRun({
         ctx: toServiceCtx(rpcCtx),
-        input: { id: Number(req.id) },
+        input: { id: parseMonitorId(req.id) },
       });
     } catch (err) {
       if (err instanceof NotFoundError) {
@@ -678,8 +697,10 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const url = getCheckerUrl(row);
     const timeout = getCheckerTimeout(row);
 
-    // Trigger checks for each region in parallel
-    await Promise.all(
+    // Trigger checks for each region in parallel. The run is already recorded
+    // (and the quota spent), so one unreachable region must not fail the call
+    // and invite a retry that spends it again.
+    const results = await Promise.allSettled(
       row.regions.map((region) => {
         const status = run.regionStatus.get(region) || "active";
         const payload = getCheckerPayload(row, status);
@@ -697,6 +718,21 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       }),
     );
 
+    const failed = results.flatMap((result, i) =>
+      result.status === "rejected"
+        ? [{ region: row.regions[i], reason: String(result.reason) }]
+        : [],
+    );
+    if (failed.length > 0) {
+      logger.warn("Failed to trigger monitor in some regions", {
+        monitorId: row.id,
+        failed,
+      });
+    }
+    if (results.length > 0 && failed.length === results.length) {
+      throw monitorTriggerFailedError(req.id);
+    }
+
     return { success: true };
   },
 
@@ -706,7 +742,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     try {
       await deleteMonitor({
         ctx: toServiceCtx(rpcCtx),
-        input: { id: Number(req.id) },
+        input: { id: parseMonitorId(req.id) },
       });
     } catch (err) {
       if (err instanceof NotFoundError) {
@@ -804,7 +840,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     try {
       const result = await getMonitorStatus({
         ctx: toServiceCtx(rpcCtx),
-        input: { monitorId: Number(req.id) },
+        input: { monitorId: parseMonitorId(req.id) },
       });
       const regions: RegionStatus[] = result.regions.map((s) => ({
         $typeName: "openstatus.monitor.v1.RegionStatus" as const,
@@ -825,7 +861,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const workspaceId = rpcCtx.workspace.id;
 
     // Get the monitor
-    const dbMon = await getMonitorById(Number(req.id), workspaceId);
+    const dbMon = await getMonitorById(parseMonitorId(req.id), workspaceId);
     if (!dbMon) {
       throw monitorNotFoundError(req.id);
     }
@@ -920,7 +956,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       const result = await getMonitorSummary({
         ctx: toServiceCtx(rpcCtx),
         input: {
-          monitorId: Number(req.id),
+          monitorId: parseMonitorId(req.id),
           timeRange: timeRangeKey,
           regions: requestedRegions.length > 0 ? requestedRegions : undefined,
         },
@@ -960,7 +996,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       const result = await listResponseLogs({
         ctx: toServiceCtx(rpcCtx),
         input: {
-          monitorId: Number(req.id),
+          monitorId: parseMonitorId(req.id),
           fromTimestamp: req.fromTimestamp
             ? Number(req.fromTimestamp)
             : undefined,
@@ -992,7 +1028,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       }
       if (err instanceof ValidationError) {
         const jobType =
-          (await getMonitorById(Number(req.id), rpcCtx.workspace.id))
+          (await getMonitorById(parseMonitorId(req.id), rpcCtx.workspace.id))
             ?.jobType ?? "unknown";
         throw monitorTypeMismatchError(req.id, "http", jobType);
       }
@@ -1005,7 +1041,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     try {
       const log = await getResponseLog({
         ctx: toServiceCtx(rpcCtx),
-        input: { monitorId: Number(req.id), logId: req.logId },
+        input: { monitorId: parseMonitorId(req.id), logId: req.logId },
       });
       return {
         $typeName:
@@ -1024,7 +1060,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       }
       if (err instanceof ValidationError) {
         const jobType =
-          (await getMonitorById(Number(req.id), rpcCtx.workspace.id))
+          (await getMonitorById(parseMonitorId(req.id), rpcCtx.workspace.id))
             ?.jobType ?? "unknown";
         throw monitorTypeMismatchError(req.id, "http", jobType);
       }

@@ -12,8 +12,14 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { ConflictError, NotFoundError, UnauthorizedError } from "../errors";
+import {
+  ConflictError,
+  LimitExceededError,
+  NotFoundError,
+  UnauthorizedError,
+} from "../errors";
 import type { Workspace } from "../types";
+import { UNLIMITED_MEMBERS_EFFECTIVE_CAP } from "./create";
 import { AcceptInvitationInput } from "./schemas";
 
 /**
@@ -67,6 +73,28 @@ export async function acceptInvitation(args: {
     });
 
     if (!existing) throw new NotFoundError("invitation", input.id);
+    if (!existing.workspace) {
+      throw new NotFoundError("workspace", existing.workspaceId);
+    }
+    const workspace = selectWorkspaceSchema.parse(existing.workspace);
+
+    // Re-check the target workspace's `members` cap: `createInvitation`
+    // checks at send time, but the plan may have shrunk (downgrade, trial
+    // end) before the invitee redeems the token. An invitee who's already
+    // a member doesn't add a seat, so they pass regardless.
+    const membersLimit = workspace.limits.members;
+    const effectiveLimit =
+      membersLimit === "Unlimited"
+        ? UNLIMITED_MEMBERS_EFFECTIVE_CAP
+        : membersLimit;
+    const memberRows = await tx
+      .select({ userId: usersToWorkspaces.userId })
+      .from(usersToWorkspaces)
+      .where(eq(usersToWorkspaces.workspaceId, existing.workspaceId));
+    const alreadyMember = memberRows.some((m) => m.userId === userId);
+    if (!alreadyMember && memberRows.length >= effectiveLimit) {
+      throw new LimitExceededError("members", effectiveLimit);
+    }
 
     // Conditional UPDATE — the `isNull(acceptedAt)` predicate makes the
     // write a no-op for any row another caller has already claimed,
@@ -107,11 +135,6 @@ export async function acceptInvitation(args: {
         role: existing.role,
       })
       .onConflictDoNothing();
-
-    if (!existing.workspace) {
-      throw new NotFoundError("workspace", existing.workspaceId);
-    }
-    const workspace = selectWorkspaceSchema.parse(existing.workspace);
 
     // Strip `token` (email-link capability) from the snapshot; construct the snapshots from the pre-fetched row
     // to avoid a second SELECT after the UPDATE.

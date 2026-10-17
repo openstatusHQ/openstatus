@@ -119,6 +119,54 @@ describe("collectChannelTranscript", () => {
     expect(text).not.toContain("reply 499");
     expect(truncated).toBe(true);
   });
+
+  test("over the cap the oldest messages go, the newest stay", async () => {
+    const top = Array.from({ length: 600 }, (_, i) => ({
+      ts: `${1000 + i}.0`,
+      text: `message ${i}`,
+      user: "U1",
+    }));
+    const newestFirst = [...top].reverse();
+    const client: SlackHistoryClient = {
+      conversations: {
+        history: async ({ cursor }) => {
+          const from = Number(cursor ?? 0);
+          const next = from + 200 < top.length ? String(from + 200) : undefined;
+          return {
+            messages: newestFirst.slice(from, from + 200),
+            has_more: Boolean(next),
+            response_metadata: { next_cursor: next },
+          };
+        },
+        replies: async () => ({ messages: [] }),
+      },
+    };
+    const { text, truncated } = await collectChannelTranscript(client, "C1");
+    const lines = text.split("\n");
+    expect(lines).toHaveLength(500);
+    expect(lines[0]).toContain("message 100");
+    expect(lines.at(-1)).toContain("message 599");
+    expect(text).not.toContain("message 99\n");
+    expect(truncated).toBe(true);
+  });
+
+  test("over the character cap whole lines go from the oldest end", async () => {
+    const big = "x".repeat(300_000);
+    const client = history({
+      top: Array.from({ length: 5 }, (_, i) => ({
+        ts: `${100 + i}.0`,
+        text: `${i} ${big}`,
+        user: "U1",
+      })),
+    });
+    const { text, truncated } = await collectChannelTranscript(client, "C1");
+    const lines = text.split("\n");
+    expect(text.length).toBeLessThanOrEqual(1_000_000);
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toContain(": 2 x");
+    expect(lines[2]).toContain(": 4 x");
+    expect(truncated).toBe(true);
+  });
 });
 
 async function resolvedIncident(tx: DB, ctx: ServiceContext, bound: boolean) {

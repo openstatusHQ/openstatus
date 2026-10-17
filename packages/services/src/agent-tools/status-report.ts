@@ -398,11 +398,10 @@ export const createStatusReportTool: AgentTool<
     let notified = false;
     if (input.notify) {
       try {
-        await notifyStatusReport({
+        notified = await notifyStatusReport({
           ctx,
           input: { statusReportUpdateId: result.initialUpdate.id },
         });
-        notified = true;
       } catch (err) {
         console.warn(
           "notifyStatusReport failed after create_status_report",
@@ -525,11 +524,10 @@ export const addStatusReportUpdateTool: AgentTool<
     let notified = false;
     if (input.notify) {
       try {
-        await notifyStatusReport({
+        notified = await notifyStatusReport({
           ctx,
           input: { statusReportUpdateId: result.statusReportUpdate.id },
         });
-        notified = true;
       } catch (err) {
         console.warn(
           "notifyStatusReport failed after add_status_report_update",
@@ -705,11 +703,10 @@ export const resolveStatusReportTool: AgentTool<
     let notified = false;
     if (input.notify) {
       try {
-        await notifyStatusReport({
+        notified = await notifyStatusReport({
           ctx,
           input: { statusReportUpdateId: result.statusReportUpdate.id },
         });
-        notified = true;
       } catch (err) {
         console.warn(
           "notifyStatusReport failed after resolve_status_report",

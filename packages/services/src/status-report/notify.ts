@@ -16,11 +16,14 @@ import { NotifyStatusReportInput } from "./schemas";
  * Enforces:
  *   - Workspace owns the target update (via join to the parent report).
  *   - Plan has `status-subscribers` enabled — otherwise no-op.
+ *
+ * Returns `true` when the update was dispatched, `false` when the plan
+ * skipped it.
  */
 export async function notifyStatusReport(args: {
   ctx: ServiceContext;
   input: NotifyStatusReportInput;
-}): Promise<void> {
+}): Promise<boolean> {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = NotifyStatusReportInput.parse(args.input);
@@ -51,8 +54,9 @@ export async function notifyStatusReport(args: {
   if (!ctx.workspace.limits["status-subscribers"]) {
     // Plan does not enable subscribers — silently skip, matching existing
     // `emailRouter.sendStatusReport` behaviour.
-    return;
+    return false;
   }
 
   await dispatchStatusReportUpdate(input.statusReportUpdateId);
+  return true;
 }

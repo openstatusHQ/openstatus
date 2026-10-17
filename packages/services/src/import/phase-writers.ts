@@ -19,7 +19,14 @@ import type { PageComponentImpact } from "@openstatus/db/src/schema";
 import type { PhaseResult, UpdateComponentImpact } from "@openstatus/importers";
 
 import { emitAudit } from "../audit";
-import { type DB, type ServiceContext, tryGetActorUserId } from "../context";
+import {
+  type DB,
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
+import { ConflictError } from "../errors";
+import { assertCustomDomainAvailable } from "../page/internal";
 import {
   withComponentImpacts,
   withPageComponentIds,
@@ -53,6 +60,29 @@ export type PhaseContext = {
  * infrastructure errors (e.g. a required page record is missing). The
  * orchestrator in `run.ts` catches throws to abort the remaining phases.
  */
+
+/**
+ * Runs one resource's writes (row + children + links + audit) as a unit. A
+ * half-written resource would otherwise match the idempotency check on the
+ * next run and be skipped forever, never getting its missing children.
+ * Reuses the caller's transaction when `pc.tx` already is one.
+ */
+// Scope is checked by `runImport`; `fn` emits the resource's audit rows.
+// oxlint-disable-next-line openstatus/services-mutation-guards
+function atomically<T>(
+  pc: PhaseContext,
+  fn: (tx: DB) => Promise<T>,
+): Promise<T> {
+  return withTransaction({ ...pc.ctx, db: pc.tx }, fn);
+}
+
+function earliestDate(dates: Date[]): Date | undefined {
+  let min: Date | undefined;
+  for (const d of dates) {
+    if (!min || d.getTime() < min.getTime()) min = d;
+  }
+  return min;
+}
 
 function auditMeta(
   pc: PhaseContext,
@@ -90,6 +120,18 @@ export async function writePagePhase(
   if (!limits["custom-domain"]) {
     data.customDomain = "";
   }
+  // Same tolerance when another page already holds the domain.
+  if (data.customDomain) {
+    try {
+      await assertCustomDomainAvailable({
+        tx,
+        customDomain: data.customDomain,
+      });
+    } catch (err) {
+      if (!(err instanceof ConflictError)) throw err;
+      data.customDomain = "";
+    }
+  }
 
   if (existingPageId) {
     const existing = await tx
@@ -105,11 +147,6 @@ export async function writePagePhase(
         "Provided page not found or does not belong to workspace",
       );
     }
-
-    await tx
-      .update(page)
-      .set({ title: data.title, description: data.description })
-      .where(eq(page.id, existingPageId));
 
     resource.openstatusId = existingPageId;
     resource.status = "skipped";
@@ -284,6 +321,12 @@ export async function writeComponentsPhase(
         }
       }
 
+      const resolvedGroupId = data.sourceGroupId
+        ? (groupIdMap.get(data.sourceGroupId) ?? null)
+        : null;
+
+      // Keyed on the group too: same-named components in different groups
+      // ("API" under EU and US) are distinct and must not share an id.
       const existing = await tx
         .select()
         .from(pageComponent)
@@ -291,6 +334,9 @@ export async function writeComponentsPhase(
           and(
             eq(pageComponent.name, data.name),
             eq(pageComponent.pageId, pageId),
+            resolvedGroupId === null
+              ? isNull(pageComponent.groupId)
+              : eq(pageComponent.groupId, resolvedGroupId),
           ),
         )
         .get();
@@ -301,10 +347,6 @@ export async function writeComponentsPhase(
         resource.status = "skipped";
         continue;
       }
-
-      const resolvedGroupId = data.sourceGroupId
-        ? (groupIdMap.get(data.sourceGroupId) ?? null)
-        : null;
 
       const [inserted] = await tx
         .insert(pageComponent)
@@ -378,23 +420,40 @@ export async function writeIncidentsPhase(
         sourceComponentIds: string[];
       };
 
-      // Idempotency by `(title, pageId)` — every other phase writer
-      // (page slug, monitor url, component name, subscriber email)
-      // skips on duplicate before inserting, and imports are
-      // explicitly re-runnable per `run.ts`'s phase-level recovery
-      // model. Without this check, re-running an import would land
-      // duplicate status reports on every pass.
-      const existingReport = await tx
-        .select({ id: statusReport.id })
-        .from(statusReport)
-        .where(
-          and(
-            eq(statusReport.pageId, pageId),
-            eq(statusReport.workspaceId, workspaceId),
-            eq(statusReport.title, data.report.title),
-          ),
-        )
-        .get();
+      // Idempotency by `(title, pageId, first update date)` so imports stay
+      // re-runnable per `run.ts`'s phase-level recovery model. Title alone
+      // collapses distinct incidents that share a generic name ("Degraded
+      // performance"); the first update's date pins the match to one
+      // incident, as `from/to` does for maintenances below.
+      const firstUpdateDate = earliestDate(data.updates.map((u) => u.date));
+      const existingReport = firstUpdateDate
+        ? await tx
+            .selectDistinct({ id: statusReport.id })
+            .from(statusReport)
+            .innerJoin(
+              statusReportUpdate,
+              eq(statusReportUpdate.statusReportId, statusReport.id),
+            )
+            .where(
+              and(
+                eq(statusReport.pageId, pageId),
+                eq(statusReport.workspaceId, workspaceId),
+                eq(statusReport.title, data.report.title),
+                eq(statusReportUpdate.date, firstUpdateDate),
+              ),
+            )
+            .get()
+        : await tx
+            .select({ id: statusReport.id })
+            .from(statusReport)
+            .where(
+              and(
+                eq(statusReport.pageId, pageId),
+                eq(statusReport.workspaceId, workspaceId),
+                eq(statusReport.title, data.report.title),
+              ),
+            )
+            .get();
 
       if (existingReport) {
         resource.openstatusId = existingReport.id;
@@ -422,125 +481,129 @@ export async function writeIncidentsPhase(
         continue;
       }
 
-      const [insertedReport] = await tx
-        .insert(statusReport)
-        .values({
-          title: data.report.title,
-          status: data.report.status,
-          workspaceId,
-          pageId,
-          createdBy: actorUserId,
-          updatedBy: actorUserId,
-        })
-        .returning();
-
-      if (!insertedReport) {
-        resource.status = "failed";
-        resource.error = "Failed to insert status report";
-        continue;
-      }
-
-      // membership = sourceComponentIds ∪ impact-named components, upholding
-      // the invariant that every impact row's component is in the report set
-      const memberSourceIds = new Set([
-        ...data.sourceComponentIds,
-        ...data.updates.flatMap((u) =>
-          (u.componentImpacts ?? []).map((ci) => ci.sourceComponentId),
-        ),
-      ]);
-      // distinct source ids can collapse onto one internal component (the
-      // components phase dedupes by name+page) — dedupe to respect the PK
-      const memberComponentIds = new Set<number>();
-      for (const sourceCompId of memberSourceIds) {
-        const osCompId = componentIdMap.get(sourceCompId);
-        if (osCompId) memberComponentIds.add(osCompId);
-      }
-      const componentLinks = [...memberComponentIds].map((pageComponentId) => ({
-        statusReportId: insertedReport.id,
-        pageComponentId,
-      }));
-
-      await emitAudit(tx, ctx, {
-        action: "status_report.create",
-        entityType: "status_report",
-        entityId: insertedReport.id,
-        metadata: auditMeta(pc, {
-          sourceId: resource.sourceId,
-          pageId,
-          title: data.report.title,
-        }),
-        after: withPageComponentIds(
-          insertedReport,
-          componentLinks.map((l) => l.pageComponentId),
-        ),
-      });
-
-      // Insert updates one-by-one so each inserted id pairs with its source
-      // update's componentImpacts deterministically (batch `.returning()`
-      // order is not a guarantee worth relying on).
-      for (const u of data.updates) {
-        const row = await tx
-          .insert(statusReportUpdate)
+      const reportId = await atomically(pc, async (rtx) => {
+        const [insertedReport] = await rtx
+          .insert(statusReport)
           .values({
-            status: u.status,
-            message: u.message,
-            date: u.date,
-            statusReportId: insertedReport.id,
+            title: data.report.title,
+            status: data.report.status,
+            workspaceId,
+            pageId,
             createdBy: actorUserId,
             updatedBy: actorUserId,
           })
-          .returning()
-          .get();
+          .returning();
 
-        // ids missing from `componentIdMap` get no impact row — same
-        // partial-map caveat as the membership links. Collapsed source ids
-        // (same internal component) keep the worst impact.
-        const impactByComponent = new Map<number, PageComponentImpact>();
-        for (const ci of u.componentImpacts ?? []) {
-          const osCompId = componentIdMap.get(ci.sourceComponentId);
-          if (!osCompId) continue;
-          const prev = impactByComponent.get(osCompId);
-          impactByComponent.set(
-            osCompId,
-            prev ? worstImpact([prev, ci.impact]) : ci.impact,
-          );
+        if (!insertedReport) throw new Error("Failed to insert status report");
+
+        // membership = sourceComponentIds ∪ impact-named components, upholding
+        // the invariant that every impact row's component is in the report set
+        const memberSourceIds = new Set([
+          ...data.sourceComponentIds,
+          ...data.updates.flatMap((u) =>
+            (u.componentImpacts ?? []).map((ci) => ci.sourceComponentId),
+          ),
+        ]);
+        // distinct source ids can collapse onto one internal component (the
+        // components phase dedupes by name+group+page) — dedupe to respect the PK
+        const memberComponentIds = new Set<number>();
+        for (const sourceCompId of memberSourceIds) {
+          const osCompId = componentIdMap.get(sourceCompId);
+          if (osCompId) memberComponentIds.add(osCompId);
         }
-        const impactRows = [...impactByComponent].map(
-          ([pageComponentId, impact]) => ({
-            statusReportUpdateId: row.id,
+        const componentLinks = [...memberComponentIds].map(
+          (pageComponentId) => ({
+            statusReportId: insertedReport.id,
             pageComponentId,
-            impact,
           }),
         );
-        if (impactRows.length > 0) {
-          await tx
-            .insert(statusReportUpdateToPageComponents)
-            .values(impactRows);
-        }
 
-        await emitAudit(tx, ctx, {
-          action: "status_report_update.create",
-          entityType: "status_report_update",
-          entityId: row.id,
+        await emitAudit(rtx, ctx, {
+          action: "status_report.create",
+          entityType: "status_report",
+          entityId: insertedReport.id,
           metadata: auditMeta(pc, {
             sourceId: resource.sourceId,
-            statusReportId: insertedReport.id,
+            pageId,
+            title: data.report.title,
           }),
-          after: withComponentImpacts(
-            row,
-            impactRows.map(({ pageComponentId, impact }) => ({
-              pageComponentId,
-              impact,
-            })),
+          after: withPageComponentIds(
+            insertedReport,
+            componentLinks.map((l) => l.pageComponentId),
           ),
         });
-      }
 
-      if (componentLinks.length > 0) {
-        await tx.insert(statusReportsToPageComponents).values(componentLinks);
-      }
+        // Insert updates one-by-one so each inserted id pairs with its source
+        // update's componentImpacts deterministically (batch `.returning()`
+        // order is not a guarantee worth relying on).
+        for (const u of data.updates) {
+          const row = await rtx
+            .insert(statusReportUpdate)
+            .values({
+              status: u.status,
+              message: u.message,
+              date: u.date,
+              statusReportId: insertedReport.id,
+              createdBy: actorUserId,
+              updatedBy: actorUserId,
+            })
+            .returning()
+            .get();
 
-      resource.openstatusId = insertedReport.id;
+          // ids missing from `componentIdMap` get no impact row — same
+          // partial-map caveat as the membership links. Collapsed source ids
+          // (same internal component) keep the worst impact.
+          const impactByComponent = new Map<number, PageComponentImpact>();
+          for (const ci of u.componentImpacts ?? []) {
+            const osCompId = componentIdMap.get(ci.sourceComponentId);
+            if (!osCompId) continue;
+            const prev = impactByComponent.get(osCompId);
+            impactByComponent.set(
+              osCompId,
+              prev ? worstImpact([prev, ci.impact]) : ci.impact,
+            );
+          }
+          const impactRows = [...impactByComponent].map(
+            ([pageComponentId, impact]) => ({
+              statusReportUpdateId: row.id,
+              pageComponentId,
+              impact,
+            }),
+          );
+          if (impactRows.length > 0) {
+            await rtx
+              .insert(statusReportUpdateToPageComponents)
+              .values(impactRows);
+          }
+
+          await emitAudit(rtx, ctx, {
+            action: "status_report_update.create",
+            entityType: "status_report_update",
+            entityId: row.id,
+            metadata: auditMeta(pc, {
+              sourceId: resource.sourceId,
+              statusReportId: insertedReport.id,
+            }),
+            after: withComponentImpacts(
+              row,
+              impactRows.map(({ pageComponentId, impact }) => ({
+                pageComponentId,
+                impact,
+              })),
+            ),
+          });
+        }
+
+        if (componentLinks.length > 0) {
+          await rtx
+            .insert(statusReportsToPageComponents)
+            .values(componentLinks);
+        }
+
+        return insertedReport.id;
+      });
+
+      resource.openstatusId = reportId;
       resource.status = "created";
     } catch (err) {
       resource.status = "failed";
@@ -617,82 +680,82 @@ export async function writeMaintenancesPhase(
         continue;
       }
 
-      const [inserted] = await tx
-        .insert(maintenance)
-        .values({
-          title: data.title,
-          message: data.message,
-          from: data.from,
-          to: data.to,
-          workspaceId,
-          pageId,
-          createdBy: actorUserId,
-          updatedBy: actorUserId,
-        })
-        .returning();
+      const maintenanceId = await atomically(pc, async (rtx) => {
+        const [inserted] = await rtx
+          .insert(maintenance)
+          .values({
+            title: data.title,
+            message: data.message,
+            from: data.from,
+            to: data.to,
+            workspaceId,
+            pageId,
+            createdBy: actorUserId,
+            updatedBy: actorUserId,
+          })
+          .returning();
 
-      if (!inserted) {
-        resource.status = "failed";
-        resource.error = "Failed to insert maintenance";
-        continue;
-      }
+        if (!inserted) throw new Error("Failed to insert maintenance");
 
-      // the message is the first timeline update; the announcement time
-      // of imported history is unknown, so it is dated at the window start
-      const [insertedUpdate] = await tx
-        .insert(maintenanceUpdate)
-        .values({
-          maintenanceId: inserted.id,
-          message: data.message,
-          date: data.from,
-          createdBy: actorUserId,
-          updatedBy: actorUserId,
-        })
-        .returning();
-
-      const componentLinks: Array<{
-        maintenanceId: number;
-        pageComponentId: number;
-      }> = [];
-      for (const sourceCompId of data.sourceComponentIds) {
-        const osCompId = componentIdMap.get(sourceCompId);
-        if (osCompId) {
-          componentLinks.push({
+        // the message is the first timeline update; the announcement time
+        // of imported history is unknown, so it is dated at the window start
+        const [insertedUpdate] = await rtx
+          .insert(maintenanceUpdate)
+          .values({
             maintenanceId: inserted.id,
-            pageComponentId: osCompId,
-          });
+            message: data.message,
+            date: data.from,
+            createdBy: actorUserId,
+            updatedBy: actorUserId,
+          })
+          .returning();
+
+        // distinct source ids can collapse onto one internal component —
+        // dedupe to respect the composite PK
+        const memberComponentIds = new Set<number>();
+        for (const sourceCompId of data.sourceComponentIds) {
+          const osCompId = componentIdMap.get(sourceCompId);
+          if (osCompId) memberComponentIds.add(osCompId);
         }
-      }
-      if (componentLinks.length > 0) {
-        await tx.insert(maintenancesToPageComponents).values(componentLinks);
-      }
+        const componentLinks = [...memberComponentIds].map(
+          (pageComponentId) => ({
+            maintenanceId: inserted.id,
+            pageComponentId,
+          }),
+        );
+        if (componentLinks.length > 0) {
+          await rtx.insert(maintenancesToPageComponents).values(componentLinks);
+        }
 
-      resource.openstatusId = inserted.id;
-      resource.status = "created";
-
-      await emitAudit(tx, ctx, {
-        action: "maintenance.create",
-        entityType: "maintenance",
-        entityId: inserted.id,
-        metadata: auditMeta(pc, {
-          sourceId: resource.sourceId,
-          pageId,
-          title: data.title,
-        }),
-        after: inserted,
-      });
-      if (insertedUpdate) {
-        await emitAudit(tx, ctx, {
-          action: "maintenance_update.create",
-          entityType: "maintenance_update",
-          entityId: insertedUpdate.id,
+        await emitAudit(rtx, ctx, {
+          action: "maintenance.create",
+          entityType: "maintenance",
+          entityId: inserted.id,
           metadata: auditMeta(pc, {
             sourceId: resource.sourceId,
-            maintenanceId: inserted.id,
+            pageId,
+            title: data.title,
           }),
-          after: insertedUpdate,
+          after: inserted,
         });
-      }
+        if (insertedUpdate) {
+          await emitAudit(rtx, ctx, {
+            action: "maintenance_update.create",
+            entityType: "maintenance_update",
+            entityId: insertedUpdate.id,
+            metadata: auditMeta(pc, {
+              sourceId: resource.sourceId,
+              maintenanceId: inserted.id,
+            }),
+            after: insertedUpdate,
+          });
+        }
+
+        return inserted.id;
+      });
+
+      resource.openstatusId = maintenanceId;
+      resource.status = "created";
     } catch (err) {
       resource.status = "failed";
       resource.error = err instanceof Error ? err.message : String(err);
@@ -756,13 +819,16 @@ export async function writeMonitorsPhase(
         sourceMonitorGroupId: string | null;
       };
 
-      // Idempotency: same url in the workspace (active only).
+      // Idempotency: same url + name in the workspace (active only). Url
+      // alone collapses distinct source checks against one endpoint, and
+      // components linked to the second would point at the first.
       const existing = await tx
         .select()
         .from(monitor)
         .where(
           and(
             eq(monitor.url, data.url),
+            eq(monitor.name, data.name),
             eq(monitor.workspaceId, workspaceId),
             isNull(monitor.deletedAt),
           ),
