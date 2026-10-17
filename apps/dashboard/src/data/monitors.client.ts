@@ -1,3 +1,4 @@
+import type { monitorStatus } from "@openstatus/db/src/schema/monitors/constants";
 import {
   Api,
   Settings,
@@ -10,6 +11,8 @@ import {
   Terminal,
   Delete,
 } from "@openstatus/icons";
+
+import type { StatusVariant } from "@/components/common/status-dot";
 
 export const monitorTypes = [
   {
@@ -88,3 +91,25 @@ export const getActions = (
     onClick: props[action.id as keyof typeof props],
   }));
 };
+
+type MonitorStatus = (typeof monitorStatus)[number];
+
+export const monitorHealthConfig = {
+  inactive: { label: "Inactive", variant: "default" },
+  active: { label: "Normal", variant: "success" },
+  degraded: { label: "Degraded", variant: "warning" },
+  error: { label: "Failing", variant: "destructive" },
+} as const satisfies Record<
+  MonitorStatus | "inactive",
+  { label: string; variant: StatusVariant }
+>;
+
+export type MonitorHealth = keyof typeof monitorHealthConfig;
+
+/** A paused monitor reads as inactive whatever its last check said. */
+export function getMonitorHealth(monitor: {
+  active: boolean | null;
+  status: MonitorStatus;
+}): MonitorHealth {
+  return monitor.active ? monitor.status : "inactive";
+}

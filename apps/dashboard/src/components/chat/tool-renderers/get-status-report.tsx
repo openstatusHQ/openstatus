@@ -1,10 +1,12 @@
 import type { AgentToolOutput } from "@openstatus/services/agent-tools";
 import { cn } from "@openstatus/ui/lib/utils";
 
+import { EntityRef } from "@/components/common/entity-ref/entity-ref";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
+import { entityKinds } from "@/data/entity-refs.client";
 import { colors } from "@/data/status-report-updates.client";
 
 import type { DetailsTableData } from "./details-table";
@@ -35,7 +37,10 @@ export function getStatusReportDetails(
             value:
               output.pageId !== null ? (
                 <TableCellLink
-                  href={`/status-pages/${output.pageId}/status-reports/${output.id}`}
+                  href={entityKinds.statusReport.href({
+                    id: output.id,
+                    pageId: output.pageId,
+                  })}
                   value={output.title}
                 />
               ) : (
@@ -47,7 +52,7 @@ export function getStatusReportDetails(
             label: "Page",
             value:
               output.pageId !== null ? (
-                <TableCellNumber value={output.pageId} />
+                <EntityRef kind="page" id={output.pageId} />
               ) : (
                 <TableCellText value={null} />
               ),

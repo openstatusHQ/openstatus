@@ -47,7 +47,7 @@ export type IncidentStatus = keyof typeof incidentStatusConfig;
 export const maintenanceStatusConfig = {
   scheduled: { label: "Scheduled", color: "text-info/80", variant: "info" },
   "in-progress": {
-    label: "In Progress",
+    label: "In progress",
     color: "text-info/80",
     variant: "warning",
   },

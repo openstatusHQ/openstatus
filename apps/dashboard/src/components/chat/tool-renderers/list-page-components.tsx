@@ -1,8 +1,10 @@
 import type { AgentToolOutput } from "@openstatus/services/agent-tools";
 
+import { EntityRef } from "@/components/common/entity-ref/entity-ref";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
+import { entityKinds } from "@/data/entity-refs.client";
 
 import type { ResultTableData } from "./result-table";
 
@@ -26,7 +28,7 @@ export function listPageComponentsTable(
       cells: {
         name: (
           <TableCellLink
-            href={`/status-pages/${c.pageId}/components`}
+            href={entityKinds.pageComponent.href(c)}
             value={c.name}
           />
         ),
@@ -36,10 +38,10 @@ export function listPageComponentsTable(
             className="text-muted-foreground font-mono"
           />
         ),
-        page: <TableCellNumber value={c.pageId} />,
+        page: <EntityRef kind="page" id={c.pageId} />,
         monitor:
           c.monitorId !== null ? (
-            <TableCellNumber value={c.monitorId} />
+            <EntityRef kind="monitor" id={c.monitorId} />
           ) : (
             <TableCellText value={null} empty="No monitor" />
           ),

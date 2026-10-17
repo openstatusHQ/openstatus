@@ -1,6 +1,7 @@
 import type { AgentToolOutput } from "@openstatus/services/agent-tools";
 import { formatDistanceStrict } from "date-fns";
 
+import { EntityRef } from "@/components/common/entity-ref/entity-ref";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
@@ -34,7 +35,7 @@ export function listMaintenancesTable(
           duration: <TableCellNumber value={amount} unit={unit} />,
           page:
             m.pageId !== null ? (
-              <TableCellNumber value={m.pageId} />
+              <EntityRef kind="page" id={m.pageId} />
             ) : (
               <TableCellText value={null} empty="No page" />
             ),
