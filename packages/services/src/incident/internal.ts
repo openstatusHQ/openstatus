@@ -129,6 +129,7 @@ export async function appendIncidentEvent(
       type: args.type,
       message: args.message ?? null,
       source: args.source ?? actorSource(ctx.actor),
+      // not `??`: an explicit null (agent writes) must beat the actor's ref
       sourceRef:
         args.sourceRef !== undefined
           ? args.sourceRef
