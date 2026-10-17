@@ -13,7 +13,8 @@ import { EntityRefFallback, EntityRefHeader, RelativeTime } from "../parts";
 export function PrivateLocationCard({ id }: { id: number }) {
   const trpc = useTRPC();
   const location = useQuery({
-    // Schema max; the default page of 50 would miss older locations.
+    // Schema max; there is no `get`, so locations past the newest 100 show
+    // "not found". Accepted: the settings page itself only lists 50.
     ...trpc.privateLocation.list.queryOptions({ limit: 100 }),
     select: findById(id),
   });
