@@ -45,7 +45,7 @@ const OwnershipTransferredEmail = (props: OwnershipTransferredProps) => {
       {isNew ? (
         <Heading title={`You are now the owner of ${props.workspaceName}`}>
           You can manage members, SSO and billing for this workspace. Billing
-          emails for it now go to you.
+          emails from openstatus for it now go to you.
         </Heading>
       ) : (
         <Heading title={`You transferred ownership of ${props.workspaceName}`}>

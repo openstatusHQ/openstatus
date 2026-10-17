@@ -74,9 +74,10 @@ export function TransferOwnershipDialog({
               </li>
               {hasStripeCustomer ? (
                 <li>
-                  Billing emails go to the new owner. If the billing email on
-                  your subscription is your address, it moves to them too. A
-                  different address, such as a finance inbox, stays as it is.
+                  Billing emails from openstatus go to the new owner. If the
+                  billing email on your subscription is your address, it moves
+                  to them too. A different address, such as a finance inbox,
+                  stays as it is.
                 </li>
               ) : null}
             </ul>
