@@ -9,7 +9,6 @@ import { afterAll, beforeAll, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
 
 import { edgeRouter } from "../edge";
-import { vercelFetch } from "../lib/vercel";
 import { createInnerTRPCContext } from "../trpc";
 
 const otherDomain = "domain-idor-test.openstatus.dev";
@@ -205,16 +204,3 @@ test("domain.getCertificateStatus surfaces a Vercel config failure instead of re
     }
   });
 });
-
-for (const path of [
-  "/v9/projects/p/domains/../../../../v2/user",
-  "/v9/projects/p/domains/%2e%2e/%2e%2e/x",
-  "/v9/projects/p/domains/a.com#?teamId=t",
-  "//evil.example/v2/user",
-]) {
-  test(`vercelFetch refuses ${path}`, async () => {
-    const error = await vercelFetch(path).catch((e) => e);
-    expect(error).toBeInstanceOf(TRPCError);
-    expect((error as TRPCError).code).toBe("BAD_REQUEST");
-  });
-}

@@ -5,6 +5,19 @@ export {
 } from "./status-update-types";
 export { deletePage } from "./delete";
 export {
+  attachDomain,
+  detachDomain,
+  detachDomainIfUnused,
+  getProjectDomain,
+  listProjectDomains,
+  reconcileProjectDomains,
+  type ProjectDomain,
+  resolveVercelConfig,
+  type VercelDomainConfig,
+  vercelConfigFromEnv,
+  vercelFetch,
+} from "./domain-sync";
+export {
   type MaintenanceContent,
   type StatusPageContent,
   type StatusReportContent,
@@ -20,6 +33,7 @@ export {
   type PageListItem,
   type PageWithRelations,
 } from "./list";
+export { setPageCustomDomain } from "./set-custom-domain";
 export {
   updatePageAppearance,
   updatePageConfiguration,

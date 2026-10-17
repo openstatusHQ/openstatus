@@ -47,12 +47,13 @@ import { DeleteAccountInput } from "./schemas";
  * 5. Blanks out PII on the user row and stamps `deletedAt`.
  *
  * All writes run in a single transaction so a partial failure never
- * leaves the account half-deleted.
+ * leaves the account half-deleted. Returns the deleted pages' custom domains
+ * for the caller to release on Vercel after commit.
  */
 export async function deleteAccount(args: {
   ctx: ServiceContext;
   input?: DeleteAccountInput;
-}): Promise<void> {
+}): Promise<{ customDomains: string[] }> {
   const { ctx } = args;
   requireScope(ctx, "write");
   if (args.input !== undefined) DeleteAccountInput.parse(args.input);
@@ -68,7 +69,8 @@ export async function deleteAccount(args: {
     );
   }
 
-  await withTransaction(ctx, async (tx) => {
+  return withTransaction(ctx, async (tx) => {
+    const customDomains = new Set<string>();
     const existing = await tx.query.user.findFirst({
       where: eq(user.id, userId),
     });
@@ -144,15 +146,14 @@ export async function deleteAccount(args: {
         await deleteMonitors({ ctx: subCtx, input: { ids: monitorIds } });
       }
 
-      const pageIds = (
-        await tx
-          .select({ id: page.id })
-          .from(page)
-          .where(eq(page.workspaceId, rawWorkspace.id))
-          .all()
-      ).map((p) => p.id);
-      for (const id of pageIds) {
-        await deletePage({ ctx: subCtx, input: { id } });
+      const pages = await tx
+        .select({ id: page.id, customDomain: page.customDomain })
+        .from(page)
+        .where(eq(page.workspaceId, rawWorkspace.id))
+        .all();
+      for (const p of pages) {
+        await deletePage({ ctx: subCtx, input: { id: p.id } });
+        if (p.customDomain) customDomains.add(p.customDomain);
       }
 
       const notificationIds = (
@@ -213,5 +214,7 @@ export async function deleteAccount(args: {
       entityId: userId,
       before: existing,
     });
+
+    return { customDomains: [...customDomains] };
   });
 }
