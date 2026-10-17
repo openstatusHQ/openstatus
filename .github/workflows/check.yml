@@ -35,6 +35,9 @@ jobs:
       - name: 📥 Download deps
         run: pnpm install
 
+      - name: 🔐 Check credential initialization
+        run: pnpm test:secrets
+
       # Blocking, unlike autofix.ci, which only commits formatting back.
       - name: 🔬 Lint
         run: pnpm lint

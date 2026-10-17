@@ -64,6 +64,7 @@ effective: |
         DATABASE_URL: http://libsql:8080
         PROJECT_ID_VERCEL: test
         NODE_ENV: production
+        AUTH_SECRET: build-time-placeholder-min-32-chars-long
       copy:
       - paths:
         - .
@@ -97,13 +98,21 @@ effective: |
   copy:
   - fromBuilder: builder
     paths:
-    - /app/apps/status-page/.next/standalone/apps/status-page/
-    target: ./
-    chmod: '555'
+    - /app/apps/status-page/.next/standalone/
+    target: /app/
+    chmod: "555"
   - fromBuilder: builder
     paths:
     - /app/node_modules/
     target: /app/node_modules/
+  - fromBuilder: builder
+    paths:
+    - /app/apps/status-page/node_modules/
+    target: ./node_modules/
+  - fromBuilder: builder
+    paths:
+    - /app/packages/credentials/node_modules/
+    target: /app/packages/credentials/node_modules/
   - fromBuilder: builder
     paths:
     - /app/apps/status-page/.next/static/
@@ -136,7 +145,7 @@ images:
           digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
 resources:
   dofigen.yml:
-    hash: b437fe8dee3c2f2316613dddbd208efea26ed2981038fa3f94a92b5b11b7e63a
+    hash: c8c4ab83643a845aac0db6735f10c681bab3269388bd1567c3fb865743e8321d
     content: |
       builders:
         # Stage 1: collect every workspace manifest (package.json) into a tree that only
@@ -190,6 +199,7 @@ resources:
             # Build-time environment variables (placeholder values, overwritten by .env.docker at runtime)
             DATABASE_URL: http://libsql:8080
             DATABASE_AUTH_TOKEN: test
+            AUTH_SECRET: build-time-placeholder-min-32-chars-long
             NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
             NEXT_PUBLIC_URL: http://localhost:3002
             TEAM_ID_VERCEL: test
@@ -218,13 +228,19 @@ resources:
       copy:
         # Copy Next.js standalone output
         - fromBuilder: builder
-          source: /app/apps/status-page/.next/standalone/apps/status-page/
-          target: ./
+          source: /app/apps/status-page/.next/standalone/
+          target: /app/
           chmod: "555"
         # Copy root node_modules (required for pnpm symlinks)
         - fromBuilder: builder
           source: /app/node_modules/
           target: /app/node_modules/
+        - fromBuilder: builder
+          source: /app/apps/status-page/node_modules/
+          target: ./node_modules/
+        - fromBuilder: builder
+          source: /app/packages/credentials/node_modules/
+          target: /app/packages/credentials/node_modules/
         # Copy static assets
         - fromBuilder: builder
           source: /app/apps/status-page/.next/static/

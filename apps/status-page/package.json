@@ -26,6 +26,7 @@
     "@openpanel/nextjs": "catalog:",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/api": "workspace:*",
+    "@openstatus/credentials": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/error": "workspace:*",
