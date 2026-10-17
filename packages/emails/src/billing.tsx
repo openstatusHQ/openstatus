@@ -15,6 +15,10 @@ import MemberRemovedEmail, {
   type MemberRemovedProps,
   memberRemovedSubject,
 } from "../emails/member-removed";
+import OwnershipTransferredEmail, {
+  type OwnershipTransferredProps,
+  ownershipTransferredSubject,
+} from "../emails/ownership-transferred";
 import PlanDowngradedEmail, {
   type PlanDowngradedProps,
   planDowngradedSubject,
@@ -158,6 +162,36 @@ export async function sendMemberRemoved(
           ? `${idempotencyKey}:${i / RESEND_BATCH_SIZE}`
           : undefined,
       },
+    );
+  }
+}
+
+/**
+ * Tells both people about an ownership transfer, one mail each. `newOwner` and
+ * `formerOwner` are what the mails show; `to` is where they go, and a person
+ * without an address is skipped. The key gets a `:new` / `:former` suffix so a
+ * retry cannot send either twice.
+ */
+export async function sendOwnershipTransferred(
+  req: Omit<OwnershipTransferredProps, "recipient"> & {
+    to: { new: string | null; former: string | null };
+    idempotencyKey: string;
+  },
+) {
+  const { to, idempotencyKey, ...props } = req;
+  for (const recipient of ["new", "former"] as const) {
+    const email = to[recipient];
+    if (!email) continue;
+    const p = { ...props, recipient };
+    await sendEmail(
+      {
+        from: SYSTEM_FROM,
+        reply_to: SUPPORT_EMAIL,
+        to: [email],
+        subject: ownershipTransferredSubject(p),
+        react: <OwnershipTransferredEmail {...p} />,
+      },
+      { idempotencyKey: `${idempotencyKey}:${recipient}` },
     );
   }
 }

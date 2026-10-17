@@ -12,6 +12,7 @@ import MemberAccessEndingEmail, {
   memberAccessEndingSubject,
 } from "../emails/member-access-ending";
 import MemberRemovedEmail from "../emails/member-removed";
+import OwnershipTransferredEmail from "../emails/ownership-transferred";
 import PlanDowngradedEmail, {
   planDowngradedSubject,
 } from "../emails/plan-downgraded";
@@ -27,6 +28,7 @@ import {
   schedulePlanEndingSoon,
   sendCancellationScheduled,
   sendMemberRemoved,
+  sendOwnershipTransferred,
   sendPlanDowngraded,
   sendTrialEnding,
 } from "./billing";
@@ -177,6 +179,27 @@ describe("billing templates", () => {
     );
     expect(manual).toContain("A workspace owner removed you");
     expect(manual).not.toContain("Ask for access");
+  });
+
+  test("ownership-transferred: copy per recipient", async () => {
+    const props = {
+      workspaceName: "Acme",
+      newOwner: "web@acme.dev",
+      formerOwner: "max@acme.dev",
+    };
+    const toNew = await render(
+      <OwnershipTransferredEmail {...props} recipient="new" />,
+    );
+    expect(toNew).toContain("You are now the owner of Acme");
+    expect(toNew).toContain("Transferred by");
+    expect(toNew).toContain("max@acme.dev");
+
+    const toFormer = await render(
+      <OwnershipTransferredEmail {...props} recipient="former" />,
+    );
+    expect(toFormer).toContain("You transferred ownership of Acme");
+    expect(toFormer).toContain("you are a member");
+    expect(toFormer).toContain("web@acme.dev");
   });
 
   test("cancellation-scheduled is raw: no layout, date, losses, resume link", async () => {
@@ -579,6 +602,42 @@ describe("send plumbing", () => {
     expect(options).toEqual({
       idempotencyKey: "stripe:evt_1:member-removed:0",
     });
+  });
+
+  test("sendOwnershipTransferred sends one mail per person, keyed by recipient", async () => {
+    await sendOwnershipTransferred({
+      idempotencyKey: "ownership:1:42",
+      workspaceName: "Acme",
+      newOwner: "web@acme.dev",
+      formerOwner: "max@acme.dev",
+      to: { new: "web@acme.dev", former: "max@acme.dev" },
+    });
+    assertSpyCalls(send, 2);
+    const [toNew, newOptions] = send.calls[0].args;
+    const [toFormer, formerOptions] = send.calls[1].args;
+    expect(toNew.to).toEqual(["web@acme.dev"]);
+    expect(toNew.subject).toBe("You are now the owner of Acme on openstatus");
+    expect(toNew.replyTo).toBe("ping@openstatus.dev");
+    expect(newOptions).toEqual({ idempotencyKey: "ownership:1:42:new" });
+    expect(toFormer.to).toEqual(["max@acme.dev"]);
+    expect(toFormer.subject).toBe(
+      "You transferred ownership of Acme on openstatus",
+    );
+    expect(formerOptions).toEqual({ idempotencyKey: "ownership:1:42:former" });
+  });
+
+  test("sendOwnershipTransferred skips a person without an address", async () => {
+    await sendOwnershipTransferred({
+      idempotencyKey: "ownership:1:43",
+      workspaceName: "Acme",
+      newOwner: "web@acme.dev",
+      formerOwner: "Max",
+      to: { new: "web@acme.dev", former: null },
+    });
+    assertSpyCalls(send, 1);
+    const [toNew] = send.calls[0].args;
+    expect(toNew.to).toEqual(["web@acme.dev"]);
+    expect(toNew.react.props.formerOwner).toBe("Max");
   });
 
   test("sendCancellationScheduled is raw, from the root domain", async () => {
