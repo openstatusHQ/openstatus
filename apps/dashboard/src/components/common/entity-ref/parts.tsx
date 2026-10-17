@@ -12,7 +12,7 @@ import {
 } from "@/components/common/entity-card";
 import { type EntityKind, entityKinds } from "@/data/entity-refs.client";
 import { formatDateTime, formatDistanceToNowShort } from "@/lib/formatter";
-import { isExpectedNotFound } from "@/lib/trpc/error";
+import { isNotFound } from "@/lib/trpc/error";
 
 /** Options for a `get` lookup: a 404 is the not-found card, not a bug. */
 export const lookupOptions = {
@@ -82,7 +82,8 @@ export function EntityRefFallback({
       </EntityCard>
     );
   }
-  const failed = query.isError && !isExpectedNotFound(query.error, true);
+  // Any 404 here means the entity is gone; `lookupOptions` only decides Sentry.
+  const failed = query.isError && !isNotFound(query.error);
   const { label } = entityKinds[kind];
   return (
     <EntityCard>

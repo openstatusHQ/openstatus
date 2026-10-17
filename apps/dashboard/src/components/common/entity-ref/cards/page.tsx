@@ -18,8 +18,8 @@ export function PageCard({ id }: { id: number }) {
     select: findById(id),
   });
   const components = useQuery({
-    ...trpc.pageComponent.list.queryOptions(),
-    select: (rows) => rows?.filter((c) => c.pageId === id).length,
+    ...trpc.pageComponent.list.queryOptions({ pageId: id }),
+    select: (rows) => rows?.length,
   });
 
   if (!page.data) {
@@ -38,7 +38,9 @@ export function PageCard({ id }: { id: number }) {
           <EntityCardRow label="Domain">{data.customDomain}</EntityCardRow>
         ) : null}
         <EntityCardRow label="Components">
-          {components.data ?? <Skeleton className="ml-auto h-4 w-6" />}
+          {components.isError
+            ? "—"
+            : (components.data ?? <Skeleton className="ml-auto h-4 w-6" />)}
         </EntityCardRow>
       </EntityCardContent>
     </EntityCard>

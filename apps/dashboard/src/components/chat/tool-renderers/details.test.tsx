@@ -66,6 +66,12 @@ describe("getMonitorDetails", () => {
     expect(value(data, "Degraded after")).toBe("3000ms");
     expect(value(data, "Tags")).toBe("prod, api");
     expect(value(data, "Notifications")).toBe("Ops");
+    const notifications = data.sections
+      .flatMap((s) => s.rows)
+      .find((r) => r.label === "Notifications");
+    expect(renderToStaticMarkup(<>{notifications?.value}</>)).toContain(
+      'data-slot="entity-ref"',
+    );
     const ids = data.sections
       .flatMap((s) => s.rows)
       .find((r) => r.label === "IDs");

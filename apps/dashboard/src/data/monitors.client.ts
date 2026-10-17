@@ -12,8 +12,6 @@ import {
   Delete,
 } from "@openstatus/icons";
 
-import type { StatusVariant } from "@/components/common/status-dot";
-
 export const monitorTypes = [
   {
     id: "http",
@@ -95,14 +93,11 @@ export const getActions = (
 type MonitorStatus = (typeof monitorStatus)[number];
 
 export const monitorHealthConfig = {
-  inactive: { label: "Inactive", variant: "default" },
-  active: { label: "Normal", variant: "success" },
-  degraded: { label: "Degraded", variant: "warning" },
-  error: { label: "Failing", variant: "destructive" },
-} as const satisfies Record<
-  MonitorStatus | "inactive",
-  { label: string; variant: StatusVariant }
->;
+  inactive: { label: "Inactive" },
+  active: { label: "Normal" },
+  degraded: { label: "Degraded" },
+  error: { label: "Failing" },
+} as const satisfies Record<MonitorStatus | "inactive", { label: string }>;
 
 export type MonitorHealth = keyof typeof monitorHealthConfig;
 

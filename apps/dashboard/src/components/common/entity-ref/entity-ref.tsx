@@ -36,6 +36,7 @@ export function EntityRef({
   id,
   children,
   className,
+  onClick,
   ...props
 }: Omit<React.ComponentProps<"button">, "id"> & {
   kind: EntityKind;
@@ -55,7 +56,10 @@ export function EntityRef({
           type="button"
           data-slot="entity-ref"
           aria-label={children ? undefined : `${entityKinds[kind].label} ${id}`}
-          onClick={() => setOpen(true)}
+          onClick={(e) => {
+            setOpen(true);
+            onClick?.(e);
+          }}
           className={cn(
             "decoration-muted-foreground/50 data-[state=open]:decoration-foreground focus-visible:ring-ring/50 cursor-default rounded-xs font-mono tabular-nums underline decoration-dashed underline-offset-2 transition-[text-decoration-color] ease-[ease] outline-none focus-visible:ring-[3px]",
             className,

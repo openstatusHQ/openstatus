@@ -41,7 +41,8 @@ part into a sibling file. `import type` from the barrel is fine; types erase.
 Reuse the dashboard's own primitives — `TableCell*`, `ResultTable`,
 `ChangesTable`. Do not build bespoke chrome for a tool result.
 
-Ids render as `EntityRef` (hover card per entity). `ChangesTable` resolves them
+Mapped entity ids render as `EntityRef` (hover card per entity); unmapped ids
+such as `commanderId` stay text. `ChangesTable` resolves them
 by field name and the audit log by `entityType`, both through `entityKinds` in
 `src/data/entity-refs.client.ts`. A new entity is one entry there plus one card
 in `src/components/common/entity-ref/cards/`; the `cards` map fails typecheck

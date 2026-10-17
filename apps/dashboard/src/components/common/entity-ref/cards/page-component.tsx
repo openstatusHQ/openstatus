@@ -36,7 +36,9 @@ export function PageComponentCard({ id }: { id: number }) {
         {data.name}
       </EntityRefHeader>
       <EntityCardContent>
-        <EntityCardRow label="Type">{data.type}</EntityCardRow>
+        <EntityCardRow label="Type">
+          {data.type === "monitor" ? "Monitor" : "Static"}
+        </EntityCardRow>
         {page.data ? (
           <EntityCardRow label="Page">{page.data.title}</EntityCardRow>
         ) : null}
