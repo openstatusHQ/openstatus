@@ -12,18 +12,35 @@ import type { SlackActor } from "./require-slack-member";
 
 const logger = getLogger(["api-server", "slack", "service-adapter"]);
 
-/** The message's permalink, or `undefined`: a missing link never fails a write. */
+/**
+ * The message's permalink, or `undefined`: a missing link never fails a
+ * write, so a slow Slack API is bounded instead of holding up the turn.
+ */
 export async function permalinkFor(
   slack: Pick<WebClient, "chat">,
   channel: string,
   ts: string,
+  timeoutMs = 3_000,
 ): Promise<string | undefined> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<"timeout">((resolve) => {
+    timer = setTimeout(() => resolve("timeout"), timeoutMs);
+  });
   try {
-    const res = await slack.chat.getPermalink({ channel, message_ts: ts });
+    const res = await Promise.race([
+      slack.chat.getPermalink({ channel, message_ts: ts }),
+      timeout,
+    ]);
+    if (res === "timeout") {
+      logger.warn("slack permalink timed out", { channel, timeoutMs });
+      return undefined;
+    }
     return res.permalink;
   } catch (error) {
     logger.warn("slack failed to fetch a permalink", { error, channel });
     return undefined;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
