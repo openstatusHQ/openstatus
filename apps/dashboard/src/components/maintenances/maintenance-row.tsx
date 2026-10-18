@@ -4,12 +4,14 @@ import type { RouterOutputs } from "@openstatus/api";
 import { formatDistanceStrict } from "date-fns";
 import NextLink from "next/link";
 
+import { DateBlock } from "@/components/common/date-block";
 import { StatusBadge } from "@/components/common/status-badge";
 import {
   EventListActions,
   EventListContent,
   EventListDescription,
   EventListItem,
+  EventListMedia,
   EventListTime,
   EventListTitle,
 } from "@/components/content/event-list";
@@ -33,6 +35,9 @@ export function MaintenanceRow({
   const config = maintenanceStatusConfig[status];
   return (
     <EventListItem>
+      <EventListMedia>
+        <DateBlock date={maintenance.from} variant="info" />
+      </EventListMedia>
       <EventListContent>
         <EventListTitle asChild>
           <NextLink

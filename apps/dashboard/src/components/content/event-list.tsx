@@ -140,6 +140,26 @@ export function EventListItem({
   );
 }
 
+// Fixed width so titles line up whether a row leads with bars or a date tile.
+export function EventListMedia({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="event-list-media"
+      className={cn(
+        "flex min-h-5 w-10 shrink-0 items-center justify-center",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function EventListContent({
   children,
   className,

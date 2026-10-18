@@ -4,12 +4,14 @@ import type { RouterOutputs } from "@openstatus/api";
 import { formatDistanceStrict } from "date-fns";
 import NextLink from "next/link";
 
+import { DateBlock } from "@/components/common/date-block";
 import { StatusBadge } from "@/components/common/status-badge";
 import {
   EventListActions,
   EventListContent,
   EventListDescription,
   EventListItem,
+  EventListMedia,
   EventListTime,
   EventListTitle,
 } from "@/components/content/event-list";
@@ -38,6 +40,9 @@ export function DowntimeRow({
   );
   return (
     <EventListItem>
+      <EventListMedia>
+        <DateBlock date={downtime.startedAt} variant="destructive" />
+      </EventListMedia>
       <EventListContent>
         {monitor ? (
           <EventListTitle asChild>
