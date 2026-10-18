@@ -8,15 +8,19 @@ import { SeverityBars } from "@/components/common/severity-bars";
 import {
   EventListActions,
   EventListContent,
+  EventListDetail,
   EventListDescription,
   EventListItem,
   EventListMedia,
+  EventListMeta,
   EventListTime,
   EventListTitle,
 } from "@/components/content/event-list";
 import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-report-update/sheet-create";
+import { formatDurationShort, pluralize } from "@/data/event-list.client";
 import { impactDisplay } from "@/data/status-report-updates.client";
 import {
+  reportResolvedAt,
   reportStartedAt,
   worstReportImpact,
 } from "@/data/status-reports.client";
@@ -44,6 +48,8 @@ export function StatusReportRow({
   const display = impactDisplay(impact);
   const impactLabel = impact === undefined ? "No impact" : display.label;
   const open = report.status !== "resolved";
+  const startedAt = reportStartedAt(report);
+  const resolvedAt = reportResolvedAt(report);
   return (
     <EventListItem>
       <EventListMedia>
@@ -67,7 +73,7 @@ export function StatusReportRow({
             <StatusReportStatusBadge status={report.status} plain />
           ) : null}
           <span>{impactLabel}</span>
-          <EventListTime date={reportStartedAt(report)} />
+          <EventListTime date={startedAt} className="lg:hidden" />
         </EventListDescription>
       </EventListContent>
       {open ? (
@@ -79,6 +85,15 @@ export function StatusReportRow({
           </FormSheetStatusReportUpdateCreate>
         </EventListActions>
       ) : null}
+      <EventListMeta>
+        <EventListTime date={startedAt} />
+        <EventListDetail>
+          {/* a single update, or a legacy report at epoch, has no span to show */}
+          {resolvedAt && startedAt.getTime() > 0 && resolvedAt > startedAt
+            ? `lasted ${formatDurationShort(resolvedAt.getTime() - startedAt.getTime())}`
+            : pluralize(report.updates.length, "update")}
+        </EventListDetail>
+      </EventListMeta>
     </EventListItem>
   );
 }

@@ -29,3 +29,12 @@ export function groupByMonth<T>(
 export function pluralize(count: number, singular: string, plural?: string) {
   return `${count} ${count === 1 ? singular : (plural ?? `${singular}s`)}`;
 }
+
+/** `45m`, `3h`, `4d`: the largest whole unit, at least one minute. */
+export function formatDurationShort(ms: number) {
+  const minutes = Math.max(1, Math.round(ms / 60_000));
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.round(hours / 24)}d`;
+}

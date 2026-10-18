@@ -9,14 +9,17 @@ import { StatusBadge } from "@/components/common/status-badge";
 import {
   EventListActions,
   EventListContent,
+  EventListDetail,
   EventListDescription,
   EventListItem,
   EventListMedia,
+  EventListMeta,
   EventListTime,
   EventListTitle,
 } from "@/components/content/event-list";
 import { IncidentRowActions } from "@/components/data-table/incidents/data-table-row-actions";
 import { DeclareFromRow } from "@/components/incidents/declare-from-row";
+import { formatDurationShort } from "@/data/event-list.client";
 
 import { DowntimeNextAction } from "./downtime-next-action";
 
@@ -64,10 +67,12 @@ export function DowntimeRow({
           ) : (
             <span>
               {downtime.autoResolved ? "Recovered" : "Resolved"}
-              {monitor ? ` after ${duration}` : null}
+              {monitor ? (
+                <span className="lg:hidden"> after {duration}</span>
+              ) : null}
             </span>
           )}
-          <EventListTime date={downtime.startedAt} />
+          <EventListTime date={downtime.startedAt} className="lg:hidden" />
         </EventListDescription>
       </EventListContent>
       {ongoing ? (
@@ -85,6 +90,16 @@ export function DowntimeRow({
           <IncidentRowActions incident={downtime} />
         </EventListActions>
       )}
+      <EventListMeta>
+        <EventListTime date={downtime.startedAt} />
+        <EventListDetail>
+          {ongoing ? "down" : "lasted"}{" "}
+          {formatDurationShort(
+            (downtime.resolvedAt ?? new Date()).getTime() -
+              downtime.startedAt.getTime(),
+          )}
+        </EventListDetail>
+      </EventListMeta>
     </EventListItem>
   );
 }

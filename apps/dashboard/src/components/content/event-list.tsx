@@ -154,7 +154,7 @@ export function EventListTitle({
     <Comp
       data-slot="event-list-title"
       className={cn(
-        "text-foreground min-w-0 text-sm font-medium break-words outline-none",
+        "text-foreground block min-w-0 truncate text-sm font-medium outline-none",
         "[a&]:hover:decoration-muted-foreground/50 [a&]:after:absolute [a&]:after:inset-0 [a&]:hover:underline [a&]:hover:decoration-dashed [a&]:hover:underline-offset-2",
         className,
       )}
@@ -213,6 +213,43 @@ export function EventListTime({
           : null}
       </time>
     </HoverCardTimestamp>
+  );
+}
+
+// lg and up only: below it the row keeps its time in the sentence, so a
+// row repeats it there with `lg:hidden`.
+export function EventListMeta({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="event-list-meta"
+      className={cn(
+        "text-muted-foreground hidden w-36 shrink-0 flex-col items-end gap-1.5 text-right text-sm lg:flex",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function EventListDetail({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="event-list-detail"
+      className={cn("font-mono text-xs leading-5 tabular-nums", className)}
+      {...props}
+    >
+      {children}
+    </span>
   );
 }
 

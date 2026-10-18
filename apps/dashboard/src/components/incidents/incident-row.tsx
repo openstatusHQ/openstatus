@@ -8,12 +8,15 @@ import { SeverityBars } from "@/components/common/severity-bars";
 import { StatusBadge } from "@/components/common/status-badge";
 import {
   EventListContent,
+  EventListDetail,
   EventListDescription,
   EventListItem,
   EventListMedia,
+  EventListMeta,
   EventListTime,
   EventListTitle,
 } from "@/components/content/event-list";
+import { formatDurationShort } from "@/data/event-list.client";
 import {
   incidentEndedAt,
   severityConfig,
@@ -39,6 +42,8 @@ export function IncidentRow({
   const endedAt = incidentEndedAt(incident);
   const severity = severityConfig[incident.severity];
   const status = statusConfig[incident.status];
+  const active = isIncidentActive(incident);
+  const now = new Date();
   return (
     <EventListItem>
       <EventListMedia>
@@ -59,21 +64,41 @@ export function IncidentRow({
         </EventListTitle>
         <EventListDescription>
           {type ? <span>Incident</span> : null}
-          {isIncidentActive(incident) ? (
+          {active ? (
             <StatusBadge variant={status.variant} plain>
-              {status.label} for{" "}
-              {formatDistanceStrict(incident.startedAt, new Date())}
+              {/* two variants: a split label would take the badge's flex gap as a word space */}
+              <span className="lg:hidden">
+                {status.label} for{" "}
+                {formatDistanceStrict(incident.startedAt, now)}
+              </span>
+              <span className="hidden lg:inline">{status.label}</span>
             </StatusBadge>
           ) : endedAt && incident.status === "resolved" ? (
             <span>
-              Resolved after {formatDistanceStrict(incident.startedAt, endedAt)}
+              Resolved
+              <span className="lg:hidden">
+                {" "}
+                after {formatDistanceStrict(incident.startedAt, endedAt)}
+              </span>
             </span>
           ) : (
             <span>{status.label}</span>
           )}
-          <EventListTime date={incident.declaredAt} />
+          <EventListTime date={incident.declaredAt} className="lg:hidden" />
         </EventListDescription>
       </EventListContent>
+      <EventListMeta>
+        <EventListTime date={incident.declaredAt} />
+        {active || (endedAt && incident.status === "resolved") ? (
+          <EventListDetail>
+            {active ? "open" : "lasted"}{" "}
+            {formatDurationShort(
+              (active ? now : (endedAt ?? now)).getTime() -
+                incident.startedAt.getTime(),
+            )}
+          </EventListDetail>
+        ) : null}
+      </EventListMeta>
     </EventListItem>
   );
 }
