@@ -88,7 +88,11 @@ function isBlockedHost(hostname: string): boolean {
  * `assertSafeUrlSync`, kept async for existing callers.
  * Throws an error if the URL is not safe.
  */
-export async function assertSafeUrl(urlString: string): Promise<void> {
+export async function assertSafeUrl(
+  urlString: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  signal?.throwIfAborted();
   let parsed: URL;
   try {
     parsed = new URL(urlString);
@@ -113,15 +117,6 @@ export async function assertSafeUrl(urlString: string): Promise<void> {
 
 const MAX_REDIRECTS = 3;
 
-function isSameService(from: URL, to: URL): boolean {
-  return (
-    to.hostname === from.hostname &&
-    to.port === from.port &&
-    (to.protocol === from.protocol ||
-      (from.protocol === "http:" && to.protocol === "https:"))
-  );
-}
-
 function isSafeRedirect(from: URL, to: URL): boolean {
   return (
     to.hostname === from.hostname &&
@@ -143,7 +138,8 @@ export async function safeFetch(
 ): Promise<Response> {
   let target = url;
   for (let hop = 0; ; hop++) {
-    await assertSafeUrl(target);
+    init?.signal?.throwIfAborted();
+    await assertSafeUrl(target, init?.signal ?? undefined);
     const res = await fetch(target, { ...init, redirect: "manual" });
 
     const location = res.headers.get("location");
