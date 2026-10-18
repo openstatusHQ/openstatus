@@ -4,7 +4,7 @@
 
 ### Requirements
 
-- [Node.js](https://nodejs.org/en/) >= 20.0.0 — runtime
+- [Node.js](https://nodejs.org/en/) >= 20.12.0, or the exact version in `devbox.json`
 - [pnpm](https://pnpm.io/) >= 8 — monorepo package manager (see root `package.json` for pinned version)
 - [Deno](https://deno.com/) — runs the db env/migrate/seed scripts in `packages/db`
 - [Bun](https://bun.sh/) — optional, used by the utility scripts in `src/scripts`
@@ -12,18 +12,69 @@
 
 ### Environment
 
-Two `.env` files are involved:
+The dashboard, marketing site, and status page resolve application credentials
+with the [SecretSpec Node SDK](https://secretspec.dev/sdk/nodejs/) during Next.js
+configuration and server startup. Run the normal development and build commands;
+no wrapper command is needed. Existing `.env` files keep working without migration.
 
-- `apps/dashboard/.env` — copy manually now (this step)
-- `packages/db/.env` — copied automatically by `pnpm dx` in step 3 below
+[SecretSpec supports 35 providers](https://secretspec.dev/), including system
+keyrings, 1Password, AWS Secrets Manager, Vault, and Doppler. Teams can choose
+their existing secret store without adding provider-specific code to OpenStatus.
+
+Declarations live in `packages/credentials/secretspec.toml`. The root
+`secretspec.toml` inherits them for use with the SecretSpec CLI. Development uses
+the `development` profile with local dummy credentials; production uses `default`,
+which requires `DATABASE_URL` and `AUTH_SECRET` and has no dummy values.
+
+By default, existing process environment values win, followed by `.env` in the
+current app or database package directory, then the profile's defaults. The `.env`
+fallback fills missing environment values before the SDK resolves its `env://`
+provider. Next.js also keeps its usual `.env.local` and environment-specific file
+loading and precedence. Existing deployment environment variables and Docker
+environment injection keep working; no file or secret-store setup is required.
+
+Select another provider using `SECRETSPEC_PROVIDER` in your shell or deployment
+configuration, for example `keyring://` or `onepassword://Development`. An explicit
+provider disables the loader's automatic `.env` fallback; missing credentials or
+provider errors fail startup rather than silently falling back to that file.
+If `.env` contains `SECRETSPEC_PROVIDER`, the loader reads only that selector and
+`SECRETSPEC_PROFILE` from the file. It leaves the file's application credentials
+unused. Next.js still loads its own environment files before configuration.
+Use `SECRETSPEC_PROVIDER=env://` to resolve only the existing environment through
+the SDK. Next.js still performs its own environment-file loading.
+`SECRETSPEC_PROFILE` overrides the selected profile. For local defaults without
+reading environment credentials, use `SECRETSPEC_PROVIDER=null://`. After successful
+resolution, this clears existing declared credentials in the selected scope before
+applying defaults, including optional credentials without defaults.
+
+Environment credentials, `.env` fallback, and local defaults also work when the
+SDK's native addon is unavailable, including on Intel Macs. External secret stores
+require a supported native addon; startup reports an error if the selected
+provider cannot run.
+
+To optionally move existing values into a secret store, install the
+[SecretSpec CLI](https://secretspec.dev/quick-start/)
+and run from the repository root:
 
 ```sh
-cp apps/dashboard/.env.example apps/dashboard/.env
+secretspec config global init
+secretspec import dotenv://apps/dashboard/.env --profile development
 ```
 
-The defaults in `.env.example` are dummy values that work for local dev — no real API keys needed.
-Fill them in before deployment to enable optional functionality (Resend for real magic-link emails, Stripe, Tinybird analytics, Sentry, GitHub/Google OAuth, etc.).
-Magic-link login works everywhere; in dev the link is printed to the terminal instead of emailed.
+Then select that provider with `SECRETSPEC_PROVIDER`. You can remove the old `.env`
+files after migration so frameworks cannot load stale values. To update an individual value,
+run `secretspec set RESEND_API_KEY --profile development`; the CLI prompts for it.
+The SDK makes resolved values available to the application's existing validated
+environment modules before they initialize.
+
+The database migration and seed commands also resolve their database credentials
+automatically in their own processes. The database `env` command validates credentials;
+it does not create a `.env` file. Shared service code and the Deno workflows app continue to consume
+process environment credentials, keeping the Node SDK outside their runtime.
+Provider authentication variables needed by external stores must be forwarded
+through Turbo, for example with `TURBO_ENV_MODE=loose`. After rotating build-time
+values in a store, use `pnpm build --force` to bypass Turbo's build cache.
+Public `NEXT_PUBLIC_*` values are resolved during the build and remain public.
 
 ### Startup
 
@@ -42,14 +93,12 @@ pnpm --filter '@openstatus/db' dev
 3. In a second terminal, set up the dev database
 
 ```sh
-pnpm -w dx
+pnpm --filter @openstatus/db migrate
+pnpm --filter @openstatus/db seed
 ```
 
-This chains three turbo tasks (`env → migrate → seed`):
-
-- `env` copies `packages/db/.env.example` → `packages/db/.env`
-- `migrate` runs Drizzle migrations against the libSQL server
-- `seed` inserts a default workspace, user (`ping@openstatus.dev`), monitors, and a status page
+`migrate` runs Drizzle migrations against libSQL. `seed` inserts a default
+workspace, user (`ping@openstatus.dev`), monitors, and a status page.
 
 4. Stop the terminal from step 2
 
@@ -58,7 +107,7 @@ This chains three turbo tasks (`env → migrate → seed`):
 5. Start the dashboard from the repo root
 
 ```sh
-pnpm -w dev:dashboard
+pnpm dev:dashboard
 ```
 
 Turbo runs the dashboard (`apps/dashboard`) and `@openstatus/db` together.
@@ -69,7 +118,7 @@ Turbo runs the dashboard (`apps/dashboard`) and `@openstatus/db` together.
 
 The dashboard uses NextAuth with GitHub, Google, SSO and a Resend magic-link provider.
 
-In `NODE_ENV=development`, `src/lib/auth/providers.ts` **prints the magic link to the dashboard's terminal stdout** instead of emailing it; the dummy `RESEND_API_KEY` from `.env.example` is enough and no OAuth credentials are required. Everywhere else the link is emailed through Resend. A self-hosted deployment (`SELF_HOST=true`) whose Resend send fails still tells the user to check their inbox but prints the link to the server log instead, so look there when running without a real key.
+In `NODE_ENV=development`, `src/lib/auth/providers.ts` **prints the magic link to the dashboard's terminal stdout** instead of emailing it; the development profile's dummy `RESEND_API_KEY` is enough and no OAuth credentials are required. Everywhere else the link is emailed through Resend. A self-hosted deployment (`SELF_HOST=true`) whose Resend send fails still tells the user to check their inbox but prints the link to the server log instead, so look there when running without a real key.
 
 To log in:
 
@@ -79,9 +128,9 @@ To log in:
 
 ## Troubleshooting
 
-- **Port 8080 already in use** — a leftover libSQL server from step 2. Kill that terminal and re-run `pnpm -w dev:dashboard`.
+- **Port 8080 already in use** — a leftover libSQL server from step 2. Kill that terminal and re-run the launch command in step 5.
 - **Magic link doesn't arrive** — it isn't emailed in dev. Look in the dashboard terminal stdout for `>>> Magic Link: ...`.
-- **Reset the dev DB** — stop the libSQL server, delete `openstatus-dev.db` at the repo root, restart libSQL, re-run `pnpm -w dx`.
+- **Reset the dev DB** — stop the libSQL server, delete `openstatus-dev.db` at the repo root, restart libSQL, then repeat step 3.
 - **No Turso CLI or Deno on the machine** (a cloud sandbox) — `node scripts/dev-stack.mjs up` does steps 2 to 5 with sqld and deno fetched from npm; `down` stops them. Its database is `.screenshots/stack/openstatus-dev.db`: `up --reseed` resets the fixtures, or delete the directory while the stack is down.
 
 ## Related services (optional for dashboard development)

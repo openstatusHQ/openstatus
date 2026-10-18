@@ -60,7 +60,8 @@ ENV \
     TINY_BIRD_API_KEY="test" \
     DATABASE_URL="http://libsql:8080" \
     PROJECT_ID_VERCEL="test" \
-    NODE_ENV="production"
+    NODE_ENV="production" \
+    AUTH_SECRET="build-time-placeholder-min-32-chars-long"
 WORKDIR /app
 COPY \
     --link \
@@ -94,12 +95,22 @@ COPY \
     --chown=1000:1000 \
     --chmod=555 \
     --link \
-    "/app/apps/status-page/.next/standalone/apps/status-page/" "./"
+    "/app/apps/status-page/.next/standalone/" "/app/"
 COPY \
     --from=builder \
     --chown=1000:1000 \
     --link \
     "/app/node_modules/" "/app/node_modules/"
+COPY \
+    --from=builder \
+    --chown=1000:1000 \
+    --link \
+    "/app/apps/status-page/node_modules/" "./node_modules/"
+COPY \
+    --from=builder \
+    --chown=1000:1000 \
+    --link \
+    "/app/packages/credentials/node_modules/" "/app/packages/credentials/node_modules/"
 COPY \
     --from=builder \
     --chown=1000:1000 \

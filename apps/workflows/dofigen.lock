@@ -39,6 +39,8 @@ effective: |
         source: packages/assertions/package.json
       - target: packages/db/package.json
         source: packages/db/package.json
+      - target: packages/credentials/package.json
+        source: packages/credentials/package.json
       - target: packages/emails/package.json
         source: packages/emails/package.json
       - target: packages/notifications/base/package.json
@@ -174,7 +176,7 @@ images:
           digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
 resources:
   dofigen.yml:
-    hash: bb33793c4b91222bc9d01de4911a4150c33290039ddf20f78f594ac96d3677e1
+    hash: 66fa4abb50d9756c00f2bb8afe857fc771b9ee1d33344cb4d55de4516b638573
     content: |
       ignore:
         - node_modules
@@ -201,6 +203,7 @@ resources:
             - apps/workflows/package.json
             - packages/assertions/package.json
             - packages/db/package.json
+            - packages/credentials/package.json
             - packages/emails/package.json
             - packages/notifications/base/package.json
             - packages/notifications/discord/package.json

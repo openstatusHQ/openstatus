@@ -1,8 +1,13 @@
+import { join as joinPath } from "node:path";
+
+import { loadCredentials } from "@openstatus/credentials";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 import { defaultLocale, locales } from "./src/i18n/config";
+
+loadCredentials();
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -40,6 +45,20 @@ const withNextIntl = createNextIntlPlugin({
 const useNucleoIcons = process.env.ICON_SET === "nucleo";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["@openstatus/credentials", "secretspec"],
+  outputFileTracingRoot: joinPath(__dirname, "../.."),
+  outputFileTracingIncludes: {
+    "/*": [
+      "../../packages/credentials/index.mjs",
+      "../../packages/credentials/environment.mjs",
+      "../../packages/credentials/package.json",
+      "../../packages/credentials/secretspec.toml",
+      "../../node_modules/.pnpm/secretspec@*/node_modules/secretspec/*.js",
+      "../../node_modules/.pnpm/secretspec@*/node_modules/secretspec/package.json",
+      "../../node_modules/.pnpm/secretspec-*/node_modules/secretspec-*/*.node",
+      "../../node_modules/.pnpm/secretspec-*/node_modules/secretspec-*/package.json",
+    ],
+  },
   output: process.env.SELF_HOST === "true" ? "standalone" : undefined,
   experimental: {
     authInterrupts: true,

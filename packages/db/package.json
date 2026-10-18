@@ -23,15 +23,16 @@
     "check": "deno check --sloppy-imports .",
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",
-    "migrate": "deno run -A --env-file src/migrate.mts",
+    "migrate": "deno run -A src/migrate.mts",
     "studio": "drizzle-kit studio",
     "env": "deno run -A env.ts",
-    "seed": "deno run -A --env-file --sloppy-imports  src/seed.mts",
+    "seed": "deno run -A --sloppy-imports  src/seed.mts",
     "dev": "turso dev --db-file ../../openstatus-dev.db"
   },
   "dependencies": {
     "@libsql/client": "catalog:",
     "@openstatus/assertions": "workspace:*",
+    "@openstatus/credentials": "workspace:*",
     "@openstatus/locales": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/theme-store": "workspace:*",

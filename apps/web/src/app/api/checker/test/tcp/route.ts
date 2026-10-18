@@ -13,7 +13,7 @@ import {
 
 import { TCPResponse, tcpPayload } from "./schema";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const preferredRegion = "auto";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;

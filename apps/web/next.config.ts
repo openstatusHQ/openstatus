@@ -1,8 +1,12 @@
 import { readFileSync } from "node:fs";
+import { join as joinPath } from "node:path";
 import { join } from "node:path";
 
+import { loadCredentials } from "@openstatus/credentials";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
+
+loadCredentials();
 
 // Read the MCP server version at build time from apps/server/package.json so the
 // `serverInfo.version` we publish in /.well-known/mcp/server-card.json never drifts.
@@ -54,6 +58,7 @@ const useNucleoIcons = process.env.ICON_SET === "nucleo";
 
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: joinPath(__dirname, "../.."),
   reactStrictMode: true,
   transpilePackages: ["@openstatus/ui", "@openstatus/api", "next-mdx-remote"],
   turbopack: useNucleoIcons
@@ -69,6 +74,16 @@ const nextConfig: NextConfig = {
     OPENSTATUS_MCP_SERVER_VERSION: readMcpServerVersion(),
   },
   outputFileTracingIncludes: {
+    "/*": [
+      "../../packages/credentials/index.mjs",
+      "../../packages/credentials/environment.mjs",
+      "../../packages/credentials/package.json",
+      "../../packages/credentials/secretspec.toml",
+      "../../node_modules/.pnpm/secretspec@*/node_modules/secretspec/*.js",
+      "../../node_modules/.pnpm/secretspec@*/node_modules/secretspec/package.json",
+      "../../node_modules/.pnpm/secretspec-*/node_modules/secretspec-*/*.node",
+      "../../node_modules/.pnpm/secretspec-*/node_modules/secretspec-*/package.json",
+    ],
     "/": [
       "./node_modules/.pnpm/@google-cloud/tasks/build/esm/src/**/*.json",
       "./node_modules/@google-cloud/tasks/build/esm/src/**/*.js",
@@ -83,7 +98,11 @@ const nextConfig: NextConfig = {
     // barrel-optimize only when unaliased — the rewrite would bypass the nucleo alias
     optimizePackageImports: useNucleoIcons ? [] : ["@openstatus/icons"],
   },
-  serverExternalPackages: ["@google-cloud/tasks"],
+  serverExternalPackages: [
+    "@google-cloud/tasks",
+    "@openstatus/credentials",
+    "secretspec",
+  ],
   expireTime: 180, // 3 minutes
   logging: {
     fetches: {

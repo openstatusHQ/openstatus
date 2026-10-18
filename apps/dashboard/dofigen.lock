@@ -99,13 +99,21 @@ effective: |
   copy:
   - fromBuilder: builder
     paths:
-    - /app/apps/dashboard/.next/standalone/apps/dashboard/
-    target: ./
-    chmod: '555'
+    - /app/apps/dashboard/.next/standalone/
+    target: /app/
+    chmod: "555"
   - fromBuilder: builder
     paths:
     - /app/node_modules/
     target: /app/node_modules/
+  - fromBuilder: builder
+    paths:
+    - /app/apps/dashboard/node_modules/
+    target: ./node_modules/
+  - fromBuilder: builder
+    paths:
+    - /app/packages/credentials/node_modules/
+    target: /app/packages/credentials/node_modules/
   - fromBuilder: builder
     paths:
     - /app/apps/dashboard/.next/static/
@@ -138,7 +146,7 @@ images:
           digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
 resources:
   dofigen.yml:
-    hash: faa334a75307a18788b8e2818ac6b7fd9f43ad79700e0c0b30162771f67f334b
+    hash: 7a3ecbd283f33114a859d905eeb5bb6a4b78639a15e28b87c84523773452bf35
     content: |
       builders:
         # Stage 1: collect every workspace manifest (package.json) into a tree that only
@@ -221,13 +229,19 @@ resources:
       copy:
         # Copy Next.js standalone output
         - fromBuilder: builder
-          source: /app/apps/dashboard/.next/standalone/apps/dashboard/
-          target: ./
+          source: /app/apps/dashboard/.next/standalone/
+          target: /app/
           chmod: "555"
         # Copy root node_modules (required for pnpm symlinks)
         - fromBuilder: builder
           source: /app/node_modules/
           target: /app/node_modules/
+        - fromBuilder: builder
+          source: /app/apps/dashboard/node_modules/
+          target: ./node_modules/
+        - fromBuilder: builder
+          source: /app/packages/credentials/node_modules/
+          target: /app/packages/credentials/node_modules/
         # Copy static assets
         - fromBuilder: builder
           source: /app/apps/dashboard/.next/static/
