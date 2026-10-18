@@ -8,20 +8,37 @@ import {
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
+  EventList,
+  EventListGroup,
+  EventListGroupHeader,
+  EventListGroupSummary,
+  EventListGroupTitle,
+  EventListGroups,
+  EventListMore,
+} from "@/components/content/event-list";
+import {
   Section,
   SectionDescription,
   SectionGroup,
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/managed-incidents/columns";
-import { DataTable } from "@/components/ui/data-table/data-table";
-import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import {
+  IncidentRow,
+  isIncidentActive,
+} from "@/components/incidents/incident-row";
+import { groupByMonth, pluralize } from "@/data/event-list.client";
+import { useShowMore } from "@/hooks/use-show-more";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Client() {
   const trpc = useTRPC();
   const { data: incidents } = useQuery(trpc.incident.list.queryOptions());
+  const active = incidents?.filter(isIncidentActive) ?? [];
+  const ended = useShowMore(
+    incidents?.filter((i) => !isIncidentActive(i)) ?? [],
+  );
+  const months = groupByMonth(ended.visible, (i) => i.declaredAt);
 
   return (
     <SectionGroup>
@@ -42,11 +59,52 @@ export function Client() {
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (
-          <DataTable
-            columns={columns}
-            data={incidents}
-            paginationComponent={DataTablePaginationSimple}
-          />
+          <EventListGroups>
+            {active.length > 0 ? (
+              <EventListGroup aria-labelledby="incidents-active">
+                <EventListGroupHeader>
+                  <EventListGroupTitle id="incidents-active">
+                    Active
+                  </EventListGroupTitle>
+                  <EventListGroupSummary>
+                    {pluralize(active.length, "incident")}
+                  </EventListGroupSummary>
+                </EventListGroupHeader>
+                <EventList>
+                  {active.map((incident) => (
+                    <IncidentRow key={incident.id} incident={incident} />
+                  ))}
+                </EventList>
+              </EventListGroup>
+            ) : null}
+            {months.map((month) => {
+              const critical = month.items.filter(
+                (i) => i.severity === "critical",
+              ).length;
+              return (
+                <EventListGroup
+                  key={month.key}
+                  aria-labelledby={`incidents-${month.key}`}
+                >
+                  <EventListGroupHeader>
+                    <EventListGroupTitle id={`incidents-${month.key}`}>
+                      {month.label}
+                    </EventListGroupTitle>
+                    <EventListGroupSummary>
+                      {pluralize(month.items.length, "incident")}
+                      {critical > 0 ? ` · ${critical} critical` : null}
+                    </EventListGroupSummary>
+                  </EventListGroupHeader>
+                  <EventList>
+                    {month.items.map((incident) => (
+                      <IncidentRow key={incident.id} incident={incident} />
+                    ))}
+                  </EventList>
+                </EventListGroup>
+              );
+            })}
+            {ended.hasMore ? <EventListMore onClick={ended.showMore} /> : null}
+          </EventListGroups>
         )}
       </Section>
     </SectionGroup>

@@ -2,6 +2,7 @@
 
 import { Info } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
+import { formatDistanceStrict } from "date-fns";
 import { useParams } from "next/navigation";
 
 import { Link } from "@/components/common/link";
@@ -12,15 +13,24 @@ import {
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
+  EventList,
+  EventListGroup,
+  EventListGroupHeader,
+  EventListGroupSummary,
+  EventListGroupTitle,
+  EventListGroups,
+  EventListMore,
+} from "@/components/content/event-list";
+import {
   Section,
   SectionDescription,
   SectionGroup,
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/incidents/columns";
-import { DataTable } from "@/components/ui/data-table/data-table";
-import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { DowntimeRow } from "@/components/downtime/downtime-row";
+import { groupByMonth, pluralize } from "@/data/event-list.client";
+import { useShowMore } from "@/hooks/use-show-more";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
@@ -34,6 +44,12 @@ export default function Page() {
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
+
+  const ongoing = monitorIncidents?.filter((i) => i.resolvedAt === null) ?? [];
+  const resolved = useShowMore(
+    monitorIncidents?.filter((i) => i.resolvedAt !== null) ?? [],
+  );
+  const months = groupByMonth(resolved.visible, (i) => i.startedAt);
 
   if (!monitorIncidents || !monitor) return null;
 
@@ -68,13 +84,59 @@ export default function Page() {
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (
-          <DataTable
-            columns={columns}
-            data={monitorIncidents}
-            paginationComponent={DataTablePaginationSimple}
-          />
+          <EventListGroups>
+            {ongoing.length > 0 ? (
+              <EventListGroup aria-labelledby="downtime-ongoing">
+                <EventListGroupHeader>
+                  <EventListGroupTitle id="downtime-ongoing">
+                    Ongoing
+                  </EventListGroupTitle>
+                </EventListGroupHeader>
+                <EventList>
+                  {ongoing.map((downtime) => (
+                    <DowntimeRow key={downtime.id} downtime={downtime} />
+                  ))}
+                </EventList>
+              </EventListGroup>
+            ) : null}
+            {months.map((month) => (
+              <EventListGroup
+                key={month.key}
+                aria-labelledby={`downtime-${month.key}`}
+              >
+                <EventListGroupHeader>
+                  <EventListGroupTitle id={`downtime-${month.key}`}>
+                    {month.label}
+                  </EventListGroupTitle>
+                  <EventListGroupSummary>
+                    {pluralize(month.items.length, "downtime")} ·{" "}
+                    {totalDuration(month.items)} total
+                  </EventListGroupSummary>
+                </EventListGroupHeader>
+                <EventList>
+                  {month.items.map((downtime) => (
+                    <DowntimeRow key={downtime.id} downtime={downtime} />
+                  ))}
+                </EventList>
+              </EventListGroup>
+            ))}
+            {resolved.hasMore ? (
+              <EventListMore onClick={resolved.showMore} />
+            ) : null}
+          </EventListGroups>
         )}
       </Section>
     </SectionGroup>
   );
+}
+
+function totalDuration(
+  downtimes: { startedAt: Date; resolvedAt: Date | null }[],
+) {
+  const ms = downtimes.reduce(
+    (sum, d) =>
+      sum + ((d.resolvedAt ?? new Date()).getTime() - d.startedAt.getTime()),
+    0,
+  );
+  return formatDistanceStrict(0, ms);
 }

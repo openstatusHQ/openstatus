@@ -10,6 +10,20 @@ import { Link } from "@/components/common/link";
 import { NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
+  EmptyStateContainer,
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
+  EventList,
+  EventListGroup,
+  EventListGroupHeader,
+  EventListGroupSummary,
+  EventListGroupTitle,
+  EventListGroups,
+  EventListMore,
+} from "@/components/content/event-list";
+import {
   Section,
   SectionDescription,
   SectionGroup,
@@ -17,11 +31,12 @@ import {
   SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/status-reports/columns";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
+import { StatusReportRow } from "@/components/status-reports/status-report-row";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
-import { DataTable } from "@/components/ui/data-table/data-table";
-import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { groupByMonth, pluralize } from "@/data/event-list.client";
+import { reportStartedAt } from "@/data/status-reports.client";
+import { useShowMore } from "@/hooks/use-show-more";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
@@ -53,11 +68,18 @@ export default function Page() {
     }),
   );
 
+  const sorted = [...(statusReports ?? [])].sort(
+    (a, b) => reportStartedAt(b).getTime() - reportStartedAt(a).getTime(),
+  );
+  const open = sorted.filter((report) => report.status !== "resolved");
+  const resolved = useShowMore(
+    sorted.filter((report) => report.status === "resolved"),
+  );
+  const months = groupByMonth(resolved.visible, reportStartedAt);
+
   if (!statusReports || !page) return null;
 
-  const hasUnresolvedIssue = statusReports.some(
-    (report) => report.status !== "resolved",
-  );
+  const hasUnresolvedIssue = open.length > 0;
 
   return (
     <SectionGroup>
@@ -135,11 +157,58 @@ export default function Page() {
             </FormSheetStatusReport>
           </div>
         </SectionHeaderRow>
-        <DataTable
-          paginationComponent={DataTablePaginationSimple}
-          columns={columns}
-          data={statusReports}
-        />
+        {statusReports.length === 0 ? (
+          <EmptyStateContainer>
+            <EmptyStateTitle>No status reports</EmptyStateTitle>
+            <EmptyStateDescription>
+              Create a status report to tell your users about an issue and keep
+              them posted until it is resolved.
+            </EmptyStateDescription>
+          </EmptyStateContainer>
+        ) : (
+          <EventListGroups>
+            {open.length > 0 ? (
+              <EventListGroup aria-labelledby="reports-open">
+                <EventListGroupHeader>
+                  <EventListGroupTitle id="reports-open">
+                    Ongoing
+                  </EventListGroupTitle>
+                  <EventListGroupSummary>
+                    {pluralize(open.length, "report")}
+                  </EventListGroupSummary>
+                </EventListGroupHeader>
+                <EventList>
+                  {open.map((report) => (
+                    <StatusReportRow key={report.id} report={report} />
+                  ))}
+                </EventList>
+              </EventListGroup>
+            ) : null}
+            {months.map((month) => (
+              <EventListGroup
+                key={month.key}
+                aria-labelledby={`reports-${month.key}`}
+              >
+                <EventListGroupHeader>
+                  <EventListGroupTitle id={`reports-${month.key}`}>
+                    {month.label}
+                  </EventListGroupTitle>
+                  <EventListGroupSummary>
+                    {pluralize(month.items.length, "report")}
+                  </EventListGroupSummary>
+                </EventListGroupHeader>
+                <EventList>
+                  {month.items.map((report) => (
+                    <StatusReportRow key={report.id} report={report} />
+                  ))}
+                </EventList>
+              </EventListGroup>
+            ))}
+            {resolved.hasMore ? (
+              <EventListMore onClick={resolved.showMore} />
+            ) : null}
+          </EventListGroups>
+        )}
       </Section>
     </SectionGroup>
   );
