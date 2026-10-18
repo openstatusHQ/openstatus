@@ -5,6 +5,20 @@ import { PayloadSchema, WebhookSchema } from "./schema";
 
 export const DEFAULT_TIMEOUT_MS = 10_000;
 
+function resolveSignal(
+  contextSignal?: AbortSignal,
+  contextTimeoutMs?: number,
+  options?: { timeoutMs?: number; signal?: AbortSignal },
+): AbortSignal {
+  const timeoutMs =
+    options?.timeoutMs ?? contextTimeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  const externalSignal = options?.signal ?? contextSignal;
+  return externalSignal
+    ? AbortSignal.any([externalSignal, timeoutSignal])
+    : timeoutSignal;
+}
+
 export const sendAlert = async (
   {
     monitor,
@@ -13,8 +27,10 @@ export const sendAlert = async (
     statusCode,
     latency,
     message,
+    signal,
+    timeoutMs,
   }: NotificationContext,
-  options?: { timeoutMs?: number },
+  options?: { timeoutMs?: number; signal?: AbortSignal },
 ) => {
   const notificationData = WebhookSchema.parse(JSON.parse(notification.data));
 
@@ -34,7 +50,7 @@ export const sendAlert = async (
       "Content-Type": "application/json",
       ...transformHeaders(notificationData.webhook.headers ?? []),
     },
-    signal: AbortSignal.timeout(options?.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+    signal: resolveSignal(signal, timeoutMs, options),
   });
   if (!res.ok) {
     throw new Error(`Failed to send webhook notification: ${res.statusText}`);
@@ -49,8 +65,10 @@ export const sendRecovery = async (
     latency,
     statusCode,
     message,
+    signal,
+    timeoutMs,
   }: NotificationContext,
-  options?: { timeoutMs?: number },
+  options?: { timeoutMs?: number; signal?: AbortSignal },
 ) => {
   const notificationData = WebhookSchema.parse(JSON.parse(notification.data));
 
@@ -70,7 +88,7 @@ export const sendRecovery = async (
       "Content-Type": "application/json",
       ...transformHeaders(notificationData.webhook.headers ?? []),
     },
-    signal: AbortSignal.timeout(options?.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+    signal: resolveSignal(signal, timeoutMs, options),
   });
   if (!res.ok) {
     throw new Error(`Failed to send webhook notification: ${res.statusText}`);
@@ -85,8 +103,10 @@ export const sendDegraded = async (
     latency,
     statusCode,
     message,
+    signal,
+    timeoutMs,
   }: NotificationContext,
-  options?: { timeoutMs?: number },
+  options?: { timeoutMs?: number; signal?: AbortSignal },
 ) => {
   const notificationData = WebhookSchema.parse(JSON.parse(notification.data));
 
@@ -106,7 +126,7 @@ export const sendDegraded = async (
       "Content-Type": "application/json",
       ...transformHeaders(notificationData.webhook.headers ?? []),
     },
-    signal: AbortSignal.timeout(options?.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+    signal: resolveSignal(signal, timeoutMs, options),
   });
   if (!res.ok) {
     throw new Error(`Failed to send webhook notification: ${res.statusText}`);
@@ -117,10 +137,12 @@ export const sendTest = async ({
   url,
   headers,
   timeoutMs,
+  signal,
 }: {
   url: string;
   headers?: { key: string; value: string }[];
   timeoutMs?: number;
+  signal?: AbortSignal;
 }) => {
   const body = PayloadSchema.parse({
     monitor: {
@@ -141,7 +163,7 @@ export const sendTest = async ({
         "Content-Type": "application/json",
         ...transformHeaders(headers ?? []),
       },
-      signal: AbortSignal.timeout(timeoutMs ?? DEFAULT_TIMEOUT_MS),
+      signal: resolveSignal(signal, timeoutMs),
     });
     if (!response.ok) {
       throw new Error("Failed to send test");

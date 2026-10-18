@@ -16,6 +16,8 @@ export interface NotificationContext {
   regions?: string[];
   latency?: number;
   incident?: Incident;
+  signal?: AbortSignal;
+  timeoutMs?: number;
 }
 
 /**

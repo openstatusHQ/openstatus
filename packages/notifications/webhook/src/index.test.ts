@@ -148,12 +148,28 @@ describe("Webhook sendTest", () => {
 
   test("should honor custom timeoutMs", async () => {
     const url = "https://example.com/webhook";
-    const result = await sendTest({ url, timeoutMs: 5000 });
+    let capturedSignal: AbortSignal | undefined;
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", (_url, init) => {
+      capturedSignal = init?.signal as AbortSignal;
+      return new Promise((_resolve, reject) => {
+        if (capturedSignal?.aborted) {
+          reject(capturedSignal.reason);
+          return;
+        }
+        capturedSignal?.addEventListener("abort", () => {
+          reject(new DOMException("The signal has been aborted", "AbortError"));
+        });
+      });
+    });
 
-    expect(result).toBe(true);
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
-    expect(callArgs[1].signal).toBeInstanceOf(AbortSignal);
+    const start = Date.now();
+    await expect(sendTest({ url, timeoutMs: 20 })).rejects.toThrow(
+      "Failed to send test",
+    );
+    const duration = Date.now() - start;
+    expect(capturedSignal?.aborted).toBe(true);
+    expect(duration).toBeLessThan(1000);
   });
 
   test("should throw error when request times out", async () => {
@@ -223,14 +239,71 @@ describe("Webhook notifications with deadline", () => {
   });
 
   test("sendAlert fails when deadline expires", async () => {
+    let capturedSignal: AbortSignal | undefined;
     fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.reject(
-        new DOMException("The signal has been aborted", "AbortError"),
-      ),
-    );
+    fetchMock = stub(globalThis, "fetch", (_url, init) => {
+      capturedSignal = init?.signal as AbortSignal;
+      return new Promise((_resolve, reject) => {
+        if (capturedSignal?.aborted) {
+          reject(capturedSignal.reason);
+          return;
+        }
+        capturedSignal?.addEventListener("abort", () => {
+          reject(new DOMException("The signal has been aborted", "AbortError"));
+        });
+      });
+    });
 
-    await expect(sendAlert(mockContext)).rejects.toThrow();
+    const start = Date.now();
+    await expect(sendAlert(mockContext, { timeoutMs: 20 })).rejects.toThrow();
+    const duration = Date.now() - start;
+    expect(capturedSignal?.aborted).toBe(true);
+    expect(duration).toBeLessThan(1000);
+  });
+
+  test("sendAlert honors context timeoutMs from outbox", async () => {
+    let capturedSignal: AbortSignal | undefined;
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", (_url, init) => {
+      capturedSignal = init?.signal as AbortSignal;
+      return new Promise((_resolve, reject) => {
+        if (capturedSignal?.aborted) {
+          reject(capturedSignal.reason);
+          return;
+        }
+        capturedSignal?.addEventListener("abort", () => {
+          reject(new DOMException("The signal has been aborted", "AbortError"));
+        });
+      });
+    });
+
+    await expect(
+      sendAlert({ ...mockContext, timeoutMs: 20 }),
+    ).rejects.toThrow();
+    expect(capturedSignal?.aborted).toBe(true);
+  });
+
+  test("sendAlert aborts when context signal is aborted", async () => {
+    const controller = new AbortController();
+    let capturedSignal: AbortSignal | undefined;
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", (_url, init) => {
+      capturedSignal = init?.signal as AbortSignal;
+      return new Promise((_resolve, reject) => {
+        if (capturedSignal?.aborted) {
+          reject(new DOMException("The signal has been aborted", "AbortError"));
+          return;
+        }
+        capturedSignal?.addEventListener("abort", () => {
+          reject(new DOMException("The signal has been aborted", "AbortError"));
+        });
+      });
+    });
+
+    const promise = sendAlert({ ...mockContext, signal: controller.signal });
+    controller.abort();
+    await expect(promise).rejects.toThrow();
+    expect(capturedSignal?.aborted).toBe(true);
   });
 
   test("sendRecovery passes deadline signal", async () => {

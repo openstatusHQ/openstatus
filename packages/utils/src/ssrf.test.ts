@@ -344,26 +344,44 @@ describe("safeFetch", () => {
     ).rejects.toThrow();
   });
 
-  it("aborts across redirect hops when deadline expires", async () => {
+  it("propagates signal to fetch on every redirect hop and aborts on deadline expiry", async () => {
     const controller = new AbortController();
-    const { restore } = redirecting({
-      "https://example.com/a": [307, "/b"],
-      "https://example.com/b": [307, "/c"],
-    });
-    const originalFetch = globalThis.fetch;
+    const capturedSignals: (AbortSignal | undefined)[] = [];
+    const original = globalThis.fetch;
     globalThis.fetch = (input, init) => {
       const url = String(input);
+      capturedSignals.push(init?.signal as AbortSignal | undefined);
+      if (init?.signal?.aborted) {
+        return Promise.reject(
+          new DOMException("The signal has been aborted", "AbortError"),
+        );
+      }
+      if (url === "https://example.com/a") {
+        return Promise.resolve(
+          new Response(null, {
+            status: 307,
+            headers: { location: "https://example.com/b" },
+          }),
+        );
+      }
       if (url === "https://example.com/b") {
         controller.abort();
+        return Promise.reject(
+          new DOMException("The signal has been aborted", "AbortError"),
+        );
       }
-      return originalFetch(input, init);
+      return Promise.resolve(new Response("ok"));
     };
     try {
       await expect(
         safeFetch("https://example.com/a", { signal: controller.signal }),
       ).rejects.toThrow();
+      expect(capturedSignals.length).toBeGreaterThanOrEqual(2);
+      for (const sig of capturedSignals) {
+        expect(sig).toBe(controller.signal);
+      }
     } finally {
-      restore();
+      globalThis.fetch = original;
     }
   });
 });

@@ -112,7 +112,7 @@ export const triggerNotifications = async ({
     switch (notifType) {
       case "alert":
         const alertResult = Effect.tryPromise({
-          try: () =>
+          try: (signal) =>
             providerToFunction[notif.notification.provider].sendAlert({
               monitor,
               notification: selectNotificationSchema.parse(notif.notification),
@@ -122,6 +122,7 @@ export const triggerNotifications = async ({
               cronTimestamp,
               regions,
               latency,
+              signal,
             }),
 
           catch: (_unknown) =>
@@ -144,7 +145,7 @@ export const triggerNotifications = async ({
         break;
       case "recovery":
         const recoveryResult = Effect.tryPromise({
-          try: () =>
+          try: (signal) =>
             providerToFunction[notif.notification.provider].sendRecovery({
               monitor,
               notification: selectNotificationSchema.parse(notif.notification),
@@ -154,6 +155,7 @@ export const triggerNotifications = async ({
               cronTimestamp,
               regions,
               latency,
+              signal,
             }),
           catch: (_unknown) =>
             new Error(
@@ -175,7 +177,7 @@ export const triggerNotifications = async ({
         break;
       case "degraded":
         const degradedResult = Effect.tryPromise({
-          try: () =>
+          try: (signal) =>
             providerToFunction[notif.notification.provider].sendDegraded({
               monitor,
               notification: selectNotificationSchema.parse(notif.notification),
@@ -185,6 +187,7 @@ export const triggerNotifications = async ({
               cronTimestamp,
               regions,
               latency,
+              signal,
             }),
           catch: (_unknown) =>
             new Error(

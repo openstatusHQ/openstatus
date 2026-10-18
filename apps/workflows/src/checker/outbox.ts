@@ -251,7 +251,7 @@ function deliverRow(
     inFlightSends.add(row.id);
     const exit = yield* Effect.exit(
       Effect.tryPromise({
-        try: () => send(context),
+        try: (signal) => send({ ...context, signal, timeoutMs }),
         catch: (error) => new Error(errorMessage(error)),
       }).pipe(Effect.timeout(timeoutMs)),
     );
