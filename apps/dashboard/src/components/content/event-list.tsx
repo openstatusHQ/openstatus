@@ -238,7 +238,7 @@ export function EventListTime({
         // focusable so the hover card opens from the keyboard
         tabIndex={0}
         className={cn(
-          "text-muted-foreground focus-visible:ring-ring/50 relative z-10 shrink-0 rounded-sm font-mono text-xs leading-5 whitespace-nowrap tabular-nums outline-none focus-visible:ring-[3px]",
+          "focus-visible:ring-ring/50 relative z-10 rounded-sm whitespace-nowrap outline-none focus-visible:ring-[3px]",
           className,
         )}
         {...props}

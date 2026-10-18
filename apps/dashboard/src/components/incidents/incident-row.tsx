@@ -38,6 +38,7 @@ export function IncidentRow({
 }) {
   const endedAt = incidentEndedAt(incident);
   const severity = severityConfig[incident.severity];
+  const status = statusConfig[incident.status];
   return (
     <EventListItem>
       <EventListMedia>
@@ -58,40 +59,21 @@ export function IncidentRow({
         </EventListTitle>
         <EventListDescription>
           {type ? <span>Incident</span> : null}
-          <span>{severity.label}</span>
           {isIncidentActive(incident) ? (
-            <StatusBadge variant={statusConfig[incident.status].variant} plain>
-              {statusConfig[incident.status].label} for{" "}
+            <StatusBadge variant={status.variant} plain>
+              {status.label} for{" "}
               {formatDistanceStrict(incident.startedAt, new Date())}
             </StatusBadge>
-          ) : incident.status === "canceled" ? (
-            <span>Canceled</span>
-          ) : endedAt ? (
+          ) : endedAt && incident.status === "resolved" ? (
             <span>
               Resolved after {formatDistanceStrict(incident.startedAt, endedAt)}
             </span>
           ) : (
-            <span>Resolved</span>
+            <span>{status.label}</span>
           )}
-          {incident.commander ? (
-            <span>
-              Commander{" "}
-              <span className="text-foreground">
-                {incident.commander.name ?? incident.commander.email}
-              </span>
-            </span>
-          ) : null}
-          {incident.statusReport ? (
-            <span className="min-w-0 truncate">
-              Report{" "}
-              <span className="text-foreground">
-                {incident.statusReport.title}
-              </span>
-            </span>
-          ) : null}
+          <EventListTime date={incident.declaredAt} />
         </EventListDescription>
       </EventListContent>
-      <EventListTime date={incident.declaredAt} />
     </EventListItem>
   );
 }

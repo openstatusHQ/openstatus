@@ -1,7 +1,7 @@
 import { expect } from "@std/expect";
 import { describe, it } from "@std/testing/bdd";
 
-import { groupByMonth, listNames, pluralize } from "./event-list.client";
+import { groupByMonth, pluralize } from "./event-list.client";
 
 // mid-month dates keep the local-time bucketing independent of the runner's TZ
 const item = (id: number, iso: string) => ({ id, date: new Date(iso) });
@@ -36,15 +36,5 @@ describe("pluralize", () => {
     expect(pluralize(1, "update")).toBe("1 update");
     expect(pluralize(0, "update")).toBe("0 updates");
     expect(pluralize(3, "downtime")).toBe("3 downtimes");
-  });
-});
-
-describe("listNames", () => {
-  it("collapses names past the max into a count", () => {
-    expect(listNames([])).toBe("");
-    expect(listNames(["API", "Website"])).toBe("API, Website");
-    expect(listNames(["API", "Website", "Docs", "Blog"])).toBe(
-      "API, Website +2",
-    );
   });
 });

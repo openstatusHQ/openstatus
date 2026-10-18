@@ -9,15 +9,15 @@ import { useHydrated } from "@/hooks/use-hydrated";
 import type { StatusVariant } from "./status-dot";
 
 const dateBlockVariants = cva(
-  "flex w-8 shrink-0 flex-col items-center gap-0.5 rounded-md border py-1",
+  "flex w-8 shrink-0 flex-col items-center leading-none",
   {
     variants: {
       variant: {
-        default: "bg-muted/50",
-        success: "border-success/20 bg-success/10 text-success",
-        warning: "border-warning/20 bg-warning/10 text-warning",
-        destructive: "border-destructive/20 bg-destructive/10 text-destructive",
-        info: "border-info/20 bg-info/10 text-info",
+        default: "text-muted-foreground",
+        success: "text-success",
+        warning: "text-warning",
+        destructive: "text-destructive",
+        info: "text-info",
       } satisfies Record<StatusVariant, string>,
     },
     defaultVariants: {
@@ -26,7 +26,7 @@ const dateBlockVariants = cva(
   },
 );
 
-/** Calendar tile: weekday over day of month, tinted by `variant`. */
+/** Weekday over day of month; `variant` colours the weekday. */
 export function DateBlock({
   date,
   variant,
@@ -46,7 +46,7 @@ export function DateBlock({
       <span className="font-mono text-xs uppercase">
         {hydrated ? format(date, "EEE") : null}
       </span>
-      <span className="text-foreground text-sm font-medium tabular-nums">
+      <span className="text-foreground mt-1 text-sm font-medium tabular-nums">
         {hydrated ? format(date, "d") : null}
       </span>
     </time>

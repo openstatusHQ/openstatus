@@ -185,7 +185,7 @@ export function buildOverviewData(
     })),
   ];
 
-  // the incident row names its report, so a linked report isn't listed twice
+  // a report linked to an open incident is that incident; list it once
   const linkedReportIds = new Set(
     (managedIncidents ?? []).flatMap((i) =>
       i.statusReport ? [i.statusReport.id] : [],

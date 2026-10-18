@@ -23,8 +23,8 @@ import { DowntimeNextAction } from "./downtime-next-action";
 type Downtime = RouterOutputs["monitorIncident"]["list"][number];
 
 /**
- * On a monitor's own page the duration is the title; `monitor` titles the
- * row with the monitor instead, for lists across monitors.
+ * On a monitor's own page the duration is the title. `monitor` is for lists
+ * across monitors: it titles the row with the monitor and leads with a date.
  */
 export function DowntimeRow({
   downtime,
@@ -40,9 +40,11 @@ export function DowntimeRow({
   );
   return (
     <EventListItem>
-      <EventListMedia>
-        <DateBlock date={downtime.startedAt} variant="destructive" />
-      </EventListMedia>
+      {monitor ? (
+        <EventListMedia>
+          <DateBlock date={downtime.startedAt} variant="destructive" />
+        </EventListMedia>
+      ) : null}
       <EventListContent>
         {monitor ? (
           <EventListTitle asChild>
@@ -57,46 +59,32 @@ export function DowntimeRow({
           {monitor ? <span>Downtime</span> : null}
           {ongoing ? (
             <StatusBadge variant="destructive" plain>
-              Ongoing
+              {downtime.acknowledgedAt ? "Acknowledged" : "Ongoing"}
             </StatusBadge>
-          ) : null}
-          {monitor ? (
-            <span>
-              {ongoing ? "for" : "lasted"} {duration}
-            </span>
-          ) : null}
-          {downtime.acknowledgedAt ? (
-            <span>
-              Acknowledged after{" "}
-              {formatDistanceStrict(
-                downtime.startedAt,
-                downtime.acknowledgedAt,
-              )}
-            </span>
-          ) : ongoing ? (
-            <span>Not acknowledged</span>
-          ) : null}
-          {ongoing ? null : downtime.autoResolved ? (
-            <span>Recovered automatically</span>
           ) : (
-            <span>Resolved manually</span>
+            <span>
+              {downtime.autoResolved ? "Recovered" : "Resolved"}
+              {monitor ? ` after ${duration}` : null}
+            </span>
           )}
+          <EventListTime date={downtime.startedAt} />
         </EventListDescription>
       </EventListContent>
-      <EventListTime date={downtime.startedAt} />
-      <EventListActions>
-        {ongoing ? (
-          <>
-            <DowntimeNextAction incident={downtime} />
-            <DeclareFromRow
-              title={`${downtime.monitor.name} is down`}
-              startedAt={downtime.startedAt}
-              source={{ type: "monitor_incident", id: downtime.id }}
-            />
-          </>
-        ) : null}
-        <IncidentRowActions incident={downtime} />
-      </EventListActions>
+      {ongoing ? (
+        <EventListActions>
+          <DowntimeNextAction incident={downtime} />
+          <DeclareFromRow
+            title={`${downtime.monitor.name} is down`}
+            startedAt={downtime.startedAt}
+            source={{ type: "monitor_incident", id: downtime.id }}
+          />
+        </EventListActions>
+      ) : monitor ? null : (
+        // no detail page to delete it from, so the menu stays here
+        <EventListActions>
+          <IncidentRowActions incident={downtime} />
+        </EventListActions>
+      )}
     </EventListItem>
   );
 }

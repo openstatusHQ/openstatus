@@ -29,9 +29,3 @@ export function groupByMonth<T>(
 export function pluralize(count: number, singular: string, plural?: string) {
   return `${count} ${count === 1 ? singular : (plural ?? `${singular}s`)}`;
 }
-
-/** `API, Website +2`: the first `max` names, then how many more. */
-export function listNames(names: string[], max = 2) {
-  if (names.length <= max) return names.join(", ");
-  return `${names.slice(0, max).join(", ")} +${names.length - max}`;
-}

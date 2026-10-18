@@ -7,7 +7,6 @@ import NextLink from "next/link";
 import { DateBlock } from "@/components/common/date-block";
 import { StatusBadge } from "@/components/common/status-badge";
 import {
-  EventListActions,
   EventListContent,
   EventListDescription,
   EventListItem,
@@ -15,15 +14,16 @@ import {
   EventListTime,
   EventListTitle,
 } from "@/components/content/event-list";
-import { MaintenanceRowActions } from "@/components/data-table/maintenances/data-table-row-actions";
-import { listNames } from "@/data/event-list.client";
 import { maintenanceStatusConfig } from "@/data/overview-events.client";
 
 import { useMaintenanceStatus } from "./use-maintenance-status";
 
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 
-/** `type` prefixes the sentence with "Maintenance", for lists that mix event kinds. */
+/**
+ * `type` is for lists that mix event kinds: it leads with a date and
+ * prefixes the sentence with "Maintenance".
+ */
 export function MaintenanceRow({
   maintenance,
   type = false,
@@ -35,9 +35,11 @@ export function MaintenanceRow({
   const config = maintenanceStatusConfig[status];
   return (
     <EventListItem>
-      <EventListMedia>
-        <DateBlock date={maintenance.from} variant="info" />
-      </EventListMedia>
+      {type ? (
+        <EventListMedia>
+          <DateBlock date={maintenance.from} variant="info" />
+        </EventListMedia>
+      ) : null}
       <EventListContent>
         <EventListTitle asChild>
           <NextLink
@@ -56,17 +58,9 @@ export function MaintenanceRow({
           <span>
             {formatDistanceStrict(maintenance.from, maintenance.to)} window
           </span>
-          <span className="min-w-0 truncate">
-            {maintenance.pageComponents.length > 0
-              ? listNames(maintenance.pageComponents.map((c) => c.name))
-              : "No components"}
-          </span>
+          <EventListTime date={maintenance.from} />
         </EventListDescription>
       </EventListContent>
-      <EventListTime date={maintenance.from} />
-      <EventListActions>
-        <MaintenanceRowActions maintenance={maintenance} />
-      </EventListActions>
     </EventListItem>
   );
 }

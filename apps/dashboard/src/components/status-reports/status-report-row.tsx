@@ -2,7 +2,6 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { formatDistanceStrict } from "date-fns";
 import NextLink from "next/link";
 
 import { SeverityBars } from "@/components/common/severity-bars";
@@ -15,12 +14,9 @@ import {
   EventListTime,
   EventListTitle,
 } from "@/components/content/event-list";
-import { StatusReportRowActions } from "@/components/data-table/status-reports/data-table-row-actions";
 import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-report-update/sheet-create";
-import { listNames, pluralize } from "@/data/event-list.client";
 import { impactDisplay } from "@/data/status-report-updates.client";
 import {
-  reportResolvedAt,
   reportStartedAt,
   worstReportImpact,
 } from "@/data/status-reports.client";
@@ -44,18 +40,17 @@ export function StatusReportRow({
   report: StatusReport;
   type?: boolean;
 }) {
-  const startedAt = reportStartedAt(report);
-  const resolvedAt = reportResolvedAt(report);
   const impact = worstReportImpact(report);
-  const open = report.status !== "resolved";
   const display = impactDisplay(impact);
+  const impactLabel = impact === undefined ? "No impact" : display.label;
+  const open = report.status !== "resolved";
   return (
     <EventListItem>
       <EventListMedia>
         <SeverityBars
           level={impact ? impactLevel[impact] : 0}
           variant={display.variant}
-          label={impact === undefined ? "No impact" : display.label}
+          label={impactLabel}
         />
       </EventListMedia>
       <EventListContent>
@@ -71,29 +66,19 @@ export function StatusReportRow({
           {open ? (
             <StatusReportStatusBadge status={report.status} plain />
           ) : null}
-          <span>{impact === undefined ? "No impact" : display.label}</span>
-          {report.pageComponents.length > 0 ? (
-            <span className="min-w-0 truncate">
-              {listNames(report.pageComponents.map((c) => c.name))}
-            </span>
-          ) : null}
-          <span>{pluralize(report.updates.length, "update")}</span>
-          {resolvedAt && startedAt.getTime() > 0 ? (
-            <span>lasted {formatDistanceStrict(startedAt, resolvedAt)}</span>
-          ) : null}
+          <span>{impactLabel}</span>
+          <EventListTime date={reportStartedAt(report)} />
         </EventListDescription>
       </EventListContent>
-      <EventListTime date={startedAt} />
-      <EventListActions>
-        {open ? (
+      {open ? (
+        <EventListActions>
           <FormSheetStatusReportUpdateCreate report={report}>
             <Button variant="outline" size="sm" className="h-7">
               Add update
             </Button>
           </FormSheetStatusReportUpdateCreate>
-        ) : null}
-        <StatusReportRowActions report={report} />
-      </EventListActions>
+        </EventListActions>
+      ) : null}
     </EventListItem>
   );
 }
