@@ -9,7 +9,7 @@ import { useHydrated } from "@/hooks/use-hydrated";
 import type { StatusVariant } from "./status-dot";
 
 const dateBlockVariants = cva(
-  "flex w-10 shrink-0 flex-col items-center gap-0.5 rounded-md border py-1",
+  "flex w-8 shrink-0 flex-col items-center gap-0.5 rounded-md border py-1",
   {
     variants: {
       variant: {

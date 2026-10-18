@@ -129,7 +129,7 @@ export function EventListItem({
     <li
       data-slot="event-list-item"
       className={cn(
-        "relative flex items-start gap-x-3 gap-y-1 px-4 py-3",
+        "relative flex items-start gap-x-2.5 px-4 py-3",
         "has-[[data-slot=event-list-title]:focus-visible]:bg-muted/50 hover:bg-muted/50 transition-colors duration-150 ease-[ease]",
         className,
       )}
@@ -140,7 +140,9 @@ export function EventListItem({
   );
 }
 
-// Fixed width so titles line up whether a row leads with bars or a date tile.
+// Fixed width so titles line up whether a row leads with bars or a date tile;
+// 46px is title + gap + first sentence line, so either centres on those two
+// lines and stays at the top when the sentence wraps.
 export function EventListMedia({
   children,
   className,
@@ -150,7 +152,7 @@ export function EventListMedia({
     <div
       data-slot="event-list-media"
       className={cn(
-        "flex min-h-5 w-10 shrink-0 items-center justify-center",
+        "flex h-11.5 w-8 shrink-0 items-center justify-center",
         className,
       )}
       {...props}
@@ -168,7 +170,7 @@ export function EventListContent({
   return (
     <div
       data-slot="event-list-content"
-      className={cn("flex min-w-0 flex-1 flex-col gap-1", className)}
+      className={cn("flex min-w-0 flex-1 flex-col gap-1.5", className)}
       {...props}
     >
       {children}
