@@ -34,6 +34,8 @@ export function DowntimeRow({
   monitor?: boolean;
 }) {
   const ongoing = downtime.resolvedAt === null;
+  // legacy monitors can have an empty name; the title is the row's only link
+  const monitorName = downtime.monitor.name || downtime.monitor.url;
   const duration = formatDistanceStrict(
     downtime.startedAt,
     downtime.resolvedAt ?? new Date(),
@@ -47,7 +49,7 @@ export function DowntimeRow({
         {monitor ? (
           <EventListTitle asChild>
             <NextLink href={`/monitors/${downtime.monitor.id}/incidents`}>
-              {downtime.monitor.name}
+              {monitorName}
             </NextLink>
           </EventListTitle>
         ) : (
@@ -72,7 +74,7 @@ export function DowntimeRow({
         <EventListActions>
           <DowntimeNextAction incident={downtime} />
           <DeclareFromRow
-            title={`${downtime.monitor.name} is down`}
+            title={`${monitorName} is down`}
             startedAt={downtime.startedAt}
             source={{ type: "monitor_incident", id: downtime.id }}
           />
