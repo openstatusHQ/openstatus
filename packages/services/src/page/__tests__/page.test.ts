@@ -665,6 +665,7 @@ describe("updatePageConfiguration", () => {
             uptime: false,
             theme: "default-rounded",
             days: 30,
+            width: "wide",
           },
         },
       });
@@ -694,6 +695,7 @@ describe("updatePageConfiguration", () => {
           uptime: false,
           theme: "default-rounded",
           days: 45,
+          width: "wide",
         });
       }
       await expectAuditRow({
