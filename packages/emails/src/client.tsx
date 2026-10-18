@@ -38,6 +38,16 @@ export function statusReportSubject(req: {
 const SYSTEM_FROM = "openstatus <notifications@notifications.openstatus.dev>";
 const SUPPORT_EMAIL = "ping@openstatus.dev";
 
+export function formatStatusPageSender(pageTitle?: string | null): string {
+  const sanitized = pageTitle
+    ?.replace(/[\r\n]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const displayName = sanitized || "Status Page";
+  const escaped = displayName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  return `"${escaped}" <notifications@notifications.openstatus.dev>`;
+}
+
 // Deterministic Resend rejections: retrying the identical request can never
 // succeed (e.g. 409 invalid_idempotent_request when a key is reused with a
 // different body), it only burns the backoff and re-logs the error.
@@ -339,7 +349,7 @@ export class EmailClient {
     try {
       const html = await render(<PageSubscriptionEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `${req.page || "Status Page"} <notifications@notifications.openstatus.dev>`,
+        from: formatStatusPageSender(req.page),
         subject: `Confirm your subscription to ${req.page}`,
         to: req.to,
         html,
@@ -368,7 +378,7 @@ export class EmailClient {
     try {
       const html = await render(<StatusPageMagicLinkEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `${req.page || "Status Page"} <notifications@notifications.openstatus.dev>`,
+        from: formatStatusPageSender(req.page),
         subject: `Authenticate to ${req.page}`,
         to: req.to,
         html,

@@ -8,7 +8,7 @@ import {
   stub,
 } from "@std/testing/mock";
 
-import { EmailClient } from "./client";
+import { EmailClient, formatStatusPageSender } from "./client";
 
 function makeSubscribers(n: number) {
   return Array.from({ length: n }, (_, i) => ({
@@ -240,6 +240,44 @@ describe("EmailClient.sendPrivateLocationAlert", () => {
   });
 });
 
+describe("formatStatusPageSender", () => {
+  test("formats normal page title with quotes", () => {
+    expect(formatStatusPageSender("Acme Corp")).toBe(
+      '"Acme Corp" <notifications@notifications.openstatus.dev>',
+    );
+  });
+
+  test("quotes titles with commas and escapes internal double quotes", () => {
+    expect(formatStatusPageSender('Acme, "Fast" Inc.')).toBe(
+      '"Acme, \\"Fast\\" Inc." <notifications@notifications.openstatus.dev>',
+    );
+  });
+
+  test("sanitizes CRLF line breaks to spaces", () => {
+    expect(formatStatusPageSender("Acme\r\nStatus")).toBe(
+      '"Acme Status" <notifications@notifications.openstatus.dev>',
+    );
+  });
+
+  test("falls back to Status Page on empty or whitespace title", () => {
+    expect(formatStatusPageSender("")).toBe(
+      '"Status Page" <notifications@notifications.openstatus.dev>',
+    );
+    expect(formatStatusPageSender("   ")).toBe(
+      '"Status Page" <notifications@notifications.openstatus.dev>',
+    );
+  });
+
+  test("falls back to Status Page on null or undefined", () => {
+    expect(formatStatusPageSender(null)).toBe(
+      '"Status Page" <notifications@notifications.openstatus.dev>',
+    );
+    expect(formatStatusPageSender(undefined)).toBe(
+      '"Status Page" <notifications@notifications.openstatus.dev>',
+    );
+  });
+});
+
 describe("EmailClient.sendPageSubscription", () => {
   let client: EmailClient;
   // biome-ignore lint/suspicious/noExplicitAny: stub over the Resend email send method
@@ -254,7 +292,7 @@ describe("EmailClient.sendPageSubscription", () => {
     send.restore();
   });
 
-  test("uses page title as the sender display name", async () => {
+  test("uses page title as the quoted sender display name", async () => {
     await client.sendPageSubscription({
       to: "subscriber@example.com",
       page: "Acme Corp",
@@ -265,9 +303,25 @@ describe("EmailClient.sendPageSubscription", () => {
     const email = send.calls[0].args[0];
     expect(email.to).toBe("subscriber@example.com");
     expect(email.from).toBe(
-      "Acme Corp <notifications@notifications.openstatus.dev>",
+      '"Acme Corp" <notifications@notifications.openstatus.dev>',
     );
     expect(email.subject).toBe("Confirm your subscription to Acme Corp");
+  });
+
+  test("falls back to Status Page when page title is empty", async () => {
+    await client.sendPageSubscription({
+      to: "subscriber@example.com",
+      page: "",
+      link: "https://acme.openstatus.dev/verify/token-123",
+    });
+
+    assertSpyCalls(send, 1);
+    const email = send.calls[0].args[0];
+    expect(email.to).toBe("subscriber@example.com");
+    expect(email.from).toBe(
+      '"Status Page" <notifications@notifications.openstatus.dev>',
+    );
+    expect(email.subject).toBe("Confirm your subscription to ");
   });
 });
 
@@ -285,7 +339,7 @@ describe("EmailClient.sendStatusPageMagicLink", () => {
     send.restore();
   });
 
-  test("uses page title as the sender display name", async () => {
+  test("uses page title as the quoted sender display name", async () => {
     await client.sendStatusPageMagicLink({
       to: "admin@example.com",
       page: "Acme Corp",
@@ -296,8 +350,24 @@ describe("EmailClient.sendStatusPageMagicLink", () => {
     const email = send.calls[0].args[0];
     expect(email.to).toBe("admin@example.com");
     expect(email.from).toBe(
-      "Acme Corp <notifications@notifications.openstatus.dev>",
+      '"Acme Corp" <notifications@notifications.openstatus.dev>',
     );
     expect(email.subject).toBe("Authenticate to Acme Corp");
+  });
+
+  test("falls back to Status Page when page title is empty", async () => {
+    await client.sendStatusPageMagicLink({
+      to: "admin@example.com",
+      page: "",
+      link: "https://acme.openstatus.dev/magic-link-token",
+    });
+
+    assertSpyCalls(send, 1);
+    const email = send.calls[0].args[0];
+    expect(email.to).toBe("admin@example.com");
+    expect(email.from).toBe(
+      '"Status Page" <notifications@notifications.openstatus.dev>',
+    );
+    expect(email.subject).toBe("Authenticate to ");
   });
 });

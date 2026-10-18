@@ -27,4 +27,4 @@ export {
   stripeIdempotencyKey,
 } from "./billing";
 
-export { EmailClient } from "./client";
+export { EmailClient, formatStatusPageSender } from "./client";

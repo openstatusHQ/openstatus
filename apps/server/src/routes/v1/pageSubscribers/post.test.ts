@@ -59,8 +59,12 @@ test("sends the same redesigned verification email as the status page form", asy
     expect(payload.to).toEqual([email]);
     // the route calls the template as a function, so this is its <Layout>
     expect(payload.react.props.brand.name).toMatch(/Status$/);
+    const pageTitle = payload.subject.replace(
+      "Confirm your subscription to ",
+      "",
+    );
     expect(payload.from).toBe(
-      `${payload.react.props.brand.name} <notifications@notifications.openstatus.dev>`,
+      `"${pageTitle}" <notifications@notifications.openstatus.dev>`,
     );
     expect(payload.subject).toMatch(/^Confirm your subscription to /);
     expect(payload.react.props.pill.label).toBe("Confirm");
