@@ -158,6 +158,7 @@ export default function Page() {
         {isLimited ? (
           <BillingOverlayContainer>
             <DataTable
+              paginationComponent={DataTablePaginationSimple}
               columns={columns}
               toolbarComponent={SubscribersDataTableToolbar}
               data={[...EXAMPLES, ...EXAMPLES, ...EXAMPLES]}

@@ -26,9 +26,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 export function FormApiKey() {
   const trpc = useTRPC();
-  const { data: apiKeys = [], refetch } = useQuery(
-    trpc.apiKey.list.queryOptions(),
-  );
+  const { data: apiKeys = [] } = useQuery(trpc.apiKey.list.queryOptions());
 
   return (
     <FormCard id="api-keys">
@@ -47,7 +45,7 @@ export function FormApiKey() {
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (
-          <DataTable apiKeys={apiKeys} refetch={refetch} />
+          <DataTable apiKeys={apiKeys} />
         )}
       </FormCardContent>
       <FormCardFooter>

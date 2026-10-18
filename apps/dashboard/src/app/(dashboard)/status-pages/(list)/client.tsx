@@ -7,6 +7,7 @@ import Link from "next/link";
 import { NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
+  Section,
   SectionDescription,
   SectionGroup,
   SectionHeader,
@@ -35,17 +36,19 @@ export function Client() {
           </Link>
         </NoteButton>
       </NoteDismissible>
-      <SectionHeader>
-        <SectionTitle>Status Pages</SectionTitle>
-        <SectionDescription>
-          Create and manage your status pages.
-        </SectionDescription>
+      <Section>
+        <SectionHeader>
+          <SectionTitle>Status Pages</SectionTitle>
+          <SectionDescription>
+            Create and manage your status pages.
+          </SectionDescription>
+        </SectionHeader>
         <DataTable
           columns={columns}
           data={statusPages}
           paginationComponent={DataTablePaginationSimple}
         />
-      </SectionHeader>
+      </Section>
     </SectionGroup>
   );
 }

@@ -9,6 +9,7 @@ import {
   RangePlotLegendItem,
 } from "@/components/content/range-plot";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { getRegionAxisMax } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 
@@ -61,8 +62,6 @@ export function RegionsDataTable({
     // A hovered or keyboard-focused row lifts: the others fade.
     <div
       className={cn(
-        // flush with the section text instead of inset by the cell padding
-        "[&_tr>*:first-child]:pl-0 [&_tr>*:last-child]:pr-0",
         // the plot hover area bleeds past the last row; clip it instead of scrolling
         "[&_[data-slot=table-container]]:overflow-y-hidden",
         "[&_tbody_tr]:transition-[opacity,background-color] [&_tbody_tr]:duration-150 [&_tbody_tr]:ease-out",
@@ -70,9 +69,10 @@ export function RegionsDataTable({
       )}
     >
       <DataTable
+        paginationComponent={DataTablePaginationSimple}
+        defaultPagination={{ pageIndex: 0, pageSize: 50 }}
         data={data}
         columns={columns}
-        pagination={{ pageIndex: 0, pageSize: Math.max(data.length, 1) }}
         defaultSorting={[{ id: "p50", desc: false }]}
       />
     </div>
