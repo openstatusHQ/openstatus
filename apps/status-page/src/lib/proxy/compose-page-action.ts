@@ -7,7 +7,8 @@ import { type Action, type ComposeInput, passthrough } from "./types";
 
 export type { ComposeInput };
 
-const BADGE_ROUTE_PATTERN = /(?:^|\/)(?:monitors\/\d+\/)?badge(?:\/v2)?\/?$/;
+const BADGE_ROUTE_PATTERN =
+  /^(?:\/[^/]+(?:\/[a-zA-Z]{2}(?:-[a-zA-Z]{2})?)?|\/[a-zA-Z]{2}(?:-[a-zA-Z]{2})?)?\/(?:monitors\/\d+\/)?badge(?:\/v2)?\/?$/;
 
 /**
  * Runs the proxy stages in priority order and returns the first non-null

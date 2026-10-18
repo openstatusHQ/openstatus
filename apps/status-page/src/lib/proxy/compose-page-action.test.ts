@@ -233,7 +233,7 @@ describe("composePageAction — badge route gate bypass", () => {
             page: { ...page, customDomain: "status.acme.com" } as Page,
             host: "status.acme.com",
             urlHost: "status.acme.com",
-            pathname: "/monitors/123/badge/v2",
+            pathname: "/events",
             route: {
               type: "hostname",
               prefix: "acme",
@@ -254,6 +254,8 @@ describe("composePageAction — badge route gate bypass", () => {
         "/badge/en/events",
         "/acme/en/monitors/123",
         "/acme/en/badge-overview",
+        "/acme/en/events/badge",
+        "/acme/en/monitors/not-a-number/badge",
       ];
 
       for (const pathname of nonBadgePaths) {

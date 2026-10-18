@@ -25,10 +25,15 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { copy } = useCopyToClipboard();
-  const { data: pageComponents } = useQuery(
-    trpc.pageComponent.list.queryOptions(),
-  );
-  const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
+  const isEligible = Boolean(row.original.public && row.original.active);
+  const { data: pageComponents } = useQuery({
+    ...trpc.pageComponent.list.queryOptions(),
+    enabled: isEligible,
+  });
+  const { data: statusPages } = useQuery({
+    ...trpc.page.list.queryOptions(),
+    enabled: isEligible,
+  });
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
       onSuccess: () => {
@@ -40,7 +45,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   // curl only speaks HTTP — the action is hidden for tcp/dns monitors
   const isHttp = row.original.jobType === "http";
 
-  const statusPage = row.original.public
+  const statusPage = isEligible
     ? statusPages?.find(
         (p) =>
           p.accessType === "public" &&

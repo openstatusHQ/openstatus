@@ -148,6 +148,7 @@ export async function getPublicMonitorForBadge(
       slug: true,
       accessType: true,
       configuration: true,
+      published: true,
     },
     with: {
       pageComponents: {
@@ -192,7 +193,7 @@ export async function getPublicMonitorForBadge(
     },
   });
 
-  if (!pageRow || pageRow.accessType !== "public") {
+  if (!pageRow || pageRow.accessType !== "public" || !pageRow.published) {
     return null;
   }
 
