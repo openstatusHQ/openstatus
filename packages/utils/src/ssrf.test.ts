@@ -335,4 +335,35 @@ describe("safeFetch", () => {
       restore();
     }
   });
+
+  it("aborts when signal is aborted before request", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      safeFetch("https://example.com/hook", { signal: controller.signal }),
+    ).rejects.toThrow();
+  });
+
+  it("aborts across redirect hops when deadline expires", async () => {
+    const controller = new AbortController();
+    const { restore } = redirecting({
+      "https://example.com/a": [307, "/b"],
+      "https://example.com/b": [307, "/c"],
+    });
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (input, init) => {
+      const url = String(input);
+      if (url === "https://example.com/b") {
+        controller.abort();
+      }
+      return originalFetch(input, init);
+    };
+    try {
+      await expect(
+        safeFetch("https://example.com/a", { signal: controller.signal }),
+      ).rejects.toThrow();
+    } finally {
+      restore();
+    }
+  });
 });

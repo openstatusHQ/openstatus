@@ -1,8 +1,15 @@
+import type { NotificationContext } from "@openstatus/notification-base";
 import { expect } from "@std/expect";
 import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
 import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
 
-import { sendTest } from "./index";
+import {
+  DEFAULT_TIMEOUT_MS,
+  sendAlert,
+  sendDegraded,
+  sendRecovery,
+  sendTest,
+} from "./index";
 
 describe("Webhook sendTest", () => {
   let fetchMock: Stub<typeof globalThis>;
@@ -129,16 +136,116 @@ describe("Webhook sendTest", () => {
     assertSpyCalls(fetchMock, 1);
   });
 
-  test("should send test webhook with 201 status code (success)", async () => {
+  test("should include timeout signal in fetch request", async () => {
     const url = "https://example.com/webhook";
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.resolve(new Response(null, { status: 201 })),
-    );
-
     const result = await sendTest({ url });
 
     expect(result).toBe(true);
     assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
+    expect(callArgs[1].signal).toBeInstanceOf(AbortSignal);
+  });
+
+  test("should honor custom timeoutMs", async () => {
+    const url = "https://example.com/webhook";
+    const result = await sendTest({ url, timeoutMs: 5000 });
+
+    expect(result).toBe(true);
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
+    expect(callArgs[1].signal).toBeInstanceOf(AbortSignal);
+  });
+
+  test("should throw error when request times out", async () => {
+    const url = "https://example.com/webhook";
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () => {
+      const error = new DOMException(
+        "The signal has been aborted",
+        "AbortError",
+      );
+      return Promise.reject(error);
+    });
+
+    await expect(sendTest({ url })).rejects.toThrow("Failed to send test");
+    assertSpyCalls(fetchMock, 1);
+  });
+});
+
+describe("Webhook notifications with deadline", () => {
+  let fetchMock: Stub<typeof globalThis>;
+
+  test("exports DEFAULT_TIMEOUT_MS as 10000ms", () => {
+    expect(DEFAULT_TIMEOUT_MS).toBe(10_000);
+  });
+
+  const mockContext = {
+    monitor: {
+      id: 1,
+      name: "test-monitor",
+      url: "https://example.com",
+    },
+    notification: {
+      data: JSON.stringify({
+        webhook: {
+          endpoint: "https://example.com/webhook",
+          headers: [{ key: "X-Test", value: "1" }],
+        },
+      }),
+    },
+    cronTimestamp: 1700000000000,
+    statusCode: 500,
+    latency: 250,
+    message: "Server Error",
+  } as unknown as NotificationContext;
+
+  beforeEach(() => {
+    fetchMock = stub(globalThis, "fetch", () =>
+      Promise.resolve(new Response(null, { status: 200 })),
+    );
+  });
+
+  afterEach(() => {
+    fetchMock.restore();
+  });
+
+  test("sendAlert passes deadline signal and custom headers", async () => {
+    await sendAlert(mockContext);
+
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
+    expect(callArgs[0]).toBe("https://example.com/webhook");
+    expect(callArgs[1].signal).toBeInstanceOf(AbortSignal);
+    expect(callArgs[1].headers).toMatchObject({
+      "Content-Type": "application/json",
+      "X-Test": "1",
+    });
+  });
+
+  test("sendAlert fails when deadline expires", async () => {
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
+      Promise.reject(
+        new DOMException("The signal has been aborted", "AbortError"),
+      ),
+    );
+
+    await expect(sendAlert(mockContext)).rejects.toThrow();
+  });
+
+  test("sendRecovery passes deadline signal", async () => {
+    await sendRecovery(mockContext, { timeoutMs: 3000 });
+
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
+    expect(callArgs[1].signal).toBeInstanceOf(AbortSignal);
+  });
+
+  test("sendDegraded passes deadline signal", async () => {
+    await sendDegraded(mockContext);
+
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
+    expect(callArgs[1].signal).toBeInstanceOf(AbortSignal);
   });
 });
