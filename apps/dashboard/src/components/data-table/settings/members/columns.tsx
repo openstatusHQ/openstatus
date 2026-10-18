@@ -56,7 +56,7 @@ function MemberName({ member }: { member: Member }) {
 
   return (
     <div className="flex items-center gap-2">
-      {member.user.name ?? <TableCellEmpty>No name</TableCellEmpty>}
+      {member.user.name || <TableCellEmpty>No name</TableCellEmpty>}
       {isMe ? <Badge variant="secondary">You</Badge> : null}
     </div>
   );

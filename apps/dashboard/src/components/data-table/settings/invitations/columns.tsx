@@ -29,16 +29,6 @@ export const columns: ColumnDef<Invitation>[] = [
     cell: ({ row }) => formatDate(row.original.expiresAt),
   },
   {
-    accessorKey: "acceptedAt",
-    header: "Accepted At",
-    cell: ({ row }) =>
-      row.original.acceptedAt ? (
-        formatDate(row.original.acceptedAt)
-      ) : (
-        <TableCellEmpty>Pending</TableCellEmpty>
-      ),
-  },
-  {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => <DataTableRowActions row={row} />,

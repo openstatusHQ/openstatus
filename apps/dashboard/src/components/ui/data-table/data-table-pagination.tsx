@@ -131,8 +131,12 @@ export function DataTablePaginationSimple<TData>({
 
   if (total <= table.initialState.pagination.pageSize) return null;
 
+  const pageSizes = [...new Set([...PAGE_SIZES, pageSize])].sort(
+    (a, b) => a - b,
+  );
+
   return (
-    <div className="bg-muted/40 flex h-10 items-center justify-between gap-2 border-t px-2">
+    <div className="bg-muted/40 flex min-h-10 flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t px-2 py-1.5">
       <div className="flex items-center gap-3">
         <div className="text-muted-foreground text-sm tabular-nums">
           {from}–{to} of {total}
@@ -149,7 +153,7 @@ export function DataTablePaginationSimple<TData>({
             <SelectValue />
           </SelectTrigger>
           <SelectContent side="top">
-            {PAGE_SIZES.map((size) => (
+            {pageSizes.map((size) => (
               <SelectItem key={size} value={`${size}`}>
                 {size} / page
               </SelectItem>
@@ -160,6 +164,7 @@ export function DataTablePaginationSimple<TData>({
       {pageCount > 1 ? (
         <nav aria-label="Pagination" className="flex items-center gap-0.5">
           <Button
+            type="button"
             variant="ghost"
             size="icon-sm"
             className="size-7"
@@ -180,6 +185,8 @@ export function DataTablePaginationSimple<TData>({
             ) : (
               <Button
                 key={item}
+                type="button"
+                aria-label={`Page ${item + 1}`}
                 variant={item === pageIndex ? "outline" : "ghost"}
                 size="icon-sm"
                 className="size-7 tabular-nums"
@@ -191,6 +198,7 @@ export function DataTablePaginationSimple<TData>({
             ),
           )}
           <Button
+            type="button"
             variant="ghost"
             size="icon-sm"
             className="size-7"
