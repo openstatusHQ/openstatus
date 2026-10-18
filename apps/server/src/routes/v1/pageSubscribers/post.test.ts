@@ -57,12 +57,12 @@ test("sends the same redesigned verification email as the status page form", asy
     assertSpyCalls(send, 1);
     const payload = send.calls[0].args[0];
     expect(payload.to).toEqual([email]);
-    expect(payload.from).toBe(
-      "Status Page <notifications@notifications.openstatus.dev>",
-    );
-    expect(payload.subject).toMatch(/^Confirm your subscription to /);
     // the route calls the template as a function, so this is its <Layout>
     expect(payload.react.props.brand.name).toMatch(/Status$/);
+    expect(payload.from).toBe(
+      `${payload.react.props.brand.name} <notifications@notifications.openstatus.dev>`,
+    );
+    expect(payload.subject).toMatch(/^Confirm your subscription to /);
     expect(payload.react.props.pill.label).toBe("Confirm");
   } finally {
     await cleanup();

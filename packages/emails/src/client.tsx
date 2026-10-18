@@ -341,7 +341,7 @@ export class EmailClient {
     try {
       const html = await render(<PageSubscriptionEmail {...req} />);
       const result = await this.client.emails.send({
-        from: "Status Page <notifications@notifications.openstatus.dev>",
+        from: `${req.page || "Status Page"} <notifications@notifications.openstatus.dev>`,
         subject: `Confirm your subscription to ${req.page}`,
         to: req.to,
         html,
@@ -370,7 +370,7 @@ export class EmailClient {
     try {
       const html = await render(<StatusPageMagicLinkEmail {...req} />);
       const result = await this.client.emails.send({
-        from: "Status Page <notifications@notifications.openstatus.dev>",
+        from: `${req.page || "Status Page"} <notifications@notifications.openstatus.dev>`,
         subject: `Authenticate to ${req.page}`,
         to: req.to,
         html,

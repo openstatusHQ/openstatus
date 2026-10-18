@@ -239,3 +239,65 @@ describe("EmailClient.sendPrivateLocationAlert", () => {
     assertSpyCalls(batchSend, 1);
   });
 });
+
+describe("EmailClient.sendPageSubscription", () => {
+  let client: EmailClient;
+  // biome-ignore lint/suspicious/noExplicitAny: stub over the Resend email send method
+  let send: Stub<any>;
+
+  beforeEach(() => {
+    client = new EmailClient({ apiKey: "re_test_123" });
+    send = stub(client.client.emails, "send", () => Promise.resolve(ok));
+  });
+
+  afterEach(() => {
+    send.restore();
+  });
+
+  test("uses page title as the sender display name", async () => {
+    await client.sendPageSubscription({
+      to: "subscriber@example.com",
+      page: "Acme Corp",
+      link: "https://acme.openstatus.dev/verify/token-123",
+    });
+
+    assertSpyCalls(send, 1);
+    const email = send.calls[0].args[0];
+    expect(email.to).toBe("subscriber@example.com");
+    expect(email.from).toBe(
+      "Acme Corp <notifications@notifications.openstatus.dev>",
+    );
+    expect(email.subject).toBe("Confirm your subscription to Acme Corp");
+  });
+});
+
+describe("EmailClient.sendStatusPageMagicLink", () => {
+  let client: EmailClient;
+  // biome-ignore lint/suspicious/noExplicitAny: stub over the Resend email send method
+  let send: Stub<any>;
+
+  beforeEach(() => {
+    client = new EmailClient({ apiKey: "re_test_123" });
+    send = stub(client.client.emails, "send", () => Promise.resolve(ok));
+  });
+
+  afterEach(() => {
+    send.restore();
+  });
+
+  test("uses page title as the sender display name", async () => {
+    await client.sendStatusPageMagicLink({
+      to: "admin@example.com",
+      page: "Acme Corp",
+      link: "https://acme.openstatus.dev/magic-link-token",
+    });
+
+    assertSpyCalls(send, 1);
+    const email = send.calls[0].args[0];
+    expect(email.to).toBe("admin@example.com");
+    expect(email.from).toBe(
+      "Acme Corp <notifications@notifications.openstatus.dev>",
+    );
+    expect(email.subject).toBe("Authenticate to Acme Corp");
+  });
+});
