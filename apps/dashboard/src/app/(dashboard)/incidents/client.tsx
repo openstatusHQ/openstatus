@@ -10,8 +10,6 @@ import {
 import {
   EventList,
   EventListGroup,
-  EventListGroupHeader,
-  EventListGroupSummary,
   EventListGroupTitle,
   EventListGroups,
   EventListMore,
@@ -27,7 +25,7 @@ import {
   IncidentRow,
   isIncidentActive,
 } from "@/components/incidents/incident-row";
-import { groupByMonth, pluralize } from "@/data/event-list.client";
+import { groupByMonth } from "@/data/event-list.client";
 import { useShowMore } from "@/hooks/use-show-more";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -62,14 +60,9 @@ export function Client() {
           <EventListGroups>
             {active.length > 0 ? (
               <EventListGroup aria-labelledby="incidents-active">
-                <EventListGroupHeader>
-                  <EventListGroupTitle id="incidents-active">
-                    Active
-                  </EventListGroupTitle>
-                  <EventListGroupSummary>
-                    {pluralize(active.length, "incident")}
-                  </EventListGroupSummary>
-                </EventListGroupHeader>
+                <EventListGroupTitle id="incidents-active">
+                  Active
+                </EventListGroupTitle>
                 <EventList>
                   {active.map((incident) => (
                     <IncidentRow key={incident.id} incident={incident} />
@@ -77,32 +70,21 @@ export function Client() {
                 </EventList>
               </EventListGroup>
             ) : null}
-            {months.map((month) => {
-              const critical = month.items.filter(
-                (i) => i.severity === "critical",
-              ).length;
-              return (
-                <EventListGroup
-                  key={month.key}
-                  aria-labelledby={`incidents-${month.key}`}
-                >
-                  <EventListGroupHeader>
-                    <EventListGroupTitle id={`incidents-${month.key}`}>
-                      {month.label}
-                    </EventListGroupTitle>
-                    <EventListGroupSummary>
-                      {pluralize(month.items.length, "incident")}
-                      {critical > 0 ? ` · ${critical} critical` : null}
-                    </EventListGroupSummary>
-                  </EventListGroupHeader>
-                  <EventList>
-                    {month.items.map((incident) => (
-                      <IncidentRow key={incident.id} incident={incident} />
-                    ))}
-                  </EventList>
-                </EventListGroup>
-              );
-            })}
+            {months.map((month) => (
+              <EventListGroup
+                key={month.key}
+                aria-labelledby={`incidents-${month.key}`}
+              >
+                <EventListGroupTitle id={`incidents-${month.key}`}>
+                  {month.label}
+                </EventListGroupTitle>
+                <EventList>
+                  {month.items.map((incident) => (
+                    <IncidentRow key={incident.id} incident={incident} />
+                  ))}
+                </EventList>
+              </EventListGroup>
+            ))}
             {ended.hasMore ? <EventListMore onClick={ended.showMore} /> : null}
           </EventListGroups>
         )}

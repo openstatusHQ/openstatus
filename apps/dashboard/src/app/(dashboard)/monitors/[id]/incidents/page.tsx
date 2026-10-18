@@ -2,7 +2,6 @@
 
 import { Info } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
-import { formatDistanceStrict } from "date-fns";
 import { useParams } from "next/navigation";
 
 import { Link } from "@/components/common/link";
@@ -15,8 +14,6 @@ import {
 import {
   EventList,
   EventListGroup,
-  EventListGroupHeader,
-  EventListGroupSummary,
   EventListGroupTitle,
   EventListGroups,
   EventListMore,
@@ -29,7 +26,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { DowntimeRow } from "@/components/downtime/downtime-row";
-import { groupByMonth, pluralize } from "@/data/event-list.client";
+import { groupByMonth } from "@/data/event-list.client";
 import { useShowMore } from "@/hooks/use-show-more";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -87,11 +84,9 @@ export default function Page() {
           <EventListGroups>
             {ongoing.length > 0 ? (
               <EventListGroup aria-labelledby="downtime-ongoing">
-                <EventListGroupHeader>
-                  <EventListGroupTitle id="downtime-ongoing">
-                    Ongoing
-                  </EventListGroupTitle>
-                </EventListGroupHeader>
+                <EventListGroupTitle id="downtime-ongoing">
+                  Ongoing
+                </EventListGroupTitle>
                 <EventList>
                   {ongoing.map((downtime) => (
                     <DowntimeRow key={downtime.id} downtime={downtime} />
@@ -104,15 +99,9 @@ export default function Page() {
                 key={month.key}
                 aria-labelledby={`downtime-${month.key}`}
               >
-                <EventListGroupHeader>
-                  <EventListGroupTitle id={`downtime-${month.key}`}>
-                    {month.label}
-                  </EventListGroupTitle>
-                  <EventListGroupSummary>
-                    {pluralize(month.items.length, "downtime")} ·{" "}
-                    {totalDuration(month.items)} total
-                  </EventListGroupSummary>
-                </EventListGroupHeader>
+                <EventListGroupTitle id={`downtime-${month.key}`}>
+                  {month.label}
+                </EventListGroupTitle>
                 <EventList>
                   {month.items.map((downtime) => (
                     <DowntimeRow key={downtime.id} downtime={downtime} />
@@ -128,15 +117,4 @@ export default function Page() {
       </Section>
     </SectionGroup>
   );
-}
-
-function totalDuration(
-  downtimes: { startedAt: Date; resolvedAt: Date | null }[],
-) {
-  const ms = downtimes.reduce(
-    (sum, d) =>
-      sum + ((d.resolvedAt ?? new Date()).getTime() - d.startedAt.getTime()),
-    0,
-  );
-  return formatDistanceStrict(0, ms);
 }

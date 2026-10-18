@@ -10,8 +10,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Incidents, reports, maintenances and downtime as one row shape: a title
- * over a muted sentence, the time on the right. Groups (active, a month)
- * stack with a header carrying their title and a mono summary.
+ * over a muted sentence. Groups (active, a month) stack under a title.
  */
 export function EventListGroups({
   children,
@@ -45,25 +44,6 @@ export function EventListGroup({
   );
 }
 
-export function EventListGroupHeader({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="event-list-group-header"
-      className={cn(
-        "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
-
 export function EventListGroupTitle({
   children,
   className,
@@ -77,25 +57,6 @@ export function EventListGroupTitle({
     >
       {children}
     </h2>
-  );
-}
-
-export function EventListGroupSummary({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"p">) {
-  return (
-    <p
-      data-slot="event-list-group-summary"
-      className={cn(
-        "text-muted-foreground font-mono text-xs tabular-nums",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </p>
   );
 }
 

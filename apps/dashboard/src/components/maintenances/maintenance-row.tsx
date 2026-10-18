@@ -20,10 +20,7 @@ import { useMaintenanceStatus } from "./use-maintenance-status";
 
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 
-/**
- * `type` is for lists that mix event kinds: it leads with a date and
- * prefixes the sentence with "Maintenance".
- */
+/** `type` prefixes the sentence with "Maintenance", for lists that mix event kinds. */
 export function MaintenanceRow({
   maintenance,
   type = false,
@@ -35,11 +32,9 @@ export function MaintenanceRow({
   const config = maintenanceStatusConfig[status];
   return (
     <EventListItem>
-      {type ? (
-        <EventListMedia>
-          <DateBlock date={maintenance.from} variant="info" />
-        </EventListMedia>
-      ) : null}
+      <EventListMedia>
+        <DateBlock date={maintenance.from} variant="info" />
+      </EventListMedia>
       <EventListContent>
         <EventListTitle asChild>
           <NextLink

@@ -17,8 +17,6 @@ import {
 import {
   EventList,
   EventListGroup,
-  EventListGroupHeader,
-  EventListGroupSummary,
   EventListGroupTitle,
   EventListGroups,
   EventListMore,
@@ -34,7 +32,7 @@ import {
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
 import { StatusReportRow } from "@/components/status-reports/status-report-row";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
-import { groupByMonth, pluralize } from "@/data/event-list.client";
+import { groupByMonth } from "@/data/event-list.client";
 import { reportStartedAt } from "@/data/status-reports.client";
 import { useShowMore } from "@/hooks/use-show-more";
 import { useTRPC } from "@/lib/trpc/client";
@@ -169,14 +167,9 @@ export default function Page() {
           <EventListGroups>
             {open.length > 0 ? (
               <EventListGroup aria-labelledby="reports-open">
-                <EventListGroupHeader>
-                  <EventListGroupTitle id="reports-open">
-                    Ongoing
-                  </EventListGroupTitle>
-                  <EventListGroupSummary>
-                    {pluralize(open.length, "report")}
-                  </EventListGroupSummary>
-                </EventListGroupHeader>
+                <EventListGroupTitle id="reports-open">
+                  Ongoing
+                </EventListGroupTitle>
                 <EventList>
                   {open.map((report) => (
                     <StatusReportRow key={report.id} report={report} />
@@ -189,14 +182,9 @@ export default function Page() {
                 key={month.key}
                 aria-labelledby={`reports-${month.key}`}
               >
-                <EventListGroupHeader>
-                  <EventListGroupTitle id={`reports-${month.key}`}>
-                    {month.label}
-                  </EventListGroupTitle>
-                  <EventListGroupSummary>
-                    {pluralize(month.items.length, "report")}
-                  </EventListGroupSummary>
-                </EventListGroupHeader>
+                <EventListGroupTitle id={`reports-${month.key}`}>
+                  {month.label}
+                </EventListGroupTitle>
                 <EventList>
                   {month.items.map((report) => (
                     <StatusReportRow key={report.id} report={report} />

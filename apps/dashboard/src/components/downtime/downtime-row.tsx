@@ -24,7 +24,7 @@ type Downtime = RouterOutputs["monitorIncident"]["list"][number];
 
 /**
  * On a monitor's own page the duration is the title. `monitor` is for lists
- * across monitors: it titles the row with the monitor and leads with a date.
+ * across monitors: it titles the row with the monitor instead.
  */
 export function DowntimeRow({
   downtime,
@@ -40,11 +40,9 @@ export function DowntimeRow({
   );
   return (
     <EventListItem>
-      {monitor ? (
-        <EventListMedia>
-          <DateBlock date={downtime.startedAt} variant="destructive" />
-        </EventListMedia>
-      ) : null}
+      <EventListMedia>
+        <DateBlock date={downtime.startedAt} variant="destructive" />
+      </EventListMedia>
       <EventListContent>
         {monitor ? (
           <EventListTitle asChild>

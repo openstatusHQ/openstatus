@@ -13,8 +13,6 @@ import {
 import {
   EventList,
   EventListGroup,
-  EventListGroupHeader,
-  EventListGroupSummary,
   EventListGroupTitle,
 } from "@/components/content/event-list";
 import {
@@ -135,12 +133,9 @@ export default function Page() {
         </MetricCardGroup>
       </Section>
       <EventListGroup aria-labelledby="overview-attention">
-        <EventListGroupHeader>
-          <EventListGroupTitle id="overview-attention">
-            Needs attention
-          </EventListGroupTitle>
-          <EventListGroupSummary>most severe first</EventListGroupSummary>
-        </EventListGroupHeader>
+        <EventListGroupTitle id="overview-attention">
+          Needs attention
+        </EventListGroupTitle>
         {needsAttention.length > 0 ? (
           <EventList>
             {needsAttention.map((event) => (
@@ -157,14 +152,9 @@ export default function Page() {
       </EventListGroup>
       {upcomingMaintenances.length > 0 ? (
         <EventListGroup aria-labelledby="overview-maintenance">
-          <EventListGroupHeader>
-            <EventListGroupTitle id="overview-maintenance">
-              Coming up
-            </EventListGroupTitle>
-            <EventListGroupSummary>
-              {pluralize(upcomingMaintenances.length, "maintenance")}
-            </EventListGroupSummary>
-          </EventListGroupHeader>
+          <EventListGroupTitle id="overview-maintenance">
+            Coming up
+          </EventListGroupTitle>
           <EventList>
             {upcomingMaintenances.map((event) => (
               <OverviewEventRow key={overviewEventKey(event)} event={event} />
@@ -173,14 +163,9 @@ export default function Page() {
         </EventListGroup>
       ) : null}
       <EventListGroup aria-labelledby="overview-recent">
-        <EventListGroupHeader>
-          <EventListGroupTitle id="overview-recent">
-            Last 7 days
-          </EventListGroupTitle>
-          <EventListGroupSummary>
-            {pluralize(recentlyResolved.length, "event")} ended
-          </EventListGroupSummary>
-        </EventListGroupHeader>
+        <EventListGroupTitle id="overview-recent">
+          Last 7 days
+        </EventListGroupTitle>
         {recentlyResolved.length > 0 ? (
           <EventList>
             {recentlyResolved.map((event) => (

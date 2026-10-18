@@ -14,8 +14,6 @@ import {
 import {
   EventList,
   EventListGroup,
-  EventListGroupHeader,
-  EventListGroupSummary,
   EventListGroupTitle,
   EventListGroups,
   EventListMore,
@@ -31,7 +29,7 @@ import {
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
 import { MaintenanceRow } from "@/components/maintenances/maintenance-row";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
-import { groupByMonth, pluralize } from "@/data/event-list.client";
+import { groupByMonth } from "@/data/event-list.client";
 import { useShowMore } from "@/hooks/use-show-more";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
@@ -135,14 +133,9 @@ export default function Page() {
           <EventListGroups>
             {upcoming.length > 0 ? (
               <EventListGroup aria-labelledby="maintenances-upcoming">
-                <EventListGroupHeader>
-                  <EventListGroupTitle id="maintenances-upcoming">
-                    Upcoming
-                  </EventListGroupTitle>
-                  <EventListGroupSummary>
-                    {pluralize(upcoming.length, "maintenance")}
-                  </EventListGroupSummary>
-                </EventListGroupHeader>
+                <EventListGroupTitle id="maintenances-upcoming">
+                  Upcoming
+                </EventListGroupTitle>
                 <EventList>
                   {upcoming.map((maintenance) => (
                     <MaintenanceRow
@@ -158,14 +151,9 @@ export default function Page() {
                 key={month.key}
                 aria-labelledby={`maintenances-${month.key}`}
               >
-                <EventListGroupHeader>
-                  <EventListGroupTitle id={`maintenances-${month.key}`}>
-                    {month.label}
-                  </EventListGroupTitle>
-                  <EventListGroupSummary>
-                    {pluralize(month.items.length, "maintenance")}
-                  </EventListGroupSummary>
-                </EventListGroupHeader>
+                <EventListGroupTitle id={`maintenances-${month.key}`}>
+                  {month.label}
+                </EventListGroupTitle>
                 <EventList>
                   {month.items.map((maintenance) => (
                     <MaintenanceRow
