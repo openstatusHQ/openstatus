@@ -1,16 +1,6 @@
 "use client";
 
-import type { RouterOutputs } from "@openstatus/api";
-import { Badge } from "@openstatus/ui/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@openstatus/ui/components/ui/table";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { Link } from "@/components/common/link";
 import {
@@ -18,8 +8,7 @@ import {
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
-import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
-import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { columns } from "@/components/data-table/settings/connected-apps/columns";
 import {
   FormCard,
   FormCardContent,
@@ -29,36 +18,15 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { formatDate } from "@/lib/formatter";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
-
-type Grant = RouterOutputs["oauth"]["listGrants"][number];
-
-function scopeLabel(scope: Grant["scope"]): string {
-  return scope.includes("write") ? "Read & write" : "Read-only";
-}
-
-function userLabel(user: Grant["user"]): string {
-  if (!user) return "Removed user";
-  const name = [user.firstName, user.lastName].filter(Boolean).join(" ");
-  return name || user.email || `User ${user.id}`;
-}
 
 /** OAuth grants minted through `/oauth/authorize` (Claude, Cursor, ChatGPT and other MCP clients). */
 export function ConnectedAppsCard() {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const query = useQuery(trpc.oauth.listGrants.queryOptions());
   const grants = query.data ?? [];
-
-  const revoke = useMutation(
-    trpc.oauth.revokeGrant.mutationOptions({
-      onSuccess: () =>
-        queryClient.invalidateQueries({
-          queryKey: trpc.oauth.listGrants.queryKey(),
-        }),
-    }),
-  );
 
   return (
     <FormCard id="connected-apps">
@@ -87,64 +55,11 @@ export function ConnectedAppsCard() {
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>App</TableHead>
-                  <TableHead>Access</TableHead>
-                  <TableHead>Connected by</TableHead>
-                  <TableHead>Connected</TableHead>
-                  <TableHead>Last used</TableHead>
-                  <TableHead>
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {grants.map((grant) => (
-                  <TableRow key={grant.id}>
-                    <TableCell className="font-medium">
-                      {grant.clientName}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {scopeLabel(grant.scope)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                      {userLabel(grant.user)}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {grant.createdAt ? (
-                        formatDate(grant.createdAt)
-                      ) : (
-                        <TableCellEmpty>Unknown</TableCellEmpty>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {grant.lastUsedAt ? (
-                        formatDate(grant.lastUsedAt)
-                      ) : (
-                        <TableCellEmpty>Never</TableCellEmpty>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end">
-                        <QuickActions
-                          deleteAction={{
-                            confirmationValue: grant.clientName,
-                            submitAction: async () =>
-                              await revoke.mutateAsync({ grantId: grant.id }),
-                          }}
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTable
+            columns={columns}
+            data={grants}
+            paginationComponent={DataTablePaginationSimple}
+          />
         )}
       </FormCardContent>
       <FormCardFooter>

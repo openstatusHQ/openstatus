@@ -25,6 +25,7 @@ import {
 import { columns } from "@/components/data-table/notifications/columns";
 import { FormSheetNotifier } from "@/components/forms/notifications/sheet";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { config, hiddenProviders } from "@/data/notifications.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -69,7 +70,11 @@ export function Client() {
             <EmptyStateTitle>No notifier found</EmptyStateTitle>
           </EmptyStateContainer>
         ) : (
-          <DataTable columns={columns} data={notifications} />
+          <DataTable
+            paginationComponent={DataTablePaginationSimple}
+            columns={columns}
+            data={notifications}
+          />
         )}
       </Section>
       <Section>

@@ -29,7 +29,7 @@ export function MonitorDataTableToolbar({
           placeholder="Filter by name, url, type..."
           value={(table.getState().globalFilter as string) ?? ""}
           onChange={(event) => table.setGlobalFilter(event.target.value)}
-          className="h-8 w-[150px] lg:w-[250px]"
+          className="h-8 w-[150px] shadow-none lg:w-[250px]"
         />
         {table.getColumn("tags") && (
           <DataTableFacetedFilter

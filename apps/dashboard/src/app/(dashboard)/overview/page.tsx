@@ -28,6 +28,7 @@ import {
   MetricCardValue,
 } from "@/components/metric/metric-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { buildOverviewData } from "@/data/overview-events.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -134,6 +135,7 @@ export default function Page() {
         </SectionHeader>
         {needsAttention.length > 0 ? (
           <DataTable
+            paginationComponent={DataTablePaginationSimple}
             columns={columns}
             data={needsAttention}
             defaultSorting={[{ id: "startedAt", desc: true }]}
@@ -156,6 +158,7 @@ export default function Page() {
             </SectionDescription>
           </SectionHeader>
           <DataTable
+            paginationComponent={DataTablePaginationSimple}
             columns={columns}
             data={upcomingMaintenances}
             defaultSorting={[{ id: "startedAt", desc: false }]}
@@ -173,6 +176,7 @@ export default function Page() {
         </SectionHeader>
         {recentlyResolved.length > 0 ? (
           <DataTable
+            paginationComponent={DataTablePaginationSimple}
             columns={columns}
             data={recentlyResolved}
             defaultSorting={[{ id: "startedAt", desc: true }]}

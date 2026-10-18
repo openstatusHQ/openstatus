@@ -7,6 +7,7 @@ export function EmptyStateContainer({
 }: React.ComponentProps<"div">) {
   return (
     <div
+      data-slot="empty-state-container"
       className={cn(
         "border-border flex h-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-4",
         className,
@@ -24,7 +25,11 @@ export function EmptyStateTitle({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("text-foreground", className)} {...props}>
+    <p
+      data-slot="empty-state-title"
+      className={cn("text-foreground", className)}
+      {...props}
+    >
       {children}
     </p>
   );
@@ -37,6 +42,7 @@ export function EmptyStateDescription({
 }: React.ComponentProps<"p">) {
   return (
     <p
+      data-slot="empty-state-description"
       className={cn("text-muted-foreground text-center text-sm", className)}
       {...props}
     >

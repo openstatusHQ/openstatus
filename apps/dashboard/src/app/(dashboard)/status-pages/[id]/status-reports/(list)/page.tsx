@@ -21,6 +21,7 @@ import { columns } from "@/components/data-table/status-reports/columns";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
@@ -134,7 +135,11 @@ export default function Page() {
             </FormSheetStatusReport>
           </div>
         </SectionHeaderRow>
-        <DataTable columns={columns} data={statusReports} />
+        <DataTable
+          paginationComponent={DataTablePaginationSimple}
+          columns={columns}
+          data={statusReports}
+        />
       </Section>
     </SectionGroup>
   );
