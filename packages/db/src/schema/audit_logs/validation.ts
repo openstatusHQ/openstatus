@@ -206,6 +206,15 @@ const memberActions = [
   // they're (userId, workspaceId) composite — so the user id is the most
   // useful identifier to fix on in the audit log.
   action("member.create", "member", intId, { optionalMetadata: true }),
+  // Only a role change today (ownership transfer). A transfer writes two rows,
+  // one per affected user, paired through this metadata, so it is required.
+  action("member.update", "member", intId).extend({
+    metadata: z.object({
+      reason: z.literal("ownership_transfer"),
+      fromUserId: intId,
+      toUserId: intId,
+    }),
+  }),
   action("member.delete", "member", intId),
 ] as const;
 

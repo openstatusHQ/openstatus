@@ -1,3 +1,4 @@
+import { ShieldUser } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import {
   Table,
@@ -8,12 +9,14 @@ import {
   TableRow,
 } from "@openstatus/ui/components/ui/table";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { TableCellEmpty } from "../../table-cell-empty";
+import { TransferOwnershipDialog } from "./transfer-ownership-dialog";
 
 export function DataTable() {
   const trpc = useTRPC();
@@ -27,6 +30,10 @@ export function DataTable() {
   );
 
   if (!members) return null;
+
+  const currentUserId = user?.id;
+  const isOwner =
+    members.find((m) => m.user.id === currentUserId)?.role === "owner";
 
   return (
     <Table>
@@ -43,11 +50,9 @@ export function DataTable() {
       </TableHeader>
       <TableBody>
         {members.map((item) => {
-          const currentUserId = user?.id;
           const isMe = Boolean(currentUserId && item.user.id === currentUserId);
-          const canDelete = Boolean(
-            currentUserId && item.user.id !== currentUserId,
-          );
+          // The server rejects non-owners; don't offer what will fail.
+          const canDelete = isOwner && !isMe;
 
           return (
             <TableRow key={item.user.id}>
@@ -58,26 +63,28 @@ export function DataTable() {
                 </div>
               </TableCell>
               <TableCell>{item.user.email}</TableCell>
-              <TableCell>{item.role}</TableCell>
+              <TableCell>
+                <Badge
+                  variant={item.role === "owner" ? "default" : "outline"}
+                  className="capitalize"
+                >
+                  {item.role}
+                </Badge>
+              </TableCell>
               <TableCell>
                 {formatDate(item.user.createdAt ?? item.createdAt)}
               </TableCell>
               <TableCell>
                 {canDelete ? (
-                  <div className="flex justify-end">
-                    <QuickActions
-                      deleteAction={{
-                        confirmationValue: item.user.email ?? "user",
-                        description: workspace?.ssoEnabled
-                          ? "This workspace uses SSO. They can sign in again and rejoin automatically unless you also remove them from your identity provider."
-                          : undefined,
-                        submitAction: async () =>
-                          await deleteMemberMutation.mutateAsync({
-                            id: item.user.id,
-                          }),
-                      }}
-                    />
-                  </div>
+                  <MemberRowActions
+                    member={item}
+                    ssoEnabled={!!workspace?.ssoEnabled}
+                    onDelete={async () =>
+                      await deleteMemberMutation.mutateAsync({
+                        id: item.user.id,
+                      })
+                    }
+                  />
                 ) : null}
               </TableCell>
             </TableRow>
@@ -85,5 +92,63 @@ export function DataTable() {
         })}
       </TableBody>
     </Table>
+  );
+}
+
+function MemberRowActions({
+  member,
+  ssoEnabled,
+  onDelete,
+}: {
+  member: {
+    role: string;
+    user: {
+      id: number;
+      name: string | null;
+      email: string | null;
+      deletedAt: Date | null;
+    };
+  };
+  ssoEnabled: boolean;
+  onDelete: () => Promise<void>;
+}) {
+  const [transferOpen, setTransferOpen] = useState(false);
+  const { user } = member;
+  const canTransfer =
+    member.role !== "owner" && !user.deletedAt && !!user.email;
+
+  return (
+    <div className="flex justify-end">
+      <QuickActions
+        actions={
+          canTransfer
+            ? [
+                {
+                  id: "transfer",
+                  label: "Make owner",
+                  icon: ShieldUser,
+                  variant: "default",
+                  onClick: () => setTransferOpen(true),
+                },
+              ]
+            : undefined
+        }
+        deleteAction={{
+          confirmationValue: user.email ?? "user",
+          description: ssoEnabled
+            ? "This workspace uses SSO. They can sign in again and rejoin automatically unless you also remove them from your identity provider."
+            : undefined,
+          submitAction: onDelete,
+        }}
+      />
+      {/* Outside `QuickActions`: its dropdown item unmounts with the menu. */}
+      {canTransfer && user.email ? (
+        <TransferOwnershipDialog
+          member={{ id: user.id, name: user.name, email: user.email }}
+          open={transferOpen}
+          onOpenChange={setTransferOpen}
+        />
+      ) : null}
+    </div>
   );
 }

@@ -232,6 +232,10 @@ export const Events = {
     name: "user_removed",
     channel: "team",
   },
+  TransferOwnership: {
+    name: "ownership_transferred",
+    channel: "team",
+  },
   CreateAPI: {
     name: "api_key_created",
     channel: "api_key",

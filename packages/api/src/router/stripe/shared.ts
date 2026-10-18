@@ -211,3 +211,37 @@ export function trialEndsAtOf(subscription: Stripe.Subscription) {
     ? new Date(subscription.trial_end * 1000)
     : null;
 }
+
+type CustomerEmailClient = {
+  customers: {
+    retrieve(id: string): Promise<Stripe.Customer | Stripe.DeletedCustomer>;
+    update(
+      id: string,
+      params: Stripe.CustomerUpdateParams,
+    ): Promise<Stripe.Customer>;
+  };
+};
+
+/**
+ * After an ownership transfer, move the Stripe customer email to the new
+ * owner, but only when it still equals the former owner's email. A finance
+ * address set in the portal stays. Returns whether the customer was updated.
+ */
+export async function syncCustomerEmailToNewOwner(args: {
+  customerId: string;
+  formerOwnerEmail: string;
+  newOwnerEmail: string;
+  client?: CustomerEmailClient;
+}): Promise<boolean> {
+  const client = args.client ?? stripe;
+  const customer = await client.customers.retrieve(args.customerId);
+  if (customer.deleted) return false;
+  const current = customer.email?.trim().toLowerCase();
+  if (!current || current !== args.formerOwnerEmail.trim().toLowerCase()) {
+    return false;
+  }
+  await client.customers.update(args.customerId, {
+    email: args.newOwnerEmail,
+  });
+  return true;
+}
