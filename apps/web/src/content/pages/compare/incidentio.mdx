@@ -1,88 +1,118 @@
 ---
 title: "Incident.io vs openstatus"
 publishedAt: "2026-02-21"
-updatedAt: "2026-08-26"
+updatedAt: "2026-10-17"
 author: "openstatus"
-description: "Looking for an incident.io alternative that combines monitoring with status pages? openstatus detects outages from 28 regions and communicates them to users — open source and starting free."
+description: "Looking for an incident.io alternative? openstatus runs incidents from Slack, keeps your status page updated and monitors from 28 regions. One flat price, unlimited team members, open source."
 category: "company"
 faq:
   - question: "Is openstatus a good incident.io alternative?"
-    answer: "It depends on what you need. Incident.io is an incident management platform — on-call scheduling, Slack-based workflows, AI post-mortems. Openstatus is a monitoring and status page platform. If your primary need is detecting outages and communicating them to users, openstatus is the more direct fit. If you already have monitoring and need sophisticated incident coordination across a large on-call team, incident.io is built for that."
+    answer: "For small teams, yes. Openstatus covers the loop most teams under 20 engineers need: monitors detect the outage from 28 regions, the incident runs in its own Slack channel with a timeline and a postmortem draft, and the status page keeps customers informed. It is a flat price with unlimited team members. If you need on-call scheduling, escalation policies and incident workflows across many teams, incident.io is built for that."
   - question: "Does incident.io include uptime monitoring?"
-    answer: "No. Incident.io does not monitor your services. It receives alerts from external tools like Datadog, PagerDuty, or Prometheus and routes them through its incident workflow. You still need a separate monitoring tool. Openstatus includes uptime monitoring from 28 regions as part of the same product."
-  - question: "Does openstatus have incident management features?"
-    answer: "Openstatus covers the detect-and-communicate part of incident response: monitors detect issues and your status page communicates them to users. It does not have on-call scheduling, escalation policies, or Slack-based incident coordination. For teams that need those workflows, incident.io is the stronger choice."
+    answer: "Not in the sense of checking your website or API from around the world. Incident.io receives alerts from tools like Datadog, Grafana or PagerDuty and offers heartbeat monitoring on paid plans. Openstatus runs HTTP, TCP and DNS checks from 28 regions in parallel, so the same product that detects the outage also runs the incident and updates the status page."
+  - question: "Does openstatus have incident management?"
+    answer: "Yes. Declare an incident from Slack, the dashboard, the CLI or an AI agent. Each incident gets its own Slack channel, a severity, a commander and one timeline. A linked status report keeps customers informed, stale incidents get reminders, and once resolved the agent drafts a blameless postmortem. Openstatus does not include on-call scheduling: alerts go to PagerDuty, Opsgenie or Grafana OnCall if you use them."
   - question: "How does openstatus pricing compare to incident.io?"
-    answer: "Openstatus starts at $30/month with unlimited team members. Incident.io uses per-seat pricing on paid plans and targets mid-to-large engineering teams. For small teams that only need monitoring and a status page, openstatus is significantly cheaper."
+    answer: "Incident.io is free for small teams, then charges per user: $15–19 per user per month on Team and $25 on Pro, plus $10–20 per user for on-call. A 10-person team pays $150–250 a month on Team. Openstatus is $30/month (Starter) or $100/month (Pro) with unlimited team members, monitoring and status pages included. Prices checked October 2026."
+  - question: "How many status pages do I get?"
+    answer: "Incident.io includes one public status page on every plan below Enterprise, and one internal page from Pro. Openstatus Pro includes five status pages, each public or private (password protection, with magic link and IP restriction as add-ons), and more can be added for $20/month each."
+  - question: "Can I use openstatus and incident.io together?"
+    answer: "Yes. Some teams keep incident.io for on-call and internal coordination and use openstatus for monitoring and the public status page. Openstatus alerts can be sent to incident.io through a webhook or PagerDuty."
 ---
 
 ## Looking for an incident.io alternative?
 
-**TL;DR:** Openstatus detects outages and communicates them to users via status pages. Incident.io coordinates the human response through Slack workflows and on-call scheduling. They solve adjacent problems — openstatus is for monitoring and status pages, incident.io is for incident coordination.
+**TL;DR:** Incident.io is an incident management platform with a status page attached. Openstatus is monitoring, incident management and status pages in one product. Incident.io is free until your team grows, then charges per user and still needs a separate monitoring tool. Openstatus is a flat price with unlimited team members, and the monitors that catch the outage are in the same workspace as the incident and the status page.
 
-If you need to detect outages and communicate them to users — not just coordinate the human response — openstatus is the simpler, more affordable choice. It combines uptime monitoring from 28 global regions with native status pages in a single open-source product, no separate monitoring tool required.
+Many teams pick incident.io for its free plan: one status page, Slack incident response and single-team on-call for small teams. That works until the sixth engineer joins, you need a second status page, or someone asks how the status page knows something is down. The answer is that it doesn't: an incident.io status page changes when a person declares an incident, after an alert from a monitoring tool you run and pay for separately.
 
-Openstatus and incident.io solve adjacent problems. Incident.io is an **incident management** platform — it coordinates the human response to an outage through Slack workflows, on-call scheduling, and post-mortems. Openstatus is a **monitoring and status page** platform — it detects outages automatically and communicates them to end users.
+Openstatus covers the whole loop for teams that don't have a dedicated SRE team:
 
-The key distinction: incident.io has no uptime monitoring. It relies on external alerting sources (Datadog, PagerDuty, Prometheus) to trigger its workflows. If you want a single tool that monitors your services and updates your status page without manual intervention, openstatus covers that loop directly. If you have monitoring in place and need sophisticated incident coordination across a large on-call team, incident.io is purpose-built for that.
+1. **Detect.** Monitors check your API from 28 regions in parallel. The alert lands in Slack before the first support ticket.
+2. **Respond.** Declare the incident from the alert, Slack, the dashboard or an AI agent. It gets its own channel, a severity, a commander and one timeline.
+3. **Communicate.** A linked status report updates your status page and notifies subscribers, worded for customers, separate from internal notes.
+4. **Learn.** Once resolved, the agent drafts a blameless postmortem from the timeline, the Slack channel and the public updates.
 
 ## Feature Comparison
 
-| Feature                    | openstatus | incident.io      |
-| -------------------------- | ---------- | ---------------- |
-| Open-source                | Yes        | No               |
-| Built-in uptime monitoring | Yes        | No               |
-| Multi-region               | 28 regions | Not applicable   |
-| Monitoring as code         | Yes        | No               |
-| OpenTelemetry export       | Yes        | No               |
-| Status page included       | Yes        | Yes              |
-| Incident management        | No         | Yes              |
-| On-call scheduling         | No         | Yes              |
-| Post-mortems               | No         | Yes (AI-powered) |
-| Team members               | Unlimited  | Per-seat pricing |
+| Feature                              | openstatus                          | incident.io                         |
+| ------------------------------------ | ----------------------------------- | ----------------------------------- |
+| Uptime monitoring (HTTP, TCP, DNS)   | Yes, 28 regions in parallel         | No (heartbeats on paid plans)       |
+| Incident declaration from Slack      | Yes                                 | Yes                                 |
+| Slack channel per incident           | Yes                                 | Yes                                 |
+| Severity, commander, timeline        | Yes                                 | Yes                                 |
+| Postmortem draft                     | Yes (AI-drafted)                    | Yes (AI-drafted)                    |
+| Status page                          | Yes, custom domain                  | Yes, custom domain                  |
+| Status pages included                | 1 (Starter), 5 (Pro)                | 1 public (Enterprise: unlimited)    |
+| Private status pages                 | Yes, from Starter                   | 1 internal page from Pro            |
+| On-call scheduling and escalation    | No (PagerDuty, Opsgenie, Grafana OnCall) | Yes                            |
+| MCP server for AI agents             | Yes                                 | Yes                                 |
+| CLI, Terraform, GitHub Action        | Yes                                 | Terraform                           |
+| OpenTelemetry export                 | Yes                                 | No                                  |
+| Private monitoring locations         | Yes                                 | No                                  |
+| Open source and self-hostable        | Yes (AGPL-3.0)                      | No                                  |
+| Team members                         | Unlimited                           | Per user                            |
 
 ## Pricing Comparison
 
-|                 | openstatus                        | incident.io                                 |
-| --------------- | --------------------------------- | ------------------------------------------- |
-| Free plan       | 1 monitor, 1 status page          | Limited free tier                           |
-| Starter/paid    | $30/mo                            | Per-seat pricing (contact sales)            |
-| What's included | Monitoring + status page + alerts | Incident workflows + on-call + post-mortems |
-| Team members    | Unlimited on paid plans           | Per-seat                                    |
-| Monitoring      | Built-in (28 regions)             | Requires external tool                      |
+|                       | openstatus                              | incident.io                                    |
+| --------------------- | --------------------------------------- | ---------------------------------------------- |
+| Free plan             | 1 monitor, 1 status page                | Small teams: 1 status page, Slack response, single-team on-call |
+| Entry paid plan       | $30/mo flat (Starter)                   | $15–19 per user/mo (Team)                      |
+| Mid plan              | $100/mo flat (Pro)                      | $25 per user/mo (Pro)                          |
+| On-call               | Via PagerDuty, Opsgenie, Grafana OnCall | +$10–20 per user/mo                            |
+| Uptime monitoring     | Included                                | Separate tool                                  |
+| Team members          | Unlimited                               | Per user                                       |
 
-For small-to-mid teams that need monitoring and a status page, openstatus is significantly cheaper. Incident.io's per-seat pricing targets larger engineering organizations with complex on-call rotations.
+What a team pays per month, by size:
+
+| Team size | openstatus Pro | incident.io Team | incident.io Team + on-call | incident.io Pro + on-call |
+| --------- | -------------- | ---------------- | -------------------------- | ------------------------- |
+| 5         | $100           | $75–95           | $125–145                   | $225                      |
+| 10        | $100           | $150–190         | $250–290                   | $450                      |
+| 20        | $100           | $300–380         | $500–580                   | $900                      |
+
+Incident.io figures use list prices from [incident.io/pricing](https://incident.io/pricing) as of October 2026 (annual–monthly billing) and exclude the separate monitoring tool. Openstatus Pro includes 50 monitors, 5 status pages and unlimited team members.
 
 ## When to Choose openstatus
 
-- You need **uptime monitoring + status page** without integrating two separate products
-- You want **open-source** software or need to self-host
-- You need **monitoring-as-code** or OpenTelemetry export
-- You want **predictable pricing** without per-seat charges
+- You want **one product** for monitoring, incidents and the status page, without wiring three tools together
+- Your team is growing and you don't want the bill to grow **per user**
+- You need **more than one status page**, or private pages for customers and internal teams
+- You want an **open-source** product you can inspect or self-host
+- You work with **AI agents**, the CLI or Terraform, and want every action in the audit log
 
 ## When to Choose incident.io
 
-- Your team already has monitoring (Datadog, PagerDuty) and needs **Slack-based incident coordination**
-- You need **on-call scheduling, escalation policies**, and rotation management
-- You want **AI-powered post-mortems** and structured incident timelines
-- You manage a large on-call rotation across multiple teams or services
+- You need **on-call scheduling and escalation policies** built into the same tool
+- You run incidents across **many teams and services** with a service catalog and custom workflows
+- You already pay for monitoring (Datadog, Grafana) and only need the coordination layer
+- You have a dedicated SRE or platform team and an enterprise budget
 
 ## Using openstatus alongside incident.io
 
-These products are complementary rather than direct replacements. A common setup:
+Some teams keep incident.io for on-call and internal coordination and move monitoring and the public status page to openstatus:
 
-- **Openstatus** detects outages from 28 regions and updates your public status page automatically
-- **Incident.io** receives alerts (from openstatus or other tools) and coordinates the internal response via Slack
-- Your **users** see the status page. Your **engineers** see the incident channel.
+- **Openstatus** checks your services from 28 regions and keeps your status page and subscribers informed
+- **Incident.io** receives openstatus alerts through a webhook or PagerDuty and pages the person on call
+- Your **customers** read the status page. Your **engineers** work in incident.io.
 
-If you only need the detection and communication layer, openstatus covers it alone. If you need the full incident coordination layer too, both tools work well together.
+## Switching from incident.io
+
+1. **Sign up** for a free openstatus account, no credit card required
+2. **Add monitors** for the endpoints your incident.io alerts came from, or define them as code with the [CLI](/tooling/cli) or [Terraform](/tooling/terraform)
+3. **Recreate your status page** components and point your custom domain to openstatus
+4. **Connect Slack** with the [Slack agent](/docs/guides/how-to-setup-slack-agent) to declare and run incidents from your workspace
+5. **Route alerts** to PagerDuty, Opsgenie or Grafana OnCall if you keep a separate on-call tool
 
 ## Related Resources
 
+- [Incident management](/incident-management)
 - [Status page](/status-page)
 - [Uptime monitoring](/uptime-monitoring)
+- [MCP server](/tooling/mcp-server)
 - [Incident Severity Matrix Guide](/guides/incident-severity-matrix)
-- [Why Every SaaS Needs a Status Page](/guides/why-every-saas-needs-a-status-page)
+- [What is incident management?](/guides/what-is-incident-management)
 - [Status Pages for Compliance](/use-case/compliance)
 - [Pricing](/pricing)
 
@@ -90,31 +120,43 @@ If you only need the detection and communication layer, openstatus covers it alo
 
 <Details summary="Is openstatus a good incident.io alternative?">
 
-It depends on what you need. Incident.io is an incident management platform — on-call scheduling, Slack-based workflows, AI post-mortems. Openstatus is a monitoring and status page platform. If your primary need is detecting outages and communicating them to users, openstatus is the more direct fit. If you already have monitoring and need sophisticated incident coordination across a large on-call team, incident.io is built for that.
+For small teams, yes. Openstatus covers the loop most teams under 20 engineers need: monitors detect the outage from 28 regions, the incident runs in its own Slack channel with a timeline and a postmortem draft, and the status page keeps customers informed. It is a flat price with unlimited team members. If you need on-call scheduling, escalation policies and incident workflows across many teams, incident.io is built for that.
 
 </Details>
 
 <Details summary="Does incident.io include uptime monitoring?">
 
-No. Incident.io does not monitor your services. It receives alerts from external tools like Datadog, PagerDuty, or Prometheus and routes them through its incident workflow. You still need a separate monitoring tool. Openstatus includes uptime monitoring from 28 regions as part of the same product.
+Not in the sense of checking your website or API from around the world. Incident.io receives alerts from tools like Datadog, Grafana or PagerDuty and offers heartbeat monitoring on paid plans. Openstatus runs HTTP, TCP and DNS checks from 28 regions in parallel, so the same product that detects the outage also runs the incident and updates the status page.
 
 </Details>
 
-<Details summary="Does openstatus have incident management features?">
+<Details summary="Does openstatus have incident management?">
 
-Openstatus covers the detect-and-communicate part of incident response: monitors detect issues and your status page communicates them to users. It does not have on-call scheduling, escalation policies, or Slack-based incident coordination. For teams that need those workflows, incident.io is the stronger choice.
+Yes. Declare an incident from Slack, the dashboard, the CLI or an AI agent. Each incident gets its own Slack channel, a severity, a commander and one timeline. A linked status report keeps customers informed, stale incidents get reminders, and once resolved the agent drafts a blameless postmortem. Openstatus does not include on-call scheduling: alerts go to PagerDuty, Opsgenie or Grafana OnCall if you use them.
 
 </Details>
 
 <Details summary="How does openstatus pricing compare to incident.io?">
 
-Openstatus starts at $30/month with unlimited team members. Incident.io uses per-seat pricing on paid plans and targets mid-to-large engineering teams. For small teams that only need monitoring and a status page, openstatus is significantly cheaper.
+Incident.io is free for small teams, then charges per user: $15–19 per user per month on Team and $25 on Pro, plus $10–20 per user for on-call. A 10-person team pays $150–250 a month on Team. Openstatus is $30/month (Starter) or $100/month (Pro) with unlimited team members, monitoring and status pages included. Prices checked October 2026.
+
+</Details>
+
+<Details summary="How many status pages do I get?">
+
+Incident.io includes one public status page on every plan below Enterprise, and one internal page from Pro. Openstatus Pro includes five status pages, each public or private (password protection, with magic link and IP restriction as add-ons), and more can be added for $20/month each.
+
+</Details>
+
+<Details summary="Can I use openstatus and incident.io together?">
+
+Yes. Some teams keep incident.io for on-call and internal coordination and use openstatus for monitoring and the public status page. Openstatus alerts can be sent to incident.io through a webhook or PagerDuty.
 
 </Details>
 
 ---
 
-Start monitoring from 28 regions today
+Monitoring, incidents and your status page, one flat price
 
 <ButtonLink href="https://app.openstatus.dev?ref=compare-incidentio">Get Started Free</ButtonLink>
 
