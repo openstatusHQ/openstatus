@@ -17,6 +17,21 @@ import {
 // Status-page timestamps render in UTC; the suffix tells viewers which zone.
 const withUTC = (value: string) => `${value} (UTC)`;
 
+function formatStamp(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    hourCycle: "h23",
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("month")} ${get("day")}, ${get("year")} ${get("hour")}:${get("minute")}`;
+}
+
 /**
  * StatusBlocksProvider
  *
@@ -116,6 +131,9 @@ export function StatusBlocksProvider({
       formatDate: (d: Date) => withUTC(formatDate(d, { locale })),
       formatDateShort: (d: Date) => formatDate(d, { month: "short", locale }),
       formatDateTime: (d: Date) => withUTC(formatDateTime(d, locale)),
+      formatDay: (d: string) =>
+        formatDate(new Date(d), { month: "short", locale }),
+      formatTimestamp: (d: Date) => withUTC(formatStamp(d)),
       formatDateRange: (from?: Date, to?: Date) => {
         const range = formatDateRange(from, to, locale);
         return from || to ? withUTC(range) : range;
