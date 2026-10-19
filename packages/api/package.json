@@ -69,6 +69,7 @@
     "@openstatus/tsconfig": "workspace:*",
     "@std/expect": "jsr:^1.0.19",
     "@std/testing": "jsr:^1.0.19",
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "typescript": "catalog:"

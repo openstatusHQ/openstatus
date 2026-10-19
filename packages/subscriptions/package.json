@@ -32,6 +32,7 @@
     "@openstatus/tsconfig": "workspace:*",
     "@std/expect": "jsr:^1.0.19",
     "@std/testing": "jsr:^1.0.19",
+    "@types/node": "catalog:",
     "typescript": "catalog:"
   }
 }

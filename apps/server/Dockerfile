@@ -98,7 +98,7 @@ COPY \
     --link \
     "/app/apps/server/dist" "/app/dist"
 USER 0:0
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 USER 1000:1000
 EXPOSE 3000
 HEALTHCHECK \
