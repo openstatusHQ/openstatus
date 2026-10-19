@@ -30,6 +30,7 @@ export {
   updatePageLinks,
   updatePageLocales,
   updatePagePasswordProtection,
+  updatePageTimezone,
 } from "./update";
 
 export {
@@ -48,4 +49,5 @@ export {
   UpdatePageLinksInput,
   UpdatePageLocalesInput,
   UpdatePagePasswordProtectionInput,
+  UpdatePageTimezoneInput,
 } from "./schemas";
