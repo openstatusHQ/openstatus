@@ -10,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { buildCurlCommand } from "@openstatus/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
@@ -22,6 +23,7 @@ import { DataTableSheetTest } from "@/components/data-table/response-logs/data-t
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { NavFeedback } from "@/components/nav/nav-feedback";
 import { getActions } from "@/data/monitors.client";
+import { buildMonitorBadgeUrl } from "@/lib/monitor-badge";
 import { useTRPC } from "@/lib/trpc/client";
 
 type TestTCP = RouterOutputs["checker"]["testTcp"];
@@ -74,6 +76,28 @@ export function NavActions() {
   const testIcmpMutation = useMutation(trpc.checker.testIcmp.mutationOptions());
   const testGrpcMutation = useMutation(trpc.checker.testGrpc.mutationOptions());
 
+  const { copy } = useCopyToClipboard();
+  const isEligible = Boolean(monitor?.public && monitor?.active);
+  const { data: pageComponents } = useQuery({
+    ...trpc.pageComponent.list.queryOptions(),
+    enabled: isEligible,
+  });
+  const { data: statusPages } = useQuery({
+    ...trpc.page.list.queryOptions(),
+    enabled: isEligible,
+  });
+
+  const statusPage =
+    monitor && isEligible
+      ? statusPages?.find(
+          (p) =>
+            p.accessType === "public" &&
+            pageComponents?.some(
+              (c) => c.monitorId === monitor.id && c.pageId === p.id,
+            ),
+        )
+      : undefined;
+
   // curl only speaks HTTP — the action is hidden for tcp/dns monitors
   const curlCommand =
     monitor?.jobType === "http" ? buildCurlCommand(monitor) : null;
@@ -90,6 +114,16 @@ export function NavActions() {
           toast.success("cURL command copied to clipboard");
         }
       : undefined,
+    "copy-badge":
+      statusPage && monitor
+        ? () => {
+            const badgeUrl = buildMonitorBadgeUrl(statusPage, monitor.id);
+            void copy(badgeUrl, {
+              withToast: true,
+              successMessage: "Badge URL copied to clipboard",
+            });
+          }
+        : undefined,
     clone: () => {
       const promise = cloneMonitorMutation.mutateAsync({
         id: Number.parseInt(id),
@@ -105,7 +139,11 @@ export function NavActions() {
         },
       });
     },
-  }).filter((action) => action.id !== "copy-curl" || Boolean(curlCommand));
+  }).filter(
+    (action) =>
+      (action.id !== "copy-curl" || Boolean(curlCommand)) &&
+      (action.id !== "copy-badge" || Boolean(statusPage)),
+  );
 
   async function testAction() {
     if (monitor?.jobType === "http") {

@@ -10,6 +10,7 @@ import {
   Server,
   Terminal,
   Delete,
+  Tag,
 } from "@openstatus/icons";
 
 export const monitorTypes = [
@@ -57,6 +58,12 @@ export const actions = [
     id: "copy-curl",
     label: "Copy cURL",
     icon: Terminal,
+    variant: "default" as const,
+  },
+  {
+    id: "copy-badge",
+    label: "Copy Badge URL",
+    icon: Tag,
     variant: "default" as const,
   },
   {
