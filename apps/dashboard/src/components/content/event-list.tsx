@@ -93,6 +93,8 @@ export function EventListItem({
         "relative flex flex-wrap items-start gap-x-2.5 gap-y-2 px-4 py-3 sm:flex-nowrap",
         // media width; a row with a wider marker overrides it on the item
         "[--event-list-media:2rem]",
+        // room for the pinned menu, so the time column ends before it
+        "has-[>[data-slot=event-list-menu]]:pr-11",
         "has-[[data-slot=event-list-title]:focus-visible]:bg-muted/50 hover:bg-muted/50 transition-colors duration-150 ease-[ease]",
         className,
       )}
@@ -269,6 +271,24 @@ export function EventListActions({
         "relative z-10 ml-[calc(var(--event-list-media)+0.625rem)] flex shrink-0 items-center gap-1 sm:-my-1 sm:ml-0",
         className,
       )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+// An overflow menu (edit, delete) pinned to the top-right corner, like
+// TimelineActions: it stays put while buttons and the time column flow.
+export function EventListMenu({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="event-list-menu"
+      className={cn("absolute top-2 right-2 z-10 flex items-center", className)}
       {...props}
     >
       {children}

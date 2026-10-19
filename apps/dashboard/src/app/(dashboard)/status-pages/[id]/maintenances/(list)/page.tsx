@@ -27,7 +27,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
-import { MaintenanceRow } from "@/components/maintenances/maintenance-row";
+import { MaintenanceEventRow } from "@/components/maintenances/maintenance-event-row";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { groupByMonth } from "@/data/event-list.client";
 import { useShowMore } from "@/hooks/use-show-more";
@@ -138,7 +138,7 @@ export default function Page() {
                 </EventListGroupTitle>
                 <EventList>
                   {upcoming.map((maintenance) => (
-                    <MaintenanceRow
+                    <MaintenanceEventRow
                       key={maintenance.id}
                       maintenance={maintenance}
                     />
@@ -156,7 +156,7 @@ export default function Page() {
                 </EventListGroupTitle>
                 <EventList>
                   {month.items.map((maintenance) => (
-                    <MaintenanceRow
+                    <MaintenanceEventRow
                       key={maintenance.id}
                       maintenance={maintenance}
                     />

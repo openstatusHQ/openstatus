@@ -25,7 +25,7 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { DowntimeRow } from "@/components/downtime/downtime-row";
+import { DowntimeEventRow } from "@/components/downtime/downtime-event-row";
 import { groupByMonth } from "@/data/event-list.client";
 import { useShowMore } from "@/hooks/use-show-more";
 import { useTRPC } from "@/lib/trpc/client";
@@ -89,7 +89,7 @@ export default function Page() {
                 </EventListGroupTitle>
                 <EventList>
                   {ongoing.map((downtime) => (
-                    <DowntimeRow key={downtime.id} downtime={downtime} />
+                    <DowntimeEventRow key={downtime.id} downtime={downtime} />
                   ))}
                 </EventList>
               </EventListGroup>
@@ -104,7 +104,7 @@ export default function Page() {
                 </EventListGroupTitle>
                 <EventList>
                   {month.items.map((downtime) => (
-                    <DowntimeRow key={downtime.id} downtime={downtime} />
+                    <DowntimeEventRow key={downtime.id} downtime={downtime} />
                   ))}
                 </EventList>
               </EventListGroup>

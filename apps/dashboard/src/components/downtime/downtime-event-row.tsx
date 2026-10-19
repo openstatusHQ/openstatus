@@ -14,6 +14,7 @@ import {
   EventListDetail,
   EventListItem,
   EventListMedia,
+  EventListMenu,
   EventListMeta,
   EventListTime,
   EventListTitle,
@@ -31,7 +32,7 @@ type Downtime = RouterOutputs["monitorIncident"]["list"][number];
  * across monitors and kinds: it titles the row with the monitor, leads with a
  * type tag and makes the sentence the state and the date.
  */
-export function DowntimeRow({
+export function DowntimeEventRow({
   downtime,
   monitor = false,
 }: {
@@ -119,12 +120,7 @@ export function DowntimeRow({
             source={{ type: "monitor_incident", id: downtime.id }}
           />
         </EventListActions>
-      ) : monitor ? null : (
-        // no detail page to delete it from, so the menu stays here
-        <EventListActions>
-          <IncidentRowActions incident={downtime} />
-        </EventListActions>
-      )}
+      ) : null}
       <EventListMeta>
         <EventListTime date={downtime.startedAt} />
         <EventListDetail>
@@ -135,6 +131,12 @@ export function DowntimeRow({
           )}
         </EventListDetail>
       </EventListMeta>
+      {monitor ? null : (
+        // no detail page to delete it from, so the menu stays here
+        <EventListMenu>
+          <IncidentRowActions incident={downtime} />
+        </EventListMenu>
+      )}
     </EventListItem>
   );
 }

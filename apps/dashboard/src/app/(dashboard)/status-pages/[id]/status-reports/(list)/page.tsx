@@ -30,7 +30,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
-import { StatusReportRow } from "@/components/status-reports/status-report-row";
+import { StatusReportEventRow } from "@/components/status-reports/status-report-event-row";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { groupByMonth } from "@/data/event-list.client";
 import { reportStartedAt } from "@/data/status-reports.client";
@@ -172,7 +172,7 @@ export default function Page() {
                 </EventListGroupTitle>
                 <EventList>
                   {open.map((report) => (
-                    <StatusReportRow key={report.id} report={report} />
+                    <StatusReportEventRow key={report.id} report={report} />
                   ))}
                 </EventList>
               </EventListGroup>
@@ -187,7 +187,7 @@ export default function Page() {
                 </EventListGroupTitle>
                 <EventList>
                   {month.items.map((report) => (
-                    <StatusReportRow key={report.id} report={report} />
+                    <StatusReportEventRow key={report.id} report={report} />
                   ))}
                 </EventList>
               </EventListGroup>

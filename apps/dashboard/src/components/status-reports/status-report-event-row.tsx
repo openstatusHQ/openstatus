@@ -48,7 +48,7 @@ const impactLevel = {
  * `type` is for lists that mix event kinds: a type tag leads and the
  * sentence is the state and the date.
  */
-export function StatusReportRow({
+export function StatusReportEventRow({
   report,
   type = false,
 }: {

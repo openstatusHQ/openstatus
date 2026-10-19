@@ -32,7 +32,7 @@ type Maintenance = RouterOutputs["maintenance"]["list"][number];
  * `type` is for lists that mix event kinds: a type tag leads and the
  * sentence is the state and the window.
  */
-export function MaintenanceRow({
+export function MaintenanceEventRow({
   maintenance,
   type = false,
 }: {

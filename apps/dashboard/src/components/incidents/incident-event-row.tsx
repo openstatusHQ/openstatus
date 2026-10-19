@@ -21,6 +21,7 @@ import {
 import { formatDurationShort, formatEventDate } from "@/data/event-list.client";
 import {
   incidentEndedAt,
+  isIncidentActive,
   severityConfig,
   statusConfig,
 } from "@/data/managed-incidents.client";
@@ -29,15 +30,11 @@ type Incident = NonNullable<RouterOutputs["incident"]["list"]>[number];
 
 const severityLevel = { critical: 3, major: 2, minor: 1 } as const;
 
-export function isIncidentActive(incident: Pick<Incident, "status">) {
-  return incident.status === "open" || incident.status === "mitigated";
-}
-
 /**
  * `type` is for lists that mix event kinds: a type tag leads and the
  * sentence is the state and the date.
  */
-export function IncidentRow({
+export function IncidentEventRow({
   incident,
   type = false,
 }: {

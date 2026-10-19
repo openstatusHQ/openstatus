@@ -21,11 +21,9 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import {
-  IncidentRow,
-  isIncidentActive,
-} from "@/components/incidents/incident-row";
+import { IncidentEventRow } from "@/components/incidents/incident-event-row";
 import { groupByMonth } from "@/data/event-list.client";
+import { isIncidentActive } from "@/data/managed-incidents.client";
 import { useShowMore } from "@/hooks/use-show-more";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -65,7 +63,7 @@ export function Client() {
                 </EventListGroupTitle>
                 <EventList>
                   {active.map((incident) => (
-                    <IncidentRow key={incident.id} incident={incident} />
+                    <IncidentEventRow key={incident.id} incident={incident} />
                   ))}
                 </EventList>
               </EventListGroup>
@@ -80,7 +78,7 @@ export function Client() {
                 </EventListGroupTitle>
                 <EventList>
                   {month.items.map((incident) => (
-                    <IncidentRow key={incident.id} incident={incident} />
+                    <IncidentEventRow key={incident.id} incident={incident} />
                   ))}
                 </EventList>
               </EventListGroup>
