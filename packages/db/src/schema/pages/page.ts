@@ -56,6 +56,8 @@ export const page = sqliteTable(
       .default("en")
       .$type<Locale>(),
     locales: text("locales", { mode: "json" }).$type<Locale[]>(),
+    // IANA zone the public page renders its bars and timestamps in
+    defaultTimezone: text("default_timezone").notNull().default("UTC"),
 
     legacyPage: integer("legacy_page", { mode: "boolean" })
       .notNull()

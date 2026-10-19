@@ -33,6 +33,24 @@ export const customDomainSchema = z
   )
   .or(z.enum([""]));
 
+function isKnownTimeZone(value: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    return true;
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+}
+
+// ClickHouse rejects offsets like "+09:00" that Intl accepts.
+export const timeZoneSchema = z
+  .string()
+  .refine(
+    (value) => /^[A-Za-z]/.test(value) && isKnownTimeZone(value),
+    "Unknown IANA time zone",
+  );
+
 const stringToArray = z.preprocess((val) => {
   if (val && String(val).length > 0) {
     return String(val).split(",");
@@ -100,6 +118,7 @@ export const insertPageSchema = createInsertSchema(page, {
       .nullish(),
     defaultLocale: z.enum(locales).prefault("en"),
     locales: z.array(z.enum(locales)).nullable().optional(),
+    defaultTimezone: timeZoneSchema.prefault("UTC"),
     customTheme: customThemeWriteSchema,
   })
   .refine(
@@ -155,6 +174,8 @@ export const selectPageSchema = createSelectSchema(page).extend({
   allowedIpRanges: stringToArray.prefault([]),
   defaultLocale: z.enum(locales).prefault("en"),
   locales: z.array(z.enum(locales)).nullable().prefault(null),
+  // A zone the runtime cannot resolve must not take the whole page down.
+  defaultTimezone: timeZoneSchema.catch("UTC"),
 });
 
 export type InsertPage = z.infer<typeof insertPageSchema>;
