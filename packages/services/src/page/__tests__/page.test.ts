@@ -35,6 +35,7 @@ import {
   updatePageCustomTheme,
   updatePageGeneral,
   updatePageLocales,
+  updatePageTimezone,
 } from "../update";
 
 const TEST_PREFIX = "svc-page-test";
@@ -722,6 +723,68 @@ describe("updatePageLocales", () => {
           input: { id: p.id, defaultLocale: "en", locales: ["en"] },
         }),
       ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});
+
+describe("updatePageTimezone", () => {
+  test("stores the zone + audit", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Zone", slug: uniqueSlug("zone") },
+      });
+      for (const zone of ["Asia/Tokyo", "Asia/Kolkata"]) {
+        await updatePageTimezone({
+          ctx,
+          input: { id: p.id, defaultTimezone: zone },
+        });
+        const row = await tx
+          .select()
+          .from(pageTable)
+          .where(eq(pageTable.id, p.id))
+          .get();
+        expect(row?.defaultTimezone).toBe(zone);
+      }
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page.update",
+        entityType: "page",
+        entityId: p.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("rejects a name that is not a time zone", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Zone", slug: uniqueSlug("zone-bad") },
+      });
+      await expect(
+        updatePageTimezone({
+          ctx,
+          input: { id: p.id, defaultTimezone: "Mars/Olympus" },
+        }),
+      ).rejects.toThrow();
+    });
+  });
+
+  test("cross-workspace → NotFoundError", async () => {
+    await withTestTransaction(async (tx) => {
+      const p = await newPage({
+        ctx: { ...teamCtx, db: tx },
+        input: { title: "Zone", slug: uniqueSlug("zone-iso") },
+      });
+      await expect(
+        updatePageTimezone({
+          ctx: { ...freeCtx, db: tx },
+          input: { id: p.id, defaultTimezone: "Asia/Tokyo" },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 });

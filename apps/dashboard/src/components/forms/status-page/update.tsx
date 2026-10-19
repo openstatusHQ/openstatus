@@ -16,6 +16,7 @@ import { FormGeneral } from "./form-general";
 import { FormLinks } from "./form-links";
 import { FormLocale } from "./form-locale";
 import { FormPageAccess } from "./form-page-access";
+import { FormTimezone } from "./form-timezone";
 
 export function FormStatusPageUpdate() {
   const { id } = useParams<{ id: string }>();
@@ -85,6 +86,12 @@ export function FormStatusPageUpdate() {
 
   const updateLocalesMutation = useMutation(
     trpc.page.updateLocales.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
+
+  const updateTimezoneMutation = useMutation(
+    trpc.page.updateTimezone.mutationOptions({
       onSuccess: () => refetch(),
     }),
   );
@@ -186,6 +193,15 @@ export function FormStatusPageUpdate() {
             id: Number.parseInt(id),
             defaultLocale: values.defaultLocale,
             locales: values.locales,
+          });
+        }}
+      />
+      <FormTimezone
+        defaultValues={{ defaultTimezone: statusPage.defaultTimezone }}
+        onSubmit={async (values) => {
+          await updateTimezoneMutation.mutateAsync({
+            id: Number.parseInt(id),
+            defaultTimezone: values.defaultTimezone,
           });
         }}
       />
