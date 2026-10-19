@@ -14,6 +14,7 @@ RUN \
     --mount=type=bind,target=pnpm-lock.yaml,source=pnpm-lock.yaml \
     --mount=type=bind,target=package.json,source=package.json \
     --mount=type=bind,target=packages/db/package.json,source=packages/db/package.json \
+    --mount=type=bind,target=packages/credentials/package.json,source=packages/credentials/package.json \
     --mount=type=bind,target=packages/assertions/package.json,source=packages/assertions/package.json \
     --mount=type=bind,target=packages/locales/package.json,source=packages/locales/package.json \
     --mount=type=bind,target=packages/regions/package.json,source=packages/regions/package.json \
@@ -42,6 +43,10 @@ COPY \
     --chown=1000:1000 \
     --link \
     "packages/db" "/app/packages/db"
+COPY \
+    --chown=1000:1000 \
+    --link \
+    "packages/credentials" "/app/packages/credentials"
 COPY \
     --chown=1000:1000 \
     --link \

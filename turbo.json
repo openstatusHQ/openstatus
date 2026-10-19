@@ -1,12 +1,28 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
+  "globalDependencies": [
+    "**/.env",
+    "**/.env.*local",
+    "**/.env.development",
+    "**/.env.production",
+    "**/.env.test",
+    "packages/credentials/secretspec.toml"
+  ],
   // Vercel disables corepack unless it can confirm turbo >= 2.1.3 or sees this
   // passthrough; without corepack it falls back to pnpm 9, which can't read
   // `overrides` from pnpm-workspace.yaml and fails the frozen install.
   // PORT: strict env mode would strip it, and `pnpm dev:dashboard` could never
   // move off :3001.
-  "globalPassThroughEnv": ["COREPACK_HOME", "PORT"],
+  "globalEnv": ["SECRETSPEC_PROVIDER", "SECRETSPEC_PROFILE"],
+  "globalPassThroughEnv": [
+    "COREPACK_HOME",
+    "PORT",
+    "SECRETSPEC_*",
+    "!SECRETSPEC_PROVIDER",
+    "!SECRETSPEC_PROFILE",
+    "XDG_*",
+    "DBUS_SESSION_BUS_ADDRESS"
+  ],
   "tasks": {
     "registry:build": {
       "outputs": ["public/r/**"]

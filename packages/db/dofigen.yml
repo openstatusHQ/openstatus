@@ -11,6 +11,7 @@ builders:
       - pnpm-lock.yaml
       - package.json
       - packages/db/package.json
+      - packages/credentials/package.json
       - packages/assertions/package.json
       - packages/locales/package.json
       - packages/regions/package.json
@@ -38,6 +39,7 @@ labels:
 # @openstatus/* symlinks resolve and seed.mts can run via the same image.
 copy:
   - packages/db /app/packages/db
+  - packages/credentials /app/packages/credentials
   - packages/assertions /app/packages/assertions
   - packages/locales /app/packages/locales
   - packages/regions /app/packages/regions

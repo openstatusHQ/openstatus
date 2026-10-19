@@ -37,6 +37,8 @@ effective: |
         source: packages/analytics/package.json
       - target: packages/db/package.json
         source: packages/db/package.json
+      - target: packages/credentials/package.json
+        source: packages/credentials/package.json
       - target: packages/proto/package.json
         source: packages/proto/package.json
       - target: packages/emails/package.json
@@ -169,7 +171,7 @@ images:
           digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
 resources:
   dofigen.yml:
-    hash: fcdbbd75320dc75f953ef46785f13b2074d77e280ff609f767ae87727918b785
+    hash: c40e8187808c716c22f0aa94aaa45f0615e1a5c527a454d9d541a0be83066ee0
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -197,6 +199,7 @@ resources:
             - apps/server/package.json
             - packages/analytics/package.json
             - packages/db/package.json
+            - packages/credentials/package.json
             - packages/proto/package.json
             - packages/emails/package.json
             - packages/notifications/base/package.json

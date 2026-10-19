@@ -96,12 +96,22 @@ COPY \
     --chown=1000:1000 \
     --chmod=555 \
     --link \
-    "/app/apps/dashboard/.next/standalone/apps/dashboard/" "./"
+    "/app/apps/dashboard/.next/standalone/" "/app/"
 COPY \
     --from=builder \
     --chown=1000:1000 \
     --link \
     "/app/node_modules/" "/app/node_modules/"
+COPY \
+    --from=builder \
+    --chown=1000:1000 \
+    --link \
+    "/app/apps/dashboard/node_modules/" "./node_modules/"
+COPY \
+    --from=builder \
+    --chown=1000:1000 \
+    --link \
+    "/app/packages/credentials/node_modules/" "/app/packages/credentials/node_modules/"
 COPY \
     --from=builder \
     --chown=1000:1000 \

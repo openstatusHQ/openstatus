@@ -116,6 +116,14 @@
           ]
         }
       },
+      "packages/credentials": {
+        "packageJson": {
+          "dependencies": [
+            "npm:secretspec@0.21.1",
+            "npm:smol-toml@1.8.0"
+          ]
+        }
+      },
       "packages/db": {
         "packageJson": {
           "dependencies": [

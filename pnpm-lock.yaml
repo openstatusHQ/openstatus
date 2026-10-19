@@ -736,6 +736,9 @@ importers:
       '@openstatus/assertions':
         specifier: workspace:*
         version: link:../../packages/assertions
+      '@openstatus/credentials':
+        specifier: workspace:*
+        version: link:../../packages/credentials
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -1294,6 +1297,9 @@ importers:
       '@openstatus/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@openstatus/credentials':
+        specifier: workspace:*
+        version: link:../../packages/credentials
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -1526,6 +1532,9 @@ importers:
       '@openstatus/assertions':
         specifier: workspace:*
         version: link:../../packages/assertions
+      '@openstatus/credentials':
+        specifier: workspace:*
+        version: link:../../packages/credentials
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -2169,6 +2178,15 @@ importers:
         specifier: 'catalog:'
         version: 7.0.2
 
+  packages/credentials:
+    dependencies:
+      secretspec:
+        specifier: 0.21.1
+        version: 0.21.1
+      smol-toml:
+        specifier: 1.8.0
+        version: 1.8.0
+
   packages/db:
     dependencies:
       '@libsql/client':
@@ -2177,6 +2195,9 @@ importers:
       '@openstatus/assertions':
         specifier: workspace:*
         version: link:../assertions
+      '@openstatus/credentials':
+        specifier: workspace:*
+        version: link:../credentials
       '@openstatus/locales':
         specifier: workspace:*
         version: link:../locales
@@ -11193,6 +11214,43 @@ packages:
     resolution: {integrity: sha512-zJlMCZ0cAR5p/Y4oVpRoqioDMJcGxaXRrQ/4rP4WyR84vc5z/DolXdbvXeDpTwbtocDFr2rhPqHPErDCUtz2kA==}
     engines: {node: '>= 10.13.0'}
 
+  secretspec-darwin-arm64@0.21.1:
+    resolution: {integrity: sha512-y0B3ppArIS5WsXMaa6B3AqAaG/Hxs9kRC2fgWXGtskdtk+UCfA6qjVjBsiKE79XV2R5tnUKc+j9e0aizbSa/zw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  secretspec-linux-arm64-gnu@0.21.1:
+    resolution: {integrity: sha512-NvOXyQ4iB2mQySvHBv9mE9rr1nZpmB3yBLQIkBeWluH8LfUEgKV7OaOaUORf89ub2nEzVTIC1dFBxbFqAEIFug==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  secretspec-linux-arm64-musl@0.21.1:
+    resolution: {integrity: sha512-47u/ZfyxX+ljWG0e/kxZI/4v2cOIdqwel/cmahdv05R+4tNi/JGMdCv9dRCdL1UjUWeIdRMGZ+L0Wi08LBvIwg==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  secretspec-linux-x64-gnu@0.21.1:
+    resolution: {integrity: sha512-ArG4e0u9DQtXV/hBYaO4ivuFM8l+sM0hl7zOcg/2Bc1hsESknoLEjabaSP6rY9NJKusXGLeMz0ppV9yBs2d2eA==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  secretspec-linux-x64-musl@0.21.1:
+    resolution: {integrity: sha512-NKOZ3AFWrXRGSzH/wT66iKUacRp2zhy76os/7G85ZRChgETLhr2MW/rmpPWJFRIiCDex1zUuQPIQSs+gH1e97A==}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  secretspec-win32-x64-msvc@0.21.1:
+    resolution: {integrity: sha512-XhXqqEGMtQPufNwqMPHFkc/rrTsGWeTVsmE35WYAJVz68mFvejw4z5+WZyV8NomGer/1OtorNFQUnjL8PPKqLw==}
+    cpu: [x64]
+    os: [win32]
+
+  secretspec@0.21.1:
+    resolution: {integrity: sha512-6PftFI4GfEeXBjwJe83xE1+11luVmbao5heuDxC+RYuvapneycb2bl1X+vaG6e6wHzr1/g/Z2YVEGf2vmek4Sw==}
+
   section-matter@1.0.0:
     resolution: {integrity: sha512-vfD3pmTzGpufjScBh50YHKzEu2lxBWhVEHsNGoEXmCmn2hKGfeNLYMzCJpe8cD7gqX7TJluOVpBkAequ6dgMmA==}
     engines: {node: '>=4'}
@@ -19747,6 +19805,33 @@ snapshots:
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       ajv-keywords: 5.1.0(ajv@8.20.0)
+
+  secretspec-darwin-arm64@0.21.1:
+    optional: true
+
+  secretspec-linux-arm64-gnu@0.21.1:
+    optional: true
+
+  secretspec-linux-arm64-musl@0.21.1:
+    optional: true
+
+  secretspec-linux-x64-gnu@0.21.1:
+    optional: true
+
+  secretspec-linux-x64-musl@0.21.1:
+    optional: true
+
+  secretspec-win32-x64-msvc@0.21.1:
+    optional: true
+
+  secretspec@0.21.1:
+    optionalDependencies:
+      secretspec-darwin-arm64: 0.21.1
+      secretspec-linux-arm64-gnu: 0.21.1
+      secretspec-linux-arm64-musl: 0.21.1
+      secretspec-linux-x64-gnu: 0.21.1
+      secretspec-linux-x64-musl: 0.21.1
+      secretspec-win32-x64-msvc: 0.21.1
 
   section-matter@1.0.0:
     dependencies:

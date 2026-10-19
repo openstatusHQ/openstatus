@@ -23,6 +23,7 @@ builders:
       - apps/workflows/package.json
       - packages/assertions/package.json
       - packages/db/package.json
+      - packages/credentials/package.json
       - packages/emails/package.json
       - packages/notifications/base/package.json
       - packages/notifications/discord/package.json

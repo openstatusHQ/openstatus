@@ -1,1 +1,1 @@
-await Deno.copyFile("./.env.example", "./.env");
+import "./credentials.mjs";

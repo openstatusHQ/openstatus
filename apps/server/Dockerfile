@@ -16,6 +16,7 @@ RUN \
     --mount=type=bind,target=apps/server/package.json,source=apps/server/package.json \
     --mount=type=bind,target=packages/analytics/package.json,source=packages/analytics/package.json \
     --mount=type=bind,target=packages/db/package.json,source=packages/db/package.json \
+    --mount=type=bind,target=packages/credentials/package.json,source=packages/credentials/package.json \
     --mount=type=bind,target=packages/proto/package.json,source=packages/proto/package.json \
     --mount=type=bind,target=packages/emails/package.json,source=packages/emails/package.json \
     --mount=type=bind,target=packages/notifications/base/package.json,source=packages/notifications/base/package.json \

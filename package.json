@@ -9,7 +9,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "env": "bun env.ts",
+    "test:secrets": "pnpm --filter @openstatus/credentials test",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "lint:type": "oxlint --type-aware",
@@ -18,7 +18,7 @@
     "lint:turbo": "turbo run lint",
     "check": "turbo run check",
     "check:docs": "node scripts/check-doc-refs.mts",
-    "verify": "pnpm format:check && pnpm check:docs && pnpm check",
+    "verify": "pnpm format:check && pnpm test:secrets && pnpm check:docs && pnpm check",
     "verify:test": "turbo run test --affected --concurrency=1",
     "dev:web": "turbo run dev --filter='./apps/web' --filter='./packages/db'",
     "dev:status-page": "turbo run dev --filter='./apps/status-page' --filter='./packages/db'",
