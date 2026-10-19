@@ -3,10 +3,9 @@ import {
   impactUptimeWeight,
 } from "@openstatus/db/src/schema";
 
+import { MS_PER_DAY } from "./day-window";
 import { type WeightedInterval, mergedDowntimeMs } from "./downtime";
 import type { Event, StatusData } from "./events";
-
-export const MS_PER_DAY = 86_400_000;
 
 export type CheckCounts = { ok: number; degraded: number; error: number };
 

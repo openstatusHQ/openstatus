@@ -2905,6 +2905,9 @@ importers:
 
   packages/services:
     dependencies:
+      '@date-fns/tz':
+        specifier: 'catalog:'
+        version: 1.5.0
       '@openstatus/assertions':
         specifier: workspace:*
         version: link:../assertions
