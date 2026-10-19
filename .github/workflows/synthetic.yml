@@ -1,25 +1,20 @@
-# name: Run OpenStatus Synthetics CI
-#
-# on:
-#   workflow_run:
-#       workflows: ['Fly Deploy']
-#       types: [completed]
-#       branches:
-#         - main
-#   repository_dispatch:
-#       types:
-#         - 'vercel.deployment.success'
-#       branches:
-#         - main
-#
-# jobs:
-#   synthetic_ci:
-#     runs-on: ubuntu-latest
-#     name: Run OpenStatus Synthetics CI
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v6
-#       - name: Run OpenStatus Synthetics CI
-#         uses: openstatushq/openstatus-github-action@v1
-#         with:
-#           api_key: ${{ secrets.OPENSTATUS_API_KEY }}
+name: Run OpenStatus Synthetics CI
+
+# Automatic triggers are paused; run it from the Actions tab when needed.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic_ci:
+    runs-on: ubuntu-latest
+    name: Run OpenStatus Synthetics CI
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Run OpenStatus Synthetics CI
+        uses: openstatushq/openstatus-github-action@v1
+        with:
+          api_key: ${{ secrets.OPENSTATUS_API_KEY }}
