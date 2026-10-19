@@ -173,11 +173,14 @@ export function setDataByType({
   data,
   cardType,
   barType,
+  timeZone = "UTC",
 }: {
   events: Event[];
   data: StatusData[];
   cardType: "requests" | "duration" | "dominant" | "manual";
   barType: "absolute" | "dominant" | "manual";
+  /** IANA zone whose calendar days the bars stand for */
+  timeZone?: string;
 }): UptimeData[] {
   // Helper functions moved inside to share inputs and avoid parameter passing
   function createEventSegments(
@@ -408,7 +411,7 @@ export function setDataByType({
   }
 
   return data.map((dayData) => {
-    const day = dayWindow(dayData.day);
+    const day = dayWindow(dayData.day, timeZone);
     const dayMs = day.end - day.start;
 
     // Find events for this day
@@ -665,6 +668,7 @@ export function getUptime({
   barType,
   cardType,
   privateLocationOnly = false,
+  timeZone = "UTC",
 }: {
   data: StatusData[];
   events: Event[];
@@ -672,11 +676,13 @@ export function getUptime({
   cardType: "requests" | "duration" | "dominant" | "manual";
   /** no public regions and ≥1 private location: include probe errors in duration uptime */
   privateLocationOnly?: boolean;
+  /** IANA zone whose calendar days `data` is keyed by */
+  timeZone?: string;
 }): string {
   if (barType === "manual" || cardType === "duration") {
     // Clamp event durations to the data lookback window to avoid
     // events outside the window producing negative uptime values.
-    const days = data.map((d) => dayWindow(d.day));
+    const days = data.map((d) => dayWindow(d.day, timeZone));
     const { segments: coverage, totalMs: total } = dayCoverage(days);
     if (total === 0) return "100%";
     const window: UptimeWindow = {
@@ -696,7 +702,7 @@ export function getUptime({
       // of the incident covering the same outage and nearly double it (#2481).
       const eventIntervals = downtimeIntervals(events, window, false);
       const probeIntervals = privateLocationOnly
-        ? probeDowntimeIntervals(data, window)
+        ? probeDowntimeIntervals(data, window, timeZone)
         : [];
       const allIntervals = [...eventIntervals, ...probeIntervals];
       duration = mergedDowntimeMs(
