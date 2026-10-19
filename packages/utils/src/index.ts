@@ -27,6 +27,7 @@ export { type HeaderPair, headerPairSchema } from "./headers";
 export { personName } from "./person-name";
 export { iteratorToStream, yieldMany } from "./stream";
 export { type PageUpdateStatus, statusLabel } from "./status";
+export { timeZoneShortName } from "./timezone";
 
 export function transformHeaders(
   headers: { key: string; value: string }[],

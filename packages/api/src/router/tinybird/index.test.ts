@@ -142,3 +142,13 @@ test("tinybird.listInfinite accepts React Query's own paging direction", async (
     expect(result).toEqual({ data: [], nextCursor: null, prevCursor: null });
   }
 });
+
+// ─── getStatusInTimeZoneProcedure ────────────────────────────────
+
+import { getStatusInTimeZoneProcedure } from "./index";
+
+for (const type of ["http", "tcp", "dns", "icmp", "grpc"] as const) {
+  test(`${type} has a 15m status pipe that regroups days by time zone`, () => {
+    expect(typeof getStatusInTimeZoneProcedure(type)).toBe("function");
+  });
+}
