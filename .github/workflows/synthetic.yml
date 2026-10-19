@@ -4,6 +4,9 @@ name: Run OpenStatus Synthetics CI
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   synthetic_ci:
     runs-on: ubuntu-latest
