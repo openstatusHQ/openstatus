@@ -15,6 +15,7 @@ import {
   selectStatusReportPageSchema,
   selectWorkspaceSchema,
   statusReport,
+  timeZoneSchema,
 } from "@openstatus/db/src/schema";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
 import { constantTimeEqual } from "@openstatus/services/page-access";
@@ -53,6 +54,7 @@ import {
   getMetricsLatencyMultiProcedure,
   getMetricsLatencyProcedure,
   getMetricsRegionsProcedure,
+  getStatusInTimeZoneProcedure,
   getStatusProcedure,
   getUptimeProcedure,
 } from "./tinybird";
@@ -801,13 +803,20 @@ export const statusPageRouter = createTRPCRouter({
         grpc: monitors.filter((c) => c.monitor.jobType === "grpc"),
       };
 
-      const proceduresByType = {
-        http: getStatusProcedure("45d", "http"),
-        tcp: getStatusProcedure("45d", "tcp"),
-        dns: getStatusProcedure("45d", "dns"),
-        icmp: getStatusProcedure("45d", "icmp"),
-        grpc: getStatusProcedure("45d", "grpc"),
-      };
+      // a zone this runtime cannot resolve renders the page in UTC instead of failing it
+      const timeZone = timeZoneSchema.catch("UTC").parse(_page.defaultTimezone);
+      const monitorTypes = ["http", "tcp", "dns", "icmp", "grpc"] as const;
+      // UTC pages keep the 45d pipes; other zones regroup 15m buckets into their days
+      const readStatus = (
+        type: (typeof monitorTypes)[number],
+        monitorIds: string[],
+      ) =>
+        timeZone === "UTC"
+          ? getStatusProcedure("45d", type)({ monitorIds })
+          : getStatusInTimeZoneProcedure(type)({
+              monitorIds,
+              timezone: timeZone,
+            });
 
       // Manual mode never touches Tinybird. Otherwise race the reads against
       // the fallback budget: a slow (>5s) or erroring Tinybird degrades the
@@ -816,12 +825,12 @@ export const statusPageRouter = createTRPCRouter({
         input.barType === "manual"
           ? Promise.resolve([null, null, null, null, null])
           : Promise.all(
-              Object.entries(proceduresByType).map(([type, procedure]) => {
-                const monitorIds = monitorsByType[
-                  type as keyof typeof proceduresByType
-                ].map((c) => c.monitor.id.toString());
+              monitorTypes.map((type) => {
+                const monitorIds = monitorsByType[type].map((c) =>
+                  c.monitor.id.toString(),
+                );
                 if (monitorIds.length === 0) return null;
-                return procedure({ monitorIds });
+                return readStatus(type, monitorIds);
               }),
             ),
       );
@@ -830,14 +839,7 @@ export const statusPageRouter = createTRPCRouter({
       const [statusHttp, statusTcp, statusDns, statusIcmp, statusGrpc] =
         tinybird.data ?? [null, null, null, null, null];
 
-      const statusDataByMonitorId = new Map<
-        string,
-        | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["icmp"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["grpc"]>>["data"]
-      >();
+      const statusDataByMonitorId = new Map<string, StatusData[]>();
 
       // Consolidate status data from all monitor types into the map
       for (const statusResult of [
@@ -913,6 +915,7 @@ export const statusPageRouter = createTRPCRouter({
             rawData,
             monitorId,
             lookbackPeriod,
+            timeZone,
           );
         } else {
           // Static components, manual mode, or NOOP mode: use synthetic data
@@ -920,6 +923,7 @@ export const statusPageRouter = createTRPCRouter({
             errorDays: [],
             degradedDays: [],
             lookbackPeriod,
+            timeZone,
           });
         }
 
@@ -934,12 +938,14 @@ export const statusPageRouter = createTRPCRouter({
           data: filledData,
           cardType: effectiveCardType,
           barType: effectiveBarType,
+          timeZone,
         });
         const uptime = getUptime({
           data: filledData,
           events,
           barType: effectiveBarType,
           cardType: effectiveCardType,
+          timeZone,
           privateLocationOnly:
             c.monitor != null && privateOnlyMonitorIds.has(c.monitor.id),
         });
