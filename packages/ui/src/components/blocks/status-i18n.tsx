@@ -61,6 +61,13 @@ export type StatusBlocksLabels = {
   formatDate: (d: Date) => string;
   formatDateShort: (d: Date) => string;
   formatDateTime: (d: Date) => string;
+  /**
+   * A status bar's calendar day from its `YYYY-MM-DD` key. Unlike the
+   * instant formatters above it must not shift the date into a time zone.
+   */
+  formatDay: (day: string) => string;
+  /** Compact banner stamp such as `Oct 03, 2026 14:41 (UTC)`. */
+  formatTimestamp: (d: Date) => string;
   formatDateRange: (from?: Date, to?: Date) => string;
   /**
    * Returns the start/end of a closed range as separate strings, so callers

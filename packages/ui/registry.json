@@ -172,6 +172,7 @@
       "title": "Status Timestamp",
       "description": "Interactive timestamp display with tooltip (simple) or hover-card (rich) variants showing multiple timezone formats",
       "registryDependencies": [
+        "status-i18n",
         "hover-card",
         "tooltip",
         "use-copy-to-clipboard",

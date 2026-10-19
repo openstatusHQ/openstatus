@@ -1,6 +1,7 @@
 "use client";
 
 import { UTCDate } from "@date-fns/utc";
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 import {
   HoverCard,
   HoverCardContent,
@@ -180,6 +181,7 @@ function SimpleTimestamp({
   children,
   ...props
 }: Omit<SimpleVariantProps, "variant">) {
+  const labels = useStatusBlocksLabels();
   return (
     <TooltipProvider>
       <Tooltip>
@@ -190,7 +192,7 @@ function SimpleTimestamp({
           )}
           {...props}
         >
-          {children || format(new UTCDate(date), "LLL dd, y HH:mm '(UTC)'")}
+          {children || labels.formatTimestamp(date)}
         </TooltipTrigger>
         <TooltipContent data-slot="status-timestamp-content">
           <p className="font-mono">{format(date, "LLL dd, y HH:mm (z)")}</p>
