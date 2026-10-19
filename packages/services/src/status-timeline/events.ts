@@ -14,6 +14,8 @@ import {
   worstImpact,
 } from "@openstatus/db/src/schema";
 
+import { type DayWindow, dayWindow } from "./day-window";
+
 export type MonitorComponentWithNonNullMonitor =
   PageComponentWithMonitorRelation & {
     type: "monitor";
@@ -456,21 +458,13 @@ export function getHighestPriorityStatus(
 // worst report impact for one day; null = legacy event (no impact rows)
 export function reportEventDayImpact(
   event: Event,
-  date: Date,
+  { start, end }: DayWindow,
 ): PageComponentImpact | null {
   if (!event.impactIntervals) return null;
 
-  const startOfDay = new Date(date);
-  startOfDay.setUTCHours(0, 0, 0, 0);
-  const endOfDay = new Date(date);
-  endOfDay.setUTCHours(23, 59, 59, 999);
-
   const overlapping = event.impactIntervals.filter((iv) => {
-    const end = iv.to ?? new Date();
-    return (
-      iv.from.getTime() <= endOfDay.getTime() &&
-      end.getTime() >= startOfDay.getTime()
-    );
+    const ivEnd = iv.to ?? new Date();
+    return iv.from.getTime() < end && ivEnd.getTime() >= start;
   });
   return worstImpact(overlapping.map((iv) => iv.impact));
 }
@@ -478,27 +472,20 @@ export function reportEventDayImpact(
 // worst projected report color for one day; legacy events stay orange
 export function reportEventDayStatus(
   event: Event,
-  date: Date,
+  day: DayWindow,
 ): "success" | "degraded" | "error" {
-  const impact = reportEventDayImpact(event, date);
+  const impact = reportEventDayImpact(event, day);
   return impact === null ? "degraded" : impactToStatusType(impact);
 }
 
-// Helper to check if date is within event range
-export function isDateWithinEvent(date: Date, event: Event): boolean {
-  const startOfDay = new Date(date);
-  startOfDay.setUTCHours(0, 0, 0, 0);
-
-  const endOfDay = new Date(date);
-  endOfDay.setUTCHours(23, 59, 59, 999);
-
+export function isDateWithinEvent(
+  { start, end }: DayWindow,
+  event: Event,
+): boolean {
   const eventStart = new Date(event.from);
   const eventEnd = event.to ? new Date(event.to) : new Date();
 
-  return (
-    eventStart.getTime() <= endOfDay.getTime() &&
-    eventEnd.getTime() >= startOfDay.getTime()
-  );
+  return eventStart.getTime() < end && eventEnd.getTime() >= start;
 }
 
 export type DayStatus =
@@ -514,12 +501,12 @@ export function resolveDayStatus(
   bucket: StatusData,
   events: Event[],
 ): { status: DayStatus; impact?: PageComponentImpact } {
-  const date = new Date(bucket.day);
-  const dayEvents = events.filter((e) => isDateWithinEvent(date, e));
+  const day = dayWindow(bucket.day);
+  const dayEvents = events.filter((e) => isDateWithinEvent(day, e));
   const reports = dayEvents.filter((e) => e.type === "report");
 
   const dayImpacts = reports
-    .map((e) => reportEventDayImpact(e, date))
+    .map((e) => reportEventDayImpact(e, day))
     .filter((i): i is PageComponentImpact => i !== null);
   const impact = dayImpacts.length > 0 ? worstImpact(dayImpacts) : undefined;
 
@@ -528,7 +515,7 @@ export function resolveDayStatus(
   }
 
   const reportsDayStatus = reports.length
-    ? getWorstVariant(reports.map((e) => reportEventDayStatus(e, date)))
+    ? getWorstVariant(reports.map((e) => reportEventDayStatus(e, day)))
     : undefined;
   if (reportsDayStatus && reportsDayStatus !== "success") {
     return {
