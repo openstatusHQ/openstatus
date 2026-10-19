@@ -125,15 +125,15 @@ openstatus plans have caps on the number of components and monitors. If your imp
 
 ### Partial import
 
-If the import succeeds for some phases but fails for others (for example, components import successfully but incidents fail due to a rate limit or timeout), the successfully imported resources remain in place. Fix the underlying issue and re-run the import. Only the failed phases will be retried; already-imported resources are not duplicated.
+If the import succeeds for some phases but fails for others (for example, components import successfully but incidents fail due to a rate limit or timeout), the successfully imported resources remain in place. Fix the underlying issue and re-run the import. The whole import runs again, but resources that already exist are skipped, so nothing is duplicated.
 
 <Aside type="caution">
 If a partial import leaves your status page in an inconsistent state, you can delete the imported resources manually and start the import again from scratch.
 </Aside>
 
-### Duplicate incidents on re-import
+### Re-importing incidents and maintenances
 
-Running the import a second time does not deduplicate incidents or maintenances. If you need to re-import, delete the previously imported records first to avoid duplicate entries appearing on your status page.
+Running the import a second time does not create duplicates. An incident is skipped when a status report with the same title and first update date already exists on the page; a maintenance is skipped when one with the same title, start, and end already exists. If you renamed an imported incident or maintenance in openstatus, the next import treats it as new.
 
 ## What's next
 

@@ -27,7 +27,7 @@ In the dashboard, two settings on the status page's **Components** page control 
 
 | Setting        | Source of truth      | What users see                      | Best for                        |
 |-------------|----------------------|-------------------------------------|----------------------------------|
-| **Monitor checks** + **Time per status** | Incident duration    | Time-based uptime, proportional colours | Accurate long-term view         |
+| **Monitor checks** + **Time per status** | Incidents and report impacts | Time-based uptime, proportional colours | Accurate long-term view         |
 | **Monitor checks** + **Number of checks** | Every check result    | Check-based uptime %              | Real-time reflection            |
 | **Reports only**   | Your status reports and maintenances  | Controlled, narrative updates       | Transparency without monitoring |
 
@@ -37,11 +37,17 @@ With **Monitor checks** as the status source (`absolute`), uptime is calculated 
 
 ### Time per status
 
-The time per status value (`duration`) is calculated from the **total monitoring time and the duration of incidents**.
+The time per status value (`duration`) is calculated from the **total monitoring time and the downtime recorded by incidents and status reports**.
 
-In simple terms: `uptime = (total time - incident duration) / total time`
+In simple terms: `uptime = (total time - downtime) / total time`
 
-This means uptime is based on how long something was down, not how many checks failed. Only incident durations are included in the calculation.
+This means uptime is based on how long something was down, not how many checks failed. Downtime combines:
+
+- **Incidents**, which count fully.
+- **Status report impacts**, weighted by severity: a major outage counts fully, a partial outage counts half, and degraded performance not at all. Reports without per-component impacts are ignored in this mode.
+- **Probe errors**, only for monitors that run exclusively from [private locations](/docs/concept/private-locations).
+
+Overlapping periods are merged, so an incident and a status report describing the same outage count once.
 
 Temporary single-region ping failures (e.g., one location failing once, sometimes this just happens) are not propagated to users — because these often don't represent a real outage. That's also why we recommend at least three locations per monitor for redundancy.
 
