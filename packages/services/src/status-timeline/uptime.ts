@@ -157,11 +157,12 @@ export function reportsOnlyDowntimeMs(
 export function probeDowntimeIntervals(
   data: StatusData[],
   window: UptimeWindow,
+  timeZone = "UTC",
 ): WeightedInterval[] {
   const intervals: WeightedInterval[] = [];
 
   for (const item of data) {
-    const { start: dayStart, end: dayEnd } = dayWindow(item.day);
+    const { start: dayStart, end: dayEnd } = dayWindow(item.day, timeZone);
 
     // Clamp to window
     const start = Math.max(dayStart, window.start);

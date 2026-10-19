@@ -21,3 +21,9 @@ export function dayWindow(day: string, timeZone = "UTC"): DayWindow {
     end: new TZDate(year, month - 1, date + 1, timeZone).getTime(),
   };
 }
+
+/** Today's date in `timeZone`, keyed as UTC midnight like `StatusData.day`. */
+export function todayIn(timeZone: string): Date {
+  const date = new TZDate(Date.now(), timeZone).toISOString().slice(0, 10);
+  return new Date(`${date}T00:00:00.000Z`);
+}

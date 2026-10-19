@@ -14,7 +14,7 @@ import {
   worstImpact,
 } from "@openstatus/db/src/schema";
 
-import { type DayWindow, dayWindow } from "./day-window";
+import { type DayWindow, dayWindow, todayIn } from "./day-window";
 
 export type MonitorComponentWithNonNullMonitor =
   PageComponentWithMonitorRelation & {
@@ -48,6 +48,7 @@ export function fillStatusDataFor45Days(
   data: Array<StatusData>,
   monitorId: string,
   lookbackPeriod = 45,
+  timeZone = "UTC",
 ): Array<StatusData> {
   const result = [];
   const dataByDay = new Map();
@@ -59,11 +60,10 @@ export function fillStatusDataFor45Days(
   });
 
   // Generate all days from today backwards
-  const now = new Date();
+  const today = todayIn(timeZone);
   for (let i = 0; i < lookbackPeriod; i++) {
-    const date = new Date(now);
+    const date = new Date(today);
     date.setUTCDate(date.getUTCDate() - i);
-    date.setUTCHours(0, 0, 0, 0); // Set to start of day in UTC
 
     const dayKey = date.toISOString().split("T")[0]; // YYYY-MM-DD format
     const isoString = date.toISOString();
@@ -98,17 +98,19 @@ export function fillStatusDataFor45DaysNoop({
   errorDays,
   degradedDays,
   lookbackPeriod = 45,
+  timeZone = "UTC",
 }: {
   errorDays: number[];
   degradedDays: number[];
   lookbackPeriod?: number;
+  timeZone?: string;
 }): Array<StatusData> {
   const issueDays = [...errorDays, ...degradedDays];
-  // UTC day grid, matching fillStatusDataFor45Days, so synthetic days line up
+  // same day grid as fillStatusDataFor45Days, so synthetic days line up
+  const today = todayIn(timeZone);
   const data: StatusData[] = Array.from({ length: lookbackPeriod }, (_, i) => {
-    const date = new Date();
+    const date = new Date(today);
     date.setUTCDate(date.getUTCDate() - i);
-    date.setUTCHours(0, 0, 0, 0);
     return {
       day: date.toISOString(),
       count: 1,
@@ -118,7 +120,7 @@ export function fillStatusDataFor45DaysNoop({
       monitorId: "1",
     };
   });
-  return fillStatusDataFor45Days(data, "1", lookbackPeriod);
+  return fillStatusDataFor45Days(data, "1", lookbackPeriod, timeZone);
 }
 
 export type ImpactInterval = {
@@ -500,8 +502,9 @@ export type DayStatus =
 export function resolveDayStatus(
   bucket: StatusData,
   events: Event[],
+  timeZone = "UTC",
 ): { status: DayStatus; impact?: PageComponentImpact } {
-  const day = dayWindow(bucket.day);
+  const day = dayWindow(bucket.day, timeZone);
   const dayEvents = events.filter((e) => isDateWithinEvent(day, e));
   const reports = dayEvents.filter((e) => e.type === "report");
 
