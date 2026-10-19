@@ -1,8 +1,8 @@
 ---
-title: "Free & Open Source Uptime Monitoring, Status Page and Incident Response from Slack or AI"
+title: "Open Source Status Page, Uptime Monitoring & Incident Response"
 hero: "Run status pages and incident response from Slack or your AI agent."
 publishedAt: "2026-04-07"
-updatedAt: "2026-10-07"
+updatedAt: "2026-10-16"
 author: "openstatus"
 description: "Open source status page, incident response and global uptime monitoring. When something breaks, your subscribers hear it first and your auditor gets the trail."
 category: "product"
@@ -25,7 +25,7 @@ faq:
 </Actions>
 
 <p>
-<Subtle>Free to start, with a 14-day Starter trial and no card needed. Paid plans from $30/mo.</Subtle>
+<Subtle>Free to start. Try Starter free for 14 days, no card needed. Paid plans from $30/mo.</Subtle>
 </p>
 
 <Demo type="status-page" />
@@ -46,7 +46,7 @@ At 09:41 the Checkout API at Pied Piper starts returning 503s from Europe. Here 
 
 <Timeline>
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Eyebrow status="investigating">09:41</Eyebrow>
@@ -73,7 +73,7 @@ The Slack alert at 09:41: Checkout API returned 503 from lhr, ams, cdg and koyeb
 </div>
 </Grid>
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Eyebrow status="investigating">09:43</Eyebrow>
@@ -99,7 +99,7 @@ Gilfoyle runs `/openstatus incident declare Checkout API 503s in EU --sev major`
 </div>
 </Grid>
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Eyebrow status="identified">09:44</Eyebrow>
@@ -127,7 +127,7 @@ An engineer asks @openstatus in the incident thread to open a status report. The
 </div>
 </Grid>
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Eyebrow status="monitoring">10:14</Eyebrow>
@@ -153,7 +153,7 @@ At 10:14 Gilfoyle runs `/openstatus incident mitigate Rollback complete in eu-we
 </div>
 </Grid>
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Eyebrow status="resolved">11:02</Eyebrow>
@@ -179,7 +179,7 @@ The postmortem draft, written by the agent at 11:02: summary, impact (55m, from 
 </div>
 </Grid>
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Eyebrow>+1 week</Eyebrow>
@@ -205,7 +205,7 @@ The same incident a week later in the status page's events feed: four timestampe
 </div>
 </Grid>
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Eyebrow>+6 months</Eyebrow>
@@ -258,7 +258,7 @@ Every action in the dashboard is reachable programmatically. One API key, four w
 
 ## Flat pricing
 
-No per-seat fees. Every new workspace starts with a 14-day Starter trial, no card needed. [Open source](/github) and self-hostable under AGPL-3.0.
+No per-seat fees. Try Starter free for 14 days from your billing settings, no card needed. [Open source](/github) and self-hostable under AGPL-3.0.
 
 | Plan | Price | Includes |
 | --- | --- | --- |

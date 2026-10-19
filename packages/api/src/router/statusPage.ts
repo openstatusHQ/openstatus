@@ -16,6 +16,7 @@ import {
   selectWorkspaceSchema,
   statusReport,
 } from "@openstatus/db/src/schema";
+import { getStatusUpdateTypes } from "@openstatus/services/page";
 import { constantTimeEqual } from "@openstatus/services/page-access";
 import {
   getSubscriberByToken,
@@ -34,6 +35,7 @@ import {
   resolvePageAccess,
   visitorFromCtx,
 } from "../lib/page-access";
+import { sendSubscriberVerification } from "../lib/subscriber-verification";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
@@ -522,6 +524,11 @@ export const statusPageRouter = createTRPCRouter({
         statusReports,
         maintenances,
         workspacePlan: _page.workspace.plan,
+        statusUpdateTypes: getStatusUpdateTypes({
+          accessType: _page.accessType ?? "public",
+          emailSubscriptionsEnabled:
+            ws.data?.limits["status-subscribers"] ?? false,
+        }),
         status,
         lastEvents,
         openEvents,
@@ -858,6 +865,27 @@ export const statusPageRouter = createTRPCRouter({
         input.days ??
         (parsedConfiguration.success ? parsedConfiguration.data.days : 45);
 
+      // No public regions alone doesn't make a monitor private-only: it may
+      // have no locations at all, so confirm an active private assignment.
+      const noRegionMonitorIds = monitors
+        .filter((c) => c.monitor.regions.length === 0)
+        .map((c) => c.monitor.id);
+      const privateOnlyMonitorIds = new Set<number>();
+      if (noRegionMonitorIds.length > 0) {
+        const rows = await opts.ctx.db.query.privateLocationToMonitors.findMany(
+          {
+            where: and(
+              inArray(privateLocationToMonitors.monitorId, noRegionMonitorIds),
+              isNull(privateLocationToMonitors.deletedAt),
+            ),
+            columns: { monitorId: true },
+          },
+        );
+        for (const row of rows) {
+          if (row.monitorId !== null) privateOnlyMonitorIds.add(row.monitorId);
+        }
+      }
+
       return pageComponents.map((c) => {
         const events = getEvents({
           maintenances: _page.maintenances,
@@ -912,6 +940,8 @@ export const statusPageRouter = createTRPCRouter({
           events,
           barType: effectiveBarType,
           cardType: effectiveCardType,
+          privateLocationOnly:
+            c.monitor != null && privateOnlyMonitorIds.has(c.monitor.id),
         });
 
         return {
@@ -1418,7 +1448,9 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      return { id: subscription.id, token: subscription.token };
+      await sendSubscriberVerification(opts.ctx.db, subscription.id);
+
+      return { id: subscription.id };
     }),
 
   getSubscriptionByToken: publicProcedure

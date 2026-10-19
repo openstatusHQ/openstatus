@@ -3,6 +3,7 @@ import { describe, it } from "@std/testing/bdd";
 
 import {
   getMonitorListMetrics,
+  getRegionAxisMax,
   isPaidPeriod,
   mapMetrics,
   mapRegionMetrics,
@@ -69,13 +70,24 @@ describe("mapRegionMetrics", () => {
   }
 
   it("returns empty sorted entries without a timeline", () => {
-    expect(mapRegionMetrics(undefined, ["iad", "ams"], "p50")).toEqual([
-      { region: "ams", p50: 0, p90: 0, p99: 0, trend: [] },
-      { region: "iad", p50: 0, p90: 0, p99: 0, trend: [] },
+    expect(mapRegionMetrics(undefined, ["iad", "ams"])).toEqual([
+      { region: "ams", p50: 0, p75: 0, p90: 0, p95: 0, p99: 0, buckets: 0 },
+      { region: "iad", p50: 0, p75: 0, p90: 0, p95: 0, p99: 0, buckets: 0 },
     ]);
   });
 
-  it("averages percentiles and reverses the trend per region", () => {
+  it("keeps requested regions without data", () => {
+    const timeline = {
+      data: [row("iad", 1, 10, 20)],
+    } as unknown as Timeline;
+    const result = mapRegionMetrics(timeline, ["iad", "fra"]);
+    expect(result.map((r) => [r.region, r.buckets])).toEqual([
+      ["fra", 0],
+      ["iad", 1],
+    ]);
+  });
+
+  it("averages percentiles per region", () => {
     const timeline = {
       data: [
         row("iad", 2, 100, 300),
@@ -85,25 +97,57 @@ describe("mapRegionMetrics", () => {
       ],
     } as unknown as Timeline;
 
-    const result = mapRegionMetrics(timeline, ["ams", "iad"], "p99");
+    const result = mapRegionMetrics(timeline, ["ams", "iad"]);
     expect(result.map((r) => r.region)).toEqual(["ams", "iad"]);
 
     const iad = result[1];
     expect(iad.p50).toBe(151);
     expect(iad.p99).toBe(350);
-    expect(iad.trend).toEqual([
-      { latency: 400, timestamp: 1, iad: 400 },
-      { latency: 300, timestamp: 2, iad: 300 },
-    ]);
   });
 
   it("treats missing percentile values as 0", () => {
     const timeline = {
       data: [row("ams", 1, 10, 20)],
     } as unknown as Timeline;
-    expect(mapRegionMetrics(timeline, ["ams"], "p75")[0].trend).toEqual([
-      { latency: 0, timestamp: 1, ams: 0 },
-    ]);
+    expect(mapRegionMetrics(timeline, ["ams"])[0].p75).toBe(0);
+  });
+});
+
+describe("getRegionAxisMax", () => {
+  function metric(p90: number, p99: number, buckets = 1) {
+    return { region: "x", p50: 0, p75: 0, p90, p95: 0, p99, buckets };
+  }
+
+  it("rounds the largest P99 up", () => {
+    expect(getRegionAxisMax([metric(192, 301), metric(410, 556)])).toBe(600);
+  });
+
+  it("clips an outlier P99 but keeps every P90", () => {
+    expect(
+      getRegionAxisMax([metric(192, 301), metric(410, 1240), metric(177, 254)]),
+    ).toBe(500);
+  });
+
+  it("adds headroom for the overflow badge when a P99 is clipped", () => {
+    expect(
+      getRegionAxisMax([metric(500, 600), metric(100, 200), metric(100, 2000)]),
+    ).toBe(700);
+  });
+
+  it("draws an outlier normally once the rounded axis covers it", () => {
+    const metrics = [50, 100, 100, 200, 201].map((p99) => metric(10, p99));
+    const max = getRegionAxisMax(metrics);
+    expect(max).toBe(300);
+    expect(metrics.some((m) => m.p99 > max)).toBe(false);
+  });
+
+  it("averages the two middle P99s for an even count", () => {
+    expect(getRegionAxisMax([metric(50, 100), metric(50, 210)])).toBe(300);
+  });
+
+  it("ignores regions without data", () => {
+    expect(getRegionAxisMax([metric(0, 0, 0)])).toBe(100);
+    expect(getRegionAxisMax([metric(50, 80), metric(0, 9000, 0)])).toBe(80);
   });
 });
 

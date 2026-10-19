@@ -12,6 +12,7 @@ import {
   Unlinked,
   Plug,
   Delete,
+  Info,
 } from "@openstatus/icons";
 import {
   AlertDialog,
@@ -66,6 +67,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { Link } from "@/components/common/link";
+import { MonitorStatusDot } from "@/components/common/monitor-status-dot";
+import { Note } from "@/components/common/note";
 import {
   EmptyStateContainer,
   EmptyStateTitle,
@@ -81,7 +84,6 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { STATUS } from "@/components/nav/nav-monitors";
 import {
   Sortable,
   SortableContent,
@@ -289,6 +291,14 @@ export function FormComponents({
   const watchComponents = form.watch("components");
   const watchGroups = form.watch("groups");
   const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
+  const linkedMonitorIds = new Set(
+    [...watchComponents, ...watchGroups.flatMap((g) => g.components)].map(
+      (c) => c.monitorId,
+    ),
+  );
+  const hasInactiveMonitors = monitors.some(
+    (m) => !m.active && linkedMonitorIds.has(m.id),
+  );
   const [data, setData] = useState<(PageComponent | ComponentGroup)[]>(
     getSortedItems(
       allPageComponents,
@@ -629,7 +639,15 @@ export function FormComponents({
               />
             </FormCardContent>
             <FormCardSeparator />
-            <FormCardContent>
+            <FormCardContent className="grid gap-4">
+              {hasInactiveMonitors ? (
+                <Note color="warning">
+                  <Info />
+                  You have inactive monitors linked. They don't collect data, so
+                  activate them, use static components, or set the status source
+                  to Reports only.
+                </Note>
+              ) : null}
               <Sortable
                 value={data}
                 onValueChange={onValueChange}
@@ -840,16 +858,12 @@ function ComponentRow({
               </div>
             ) : null}
             {component.monitor && component.type === "monitor" ? (
-              <div
-                className={cn(
-                  "size-2 rounded-full",
-                  STATUS[
-                    component.monitor.active
-                      ? component.monitor.status
-                      : "inactive"
-                  ],
-                )}
-              />
+              <TooltipProvider delayDuration={0}>
+                <MonitorStatusDot
+                  monitor={component.monitor}
+                  label={component.monitor.active ? "Active" : "Inactive"}
+                />
+              </TooltipProvider>
             ) : null}
           </div>
           <AlertDialog>

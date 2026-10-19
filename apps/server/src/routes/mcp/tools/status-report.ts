@@ -6,9 +6,12 @@ import type { ServiceContext } from "@openstatus/services";
 import {
   addStatusReportUpdateTool,
   createStatusReportTool,
+  deleteStatusReportUpdateTool,
+  getStatusReportTool,
   listStatusReportsTool,
   resolveStatusReportTool,
   updateStatusReportTool,
+  updateStatusReportUpdateTool,
 } from "@openstatus/services/agent-tools";
 
 import { registerRegistryTools } from "./registry-adapter";
@@ -19,9 +22,12 @@ export function registerStatusReportTools(
 ): Map<string, RegisteredTool> {
   return registerRegistryTools(server, ctx, [
     listStatusReportsTool,
+    getStatusReportTool,
     createStatusReportTool,
     addStatusReportUpdateTool,
     updateStatusReportTool,
     resolveStatusReportTool,
+    updateStatusReportUpdateTool,
+    deleteStatusReportUpdateTool,
   ]);
 }

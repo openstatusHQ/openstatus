@@ -39,8 +39,12 @@ tags:
       and associate them with monitors. Supports 12 notification providers.
   - name: StatusReportService
     description: |
-      Create and manage incident reports with status updates. Reports follow a lifecycle:
+      Create and manage public status reports with status updates. Reports follow a lifecycle:
       investigating -> identified -> monitoring -> resolved.
+  - name: IncidentService
+    description: |
+      Declare and run incidents: lifecycle (open -> mitigated -> resolved, or canceled),
+      timeline notes, a linked status report, and the postmortem.
   - name: MaintenanceService
     description: |
       Schedule maintenance windows for status page components. Subscribers can be

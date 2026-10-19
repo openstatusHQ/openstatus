@@ -1,10 +1,11 @@
-import { and, count, db as defaultDb, eq } from "@openstatus/db";
-import { page, pageComponent } from "@openstatus/db/src/schema";
+import { count, db as defaultDb, eq } from "@openstatus/db";
+import { pageComponent } from "@openstatus/db/src/schema";
 import type { ImportSummary } from "@openstatus/importers";
 
 import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
-import { NotFoundError, ValidationError } from "../errors";
+import { ValidationError } from "../errors";
+import { getPageInWorkspace } from "../page/internal";
 import { addLimitWarnings } from "./limits";
 import {
   type PhaseContext,
@@ -48,16 +49,12 @@ export async function runImport(args: {
   // Verify pageId belongs to the workspace before doing any provider work.
   // Was previously duplicated at the router layer — owning this in the
   // service means all callers (tRPC / Slack / future) get the same check.
-  if (input.pageId) {
-    const existing = await tx
-      .select({ id: page.id })
-      .from(page)
-      .where(
-        and(eq(page.id, input.pageId), eq(page.workspaceId, ctx.workspace.id)),
-      )
-      .get();
-
-    if (!existing) throw new NotFoundError("page", input.pageId);
+  if (input.pageId !== undefined) {
+    await getPageInWorkspace({
+      tx: tx,
+      id: input.pageId,
+      workspaceId: ctx.workspace.id,
+    });
   }
 
   const provider = createProvider(input.provider);

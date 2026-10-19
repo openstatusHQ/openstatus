@@ -36,6 +36,47 @@
   }
 }
 
+@layer components {
+  /* GFM task lists: the checkbox replaces the bullet, like GitHub. remark-gfm
+   * emits it disabled; drawn by hand so it mirrors the UI Checkbox instead of
+   * the browser's greyed-out native control. */
+  .prose .task-list-item {
+    list-style: none;
+  }
+  .prose .task-list-item > input[type="checkbox"] {
+    appearance: none;
+    position: relative;
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    /* hangs in the marker gutter; the markdown's own space after the box
+     * fills the rest, so wrapped lines align with the text */
+    margin-inline-start: -1.5em;
+    margin-inline-end: 0.25em;
+    vertical-align: -0.125em;
+    border: 1px solid var(--input);
+    border-radius: 0.25rem;
+    background-color: var(--background);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    cursor: default;
+  }
+  .dark .prose .task-list-item > input[type="checkbox"] {
+    background-color: color-mix(in oklab, var(--input) 30%, transparent);
+  }
+  .prose .task-list-item > input[type="checkbox"]:checked {
+    border-color: var(--primary);
+    background-color: var(--primary);
+  }
+  .prose .task-list-item > input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    background-color: var(--primary-foreground);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+  }
+}
+
 @layer utilities {
   /* Scoped to the onboarding status-page preview so `rounded-full` collapses
    * to 0 when the active theme sets `--radius: 0` (every theme except the

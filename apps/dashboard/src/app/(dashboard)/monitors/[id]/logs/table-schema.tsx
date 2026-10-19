@@ -21,6 +21,7 @@ import {
 import { addDays, addHours, endOfDay, startOfDay } from "date-fns";
 
 import { HoverCardTiming } from "@/components/common/hover-card-timing";
+import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellRegion } from "@/components/data-table/table-cell-region";
 import { cn } from "@/lib/utils";
@@ -38,10 +39,6 @@ const STATUS_SWATCH: Record<string, string> = {
   degraded: "bg-warning",
   error: "bg-destructive",
 };
-
-function Dash() {
-  return <div className="text-muted-foreground">-</div>;
-}
 
 /** The same square the table cell draws, so the filter row reads as its legend. */
 function StatusSwatch({ value }: { value: string }) {
@@ -151,7 +148,7 @@ export function createLogsTableSchema(options: {
       .display("custom", {
         cell: (value) => {
           const swatch = STATUS_SWATCH[String(value)];
-          if (!swatch) return <Dash />;
+          if (!swatch) return <TableCellEmpty>Unknown</TableCellEmpty>;
           return (
             <div className="flex justify-center">
               <div className={cn(swatch, "size-2.5 rounded-[2px]")} />
@@ -208,7 +205,7 @@ export function createLogsTableSchema(options: {
       .display("custom", {
         cell: (_value, row) => {
           const log = row as ResponseLog;
-          if (!log.timing) return <Dash />;
+          if (!log.timing) return <TableCellEmpty>No timing</TableCellEmpty>;
           return <HoverCardTiming timing={log.timing} latency={log.latency} />;
         },
       }),
@@ -226,7 +223,8 @@ export function createLogsTableSchema(options: {
       })
       .display("custom", {
         cell: (value) => {
-          if (value !== "cron" && value !== "api") return <Dash />;
+          if (value !== "cron" && value !== "api")
+            return <TableCellEmpty>Unknown</TableCellEmpty>;
           const Icon = value === "cron" ? Clock : ApiTrigger;
           const label = value === "cron" ? "Scheduled" : "API";
           return (

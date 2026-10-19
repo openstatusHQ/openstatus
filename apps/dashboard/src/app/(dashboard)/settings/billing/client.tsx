@@ -1,12 +1,14 @@
 "use client";
 
+import { TRIAL_DAYS } from "@openstatus/api/src/router/stripe/trial-config";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
-import { useEffect, useMemo, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { BillingAddons } from "@/components/content/billing-addons";
@@ -23,6 +25,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { DataTable } from "@/components/data-table/billing/data-table";
+import { UpgradeIntentDialog } from "@/components/dialogs/upgrade-intent";
 import {
   FormCard,
   FormCardContent,
@@ -76,9 +79,27 @@ export function Client() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
-  const [{ success, setup }, setSearchParams] =
+  const [{ success, setup, trial }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  // Captured on mount: the toasts clear the params while the dialog is open.
+  const [askIntent, setAskIntent] = useState(Boolean(success || trial));
+  const [startedTrial] = useState(Boolean(trial));
+  const { data: hasIntent } = useQuery({
+    ...trpc.feedback.hasSubmitted.queryOptions({ source: "upgrade-intent" }),
+    enabled: askIntent,
+  });
+  const [currency] = useCookieState("x-currency", "USD");
+  const trialCheckoutMutation = useMutation(
+    trpc.stripeRouter.getCheckoutSession.mutationOptions({
+      onSuccess: (data) => {
+        if (data?.type === "checkout" && data.session.url) {
+          window.location.assign(data.session.url);
+        }
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
   const { data: usage } = useQuery(trpc.workspace.usage.queryOptions());
   const paymentMethodSetupMutation = useMutation(
     trpc.stripeRouter.getPaymentMethodSetupSession.mutationOptions({
@@ -123,6 +144,45 @@ export function Client() {
   }, [success, setSearchParams]);
 
   useEffect(() => {
+    if (!trial) return;
+    let cancelled = false;
+    queryClient.invalidateQueries({
+      queryKey: trpc.stripeRouter.getBillingInterval.queryKey(),
+    });
+    // The webhook can land after the redirect, and anyone can open
+    // `?trial=true`, so only toast once the workspace is actually trialing.
+    (async () => {
+      for (let attempt = 0; attempt < 5 && !cancelled; attempt++) {
+        const ws = await queryClient.fetchQuery({
+          ...trpc.workspace.get.queryOptions(),
+          staleTime: 0,
+        });
+        if (cancelled) return;
+        if (ws.trialDaysLeft !== null) {
+          toast.success(`Your ${TRIAL_DAYS}-day Starter trial has started`, {
+            duration: 5_000,
+            onAutoClose: () => setSearchParams({ trial: null }),
+            onDismiss: () => setSearchParams({ trial: null }),
+          });
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1_000));
+      }
+      if (cancelled) return;
+      // Webhook still pending: confirm checkout without claiming the trial.
+      toast.success("Checkout complete", {
+        description: "Your trial starts as soon as Stripe confirms it.",
+        duration: 5_000,
+        onAutoClose: () => setSearchParams({ trial: null }),
+        onDismiss: () => setSearchParams({ trial: null }),
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [trial, setSearchParams, queryClient, trpc]);
+
+  useEffect(() => {
     if (setup) {
       queryClient.invalidateQueries({
         queryKey: trpc.workspace.get.queryKey(),
@@ -157,6 +217,11 @@ export function Client() {
 
   return (
     <SectionGroup>
+      <UpgradeIntentDialog
+        open={askIntent && hasIntent === false}
+        onOpenChange={setAskIntent}
+        trial={startedTrial}
+      />
       <Section>
         <SectionHeader>
           <SectionTitle>Billing</SectionTitle>
@@ -165,6 +230,48 @@ export function Client() {
           </SectionDescription>
         </SectionHeader>
         <FormCardGroup>
+          {workspace?.trial.eligible ? (
+            <FormCard>
+              <FormCardHeader>
+                <FormCardTitle>
+                  Try Starter free for {TRIAL_DAYS} days
+                </FormCardTitle>
+                <FormCardDescription>
+                  1 min checks, more monitors, custom domain, Slack and on-call
+                  integrations.
+                </FormCardDescription>
+              </FormCardHeader>
+              <FormCardFooter>
+                <FormCardFooterInfo>
+                  <span className="text-foreground font-medium">
+                    No credit card needed.
+                  </span>{" "}
+                  The workspace returns to Hobby after {TRIAL_DAYS} days unless
+                  you add a card.
+                </FormCardFooterInfo>
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    trialCheckoutMutation.mutate({
+                      trial: true,
+                      plan: "starter",
+                      interval: "monthly",
+                      surface: "billing",
+                      currency: currency || "USD",
+                      workspaceSlug: workspace.slug,
+                      successUrl: `${window.location.origin}/settings/billing?trial=true`,
+                      cancelUrl: `${window.location.origin}/settings/billing`,
+                    })
+                  }
+                  disabled={trialCheckoutMutation.isPending}
+                >
+                  {trialCheckoutMutation.isPending
+                    ? "Loading..."
+                    : "Start trial"}
+                </Button>
+              </FormCardFooter>
+            </FormCard>
+          ) : null}
           {workspace.trialEndsAt && trialDaysLeft ? (
             <FormCard>
               <FormCardHeader>

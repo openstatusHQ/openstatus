@@ -118,6 +118,7 @@ export function Client() {
         {isLimited ? (
           <BillingOverlayContainer>
             <DataTable
+              paginationComponent={DataTablePaginationSimple}
               columns={columns}
               data={[...EXAMPLES, ...EXAMPLES, ...EXAMPLES]}
               defaultColumnVisibility={{

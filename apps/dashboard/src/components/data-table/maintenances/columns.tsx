@@ -11,6 +11,7 @@ import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 
+import { TableCellEmpty } from "../table-cell-empty";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
@@ -42,7 +43,7 @@ export const columns: ColumnDef<Maintenance>[] = [
     cell: ({ row }) => {
       const value = row.original.pageComponents;
       if (value.length === 0) {
-        return <div className="text-muted-foreground">-</div>;
+        return <TableCellEmpty>No components</TableCellEmpty>;
       }
       return (
         <div className="flex flex-wrap gap-1">

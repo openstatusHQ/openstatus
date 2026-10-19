@@ -92,10 +92,7 @@ export function OnboardingChecksTable({
   if (rows.length === 0 && isStreaming) {
     return (
       <div
-        className={cn(
-          "border-border bg-background overflow-auto rounded-md border md:min-h-0 md:flex-1",
-          className,
-        )}
+        className={cn("overflow-auto md:min-h-0 md:flex-1", className)}
         {...props}
       >
         <DataTableSkeleton rows={Math.min(totalRegions, 8)} />

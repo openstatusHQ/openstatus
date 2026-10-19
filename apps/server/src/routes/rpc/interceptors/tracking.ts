@@ -1,3 +1,4 @@
+import { isMessage, type Message } from "@bufbuild/protobuf";
 import type { Interceptor } from "@connectrpc/connect";
 import { getLogger } from "@logtape/logtape";
 import {
@@ -6,8 +7,15 @@ import {
   parseInputToProps,
   setupAnalytics,
 } from "@openstatus/analytics";
+import {
+  DeclareIncidentRequestSchema,
+  IncidentSeverity,
+  IncidentStatus,
+  SetIncidentStatusRequestSchema,
+} from "@openstatus/proto/incident/v1";
 
 import { apiAnalyticsIdentity } from "../../../libs/analytics-identity";
+import { apiRequestSampleRate } from "../../../libs/api-request-sampling";
 import { parseCliHeaders, trackCliCommand } from "../../../libs/cli-telemetry";
 import { RPC_CONTEXT_KEY } from "./auth";
 
@@ -17,7 +25,24 @@ type RpcEventMapping = {
   event: EventProps;
   eventProps?: string[];
   normalizeInput?: (message: unknown) => Record<string, unknown>;
+  props?: (message: Message) => Record<string, string>;
 };
+
+function incidentProps(message: Message): Record<string, string> {
+  if (isMessage(message, DeclareIncidentRequestSchema)) {
+    return {
+      source: "api",
+      severity: IncidentSeverity[message.severity].toLowerCase(),
+    };
+  }
+  if (isMessage(message, SetIncidentStatusRequestSchema)) {
+    return {
+      source: "api",
+      status: IncidentStatus[message.status].toLowerCase(),
+    };
+  }
+  return { source: "api" };
+}
 
 // Create*Monitor requests nest the config under `monitor`, so top-level
 // extraction yields nothing; ICMP and gRPC name their target `uri` and none of
@@ -158,6 +183,44 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     {
       event: Events.DeletePrivateLocation,
     },
+
+  // IncidentService
+  "openstatus.incident.v1.IncidentService/DeclareIncident": {
+    event: Events.DeclareManagedIncident,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/UpdateIncident": {
+    event: Events.UpdateManagedIncident,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/SetIncidentStatus": {
+    event: Events.ChangeManagedIncidentStatus,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/AddIncidentNote": {
+    event: Events.AddManagedIncidentNote,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/LinkStatusReport": {
+    event: Events.LinkManagedIncidentReport,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/CloseIncident": {
+    event: Events.CloseManagedIncident,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/DeleteIncident": {
+    event: Events.DeleteManagedIncident,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/UpdatePostmortem": {
+    event: Events.DraftManagedPostmortem,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/ApprovePostmortem": {
+    event: Events.ApproveManagedPostmortem,
+    props: incidentProps,
+  },
 };
 
 /**
@@ -171,6 +234,8 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
  *
  * Requests from the openstatus CLI also carry `cliCommand`/`cliVersion` on
  * `api_request`, and the first request of each CLI run fires one `cli_command`.
+ * CLI requests always fire `api_request`; the rest are sampled (see
+ * `apiRequestSampleRate`). Domain events are never sampled.
  *
  * Must be placed after authInterceptor (needs workspace context) and
  * validationInterceptor (requests it rejects never reach here, so they are not
@@ -209,23 +274,32 @@ function trackRpcCall(req: TrackedRequest, success: boolean) {
   const key = `${req.service.typeName}/${req.method.name}`;
   const mapping = success ? RPC_EVENT_MAP[key] : undefined;
   const cli = parseCliHeaders(req.header);
+  const sampleRate = apiRequestSampleRate(cli);
 
-  const events: (EventProps & Record<string, unknown>)[] = [
-    {
+  const events: (EventProps & Record<string, unknown>)[] = [];
+
+  if (sampleRate !== undefined) {
+    events.push({
       ...Events.ApiRequest,
       service: req.service.typeName,
       method: req.method.name,
       success,
+      sampleRate,
       ...(cli ? { cliCommand: cli.command } : {}),
       ...(cli?.version ? { cliVersion: cli.version } : {}),
-    },
-  ];
+    });
+  }
 
   if (mapping) {
     const input = mapping.normalizeInput?.(req.message) ?? req.message;
-    const additionalProps = parseInputToProps(input, mapping.eventProps);
+    const additionalProps = {
+      ...parseInputToProps(input, mapping.eventProps),
+      ...(mapping.props && !req.stream ? mapping.props(req.message) : {}),
+    };
     events.push({ ...additionalProps, ...mapping.event });
   }
+
+  if (events.length === 0) return;
 
   setupAnalytics(apiAnalyticsIdentity(rpcCtx.workspace, req.header))
     .then((analytics) =>

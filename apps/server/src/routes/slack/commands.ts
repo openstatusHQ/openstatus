@@ -1,5 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import { ForbiddenError } from "@openstatus/services";
+import { ForbiddenError, PreconditionFailedError } from "@openstatus/services";
 import {
   createSlackSubscriber,
   listSlackSubscribersForChannel,
@@ -9,7 +9,8 @@ import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
 
-import { runInBackground } from "./background";
+import { runInBackground } from "@/libs/background";
+
 import { buildLinkAccountBlocks, LINK_ACCOUNT_TEXT } from "./blocks";
 import type { SlackConfig, SlackEnv } from "./config";
 import { runIncidentCommand } from "./incident-commands";
@@ -250,6 +251,9 @@ async function runCommand(command: SlashCommand): Promise<string> {
       }
       return `📡 This channel is now subscribed to *${page.title}*. Incident updates will appear here.`;
     } catch (error) {
+      if (error instanceof PreconditionFailedError) {
+        return `*${page.title}* is a protected status page and can't be subscribed to from Slack.`;
+      }
       if (error instanceof ForbiddenError) {
         return `*${page.title}* isn't on a plan that supports subscribers.`;
       }

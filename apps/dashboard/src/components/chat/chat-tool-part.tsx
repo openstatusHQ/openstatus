@@ -73,6 +73,8 @@ function ApprovalCard({
   }, []);
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // An open popover (e.g. an entity hover card) already handled this key.
+    if (e.defaultPrevented) return;
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       confirmTool(approvalId);

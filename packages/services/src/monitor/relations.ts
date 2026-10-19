@@ -9,8 +9,8 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { LimitExceededError } from "../errors";
 import {
+  assertSchedulingWithinPlan,
   getMonitorInWorkspace,
   validateNotificationIds,
   validatePrivateLocationIds,
@@ -34,22 +34,7 @@ export async function updateMonitorSchedulingRegions(args: {
   const { ctx } = args;
   requireScope(ctx, "write");
   const input = UpdateMonitorSchedulingRegionsInput.parse(args.input);
-  const limits = ctx.workspace.limits;
-
-  if (!limits.periodicity.includes(input.periodicity)) {
-    throw new LimitExceededError("periodicity", limits.periodicity.length);
-  }
-  if (limits["max-regions"] < input.regions.length) {
-    throw new LimitExceededError("max-regions", limits["max-regions"]);
-  }
-  if (
-    input.regions.length > 0 &&
-    !input.regions.every((r) =>
-      limits.regions.includes(r as (typeof limits)["regions"][number]),
-    )
-  ) {
-    throw new LimitExceededError("regions", limits.regions.length);
-  }
+  assertSchedulingWithinPlan(ctx.workspace.limits, input);
 
   await withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({

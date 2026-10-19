@@ -14,27 +14,30 @@ import {
   SetIncidentStatusInput,
   UpdateIncidentInput,
   addIncidentNote,
-  allowedTransitions,
   approvePostmortem,
   draftPostmortem,
   generatePostmortemDraft,
   getPostmortem,
-  announceIncidentChange,
-  announceInChannel,
+  afterIncidentClosed,
+  afterIncidentDeclared,
+  afterIncidentDeleted,
+  afterIncidentStatusChanged,
+  afterIncidentUpdated,
+  afterPostmortemApproved,
   bindIncidentSlackChannel,
   closeIncident,
   declareIncident,
   deleteIncident,
-  displayName,
-  escapeMrkdwn,
   getIncident,
   getIncidentForStatusReport,
-  isDeletable,
+  getIncidentOrThrow,
   linkIncidentStatusReport,
   listIncidentEvents,
   listIncidents,
   listLinkedStatusReportIds,
-  openIncidentSlackChannel,
+  type IncidentEffects,
+  incidentEffects,
+  resolveDashboardUrl,
   setIncidentStatus,
   unbindIncidentSlackChannel,
   unlinkIncidentStatusReport,
@@ -43,80 +46,30 @@ import {
 import { WebClient } from "@slack/web-api";
 import { TRPCError } from "@trpc/server";
 import { generateText } from "ai";
-import { after } from "next/server.js";
 import { z } from "zod";
 
+import { createAfterResponse } from "../lib/after-response";
 import { chatRateLimit } from "../lib/chat-rate-limit";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
-const DASHBOARD_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://app.openstatus.dev"
-    : "http://localhost:3001";
-
-const clientFor = (token: string) => new WebClient(token);
+const DASHBOARD_URL = resolveDashboardUrl({
+  nodeEnv: process.env.NODE_ENV,
+  override: process.env.DASHBOARD_URL,
+});
 
 type AuthedCtx = Parameters<typeof toServiceCtx>[0];
 
-/** Slack follow-ups run after the response; the incident is already saved. */
-function afterResponse(task: () => Promise<void>) {
-  const run = () =>
-    task().catch((err) => console.warn("incident slack follow-up failed", err));
-  try {
-    after(run);
-  } catch {
-    void run();
-  }
-}
+/** Follow-ups run after the response; the incident is already saved. */
+const afterResponse = createAfterResponse("incident follow-up");
 
-function announce(
-  ctx: AuthedCtx,
-  incidentId: number,
-  text: string,
-  archive = false,
-) {
-  afterResponse(() =>
-    announceIncidentChange({
-      ctx: toServiceCtx(ctx),
-      incidentId,
-      text,
-      clientFor,
-      dashboardUrl: DASHBOARD_URL,
-      archive,
-    }),
-  );
-}
-
-function actorName(ctx: AuthedCtx): string {
-  return escapeMrkdwn(ctx.user.name || ctx.user.email || "A teammate");
-}
-
-function quote(note: string | undefined): string {
-  return note ? `\n>${escapeMrkdwn(note).replaceAll("\n", "\n>")}` : "";
-}
-
-/** Best effort: a failed email never fails the mutation that assigned them. */
-async function notifyCommander(ctx: AuthedCtx, incidentId: number) {
-  try {
-    const row = await getIncident({
-      ctx: toServiceCtx(ctx),
-      input: { id: incidentId },
-    });
-    const commander = row?.commander;
-    if (!row || !commander?.email || commander.id === ctx.user.id) return;
-    await sendIncidentCommander({
-      to: commander.email,
-      incidentTitle: row.title,
-      severity: row.severity,
-      workspaceName: ctx.workspace.name ?? ctx.workspace.slug,
-      assignedBy: actorName(ctx),
-      url: `${DASHBOARD_URL}/incidents/${row.id}`,
-      idempotencyKey: `incident-commander:${row.id}:${commander.id}:${row.updatedAt.getTime()}`,
-    });
-  } catch (err) {
-    console.warn("incident commander email failed", { incidentId, err });
-  }
+function effectsFor(ctx: AuthedCtx): IncidentEffects {
+  return incidentEffects({
+    clientFor: (token) => new WebClient(token),
+    dashboardUrl: DASHBOARD_URL,
+    sendCommanderEmail: sendIncidentCommander,
+    name: ctx.user.name || ctx.user.email || "A teammate",
+  });
 }
 
 export const incidentRouter = createTRPCRouter({
@@ -132,7 +85,7 @@ export const incidentRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       try {
-        return await listIncidents({ ctx: toServiceCtx(ctx), input });
+        return (await listIncidents({ ctx: toServiceCtx(ctx), input })).items;
       } catch (err) {
         toTRPCError(err);
       }
@@ -142,18 +95,7 @@ export const incidentRouter = createTRPCRouter({
     .input(IncidentIdInput)
     .query(async ({ ctx, input }) => {
       try {
-        const row = await getIncident({ ctx: toServiceCtx(ctx), input });
-        if (!row) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Incident not found",
-          });
-        }
-        return {
-          ...row,
-          allowedTransitions: allowedTransitions(row),
-          deletable: isDeletable(row),
-        };
+        return await getIncidentOrThrow({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
@@ -204,17 +146,14 @@ export const incidentRouter = createTRPCRouter({
           ctx: toServiceCtx(ctx),
           input: declare,
         });
-        if (row.commanderId !== null) await notifyCommander(ctx, row.id);
-        if (openSlackChannel) {
-          afterResponse(async () => {
-            await openIncidentSlackChannel({
-              ctx: toServiceCtx(ctx),
-              incidentId: row.id,
-              clientFor,
-              dashboardUrl: DASHBOARD_URL,
-            });
-          });
-        }
+        afterResponse(() =>
+          afterIncidentDeclared({
+            ctx: toServiceCtx(ctx),
+            effects: effectsFor(ctx),
+            incident: row,
+            openSlackChannel: openSlackChannel ?? false,
+          }),
+        );
         return row;
       } catch (err) {
         toTRPCError(err);
@@ -231,41 +170,15 @@ export const incidentRouter = createTRPCRouter({
           input: { id: input.id },
         });
         const row = await updateIncident({ ctx: toServiceCtx(ctx), input });
-        const commanderChanged = row.commanderId !== before?.commanderId;
-        if (row.commanderId !== null && commanderChanged) {
-          await notifyCommander(ctx, row.id);
-        }
-        const changes: string[] = [];
-        if (before && row.title !== before.title) {
-          changes.push(`title is now *${escapeMrkdwn(row.title)}*`);
-        }
-        if (before && row.summary !== before.summary) {
-          changes.push(
-            row.summary ? "summary was updated" : "summary was removed",
+        if (before) {
+          afterResponse(() =>
+            afterIncidentUpdated({
+              ctx: toServiceCtx(ctx),
+              effects: effectsFor(ctx),
+              before,
+              after: row,
+            }),
           );
-        }
-        if (before && row.startedAt.getTime() !== before.startedAt.getTime()) {
-          const seconds = Math.floor(row.startedAt.getTime() / 1000);
-          changes.push(
-            `start time is now <!date^${seconds}^{date_short_pretty} {time}|${row.startedAt.toISOString()}>`,
-          );
-        }
-        if (before && row.severity !== before.severity) {
-          changes.push(`severity is now *${row.severity}*`);
-        }
-        if (before && commanderChanged) {
-          const after = await getIncident({
-            ctx: toServiceCtx(ctx),
-            input: { id: row.id },
-          });
-          changes.push(
-            after?.commander
-              ? `${escapeMrkdwn(displayName(after.commander))} is now commander`
-              : "there is no commander",
-          );
-        }
-        if (changes.length) {
-          announce(ctx, row.id, `${actorName(ctx)}: ${changes.join(", ")}.`);
         }
         return row;
       } catch (err) {
@@ -279,11 +192,14 @@ export const incidentRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       try {
         const row = await setIncidentStatus({ ctx: toServiceCtx(ctx), input });
-        announce(
-          ctx,
-          row.id,
-          `${actorName(ctx)} marked the incident *${row.status}*.${quote(input.note)}`,
-          row.status === "canceled",
+        afterResponse(() =>
+          afterIncidentStatusChanged({
+            ctx: toServiceCtx(ctx),
+            effects: effectsFor(ctx),
+            incidentId: row.id,
+            status: row.status,
+            note: input.note,
+          }),
         );
         return row;
       } catch (err) {
@@ -400,10 +316,14 @@ export const incidentRouter = createTRPCRouter({
 
   draftPostmortem: protectedProcedure
     .meta({ track: Events.DraftManagedPostmortem })
-    .input(DraftPostmortemInput)
+    // An agent draft goes through `draftPostmortemWithAgent`; this is a person typing.
+    .input(DraftPostmortemInput.omit({ draftedBy: true }))
     .mutation(async ({ ctx, input }) => {
       try {
-        return await draftPostmortem({ ctx: toServiceCtx(ctx), input });
+        return await draftPostmortem({
+          ctx: toServiceCtx(ctx),
+          input: { ...input, draftedBy: "user" },
+        });
       } catch (err) {
         toTRPCError(err);
       }
@@ -418,15 +338,14 @@ export const incidentRouter = createTRPCRouter({
           ? await getIncident({ ctx: toServiceCtx(ctx), input })
           : undefined;
         const row = await approvePostmortem({ ctx: toServiceCtx(ctx), input });
-        // Only announce (and archive) when this approval actually closed it.
-        if (before && !before.closedAt) {
-          announce(
-            ctx,
-            input.id,
-            `${actorName(ctx)} approved the postmortem and closed the incident.`,
-            true,
-          );
-        }
+        afterResponse(() =>
+          afterPostmortemApproved({
+            ctx: toServiceCtx(ctx),
+            effects: effectsFor(ctx),
+            incidentId: input.id,
+            closed: !!before && !before.closedAt,
+          }),
+        );
         return row;
       } catch (err) {
         toTRPCError(err);
@@ -439,7 +358,13 @@ export const incidentRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       try {
         const row = await closeIncident({ ctx: toServiceCtx(ctx), input });
-        announce(ctx, row.id, `${actorName(ctx)} closed the incident.`, true);
+        afterResponse(() =>
+          afterIncidentClosed({
+            ctx: toServiceCtx(ctx),
+            effects: effectsFor(ctx),
+            incidentId: row.id,
+          }),
+        );
         return row;
       } catch (err) {
         toTRPCError(err);
@@ -453,15 +378,12 @@ export const incidentRouter = createTRPCRouter({
       try {
         const before = await getIncident({ ctx: toServiceCtx(ctx), input });
         await deleteIncident({ ctx: toServiceCtx(ctx), input });
-        if (before?.slackChannelId) {
+        if (before) {
           afterResponse(() =>
-            announceInChannel({
+            afterIncidentDeleted({
               ctx: toServiceCtx(ctx),
-              incident: before,
-              text: `${actorName(ctx)} deleted this incident: it was declared by mistake.`,
-              clientFor,
-              dashboardUrl: DASHBOARD_URL,
-              archive: true,
+              effects: effectsFor(ctx),
+              before,
             }),
           );
         }

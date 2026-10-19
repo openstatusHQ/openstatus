@@ -48,7 +48,7 @@ export function DataTableFacetedFilter<TData, TValue>({
           variant="outline"
           size="sm"
           className={cn(
-            "h-8 border-dashed",
+            "h-8 border-dashed shadow-none",
             selectedValues?.size > 0 && "border-solid",
           )}
         >

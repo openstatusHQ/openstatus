@@ -9,6 +9,7 @@ import type { Context, Next } from "hono";
 import { matchedRoutes } from "hono/route";
 
 import { apiAnalyticsIdentity } from "@/libs/analytics-identity";
+import { apiRequestSampleRate } from "@/libs/api-request-sampling";
 import { parseCliHeaders, trackCliCommand } from "@/libs/cli-telemetry";
 import type { Variables } from "@/types";
 
@@ -53,7 +54,8 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
  * pattern (`GET /v1/monitor/:id`), never the raw URL, to keep it low-cardinality.
  *
  * Requests from the openstatus CLI also carry `cliCommand`/`cliVersion`, and
- * the first request of each CLI run fires one `cli_command`.
+ * the first request of each CLI run fires one `cli_command`. CLI requests are
+ * always tracked; the rest are sampled (see `apiRequestSampleRate`).
  *
  * Mount after `authMiddleware`; requests it rejects carry no workspace and are
  * skipped, as are requests that match no route. Per-route domain events stay with `trackMiddleware`.
@@ -72,6 +74,9 @@ export function apiTrackMiddleware() {
     if (!route) return;
 
     const cli = parseCliHeaders(c.req.raw.headers);
+    const sampleRate = apiRequestSampleRate(cli);
+    if (sampleRate === undefined) return;
+
     const success = c.res.status.toString().startsWith("2") && !c.error;
 
     setupAnalytics(apiAnalyticsIdentity(workspace, c.req.raw.headers))
@@ -82,6 +87,7 @@ export function apiTrackMiddleware() {
             service: "v1",
             method: `${c.req.method} ${route.path}`,
             success,
+            sampleRate,
             ...(cli ? { cliCommand: cli.command } : {}),
             ...(cli?.version ? { cliVersion: cli.version } : {}),
           }),

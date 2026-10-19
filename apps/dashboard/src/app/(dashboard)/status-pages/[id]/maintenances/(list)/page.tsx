@@ -18,6 +18,7 @@ import { columns } from "@/components/data-table/maintenances/columns";
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
@@ -96,7 +97,11 @@ export default function Page() {
             </FormSheetMaintenance>
           </div>
         </SectionHeaderRow>
-        <DataTable columns={columns} data={maintenances} />
+        <DataTable
+          paginationComponent={DataTablePaginationSimple}
+          columns={columns}
+          data={maintenances}
+        />
       </Section>
     </SectionGroup>
   );

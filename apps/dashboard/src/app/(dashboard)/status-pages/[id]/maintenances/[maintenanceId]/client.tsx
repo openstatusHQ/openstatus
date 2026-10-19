@@ -24,7 +24,10 @@ import { MaintenanceActions } from "@/components/maintenances/maintenance-action
 import { MaintenanceComponents } from "@/components/maintenances/maintenance-components";
 import { MaintenanceProperties } from "@/components/maintenances/maintenance-properties";
 import { MaintenanceUpdateComposer } from "@/components/maintenances/maintenance-update-composer";
-import { MaintenanceUpdateTimelineItem } from "@/components/maintenances/maintenance-update-timeline";
+import {
+  MaintenanceScheduledTimelineItem,
+  MaintenanceUpdateTimelineItem,
+} from "@/components/maintenances/maintenance-update-timeline";
 import { useMaintenanceStatus } from "@/components/maintenances/use-maintenance-status";
 import { useUpdateMaintenance } from "@/components/maintenances/use-update-maintenance";
 import { Notifications } from "@/components/status-pages/notifications";
@@ -97,20 +100,29 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
       </DetailHeader>
       <DetailContent>
         <DetailMain>
-          <Timeline>
-            <MaintenanceUpdateComposer
-              maintenance={maintenance}
-              canNotify={canNotify}
-            />
-            {updates.map((update, i) => (
-              <MaintenanceUpdateTimelineItem
-                key={update.id}
+          <DetailSection>
+            <DetailSectionTitle variant="heading">
+              Updates
+              <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
+                {updates.length}
+              </span>
+            </DetailSectionTitle>
+            <Timeline>
+              <MaintenanceUpdateComposer
                 maintenance={maintenance}
-                update={update}
-                index={updates.length - i}
+                canNotify={canNotify}
               />
-            ))}
-          </Timeline>
+              {updates.map((update, i) => (
+                <MaintenanceUpdateTimelineItem
+                  key={update.id}
+                  maintenance={maintenance}
+                  update={update}
+                  index={updates.length - i}
+                />
+              ))}
+              <MaintenanceScheduledTimelineItem maintenance={maintenance} />
+            </Timeline>
+          </DetailSection>
         </DetailMain>
         <DetailAside>
           <DetailSection>

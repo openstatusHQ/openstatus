@@ -1,7 +1,14 @@
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
+import { z } from "zod";
 
-import { noopFlagSchema, OSTinybird } from "./client";
+import {
+  isValidTimeZone,
+  noopFlagSchema,
+  OSTinybird,
+  status15mParameters,
+  status15mShape,
+} from "./client";
 
 describe("noopFlagSchema", () => {
   test("treats the string 'false' as disabled, not as a truthy string", () => {
@@ -153,6 +160,110 @@ describe("response-log facet pipes", () => {
           latencyMax: 1000,
         }),
       ).toEqual({ meta: [], data: [] });
+    });
+  }
+});
+
+const status15mGetters = [
+  "httpStatus15m",
+  "tcpStatus15m",
+  "dnsStatus15m",
+  "icmpStatus15m",
+  "grpcStatus15m",
+] as const;
+
+describe("status15mParameters", () => {
+  test("defaults timezone to UTC", () => {
+    expect(status15mParameters.parse({ monitorIds: ["1"] })).toEqual({
+      monitorIds: ["1"],
+      timezone: "UTC",
+    });
+  });
+
+  test("forwards any zone untouched, fractional offsets included", () => {
+    for (const timezone of [
+      "Europe/Berlin",
+      "Asia/Kolkata",
+      "Asia/Kathmandu",
+    ]) {
+      expect(
+        status15mParameters.parse({ monitorIds: ["1", "2"], timezone })
+          .timezone,
+      ).toBe(timezone);
+    }
+  });
+
+  test("rejects zone names ClickHouse would 400 on, before the request", () => {
+    for (const timezone of ["Mars/Olympus", "", "GMT+1", "+05:30", "-03:00"]) {
+      const result = status15mParameters.safeParse({
+        monitorIds: ["1"],
+        timezone,
+      });
+      expect(result.success).toBe(false);
+    }
+    expect(isValidTimeZone("Etc/GMT+1")).toBe(true);
+  });
+});
+
+describe("status15mShape", () => {
+  const shape = status15mShape(z.coerce.string());
+
+  test("re-keys the local calendar date as UTC midnight, like the 45d pipes", () => {
+    const row = shape.parse({
+      day: "2026-10-14",
+      count: 10,
+      ok: 9,
+      degraded: 0,
+      error: 1,
+      monitorId: 1,
+    });
+    expect(row.day).toBe("2026-10-14T00:00:00.000Z");
+    // the key every day-indexed consumer derives must be the local date itself
+    expect(new Date(row.day).toISOString().split("T")[0]).toBe("2026-10-14");
+    expect(row.monitorId).toBe("1");
+  });
+
+  test("rejects a datetime or epoch `day`, which would re-introduce the UTC shift", () => {
+    for (const day of [
+      "2026-10-13 22:00:00",
+      "2026-10-13T22:00:00.000Z",
+      1760392800000,
+    ]) {
+      expect(
+        shape.safeParse({
+          day,
+          count: 0,
+          ok: 0,
+          degraded: 0,
+          error: 0,
+          monitorId: "1",
+        }).success,
+      ).toBe(false);
+    }
+  });
+
+  test("defaults missing counters to 0", () => {
+    expect(shape.parse({ day: "2026-01-01", monitorId: "1" })).toMatchObject({
+      count: 0,
+      ok: 0,
+      degraded: 0,
+      error: 0,
+    });
+  });
+});
+
+describe("15m status pipes", () => {
+  const tb = new OSTinybird({ token: "a-token" });
+
+  for (const name of status15mGetters) {
+    test(`${name} resolves for any zone and when timezone is omitted`, async () => {
+      expect(
+        await tb[name]({ monitorIds: ["1"], timezone: "Asia/Kolkata" }),
+      ).toEqual({ meta: [], data: [] });
+      expect(await tb[name]({ monitorIds: ["1"] })).toEqual({
+        meta: [],
+        data: [],
+      });
     });
   }
 });

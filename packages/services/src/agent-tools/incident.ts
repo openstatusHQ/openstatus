@@ -54,13 +54,13 @@ export const listIncidentsTool: AgentTool<
 > = {
   name: "list_incidents",
   description:
-    "List managed incidents in this workspace (declared by the team, not monitor downtime), open ones first.",
+    "List managed incidents in this workspace (declared by the team, not monitor downtime), newest declared first. Filter by `status` to see only open ones.",
   scope: "read",
   destructive: false,
   inputSchema: ListIncidentsInput,
   outputSchema: ListIncidentsOutput,
   async run({ ctx, input }) {
-    const rows = await listIncidents({
+    const { items: rows } = await listIncidents({
       ctx,
       input: { status: input.status, limit: input.limit },
     });

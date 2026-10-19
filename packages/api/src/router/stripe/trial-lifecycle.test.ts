@@ -115,6 +115,15 @@ function asCaller(fixture: Awaited<ReturnType<typeof seedTrial>>) {
   });
 }
 
+async function readTrialedAt(workspaceId: number) {
+  const row = await db
+    .select({ trialedAt: workspace.trialedAt })
+    .from(workspace)
+    .where(eq(workspace.id, workspaceId))
+    .get();
+  return row?.trialedAt;
+}
+
 describe("trial lifecycle", () => {
   let live: Stripe.Subscription[];
   let customer: Stripe.Customer;
@@ -454,6 +463,154 @@ describe("trial lifecycle", () => {
       ]);
     });
 
+    function stubSetup() {
+      stubs.push(
+        stub(stripe.setupIntents, "retrieve", () =>
+          Promise.resolve({
+            payment_method: "pm_new",
+            metadata: { subscriptionId: "sub_setup" },
+          } as unknown as Stripe.Response<Stripe.SetupIntent>),
+        ),
+        stub(stripe.subscriptions, "retrieve", () =>
+          Promise.resolve(
+            subscription("cus_setup", {
+              id: "sub_setup",
+            }) as Stripe.Response<Stripe.Subscription>,
+          ),
+        ),
+        stub(stripe.customers, "update", () =>
+          Promise.resolve({} as Stripe.Response<Stripe.Customer>),
+        ),
+      );
+    }
+
+    const setupCompleted = () =>
+      event("checkout.session.completed", {
+        mode: "setup",
+        customer: "cus_setup",
+        setup_intent: "seti_1",
+      } as Stripe.Checkout.Session);
+
+    test("setup checkout completed → automatic tax on after the card", async () => {
+      stubSetup();
+
+      await caller().sessionCompleted(setupCompleted());
+
+      expect(updateSubscription.calls.map((c) => c.args)).toEqual([
+        ["sub_setup", { default_payment_method: "pm_new" }],
+        ["sub_setup", { automatic_tax: { enabled: true } }],
+      ]);
+    });
+
+    test("Stripe rejecting the tax location still keeps the card", async () => {
+      stubSetup();
+      stubs = stubs.filter((s) => s !== updateSubscription);
+      updateSubscription.restore();
+      const update = stub(
+        stripe.subscriptions,
+        "update",
+        (_id: string, params?: Stripe.SubscriptionUpdateParams) =>
+          params?.automatic_tax
+            ? Promise.reject(new Error("customer_tax_location_invalid"))
+            : Promise.resolve({} as Stripe.Response<Stripe.Subscription>),
+      );
+      stubs.push(update);
+
+      await caller().sessionCompleted(setupCompleted());
+
+      expect(update.calls[0]?.args).toEqual([
+        "sub_setup",
+        { default_payment_method: "pm_new" },
+      ]);
+      assertSpyCalls(update, 2);
+    });
+
+    test("checkout completed with a trial → trial_started, customer stamped", async () => {
+      const stripeId = `cus_${crypto.randomUUID()}`;
+      const f = await createTestWorkspace({
+        plan: "free",
+        stripeId,
+        subscriptionId: null,
+        trialEndsAt: null,
+      });
+      const sub = subscription(stripeId, {
+        metadata: {
+          source: "trial_opt_in",
+          surface: "billing",
+          intent: "Slack alerts",
+        },
+      });
+      const retrieveSub = stub(stripe.subscriptions, "retrieve", () =>
+        Promise.resolve(sub as Stripe.Response<Stripe.Subscription>),
+      );
+      const updateCustomer = stub(stripe.customers, "update", () =>
+        Promise.resolve({} as Stripe.Response<Stripe.Customer>),
+      );
+      stubs.push(retrieveSub, updateCustomer);
+      const session = {
+        mode: "subscription",
+        customer: stripeId,
+        subscription: sub.id,
+      } as Stripe.Checkout.Session;
+
+      await caller().sessionCompleted(
+        event("checkout.session.completed", session),
+      );
+
+      const after = await readWorkspace(f.workspace.id);
+      expect(after?.plan).toBe("starter");
+      expect(after?.subscriptionId).toBe(sub.id);
+      expect(after?.trialEndsAt).toEqual(new Date((sub.trial_end ?? 0) * 1000));
+      expect(await lastPlanAuditReason(f.workspace.id)).toBe("trial_started");
+      expect(updateCustomer.calls[0]?.args).toEqual([
+        stripeId,
+        { metadata: { trialed: "true" } },
+      ]);
+
+      const trialedAt = await readTrialedAt(f.workspace.id);
+      expect(trialedAt).toBeInstanceOf(Date);
+
+      // A redelivered event stamps again and changes nothing else.
+      await caller().sessionCompleted(
+        event("checkout.session.completed", session),
+      );
+      assertSpyCalls(updateCustomer, 2);
+      expect((await readWorkspace(f.workspace.id))?.plan).toBe("starter");
+      expect(await readTrialedAt(f.workspace.id)).toEqual(trialedAt);
+    });
+
+    test("checkout completed with a paid subscription is not a trial", async () => {
+      const stripeId = `cus_${crypto.randomUUID()}`;
+      const f = await createTestWorkspace({
+        plan: "free",
+        stripeId,
+        subscriptionId: null,
+        trialEndsAt: null,
+      });
+      const sub = subscription(stripeId, { status: "active", trial_end: null });
+      const retrieveSub = stub(stripe.subscriptions, "retrieve", () =>
+        Promise.resolve(sub as Stripe.Response<Stripe.Subscription>),
+      );
+      const updateCustomer = stub(stripe.customers, "update", () =>
+        Promise.resolve({} as Stripe.Response<Stripe.Customer>),
+      );
+      stubs.push(retrieveSub, updateCustomer);
+
+      await caller().sessionCompleted(
+        event("checkout.session.completed", {
+          mode: "subscription",
+          customer: stripeId,
+          subscription: sub.id,
+        } as Stripe.Checkout.Session),
+      );
+
+      expect(await lastPlanAuditReason(f.workspace.id)).toBe(
+        "checkout_session_completed",
+      );
+      assertSpyCalls(updateCustomer, 0);
+      expect(await readTrialedAt(f.workspace.id)).toBeNull();
+    });
+
     test("trialing → active clears trialEndsAt", async () => {
       const s = await seedTrial();
       const sub = subscription(s.stripeId, { status: "active" });
@@ -524,6 +681,41 @@ describe("trial lifecycle", () => {
       expect(after?.plan).toBe("free");
       expect(after?.trialEndsAt).toBeNull();
       expect(await lastPlanAuditReason(s.ws.id)).toBe("trial_cancelled");
+    });
+
+    test("cancelled inside the slack after trial_end: card → churn, no card → trial", async () => {
+      const send = stub(resend.emails, "send");
+      const enabled = stub(delivery, "enabled", () => true);
+      stubs.push(send, enabled);
+      live = [];
+      const trialEnd = now() - 2 * 60 * 60;
+      const endedSoonAfter = (stripeId: string) =>
+        event(
+          "customer.subscription.deleted",
+          subscription(stripeId, {
+            status: "canceled",
+            trial_end: trialEnd,
+            ended_at: trialEnd + 30 * 60,
+            cancellation_details: {
+              reason: "cancellation_requested",
+            } as Stripe.Subscription.CancellationDetails,
+          }),
+        );
+
+      const cardless = await seedTrial();
+      await caller().customerSubscriptionDeleted(
+        endedSoonAfter(cardless.stripeId),
+      );
+      expect(await lastPlanAuditReason(cardless.ws.id)).toBe("trial_cancelled");
+
+      withCard();
+      const converted = await seedTrial();
+      await caller().customerSubscriptionDeleted(
+        endedSoonAfter(converted.stripeId),
+      );
+      expect(await lastPlanAuditReason(converted.ws.id)).toBe(
+        "subscription_deleted",
+      );
     });
 
     test("a converted trial cancelled later is churn even if the marker is stale", async () => {

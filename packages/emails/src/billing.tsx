@@ -7,10 +7,18 @@ import type { PlanLoss } from "../emails/_components/plan-loss";
 import CancellationScheduledEmail, {
   CANCELLATION_SCHEDULED_SUBJECT,
 } from "../emails/cancellation-scheduled";
+import MemberAccessEndingEmail, {
+  type MemberAccessEndingProps,
+  memberAccessEndingSubject,
+} from "../emails/member-access-ending";
 import MemberRemovedEmail, {
   type MemberRemovedProps,
   memberRemovedSubject,
 } from "../emails/member-removed";
+import OwnershipTransferredEmail, {
+  type OwnershipTransferredProps,
+  ownershipTransferredSubject,
+} from "../emails/ownership-transferred";
 import PlanDowngradedEmail, {
   type PlanDowngradedProps,
   planDowngradedSubject,
@@ -37,6 +45,7 @@ const DAY_MS = 86_400_000;
 export const REMINDER_LEAD_DAYS = 3;
 const RESEND_MAX_SCHEDULE_DAYS = 30;
 const RESEND_BATCH_SIZE = 100;
+const RESEND_MAX_RECIPIENTS = 50;
 
 /** `stripe:<event.id>:<template>` — a Stripe redelivery reuses the event id. */
 export function stripeIdempotencyKey(eventId: string, template: string) {
@@ -155,6 +164,74 @@ export async function sendMemberRemoved(
       },
     );
   }
+}
+
+/**
+ * Tells both people about an ownership transfer, one mail each. `newOwner` and
+ * `formerOwner` are what the mails show; `to` is where they go, and a person
+ * without an address is skipped. The key gets a `:new` / `:former` suffix so a
+ * retry cannot send either twice.
+ */
+export async function sendOwnershipTransferred(
+  req: Omit<OwnershipTransferredProps, "recipient"> & {
+    to: { new: string | null; former: string | null };
+    idempotencyKey: string;
+  },
+) {
+  const { to, idempotencyKey, ...props } = req;
+  for (const recipient of ["new", "former"] as const) {
+    const email = to[recipient];
+    if (!email) continue;
+    const p = { ...props, recipient };
+    await sendEmail(
+      {
+        from: SYSTEM_FROM,
+        reply_to: SUPPORT_EMAIL,
+        to: [email],
+        subject: ownershipTransferredSubject(p),
+        react: <OwnershipTransferredEmail {...p} />,
+      },
+      { idempotencyKey: `${idempotencyKey}:${recipient}` },
+    );
+  }
+}
+
+/**
+ * Warns members `REMINDER_LEAD_DAYS` before `endsAt`, or right away when that
+ * cannot be scheduled or `schedule` is false. Returns the ids of the scheduled
+ * sends, to cancel on resume. The batch API cannot schedule, so members share
+ * one email per 50 recipients — they already see each other in the workspace.
+ */
+export async function scheduleMemberAccessEnding(
+  req: MemberAccessEndingProps & {
+    to: string[];
+    eventId: string;
+    schedule?: boolean;
+    now?: Date;
+  },
+): Promise<string[]> {
+  const { to, eventId, schedule = true, now, ...props } = req;
+  const scheduledAt = schedule ? reminderScheduledAt(props.endsAt, now) : null;
+  // Chunk keys must name the same members on a redelivery.
+  const recipients = [...to].sort();
+  const ids: string[] = [];
+  for (let i = 0; i < recipients.length; i += RESEND_MAX_RECIPIENTS) {
+    const id = await sendEmail(
+      {
+        from: SYSTEM_FROM,
+        reply_to: SUPPORT_EMAIL,
+        to: recipients.slice(i, i + RESEND_MAX_RECIPIENTS),
+        subject: memberAccessEndingSubject(props),
+        react: <MemberAccessEndingEmail {...props} />,
+      },
+      {
+        idempotencyKey: `${stripeIdempotencyKey(eventId, "member-access-ending")}:${i / RESEND_MAX_RECIPIENTS}`,
+        scheduledAt: scheduledAt?.toISOString(),
+      },
+    );
+    if (id && scheduledAt) ids.push(id);
+  }
+  return ids;
 }
 
 export async function sendCancellationScheduled(req: {

@@ -1,6 +1,7 @@
 import { eq } from "@openstatus/db";
 import {
   type IncidentPostmortem,
+  type PostmortemAuthor,
   incidentPostmortem,
 } from "@openstatus/db/src/schema";
 
@@ -16,7 +17,11 @@ import {
 } from "../context";
 import { ConflictError, NotFoundError } from "../errors";
 import { closeIncidentInTx } from "./close";
-import { appendIncidentEvent, getIncidentInWorkspace } from "./internal";
+import {
+  appendIncidentEvent,
+  getIncidentInWorkspace,
+  incidentUserColumns,
+} from "./internal";
 import {
   ApprovePostmortemInput,
   DraftPostmortemInput,
@@ -32,6 +37,14 @@ async function findPostmortem(
     .from(incidentPostmortem)
     .where(eq(incidentPostmortem.incidentId, incidentId))
     .get();
+}
+
+// The actor is whoever asked for the draft; the event credits the agent. Its
+// ref would be a run id, which no caller has yet.
+function agentSource(draftedBy: PostmortemAuthor) {
+  return draftedBy === "agent"
+    ? { source: "agent" as const, sourceRef: null }
+    : {};
 }
 
 /**
@@ -80,6 +93,7 @@ export async function draftPostmortem(args: {
       await appendIncidentEvent(tx, ctx, {
         incidentId: row.id,
         type: "postmortem_drafted",
+        ...agentSource(input.draftedBy),
         message:
           input.draftedBy === "agent"
             ? "Postmortem drafted by the agent"
@@ -122,6 +136,7 @@ export async function draftPostmortem(args: {
         existing.status === "approved"
           ? "postmortem_updated"
           : "postmortem_drafted",
+      ...agentSource(input.draftedBy),
       message:
         existing.status === "approved"
           ? "Postmortem edited"
@@ -196,10 +211,13 @@ export async function approvePostmortem(args: {
 export async function getPostmortem(args: {
   ctx: ServiceContext;
   input: IncidentIdInput;
-}): Promise<IncidentPostmortem | undefined> {
+}) {
   const { ctx } = args;
   const input = IncidentIdInput.parse(args.input);
   const db = getReadDb(ctx);
   const row = await getIncidentInWorkspace(db, ctx.workspace.id, input.id);
-  return findPostmortem(db, row.id);
+  return db.query.incidentPostmortem.findFirst({
+    where: eq(incidentPostmortem.incidentId, row.id),
+    with: { approvedByUser: { columns: incidentUserColumns } },
+  });
 }

@@ -106,6 +106,7 @@
         "app_uninstalled",
         "channel_archive",
         "channel_deleted",
+        "member_joined_channel",
         "message.channels",
         "message.groups",
         "message.im",

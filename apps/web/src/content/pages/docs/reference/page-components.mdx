@@ -23,9 +23,9 @@ Page components come in two distinct types, each serving different purposes on y
 
 **Type:** `monitor`
 
-Monitor components are linked to an active monitor in your workspace. They automatically inherit the monitor's status and display real-time health information.
+Monitor components are linked to a monitor in your workspace. While the monitor is active, they automatically inherit its status and display real-time health information.
 
-**Characteristics:**
+**Characteristics (while the linked monitor is active):**
 - Display live monitor status (up, degraded, down).
 - Show active incidents from the linked monitor.
 - Include historical uptime data.
@@ -37,6 +37,10 @@ Monitor components are linked to an active monitor in your workspace. They autom
 - Showing website availability.
 - Tracking critical service dependencies.
 - Monitoring infrastructure components.
+
+<Aside type="caution">
+A monitor component only shares data while its monitor is active. Inactive monitors don't run checks, so the component shows no monitor-check history and no incidents. Status reports and maintenances still apply, and still populate the bars in **Reports only** mode. To keep a service on your status page without monitoring it, use a [static component](#static-components) or set the status source to [**Reports only**](/docs/guides/how-to-configure-status-page#1-components-configuration).
+</Aside>
 
 #### Configuring monitor components
 
@@ -63,7 +67,7 @@ Monitor components calculate uptime percentages based on:
 **Monitor selection:**
 When adding a monitor component, the dashboard shows you available monitors with indicators for:
 - **Public/Private status**: Whether the monitor is already public.
-- **Active status**: Only active monitors can be linked.
+- **Active status**: Inactive monitors can be linked, but don't share data until they're activated again. The dashboard warns you when a linked monitor is inactive.
 - **Already linked**: Monitors already used on this status page are unavailable.
 
 <Aside type="tip">
@@ -258,7 +262,6 @@ You can add components to your status page in two ways:
 2. **Components within groups:** Add a component directly into a new or existing group.
 
 When adding a monitor component, you can only select from monitors that:
-- Are currently active.
 - Have not been deleted.
 - Are not already linked to another component on this status page.
 

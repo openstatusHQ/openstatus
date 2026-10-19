@@ -28,6 +28,14 @@ export async function bindIncidentSlackChannel(args: {
     );
     assertNotClosed(existing);
     if (
+      input.expectedChannelId !== undefined &&
+      existing.slackChannelId !== input.expectedChannelId
+    ) {
+      throw new ConflictError(
+        "This incident has moved to another channel since.",
+      );
+    }
+    if (
       existing.slackTeamId === input.teamId &&
       existing.slackChannelId === input.channelId
     ) {
@@ -71,7 +79,10 @@ export async function bindIncidentSlackChannel(args: {
     await appendIncidentEvent(tx, ctx, {
       incidentId: updated.id,
       type: "slack_channel_bound",
-      message: `Slack channel <#${input.channelId}> bound`,
+      message:
+        existing.slackChannelId && existing.slackTeamId === input.teamId
+          ? `Slack channel moved from <#${existing.slackChannelId}> to <#${input.channelId}>`
+          : `Slack channel <#${input.channelId}> bound`,
     });
     return updated;
   });

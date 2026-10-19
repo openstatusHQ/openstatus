@@ -2018,6 +2018,218 @@ describe("MonitorService.TriggerMonitor", () => {
       await db.delete(monitor).where(eq(monitor.id, icmpMon.id));
     }
   });
+  test("succeeds when only some regions fail to dispatch", async () => {
+    const mon = await createMonitor(1, {
+      name: `${TEST_PREFIX}-partial-trigger`,
+      url: "https://example.com",
+      periodicity: "10m",
+      active: true,
+      regions: "ams,fra",
+    });
+
+    const realFetch = globalThis.fetch;
+    const regions: string[] = [];
+    globalThis.fetch = ((_url: string | URL | Request, init?: RequestInit) => {
+      const region = new Headers(init?.headers).get("fly-prefer-region") ?? "";
+      regions.push(region);
+      return region === "fra"
+        ? Promise.reject(new TypeError("network error"))
+        : Promise.resolve(new Response(null, { status: 200 }));
+    }) as typeof fetch;
+
+    try {
+      const res = await connectRequest(
+        "TriggerMonitor",
+        { id: String(mon.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+      expect(regions.sort()).toEqual(["ams", "fra"]);
+    } finally {
+      globalThis.fetch = realFetch;
+      await db.delete(monitorRun).where(eq(monitorRun.monitorId, mon.id));
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("returns Unavailable when no region could be reached", async () => {
+    const mon = await createMonitor(1, {
+      name: `${TEST_PREFIX}-failed-trigger`,
+      url: "https://example.com",
+      periodicity: "10m",
+      active: true,
+      regions: "ams,fra",
+    });
+
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (() =>
+      Promise.reject(new TypeError("network error"))) as typeof fetch;
+
+    try {
+      const res = await connectRequest(
+        "TriggerMonitor",
+        { id: String(mon.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(503);
+      expect(res.headers.get("error-reason")).toBe("MONITOR_TRIGGER_FAILED");
+    } finally {
+      globalThis.fetch = realFetch;
+      await db.delete(monitorRun).where(eq(monitorRun.monitorId, mon.id));
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+});
+
+// HTTP, TCP and DNS updates skip the validation interceptor like ICMP and gRPC,
+// so the same bounds must be enforced in their handlers.
+describe("MonitorService - update bounds (HTTP, TCP, DNS)", () => {
+  const cases = [
+    {
+      method: "UpdateHTTPMonitor",
+      id: () => testHttpMonitorId,
+      target: "url",
+    },
+    {
+      method: "UpdateTCPMonitor",
+      id: () => testTcpMonitorId,
+      target: "uri",
+    },
+    {
+      method: "UpdateDNSMonitor",
+      id: () => testDnsMonitorId,
+      target: "uri",
+    },
+  ] as const;
+
+  for (const { method, id, target } of cases) {
+    test(`${method} rejects out-of-bounds patches`, async () => {
+      for (const monitor of [
+        { retry: "1000000" },
+        { retry: "11" },
+        { name: "n".repeat(257) },
+        { description: "d".repeat(1025) },
+        { [target]: "u".repeat(2049) },
+      ]) {
+        const res = await connectRequest(
+          method,
+          { id: String(id()), monitor },
+          { "x-openstatus-key": "1" },
+        );
+
+        expect(res.status).toBe(400);
+      }
+    });
+
+    test(`${method} leaves the stored monitor untouched on rejection`, async () => {
+      const before = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, id()))
+        .get();
+
+      const res = await connectRequest(
+        method,
+        {
+          id: String(id()),
+          monitor: { name: "should-not-be-written", retry: "1000000" },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(400);
+
+      const after = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, id()))
+        .get();
+      expect(after?.name).toBe(before?.name);
+      expect(after?.retry).toBe(before?.retry);
+    });
+  }
+});
+
+// `Number("0x10")` is 16 and `Number("1e3")` is 1000: a loosely parsed id
+// silently targets another row instead of failing.
+describe("MonitorService - strict id parsing", () => {
+  const looseIds = (id: number) => [
+    `0x${id.toString(16)}`,
+    `${id}.0`,
+    `${id}abc`,
+    `+${id}`,
+    "",
+  ];
+
+  test("DeleteMonitor rejects non-decimal ids without deleting", async () => {
+    const mon = await createMonitor(1, {
+      name: `${TEST_PREFIX}-strict-id`,
+      url: "https://example.com",
+      periodicity: "10m",
+      active: true,
+      regions: "ams",
+    });
+
+    try {
+      for (const id of looseIds(mon.id)) {
+        const res = await connectRequest(
+          "DeleteMonitor",
+          { id },
+          { "x-openstatus-key": "1" },
+        );
+        expect(res.status).toBe(400);
+      }
+
+      const row = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, mon.id))
+        .get();
+      expect(row?.deletedAt).toBeNull();
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("GetMonitor and UpdateHTTPMonitor reject non-decimal ids", async () => {
+    for (const id of looseIds(testHttpMonitorId).filter((id) => id !== "")) {
+      const get = await connectRequest(
+        "GetMonitor",
+        { id },
+        { "x-openstatus-key": "1" },
+      );
+      expect(get.status).toBe(400);
+      expect(get.headers.get("error-reason")).toBe("MONITOR_ID_INVALID");
+
+      const update = await connectRequest(
+        "UpdateHTTPMonitor",
+        { id, monitor: { name: "should-not-be-written" } },
+        { "x-openstatus-key": "1" },
+      );
+      expect(update.status).toBe(400);
+    }
+  });
+
+  test("an id with CR/LF is InvalidArgument, not Internal", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: `${testHttpMonitorId}\r\nx-injected: 1` },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res.status).toBe(400);
+    expect(res.headers.get("error-reason")).toBe("MONITOR_ID_INVALID");
+  });
+
+  test("still accepts a plain decimal id", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: String(testHttpMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res.status).toBe(200);
+  });
 });
 
 describe("MonitorService - Authentication", () => {

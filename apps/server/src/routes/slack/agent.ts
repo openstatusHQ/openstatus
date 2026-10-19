@@ -1,7 +1,7 @@
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
 import type { ServiceContext } from "@openstatus/services";
 import { stepCountIs, streamText } from "ai";
-import type { ModelMessage, Tool } from "ai";
+import type { Tool } from "ai";
 
 import { tb } from "@/libs/clients";
 
@@ -9,12 +9,10 @@ import { SLACK_AGENT_MODEL } from "./model";
 import { buildSlackTools } from "./registry-runner";
 import type { SlackActor } from "./require-slack-member";
 import { buildSystemPrompt } from "./system-prompt";
-
-interface SlackThreadMessage {
-  user?: string;
-  bot_id?: string;
-  text?: string;
-}
+import {
+  convertThreadToMessages,
+  type SlackThreadMessage,
+} from "./thread-messages";
 
 // A mention needs list_status_pages + list_page_components before it can draft,
 // and the model is told to check monitor status first — 5 left no headroom.
@@ -51,27 +49,6 @@ export interface AgentOptions {
   tools?: Record<string, Tool>;
   /** Appended to the system prompt: what the user is looking at right now. */
   contextNote?: string;
-}
-
-function convertThreadToMessages(
-  thread: SlackThreadMessage[],
-  botUserId: string,
-): ModelMessage[] {
-  const messages: ModelMessage[] = [];
-  for (const msg of thread) {
-    if (!msg.text) continue;
-    if (msg.bot_id || msg.user === botUserId) {
-      messages.push({ role: "assistant", content: msg.text });
-    } else {
-      messages.push({ role: "user", content: msg.text });
-    }
-  }
-  // The API requires the first message to have role "user".
-  // Drop any leading assistant messages (e.g. bot confirmations from a prior turn).
-  while (messages.length > 0 && messages[0].role !== "user") {
-    messages.shift();
-  }
-  return messages;
 }
 
 export async function runAgent(

@@ -55,8 +55,6 @@ export type StatusBlocksLabels = {
   /** Heading shown on the status-calendar block. */
   calendarTitle: string;
 
-  durationIn: (s: string) => string;
-  durationEarlier: (s: string) => string;
   durationFor: (s: string) => string;
   durationAcross: (s: string) => string;
 

@@ -67,8 +67,9 @@ function line(message: { ts?: string; user?: string; text?: string }): string {
 
 /**
  * The channel, oldest first, bot messages left out and threads inlined under
- * their parent, capped at 500 messages (the most recent top-level ones) and
- * 1,000,000 characters.
+ * their parent, capped at 500 messages and 1,000,000 characters. The caps drop
+ * the oldest top-level messages first, each with its whole thread: the end of
+ * an incident (mitigation, resolution) matters more than its start.
  */
 export async function collectChannelTranscript(
   client: SlackHistoryClient,
@@ -91,42 +92,74 @@ export async function collectChannelTranscript(
     }
   } while (cursor);
 
-  const lines: string[] = [];
-  const push = (entry: string): boolean => {
-    if (lines.length >= MAX_MESSAGES) {
-      truncated = true;
-      return false;
-    }
-    lines.push(entry);
-    return true;
-  };
-  collect: for (const message of top.reverse()) {
+  // Walk newest first, one block (a parent and its thread) at a time, so the
+  // caps drop the oldest blocks whole and never split a parent from its
+  // replies. Only an oversized newest block is cut, keeping its parent and
+  // its newest replies.
+  const blocks: string[][] = [];
+  let count = 0;
+  for (const message of top) {
+    const block: string[] = [];
+    // An older block over the remaining budget is dropped whole, so stop
+    // paging its thread early. Only the newest block needs every page, to
+    // keep its newest replies.
+    const overBudget = () =>
+      blocks.length > 0 && count + block.length > MAX_MESSAGES;
     // A bot parent (the incident card) is left out, its human replies are not.
-    if (!message.bot_id && message.text && !push(line(message))) break;
-    if (!message.reply_count || !message.ts) continue;
-    let replyCursor: string | undefined;
-    do {
-      const thread = await client.conversations.replies({
-        channel,
-        ts: message.ts,
-        cursor: replyCursor,
-        limit: 200,
-      });
-      for (const reply of thread.messages ?? []) {
-        if (reply.ts === message.ts || reply.bot_id || !reply.text) continue;
-        if (!push(`    ${line(reply)}`)) break collect;
-      }
-      replyCursor = thread.has_more
-        ? thread.response_metadata?.next_cursor
-        : undefined;
-    } while (replyCursor);
+    if (!message.bot_id && message.text) block.push(line(message));
+    if (message.reply_count && message.ts && !overBudget()) {
+      let replyCursor: string | undefined;
+      do {
+        const thread = await client.conversations.replies({
+          channel,
+          ts: message.ts,
+          cursor: replyCursor,
+          limit: 200,
+        });
+        for (const reply of thread.messages ?? []) {
+          if (reply.ts === message.ts || reply.bot_id || !reply.text) continue;
+          block.push(`    ${line(reply)}`);
+          if (overBudget()) break;
+        }
+        replyCursor = thread.has_more
+          ? thread.response_metadata?.next_cursor
+          : undefined;
+      } while (replyCursor && !overBudget());
+    }
+    if (block.length === 0) continue;
+    if (count + block.length > MAX_MESSAGES) {
+      truncated = true;
+      if (blocks.length === 0) blocks.push(keepNewest(block, MAX_MESSAGES));
+      break;
+    }
+    blocks.push(block);
+    count += block.length;
   }
-  let text = lines.join("\n");
-  if (text.length > MAX_TRANSCRIPT_CHARS) {
-    text = text.slice(0, MAX_TRANSCRIPT_CHARS);
+  const ordered = blocks.reverse();
+  const size = (block: string[]) =>
+    block.reduce((sum, entry) => sum + entry.length + 1, 0);
+  // Over the character cap, drop whole blocks from the oldest end.
+  let length = ordered.reduce((sum, block) => sum + size(block), 0) - 1;
+  while (length > MAX_TRANSCRIPT_CHARS && ordered.length > 1) {
+    length -= size(ordered.shift() ?? []);
     truncated = true;
   }
-  return { text, truncated };
+  const lines = ordered.flat();
+  // A single block still over the cap loses its oldest replies, then lines.
+  while (length > MAX_TRANSCRIPT_CHARS && lines.length > 0) {
+    const drop = lines.length > 1 && !lines[0].startsWith("    ") ? 1 : 0;
+    length -= lines[drop].length + 1;
+    lines.splice(drop, 1);
+    truncated = true;
+  }
+  return { text: lines.join("\n"), truncated };
+}
+
+/** A block's parent (when it has one) plus its newest lines, `max` in all. */
+function keepNewest(block: string[], max: number): string[] {
+  const hasParent = !block[0].startsWith("    ");
+  if (!hasParent) return block.slice(-max);
+  return [block[0], ...block.slice(1).slice(-(max - 1))];
 }
 
 const SYSTEM = `You write blameless incident postmortems for an engineering team.

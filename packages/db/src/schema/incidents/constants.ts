@@ -27,9 +27,22 @@ export const incidentEventType = [
   "closed",
 ] as const;
 
+// `source_ref` by source: slack → message permalink (null for slash commands
+// and modals); api / mcp → API key id; agent → run or thread id, if any;
+// dashboard / system → null.
+export const incidentEventSource = [
+  "dashboard",
+  "api",
+  "mcp",
+  "slack",
+  "agent",
+  "system",
+] as const;
+
 export type IncidentSeverity = (typeof incidentSeverity)[number];
 export type IncidentStatus = (typeof incidentStatus)[number];
 export type IncidentEventType = (typeof incidentEventType)[number];
+export type IncidentEventSource = (typeof incidentEventSource)[number];
 
 export const postmortemStatus = ["draft", "approved"] as const;
 export const postmortemAuthor = ["agent", "user"] as const;

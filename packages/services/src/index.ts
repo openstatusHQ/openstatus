@@ -19,6 +19,7 @@ export {
 } from "./retry";
 
 export {
+  ConcurrentUpdateError,
   ConflictError,
   ForbiddenError,
   InternalServiceError,

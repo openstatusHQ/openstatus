@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 import { TableCellBadge } from "../table-cell-badge";
 import { TableCellDate } from "../table-cell-date";
+import { TableCellEmpty } from "../table-cell-empty";
 import { TableCellMetadata } from "../table-cell-metadata";
 import { TableCellText } from "../table-cell-text";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -61,7 +62,7 @@ export const columns: ColumnDef<PrivateLocation>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const value = row.getValue("lastSeenAt");
-      return <TableCellDate value={value} />;
+      return <TableCellDate value={value} empty="Never" />;
     },
   },
   {
@@ -83,7 +84,7 @@ export const columns: ColumnDef<PrivateLocation>[] = [
           </div>
         );
       }
-      return <span className="text-muted-foreground">-</span>;
+      return <TableCellEmpty>No monitors</TableCellEmpty>;
     },
     meta: {
       cellClassName: "tabular-nums font-mono",

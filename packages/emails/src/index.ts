@@ -20,9 +20,11 @@ export {
 } from "./send";
 export {
   billingRecipients,
+  scheduleMemberAccessEnding,
   schedulePlanEndingSoon,
   sendCancellationScheduled,
   sendMemberRemoved,
+  sendOwnershipTransferred,
   sendPlanDowngraded,
   sendTrialEnding,
   stripeIdempotencyKey,

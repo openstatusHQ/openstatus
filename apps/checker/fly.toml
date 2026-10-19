@@ -23,10 +23,13 @@ primary_region = "ams"
   auto_start_machines = false
   processes = ["app"]
 
-[[vm]]
-  cpu_kind = "shared"
-  cpus = 2
-  memory_mb = 512
+# No [[vm]] block on purpose: machine size is set per region with
+# `fly machine update`, and [[vm]] can only be scoped per process group, so any
+# block here would reset every machine to one size on `fly deploy`.
+# Without it, deploys leave each machine's size alone.
+#   shared-cpu-2x / 512MB: ams, cdg, iad, jnb, lhr, sjc, syd (7d avg CPU above the 1x baseline)
+#   shared-cpu-1x / 512MB: every other region
+# Keep memory at 512MB everywhere: 7d peaks reach ~300MB.
 
 
 [[http_service.checks]]

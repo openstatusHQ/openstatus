@@ -15,9 +15,10 @@ import (
 const (
 	// Bound the pool so bursts of concurrent ingests can't open an unbounded
 	// number of remote libSQL connections (see #2861).
-	maxOpenConns    = 16
-	maxIdleConns    = 16
-	connMaxIdleTime = time.Minute
+	maxOpenConns = 16
+
+	maxLocalIdleConns    = 16
+	localConnMaxIdleTime = time.Minute
 )
 
 var (
@@ -46,11 +47,11 @@ func New() *sqlx.DB {
 // Open opens a libSQL database with a bounded connection pool.
 // dsn can be a remote URL (libsql://, http://, https://) or a local file: URL.
 func Open(dsn string, token string) (*sqlx.DB, error) {
+	u, err := url.Parse(dsn)
+	if err != nil {
+		return nil, err
+	}
 	if token != "" {
-		u, err := url.Parse(dsn)
-		if err != nil {
-			return nil, err
-		}
 		q := u.Query()
 		q.Set("authToken", token)
 		u.RawQuery = q.Encode()
@@ -61,9 +62,15 @@ func Open(dsn string, token string) (*sqlx.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	idleConns := maxLocalIdleConns
+	switch u.Scheme {
+	case "http", "https", "libsql":
+		// Remote Hrana streams can expire before the pool's idle timeout.
+		idleConns = 0
+	}
 	c.SetMaxOpenConns(maxOpenConns)
-	c.SetMaxIdleConns(maxIdleConns)
-	c.SetConnMaxIdleTime(connMaxIdleTime)
+	c.SetMaxIdleConns(idleConns)
+	c.SetConnMaxIdleTime(localConnMaxIdleTime)
 
 	return sqlx.NewDb(c, "sqlite3"), nil
 }

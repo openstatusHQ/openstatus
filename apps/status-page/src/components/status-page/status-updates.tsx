@@ -9,7 +9,6 @@ import {
   StatusUpdatesRss,
   StatusUpdatesSection,
   StatusUpdatesSlack,
-  StatusUpdatesSsh,
   StatusUpdatesTrigger,
 } from "@openstatus/ui/components/blocks/status-updates";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -33,8 +32,6 @@ import {
   type FormValues,
 } from "../forms/form-subscribe-email";
 
-export type StatusUpdateType = "email" | "rss" | "ssh" | "json" | "slack";
-
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 
 function getUpdateLink(
@@ -55,14 +52,12 @@ function getUpdateLink(
 }
 
 interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
-  types?: StatusUpdateType[];
   page?: Page | null;
   onSubscribe?: (values: FormValues) => Promise<void> | void;
 }
 
 export function StatusUpdates({
   className,
-  types = ["rss", "ssh", "json", "slack"],
   page,
   onSubscribe,
   ...props
@@ -75,12 +70,12 @@ export function StatusUpdates({
   // page payload, which intentionally omits it.
   const [password] = useCookieState(createProtectedCookieKey(domain));
 
+  const types = page?.statusUpdateTypes ?? [];
   if (types.length === 0) return null;
 
   const rssUrl = getUpdateLink("rss", page, password);
   const atomUrl = getUpdateLink("atom", page, password);
   const jsonUrl = getUpdateLink("json", page, password);
-  const sshCommand = `ssh ${page?.slug}@ssh.openstatus.dev`;
 
   return (
     <BlockStatusUpdates>
@@ -99,9 +94,6 @@ export function StatusUpdates({
             ) : null}
             {types.includes("json") ? (
               <TabsTrigger value="json">{t("JSON")}</TabsTrigger>
-            ) : null}
-            {types.includes("ssh") ? (
-              <TabsTrigger value="ssh">{t("SSH")}</TabsTrigger>
             ) : null}
           </TabsList>
           <TabsContent value="email" className="flex flex-col gap-2">
@@ -138,9 +130,6 @@ export function StatusUpdates({
           </TabsContent>
           <TabsContent value="json">
             <StatusUpdatesJson url={jsonUrl} />
-          </TabsContent>
-          <TabsContent value="ssh">
-            <StatusUpdatesSsh command={sshCommand} />
           </TabsContent>
           <TabsContent value="slack">
             <StatusUpdatesSlack rssUrl={rssUrl} />

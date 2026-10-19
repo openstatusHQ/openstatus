@@ -9,15 +9,23 @@ import { z } from "zod";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { checkTrialEligibility } from "./stripe/trial";
 
 export const workspaceRouter = createTRPCRouter({
   // The authed middleware already resolved and parsed this row; re-selecting
   // it would be the same query. Counts live in `usage` — the shell reads
   // `limits` on every route, the counts only on two surfaces.
   // `trialDaysLeft` is derived here, not stored: it depends on "now".
-  get: protectedProcedure.query(({ ctx }) => ({
+  // `trial` skips Stripe and costs no read for a non-free
+  // workspace; the Checkout mutation re-checks with Stripe.
+  get: protectedProcedure.query(async ({ ctx }) => ({
     ...ctx.workspace,
     trialDaysLeft: getTrialDaysLeft(ctx.workspace.trialEndsAt),
+    trial: await checkTrialEligibility({
+      ctx: toServiceCtx(ctx),
+      email: ctx.user.email,
+      stripe: false,
+    }),
     features: enabledFeatures(ctx.workspace),
   })),
 

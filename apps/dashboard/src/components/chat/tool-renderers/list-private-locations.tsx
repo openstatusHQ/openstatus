@@ -1,10 +1,13 @@
 import type { AgentToolOutput } from "@openstatus/services/agent-tools";
 
+import { EntityRefList } from "@/components/common/entity-ref/entity-ref";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellMetadata } from "@/components/data-table/table-cell-metadata";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
+import { entityKinds } from "@/data/entity-refs.client";
 
 import type { ResultTableData } from "./result-table";
 
@@ -28,25 +31,21 @@ export function listPrivateLocationsTable(
       cells: {
         name: (
           <TableCellLink
-            href={"/settings/private-locations"}
+            href={entityKinds.privateLocation.href()}
             value={location.name}
           />
         ),
-        monitors: (
-          <TableCellText
-            value={
-              location.monitorIds.length === 0
-                ? "none"
-                : `${location.monitorIds.length} (${location.monitorIds.join(", ")})`
-            }
-            className="text-muted-foreground font-mono"
-          />
-        ),
+        monitors:
+          location.monitorIds.length === 0 ? (
+            <TableCellText value={null} empty="None" />
+          ) : (
+            <EntityRefList kind="monitor" refs={location.monitorIds} />
+          ),
         metadata: <TableCellMetadata value={location.metadata} />,
         lastSeenAt: location.lastSeenAt ? (
           <TableCellDate value={new Date(location.lastSeenAt)} />
         ) : (
-          <TableCellText value="never" className="text-muted-foreground" />
+          <TableCellEmpty>Never</TableCellEmpty>
         ),
         id: <TableCellNumber value={location.id} />,
       },

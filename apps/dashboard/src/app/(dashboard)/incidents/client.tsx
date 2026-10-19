@@ -42,7 +42,6 @@ export function Client() {
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (
-          // incident.list already sorts open first, then newest declared.
           <DataTable
             columns={columns}
             data={incidents}

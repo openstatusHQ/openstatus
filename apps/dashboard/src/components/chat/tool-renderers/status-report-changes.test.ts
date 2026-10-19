@@ -48,7 +48,10 @@ describe("createStatusReportChanges", () => {
     );
     expect(rows.slice(5)).toEqual([
       { field: "pageComponentIds", after: [1, 2] },
-      { field: "componentImpacts", after: ["1 → major_outage"] },
+      {
+        field: "componentImpacts",
+        after: [{ pageComponentId: 1, impact: "major_outage" }],
+      },
       { field: "date", after: "2024-01-01T00:00:00Z" },
     ]);
   });
@@ -110,7 +113,7 @@ describe("addStatusReportUpdateChanges", () => {
     ]);
   });
 
-  it("formats impacts, keeps the date and uses the applied notify flag", () => {
+  it("keeps impacts structured, keeps the date and uses the applied notify flag", () => {
     const rows = addStatusReportUpdateChanges(
       asInput<AddInput>({
         ...base,
@@ -121,7 +124,10 @@ describe("addStatusReportUpdateChanges", () => {
     );
     expect(rows.find((r) => r.field === "notify")?.after).toBe(true);
     expect(rows.slice(4)).toEqual([
-      { field: "componentImpacts", after: ["4 → operational"] },
+      {
+        field: "componentImpacts",
+        after: [{ pageComponentId: 4, impact: "operational" }],
+      },
       { field: "date", after: "2024-01-01T00:00:00Z" },
     ]);
   });
