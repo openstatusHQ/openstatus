@@ -25,13 +25,9 @@ const assertion = z.discriminatedUnion("type", [
   recordAssertion,
 ]);
 
-// Bounds mirror `insertMonitorSchema` (0–60_000 ms) — what the dashboard
-// forms accept.
-const timeoutMs = z.coerce.number().gte(0).lte(60_000);
-
-// The RPC API's proto contract declares 0–120_000 ms and validates it there,
-// so the whole-object verbs must not reject a value the proto accepts.
-const apiTimeoutMs = z.coerce.number().gte(0).lte(120_000);
+// Bounds mirror `insertMonitorSchema` and the RPC API's proto contract
+// (0–300_000 ms), so no verb rejects a value another surface accepts.
+const timeoutMs = z.coerce.number().gte(0).lte(300_000);
 
 /**
  * Create a new monitor. Regions and periodicity are optional — when unset,
@@ -54,8 +50,8 @@ export const CreateMonitorInput = z.object({
   // falls through to the column default rather than overwriting it.
   description: z.string().optional(),
   public: z.boolean().optional(),
-  timeout: apiTimeoutMs.optional(),
-  degradedAfter: apiTimeoutMs.nullish(),
+  timeout: timeoutMs.optional(),
+  degradedAfter: timeoutMs.nullish(),
   retry: z.number().int().min(0).optional(),
   followRedirects: z.boolean().optional(),
   grpcService: z.string().optional(),
@@ -87,8 +83,8 @@ export const UpdateMonitorConfigInput = z.object({
   regions: z.array(z.string()).optional(),
   description: z.string().optional(),
   public: z.boolean().optional(),
-  timeout: apiTimeoutMs.optional(),
-  degradedAfter: apiTimeoutMs.nullish(),
+  timeout: timeoutMs.optional(),
+  degradedAfter: timeoutMs.nullish(),
   retry: z.number().int().min(0).optional(),
   followRedirects: z.boolean().optional(),
   grpcService: z.string().optional(),

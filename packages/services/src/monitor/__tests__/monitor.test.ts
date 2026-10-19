@@ -1303,18 +1303,18 @@ describe("updateMonitorConfig clearing + replacement", () => {
     });
   });
 
-  // The proto declares 0–120_000 ms for `timeout`/`degraded_at`; the RPC API
+  // The proto declares 0–300_000 ms for `timeout`/`degraded_at`; the RPC API
   // accepted that range before these verbs existed, so they must too.
-  test("accepts the proto's full 0–120_000 ms timeout range", async () => {
+  test("accepts the proto's full 0–300_000 ms timeout range", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const row = await seed(tx, `${TEST_PREFIX}-wide-timeout`);
 
       const updated = await updateMonitorConfig({
         ctx,
-        input: { id: row.id, timeout: 120_000, degradedAfter: 90_000 },
+        input: { id: row.id, timeout: 300_000, degradedAfter: 90_000 },
       });
-      expect(updated.timeout).toBe(120_000);
+      expect(updated.timeout).toBe(300_000);
       expect(updated.degradedAfter).toBe(90_000);
 
       const created = await createMonitor({
@@ -1327,11 +1327,11 @@ describe("updateMonitorConfig clearing + replacement", () => {
           headers: [],
           assertions: [],
           active: false,
-          timeout: 120_000,
+          timeout: 300_000,
           degradedAfter: 90_000,
         },
       });
-      expect(created.timeout).toBe(120_000);
+      expect(created.timeout).toBe(300_000);
       expect(created.degradedAfter).toBe(90_000);
     });
   });
@@ -1342,7 +1342,7 @@ describe("updateMonitorConfig clearing + replacement", () => {
       const row = await seed(tx, `${TEST_PREFIX}-over-timeout`);
 
       await expect(
-        updateMonitorConfig({ ctx, input: { id: row.id, timeout: 120_001 } }),
+        updateMonitorConfig({ ctx, input: { id: row.id, timeout: 300_001 } }),
       ).rejects.toThrow();
     });
   });

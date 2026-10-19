@@ -167,7 +167,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		return response, nil
 	}
 
-	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
+	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)), backoff.WithMaxElapsedTime(retryBudget))
 	data.Latency = latency
 	if result != nil {
 		data.Records = checker.FormatDNSRecords(result)
