@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 
 export type MonthGroup<T> = {
   /** `yyyy-MM`, stable across renders. */
@@ -37,4 +37,15 @@ export function formatDurationShort(ms: number) {
   const hours = Math.round(minutes / 60);
   if (hours < 24) return `${hours}h`;
   return `${Math.round(hours / 24)}d`;
+}
+
+/** `Sun 18 Oct, 21:55` in local time. */
+export function formatEventDate(date: Date) {
+  return format(date, "EEE d MMM, HH:mm");
+}
+
+/** `Mon 19 Oct, 02:00–06:00`; the end gets its own date when it falls on another day. */
+export function formatEventWindow(from: Date, to: Date) {
+  const end = isSameDay(from, to) ? format(to, "HH:mm") : formatEventDate(to);
+  return `${formatEventDate(from)}–${end}`;
 }

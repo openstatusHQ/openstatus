@@ -91,6 +91,8 @@ export function EventListItem({
       data-slot="event-list-item"
       className={cn(
         "relative flex flex-wrap items-start gap-x-2.5 gap-y-2 px-4 py-3 sm:flex-nowrap",
+        // media width; a row with a wider marker overrides it on the item
+        "[--event-list-media:2rem]",
         "has-[[data-slot=event-list-title]:focus-visible]:bg-muted/50 hover:bg-muted/50 transition-colors duration-150 ease-[ease]",
         className,
       )}
@@ -113,7 +115,7 @@ export function EventListMedia({
     <div
       data-slot="event-list-media"
       className={cn(
-        "flex h-11.5 w-8 shrink-0 items-center justify-center",
+        "flex h-11.5 w-(--event-list-media) shrink-0 items-center justify-center",
         className,
       )}
       {...props}
@@ -133,7 +135,7 @@ export function EventListContent({
       data-slot="event-list-content"
       className={cn(
         // below sm the content fills the line beside the media, so actions wrap under it
-        "flex min-w-0 flex-1 basis-[calc(100%-2.625rem)] flex-col gap-1.5 sm:basis-auto",
+        "flex min-w-0 flex-1 basis-[calc(100%-var(--event-list-media)-0.625rem)] flex-col gap-1.5 sm:basis-auto",
         className,
       )}
       {...props}
@@ -253,7 +255,7 @@ export function EventListDetail({
   );
 }
 
-// Wrapped below sm, ml-10.5 (media + gap) lines actions up with the text;
+// Wrapped below sm, a margin of media + gap lines actions up with the text;
 // beside the title, -my-1 keeps a 28px button from growing the row.
 export function EventListActions({
   children,
@@ -264,7 +266,7 @@ export function EventListActions({
     <div
       data-slot="event-list-actions"
       className={cn(
-        "relative z-10 ml-10.5 flex shrink-0 items-center gap-1 sm:-my-1 sm:ml-0",
+        "relative z-10 ml-[calc(var(--event-list-media)+0.625rem)] flex shrink-0 items-center gap-1 sm:-my-1 sm:ml-0",
         className,
       )}
       {...props}

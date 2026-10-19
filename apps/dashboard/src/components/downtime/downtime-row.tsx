@@ -6,11 +6,12 @@ import NextLink from "next/link";
 
 import { DateBlock } from "@/components/common/date-block";
 import { StatusBadge } from "@/components/common/status-badge";
+import { TypeTag } from "@/components/common/type-tag";
 import {
   EventListActions,
   EventListContent,
-  EventListDetail,
   EventListDescription,
+  EventListDetail,
   EventListItem,
   EventListMedia,
   EventListMeta,
@@ -19,7 +20,7 @@ import {
 } from "@/components/content/event-list";
 import { IncidentRowActions } from "@/components/data-table/incidents/data-table-row-actions";
 import { DeclareFromRow } from "@/components/incidents/declare-from-row";
-import { formatDurationShort } from "@/data/event-list.client";
+import { formatDurationShort, formatEventDate } from "@/data/event-list.client";
 
 import { DowntimeNextAction } from "./downtime-next-action";
 
@@ -27,7 +28,8 @@ type Downtime = RouterOutputs["monitorIncident"]["list"][number];
 
 /**
  * On a monitor's own page the duration is the title. `monitor` is for lists
- * across monitors: it titles the row with the monitor instead.
+ * across monitors and kinds: it titles the row with the monitor, leads with a
+ * type tag and makes the sentence the state and the date.
  */
 export function DowntimeRow({
   downtime,
@@ -37,6 +39,13 @@ export function DowntimeRow({
   monitor?: boolean;
 }) {
   const ongoing = downtime.resolvedAt === null;
+  const state = ongoing
+    ? downtime.acknowledgedAt
+      ? "Acknowledged"
+      : "Ongoing"
+    : downtime.autoResolved
+      ? "Recovered"
+      : "Resolved";
   // legacy monitors can have an empty name; the title is the row's only link
   const monitorName = downtime.monitor.name || downtime.monitor.url;
   const duration = formatDistanceStrict(
@@ -44,9 +53,26 @@ export function DowntimeRow({
     downtime.resolvedAt ?? new Date(),
   );
   return (
-    <EventListItem>
+    <EventListItem
+      className={monitor ? "[--event-list-media:2.75rem]" : undefined}
+    >
       <EventListMedia>
-        <DateBlock date={downtime.startedAt} variant="destructive" />
+        {monitor ? (
+          <TypeTag
+            label="Downtime"
+            variant={
+              ongoing
+                ? downtime.acknowledgedAt
+                  ? "warning"
+                  : "destructive"
+                : "default"
+            }
+          >
+            DWN
+          </TypeTag>
+        ) : (
+          <DateBlock date={downtime.startedAt} variant="destructive" />
+        )}
       </EventListMedia>
       <EventListContent>
         {monitor ? (
@@ -59,19 +85,28 @@ export function DowntimeRow({
           <EventListTitle>Down for {duration}</EventListTitle>
         )}
         <EventListDescription>
-          {monitor ? <span>Downtime</span> : null}
-          {ongoing ? (
+          {ongoing && monitor ? (
+            <span className="text-foreground font-medium">{state}</span>
+          ) : ongoing ? (
             <StatusBadge variant="destructive" plain>
-              {downtime.acknowledgedAt ? "Acknowledged" : "Ongoing"}
+              {state}
             </StatusBadge>
           ) : (
             <span>
-              {downtime.autoResolved ? "Recovered" : "Resolved"}
+              {state}
               {monitor ? (
                 <span className="lg:hidden"> after {duration}</span>
               ) : null}
             </span>
           )}
+          {monitor ? (
+            <EventListTime
+              date={downtime.startedAt}
+              className="hidden lg:inline"
+            >
+              {formatEventDate(downtime.startedAt)}
+            </EventListTime>
+          ) : null}
           <EventListTime date={downtime.startedAt} className="lg:hidden" />
         </EventListDescription>
       </EventListContent>

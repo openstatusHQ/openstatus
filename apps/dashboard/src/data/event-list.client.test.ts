@@ -3,6 +3,8 @@ import { describe, it } from "@std/testing/bdd";
 
 import {
   formatDurationShort,
+  formatEventDate,
+  formatEventWindow,
   groupByMonth,
   pluralize,
 } from "./event-list.client";
@@ -50,5 +52,21 @@ describe("formatDurationShort", () => {
     expect(formatDurationShort(45 * m)).toBe("45m");
     expect(formatDurationShort(150 * m)).toBe("3h");
     expect(formatDurationShort(4 * 24 * 60 * m)).toBe("4d");
+  });
+});
+
+describe("formatEventWindow", () => {
+  // local-time constructors keep the expectation independent of the runner's TZ
+  const at = (day: number, h: number) => new Date(2026, 9, day, h, 0);
+  it("formats a date and a same-day window", () => {
+    expect(formatEventDate(at(18, 21))).toBe("Sun 18 Oct, 21:00");
+    expect(formatEventWindow(at(19, 2), at(19, 6))).toBe(
+      "Mon 19 Oct, 02:00–06:00",
+    );
+  });
+  it("dates the end of a window past midnight", () => {
+    expect(formatEventWindow(at(18, 22), at(19, 0))).toBe(
+      "Sun 18 Oct, 22:00–Mon 19 Oct, 00:00",
+    );
   });
 });

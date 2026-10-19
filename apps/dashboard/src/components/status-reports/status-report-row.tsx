@@ -5,11 +5,12 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import NextLink from "next/link";
 
 import { SeverityBars } from "@/components/common/severity-bars";
+import { TypeTag } from "@/components/common/type-tag";
 import {
   EventListActions,
   EventListContent,
-  EventListDetail,
   EventListDescription,
+  EventListDetail,
   EventListItem,
   EventListMedia,
   EventListMeta,
@@ -17,8 +18,15 @@ import {
   EventListTitle,
 } from "@/components/content/event-list";
 import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-report-update/sheet-create";
-import { formatDurationShort, pluralize } from "@/data/event-list.client";
-import { impactDisplay } from "@/data/status-report-updates.client";
+import {
+  formatDurationShort,
+  formatEventDate,
+  pluralize,
+} from "@/data/event-list.client";
+import {
+  impactDisplay,
+  statusVariants,
+} from "@/data/status-report-updates.client";
 import {
   reportResolvedAt,
   reportStartedAt,
@@ -36,7 +44,10 @@ const impactLevel = {
   major_outage: 3,
 } as const;
 
-/** `type` prefixes the sentence with "Status report", for lists that mix event kinds. */
+/**
+ * `type` is for lists that mix event kinds: a type tag leads and the
+ * sentence is the state and the date.
+ */
 export function StatusReportRow({
   report,
   type = false,
@@ -51,13 +62,24 @@ export function StatusReportRow({
   const startedAt = reportStartedAt(report);
   const resolvedAt = reportResolvedAt(report);
   return (
-    <EventListItem>
+    <EventListItem
+      className={type ? "[--event-list-media:2.75rem]" : undefined}
+    >
       <EventListMedia>
-        <SeverityBars
-          level={impact ? impactLevel[impact] : 0}
-          variant={display.variant}
-          label={impactLabel}
-        />
+        {type ? (
+          <TypeTag
+            label="Status report"
+            variant={open ? statusVariants[report.status] : "default"}
+          >
+            RPT
+          </TypeTag>
+        ) : (
+          <SeverityBars
+            level={impact ? impactLevel[impact] : 0}
+            variant={display.variant}
+            label={impactLabel}
+          />
+        )}
       </EventListMedia>
       <EventListContent>
         <EventListTitle asChild>
@@ -68,11 +90,19 @@ export function StatusReportRow({
           </NextLink>
         </EventListTitle>
         <EventListDescription>
-          {type ? <span>Status report</span> : null}
-          {open ? (
+          {open && type ? (
+            <span className="text-foreground font-medium capitalize">
+              {report.status}
+            </span>
+          ) : open ? (
             <StatusReportStatusBadge status={report.status} plain />
           ) : null}
           <span>{impactLabel}</span>
+          {type ? (
+            <EventListTime date={startedAt} className="hidden lg:inline">
+              {formatEventDate(startedAt)}
+            </EventListTime>
+          ) : null}
           <EventListTime date={startedAt} className="lg:hidden" />
         </EventListDescription>
       </EventListContent>

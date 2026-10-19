@@ -1,22 +1,24 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import NextLink from "next/link";
 
 import { SeverityBars } from "@/components/common/severity-bars";
 import { StatusBadge } from "@/components/common/status-badge";
+import { TypeTag } from "@/components/common/type-tag";
 import {
   EventListContent,
-  EventListDetail,
   EventListDescription,
+  EventListDetail,
   EventListItem,
   EventListMedia,
   EventListMeta,
   EventListTime,
   EventListTitle,
 } from "@/components/content/event-list";
-import { formatDurationShort } from "@/data/event-list.client";
+import { formatDurationShort, formatEventDate } from "@/data/event-list.client";
 import {
   incidentEndedAt,
   severityConfig,
@@ -31,7 +33,10 @@ export function isIncidentActive(incident: Pick<Incident, "status">) {
   return incident.status === "open" || incident.status === "mitigated";
 }
 
-/** `type` prefixes the sentence with "Incident", for lists that mix event kinds. */
+/**
+ * `type` is for lists that mix event kinds: a type tag leads and the
+ * sentence is the state and the date.
+ */
 export function IncidentRow({
   incident,
   type = false,
@@ -43,18 +48,30 @@ export function IncidentRow({
   const severity = severityConfig[incident.severity];
   const status = statusConfig[incident.status];
   const active = isIncidentActive(incident);
+  const resolved = endedAt && incident.status === "resolved";
   const now = new Date();
   return (
-    <EventListItem>
+    <EventListItem
+      className={type ? "[--event-list-media:2.75rem]" : undefined}
+    >
       <EventListMedia>
-        <SeverityBars
-          level={severityLevel[incident.severity]}
-          // a canceled incident never had its impact, so it stays neutral
-          variant={
-            incident.status === "canceled" ? "default" : severity.variant
-          }
-          label={`${severity.label} severity`}
-        />
+        {type ? (
+          <TypeTag
+            label="Incident"
+            variant={active ? status.variant : "default"}
+          >
+            INC
+          </TypeTag>
+        ) : (
+          <SeverityBars
+            level={severityLevel[incident.severity]}
+            // a canceled incident never had its impact, so it stays neutral
+            variant={
+              incident.status === "canceled" ? "default" : severity.variant
+            }
+            label={`${severity.label} severity`}
+          />
+        )}
       </EventListMedia>
       <EventListContent>
         <EventListTitle asChild>
@@ -63,8 +80,7 @@ export function IncidentRow({
           </NextLink>
         </EventListTitle>
         <EventListDescription>
-          {type ? <span>Incident</span> : null}
-          {active ? (
+          {active && !type ? (
             <StatusBadge variant={status.variant} plain>
               {/* two variants: a split label would take the badge's flex gap as a word space */}
               <span className="lg:hidden">
@@ -73,23 +89,36 @@ export function IncidentRow({
               </span>
               <span className="hidden lg:inline">{status.label}</span>
             </StatusBadge>
-          ) : endedAt && incident.status === "resolved" ? (
-            <span>
-              Resolved
-              <span className="lg:hidden">
-                {" "}
-                after {formatDistanceStrict(incident.startedAt, endedAt)}
-              </span>
-            </span>
           ) : (
-            <span>{status.label}</span>
+            <span className={cn(active && "text-foreground font-medium")}>
+              {status.label}
+              {active ? (
+                <span className="lg:hidden">
+                  {" "}
+                  for {formatDistanceStrict(incident.startedAt, now)}
+                </span>
+              ) : resolved ? (
+                <span className="lg:hidden">
+                  {" "}
+                  after {formatDistanceStrict(incident.startedAt, endedAt)}
+                </span>
+              ) : null}
+            </span>
           )}
+          {type ? (
+            <EventListTime
+              date={incident.declaredAt}
+              className="hidden lg:inline"
+            >
+              {formatEventDate(incident.declaredAt)}
+            </EventListTime>
+          ) : null}
           <EventListTime date={incident.declaredAt} className="lg:hidden" />
         </EventListDescription>
       </EventListContent>
       <EventListMeta>
         <EventListTime date={incident.declaredAt} />
-        {active || (endedAt && incident.status === "resolved") ? (
+        {active || resolved ? (
           <EventListDetail>
             {active ? "open" : "lasted"}{" "}
             {formatDurationShort(
