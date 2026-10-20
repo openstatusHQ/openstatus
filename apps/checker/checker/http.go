@@ -58,17 +58,29 @@ func decodeBase64Body(body string) ([]byte, error) {
 	return nil, fmt.Errorf("invalid base64 data url format")
 }
 
+// defaultHTTPTimeout bounds a probe whose monitor has no timeout set: a zero
+// timeout would otherwise let a dial or TLS handshake hang forever.
+const defaultHTTPTimeout = 45 * time.Second
+
 // NewHTTPClient returns a client with a transport of its own. Leaving Transport
 // nil shares http.DefaultTransport: a probe could then be handed a pooled
 // connection (no DNS/connect/TLS timing), and CloseIdleConnections would tear
 // down the connections of every concurrent probe and of the Tinybird client.
+// With keep-alives off, every probe is sent with "Connection: close".
 func NewHTTPClient(timeout time.Duration, followRedirects bool) *http.Client {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.DisableKeepAlives = true
-	// The default transport caps dial at 30s and the TLS handshake at 10s,
-	// which cut a check short of the monitor's own timeout.
-	transport.DialContext = (&net.Dialer{Timeout: timeout}).DialContext
-	transport.TLSHandshakeTimeout = timeout
+	if timeout <= 0 {
+		timeout = defaultHTTPTimeout
+	}
+
+	// Dial and TLS get the monitor's whole timeout: http.DefaultTransport caps
+	// them at 30s and 10s, which cut a check short of what the user set.
+	transport := &http.Transport{
+		Proxy:               http.ProxyFromEnvironment,
+		DialContext:         (&net.Dialer{Timeout: timeout}).DialContext,
+		TLSHandshakeTimeout: timeout,
+		ForceAttemptHTTP2:   true,
+		DisableKeepAlives:   true,
+	}
 
 	client := &http.Client{
 		Timeout:   timeout,
@@ -94,8 +106,9 @@ func NewHTTPClient(timeout time.Duration, followRedirects bool) *http.Client {
 }
 
 // httpErrorMessage turns a failed request into the message stored for the
-// customer. The raw error is prefixed with the method and URL, and DNS failures
-// name fly's internal resolver ([fdaa::3]:53).
+// customer: common transport failures get a short fixed message, and anything
+// else loses the method and URL prefix. DNS messages leave out the resolver,
+// which on fly is an internal address ([fdaa::3]:53).
 func httpErrorMessage(err error, latency int64) string {
 	var urlErr *url.Error
 	if errors.As(err, &urlErr) && urlErr.Timeout() {

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -25,10 +24,6 @@ type Handler struct {
 }
 
 // Authorization could be handle by middleware
-
-func NewHTTPClient() *http.Client {
-	return &http.Client{}
-}
 
 // withMonitorLogger tags every log line of a check with the monitor it belongs
 // to: the probed URL alone does not say which workspace to look at.

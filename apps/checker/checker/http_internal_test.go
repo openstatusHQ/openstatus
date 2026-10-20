@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"syscall"
@@ -90,4 +91,17 @@ func TestHTTPErrorMessage(t *testing.T) {
 			assert.Equal(t, tt.want, httpErrorMessage(tt.err, 1200))
 		})
 	}
+}
+
+// A monitor without a timeout must still be bounded: a zero timeout on the
+// dialer and TLS handshake means no limit at all.
+func TestNewHTTPClientZeroTimeoutFallsBack(t *testing.T) {
+	client := NewHTTPClient(0, true)
+
+	assert.Equal(t, defaultHTTPTimeout, client.Timeout)
+
+	transport, ok := client.Transport.(*http.Transport)
+	assert.True(t, ok)
+	assert.Equal(t, defaultHTTPTimeout, transport.TLSHandshakeTimeout)
+	assert.True(t, transport.DisableKeepAlives)
 }

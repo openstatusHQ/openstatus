@@ -69,6 +69,9 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 	}
 
 	requestClient := checker.NewHTTPClient(45*time.Second, true)
+	// Keep Go's default policy here: a redirect loop is an error, not the last
+	// 3xx response.
+	requestClient.CheckRedirect = nil
 
 	defer requestClient.CloseIdleConnections()
 

@@ -35,7 +35,7 @@ var (
 // cloudTasksClient builds the Cloud Tasks client once and shares it: it holds a
 // gRPC connection and a token cache, too heavy to rebuild on every status
 // change. A failed build is not cached, so the next call tries again.
-func cloudTasksClient(ctx context.Context) (*cloudtasks.Client, error) {
+func cloudTasksClient() (*cloudtasks.Client, error) {
 	tasksClientMu.Lock()
 	defer tasksClientMu.Unlock()
 
@@ -64,9 +64,9 @@ func cloudTasksClient(ctx context.Context) (*cloudtasks.Client, error) {
 		TokenProvider: tp,
 	})
 
-	// The client outlives the request that first needs it, so it must not be
-	// bound to that request's context.
-	client, err := cloudtasks.NewClient(context.WithoutCancel(ctx), option.WithAuthCredentials(creds))
+	// The client lives as long as the process, so it takes neither the
+	// cancellation nor the values (logger, monitor) of the request that built it.
+	client, err := cloudtasks.NewClient(context.Background(), option.WithAuthCredentials(creds))
 	if err != nil {
 		return nil, fmt.Errorf("creating cloud tasks client: %w", err)
 	}
@@ -80,18 +80,17 @@ func cloudTasksClient(ctx context.Context) (*cloudtasks.Client, error) {
 // act on the returned error, so every failure is logged here: a lost update is
 // a missed alert.
 func UpdateStatus(ctx context.Context, updateData UpdateData) error {
-	logger := log.Ctx(ctx).With().
-		Str("monitor_id", updateData.MonitorId).
-		Str("status", updateData.Status).
-		Logger()
+	// monitor_id is already on the context logger (handlers.withMonitorLogger).
+	logger := log.Ctx(ctx).With().Str("status", updateData.Status).Logger()
 
 	url := "https://openstatus-workflows.fly.dev/updateStatus"
 	basic := "Basic " + os.Getenv("CRON_SECRET")
 	payloadBuf := new(bytes.Buffer)
 
-	client, err := cloudTasksClient(ctx)
+	client, err := cloudTasksClient()
 	if err != nil {
 		logger.Error().Err(err).Msg("error while updating status")
+
 		return err
 	}
 
