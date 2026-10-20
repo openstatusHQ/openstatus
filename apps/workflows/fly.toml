@@ -15,8 +15,8 @@ kill_timeout = "25s"
 
 [[vm]]
   cpu_kind = "shared"
-  cpus = 6
-  memory_mb = 1536
+  cpus = 4
+  memory_mb = 1024
 
 [http_service]
   internal_port = 3000
