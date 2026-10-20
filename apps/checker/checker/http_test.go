@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"net"
 	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -116,4 +120,34 @@ func Test_ping(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Each probe must open its own connection: a pooled one would skip DNS,
+// connect and TLS, and report those timings as zero.
+func TestNewHTTPClientDoesNotReuseConnections(t *testing.T) {
+	var newConns atomic.Int32
+
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	server.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		if state == http.StateNew {
+			newConns.Add(1)
+		}
+	}
+	server.Start()
+	t.Cleanup(server.Close)
+
+	client := checker.NewHTTPClient(5*time.Second, true)
+	defer client.CloseIdleConnections()
+
+	for range 2 {
+		input := request.HttpCheckerRequest{URL: server.URL, Method: http.MethodGet}
+		res, err := checker.Http(context.Background(), client, input)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.Status)
+		assert.NotZero(t, res.Timing.ConnectStart)
+	}
+
+	assert.Equal(t, int32(2), newConns.Load())
 }

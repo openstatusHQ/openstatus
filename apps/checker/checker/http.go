@@ -8,10 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/openstatushq/openstatus/apps/checker/request"
@@ -54,6 +56,81 @@ func decodeBase64Body(body string) ([]byte, error) {
 		return base64.StdEncoding.DecodeString(data[1])
 	}
 	return nil, fmt.Errorf("invalid base64 data url format")
+}
+
+// NewHTTPClient returns a client with a transport of its own. Leaving Transport
+// nil shares http.DefaultTransport: a probe could then be handed a pooled
+// connection (no DNS/connect/TLS timing), and CloseIdleConnections would tear
+// down the connections of every concurrent probe and of the Tinybird client.
+func NewHTTPClient(timeout time.Duration, followRedirects bool) *http.Client {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.DisableKeepAlives = true
+	// The default transport caps dial at 30s and the TLS handshake at 10s,
+	// which cut a check short of the monitor's own timeout.
+	transport.DialContext = (&net.Dialer{Timeout: timeout}).DialContext
+	transport.TLSHandshakeTimeout = timeout
+
+	client := &http.Client{
+		Timeout:   timeout,
+		Transport: transport,
+	}
+
+	if !followRedirects {
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	} else {
+		// Explicitly limit the number of redirects to 10 (Go's default)
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return http.ErrUseLastResponse
+			}
+
+			return nil
+		}
+	}
+
+	return client
+}
+
+// httpErrorMessage turns a failed request into the message stored for the
+// customer. The raw error is prefixed with the method and URL, and DNS failures
+// name fly's internal resolver ([fdaa::3]:53).
+func httpErrorMessage(err error, latency int64) string {
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) && urlErr.Timeout() {
+		return fmt.Sprintf("Timeout after %d ms", latency)
+	}
+
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
+		return fmt.Sprintf("DNS lookup failed for %s: %s", dnsErr.Name, dnsErr.Err)
+	}
+
+	var certErr *tls.CertificateVerificationError
+	if errors.As(err, &certErr) {
+		return fmt.Sprintf("TLS certificate verification failed: %s", certErr.Err)
+	}
+
+	var opErr *net.OpError
+	if errors.As(err, &opErr) && opErr.Op == "remote error" {
+		return fmt.Sprintf("TLS handshake failed: %s", opErr.Err)
+	}
+
+	switch {
+	case errors.Is(err, syscall.ECONNREFUSED):
+		return "Connection refused"
+	case errors.Is(err, syscall.ECONNRESET):
+		return "Connection reset by peer"
+	case errors.Is(err, io.EOF), errors.Is(err, io.ErrUnexpectedEOF):
+		return "Connection closed by server before a response was received"
+	}
+
+	if urlErr != nil {
+		return urlErr.Err.Error()
+	}
+
+	return err.Error()
 }
 
 // FIXME: This should only return the TCP Timing Data;
@@ -126,14 +203,10 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	latency := time.Since(start).Milliseconds()
 
 	if err != nil {
-		errorMsg := err.Error()
+		errorMsg := httpErrorMessage(err, latency)
 
-		var urlErr *url.Error
-		if errors.As(err, &urlErr) && urlErr.Timeout() {
-			errorMsg = fmt.Sprintf("Timeout after %d ms", latency)
-		}
-
-		logger.Error().Err(err).Msg("error while pinging")
+		// A failing customer endpoint is expected, not a checker error.
+		logger.Warn().Err(err).Msg("error while pinging")
 
 		// Return Response with error field instead of returning a Go error
 		// This ensures all failures (timeouts, connection refused, DNS failures, etc.)

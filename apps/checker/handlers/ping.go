@@ -68,10 +68,7 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 		}
 	}
 
-	//  We need a new client for each request to avoid connection reuse.
-	requestClient := &http.Client{
-		Timeout: 45 * time.Second,
-	}
+	requestClient := checker.NewHTTPClient(45*time.Second, true)
 
 	defer requestClient.CloseIdleConnections()
 

@@ -65,6 +65,8 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		return
 	}
 
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
 	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
 
 	if err != nil {
@@ -290,6 +292,8 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 
 		return
 	}
+
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
 
 	var called int
 
