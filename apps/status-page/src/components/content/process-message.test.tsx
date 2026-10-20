@@ -1,6 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
 
 import { ProcessMessage } from "./process-message";
 
@@ -43,7 +42,7 @@ describe("ProcessMessage", () => {
   });
 
   // the `ol` override drops its props, so ordered list items vanish
-  it.ignore("keeps the items of ordered lists", () => {
+  it.skip("keeps the items of ordered lists", () => {
     const html = render("1. first\n2. second");
     expect(html).toContain("list-decimal");
     expect(html).toContain("<li>first</li>");

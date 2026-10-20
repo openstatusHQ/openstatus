@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "env": "deno run -A env.ts",
+    "env": "node env.ts",
     "dev": "next dev",
     "build:registry": "turbo run registry:build --filter=@openstatus/ui",
     "build": "pnpm build:registry && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "NODE_ENV=test deno test --parallel -A --no-check --sloppy-imports",
+    "test": "NODE_ENV=test vitest run",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
@@ -96,9 +96,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@tailwindcss/postcss": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
@@ -109,6 +108,7 @@
     "rehype-slug": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
-    "unified": "catalog:"
+    "unified": "catalog:",
+    "vitest": "catalog:"
   }
 }

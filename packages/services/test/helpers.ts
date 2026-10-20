@@ -5,7 +5,7 @@ import {
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
+import { expect } from "vitest";
 
 import type { Actor, DB, DrizzleTx, ServiceContext } from "../src/context";
 import type { Workspace } from "../src/types";

@@ -1,8 +1,7 @@
 import { db } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 import { createIncident } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import {
   createWorkspaceFixture,

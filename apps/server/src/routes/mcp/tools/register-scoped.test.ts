@@ -1,8 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Workspace } from "@openstatus/db/src/schema";
 import type { ServiceContext } from "@openstatus/services";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { registerScopedTool } from "./register-scoped";
 

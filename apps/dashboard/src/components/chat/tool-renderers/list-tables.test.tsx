@@ -1,7 +1,6 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
 
 import { listMonitorsTable } from "./list-monitors";
 import { listNotificationsTable } from "./list-notifications";

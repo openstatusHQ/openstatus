@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 // The double stands in for @slack/web-api via the test import map.
 import { WebClient } from "@slack/web-api";
+import { beforeEach, describe, expect, test } from "vitest";
 
 import { slackTestState } from "@/libs/test/doubles/slack-test-state";
 
@@ -179,7 +179,10 @@ describe("fetchChannelHistory", () => {
     });
     const execute = tools.read_slack_channel.execute;
     if (!execute) throw new Error("read_slack_channel has no execute");
-    await execute({ before: "10.0" }, { toolCallId: "t1", messages: [] });
+    await execute(
+      { before: "10.0" },
+      { toolCallId: "t1", messages: [], context: {} },
+    );
     expect(slackTestState.calls[0].args).toMatchObject({ latest: "10.0" });
   });
 });

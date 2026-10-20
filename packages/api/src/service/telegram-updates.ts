@@ -91,6 +91,9 @@ export type ValidUpdate =
       user: { id: number; first_name: string; username?: string };
     };
 
+// Matches the phase-1 token expiry in `createTelegramToken`.
+const TELEGRAM_CHAT_BINDING_TTL_SECONDS = 1800;
+
 // ---- Helpers ----------------------------------------------------------------
 
 function extractPrivateChatStart(
@@ -221,6 +224,8 @@ export async function processTelegramUpdates(args: {
       })
     : updates;
 
+  const chatKey = `telegram:workspace_chat:${workspaceId}`;
+
   // 2. Phase 1: private /start (no privateChatId filter)
   if (!privateChatId) {
     const tokenKey = `telegram:workspace_token:${workspaceId}`;
@@ -232,6 +237,9 @@ export async function processTelegramUpdates(args: {
         if (result) {
           // Single-use token: delete and stop
           await redisClient.del(tokenKey);
+          await redisClient.set(chatKey, result.chatId, {
+            ex: TELEGRAM_CHAT_BINDING_TTL_SECONDS,
+          });
           validUpdates.push({ chatType: "private", ...result });
           break;
         }
@@ -240,6 +248,14 @@ export async function processTelegramUpdates(args: {
   }
   // 3. Phase 2: group/supergroup additions
   else {
+    // Only the chat that completed phase 1 for this workspace may be used;
+    // otherwise any caller could read another user's group additions.
+    // String(): Upstash deserializes numeric strings into numbers.
+    const boundChatId = await redisClient.get(chatKey);
+    if (boundChatId == null || String(boundChatId) !== privateChatId) {
+      return validUpdates;
+    }
+
     for (const update of recentUpdates) {
       const result = extractGroupBotAddition(
         update,

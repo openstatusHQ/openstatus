@@ -1,15 +1,13 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
-import { stub } from "@std/testing/mock";
+import { describe, expect, test, vi } from "vitest";
 
 import { shouldSample } from "./sampling";
 
 function withRandom<T>(value: number, fn: () => T): T {
-  const random = stub(Math, "random", () => value);
+  const random = vi.spyOn(Math, "random").mockImplementation(() => value);
   try {
     return fn();
   } finally {
-    random.restore();
+    random.mockRestore();
   }
 }
 

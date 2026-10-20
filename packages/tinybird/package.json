@@ -4,8 +4,8 @@
   "license": "MIT",
   "main": "src/index.ts",
   "scripts": {
-    "check": "deno check --sloppy-imports .",
-    "test": "NODE_ENV=test deno test --parallel -A --no-check --sloppy-imports"
+    "check": "tsc --noEmit",
+    "test": "NODE_ENV=test vitest run"
   },
   "dependencies": {
     "@chronark/zod-bird": "catalog:",
@@ -14,12 +14,12 @@
   "devDependencies": {
     "@libsql/client": "catalog:",
     "@openstatus/db": "workspace:*",
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@types/node": "catalog:",
     "drizzle-orm": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

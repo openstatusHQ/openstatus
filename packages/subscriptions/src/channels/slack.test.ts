@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, it as test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import type { PageUpdate, Subscription } from "../types";
 import {

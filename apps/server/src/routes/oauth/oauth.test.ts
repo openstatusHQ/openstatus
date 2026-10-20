@@ -14,9 +14,8 @@ import {
   pkceChallenge,
 } from "@openstatus/services/oauth";
 import { clearAuditLogFor } from "@openstatus/services/test/helpers";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { app } from "../../index";
 import { oauthConfigFromEnv } from "./config";

@@ -1,6 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 import { Effect } from "effect";
+import { describe, expect, it } from "vitest";
 
 import { fetchers as allFetchers } from "../src/fetchers";
 import type { StatusPageEntry, StatusPageProvider } from "../src/types";

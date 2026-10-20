@@ -1,7 +1,6 @@
 import { Region } from "@openstatus/proto/monitor/v1";
 import { AVAILABLE_REGIONS, RAILWAY_REGIONS } from "@openstatus/regions";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import {
   regionToString,

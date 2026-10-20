@@ -14,14 +14,14 @@ import {
   createMonitor,
   createWorkspace,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
 import {
   afterAll,
   beforeAll,
   beforeEach,
   describe,
+  expect,
   test,
-} from "@std/testing/bdd";
+} from "vitest";
 
 import { app } from "../../../../../index";
 
@@ -1690,8 +1690,8 @@ describe("MonitorService.UpdateICMPMonitor", () => {
     for (const [field, monitor] of [
       ["retry above max", { retry: "11" }],
       ["negative retry", { retry: "-1" }],
-      ["timeout above max", { timeout: "120001" }],
-      ["degradedAt above max", { degradedAt: "120001" }],
+      ["timeout above max", { timeout: "300001" }],
+      ["degradedAt above max", { degradedAt: "300001" }],
       ["over-long description", { description: "d".repeat(1025) }],
       ["over-long name", { name: "n".repeat(257) }],
       ["over-long uri", { uri: "u".repeat(2049) }],
@@ -1740,7 +1740,7 @@ describe("MonitorService.UpdateICMPMonitor", () => {
       "UpdateICMPMonitor",
       {
         id: String(testIcmpMonitorId),
-        monitor: { retry: "10", timeout: "120000" },
+        monitor: { retry: "10", timeout: "300000" },
       },
       { "x-openstatus-key": "1" },
     );
@@ -3274,16 +3274,16 @@ describe("MonitorService.GetMonitor", () => {
     // Insert a monitor with invalid data that will fail selectMonitorSchema parsing
     const corruptedMon = await db
       .insert(monitor)
-      // @ts-expect-error - intentionally invalid periodicity to test parse failure
       .values({
         workspaceId: 1,
         name: `${TEST_PREFIX}-corrupted-data`,
         url: "https://corrupted.example.com",
+        // intentionally invalid periodicity to test parse failure
         periodicity: "invalid-periodicity",
         active: true,
         regions: "ams",
         jobType: "http",
-      })
+      } as unknown as typeof monitor.$inferInsert)
       .returning()
       .get();
 

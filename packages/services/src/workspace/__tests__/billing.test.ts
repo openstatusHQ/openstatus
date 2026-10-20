@@ -6,8 +6,7 @@ import {
   createTestWorkspace,
   createUser,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 import { ZodError } from "zod";
 
 import {

@@ -10,8 +10,7 @@ import {
   statusReportUpdateToPageComponents,
 } from "@openstatus/db/src/schema";
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import {
   createWorkspaceFixture,

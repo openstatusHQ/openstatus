@@ -58,9 +58,9 @@ const otelLogger = getLogger("api-server-otel");
  * This allows tests to import `app` immediately.
  */
 
-// Build the LoggerProvider with a static OTLP exporter import so `deno bundle`
-// includes it. Letting @logtape/otel create the exporter triggers a dynamic
-// import of a bare specifier, which the compiled --node-modules-dir=none binary
+// Build the LoggerProvider with a static OTLP exporter import so tsdown
+// bundles it. Letting @logtape/otel create the exporter triggers a dynamic
+// import of a bare specifier, which the image (shipped without node_modules)
 // can't resolve.
 const loggerProvider = new LoggerProvider({
   resource: resourceFromAttributes({

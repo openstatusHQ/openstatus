@@ -1,7 +1,6 @@
 import { db, eq } from "@openstatus/db";
 import { auditLog } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterAll, describe, test } from "@std/testing/bdd";
+import { afterAll, describe, expect, test } from "vitest";
 
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../test/fixtures";
 import { withTestTransaction } from "../../test/helpers";

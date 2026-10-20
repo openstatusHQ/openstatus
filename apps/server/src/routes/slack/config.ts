@@ -7,9 +7,8 @@ import { env } from "@/env";
  * built and carried on the request context.
  *
  * Handlers read this instead of `env` directly so tests can construct a route
- * with explicit config. Mutating `process.env` per-test is not viable: Deno's
- * `--parallel` runs test files in workers that share one process environment,
- * so concurrent files clobber each other's settings.
+ * with explicit config. Mutating `process.env` per-test is not viable: every
+ * test in a file shares it, so one case's settings leak into the next.
  */
 export type SlackConfig = {
   signingSecret?: string;

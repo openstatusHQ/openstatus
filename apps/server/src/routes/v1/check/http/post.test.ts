@@ -1,8 +1,8 @@
-import { afterEach, expect, mock, test } from "@openstatus/test-utils";
+import { afterEach, expect, test, vi } from "vitest";
 
 import { app } from "@/index";
 
-const mockFetch = mock();
+const mockFetch = vi.fn();
 
 global.fetch = mockFetch as unknown as typeof fetch;
 

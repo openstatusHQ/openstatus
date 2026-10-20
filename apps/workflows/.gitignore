@@ -1,6 +1,5 @@
 # deps
 node_modules/
 
-# build artifacts / local dev db
-app
+# local dev db
 dev.db*

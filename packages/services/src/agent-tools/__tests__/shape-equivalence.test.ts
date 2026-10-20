@@ -1,6 +1,5 @@
 import { createMonitor } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import { createWorkspaceFixture, makeUserCtx } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";

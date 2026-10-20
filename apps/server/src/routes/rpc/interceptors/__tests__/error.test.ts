@@ -1,5 +1,5 @@
 import { Code, ConnectError, type Interceptor } from "@connectrpc/connect";
-import { describe, expect, test } from "@openstatus/test-utils";
+import { describe, expect, test } from "vitest";
 
 import { RPC_CONTEXT_KEY } from "../auth";
 import { errorInterceptor } from "../error";

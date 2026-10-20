@@ -1,7 +1,8 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { readFile } from "node:fs/promises";
+
+import { parse as parseYaml } from "@std/yaml";
 import { Hono } from "hono";
-import { parse as parseYaml } from "jsr:@std/yaml@^1.0.9";
+import { describe, expect, test } from "vitest";
 
 import openapiV1Json from "../../static/openapi-v1.json" with { type: "json" };
 import openapiYaml from "../../static/openapi-yaml";
@@ -32,8 +33,9 @@ function withoutDateDefaults(value: unknown): unknown {
 describe("OpenAPI documents", () => {
   test("openapi.json is a faithful rendering of openapi.yaml", async () => {
     const yaml = parseYaml(
-      await Deno.readTextFile(
+      await readFile(
         new URL("../../static/openapi.yaml", import.meta.url),
+        "utf8",
       ),
     );
     expect(JSON.parse(JSON.stringify(openapiJson))).toEqual(yaml);
@@ -41,8 +43,9 @@ describe("OpenAPI documents", () => {
 
   test("the embedded YAML module matches openapi.yaml on disk", async () => {
     expect(openapiYaml).toBe(
-      await Deno.readTextFile(
+      await readFile(
         new URL("../../static/openapi.yaml", import.meta.url),
+        "utf8",
       ),
     );
   });

@@ -1,5 +1,5 @@
-// Test double for @openstatus/upstash, swapped in via --import-map in the
-// `deno test` command. Keeps tests off a real Upstash Redis instance.
+// Test double for @openstatus/upstash, swapped in via test.importmap.json.
+// Keeps tests off a real Upstash Redis instance.
 const noopRedis = {
   get: () => Promise.resolve(null),
   set: () => Promise.resolve("OK"),

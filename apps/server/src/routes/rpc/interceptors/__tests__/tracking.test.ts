@@ -1,3 +1,5 @@
+// @ts-nocheck — ConnectRPC's deep generic types (AnyFn, UnaryResponse, etc.)
+// are incompatible with the test mocks. All runtime behavior is correct.
 import { create } from "@bufbuild/protobuf";
 import type { Interceptor } from "@connectrpc/connect";
 import { Events } from "@openstatus/analytics";
@@ -9,18 +11,16 @@ import {
   SetIncidentStatusRequestSchema,
 } from "@openstatus/proto/incident/v1";
 import { MonitorService } from "@openstatus/proto/monitor/v1";
-// @ts-nocheck — ConnectRPC's deep generic types (AnyFn, UnaryResponse, etc.)
-// are incompatible with the test mocks. All runtime behavior is correct.
 import {
   afterEach,
   beforeEach,
   describe,
   expect,
-  mock,
-  type Stub,
-  stub,
+  type Mock,
+  type MockInstance,
   test,
-} from "@openstatus/test-utils";
+  vi,
+} from "vitest";
 
 import { RPC_CONTEXT_KEY } from "../auth";
 import { RPC_EVENT_MAP, trackingInterceptor } from "../tracking";
@@ -30,8 +30,8 @@ import { RPC_EVENT_MAP, trackingInterceptor } from "../tracking";
 const { track: mockTrack, setupAnalytics: mockSetupAnalytics } = (
   globalThis as Record<string, unknown>
 ).__analyticsSpies as {
-  track: ReturnType<typeof mock>;
-  setupAnalytics: ReturnType<typeof mock>;
+  track: Mock;
+  setupAnalytics: Mock;
 };
 
 type NextFn = Parameters<ReturnType<Interceptor>>[0];
@@ -41,12 +41,12 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 /** Create a mock `next` that resolves with the given value. */
 function mockNext(response: unknown): NextFn {
-  return mock(() => Promise.resolve(response)) as unknown as NextFn;
+  return vi.fn(() => Promise.resolve(response)) as unknown as NextFn;
 }
 
 /** Create a mock `next` that rejects with the given error. */
 function mockNextReject(error: Error): NextFn {
-  return mock(() => Promise.reject(error)) as unknown as NextFn;
+  return vi.fn(() => Promise.reject(error)) as unknown as NextFn;
 }
 
 const TEST_WORKSPACE = {
@@ -95,17 +95,17 @@ function createMockRequest(
 }
 
 describe("trackingInterceptor", () => {
-  let random: Stub<Math, [], number>;
+  let random: MockInstance<() => number>;
 
   beforeEach(() => {
     mockSetupAnalytics.mockClear();
     mockTrack.mockClear();
     // Keep every sampled request unless a test says otherwise.
-    random = stub(Math, "random", () => 0);
+    random = vi.spyOn(Math, "random").mockReturnValue(0);
   });
 
   afterEach(() => {
-    random.restore();
+    random.mockRestore();
   });
 
   test("tracks mapped event on success", async () => {
@@ -274,8 +274,7 @@ describe("trackingInterceptor", () => {
   });
 
   test("drops non-CLI api_request outside the sample", async () => {
-    random.restore();
-    random = stub(Math, "random", () => 0.5);
+    random.mockReturnValue(0.5);
 
     const interceptor = trackingInterceptor();
     const req = createMockRequest(
@@ -291,8 +290,7 @@ describe("trackingInterceptor", () => {
   });
 
   test("keeps the domain event when api_request is sampled out", async () => {
-    random.restore();
-    random = stub(Math, "random", () => 0.5);
+    random.mockReturnValue(0.5);
 
     const interceptor = trackingInterceptor();
     const req = createMockRequest(
@@ -308,8 +306,7 @@ describe("trackingInterceptor", () => {
   });
 
   test("always tracks CLI api_request", async () => {
-    random.restore();
-    random = stub(Math, "random", () => 0.99);
+    random.mockReturnValue(0.99);
 
     const interceptor = trackingInterceptor();
     const req = createMockRequest(

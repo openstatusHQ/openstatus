@@ -1,6 +1,6 @@
 import { FetchError } from "@openstatus/status-fetcher";
 import type { DetectionResult } from "@openstatus/status-fetcher";
-import { describe, expect, test } from "@openstatus/test-utils";
+import { describe, expect, test } from "vitest";
 
 import {
   PROBE_TTL_MS,

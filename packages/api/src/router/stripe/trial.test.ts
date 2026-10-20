@@ -10,10 +10,16 @@ import {
   createTestWorkspace,
   createUser,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 import type Stripe from "stripe";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import { createInnerTRPCContext } from "../../trpc";
 import { workspaceRouter } from "../workspace";
@@ -81,38 +87,40 @@ describe("trial checkout", () => {
   let customerId: string;
   let customers: Stripe.Customer[];
   let subscriptions: Partial<Stripe.Subscription>[];
-  let stubs: Stub[];
-  let listCustomers: Stub;
-  let createCustomer: Stub;
-  let createSession: Stub;
+  let stubs: MockInstance[];
+  let listCustomers: MockInstance;
+  let createCustomer: MockInstance;
+  let createSession: MockInstance;
 
   beforeEach(() => {
     customerId = `cus_${crypto.randomUUID()}`;
     customers = [];
     subscriptions = [];
-    listCustomers = stub(
-      stripe.customers,
-      "list",
-      () =>
-        Promise.resolve({ data: customers } as Stripe.Response<
-          Stripe.ApiList<Stripe.Customer>
-        >) as Stripe.ApiListPromise<Stripe.Customer>,
-    );
-    createCustomer = stub(stripe.customers, "create", () =>
-      Promise.resolve({ id: customerId } as Stripe.Response<Stripe.Customer>),
-    );
-    createSession = stub(stripe.checkout.sessions, "create", () =>
-      Promise.resolve({
-        url: "https://checkout.stripe.test/session",
-      } as Stripe.Response<Stripe.Checkout.Session>),
-    );
+    listCustomers = vi
+      .spyOn(stripe.customers, "list")
+      .mockImplementation(
+        () =>
+          Promise.resolve({ data: customers } as Stripe.Response<
+            Stripe.ApiList<Stripe.Customer>
+          >) as Stripe.ApiListPromise<Stripe.Customer>,
+      );
+    createCustomer = vi
+      .spyOn(stripe.customers, "create")
+      .mockImplementation(() =>
+        Promise.resolve({ id: customerId } as Stripe.Response<Stripe.Customer>),
+      );
+    createSession = vi
+      .spyOn(stripe.checkout.sessions, "create")
+      .mockImplementation(() =>
+        Promise.resolve({
+          url: "https://checkout.stripe.test/session",
+        } as Stripe.Response<Stripe.Checkout.Session>),
+      );
     stubs = [
       listCustomers,
       createCustomer,
       createSession,
-      stub(
-        stripe.subscriptions,
-        "list",
+      vi.spyOn(stripe.subscriptions, "list").mockImplementation(
         // Awaited for the eligibility scan, auto-paged for the live lookup.
         () =>
           Object.assign(Promise.resolve({ data: subscriptions }), {
@@ -123,7 +131,7 @@ describe("trial checkout", () => {
   });
 
   afterEach(() => {
-    for (const s of stubs) s.restore();
+    for (const s of stubs) s.mockRestore();
   });
 
   describe("getCheckoutSession", () => {
@@ -135,9 +143,9 @@ describe("trial checkout", () => {
       );
 
       expect(result?.type).toBe("checkout");
-      assertSpyCalls(createCustomer, 1);
-      assertSpyCalls(createSession, 1);
-      const params = createSession.calls[0]?.args[0];
+      expect(createCustomer).toHaveBeenCalledTimes(1);
+      expect(createSession).toHaveBeenCalledTimes(1);
+      const params = createSession.mock.calls[0]?.[0];
       expect(params).toMatchObject({
         mode: "subscription",
         customer: customerId,
@@ -164,7 +172,7 @@ describe("trial checkout", () => {
       await asCaller(f).getCheckoutSession(trialInput(f, { intent: "   " }));
 
       expect(
-        createSession.calls[0]?.args[0]?.subscription_data?.metadata,
+        createSession.mock.calls[0]?.[0]?.subscription_data?.metadata,
       ).toEqual({ source: "trial_opt_in" });
     });
 
@@ -177,7 +185,7 @@ describe("trial checkout", () => {
         plan: "team",
       });
 
-      const params = createSession.calls[0]?.args[0];
+      const params = createSession.mock.calls[0]?.[0];
       expect(params?.payment_method_collection).toBeUndefined();
       expect(params?.subscription_data).toBeUndefined();
       expect(params?.success_url).toContain("?success=true");
@@ -191,8 +199,8 @@ describe("trial checkout", () => {
       const result = await asCaller(f).getCheckoutSession(trialInput(f));
 
       expect(result?.type).toBe("checkout");
-      assertSpyCalls(createCustomer, 0);
-      expect(createSession.calls[0]?.args[0]).toMatchObject({
+      expect(createCustomer).toHaveBeenCalledTimes(0);
+      expect(createSession.mock.calls[0]?.[0]).toMatchObject({
         customer: stripeId,
       });
     });
@@ -207,7 +215,7 @@ describe("trial checkout", () => {
         code: "PRECONDITION_FAILED",
         message: "This workspace has already had a subscription.",
       });
-      assertSpyCalls(createSession, 0);
+      expect(createSession).toHaveBeenCalledTimes(0);
     });
 
     test("refuses a magic-link-only account", async () => {
@@ -219,8 +227,8 @@ describe("trial checkout", () => {
         code: "PRECONDITION_FAILED",
         message: "Sign in with GitHub or Google to start a trial.",
       });
-      assertSpyCalls(listCustomers, 0);
-      assertSpyCalls(createCustomer, 0);
+      expect(listCustomers).toHaveBeenCalledTimes(0);
+      expect(createCustomer).toHaveBeenCalledTimes(0);
     });
 
     test("refuses an SSO-only account", async () => {
@@ -232,7 +240,7 @@ describe("trial checkout", () => {
         code: "PRECONDITION_FAILED",
         message: "Trials are not available for SSO accounts.",
       });
-      assertSpyCalls(createCustomer, 0);
+      expect(createCustomer).toHaveBeenCalledTimes(0);
     });
 
     test("an account linked to both GitHub and a magic link qualifies", async () => {
@@ -253,7 +261,7 @@ describe("trial checkout", () => {
       await expect(
         asCaller(f).getCheckoutSession(trialInput(f)),
       ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
-      assertSpyCalls(listCustomers, 0);
+      expect(listCustomers).toHaveBeenCalledTimes(0);
     });
 
     test("refuses an email that already had a trial", async () => {
@@ -269,11 +277,11 @@ describe("trial checkout", () => {
         code: "PRECONDITION_FAILED",
         message: "This workspace or email has already used a trial.",
       });
-      expect(listCustomers.calls[0]?.args[0]).toEqual({
+      expect(listCustomers.mock.calls[0]?.[0]).toEqual({
         email: f.user.email,
         limit: 100,
       });
-      assertSpyCalls(createCustomer, 0);
+      expect(createCustomer).toHaveBeenCalledTimes(0);
     });
 
     test("checks both spellings of a mixed-case email", async () => {
@@ -283,7 +291,7 @@ describe("trial checkout", () => {
 
       await asCaller(f).getCheckoutSession(trialInput(f));
 
-      expect(listCustomers.calls.map((c) => c.args[0])).toEqual([
+      expect(listCustomers.mock.calls.map((c) => c[0])).toEqual([
         { email, limit: 100 },
         { email: email.toLowerCase(), limit: 100 },
       ]);
@@ -298,7 +306,7 @@ describe("trial checkout", () => {
         code: "PRECONDITION_FAILED",
         message: "This workspace or email has already used a trial.",
       });
-      assertSpyCalls(listCustomers, 0);
+      expect(listCustomers).toHaveBeenCalledTimes(0);
     });
 
     test("refuses a member who is not the owner", async () => {
@@ -321,7 +329,7 @@ describe("trial checkout", () => {
       await expect(
         asCaller(f).getCheckoutSession(trialInput(f)),
       ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
-      assertSpyCalls(createCustomer, 0);
+      expect(createCustomer).toHaveBeenCalledTimes(0);
     });
 
     test("refuses a trial on any plan but Starter monthly", async () => {
@@ -333,7 +341,7 @@ describe("trial checkout", () => {
       await expect(
         asCaller(f).getCheckoutSession(trialInput(f, { interval: "yearly" })),
       ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-      assertSpyCalls(createSession, 0);
+      expect(createSession).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -357,7 +365,7 @@ describe("trial checkout", () => {
       expect((await getWorkspace(f)).trial).toEqual({
         eligible: true,
       });
-      assertSpyCalls(listCustomers, 0);
+      expect(listCustomers).toHaveBeenCalledTimes(0);
     });
 
     test("not eligible once the workspace has trialed", async () => {

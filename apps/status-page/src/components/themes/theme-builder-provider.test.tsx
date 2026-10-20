@@ -1,8 +1,7 @@
 import { THEMES } from "@openstatus/theme-store";
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
 
 import { ThemePromptButton } from "./theme-agent-actions";
 import {
