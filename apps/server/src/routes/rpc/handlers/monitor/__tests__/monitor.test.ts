@@ -448,22 +448,31 @@ describe("MonitorService.ListMonitors", () => {
   });
 
   test("uses offset for pagination", async () => {
-    // First page
-    const res1 = await connectRequest(
-      "ListMonitors",
-      { limit: 1 },
-      { "x-openstatus-key": "1" },
-    );
+    // Isolate in a dedicated workspace so concurrent monitor inserts/deletes
+    // on the seeded workspace can't shift the pagination window mid-test.
+    // Distinct createdAt values give the `desc(createdAt)` order a
+    // deterministic sequence (it has no id tiebreaker).
+    const ws = await createWorkspace();
+    const key = String(ws.id);
+    const now = Date.now();
+    await createMonitor(ws.id, { createdAt: new Date(now - 1000) });
+    await createMonitor(ws.id, { createdAt: new Date(now) });
 
-    expect(res1.status).toBe(200);
-    const data1 = await res1.json();
+    try {
+      const res1 = await connectRequest(
+        "ListMonitors",
+        { limit: 1 },
+        { "x-openstatus-key": key },
+      );
 
-    if (data1.totalSize > 1) {
-      // Second page using offset
+      expect(res1.status).toBe(200);
+      const data1 = await res1.json();
+      expect(data1.totalSize).toBe(2);
+
       const res2 = await connectRequest(
         "ListMonitors",
         { limit: 1, offset: 1 },
-        { "x-openstatus-key": "1" },
+        { "x-openstatus-key": key },
       );
 
       expect(res2.status).toBe(200);
@@ -482,11 +491,12 @@ describe("MonitorService.ListMonitors", () => {
         ...(data2.dnsMonitors || []).map((m: { id: string }) => m.id),
       ];
 
-      // Should have no overlap
-      const overlap = firstPageIds.filter((id: string) =>
-        secondPageIds.includes(id),
-      );
-      expect(overlap.length).toBe(0);
+      expect(firstPageIds).toHaveLength(1);
+      expect(secondPageIds).toHaveLength(1);
+      expect(firstPageIds[0]).not.toBe(secondPageIds[0]);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.workspaceId, ws.id));
+      await db.delete(workspace).where(eq(workspace.id, ws.id));
     }
   });
 
