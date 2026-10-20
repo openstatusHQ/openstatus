@@ -60,7 +60,7 @@ Each update can declare a per-component impact — `degraded_performance`, `part
 
 - A component's current impact is whatever the **latest update naming it** said. Components you omit from an update keep their previous impact — you only declare what changed.
 - Resolving the report sets every still-affected component back to `operational`, so the page clears deterministically.
-- On status pages using the [Reports only status source](/docs/concept/uptime-calculation-and-values#reports-only), impacts also weight the uptime percentage: a major outage counts fully against uptime, a partial outage counts half, and degraded performance not at all.
+- Impacts also weight the uptime percentage on status pages using the [Reports only status source](/docs/concept/uptime-calculation-and-values#reports-only) or [Monitor checks with Time per status](/docs/concept/uptime-calculation-and-values#time-per-status): a major outage counts fully against uptime, a partial outage counts half, and degraded performance not at all.
 
 The [Status report reference](/docs/reference/status-report) covers the exact impact semantics and weights.
 
@@ -89,7 +89,7 @@ If planned work goes sideways and overruns or breaks something, escalate: publis
 | Scoped to | A monitor | A status page + components | A status page + components |
 | Audience | Your team | Your users | Your users |
 | Timing | When detection fires | During/after the event | Announced before the event |
-| Affects uptime | Yes — failed checks count | Only with Reports only status source, via impacts | Never |
+| Affects uptime | Yes — failed checks count | Via impacts, with Reports only or Time per status | Never |
 | Resolved by | Acknowledge/resolve, or auto-resolve | A `resolved` update | The window ending |
 
 On the status page itself, when several apply to one component, the worst wins: an active incident (error) outranks an unresolved status report (degraded), which outranks maintenance (info), which outranks operational.

@@ -128,7 +128,7 @@ The latency above which a `SERVING` response is recorded as degraded rather than
 **Type:** Integer (optional)
 **Default:** `3`
 
-How many times a check is retried before reporting a definitive error. Only connection failures are retried: once the server has answered — including `NOT_SERVING` or `UNIMPLEMENTED` — the result is recorded immediately, because asking again cannot change it.
+The total number of attempts made for each check, including the first one. `0` is treated as the default (`3`); there is no setting that disables retries, so `1` means a single attempt. Only connection failures trigger another attempt: once the server has answered — including `NOT_SERVING` or `UNIMPLEMENTED` — the result is recorded immediately, because asking again cannot change it.
 
 ### OpenTelemetry
 

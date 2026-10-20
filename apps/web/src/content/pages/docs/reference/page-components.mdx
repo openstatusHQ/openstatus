@@ -190,13 +190,14 @@ Page components can be affected by up to three types of events that influence th
 
 **Applies to:** monitor components only.
 
-Incidents are automatically generated when a monitor detects a failure. They represent unplanned outages or degraded performance discovered through active monitoring.
+Incidents are automatically generated when a monitor detects a failure. They represent unplanned outages discovered through active monitoring.
 
 **How incidents are created:**
 
 - Monitor check fails (connection timeout, HTTP error, DNS failure).
 - Monitor assertion fails (wrong status code, unexpected response body).
-- Monitor reaches degraded threshold (response time too slow).
+
+A monitor that only crosses its degraded threshold (response time too slow) does not open an incident.
 
 **Status impact:** components with active incidents show an **error** status. This takes the highest priority in the status hierarchy.
 

@@ -19,10 +19,11 @@ const { monitor } = await client.monitor.v1.MonitorService.createHTTPMonitor({
   monitor: {
     name: "My API",
     url: "https://example.com",
+    method: HTTPMethod.HTTP_METHOD_GET,
     periodicity: Periodicity.PERIODICITY_1M,
     active: true,
     timeout: BigInt(30000),       // 30 seconds
-    retry: BigInt(5),             // 5 retries
+    retry: BigInt(5),             // 5 attempts in total
     degradedAt: BigInt(3000),     // degraded after 3s
     statusCodeAssertions: [
       { comparator: NumberComparator.EQUAL, target: BigInt(200) },
@@ -127,14 +128,14 @@ const { httpMonitors } = await openstatus.monitor.v1.MonitorService
 
 const { monitor } = await openstatus.monitor.v1.MonitorService
   .createHTTPMonitor({
-    monitor: { name: "API", url: "https://example.com", periodicity: 2, active: true },
+    monitor: { name: "API", url: "https://example.com", method: 1, periodicity: 2, active: true },
   }, { headers });
 ```
 
 **After** — configure once, use everywhere:
 
 ```typescript
-import { createOpenStatusClient, Periodicity } from "@openstatus/sdk-node";
+import { createOpenStatusClient, HTTPMethod, Periodicity } from "@openstatus/sdk-node";
 
 const client = createOpenStatusClient({
   apiKey: process.env.OPENSTATUS_API_KEY,
@@ -148,6 +149,7 @@ const { monitor } = await client.monitor.v1.MonitorService
     monitor: {
       name: "API",
       url: "https://example.com",
+      method: HTTPMethod.HTTP_METHOD_GET,
       periodicity: Periodicity.PERIODICITY_1M,
       active: true,
     },
