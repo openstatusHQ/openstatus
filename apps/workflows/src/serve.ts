@@ -20,11 +20,15 @@ startScheduler();
 
 const server = serve({ fetch: app.fetch, port: PORT });
 
-process.on("SIGTERM", () => {
+process.once("SIGTERM", () => {
   void (async () => {
     logger.info("SIGTERM received, releasing outbox claims");
+    const httpClosed = new Promise<void>((resolve) =>
+      server.close(() => resolve()),
+    );
     await stopScheduler();
     await shutdownOutbox();
-    server.close();
+    await httpClosed;
+    process.exit(0);
   })();
 });

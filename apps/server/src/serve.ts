@@ -20,4 +20,12 @@ getLogger("api-server").info("Starting server", {
   environment: env.NODE_ENV,
 });
 
-serve({ fetch: app.fetch, port });
+const server = serve({ fetch: app.fetch, port });
+
+// Fly sends kill_signal (SIGTERM, see fly.toml) on deploy and stop, then
+// SIGKILLs after kill_timeout. Stop accepting connections and let in-flight
+// requests finish instead of dropping them mid-response.
+process.once("SIGTERM", () => {
+  getLogger("api-server").info("SIGTERM received, draining connections");
+  server.close(() => process.exit(0));
+});
