@@ -2,7 +2,7 @@
 
 ## Tech
 
-- Deno
+- Node.js
 - HonoJS
 
 ## MCP Registry

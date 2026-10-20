@@ -3,10 +3,10 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM node@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS install
+FROM node@sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146 AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6" \
-    org.opencontainers.image.base.name="docker.io/node:24-slim" \
+    org.opencontainers.image.base.digest="sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146" \
+    org.opencontainers.image.base.name="docker.io/node:26.8.1-slim" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
 RUN \
@@ -37,6 +37,7 @@ RUN \
     --mount=type=bind,target=packages/subscriptions/package.json,source=packages/subscriptions/package.json \
     --mount=type=bind,target=packages/utils/package.json,source=packages/utils/package.json \
     --mount=type=bind,target=packages/tsconfig/package.json,source=packages/tsconfig/package.json \
+    --mount=type=bind,target=packages/test-utils/package.json,source=packages/test-utils/package.json \
     --mount=type=bind,target=packages/tinybird/package.json,source=packages/tinybird/package.json \
     --mount=type=bind,target=packages/upstash/package.json,source=packages/upstash/package.json \
     --mount=type=bind,target=packages/theme-store/package.json,source=packages/theme-store/package.json \
@@ -44,15 +45,16 @@ RUN \
     --mount=type=bind,target=packages/status-fetcher/package.json,source=packages/status-fetcher/package.json \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
+npm install -g corepack@0.36.0
 corepack enable pnpm
-pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --loglevel debug
+pnpm install --frozen-lockfile --filter=@openstatus/workflows... --loglevel debug
 EOF
 
 # build
-FROM denoland/deno@sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432 AS build
+FROM node@sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146 AS build
 LABEL \
-    org.opencontainers.image.base.digest="sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432" \
-    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.7" \
+    org.opencontainers.image.base.digest="sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146" \
+    org.opencontainers.image.base.name="docker.io/node:26.8.1-slim" \
     org.opencontainers.image.stage="build"
 ENV NODE_ENV="production"
 WORKDIR /app/apps/workflows
@@ -72,36 +74,44 @@ COPY \
     --link \
     "/app/packages" "/app/packages"
 RUN <<EOF
-mkdir -p /tmp/sc
-deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
-cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
-cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
-cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
-mkdir -p /app/data
+./node_modules/.bin/tsdown
+mkdir -p /tmp/sc /app/data
+node scripts/sidecar-package.mjs /tmp/sc/package.json
+npm install --prefix /tmp/sc --omit=dev --no-package-lock --no-audit --no-fund
 EOF
 
 # runtime
-FROM registry.access.redhat.com/hi/curl@sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4 AS runtime
+FROM node@sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146 AS runtime
 LABEL \
     io.dofigen.version="2.8.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4" \
+    org.opencontainers.image.base.digest="sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146" \
+    org.opencontainers.image.base.name="docker.io/node:26.8.1-slim" \
     org.opencontainers.image.description="Background job processing and probe scheduling for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
     org.opencontainers.image.title="OpenStatus Workflows" \
     org.opencontainers.image.vendor="OpenStatus"
+ENV NODE_ENV="production"
 WORKDIR /app/
 COPY \
     --from=build \
     --chown=1000:1000 \
     --chmod=555 \
     --link \
-    "/app/apps/workflows/app" "/app/apps/workflows/"
+    "/app/apps/workflows/dist" "/app/apps/workflows/dist"
+COPY \
+    --from=build \
+    --chown=1000:1000 \
+    --chmod=555 \
+    --link \
+    "/tmp/sc/node_modules" "/app/apps/workflows/node_modules"
 COPY \
     --from=build \
     --chown=1000:1000 \
     --link \
     "/app/data" "/app/data"
+USER 0:0
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
 USER 1000:1000
 EXPOSE 3000
 HEALTHCHECK \
@@ -110,4 +120,4 @@ HEALTHCHECK \
     --start-period=30s \
     --retries=3 \
     CMD ["curl", "-f", "http://localhost:3000/ping"]
-ENTRYPOINT ["/app/apps/workflows/app"]
+ENTRYPOINT ["node", "/app/apps/workflows/dist/serve.mjs"]

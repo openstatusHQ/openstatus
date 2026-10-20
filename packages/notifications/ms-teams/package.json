@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "main": "src/index.ts",
   "scripts": {
-    "check": "deno check --sloppy-imports .",
+    "check": "tsc --noEmit",
     "test": "deno test --parallel -A --no-check --sloppy-imports",
     "tsc": "tsc"
   },

@@ -12,7 +12,7 @@
     }
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
+    "check": "tsc --noEmit",
     "test": "deno test --parallel -A --no-check --sloppy-imports",
     "lint": "oxlint",
     "tsc": "tsc --noEmit"
