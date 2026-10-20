@@ -31,33 +31,55 @@ type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
 export function DataTableBasics({
   data,
   privateLocations,
+  attempts,
 }: {
   data: ResponseLog;
   privateLocations?: PrivateLocation[];
+  attempts?: number;
 }) {
   if (data.type === "http") {
     return (
-      <DataTableBasicsHTTP data={data} privateLocations={privateLocations} />
+      <DataTableBasicsHTTP
+        data={data}
+        privateLocations={privateLocations}
+        attempts={attempts}
+      />
     );
   }
   if (data.type === "tcp") {
     return (
-      <DataTableBasicsTCP data={data} privateLocations={privateLocations} />
+      <DataTableBasicsTCP
+        data={data}
+        privateLocations={privateLocations}
+        attempts={attempts}
+      />
     );
   }
   if (data.type === "dns") {
     return (
-      <DataTableBasicsDNS data={data} privateLocations={privateLocations} />
+      <DataTableBasicsDNS
+        data={data}
+        privateLocations={privateLocations}
+        attempts={attempts}
+      />
     );
   }
   if (data.type === "icmp") {
     return (
-      <DataTableBasicsICMP data={data} privateLocations={privateLocations} />
+      <DataTableBasicsICMP
+        data={data}
+        privateLocations={privateLocations}
+        attempts={attempts}
+      />
     );
   }
   if (data.type === "grpc") {
     return (
-      <DataTableBasicsGRPC data={data} privateLocations={privateLocations} />
+      <DataTableBasicsGRPC
+        data={data}
+        privateLocations={privateLocations}
+        attempts={attempts}
+      />
     );
   }
   return null;
@@ -66,11 +88,13 @@ export function DataTableBasics({
 export function DataTableBasicsHTTP({
   data,
   privateLocations,
+  attempts,
 }: {
   data: Extract<ResponseLog, { type: "http" }> & {
     trigger?: "cron" | "api" | "test" | null;
   };
   privateLocations?: PrivateLocation[];
+  attempts?: number;
 }) {
   const privateLocataion = privateLocations?.find(
     (location) => String(location.id) === String(data.region),
@@ -108,6 +132,10 @@ export function DataTableBasicsHTTP({
             </div>
           </TableCell>
         </TableRow>
+        <BasicsAttemptsRow
+          attempts={attempts}
+          requestStatus={data.requestStatus}
+        />
         {data.id ? (
           <TableRow className="[&>:not(:last-child)]:border-r">
             <TableHead className="bg-muted/50 text-muted-foreground font-normal">
@@ -395,7 +423,34 @@ function BasicsRow({
   );
 }
 
-function BasicsRequestRows({ data }: { data: BasicsRequestFields }) {
+function BasicsAttemptsRow({
+  attempts,
+  requestStatus,
+}: {
+  attempts?: number;
+  requestStatus?: string | null;
+}) {
+  if (!attempts || attempts < 2) return null;
+
+  return (
+    <BasicsRow label="Attempts">
+      {attempts}{" "}
+      <span className="text-muted-foreground">
+        {requestStatus === "error"
+          ? "all failed"
+          : `passed on attempt ${attempts}`}
+      </span>
+    </BasicsRow>
+  );
+}
+
+function BasicsRequestRows({
+  data,
+  attempts,
+}: {
+  data: BasicsRequestFields;
+  attempts?: number;
+}) {
   return (
     <>
       {/* TODO: add colored square like list (see columns) */}
@@ -411,6 +466,10 @@ function BasicsRequestRows({ data }: { data: BasicsRequestFields }) {
           <div className="capitalize">{data?.requestStatus ?? "unknown"}</div>
         </div>
       </BasicsRow>
+      <BasicsAttemptsRow
+        attempts={attempts}
+        requestStatus={data.requestStatus}
+      />
       {data.id ? <BasicsRow label="ID">{data.id}</BasicsRow> : null}
       <BasicsRow label="Timestamp">
         <TableCellDate
@@ -487,15 +546,17 @@ function BasicsErrorMessageRows({
 export function DataTableBasicsTCP({
   data,
   privateLocations,
+  attempts,
 }: {
   data: Extract<ResponseLog, { type: "tcp" }> & {
     trigger?: "cron" | "api" | "test" | null;
   };
   privateLocations?: PrivateLocation[];
+  attempts?: number;
 }) {
   return (
     <BasicsTable>
-      <BasicsRequestRows data={data} />
+      <BasicsRequestRows data={data} attempts={attempts} />
       <BasicsRow label="URI">{data.uri}</BasicsRow>
       <BasicsRow label="Latency">
         <TableCellNumber value={data?.latency} unit="ms" />
@@ -509,11 +570,13 @@ export function DataTableBasicsTCP({
 export function DataTableBasicsICMP({
   data,
   privateLocations,
+  attempts,
 }: {
   data: Extract<ResponseLog, { type: "icmp" }> & {
     trigger?: "cron" | "api" | "test" | null;
   };
   privateLocations?: PrivateLocation[];
+  attempts?: number;
 }) {
   const packetLoss =
     data.packetsSent > 0
@@ -522,7 +585,7 @@ export function DataTableBasicsICMP({
 
   return (
     <BasicsTable>
-      <BasicsRequestRows data={data} />
+      <BasicsRequestRows data={data} attempts={attempts} />
       <BasicsRow label="Host">{data.uri}</BasicsRow>
       <BasicsRow label="Latency (avg)">
         <TableCellNumber value={data?.latency} unit="ms" />
@@ -544,15 +607,17 @@ export function DataTableBasicsICMP({
 export function DataTableBasicsGRPC({
   data,
   privateLocations,
+  attempts,
 }: {
   data: Extract<ResponseLog, { type: "grpc" }> & {
     trigger?: "cron" | "api" | "test" | null;
   };
   privateLocations?: PrivateLocation[];
+  attempts?: number;
 }) {
   return (
     <BasicsTable>
-      <BasicsRequestRows data={data} />
+      <BasicsRequestRows data={data} attempts={attempts} />
       <BasicsRow label="Host:Port">{data.uri}</BasicsRow>
       <BasicsRow label="Service">
         {data.service ? (
@@ -581,15 +646,17 @@ export function DataTableBasicsGRPC({
 export function DataTableBasicsDNS({
   data,
   privateLocations,
+  attempts,
 }: {
   data: Extract<ResponseLog, { type: "dns" }> & {
     trigger?: "cron" | "api" | "test" | null;
   };
   privateLocations?: PrivateLocation[];
+  attempts?: number;
 }) {
   return (
     <BasicsTable>
-      <BasicsRequestRows data={data} />
+      <BasicsRequestRows data={data} attempts={attempts} />
       <BasicsRow label="URI">{data.uri}</BasicsRow>
       <BasicsRow label="Latency">
         <TableCellNumber value={data?.latency} unit="ms" />

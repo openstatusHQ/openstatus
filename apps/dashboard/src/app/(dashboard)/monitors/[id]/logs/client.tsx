@@ -338,10 +338,21 @@ function LogsSheet({
     }),
     enabled: Boolean(selectedId),
   });
+  const selectedLog = log?.data?.length ? log.data[0] : null;
+
+  const { data: attempts } = useQuery({
+    ...trpc.tinybird.attempts.queryOptions({
+      monitorId: String(monitor.id),
+      region: selectedLog?.region ?? "",
+      cronTimestamp: selectedLog?.cronTimestamp ?? 0,
+    }),
+    enabled: Boolean(selectedLog),
+  });
 
   return (
     <Sheet
-      data={log?.data?.length ? log.data[0] : null}
+      data={selectedLog}
+      attempts={attempts?.data}
       privateLocations={monitor.privateLocations ?? []}
       onClose={() => {
         table.resetRowSelection();

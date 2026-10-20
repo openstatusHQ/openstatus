@@ -141,3 +141,34 @@ test("tinybird.listInfinite accepts React Query's own paging direction", async (
     expect(result).toEqual({ data: [], nextCursor: null, prevCursor: null });
   }
 });
+
+// ─── attempts ────────────────────────────────────────────────────
+
+test("tinybird.attempts rejects monitor from another workspace", async () => {
+  const caller = callerForWorkspace(1);
+
+  try {
+    // Monitor 5 belongs to workspace 3
+    await caller.tinybird.attempts({
+      monitorId: "5",
+      region: "ams",
+      cronTimestamp: 1_700_000_000_000,
+    });
+    throw new Error("Should have thrown");
+  } catch (e) {
+    expect(e).toBeInstanceOf(TRPCError);
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
+  }
+});
+
+test("tinybird.attempts succeeds for own workspace monitor", async () => {
+  const caller = callerForWorkspace(1);
+
+  // Monitor 1 belongs to workspace 1 — should not throw
+  const result = await caller.tinybird.attempts({
+    monitorId: "1",
+    region: "ams",
+    cronTimestamp: 1_700_000_000_000,
+  });
+  expect(result).toBeDefined();
+});
