@@ -1,4 +1,4 @@
-// Web Crypto only: this package runs on Deno and stays Edge-safe.
+// Web Crypto only: this package stays Edge-safe.
 
 const encoder = new TextEncoder();
 

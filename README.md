@@ -135,7 +135,6 @@ The template source and the setup instructions are in [ephraimduncan/openstatus-
 
 - [Node.js](https://nodejs.org/en/)
 - [pnpm](https://pnpm.io/)
-- [Deno](https://deno.com/)
 - [Turso CLI](https://docs.turso.tech/quickstart).
 
 #### Dashboard

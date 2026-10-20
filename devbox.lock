@@ -49,68 +49,6 @@
         }
       }
     },
-    "deno@2.9.5": {
-      "last_modified": "2026-08-27T07:16:00Z",
-      "resolved": "github:NixOS/nixpkgs/c27cdad491a991b11ed731760aa2ef8db0cb0410#deno",
-      "source": "devbox-search",
-      "version": "2.9.5",
-      "systems": {
-        "aarch64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/94pdxnq7cfdymzmr19144spl0rp34mjg-deno-2.9.5",
-              "default": true
-            },
-            {
-              "name": "denort",
-              "path": "/nix/store/ci5jh3b5yr2dz36q8qb9qs4za2nkkgz3-deno-2.9.5-denort"
-            },
-            {
-              "name": "libdenort",
-              "path": "/nix/store/lcxc1mm8hz5i9jhdpv0cb233nxf9r64g-deno-2.9.5-libdenort"
-            }
-          ],
-          "store_path": "/nix/store/94pdxnq7cfdymzmr19144spl0rp34mjg-deno-2.9.5"
-        },
-        "aarch64-linux": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/8rzh2fpa3lwqzx9iiz07qbk3b7lsjniw-deno-2.9.5",
-              "default": true
-            },
-            {
-              "name": "denort",
-              "path": "/nix/store/2h16nirjr5ddd2bz7vxd19q0lawl5cd3-deno-2.9.5-denort"
-            },
-            {
-              "name": "libdenort",
-              "path": "/nix/store/8hn63ayil0mk81a7mim21qh4155n3r6j-deno-2.9.5-libdenort"
-            }
-          ],
-          "store_path": "/nix/store/8rzh2fpa3lwqzx9iiz07qbk3b7lsjniw-deno-2.9.5"
-        },
-        "x86_64-linux": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/7hk2ax3hgs4152cdqsqcq4lfq1a2kla6-deno-2.9.5",
-              "default": true
-            },
-            {
-              "name": "libdenort",
-              "path": "/nix/store/3m3rdq6vl231165fycmk5rjc48anrzxi-deno-2.9.5-libdenort"
-            },
-            {
-              "name": "denort",
-              "path": "/nix/store/180ds5dqaynm1k7c1j6s5lwlak943z9k-deno-2.9.5-denort"
-            }
-          ],
-          "store_path": "/nix/store/7hk2ax3hgs4152cdqsqcq4lfq1a2kla6-deno-2.9.5"
-        }
-      }
-    },
     "github:NixOS/nixpkgs/nixpkgs-unstable": {
       "last_modified": "2025-11-05T16:44:39Z",
       "resolved": "github:NixOS/nixpkgs/ffcdcf99d65c61956d882df249a9be53e5902ea5?lastModified=1762361079&narHash=sha256-lz718rr1BDpZBYk7%2BG8cE6wee3PiBUpn8aomG%2FvLLiY%3D"

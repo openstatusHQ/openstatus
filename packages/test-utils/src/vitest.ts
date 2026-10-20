@@ -6,7 +6,7 @@ import type { Plugin } from "vite";
 import { defineConfig } from "vitest/config";
 
 type Options = {
-  /** Test-double swaps, in Deno import-map format, relative to the package. */
+  /** Test-double swaps, in import-map format, relative to the package. */
   importMap?: string;
   /** Loaded into `process.env` for every test file, relative to the package. */
   envFile?: string;
@@ -14,7 +14,7 @@ type Options = {
 };
 
 /**
- * Applies a Deno-style import map: exact bare keys, `/`-suffixed prefix keys,
+ * Applies an import map: exact bare keys, `/`-suffixed prefix keys,
  * and relative keys matched against the importer-resolved path without
  * extension probing — so `./page-urls` is swapped but `./page-urls.ts` is not.
  */

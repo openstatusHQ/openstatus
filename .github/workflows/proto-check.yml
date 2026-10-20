@@ -35,11 +35,6 @@ jobs:
           node-version: 26.8.1
           cache: "pnpm"
 
-      - name: 🦕 Setup Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: 2.9.7
-
       - name: 🐹 Setup Go
         uses: actions/setup-go@v5
         with:
