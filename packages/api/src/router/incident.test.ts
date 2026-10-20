@@ -1,5 +1,9 @@
 import { db, eq, inArray } from "@openstatus/db";
-import { incident, incidentEvent } from "@openstatus/db/src/schema";
+import {
+  incident,
+  incidentEvent,
+  incidentPostmortem,
+} from "@openstatus/db/src/schema";
 import { createIncident } from "@openstatus/db/src/test/factories";
 import { clearAuditLogFor } from "@openstatus/services/test/helpers";
 import { TRPCError } from "@trpc/server";
@@ -26,8 +30,16 @@ afterAll(async () => {
     .delete(incidentEvent)
     .where(inArray(incidentEvent.incidentId, created))
     .returning({ id: incidentEvent.id });
+  const postmortems = await db
+    .delete(incidentPostmortem)
+    .where(inArray(incidentPostmortem.incidentId, created))
+    .returning({ id: incidentPostmortem.id });
   await db.delete(incident).where(inArray(incident.id, created));
   await clearAuditLogFor({ entityType: "incident", entityIds: created });
+  await clearAuditLogFor({
+    entityType: "incident_postmortem",
+    entityIds: postmortems.map((p) => p.id),
+  });
   await clearAuditLogFor({
     entityType: "incident_event",
     entityIds: events.map((e) => e.id),
@@ -50,8 +62,14 @@ test("declare, move and read an incident through tRPC", async () => {
   expect(got?.allowedTransitions).toEqual(["resolved", "open", "canceled"]);
   expect(got?.deletable).toBe(false);
 
+  await api.incident.addNote({ id: row.id, message: "Looking into it" });
   const events = await api.incident.listEvents({ id: row.id });
-  expect(events?.map((e) => e.type)).toEqual(["status_changed", "declared"]);
+  expect(events?.map((e) => e.type)).toEqual([
+    "note",
+    "status_changed",
+    "declared",
+  ]);
+  expect(events?.[0]).toMatchObject({ source: "dashboard", sourceRef: null });
 });
 
 test("another workspace's incident is not found", async () => {
@@ -70,4 +88,29 @@ test("another workspace's incident is not found", async () => {
     .where(eq(incident.id, theirs.id))
     .get();
   expect(stillThere).toBeDefined();
+});
+
+test("a postmortem saved through tRPC is the user's, whatever the client says", async () => {
+  const api = caller();
+  const row = await api.incident.declare({
+    title: "Postmortem test",
+    severity: "minor",
+    commanderId: 1,
+  });
+  if (!row) throw new Error("declare returned nothing");
+  created.push(row.id);
+  await api.incident.setStatus({ id: row.id, status: "resolved" });
+
+  const draft = await api.incident.draftPostmortem({
+    id: row.id,
+    content: "## Summary",
+    // @ts-expect-error - not part of the input; the agent has its own route
+    draftedBy: "agent",
+  });
+  expect(draft?.draftedBy).toBe("user");
+  const events = await api.incident.listEvents({ id: row.id });
+  expect(events?.[0]).toMatchObject({
+    type: "postmortem_drafted",
+    source: "dashboard",
+  });
 });

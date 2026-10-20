@@ -1,15 +1,16 @@
 "use client";
 
-import { Check, Lock } from "@openstatus/icons";
+import { Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@openstatus/ui/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectValue,
+} from "@openstatus/ui/components/ui/select";
+import { SelectTrigger } from "@radix-ui/react-select";
 import { useQuery } from "@tanstack/react-query";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
@@ -53,40 +54,43 @@ export function DropdownPeriod() {
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            {PERIOD_VALUES.find(({ value }) => value === period)?.label}
+      <Select
+        value={period}
+        onValueChange={(value) => {
+          const next = value as (typeof PERIODS)[number];
+          if (isFree && isPaidPeriod(next)) setUpgradeOpen(true);
+          else setPeriod(next);
+        }}
+      >
+        <SelectTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="decoration-border hover:decoration-foreground data-[state=open]:decoration-foreground h-auto rounded-md px-1 py-0 text-[length:inherit] leading-[inherit] font-medium underline underline-offset-3 hover:bg-transparent dark:hover:bg-transparent"
+          >
+            <SelectValue />
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuGroup>
-            <DropdownMenuLabel className="text-muted-foreground text-xs font-medium">
-              Period
-            </DropdownMenuLabel>
+        </SelectTrigger>
+        <SelectContent position="item-aligned">
+          <SelectGroup>
+            <SelectLabel>Period</SelectLabel>
             {PERIOD_VALUES.map(({ value, label }) => {
               const locked = isFree && isPaidPeriod(value);
               return (
-                <DropdownMenuItem
+                <SelectItem
                   key={value}
+                  value={value}
                   data-locked={locked}
-                  onSelect={() =>
-                    locked ? setUpgradeOpen(true) : setPeriod(value)
-                  }
-                  className={"data-[locked=true]:opacity-70"}
+                  className="data-[locked=true]:opacity-70"
                 >
                   {label}
-                  {locked ? (
-                    <Lock className="ml-auto shrink-0" />
-                  ) : period === value ? (
-                    <Check className="ml-auto shrink-0" />
-                  ) : null}
-                </DropdownMenuItem>
+                  {locked ? <Lock className="ml-auto shrink-0" /> : null}
+                </SelectItem>
               );
             })}
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
       <UpgradeDialog
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}

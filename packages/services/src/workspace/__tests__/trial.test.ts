@@ -1,3 +1,5 @@
+import { db, eq } from "@openstatus/db";
+import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
 import {
   addUserToWorkspace,
   createTestWorkspace,
@@ -6,10 +8,12 @@ import {
 } from "@openstatus/db/src/test/factories";
 import { describe, expect, test } from "vitest";
 
+import { makeUserCtx } from "../../../test/helpers";
 import {
-  findTrialEligibleWorkspace,
   getTrialDaysLeft,
+  isTrialEligibleWorkspace,
   listOwnedTrialWorkspaces,
+  markWorkspaceTrialed,
 } from "../index.ts";
 
 const DAY_MS = 86_400_000;
@@ -32,17 +36,24 @@ describe("getTrialDaysLeft", () => {
   });
 });
 
-describe("findTrialEligibleWorkspace", () => {
-  test("an owned free workspace never linked to Stripe", async () => {
+describe("isTrialEligibleWorkspace", () => {
+  function ctxFor(
+    ws: Parameters<typeof selectWorkspaceSchema.parse>[0],
+    userId: number,
+  ) {
+    return makeUserCtx(selectWorkspaceSchema.parse(ws), { userId });
+  }
+
+  test("an owned free workspace with no subscription", async () => {
     const { workspace: ws, user } = await createTestWorkspace({
       plan: "free",
       stripeId: null,
       subscriptionId: null,
+      trialEndsAt: null,
     });
-    const found = await findTrialEligibleWorkspace({
-      input: { userId: user.id },
-    });
-    expect(found?.id).toBe(ws.id);
+    expect(await isTrialEligibleWorkspace({ ctx: ctxFor(ws, user.id) })).toBe(
+      true,
+    );
   });
 
   test("a signup workspace with no plan column yet counts as free", async () => {
@@ -54,43 +65,88 @@ describe("findTrialEligibleWorkspace", () => {
     const owner = await createUser();
     await addUserToWorkspace(owner.id, ws.id, "owner");
 
-    const found = await findTrialEligibleWorkspace({
-      input: { userId: owner.id },
-    });
-    expect(found?.id).toBe(ws.id);
+    expect(await isTrialEligibleWorkspace({ ctx: ctxFor(ws, owner.id) })).toBe(
+      true,
+    );
   });
 
-  test("null when the workspace already has a Stripe customer", async () => {
-    const { user } = await createTestWorkspace({
+  test("a Stripe customer without a subscription is still eligible", async () => {
+    const { workspace: ws, user } = await createTestWorkspace({
       plan: "free",
       stripeId: `cus_${crypto.randomUUID()}`,
+      subscriptionId: null,
+      trialEndsAt: null,
     });
-    expect(
-      await findTrialEligibleWorkspace({ input: { userId: user.id } }),
-    ).toBeNull();
+    expect(await isTrialEligibleWorkspace({ ctx: ctxFor(ws, user.id) })).toBe(
+      true,
+    );
   });
 
-  test("null when the workspace is on a paid plan", async () => {
-    const { user } = await createTestWorkspace({
+  test("false once a trial marker is set", async () => {
+    const { workspace: ws, user } = await createTestWorkspace({
+      plan: "free",
+      stripeId: null,
+      subscriptionId: null,
+      trialEndsAt: new Date(Date.now() + DAY_MS),
+    });
+    expect(await isTrialEligibleWorkspace({ ctx: ctxFor(ws, user.id) })).toBe(
+      false,
+    );
+  });
+
+  test("false once the workspace has trialed before", async () => {
+    const { workspace: ws, user } = await createTestWorkspace({
+      plan: "free",
+      stripeId: null,
+      subscriptionId: null,
+      trialEndsAt: null,
+      trialedAt: new Date(),
+    });
+    expect(await isTrialEligibleWorkspace({ ctx: ctxFor(ws, user.id) })).toBe(
+      false,
+    );
+  });
+
+  test("false when the workspace is on a paid plan", async () => {
+    const { workspace: ws, user } = await createTestWorkspace({
       plan: "team",
       stripeId: null,
       subscriptionId: null,
     });
-    expect(
-      await findTrialEligibleWorkspace({ input: { userId: user.id } }),
-    ).toBeNull();
+    expect(await isTrialEligibleWorkspace({ ctx: ctxFor(ws, user.id) })).toBe(
+      false,
+    );
   });
 
-  test("null for a member who is not the owner", async () => {
+  test("false for a member who is not the owner", async () => {
     const { workspace: ws } = await createTestWorkspace({
       plan: "free",
       stripeId: null,
+      subscriptionId: null,
+      trialEndsAt: null,
     });
     const member = await createUser();
     await addUserToWorkspace(member.id, ws.id, "member");
+    expect(await isTrialEligibleWorkspace({ ctx: ctxFor(ws, member.id) })).toBe(
+      false,
+    );
+  });
+
+  test("false for an actor without a user", async () => {
+    const { workspace: ws } = await createTestWorkspace({
+      plan: "free",
+      stripeId: null,
+      subscriptionId: null,
+      trialEndsAt: null,
+    });
     expect(
-      await findTrialEligibleWorkspace({ input: { userId: member.id } }),
-    ).toBeNull();
+      await isTrialEligibleWorkspace({
+        ctx: {
+          workspace: selectWorkspaceSchema.parse(ws),
+          actor: { type: "system", job: "test" },
+        },
+      }),
+    ).toBe(false);
   });
 });
 
@@ -115,5 +171,37 @@ describe("listOwnedTrialWorkspaces", () => {
 
     expect(rows.map((r) => r.id)).toEqual([trial.id]);
     expect(rows[0]?.trialEndsAt).toEqual(trialEndsAt);
+  });
+});
+
+describe("markWorkspaceTrialed", () => {
+  test("sets trialedAt once and keeps the first date", async () => {
+    const first = new Date("2026-01-01T00:00:00Z");
+    const { workspace: ws, user } = await createTestWorkspace({
+      trialedAt: null,
+    });
+    const ctx = makeUserCtx(selectWorkspaceSchema.parse(ws), {
+      userId: user.id,
+    });
+
+    await markWorkspaceTrialed({ ctx });
+    const stamped = await db
+      .select({ trialedAt: workspace.trialedAt })
+      .from(workspace)
+      .where(eq(workspace.id, ws.id))
+      .get();
+    expect(stamped?.trialedAt).toBeInstanceOf(Date);
+
+    await db
+      .update(workspace)
+      .set({ trialedAt: first })
+      .where(eq(workspace.id, ws.id));
+    await markWorkspaceTrialed({ ctx });
+    const kept = await db
+      .select({ trialedAt: workspace.trialedAt })
+      .from(workspace)
+      .where(eq(workspace.id, ws.id))
+      .get();
+    expect(kept?.trialedAt).toEqual(first);
   });
 });

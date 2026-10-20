@@ -12,6 +12,7 @@ import { assertWithinLimit } from "../limits";
 import type { Page } from "../types";
 import {
   assertAccessTypeAllowed,
+  assertCustomDomainAvailable,
   assertSlugAvailable,
   validateMonitorIdsActive,
 } from "./internal";
@@ -26,6 +27,9 @@ export async function createPage(args: {
   requireScope(ctx, "write");
   const input = CreatePageInput.parse(args.input);
 
+  if (input.customDomain && !ctx.workspace.limits["custom-domain"]) {
+    throw new LimitExceededError("custom-domain", 0);
+  }
   if (input.customTheme && !ctx.workspace.limits["custom-theme"]) {
     throw new LimitExceededError("custom-theme", 0);
   }
@@ -44,6 +48,7 @@ export async function createPage(args: {
       limit: "status-pages",
     });
     await assertSlugAvailable({ tx, slug: input.slug });
+    await assertCustomDomainAvailable({ tx, customDomain: input.customDomain });
     assertAccessTypeAllowed(ctx.workspace, {
       accessType: input.accessType ?? "public",
       passwordProtected: input.passwordProtected ?? null,

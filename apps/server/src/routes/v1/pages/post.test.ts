@@ -458,3 +458,22 @@ test("create a page uses monitor externalName when available", async () => {
     await db.delete(page).where(eq(page.id, result.data.id));
   }
 });
+
+test("create a page with a custom domain another page uses should return 409", async () => {
+  const res = await app.request("/v1/page", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      title: "OpenStatus",
+      description: "OpenStatus website",
+      slug: `taken-domain-${Date.now()}`,
+      // Seeded on page 2.
+      customDomain: "STATUS.ACME.COM",
+    }),
+  });
+
+  expect(res.status).toBe(409);
+});

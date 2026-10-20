@@ -7,6 +7,7 @@ import { type ServiceContext, withTransaction } from "../context";
 import { LimitExceededError } from "../errors";
 import {
   assertAccessTypeAllowed,
+  assertCustomDomainAvailable,
   assertSlugAvailable,
   getPageInWorkspace,
 } from "./internal";
@@ -84,6 +85,11 @@ export async function updatePageCustomDomain(args: {
       tx,
       id: input.id,
       workspaceId: ctx.workspace.id,
+    });
+    await assertCustomDomainAvailable({
+      tx,
+      customDomain: input.customDomain,
+      excludePageId: existing.id,
     });
 
     const updated = await tx

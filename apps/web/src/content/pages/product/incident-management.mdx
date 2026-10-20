@@ -30,7 +30,7 @@ faq:
 </Actions>
 
 <p>
-<Subtle>Free to start, with a 14-day Starter trial and no card needed. Paid plans from $30/mo.</Subtle>
+<Subtle>Free to start. Try Starter free for 14 days, no card needed. Paid plans from $30/mo.</Subtle>
 </p>
 
 <Demo type="incident" />
@@ -73,7 +73,7 @@ Every status change, note and public update is timestamped as it happens. The po
 
 ## Declare from Slack or the dashboard
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 Run `/openstatus incident declare` with a title and a severity, approve the card, and the incident exists. The dashboard has the same form, with a commander, a start time you can set in the past and an open status report to link.
@@ -97,7 +97,7 @@ Gilfoyle runs `/openstatus incident declare Checkout API 503s in EU --sev major`
 
 ## A Slack channel per incident
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Demo type="incident-channel" />
@@ -113,6 +113,8 @@ The incident's own Slack channel, named inc-, the date and checkout-api-503s-in-
 
 Every incident gets a channel with the severity and status in its topic and the incident card pinned on top. Add any message to the timeline from its ⋯ menu or with a 📌 reaction, with a link back to Slack.
 
+Already working in another channel? Link it instead, and the new one is archived. The channel also gets a drafted first status report, with the affected components and when the problem started, ready to publish in one click.
+
 If the incident goes quiet, the channel gets a reminder: after one hour for critical, four for major and a day for minor.
 
 - [Slack agent](/docs/guides/how-to-setup-slack-agent)
@@ -123,7 +125,7 @@ If the incident goes quiet, the channel gets a reminder: after one hour for crit
 
 ## From the monitor that caught it
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 When a monitor goes down, declare the incident from its downtime row and the start time is already filled in. The duration counts from when the impact began, not from when someone got around to declaring it.
@@ -147,7 +149,7 @@ The Slack alert that started it at 09:41: Checkout API returned 503 from lhr, am
 
 ## Internal status, public update
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Demo type="incident-status" />
@@ -171,7 +173,7 @@ Mitigate, resolve, cancel or reopen from the channel or the dashboard, with a no
 
 ## A postmortem with a first draft
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 Once the incident is resolved, the agent drafts a blameless postmortem from the timeline, the public updates and the channel history. Where it has no facts it says so instead of guessing.
@@ -197,7 +199,7 @@ The postmortem draft, written by the agent, in seven sections: summary, impact (
 
 ## For agents, with a paper trail
 
-<Grid variant="borderless">
+<Grid variant="borderless" sticky>
 <div>
 
 <Demo type="audit" />
@@ -227,7 +229,7 @@ Every one of those steps is in the audit log with the person behind it, whicheve
   <ButtonLink href="https://app.openstatus.dev" variant="default">Declare your first incident</ButtonLink>
 </Actions>
 
-<Subtle>Free to start, with a 14-day Starter trial and no card needed. Paid plans from $30/mo.</Subtle>
+<Subtle>Free to start. Try Starter free for 14 days, no card needed. Paid plans from $30/mo.</Subtle>
 
 ## Frequently asked questions
 

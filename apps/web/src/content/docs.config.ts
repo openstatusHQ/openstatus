@@ -216,6 +216,10 @@ export const docsNav: DocsNavSection[] = [
             label: "Maintenance Service",
           },
           {
+            slug: "sdk/nodejs/incident-service",
+            label: "Incident Service",
+          },
+          {
             slug: "sdk/nodejs/notification-service",
             label: "Notification Service",
           },
@@ -276,6 +280,10 @@ export const docsNav: DocsNavSection[] = [
       { slug: "reference/maintenance", label: "Maintenance Reference" },
       { slug: "reference/subscriber", label: "Subscriber Reference" },
       { slug: "reference/terraform", label: "Terraform Provider Reference" },
+      {
+        slug: "reference/workspace-members",
+        label: "Workspace Members Reference",
+      },
     ],
   },
   {

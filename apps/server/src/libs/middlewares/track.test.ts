@@ -1,7 +1,16 @@
 import { Events } from "@openstatus/analytics";
 import type { Workspace } from "@openstatus/db/src/schema";
 import { Hono } from "hono";
-import { beforeEach, describe, expect, test, vi, type Mock } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  type Mock,
+  type MockInstance,
+  test,
+  vi,
+} from "vitest";
 
 import type { Variables } from "@/types";
 
@@ -57,9 +66,17 @@ function cliCommandCalls() {
 }
 
 describe("apiTrackMiddleware", () => {
+  let random: MockInstance<() => number>;
+
   beforeEach(() => {
     mockSetupAnalytics.mockClear();
     mockTrack.mockClear();
+    // Keep every sampled request unless a test says otherwise.
+    random = vi.spyOn(Math, "random").mockReturnValue(0);
+  });
+
+  afterEach(() => {
+    random.mockRestore();
   });
 
   test("fires api_request for GET requests with the route pattern", async () => {
@@ -75,7 +92,35 @@ describe("apiTrackMiddleware", () => {
       service: "v1",
       method: "GET /monitor/:id",
       success: false,
+      sampleRate: 0.1,
     });
+  });
+
+  test("drops non-CLI requests outside the sample", async () => {
+    random.mockReturnValue(0.5);
+
+    const res = await makeApp().request("/whoami", {
+      headers: { "user-agent": "curl/8" },
+    });
+    await flush();
+
+    expect(res.status).toBe(200);
+    expect(mockSetupAnalytics).not.toHaveBeenCalled();
+    expect(mockTrack).not.toHaveBeenCalled();
+  });
+
+  test("always tracks CLI requests", async () => {
+    random.mockReturnValue(0.99);
+
+    await makeApp().request("/whoami", {
+      headers: cliHeaders(crypto.randomUUID()),
+    });
+    await flush();
+
+    expect(mockTrack).toHaveBeenCalledWith(
+      expect.objectContaining({ ...Events.ApiRequest, sampleRate: 1 }),
+    );
+    expect(cliCommandCalls()).toHaveLength(1);
   });
 
   test("skips requests that match no route", async () => {
@@ -113,6 +158,7 @@ describe("apiTrackMiddleware", () => {
       service: "v1",
       method: "GET /whoami",
       success: true,
+      sampleRate: 1,
       cliCommand: "whoami",
       cliVersion: "1.3.2",
     });

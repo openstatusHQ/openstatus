@@ -1,3 +1,4 @@
+import type { monitorStatus } from "@openstatus/db/src/schema/monitors/constants";
 import {
   Api,
   Settings,
@@ -88,3 +89,22 @@ export const getActions = (
     onClick: props[action.id as keyof typeof props],
   }));
 };
+
+type MonitorStatus = (typeof monitorStatus)[number];
+
+export const monitorHealthConfig = {
+  inactive: { label: "Inactive" },
+  active: { label: "Normal" },
+  degraded: { label: "Degraded" },
+  error: { label: "Failing" },
+} as const satisfies Record<MonitorStatus | "inactive", { label: string }>;
+
+export type MonitorHealth = keyof typeof monitorHealthConfig;
+
+/** A paused monitor reads as inactive whatever its last check said. */
+export function getMonitorHealth(monitor: {
+  active: boolean | null;
+  status: MonitorStatus;
+}): MonitorHealth {
+  return monitor.active ? monitor.status : "inactive";
+}

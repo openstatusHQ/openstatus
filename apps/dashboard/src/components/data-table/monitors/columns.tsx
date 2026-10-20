@@ -11,9 +11,9 @@ import { formatDistanceToNowShort } from "@/lib/formatter";
 
 import { TableCellSkeleton } from "../dable-cell-skeleton";
 import { TableCellDate } from "../table-cell-date";
+import { TableCellEmpty } from "../table-cell-empty";
 import { TableCellIndicator } from "../table-cell-indicator";
 import { TableCellNumber } from "../table-cell-number";
-import { TableCellUnavailable } from "../table-cell-unavailable";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type Monitor = RouterOutputs["monitor"]["list"][number] & {
@@ -134,7 +134,7 @@ export const columns: ColumnDef<Monitor>[] = [
       const value = row.getValue("tags");
       if (!Array.isArray(value)) return null;
       if (value.length === 0) {
-        return <div className="text-muted-foreground">-</div>;
+        return <TableCellEmpty>No tags</TableCellEmpty>;
       }
       return (
         <div className="group/badges flex flex-wrap -space-x-2">
@@ -168,11 +168,17 @@ export const columns: ColumnDef<Monitor>[] = [
   },
   {
     id: "lastIncident",
-    header: "Last Incident",
+    header: "Last Downtime",
     accessorFn: (row) => row.incidents?.[0]?.createdAt,
     cell: ({ row }) => {
       const value = row.getValue("lastIncident");
-      return <TableCellDate value={value} formatStr="LLL dd, y" />;
+      return (
+        <TableCellDate
+          value={value}
+          formatStr="LLL dd, y"
+          empty="No downtime"
+        />
+      );
     },
     enableHiding: false,
     enableGlobalFilter: false,
@@ -209,6 +215,7 @@ export const columns: ColumnDef<Monitor>[] = [
               ? formatDistanceToNowShort(new Date(value))
               : value
           }
+          empty="Never"
         />
       );
     },
@@ -227,7 +234,7 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p50");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellUnavailable />;
+      if (!value) return <TableCellEmpty>No data</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,
@@ -244,7 +251,7 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p90");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellUnavailable />;
+      if (!value) return <TableCellEmpty>No data</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,
@@ -262,7 +269,7 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p95");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellUnavailable />;
+      if (!value) return <TableCellEmpty>No data</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,

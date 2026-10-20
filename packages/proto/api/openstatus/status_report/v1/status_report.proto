@@ -72,6 +72,9 @@ message StatusReportSummary {
 
   // Timestamp when the report was last updated (RFC 3339 format).
   string updated_at = 6;
+
+  // ID of the incident this report communicates (unset when not linked).
+  optional string incident_id = 7;
 }
 
 // StatusReport represents an incident or maintenance report with full details.
@@ -96,4 +99,7 @@ message StatusReport {
 
   // Timestamp when the report was last updated (RFC 3339 format).
   string updated_at = 7;
+
+  // ID of the incident this report communicates (unset when not linked).
+  optional string incident_id = 8;
 }

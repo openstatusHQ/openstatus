@@ -124,8 +124,8 @@ export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
 // Home sits outside `getPageMetadata`: its canonical is `/`, its title skips
 // the `%s | openstatus` template and its OG card is the static one.
 export const getHomeMetadata = (page: MDXData): Metadata => {
-  const { title, description, category, seo } = page.metadata;
-  const metaTitle = seo?.title ?? title;
+  const { description, category, seo } = page.metadata;
+  const metaTitle = seo?.title ?? HOMEPAGE_TITLE;
   const metaDescription = seo?.description ?? description;
 
   return {

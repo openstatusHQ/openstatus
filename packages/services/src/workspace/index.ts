@@ -15,9 +15,10 @@ export {
   previewWorkspaceDowngrade,
 } from "./downgrade";
 export {
-  findTrialEligibleWorkspace,
   getTrialDaysLeft,
+  isTrialEligibleWorkspace,
   listOwnedTrialWorkspaces,
+  markWorkspaceTrialed,
 } from "./trial";
 export {
   updateWorkspaceLimits,

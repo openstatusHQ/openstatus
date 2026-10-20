@@ -113,9 +113,120 @@ describe("collectChannelTranscript", () => {
     const { text, truncated } = await collectChannelTranscript(client, "C1");
     const lines = text.split("\n");
     expect(lines).toHaveLength(500);
+    // An oversized thread keeps its parent and its newest replies.
     expect(lines[0]).toContain("start");
-    expect(text).toContain("reply 498");
-    expect(text).not.toContain("reply 499");
+    expect(lines[1]).toContain("reply 101");
+    expect(lines.at(-1)).toContain("reply 599");
+    expect(text).not.toContain("reply 100\n");
+    expect(truncated).toBe(true);
+  });
+
+  test("a thread that doesn't fit under the cap is dropped whole", async () => {
+    // Newest: 490 single messages. Older: one parent with 20 replies.
+    const top = [
+      { ts: "100.0", text: "old parent", user: "U1", reply_count: 20 },
+      ...Array.from({ length: 490 }, (_, i) => ({
+        ts: `${200 + i}.0`,
+        text: `message ${i}`,
+        user: "U1",
+      })),
+    ];
+    const client = history({
+      top,
+      threads: {
+        "100.0": Array.from({ length: 20 }, (_, i) => ({
+          ts: `100.${i + 1}`,
+          text: `old reply ${i}`,
+          user: "U2",
+        })),
+      },
+    });
+    const { text, truncated } = await collectChannelTranscript(client, "C1");
+    expect(text).not.toContain("old parent");
+    expect(text).not.toContain("old reply");
+    expect(text.split("\n")).toHaveLength(490);
+    expect(truncated).toBe(true);
+  });
+
+  test("a skipped message with no content doesn't mark the transcript truncated", async () => {
+    const top = [
+      { ts: "99.0", text: "Incident card", bot_id: "B1" },
+      ...Array.from({ length: 500 }, (_, i) => ({
+        ts: `${100 + i}.0`,
+        text: `message ${i}`,
+        user: "U1",
+      })),
+    ];
+    const { text, truncated } = await collectChannelTranscript(
+      history({ top }),
+      "C1",
+    );
+    expect(text.split("\n")).toHaveLength(500);
+    expect(truncated).toBe(false);
+  });
+
+  test("over the cap the oldest messages go, the newest stay", async () => {
+    const top = Array.from({ length: 600 }, (_, i) => ({
+      ts: `${1000 + i}.0`,
+      text: `message ${i}`,
+      user: "U1",
+    }));
+    const newestFirst = [...top].reverse();
+    const client: SlackHistoryClient = {
+      conversations: {
+        history: async ({ cursor }) => {
+          const from = Number(cursor ?? 0);
+          const next = from + 200 < top.length ? String(from + 200) : undefined;
+          return {
+            messages: newestFirst.slice(from, from + 200),
+            has_more: Boolean(next),
+            response_metadata: { next_cursor: next },
+          };
+        },
+        replies: async () => ({ messages: [] }),
+      },
+    };
+    const { text, truncated } = await collectChannelTranscript(client, "C1");
+    const lines = text.split("\n");
+    expect(lines).toHaveLength(500);
+    expect(lines[0]).toContain("message 100");
+    expect(lines.at(-1)).toContain("message 599");
+    expect(text).not.toContain("message 99\n");
+    expect(truncated).toBe(true);
+  });
+
+  test("over the character cap whole lines go from the oldest end", async () => {
+    const big = "x".repeat(300_000);
+    const client = history({
+      top: Array.from({ length: 5 }, (_, i) => ({
+        ts: `${100 + i}.0`,
+        text: `${i} ${big}`,
+        user: "U1",
+      })),
+    });
+    const { text, truncated } = await collectChannelTranscript(client, "C1");
+    const lines = text.split("\n");
+    expect(text.length).toBeLessThanOrEqual(1_000_000);
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toContain(": 2 x");
+    expect(lines[2]).toContain(": 4 x");
+    expect(truncated).toBe(true);
+  });
+
+  test("the character cap drops a parent together with its replies", async () => {
+    const big = "x".repeat(400_000);
+    const client = history({
+      top: [
+        { ts: "100.0", text: `old ${big}`, user: "U1", reply_count: 1 },
+        { ts: "101.0", text: `new ${big}`, user: "U1" },
+        { ts: "102.0", text: `newer ${big}`, user: "U1" },
+      ],
+      threads: { "100.0": [{ ts: "100.5", text: "old reply", user: "U2" }] },
+    });
+    const { text, truncated } = await collectChannelTranscript(client, "C1");
+    expect(text).not.toContain("old reply");
+    expect(text).not.toContain(": old x");
+    expect(text.split("\n")).toHaveLength(2);
     expect(truncated).toBe(true);
   });
 });

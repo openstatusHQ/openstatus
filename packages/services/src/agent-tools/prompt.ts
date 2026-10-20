@@ -32,7 +32,7 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
       ? `\n\nAfter a tool returns, the dashboard already renders a structured view of the result:
 - Write tools (create_*, update_*, resolve_*, add_*) render a diff card with every input/output field (id, status, message, dates, notify outcome).
 - List tools (list_status_pages, list_page_components, list_status_reports, list_maintenances, list_monitors, list_notifications, list_response_logs, list_audit_logs, search_docs, search_content) render a table with one row per result.
-- Detail tools (get_monitor, get_monitor_status, get_monitor_summary, get_response_log, get_audit_log) render a structured detail card.
+- Detail tools (get_status_report, get_monitor, get_monitor_status, get_monitor_summary, get_response_log, get_audit_log) render a structured detail card.
 DO NOT restate that data in your reply — no markdown tables, no bullet recaps of the rows, no field-by-field summaries. A one-line acknowledgement ("You have 4 status reports — 3 active." / "Monitor 12 is healthy in 5/7 regions; failing in gru, fra." / "Incident resolved.") plus an optional next step is enough.
 Exception: after get_doc_page or get_content_page, DO synthesize an answer from the page content — the answer is the point; just don't paste the whole page.`
       : "";
@@ -68,7 +68,7 @@ You help teams manage status pages, status reports, and maintenance windows, ans
 Anti-guess rules — these are absolute:
 - You have NO knowledge of this workspace's data. NEVER invent or guess IDs (page id, status report id, maintenance id, page component id, monitor id, notification id, response log id).
 - Before referencing a status page: call list_status_pages.
-- Before referencing a status report: call list_status_reports.
+- Before referencing a status report: call list_status_reports. Its updates stop at the 10 most recent entries; call get_status_report for the full timeline before editing or deleting an older entry.
 - Before referencing a maintenance window: call list_maintenances.
 - Before referencing a page component (including by name like "the laser pointer"): call list_page_components({ pageId }).
 - Before referencing a monitor (including by name like "the API monitor"): call list_monitors.

@@ -14,7 +14,11 @@ import {
 
 import type { PlanLoss } from "../emails/_components/plan-loss";
 import CancellationScheduledEmail from "../emails/cancellation-scheduled";
+import MemberAccessEndingEmail, {
+  memberAccessEndingSubject,
+} from "../emails/member-access-ending";
 import MemberRemovedEmail from "../emails/member-removed";
+import OwnershipTransferredEmail from "../emails/ownership-transferred";
 import PlanDowngradedEmail, {
   planDowngradedSubject,
 } from "../emails/plan-downgraded";
@@ -26,9 +30,11 @@ import {
   billingRecipients,
   planLossLines,
   reminderScheduledAt,
+  scheduleMemberAccessEnding,
   schedulePlanEndingSoon,
   sendCancellationScheduled,
   sendMemberRemoved,
+  sendOwnershipTransferred,
   sendPlanDowngraded,
   sendTrialEnding,
 } from "./billing";
@@ -97,6 +103,30 @@ describe("billing templates", () => {
     );
   });
 
+  test("plan-downgraded after a trial says trial and offers upgrade", async () => {
+    const props = {
+      workspaceSlug: "acme-dev",
+      previousPlan: "team",
+      loss,
+      reason: "trial_ended" as const,
+    };
+    const html = await render(<PlanDowngradedEmail {...props} />);
+    expect(html).toContain("TRIAL");
+    expect(html).toContain("team trial ended without a payment method");
+    expect(html).toContain("team trial → free");
+    expect(html).toContain("Upgrade");
+    expect(html).not.toContain("subscription ended");
+    expect(html).not.toContain("Re-subscribe");
+    expect(planDowngradedSubject(props)).toBe(
+      "Your trial ended — 2 status pages deleted",
+    );
+
+    const cancelled = await render(
+      <PlanDowngradedEmail {...props} reason="trial_cancelled" />,
+    );
+    expect(cancelled).toContain("You cancelled your team trial");
+  });
+
   test("plan-ending-soon is dated and in the future tense", async () => {
     const props = { workspaceSlug: "acme-dev", plan: "team", endsAt, loss };
     const html = await render(<PlanEndingSoonEmail {...props} />);
@@ -108,6 +138,33 @@ describe("billing templates", () => {
     expect(planEndingSoonSubject(props)).toBe(
       "Your team plan ends on 25 Sep — resume to keep everything",
     );
+  });
+
+  test("member-access-ending: dated, names owners, trial vs cancellation", async () => {
+    const props = {
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "cancellation" as const,
+      owners: ["max@acme.dev", "thibault@acme.dev"],
+    };
+    const html = await render(<MemberAccessEndingEmail {...props} />);
+    expect(html).toContain("HEADS UP");
+    expect(html).toContain("You lose access to Acme on Friday 25 September");
+    expect(html).toContain("team subscription is cancelled");
+    expect(html).toContain("Fri 25 Sep 2026");
+    expect(html).toContain("max@acme.dev, thibault@acme.dev");
+    expect(html).toContain("you are a member of this workspace");
+    expect(memberAccessEndingSubject(props)).toBe(
+      "Your access to Acme on openstatus ends on 25 Sep",
+    );
+
+    const trial = await render(
+      <MemberAccessEndingEmail {...props} reason="trial" owners={[]} />,
+    );
+    expect(trial).toContain("team trial ends without a payment method");
+    expect(trial).toContain("Ask a workspace owner");
+    expect(trial).not.toContain("Ask to keep it");
   });
 
   test("member-removed: one line, who to ask, no CTA", async () => {
@@ -128,6 +185,27 @@ describe("billing templates", () => {
     );
     expect(manual).toContain("A workspace owner removed you");
     expect(manual).not.toContain("Ask for access");
+  });
+
+  test("ownership-transferred: copy per recipient", async () => {
+    const props = {
+      workspaceName: "Acme",
+      newOwner: "web@acme.dev",
+      formerOwner: "max@acme.dev",
+    };
+    const toNew = await render(
+      <OwnershipTransferredEmail {...props} recipient="new" />,
+    );
+    expect(toNew).toContain("You are now the owner of Acme");
+    expect(toNew).toContain("Transferred by");
+    expect(toNew).toContain("max@acme.dev");
+
+    const toFormer = await render(
+      <OwnershipTransferredEmail {...props} recipient="former" />,
+    );
+    expect(toFormer).toContain("You transferred ownership of Acme");
+    expect(toFormer).toContain("you are a member");
+    expect(toFormer).toContain("web@acme.dev");
   });
 
   test("cancellation-scheduled is raw: no layout, date, losses, resume link", async () => {
@@ -377,6 +455,91 @@ describe("send plumbing", () => {
     expect(await cancelScheduledEmail("email_123")).toBe(false);
   });
 
+  test("scheduleMemberAccessEnding: 3 days ahead, 50 recipients per email", async () => {
+    const now = new Date(endsAt.getTime() - 10 * 86_400_000);
+    const ids = await scheduleMemberAccessEnding({
+      to: Array.from({ length: 60 }, (_, i) => `m${i}@acme.dev`),
+      eventId: "evt_1",
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "cancellation",
+      owners: ["max@acme.dev"],
+      now,
+    });
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send.mock.calls.map((c) => c[0].to.length)).toEqual([50, 10]);
+    expect(send.mock.calls[0][0].scheduledAt).toBe("2026-09-22T00:00:00.000Z");
+    expect(send.mock.calls[1][1]).toEqual({
+      idempotencyKey: "stripe:evt_1:member-access-ending:1",
+    });
+    expect(ids.length).toBe(2);
+  });
+
+  test("scheduleMemberAccessEnding chunks a stable order across redeliveries", async () => {
+    const req = {
+      eventId: "evt_1",
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "trial" as const,
+      owners: [],
+    };
+    await scheduleMemberAccessEnding({
+      ...req,
+      to: ["b@acme.dev", "a@acme.dev"],
+    });
+    await scheduleMemberAccessEnding({
+      ...req,
+      to: ["a@acme.dev", "b@acme.dev"],
+    });
+    expect(send.mock.calls[0][0].to).toEqual(send.mock.calls[1][0].to);
+  });
+
+  test("scheduleMemberAccessEnding inside the lead window sends now, no ids", async () => {
+    const ids = await scheduleMemberAccessEnding({
+      to: ["a@acme.dev"],
+      eventId: "evt_1",
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "trial",
+      owners: [],
+      now: new Date(endsAt.getTime() - 86_400_000),
+    });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect("scheduledAt" in send.mock.calls[0][0]).toBe(false);
+    expect(ids).toEqual([]);
+
+    const unscheduled = await scheduleMemberAccessEnding({
+      to: ["a@acme.dev"],
+      eventId: "evt_3",
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "cancellation",
+      owners: [],
+      schedule: false,
+      now: new Date(endsAt.getTime() - 10 * 86_400_000),
+    });
+    expect(send).toHaveBeenCalledTimes(2);
+    expect("scheduledAt" in send.mock.calls[1][0]).toBe(false);
+    expect(unscheduled).toEqual([]);
+
+    expect(
+      await scheduleMemberAccessEnding({
+        to: [],
+        eventId: "evt_2",
+        workspaceName: "Acme",
+        plan: "team",
+        endsAt,
+        reason: "trial",
+        owners: [],
+      }),
+    ).toEqual([]);
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
   test("sendMemberRemoved chunks at Resend's 100-email batch limit", async () => {
     await sendMemberRemoved({
       to: Array.from({ length: 250 }, (_, i) => `m${i}@acme.dev`),
@@ -454,6 +617,42 @@ describe("send plumbing", () => {
     expect(options).toEqual({
       idempotencyKey: "stripe:evt_1:member-removed:0",
     });
+  });
+
+  test("sendOwnershipTransferred sends one mail per person, keyed by recipient", async () => {
+    await sendOwnershipTransferred({
+      idempotencyKey: "ownership:1:42",
+      workspaceName: "Acme",
+      newOwner: "web@acme.dev",
+      formerOwner: "max@acme.dev",
+      to: { new: "web@acme.dev", former: "max@acme.dev" },
+    });
+    expect(send).toHaveBeenCalledTimes(2);
+    const [toNew, newOptions] = send.mock.calls[0];
+    const [toFormer, formerOptions] = send.mock.calls[1];
+    expect(toNew.to).toEqual(["web@acme.dev"]);
+    expect(toNew.subject).toBe("You are now the owner of Acme on openstatus");
+    expect(toNew.replyTo).toBe("ping@openstatus.dev");
+    expect(newOptions).toEqual({ idempotencyKey: "ownership:1:42:new" });
+    expect(toFormer.to).toEqual(["max@acme.dev"]);
+    expect(toFormer.subject).toBe(
+      "You transferred ownership of Acme on openstatus",
+    );
+    expect(formerOptions).toEqual({ idempotencyKey: "ownership:1:42:former" });
+  });
+
+  test("sendOwnershipTransferred skips a person without an address", async () => {
+    await sendOwnershipTransferred({
+      idempotencyKey: "ownership:1:43",
+      workspaceName: "Acme",
+      newOwner: "web@acme.dev",
+      formerOwner: "Max",
+      to: { new: "web@acme.dev", former: null },
+    });
+    expect(send).toHaveBeenCalledTimes(1);
+    const [toNew] = send.mock.calls[0];
+    expect(toNew.to).toEqual(["web@acme.dev"]);
+    expect(toNew.react.props.formerOwner).toBe("Max");
   });
 
   test("sendCancellationScheduled is raw, from the root domain", async () => {

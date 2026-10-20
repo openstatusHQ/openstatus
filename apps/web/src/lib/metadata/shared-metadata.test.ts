@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import type { MDXData } from "../../content/utils";
 import {
   BASE_URL,
+  HOMEPAGE_TITLE,
   getHomeMetadata,
   getPageMetadata,
   getSocialMetadata,
@@ -118,9 +119,9 @@ describe("getPageMetadata", () => {
 });
 
 describe("getHomeMetadata", () => {
-  test("bypasses the title template and uses the static og image", () => {
+  test("uses HOMEPAGE_TITLE, bypasses the title template and uses the static og image", () => {
     const meta = getHomeMetadata(page());
-    expect(meta.title).toEqual({ absolute: "My Post" });
+    expect(meta.title).toEqual({ absolute: HOMEPAGE_TITLE });
     expect(meta.alternates?.canonical).toBe("/");
     expect(meta.twitter?.images).toEqual([`${BASE_URL}/api/og`]);
     expect(meta.openGraph?.url).toBe(BASE_URL);

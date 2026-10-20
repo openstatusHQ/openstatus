@@ -26,9 +26,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 export function FormApiKey() {
   const trpc = useTRPC();
-  const { data: apiKeys = [], refetch } = useQuery(
-    trpc.apiKey.list.queryOptions(),
-  );
+  const { data: apiKeys = [] } = useQuery(trpc.apiKey.list.queryOptions());
 
   return (
     <FormCard id="api-keys">
@@ -47,14 +45,14 @@ export function FormApiKey() {
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (
-          <DataTable apiKeys={apiKeys} refetch={refetch} />
+          <DataTable apiKeys={apiKeys} />
         )}
       </FormCardContent>
       <FormCardFooter>
         <FormCardFooterInfo>
           Trigger monitors via CLI, CI/CD or create your own status page.{" "}
           <Link
-            href="https://api.openstatus.dev/v1"
+            href="https://api.openstatus.dev/openapi"
             rel="noreferrer"
             target="_blank"
           >

@@ -1,4 +1,4 @@
-import { eq } from "@openstatus/db";
+import { eq, sql } from "@openstatus/db";
 import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
@@ -8,6 +8,7 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
+import { ConflictError } from "../errors";
 import { unlinkIncidentFromStatusReport } from "../incident/link-status-report";
 import { recomputeReportStatus } from "./derive-status";
 import { getReportInWorkspace, getReportUpdateInWorkspace } from "./internal";
@@ -66,6 +67,18 @@ export async function deleteStatusReportUpdate(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+
+    // the report's status and message are derived from its updates
+    const remaining = await tx
+      .select({ count: sql<number>`count(*)` })
+      .from(statusReportUpdate)
+      .where(eq(statusReportUpdate.statusReportId, existing.statusReportId))
+      .get();
+    if ((remaining?.count ?? 0) <= 1) {
+      throw new ConflictError(
+        "A status report needs at least one update. Delete the report instead.",
+      );
+    }
 
     await tx
       .delete(statusReportUpdate)

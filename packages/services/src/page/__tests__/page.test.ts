@@ -162,6 +162,10 @@ describe("createPage (full form)", () => {
       name: "additional locale",
       input: { locales: ["en", "fr"] },
     },
+    {
+      name: "custom domain",
+      input: { customDomain: `${TEST_PREFIX}-denied.example.com` },
+    },
   ] satisfies {
     name: string;
     input: Partial<CreatePageInput>;
@@ -543,6 +547,101 @@ describe("updatePageCustomDomain", () => {
         .where(eq(pageTable.id, p.id))
         .get();
       expect(cleared?.customDomain).toBe("");
+    });
+  });
+});
+
+describe("custom domain uniqueness", () => {
+  const uniqueDomain = (tag: string) =>
+    `${uniqueSlug(tag)}.example.com`.toLowerCase();
+
+  test("createPage rejects a domain another workspace already uses", async () => {
+    await withTestTransaction(async (tx) => {
+      const domain = uniqueDomain("taken-create");
+      await tx
+        .insert(pageTable)
+        .values({
+          workspaceId: freeCtx.workspace.id,
+          title: "Owner",
+          description: "",
+          slug: uniqueSlug("domain-owner"),
+          customDomain: domain,
+        })
+        .run();
+
+      const slug = uniqueSlug("domain-thief");
+      await expect(
+        createPage({
+          ctx: { ...teamCtx, db: tx },
+          input: {
+            workspaceId: teamCtx.workspace.id,
+            title: "Thief",
+            description: "",
+            slug,
+            customDomain: domain.toUpperCase(),
+          },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+      expect(
+        await tx.select().from(pageTable).where(eq(pageTable.slug, slug)).get(),
+      ).toBeUndefined();
+    });
+  });
+
+  test("updatePageCustomDomain rejects a domain used by another page", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const domain = uniqueDomain("taken-update");
+      const owner = await newPage({
+        ctx,
+        input: { title: "Owner", slug: uniqueSlug("domain-owner") },
+      });
+      await updatePageCustomDomain({
+        ctx,
+        input: { id: owner.id, customDomain: domain },
+      });
+
+      const other = await newPage({
+        ctx,
+        input: { title: "Other", slug: uniqueSlug("domain-other") },
+      });
+      await expect(
+        updatePageCustomDomain({
+          ctx,
+          input: { id: other.id, customDomain: domain },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, other.id))
+        .get();
+      expect(row?.customDomain).toBe("");
+    });
+  });
+
+  test("updatePageCustomDomain lets a page re-save its own domain", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const domain = uniqueDomain("own");
+      const p = await newPage({
+        ctx,
+        input: { title: "Own", slug: uniqueSlug("domain-own") },
+      });
+      await updatePageCustomDomain({
+        ctx,
+        input: { id: p.id, customDomain: domain },
+      });
+      await updatePageCustomDomain({
+        ctx,
+        input: { id: p.id, customDomain: domain },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.customDomain).toBe(domain);
     });
   });
 });

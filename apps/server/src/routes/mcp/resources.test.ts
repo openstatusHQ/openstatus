@@ -52,9 +52,7 @@ describe("public MCP resources", () => {
     stubFetch(() => Promise.reject(new Error("network down")));
     for (const resource of PUBLIC_RESOURCES) {
       const result = await readPublicResource(resource);
-      expect(
-        textOf(result).length,
-      ).toBeGreaterThan(0);
+      expect(textOf(result).length).toBeGreaterThan(0);
     }
   });
 
@@ -64,17 +62,13 @@ describe("public MCP resources", () => {
 
     stubFetch(() => Promise.resolve(new Response("   ")));
     const blank = await readPublicResource(remote);
-    expect(
-      textOf(blank).trim().length,
-    ).toBeGreaterThan(0);
+    expect(textOf(blank).trim().length).toBeGreaterThan(0);
 
     stubFetch(() =>
       Promise.resolve(new Response("not found", { status: 404 })),
     );
     const missing = await readPublicResource(remote);
-    expect(
-      textOf(missing).trim().length,
-    ).toBeGreaterThan(0);
+    expect(textOf(missing).trim().length).toBeGreaterThan(0);
   });
 
   test("serves the fetched document when it resolves", async () => {
@@ -85,9 +79,7 @@ describe("public MCP resources", () => {
 
     stubFetch(() => Promise.resolve(new Response("# MCP server\n\nlive copy")));
     const result = await readPublicResource(remote);
-    expect(textOf(result)).toContain(
-      "live copy",
-    );
+    expect(textOf(result)).toContain("live copy");
   });
 
   test("ships the OpenAPI document without a network call", async () => {
@@ -98,9 +90,7 @@ describe("public MCP resources", () => {
     if (!spec) throw new Error("openapi resource missing");
 
     const result = await readPublicResource(spec);
-    const parsed = JSON.parse(
-      textOf(result),
-    );
+    const parsed = JSON.parse(textOf(result));
     expect(parsed.openapi).toBe("3.1.0");
     expect(parsed.servers[0].url).toBe("https://api.openstatus.dev");
   });
@@ -172,9 +162,7 @@ describe("public MCP documents over the transport", () => {
     try {
       for (const resource of PUBLIC_RESOURCES) {
         const result = await client.readResource({ uri: resource.uri });
-        expect(
-          textOf(result).length,
-        ).toBeGreaterThan(0);
+        expect(textOf(result).length).toBeGreaterThan(0);
       }
     } finally {
       await close();

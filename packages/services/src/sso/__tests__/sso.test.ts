@@ -1,4 +1,4 @@
-import { and, eq } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import {
   usersToWorkspaces,
   workspace,
@@ -48,12 +48,17 @@ function fakeWorkOS(
   overrides: {
     organizationId?: string;
     domains?: { domain: string; state: string }[];
+    deleted?: string[];
   } = {},
 ): WorkOSClient {
   const organizationId = overrides.organizationId ?? "org_test_1";
   return {
     organizations: {
       createOrganization: () => Promise.resolve({ id: organizationId }),
+      deleteOrganization: (id) => {
+        overrides.deleted?.push(id);
+        return Promise.resolve();
+      },
       getOrganization: () =>
         Promise.resolve({ domains: overrides.domains ?? [] }),
     },
@@ -177,6 +182,148 @@ describe("enableSso", () => {
       });
 
       expect(again.organizationId).toBe("org_test_1");
+    });
+  });
+
+  test("deletes the WorkOS org it created when persisting fails", async () => {
+    await withTestTransaction(async (tx) => {
+      const deleted: string[] = [];
+      const workos = fakeWorkOS({ organizationId: "org_orphan", deleted });
+      // Ownership is revoked while the WorkOS call is in flight, so the
+      // persisting transaction fails after the org already exists.
+      workos.organizations.createOrganization = async () => {
+        await tx
+          .update(usersToWorkspaces)
+          .set({ role: "member" })
+          .where(
+            and(
+              eq(usersToWorkspaces.workspaceId, scaleCtx.workspace.id),
+              eq(usersToWorkspaces.userId, SCALE_OWNER_ID),
+            ),
+          );
+        return { id: "org_orphan" };
+      };
+
+      await expect(
+        enableSso({ ctx: { ...scaleCtx, db: tx, workos } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      expect(deleted).toEqual(["org_orphan"]);
+
+      const row = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, scaleCtx.workspace.id))
+        .get();
+      expect(row?.workosOrganizationId).toBeNull();
+    });
+  });
+
+  // Runs on the committed db: the keep branch only applies to a transaction
+  // enableSso owns. A fresh workspace keeps the commit away from seeded ones.
+  test("keeps the org when its commit landed despite an error", async () => {
+    const fixture = await createWorkspaceFixture("scale", {
+      limits: JSON.stringify({ sso: true }),
+    });
+    // Org ids are unique across workspaces and this commit outlives the test.
+    const organizationId = `org_landed_${fixture.workspace.id}`;
+    const deleted: string[] = [];
+    let transactions = 0;
+    // The persisting transaction commits, then the response is "lost".
+    const lossyDb = new Proxy(db, {
+      get(target, prop, receiver) {
+        if (prop !== "transaction") return Reflect.get(target, prop, receiver);
+        return async (fn: Parameters<typeof db.transaction>[0]) => {
+          const result = await target.transaction(fn);
+          transactions++;
+          if (transactions === 2) throw new Error("lost response");
+          return result;
+        };
+      },
+    });
+
+    await expect(
+      enableSso({
+        ctx: {
+          ...makeUserCtx(fixture.workspace, { userId: fixture.userId }),
+          db: lossyDb,
+          workos: fakeWorkOS({ organizationId, deleted }),
+        },
+      }),
+    ).rejects.toThrow("lost response");
+    expect(deleted).toEqual([]);
+
+    const row = await db
+      .select()
+      .from(workspace)
+      .where(eq(workspace.id, fixture.workspace.id))
+      .get();
+    expect(row?.workosOrganizationId).toBe(organizationId);
+  });
+
+  test("refuses to enable when the add-on is removed mid-enable", async () => {
+    await withTestTransaction(async (tx) => {
+      const deleted: string[] = [];
+      const workos = fakeWorkOS({ organizationId: "org_downgraded", deleted });
+      // A downgrade drops the add-on while the WorkOS call is in flight.
+      workos.organizations.createOrganization = async () => {
+        await tx
+          .update(workspace)
+          .set({ limits: JSON.stringify({ sso: false }) })
+          .where(eq(workspace.id, scaleCtx.workspace.id));
+        return { id: "org_downgraded" };
+      };
+
+      await expect(
+        enableSso({ ctx: { ...scaleCtx, db: tx, workos } }),
+      ).rejects.toBeInstanceOf(PreconditionFailedError);
+      expect(deleted).toEqual(["org_downgraded"]);
+
+      const row = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, scaleCtx.workspace.id))
+        .get();
+      expect(row?.ssoEnabled).toBe(false);
+      expect(row?.workosOrganizationId).toBeNull();
+    });
+  });
+
+  test("keeps a concurrently persisted org and deletes its own", async () => {
+    await withTestTransaction(async (tx) => {
+      const deleted: string[] = [];
+      const workos = fakeWorkOS({ organizationId: "org_loser", deleted });
+      // A concurrent enable lands its org between our read and our write.
+      workos.organizations.createOrganization = async () => {
+        await tx
+          .update(workspace)
+          .set({ workosOrganizationId: "org_winner" })
+          .where(eq(workspace.id, scaleCtx.workspace.id));
+        return { id: "org_loser" };
+      };
+
+      const result = await enableSso({ ctx: { ...scaleCtx, db: tx, workos } });
+
+      expect(result.organizationId).toBe("org_winner");
+      expect(deleted).toEqual(["org_loser"]);
+    });
+  });
+
+  test("does not create or delete an org when one is already linked", async () => {
+    await withTestTransaction(async (tx) => {
+      await enableSso({ ctx: { ...scaleCtx, db: tx, workos: fakeWorkOS() } });
+
+      const deleted: string[] = [];
+      const workos = fakeWorkOS({ deleted });
+      let created = 0;
+      workos.organizations.createOrganization = () => {
+        created++;
+        return Promise.resolve({ id: "org_unused" });
+      };
+
+      await enableSso({ ctx: { ...scaleCtx, db: tx, workos } });
+
+      expect(created).toBe(0);
+      expect(deleted).toEqual([]);
     });
   });
 });

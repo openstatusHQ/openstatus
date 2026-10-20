@@ -46,7 +46,9 @@ const baseColumns: ColumnDef<Incident>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Acknowledged" />
     ),
-    cell: ({ row }) => <TableCellDate value={row.getValue("acknowledgedAt")} />,
+    cell: ({ row }) => (
+      <TableCellDate value={row.getValue("acknowledgedAt")} empty="Pending" />
+    ),
     enableHiding: false,
   },
   {
@@ -54,7 +56,9 @@ const baseColumns: ColumnDef<Incident>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Resolved At" />
     ),
-    cell: ({ row }) => <TableCellDate value={row.getValue("resolvedAt")} />,
+    cell: ({ row }) => (
+      <TableCellDate value={row.getValue("resolvedAt")} empty="Ongoing" />
+    ),
     enableHiding: false,
   },
   {

@@ -156,7 +156,7 @@ const tools = {
   }),
   list_incidents: tool({
     description:
-      "List managed incidents in this workspace (declared by the team, not monitor downtime), open ones first.",
+      "List managed incidents in this workspace (declared by the team, not monitor downtime), newest declared first. Filter by `status` to see only open ones.",
     inputSchema: z.object({
       status: z
         .array(z.enum(["open", "mitigated", "resolved", "canceled"]))

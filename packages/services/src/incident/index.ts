@@ -2,14 +2,31 @@ export { addIncidentNote } from "./add-note";
 export { closeIncident, closeIncidentInTx } from "./close";
 export { declareIncident } from "./declare";
 export { deleteIncident, isDeletable } from "./delete";
-export { displayName } from "../attribution";
+export {
+  actorDisplayName,
+  afterIncidentClosed,
+  afterIncidentDeclared,
+  afterIncidentDeleted,
+  afterIncidentStatusChanged,
+  afterIncidentUpdated,
+  afterPostmortemApproved,
+  type CommanderEmail,
+  describeIncidentChanges,
+  incidentDashboardUrl,
+  type IncidentEffects,
+  incidentEffects,
+  notifyIncidentCommander,
+  quoteNote,
+  resolveDashboardUrl,
+} from "./effects";
+export { displayName, toAttributedUserDetail } from "../attribution";
 export { allowedTransitions } from "./internal";
 export {
   linkIncidentStatusReport,
   unlinkIncidentFromStatusReport,
   unlinkIncidentStatusReport,
 } from "./link-status-report";
-export { listIncidentEvents } from "./list-events";
+export { getIncidentEvent, listIncidentEvents } from "./list-events";
 export { clearIncidentCommander } from "./members";
 export {
   type ClaimOnce,
@@ -22,8 +39,10 @@ export {
   getIncident,
   getIncidentBySlackChannel,
   getIncidentForStatusReport,
+  getIncidentOrThrow,
   listIncidents,
   listLinkedStatusReportIds,
+  toIncidentView,
 } from "./list";
 export {
   approvePostmortem,
@@ -63,6 +82,7 @@ export {
   announceInChannel,
   escapeMrkdwn,
   headerBlocks,
+  INCIDENT_CARD_ACTIONS,
   incidentChannelName,
   incidentSlackReady,
   type OpenChannelResult,

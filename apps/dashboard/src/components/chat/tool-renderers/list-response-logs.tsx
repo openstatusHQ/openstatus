@@ -3,6 +3,7 @@ import { cn } from "@openstatus/ui/lib/utils";
 
 import { HoverCardTiming } from "@/components/common/hover-card-timing";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellRegion } from "@/components/data-table/table-cell-region";
 import { TableCellText } from "@/components/data-table/table-cell-text";
@@ -47,7 +48,7 @@ export function listResponseLogsTable(
             )}
           />
         ) : (
-          <div className="text-muted-foreground">-</div>
+          <TableCellEmpty>Unknown</TableCellEmpty>
         ),
         timestamp: (
           <TableCellDate
@@ -63,17 +64,18 @@ export function listResponseLogsTable(
               className={textColors[getStatusCodeVariant(log.statusCode)]}
             />
           ) : (
-            <TableCellText value="—" />
+            <TableCellEmpty>No status</TableCellEmpty>
           ),
         latency: <TableCellNumber value={log.latency} unit="ms" />,
         timing: log.timing ? (
           <HoverCardTiming timing={log.timing} latency={log.latency} />
         ) : (
-          <div className="text-muted-foreground">-</div>
+          <TableCellEmpty>No timing</TableCellEmpty>
         ),
         id: (
           <TableCellText
-            value={log.id ?? "—"}
+            value={log.id}
+            empty="No ID"
             className="text-muted-foreground font-mono"
           />
         ),

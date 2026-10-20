@@ -132,7 +132,7 @@ describe("listIncidentsTable", () => {
     ]);
     const [closed, open] = table.rows;
     expect(text(closed.cells.status)).toBe("resolved · closed");
-    expect(text(closed.cells.commander)).toBe("-");
+    expect(text(closed.cells.commander)).toBe("Unassigned");
     expect(text(open.cells.status)).toBe("open");
     expect(text(open.cells.commander)).toBe("Ada");
     expect(text(open.cells.id)).toBe("2");
@@ -172,7 +172,7 @@ describe("getIncidentDetails", () => {
     ]);
     const value = (label: string) =>
       text(overview.rows.find((r) => r.label === label)?.value);
-    expect(value("Commander")).toBe("-");
+    expect(value("Commander")).toBe("Unassigned");
     expect(value("Status report")).toBe("Payments degraded");
   });
 

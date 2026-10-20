@@ -84,13 +84,13 @@ builders:
     run:
       - ./node_modules/.bin/tsdown
 
-# Runtime stage: Node plus curl (healthcheck) and the system CA store, which libsql's native
-# TLS reads — Node's own fetch bundles its CAs, the addon does not.
+# Runtime stage: Node plus curl for the healthcheck. No ca-certificates: the server talks to libSQL
+# over HTTP (pure JS) and Node bundles its own CA store, so nothing reads the system one.
 fromImage: node:26.8.1-slim
 root:
   run:
     # One chained command: dofigen emits a heredoc RUN, which doesn't stop on a failed line
-    - apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
+    - apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 workdir: /app/
 
 # Metadata labels

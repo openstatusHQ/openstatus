@@ -6,8 +6,11 @@ import { slackTestState } from "@/libs/test/doubles/slack-test-state";
 
 import {
   channelContextTooling,
+  channelHistoryNote,
+  channelHistoryTooling,
   contextChannelId,
   contextUserId,
+  fetchChannelHistory,
   forgetContext,
   recallContext,
   rememberContext,
@@ -120,5 +123,66 @@ describe("the read_slack_channel tool", () => {
 
     // The model needs to explain this, so it must not blow up the turn.
     expect(result.error).toBe("not_in_channel");
+  });
+});
+
+describe("fetchChannelHistory", () => {
+  beforeEach(() => {
+    slackTestState.calls = [];
+  });
+
+  test("reads before a ts and keeps the newest within the size cap", async () => {
+    const long = "x".repeat(5_000);
+    slackTestState.historyImpl = () =>
+      Promise.resolve({
+        messages: Array.from({ length: 30 }, (_, i) => ({
+          user: "U1",
+          text: `${30 - i}:${long}`,
+          ts: `${1792000000 + 30 - i}.0`,
+        })),
+      });
+    const messages = await fetchChannelHistory(
+      new WebClient("xoxb-test"),
+      "C1",
+      { limit: 80, before: "1792000100.0" },
+    );
+
+    expect(slackTestState.calls[0].args).toMatchObject({
+      channel: "C1",
+      limit: 50,
+      latest: "1792000100.0",
+    });
+    expect(messages.reduce((n, m) => n + m.text.length, 0)).toBeLessThanOrEqual(
+      20_000,
+    );
+    expect(messages.every((m) => m.text.length <= 2_000)).toBe(true);
+    expect(messages.at(-1)?.text.startsWith("30:")).toBe(true);
+  });
+
+  test("the note lists messages oldest first with UTC times", () => {
+    const note = channelHistoryNote("C1", [
+      { user: "U1", text: "first", ts: "1792098600.0" },
+      { user: "U2", text: "second", ts: "1792139400.0" },
+    ]);
+    expect(note).toContain("<#C1>");
+    expect(note).toContain("[2026-10-15 21:10 UTC] <@U1>: first");
+    expect(note).toContain("Oldest ts here: 1792098600.0");
+    expect(channelHistoryNote("C1", [])).toBeUndefined();
+  });
+
+  test("the channel tool pages back with before", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({ messages: [{ user: "U1", text: "old", ts: "5.0" }] });
+    const tools = channelHistoryTooling({
+      slack: new WebClient("xoxb-test"),
+      channelId: "C1",
+    });
+    const execute = tools.read_slack_channel.execute;
+    if (!execute) throw new Error("read_slack_channel has no execute");
+    await execute(
+      { before: "10.0" },
+      { toolCallId: "t1", messages: [], context: {} },
+    );
+    expect(slackTestState.calls[0].args).toMatchObject({ latest: "10.0" });
   });
 });

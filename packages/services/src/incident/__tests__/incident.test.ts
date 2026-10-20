@@ -41,12 +41,14 @@ import {
   declareIncident,
   deleteIncident,
   getIncident,
+  getIncidentOrThrow,
   linkIncidentStatusReport,
   listIncidentEvents,
   listIncidents,
   setIncidentStatus,
   unbindIncidentSlackChannel,
   unlinkIncidentStatusReport,
+  toIncidentView,
   updateIncident,
 } from "../index";
 
@@ -639,6 +641,51 @@ describe("slack channel binding", () => {
   });
 });
 
+describe("slack channel moves", () => {
+  test("a move expecting another channel conflicts", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = as(memberId, tx);
+      const row = await declare(tx);
+      await bindIncidentSlackChannel({
+        ctx,
+        input: { id: row.id, teamId: "T1", channelId: "C_OTHER" },
+      });
+      await expect(
+        bindIncidentSlackChannel({
+          ctx,
+          input: {
+            id: row.id,
+            teamId: "T1",
+            channelId: "C_SOURCE",
+            expectedChannelId: "C_NEW",
+          },
+        }),
+      ).rejects.toThrow(ConflictError);
+    });
+  });
+
+  test("rebinding to another channel records the move", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = as(memberId, tx);
+      const row = await declare(tx);
+      await bindIncidentSlackChannel({
+        ctx,
+        input: { id: row.id, teamId: "T1", channelId: "C_NEW" },
+      });
+      const moved = await bindIncidentSlackChannel({
+        ctx,
+        input: { id: row.id, teamId: "T1", channelId: "C_SOURCE" },
+      });
+      expect(moved.slackChannelId).toBe("C_SOURCE");
+      const events = await listIncidentEvents({ ctx, input: { id: row.id } });
+      expect(events.map((e) => e.message)).toContain(
+        "Slack channel moved from <#C_NEW> to <#C_SOURCE>",
+      );
+      await expectInvariant(tx, row.id);
+    });
+  });
+});
+
 describe("closeIncident", () => {
   test("a member who isn't commander cannot close; the commander can", async () => {
     await withTestTransaction(async (tx) => {
@@ -738,26 +785,159 @@ describe("deleteIncident", () => {
 });
 
 describe("reads", () => {
-  test("list puts open incidents first and filters by status", async () => {
+  test("list orders newest declared first and filters by status", async () => {
     await withTestTransaction(async (tx) => {
-      const resolved = await createIncident(
-        workspace.id,
-        { status: "resolved", declaredAt: new Date() },
-        tx,
-      );
-      const open = await createIncident(
+      const older = await createIncident(
         workspace.id,
         { status: "open", declaredAt: new Date(Date.now() - 86_400_000) },
         tx,
       );
+      const newer = await createIncident(
+        workspace.id,
+        { status: "resolved", declaredAt: new Date() },
+        tx,
+      );
       const ctx = as(memberId, tx);
-      const ids = (await listIncidents({ ctx })).map((i) => i.id);
-      expect(ids.indexOf(open.id)).toBeLessThan(ids.indexOf(resolved.id));
-      const onlyResolved = await listIncidents({
+      const ids = (await listIncidents({ ctx })).items.map((i) => i.id);
+      expect(ids).toContain(newer.id);
+      expect(ids).toContain(older.id);
+      expect(ids.indexOf(newer.id)).toBeLessThan(ids.indexOf(older.id));
+      const { items: onlyResolved } = await listIncidents({
         ctx,
         input: { status: ["resolved"] },
       });
       expect(onlyResolved.every((i) => i.status === "resolved")).toBe(true);
+    });
+  });
+
+  test("list filters by closed", async () => {
+    await withTestTransaction(async (tx) => {
+      const closed = await createIncident(
+        workspace.id,
+        { status: "resolved", resolvedAt: new Date(), closedAt: new Date() },
+        tx,
+      );
+      const resolved = await createIncident(
+        workspace.id,
+        { status: "resolved", resolvedAt: new Date() },
+        tx,
+      );
+      const ctx = as(memberId, tx);
+      const onlyClosed = (
+        await listIncidents({ ctx, input: { closed: true } })
+      ).items.map((i) => i.id);
+      expect(onlyClosed).toContain(closed.id);
+      expect(onlyClosed).not.toContain(resolved.id);
+      const notClosed = (
+        await listIncidents({
+          ctx,
+          input: { status: ["resolved"], closed: false },
+        })
+      ).items.map((i) => i.id);
+      expect(notClosed).toContain(resolved.id);
+      expect(notClosed).not.toContain(closed.id);
+    });
+  });
+
+  test("list returns the total size across pages", async () => {
+    await withTestTransaction(async (tx) => {
+      for (let i = 0; i < 3; i++) {
+        await createIncident(workspace.id, { status: "open" }, tx);
+      }
+      const ctx = as(memberId, tx);
+      const all = await listIncidents({ ctx, input: { limit: 100 } });
+      const total = all.items.length;
+      expect(all.totalSize).toBe(total);
+      const first = await listIncidents({ ctx, input: { limit: 2 } });
+      expect(first.items).toHaveLength(2);
+      expect(first.totalSize).toBe(total);
+      const last = await listIncidents({
+        ctx,
+        input: { limit: 2, offset: total - 1 },
+      });
+      expect(last.items).toHaveLength(1);
+      expect(last.totalSize).toBe(total);
+      const past = await listIncidents({
+        ctx,
+        input: { limit: 2, offset: total + 5 },
+      });
+      expect(past.items).toHaveLength(0);
+      expect(past.totalSize).toBe(total);
+    });
+  });
+
+  test("get carries allowed transitions and deletable", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await declare(tx);
+      const ctx = as(memberId, tx);
+      const open = await getIncidentOrThrow({ ctx, input: { id: row.id } });
+      expect(open.allowedTransitions).toEqual([
+        "mitigated",
+        "resolved",
+        "canceled",
+      ]);
+      expect(open.deletable).toBe(true);
+      await setIncidentStatus({
+        ctx,
+        input: { id: row.id, status: "mitigated" },
+      });
+      const mitigated = await getIncidentOrThrow({
+        ctx,
+        input: { id: row.id },
+      });
+      expect(mitigated.allowedTransitions).toEqual([
+        "resolved",
+        "open",
+        "canceled",
+      ]);
+      expect(mitigated.deletable).toBe(false);
+    });
+  });
+
+  test("the view of a closed or canceled incident has no transitions", () => {
+    const base = {
+      id: 1,
+      workspaceId: 1,
+      title: "x",
+      severity: "minor" as const,
+      summary: null,
+      commanderId: null,
+      declaredBy: null,
+      declaredAt: new Date(),
+      startedAt: new Date(),
+      mitigatedAt: null,
+      resolvedAt: new Date(),
+      resolvedBy: null,
+      closedAt: new Date(),
+      statusReportId: null,
+      slackTeamId: null,
+      slackChannelId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const closed = toIncidentView({ ...base, status: "resolved" });
+    expect(closed.allowedTransitions).toEqual([]);
+    expect(closed.deletable).toBe(false);
+    const canceled = toIncidentView({ ...base, status: "canceled" });
+    expect(canceled.allowedTransitions).toEqual([]);
+    expect(canceled.deletable).toBe(false);
+  });
+
+  test("getIncidentOrThrow is NotFound for another workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const theirs = await createIncident(otherWorkspace.id, {}, tx);
+      await expect(
+        getIncidentOrThrow({
+          ctx: as(memberId, tx),
+          input: { id: theirs.id },
+        }),
+      ).rejects.toThrow(NotFoundError);
+      await expect(
+        getIncidentOrThrow({
+          ctx: as(memberId, tx),
+          input: { id: 999_999_999 },
+        }),
+      ).rejects.toThrow(NotFoundError);
     });
   });
 

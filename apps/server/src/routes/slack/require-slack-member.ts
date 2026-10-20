@@ -1,4 +1,5 @@
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
+import type { Actor } from "@openstatus/services";
 import { signSlackLinkToken } from "@openstatus/services/slack-user";
 import type { WebClient } from "@slack/web-api";
 
@@ -7,12 +8,7 @@ import { redis } from "@/libs/clients";
 import type { SlackConfig } from "./config";
 import { resolveSlackMember } from "./resolve-slack-user";
 
-export type SlackActor = {
-  type: "slack";
-  teamId: string;
-  slackUserId: string;
-  userId: number;
-};
+export type SlackActor = Extract<Actor, { type: "slack" }>;
 
 const LINK_CARD_WINDOW_SECONDS = 10 * 60;
 

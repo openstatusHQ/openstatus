@@ -47,7 +47,7 @@ describe("getMonitorDetails", () => {
     followRedirects: true,
     public: false,
     tags: [{ name: "prod" }, { name: "api" }],
-    notifications: [{ name: "Ops", provider: "slack" }],
+    notifications: [{ id: 3, name: "Ops", provider: "slack" }],
     privateLocationIds: [7, 8],
   };
   const input = asFixture<Input>({ id: 1 });
@@ -64,8 +64,19 @@ describe("getMonitorDetails", () => {
     expect(value(data, "Regions")).toBe("ams, iad");
     expect(value(data, "Degraded after")).toBe("3000ms");
     expect(value(data, "Tags")).toBe("prod, api");
-    expect(value(data, "Notifications")).toBe("Ops (slack)");
-    expect(value(data, "IDs")).toBe("7, 8");
+    expect(value(data, "Notifications")).toBe("Ops");
+    const notifications = data.sections
+      .flatMap((s) => s.rows)
+      .find((r) => r.label === "Notifications");
+    expect(renderToStaticMarkup(<>{notifications?.value}</>)).toContain(
+      'data-slot="entity-ref"',
+    );
+    const ids = data.sections
+      .flatMap((s) => s.rows)
+      .find((r) => r.label === "IDs");
+    const markup = renderToStaticMarkup(<>{ids?.value}</>);
+    expect(markup).toContain('aria-label="Private location 7"');
+    expect(markup).toContain('aria-label="Private location 8"');
   });
 
   it("drops optional rows and sections when absent", () => {
@@ -111,7 +122,7 @@ describe("getMonitorSummaryDetails", () => {
       ["p50", "p75", "p90", "p95", "p99"],
     ]);
     expect(value(data, "Window")).toBe("7d");
-    expect(value(data, "Last check")).toBe("-");
+    expect(value(data, "Last check")).toBe("None");
     expect(value(data, "Failed")).toBe("5");
     expect(value(data, "p99")).toBe("400ms");
   });

@@ -176,6 +176,7 @@ export function makeSlackCtx(
     teamId: string;
     slackUserId: string;
     userId: number;
+    permalink?: string;
     requestId?: string;
   },
 ): ServiceContext {
@@ -186,6 +187,7 @@ export function makeSlackCtx(
       teamId: opts.teamId,
       slackUserId: opts.slackUserId,
       userId: opts.userId,
+      permalink: opts.permalink,
     },
     requestId: opts.requestId,
   };

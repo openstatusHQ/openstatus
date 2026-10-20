@@ -4726,3 +4726,71 @@ describe("StatusPageService — IP restriction in read responses", () => {
       .where(eq(page.id, testPasswordPageId));
   });
 });
+
+// `Number("0x10")` is 16 and `Number("1e3")` is 1000: a loosely parsed id
+// silently targets another row instead of failing.
+describe("StatusPageService - strict id parsing", () => {
+  test("DeleteStatusPage rejects non-decimal ids without deleting", async () => {
+    const target = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-strict-id`,
+        slug: `${TEST_PREFIX}-strict-id-${Date.now()}`,
+        description: "Strict id parsing",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    try {
+      for (const id of [
+        `0x${target.id.toString(16)}`,
+        `${target.id}.0`,
+        `${target.id}abc`,
+        `+${target.id}`,
+      ]) {
+        const res = await connectRequest(
+          "DeleteStatusPage",
+          { id },
+          { "x-openstatus-key": "1" },
+        );
+        expect(res.status).toBe(400);
+      }
+
+      const row = await db
+        .select()
+        .from(page)
+        .where(eq(page.id, target.id))
+        .get();
+      expect(row).toBeDefined();
+    } finally {
+      await db.delete(page).where(eq(page.id, target.id));
+    }
+  });
+
+  test("GetStatusPage rejects a non-decimal id", async () => {
+    const res = await connectRequest(
+      "GetStatusPage",
+      { id: `${testPageId}abc` },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("AddMonitorComponent rejects non-decimal page and monitor ids", async () => {
+    for (const body of [
+      {
+        pageId: `0x${testPageId.toString(16)}`,
+        monitorId: String(testMonitorId),
+      },
+      { pageId: String(testPageId), monitorId: `${testMonitorId}e0` },
+    ]) {
+      const res = await connectRequest("AddMonitorComponent", body, {
+        "x-openstatus-key": "1",
+      });
+      expect(res.status).toBe(400);
+    }
+  });
+});

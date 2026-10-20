@@ -85,7 +85,7 @@ A maintenance is a timeline of dated notes. The first one is the announcement wr
 - **Date** — Datetime (optional). When the note applies. Defaults to the time it is posted.
 - **Notify** — Boolean (optional, write-only). Sends the note to status page subscribers.
 
-A maintenance always keeps at least one update: deleting the last one is rejected, delete the maintenance instead. Reads return them newest-first under `updates` (RPC, agent tools) or `maintenanceUpdates` (status page JSON). The public status page, feeds and Markdown render the updates in order, oldest first on the page.
+A maintenance always keeps at least one update: deleting the last one is rejected; delete the maintenance instead. Reads return them newest-first under `updates` (RPC, agent tools) or `maintenanceUpdates` (status page JSON). The public status page, feeds and Markdown render the updates in order, oldest first on the page.
 
 ## Relationships
 

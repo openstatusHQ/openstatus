@@ -4,6 +4,7 @@ import type {
 } from "@openstatus/services/agent-tools";
 
 import type { ChangeRow } from "@/components/common/changes-table";
+import { EntityRef } from "@/components/common/entity-ref/entity-ref";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
@@ -32,7 +33,9 @@ export function listIncidentsTable(
         status: (
           <TableCellText value={i.closed ? `${i.status} · closed` : i.status} />
         ),
-        commander: <TableCellText value={i.commander?.name ?? null} />,
+        commander: (
+          <TableCellText value={i.commander?.name ?? null} empty="Unassigned" />
+        ),
         id: <TableCellNumber value={i.id} />,
       },
     })),
@@ -55,7 +58,12 @@ export function getIncidentDetails(
           { label: "Status", value: <TableCellText value={output.status} /> },
           {
             label: "Commander",
-            value: <TableCellText value={output.commander?.name ?? null} />,
+            value: (
+              <TableCellText
+                value={output.commander?.name ?? null}
+                empty="Unassigned"
+              />
+            ),
           },
           {
             label: "Summary",
@@ -67,7 +75,13 @@ export function getIncidentDetails(
           },
           {
             label: "Status report",
-            value: <TableCellText value={output.statusReport?.title ?? null} />,
+            value: output.statusReport ? (
+              <EntityRef kind="statusReport" id={output.statusReport.id}>
+                {output.statusReport.title}
+              </EntityRef>
+            ) : (
+              <TableCellText value={null} />
+            ),
           },
         ],
       },

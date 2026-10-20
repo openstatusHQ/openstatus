@@ -21,6 +21,7 @@ import {
 import { columns } from "@/components/data-table/private-locations/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 
 const EXAMPLES = [
@@ -74,6 +75,7 @@ export function Client() {
         {workspace.limits["private-locations"] === false ? (
           <BillingOverlayContainer>
             <DataTable
+              paginationComponent={DataTablePaginationSimple}
               columns={columns}
               data={[...EXAMPLES, ...EXAMPLES, ...EXAMPLES]}
             />
@@ -105,7 +107,11 @@ export function Client() {
             />
           </BillingOverlayContainer>
         ) : (
-          <DataTable columns={columns} data={privateLocations} />
+          <DataTable
+            paginationComponent={DataTablePaginationSimple}
+            columns={columns}
+            data={privateLocations}
+          />
         )}
       </Section>
     </SectionGroup>

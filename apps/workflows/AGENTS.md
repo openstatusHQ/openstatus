@@ -9,7 +9,7 @@ Constraints that follow from the build:
 - `@libsql/client`, `libsql` and `@google-cloud/tasks` stay external in
   `tsdown.config.ts` (native addon, CJS `__dirname` reads) and ship as a
   side-car `node_modules` in the image. A new dependency with either trait
-  joins that list and the `externals` in `scripts/sidecar-package.mjs`, which
+  joins that list and the `externals` in `apps/workflows/scripts/sidecar-package.mjs`, which
   writes the side-car's pinned `package.json`.
 - Tests run on Vitest: each test file gets its own process, but the tests in a
   file share `process.env`. Never drive a branch by assigning to `process.env`

@@ -106,3 +106,66 @@ describe("ChangesTable", () => {
     expect(html).not.toContain('data-kind="added"');
   });
 });
+
+describe("ChangesTable entity refs", () => {
+  function refs(changes: Parameters<typeof ChangesTable>[0]["changes"]) {
+    const html = renderToStaticMarkup(<ChangesTable changes={changes} />);
+    return [
+      ...html.matchAll(/data-slot="entity-ref"[^>]*aria-label="([^"]+)"/g),
+    ].map((m) => m[1]);
+  }
+
+  it("renders a known id field as a ref", () => {
+    expect(refs([{ field: "pageId", after: 1 }])).toEqual(["Status page 1"]);
+  });
+
+  it("renders every id of an id array", () => {
+    expect(refs([{ field: "pageComponentIds", after: [3, 4] }])).toEqual([
+      "Component 3",
+      "Component 4",
+    ]);
+  });
+
+  it("renders refs on removed lines too", () => {
+    expect(refs([{ field: "monitorId", before: 2, after: 5 }])).toEqual([
+      "Monitor 2",
+      "Monitor 5",
+    ]);
+  });
+
+  it("renders component impacts as ref and impact label", () => {
+    const html = renderToStaticMarkup(
+      <ChangesTable
+        changes={[
+          {
+            field: "componentImpacts",
+            after: [{ pageComponentId: 7, impact: "major_outage" }],
+          },
+        ]}
+      />,
+    );
+    expect(html).toContain('aria-label="Component 7"');
+    expect(html).toContain("Major outage");
+  });
+
+  it("falls back to text for unknown fields and non-id values", () => {
+    expect(
+      refs([
+        { field: "retry", after: 3 },
+        { field: "pageId", after: null },
+        { field: "monitorIds", after: [] },
+        { field: "pageComponentIds", after: ["a"] },
+        { field: "componentImpacts", after: ["1 → major_outage"] },
+      ]),
+    ).toEqual([]);
+  });
+
+  it("treats inherited object keys as plain fields", () => {
+    expect(
+      refs([
+        { field: "toString", after: 1 },
+        { field: "constructor", after: 2 },
+      ]),
+    ).toEqual([]);
+  });
+});

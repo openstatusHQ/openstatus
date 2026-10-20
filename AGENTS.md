@@ -77,6 +77,7 @@ boundaries with external SDKs or at registry-style dispatch. When you need one:
 
 ## Package context
 
+- `DESIGN.md` — what good UI looks like: hierarchy, compound kits, tokens, motion, a11y
 - `packages/services/AGENTS.md` — service verbs, audit log, scope enforcement
 - `packages/ui/AGENTS.md` — stock shadcn vs. the published blocks registry
 - `apps/dashboard/AGENTS.md` — Next.js runtimes, client boundary, UI verification

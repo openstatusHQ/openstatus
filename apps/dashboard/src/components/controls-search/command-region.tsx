@@ -61,7 +61,11 @@ export function CommandRegion({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="decoration-border hover:decoration-foreground data-[state=open]:decoration-foreground h-auto rounded-md px-1 py-0 text-[length:inherit] leading-[inherit] font-medium underline underline-offset-3 hover:bg-transparent dark:hover:bg-transparent"
+        >
           {selectedRegions.length === regions.length
             ? "All Regions"
             : `${selectedRegions.length} Regions`}

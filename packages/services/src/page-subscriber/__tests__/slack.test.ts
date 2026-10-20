@@ -4,6 +4,7 @@ import { createPage } from "@openstatus/db/src/test/factories";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { createWorkspaceFixture, expectAuditRow } from "../../../test/helpers";
+import { PreconditionFailedError } from "../../errors";
 import {
   createSlackSubscriber,
   listSlackSubscribersForChannel,
@@ -21,6 +22,7 @@ const CHANNELS = {
   reactivate: "C_SLACK_REACTIVATE",
   remove: "C_SLACK_REMOVE",
   list: "C_SLACK_LIST",
+  protected: "C_SLACK_PROTECTED",
 };
 
 async function cleanAll() {
@@ -116,6 +118,36 @@ describe("createSlackSubscriber", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]?.unsubscribedAt).toBeNull();
   });
+});
+
+describe("createSlackSubscriber on a protected page", () => {
+  for (const accessType of [
+    "password",
+    "email-domain",
+    "ip-restriction",
+  ] as const) {
+    test(`rejects a ${accessType} page and writes no row`, async () => {
+      const gated = await createPage(WORKSPACE_ID, {
+        accessType,
+        password: accessType === "password" ? "secret" : null,
+      });
+
+      await expect(
+        createSlackSubscriber({
+          input: {
+            pageId: gated.id,
+            teamId: TEAM_ID,
+            channelId: CHANNELS.protected,
+          },
+        }),
+      ).rejects.toBeInstanceOf(PreconditionFailedError);
+
+      const rows = await db.query.pageSubscriber.findMany({
+        where: eq(pageSubscriber.pageId, gated.id),
+      });
+      expect(rows).toHaveLength(0);
+    });
+  }
 });
 
 describe("removeSlackSubscriber", () => {

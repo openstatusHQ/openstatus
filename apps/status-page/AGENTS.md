@@ -58,6 +58,12 @@ no `page` row ends up. The proxy rewrites those to a 404
 (`resolveUnresolvedHostAction`) so an unknown slug or a custom domain missing
 from the DB never answers with the explorer or its OG image. Only
 `themes.openstatus.dev` is indexable — see `lib/theme-explorer-host.ts`.
+## Screenshots
+
+For any visible change, shoot it before reporting it done:
+`node scripts/screenshot.mjs --app status-page /acme` (in dev the slug is the
+first path segment; the `screenshot` skill has the flags). Judge against the
+root `DESIGN.md`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

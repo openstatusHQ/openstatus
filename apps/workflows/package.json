@@ -58,6 +58,7 @@
     "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@oxc-node/core": "catalog:",
+    "@types/node": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

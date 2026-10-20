@@ -81,7 +81,9 @@ export function FormSheetStatusReportCreate({
     trpc.statusReport.create.mutationOptions({
       onSuccess: (statusReport) => {
         if (statusReport.notifySubscribers) {
-          sendStatusReportUpdateMutation.mutate({ id: statusReport.id });
+          sendStatusReportUpdateMutation.mutate({
+            id: statusReport.initialUpdateId,
+          });
         }
         // no-input prefix key — matches every statusReport.list query
         queryClient.invalidateQueries({

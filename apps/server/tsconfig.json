@@ -11,6 +11,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@openstatus/analytics-real": ["../../packages/analytics/src/index.ts"],
+      "@openstatus/emails-real": ["../../packages/emails/src/index.ts"],
       "@openstatus/subscriptions-real": [
         "../../packages/subscriptions/src/index.ts"
       ],

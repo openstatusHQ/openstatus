@@ -11,5 +11,14 @@
     "resolveJsonModule": true,
     "isolatedModules": true
   },
-  "include": ["src/**/*", "__tests__/**/*"]
+  "include": ["src/**/*", "__tests__/**/*"],
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/*.mock.ts",
+    "**/test-preload.ts"
+  ]
 }

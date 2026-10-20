@@ -1,15 +1,15 @@
 "use client";
 
-import { Check } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@openstatus/ui/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectValue,
+} from "@openstatus/ui/components/ui/select";
+import { SelectTrigger } from "@radix-ui/react-select";
 import {
   parseAsNumberLiteral,
   parseAsStringLiteral,
@@ -49,27 +49,31 @@ export function DropdownInterval() {
   const selected = Math.max(interval, min) as (typeof INTERVALS)[number];
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
-          {MAPPING[selected]}
+    <Select
+      value={String(selected)}
+      onValueChange={(value) =>
+        setInterval(Number(value) as (typeof INTERVALS)[number])
+      }
+    >
+      <SelectTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="decoration-border hover:decoration-foreground data-[state=open]:decoration-foreground h-auto rounded-md px-1 py-0 text-[length:inherit] leading-[inherit] font-medium underline underline-offset-3 hover:bg-transparent dark:hover:bg-transparent"
+        >
+          <SelectValue />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel className="text-muted-foreground text-xs font-medium">
-            Resolution
-          </DropdownMenuLabel>
+      </SelectTrigger>
+      <SelectContent position="item-aligned">
+        <SelectGroup>
+          <SelectLabel>Resolution</SelectLabel>
           {options.map((item) => (
-            <DropdownMenuItem key={item} onSelect={() => setInterval(item)}>
+            <SelectItem key={item} value={String(item)}>
               {MAPPING[item]}
-              {selected === item ? (
-                <Check className="ml-auto shrink-0" />
-              ) : null}
-            </DropdownMenuItem>
+            </SelectItem>
           ))}
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   );
 }

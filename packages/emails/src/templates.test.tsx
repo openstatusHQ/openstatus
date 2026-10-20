@@ -710,7 +710,7 @@ describe("every transactional template", () => {
     subscription: <PageSubscriptionEmail page="Acme" link="https://a.dev" />,
     magicLink: <StatusPageMagicLinkEmail page="Acme" link="https://a.dev" />,
     dashboardMagicLink: <DashboardMagicLinkEmail link="https://a.dev" />,
-    welcome: <WelcomeEmail trialEndsAt={new Date("2026-10-07T00:00:00Z")} />,
+    welcome: <WelcomeEmail />,
     incidentCommander: (
       <IncidentCommanderEmail {...IncidentCommanderEmail.PreviewProps} />
     ),
@@ -730,15 +730,9 @@ describe("every transactional template", () => {
 });
 
 describe("WelcomeEmail", () => {
-  test("mentions the trial only when one started", async () => {
-    const withTrial = await render(
-      <WelcomeEmail trialEndsAt={new Date("2026-10-07T00:00:00Z")} />,
-      { plainText: true },
-    );
-    expect(withTrial).toContain("14-day Starter trial until Wed 7 Oct 2026");
-
-    const withoutTrial = await render(<WelcomeEmail />, { plainText: true });
-    expect(withoutTrial).not.toContain("trial");
+  test("never mentions a trial", async () => {
+    const html = await render(<WelcomeEmail />, { plainText: true });
+    expect(html).not.toContain("trial");
   });
 });
 

@@ -19,14 +19,17 @@ import {
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { reportStartedAt } from "@/data/status-reports.client";
 
+import { TableCellEmpty } from "../table-cell-empty";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 
 // derived top-level impact = worst impact set by any update, not the
 // current one (a resolved report would always read "Operational");
-// legacy reports (no impact rows) read "Untriaged"
+// `null` = components linked but no impact rows (legacy, "Untriaged"),
+// `undefined` = nothing affected, so there is nothing to triage
 function worstReportImpact(report: StatusReport) {
+  if (report.pageComponents.length === 0) return undefined;
   const impacts = report.updates.flatMap((u) =>
     u.componentImpacts.map((ci) => ci.impact),
   );
@@ -56,11 +59,14 @@ export const columns: ColumnDef<StatusReport>[] = [
     accessorFn: (row) => worstReportImpact(row),
     header: "Impact",
     enableSorting: false,
-    cell: ({ row }) => (
-      <StatusReportImpactBadge
-        impact={row.getValue<PageComponentImpact | null>("impact")}
-      />
-    ),
+    cell: ({ row }) => {
+      const impact = row.getValue<PageComponentImpact | null | undefined>(
+        "impact",
+      );
+      if (impact === undefined)
+        return <TableCellEmpty>No impact</TableCellEmpty>;
+      return <StatusReportImpactBadge impact={impact} />;
+    },
   },
   {
     accessorKey: "status",
@@ -96,7 +102,7 @@ export const columns: ColumnDef<StatusReport>[] = [
           </div>
         );
       }
-      return <div className="text-muted-foreground">-</div>;
+      return <TableCellEmpty>No components</TableCellEmpty>;
     },
   },
   {

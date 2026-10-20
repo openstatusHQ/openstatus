@@ -68,7 +68,7 @@ export function DataTable<TData, TValue>({
   defaultSorting = [],
   defaultColumnVisibility = {},
   defaultColumnFilters = [],
-  defaultPagination = { pageIndex: 0, pageSize: 20 },
+  defaultPagination = { pageIndex: 0, pageSize: 10 },
   autoResetPageIndex = true,
   columnFilters,
   setColumnFilters,
@@ -105,6 +105,7 @@ export function DataTable<TData, TValue>({
   const table = useReactTable({
     data,
     columns,
+    initialState: { pagination: defaultPagination },
     state: {
       sorting: sortingState,
       columnVisibility: columnVisibilityState,
@@ -137,83 +138,88 @@ export function DataTable<TData, TValue>({
       {toolbarComponent
         ? React.createElement(toolbarComponent, { table })
         : null}
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    className={header.column.columnDef.meta?.headerClassName}
+      <div className="bg-background overflow-hidden rounded-md border">
+        <Table>
+          <TableHeader className="bg-muted/40">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className="hover:bg-transparent">
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      className={header.column.columnDef.meta?.headerClassName}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <Fragment key={row.id}>
+                  <TableRow
+                    data-state={
+                      (row.getIsSelected() || row.getIsExpanded()) && "selected"
+                    }
+                    onClick={(e) => {
+                      // nested links/buttons own their click
+                      if ((e.target as HTMLElement).closest("a,button")) return;
+                      onRowClick?.(row);
+                    }}
+                    className="data-[state=selected]:bg-muted/50"
                   >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className={cell.column.columnDef.meta?.cellClassName}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
                         )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <Fragment key={row.id}>
-                <TableRow
-                  data-state={
-                    (row.getIsSelected() || row.getIsExpanded()) && "selected"
-                  }
-                  onClick={(e) => {
-                    // nested links/buttons own their click
-                    if ((e.target as HTMLElement).closest("a,button")) return;
-                    onRowClick?.(row);
-                  }}
-                  className="data-[state=selected]:bg-muted/50"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className={cell.column.columnDef.meta?.cellClassName}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-                {row.getIsExpanded() && (
-                  <TableRow className="hover:bg-background">
-                    <TableCell
-                      className="p-0"
-                      colSpan={row.getVisibleCells().length}
-                    >
-                      {rowComponent
-                        ? React.createElement(rowComponent, { row })
-                        : null}
-                    </TableCell>
+                      </TableCell>
+                    ))}
                   </TableRow>
-                )}
-              </Fragment>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-        {actionBar ? React.createElement(actionBar, { table }) : null}
-      </Table>
-      {paginationComponent
-        ? React.createElement(paginationComponent, { table })
-        : null}
+                  {row.getIsExpanded() && (
+                    <TableRow className="hover:bg-background">
+                      <TableCell
+                        className="p-0"
+                        colSpan={row.getVisibleCells().length}
+                      >
+                        {rowComponent
+                          ? React.createElement(rowComponent, { row })
+                          : null}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </Fragment>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+          {actionBar ? React.createElement(actionBar, { table }) : null}
+        </Table>
+        {paginationComponent
+          ? React.createElement(paginationComponent, { table })
+          : null}
+      </div>
     </div>
   );
 }
