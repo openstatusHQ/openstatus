@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -37,6 +38,9 @@ type GRPCData struct {
 	GRPCCode      int64 `json:"grpcCode"`
 
 	Error uint8 `json:"error"`
+
+	Attempt  int `json:"attempt,omitempty"`
+	Attempts int `json:"attempts,omitempty"`
 }
 
 func grpcCheck(req request.GRPCCheckerRequest) (checker.GRPCResult, error) {
@@ -49,9 +53,37 @@ func grpcCheck(req request.GRPCCheckerRequest) (checker.GRPCResult, error) {
 	)
 }
 
+func (h Handler) sendGRPCAttempt(
+	ctx context.Context, res checker.GRPCResult, err error, data GRPCData, dataSourceName string,
+) {
+	id, idErr := uuid.NewV7()
+	if idErr != nil {
+		log.Ctx(ctx).Error().Err(idErr).Msg("failed to generate attempt uuid")
+
+		return
+	}
+
+	timing, timingErr := json.Marshal(res.Timing)
+	if timingErr != nil {
+		log.Ctx(ctx).Error().Err(timingErr).Msg("error while parsing timing data")
+	}
+
+	data.ID = id.String()
+	data.Timestamp = time.Now().UTC().UnixMilli()
+	data.Timing = string(timing)
+	data.Latency = res.Latency
+	data.GRPCCode = res.GRPCCode
+	data.ErrorMessage = err.Error()
+	data.Error = 1
+	data.RequestStatus = "error"
+
+	h.sendAttempt(ctx, data, dataSourceName)
+}
+
 func (h Handler) GRPCHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	dataSourceName := "grpc_response__v0"
+	attemptDataSourceName := "grpc_attempt__v0"
 
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -126,15 +158,32 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 	// from a connect or TLS one, and a timeout from a refused connection. op()
 	// drops `res` when it returns an error to the retry loop, so keep the last
 	// attempt's result.
-	var lastResult checker.GRPCResult
+	var (
+		lastResult checker.GRPCResult
+		called     int
+	)
 
 	op := func() (struct{}, error) {
+		called++
 		res, err := grpcCheck(req)
 		lastResult = res
 		if err != nil {
+			err = fmt.Errorf("unable to check grpc %s", err)
+			if called < retry {
+				h.sendGRPCAttempt(ctx, res, err, GRPCData{
+					WorkspaceID:   workspaceId,
+					MonitorID:     monitorId,
+					Region:        h.Region,
+					CronTimestamp: req.CronTimestamp,
+					Trigger:       trigger,
+					URI:           req.URI,
+					Service:       req.Service,
+					Attempt:       called,
+				}, attemptDataSourceName)
+			}
 			// Only a call that never reached the server is worth repeating. A
 			// server answering NOT_SERVING will answer the same three more times.
-			return struct{}{}, fmt.Errorf("unable to check grpc %s", err)
+			return struct{}{}, err
 		}
 
 		timingAsString, err := json.Marshal(res.Timing)
@@ -182,6 +231,7 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 			Trigger:       trigger,
 			URI:           req.URI,
 			RequestStatus: requestStatus,
+			Attempts:      called,
 		}
 
 		response = checker.GRPCResponse{
@@ -261,6 +311,7 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 			Timing:        string(timingAsString),
 			GRPCCode:      lastResult.GRPCCode,
 			RequestStatus: "error",
+			Attempts:      called,
 		}
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")

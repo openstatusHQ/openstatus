@@ -39,6 +39,9 @@ type DNSResponse struct {
 	CronTimestamp int64 `json:"cronTimestamp"`
 
 	Error uint8 `json:"error"`
+
+	Attempt  int `json:"attempt,omitempty"`
+	Attempts int `json:"attempts,omitempty"`
 }
 
 // dnsTinybirdEvent re-types Records as a JSON string so Tinybird stores it in
@@ -62,6 +65,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	const defaultRetry = 3
 	dataSourceName := "dns_response__v0"
+	attemptDataSourceName := "dns_attempt__v0"
 
 	// Authorization check
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
@@ -136,11 +140,50 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		Timestamp:     time.Now().UTC().UnixMilli(),
 	}
 
+	if len(req.RawAssertions) > 0 {
+		if j, err := json.Marshal(req.RawAssertions); err == nil {
+			data.Assertions = string(j)
+		} else {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to marshal assertions")
+		}
+	}
+
 	var (
 		latency      int64
 		isSuccessful = true
 		called       int
 	)
+
+	sendAttempt := func(start int64, response *checker.DnsResponse, message string) {
+		attemptID, err := uuid.NewV7()
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to generate attempt uuid")
+
+			return
+		}
+
+		attempt := data
+		attempt.ID = attemptID.String()
+		attempt.Timestamp = start
+		attempt.Latency = latency
+		attempt.Error = 1
+		attempt.ErrorMessage = message
+		attempt.RequestStatus = "error"
+		attempt.Attempt = called
+
+		if response != nil {
+			attempt.Records = checker.FormatDNSRecords(response)
+		}
+
+		event, err := attempt.tinybirdEvent()
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to marshal dns records")
+
+			return
+		}
+
+		h.sendAttempt(ctx, event, attemptDataSourceName)
+	}
 
 	op := func() (*checker.DnsResponse, error) {
 		called++
@@ -152,6 +195,9 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		latency = time.Now().UTC().UnixMilli() - start
 
 		if err != nil {
+			if called < retry {
+				sendAttempt(start, nil, err.Error())
+			}
 			return nil, err
 		}
 		if len(req.RawAssertions) > 0 {
@@ -162,6 +208,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 			}
 		}
 		if !isSuccessful && called < retry {
+			sendAttempt(start, response, "assertion failed")
 			return nil, backoff.RetryAfter(1)
 		}
 		if !isSuccessful {
@@ -173,16 +220,9 @@ func (h Handler) DNSHandler(c *gin.Context) {
 
 	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)), backoff.WithMaxElapsedTime(retryBudget))
 	data.Latency = latency
+	data.Attempts = called
 	if result != nil {
 		data.Records = checker.FormatDNSRecords(result)
-	}
-
-	if len(req.RawAssertions) > 0 {
-		if j, err := json.Marshal(req.RawAssertions); err == nil {
-			data.Assertions = string(j)
-		} else {
-			log.Ctx(ctx).Error().Err(err).Msg("failed to marshal assertions")
-		}
 	}
 
 	// Status update logic
