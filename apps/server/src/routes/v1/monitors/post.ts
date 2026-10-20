@@ -4,7 +4,7 @@ import { serialize } from "@openstatus/assertions";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { openApiErrorResponses, OpenStatusApiError } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 
 import type { monitorsApi } from "./index";
@@ -96,7 +96,20 @@ export function registerPostMonitor(api: typeof monitorsApi) {
     // `jobType` is nullable on the wire; the column defaults to "http".
     assertSafeMonitorUrl({ jobType: input.jobType ?? "http", url: input.url });
 
-    const { headers, regions, assertions, ...rest } = input;
+    const { headers, regions, assertions, openTelemetry, ...rest } = input;
+    if (openTelemetry) {
+      assertSafeMonitorUrl({
+        jobType: "http",
+        url: openTelemetry.endpoint,
+      });
+    }
+
+    const otelHeadersEntries = openTelemetry?.headers
+      ? Object.entries(openTelemetry.headers).map(([key, value]) => ({
+          key,
+          value,
+        }))
+      : undefined;
 
     const assert = assertions ? getAssertions(assertions) : [];
 
@@ -108,6 +121,10 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         regions: regions ? regions.join(",") : undefined,
         description: input.description ?? undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
+        otelEndpoint: openTelemetry?.endpoint,
+        otelHeaders: otelHeadersEntries
+          ? JSON.stringify(otelHeadersEntries)
+          : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
         timeout: input.timeout || 45000,
       })
