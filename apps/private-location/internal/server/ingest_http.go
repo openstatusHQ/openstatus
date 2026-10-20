@@ -32,6 +32,8 @@ type PingData struct {
 	Timestamp     int64  `json:"timestamp"`
 	StatusCode    int    `json:"statusCode,omitempty"`
 	Error         uint8  `json:"error"`
+	Attempt       int    `json:"attempt,omitempty"`
+	Attempts      int    `json:"attempts,omitempty"`
 }
 
 func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Request[private_locationv1.IngestHTTPRequest]) (*connect.Response[private_locationv1.IngestHTTPResponse], error) {
@@ -78,9 +80,29 @@ func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Re
 		Assertions:    ic.Monitor.Assertions.String,
 		Message:       req.Msg.Message,
 		Error:         uint8(req.Msg.Error),
+		Attempts:      len(req.Msg.Attempts) + 1,
 	}
 
 	h.sendEventAndUpdateLastSeen(ctx, data, tinybird.DatasourceHTTP, ic.Region.ID)
+
+	attempts := make([]PingData, 0, len(req.Msg.Attempts))
+	for i, a := range req.Msg.Attempts {
+		attempt := data
+		attempt.ID = a.Id
+		attempt.Latency = a.Latency
+		attempt.Timestamp = a.Timestamp
+		attempt.RequestStatus = a.RequestStatus
+		attempt.Message = a.Message
+		attempt.Body = a.Body
+		attempt.Headers = a.Headers
+		attempt.Timing = a.Timing
+		attempt.StatusCode = int(a.StatusCode)
+		attempt.Error = uint8(a.Error)
+		attempt.Attempt = i + 1
+		attempt.Attempts = 0
+		attempts = append(attempts, attempt)
+	}
+	sendAttempts(ctx, h.TbClient, attempts, tinybird.DatasourceHTTPAttempt)
 
 	h.forwardStatusUpdate(ctx, ic, statusUpdateInput{
 		RequestStatus: data.RequestStatus,

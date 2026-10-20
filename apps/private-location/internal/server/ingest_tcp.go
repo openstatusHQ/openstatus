@@ -26,6 +26,9 @@ type TCPData struct {
 	CronTimestamp int64 `json:"cronTimestamp"`
 
 	Error uint8 `json:"error"`
+
+	Attempt  int `json:"attempt,omitempty"`
+	Attempts int `json:"attempts,omitempty"`
 }
 
 func (h *privateLocationHandler) IngestTCP(ctx context.Context, req *connect.Request[private_locationv1.IngestTCPRequest]) (*connect.Response[private_locationv1.IngestTCPResponse], error) {
@@ -67,9 +70,26 @@ func (h *privateLocationHandler) IngestTCP(ctx context.Context, req *connect.Req
 		URI:           req.Msg.Uri,
 		RequestStatus: req.Msg.RequestStatus,
 		ErrorMessage:  req.Msg.Message,
+		Attempts:      len(req.Msg.Attempts) + 1,
 	}
 
 	h.sendEventAndUpdateLastSeen(ctx, data, tinybird.DatasourceTCP, ic.Region.ID)
+
+	attempts := make([]TCPData, 0, len(req.Msg.Attempts))
+	for i, a := range req.Msg.Attempts {
+		attempt := data
+		attempt.ID = a.Id
+		attempt.Latency = a.Latency
+		attempt.Timestamp = a.Timestamp
+		attempt.ErrorMessage = a.Message
+		attempt.RequestStatus = a.RequestStatus
+		attempt.Error = uint8(a.Error)
+		attempt.Timing = a.Timing
+		attempt.Attempt = i + 1
+		attempt.Attempts = 0
+		attempts = append(attempts, attempt)
+	}
+	sendAttempts(ctx, h.TbClient, attempts, tinybird.DatasourceTCPAttempt)
 
 	h.forwardStatusUpdate(ctx, ic, statusUpdateInput{
 		RequestStatus: data.RequestStatus,

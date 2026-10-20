@@ -31,6 +31,9 @@ type ICMPData struct {
 	PacketsReceived uint8 `json:"packetsReceived"`
 
 	Error uint8 `json:"error"`
+
+	Attempt  int `json:"attempt,omitempty"`
+	Attempts int `json:"attempts,omitempty"`
 }
 
 func (h *privateLocationHandler) IngestICMP(ctx context.Context, req *connect.Request[private_locationv1.IngestICMPRequest]) (*connect.Response[private_locationv1.IngestICMPResponse], error) {
@@ -75,9 +78,30 @@ func (h *privateLocationHandler) IngestICMP(ctx context.Context, req *connect.Re
 		Trigger:         "cron",
 		URI:             req.Msg.Uri,
 		RequestStatus:   req.Msg.RequestStatus,
+		Attempts:        len(req.Msg.Attempts) + 1,
 	}
 
 	h.sendEventAndUpdateLastSeen(ctx, data, tinybird.DatasourceICMP, ic.Region.ID)
+
+	attempts := make([]ICMPData, 0, len(req.Msg.Attempts))
+	for i, a := range req.Msg.Attempts {
+		attempt := data
+		attempt.ID = a.Id
+		attempt.Latency = a.Latency
+		attempt.LatencyMin = a.LatencyMin
+		attempt.LatencyMax = a.LatencyMax
+		attempt.PacketsSent = uint8(a.PacketsSent)
+		attempt.PacketsReceived = uint8(a.PacketsReceived)
+		attempt.Timestamp = a.Timestamp
+		attempt.ErrorMessage = a.Message
+		attempt.RequestStatus = a.RequestStatus
+		attempt.Error = uint8(a.Error)
+		attempt.Timing = a.Timing
+		attempt.Attempt = i + 1
+		attempt.Attempts = 0
+		attempts = append(attempts, attempt)
+	}
+	sendAttempts(ctx, h.TbClient, attempts, tinybird.DatasourceICMPAttempt)
 
 	h.forwardStatusUpdate(ctx, ic, statusUpdateInput{
 		RequestStatus: data.RequestStatus,

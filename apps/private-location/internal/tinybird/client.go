@@ -17,6 +17,12 @@ const (
 	DatasourceDNS  = "dns_response__v0"
 	DatasourceICMP = "icmp_response__v0"
 	DatasourceGRPC = "grpc_response__v0"
+
+	DatasourceHTTPAttempt = "ping_attempt__v0"
+	DatasourceTCPAttempt  = "tcp_attempt__v0"
+	DatasourceDNSAttempt  = "dns_attempt__v0"
+	DatasourceICMPAttempt = "icmp_attempt__v0"
+	DatasourceGRPCAttempt = "grpc_attempt__v0"
 )
 
 func getBaseURL() string {

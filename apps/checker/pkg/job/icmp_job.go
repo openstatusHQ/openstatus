@@ -29,6 +29,8 @@ type ICMPPrivateRegionData struct {
 	CronTimestamp   int64  `json:"cron_timestamp"`
 	Error           int    `json:"error"`
 	Timing          string `json:"timing"`
+
+	Attempts []*ICMPPrivateRegionData `json:"attempts,omitempty"`
 }
 
 func (jobRunner) ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region string) (*ICMPPrivateRegionData, error) {
@@ -44,18 +46,17 @@ func (jobRunner) ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region st
 
 	req := icmpCheckerRequest(monitor)
 
-	var called int
-	var lastResult checker.ICMPResponse
+	var (
+		called     int
+		lastResult checker.ICMPResponse
+		attempts   []*ICMPPrivateRegionData
+	)
 
 	op := func() (*ICMPPrivateRegionData, error) {
 		called++
 		start := time.Now().UTC().UnixMilli()
 		res, err := checker.PingICMP(monitor.Timeout, monitor.Uri)
 		if err != nil {
-			if called < int(retry) {
-				return nil, fmt.Errorf("ICMP check failed: %w", err)
-			}
-
 			data, dataErr := newICMPData(monitor.Uri, start)
 			if dataErr != nil {
 				return nil, dataErr
@@ -66,6 +67,14 @@ func (jobRunner) ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region st
 			data.RequestStatus = "error"
 			data.Error = 1
 			data.Message = err.Error()
+
+			if called < int(retry) {
+				attempts = append(attempts, data)
+
+				return nil, fmt.Errorf("ICMP check failed: %w", err)
+			}
+
+			data.Attempts = attempts
 
 			return data, nil
 		}
@@ -106,6 +115,7 @@ func (jobRunner) ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region st
 		data.Error = 0
 		data.Message = fmt.Sprintf("Successfully pinged %s", monitor.Uri)
 		data.Timing = string(timingAsString)
+		data.Attempts = attempts
 
 		return data, nil
 	}

@@ -30,6 +30,9 @@ type DNSResponse struct {
 	CronTimestamp int64 `json:"cronTimestamp"`
 
 	Error uint8 `json:"error"`
+
+	Attempt  int `json:"attempt,omitempty"`
+	Attempts int `json:"attempts,omitempty"`
 }
 
 func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Request[private_locationv1.IngestDNSRequest]) (*connect.Response[private_locationv1.IngestDNSResponse], error) {
@@ -57,14 +60,7 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		}
 	}
 
-	records := make(map[string][]string)
-	for recordType, record := range req.Msg.Records {
-		r := []string{}
-		r = append(r, record.GetRecord()...)
-		records[recordType] = r
-	}
-
-	recordsJSON, err := json.Marshal(records)
+	recordsJSON, err := recordsToJSON(req.Msg.Records)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -82,11 +78,33 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		Trigger:       "cron",
 		URI:           req.Msg.Uri,
 		RequestStatus: req.Msg.RequestStatus,
-		Records:       string(recordsJSON),
+		Records:       recordsJSON,
 		ErrorMessage:  req.Msg.Message,
+		Attempts:      len(req.Msg.Attempts) + 1,
 	}
 
 	h.sendEventAndUpdateLastSeen(ctx, data, tinybird.DatasourceDNS, ic.Region.ID)
+
+	attempts := make([]DNSResponse, 0, len(req.Msg.Attempts))
+	for i, a := range req.Msg.Attempts {
+		attemptRecords, err := recordsToJSON(a.Records)
+		if err != nil {
+			continue
+		}
+		attempt := data
+		attempt.ID = a.Id
+		attempt.Latency = a.Latency
+		attempt.Timestamp = a.Timestamp
+		attempt.RequestStatus = a.RequestStatus
+		attempt.ErrorMessage = a.Message
+		attempt.Records = attemptRecords
+		attempt.Timing = a.Timing
+		attempt.Error = uint8(a.Error)
+		attempt.Attempt = i + 1
+		attempt.Attempts = 0
+		attempts = append(attempts, attempt)
+	}
+	sendAttempts(ctx, h.TbClient, attempts, tinybird.DatasourceDNSAttempt)
 
 	h.forwardStatusUpdate(ctx, ic, statusUpdateInput{
 		RequestStatus: data.RequestStatus,
@@ -97,4 +115,20 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 	})
 
 	return connect.NewResponse(&private_locationv1.IngestDNSResponse{}), nil
+}
+
+func recordsToJSON(protoRecords map[string]*private_locationv1.Records) (string, error) {
+	records := make(map[string][]string, len(protoRecords))
+	for recordType, record := range protoRecords {
+		r := []string{}
+		r = append(r, record.GetRecord()...)
+		records[recordType] = r
+	}
+
+	recordsJSON, err := json.Marshal(records)
+	if err != nil {
+		return "", err
+	}
+
+	return string(recordsJSON), nil
 }

@@ -113,14 +113,34 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 		req.OtelConfig.Headers = headersToMap(otelCfg.GetHeaders())
 	}
 
-	var called int
-	var lastRes checker.Response
+	var (
+		called   int
+		lastRes  checker.Response
+		attempts []*HttpPrivateRegionData
+	)
 
 	op := func() (*HttpPrivateRegionData, error) {
 		called++
 		res, err := checker.Http(ctx, requestClient, req)
 		if err != nil {
-			return nil, fmt.Errorf("unable to ping: %w", err)
+			err = fmt.Errorf("unable to ping: %w", err)
+			lastRes = res
+			lastRes.Error = err.Error()
+
+			data, dataErr := httpErrorData(req.URL, res, err)
+			if dataErr != nil {
+				return nil, dataErr
+			}
+
+			if called < int(retry) {
+				attempts = append(attempts, data)
+
+				return nil, err
+			}
+
+			data.Attempts = attempts
+
+			return data, nil
 		}
 		lastRes = res
 
@@ -228,9 +248,13 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 			// for non-2xx / failed assertions, matching the public checker.
 			lastRes.Error = "Error"
 			if called < int(retry) {
+				attempts = append(attempts, &data)
+
 				return nil, fmt.Errorf("unable to ping: %v with status %v", res, res.Status)
 			}
 		}
+
+		data.Attempts = attempts
 
 		return &data, nil
 	}
@@ -248,4 +272,37 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 		return nil, err
 	}
 	return resp, nil
+}
+
+// httpErrorData reports a check that checker.Http could not complete (an
+// unbuildable request, a body that failed mid-read) as an error result, so
+// it is ingested like any other failure instead of being dropped.
+func httpErrorData(url string, res checker.Response, err error) (*HttpPrivateRegionData, error) {
+	id, uuidErr := uuid.NewV7()
+	if uuidErr != nil {
+		return nil, fmt.Errorf("error while generating uuid: %w", uuidErr)
+	}
+
+	timestamp := res.Timestamp
+	if timestamp == 0 {
+		timestamp = time.Now().UTC().UnixMilli()
+	}
+
+	data := &HttpPrivateRegionData{
+		ID:            id.String(),
+		URL:           url,
+		Latency:       res.Latency,
+		StatusCode:    res.Status,
+		Timestamp:     timestamp,
+		CronTimestamp: timestamp,
+		RequestStatus: "error",
+		Message:       err.Error(),
+		Error:         1,
+	}
+
+	if timing, timingErr := json.Marshal(res.Timing); timingErr == nil {
+		data.Timing = string(timing)
+	}
+
+	return data, nil
 }

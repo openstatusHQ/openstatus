@@ -32,6 +32,8 @@ type TCPPrivateRegionData struct {
 	CronTimestamp int64  `json:"cron_timestamp"`
 	Error         int    `json:"error"`
 	Timing        string `json:"timing"`
+
+	Attempts []*TCPPrivateRegionData `json:"attempts,omitempty"`
 }
 
 // runAssertions performs all configured assertions for TCP and returns their results
@@ -49,17 +51,16 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region stri
 
 	req := tcpCheckerRequest(monitor)
 
-	var called int
-	var lastResult checker.TCPResponse
+	var (
+		called     int
+		lastResult checker.TCPResponse
+		attempts   []*TCPPrivateRegionData
+	)
 
 	op := func() (*TCPPrivateRegionData, error) {
 		called++
 		res, err := checker.PingTCP(ctx, monitor.Timeout, monitor.Uri)
 		if err != nil {
-			if called < int(retry) {
-				return nil, fmt.Errorf("TCP connection failed: %w", err)
-			}
-			// On final attempt, return the error in the result
 			id, uuidErr := uuid.NewV7()
 			if uuidErr != nil {
 				return nil, fmt.Errorf("failed to generate UUID: %w", uuidErr)
@@ -70,7 +71,7 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region stri
 			// Use current timestamp since connection failed and res.TCPStart would be 0
 			now := time.Now().UnixMilli()
 
-			return &TCPPrivateRegionData{
+			data := &TCPPrivateRegionData{
 				ID:            id.String(),
 				Latency:       0,
 				Timestamp:     now,
@@ -79,7 +80,17 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region stri
 				RequestStatus: "error",
 				Error:         1,
 				Message:       err.Error(),
-			}, nil
+			}
+
+			if called < int(retry) {
+				attempts = append(attempts, data)
+
+				return nil, fmt.Errorf("TCP connection failed: %w", err)
+			}
+
+			data.Attempts = attempts
+
+			return data, nil
 		}
 
 		latency := res.TCPDone - res.TCPStart
@@ -110,6 +121,7 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region stri
 			Error:         0,
 			Message:       fmt.Sprintf("Successfully connected to %s", monitor.Uri),
 			Timing:        string(timingAsString),
+			Attempts:      attempts,
 		}
 
 		return data, nil
