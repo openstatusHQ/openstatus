@@ -54,7 +54,7 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region stri
 
 	op := func() (*TCPPrivateRegionData, error) {
 		called++
-		res, err := checker.PingTCP(int(monitor.Timeout), monitor.Uri)
+		res, err := checker.PingTCP(ctx, monitor.Timeout, monitor.Uri)
 		if err != nil {
 			if called < int(retry) {
 				return nil, fmt.Errorf("TCP connection failed: %w", err)

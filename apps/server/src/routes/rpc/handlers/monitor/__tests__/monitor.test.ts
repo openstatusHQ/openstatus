@@ -1690,8 +1690,8 @@ describe("MonitorService.UpdateICMPMonitor", () => {
     for (const [field, monitor] of [
       ["retry above max", { retry: "11" }],
       ["negative retry", { retry: "-1" }],
-      ["timeout above max", { timeout: "120001" }],
-      ["degradedAt above max", { degradedAt: "120001" }],
+      ["timeout above max", { timeout: "300001" }],
+      ["degradedAt above max", { degradedAt: "300001" }],
       ["over-long description", { description: "d".repeat(1025) }],
       ["over-long name", { name: "n".repeat(257) }],
       ["over-long uri", { uri: "u".repeat(2049) }],
@@ -1740,7 +1740,7 @@ describe("MonitorService.UpdateICMPMonitor", () => {
       "UpdateICMPMonitor",
       {
         id: String(testIcmpMonitorId),
-        monitor: { retry: "10", timeout: "120000" },
+        monitor: { retry: "10", timeout: "300000" },
       },
       { "x-openstatus-key": "1" },
     );

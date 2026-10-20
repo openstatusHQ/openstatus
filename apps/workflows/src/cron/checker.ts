@@ -431,6 +431,9 @@ const createCronTask = async (
     scheduleTime: {
       seconds: timestamp / 1000,
     },
+    // The checker answers only after its whole retry loop, which a 5m timeout
+    // can stretch well past Cloud Tasks' 10m default; 30m is the max allowed.
+    dispatchDeadline: { seconds: 30 * 60 },
   };
 
   const request = { parent: parent, task: newTask };

@@ -1513,20 +1513,20 @@ components:
             - integer
             - string
           title: timeout
-          maximum: 120000
+          maximum: 300000
           minimum: 0
           format: int64
-          description: Timeout in milliseconds (0-120000, defaults to 45000).
+          description: Timeout in milliseconds (0-300000, defaults to 45000).
         degradedAt:
           type:
             - integer
             - string
             - "null"
           title: degraded_at
-          maximum: 120000
+          maximum: 300000
           minimum: 0
           format: int64
-          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+          description: Latency threshold for degraded status in milliseconds (optional, 0-300000).
         retry:
           type:
             - integer
@@ -1645,20 +1645,20 @@ components:
             - integer
             - string
           title: timeout
-          maximum: 120000
+          maximum: 300000
           minimum: 0
           format: int64
-          description: Timeout in milliseconds (0-120000, defaults to 45000).
+          description: Timeout in milliseconds (0-300000, defaults to 45000).
         degradedAt:
           type:
             - integer
             - string
             - "null"
           title: degraded_at
-          maximum: 120000
+          maximum: 300000
           minimum: 0
           format: int64
-          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+          description: Latency threshold for degraded status in milliseconds (optional, 0-300000).
         retry:
           type:
             - integer
@@ -1986,20 +1986,20 @@ components:
             - integer
             - string
           title: timeout
-          maximum: 120000
+          maximum: 300000
           minimum: 0
           format: int64
-          description: Timeout in milliseconds (0-120000, defaults to 45000).
+          description: Timeout in milliseconds (0-300000, defaults to 45000).
         degradedAt:
           type:
             - integer
             - string
             - "null"
           title: degraded_at
-          maximum: 120000
+          maximum: 300000
           minimum: 0
           format: int64
-          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+          description: Latency threshold for degraded status in milliseconds (optional, 0-300000).
         retry:
           type:
             - integer
@@ -2347,20 +2347,20 @@ components:
             - integer
             - string
           title: timeout
-          maximum: 120000
+          maximum: 300000
           minimum: 0
           format: int64
-          description: Timeout in milliseconds (0-120000, defaults to 45000).
+          description: Timeout in milliseconds (0-300000, defaults to 45000).
         degradedAt:
           type:
             - integer
             - string
             - "null"
           title: degraded_at
-          maximum: 120000
+          maximum: 300000
           minimum: 0
           format: int64
-          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+          description: Latency threshold for degraded status in milliseconds (optional, 0-300000).
         retry:
           type:
             - integer
@@ -2801,20 +2801,20 @@ components:
             - integer
             - string
           title: timeout
-          maximum: 120000
+          maximum: 300000
           minimum: 0
           format: int64
-          description: Timeout in milliseconds (0-120000, defaults to 45000).
+          description: Timeout in milliseconds (0-300000, defaults to 45000).
         degradedAt:
           type:
             - integer
             - string
             - "null"
           title: degraded_at
-          maximum: 120000
+          maximum: 300000
           minimum: 0
           format: int64
-          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+          description: Latency threshold for degraded status in milliseconds (optional, 0-300000).
         retry:
           type:
             - integer
