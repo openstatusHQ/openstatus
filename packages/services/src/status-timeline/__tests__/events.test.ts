@@ -1,6 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
-import { FakeTime } from "@std/testing/time";
+import { describe, expect, test, vi } from "vitest";
 
 import {
   activeReportStatus,
@@ -104,7 +102,7 @@ describe("getEvents incident timestamps", () => {
 
 describe("getEvents lookback", () => {
   test("keeps overlapping intervals and clips incident downtime to the window", () => {
-    const time = new FakeTime(day("2026-03-01"));
+    vi.useFakeTimers({ now: day("2026-03-01") });
     try {
       const from = day("2025-12-01");
       const threshold = day("2026-01-15");
@@ -169,8 +167,8 @@ describe("getEvents lookback", () => {
       expect(
         durationDowntimeMs(events, {
           start: threshold.getTime(),
-          end: time.now,
-          now: time.now,
+          end: Date.now(),
+          now: Date.now(),
         }),
       ).toBe(3_888_000_000);
       expect(
@@ -180,7 +178,7 @@ describe("getEvents lookback", () => {
         ).status,
       ).toBe("maintenance");
     } finally {
-      time.restore();
+      vi.useRealTimers();
     }
   });
 });

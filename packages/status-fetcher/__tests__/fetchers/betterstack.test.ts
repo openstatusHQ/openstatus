@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { beforeEach, describe, it } from "@std/testing/bdd";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { BetterStackFetcher } from "../../src/fetchers/betterstack";
 import type { StatusPageEntry } from "../../src/types";
@@ -122,9 +121,9 @@ describe("BetterStackFetcher", () => {
       expect(result.description).toBe("All Systems Operational");
       expect(result.timezone).toBe("America/New_York");
       expect(typeof result.updated_at).toBe("number");
-      const call = fetchMock.calls[fetchMock.calls.length - 1];
-      expect(call.args[0]).toBe("https://status.test.com/index.json");
-      expect(call.args[1]).toEqual(
+      const call = fetchMock.mock.lastCall;
+      expect(call?.[0]).toBe("https://status.test.com/index.json");
+      expect(call?.[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
             "User-Agent": "OpenStatus-Directory/1.0",
@@ -242,9 +241,9 @@ describe("BetterStackFetcher", () => {
 
       await runFetcher(fetcher, entry);
 
-      const call = fetchMock.calls[fetchMock.calls.length - 1];
-      expect(call.args[0]).toBe("https://custom.endpoint.com/status.json");
-      expect(call.args[1]).toEqual(expect.any(Object));
+      const call = fetchMock.mock.lastCall;
+      expect(call?.[0]).toBe("https://custom.endpoint.com/status.json");
+      expect(call?.[1]).toEqual(expect.any(Object));
     });
 
     it("should fail with FetchError on 4xx response", async () => {

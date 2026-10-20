@@ -1,8 +1,7 @@
 import { StatusEventTimelineReport } from "@openstatus/ui/components/blocks/status-events";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, test } from "vitest";
 
 describe("StatusEventTimelineReport", () => {
   const updates = [

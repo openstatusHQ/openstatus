@@ -9,17 +9,23 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
-import { mock } from "@openstatus/test-utils";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 import { nanoid } from "nanoid";
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+  type Mock,
+} from "vitest";
 
 import { app } from "../../../../../index";
 
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as {
-  dispatchStatusReportUpdate: ReturnType<typeof mock>;
-  dispatchMaintenanceUpdate: ReturnType<typeof mock>;
+  dispatchStatusReportUpdate: Mock;
+  dispatchMaintenanceUpdate: Mock;
 };
 
 /**

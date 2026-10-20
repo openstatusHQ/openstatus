@@ -10,8 +10,8 @@ import {
   workspace as workspaceTable,
 } from "@openstatus/db/src/schema";
 import { declareIncident } from "@openstatus/services/incident";
-import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import { Hono } from "hono";
+import { beforeEach, describe, expect, test } from "vitest";
 
 import { slackTestState } from "@/libs/test/doubles/slack-test-state";
 import {

@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import { describe, expect, it } from "vitest";
 
 import type { HttpAssertionRequest } from "./types";
 import {
@@ -198,19 +197,19 @@ describe("JsonBodyAssertion", () => {
 
   // JSONPath returns an array, which is compared to the target as-is, so
   // these fail today. Un-ignore once the matched value is unwrapped.
-  it.ignore("passes eq when the matched value equals the target", () => {
+  it.skip("passes eq when the matched value equals the target", () => {
     expect(json("$.status", "eq", "ok").assert(http({ body })).success).toBe(
       true,
     );
   });
 
-  it.ignore("fails not_eq when the matched value equals the target", () => {
+  it.skip("fails not_eq when the matched value equals the target", () => {
     expect(
       json("$.status", "not_eq", "ok").assert(http({ body })).success,
     ).toBe(false);
   });
 
-  it.ignore("matches substrings with contains", () => {
+  it.skip("matches substrings with contains", () => {
     expect(
       json("$.status", "contains", "o").assert(http({ body })).success,
     ).toBe(true);

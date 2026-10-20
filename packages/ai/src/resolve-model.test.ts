@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import { resolveChatModel } from "./resolve-model";
 

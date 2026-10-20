@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import { describe, expect, it } from "vitest";
 
 import { MONITOR_TABS } from "@/app/(dashboard)/monitors/[id]/constants";
 import { STATUS_PAGE_TABS } from "@/app/(dashboard)/status-pages/[id]/constants";

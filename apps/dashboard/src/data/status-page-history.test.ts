@@ -1,6 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
-import { FakeTime } from "@std/testing/time";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   type HistoryEvent,
@@ -70,13 +68,13 @@ describe("eventsForMonth", () => {
   });
 
   it("treats open-ended events as lasting until now", () => {
-    const time = new FakeTime(new Date("2025-05-15T00:00:00Z"));
+    vi.useFakeTimers({ now: new Date("2025-05-15T00:00:00Z") });
     try {
       const open = event("2025-03-20T00:00:00Z", null);
       expect(eventsForMonth([open], "2025-04")).toEqual([open]);
       expect(eventsForMonth([open], "2025-06")).toEqual([]);
     } finally {
-      time.restore();
+      vi.useRealTimers();
     }
   });
 });

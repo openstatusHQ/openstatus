@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { getBaseUrl } from "./base-url";
 

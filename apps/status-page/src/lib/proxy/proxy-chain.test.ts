@@ -1,6 +1,5 @@
 import type { Page } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { resolveRoute } from "../resolve-route";
 import { applyPageLocaleOverride } from "./apply-page-locale-override";

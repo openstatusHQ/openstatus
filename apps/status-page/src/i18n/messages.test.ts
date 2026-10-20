@@ -2,8 +2,7 @@ import { Buffer } from "node:buffer";
 import { readFile } from "node:fs/promises";
 
 import { defaultLocale, locales } from "@openstatus/locales";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 // next-intl's extractor derives ids from the source text; catalogs drift
 // silently when that format changes (4.14 moved base64 -> base64url).

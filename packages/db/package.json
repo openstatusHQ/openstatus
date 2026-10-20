@@ -27,7 +27,8 @@
     "studio": "drizzle-kit studio",
     "env": "node env.ts",
     "seed": "node --import @oxc-node/core/register --env-file-if-exists=.env src/seed.mts",
-    "dev": "turso dev --db-file ../../openstatus-dev.db"
+    "dev": "turso dev --db-file ../../openstatus-dev.db",
+    "test": "vitest run"
   },
   "dependencies": {
     "@libsql/client": "catalog:",
@@ -44,13 +45,13 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@types/bcryptjs": "catalog:",
     "@types/node": "catalog:",
     "drizzle-kit": "catalog:",
     "next-auth": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

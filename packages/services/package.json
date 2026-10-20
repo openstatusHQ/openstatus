@@ -156,7 +156,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "NODE_ENV=test RESEND_API_KEY=test-key deno test --parallel -A --no-check --sloppy-imports",
+    "test": "NODE_ENV=test RESEND_API_KEY=test-key vitest run",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
@@ -175,10 +175,10 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@types/node": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

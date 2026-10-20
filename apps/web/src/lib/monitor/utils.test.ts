@@ -1,6 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
-import { FakeTime } from "@std/testing/time";
+import { describe, expect, test, vi } from "vitest";
 
 import {
   getDateByPeriod,
@@ -31,11 +29,11 @@ describe("getDateByPeriod", () => {
   const now = new Date(2024, 5, 15, 13, 27, 45, 123);
 
   function at<T>(fn: () => T) {
-    const time = new FakeTime(now);
+    vi.useFakeTimers({ now });
     try {
       return fn();
     } finally {
-      time.restore();
+      vi.useRealTimers();
     }
   }
 

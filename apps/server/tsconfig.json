@@ -9,16 +9,13 @@
     "jsxImportSource": "react",
     "allowJs": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@openstatus/analytics-real": ["../../packages/analytics/src/index.ts"],
+      "@openstatus/emails-real": ["../../packages/emails/src/index.ts"],
+      "@openstatus/subscriptions-real": [
+        "../../packages/subscriptions/src/index.ts"
+      ],
+      "@openstatus/tinybird-real": ["../../packages/tinybird/src/index.ts"]
     }
-  },
-  "exclude": [
-    "node_modules",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/__tests__/**",
-    "**/test/**",
-    "**/*.mock.ts",
-    "**/test-preload.ts"
-  ]
+  }
 }

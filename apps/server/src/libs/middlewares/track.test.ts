@@ -1,16 +1,16 @@
 import { Events } from "@openstatus/analytics";
 import type { Workspace } from "@openstatus/db/src/schema";
+import { Hono } from "hono";
 import {
   afterEach,
   beforeEach,
   describe,
   expect,
-  type mock,
-  type Stub,
-  stub,
+  type Mock,
+  type MockInstance,
   test,
-} from "@openstatus/test-utils";
-import { Hono } from "hono";
+  vi,
+} from "vitest";
 
 import type { Variables } from "@/types";
 
@@ -21,8 +21,8 @@ import { apiTrackMiddleware } from "./track";
 const { track: mockTrack, setupAnalytics: mockSetupAnalytics } = (
   globalThis as Record<string, unknown>
 ).__analyticsSpies as {
-  track: ReturnType<typeof mock>;
-  setupAnalytics: ReturnType<typeof mock>;
+  track: Mock;
+  setupAnalytics: Mock;
 };
 
 /** Let the fire-and-forget analytics chain settle. */
@@ -66,17 +66,17 @@ function cliCommandCalls() {
 }
 
 describe("apiTrackMiddleware", () => {
-  let random: Stub<Math, [], number>;
+  let random: MockInstance<() => number>;
 
   beforeEach(() => {
     mockSetupAnalytics.mockClear();
     mockTrack.mockClear();
     // Keep every sampled request unless a test says otherwise.
-    random = stub(Math, "random", () => 0);
+    random = vi.spyOn(Math, "random").mockReturnValue(0);
   });
 
   afterEach(() => {
-    random.restore();
+    random.mockRestore();
   });
 
   test("fires api_request for GET requests with the route pattern", async () => {
@@ -97,8 +97,7 @@ describe("apiTrackMiddleware", () => {
   });
 
   test("drops non-CLI requests outside the sample", async () => {
-    random.restore();
-    random = stub(Math, "random", () => 0.5);
+    random.mockReturnValue(0.5);
 
     const res = await makeApp().request("/whoami", {
       headers: { "user-agent": "curl/8" },
@@ -111,8 +110,7 @@ describe("apiTrackMiddleware", () => {
   });
 
   test("always tracks CLI requests", async () => {
-    random.restore();
-    random = stub(Math, "random", () => 0.99);
+    random.mockReturnValue(0.99);
 
     await makeApp().request("/whoami", {
       headers: cliHeaders(crypto.randomUUID()),

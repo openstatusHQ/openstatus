@@ -14,7 +14,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "dev:email": "email dev",
-    "test": "deno test --parallel -A --no-check --sloppy-imports"
+    "test": "vitest run"
   },
   "dependencies": {
     "@openstatus/utils": "workspace:*",
@@ -27,12 +27,12 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@react-email/ui": "catalog:",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

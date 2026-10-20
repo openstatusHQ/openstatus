@@ -4,7 +4,7 @@
     "check": "tsc --noEmit",
     "dev": "NODE_ENV=development node --import @oxc-node/core/register --watch src/serve.ts",
     "start": "NODE_ENV=production node dist/serve.mjs",
-    "test": "NODE_ENV=test RESEND_API_KEY=test-key CRON_SECRET=test-secret deno test --parallel -A --no-check --sloppy-imports",
+    "test": "NODE_ENV=test RESEND_API_KEY=test-key CRON_SECRET=test-secret vitest run",
     "build": "tsdown"
   },
   "dependencies": {
@@ -60,6 +60,7 @@
     "@oxc-node/core": "catalog:",
     "@types/node": "catalog:",
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

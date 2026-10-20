@@ -1,6 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
-import { FakeTime } from "@std/testing/time";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   formatDateForInput,
@@ -95,24 +93,24 @@ describe("formatDistanceToNowShort", () => {
     [10 * 24 * 60 * 60, "10d ago"],
   ] as const) {
     it(`${secondsAgo}s -> ${expected}`, () => {
-      const time = new FakeTime(now);
+      vi.useFakeTimers({ now });
       try {
         const date = new Date(now.getTime() - secondsAgo * 1000);
         expect(formatDistanceToNowShort(date)).toBe(expected);
       } finally {
-        time.restore();
+        vi.useRealTimers();
       }
     });
   }
 
   it("clamps future dates to 0s", () => {
-    const time = new FakeTime(now);
+    vi.useFakeTimers({ now });
     try {
       expect(formatDistanceToNowShort(new Date(now.getTime() + 60_000))).toBe(
         "0s ago",
       );
     } finally {
-      time.restore();
+      vi.useRealTimers();
     }
   });
 });

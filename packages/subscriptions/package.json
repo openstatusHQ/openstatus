@@ -16,7 +16,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "deno test --parallel -A --no-check --sloppy-imports"
+    "test": "vitest run"
   },
   "dependencies": {
     "@openstatus/db": "workspace:*",
@@ -29,10 +29,10 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@types/node": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

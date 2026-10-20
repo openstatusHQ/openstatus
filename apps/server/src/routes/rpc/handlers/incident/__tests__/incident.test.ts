@@ -46,14 +46,14 @@ import {
   ListStatusReportsResponseSchema,
 } from "@openstatus/proto/status_report/v1";
 import { SLACK_BOT_SCOPES } from "@openstatus/services/integration";
-import { expect } from "@std/expect";
 import {
   afterAll,
   beforeAll,
   beforeEach,
   describe,
+  expect,
   test,
-} from "@std/testing/bdd";
+} from "vitest";
 
 import { settleBackgroundTasks } from "@/libs/background";
 import { incidentCommanderEmails } from "@/libs/test/doubles/emails.mock";

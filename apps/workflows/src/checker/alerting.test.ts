@@ -13,32 +13,32 @@ import {
 import {
   afterAll,
   afterEach,
-  assertSpyCalls,
   beforeAll,
   beforeEach,
   describe,
   expect,
-  type Stub,
-  stub,
   test,
-} from "@openstatus/test-utils";
+  vi,
+  type MockInstance,
+} from "vitest";
 
-import { checkerAudit } from "../utils/audit-log";
+import { stubPublishAuditLog } from "../test/stub-audit-log";
 import { triggerNotifications } from "./alerting";
 import { providerToFunction } from "./utils";
 
-// Deno has no module mocking, so we stub the methods on the real singletons
-// that alerting.ts reads at call time. Stubbing per-test resolves them to no-op
+// Stub the methods on the real singletons that alerting.ts reads at call time. Stubbing per-test resolves them to no-op
 // to avoid real HTTP / Tinybird calls and gives a fresh call count each test.
 // biome-ignore lint/suspicious/noExplicitAny: heterogeneous provider stubs
-type AnyStub = Stub<any>;
+type AnyStub = MockInstance;
 let stubs: AnyStub[] = [];
 
 const stubSend = (
   provider: "email" | "slack" | "discord",
   verb: "sendAlert" | "sendRecovery" | "sendDegraded",
 ): AnyStub => {
-  const s = stub(providerToFunction[provider], verb, () => Promise.resolve());
+  const s = vi
+    .spyOn(providerToFunction[provider], verb)
+    .mockImplementation(() => Promise.resolve());
   stubs.push(s);
   return s;
 };
@@ -64,9 +64,7 @@ let noNotifMonitorId: number;
 beforeEach(() => {
   stubs = [];
   // biome-ignore lint/suspicious/noExplicitAny: avoid Tinybird call
-  stubs.push(
-    stub(checkerAudit, "publishAuditLog", () => Promise.resolve()) as AnyStub,
-  );
+  stubs.push(stubPublishAuditLog());
   mockEmailSendAlert = stubSend("email", "sendAlert");
   mockEmailSendRecovery = stubSend("email", "sendRecovery");
   mockEmailSendDegraded = stubSend("email", "sendDegraded");
@@ -79,7 +77,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  for (const s of stubs) s.restore();
+  for (const s of stubs) s.mockRestore();
   stubs = [];
 });
 
@@ -113,7 +111,7 @@ await describe("triggerNotifications", async () => {
       latency: 1500,
     });
 
-    assertSpyCalls(mockEmailSendAlert, 1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       notificationId: emailNotificationId,
@@ -132,7 +130,7 @@ await describe("triggerNotifications", async () => {
       regions: ["ams"],
     });
 
-    assertSpyCalls(mockEmailSendRecovery, 1);
+    expect(mockEmailSendRecovery).toHaveBeenCalledTimes(1);
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       notificationId: emailNotificationId,
@@ -152,7 +150,7 @@ await describe("triggerNotifications", async () => {
       regions: ["ams"],
     });
 
-    assertSpyCalls(mockEmailSendDegraded, 1);
+    expect(mockEmailSendDegraded).toHaveBeenCalledTimes(1);
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       notificationId: emailNotificationId,
@@ -171,7 +169,7 @@ await describe("triggerNotifications", async () => {
       cronTimestamp,
     });
 
-    assertSpyCalls(mockEmailSendAlert, 0);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
     expect(result).toHaveLength(0);
   });
 
@@ -186,7 +184,7 @@ await describe("triggerNotifications", async () => {
     });
 
     expect(first).toHaveLength(1);
-    assertSpyCalls(mockEmailSendAlert, 1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
 
     // Same cronTimestamp should be skipped due to unique constraint
     const second = await triggerNotifications({
@@ -197,7 +195,7 @@ await describe("triggerNotifications", async () => {
     });
 
     // still only the first call — the duplicate was skipped
-    assertSpyCalls(mockEmailSendAlert, 1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
     expect(second).toHaveLength(0);
   });
 });
@@ -278,9 +276,9 @@ describe("triggerNotifications with multiple providers", () => {
       regions: ["ams"],
     });
 
-    assertSpyCalls(mockSlackSendAlert, 1);
-    assertSpyCalls(mockDiscordSendAlert, 1);
-    assertSpyCalls(mockEmailSendAlert, 0);
+    expect(mockSlackSendAlert).toHaveBeenCalledTimes(1);
+    expect(mockDiscordSendAlert).toHaveBeenCalledTimes(1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
 
     expect(result).toHaveLength(2);
     expect(result).toContainEqual({
@@ -304,8 +302,8 @@ describe("triggerNotifications with multiple providers", () => {
       regions: ["ams"],
     });
 
-    assertSpyCalls(mockSlackSendRecovery, 1);
-    assertSpyCalls(mockDiscordSendRecovery, 1);
+    expect(mockSlackSendRecovery).toHaveBeenCalledTimes(1);
+    expect(mockDiscordSendRecovery).toHaveBeenCalledTimes(1);
 
     expect(result).toHaveLength(2);
     const providers = result.map((r) => r.provider).sort();

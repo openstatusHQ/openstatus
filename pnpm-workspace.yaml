@@ -220,4 +220,6 @@ catalog:
   unified: 11.0.5
   validator: 13.15.35
   vaul: 1.1.2
+  vite: 8.3.4
+  vitest: 5.0.3
   zod: 4.6.5

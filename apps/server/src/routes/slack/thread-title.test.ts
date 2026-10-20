@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import type { WebClient } from "@slack/web-api";
+import { beforeEach, describe, expect, test } from "vitest";
 
 import {
   buildThreadTitle,

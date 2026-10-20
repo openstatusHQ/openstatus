@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
+import { beforeEach, describe, expect, test } from "vitest";
 
 import { reportDraftState } from "@/libs/test/doubles/report-draft-model.mock";
 import { busyChannelHistory } from "@/libs/test/slack-incident-fixtures";
