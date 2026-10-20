@@ -2,14 +2,14 @@ import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
-  NotificationDataSchema,
   monitor,
   notification,
   notificationsToMonitors,
-  selectNotificationSchema,
 } from "@openstatus/db/src/schema";
+import { ValidationError } from "@openstatus/services";
+import { validateNotificationData } from "@openstatus/services/notification";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { openApiErrorResponses, OpenStatusApiError } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 
 import type { notificationsApi } from "./index";
@@ -73,6 +73,18 @@ export function registerPostNotification(api: typeof notificationsApi) {
       });
     }
 
+    try {
+      validateNotificationData(input.provider, input.payload);
+    } catch (err) {
+      if (err instanceof ValidationError) {
+        throw new OpenStatusApiError({
+          code: "BAD_REQUEST",
+          message: err.message,
+        });
+      }
+      throw err;
+    }
+
     const { payload, monitors, ...rest } = input;
 
     if (monitors?.length) {
@@ -115,14 +127,10 @@ export function registerPostNotification(api: typeof notificationsApi) {
       }
     }
 
-    // FIXME: too complex
-    const d = selectNotificationSchema.parse(_notification);
-
-    const _payload = NotificationDataSchema.parse(JSON.parse(d.data));
     const data = NotificationSchema.parse({
       ..._notification,
       monitors,
-      payload: _payload,
+      payload,
     });
     return c.json(data, 200);
   });
