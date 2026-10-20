@@ -715,10 +715,10 @@ describe("joinSsoWorkspace", () => {
   }
 
   test("provisions the member and audits the join", async () => {
+    // `createUser` writes on the default db — do it before the test tx takes
+    // the write lock, or the two deadlock.
+    const newcomer = await createUser();
     await withTestTransaction(async (tx) => {
-      // `createUser` writes on the default db — do it before the test tx takes
-      // a write lock, or the two deadlock.
-      const newcomer = await createUser();
       await enableSsoOn(tx);
       const ctx = makeUserCtx(scaleCtx.workspace, { userId: newcomer.id });
 
@@ -774,8 +774,8 @@ describe("joinSsoWorkspace", () => {
   });
 
   test("rejects a workspace with sso switched off", async () => {
+    const newcomer = await createUser();
     await withTestTransaction(async (tx) => {
-      const newcomer = await createUser();
       await expect(
         joinSsoWorkspace({
           ctx: { ...scaleCtx, db: tx },
@@ -786,8 +786,8 @@ describe("joinSsoWorkspace", () => {
   });
 
   test("a sign-in that overlaps disableSso does not provision", async () => {
+    const newcomer = await createUser();
     await withTestTransaction(async (tx) => {
-      const newcomer = await createUser();
       await enableSsoOn(tx);
       // The ctx snapshot was taken while SSO was on; the owner turns it off
       // before the callback lands.

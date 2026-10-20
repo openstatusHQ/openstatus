@@ -1028,8 +1028,8 @@ describe("hasPendingSubscriber", () => {
 
 describe("createPageSubscriber", () => {
   test("rejects read-only actor", async () => {
+    const team = (await createWorkspaceFixture("team")).workspace;
     await withTestTransaction(async (tx) => {
-      const team = (await createWorkspaceFixture("team")).workspace;
       const readOnlyCtx = {
         ...makeApiKeyCtx(team, {
           keyId: "k-read",
