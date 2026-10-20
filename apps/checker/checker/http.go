@@ -75,11 +75,12 @@ func NewHTTPClient(timeout time.Duration, followRedirects bool) *http.Client {
 	// Dial and TLS get the monitor's whole timeout: http.DefaultTransport caps
 	// them at 30s and 10s, which cut a check short of what the user set.
 	transport := &http.Transport{
-		Proxy:               http.ProxyFromEnvironment,
-		DialContext:         (&net.Dialer{Timeout: timeout}).DialContext,
-		TLSHandshakeTimeout: timeout,
-		ForceAttemptHTTP2:   true,
-		DisableKeepAlives:   true,
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           (&net.Dialer{Timeout: timeout}).DialContext,
+		TLSHandshakeTimeout:   timeout,
+		ExpectContinueTimeout: time.Second,
+		ForceAttemptHTTP2:     true,
+		DisableKeepAlives:     true,
 	}
 
 	client := &http.Client{
