@@ -88,9 +88,7 @@ export async function withTestTransaction<T>(
   }
 }
 
-async function runRolledBack<T>(
-  fn: (tx: DrizzleTx) => Promise<T>,
-): Promise<T> {
+async function runRolledBack<T>(fn: (tx: DrizzleTx) => Promise<T>): Promise<T> {
   let result!: T;
   try {
     await db.transaction(async (tx) => {
