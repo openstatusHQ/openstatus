@@ -1541,10 +1541,11 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
+      // Public procedure: never return the raw row (password, IP allow-list).
       return {
         email: opts.input.email,
         slug: opts.input.slug,
-        page: _page,
+        page: { title: _page.title },
       };
     }),
 
