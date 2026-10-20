@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
@@ -74,23 +73,8 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 		retry = 3
 	}
 
-	requestClient := &http.Client{
-		Timeout: time.Duration(monitor.Timeout) * time.Millisecond,
-	}
+	requestClient := checker.NewHTTPClient(time.Duration(monitor.Timeout)*time.Millisecond, monitor.FollowRedirects)
 	defer requestClient.CloseIdleConnections()
-
-	if !monitor.FollowRedirects {
-		requestClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		}
-	} else {
-		requestClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			if len(via) >= 10 {
-				return http.ErrUseLastResponse
-			}
-			return nil
-		}
-	}
 
 	var degradedAfter int64
 	if monitor.DegradedAt != nil {

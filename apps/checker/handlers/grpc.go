@@ -78,6 +78,8 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 		return
 	}
 
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
 	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
@@ -331,6 +333,8 @@ func (h Handler) GRPCHandlerRegion(c *gin.Context) {
 
 		return
 	}
+
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
 
 	var response checker.GRPCResponse
 

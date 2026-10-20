@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/rs/zerolog/log"
 	"google.golang.org/api/option"
@@ -26,11 +27,22 @@ type UpdateData struct {
 	Latency       int64  `json:"latency,omitempty"`
 }
 
-func UpdateStatus(ctx context.Context, updateData UpdateData) error {
+var (
+	tasksClientMu sync.Mutex
+	tasksClient   *cloudtasks.Client
+)
 
-	url := "https://openstatus-workflows.fly.dev/updateStatus"
-	basic := "Basic " + os.Getenv("CRON_SECRET")
-	payloadBuf := new(bytes.Buffer)
+// cloudTasksClient builds the Cloud Tasks client once and shares it: it holds a
+// gRPC connection and a token cache, too heavy to rebuild on every status
+// change. A failed build is not cached, so the next call tries again.
+func cloudTasksClient() (*cloudtasks.Client, error) {
+	tasksClientMu.Lock()
+	defer tasksClientMu.Unlock()
+
+	if tasksClient != nil {
+		return tasksClient, nil
+	}
+
 	c := os.Getenv("GCP_PRIVATE_KEY")
 	c = strings.ReplaceAll(c, "\\n", "\n")
 	opts := &auth.Options2LO{
@@ -45,23 +57,45 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) error {
 
 	tp, err := auth.New2LOTokenProvider(opts)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("error while creating token provider")
-		return err
+		return nil, fmt.Errorf("creating token provider: %w", err)
 	}
 
 	creds := auth.NewCredentials(&auth.CredentialsOptions{
 		TokenProvider: tp,
 	})
 
-	client, err := cloudtasks.NewClient(ctx, option.WithAuthCredentials(creds))
+	// The client lives as long as the process, so it takes neither the
+	// cancellation nor the values (logger, monitor) of the request that built it.
+	client, err := cloudtasks.NewClient(context.Background(), option.WithAuthCredentials(creds))
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("error while creating cloud tasks client")
-
+		return nil, fmt.Errorf("creating cloud tasks client: %w", err)
 	}
-	defer client.Close()
+
+	tasksClient = client
+
+	return tasksClient, nil
+}
+
+// UpdateStatus queues the status change that drives alerting. Callers do not
+// act on the returned error, so every failure is logged here: a lost update is
+// a missed alert.
+func UpdateStatus(ctx context.Context, updateData UpdateData) error {
+	// monitor_id is already on the context logger (handlers.withMonitorLogger).
+	logger := log.Ctx(ctx).With().Str("status", updateData.Status).Logger()
+
+	url := "https://openstatus-workflows.fly.dev/updateStatus"
+	basic := "Basic " + os.Getenv("CRON_SECRET")
+	payloadBuf := new(bytes.Buffer)
+
+	client, err := cloudTasksClient()
+	if err != nil {
+		logger.Error().Err(err).Msg("error while updating status")
+
+		return err
+	}
 
 	if err := json.NewEncoder(payloadBuf).Encode(updateData); err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("error while updating status")
+		logger.Error().Err(err).Msg("error while updating status")
 		return err
 	}
 	projectID := os.Getenv("GCP_PROJECT_ID")
@@ -85,7 +119,7 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) error {
 
 	_, err = client.CreateTask(ctx, req)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("error while creating the cloud task")
+		logger.Error().Err(err).Msg("error while creating the cloud task")
 		return fmt.Errorf("cloudtasks.CreateTask: %w", err)
 	}
 

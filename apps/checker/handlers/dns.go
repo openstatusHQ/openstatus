@@ -87,6 +87,8 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		return
 	}
 
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
 	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workspace id"})
@@ -150,7 +152,6 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		latency = time.Now().UTC().UnixMilli() - start
 
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("dns check failed")
 			return nil, err
 		}
 		if len(req.RawAssertions) > 0 {
@@ -276,6 +277,8 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		return
 	}
 
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
 	retry := defaultRetry
 	if req.Retry != 0 {
 		retry = int(req.Retry)
@@ -322,7 +325,6 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		latency = time.Now().UTC().UnixMilli() - start
 
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("dns check failed")
 			return nil, err
 		}
 		if len(req.RawAssertions) > 0 {

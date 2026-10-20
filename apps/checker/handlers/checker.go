@@ -73,25 +73,10 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		return
 	}
-	//  We need a new client for each request to avoid connection reuse.
-	requestClient := &http.Client{
-		Timeout: time.Duration(req.Timeout) * time.Millisecond,
-	}
 
-	// Configure redirect policy based on FollowRedirects setting
-	if !req.FollowRedirects {
-		requestClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		}
-	} else {
-		// Explicitly limit the number of redirects to 10 (Go's default)
-		requestClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			if len(via) >= 10 {
-				return http.ErrUseLastResponse
-			}
-			return nil
-		}
-	}
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
+	requestClient := checker.NewHTTPClient(time.Duration(req.Timeout)*time.Millisecond, req.FollowRedirects)
 	defer requestClient.CloseIdleConnections()
 
 	// Might be a more efficient way to do it
@@ -119,7 +104,8 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 	op := func() (struct{}, error) {
 		called++
-		res, err := checker.Http(ctx, requestClient, req)
+		attemptCtx := log.Ctx(ctx).With().Int("attempt", called).Logger().WithContext(ctx)
+		res, err := checker.Http(attemptCtx, requestClient, req)
 
 		if err != nil {
 			return struct{}{}, fmt.Errorf("unable to ping: %w", err)
