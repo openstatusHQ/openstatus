@@ -1,8 +1,12 @@
 import { serve } from "@hono/node-server";
-import { getLogger } from "@logtape/logtape";
+import { dispose, getLogger } from "@logtape/logtape";
 
 import { shutdownOutbox, startOutboxConsumer } from "./checker/outbox";
-import { startScheduler, stopScheduler } from "./cron/scheduler";
+import {
+  drainScheduledTasks,
+  startScheduler,
+  stopScheduler,
+} from "./cron/scheduler";
 import { env } from "./env";
 import { app } from "./index";
 
@@ -27,8 +31,14 @@ process.once("SIGTERM", () => {
       server.close(() => resolve()),
     );
     await stopScheduler();
-    await shutdownOutbox();
+    // Same window shutdownOutbox gives in-flight sends, so both fit inside
+    // Fly's kill_timeout with room left for the OTLP log flush.
+    await Promise.all([
+      shutdownOutbox(),
+      drainScheduledTasks(env().NOTIFICATION_TIMEOUT_MS + 5_000),
+    ]);
     await httpClosed;
+    await dispose();
     process.exit(0);
   })();
 });

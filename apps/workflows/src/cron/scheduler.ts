@@ -54,9 +54,22 @@ type RunningTask = Fiber.Fiber<unknown, unknown>;
 
 let running: RunningTask[] = [];
 
+// Interrupting a fiber does not cancel the promise `Effect.tryPromise` is
+// waiting on, so the task keeps running detached. Track it so shutdown can wait
+// for, e.g., a claimed incident reminder window to actually be sent.
+const inFlight = new Set<Promise<unknown>>();
+
+function track(task: ScheduledTask): Promise<unknown> {
+  const promise = task.run().finally(() => {
+    inFlight.delete(promise);
+  });
+  inFlight.add(promise);
+  return promise;
+}
+
 function scheduleTask(task: ScheduledTask): RunningTask {
   const body = Effect.tryPromise({
-    try: () => task.run(),
+    try: () => track(task),
     catch: (error) =>
       error instanceof Error ? error : new Error(String(error)),
   }).pipe(
@@ -105,4 +118,21 @@ export async function stopScheduler(): Promise<void> {
       discard: true,
     }),
   );
+}
+
+/**
+ * Resolves once every scheduled task already started has settled, or after
+ * `graceMs`. Call after `stopScheduler` so no new run can start meanwhile.
+ */
+export async function drainScheduledTasks(graceMs: number): Promise<void> {
+  if (inFlight.size === 0) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const grace = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, graceMs);
+  });
+  await Promise.race([
+    Promise.allSettled(inFlight).then(() => undefined),
+    grace,
+  ]);
+  if (timer !== undefined) clearTimeout(timer);
 }
