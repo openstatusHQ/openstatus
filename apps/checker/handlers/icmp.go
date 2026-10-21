@@ -39,11 +39,15 @@ type ICMPData struct {
 	PacketsReceived uint8 `json:"packetsReceived"`
 
 	Error uint8 `json:"error"`
+
+	Attempt  int `json:"attempt,omitempty"`
+	Attempts int `json:"attempts,omitempty"`
 }
 
 func (h Handler) ICMPHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	dataSourceName := "icmp_response__v0"
+	attemptDataSourceName := "icmp_attempt__v0"
 
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -113,10 +117,34 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 		retry = 3
 	}
 
+	var called int
+
 	op := func() (struct{}, error) {
+		called++
 		res, err := checker.PingICMP(req.Timeout, req.URI)
 		if err != nil {
-			return struct{}{}, fmt.Errorf("unable to check icmp %s", err)
+			err = fmt.Errorf("unable to check icmp %s", err)
+
+			if called < retry {
+				if id, idErr := uuid.NewV7(); idErr == nil {
+					h.sendAttempt(ctx, ICMPData{
+						ID:            id.String(),
+						WorkspaceID:   workspaceId,
+						Timestamp:     time.Now().UTC().UnixMilli(),
+						CronTimestamp: req.CronTimestamp,
+						ErrorMessage:  err.Error(),
+						Region:        h.Region,
+						MonitorID:     monitorId,
+						Error:         1,
+						Trigger:       trigger,
+						URI:           req.URI,
+						RequestStatus: "error",
+						Attempt:       called,
+					}, attemptDataSourceName)
+				}
+			}
+
+			return struct{}{}, err
 		}
 
 		timingAsString, err := json.Marshal(res.Timing)
@@ -161,6 +189,7 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 			Trigger:         trigger,
 			URI:             req.URI,
 			RequestStatus:   requestStatus,
+			Attempts:        called,
 		}
 
 		response = checker.ICMPResponse{
@@ -224,6 +253,7 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 		data := ICMPData{
 			ID:            id.String(),
 			WorkspaceID:   workspaceId,
+			Timestamp:     time.Now().UTC().UnixMilli(),
 			CronTimestamp: req.CronTimestamp,
 			ErrorMessage:  err.Error(),
 			Region:        h.Region,
@@ -232,6 +262,7 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 			Trigger:       trigger,
 			URI:           req.URI,
 			RequestStatus: "error",
+			Attempts:      called,
 		}
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")

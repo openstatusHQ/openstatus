@@ -34,11 +34,15 @@ type TCPData struct {
 	CronTimestamp int64 `json:"cronTimestamp"`
 
 	Error uint8 `json:"error"`
+
+	Attempt  int `json:"attempt,omitempty"`
+	Attempts int `json:"attempts,omitempty"`
 }
 
 func (h Handler) TCPHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	dataSourceName := "tcp_response__v0"
+	attemptDataSourceName := "tcp_attempt__v0"
 
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -110,11 +114,35 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		retry = 3
 	}
 
+	var called int
+
 	op := func() (struct{}, error) {
+		called++
 		res, err := checker.PingTCP(ctx, req.Timeout, req.URI)
 
 		if err != nil {
-			return struct{}{}, fmt.Errorf("unable to check tcp %s", err)
+			err = fmt.Errorf("unable to check tcp %s", err)
+
+			if called < retry {
+				if id, idErr := uuid.NewV7(); idErr == nil {
+					h.sendAttempt(ctx, TCPData{
+						ID:            id.String(),
+						WorkspaceID:   workspaceId,
+						Timestamp:     time.Now().UTC().UnixMilli(),
+						CronTimestamp: req.CronTimestamp,
+						ErrorMessage:  err.Error(),
+						Region:        h.Region,
+						MonitorID:     monitorId,
+						Error:         1,
+						Trigger:       trigger,
+						URI:           req.URI,
+						RequestStatus: "error",
+						Attempt:       called,
+					}, attemptDataSourceName)
+				}
+			}
+
+			return struct{}{}, err
 		}
 
 		timingAsString, err := json.Marshal(res)
@@ -154,6 +182,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			Trigger:       trigger,
 			URI:           req.URI,
 			RequestStatus: requestStatus,
+			Attempts:      called,
 		}
 
 		response = checker.TCPResponse{
@@ -219,6 +248,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		data := TCPData{
 			ID:            id.String(),
 			WorkspaceID:   workspaceId,
+			Timestamp:     time.Now().UTC().UnixMilli(),
 			CronTimestamp: req.CronTimestamp,
 			ErrorMessage:  err.Error(),
 			Region:        h.Region,
@@ -227,6 +257,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			Trigger:       trigger,
 			URI:           req.URI,
 			RequestStatus: "error",
+			Attempts:      called,
 		}
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")

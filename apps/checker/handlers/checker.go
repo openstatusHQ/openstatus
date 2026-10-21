@@ -42,12 +42,15 @@ type PingData struct {
 	Timestamp     int64  `json:"timestamp"`
 	StatusCode    int    `json:"statusCode,omitempty"`
 	Error         uint8  `json:"error"`
+	Attempt       int    `json:"attempt,omitempty"`
+	Attempts      int    `json:"attempts,omitempty"`
 }
 
 func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	const defaultRetry = 3
 	dataSourceName := "ping_response__v8"
+	attemptDataSourceName := "ping_attempt__v0"
 
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -108,7 +111,30 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		res, err := checker.Http(attemptCtx, requestClient, req)
 
 		if err != nil {
-			return struct{}{}, fmt.Errorf("unable to ping: %w", err)
+			err = fmt.Errorf("unable to ping: %w", err)
+
+			if called < retry {
+				if id, idErr := uuid.NewV7(); idErr == nil {
+					h.sendAttempt(ctx, PingData{
+						ID:            id.String(),
+						URL:           req.URL,
+						Method:        req.Method,
+						Region:        h.Region,
+						Message:       err.Error(),
+						CronTimestamp: req.CronTimestamp,
+						Timestamp:     time.Now().UTC().UnixMilli(),
+						MonitorID:     req.MonitorID,
+						WorkspaceID:   req.WorkspaceID,
+						Error:         1,
+						Assertions:    assertionAsString,
+						Trigger:       trigger,
+						RequestStatus: "error",
+						Attempt:       called,
+					}, attemptDataSourceName)
+				}
+			}
+
+			return struct{}{}, err
 		}
 
 		// In TB we need to store them as string
@@ -164,6 +190,12 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		// let's retry at least once if the status code is not successful.
 		if !isSuccessfull && called < retry {
+			attempt := data
+			attempt.Error = 1
+			attempt.RequestStatus = "error"
+			attempt.Assertions = assertionAsString
+			attempt.Attempt = called
+			h.sendAttempt(ctx, attempt, attemptDataSourceName)
 			return struct{}{}, fmt.Errorf("unable to ping: %v with status %v", res, res.Status)
 		}
 
@@ -188,6 +220,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		}
 
 		data.Assertions = assertionAsString
+		data.Attempts = called
 
 		if !isSuccessfull && req.Status != "error" {
 			// Q: Why here we do not check if the status was previously active?
@@ -282,6 +315,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			Body:          "",
 			Trigger:       trigger,
 			RequestStatus: "error",
+			Attempts:      called,
 		}
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
