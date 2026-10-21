@@ -24,6 +24,8 @@ type DNSPrivateRegionData struct {
 	CronTimestamp int64               `json:"cronTimestamp"`
 	Timestamp     int64               `json:"timestamp"`
 	Error         uint8               `json:"error"`
+
+	Attempts []*DNSPrivateRegionData `json:"attempts,omitempty"`
 }
 
 func ProtoRecordAssertionToComparator(assertion v1.RecordComparator) (request.RecordComparator, error) {
@@ -103,8 +105,11 @@ func (jobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivat
 		defer cancel()
 	}
 
-	var called int
-	var lastFailure *DNSPrivateRegionData
+	var (
+		called      int
+		lastFailure *DNSPrivateRegionData
+		attempts    []*DNSPrivateRegionData
+	)
 
 	op := func() (*DNSPrivateRegionData, error) {
 		called++
@@ -127,8 +132,13 @@ func (jobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivat
 			lastFailure = data
 
 			if called < int(retry) {
+				attempts = append(attempts, data)
+
 				return nil, fmt.Errorf("DNS lookup failed for %s: %w", monitor.Uri, lookupErr)
 			}
+
+			data.Attempts = attempts
+
 			return data, nil
 		}
 
@@ -142,6 +152,8 @@ func (jobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivat
 			data.RequestStatus = "error"
 			data.Error = 1
 			data.Message = fmt.Sprintf("invalid DNS assertion for %s: %s", monitor.Uri, assertErr)
+			data.Attempts = attempts
+
 			return data, nil
 		}
 
@@ -153,6 +165,8 @@ func (jobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivat
 			lastFailure = data
 
 			if called < int(retry) {
+				attempts = append(attempts, data)
+
 				return nil, errors.New(data.Message)
 			}
 		case degradedAfter > 0 && latency > degradedAfter:
@@ -160,6 +174,8 @@ func (jobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivat
 		default:
 			data.RequestStatus = "success"
 		}
+
+		data.Attempts = attempts
 
 		return data, nil
 	}
@@ -171,6 +187,12 @@ func (jobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivat
 	// backoff.Retry discards the operation result when the context expires, so
 	// without this the pending failure is lost and no outage is ingested.
 	if err != nil && lastFailure != nil && errors.Is(err, errRetryBudgetExpired) {
+		if n := len(attempts); n > 0 && attempts[n-1] == lastFailure {
+			attempts = attempts[:n-1]
+		}
+
+		lastFailure.Attempts = attempts
+
 		return lastFailure, nil
 	}
 

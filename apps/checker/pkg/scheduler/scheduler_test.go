@@ -74,6 +74,14 @@ func (m *mockJobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*jo
 		Timestamp:     1700000000000,
 		CronTimestamp: 1700000000000,
 		Records:       map[string][]string{"A": {"192.168.1.1"}},
+		Attempts: []*job.DNSPrivateRegionData{{
+			ID:            "dns-attempt-1",
+			RequestStatus: "error",
+			Message:       "lookup failed",
+			Latency:       7,
+			Timestamp:     1699999999000,
+			Error:         1,
+		}},
 	}, nil
 }
 
@@ -331,6 +339,12 @@ func TestMonitorManager_IngestsDNSResult(t *testing.T) {
 	}
 	if got := ingested.Records["A"].GetRecord(); len(got) != 1 || got[0] != "192.168.1.1" {
 		t.Errorf("expected the A records to be forwarded, got %v", got)
+	}
+	if len(ingested.Attempts) != 1 {
+		t.Fatalf("expected 1 failed attempt to be forwarded, got %d", len(ingested.Attempts))
+	}
+	if a := ingested.Attempts[0]; a.Id != "dns-attempt-1" || a.Error != 1 || a.Message != "lookup failed" || a.Timestamp != 1699999999000 {
+		t.Errorf("expected the failed attempt to be forwarded as is, got %v", a)
 	}
 }
 

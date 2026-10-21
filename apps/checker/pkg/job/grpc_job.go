@@ -28,6 +28,8 @@ type GRPCPrivateRegionData struct {
 	CronTimestamp int64  `json:"cron_timestamp"`
 	Error         int    `json:"error"`
 	Timing        string `json:"timing"`
+
+	Attempts []*GRPCPrivateRegionData `json:"attempts,omitempty"`
 }
 
 func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region string) (*GRPCPrivateRegionData, error) {
@@ -43,8 +45,11 @@ func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region st
 
 	req := grpcCheckerRequest(monitor)
 
-	var called int
-	var lastResult checker.GRPCResponse
+	var (
+		called     int
+		lastResult checker.GRPCResponse
+		attempts   []*GRPCPrivateRegionData
+	)
 
 	op := func() (*GRPCPrivateRegionData, error) {
 		called++
@@ -58,11 +63,6 @@ func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region st
 			headersToMap(monitor.GetMetadata()),
 		)
 		if err != nil {
-			// Only a call that never reached the server is worth repeating.
-			if called < int(retry) {
-				return nil, fmt.Errorf("gRPC check failed: %w", err)
-			}
-
 			data, dataErr := newGRPCData(monitor.Uri, monitor.Service, start)
 			if dataErr != nil {
 				return nil, dataErr
@@ -72,9 +72,19 @@ func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region st
 
 			data.RequestStatus = "error"
 			data.Error = 1
+			data.Latency = res.Latency
 			data.GRPCCode = res.GRPCCode
 			data.Message = err.Error()
 			data.Timing = marshalGRPCTiming(res.Timing)
+
+			// Only a call that never reached the server is worth repeating.
+			if called < int(retry) {
+				attempts = append(attempts, data)
+
+				return nil, fmt.Errorf("gRPC check failed: %w", err)
+			}
+
+			data.Attempts = attempts
 
 			return data, nil
 		}
@@ -117,6 +127,7 @@ func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region st
 		data.Error = errorFlag
 		data.Message = res.Message
 		data.Timing = marshalGRPCTiming(res.Timing)
+		data.Attempts = attempts
 
 		return data, nil
 	}

@@ -44,7 +44,18 @@ message IngestTCPRequest {
     string requestStatus = 8;
     int64 error = 9;
     string timing = 10;
+    // Failed attempts before this result, in order. Attempt n is at index n-1.
+    repeated TCPAttempt attempts = 11;
+}
 
+message TCPAttempt {
+    string id = 1;
+    int64 latency = 2;
+    int64 timestamp = 3;
+    string message = 4;
+    string requestStatus = 5;
+    int64 error = 6;
+    string timing = 7;
 }
 
 message IngestTCPResponse {
@@ -65,6 +76,21 @@ message IngestHTTPRequest {
     string timing = 11;
     int64 statusCode = 12;
     int64 error = 13;
+    // Failed attempts before this result, in order. Attempt n is at index n-1.
+    repeated HTTPAttempt attempts = 14;
+}
+
+message HTTPAttempt {
+    string id = 1;
+    int64 latency = 2;
+    int64 timestamp = 3;
+    string requestStatus = 4;
+    string message = 5;
+    string body = 6;
+    string headers = 7;
+    string timing = 8;
+    int64 statusCode = 9;
+    int64 error = 10;
 }
 
 message IngestHTTPResponse {
@@ -87,6 +113,19 @@ message IngestDNSRequest {
     map<string, Records>  records = 9;
     string timing = 10;
     int64 error = 11;
+    // Failed attempts before this result, in order. Attempt n is at index n-1.
+    repeated DNSAttempt attempts = 12;
+}
+
+message DNSAttempt {
+    string id = 1;
+    int64 latency = 2;
+    int64 timestamp = 3;
+    string requestStatus = 4;
+    string message = 5;
+    map<string, Records> records = 6;
+    string timing = 7;
+    int64 error = 8;
 }
 message IngestDNSResponse {
 
@@ -107,6 +146,22 @@ message IngestICMPRequest {
     string requestStatus = 12;
     int64 error = 13;
     string timing = 14;
+    // Failed attempts before this result, in order. Attempt n is at index n-1.
+    repeated ICMPAttempt attempts = 15;
+}
+
+message ICMPAttempt {
+    string id = 1;
+    int64 latency = 2;
+    int64 latencyMin = 3;
+    int64 latencyMax = 4;
+    int64 packetsSent = 5;
+    int64 packetsReceived = 6;
+    int64 timestamp = 7;
+    string message = 8;
+    string requestStatus = 9;
+    int64 error = 10;
+    string timing = 11;
 }
 
 message IngestICMPResponse {
@@ -127,6 +182,20 @@ message IngestGRPCRequest {
     string requestStatus = 11;
     int64 error = 12;
     string timing = 13;
+    // Failed attempts before this result, in order. Attempt n is at index n-1.
+    repeated GRPCAttempt attempts = 14;
+}
+
+message GRPCAttempt {
+    string id = 1;
+    int64 latency = 2;
+    int64 timestamp = 3;
+    string servingStatus = 4;
+    int64 grpcCode = 5;
+    string message = 6;
+    string requestStatus = 7;
+    int64 error = 8;
+    string timing = 9;
 }
 
 message IngestGRPCResponse {

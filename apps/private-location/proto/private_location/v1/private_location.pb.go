@@ -153,6 +153,8 @@ type IngestTCPRequest struct {
 	RequestStatus string                 `protobuf:"bytes,8,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
 	Error         int64                  `protobuf:"varint,9,opt,name=error,proto3" json:"error,omitempty"`
 	Timing        string                 `protobuf:"bytes,10,opt,name=timing,proto3" json:"timing,omitempty"`
+	// Failed attempts before this result, in order. Attempt n is at index n-1.
+	Attempts      []*TCPAttempt `protobuf:"bytes,11,rep,name=attempts,proto3" json:"attempts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -257,6 +259,105 @@ func (x *IngestTCPRequest) GetTiming() string {
 	return ""
 }
 
+func (x *IngestTCPRequest) GetAttempts() []*TCPAttempt {
+	if x != nil {
+		return x.Attempts
+	}
+	return nil
+}
+
+type TCPAttempt struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Latency       int64                  `protobuf:"varint,2,opt,name=latency,proto3" json:"latency,omitempty"`
+	Timestamp     int64                  `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Message       string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	RequestStatus string                 `protobuf:"bytes,5,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
+	Error         int64                  `protobuf:"varint,6,opt,name=error,proto3" json:"error,omitempty"`
+	Timing        string                 `protobuf:"bytes,7,opt,name=timing,proto3" json:"timing,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TCPAttempt) Reset() {
+	*x = TCPAttempt{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TCPAttempt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TCPAttempt) ProtoMessage() {}
+
+func (x *TCPAttempt) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TCPAttempt.ProtoReflect.Descriptor instead.
+func (*TCPAttempt) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *TCPAttempt) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *TCPAttempt) GetLatency() int64 {
+	if x != nil {
+		return x.Latency
+	}
+	return 0
+}
+
+func (x *TCPAttempt) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *TCPAttempt) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *TCPAttempt) GetRequestStatus() string {
+	if x != nil {
+		return x.RequestStatus
+	}
+	return ""
+}
+
+func (x *TCPAttempt) GetError() int64 {
+	if x != nil {
+		return x.Error
+	}
+	return 0
+}
+
+func (x *TCPAttempt) GetTiming() string {
+	if x != nil {
+		return x.Timing
+	}
+	return ""
+}
+
 type IngestTCPResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -265,7 +366,7 @@ type IngestTCPResponse struct {
 
 func (x *IngestTCPResponse) Reset() {
 	*x = IngestTCPResponse{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[3]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -277,7 +378,7 @@ func (x *IngestTCPResponse) String() string {
 func (*IngestTCPResponse) ProtoMessage() {}
 
 func (x *IngestTCPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[3]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -290,7 +391,7 @@ func (x *IngestTCPResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestTCPResponse.ProtoReflect.Descriptor instead.
 func (*IngestTCPResponse) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{3}
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{4}
 }
 
 type IngestHTTPRequest struct {
@@ -308,13 +409,15 @@ type IngestHTTPRequest struct {
 	Timing        string                 `protobuf:"bytes,11,opt,name=timing,proto3" json:"timing,omitempty"`
 	StatusCode    int64                  `protobuf:"varint,12,opt,name=statusCode,proto3" json:"statusCode,omitempty"`
 	Error         int64                  `protobuf:"varint,13,opt,name=error,proto3" json:"error,omitempty"`
+	// Failed attempts before this result, in order. Attempt n is at index n-1.
+	Attempts      []*HTTPAttempt `protobuf:"bytes,14,rep,name=attempts,proto3" json:"attempts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *IngestHTTPRequest) Reset() {
 	*x = IngestHTTPRequest{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[4]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -326,7 +429,7 @@ func (x *IngestHTTPRequest) String() string {
 func (*IngestHTTPRequest) ProtoMessage() {}
 
 func (x *IngestHTTPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[4]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -339,7 +442,7 @@ func (x *IngestHTTPRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestHTTPRequest.ProtoReflect.Descriptor instead.
 func (*IngestHTTPRequest) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{4}
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *IngestHTTPRequest) GetId() string {
@@ -433,6 +536,129 @@ func (x *IngestHTTPRequest) GetError() int64 {
 	return 0
 }
 
+func (x *IngestHTTPRequest) GetAttempts() []*HTTPAttempt {
+	if x != nil {
+		return x.Attempts
+	}
+	return nil
+}
+
+type HTTPAttempt struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Latency       int64                  `protobuf:"varint,2,opt,name=latency,proto3" json:"latency,omitempty"`
+	Timestamp     int64                  `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	RequestStatus string                 `protobuf:"bytes,4,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
+	Message       string                 `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
+	Body          string                 `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`
+	Headers       string                 `protobuf:"bytes,7,opt,name=headers,proto3" json:"headers,omitempty"`
+	Timing        string                 `protobuf:"bytes,8,opt,name=timing,proto3" json:"timing,omitempty"`
+	StatusCode    int64                  `protobuf:"varint,9,opt,name=statusCode,proto3" json:"statusCode,omitempty"`
+	Error         int64                  `protobuf:"varint,10,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HTTPAttempt) Reset() {
+	*x = HTTPAttempt{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HTTPAttempt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HTTPAttempt) ProtoMessage() {}
+
+func (x *HTTPAttempt) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HTTPAttempt.ProtoReflect.Descriptor instead.
+func (*HTTPAttempt) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *HTTPAttempt) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *HTTPAttempt) GetLatency() int64 {
+	if x != nil {
+		return x.Latency
+	}
+	return 0
+}
+
+func (x *HTTPAttempt) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *HTTPAttempt) GetRequestStatus() string {
+	if x != nil {
+		return x.RequestStatus
+	}
+	return ""
+}
+
+func (x *HTTPAttempt) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *HTTPAttempt) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+func (x *HTTPAttempt) GetHeaders() string {
+	if x != nil {
+		return x.Headers
+	}
+	return ""
+}
+
+func (x *HTTPAttempt) GetTiming() string {
+	if x != nil {
+		return x.Timing
+	}
+	return ""
+}
+
+func (x *HTTPAttempt) GetStatusCode() int64 {
+	if x != nil {
+		return x.StatusCode
+	}
+	return 0
+}
+
+func (x *HTTPAttempt) GetError() int64 {
+	if x != nil {
+		return x.Error
+	}
+	return 0
+}
+
 type IngestHTTPResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -441,7 +667,7 @@ type IngestHTTPResponse struct {
 
 func (x *IngestHTTPResponse) Reset() {
 	*x = IngestHTTPResponse{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[5]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -453,7 +679,7 @@ func (x *IngestHTTPResponse) String() string {
 func (*IngestHTTPResponse) ProtoMessage() {}
 
 func (x *IngestHTTPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[5]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -466,7 +692,7 @@ func (x *IngestHTTPResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestHTTPResponse.ProtoReflect.Descriptor instead.
 func (*IngestHTTPResponse) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{5}
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{7}
 }
 
 type Records struct {
@@ -478,7 +704,7 @@ type Records struct {
 
 func (x *Records) Reset() {
 	*x = Records{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[6]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -490,7 +716,7 @@ func (x *Records) String() string {
 func (*Records) ProtoMessage() {}
 
 func (x *Records) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[6]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -503,7 +729,7 @@ func (x *Records) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Records.ProtoReflect.Descriptor instead.
 func (*Records) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{6}
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Records) GetRecord() []string {
@@ -526,13 +752,15 @@ type IngestDNSRequest struct {
 	Records       map[string]*Records    `protobuf:"bytes,9,rep,name=records,proto3" json:"records,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Timing        string                 `protobuf:"bytes,10,opt,name=timing,proto3" json:"timing,omitempty"`
 	Error         int64                  `protobuf:"varint,11,opt,name=error,proto3" json:"error,omitempty"`
+	// Failed attempts before this result, in order. Attempt n is at index n-1.
+	Attempts      []*DNSAttempt `protobuf:"bytes,12,rep,name=attempts,proto3" json:"attempts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *IngestDNSRequest) Reset() {
 	*x = IngestDNSRequest{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[7]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -544,7 +772,7 @@ func (x *IngestDNSRequest) String() string {
 func (*IngestDNSRequest) ProtoMessage() {}
 
 func (x *IngestDNSRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[7]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -557,7 +785,7 @@ func (x *IngestDNSRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestDNSRequest.ProtoReflect.Descriptor instead.
 func (*IngestDNSRequest) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{7}
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *IngestDNSRequest) GetId() string {
@@ -637,6 +865,113 @@ func (x *IngestDNSRequest) GetError() int64 {
 	return 0
 }
 
+func (x *IngestDNSRequest) GetAttempts() []*DNSAttempt {
+	if x != nil {
+		return x.Attempts
+	}
+	return nil
+}
+
+type DNSAttempt struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Latency       int64                  `protobuf:"varint,2,opt,name=latency,proto3" json:"latency,omitempty"`
+	Timestamp     int64                  `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	RequestStatus string                 `protobuf:"bytes,4,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
+	Message       string                 `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
+	Records       map[string]*Records    `protobuf:"bytes,6,rep,name=records,proto3" json:"records,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Timing        string                 `protobuf:"bytes,7,opt,name=timing,proto3" json:"timing,omitempty"`
+	Error         int64                  `protobuf:"varint,8,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DNSAttempt) Reset() {
+	*x = DNSAttempt{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DNSAttempt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DNSAttempt) ProtoMessage() {}
+
+func (x *DNSAttempt) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DNSAttempt.ProtoReflect.Descriptor instead.
+func (*DNSAttempt) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *DNSAttempt) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *DNSAttempt) GetLatency() int64 {
+	if x != nil {
+		return x.Latency
+	}
+	return 0
+}
+
+func (x *DNSAttempt) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *DNSAttempt) GetRequestStatus() string {
+	if x != nil {
+		return x.RequestStatus
+	}
+	return ""
+}
+
+func (x *DNSAttempt) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *DNSAttempt) GetRecords() map[string]*Records {
+	if x != nil {
+		return x.Records
+	}
+	return nil
+}
+
+func (x *DNSAttempt) GetTiming() string {
+	if x != nil {
+		return x.Timing
+	}
+	return ""
+}
+
+func (x *DNSAttempt) GetError() int64 {
+	if x != nil {
+		return x.Error
+	}
+	return 0
+}
+
 type IngestDNSResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -645,7 +980,7 @@ type IngestDNSResponse struct {
 
 func (x *IngestDNSResponse) Reset() {
 	*x = IngestDNSResponse{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[8]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -657,7 +992,7 @@ func (x *IngestDNSResponse) String() string {
 func (*IngestDNSResponse) ProtoMessage() {}
 
 func (x *IngestDNSResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[8]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -670,7 +1005,7 @@ func (x *IngestDNSResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestDNSResponse.ProtoReflect.Descriptor instead.
 func (*IngestDNSResponse) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{8}
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{11}
 }
 
 type IngestICMPRequest struct {
@@ -689,13 +1024,15 @@ type IngestICMPRequest struct {
 	RequestStatus   string                 `protobuf:"bytes,12,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
 	Error           int64                  `protobuf:"varint,13,opt,name=error,proto3" json:"error,omitempty"`
 	Timing          string                 `protobuf:"bytes,14,opt,name=timing,proto3" json:"timing,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Failed attempts before this result, in order. Attempt n is at index n-1.
+	Attempts      []*ICMPAttempt `protobuf:"bytes,15,rep,name=attempts,proto3" json:"attempts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *IngestICMPRequest) Reset() {
 	*x = IngestICMPRequest{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[9]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -707,7 +1044,7 @@ func (x *IngestICMPRequest) String() string {
 func (*IngestICMPRequest) ProtoMessage() {}
 
 func (x *IngestICMPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[9]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -720,7 +1057,7 @@ func (x *IngestICMPRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestICMPRequest.ProtoReflect.Descriptor instead.
 func (*IngestICMPRequest) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{9}
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *IngestICMPRequest) GetId() string {
@@ -821,6 +1158,137 @@ func (x *IngestICMPRequest) GetTiming() string {
 	return ""
 }
 
+func (x *IngestICMPRequest) GetAttempts() []*ICMPAttempt {
+	if x != nil {
+		return x.Attempts
+	}
+	return nil
+}
+
+type ICMPAttempt struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Latency         int64                  `protobuf:"varint,2,opt,name=latency,proto3" json:"latency,omitempty"`
+	LatencyMin      int64                  `protobuf:"varint,3,opt,name=latencyMin,proto3" json:"latencyMin,omitempty"`
+	LatencyMax      int64                  `protobuf:"varint,4,opt,name=latencyMax,proto3" json:"latencyMax,omitempty"`
+	PacketsSent     int64                  `protobuf:"varint,5,opt,name=packetsSent,proto3" json:"packetsSent,omitempty"`
+	PacketsReceived int64                  `protobuf:"varint,6,opt,name=packetsReceived,proto3" json:"packetsReceived,omitempty"`
+	Timestamp       int64                  `protobuf:"varint,7,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Message         string                 `protobuf:"bytes,8,opt,name=message,proto3" json:"message,omitempty"`
+	RequestStatus   string                 `protobuf:"bytes,9,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
+	Error           int64                  `protobuf:"varint,10,opt,name=error,proto3" json:"error,omitempty"`
+	Timing          string                 `protobuf:"bytes,11,opt,name=timing,proto3" json:"timing,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ICMPAttempt) Reset() {
+	*x = ICMPAttempt{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ICMPAttempt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ICMPAttempt) ProtoMessage() {}
+
+func (x *ICMPAttempt) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ICMPAttempt.ProtoReflect.Descriptor instead.
+func (*ICMPAttempt) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ICMPAttempt) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ICMPAttempt) GetLatency() int64 {
+	if x != nil {
+		return x.Latency
+	}
+	return 0
+}
+
+func (x *ICMPAttempt) GetLatencyMin() int64 {
+	if x != nil {
+		return x.LatencyMin
+	}
+	return 0
+}
+
+func (x *ICMPAttempt) GetLatencyMax() int64 {
+	if x != nil {
+		return x.LatencyMax
+	}
+	return 0
+}
+
+func (x *ICMPAttempt) GetPacketsSent() int64 {
+	if x != nil {
+		return x.PacketsSent
+	}
+	return 0
+}
+
+func (x *ICMPAttempt) GetPacketsReceived() int64 {
+	if x != nil {
+		return x.PacketsReceived
+	}
+	return 0
+}
+
+func (x *ICMPAttempt) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *ICMPAttempt) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *ICMPAttempt) GetRequestStatus() string {
+	if x != nil {
+		return x.RequestStatus
+	}
+	return ""
+}
+
+func (x *ICMPAttempt) GetError() int64 {
+	if x != nil {
+		return x.Error
+	}
+	return 0
+}
+
+func (x *ICMPAttempt) GetTiming() string {
+	if x != nil {
+		return x.Timing
+	}
+	return ""
+}
+
 type IngestICMPResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -829,7 +1297,7 @@ type IngestICMPResponse struct {
 
 func (x *IngestICMPResponse) Reset() {
 	*x = IngestICMPResponse{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[10]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -841,7 +1309,7 @@ func (x *IngestICMPResponse) String() string {
 func (*IngestICMPResponse) ProtoMessage() {}
 
 func (x *IngestICMPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[10]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -854,7 +1322,7 @@ func (x *IngestICMPResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestICMPResponse.ProtoReflect.Descriptor instead.
 func (*IngestICMPResponse) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{10}
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{14}
 }
 
 type IngestGRPCRequest struct {
@@ -872,13 +1340,15 @@ type IngestGRPCRequest struct {
 	RequestStatus string                 `protobuf:"bytes,11,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
 	Error         int64                  `protobuf:"varint,12,opt,name=error,proto3" json:"error,omitempty"`
 	Timing        string                 `protobuf:"bytes,13,opt,name=timing,proto3" json:"timing,omitempty"`
+	// Failed attempts before this result, in order. Attempt n is at index n-1.
+	Attempts      []*GRPCAttempt `protobuf:"bytes,14,rep,name=attempts,proto3" json:"attempts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *IngestGRPCRequest) Reset() {
 	*x = IngestGRPCRequest{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[11]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -890,7 +1360,7 @@ func (x *IngestGRPCRequest) String() string {
 func (*IngestGRPCRequest) ProtoMessage() {}
 
 func (x *IngestGRPCRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[11]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -903,7 +1373,7 @@ func (x *IngestGRPCRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestGRPCRequest.ProtoReflect.Descriptor instead.
 func (*IngestGRPCRequest) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{11}
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *IngestGRPCRequest) GetId() string {
@@ -997,6 +1467,121 @@ func (x *IngestGRPCRequest) GetTiming() string {
 	return ""
 }
 
+func (x *IngestGRPCRequest) GetAttempts() []*GRPCAttempt {
+	if x != nil {
+		return x.Attempts
+	}
+	return nil
+}
+
+type GRPCAttempt struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Latency       int64                  `protobuf:"varint,2,opt,name=latency,proto3" json:"latency,omitempty"`
+	Timestamp     int64                  `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	ServingStatus string                 `protobuf:"bytes,4,opt,name=servingStatus,proto3" json:"servingStatus,omitempty"`
+	GrpcCode      int64                  `protobuf:"varint,5,opt,name=grpcCode,proto3" json:"grpcCode,omitempty"`
+	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
+	RequestStatus string                 `protobuf:"bytes,7,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
+	Error         int64                  `protobuf:"varint,8,opt,name=error,proto3" json:"error,omitempty"`
+	Timing        string                 `protobuf:"bytes,9,opt,name=timing,proto3" json:"timing,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GRPCAttempt) Reset() {
+	*x = GRPCAttempt{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GRPCAttempt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GRPCAttempt) ProtoMessage() {}
+
+func (x *GRPCAttempt) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GRPCAttempt.ProtoReflect.Descriptor instead.
+func (*GRPCAttempt) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *GRPCAttempt) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *GRPCAttempt) GetLatency() int64 {
+	if x != nil {
+		return x.Latency
+	}
+	return 0
+}
+
+func (x *GRPCAttempt) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *GRPCAttempt) GetServingStatus() string {
+	if x != nil {
+		return x.ServingStatus
+	}
+	return ""
+}
+
+func (x *GRPCAttempt) GetGrpcCode() int64 {
+	if x != nil {
+		return x.GrpcCode
+	}
+	return 0
+}
+
+func (x *GRPCAttempt) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *GRPCAttempt) GetRequestStatus() string {
+	if x != nil {
+		return x.RequestStatus
+	}
+	return ""
+}
+
+func (x *GRPCAttempt) GetError() int64 {
+	if x != nil {
+		return x.Error
+	}
+	return 0
+}
+
+func (x *GRPCAttempt) GetTiming() string {
+	if x != nil {
+		return x.Timing
+	}
+	return ""
+}
+
 type IngestGRPCResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1005,7 +1590,7 @@ type IngestGRPCResponse struct {
 
 func (x *IngestGRPCResponse) Reset() {
 	*x = IngestGRPCResponse{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[12]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1017,7 +1602,7 @@ func (x *IngestGRPCResponse) String() string {
 func (*IngestGRPCResponse) ProtoMessage() {}
 
 func (x *IngestGRPCResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[12]
+	mi := &file_private_location_v1_private_location_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1030,7 +1615,7 @@ func (x *IngestGRPCResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestGRPCResponse.ProtoReflect.Descriptor instead.
 func (*IngestGRPCResponse) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{12}
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{17}
 }
 
 var File_private_location_v1_private_location_proto protoreflect.FileDescriptor
@@ -1045,7 +1630,7 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\fdns_monitors\x18\x03 \x03(\v2\x1f.private_location.v1.DNSMonitorR\vdnsMonitors\x12E\n" +
 	"\ricmp_monitors\x18\x05 \x03(\v2 .private_location.v1.ICMPMonitorR\ficmpMonitors\x12E\n" +
 	"\rgrpc_monitors\x18\x06 \x03(\v2 .private_location.v1.GRPCMonitorR\fgrpcMonitors\x12\x16\n" +
-	"\x06region\x18\x04 \x01(\tR\x06region\"\x9e\x02\n" +
+	"\x06region\x18\x04 \x01(\tR\x06region\"\xdb\x02\n" +
 	"\x10IngestTCPRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
@@ -1057,8 +1642,18 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\rrequestStatus\x18\b \x01(\tR\rrequestStatus\x12\x14\n" +
 	"\x05error\x18\t \x01(\x03R\x05error\x12\x16\n" +
 	"\x06timing\x18\n" +
-	" \x01(\tR\x06timing\"\x13\n" +
-	"\x11IngestTCPResponse\"\xed\x02\n" +
+	" \x01(\tR\x06timing\x12;\n" +
+	"\battempts\x18\v \x03(\v2\x1f.private_location.v1.TCPAttemptR\battempts\"\xc2\x01\n" +
+	"\n" +
+	"TCPAttempt\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\alatency\x18\x02 \x01(\x03R\alatency\x12\x1c\n" +
+	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\x12\x18\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage\x12$\n" +
+	"\rrequestStatus\x18\x05 \x01(\tR\rrequestStatus\x12\x14\n" +
+	"\x05error\x18\x06 \x01(\x03R\x05error\x12\x16\n" +
+	"\x06timing\x18\a \x01(\tR\x06timing\"\x13\n" +
+	"\x11IngestTCPResponse\"\xab\x03\n" +
 	"\x11IngestHTTPRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
@@ -1075,10 +1670,25 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\n" +
 	"statusCode\x18\f \x01(\x03R\n" +
 	"statusCode\x12\x14\n" +
-	"\x05error\x18\r \x01(\x03R\x05error\"\x14\n" +
+	"\x05error\x18\r \x01(\x03R\x05error\x12<\n" +
+	"\battempts\x18\x0e \x03(\v2 .private_location.v1.HTTPAttemptR\battempts\"\x91\x02\n" +
+	"\vHTTPAttempt\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\alatency\x18\x02 \x01(\x03R\alatency\x12\x1c\n" +
+	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\x12$\n" +
+	"\rrequestStatus\x18\x04 \x01(\tR\rrequestStatus\x12\x18\n" +
+	"\amessage\x18\x05 \x01(\tR\amessage\x12\x12\n" +
+	"\x04body\x18\x06 \x01(\tR\x04body\x12\x18\n" +
+	"\aheaders\x18\a \x01(\tR\aheaders\x12\x16\n" +
+	"\x06timing\x18\b \x01(\tR\x06timing\x12\x1e\n" +
+	"\n" +
+	"statusCode\x18\t \x01(\x03R\n" +
+	"statusCode\x12\x14\n" +
+	"\x05error\x18\n" +
+	" \x01(\x03R\x05error\"\x14\n" +
 	"\x12IngestHTTPResponse\"!\n" +
 	"\aRecords\x12\x16\n" +
-	"\x06record\x18\x01 \x03(\tR\x06record\"\xc6\x03\n" +
+	"\x06record\x18\x01 \x03(\tR\x06record\"\x83\x04\n" +
 	"\x10IngestDNSRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
@@ -1091,11 +1701,25 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\arecords\x18\t \x03(\v22.private_location.v1.IngestDNSRequest.RecordsEntryR\arecords\x12\x16\n" +
 	"\x06timing\x18\n" +
 	" \x01(\tR\x06timing\x12\x14\n" +
-	"\x05error\x18\v \x01(\x03R\x05error\x1aX\n" +
+	"\x05error\x18\v \x01(\x03R\x05error\x12;\n" +
+	"\battempts\x18\f \x03(\v2\x1f.private_location.v1.DNSAttemptR\battempts\x1aX\n" +
+	"\fRecordsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x122\n" +
+	"\x05value\x18\x02 \x01(\v2\x1c.private_location.v1.RecordsR\x05value:\x028\x01\"\xe4\x02\n" +
+	"\n" +
+	"DNSAttempt\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\alatency\x18\x02 \x01(\x03R\alatency\x12\x1c\n" +
+	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\x12$\n" +
+	"\rrequestStatus\x18\x04 \x01(\tR\rrequestStatus\x12\x18\n" +
+	"\amessage\x18\x05 \x01(\tR\amessage\x12F\n" +
+	"\arecords\x18\x06 \x03(\v2,.private_location.v1.DNSAttempt.RecordsEntryR\arecords\x12\x16\n" +
+	"\x06timing\x18\a \x01(\tR\x06timing\x12\x14\n" +
+	"\x05error\x18\b \x01(\x03R\x05error\x1aX\n" +
 	"\fRecordsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x122\n" +
 	"\x05value\x18\x02 \x01(\v2\x1c.private_location.v1.RecordsR\x05value:\x028\x01\"\x13\n" +
-	"\x11IngestDNSResponse\"\xab\x03\n" +
+	"\x11IngestDNSResponse\"\xe9\x03\n" +
 	"\x11IngestICMPRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
@@ -1115,8 +1739,26 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\amessage\x18\v \x01(\tR\amessage\x12$\n" +
 	"\rrequestStatus\x18\f \x01(\tR\rrequestStatus\x12\x14\n" +
 	"\x05error\x18\r \x01(\x03R\x05error\x12\x16\n" +
-	"\x06timing\x18\x0e \x01(\tR\x06timing\"\x14\n" +
-	"\x12IngestICMPResponse\"\xfb\x02\n" +
+	"\x06timing\x18\x0e \x01(\tR\x06timing\x12<\n" +
+	"\battempts\x18\x0f \x03(\v2 .private_location.v1.ICMPAttemptR\battempts\"\xcf\x02\n" +
+	"\vICMPAttempt\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\alatency\x18\x02 \x01(\x03R\alatency\x12\x1e\n" +
+	"\n" +
+	"latencyMin\x18\x03 \x01(\x03R\n" +
+	"latencyMin\x12\x1e\n" +
+	"\n" +
+	"latencyMax\x18\x04 \x01(\x03R\n" +
+	"latencyMax\x12 \n" +
+	"\vpacketsSent\x18\x05 \x01(\x03R\vpacketsSent\x12(\n" +
+	"\x0fpacketsReceived\x18\x06 \x01(\x03R\x0fpacketsReceived\x12\x1c\n" +
+	"\ttimestamp\x18\a \x01(\x03R\ttimestamp\x12\x18\n" +
+	"\amessage\x18\b \x01(\tR\amessage\x12$\n" +
+	"\rrequestStatus\x18\t \x01(\tR\rrequestStatus\x12\x14\n" +
+	"\x05error\x18\n" +
+	" \x01(\x03R\x05error\x12\x16\n" +
+	"\x06timing\x18\v \x01(\tR\x06timing\"\x14\n" +
+	"\x12IngestICMPResponse\"\xb9\x03\n" +
 	"\x11IngestGRPCRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
@@ -1131,7 +1773,18 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	" \x01(\tR\amessage\x12$\n" +
 	"\rrequestStatus\x18\v \x01(\tR\rrequestStatus\x12\x14\n" +
 	"\x05error\x18\f \x01(\x03R\x05error\x12\x16\n" +
-	"\x06timing\x18\r \x01(\tR\x06timing\"\x14\n" +
+	"\x06timing\x18\r \x01(\tR\x06timing\x12<\n" +
+	"\battempts\x18\x0e \x03(\v2 .private_location.v1.GRPCAttemptR\battempts\"\x85\x02\n" +
+	"\vGRPCAttempt\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\alatency\x18\x02 \x01(\x03R\alatency\x12\x1c\n" +
+	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\x12$\n" +
+	"\rservingStatus\x18\x04 \x01(\tR\rservingStatus\x12\x1a\n" +
+	"\bgrpcCode\x18\x05 \x01(\x03R\bgrpcCode\x12\x18\n" +
+	"\amessage\x18\x06 \x01(\tR\amessage\x12$\n" +
+	"\rrequestStatus\x18\a \x01(\tR\rrequestStatus\x12\x14\n" +
+	"\x05error\x18\b \x01(\x03R\x05error\x12\x16\n" +
+	"\x06timing\x18\t \x01(\tR\x06timing\"\x14\n" +
 	"\x12IngestGRPCResponse2\xd2\x04\n" +
 	"\x16PrivateLocationService\x12Y\n" +
 	"\bMonitors\x12$.private_location.v1.MonitorsRequest\x1a%.private_location.v1.MonitorsResponse\"\x00\x12\\\n" +
@@ -1156,53 +1809,66 @@ func file_private_location_v1_private_location_proto_rawDescGZIP() []byte {
 	return file_private_location_v1_private_location_proto_rawDescData
 }
 
-var file_private_location_v1_private_location_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_private_location_v1_private_location_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_private_location_v1_private_location_proto_goTypes = []any{
 	(*MonitorsRequest)(nil),    // 0: private_location.v1.MonitorsRequest
 	(*MonitorsResponse)(nil),   // 1: private_location.v1.MonitorsResponse
 	(*IngestTCPRequest)(nil),   // 2: private_location.v1.IngestTCPRequest
-	(*IngestTCPResponse)(nil),  // 3: private_location.v1.IngestTCPResponse
-	(*IngestHTTPRequest)(nil),  // 4: private_location.v1.IngestHTTPRequest
-	(*IngestHTTPResponse)(nil), // 5: private_location.v1.IngestHTTPResponse
-	(*Records)(nil),            // 6: private_location.v1.Records
-	(*IngestDNSRequest)(nil),   // 7: private_location.v1.IngestDNSRequest
-	(*IngestDNSResponse)(nil),  // 8: private_location.v1.IngestDNSResponse
-	(*IngestICMPRequest)(nil),  // 9: private_location.v1.IngestICMPRequest
-	(*IngestICMPResponse)(nil), // 10: private_location.v1.IngestICMPResponse
-	(*IngestGRPCRequest)(nil),  // 11: private_location.v1.IngestGRPCRequest
-	(*IngestGRPCResponse)(nil), // 12: private_location.v1.IngestGRPCResponse
-	nil,                        // 13: private_location.v1.IngestDNSRequest.RecordsEntry
-	(*HTTPMonitor)(nil),        // 14: private_location.v1.HTTPMonitor
-	(*TCPMonitor)(nil),         // 15: private_location.v1.TCPMonitor
-	(*DNSMonitor)(nil),         // 16: private_location.v1.DNSMonitor
-	(*ICMPMonitor)(nil),        // 17: private_location.v1.ICMPMonitor
-	(*GRPCMonitor)(nil),        // 18: private_location.v1.GRPCMonitor
+	(*TCPAttempt)(nil),         // 3: private_location.v1.TCPAttempt
+	(*IngestTCPResponse)(nil),  // 4: private_location.v1.IngestTCPResponse
+	(*IngestHTTPRequest)(nil),  // 5: private_location.v1.IngestHTTPRequest
+	(*HTTPAttempt)(nil),        // 6: private_location.v1.HTTPAttempt
+	(*IngestHTTPResponse)(nil), // 7: private_location.v1.IngestHTTPResponse
+	(*Records)(nil),            // 8: private_location.v1.Records
+	(*IngestDNSRequest)(nil),   // 9: private_location.v1.IngestDNSRequest
+	(*DNSAttempt)(nil),         // 10: private_location.v1.DNSAttempt
+	(*IngestDNSResponse)(nil),  // 11: private_location.v1.IngestDNSResponse
+	(*IngestICMPRequest)(nil),  // 12: private_location.v1.IngestICMPRequest
+	(*ICMPAttempt)(nil),        // 13: private_location.v1.ICMPAttempt
+	(*IngestICMPResponse)(nil), // 14: private_location.v1.IngestICMPResponse
+	(*IngestGRPCRequest)(nil),  // 15: private_location.v1.IngestGRPCRequest
+	(*GRPCAttempt)(nil),        // 16: private_location.v1.GRPCAttempt
+	(*IngestGRPCResponse)(nil), // 17: private_location.v1.IngestGRPCResponse
+	nil,                        // 18: private_location.v1.IngestDNSRequest.RecordsEntry
+	nil,                        // 19: private_location.v1.DNSAttempt.RecordsEntry
+	(*HTTPMonitor)(nil),        // 20: private_location.v1.HTTPMonitor
+	(*TCPMonitor)(nil),         // 21: private_location.v1.TCPMonitor
+	(*DNSMonitor)(nil),         // 22: private_location.v1.DNSMonitor
+	(*ICMPMonitor)(nil),        // 23: private_location.v1.ICMPMonitor
+	(*GRPCMonitor)(nil),        // 24: private_location.v1.GRPCMonitor
 }
 var file_private_location_v1_private_location_proto_depIdxs = []int32{
-	14, // 0: private_location.v1.MonitorsResponse.http_monitors:type_name -> private_location.v1.HTTPMonitor
-	15, // 1: private_location.v1.MonitorsResponse.tcp_monitors:type_name -> private_location.v1.TCPMonitor
-	16, // 2: private_location.v1.MonitorsResponse.dns_monitors:type_name -> private_location.v1.DNSMonitor
-	17, // 3: private_location.v1.MonitorsResponse.icmp_monitors:type_name -> private_location.v1.ICMPMonitor
-	18, // 4: private_location.v1.MonitorsResponse.grpc_monitors:type_name -> private_location.v1.GRPCMonitor
-	13, // 5: private_location.v1.IngestDNSRequest.records:type_name -> private_location.v1.IngestDNSRequest.RecordsEntry
-	6,  // 6: private_location.v1.IngestDNSRequest.RecordsEntry.value:type_name -> private_location.v1.Records
-	0,  // 7: private_location.v1.PrivateLocationService.Monitors:input_type -> private_location.v1.MonitorsRequest
-	2,  // 8: private_location.v1.PrivateLocationService.IngestTCP:input_type -> private_location.v1.IngestTCPRequest
-	4,  // 9: private_location.v1.PrivateLocationService.IngestHTTP:input_type -> private_location.v1.IngestHTTPRequest
-	7,  // 10: private_location.v1.PrivateLocationService.IngestDNS:input_type -> private_location.v1.IngestDNSRequest
-	9,  // 11: private_location.v1.PrivateLocationService.IngestICMP:input_type -> private_location.v1.IngestICMPRequest
-	11, // 12: private_location.v1.PrivateLocationService.IngestGRPC:input_type -> private_location.v1.IngestGRPCRequest
-	1,  // 13: private_location.v1.PrivateLocationService.Monitors:output_type -> private_location.v1.MonitorsResponse
-	3,  // 14: private_location.v1.PrivateLocationService.IngestTCP:output_type -> private_location.v1.IngestTCPResponse
-	5,  // 15: private_location.v1.PrivateLocationService.IngestHTTP:output_type -> private_location.v1.IngestHTTPResponse
-	8,  // 16: private_location.v1.PrivateLocationService.IngestDNS:output_type -> private_location.v1.IngestDNSResponse
-	10, // 17: private_location.v1.PrivateLocationService.IngestICMP:output_type -> private_location.v1.IngestICMPResponse
-	12, // 18: private_location.v1.PrivateLocationService.IngestGRPC:output_type -> private_location.v1.IngestGRPCResponse
-	13, // [13:19] is the sub-list for method output_type
-	7,  // [7:13] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	20, // 0: private_location.v1.MonitorsResponse.http_monitors:type_name -> private_location.v1.HTTPMonitor
+	21, // 1: private_location.v1.MonitorsResponse.tcp_monitors:type_name -> private_location.v1.TCPMonitor
+	22, // 2: private_location.v1.MonitorsResponse.dns_monitors:type_name -> private_location.v1.DNSMonitor
+	23, // 3: private_location.v1.MonitorsResponse.icmp_monitors:type_name -> private_location.v1.ICMPMonitor
+	24, // 4: private_location.v1.MonitorsResponse.grpc_monitors:type_name -> private_location.v1.GRPCMonitor
+	3,  // 5: private_location.v1.IngestTCPRequest.attempts:type_name -> private_location.v1.TCPAttempt
+	6,  // 6: private_location.v1.IngestHTTPRequest.attempts:type_name -> private_location.v1.HTTPAttempt
+	18, // 7: private_location.v1.IngestDNSRequest.records:type_name -> private_location.v1.IngestDNSRequest.RecordsEntry
+	10, // 8: private_location.v1.IngestDNSRequest.attempts:type_name -> private_location.v1.DNSAttempt
+	19, // 9: private_location.v1.DNSAttempt.records:type_name -> private_location.v1.DNSAttempt.RecordsEntry
+	13, // 10: private_location.v1.IngestICMPRequest.attempts:type_name -> private_location.v1.ICMPAttempt
+	16, // 11: private_location.v1.IngestGRPCRequest.attempts:type_name -> private_location.v1.GRPCAttempt
+	8,  // 12: private_location.v1.IngestDNSRequest.RecordsEntry.value:type_name -> private_location.v1.Records
+	8,  // 13: private_location.v1.DNSAttempt.RecordsEntry.value:type_name -> private_location.v1.Records
+	0,  // 14: private_location.v1.PrivateLocationService.Monitors:input_type -> private_location.v1.MonitorsRequest
+	2,  // 15: private_location.v1.PrivateLocationService.IngestTCP:input_type -> private_location.v1.IngestTCPRequest
+	5,  // 16: private_location.v1.PrivateLocationService.IngestHTTP:input_type -> private_location.v1.IngestHTTPRequest
+	9,  // 17: private_location.v1.PrivateLocationService.IngestDNS:input_type -> private_location.v1.IngestDNSRequest
+	12, // 18: private_location.v1.PrivateLocationService.IngestICMP:input_type -> private_location.v1.IngestICMPRequest
+	15, // 19: private_location.v1.PrivateLocationService.IngestGRPC:input_type -> private_location.v1.IngestGRPCRequest
+	1,  // 20: private_location.v1.PrivateLocationService.Monitors:output_type -> private_location.v1.MonitorsResponse
+	4,  // 21: private_location.v1.PrivateLocationService.IngestTCP:output_type -> private_location.v1.IngestTCPResponse
+	7,  // 22: private_location.v1.PrivateLocationService.IngestHTTP:output_type -> private_location.v1.IngestHTTPResponse
+	11, // 23: private_location.v1.PrivateLocationService.IngestDNS:output_type -> private_location.v1.IngestDNSResponse
+	14, // 24: private_location.v1.PrivateLocationService.IngestICMP:output_type -> private_location.v1.IngestICMPResponse
+	17, // 25: private_location.v1.PrivateLocationService.IngestGRPC:output_type -> private_location.v1.IngestGRPCResponse
+	20, // [20:26] is the sub-list for method output_type
+	14, // [14:20] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_private_location_v1_private_location_proto_init() }
@@ -1221,7 +1887,7 @@ func file_private_location_v1_private_location_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_private_location_v1_private_location_proto_rawDesc), len(file_private_location_v1_private_location_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

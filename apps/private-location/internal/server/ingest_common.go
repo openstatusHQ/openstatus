@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/openstatushq/openstatus/apps/private-location/internal/database"
+	"github.com/openstatushq/openstatus/apps/private-location/internal/tinybird"
 )
 
 // dbTimeout bounds how long a single query waits for a pooled connection and runs.
@@ -89,6 +90,30 @@ func (h *privateLocationHandler) sendEventAndUpdateLastSeen(ctx context.Context,
 				"message": dbErr.Error(),
 				"type":    "last_seen_update",
 			}
+		}
+	}
+}
+
+// sendAttempts stores the failed attempts an agent sent with its result. They
+// are debugging detail, so a failed send is noted on the wide event and never
+// fails the ingest.
+func sendAttempts[T any](ctx context.Context, client tinybird.Client, attempts []T, dataSourceName string) {
+	if len(attempts) == 0 {
+		return
+	}
+
+	failed := 0
+	for _, attempt := range attempts {
+		if err := client.SendEvent(ctx, attempt, dataSourceName); err != nil {
+			failed++
+		}
+	}
+
+	if holder := GetEvent(ctx); holder != nil {
+		holder.Event["attempts"] = map[string]any{
+			"datasource": dataSourceName,
+			"count":      len(attempts),
+			"failed":     failed,
 		}
 	}
 }
