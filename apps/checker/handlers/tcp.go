@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -38,23 +39,9 @@ type TCPData struct {
 
 func (h Handler) TCPHandler(c *gin.Context) {
 	ctx := c.Request.Context()
-	dataSourceName := "tcp_response__v0"
 
-	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-
+	if !h.acceptCron(c) {
 		return
-	}
-
-	if h.CloudProvider == "fly" {
-		// if the request has been routed to a wrong region, we forward it to the correct one.
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
-			return
-		}
 	}
 
 	var req request.TCPCheckerRequest
@@ -65,43 +52,43 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		return
 	}
 
-	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+	setCheckerEvent(c, req.URI, req.WorkspaceID, req.MonitorID, cronTrigger(req.Trigger), "tcp")
 
-	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
+	response, err := h.RunTCPCheck(ctx, req)
+	if respondInvalid(c, err) {
+		return
+	}
 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+	returnData := c.Query("data")
+	if returnData == "true" {
+		c.JSON(http.StatusOK, response)
 
 		return
+	}
+
+	c.JSON(http.StatusOK, nil)
+}
+
+// RunTCPCheck probes and records one cron TCP check. A nil error means the
+// result was recorded, whether the monitor passed or not.
+func (h Handler) RunTCPCheck(ctx context.Context, req request.TCPCheckerRequest) (checker.TCPResponse, error) {
+	dataSourceName := "tcp_response__v0"
+
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
+	var response checker.TCPResponse
+
+	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
+	if err != nil {
+		return response, InvalidRequestError{Reason: "invalid request"}
 	}
 
 	monitorId, err := strconv.ParseInt(req.MonitorID, 10, 64)
-
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-
-		return
+		return response, InvalidRequestError{Reason: "invalid request"}
 	}
 
-	var trigger = "cron"
-	if req.Trigger != "" {
-		trigger = req.Trigger
-	}
-
-	e, f := c.Get("event")
-	if f {
-		t := e.(map[string]any)
-		t["checker"] = map[string]string{
-			"uri": req.URI,
-			"workspace_id": req.WorkspaceID,
-			"monitor_id":req.MonitorID,
-			"trigger": trigger,
-			"type": "tcp",
-		}
-		c.Set("event", t)
-	}
-
-	var response checker.TCPResponse
+	trigger := cronTrigger(req.Trigger)
 
 	var retry int
 	if req.Retry != 0 {
@@ -109,6 +96,8 @@ func (h Handler) TCPHandler(c *gin.Context) {
 	} else {
 		retry = 3
 	}
+
+	var recordErr error
 
 	op := func() (struct{}, error) {
 		res, err := checker.PingTCP(ctx, req.Timeout, req.URI)
@@ -204,6 +193,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+			recordErr = err
 		}
 
 		return struct{}{}, nil
@@ -214,7 +204,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		id, e := uuid.NewV7()
 		if e != nil {
 			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
-			return
+			return response, e
 		}
 		data := TCPData{
 			ID:            id.String(),
@@ -230,6 +220,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		}
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+			recordErr = err
 		}
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
@@ -246,14 +237,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		otelOS.RecordTCPMetrics(ctx, req, response, h.Region)
 	}
 
-	returnData := c.Query("data")
-	if returnData == "true" {
-		c.JSON(http.StatusOK, response)
-
-		return
-	}
-
-	c.JSON(http.StatusOK, nil)
+	return response, recordErr
 }
 
 func (h Handler) TCPHandlerRegion(c *gin.Context) {
