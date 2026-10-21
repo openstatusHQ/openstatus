@@ -34,11 +34,10 @@ import TrialEndingEmail, {
 import { sendBatchEmailHtml, sendEmail } from "./send";
 
 const RAW_FROM = "Thibault from openstatus <thibault@openstatus.dev>";
-// Signed hybrid: personal name on the system subdomain, replies to a real inbox.
-const SIGNED_FROM =
-  "Thibault from openstatus <thibault@notifications.openstatus.dev>";
+// Signed hybrid: personal name on the account subdomain, replies to a real inbox.
+const SIGNED_FROM = "Thibault from openstatus <thibault@mail.openstatus.dev>";
 const SIGNED_REPLY_TO = "thibault@openstatus.dev";
-const SYSTEM_FROM = "openstatus <notifications@notifications.openstatus.dev>";
+const SYSTEM_FROM = "openstatus <notifications@mail.openstatus.dev>";
 const SUPPORT_EMAIL = "ping@openstatus.dev";
 
 const DAY_MS = 86_400_000;

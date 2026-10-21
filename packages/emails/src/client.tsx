@@ -38,6 +38,8 @@ export function pageUpdateSubject(req: {
 }
 
 const SYSTEM_FROM = "openstatus <notifications@notifications.openstatus.dev>";
+const ACCOUNT_FROM = "openstatus <notifications@mail.openstatus.dev>";
+const SUBSCRIBERS_DOMAIN = "subscribers.openstatus.dev";
 const SUPPORT_EMAIL = "ping@openstatus.dev";
 
 // Deterministic Resend rejections: retrying the identical request can never
@@ -229,7 +231,7 @@ export class EmailClient {
               const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
-                from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
+                from: `${req.pageTitle} <notifications@${SUBSCRIBERS_DOMAIN}>`,
                 subject: pageUpdateSubject(req),
                 to: subscriber.email,
                 react: (
@@ -279,13 +281,11 @@ export class EmailClient {
     try {
       const html = await render(<TeamInvitationEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `${
-          req.workspaceName || "openstatus"
-        } <notifications@notifications.openstatus.dev>`,
+        from: ACCOUNT_FROM,
         replyTo: SUPPORT_EMAIL,
-        subject: `You've been invited to join ${
-          req.workspaceName || "openstatus"
-        }`,
+        subject: req.workspaceName
+          ? `${req.invitedBy} invited you to join ${req.workspaceName} on openstatus`
+          : `${req.invitedBy} invited you to join openstatus`,
         to: req.to,
         html,
       });
@@ -341,7 +341,7 @@ export class EmailClient {
     try {
       const html = await render(<PageSubscriptionEmail {...req} />);
       const result = await this.client.emails.send({
-        from: "Status Page <notifications@notifications.openstatus.dev>",
+        from: `Status Page <notifications@${SUBSCRIBERS_DOMAIN}>`,
         subject: `Confirm your subscription to ${req.page}`,
         to: req.to,
         html,
@@ -370,7 +370,7 @@ export class EmailClient {
     try {
       const html = await render(<StatusPageMagicLinkEmail {...req} />);
       const result = await this.client.emails.send({
-        from: "Status Page <notifications@notifications.openstatus.dev>",
+        from: `Status Page <notifications@${SUBSCRIBERS_DOMAIN}>`,
         subject: `Authenticate to ${req.page}`,
         to: req.to,
         html,
@@ -399,7 +399,7 @@ export class EmailClient {
 
     const html = await render(<DashboardMagicLinkEmail link={req.link} />);
     const result = await this.client.emails.send({
-      from: SYSTEM_FROM,
+      from: ACCOUNT_FROM,
       subject: "Sign in to openstatus",
       to: req.to,
       html,

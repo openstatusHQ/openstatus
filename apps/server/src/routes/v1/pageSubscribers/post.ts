@@ -112,7 +112,7 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
         link,
         page: _page.title,
       }),
-      from: "Status Page <notifications@notifications.openstatus.dev>",
+      from: "Status Page <notifications@subscribers.openstatus.dev>",
       to: [normalizedEmail],
       subject: `Confirm your subscription to ${_page.title}`,
     });
