@@ -17,7 +17,8 @@ SCHEMA >
     `trigger` Nullable(String) `json:$.trigger`,
     `id` Nullable(String) `json:$.id`,
     `requestStatus` Nullable(String) `json:$.requestStatus`,
-    `method` String `json:$.method`
+    `method` String `json:$.method`,
+    `attempts` UInt8 `json:$.attempts` DEFAULT 1
 
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(fromUnixTimestamp64Milli(cronTimestamp))"

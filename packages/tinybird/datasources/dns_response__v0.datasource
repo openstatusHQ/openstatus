@@ -13,7 +13,8 @@ SCHEMA >
     `timestamp` Int64 `json:$.timestamp`,
     `trigger` String `json:$.trigger`,
     `uri` String `json:$.uri`,
-    `workspaceId` Int16 `json:$.workspaceId`
+    `workspaceId` Int16 `json:$.workspaceId`,
+    `attempts` UInt8 `json:$.attempts` DEFAULT 1
 
 ENGINE "MergeTree"
 ENGINE_SORTING_KEY "trigger, uri, workspaceId"
