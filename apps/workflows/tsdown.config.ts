@@ -1,9 +1,15 @@
 import { defineConfig } from "tsdown";
 
 // Inline everything except the packages that can't be bundled: libsql loads a
-// native .node addon, and google-proto-files (under @google-cloud/tasks) reads
-// files via CJS __dirname. Those three ship as a side-car node_modules.
-const external = ["@libsql/client", "libsql", "@google-cloud/tasks"];
+// native .node addon, and google-gax / google-proto-files (under
+// @google-cloud/tasks and @google-cloud/pubsub) read files via CJS __dirname.
+// Those ship as a side-car node_modules.
+const external = [
+  "@libsql/client",
+  "libsql",
+  "@google-cloud/tasks",
+  "@google-cloud/pubsub",
+];
 
 export default defineConfig({
   entry: ["src/serve.ts"],
