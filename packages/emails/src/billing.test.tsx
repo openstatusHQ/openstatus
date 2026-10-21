@@ -584,7 +584,7 @@ describe("send plumbing", () => {
     const [payload, options] = send.mock.calls[0];
     expect(payload.to).toEqual(["max@acme.dev"]);
     expect(payload.from).toBe(
-      "Thibault from openstatus <thibault@notifications.openstatus.dev>",
+      "Thibault from openstatus <thibault@mail.openstatus.dev>",
     );
     expect(payload.replyTo).toBe("thibault@openstatus.dev");
     expect(payload.subject).toBe(
@@ -607,7 +607,7 @@ describe("send plumbing", () => {
       "b@acme.dev",
     ]);
     expect(emails[0].from).toBe(
-      "openstatus <notifications@notifications.openstatus.dev>",
+      "openstatus <notifications@mail.openstatus.dev>",
     );
     expect(emails[0].replyTo).toBe("ping@openstatus.dev");
     expect(emails[0].subject).toBe(
@@ -685,9 +685,7 @@ describe("send plumbing", () => {
     });
     expect(id).toBe("email_123");
     const [payload, options] = send.mock.calls[0];
-    expect(payload.from).toBe(
-      "openstatus <notifications@notifications.openstatus.dev>",
-    );
+    expect(payload.from).toBe("openstatus <notifications@mail.openstatus.dev>");
     expect(payload.replyTo).toBe("ping@openstatus.dev");
     expect(payload.scheduledAt).toBe("2026-09-22T00:00:00.000Z");
     expect(options).toEqual({
@@ -720,9 +718,7 @@ describe("send plumbing", () => {
       loss,
     });
     const [payload, options] = send.mock.calls[0];
-    expect(payload.from).toBe(
-      "openstatus <notifications@notifications.openstatus.dev>",
-    );
+    expect(payload.from).toBe("openstatus <notifications@mail.openstatus.dev>");
     expect(payload.replyTo).toBe("ping@openstatus.dev");
     expect(payload.subject).toBe(
       "Your trial ends on 25 Sep — add a payment method to keep starter",

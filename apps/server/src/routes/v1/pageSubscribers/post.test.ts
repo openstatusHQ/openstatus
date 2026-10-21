@@ -57,8 +57,8 @@ test("sends the same redesigned verification email as the status page form", asy
     expect(send).toHaveBeenCalledTimes(1);
     const payload = send.mock.calls[0][0];
     expect(payload.to).toEqual([email]);
-    expect(payload.from).toBe(
-      "Status Page <notifications@notifications.openstatus.dev>",
+    expect(payload.from).toMatch(
+      /^".+" <notifications@subscribers\.openstatus\.dev>$/,
     );
     expect(payload.subject).toMatch(/^Confirm your subscription to /);
     // the route calls the template as a function, so this is its <Layout>
