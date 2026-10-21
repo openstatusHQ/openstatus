@@ -176,6 +176,15 @@ export function getGetProcedure(period: "14d", type: Type) {
   }
 }
 
+export function getAttemptsProcedure(type: Type) {
+  if (type === "http") return tb.httpAttempts;
+  if (type === "tcp") return tb.tcpAttempts;
+  if (type === "dns") return tb.dnsAttempts;
+  if (type === "icmp") return tb.icmpAttempts;
+  if (type === "grpc") return tb.grpcAttempts;
+  throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
+}
+
 export function getGlobalMetricsProcedure(type: Type) {
   if (type === "http") return tb.httpGlobalMetricsDaily;
   if (type === "tcp") return tb.tcpGlobalMetricsDaily;
@@ -525,6 +534,33 @@ export const tinybirdRouter = createTRPCRouter({
         opts.input.period,
         _monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc",
       );
+      return await procedure(opts.input);
+    }),
+
+  attempts: protectedProcedure
+    .input(
+      z.object({
+        monitorId: z.string(),
+        region: z.string(),
+        cronTimestamp: z.int(),
+      }),
+    )
+    .query(async (opts) => {
+      const _monitor = await db.query.monitor.findFirst({
+        where: and(
+          eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
+        ),
+      });
+
+      if (!_monitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
+
+      const procedure = getAttemptsProcedure(_monitor.jobType as Type);
       return await procedure(opts.input);
     }),
 
