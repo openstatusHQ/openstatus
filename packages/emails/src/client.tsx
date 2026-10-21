@@ -26,6 +26,7 @@ import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link"
 import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
 import { env } from "./env";
+import { statusPageFrom } from "./sender";
 
 export function pageUpdateSubject(req: {
   status: PageUpdateProps["status"];
@@ -39,7 +40,6 @@ export function pageUpdateSubject(req: {
 
 const SYSTEM_FROM = "openstatus <notifications@notifications.openstatus.dev>";
 const ACCOUNT_FROM = "openstatus <notifications@mail.openstatus.dev>";
-const SUBSCRIBERS_DOMAIN = "subscribers.openstatus.dev";
 const SUPPORT_EMAIL = "ping@openstatus.dev";
 
 // Deterministic Resend rejections: retrying the identical request can never
@@ -231,7 +231,7 @@ export class EmailClient {
               const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
-                from: `${req.pageTitle} <notifications@${SUBSCRIBERS_DOMAIN}>`,
+                from: statusPageFrom(req.pageTitle),
                 subject: pageUpdateSubject(req),
                 to: subscriber.email,
                 react: (
@@ -341,7 +341,7 @@ export class EmailClient {
     try {
       const html = await render(<PageSubscriptionEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `Status Page <notifications@${SUBSCRIBERS_DOMAIN}>`,
+        from: statusPageFrom(req.page),
         subject: `Confirm your subscription to ${req.page}`,
         to: req.to,
         html,
@@ -370,7 +370,7 @@ export class EmailClient {
     try {
       const html = await render(<StatusPageMagicLinkEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `Status Page <notifications@${SUBSCRIBERS_DOMAIN}>`,
+        from: statusPageFrom(req.page),
         subject: `Authenticate to ${req.page}`,
         to: req.to,
         html,
