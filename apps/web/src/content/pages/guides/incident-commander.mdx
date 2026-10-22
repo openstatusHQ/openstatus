@@ -1,0 +1,222 @@
+---
+title: "Incident Commander"
+seo:
+  title: "What Does an Incident Commander Do? Role, Checklist, Handover"
+  description: "The incident commander coordinates the response, decides, and communicates. They do not debug. What the role covers, a checklist for the first ten minutes, how to hand over, and how a small team does it without an on-call rotation."
+description: "What the incident commander actually does during an outage, what they should refuse to do, a checklist for the first ten minutes, how to hand the role over, and how a three-person team fills it."
+author: "openstatus"
+publishedAt: "2026-10-22"
+category: "fundamentals"
+faq:
+  - question: "Does the incident commander need to be an engineer?"
+    answer: "No. The commander coordinates, decides and communicates; they do not need to be able to fix the problem. Many teams deliberately pick someone who is not the best-placed debugger, because that person should be debugging. What the commander needs is enough context to judge severity and impact, and the authority to make calls without asking permission."
+  - question: "Can the incident commander change during an incident?"
+    answer: "Yes, and for anything longer than a few hours it should. Hand over explicitly: the outgoing commander states the current status, what is known, what is being tried, when the next customer update is due, and who is doing what. The incoming commander confirms in the channel. A handover nobody announced is a gap nobody owns."
+  - question: "What is the difference between the incident commander and on-call?"
+    answer: "On-call is who gets paged and starts looking. The incident commander is who runs the response once it is declared. Often it is the same person for the first few minutes, but on-call's job is to fix, and the commander's job is to coordinate. When both are needed at once and only one person is awake, the commander role is the one to hand to the next person who joins."
+  - question: "Should the incident commander write the status page updates?"
+    answer: "The commander owns the decision to post and what the update must say. Writing it can be delegated to a communications lead, and on larger incidents it should be. On a small team the commander usually writes it, which is fine as long as writing the update is a scheduled task and not something that happens when there is a quiet moment."
+  - question: "What does the incident commander do after the incident?"
+    answer: "Make sure the postmortem happens. The commander has the clearest picture of what was decided and why, so they either write the first draft or review the one the team produces. They also own the handover from incident to action items: who is doing what, by when."
+---
+
+Every incident has a commander whether you name one or not. If nobody holds the
+role, it is whoever is loudest in the channel, and the first decision gets made twice
+by two people who did not know the other was deciding.
+
+Naming one person removes that. The incident commander, usually shortened to IC, is
+the single person responsible for how the response is run. Not for fixing the
+problem. For running the response.
+
+## What the incident commander does
+
+Three jobs, in order of how often they come up:
+
+**Coordinates.** Knows who is working on what. Pulls people in and sends people away.
+Keeps one conversation going instead of three. When two engineers are both about to
+roll back the same deploy, the commander is the one who notices.
+
+**Decides.** Severity. Whether to roll back or roll forward. Whether to page someone
+at 3 a.m. Whether the incident is mitigated. When to stop. The commander does not
+need to be the one with the best answer; they are the one who makes sure a decision
+gets made and that everyone knows what it was.
+
+**Communicates.** Owns the clock on customer updates. Decides what the status page
+says and when. Keeps the rest of the company from walking into the channel to ask
+"any update?". Internally, the commander is the person to ask. Externally, the
+commander decides what gets said.
+
+## What the incident commander does not do
+
+**Debug.** This is the rule that gets broken most. The moment the commander opens a
+terminal they stop coordinating, and the response goes back to being a group of
+people each solving their own version of the problem. If the commander is the only
+one who can fix it, hand the role to someone else and fix it.
+
+**Find the root cause.** During the incident the goal is to stop the impact. Root
+cause is the postmortem's job. A commander who lets the team chase "why" before
+service is restored extends the outage.
+
+**Do everything themselves.** Writing updates, keeping the timeline, paging people
+and talking to support are all things the commander is responsible for and none of
+them are things the commander has to do personally. On a larger incident, delegate
+the writing to a communications lead and the timeline to a scribe.
+
+## The first ten minutes
+
+A checklist for the person who just became commander:
+
+1. **Say so.** "I'm IC for this one." in the channel. Everyone now knows who to ask.
+2. **Set the severity.** Use the team's [severity matrix](/guides/incident-severity-matrix),
+   not a feeling. Severity sets the update cadence and who gets paged.
+3. **State what is known in one message.** Symptom, who is affected, since when.
+   Nothing about cause yet.
+4. **Post the first public update.** Within fifteen minutes of detection. "We are
+   investigating elevated errors on the checkout API. Next update at 10:15." The
+   [incident communication guide](/guides/incident-communication) has the wording
+   per stage.
+5. **Assign.** One person on the most likely cause, one person watching for the
+   fix landing, one person on comms if the incident is big enough. Name them.
+6. **Set the next checkpoint.** When the team regroups, and when the next customer
+   update goes out. Put both in the channel.
+
+Everything after that is a loop: check in, decide, update, repeat, until the impact
+stops.
+
+## Running the incident
+
+**Keep one place.** One channel. Decisions in the channel, not in direct messages.
+If a decision was made on a call, the commander writes it into the channel.
+
+**Keep the timeline as you go.** The postmortem will be written from it. The
+commander does not have to type it; pin the message where someone identified the
+cause, the message where the rollback was decided, the message where recovery was
+confirmed. Two hours later nobody remembers which came first.
+
+**Update on schedule, not on news.** "Still investigating, next update in 30
+minutes" is a complete update. Missing a promised update costs more than the outage.
+
+**Mitigate before you understand.** If a rollback stops the impact, roll back. The
+team can find out what was in the deploy after customers can check out again.
+
+**Call it.** Declaring the incident mitigated, then resolved, is the commander's
+call. So is declaring it a false alarm. Make the call explicitly so the team can
+stand down.
+
+## Handing over
+
+Incidents that run longer than a few hours need a new commander. Tired commanders
+make slow decisions. The handover is a message, not a feeling:
+
+- Current status and severity.
+- What is known and what is not.
+- What is being tried right now and by whom.
+- When the next customer update is due and what it should say.
+- Anything promised to anyone, including support and the customer who emailed the
+  CEO.
+
+The incoming commander repeats it back in the channel and says "I'm IC now." The
+outgoing commander leaves. If they stay in the channel they will keep deciding.
+
+## On a small team
+
+Three engineers, no on-call rotation, one of them is asleep. The commander is also
+the person fixing it. That is normal and it works, with two adjustments.
+
+**Separate the hats in time.** Spend the first five minutes as commander: severity,
+first public update, next checkpoint. Then fix. Set a timer for the next update so
+the commander hat comes back on whether or not the fix is done.
+
+**Hand off the moment someone else is awake.** The second person to join takes
+command, because the first person is already deep in the problem and should stay
+there.
+
+**Let the tooling hold the clock.** Reminders when the incident goes quiet, a drafted
+first status report, a timeline built from pinned messages. The fewer things the
+commander has to remember, the more of the role one person can carry.
+
+## Where the commander lives in openstatus
+
+The commander is a field on the incident, set when you
+[declare it](/incident-management#declare-from-slack-or-the-dashboard) from the
+dashboard, from Slack or from an agent, and changeable while the incident is open.
+Changing it is recorded on the timeline. Three things depend on it:
+
+- **Stale reminders.** An incident that goes quiet gets a reminder in its Slack
+  channel. Without a channel, the reminder goes to the commander as a direct
+  message.
+- **The postmortem.** The commander, an owner or an admin approves the drafted
+  postmortem. Approving closes the incident.
+- **Closing.** Only a resolved incident can be closed, and only by the commander, an
+  owner or an admin.
+
+The rest of the role is yours. The tooling keeps the record so that the person
+coordinating does not also have to be the person remembering. [How incident
+management works in openstatus](/incident-management) shows the whole flow from
+alert to postmortem, and the [incident management
+reference](/docs/reference/incident-management) has the rules.
+
+## Frequently asked questions
+
+<Details summary="Does the incident commander need to be an engineer?">
+
+No. The commander coordinates, decides and communicates; they do not need to be able
+to fix the problem. Many teams deliberately pick someone who is not the best-placed
+debugger, because that person should be debugging. What the commander needs is enough
+context to judge severity and impact, and the authority to make calls without asking
+permission.
+
+</Details>
+
+<Details summary="Can the incident commander change during an incident?">
+
+Yes, and for anything longer than a few hours it should. Hand over explicitly: the
+outgoing commander states the current status, what is known, what is being tried,
+when the next customer update is due, and who is doing what. The incoming commander
+confirms in the channel. A handover nobody announced is a gap nobody owns.
+
+</Details>
+
+<Details summary="What is the difference between the incident commander and on-call?">
+
+On-call is who gets paged and starts looking. The incident commander is who runs the
+response once it is declared. Often it is the same person for the first few minutes,
+but on-call's job is to fix, and the commander's job is to coordinate. When both are
+needed at once and only one person is awake, the commander role is the one to hand to
+the next person who joins.
+
+</Details>
+
+<Details summary="Should the incident commander write the status page updates?">
+
+The commander owns the decision to post and what the update must say. Writing it can
+be delegated to a communications lead, and on larger incidents it should be. On a
+small team the commander usually writes it, which is fine as long as writing the
+update is a scheduled task and not something that happens when there is a quiet
+moment.
+
+</Details>
+
+<Details summary="What does the incident commander do after the incident?">
+
+Make sure the postmortem happens. The commander has the clearest picture of what was
+decided and why, so they either write the first draft or review the one the team
+produces. They also own the handover from incident to action items: who is doing
+what, by when.
+
+</Details>
+
+---
+
+**Openstatus gives the commander one record: the alert, the timeline, the public
+update and the postmortem.** Open source. [See how incident management
+works](/incident-management) or start with [what incident management
+is](/guides/what-is-incident-management).
+
+<ButtonLink href="https://app.openstatus.dev">Declare your first incident</ButtonLink>
+
+---
+
+Start free. No credit card required.
+
+---

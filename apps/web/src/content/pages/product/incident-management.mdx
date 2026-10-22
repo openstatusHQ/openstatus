@@ -1,11 +1,11 @@
 ---
 title: "Incident Management"
 seo:
-  title: "Incident Management — Slack Channels, Timeline, Postmortems"
-  description: "Open source incident management next to your monitors and status page. Declare from Slack, get a channel per incident, keep a timeline and draft the postmortem."
+  title: "Incident Management Platform — Slack, Timeline, Postmortems"
+  description: "Open source incident management software next to your monitors and status page. Declare from Slack, get a channel per incident, keep one timeline, update the status page and draft the postmortem."
 hero: "Incident management for small teams"
 publishedAt: "2026-10-05"
-updatedAt: "2026-10-05"
+updatedAt: "2026-10-22"
 author: "Maximilian Kaske"
 description: "Declare an incident from Slack or the dashboard, run it in its own channel, keep one timeline and leave with a postmortem. Next to the monitors and the status page it belongs to."
 category: "Product"
@@ -76,7 +76,7 @@ Every status change, note and public update is timestamped as it happens. The po
 <Grid variant="borderless" sticky>
 <div>
 
-Run `/openstatus incident declare` with a title and a severity, approve the card, and the incident exists. The dashboard has the same form, with a commander, a start time you can set in the past and an open status report to link.
+Run `/openstatus incident declare` with a title and a severity, approve the card, and the incident exists. The dashboard has the same form, with a [commander](/guides/incident-commander), a start time you can set in the past and an open status report to link.
 
 - [Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)
 - [Status report reference](/docs/reference/status-report)
@@ -117,6 +117,7 @@ Already working in another channel? Link it instead, and the new one is archived
 
 If the incident goes quiet, the channel gets a reminder: after one hour for critical, four for major and a day for minor.
 
+- [Running incidents in Slack](/guides/slack-incident-management)
 - [Slack agent](/docs/guides/how-to-setup-slack-agent)
 - [Notification channels](/docs/reference/notification)
 
@@ -235,7 +236,7 @@ Every one of those steps is in the audit log with the person behind it, whicheve
 
 <Details summary="What is incident management?" headingLevel={3}>
 
-Incident management is how a team responds when something breaks: someone declares the incident, one person takes command, the team works the problem in one place, customers are kept informed, and afterwards a postmortem records what happened and what changes. Openstatus keeps the declaration, the timeline, the public status report and the postmortem in one record.
+Incident management is how a team responds when something breaks: someone declares the incident, one person takes command, the team works the problem in one place, customers are kept informed, and afterwards a postmortem records what happened and what changes. Openstatus keeps the declaration, the timeline, the public status report and the postmortem in one record. The longer version is in [what is incident management](/guides/what-is-incident-management).
 
 </Details>
 
