@@ -1,6 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { FakeTime } from "@std/testing/time";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { dayWindow } from "../day-window";
 import {
@@ -41,12 +39,11 @@ function bucket(date: string, overrides: Partial<StatusData> = {}): StatusData {
 }
 
 describe("fillStatusDataFor45Days in a time zone", () => {
-  let time: FakeTime;
   // 2026-10-16 05:00 in Tokyo, still 2026-10-15 in UTC
   beforeEach(() => {
-    time = new FakeTime(at("2026-10-15T20:00:00.000Z"));
+    vi.useFakeTimers({ now: at("2026-10-15T20:00:00.000Z") });
   });
-  afterEach(() => time.restore());
+  afterEach(() => vi.useRealTimers());
 
   test("ends on today's date in the zone", () => {
     expect(fillStatusDataFor45Days([], "1", 45, "Asia/Tokyo").at(-1)?.day).toBe(
