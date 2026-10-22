@@ -1,0 +1,291 @@
+---
+title: "Slack Incident Management"
+seo:
+  title: "Slack Incident Management: Setup Guide, Commands and Channels"
+  description: "How to run incidents in Slack: declare with a slash command, get a channel per incident, pin messages to the timeline, update the status page from the channel and leave with a drafted postmortem."
+description: "A setup guide for running incidents in Slack: one channel per incident, slash commands to declare and change status, a timeline built from pinned messages, a public update from the same channel, and a postmortem draft when it is over."
+author: "openstatus"
+publishedAt: "2026-10-22"
+category: "education"
+faq:
+  - question: "Do I need a separate Slack app for incidents?"
+    answer: "No. The openstatus Slack agent that subscribes channels to a status page is the same app that declares and runs incidents. If you installed it before incident management existed, go to Settings > Integrations and click Reconnect to grant the channel permissions."
+  - question: "What happens to the channel after the incident?"
+    answer: "The channel stays open while the incident is open, mitigated or resolved, so the postmortem can be drafted from it. It is archived when the incident is closed or canceled. Archived channels remain searchable in Slack."
+  - question: "Can I link an existing channel instead of getting a new one?"
+    answer: "Yes. When you declare from a channel your team is already working in, the bot posts a notice with a Link this channel instead button. Clicking it moves the incident there, pins the card in that channel and archives the inc- channel that was just created."
+  - question: "Does the bot read the whole channel?"
+    answer: "When you mention it, the agent reads the 50 messages before your mention, or the 20 before the thread you are in, and can page back further when it needs to. Slack message links in your message are read as well. The postmortem draft uses the incident channel's history. Declaring, changing status and approving the postmortem go through an approval card; a pinned message or a note lands on the timeline straight away, and nothing reaches the status page until you submit the form."
+  - question: "Can I run incidents without Slack?"
+    answer: "Yes. Declare, update, resolve and write the postmortem from the dashboard, or through the MCP server from an agent. Slack adds the channel per incident, slash commands, pinning to the timeline and stale reminders on top of the same incident record."
+---
+
+Most teams already run incidents in Slack. The problem is not Slack. It is that the
+incident has no record of its own: the alert lands in one channel, the discussion
+happens in a thread, the status page is updated from a browser tab, and two days later
+someone reconstructs the timeline from scrollback for the postmortem.
+
+This guide sets up the other way of doing it: one channel per incident, a slash
+command to declare and change status, a timeline that is built from the messages you
+pin, a public update posted from the same channel, and a postmortem drafted from all
+of it once the incident is resolved. It uses the openstatus Slack agent. Setup takes
+about five minutes.
+
+## Why one channel per incident
+
+A single `#incidents` channel works until two things go wrong at once. Then the
+rollback discussion for the checkout API is interleaved with the DNS problem, the
+person who joins late cannot tell which messages belong to which incident, and the
+pinned "current status" message is already stale.
+
+A channel per incident gives you:
+
+- **A name that says what it is.** `inc-2026-10-22-checkout-api-503s-in-eu` is
+  findable in Slack search next month. "The thread in #incidents from Tuesday" is not.
+- **A topic that is the current state.** Severity and status live in the channel
+  topic and are kept in sync, so nobody has to scroll to find out whether the incident
+  is still open.
+- **A scope for the record.** Everything in the channel is about this incident, so
+  the timeline and the postmortem can be built from it instead of from memory.
+- **A clean end.** The channel is archived when the incident is closed. It stays
+  searchable and stops being noise.
+
+## Setup
+
+1. In openstatus, go to **Settings** > **Integrations** and click **Add to Slack**.
+   The Slack agent is available on paid plans.
+2. Invite the bot to the channel you declare incidents from, for example
+   `#incidents`, with `/invite @openstatus`.
+3. If you installed the app before incident management existed, click **Reconnect**
+   in the same settings page. Incident channels need permissions the older install
+   did not ask for.
+
+The step-by-step version with screenshots is in [Set up the openstatus Slack
+agent](/docs/guides/how-to-setup-slack-agent).
+
+## Declare an incident
+
+From any channel the bot is in:
+
+```
+/openstatus incident declare Checkout API 503s in EU --sev major
+```
+
+The bot posts an approval card with the title and severity. Nothing exists until
+someone approves it. Once approved:
+
+- The incident is declared with you as the declarer.
+- A channel named `inc-YYYY-MM-DD-<title>` is created with the date in UTC.
+- You are invited, the topic is set to the severity and status with a link to the
+  incident, and the incident card is pinned at the top.
+
+Severity defaults to `major`. The three levels are `critical` for a major outage or
+data loss, `major` for significant degradation and `minor` for limited impact. If you
+do not have a shared definition of those yet, the [incident severity
+matrix](/guides/incident-severity-matrix) is the place to agree on one.
+
+Run `/openstatus incident declare` without a title to get a form instead, with a
+commander, a start time you can set in the past and an existing status report to
+link.
+
+### Already working in a channel?
+
+If your team opened a channel before anyone declared, declare from there. The bot
+posts a notice with **Link this channel instead**. Clicking it moves the incident
+into the channel you are in, pins the card there, and archives the `inc-` channel it
+just created. The move is recorded on the timeline.
+
+### Started by a monitor?
+
+When the incident began with an alert, declare it from the monitor's downtime row in
+the dashboard. The start time is filled in from the first failed check, so the
+duration counts from when users were affected and not from when someone got around to
+declaring. The channel is opened the same way. See [incident management in
+openstatus](/incident-management#from-the-monitor-that-caught-it) for how the
+monitor, the incident and the status page connect.
+
+## What the channel gives you
+
+The pinned card is the control surface for the incident. Its buttons:
+
+- **Update status** changes the status or severity, or posts an update to the
+  channel and the timeline.
+- **Update status page** publishes a status report linked to the incident, or adds
+  an update to the one already linked, with an option to notify subscribers.
+
+Right after the channel is created, the bot also posts a **Create a status report?**
+card with a drafted first public update. The draft is built from the incident and
+from the channel you declared in. When there is enough evidence it suggests the status
+page, the affected components and the time users were first affected. **Create status
+report** opens the form filled in. Nothing is published until you review and submit
+it. **Not needed** dismisses the card.
+
+## Keep the timeline from the channel
+
+The timeline is what the postmortem is written from, so it should hold the decisions
+and the facts, not every message. Three ways to put a message on it:
+
+1. Open the message's **⋯** menu and choose **Add to incident timeline**.
+2. React to it with 📌.
+3. Write a note directly:
+
+```
+/openstatus incident note Rolling back the 09:38 edge config deploy.
+```
+
+A pinned message becomes a timeline note attributed to its author, with a link back
+to the Slack message. Thread replies work too. The bot confirms with ✅.
+
+What is worth pinning: the message that identifies the cause, the decision to roll
+back, the moment someone confirms recovery, anything a customer was told outside the
+status page. What is not: "looking", "same here", and the forty messages in between.
+
+## Change the status
+
+```
+/openstatus incident mitigate Rollback complete in eu-west-1 and eu-west-2.
+/openstatus incident resolve
+```
+
+`cancel` and `reopen` work the same way. The note after the command lands on the
+timeline. Each change posts an approval card first, is announced in the channel, and
+updates the topic.
+
+The statuses: `open` while the impact is ongoing, `mitigated` once the impact has
+stopped but the cause is not fixed, `resolved` when it is fixed, `canceled` for a
+false alarm. Mitigate early and honestly. "The bleeding stopped, we do not yet know
+why" is a real state and your customers would rather hear it than wait for the full
+fix.
+
+Outside the incident's channel, name the incident: `/openstatus incident resolve
+#12`. `/openstatus incident status` shows where an incident stands and
+`/openstatus incident list` shows the open ones.
+
+### The status page is separate on purpose
+
+Resolving the incident does not resolve the public status report, and mitigating it
+does not post an update. The internal record and the public one keep their own status
+and their own wording. That is what lets the team mark the incident mitigated while
+the status page still says monitoring. Post the public update with **Update status
+page** on the card, in your own words. What to write at each stage is in [incident
+communication](/guides/incident-communication).
+
+## Stale reminders
+
+An incident that goes quiet gets a reminder in its channel. The threshold depends on
+severity:
+
+| Severity | First reminder after |
+| --- | --- |
+| `critical` | 1 hour |
+| `major` | 4 hours |
+| `minor` | 24 hours |
+
+If it stays quiet, the next reminders come at twice, four times and eight times that
+threshold. Without a channel, the reminder is sent as a direct message to the
+commander, or to the person who declared the incident.
+
+This is the fix for the incident that was mitigated on Friday, forgotten over the
+weekend, and found still open on Tuesday with no postmortem.
+
+## Draft the postmortem
+
+Once the incident is resolved:
+
+```
+/openstatus incident postmortem
+```
+
+The agent drafts a blameless postmortem from the incident's fields, the timeline, the
+linked status report's updates and the history of the channel. It has seven sections:
+summary, impact, timeline, root cause, what went well, what went wrong and action
+items. Where it has no facts it says what is unknown instead of guessing.
+
+The draft is posted with a card to approve it. Edit it in the dashboard first if you
+want. Approving from the card closes the incident, which freezes it and archives the
+channel. The dashboard separates the two: **Approve** keeps the incident open,
+**Approve & close** does both. The
+whole chain, from the alert through every status change to the approved postmortem,
+is in the audit log with the person behind each step.
+
+## Without Slack
+
+Everything above has a dashboard equivalent: declare from **Incidents**, from a
+monitor's downtime row or from a status report; add notes; change status; draft and
+approve the postmortem. Agents get the same tools through the [MCP
+server](/docs/reference/mcp-server#incidents), with an approval step before anything
+changes. Slack adds the channel, the slash commands, pinning and the reminders on top
+of the same record.
+
+## A runbook you can paste into the channel topic
+
+```
+1. /openstatus incident declare <title> --sev <critical|major|minor>
+2. Approve the "Create a status report?" card, or dismiss it
+3. Pin the message that identifies the cause (📌)
+4. /openstatus incident mitigate <what stopped the impact>
+5. Update status page from the pinned card
+6. /openstatus incident resolve
+7. /openstatus incident postmortem, then approve
+```
+
+## Frequently asked questions
+
+<Details summary="Do I need a separate Slack app for incidents?">
+
+No. The openstatus Slack agent that subscribes channels to a status page is the same
+app that declares and runs incidents. If you installed it before incident management
+existed, go to **Settings** > **Integrations** and click **Reconnect** to grant the
+channel permissions.
+
+</Details>
+
+<Details summary="What happens to the channel after the incident?">
+
+The channel stays open while the incident is open, mitigated or resolved, so the
+postmortem can be drafted from it. It is archived when the incident is closed or
+canceled. Archived channels remain searchable in Slack.
+
+</Details>
+
+<Details summary="Can I link an existing channel instead of getting a new one?">
+
+Yes. When you declare from a channel your team is already working in, the bot posts
+a notice with **Link this channel instead**. Clicking it moves the incident there,
+pins the card in that channel and archives the `inc-` channel that was just created.
+
+</Details>
+
+<Details summary="Does the bot read the whole channel?">
+
+When you mention it, the agent reads the 50 messages before your mention, or the 20
+before the thread you are in, and can page back further when it needs to. Slack
+message links in your message are read as well. The postmortem draft uses the
+incident channel's history. Declaring, changing status and approving the postmortem
+go through an approval card; a pinned message or a note lands on the timeline
+straight away, and nothing reaches the status page until you submit the form.
+
+</Details>
+
+<Details summary="Can I run incidents without Slack?">
+
+Yes. Declare, update, resolve and write the postmortem from the dashboard, or through
+the MCP server from an agent. Slack adds the channel per incident, slash commands,
+pinning to the timeline and stale reminders on top of the same incident record.
+
+</Details>
+
+---
+
+**Openstatus runs the incident next to the monitor that caught it and the status page
+that reports it.** Open source. [See how incident management
+works](/incident-management), or read the [incident management
+reference](/docs/reference/incident-management) for every command and rule.
+
+<ButtonLink href="https://app.openstatus.dev">Declare your first incident</ButtonLink>
+
+---
+
+Start free. No credit card required.
+
+---
