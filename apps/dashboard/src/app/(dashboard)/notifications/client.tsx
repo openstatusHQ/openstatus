@@ -1,8 +1,9 @@
 "use client";
 
-import { Notification } from "@openstatus/icons";
+import { ExternalLink, Notification } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import NextLink from "next/link";
 import { useQueryStates } from "nuqs";
 
 import { Link } from "@/components/common/link";
@@ -88,6 +89,16 @@ export function Client() {
                 <Button size="sm" asChild>
                   <a href="#notifier-channels">Choose a channel</a>
                 </Button>
+                <Button size="sm" variant="outline" asChild>
+                  <NextLink
+                    href="https://www.openstatus.dev/docs/reference/notification"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <ExternalLink />
+                    Read the docs
+                  </NextLink>
+                </Button>
               </EmptyStateActions>
             </DataTableEmpty>
           }
@@ -99,7 +110,7 @@ export function Client() {
           <SectionDescription>
             Define your notifications to receive alerts when downtime occurs.{" "}
             <Link
-              href="https://www.openstatus.dev/docs/reference/notification/"
+              href="https://www.openstatus.dev/docs/reference/notification"
               rel="noreferrer"
               target="_blank"
             >

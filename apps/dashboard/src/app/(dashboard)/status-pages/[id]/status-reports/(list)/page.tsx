@@ -163,8 +163,8 @@ export default function Page() {
               <EmptyStateTitle>Nothing to report</EmptyStateTitle>
               <EmptyStateDescription>
                 Nothing has been published on this page. When something breaks,
-                post a report here to keep visitors informed. Subscribers get
-                every update by email.
+                post a report here to keep visitors informed, and notify your
+                subscribers by email.
               </EmptyStateDescription>
               <EmptyStateActions>
                 <Button size="sm" onClick={() => setOpenCreate(true)}>

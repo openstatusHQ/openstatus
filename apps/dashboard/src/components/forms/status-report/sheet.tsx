@@ -38,7 +38,10 @@ export function FormSheetStatusReport({
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
-  const setOpen = onOpenChange ?? setInternalOpen;
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setInternalOpen(next);
+    onOpenChange?.(next);
+  };
 
   return (
     <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>

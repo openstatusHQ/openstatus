@@ -111,8 +111,8 @@ export function GlobalUptimeSection({
   }
 
   const definedMetrics = defineMetrics();
-  // a window with no checks has no uptime or latency, only a count of zero
-  const noData = !!metrics && !hasMetricsData(metrics);
+  // a window with no checks (or a failed fetch) has no uptime or latency
+  const noData = !metrics || !hasMetricsData(metrics);
 
   const refinedMetrics: (Metric | null)[] = (
     [

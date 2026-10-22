@@ -7,7 +7,7 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
 import NextLink from "next/link";
 import { useQueryStates } from "nuqs";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Link } from "@/components/common/link";
 import {
@@ -40,14 +40,7 @@ import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table
 import { getMonitorListMetrics } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 
-import { searchParamsParsers } from "./search-params";
-
-type MonitorStatus =
-  NonNullable<
-    (typeof searchParamsParsers)["status"]["parseServerSide"]
-  > extends (v: unknown) => infer R
-    ? NonNullable<R>
-    : never;
+import { type MonitorStatus, searchParamsParsers } from "./search-params";
 
 type MetricType = NonNullable<
   RouterInputs["tinybird"]["globalMetrics"]["type"]
@@ -81,10 +74,6 @@ export function Client() {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParsers);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const sortingRef = useRef(sorting);
-  const filtersRef = useRef(columnFilters);
-  sortingRef.current = sorting;
-  filtersRef.current = columnFilters;
 
   const metricQueries = useQueries({
     queries: METRIC_TYPES.map((type) => {
@@ -117,13 +106,12 @@ export function Client() {
   const metrics = getMonitorListMetrics(monitors, globalMetrics);
 
   // every filter or sort change goes through here, from the table or the cards,
-  // so the URL mirrors the state; refs keep two updates in one tick in order
+  // so the URL mirrors the state
   const onColumnFiltersChange: React.Dispatch<
     React.SetStateAction<ColumnFiltersState>
   > = (updater) => {
     const next =
-      typeof updater === "function" ? updater(filtersRef.current) : updater;
-    filtersRef.current = next;
+      typeof updater === "function" ? updater(columnFilters) : updater;
     setColumnFilters(next);
     const status = next.find((f) => f.id === "status")?.value as
       | MonitorStatus[]
@@ -133,9 +121,7 @@ export function Client() {
   const onSortingChange: React.Dispatch<React.SetStateAction<SortingState>> = (
     updater,
   ) => {
-    const next =
-      typeof updater === "function" ? updater(sortingRef.current) : updater;
-    sortingRef.current = next;
+    const next = typeof updater === "function" ? updater(sorting) : updater;
     setSorting(next);
     setSearchParams({ sort: next[0] ?? null });
   };

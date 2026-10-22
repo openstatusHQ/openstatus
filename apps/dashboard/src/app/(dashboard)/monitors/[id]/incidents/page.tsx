@@ -72,8 +72,8 @@ export default function Page() {
               </EmptyStateMedia>
               <EmptyStateTitle>No downtime recorded</EmptyStateTitle>
               <EmptyStateDescription>
-                A failed check opens a downtime entry here and alerts your
-                channels. Nothing has failed so far.
+                A failed check opens a downtime entry here and alerts the
+                channels linked to this monitor. Nothing has failed so far.
               </EmptyStateDescription>
             </DataTableEmpty>
           }

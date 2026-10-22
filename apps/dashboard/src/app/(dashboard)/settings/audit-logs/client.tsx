@@ -13,7 +13,6 @@ import {
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
 import {
-  EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
@@ -30,6 +29,7 @@ import { DataTableRowDetails } from "@/components/data-table/audit-logs-workspac
 import { AuditLogsDataTableToolbar } from "@/components/data-table/audit-logs-workspace/data-table-toolbar";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -102,7 +102,7 @@ export function Client() {
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: auditLogs } = useQuery(trpc.auditLog.list.queryOptions({}));
 
-  if (!workspace) return null;
+  if (!workspace || !auditLogs) return null;
 
   const isLimited = workspace.limits["audit-log"] === false;
 
@@ -158,7 +158,7 @@ export function Client() {
               limit="audit-log"
             />
           </BillingOverlayContainer>
-        ) : auditLogs?.items.length ? (
+        ) : (
           <DataTable
             columns={columns}
             data={auditLogs.items}
@@ -174,18 +174,19 @@ export function Client() {
               <DataTableRowDetails row={row.original} />
             )}
             paginationComponent={DataTablePaginationSimple}
+            emptyState={
+              <DataTableEmpty>
+                <EmptyStateMedia>
+                  <AuditLog />
+                </EmptyStateMedia>
+                <EmptyStateTitle>No audit logs yet</EmptyStateTitle>
+                <EmptyStateDescription>
+                  Every create, update and delete in this workspace is recorded
+                  here with who did it and when.
+                </EmptyStateDescription>
+              </DataTableEmpty>
+            }
           />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateMedia>
-              <AuditLog />
-            </EmptyStateMedia>
-            <EmptyStateTitle>No audit logs yet</EmptyStateTitle>
-            <EmptyStateDescription>
-              Every create, update and delete in this workspace is recorded here
-              with who did it and when.
-            </EmptyStateDescription>
-          </EmptyStateContainer>
         )}
       </Section>
     </SectionGroup>

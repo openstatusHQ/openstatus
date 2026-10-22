@@ -56,7 +56,7 @@ export function AuditLogsWrapper({
         </EmptyStateMedia>
         <EmptyStateTitle>Nothing yet</EmptyStateTitle>
         <EmptyStateDescription>
-          Status changes, incidents and configuration edits show up here.
+          Status changes, downtime and sent alerts show up here.
         </EmptyStateDescription>
       </EmptyStateContainer>
     );

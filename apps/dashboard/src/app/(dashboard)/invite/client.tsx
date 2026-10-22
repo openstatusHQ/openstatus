@@ -63,7 +63,7 @@ export function Client() {
               This invitation can&apos;t be opened.
             </SectionDescription>
           </SectionHeader>
-          <EmptyStateContainer className="py-8">
+          <EmptyStateContainer>
             <EmptyStateTitle>Invitation unavailable</EmptyStateTitle>
             <EmptyStateDescription className="font-mono">
               {error.message}

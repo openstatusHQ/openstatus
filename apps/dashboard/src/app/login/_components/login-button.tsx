@@ -29,11 +29,7 @@ export function LoginButton({
   return (
     <Button
       variant={variant}
-      className={cn(
-        "relative w-full",
-        isLastUsed && "border-primary border",
-        className,
-      )}
+      className={cn("relative w-full", className)}
       onClick={(e) => {
         localStorage.setItem(STORAGE_KEY, provider);
         onClick?.(e);
@@ -44,7 +40,8 @@ export function LoginButton({
       {isLastUsed ? (
         <Badge
           variant="outline"
-          className="text-muted-foreground absolute top-1/2 right-2 -translate-y-1/2 px-1.5 text-[10px] font-normal"
+          // inherits the button's text color so it reads on both variants
+          className="absolute top-1/2 right-2 -translate-y-1/2 border-transparent bg-current/10 px-1.5 text-[10px] font-normal text-current opacity-80"
         >
           Last used
         </Badge>

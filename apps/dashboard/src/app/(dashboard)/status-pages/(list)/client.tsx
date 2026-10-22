@@ -1,6 +1,6 @@
 "use client";
 
-import { StatusPage, Theme } from "@openstatus/icons";
+import { ExternalLink, StatusPage, Theme } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -71,6 +71,7 @@ export function Client() {
                 </Button>
                 <Button size="sm" variant="outline" asChild>
                   <Link href="https://status.openstatus.dev" target="_blank">
+                    <ExternalLink />
                     See an example
                   </Link>
                 </Button>

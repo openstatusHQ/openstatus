@@ -59,7 +59,7 @@ export function Client() {
                     <Button size="sm">Declare incident</Button>
                   </DeclareIncidentButton>
                   <Button size="sm" variant="outline" asChild>
-                    <Link href="/status-pages">Post a status report</Link>
+                    <Link href="/status-pages">Pick a status page</Link>
                   </Button>
                 </EmptyStateActions>
               </DataTableEmpty>

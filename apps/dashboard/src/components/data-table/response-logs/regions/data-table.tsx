@@ -91,12 +91,24 @@ export function RegionsDataTable({
             <EmptyStateMedia>
               <Globe />
             </EmptyStateMedia>
-            <EmptyStateTitle>No checks in this period</EmptyStateTitle>
-            <EmptyStateDescription>
-              None of the {data.length}{" "}
-              {data.length === 1 ? "region" : "regions"} reported. Pick a longer
-              period or wait for the next check.
-            </EmptyStateDescription>
+            {data.length === 0 ? (
+              <>
+                <EmptyStateTitle>No regions configured</EmptyStateTitle>
+                <EmptyStateDescription>
+                  Add a region or private location to the monitor to compare
+                  latency per region.
+                </EmptyStateDescription>
+              </>
+            ) : (
+              <>
+                <EmptyStateTitle>No checks in this period</EmptyStateTitle>
+                <EmptyStateDescription>
+                  None of the {data.length}{" "}
+                  {data.length === 1 ? "region" : "regions"} reported. Pick a
+                  longer period or wait for the next check.
+                </EmptyStateDescription>
+              </>
+            )}
           </EmptyStateContainer>
         }
       />

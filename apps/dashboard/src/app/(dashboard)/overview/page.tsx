@@ -7,7 +7,6 @@ import Link from "next/link";
 import { NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
-  EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
@@ -30,6 +29,7 @@ import {
   MetricCardValue,
 } from "@/components/metric/metric-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { buildOverviewData } from "@/data/overview-events.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -135,26 +135,26 @@ export default function Page() {
             Everything currently unresolved, newest first.
           </SectionDescription>
         </SectionHeader>
-        {needsAttention.length > 0 ? (
-          <DataTable
-            paginationComponent={DataTablePaginationSimple}
-            columns={columns}
-            data={needsAttention}
-            defaultSorting={[{ id: "startedAt", desc: true }]}
-            defaultColumnVisibility={{ duration: false, endsAt: false }}
-          />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateMedia variant="success">
-              <Success />
-            </EmptyStateMedia>
-            <EmptyStateTitle>All clear</EmptyStateTitle>
-            <EmptyStateDescription>
-              Nothing is unresolved. Open incidents, status reports and
-              maintenances show up here the moment they start.
-            </EmptyStateDescription>
-          </EmptyStateContainer>
-        )}
+        <DataTable
+          paginationComponent={DataTablePaginationSimple}
+          columns={columns}
+          data={needsAttention}
+          defaultSorting={[{ id: "startedAt", desc: true }]}
+          defaultColumnVisibility={{ duration: false, endsAt: false }}
+          emptyState={
+            <DataTableEmpty>
+              <EmptyStateMedia variant="success">
+                <Success />
+              </EmptyStateMedia>
+              <EmptyStateTitle>All clear</EmptyStateTitle>
+              <EmptyStateDescription>
+                {openIncidents
+                  ? "Nothing is unresolved. Failing monitors, open incidents and status reports show up here."
+                  : "Incidents could not be loaded. Failing monitors and open status reports still show up here."}
+              </EmptyStateDescription>
+            </DataTableEmpty>
+          }
+        />
       </Section>
       {upcomingMaintenances.length > 0 ? (
         <Section>
@@ -181,26 +181,25 @@ export default function Page() {
             last 7 days.
           </SectionDescription>
         </SectionHeader>
-        {recentlyResolved.length > 0 ? (
-          <DataTable
-            paginationComponent={DataTablePaginationSimple}
-            columns={columns}
-            data={recentlyResolved}
-            defaultSorting={[{ id: "startedAt", desc: true }]}
-            defaultColumnVisibility={{ action: false, endsAt: false }}
-          />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateMedia>
-              <Clock />
-            </EmptyStateMedia>
-            <EmptyStateTitle>No recent activity</EmptyStateTitle>
-            <EmptyStateDescription>
-              Resolved incidents and reports and completed maintenances from the
-              last 7 days land here.
-            </EmptyStateDescription>
-          </EmptyStateContainer>
-        )}
+        <DataTable
+          paginationComponent={DataTablePaginationSimple}
+          columns={columns}
+          data={recentlyResolved}
+          defaultSorting={[{ id: "startedAt", desc: true }]}
+          defaultColumnVisibility={{ action: false, endsAt: false }}
+          emptyState={
+            <DataTableEmpty>
+              <EmptyStateMedia>
+                <Clock />
+              </EmptyStateMedia>
+              <EmptyStateTitle>No recent activity</EmptyStateTitle>
+              <EmptyStateDescription>
+                Resolved incidents and reports and completed maintenances from
+                the last 7 days land here.
+              </EmptyStateDescription>
+            </DataTableEmpty>
+          }
+        />
       </Section>
     </SectionGroup>
   );

@@ -135,15 +135,14 @@ export function Client() {
   const noData = !!metrics && !hasMetricsData(metrics);
   // a paused monitor keeps its history; the paused card only fills an empty slot
   const paused = monitor?.active === false && noData;
-  const filteredOut = noData && !!selectedRegions?.length;
+  // free plans ignore the region filter server-side, so they keep every row
+  const filtersRegions =
+    workspace?.plan !== "free" && !!selectedRegions?.length;
+  const filteredOut = noData && filtersRegions;
   const maxPeriod = workspace?.plan === "free" ? FREE_MAX_PERIOD : "90d";
   const widerPeriod = PERIODS[PERIODS.indexOf(effectivePeriod) + 1];
   const canWiden =
     !!widerPeriod && PERIODS.indexOf(widerPeriod) <= PERIODS.indexOf(maxPeriod);
-
-  // free plans ignore the region filter server-side, so they keep every row
-  const filtersRegions =
-    workspace?.plan !== "free" && !!selectedRegions?.length;
 
   const regionMetrics: RegionMetric[] = React.useMemo(() => {
     const configured = [

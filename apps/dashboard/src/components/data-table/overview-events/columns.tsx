@@ -17,7 +17,6 @@ import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-report-update/sheet-create";
-import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { statusConfig as managedIncidentStatusConfig } from "@/data/managed-incidents.client";
 import {
   type OverviewEvent,
@@ -134,9 +133,8 @@ const baseColumns: ColumnDef<OverviewEvent>[] = [
   {
     id: "startedAt",
     accessorFn: (row) => getStartedAt(row),
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Start" />
-    ),
+    // sortable so the page's defaultSorting applies, but no toggle in the header
+    header: "Start",
     cell: ({ row }) => <TableCellDate value={row.getValue("startedAt")} />,
     enableHiding: false,
     meta: {

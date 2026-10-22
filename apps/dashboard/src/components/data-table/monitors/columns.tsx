@@ -234,7 +234,7 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p50");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellEmpty>No data</TableCellEmpty>;
+      if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,
@@ -251,7 +251,7 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p90");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellEmpty>No data</TableCellEmpty>;
+      if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,
@@ -269,7 +269,7 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p95");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellEmpty>No data</TableCellEmpty>;
+      if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   getMonitorListMetrics,
   getRegionAxisMax,
+  hasMetricsData,
   isPaidPeriod,
   mapMetrics,
   mapRegionMetrics,
@@ -52,6 +53,37 @@ describe("mapMetrics", () => {
       error: 1,
       lastTimestamp: 123,
     });
+  });
+});
+
+describe("hasMetricsData", () => {
+  function window(lastTimestamp: number | null) {
+    return {
+      p50Latency: 0,
+      p75Latency: 0,
+      p90Latency: 0,
+      p95Latency: 0,
+      p99Latency: 0,
+      count: 0,
+      success: 0,
+      degraded: 0,
+      error: 0,
+      lastTimestamp,
+    };
+  }
+
+  it("is false when only the previous window row exists", () => {
+    expect(hasMetricsData({ data: [window(null)] } as unknown as Metrics)).toBe(
+      false,
+    );
+  });
+
+  it("is true once the current window has a check", () => {
+    expect(
+      hasMetricsData({
+        data: [window(null), window(123)],
+      } as unknown as Metrics),
+    ).toBe(true);
   });
 });
 
@@ -175,8 +207,8 @@ describe("getMonitorListMetrics", () => {
     ]);
   });
 
-  it("shows N/A without latency data", () => {
+  it("shows an em dash without latency data", () => {
     const p95 = getMonitorListMetrics().find((m) => m.key === "p95");
-    expect(p95?.value).toBe("N/A");
+    expect(p95?.value).toBe("—");
   });
 });

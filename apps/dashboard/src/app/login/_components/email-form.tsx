@@ -57,7 +57,7 @@ export function EmailForm({
 
   if (state.sent) {
     return (
-      <EmptyStateContainer className="py-8">
+      <EmptyStateContainer>
         <Email className="text-muted-foreground size-5" />
         <EmptyStateTitle>Check your inbox</EmptyStateTitle>
         <EmptyStateDescription className="text-pretty">

@@ -1,8 +1,8 @@
 "use client";
 import type { RouterOutputs } from "@openstatus/api";
-import { Lock, PrivateLocation } from "@openstatus/icons";
+import { ExternalLink, Lock, PrivateLocation } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import NextLink from "next/link";
 import { useState } from "react";
 
@@ -28,7 +28,7 @@ import {
 } from "@/components/content/section";
 import { columns } from "@/components/data-table/private-locations/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
-import { FormSheetPrivateLocation } from "@/components/forms/private-location/sheet";
+import { FormSheetPrivateLocationCreate } from "@/components/forms/private-location/sheet-create";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
@@ -65,22 +65,12 @@ const EXAMPLES = [
 
 export function Client() {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const [openDialog, setOpenDialog] = useState(false);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: privateLocations } = useQuery(
     trpc.privateLocation.list.queryOptions(),
   );
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
-  const createPrivateLocationMutation = useMutation(
-    trpc.privateLocation.new.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.privateLocation.list.queryKey(),
-        });
-      },
-    }),
-  );
 
   if (!privateLocations || !workspace) return null;
 
@@ -144,27 +134,16 @@ export function Client() {
                   checker with its token.
                 </EmptyStateDescription>
                 <EmptyStateActions>
-                  <FormSheetPrivateLocation
-                    monitors={monitors ?? []}
-                    onSubmit={async (values) => {
-                      await createPrivateLocationMutation.mutateAsync({
-                        name: values.name,
-                        monitors: values.monitors,
-                        token: values.token,
-                        metadata: Object.fromEntries(
-                          values.metadata.map((m) => [m.key, m.value]),
-                        ),
-                      });
-                    }}
-                  >
+                  <FormSheetPrivateLocationCreate monitors={monitors ?? []}>
                     <Button size="sm">Create private location</Button>
-                  </FormSheetPrivateLocation>
+                  </FormSheetPrivateLocationCreate>
                   <Button size="sm" variant="outline" asChild>
                     <NextLink
                       href="https://www.openstatus.dev/docs/guides/how-to-create-private-location/"
                       target="_blank"
                       rel="noreferrer"
                     >
+                      <ExternalLink />
                       Read the setup guide
                     </NextLink>
                   </Button>

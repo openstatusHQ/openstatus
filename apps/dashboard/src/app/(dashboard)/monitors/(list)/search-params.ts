@@ -15,8 +15,16 @@ export const parseAsSort = createParser({
   },
 });
 
+export const MONITOR_STATUSES = [
+  "active",
+  "degraded",
+  "error",
+  "inactive",
+] as const;
+export type MonitorStatus = (typeof MONITOR_STATUSES)[number];
+
 export const searchParamsParsers = {
-  status: parseAsStringEnum(["active", "degraded", "error", "inactive"]),
+  status: parseAsStringEnum([...MONITOR_STATUSES]),
   sort: parseAsSort,
 };
 
