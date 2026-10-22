@@ -30,6 +30,7 @@ import {
   latencyFormatter,
   regionFormatter,
 } from "../../../../lib/checker/utils";
+import { APP_URL } from "../../../../lib/metadata/shared-metadata";
 import { toast } from "../../../../lib/toast";
 import { cn } from "../../../../lib/utils";
 import {
@@ -50,6 +51,9 @@ type CheckerContextType = {
   setFailures: React.Dispatch<React.SetStateAction<CheckerFailure[]>>;
   id: string | null;
   setId: React.Dispatch<React.SetStateAction<string | null>>;
+  // URL the current `values` belong to, for the monitor CTA.
+  url: string | null;
+  setUrl: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 const CheckerContext = createContext<CheckerContextType>({
@@ -59,17 +63,22 @@ const CheckerContext = createContext<CheckerContextType>({
   setFailures: () => {},
   id: null,
   setId: () => {},
+  url: null,
+  setUrl: () => {},
 });
 
 export function CheckerProvider({
   children,
   defaultValues = [],
+  defaultUrl = null,
 }: {
   children: React.ReactNode;
   defaultValues?: Values[];
+  defaultUrl?: string | null;
 }) {
   const [values, setValues] = useState<Values[]>(defaultValues);
   const [failures, setFailures] = useState<CheckerFailure[]>([]);
+  const [url, setUrl] = useState<string | null>(defaultUrl);
   const [{ id: urlId }, setSearchParams] = useQueryStates(searchParamsParsers);
   const [id, setId] = useState<string | null>(urlId);
 
@@ -96,6 +105,8 @@ export function CheckerProvider({
         setFailures,
         id,
         setId: updateId,
+        url,
+        setUrl,
       }}
     >
       {children}
@@ -118,7 +129,7 @@ export function Form({
   defaultMethod?: string;
   defaultUrl?: string;
 }) {
-  const { setValues, setFailures, setId } = useCheckerContext();
+  const { setValues, setFailures, setId, setUrl } = useCheckerContext();
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -141,6 +152,7 @@ export function Form({
     setValues([]);
     setFailures([]);
     setId(null); // This will also clear the URL param
+    setUrl(url);
 
     startTransition(async () => {
       async function fetchAndReadStream() {
@@ -484,6 +496,58 @@ export function DetailsButtonLink() {
         Response details
       </Link>
     </Button>
+  );
+}
+
+// Below 3× the regions are "even"; above it one region is the story.
+const SPREAD_RATIO = 3;
+
+export function MonitorCta() {
+  const { values, url } = useCheckerContext();
+
+  if (!url || values.length === 0) return null;
+
+  const sorted = [...values].sort((a, b) => a.latency - b.latency);
+  const fastest = sorted[0];
+  const slowest = sorted[sorted.length - 1];
+  const uneven =
+    sorted.length > 1 &&
+    fastest.latency > 0 &&
+    slowest.latency / fastest.latency >= SPREAD_RATIO;
+
+  const params = new URLSearchParams({ url, ref: "checker" });
+
+  return (
+    <div className="border-border bg-muted/30 mt-2 grid gap-4 border p-4 sm:grid-cols-3">
+      <div className="sm:col-span-2">
+        <p className="my-0! font-semibold">
+          {uneven
+            ? `${regionFormatter(slowest.region, "long")} answers in ${latencyFormatter(
+                slowest.latency,
+              )}, ${regionFormatter(fastest.region, "long")} in ${latencyFormatter(
+                fastest.latency,
+              )}.`
+            : "Response times look even across regions."}
+        </p>
+        <p className="text-muted-foreground my-0! text-sm">
+          {uneven
+            ? "One sample is a snapshot. Monitor this URL from all regions and get alerted when a region degrades. Free."
+            : "Keep it that way: monitor this URL on a schedule and get alerted when it slows down or fails. Free."}
+        </p>
+      </div>
+      <div className="flex items-center sm:col-span-1 sm:justify-end">
+        <Button asChild className="h-auto! rounded-none p-4 text-base">
+          <a
+            href={`${APP_URL}/monitors/create?${params.toString()}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-background! no-underline!"
+          >
+            Monitor this URL
+          </a>
+        </Button>
+      </div>
+    </div>
   );
 }
 

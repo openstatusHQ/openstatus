@@ -17,6 +17,28 @@ export function isStale(fetchedAtMs: number): boolean {
   return Date.now() - fetchedAtMs > STALE_THRESHOLD_MS;
 }
 
+export function getHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+// Directory rows carry the marketing site, which is what a visitor asking
+// "is it down for me?" wants probed; only http(s) can be checked.
+export function getCheckerHref(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return null;
+    }
+    return `/play/checker?${new URLSearchParams({ url: parsed.toString() })}`;
+  } catch {
+    return null;
+  }
+}
+
 // Upstream component names often already carry the provider ("Zoom AI" on
 // Zoom), so prefixing blindly yields "Zoom Zoom AI".
 export function getComponentFullName(

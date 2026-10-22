@@ -1,7 +1,9 @@
 ---
 category: Concepts
 title: Understanding Latency vs Response Time
-description: "Deep dive into the difference between latency and response time, and why both matter for monitoring"
+description: "Latency is network travel time, response time adds server processing. What each one measures, how to read them per region, and which one to monitor."
+seo:
+  title: "Latency vs Response Time: The Difference and How to Monitor Both"
 ---
 
 ## The confusion
@@ -12,7 +14,7 @@ Latency and response time are often used interchangeably, but they measure diffe
 - **Latency** measures network travel time
 - **Response time** measures total time including server processing
 
-Both metrics matter, but for different reasons. This page explains what each one measures and how to read them; if you are looking for target numbers, see [what is a good server response time?](/guides/what-is-a-good-response-time).
+Both metrics matter, but for different reasons. This page explains what each one measures and how to read them; if you are looking for target numbers, see [what is a good server response time?](/guides/what-is-a-good-response-time). To see both for your own URL, split per region into DNS, TCP, TLS and time to first byte, run the [website speed test](/play/checker).
 
 ## What is latency?
 

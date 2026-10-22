@@ -76,6 +76,24 @@ export function Client() {
   const pathname = usePathname();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const skipMutation = useMutation(trpc.track.onboardingSkip.mutationOptions());
+  const completeMutation = useMutation(
+    trpc.track.onboardingComplete.mutationOptions(),
+  );
+  const trackSkip = (step: "monitor" | "page") => {
+    skipMutation.mutate({ step });
+  };
+
+  // Once per visit of the launch step; the search params say how they got here.
+  const completedRef = useRef(false);
+  useEffect(() => {
+    if (step !== "3" || completedRef.current) return;
+    completedRef.current = true;
+    completeMutation.mutate({
+      monitor: monitor ?? "none",
+      page: page ?? "none",
+    });
+  }, [step, monitor, page, completeMutation]);
 
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: user } = useQuery(trpc.user.get.queryOptions());
@@ -215,7 +233,10 @@ export function Client() {
                 active: true,
               });
             }}
-            onSkip={() => setSearchParams({ monitor: "skipped", step: "2" })}
+            onSkip={() => {
+              trackSkip("monitor");
+              setSearchParams({ monitor: "skipped", step: "2" });
+            }}
             onContinue={() => {
               setSearchParams({ step: "2" });
               stopChecks();
@@ -267,7 +288,10 @@ export function Client() {
                 });
               }
             }}
-            onSkip={() => setSearchParams({ page: "skipped", step: "3" })}
+            onSkip={() => {
+              trackSkip("page");
+              setSearchParams({ page: "skipped", step: "3" });
+            }}
             onContinue={() => setSearchParams({ step: "3" })}
           />
         ) : null}

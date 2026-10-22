@@ -150,10 +150,10 @@ export async function generateStatusIndexMarkdown(): Promise<string> {
 
   let md = "---\n";
   md += `title: "External Status"\n`;
-  md += `description: "Current status of external services tracked by OpenStatus."\n`;
+  md += `description: "Current status of external services tracked by openstatus."\n`;
   md += "---\n\n";
   md += "# External Status\n\n";
-  md += "Current status of external services tracked by OpenStatus.\n\n";
+  md += "Current status of external services tracked by openstatus.\n\n";
   md += "| Service | Status | Provider | URL |\n";
   md += "| --- | --- | --- | --- |\n";
   for (const s of services) {
@@ -201,7 +201,7 @@ export async function generateStatusDetailMarkdown(
 
   let md = "---\n";
   md += `title: "${service.name} Status"\n`;
-  md += `description: "Current status of ${service.name}. Uptime history and recent incidents tracked by OpenStatus."\n`;
+  md += `description: "Current status of ${service.name}. Uptime history and recent incidents tracked by openstatus."\n`;
   md += "---\n\n";
   md += `# ${service.name} Status\n\n`;
 
