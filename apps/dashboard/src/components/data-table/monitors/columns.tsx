@@ -66,16 +66,16 @@ export const columns: ColumnDef<Monitor>[] = [
       }
     },
     filterFn: (row, _, value) => {
-      if (Array.isArray(value)) {
-        if (value.includes("inactive")) {
-          return !row.original.active;
-        }
-        if (value.includes("active")) {
+      const statuses: string[] = Array.isArray(value) ? value : [value];
+      // "inactive" is a paused monitor, "active" a running healthy one;
+      // every other status matches the monitor's status as-is
+      return statuses.some((status) => {
+        if (status === "inactive") return !row.original.active;
+        if (status === "active") {
           return !!row.original.active && row.original.status === "active";
         }
-        return value.includes(row.original.status);
-      }
-      return row.original.status === value;
+        return row.original.status === status;
+      });
     },
     enableSorting: false,
     enableHiding: false,
