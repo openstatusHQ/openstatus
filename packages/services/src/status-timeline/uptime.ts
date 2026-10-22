@@ -3,10 +3,9 @@ import {
   impactUptimeWeight,
 } from "@openstatus/db/src/schema";
 
+import { type DayWindow, dayWindow } from "./day-window";
 import { type WeightedInterval, mergedDowntimeMs } from "./downtime";
 import type { Event, StatusData } from "./events";
-
-export const MS_PER_DAY = 86_400_000;
 
 export type CheckCounts = { ok: number; degraded: number; error: number };
 
@@ -22,16 +21,14 @@ export type CoverageSegment = { start: number; end: number };
  * base. `clampEndMs` cuts the in-progress day to elapsed time.
  */
 export function dayCoverage(
-  dayStartsMs: number[],
+  days: DayWindow[],
   clampEndMs?: number,
 ): { segments: CoverageSegment[]; totalMs: number } {
   let totalMs = 0;
   const segments: CoverageSegment[] = [];
-  for (const start of dayStartsMs) {
+  for (const { start, end: dayEnd } of days) {
     const end =
-      clampEndMs === undefined
-        ? start + MS_PER_DAY
-        : Math.min(start + MS_PER_DAY, clampEndMs);
+      clampEndMs === undefined ? dayEnd : Math.min(dayEnd, clampEndMs);
     if (end <= start) continue;
     totalMs += end - start;
     segments.push({ start, end });
@@ -160,12 +157,12 @@ export function reportsOnlyDowntimeMs(
 export function probeDowntimeIntervals(
   data: StatusData[],
   window: UptimeWindow,
+  timeZone = "UTC",
 ): WeightedInterval[] {
   const intervals: WeightedInterval[] = [];
 
   for (const item of data) {
-    const dayStart = new Date(item.day).getTime();
-    const dayEnd = dayStart + MS_PER_DAY;
+    const { start: dayStart, end: dayEnd } = dayWindow(item.day, timeZone);
 
     // Clamp to window
     const start = Math.max(dayStart, window.start);

@@ -160,6 +160,7 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
+    "@date-fns/tz": "catalog:",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/importers": "workspace:*",

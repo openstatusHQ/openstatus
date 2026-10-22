@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 
+import { dayWindow } from "../day-window";
 import {
   activeReportStatus,
   type Event,
@@ -226,20 +227,20 @@ describe("isDateWithinEvent", () => {
   const event = makeEvent({ from: day("2026-01-10"), to: day("2026-01-12") });
 
   test("a day inside the window matches, including both boundaries", () => {
-    expect(isDateWithinEvent(day("2026-01-11"), event)).toBe(true);
-    expect(isDateWithinEvent(day("2026-01-10"), event)).toBe(true);
-    expect(isDateWithinEvent(day("2026-01-12"), event)).toBe(true);
+    expect(isDateWithinEvent(dayWindow("2026-01-11"), event)).toBe(true);
+    expect(isDateWithinEvent(dayWindow("2026-01-10"), event)).toBe(true);
+    expect(isDateWithinEvent(dayWindow("2026-01-12"), event)).toBe(true);
   });
 
   test("days outside the window do not match", () => {
-    expect(isDateWithinEvent(day("2026-01-09"), event)).toBe(false);
-    expect(isDateWithinEvent(day("2026-01-13"), event)).toBe(false);
+    expect(isDateWithinEvent(dayWindow("2026-01-09"), event)).toBe(false);
+    expect(isDateWithinEvent(dayWindow("2026-01-13"), event)).toBe(false);
   });
 
   test("an open-ended event runs up to now", () => {
     const open = makeEvent({ from: day("2020-01-01"), to: null });
-    expect(isDateWithinEvent(day("2021-01-01"), open)).toBe(true);
-    expect(isDateWithinEvent(day("2019-01-01"), open)).toBe(false);
+    expect(isDateWithinEvent(dayWindow("2021-01-01"), open)).toBe(true);
+    expect(isDateWithinEvent(dayWindow("2019-01-01"), open)).toBe(false);
   });
 });
 
@@ -335,14 +336,16 @@ describe("reportEventDayImpact", () => {
         },
       ],
     });
-    expect(reportEventDayImpact(event, day("2026-01-11"))).toBe("major_outage");
+    expect(reportEventDayImpact(event, dayWindow("2026-01-11"))).toBe(
+      "major_outage",
+    );
   });
 
   test("null when the event has no impact rows (legacy)", () => {
     expect(
       reportEventDayImpact(
         makeEvent({ impactIntervals: undefined }),
-        day("2026-01-11"),
+        dayWindow("2026-01-11"),
       ),
     ).toBeNull();
   });
@@ -357,7 +360,9 @@ describe("reportEventDayImpact", () => {
         },
       ],
     });
-    expect(reportEventDayImpact(event, day("2026-01-20"))).toBe("operational");
+    expect(reportEventDayImpact(event, dayWindow("2026-01-20"))).toBe(
+      "operational",
+    );
   });
 });
 
@@ -366,7 +371,7 @@ describe("reportEventDayStatus", () => {
     expect(
       reportEventDayStatus(
         makeEvent({ impactIntervals: undefined }),
-        day("2026-01-11"),
+        dayWindow("2026-01-11"),
       ),
     ).toBe("degraded");
   });
@@ -381,7 +386,7 @@ describe("reportEventDayStatus", () => {
         },
       ],
     });
-    expect(reportEventDayStatus(major, day("2026-01-11"))).toBe("error");
+    expect(reportEventDayStatus(major, dayWindow("2026-01-11"))).toBe("error");
 
     const noOverlap = makeEvent({
       impactIntervals: [
@@ -392,7 +397,9 @@ describe("reportEventDayStatus", () => {
         },
       ],
     });
-    expect(reportEventDayStatus(noOverlap, day("2026-01-20"))).toBe("success");
+    expect(reportEventDayStatus(noOverlap, dayWindow("2026-01-20"))).toBe(
+      "success",
+    );
   });
 });
 
