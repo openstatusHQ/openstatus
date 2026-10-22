@@ -16,6 +16,30 @@ describe("convertMdxToMarkdown", () => {
     expect(markdown).toContain("Answer.");
   });
 
+  test("frontmatter carries an absolute url, ISO dates and escaped quotes", () => {
+    const markdown = convertMdxToMarkdown({
+      metadata: {
+        title: 'Say "hi"',
+        publishedAt: new Date("2026-01-02"),
+        updatedAt: new Date("2026-03-04"),
+        description: "d",
+      },
+      content: "Body",
+      slug: "t",
+      href: "/blog/t",
+    } as Parameters<typeof convertMdxToMarkdown>[0]);
+    expect(markdown).toContain('title: "Say \\"hi\\""');
+    expect(markdown).toContain('url: "https://www.openstatus.dev/blog/t"');
+    expect(markdown).toContain('date: "2026-01-02"');
+    expect(markdown).toContain('updated: "2026-03-04"');
+  });
+
+  test("the home page resolves to the site root, not /home", () => {
+    const markdown = convertMdxToMarkdown(getHomePage());
+    expect(markdown).toContain('url: "https://www.openstatus.dev/"');
+    expect(markdown).not.toContain("openstatus.dev/home");
+  });
+
   test("the home page keeps every FAQ entry in its markdown representation", () => {
     const home = getHomePage();
     const markdown = convertMdxToMarkdown(home);

@@ -15,11 +15,8 @@ import {
 export const runtime = "nodejs";
 export const revalidate = 3600;
 
-const BASE = "https://www.openstatus.dev";
-
 function renderPage(page: MDXData): string {
-  const md = convertMdxToMarkdown(page);
-  return `<!-- ${BASE}${page.href} -->\n\n${md}`;
+  return convertMdxToMarkdown(page);
 }
 
 export function GET() {

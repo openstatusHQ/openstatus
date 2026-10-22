@@ -410,6 +410,19 @@ const nextConfig: NextConfig = {
             },
           ],
         },
+        // `.+` above needs at least one path character, so the home page
+        // gets its own rule.
+        {
+          source: "/",
+          destination: "/api/markdown",
+          has: [
+            {
+              type: "header",
+              key: "accept",
+              value: "(.*)text/markdown(.*)",
+            },
+          ],
+        },
       ],
     };
   },

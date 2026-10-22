@@ -1,6 +1,9 @@
 import { customers, getCustomer } from "../data/customers";
+import { canonicalUrl, frontmatter } from "./frontmatter";
 import type { MDXData } from "./utils";
-import { formatDate } from "./utils";
+
+// Agents parse these dates; the human form stays on the HTML page.
+const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 
 /**
  * Converts MDX content to clean markdown format for AI tools
@@ -10,26 +13,18 @@ export function convertMdxToMarkdown(data: MDXData): string {
   let output = "";
 
   // Step 0: Generate YAML frontmatter from metadata
-  const { metadata, content } = data;
+  const { metadata, content, href } = data;
 
-  output += "---\n";
-  output += `title: "${metadata.title}"\n`;
-  if (metadata.publishedAt) {
-    output += `date: ${formatDate(metadata.publishedAt)}\n`;
-  }
-  if (metadata.author) {
-    output += `author: "${metadata.author}"\n`;
-  }
-  if (metadata.description) {
-    output += `description: "${metadata.description}"\n`;
-  }
-  if (metadata.category) {
-    output += `category: "${metadata.category}"\n`;
-  }
-  if (metadata.image) {
-    output += `image: "${metadata.image}"\n`;
-  }
-  output += "---\n\n";
+  output += frontmatter({
+    title: metadata.title,
+    url: canonicalUrl(metadata.seo?.canonical ?? href),
+    date: metadata.publishedAt ? isoDate(metadata.publishedAt) : undefined,
+    updated: metadata.updatedAt ? isoDate(metadata.updatedAt) : undefined,
+    author: metadata.author,
+    description: metadata.description,
+    category: metadata.category,
+    image: metadata.image ? canonicalUrl(metadata.image) : undefined,
+  });
 
   // Step 1: Strip import statements (confirmed: always at top of file)
   let markdown = content.replace(/^import\s+.*$/gm, "");

@@ -33,6 +33,7 @@ import {
   BASE_URL,
   getPageMetadata,
   getSocialMetadata,
+  markdownAlternate,
 } from "../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
@@ -57,7 +58,7 @@ function getHubMetadata(title: string, href: string): Metadata {
   return {
     title,
     description: DOCS_DESCRIPTION,
-    alternates: { canonical: url },
+    alternates: { canonical: url, ...markdownAlternate(href) },
     ...getSocialMetadata({
       title,
       description: DOCS_DESCRIPTION,

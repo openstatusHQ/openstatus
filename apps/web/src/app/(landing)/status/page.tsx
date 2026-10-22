@@ -3,12 +3,12 @@ import { Suspense } from "react";
 
 import { ButtonLink } from "../../../content/mdx-components/button-link";
 import { CustomLink } from "../../../content/mdx-components/custom-link";
+import { sections } from "../../../content/sections";
 import {
   APP_URL,
   BASE_URL,
   defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
+  getListingMetadata,
 } from "../../../lib/metadata/shared-metadata";
 import { HydrateClient, api } from "../../../trpc/rq-server";
 import {
@@ -22,10 +22,6 @@ import { ServiceSearch } from "./service-search";
 
 export const dynamic = "force-dynamic";
 
-const TITLE = "External Status";
-const DESCRIPTION =
-  "Easily check if your external providers is working properly";
-
 export async function generateMetadata(props: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
@@ -33,25 +29,11 @@ export async function generateMetadata(props: {
   const hasQuery = q.trim() !== "";
 
   return {
-    ...defaultMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    alternates: {
-      canonical: "/status",
-    },
+    ...getListingMetadata({
+      ...sections.status,
+      ogImage: `${BASE_URL}/api/og/external-service`,
+    }),
     robots: hasQuery ? { index: false, follow: true } : defaultMetadata.robots,
-    openGraph: {
-      ...ogMetadata,
-      title: TITLE,
-      description: DESCRIPTION,
-      images: [`${BASE_URL}/api/og/external-service`],
-    },
-    twitter: {
-      ...twitterMetadata,
-      title: TITLE,
-      description: DESCRIPTION,
-      images: [`${BASE_URL}/api/og/external-service`],
-    },
   };
 }
 

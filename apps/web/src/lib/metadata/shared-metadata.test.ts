@@ -1,10 +1,13 @@
+import type { Metadata } from "next";
 import { describe, expect, test } from "vitest";
 
-import type { MDXData } from "../../content/utils";
+import { type MDXData, getHomePage } from "../../content/utils";
 import {
   BASE_URL,
+  DESCRIPTION,
   HOMEPAGE_TITLE,
   getHomeMetadata,
+  getListingMetadata,
   getPageMetadata,
   getSocialMetadata,
 } from "./shared-metadata";
@@ -119,9 +122,9 @@ describe("getPageMetadata", () => {
 });
 
 describe("getHomeMetadata", () => {
-  test("uses HOMEPAGE_TITLE, bypasses the title template and uses the static og image", () => {
+  test("uses the page title, bypasses the title template and uses the static og image", () => {
     const meta = getHomeMetadata(page());
-    expect(meta.title).toEqual({ absolute: HOMEPAGE_TITLE });
+    expect(meta.title).toEqual({ absolute: "My Post" });
     expect(meta.alternates?.canonical).toBe("/");
     expect(meta.twitter?.images).toEqual([`${BASE_URL}/api/og`]);
     expect(meta.openGraph?.url).toBe(BASE_URL);
@@ -134,5 +137,57 @@ describe("getHomeMetadata", () => {
     expect(meta.title).toEqual({ absolute: "Home SEO" });
     expect(meta.alternates?.canonical).toBe("/home");
     expect(meta.robots).toEqual({ index: false });
+  });
+});
+
+describe("getListingMetadata", () => {
+  test("derives canonical, og and twitter from one title/description/path", () => {
+    const meta = getListingMetadata({
+      title: "Blog & More",
+      description: "desc",
+      path: "/blog",
+    });
+    expect(meta.title).toBe("Blog & More");
+    expect(meta.alternates?.canonical).toBe("/blog");
+    expect(meta.openGraph?.url).toBe(`${BASE_URL}/blog`);
+    expect(meta.openGraph?.title).toBe("Blog & More");
+    expect(meta.twitter?.description).toBe("desc");
+    expect(twitterImage(meta)).toBe(
+      `${BASE_URL}/api/og?title=Blog+%26+More&description=desc`,
+    );
+  });
+
+  test("an explicit og image replaces the generated card", () => {
+    const meta = getListingMetadata({
+      title: "T",
+      description: "D",
+      path: "/status",
+      ogImage: `${BASE_URL}/api/og/external-service`,
+    });
+    expect(twitterImage(meta)).toBe(`${BASE_URL}/api/og/external-service`);
+  });
+});
+
+describe("markdown alternate", () => {
+  test("pages, listings and home point at their .md twin", () => {
+    const types = (meta: Metadata) =>
+      (meta.alternates?.types as Record<string, string>)["text/markdown"];
+    expect(types(getPageMetadata(page(), "blog"))).toBe(
+      `${BASE_URL}/blog/my-post.md`,
+    );
+    expect(
+      types(
+        getListingMetadata({ title: "T", description: "D", path: "/blog" }),
+      ),
+    ).toBe(`${BASE_URL}/blog.md`);
+    expect(types(getHomeMetadata(page()))).toBe(`${BASE_URL}/index.md`);
+  });
+});
+
+describe("home.mdx and the root-layout fallback", () => {
+  test("say the same thing, so neither drifts unnoticed", () => {
+    const home = getHomePage();
+    expect(home.metadata.title).toBe(HOMEPAGE_TITLE);
+    expect(home.metadata.description).toBe(DESCRIPTION);
   });
 });

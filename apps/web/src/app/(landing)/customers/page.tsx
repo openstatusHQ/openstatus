@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
 
 import { components } from "../../../content/mdx";
+import { sections } from "../../../content/sections";
 import { getCustomerPages } from "../../../content/utils";
 import { JsonLd } from "../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "../../../lib/metadata/shared-metadata";
+import { getListingMetadata } from "../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
-  getJsonLDBreadcrumbList,
   getJsonLDItemList,
   getJsonLDOrganization,
+  getJsonLDSectionBreadcrumb,
 } from "../../../lib/metadata/structured-data";
 import {
   ContentBoxDescription,
@@ -23,45 +19,20 @@ import {
 } from "../content-box";
 import { ContentBoxImage } from "../content-box-image";
 
-const TITLE = "Meet our customers";
-const DESCRIPTION =
-  "Real teams using openstatus to monitor uptime, latency, and run their status pages";
-
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: {
-    canonical: "/customers",
-  },
-  openGraph: {
-    ...ogMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-  twitter: {
-    ...twitterMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
-  },
-};
+export const metadata: Metadata = getListingMetadata(sections.customers);
 
 export default function CustomersListPage() {
   const pages = getCustomerPages();
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
-    getJsonLDBreadcrumbList([
-      { name: "Home", url: BASE_URL },
-      { name: "Customers", url: `${BASE_URL}/customers` },
-    ]),
+    getJsonLDSectionBreadcrumb(sections.customers),
     getJsonLDItemList(pages, "/customers"),
   ]);
   return (
     <section className="prose dark:prose-invert max-w-none">
       <JsonLd graph={jsonLDGraph} />
-      <h1>{TITLE}</h1>
-      <p className="text-lg">{DESCRIPTION}</p>
+      <h1>{sections.customers.title}</h1>
+      <p className="text-lg">{sections.customers.description}</p>
       <components.Grid cols={2}>
         {pages.map((page) => (
           <ContentBoxLink key={page.slug} href={`/customers/${page.slug}`}>

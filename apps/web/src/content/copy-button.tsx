@@ -1,5 +1,6 @@
 "use client";
 
+import { useOpenPanel } from "@openpanel/nextjs";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { ButtonGroup } from "@openstatus/ui/components/ui/button-group";
 import {
@@ -11,6 +12,7 @@ import {
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export function CopyButton({
@@ -43,9 +45,12 @@ export function CopyDropdownButton({
   className,
   ...props
 }: React.ComponentProps<typeof ButtonGroup>) {
+  const { track } = useOpenPanel();
   const { copy, isCopied } = useCopyToClipboard();
+  const [isMarkdownCopied, setIsMarkdownCopied] = useState(false);
 
   const handleCopyLink = () => {
+    track("content_copied", { kind: "link", path: window.location.pathname });
     copy(window.location.href, {
       successMessage: "Link copied to clipboard",
       withToast: true,
@@ -53,7 +58,13 @@ export function CopyDropdownButton({
   };
 
   const handleCopyMarkdown = async () => {
+    track("content_copied", {
+      kind: "markdown",
+      path: window.location.pathname,
+    });
     try {
+      // Safari only honors clipboard writes inside the click, so the fetch
+      // goes in as a promise instead of awaiting it first.
       const item = new ClipboardItem({
         "text/plain": fetch(window.location.pathname, {
           headers: { Accept: "text/markdown" },
@@ -66,6 +77,8 @@ export function CopyDropdownButton({
       });
 
       await navigator.clipboard.write([item]);
+      setIsMarkdownCopied(true);
+      setTimeout(() => setIsMarkdownCopied(false), 3000);
       toast.success("Markdown copied to clipboard");
     } catch (_error) {
       toast.error("Failed to copy markdown");
@@ -80,9 +93,9 @@ export function CopyDropdownButton({
       <Button
         variant="ghost"
         className="rounded-none p-4"
-        onClick={handleCopyLink}
+        onClick={handleCopyMarkdown}
       >
-        {isCopied ? "[link copied]" : "[copy link]"}
+        {isMarkdownCopied ? "[markdown copied]" : "[copy markdown]"}
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -108,9 +121,9 @@ export function CopyDropdownButton({
           <DropdownMenuGroup>
             <DropdownMenuItem
               className="rounded-none font-mono"
-              onClick={handleCopyMarkdown}
+              onClick={handleCopyLink}
             >
-              [copy markdown]
+              {isCopied ? "[link copied]" : "[copy link]"}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
