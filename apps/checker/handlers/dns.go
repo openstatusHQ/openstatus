@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -86,6 +87,8 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		return
 	}
 
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
 	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workspace id"})
@@ -142,12 +145,13 @@ func (h Handler) DNSHandler(c *gin.Context) {
 	op := func() (*checker.DnsResponse, error) {
 		called++
 		log.Ctx(ctx).Debug().Msgf("performing dns check for %s (attempt %d/%d)", req.URI, called, retry)
+		attemptCtx, cancel := dnsAttemptContext(ctx, req.Timeout)
+		defer cancel()
 		start := time.Now().UTC().UnixMilli()
-		response, err := checker.Dns(ctx, req.URI)
+		response, err := checker.Dns(attemptCtx, req.URI)
 		latency = time.Now().UTC().UnixMilli() - start
 
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("dns check failed")
 			return nil, err
 		}
 		if len(req.RawAssertions) > 0 {
@@ -167,7 +171,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		return response, nil
 	}
 
-	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
+	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)), backoff.WithMaxElapsedTime(retryBudget))
 	data.Latency = latency
 	if result != nil {
 		data.Records = checker.FormatDNSRecords(result)
@@ -273,6 +277,8 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		return
 	}
 
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
 	retry := defaultRetry
 	if req.Retry != 0 {
 		retry = int(req.Retry)
@@ -312,12 +318,13 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 	op := func() (*checker.DnsResponse, error) {
 		called++
 		log.Ctx(ctx).Debug().Msgf("performing dns check for %s (attempt %d/%d)", req.URI, called, retry)
+		attemptCtx, cancel := dnsAttemptContext(ctx, req.Timeout)
+		defer cancel()
 		start := time.Now().UTC().UnixMilli()
-		response, err := checker.Dns(ctx, req.URI)
+		response, err := checker.Dns(attemptCtx, req.URI)
 		latency = time.Now().UTC().UnixMilli() - start
 
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("dns check failed")
 			return nil, err
 		}
 		if len(req.RawAssertions) > 0 {
@@ -398,4 +405,13 @@ func EvaluateDNSAssertions(rawAssertions []json.RawMessage, response *checker.Dn
 		}
 	}
 	return true, nil
+}
+
+// dnsAttemptContext bounds one lookup attempt by the monitor timeout
+// (milliseconds), so a stalled resolver cannot outlive the retry budget.
+func dnsAttemptContext(ctx context.Context, timeoutMs int64) (context.Context, context.CancelFunc) {
+	if timeoutMs <= 0 {
+		return context.WithCancel(ctx)
+	}
+	return context.WithTimeout(ctx, time.Duration(timeoutMs)*time.Millisecond)
 }

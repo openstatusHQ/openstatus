@@ -159,24 +159,21 @@ export async function cancelSupersededSubscriptions(
 export async function cancelSubscription(customer?: string) {
   if (!customer) return;
 
-  try {
-    const { current } = await getCurrentSubscription(customer);
-    if (!current) return;
+  // Throws on Stripe failure so the caller never deletes an account whose
+  // subscription is still billing.
+  const { current } = await getCurrentSubscription(customer);
+  if (!current) return;
 
-    if (current.status === "trialing") {
-      return await stripe.subscriptions.cancel(current.id);
-    }
-
-    return await stripe.subscriptions.update(current.id, {
-      cancel_at_period_end: true,
-      cancellation_details: {
-        comment: "Customer deleted their OpenStatus project.",
-      },
-    });
-  } catch (error) {
-    console.log("Error cancelling Stripe subscription", error);
-    return;
+  if (current.status === "trialing") {
+    return await stripe.subscriptions.cancel(current.id);
   }
+
+  return await stripe.subscriptions.update(current.id, {
+    cancel_at_period_end: true,
+    cancellation_details: {
+      comment: "Customer deleted their OpenStatus project.",
+    },
+  });
 }
 
 export function customerIdOf(subscription: Stripe.Subscription) {

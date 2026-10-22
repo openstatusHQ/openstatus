@@ -6,8 +6,7 @@ import {
   createUser,
   createWorkspace,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { makeUserCtx } from "../../../test/helpers";
 import {

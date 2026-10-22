@@ -5,11 +5,10 @@ import {
   createPageComponent,
   createTestWorkspace,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { NextRequest } from "next/server.js";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { appRouter } from "../root";
 import { createInnerTRPCContext, createTRPCContext } from "../trpc";

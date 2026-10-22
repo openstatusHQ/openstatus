@@ -78,7 +78,7 @@ The duration after which a DNS response is considered degraded. This indicates a
 **Type:** Integer (optional)
 **Default:** `3`
 
-The number of times the monitor will retry a failed DNS lookup before reporting a definitive failure. For example: `3`
+The total number of lookup attempts made for each check, including the first one. With `3`, a failing lookup is tried up to three times in the same region before the check is reported as failed. `0` is treated as the default (`3`); there is no setting that disables retries, so `1` means a single attempt.
 
 ### Assertions
 

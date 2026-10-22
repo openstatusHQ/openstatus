@@ -65,6 +65,8 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		return
 	}
 
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
 	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
 
 	if err != nil {
@@ -109,7 +111,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 	}
 
 	op := func() (struct{}, error) {
-		res, err := checker.PingTCP(int(req.Timeout), req.URI)
+		res, err := checker.PingTCP(ctx, req.Timeout, req.URI)
 
 		if err != nil {
 			return struct{}{}, fmt.Errorf("unable to check tcp %s", err)
@@ -207,7 +209,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		return struct{}{}, nil
 	}
 
-	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry))); err != nil {
+	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)), backoff.WithMaxElapsedTime(retryBudget)); err != nil {
 
 		id, e := uuid.NewV7()
 		if e != nil {
@@ -291,6 +293,8 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		return
 	}
 
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
 	var called int
 
 	var response checker.TCPResponse
@@ -298,7 +302,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 	op := func() (struct{}, error) {
 		called++
 		timestamp := time.Now().UTC().UnixMilli()
-		res, err := checker.PingTCP(int(req.Timeout), req.URI)
+		res, err := checker.PingTCP(ctx, req.Timeout, req.URI)
 
 		if err != nil {
 			return struct{}{}, fmt.Errorf("unable to check tcp %s", err)

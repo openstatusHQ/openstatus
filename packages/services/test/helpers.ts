@@ -1,16 +1,47 @@
-import { and, db, desc, eq, inArray } from "@openstatus/db";
+import { and, db, desc, eq, inArray, sql } from "@openstatus/db";
 import {
   type Scope,
   auditLog,
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
+import { expect } from "vitest";
 
 import type { Actor, DB, DrizzleTx, ServiceContext } from "../src/context";
+import { isRetryableDbError } from "../src/retry";
 import type { Workspace } from "../src/types";
 
 class RollbackSignal extends Error {}
+
+/** The transaction never started: `fn` did not run, so it's safe to retry. */
+class BeginFailed extends Error {
+  constructor(readonly original: unknown) {
+    super("test transaction failed to begin");
+  }
+}
+
+// `db.transaction()` opens with `BEGIN IMMEDIATE`, so every test transaction
+// takes the single write lock up front. Parallel test files queue on it, and a
+// waiter that loses gets SQLITE_BUSY ("database is locked") or sqld's
+// TRANSACTION_TIMEOUT — surfaced on the test's first query, since libsql
+// pipelines BEGIN with it.
+const BEGIN_MAX_ATTEMPTS = 8;
+const BEGIN_BASE_DELAY_MS = 50;
+const BEGIN_MAX_DELAY_MS = 1_000;
+
+function isLockContention(err: unknown): boolean {
+  if (isRetryableDbError(err)) return true;
+  let current: unknown = err;
+  for (let depth = 0; depth < 10; depth++) {
+    if (typeof current !== "object" || current === null) return false;
+    if ("code" in current && current.code === "TRANSACTION_TIMEOUT") {
+      return true;
+    }
+    if (!("cause" in current) || current.cause === current) return false;
+    current = current.cause;
+  }
+  return false;
+}
 
 /**
  * Wrap a test body in a transaction that always rolls back, so per-test
@@ -30,13 +61,43 @@ class RollbackSignal extends Error {}
  *   - Inside the callback, replace any `db.select(...)` /
  *     `db.insert(...)` / `db.delete(...)` with the same call on `tx`.
  *     Reads via committed `db` will not see the in-tx writes.
+ *
+ * Lock contention while BEGIN acquires the write lock is retried with
+ * backoff. Once the transaction has started, `fn` holds the lock, so its
+ * own queries are never retried (and `fn` never runs twice).
  */
 export async function withTestTransaction<T>(
   fn: (tx: DrizzleTx) => Promise<T>,
 ): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await runRolledBack(fn);
+    } catch (e) {
+      if (!(e instanceof BeginFailed)) throw e;
+      if (attempt >= BEGIN_MAX_ATTEMPTS || !isLockContention(e.original)) {
+        throw e.original;
+      }
+      const delay = Math.min(
+        BEGIN_BASE_DELAY_MS * 2 ** (attempt - 1),
+        BEGIN_MAX_DELAY_MS,
+      );
+      await new Promise((resolve) =>
+        setTimeout(resolve, delay / 2 + Math.random() * (delay / 2)),
+      );
+    }
+  }
+}
+
+async function runRolledBack<T>(fn: (tx: DrizzleTx) => Promise<T>): Promise<T> {
   let result!: T;
   try {
     await db.transaction(async (tx) => {
+      // Force the BEGIN now so lock contention is isolated from `fn`.
+      try {
+        await tx.run(sql`select 1`);
+      } catch (e) {
+        throw new BeginFailed(e);
+      }
       result = await fn(tx);
       throw new RollbackSignal();
     });

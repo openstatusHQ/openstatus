@@ -1,8 +1,7 @@
 import { db } from "@openstatus/db";
 import { account } from "@openstatus/db/src/schema";
 import { createUser } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { listUserProviders } from "../index.ts";
 

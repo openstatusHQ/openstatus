@@ -1,9 +1,7 @@
 import { and, db, eq, isNull } from "@openstatus/db";
 import { pageSubscriber } from "@openstatus/db/src/schema";
 import { delivery, resend } from "@openstatus/emails/src/send";
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
-import { assertSpyCalls, stub } from "@std/testing/mock";
+import { expect, test, vi } from "vitest";
 
 import { app } from "@/index";
 
@@ -33,10 +31,12 @@ test("create a page subscription", async () => {
 });
 
 test("sends the same redesigned verification email as the status page form", async () => {
-  const enabled = stub(delivery, "enabled", () => true);
-  const send = stub(resend.emails, "send", () =>
-    Promise.resolve({ data: { id: "email_1" }, error: null } as never),
-  );
+  const enabled = vi.spyOn(delivery, "enabled").mockImplementation(() => true);
+  const send = vi
+    .spyOn(resend.emails, "send")
+    .mockImplementation(() =>
+      Promise.resolve({ data: { id: "email_1" }, error: null } as never),
+    );
 
   const email = "verify-mail@openstatus.dev";
   const cleanup = () =>
@@ -54,20 +54,23 @@ test("sends the same redesigned verification email as the status page form", asy
     });
     expect(res.status).toBe(200);
 
-    assertSpyCalls(send, 1);
-    const payload = send.calls[0].args[0];
+    expect(send).toHaveBeenCalledTimes(1);
+    const payload = send.mock.calls[0][0];
     expect(payload.to).toEqual([email]);
-    expect(payload.from).toBe(
-      "Status Page <notifications@notifications.openstatus.dev>",
+    expect(payload.from).toMatch(
+      /^".+" <notifications@subscribers\.openstatus\.dev>$/,
     );
     expect(payload.subject).toMatch(/^Confirm your subscription to /);
     // the route calls the template as a function, so this is its <Layout>
-    expect(payload.react.props.brand.name).toMatch(/Status$/);
-    expect(payload.react.props.pill.label).toBe("Confirm");
+    const layout = payload.react as unknown as {
+      props: { brand: { name: string }; pill: { label: string } };
+    };
+    expect(layout.props.brand.name).toMatch(/Status$/);
+    expect(layout.props.pill.label).toBe("Confirm");
   } finally {
     await cleanup();
-    send.restore();
-    enabled.restore();
+    send.mockRestore();
+    enabled.mockRestore();
   }
 });
 

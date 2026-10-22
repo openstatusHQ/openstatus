@@ -13,8 +13,7 @@ import {
   createWorkspaceFixture,
   withTestTransaction,
 } from "@openstatus/services/test/helpers";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import { toConnectError, toServiceCtx } from "./adapter";
 

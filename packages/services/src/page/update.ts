@@ -155,7 +155,8 @@ export async function updatePagePasswordProtection(args: {
         // non-empty joins (e.g. `"a@b.com"` / `"10.0.0.0/24"`) pass
         // through unchanged.
         authEmailDomains: input.authEmailDomains?.join(",") || null,
-        password: input.password,
+        // Drop a retired password; `undefined` keeps the stored one.
+        password: input.accessType === "password" ? input.password : null,
         allowedIpRanges: input.allowedIpRanges?.join(",") || null,
         ...(input.allowIndex !== undefined && { allowIndex: input.allowIndex }),
         updatedAt: new Date(),

@@ -1,12 +1,18 @@
 import type { MonitorIncident, Monitor } from "@openstatus/db/src/schema";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
-type FetchMock = Stub<typeof globalThis>;
+type FetchMock = MockInstance<typeof fetch>;
 
 type AdaptiveCardElement = {
   type: string;
@@ -42,13 +48,15 @@ describe("Microsoft Teams Notifications", () => {
   let fetchMock: FetchMock;
 
   beforeEach(() => {
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.resolve(new Response(null, { status: 200 })),
-    );
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(new Response(null, { status: 200 })),
+      );
   });
 
   afterEach(() => {
-    fetchMock.restore();
+    fetchMock.mockRestore();
   });
 
   const createMockMonitor = (): Monitor => ({
@@ -116,8 +124,7 @@ describe("Microsoft Teams Notifications", () => {
   });
 
   const readMessagePayload = (): MessagePayload => {
-    const calls = fetchMock.calls;
-    const init = calls[0].args[1];
+    const init = fetchMock.mock.calls[0]?.[1];
     if (!init || typeof init.body !== "string") {
       throw new Error("expected string body");
     }
@@ -171,8 +178,8 @@ describe("Microsoft Teams Notifications", () => {
       regions: ["iad"],
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const [url, init] = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
     expect(String(url)).toContain("logic.azure.com");
     expect(init?.method).toBe("POST");
 
@@ -304,7 +311,7 @@ describe("Microsoft Teams Notifications", () => {
         "https://prod-00.westeurope.logic.azure.com:443/workflows/test/triggers/manual/paths/invoke",
     });
 
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     const card = getCard(readMessagePayload());
     const header = findContainerByStyle(card, "good");
     expect(header?.items?.[0]?.text).toBe("Test notification");
@@ -313,14 +320,14 @@ describe("Microsoft Teams Notifications", () => {
 
   test("Send Test with empty webhookUrl", async () => {
     await expect(sendTest({ webhookUrl: "" })).rejects.toThrow();
-    assertSpyCalls(fetchMock, 0);
+    expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 
   test("Handle fetch error", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.reject(new Error("Network error")),
-    );
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.reject(new Error("Network error")));
 
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(

@@ -54,16 +54,16 @@ message GRPCMonitor {
     not_in: [0]
   }];
 
-  // Timeout in milliseconds (0-120000, defaults to 45000).
+  // Timeout in milliseconds (0-300000, defaults to 45000).
   int64 timeout = 5 [(buf.validate.field).int64 = {
     gte: 0
-    lte: 120000
+    lte: 300000
   }];
 
-  // Latency threshold for degraded status in milliseconds (optional, 0-120000).
+  // Latency threshold for degraded status in milliseconds (optional, 0-300000).
   optional int64 degraded_at = 6 [(buf.validate.field).int64 = {
     gte: 0
-    lte: 120000
+    lte: 300000
   }];
 
   // Number of retry attempts (0-10, defaults to 3).

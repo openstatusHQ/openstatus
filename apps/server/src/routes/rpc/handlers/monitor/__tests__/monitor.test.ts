@@ -14,14 +14,14 @@ import {
   createMonitor,
   createWorkspace,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
 import {
   afterAll,
   beforeAll,
   beforeEach,
   describe,
+  expect,
   test,
-} from "@std/testing/bdd";
+} from "vitest";
 
 import { app } from "../../../../../index";
 
@@ -448,22 +448,31 @@ describe("MonitorService.ListMonitors", () => {
   });
 
   test("uses offset for pagination", async () => {
-    // First page
-    const res1 = await connectRequest(
-      "ListMonitors",
-      { limit: 1 },
-      { "x-openstatus-key": "1" },
-    );
+    // Isolate in a dedicated workspace so concurrent monitor inserts/deletes
+    // on the seeded workspace can't shift the pagination window mid-test.
+    // Distinct createdAt values give the `desc(createdAt)` order a
+    // deterministic sequence (it has no id tiebreaker).
+    const ws = await createWorkspace();
+    const key = String(ws.id);
+    const now = Date.now();
+    await createMonitor(ws.id, { createdAt: new Date(now - 1000) });
+    await createMonitor(ws.id, { createdAt: new Date(now) });
 
-    expect(res1.status).toBe(200);
-    const data1 = await res1.json();
+    try {
+      const res1 = await connectRequest(
+        "ListMonitors",
+        { limit: 1 },
+        { "x-openstatus-key": key },
+      );
 
-    if (data1.totalSize > 1) {
-      // Second page using offset
+      expect(res1.status).toBe(200);
+      const data1 = await res1.json();
+      expect(data1.totalSize).toBe(2);
+
       const res2 = await connectRequest(
         "ListMonitors",
         { limit: 1, offset: 1 },
-        { "x-openstatus-key": "1" },
+        { "x-openstatus-key": key },
       );
 
       expect(res2.status).toBe(200);
@@ -482,11 +491,12 @@ describe("MonitorService.ListMonitors", () => {
         ...(data2.dnsMonitors || []).map((m: { id: string }) => m.id),
       ];
 
-      // Should have no overlap
-      const overlap = firstPageIds.filter((id: string) =>
-        secondPageIds.includes(id),
-      );
-      expect(overlap.length).toBe(0);
+      expect(firstPageIds).toHaveLength(1);
+      expect(secondPageIds).toHaveLength(1);
+      expect(firstPageIds[0]).not.toBe(secondPageIds[0]);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.workspaceId, ws.id));
+      await db.delete(workspace).where(eq(workspace.id, ws.id));
     }
   });
 
@@ -1690,8 +1700,8 @@ describe("MonitorService.UpdateICMPMonitor", () => {
     for (const [field, monitor] of [
       ["retry above max", { retry: "11" }],
       ["negative retry", { retry: "-1" }],
-      ["timeout above max", { timeout: "120001" }],
-      ["degradedAt above max", { degradedAt: "120001" }],
+      ["timeout above max", { timeout: "300001" }],
+      ["degradedAt above max", { degradedAt: "300001" }],
       ["over-long description", { description: "d".repeat(1025) }],
       ["over-long name", { name: "n".repeat(257) }],
       ["over-long uri", { uri: "u".repeat(2049) }],
@@ -1740,7 +1750,7 @@ describe("MonitorService.UpdateICMPMonitor", () => {
       "UpdateICMPMonitor",
       {
         id: String(testIcmpMonitorId),
-        monitor: { retry: "10", timeout: "120000" },
+        monitor: { retry: "10", timeout: "300000" },
       },
       { "x-openstatus-key": "1" },
     );
@@ -3274,16 +3284,16 @@ describe("MonitorService.GetMonitor", () => {
     // Insert a monitor with invalid data that will fail selectMonitorSchema parsing
     const corruptedMon = await db
       .insert(monitor)
-      // @ts-expect-error - intentionally invalid periodicity to test parse failure
       .values({
         workspaceId: 1,
         name: `${TEST_PREFIX}-corrupted-data`,
         url: "https://corrupted.example.com",
+        // intentionally invalid periodicity to test parse failure
         periodicity: "invalid-periodicity",
         active: true,
         regions: "ams",
         jobType: "http",
-      })
+      } as unknown as typeof monitor.$inferInsert)
       .returning()
       .get();
 

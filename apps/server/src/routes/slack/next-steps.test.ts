@@ -1,4 +1,4 @@
-import { describe, expect, test } from "@openstatus/test-utils";
+import { describe, expect, test } from "vitest";
 
 import { nextStepBlocks } from "./next-steps";
 

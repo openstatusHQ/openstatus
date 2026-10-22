@@ -1,21 +1,29 @@
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("OpsGenie Notifications", () => {
-  let fetchMock: Stub<typeof globalThis>;
+  let fetchMock: MockInstance;
 
   beforeEach(() => {
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.resolve(new Response(null, { status: 200 })),
-    );
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(new Response(null, { status: 200 })),
+      );
   });
 
   afterEach(() => {
-    fetchMock.restore();
+    fetchMock.mockRestore();
   });
 
   const createMockMonitor = () => ({
@@ -73,8 +81,8 @@ describe("OpsGenie Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe("https://api.opsgenie.com/v2/alerts");
     expect(callArgs[1].method).toBe("POST");
     expect(callArgs[1].headers["Content-Type"]).toBe("application/json");
@@ -105,8 +113,8 @@ describe("OpsGenie Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe("https://api.eu.opsgenie.com/v2/alerts");
   });
 
@@ -127,8 +135,8 @@ describe("OpsGenie Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.details.severity).toBe("degraded");
     expect(body.message).toBe("API Health Check is degraded");
@@ -147,10 +155,12 @@ describe("OpsGenie Notifications", () => {
     },
   ] as const) {
     test(`Recovery closes the monitor alias in ${region}`, async () => {
-      fetchMock.restore();
-      fetchMock = stub(globalThis, "fetch", () =>
-        Promise.resolve(new Response(null, { status: 202 })),
-      );
+      fetchMock.mockRestore();
+      fetchMock = vi
+        .spyOn(globalThis, "fetch")
+        .mockImplementation(() =>
+          Promise.resolve(new Response(null, { status: 202 })),
+        );
 
       await sendRecovery({
         // @ts-expect-error
@@ -163,8 +173,8 @@ describe("OpsGenie Notifications", () => {
         cronTimestamp: Date.now(),
       });
 
-      assertSpyCalls(fetchMock, 1);
-      const [requestUrl, options] = fetchMock.calls[0].args;
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [requestUrl, options] = fetchMock.mock.calls[0];
       expect(requestUrl).toBe(url);
       expect(options.method).toBe("POST");
       expect(options.headers["Content-Type"]).toBe("application/json");
@@ -174,10 +184,12 @@ describe("OpsGenie Notifications", () => {
   }
 
   test("Recovery rejects an unsuccessful close response", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.resolve(new Response(null, { status: 503 })),
-    );
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(new Response(null, { status: 503 })),
+      );
 
     await expect(
       sendRecovery({
@@ -188,13 +200,15 @@ describe("OpsGenie Notifications", () => {
         cronTimestamp: Date.now(),
       }),
     ).rejects.toThrow("503");
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   test("Recovery propagates a rejected close request", async () => {
     const error = new Error("Connection reset");
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () => Promise.reject(error));
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.reject(error));
 
     await expect(
       sendRecovery({
@@ -205,21 +219,21 @@ describe("OpsGenie Notifications", () => {
         cronTimestamp: Date.now(),
       }),
     ).rejects.toBe(error);
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.reject(new Error("Network error")),
-    );
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.reject(new Error("Network error")));
 
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
     const incident = createMockIncident();
-    expect(
+    await expect(
       sendAlert({
         // @ts-expect-error
         monitor,
@@ -232,14 +246,14 @@ describe("OpsGenie Notifications", () => {
       }),
     ).rejects.toThrow();
 
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   test("Send Test returns false on error", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.reject(new Error("Network error")),
-    );
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.reject(new Error("Network error")));
 
     const result = await sendTest({
       apiKey: "test-api-key",
@@ -247,6 +261,6 @@ describe("OpsGenie Notifications", () => {
     });
 
     expect(result).toBe(false);
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,6 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import type Stripe from "stripe";
+import { describe, expect, test } from "vitest";
 
 import { syncCustomerEmailToNewOwner } from "./shared";
 

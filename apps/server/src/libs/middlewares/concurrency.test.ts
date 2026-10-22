@@ -1,7 +1,6 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
+import { describe, expect, test } from "vitest";
 
 import { createConcurrencyGuard } from "./concurrency";
 

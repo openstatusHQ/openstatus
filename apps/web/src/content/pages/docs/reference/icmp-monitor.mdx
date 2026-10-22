@@ -74,7 +74,7 @@ The average latency after which a check is considered to be in a degraded perfor
 **Type:** Integer (optional)
 **Default:** `3`
 
-The number of times the monitor retries a fully failed check (all packets lost) before reporting a definitive error.
+The total number of attempts made for each check, including the first one. An attempt fails only when all packets are lost. `0` is treated as the default (`3`); there is no setting that disables retries, so `1` means a single attempt.
 
 ### OpenTelemetry
 

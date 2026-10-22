@@ -62,7 +62,7 @@ For AI agents that should only observe state — health summaries, paging on-cal
 
 ## Tools
 
-The server exposes 29 tools (27 on plans without the `audit-log` feature), grouped by resource: 25 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). Workspaces with incident management enabled get 10 more (see [Incidents](#incidents)). Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
+The server exposes 39 tools (37 on plans without the `audit-log` feature), grouped by resource: 35 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
 
 ### Pages
 
@@ -96,7 +96,7 @@ The server exposes 29 tools (27 on plans without the `audit-log` feature), group
 
 ### Incidents
 
-Registered only when incident management is enabled for the workspace — otherwise these tools are absent from `tools/list`. They act on declared incidents, not on monitor downtime, and are internal: none of them publishes to a status page or notifies subscribers. See the [Incident management reference](/docs/reference/incident-management).
+These tools act on declared incidents, not on monitor downtime, and are internal: none of them publishes to a status page or notifies subscribers. See the [Incident management reference](/docs/reference/incident-management).
 
 | Tool                  | Type     | Purpose |
 |-----------------------|----------|---------|
@@ -181,7 +181,7 @@ Notifications dispatch as part of the same call. There is no separate notify too
 
 The mutation and the notify dispatch are sequential, not transactional. The mutation persists first; if the notify step then throws (transient provider issue, partial outage of an integration), the response carries `notified: false` and the row stays.
 
-`notified: true` means the dispatch call returned without throwing — **not** that every subscriber received a message. If the workspace plan doesn't include subscriber notifications, the service is a no-op: the maintenance tools report `notified: false`, the status report tools still report `notified: true`. Treat the field as "the dispatch ran cleanly," not as a delivery receipt.
+`notified: true` means the dispatch call returned without throwing — **not** that every subscriber received a message. If the workspace plan doesn't include subscriber notifications, the service is a no-op and the tools report `notified: false`. Treat the field as "the dispatch ran cleanly," not as a delivery receipt.
 
 | Tool                       | What `notify: true` sends |
 |----------------------------|---------------------------|

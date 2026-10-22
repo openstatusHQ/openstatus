@@ -9,7 +9,7 @@
     "lint": "next lint",
     "check": "tsc --noEmit",
     "tsc": "tsc --noEmit",
-    "test": "deno test --parallel -A --no-check --sloppy-imports --import-map=test.importmap.json src"
+    "test": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/react": "catalog:",
@@ -107,8 +107,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
+    "@openstatus/test-utils": "workspace:*",
     "@tailwindcss/postcss": "catalog:",
     "@tailwindcss/typography": "catalog:",
     "@types/dom-speech-recognition": "catalog:",
@@ -118,6 +117,7 @@
     "shadcn": "catalog:",
     "tailwindcss": "catalog:",
     "tw-animate-css": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

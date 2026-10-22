@@ -1,7 +1,6 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
 
 import type { DetailsTableData } from "./details-table";
 import { getMonitorDetails } from "./get-monitor";
@@ -198,7 +197,7 @@ describe("getResponseLogDetails", () => {
   });
 
   // statusCode is nullable, but TableCellNumber renders Number(null) as 0.
-  it.ignore("does not show 0 for a missing status code", () => {
+  it.skip("does not show 0 for a missing status code", () => {
     const data = getResponseLogDetails(
       input,
       asFixture<Output>({ ...log, statusCode: null }),

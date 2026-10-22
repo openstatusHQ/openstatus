@@ -18,18 +18,18 @@ import {
   beforeEach,
   describe,
   expect,
-  type Stub,
-  stub,
   test,
-} from "@openstatus/test-utils";
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import { applyStatusTransition } from "../checker/transition";
 import { providerToFunction } from "../checker/utils";
-import { checkerAudit } from "../utils/audit-log";
+import { stubPublishAuditLog } from "../test/stub-audit-log";
 import { handleStatusDriftCron } from "./status-drift";
 
 // biome-ignore lint/suspicious/noExplicitAny: heterogeneous provider stubs
-type AnyStub = Stub<any>;
+type AnyStub = MockInstance;
 let stubs: AnyStub[] = [];
 let workspaceId: number;
 
@@ -40,16 +40,16 @@ beforeAll(async () => {
 
 beforeEach(() => {
   stubs = [];
+  stubs.push(stubPublishAuditLog());
   stubs.push(
-    stub(checkerAudit, "publishAuditLog", () => Promise.resolve()) as AnyStub,
-  );
-  stubs.push(
-    stub(providerToFunction.email, "sendAlert", () => Promise.resolve()),
+    vi
+      .spyOn(providerToFunction.email, "sendAlert")
+      .mockImplementation(() => Promise.resolve()),
   );
 });
 
 afterEach(() => {
-  for (const s of stubs) s.restore();
+  for (const s of stubs) s.mockRestore();
   stubs = [];
 });
 
@@ -157,10 +157,10 @@ describe("handleStatusDriftCron", () => {
 describe("drift repair delivery", () => {
   test("sends the notification the repair is recovering", async () => {
     const sent: string[] = [];
-    for (const s of stubs) s.restore();
+    for (const s of stubs) s.mockRestore();
     stubs = [
-      stub(checkerAudit, "publishAuditLog", () => Promise.resolve()) as AnyStub,
-      stub(providerToFunction.email, "sendAlert", () => {
+      stubPublishAuditLog(),
+      vi.spyOn(providerToFunction.email, "sendAlert").mockImplementation(() => {
         sent.push("alert");
         return Promise.resolve();
       }),

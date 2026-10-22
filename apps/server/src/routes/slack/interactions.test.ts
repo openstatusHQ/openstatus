@@ -16,6 +16,7 @@ import {
 import {
   addUserToWorkspace,
   createPage,
+  createPageComponent,
   createTestWorkspace,
   createUser,
 } from "@openstatus/db/src/test/factories";
@@ -23,15 +24,16 @@ import {
   bindIncidentSlackChannel,
   declareIncident,
 } from "@openstatus/services/incident";
+import { WebClient } from "@slack/web-api";
+import { Hono } from "hono";
 import {
   afterEach,
+  beforeAll,
   beforeEach,
   describe,
   expect,
   test,
-} from "@openstatus/test-utils";
-import { WebClient } from "@slack/web-api";
-import { Hono } from "hono";
+} from "vitest";
 
 import { settleBackgroundTasks } from "@/libs/background";
 // workspace-resolver / @slack/web-api are swapped for doubles via the test
@@ -1763,17 +1765,42 @@ describe("publish status update button", () => {
 describe("status report follow-up after a declare", () => {
   const app = createTestApp();
   let workspace: ReturnType<typeof selectWorkspaceSchema.parse>;
+  let ownerEmail: string;
+  let pageId: number;
+  let componentId: number;
   let incidentId: number;
   const startedAt = Math.floor(Date.now() / 1000) - 11 * 3600;
 
+  // Its own workspace: other suites rename and empty the seeded page 1.
+  beforeAll(async () => {
+    const fixture = await createTestWorkspace();
+    workspace = selectWorkspaceSchema.parse(fixture.workspace);
+    ownerEmail = fixture.user.email as string;
+    const page = await createPage(workspace.id);
+    pageId = page.id;
+    const component = await createPageComponent(workspace.id, page.id, {
+      name: "Google Monitor",
+    });
+    componentId = component.id;
+  });
+
   beforeEach(async () => {
     configureSlackDoubles();
+    slackTestState.usersInfoImpl = () =>
+      Promise.resolve({ ok: true, user: { profile: { email: ownerEmail } } });
+    slackTestState.resolveWorkspace = (teamId: string) =>
+      teamId === "T_KNOWN"
+        ? Promise.resolve({
+            botToken: "xoxb-fallback",
+            workspace: { id: workspace.id, limits: { "slack-agent": true } },
+          })
+        : Promise.resolve(null);
     redisStore.clear();
     reportDraftState.calls = [];
     reportDraftState.impl = () =>
       Promise.resolve({
-        pageId: 1,
-        componentIds: [2],
+        pageId,
+        componentIds: [componentId],
         impact: "major_outage",
         message: "The dashboard API is returning errors. We are investigating.",
         startedAt: new Date(startedAt * 1000).toISOString(),
@@ -1781,9 +1808,6 @@ describe("status report follow-up after a declare", () => {
       });
     slackTestState.historyImpl = () =>
       Promise.resolve({ messages: busyChannelHistory });
-    workspace = selectWorkspaceSchema.parse(
-      await db.query.workspace.findFirst({ where: eq(workspaceTable.id, 1) }),
-    );
     const created = await declareIncident({
       ctx: { workspace, actor: { type: "system", job: "test" } },
       input: { title: `Follow-up ${crypto.randomUUID()}`, severity: "major" },
@@ -1913,8 +1937,8 @@ describe("status report follow-up after a declare", () => {
     expect(block("message")?.initial_value).toBe(
       "The dashboard API is returning errors. We are investigating.",
     );
-    expect(block("components_1")?.initial_options).toEqual([
-      expect.objectContaining({ value: "2" }),
+    expect(block(`components_${pageId}`)?.initial_options).toEqual([
+      expect.objectContaining({ value: String(componentId) }),
     ]);
     expect(block("impact")?.initial_option?.value).toBe("major_outage");
     expect(block("started_at")?.initial_date_time).toBe(startedAt);
@@ -1934,7 +1958,11 @@ describe("status report follow-up after a declare", () => {
         }),
         state: {
           values: {
-            page: { incident_card_page: { selected_option: { value: "1" } } },
+            page: {
+              incident_card_page: {
+                selected_option: { value: String(pageId) },
+              },
+            },
             title: { value: { value: "Dashboard errors" } },
             status: { value: { selected_option: { value: "investigating" } } },
             started_at: { value: { selected_date_time: startedAt } },

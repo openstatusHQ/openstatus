@@ -1,6 +1,6 @@
 # AGENTS.md — apps/server
 
-Hono, running on Deno. Four surfaces under `apps/server/src/routes/`: `v1`
+Hono, running on Node. Four surfaces under `apps/server/src/routes/`: `v1`
 (public REST), `rpc` (ConnectRPC), `mcp`, and `slack`.
 
 ## API-key scopes
@@ -25,9 +25,8 @@ the handlers that have migrated, and that list grows one domain per PR.
 Resolve config once and pass it in;
 `createSlackRoute(config)` in `apps/server/src/routes/slack/index.ts` is the
 pattern — production calls `slackConfigFromEnv()` at module scope, tests build a
-route with explicit config. Reading `env` at request time is what made the slack
-route untestable under `deno test --parallel`, since the workers share one
-process environment.
+route with explicit config. Reading `env` at request time would force tests to
+mutate the shared `process.env`, which leaks between cases.
 
 ## MCP
 

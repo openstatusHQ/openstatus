@@ -8,11 +8,22 @@ import {
   pageSubscriber,
   statusReport,
   statusReportsToPageComponents,
+  workspace,
 } from "@openstatus/db/src/schema";
-import { createTestWorkspace } from "@openstatus/db/src/test/factories";
-import { mock } from "@openstatus/test-utils";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import {
+  createPage,
+  createTestWorkspace,
+  createWorkspace,
+} from "@openstatus/db/src/test/factories";
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+  type Mock,
+} from "vitest";
 
 import { app } from "../../../../../index";
 
@@ -678,25 +689,35 @@ describe("StatusPageService.ListStatusPages", () => {
   });
 
   test("respects offset parameter", async () => {
-    // Get first page
-    const res1 = await connectRequest(
-      "ListStatusPages",
-      { limit: 1, offset: 0 },
-      { "x-openstatus-key": "1" },
-    );
-    const data1 = await res1.json();
+    // Isolate in a dedicated workspace so concurrent page inserts/deletes on
+    // the seeded workspace can't shift the pagination window mid-test. In
+    // dev/test the `x-openstatus-key` header is the workspace id.
+    const ws = await createWorkspace();
+    const key = String(ws.id);
+    await createPage(ws.id);
+    await createPage(ws.id);
 
-    // Get second page
-    const res2 = await connectRequest(
-      "ListStatusPages",
-      { limit: 1, offset: 1 },
-      { "x-openstatus-key": "1" },
-    );
-    const data2 = await res2.json();
+    try {
+      const res1 = await connectRequest(
+        "ListStatusPages",
+        { limit: 1, offset: 0 },
+        { "x-openstatus-key": key },
+      );
+      const res2 = await connectRequest(
+        "ListStatusPages",
+        { limit: 1, offset: 1 },
+        { "x-openstatus-key": key },
+      );
+      const data1 = await res1.json();
+      const data2 = await res2.json();
 
-    // Should have different pages if multiple exist
-    if (data1.statusPages?.length > 0 && data2.statusPages?.length > 0) {
+      expect(data1.totalSize).toBe(2);
+      expect(data1.statusPages).toHaveLength(1);
+      expect(data2.statusPages).toHaveLength(1);
       expect(data1.statusPages[0].id).not.toBe(data2.statusPages[0].id);
+    } finally {
+      await db.delete(page).where(eq(page.workspaceId, ws.id));
+      await db.delete(workspace).where(eq(workspace.id, ws.id));
     }
   });
 });
@@ -2256,7 +2277,7 @@ describe("StatusPageService.UpdateComponentGroup", () => {
 
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as {
-  sendVerification: ReturnType<typeof mock>;
+  sendVerification: Mock;
 };
 
 describe("StatusPageService.SubscribeToPage", () => {

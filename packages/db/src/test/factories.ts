@@ -47,17 +47,30 @@ const RETRYABLE_MESSAGE = /database is (locked|busy)/i;
 const MAX_ATTEMPTS = 5;
 const BASE_DELAY_MS = 25;
 
+const MAX_CAUSE_DEPTH = 10;
+
+// Drizzle wraps driver errors in DrizzleQueryError ("Failed query: ...") with
+// the LibsqlError on `cause`, so walk the chain rather than checking the top.
 function isBusyError(err: unknown): boolean {
-  if (typeof err !== "object" || err === null) return false;
-  if ("code" in err && typeof (err as { code: unknown }).code === "string") {
-    if (RETRYABLE_CODES.has((err as { code: string }).code)) return true;
-  }
-  if (
-    "message" in err &&
-    typeof (err as { message: unknown }).message === "string"
-  ) {
-    if (RETRYABLE_MESSAGE.test((err as { message: string }).message))
+  let current: unknown = err;
+  for (let depth = 0; depth < MAX_CAUSE_DEPTH; depth++) {
+    if (typeof current !== "object" || current === null) return false;
+    if (
+      "code" in current &&
+      typeof current.code === "string" &&
+      RETRYABLE_CODES.has(current.code)
+    ) {
       return true;
+    }
+    if (
+      "message" in current &&
+      typeof current.message === "string" &&
+      RETRYABLE_MESSAGE.test(current.message)
+    ) {
+      return true;
+    }
+    if (!("cause" in current) || current.cause === current) return false;
+    current = current.cause;
   }
   return false;
 }

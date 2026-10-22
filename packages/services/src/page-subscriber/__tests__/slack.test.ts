@@ -1,8 +1,7 @@
 import { db, eq, inArray } from "@openstatus/db";
 import { pageSubscriber } from "@openstatus/db/src/schema";
 import { createPage } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { createWorkspaceFixture, expectAuditRow } from "../../../test/helpers";
 import { PreconditionFailedError } from "../../errors";

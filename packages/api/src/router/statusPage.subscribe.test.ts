@@ -4,9 +4,8 @@ import {
   createPage,
   createTestWorkspace,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 import { NextRequest } from "next/server.js";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { appRouter } from "../root";
 import { createInnerTRPCContext } from "../trpc";

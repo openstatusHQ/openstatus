@@ -1,5 +1,14 @@
 {
   "extends": "@openstatus/tsconfig/base.json",
   "include": ["src", "*.ts", "**/*.ts"],
-  "compilerOptions": {}
+  "compilerOptions": {},
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/*.mock.ts",
+    "**/test-preload.ts"
+  ]
 }

@@ -8,7 +8,7 @@ A subscriber in openstatus is an entity (typically a user or an integration) tha
 
 **Key functions of subscribers:**
 
-- Receive automated alerts when monitor statuses change or incidents are updated.
+- Receive updates when status reports are published or maintenance is scheduled.
 - Stay informed about service health without actively monitoring the status page.
 - Choose preferred notification channels for receiving updates.
 
@@ -36,10 +36,9 @@ Webhook subscriptions are only created by the page owner from the dashboard. Sla
 
 ## Notification types received
 
-Subscribers receive notifications for key events affecting the monitored services linked to the status page:
+Subscribers receive notifications when you communicate on the status page:
 
-- **Incident creation** — when a new incident is detected and published.
-- **Incident updates** — when status reports are published for an ongoing incident (e.g., status changes from `investigating` to `identified`, `monitoring`, or `resolved`).
+- **Status report updates** — when a status report is created or a new update is posted to it (e.g., status changes from `investigating` to `identified`, `monitoring`, or `resolved`), if you choose to notify subscribers.
 - **Scheduled maintenance** — when a maintenance window is created on the page, subscribers can be notified that it has been scheduled (see the [maintenance reference](/docs/reference/maintenance)).
 
 Raw monitor status changes are *not* sent to status page subscribers. Those go to your configured [notification channels](/docs/reference/notification). Subscribers only receive status report updates and scheduled maintenance.
@@ -50,7 +49,8 @@ Status page administrators can manage their subscriber lists, including:
 
 - **Viewing subscribers** — accessing a list of all active subscribers for a status page.
 - **Adding/removing subscribers** — manually adding or removing subscribers.
-- **Communication** — sending ad-hoc notifications to the subscriber list (if supported by the platform).
+
+There is no ad-hoc broadcast: subscribers are only reached through status report updates and maintenance notifications.
 
 ## Adding subscribers from the dashboard
 
@@ -91,7 +91,7 @@ Related commands, all run from the channel:
 - `/openstatus unsubscribe [status-page-url]` — stop updates. The URL is optional when the channel follows exactly one page. Each Slack message also ends with a *Manage with `/openstatus unsubscribe`* hint.
 - `/openstatus help` — show the command list.
 
-Re-running `subscribe` on a channel that previously unsubscribed reactivates the existing subscription instead of creating a duplicate. Subscribing from Slack works against any page whose workspace is on a plan that includes subscribers; it does not require the channel's workspace to own the page.
+Re-running `subscribe` on a channel that previously unsubscribed reactivates the existing subscription instead of creating a duplicate. Subscribing from Slack works against any **public** page whose workspace is on a plan that includes subscribers; it does not require the channel's workspace to own the page. Protected pages (password, email domain, or IP restriction) are rejected with "Protected status pages can't be subscribed to from Slack".
 
 For installation and the natural-language incident commands, see [Set up the openstatus Slack agent](/docs/guides/how-to-setup-slack-agent).
 

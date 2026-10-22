@@ -12,23 +12,22 @@ import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import {
   afterAll,
   afterEach,
-  assertSpyCalls,
   beforeAll,
   beforeEach,
   describe,
   expect,
-  type Stub,
-  stub,
   test,
-} from "@openstatus/test-utils";
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import { env } from "../env";
-import { checkerAudit } from "../utils/audit-log";
+import { stubPublishAuditLog } from "../test/stub-audit-log";
 import { checkerRoute } from "./index";
 import { providerToFunction } from "./utils";
 
 // biome-ignore lint/suspicious/noExplicitAny: heterogeneous provider stubs
-type AnyStub = Stub<any>;
+type AnyStub = MockInstance;
 
 // Dedicated fixtures, not seed monitor 1: other suites (api/server maintenance
 // tests) put seed monitor 1 under active maintenance on the shared CI database,
@@ -292,19 +291,19 @@ describe("updateStatusPrivate", () => {
   beforeEach(() => {
     stubs = [];
     stubs.push(
-      stub(checkerAudit, "publishAuditLog", () =>
+      stubPublishAuditLog(() =>
         Promise.resolve({ successful_rows: 1, quarantined_rows: 0 }),
-      ) as AnyStub,
+      ),
     );
-    mockEmailSendAlert = stub(providerToFunction.email, "sendAlert", () =>
-      Promise.resolve(),
-    ) as AnyStub;
-    mockEmailSendRecovery = stub(providerToFunction.email, "sendRecovery", () =>
-      Promise.resolve(),
-    ) as AnyStub;
-    mockEmailSendDegraded = stub(providerToFunction.email, "sendDegraded", () =>
-      Promise.resolve(),
-    ) as AnyStub;
+    mockEmailSendAlert = vi
+      .spyOn(providerToFunction.email, "sendAlert")
+      .mockImplementation(() => Promise.resolve()) as AnyStub;
+    mockEmailSendRecovery = vi
+      .spyOn(providerToFunction.email, "sendRecovery")
+      .mockImplementation(() => Promise.resolve()) as AnyStub;
+    mockEmailSendDegraded = vi
+      .spyOn(providerToFunction.email, "sendDegraded")
+      .mockImplementation(() => Promise.resolve()) as AnyStub;
     stubs.push(
       mockEmailSendAlert,
       mockEmailSendRecovery,
@@ -313,7 +312,7 @@ describe("updateStatusPrivate", () => {
   });
 
   afterEach(async () => {
-    for (const s of stubs) s.restore();
+    for (const s of stubs) s.mockRestore();
     stubs = [];
     await db
       .delete(privateLocationMonitorStatus)
@@ -346,7 +345,7 @@ describe("updateStatusPrivate", () => {
       "Basic wrong-secret",
     );
     expect(res.status).toBe(401);
-    assertSpyCalls(mockEmailSendAlert, 0);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
   });
 
   test("rejects an invalid payload with 422", async () => {
@@ -371,7 +370,7 @@ describe("updateStatusPrivate", () => {
       message: "down",
     });
     expect(res.status).toBe(200);
-    assertSpyCalls(mockEmailSendAlert, 1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
 
     const row = await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID);
     expect(row?.status).toBe("error");
@@ -385,7 +384,7 @@ describe("updateStatusPrivate", () => {
       status: "error",
       cronTimestamp: 9300020,
     });
-    assertSpyCalls(mockEmailSendAlert, 1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
 
     const res = await post({
       monitorId: String(TEST_MONITOR_ID),
@@ -394,7 +393,7 @@ describe("updateStatusPrivate", () => {
       cronTimestamp: 9300021,
     });
     expect(res.status).toBe(200);
-    assertSpyCalls(mockEmailSendAlert, 1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
 
     const row = await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID);
     expect(row?.cronTimestamp).toBe(9300021);
@@ -407,7 +406,7 @@ describe("updateStatusPrivate", () => {
       status: "error",
       cronTimestamp: 9300030,
     });
-    assertSpyCalls(mockEmailSendAlert, 1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
 
     const res = await post({
       monitorId: String(TEST_MONITOR_ID),
@@ -416,7 +415,7 @@ describe("updateStatusPrivate", () => {
       cronTimestamp: 9300031,
     });
     expect(res.status).toBe(200);
-    assertSpyCalls(mockEmailSendRecovery, 1);
+    expect(mockEmailSendRecovery).toHaveBeenCalledTimes(1);
 
     const row = await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID);
     expect(row?.status).toBe("active");
@@ -431,7 +430,7 @@ describe("updateStatusPrivate", () => {
       latency: 5000,
     });
     expect(res.status).toBe(200);
-    assertSpyCalls(mockEmailSendDegraded, 1);
+    expect(mockEmailSendDegraded).toHaveBeenCalledTimes(1);
 
     const row = await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID);
     expect(row?.status).toBe("degraded");
@@ -452,7 +451,7 @@ describe("updateStatusPrivate", () => {
       cronTimestamp: 9300049,
     });
     expect(res.status).toBe(200);
-    assertSpyCalls(mockEmailSendAlert, 0);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
 
     const row = await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID);
     expect(row?.status).toBe("active");
@@ -467,7 +466,7 @@ describe("updateStatusPrivate", () => {
       cronTimestamp: 9300060,
     });
     expect(res.status).toBe(200);
-    assertSpyCalls(mockEmailSendAlert, 0);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
 
     const row = await readRow(TEST_MONITOR_ID, UNATTACHED_LOCATION_ID);
     expect(row).toBeUndefined();
@@ -481,7 +480,7 @@ describe("updateStatusPrivate", () => {
       cronTimestamp: 9300070,
     });
     expect(res.status).toBe(200);
-    assertSpyCalls(mockEmailSendAlert, 0);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
   });
 
   test("private-only monitor: updates status when threshold met (2/3 locations agree)", async () => {
@@ -520,7 +519,7 @@ describe("updateStatusPrivate", () => {
       .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
       .get();
     expect(monitorAfter2?.status).toBe("error");
-    assertSpyCalls(mockEmailSendAlert, 1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
   });
 
   test("does not change monitor.status from error when 1/3 locations report degraded (threshold not met)", async () => {

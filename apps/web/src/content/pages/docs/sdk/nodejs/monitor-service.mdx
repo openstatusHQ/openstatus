@@ -95,11 +95,11 @@ const { monitor } = await client.monitor.v1.MonitorService.updateHTTPMonitor({
 | `name` | string | Yes | Monitor name (max 256 chars) |
 | `url` | string | Yes | URL to monitor (max 2048 chars) |
 | `periodicity` | Periodicity | Yes | Check interval |
-| `method` | HTTPMethod | No | HTTP method (default: GET) |
+| `method` | HTTPMethod | Yes | HTTP method, e.g. `HTTPMethod.HTTP_METHOD_GET` (`HTTP_METHOD_UNSPECIFIED` is rejected) |
 | `body` | string | No | Request body |
 | `headers` | Headers[] | No | Custom headers `{ key, value }[]` |
-| `timeout` | bigint | No | Timeout in ms (default: 45000, max: 120000) |
-| `retry` | bigint | No | Retry attempts (default: 3, max: 10) |
+| `timeout` | bigint | No | Timeout in ms (default: 45000, max: 300000) |
+| `retry` | bigint | No | Total check attempts, including the first (default: 3, max: 10) |
 | `followRedirects` | boolean | No | Follow redirects (default: true) |
 | `regions` | Region[] | No | Regions for checks |
 | `active` | boolean | No | Enable monitoring (default: false) |
@@ -155,8 +155,8 @@ const { monitor } = await client.monitor.v1.MonitorService.updateTCPMonitor({
 | `name` | string | Yes | Monitor name (max 256 chars) |
 | `uri` | string | Yes | `host:port` to monitor (max 2048 chars) |
 | `periodicity` | Periodicity | Yes | Check interval |
-| `timeout` | bigint | No | Timeout in ms (default: 45000, max: 120000) |
-| `retry` | bigint | No | Retry attempts (default: 3, max: 10) |
+| `timeout` | bigint | No | Timeout in ms (default: 45000, max: 300000) |
+| `retry` | bigint | No | Total check attempts, including the first (default: 3, max: 10) |
 | `regions` | Region[] | No | Regions for checks |
 | `active` | boolean | No | Enable monitoring (default: false) |
 | `public` | boolean | No | Public visibility (default: false) |
@@ -221,8 +221,8 @@ const { monitor } = await client.monitor.v1.MonitorService.updateDNSMonitor({
 | `name` | string | Yes | Monitor name (max 256 chars) |
 | `uri` | string | Yes | Domain to resolve (max 2048 chars) |
 | `periodicity` | Periodicity | Yes | Check interval |
-| `timeout` | bigint | No | Timeout in ms (default: 45000, max: 120000) |
-| `retry` | bigint | No | Retry attempts (default: 3, max: 10) |
+| `timeout` | bigint | No | Timeout in ms (default: 45000, max: 300000) |
+| `retry` | bigint | No | Total check attempts, including the first (default: 3, max: 10) |
 | `regions` | Region[] | No | Regions for checks |
 | `active` | boolean | No | Enable monitoring (default: false) |
 | `public` | boolean | No | Public visibility (default: false) |

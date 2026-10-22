@@ -9,14 +9,16 @@ primary_region = 'ams'
 # Long enough for shutdownOutbox to wait out an in-flight provider call
 # (NOTIFICATION_TIMEOUT_MS + 5s) before Fly SIGKILLs.
 kill_timeout = "25s"
+# serve.ts only handles SIGTERM; Fly defaults to SIGINT.
+kill_signal = "SIGTERM"
 
 [build]
   dockerfile = "./Dockerfile"
 
 [[vm]]
   cpu_kind = "shared"
-  cpus = 6
-  memory_mb = 1536
+  cpus = 4
+  memory_mb = 1024
 
 [http_service]
   internal_port = 3000
@@ -25,6 +27,13 @@ kill_timeout = "25s"
   auto_start_machines = true
   min_machines_running = 2
   processes = ["app"]
+
+# Past soft_limit the proxy prefers the other machine, so cdg takes overflow
+# from ams. hard_limit is set high because Fly has no way to disable it.
+[http_service.concurrency]
+  type = "requests"
+  soft_limit = 5
+  hard_limit = 1000
 
 [deploy]
   strategy = "rolling"

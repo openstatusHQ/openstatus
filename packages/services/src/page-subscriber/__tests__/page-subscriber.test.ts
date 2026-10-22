@@ -9,16 +9,16 @@ import {
   createPage,
   createPageComponent,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
 import {
   afterAll,
   afterEach,
   beforeAll,
   beforeEach,
   describe,
+  expect,
   test,
-} from "@std/testing/bdd";
-import { stub } from "@std/testing/mock";
+  vi,
+} from "vitest";
 
 import {
   clearAuditLog,
@@ -482,7 +482,7 @@ describe("upsertSelfSignupSubscriber", () => {
   test("rejects when the workspace plan disables status-subscribers", async () => {
     // Rolled-back tx so the free-workspace page never commits — a
     // committed page would trip `page.test.ts`'s free-plan
-    // `status-pages` quota assertions under `deno test --parallel`.
+    // `status-pages` quota assertions when the suites run in parallel.
     await withTestTransaction(async (tx) => {
       const freePage = await tx
         .insert(page)
@@ -540,18 +540,20 @@ describe("verifySelfSignupSubscriber", () => {
         | undefined;
       const transaction = db.transaction.bind(db);
       // Commit the competing signup after token lookup, before acceptance starts.
-      const intercept = stub(db, "transaction", async (fn, config) => {
-        intercept.restore();
-        expanded = await upsertSelfSignupSubscriber({
-          visitor: null,
-          input: {
-            email: first.email,
-            pageId: PAGE_ID,
-            componentIds: scope === "entire page" ? [] : [COMPONENT_2],
-          },
+      const intercept = vi
+        .spyOn(db, "transaction")
+        .mockImplementation(async (fn, config) => {
+          intercept.mockRestore();
+          expanded = await upsertSelfSignupSubscriber({
+            visitor: null,
+            input: {
+              email: first.email,
+              pageId: PAGE_ID,
+              componentIds: scope === "entire page" ? [] : [COMPONENT_2],
+            },
+          });
+          return transaction(fn, config);
         });
-        return transaction(fn, config);
-      });
       try {
         const result = await verifySelfSignupSubscriber({
           input: { token: first.token, domain: PAGE_SLUG },
@@ -581,7 +583,7 @@ describe("verifySelfSignupSubscriber", () => {
             : [COMPONENT_1, COMPONENT_2].sort((a, b) => a - b),
         );
       } finally {
-        if (!intercept.restored) intercept.restore();
+        intercept.mockRestore();
         await db.delete(pageSubscriber).where(eq(pageSubscriber.id, first.id));
         await clearAuditLogFor({
           entityType: "page_subscriber",
@@ -1026,8 +1028,8 @@ describe("hasPendingSubscriber", () => {
 
 describe("createPageSubscriber", () => {
   test("rejects read-only actor", async () => {
+    const team = (await createWorkspaceFixture("team")).workspace;
     await withTestTransaction(async (tx) => {
-      const team = (await createWorkspaceFixture("team")).workspace;
       const readOnlyCtx = {
         ...makeApiKeyCtx(team, {
           keyId: "k-read",

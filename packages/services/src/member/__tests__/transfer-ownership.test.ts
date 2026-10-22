@@ -4,8 +4,7 @@ import {
   addUserToWorkspace,
   createUser,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import {
   clearAuditLogFor,

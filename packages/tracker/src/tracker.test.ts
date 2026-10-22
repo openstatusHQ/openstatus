@@ -4,8 +4,7 @@ import type {
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { blacklistDates } from "./blacklist";
 import { classNames, statusDetails } from "./config";

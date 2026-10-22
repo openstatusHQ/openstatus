@@ -1,6 +1,5 @@
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
+import { expect, test } from "vitest";
 
 import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";

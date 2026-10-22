@@ -20,15 +20,15 @@
     "./src/*": "./src/*.ts"
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
-    "test": "deno test --parallel -A --no-check --sloppy-imports src",
+    "check": "tsc --noEmit",
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",
-    "migrate": "deno run -A --env-file src/migrate.mts",
+    "migrate": "node --env-file-if-exists=.env src/migrate.mts",
     "studio": "drizzle-kit studio",
-    "env": "deno run -A env.ts",
-    "seed": "deno run -A --env-file --sloppy-imports  src/seed.mts",
-    "dev": "turso dev --db-file ../../openstatus-dev.db"
+    "env": "node env.ts",
+    "seed": "node --import @oxc-node/core/register --env-file-if-exists=.env src/seed.mts",
+    "dev": "turso dev --db-file ../../openstatus-dev.db",
+    "test": "vitest run"
   },
   "dependencies": {
     "@libsql/client": "catalog:",
@@ -37,6 +37,7 @@
     "@openstatus/regions": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@oxc-node/core": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "bcryptjs": "catalog:",
     "drizzle-orm": "catalog:",
@@ -44,13 +45,13 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@types/bcryptjs": "catalog:",
     "@types/node": "catalog:",
     "drizzle-kit": "catalog:",
     "next-auth": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

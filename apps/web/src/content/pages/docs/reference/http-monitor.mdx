@@ -133,7 +133,7 @@ Which frequencies you can select depends on your plan: **Hobby** offers `10m`, `
 
 **Type:** Duration (optional)
 **Default:** `45 seconds`
-**Range:** 0–120000 ms
+**Range:** 0–300000 ms (5 minutes)
 
 The maximum duration to wait for the HTTP request to complete. If the request exceeds this time, it is considered a failure.
 
@@ -149,7 +149,7 @@ The duration after which the HTTP request is considered to be performing in a de
 **Default:** `3`
 **Range:** 0–10
 
-The number of times the monitor will automatically retry the HTTP request upon failure before reporting a definitive error. For example: `3`
+The total number of attempts made for each check, including the first one. With `3`, a failing request is tried up to three times in the same region before the check is reported as failed. `0` is treated as the default (`3`); there is no setting that disables retries, so `1` means a single attempt.
 
 ### Follow redirects
 

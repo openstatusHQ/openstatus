@@ -1,7 +1,6 @@
 import type { RouterOutputs } from "@openstatus/api";
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
 
 import { FormManageSubscription } from "./form-manage-subscription";
 
