@@ -518,7 +518,7 @@ export function MonitorCta() {
   const params = new URLSearchParams({ url, ref: "checker" });
 
   return (
-    <div className="border-border bg-muted/30 mt-2 grid gap-4 border p-4 sm:grid-cols-3">
+    <div className="border-border bg-muted/30 mt-4 grid gap-4 border p-4 sm:grid-cols-3">
       <div className="sm:col-span-2">
         <p className="my-0! font-semibold">
           {uneven
@@ -540,7 +540,7 @@ export function MonitorCta() {
         </p>
       </div>
       <div className="flex items-center sm:col-span-1 sm:justify-end">
-        <Button asChild className="h-auto! rounded-none p-4 text-base">
+        <Button asChild className="h-auto! w-full rounded-none p-4 text-base">
           <a
             href={`${APP_URL}/monitors/create?${params.toString()}`}
             target="_blank"
