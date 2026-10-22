@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -46,24 +47,9 @@ type PingData struct {
 
 func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	ctx := c.Request.Context()
-	const defaultRetry = 3
-	dataSourceName := "ping_response__v8"
 
-	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-
+	if !h.acceptCron(c) {
 		return
-	}
-
-	if h.CloudProvider == "fly" {
-		// if the request has been routed to a wrong region, we forward it to the correct one.
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
-			return
-		}
 	}
 
 	var req request.HttpCheckerRequest
@@ -73,6 +59,31 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		return
 	}
+
+	setCheckerEvent(c, req.URL, req.WorkspaceID, req.MonitorID, cronTrigger(req.Trigger), "http")
+
+	result, _ := h.RunHTTPCheck(ctx, req)
+
+	returnData := c.Query("data")
+	if returnData == "true" {
+
+		if len(result.Body) > 1024 {
+			result.Body = result.Body[:1000]
+		}
+
+		c.JSON(http.StatusOK, result)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, nil)
+}
+
+// RunHTTPCheck probes and records one cron HTTP check. A nil error means the
+// result was recorded, whether the monitor passed or not.
+func (h Handler) RunHTTPCheck(ctx context.Context, req request.HttpCheckerRequest) (checker.Response, error) {
+	const defaultRetry = 3
+	dataSourceName := "ping_response__v8"
 
 	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
 
@@ -88,14 +99,13 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		assertionAsString = ""
 	}
 
-	trigger := "cron"
-	if req.Trigger != "" {
-		trigger = req.Trigger
-	}
+	trigger := cronTrigger(req.Trigger)
 
 	var called int
 
 	var result checker.Response
+
+	var recordErr error
 
 	retry := defaultRetry
 	if req.Retry != 0 {
@@ -241,20 +251,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
-		}
-
-
-		e, f := c.Get("event")
-		if f {
-			t := e.(map[string]any)
-			t["checker"] = map[string]string{
-				"uri": req.URL,
-				"workspace_id": req.WorkspaceID,
-				"monitor_id":req.MonitorID,
-				"trigger": trigger,
-				"type": "http",
-			}
-			c.Set("event", t)
+			recordErr = err
 		}
 
 		return struct{}{}, nil
@@ -264,7 +261,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		id, e := uuid.NewV7()
 		if e != nil {
 			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
-			return
+			return result, e
 		}
 
 		data := PingData{
@@ -286,6 +283,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+			recordErr = err
 		}
 
 		if req.Status != "error" {
@@ -303,19 +301,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		otelOS.RecordHTTPMetrics(ctx, req, result, h.Region)
 	}
 
-	returnData := c.Query("data")
-	if returnData == "true" {
-
-		if len(result.Body) > 1024 {
-			result.Body = result.Body[:1000]
-		}
-
-		c.JSON(http.StatusOK, result)
-
-		return
-	}
-
-	c.JSON(http.StatusOK, nil)
+	return result, recordErr
 }
 
 func EvaluateHTTPAssertions(raw []json.RawMessage, data PingData, res checker.Response) (bool, error) {
