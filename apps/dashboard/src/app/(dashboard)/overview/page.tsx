@@ -194,8 +194,9 @@ export default function Page() {
               </EmptyStateMedia>
               <EmptyStateTitle>No recent activity</EmptyStateTitle>
               <EmptyStateDescription>
-                Resolved incidents and reports and completed maintenances from
-                the last 7 days land here.
+                {endedIncidents
+                  ? "Resolved incidents and reports and completed maintenances from the last 7 days land here."
+                  : "Incidents could not be loaded. Resolved reports and completed maintenances from the last 7 days still show up here."}
               </EmptyStateDescription>
             </DataTableEmpty>
           }

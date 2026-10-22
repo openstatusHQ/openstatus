@@ -2,10 +2,12 @@
 
 import type { PrivateLocation } from "@openstatus/db/src/schema";
 import { Globe } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMemo } from "react";
 
 import {
+  EmptyStateActions,
   EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
@@ -52,12 +54,17 @@ export function RegionsDataTable({
   privateLocations,
   loading,
   degradedAfter,
+  filteredOut,
+  onShowAll,
 }: {
   data: RegionMetric[];
   privateLocations: PrivateLocation[];
   loading: boolean;
   /** Values above it render in the warning color. */
   degradedAfter: number | null;
+  /** The region filter left none of the configured regions. */
+  filteredOut?: boolean;
+  onShowAll?: () => void;
 }) {
   const max = useMemo(() => getRegionAxisMax(data), [data]);
   // only when no region reported at all; a single dead region keeps its row
@@ -91,7 +98,24 @@ export function RegionsDataTable({
             <EmptyStateMedia>
               <Globe />
             </EmptyStateMedia>
-            {data.length === 0 ? (
+            {filteredOut ? (
+              <>
+                <EmptyStateTitle>
+                  No regions match the selected filter
+                </EmptyStateTitle>
+                <EmptyStateDescription>
+                  Pick a region configured on this monitor to compare latency
+                  per region.
+                </EmptyStateDescription>
+                {onShowAll ? (
+                  <EmptyStateActions>
+                    <Button size="sm" variant="outline" onClick={onShowAll}>
+                      Show all regions
+                    </Button>
+                  </EmptyStateActions>
+                ) : null}
+              </>
+            ) : data.length === 0 ? (
               <>
                 <EmptyStateTitle>No regions configured</EmptyStateTitle>
                 <EmptyStateDescription>

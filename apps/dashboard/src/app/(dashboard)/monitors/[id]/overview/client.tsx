@@ -144,20 +144,32 @@ export function Client() {
   const canWiden =
     !!widerPeriod && PERIODS.indexOf(widerPeriod) <= PERIODS.indexOf(maxPeriod);
 
-  const regionMetrics: RegionMetric[] = React.useMemo(() => {
-    const configured = [
+  const configuredRegions = React.useMemo(
+    () => [
       ...(monitor?.regions ?? []),
       ...(monitor?.privateLocations?.map((location) =>
         location.id.toString(),
       ) ?? []),
-    ];
-    return mapRegionMetrics(
-      regionTimeline,
-      filtersRegions
-        ? configured.filter((region) => selectedRegions?.includes(region))
-        : configured,
-    );
-  }, [regionTimeline, monitor, filtersRegions, selectedRegions]);
+    ],
+    [monitor],
+  );
+  const regionMetrics: RegionMetric[] = React.useMemo(
+    () =>
+      mapRegionMetrics(
+        regionTimeline,
+        filtersRegions
+          ? configuredRegions.filter((region) =>
+              selectedRegions?.includes(region),
+            )
+          : configuredRegions,
+      ),
+    [regionTimeline, configuredRegions, filtersRegions, selectedRegions],
+  );
+  // e.g. a stale region in the URL after the monitor's regions were edited
+  const regionsFilteredOut =
+    filtersRegions &&
+    configuredRegions.length > 0 &&
+    regionMetrics.length === 0;
 
   if (!monitor) return null;
 
@@ -341,6 +353,8 @@ export function Client() {
             privateLocations={monitor.privateLocations ?? []}
             loading={!regionTimeline}
             degradedAfter={monitor.degradedAfter}
+            filteredOut={regionsFilteredOut}
+            onShowAll={() => setSearchParams({ regions: null })}
           />
         )}
       </Section>

@@ -100,11 +100,18 @@ export function Client() {
   const trpc = useTRPC();
   const [openDialog, setOpenDialog] = useState(false);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const { data: auditLogs } = useQuery(trpc.auditLog.list.queryOptions({}));
+  const {
+    data: auditLogs,
+    isPending: auditLogsPending,
+    isError: auditLogsError,
+  } = useQuery(trpc.auditLog.list.queryOptions({}));
 
-  if (!workspace || !auditLogs) return null;
+  if (!workspace) return null;
 
   const isLimited = workspace.limits["audit-log"] === false;
+
+  // a failed list still renders the page with an empty table (see below)
+  if (!isLimited && auditLogsPending) return null;
 
   return (
     <SectionGroup>
@@ -161,7 +168,7 @@ export function Client() {
         ) : (
           <DataTable
             columns={columns}
-            data={auditLogs.items}
+            data={auditLogs?.items ?? []}
             defaultColumnVisibility={{
               actorType: false,
               entityType: false,
@@ -179,11 +186,24 @@ export function Client() {
                 <EmptyStateMedia>
                   <AuditLog />
                 </EmptyStateMedia>
-                <EmptyStateTitle>No audit logs yet</EmptyStateTitle>
-                <EmptyStateDescription>
-                  Every create, update and delete in this workspace is recorded
-                  here with who did it and when.
-                </EmptyStateDescription>
+                {auditLogsError ? (
+                  <>
+                    <EmptyStateTitle>
+                      Audit logs could not be loaded
+                    </EmptyStateTitle>
+                    <EmptyStateDescription>
+                      Try again in a moment.
+                    </EmptyStateDescription>
+                  </>
+                ) : (
+                  <>
+                    <EmptyStateTitle>No audit logs yet</EmptyStateTitle>
+                    <EmptyStateDescription>
+                      Every create, update and delete in this workspace is
+                      recorded here with who did it and when.
+                    </EmptyStateDescription>
+                  </>
+                )}
               </DataTableEmpty>
             }
           />
