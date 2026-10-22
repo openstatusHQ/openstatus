@@ -81,7 +81,7 @@ const baseColumns: ColumnDef<OverviewEvent>[] = [
   {
     id: "type",
     accessorFn: (row) => row.type,
-    header: () => null,
+    header: "",
     cell: ({ row }) => {
       const config = eventTypeConfig[row.original.type];
       return (
@@ -171,7 +171,7 @@ const baseColumns: ColumnDef<OverviewEvent>[] = [
 
 const actionColumn: ColumnDef<OverviewEvent> = {
   id: "action",
-  header: () => null,
+  header: "",
   cell: ({ row }) => {
     const event = row.original;
     switch (event.type) {

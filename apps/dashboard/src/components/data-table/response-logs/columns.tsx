@@ -29,7 +29,7 @@ export function getColumns(
   return [
     {
       accessorKey: "requestStatus",
-      header: () => null,
+      header: "",
       enableSorting: false,
       enableHiding: false,
       cell: ({ row }) => {

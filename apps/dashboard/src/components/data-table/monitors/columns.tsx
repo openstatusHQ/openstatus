@@ -26,6 +26,7 @@ type Monitor = RouterOutputs["monitor"]["list"][number] & {
 export const columns: ColumnDef<Monitor>[] = [
   {
     id: "select",
+    meta: { ghost: false },
     header: ({ table }) => (
       <Checkbox
         checked={
@@ -82,6 +83,7 @@ export const columns: ColumnDef<Monitor>[] = [
     meta: {
       headerClassName: "pr-0",
       cellClassName: "w-8 pr-0",
+      ghost: false,
     },
   },
   {

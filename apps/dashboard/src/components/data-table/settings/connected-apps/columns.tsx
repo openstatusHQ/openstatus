@@ -65,6 +65,7 @@ export const columns: ColumnDef<Grant>[] = [
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
+    meta: { ghost: false },
     cell: ({ row }) => <DataTableRowActions row={row} />,
   },
 ];

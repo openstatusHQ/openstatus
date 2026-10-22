@@ -31,6 +31,7 @@ export const columns: ColumnDef<Invitation>[] = [
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
+    meta: { ghost: false },
     cell: ({ row }) => <DataTableRowActions row={row} />,
   },
 ];

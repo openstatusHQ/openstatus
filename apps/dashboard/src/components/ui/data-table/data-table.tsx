@@ -36,7 +36,11 @@ import {
 } from "@/components/content/empty-state";
 
 import type { DataTableActionBarProps } from "./data-table-action-bar";
-import { DataTableEmpty, DataTableEmptyFiltered } from "./data-table-empty";
+import {
+  DataTableEmpty,
+  DataTableEmptyFiltered,
+  DataTableGhostRows,
+} from "./data-table-empty";
 import type { DataTablePaginationProps } from "./data-table-pagination";
 import type { DataTableToolbarProps } from "./data-table-toobar";
 
@@ -215,31 +219,36 @@ export function DataTable<TData, TValue>({
                 </Fragment>
               ))
             ) : (
-              <TableRow className="hover:bg-transparent">
-                <TableCell
-                  colSpan={table.getVisibleLeafColumns().length}
-                  className="p-0"
-                >
-                  {/* the cell spans the scrollable table; pin to the visible width */}
-                  <div className="sticky left-0 w-[100cqw]">
-                    {data.length > 0 ? (
-                      <DataTableEmptyFiltered table={table} />
-                    ) : (
-                      (emptyState ?? (
-                        <DataTableEmpty>
-                          <EmptyStateMedia>
-                            <Inbox />
-                          </EmptyStateMedia>
-                          <EmptyStateTitle>Nothing here yet</EmptyStateTitle>
-                          <EmptyStateDescription>
-                            Entries show up here as soon as there are some.
-                          </EmptyStateDescription>
-                        </DataTableEmpty>
-                      ))
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
+              <>
+                {data.length === 0 ? (
+                  <DataTableGhostRows table={table} />
+                ) : null}
+                <TableRow className="hover:bg-transparent">
+                  <TableCell
+                    colSpan={table.getVisibleLeafColumns().length}
+                    className="p-0"
+                  >
+                    {/* the cell spans the scrollable table; pin to the visible width */}
+                    <div className="sticky left-0 w-[100cqw]">
+                      {data.length > 0 ? (
+                        <DataTableEmptyFiltered table={table} />
+                      ) : (
+                        (emptyState ?? (
+                          <DataTableEmpty>
+                            <EmptyStateMedia>
+                              <Inbox />
+                            </EmptyStateMedia>
+                            <EmptyStateTitle>Nothing here yet</EmptyStateTitle>
+                            <EmptyStateDescription>
+                              Entries show up here as soon as there are some.
+                            </EmptyStateDescription>
+                          </DataTableEmpty>
+                        ))
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </>
             )}
           </TableBody>
           {actionBar ? React.createElement(actionBar, { table }) : null}
