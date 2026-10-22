@@ -15,7 +15,7 @@ faq:
   - question: "Can I link an existing channel instead of getting a new one?"
     answer: "Yes. When you declare from a channel your team is already working in, the bot posts a notice with a Link this channel instead button. Clicking it moves the incident there, pins the card in that channel and archives the inc- channel that was just created."
   - question: "Does the bot read the whole channel?"
-    answer: "When you mention it, the agent reads the 50 messages before your mention, or the 20 before the thread you are in, and can page back further when it needs to. Slack message links in your message are read as well. The postmortem draft uses the incident channel's history. Nothing is published or changed without an approval card."
+    answer: "When you mention it, the agent reads the 50 messages before your mention, or the 20 before the thread you are in, and can page back further when it needs to. Slack message links in your message are read as well. The postmortem draft uses the incident channel's history. Declaring, changing status and approving the postmortem go through an approval card; a pinned message or a note lands on the timeline straight away, and nothing reaches the status page until you submit the form."
   - question: "Can I run incidents without Slack?"
     answer: "Yes. Declare, update, resolve and write the postmortem from the dashboard, or through the MCP server from an agent. Slack adds the channel per incident, slash commands, pinning to the timeline and stale reminders on top of the same incident record."
 ---
@@ -202,7 +202,9 @@ summary, impact, timeline, root cause, what went well, what went wrong and actio
 items. Where it has no facts it says what is unknown instead of guessing.
 
 The draft is posted with a card to approve it. Edit it in the dashboard first if you
-want. Approving closes the incident, which freezes it and archives the channel. The
+want. Approving from the card closes the incident, which freezes it and archives the
+channel. The dashboard separates the two: **Approve** keeps the incident open,
+**Approve & close** does both. The
 whole chain, from the alert through every status change to the approved postmortem,
 is in the audit log with the person behind each step.
 
@@ -259,7 +261,9 @@ pins the card in that channel and archives the `inc-` channel that was just crea
 When you mention it, the agent reads the 50 messages before your mention, or the 20
 before the thread you are in, and can page back further when it needs to. Slack
 message links in your message are read as well. The postmortem draft uses the
-incident channel's history. Nothing is published or changed without an approval card.
+incident channel's history. Declaring, changing status and approving the postmortem
+go through an approval card; a pinned message or a note lands on the timeline
+straight away, and nothing reaches the status page until you submit the form.
 
 </Details>
 

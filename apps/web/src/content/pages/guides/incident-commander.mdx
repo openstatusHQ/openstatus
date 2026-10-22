@@ -139,16 +139,17 @@ commander has to remember, the more of the role one person can carry.
 
 The commander is a field on the incident, set when you
 [declare it](/incident-management#declare-from-slack-or-the-dashboard) from the
-dashboard, from Slack or from an agent, and changeable while the incident is open.
+dashboard, from Slack or from an agent, and changeable until the incident is closed.
 Changing it is recorded on the timeline. Three things depend on it:
 
 - **Stale reminders.** An incident that goes quiet gets a reminder in its Slack
-  channel. Without a channel, the reminder goes to the commander as a direct
-  message.
+  channel. Without a channel, the reminder is sent as a direct message to the
+  commander, or else to the person who declared it.
 - **The postmortem.** The commander, an owner or an admin approves the drafted
-  postmortem. Approving closes the incident.
-- **Closing.** Only a resolved incident can be closed, and only by the commander, an
-  owner or an admin.
+  postmortem. From the Slack card, approving also closes the incident; the dashboard
+  offers **Approve** and **Approve & close** separately.
+- **Closing.** A resolved incident is closed by the commander, an owner or an admin.
+  Canceling a false alarm closes it on the spot.
 
 The rest of the role is yours. The tooling keeps the record so that the person
 coordinating does not also have to be the person remembering. [How incident
