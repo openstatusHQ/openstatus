@@ -37,10 +37,14 @@ const emptyStateMediaVariants = cva(
     variants: {
       variant: {
         default: "border-border text-muted-foreground",
-        success: "border-success/20 bg-success/10 text-success",
-        warning: "border-warning/20 bg-warning/10 text-warning",
-        destructive: "border-destructive/20 bg-destructive/10 text-destructive",
-        info: "border-info/20 bg-info/10 text-info",
+        // opaque tint so ghost rows never show through
+        success:
+          "border-success/20 text-success bg-[color-mix(in_oklab,var(--success)_10%,var(--background))]",
+        warning:
+          "border-warning/20 text-warning bg-[color-mix(in_oklab,var(--warning)_10%,var(--background))]",
+        destructive:
+          "border-destructive/20 text-destructive bg-[color-mix(in_oklab,var(--destructive)_10%,var(--background))]",
+        info: "border-info/20 text-info bg-[color-mix(in_oklab,var(--info)_10%,var(--background))]",
       },
     },
     defaultVariants: { variant: "default" },

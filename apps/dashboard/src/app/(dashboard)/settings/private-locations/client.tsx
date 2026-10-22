@@ -1,6 +1,6 @@
 "use client";
 import type { RouterOutputs } from "@openstatus/api";
-import { ExternalLink, Lock, PrivateLocation } from "@openstatus/icons";
+import { ExternalLink, Globe, Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import NextLink from "next/link";
@@ -125,7 +125,7 @@ export function Client() {
             emptyState={
               <DataTableEmpty>
                 <EmptyStateMedia>
-                  <PrivateLocation />
+                  <Globe />
                 </EmptyStateMedia>
                 <EmptyStateTitle>No private locations</EmptyStateTitle>
                 <EmptyStateDescription>

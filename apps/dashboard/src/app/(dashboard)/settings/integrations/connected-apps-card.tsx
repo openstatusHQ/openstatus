@@ -1,10 +1,13 @@
 "use client";
 
-import { Plug } from "@openstatus/icons";
+import { ExternalLink, Plug } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import NextLink from "next/link";
 
 import { Link } from "@/components/common/link";
 import {
+  EmptyStateActions,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
@@ -63,6 +66,18 @@ export function ConnectedAppsCard() {
                   Add the openstatus MCP server to Claude, Cursor or ChatGPT and
                   approve the connection here.
                 </EmptyStateDescription>
+                <EmptyStateActions>
+                  <Button size="sm" variant="outline" asChild>
+                    <NextLink
+                      href="https://docs.openstatus.dev/reference/mcp-server"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <ExternalLink />
+                      MCP server docs
+                    </NextLink>
+                  </Button>
+                </EmptyStateActions>
               </DataTableEmpty>
             }
           />

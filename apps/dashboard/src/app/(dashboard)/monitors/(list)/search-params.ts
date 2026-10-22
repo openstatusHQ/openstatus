@@ -1,6 +1,7 @@
 import {
   createParser,
   createSearchParamsCache,
+  parseAsArrayOf,
   parseAsStringEnum,
 } from "nuqs/server";
 
@@ -24,7 +25,7 @@ export const MONITOR_STATUSES = [
 export type MonitorStatus = (typeof MONITOR_STATUSES)[number];
 
 export const searchParamsParsers = {
-  status: parseAsStringEnum([...MONITOR_STATUSES]),
+  status: parseAsArrayOf(parseAsStringEnum([...MONITOR_STATUSES])),
   sort: parseAsSort,
 };
 

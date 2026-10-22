@@ -7,9 +7,8 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
 import NextLink from "next/link";
 import { useQueryStates } from "nuqs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { Link } from "@/components/common/link";
 import {
   EmptyStateActions,
   EmptyStateDescription,
@@ -74,6 +73,9 @@ export function Client() {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParsers);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  // latest values for updater chains within one tick (the render closure lags)
+  const sortingRef = useRef(sorting);
+  const columnFiltersRef = useRef(columnFilters);
 
   const metricQueries = useQueries({
     queries: METRIC_TYPES.map((type) => {
@@ -92,11 +94,13 @@ export function Client() {
 
   // TODO: ideally we read from the searchParamsCache and there is no layout shift
   useEffect(() => {
-    if (searchParams.status) {
-      setColumnFilters([{ id: "status", value: [searchParams.status] }]);
+    if (searchParams.status?.length) {
+      columnFiltersRef.current = [{ id: "status", value: searchParams.status }];
+      setColumnFilters(columnFiltersRef.current);
     }
     if (searchParams.sort) {
-      setSorting([searchParams.sort]);
+      sortingRef.current = [searchParams.sort];
+      setSorting(sortingRef.current);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -111,17 +115,22 @@ export function Client() {
     React.SetStateAction<ColumnFiltersState>
   > = (updater) => {
     const next =
-      typeof updater === "function" ? updater(columnFilters) : updater;
+      typeof updater === "function"
+        ? updater(columnFiltersRef.current)
+        : updater;
+    columnFiltersRef.current = next;
     setColumnFilters(next);
     const status = next.find((f) => f.id === "status")?.value as
       | MonitorStatus[]
       | undefined;
-    setSearchParams({ status: status?.[0] ?? null });
+    setSearchParams({ status: status?.length ? status : null });
   };
   const onSortingChange: React.Dispatch<React.SetStateAction<SortingState>> = (
     updater,
   ) => {
-    const next = typeof updater === "function" ? updater(sorting) : updater;
+    const next =
+      typeof updater === "function" ? updater(sortingRef.current) : updater;
+    sortingRef.current = next;
     setSorting(next);
     setSearchParams({ sort: next[0] ?? null });
   };
@@ -221,10 +230,6 @@ export function Client() {
                   <NextLink href="/agents/cli">Import via CLI</NextLink>
                 </Button>
               </EmptyStateActions>
-              <EmptyStateDescription className="text-xs">
-                Or let an agent create it through the{" "}
-                <Link href="/agents/mcp">MCP server</Link>.
-              </EmptyStateDescription>
             </DataTableEmpty>
           }
           columnFilters={columnFilters}
