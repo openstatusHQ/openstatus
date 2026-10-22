@@ -197,6 +197,7 @@ export function FormStatusPageUpdate() {
         }}
       />
       <FormTimezone
+        locked={workspace.limits.timezone === false}
         defaultValues={{ defaultTimezone: statusPage.defaultTimezone }}
         onSubmit={async (values) => {
           await updateTimezoneMutation.mutateAsync({

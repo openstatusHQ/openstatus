@@ -37,6 +37,7 @@ export type CreatePageInput = {
   forceTheme?: "light" | "dark" | "system";
   defaultLocale?: (typeof locales)[number];
   locales?: (typeof locales)[number][] | null;
+  defaultTimezone?: string;
   homepageUrl?: string | null;
   contactUrl?: string | null;
   configuration?: Record<string, unknown> | null;

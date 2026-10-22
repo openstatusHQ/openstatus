@@ -35,6 +35,7 @@ export const limitsSchema = z.object({
   "status-subscribers": z.boolean().prefault(false),
   "custom-domain": z.boolean().prefault(false),
   i18n: z.boolean().prefault(false),
+  timezone: z.boolean().prefault(false),
   "password-protection": z.boolean().prefault(false),
   "email-domain-protection": z.boolean().prefault(false), // add-on but required in limits
   "ip-restriction": z.boolean().prefault(false), // add-on but required in limits

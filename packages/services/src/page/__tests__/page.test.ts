@@ -41,6 +41,7 @@ const TEST_PREFIX = "svc-page-test";
 
 let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
+let otherTeamCtx: ServiceContext;
 let teamMonitorId: number;
 
 // Dedicated, freshly-inserted free-plan workspace for the quota-sensitive
@@ -56,6 +57,8 @@ const FREE_WS_SLUG = `${TEST_PREFIX}-free-ws`;
 beforeAll(async () => {
   const team = (await createWorkspaceFixture("team")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
+  const otherTeam = (await createWorkspaceFixture("team")).workspace;
+  otherTeamCtx = makeUserCtx(otherTeam, { userId: 3 });
 
   await db
     .delete(workspace)
@@ -167,6 +170,10 @@ describe("createPage (full form)", () => {
       name: "custom domain",
       input: { customDomain: `${TEST_PREFIX}-denied.example.com` },
     },
+    {
+      name: "time zone",
+      input: { defaultTimezone: "Asia/Tokyo" },
+    },
   ] satisfies {
     name: string;
     input: Partial<CreatePageInput>;
@@ -205,6 +212,7 @@ describe("createPage (full form)", () => {
         customTheme: { light: {}, dark: {} },
         defaultLocale: "en",
         locales: ["en"],
+        defaultTimezone: "UTC",
       },
     ] satisfies Partial<CreatePageInput>[]
   ).entries()) {
@@ -772,6 +780,36 @@ describe("updatePageTimezone", () => {
     });
   });
 
+  test("lets a plan without timezone go back to UTC", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free", slug: uniqueSlug("zone-free-utc") },
+      });
+      await updatePageTimezone({
+        ctx,
+        input: { id: p.id, defaultTimezone: "UTC" },
+      });
+    });
+  });
+
+  test("rejects when plan lacks timezone", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free", slug: uniqueSlug("zone-free") },
+      });
+      await expect(
+        updatePageTimezone({
+          ctx,
+          input: { id: p.id, defaultTimezone: "Asia/Tokyo" },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
   test("cross-workspace → NotFoundError", async () => {
     await withTestTransaction(async (tx) => {
       const p = await newPage({
@@ -780,7 +818,7 @@ describe("updatePageTimezone", () => {
       });
       await expect(
         updatePageTimezone({
-          ctx: { ...freeCtx, db: tx },
+          ctx: { ...otherTeamCtx, db: tx },
           input: { id: p.id, defaultTimezone: "Asia/Tokyo" },
         }),
       ).rejects.toBeInstanceOf(NotFoundError);

@@ -340,6 +340,11 @@ export async function updatePageTimezone(args: {
   requireScope(ctx, "write");
   const input = UpdatePageTimezoneInput.parse(args.input);
 
+  // UTC stays open to every plan, so a page can always be set back to it
+  if (input.defaultTimezone !== "UTC" && !ctx.workspace.limits.timezone) {
+    throw new LimitExceededError("timezone", 0);
+  }
+
   await withTransaction(ctx, async (tx) => {
     const existing = await getPageInWorkspace({
       tx,

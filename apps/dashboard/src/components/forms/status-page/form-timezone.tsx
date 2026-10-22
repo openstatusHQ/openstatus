@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Expand } from "@openstatus/icons";
+import { Check, Expand, Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Command,
@@ -33,6 +33,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { Link } from "@/components/common/link";
 import {
   FormCard,
   FormCardContent,
@@ -42,6 +43,7 @@ import {
   FormCardHeader,
   FormCardSeparator,
   FormCardTitle,
+  FormCardUpgrade,
 } from "@/components/forms/form-card";
 
 const schema = z.object({
@@ -60,9 +62,11 @@ function zoneLabel(timeZone: string) {
 export function FormTimezone({
   defaultValues,
   onSubmit,
+  locked,
 }: {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
+  locked?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -109,6 +113,7 @@ export function FormTimezone({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
         <FormCard>
+          {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Time zone</FormCardTitle>
             <FormCardDescription>
@@ -131,6 +136,7 @@ export function FormTimezone({
                           variant="outline"
                           role="combobox"
                           aria-expanded={open}
+                          disabled={locked}
                           className="w-full justify-between font-normal sm:max-w-md"
                         >
                           {zoneLabel(field.value)}
@@ -179,9 +185,23 @@ export function FormTimezone({
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>Defaults to UTC.</FormCardFooterInfo>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Submitting..." : "Submit"}
-            </Button>
+            {locked ? (
+              <Button
+                data-track="paywall_viewed"
+                data-limit="timezone"
+                type="button"
+                asChild
+              >
+                <Link href="/settings/billing">
+                  <Lock className="size-4" />
+                  Upgrade
+                </Link>
+              </Button>
+            ) : (
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Submitting..." : "Submit"}
+              </Button>
+            )}
           </FormCardFooter>
         </FormCard>
       </form>
