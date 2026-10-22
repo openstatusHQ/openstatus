@@ -13,7 +13,10 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import Link from "next/link";
 import { Fragment, useState } from "react";
+
+import { APP_URL } from "@/lib/metadata/shared-metadata";
 
 type Values = {
   url: string;
@@ -239,8 +242,45 @@ export function Form() {
             {isCopied ? "Copied" : "Copy to Clipboard"}
           </Button>
         </div>
+        <NextSteps url={value.url} method={value.method} />
       </div>
     </form>
+  );
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+// The command is a one-off from the reader's machine. Both links carry the
+// URL and method only; headers and body stay in the command.
+function NextSteps({ url, method }: { url: string; method: string }) {
+  if (!isHttpUrl(url)) return null;
+
+  const checker = new URLSearchParams({ url, method });
+  const monitor = new URLSearchParams({ url, method, ref: "curl" });
+
+  return (
+    <p className="text-muted-foreground col-span-5 my-0! text-sm">
+      Same URL, different place:{" "}
+      <Link href={`/play/checker?${checker.toString()}`}>
+        run it from 28 regions
+      </Link>{" "}
+      or{" "}
+      <a
+        href={`${APP_URL}/monitors/create?${monitor.toString()}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        monitor this endpoint
+      </a>{" "}
+      and get alerted when it fails.
+    </p>
   );
 }
 

@@ -1,4 +1,8 @@
-import { Events, setupAnalytics } from "@openstatus/analytics";
+import {
+  Events,
+  readAttributionCookie,
+  setupAnalytics,
+} from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { type User, user } from "@openstatus/db/src/schema";
 import { WelcomeEmail, sendEmail } from "@openstatus/emails";
@@ -76,7 +80,11 @@ async function onNewUser(
     source: "dashboard",
   });
 
-  await analytics.track({ ...Events.CreateUser, provider });
+  await analytics.track({
+    ...Events.CreateUser,
+    provider,
+    ...readAttributionCookie(requestHeaders.get("cookie")),
+  });
 }
 
 const {
