@@ -238,7 +238,13 @@ func main() {
 
 	defer httpClient.CloseIdleConnections()
 
-	tinybirdClient := tinybird.NewClient(httpClient, tinyBirdToken)
+	tinybirdOptions := tinybird.DefaultBatcherOptions()
+	tinybirdOptions.FlushInterval = envDuration("TINYBIRD_FLUSH_INTERVAL", tinybirdOptions.FlushInterval)
+	tinybirdOptions.FlushJitter = envDuration("TINYBIRD_FLUSH_JITTER", tinybirdOptions.FlushJitter)
+	tinybirdOptions.MaxBytes = envInt("TINYBIRD_MAX_BATCH_BYTES", tinybirdOptions.MaxBytes)
+	tinybirdOptions.RetryBudget = envDuration("TINYBIRD_RETRY_BUDGET", tinybirdOptions.RetryBudget)
+	tinybirdOptions.OnFlush = logTinybirdFlush
+	tinybirdClient := tinybird.NewBatcher(httpClient, tinyBirdToken, tinybirdOptions)
 
 	h := &handlers.Handler{
 		Secret:        cronSecret,
@@ -301,7 +307,17 @@ func main() {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to shutdown http server")
 	}
 	<-consumerDone
+
+	// Checks that finished during the drain may still sit in a batch.
+	flushCtx, flushCancel := context.WithTimeout(context.Background(), tinybirdFinalFlush)
+	defer flushCancel()
+	if err := tinybirdClient.Close(flushCtx); err != nil {
+		log.Error().Err(err).Msg("failed to flush tinybird batches")
+	}
 }
+
+// tinybirdFinalFlush fits in what the 60s fly kill_timeout leaves after consumerDrain.
+const tinybirdFinalFlush = 8 * time.Second
 
 // consumerDrain stays under the 60s fly kill_timeout, so unfinished checks are
 // nacked for redelivery before the machine is killed.
@@ -364,6 +380,41 @@ func logConsumerEvent(ctx context.Context, e queue.Event) {
 	if shouldSample(event) {
 		slog.LogAttrs(ctx, slog.LevelInfo, "message done", MapToAttrs(event)...)
 	}
+}
+
+func logTinybirdFlush(ctx context.Context, e tinybird.FlushEvent) {
+	event := map[string]any{
+		"timestamp":           time.Now().Format(time.RFC3339),
+		"datasource":          e.DataSource,
+		"rows":                e.Rows,
+		"bytes":               e.Bytes,
+		"attempts":            e.Attempts,
+		"ambiguous_attempts":  e.AmbiguousAttempts,
+		"status_code":         e.StatusCode,
+		"duration_ms":         int(e.Duration.Milliseconds()),
+		"oldest_wait_ms":      int(e.OldestWait.Milliseconds()),
+		"ratelimit_limit":     e.RateLimitLimit,
+		"ratelimit_remaining": e.RateLimitRemaining,
+	}
+	if e.Err != nil {
+		event["error"] = map[string]any{
+			"type":    "TinybirdFlushError",
+			"message": e.Err.Error(),
+		}
+	}
+
+	if e.Attempts > 1 || shouldSample(event) {
+		slog.LogAttrs(ctx, slog.LevelInfo, "tinybird flush", MapToAttrs(event)...)
+	}
+}
+
+func envDuration(key string, fallback time.Duration) time.Duration {
+	value, err := time.ParseDuration(env(key, ""))
+	if err != nil || value < 0 {
+		return fallback
+	}
+
+	return value
 }
 
 func envInt(key string, fallback int) int {
