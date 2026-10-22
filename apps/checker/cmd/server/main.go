@@ -242,7 +242,10 @@ func main() {
 	tinybirdOptions.FlushInterval = envDuration("TINYBIRD_FLUSH_INTERVAL", tinybirdOptions.FlushInterval)
 	tinybirdOptions.FlushJitter = envDuration("TINYBIRD_FLUSH_JITTER", tinybirdOptions.FlushJitter)
 	tinybirdOptions.MaxBytes = envInt("TINYBIRD_MAX_BATCH_BYTES", tinybirdOptions.MaxBytes)
-	tinybirdOptions.RetryBudget = envDuration("TINYBIRD_RETRY_BUDGET", tinybirdOptions.RetryBudget)
+	// A zero budget would expire before the first request.
+	if retryBudget := envDuration("TINYBIRD_RETRY_BUDGET", 0); retryBudget > 0 {
+		tinybirdOptions.RetryBudget = retryBudget
+	}
 	tinybirdOptions.OnFlush = logTinybirdFlush
 	tinybirdClient := tinybird.NewBatcher(httpClient, tinyBirdToken, tinybirdOptions)
 
@@ -300,6 +303,7 @@ func main() {
 	}
 
 	<-ctx.Done()
+	shutdownStart := time.Now()
 	// The consumer drains on its own from ctx; stop the listener alongside it.
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), consumerDrain)
 	defer shutdownCancel()
@@ -308,16 +312,18 @@ func main() {
 	}
 	<-consumerDone
 
-	// Checks that finished during the drain may still sit in a batch.
-	flushCtx, flushCancel := context.WithTimeout(context.Background(), tinybirdFinalFlush)
+	// Checks that finished during the drain may still sit in a batch. The flush
+	// gets whatever the drain left of the shutdown budget.
+	flushCtx, flushCancel := context.WithDeadline(context.Background(), shutdownStart.Add(shutdownBudget))
 	defer flushCancel()
 	if err := tinybirdClient.Close(flushCtx); err != nil {
 		log.Error().Err(err).Msg("failed to flush tinybird batches")
 	}
 }
 
-// tinybirdFinalFlush fits in what the 60s fly kill_timeout leaves after consumerDrain.
-const tinybirdFinalFlush = 8 * time.Second
+// shutdownBudget keeps the whole shutdown, final Tinybird flush included, under
+// the 60s fly kill_timeout.
+const shutdownBudget = 58 * time.Second
 
 // consumerDrain stays under the 60s fly kill_timeout, so unfinished checks are
 // nacked for redelivery before the machine is killed.

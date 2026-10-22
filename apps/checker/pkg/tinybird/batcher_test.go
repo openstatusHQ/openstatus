@@ -72,13 +72,16 @@ func options() tinybird.BatcherOptions {
 	}
 }
 
+// eventLine is the NDJSON line sendAll writes per row.
+const eventLine = `"event"` + "\n"
+
 func sendAll(t *testing.T, b *tinybird.Batcher, dataSource string, n int) []error {
 	t.Helper()
 	errs := make([]error, n)
 	var wg sync.WaitGroup
 	for i := range n {
 		wg.Go(func() {
-			errs[i] = b.SendEvent(t.Context(), map[string]int{"i": i}, dataSource)
+			errs[i] = b.SendEvent(t.Context(), "event", dataSource)
 		})
 	}
 	wg.Wait()
@@ -92,7 +95,11 @@ func TestBatcher(t *testing.T) {
 	t.Run("it should send concurrent rows as one NDJSON request", func(t *testing.T) {
 		t.Parallel()
 		api := &fakeEventsAPI{}
-		b := tinybird.NewBatcher(api.client(), "apiKey", options())
+		opts := options()
+		// Only the 50th row can trigger the flush, whatever the scheduling.
+		opts.FlushInterval = time.Hour
+		opts.MaxBytes = 50 * len(eventLine)
+		b := tinybird.NewBatcher(api.client(), "apiKey", opts)
 
 		for _, err := range sendAll(t, b, "ping_response__v8", 50) {
 			require.NoError(t, err)
@@ -215,12 +222,65 @@ func TestBatcher(t *testing.T) {
 
 		sent := make(chan error, 1)
 		go func() { sent <- b.SendEvent(t.Context(), "event", "test") }()
-		// Let the row reach the buffer; the flush interval alone would never fire.
-		time.Sleep(50 * time.Millisecond)
+		// The flush interval alone would never fire.
+		require.Eventually(t, func() bool { return b.PendingRows("test") == 1 }, time.Second, time.Millisecond)
 		require.NoError(t, b.Close(t.Context()))
 
 		require.NoError(t, <-sent)
 		require.Len(t, api.recorded(), 1)
 		require.ErrorIs(t, b.SendEvent(t.Context(), "event", "test"), tinybird.ErrBatcherClosed)
+	})
+
+	t.Run("it should count the wait behind an earlier flush against the retry budget", func(t *testing.T) {
+		t.Parallel()
+		opts := options()
+		opts.RetryBudget = 200 * time.Millisecond
+		api := &fakeEventsAPI{respond: func(attempt int) *http.Response {
+			if attempt == 1 {
+				// A slow request holds the sender past the queued batch's deadline.
+				time.Sleep(2 * opts.RetryBudget)
+			}
+			return status(http.StatusServiceUnavailable, nil)
+		}}
+		opts.FlushInterval = time.Hour
+		opts.MaxBytes = 1
+		b := tinybird.NewBatcher(api.client(), "apiKey", opts)
+
+		first := make(chan error, 1)
+		go func() { first <- b.SendEvent(t.Context(), "event", "test") }()
+		require.Eventually(t, func() bool { return len(api.recorded()) > 0 }, time.Second, time.Millisecond)
+
+		// Queued behind the first batch, which keeps its sender busy past this batch's budget.
+		start := time.Now()
+		err := b.SendEvent(t.Context(), "event", "test")
+		require.Len(t, api.recorded(), 1)
+		require.Less(t, time.Since(start), 3*opts.RetryBudget)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		require.ErrorContains(t, err, "flush not attempted")
+		require.ErrorContains(t, <-first, "unexpected status code: 503")
+	})
+
+	t.Run("it should abort in-flight retries once Close gives up", func(t *testing.T) {
+		t.Parallel()
+		api := &fakeEventsAPI{respond: func(int) *http.Response { return status(http.StatusServiceUnavailable, nil) }}
+		opts := options()
+		opts.FlushInterval = time.Hour
+		opts.MaxBytes = 1
+		opts.RetryBudget = time.Minute
+		b := tinybird.NewBatcher(api.client(), "apiKey", opts)
+
+		sent := make(chan error, 1)
+		go func() { sent <- b.SendEvent(t.Context(), "event", "test") }()
+		require.Eventually(t, func() bool { return len(api.recorded()) > 0 }, time.Second, time.Millisecond)
+
+		ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+		defer cancel()
+		require.ErrorIs(t, b.Close(ctx), context.DeadlineExceeded)
+		select {
+		case err := <-sent:
+			require.ErrorContains(t, err, "unexpected status code: 503")
+		default:
+			t.Fatal("the row should fail as soon as Close returns")
+		}
 	})
 }

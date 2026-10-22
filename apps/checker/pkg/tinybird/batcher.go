@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math/rand/v2"
 	"net/http"
 	"net/url"
@@ -22,7 +23,9 @@ type BatcherOptions struct {
 	FlushInterval time.Duration
 	FlushJitter   time.Duration
 	MaxBytes      int
-	// RetryBudget bounds the retries of one batch on 429, 5xx and network errors.
+	// RetryBudget bounds one batch from the moment it is detached, including the
+	// wait behind an earlier flush of the same data source, so a Tinybird outage
+	// cannot queue batches indefinitely.
 	RetryBudget time.Duration
 	OnFlush     func(context.Context, FlushEvent)
 }
@@ -60,6 +63,10 @@ type Batcher struct {
 	baseURL    string
 	opts       BatcherOptions
 
+	// stop aborts in-flight flushes once Close gives up waiting.
+	stop       context.Context
+	cancelStop context.CancelFunc
+
 	mu      sync.Mutex
 	closed  bool
 	batches map[string]*batch
@@ -72,15 +79,20 @@ type batch struct {
 	body       bytes.Buffer
 	waiters    []chan error
 	startedAt  time.Time
+	deadline   time.Time
 	timer      *time.Timer
 }
 
 func NewBatcher(httpClient *http.Client, apiKey string, opts BatcherOptions) *Batcher {
+	stop, cancelStop := context.WithCancel(context.Background())
+
 	return &Batcher{
 		httpClient: httpClient,
 		apiKey:     apiKey,
 		baseURL:    getBaseURL(),
 		opts:       opts,
+		stop:       stop,
+		cancelStop: cancelStop,
 		batches:    map[string]*batch{},
 		senders:    map[string]*sync.Mutex{},
 	}
@@ -113,6 +125,8 @@ func (b *Batcher) SendEvent(ctx context.Context, event any, dataSourceName strin
 	}
 	b.mu.Unlock()
 
+	// A cancelled caller's row stays in the batch and is still sent, so the
+	// redelivered check can record it twice: delivery is at least once.
 	select {
 	case err := <-done:
 		return err
@@ -121,8 +135,11 @@ func (b *Batcher) SendEvent(ctx context.Context, event any, dataSourceName strin
 	}
 }
 
-// Close flushes every pending batch and waits for in-flight flushes, bounded by ctx.
+// Close flushes every pending batch and waits for in-flight flushes, bounded by
+// ctx. When ctx ends first, in-flight flushes are aborted and their rows fail.
 func (b *Batcher) Close(ctx context.Context) error {
+	defer b.cancelStop()
+
 	b.mu.Lock()
 	b.closed = true
 	for _, pending := range b.batches {
@@ -140,6 +157,8 @@ func (b *Batcher) Close(ctx context.Context) error {
 	case <-done:
 		return nil
 	case <-ctx.Done():
+		b.cancelStop()
+		<-done
 		return ctx.Err()
 	}
 }
@@ -164,6 +183,7 @@ func (b *Batcher) flushOnTimer(target *batch) {
 func (b *Batcher) detachLocked(target *batch) {
 	delete(b.batches, target.dataSource)
 	target.timer.Stop()
+	target.deadline = time.Now().Add(b.opts.RetryBudget)
 
 	sender, ok := b.senders[target.dataSource]
 	if !ok {
@@ -174,7 +194,8 @@ func (b *Batcher) detachLocked(target *batch) {
 	b.flushes.Add(1)
 	go func() {
 		defer b.flushes.Done()
-		// One request per data source at a time, so retries don't pile up.
+		// One request per data source at a time, so retries don't pile up; the
+		// batch deadline bounds the wait for the lock.
 		sender.Lock()
 		defer sender.Unlock()
 		b.flush(target)
@@ -191,7 +212,7 @@ func (b *Batcher) flush(target *batch) {
 		RateLimitRemaining: -1,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), b.opts.RetryBudget)
+	ctx, cancel := context.WithDeadline(b.stop, target.deadline)
 	defer cancel()
 
 	event.Err = b.sendWithRetry(ctx, target, &event)
@@ -208,17 +229,37 @@ func (b *Batcher) flush(target *batch) {
 }
 
 func (b *Batcher) sendWithRetry(ctx context.Context, target *batch, event *FlushEvent) error {
-	deadline := time.Now().Add(b.opts.RetryBudget)
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("flush not attempted: %w", err)
+	}
+
+	requestURL, err := url.Parse(b.baseURL)
+	if err != nil {
+		return fmt.Errorf("unable to parse url: %w", err)
+	}
+	q := requestURL.Query()
+	q.Add("name", target.dataSource)
+	requestURL.RawQuery = q.Encode()
 
 	for {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, requestURL.String(), bytes.NewReader(target.body.Bytes()))
+		if err != nil {
+			return fmt.Errorf("unable to create request: %w", err)
+		}
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", b.apiKey))
+
 		event.Attempts++
-		resp, err := b.post(ctx, target)
+		resp, err := b.httpClient.Do(req)
 		var retryAfter time.Duration
-		if err == nil {
+		if err != nil {
+			err = fmt.Errorf("unable to send request: %w", err)
+		} else {
 			event.StatusCode = resp.StatusCode
 			event.RateLimitLimit = headerInt(resp.Header, "X-RateLimit-Limit")
 			event.RateLimitRemaining = headerInt(resp.Header, "X-RateLimit-Remaining")
 			retryAfter = parseRetryAfter(resp.Header.Get("Retry-After"))
+			// Drain so the connection is reused by the next attempt.
+			_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 64<<10))
 			resp.Body.Close()
 
 			if resp.StatusCode == http.StatusAccepted {
@@ -239,7 +280,7 @@ func (b *Batcher) sendWithRetry(ctx context.Context, target *batch, event *Flush
 		if wait <= 0 {
 			wait = backoff(event.Attempts)
 		}
-		if time.Now().Add(wait).After(deadline) {
+		if time.Now().Add(wait).After(target.deadline) {
 			return err
 		}
 
@@ -249,29 +290,6 @@ func (b *Batcher) sendWithRetry(ctx context.Context, target *batch, event *Flush
 			return err
 		}
 	}
-}
-
-func (b *Batcher) post(ctx context.Context, target *batch) (*http.Response, error) {
-	requestURL, err := url.Parse(b.baseURL)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse url: %w", err)
-	}
-	q := requestURL.Query()
-	q.Add("name", target.dataSource)
-	requestURL.RawQuery = q.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, requestURL.String(), bytes.NewReader(target.body.Bytes()))
-	if err != nil {
-		return nil, fmt.Errorf("unable to create request: %w", err)
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", b.apiKey))
-
-	resp, err := b.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("unable to send request: %w", err)
-	}
-
-	return resp, nil
 }
 
 func backoff(attempt int) time.Duration {
