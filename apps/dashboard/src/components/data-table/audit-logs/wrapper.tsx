@@ -7,12 +7,12 @@ import { useMemo } from "react";
 
 import { BlockWrapper } from "@/components/content/block-wrapper";
 import {
-  EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -48,26 +48,23 @@ export function AuditLogsWrapper({
     );
   }
 
-  if (!auditLogs?.data || auditLogs.data.length === 0) {
-    return (
-      <EmptyStateContainer inline>
-        <EmptyStateMedia>
-          <AuditLog />
-        </EmptyStateMedia>
-        <EmptyStateTitle>Nothing yet</EmptyStateTitle>
-        <EmptyStateDescription>
-          Status changes, downtime and sent alerts show up here.
-        </EmptyStateDescription>
-      </EmptyStateContainer>
-    );
-  }
-
   return (
     <BlockWrapper>
       <DataTable
         columns={columns}
-        data={auditLogs.data}
+        data={auditLogs?.data ?? []}
         paginationComponent={DataTablePaginationSimple}
+        emptyState={
+          <DataTableEmpty>
+            <EmptyStateMedia>
+              <AuditLog />
+            </EmptyStateMedia>
+            <EmptyStateTitle>Nothing yet</EmptyStateTitle>
+            <EmptyStateDescription>
+              Status changes, downtime and sent alerts show up here.
+            </EmptyStateDescription>
+          </DataTableEmpty>
+        }
       />
     </BlockWrapper>
   );

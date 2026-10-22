@@ -1,11 +1,12 @@
 "use client";
 
+import { Plug } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 
 import { Link } from "@/components/common/link";
 import {
-  EmptyStateContainer,
   EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import { columns } from "@/components/data-table/settings/connected-apps/columns";
@@ -19,6 +20,7 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -46,19 +48,23 @@ export function ConnectedAppsCard() {
           <p className="text-destructive text-sm">
             Could not load connected apps. Reload the page to try again.
           </p>
-        ) : grants.length === 0 ? (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No connected apps</EmptyStateTitle>
-            <EmptyStateDescription>
-              Add the openstatus MCP server to Claude, Cursor or ChatGPT and
-              approve the connection here.
-            </EmptyStateDescription>
-          </EmptyStateContainer>
         ) : (
           <DataTable
             columns={columns}
             data={grants}
             paginationComponent={DataTablePaginationSimple}
+            emptyState={
+              <DataTableEmpty>
+                <EmptyStateMedia>
+                  <Plug />
+                </EmptyStateMedia>
+                <EmptyStateTitle>No connected apps yet</EmptyStateTitle>
+                <EmptyStateDescription>
+                  Add the openstatus MCP server to Claude, Cursor or ChatGPT and
+                  approve the connection here.
+                </EmptyStateDescription>
+              </DataTableEmpty>
+            }
           />
         )}
       </FormCardContent>
