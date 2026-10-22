@@ -13,7 +13,12 @@ const workflows = new URL("../package.json", import.meta.url);
 // Resolve from real paths: pnpm only links a package's deps inside its store dir.
 const resolve = (name, from) => realpathSync(findPackageJSON(name, from));
 
-const externals = ["@libsql/client", "libsql", "@google-cloud/tasks"];
+const externals = [
+  "@libsql/client",
+  "libsql",
+  "@google-cloud/tasks",
+  "@google-cloud/pubsub",
+];
 const versions = new Map();
 const seen = new Set();
 
@@ -47,6 +52,7 @@ const libsqlClient = resolve("@libsql/client", workflows);
 walk(libsqlClient);
 walk(resolve("libsql", libsqlClient));
 walk(resolve("@google-cloud/tasks", workflows));
+walk(resolve("@google-cloud/pubsub", workflows));
 
 const dependencies = {};
 const overrides = {};
