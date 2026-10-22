@@ -295,6 +295,32 @@
   @apply leading-7 pl-1;
 }
 
+/* Mono is drawn for code columns and gets clumsy past ~20px: in the mono
+   layout headings stay near body size, leading tightens and text runs at
+   full contrast so hierarchy comes from weight, not size. */
+[data-font="mono"] .prose {
+  @apply text-foreground;
+}
+
+[data-font="mono"] .prose p:not(:where(.not-prose, .not-prose *)),
+[data-font="mono"] .prose li:not(:where(.not-prose, .not-prose *)) {
+  @apply leading-6;
+}
+
+[data-font="mono"] .prose > p:first-of-type {
+  @apply text-base text-foreground leading-6;
+}
+
+[data-font="mono"] .prose h1 {
+  @apply text-xl;
+}
+
+[data-font="mono"] .prose h2,
+[data-font="mono"] .prose h3,
+[data-font="mono"] .prose h4 {
+  @apply text-base;
+}
+
 .prose details {
   @apply border border-border p-4 my-4;
 }
