@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
 
+import { getDocsPage } from "../docs";
+import { DOCS_DESCRIPTION } from "../docs.config";
 import { sections } from "../sections";
 import { generateListingForPath } from "./listing";
 import { resolveContent } from "./resolve";
@@ -18,21 +20,26 @@ describe("generateListingForPath", () => {
     );
   });
 
-  test("docs hubs carry the HTML <title> and a description at every depth", () => {
-    expect(generateListingForPath("/docs")).toContain(
-      'title: "openstatus documentation"',
-    );
+  test("docs hubs carry the HTML <title> and description at every depth", () => {
+    const docs = generateListingForPath("/docs") ?? "";
+    expect(docs).toContain('title: "openstatus documentation"');
+    expect(docs).toContain(`description: ${JSON.stringify(DOCS_DESCRIPTION)}`);
+    // a section without its own intro borrows its first page's description,
+    // the same one the HTML hub card shows
+    const overview = getDocsPage("sdk/nodejs/overview")?.metadata.description;
+    expect(overview).toBeTruthy();
     const sdk = generateListingForPath("/docs/sdk") ?? "";
-    expect(sdk).toContain('title: "SDK — openstatus docs"');
     expect(sdk).toMatch(
-      /^---\ntitle: [^\n]+\nurl: [^\n]+\ndescription: ".+"\n---/,
+      /^---\ntitle: "SDK — openstatus docs"\nurl: [^\n]+\ndescription: [^\n]+\n---/,
     );
+    expect(sdk).toContain(`description: ${JSON.stringify(overview)}`);
     // a nested chapter's slug is a directory, not a page
     const nodejs = generateListingForPath("/docs/sdk/nodejs") ?? "";
     expect(nodejs).toMatch(
-      /^---\ntitle: "[^"]+ — openstatus docs"\nurl: [^\n]+\ndescription: ".+"\n---/,
+      /^---\ntitle: "[^"]+ — openstatus docs"\nurl: [^\n]+\ndescription: [^\n]+\n---/,
     );
-    expect(sdk).toMatch(/- \[[^\]]+\]\(\/docs\/sdk\/nodejs\): .+/);
+    expect(nodejs).toContain(`description: ${JSON.stringify(overview)}`);
+    expect(sdk).toContain(`- [Node SDK](/docs/sdk/nodejs): ${overview}`);
   });
 
   test("the markdown twin says what the HTML page says", () => {

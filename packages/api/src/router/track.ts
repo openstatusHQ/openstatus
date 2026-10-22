@@ -39,11 +39,17 @@ export const trackRouter = createTRPCRouter({
         ctx.req?.headers.get("x-real-ip") ??
         ctx.req?.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
       if (ip) {
-        const [count] = await incrWithTtl(
-          redis,
-          [`ratelimit:track:content-copied:${ip}`],
-          60,
-        );
+        // Best-effort tracking: a Redis outage drops the limiter, not the event.
+        let count = 0;
+        try {
+          [count] = await incrWithTtl(
+            redis,
+            [`ratelimit:track:content-copied:${ip}`],
+            60,
+          );
+        } catch (error) {
+          console.error("contentCopied rate limit unavailable", error);
+        }
         if (count > 20) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
       }
       after(async () => {
