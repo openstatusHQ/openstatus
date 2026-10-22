@@ -6,7 +6,7 @@ description: "Check if your CDN is actually caching from 28 regions worldwide. S
 category: "Product"
 faq:
   - question: "What is a CDN cache checker?"
-    answer: "A CDN cache checker tests whether your CDN is serving content from its edge cache instead of your origin server. OpenStatus requests your URL from 28 regions worldwide and reads the cache headers (cf-cache-status, x-cache, x-vercel-cache, age) to report HIT, MISS, EXPIRED, STALE, BYPASS or DYNAMIC per region."
+    answer: "A CDN cache checker tests whether your CDN is serving content from its edge cache instead of your origin server. openstatus requests your URL from 28 regions worldwide and reads the cache headers (cf-cache-status, x-cache, x-vercel-cache, age) to report HIT, MISS, EXPIRED, STALE, BYPASS or DYNAMIC per region."
   - question: "Why does my CDN return MISS in some regions?"
     answer: "CDN caches are regional: each edge location keeps its own copy. A MISS in a region usually means no user has requested the asset from that edge recently, the TTL expired, or your cache rules exclude it. The first request from a region is always a MISS — run the check again to confirm whether the edge cached the response."
   - question: "How do I know what CDN a website is using?"
@@ -89,7 +89,7 @@ Need a more complex request? Build it with the [cURL Builder](/play/curl). Want 
 
 ---
 
-With OpenStatus, you can:
+With openstatus, you can:
 
 - Verify your CDN serves cache HITs from every region after a config change.
 - Debug `cf-cache-status: MISS` and origin load spikes region by region.
@@ -102,7 +102,7 @@ If you'd like to request additional test regions or providers, feel free to cont
 
 <Details summary="What is a CDN cache checker?">
 
-A CDN cache checker tests whether your CDN is serving content from its edge cache instead of your origin server. OpenStatus requests your URL from 28 regions worldwide and reads the cache headers (cf-cache-status, x-cache, x-vercel-cache, age) to report HIT, MISS, EXPIRED, STALE, BYPASS or DYNAMIC per region.
+A CDN cache checker tests whether your CDN is serving content from its edge cache instead of your origin server. openstatus requests your URL from 28 regions worldwide and reads the cache headers (cf-cache-status, x-cache, x-vercel-cache, age) to report HIT, MISS, EXPIRED, STALE, BYPASS or DYNAMIC per region.
 
 </Details>
 

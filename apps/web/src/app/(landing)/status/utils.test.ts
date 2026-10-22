@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { getComponentFullName } from "./utils";
+import { getCheckerHref, getComponentFullName, getHost } from "./utils";
 
 describe("getComponentFullName", () => {
   test("does not repeat the provider already in the component name", () => {
@@ -47,5 +47,30 @@ describe("getComponentFullName", () => {
     expect(getComponentFullName("Zoom", "   ")).toBe("Zoom");
     expect(getComponentFullName("", "Zoom AI")).toBe("Zoom AI");
     expect(getComponentFullName("  ", "")).toBe("");
+  });
+});
+
+describe("getHost", () => {
+  test("returns the hostname without a www prefix", () => {
+    expect(getHost("https://www.github.com/")).toBe("github.com");
+    expect(getHost("https://api.vercel.com/v1")).toBe("api.vercel.com");
+  });
+
+  test("falls back to the input when it is not a URL", () => {
+    expect(getHost("not a url")).toBe("not a url");
+  });
+});
+
+describe("getCheckerHref", () => {
+  test("links the checker with the url encoded", () => {
+    expect(getCheckerHref("https://github.com")).toBe(
+      "/play/checker?url=https%3A%2F%2Fgithub.com%2F",
+    );
+  });
+
+  test("refuses non-http schemes and invalid urls", () => {
+    expect(getCheckerHref("ftp://files.example.com")).toBeNull();
+    expect(getCheckerHref("javascript:alert(1)")).toBeNull();
+    expect(getCheckerHref("not a url")).toBeNull();
   });
 });

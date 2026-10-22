@@ -167,6 +167,9 @@ catalogs:
     '@dnd-kit/utilities':
       specifier: 3.2.2
       version: 3.2.2
+    '@google-cloud/pubsub':
+      specifier: 6.2.0
+      version: 6.2.0
     '@google-cloud/tasks':
       specifier: 7.1.1
       version: 7.1.1
@@ -668,6 +671,9 @@ catalogs:
     zod:
       specifier: 4.6.5
       version: 4.6.5
+
+overrides:
+  '@google-cloud/pubsub>@opentelemetry/semantic-conventions': 1.43.0
 
 importers:
 
@@ -1821,6 +1827,9 @@ importers:
 
   apps/workflows:
     dependencies:
+      '@google-cloud/pubsub':
+        specifier: 'catalog:'
+        version: 6.2.0(supports-color@8.1.1)
       '@google-cloud/tasks':
         specifier: 'catalog:'
         version: 7.1.1(supports-color@8.1.1)
@@ -4795,6 +4804,30 @@ packages:
 
   '@formatjs/intl-localematcher@0.8.14':
     resolution: {integrity: sha512-8O7V38QmbB11+ryJ3KM/znrzXtiqgpXzqNoqDsndHZZ5/zDKTTL+cf5F0mzXkQEwhx8IlWnqYvEovf2S5EwLTw==}
+
+  '@google-cloud/paginator@7.2.0':
+    resolution: {integrity: sha512-l+x6YObHGTuqBCMvC0SXo3Cnyqg4FkWWKYRptf46PACHJ5GAUuhsd2b3wphgGrg1ybs/LAb+q5MnUTuG/3+v7w==}
+    engines: {node: '>=22'}
+
+  '@google-cloud/precise-date@6.2.0':
+    resolution: {integrity: sha512-Pvh11jzEdzCLeqXNv2H40JGUsrUjpzBJQ6Ai4aNxlLlrziyVKzz71RhMmsadAjIrnEBDiPW9Uku4OuR3f6kb2g==}
+    engines: {node: '>=22'}
+
+  '@google-cloud/projectify@6.2.0':
+    resolution: {integrity: sha512-QXBPu/D+1zgJ9Ydw+GXYws9OipW62nxfwsGl7x3JUTDim9NCGb7R+h7Sj3HKo1WMYb/StvOYyUBZrqU2pkhuiw==}
+    engines: {node: '>=22'}
+
+  '@google-cloud/promisify@6.2.0':
+    resolution: {integrity: sha512-0i3JkkwAdGGk6AlMnFm1Vf+XtpIL73ki/MZWvXDPoN37nABf/9LFHtYeo8tW77vHSQS00ykC2ygHnUL1gkYAXg==}
+    engines: {node: '>=22'}
+
+  '@google-cloud/pubsub-api@0.3.0':
+    resolution: {integrity: sha512-x1L+lrIHgaMwN5fAhnNVS7rh0BZn9eKmqOBXnOUM3jkilF4GE4ooETS9SYnCtPCVHwQtByDTh5b7KIMUW7XAHQ==}
+    engines: {node: '>=22'}
+
+  '@google-cloud/pubsub@6.2.0':
+    resolution: {integrity: sha512-E9mJwt+j5HuQTkK1aJXnNmuXgG5hPRbSqRHisOm+N55Fm2RAxDCpX4ii2Hws7te3FMENpcmDS0BqQv+GIjQcXw==}
+    engines: {node: '>=22'}
 
   '@google-cloud/tasks@7.1.1':
     resolution: {integrity: sha512-Pt8bAeYwAjPXXCnNziPAykOruLVbeQcpB6qnWkLIKAjHkyudrwEXOhucuD0IcNSgSegXBzH4BQKVjjrlo5lMOQ==}
@@ -8961,6 +8994,10 @@ packages:
     resolution: {integrity: sha512-ik3ZgC9dY/lYVVM++OISsaYDeg1tb0VtP5uL3ouh1koGOaUMDPpbFIei4JkFimWUFPn90sbMNMXQAIVOlnYKJA==}
     engines: {node: '>=10'}
 
+  arrify@2.0.1:
+    resolution: {integrity: sha512-3duEwti880xqi4eAMN8AyR4a0ByT90zoYdLlevfrvU43vb0YZwZVfxOgxWrLXXXpyugL0hNZc9G6BiB5B3nUug==}
+    engines: {node: '>=8'}
+
   assertion-error@2.0.1:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
     engines: {node: '>=12'}
@@ -10089,6 +10126,10 @@ packages:
   headers-polyfill@5.0.1:
     resolution: {integrity: sha512-1TJ6Fih/b8h5TIcv+1+Hw0PDQWJTKDKzFZzcKOiW1wJza3XoAQlkCuXLbymPYB8+ZQyw8mHvdw560e8zVFIWyA==}
 
+  heap-js@2.7.1:
+    resolution: {integrity: sha512-EQfezRg0NCZGNlhlDR3Evrw1FVL2G3LhU7EgPoxufQKruNBSYA8MiRPHeWbU+36o+Fhel0wMwM+sLEiBAlNLJA==}
+    engines: {node: '>=10.0.0'}
+
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
@@ -10301,6 +10342,9 @@ packages:
   is-regexp@3.1.0:
     resolution: {integrity: sha512-rbku49cWloU5bSMI+zaRaXdQHXnthP6DZ/vLnfdSKyL4zUzuWnomtOEiZZOd+ioQ+avFo/qau3KPTc7Fjy1uPA==}
     engines: {node: '>=12'}
+
+  is-stream-ended@0.1.4:
+    resolution: {integrity: sha512-xj0XPvmr7bQFTvirqnFr50o0hQIh6ZItDqloxt5aJrR4NQsYeSsyFQERYGCAzfindAcnKjINnwEEgLx4IqVzQw==}
 
   is-stream@2.0.1:
     resolution: {integrity: sha512-hFoiJiTl63nn+kstHGBtewWSKnQLpyb155KHheA1l39uvtO9nWIop1p3udqPcUd/xbF1VLMO4n7OI6p7RbngDg==}
@@ -10637,6 +10681,9 @@ packages:
 
   lodash.camelcase@4.3.0:
     resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
+
+  lodash.snakecase@4.1.1:
+    resolution: {integrity: sha512-QZ1d4xoBHYUeuouhEq3lk3Uq7ldgyFXGBhg04+oRLnIz8o9T65Eh+8YdroUwn846zchkA9yDsDl5CVVaV2nqYw==}
 
   lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
@@ -11299,6 +11346,10 @@ packages:
         optional: true
       vite-plus:
         optional: true
+
+  p-defer@3.0.0:
+    resolution: {integrity: sha512-ugZxsxmtTln604yeYd29EGrNhazN2lywetzpKhfmQjW/VJmhpDmWbiX+h0zL8V91R0UXkhb3KtPmyq9PZw3aYw==}
+    engines: {node: '>=8'}
 
   p-finally@1.0.0:
     resolution: {integrity: sha512-LICb2p9CB7FS+0eR1oqWnHhp0FljGLZCWBE9aix0Uye9W8LTQPwMTYVGWQWIw9RdQiDg4+epXQODwIYJtSJaow==}
@@ -14096,6 +14147,45 @@ snapshots:
   '@formatjs/intl-localematcher@0.8.14':
     dependencies:
       '@formatjs/fast-memoize': 3.1.7
+
+  '@google-cloud/paginator@7.2.0':
+    dependencies:
+      extend: 3.0.2
+
+  '@google-cloud/precise-date@6.2.0': {}
+
+  '@google-cloud/projectify@6.2.0': {}
+
+  '@google-cloud/promisify@6.2.0': {}
+
+  '@google-cloud/pubsub-api@0.3.0(supports-color@8.1.1)':
+    dependencies:
+      google-gax: 6.4.0(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - supports-color
+
+  '@google-cloud/pubsub@6.2.0(supports-color@8.1.1)':
+    dependencies:
+      '@google-cloud/paginator': 7.2.0
+      '@google-cloud/precise-date': 6.2.0
+      '@google-cloud/projectify': 6.2.0
+      '@google-cloud/promisify': 6.2.0
+      '@google-cloud/pubsub-api': 0.3.0(supports-color@8.1.1)
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
+      arrify: 2.0.1
+      extend: 3.0.2
+      google-auth-library: 11.1.0(supports-color@8.1.1)
+      google-gax: 6.4.0(supports-color@8.1.1)
+      google-logging-utils: 2.0.1
+      heap-js: 2.7.1
+      is-stream-ended: 0.1.4
+      lodash.snakecase: 4.1.1
+      long: 5.3.2
+      p-defer: 3.0.0
+    transitivePeerDependencies:
+      - supports-color
 
   '@google-cloud/tasks@7.1.1(supports-color@8.1.1)':
     dependencies:
@@ -17640,6 +17730,8 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
+  arrify@2.0.1: {}
+
   assertion-error@2.0.1: {}
 
   ast-types@0.16.3:
@@ -18839,6 +18931,8 @@ snapshots:
       '@types/set-cookie-parser': 2.4.10
       set-cookie-parser: 3.1.2
 
+  heap-js@2.7.1: {}
+
   hoist-non-react-statics@3.3.2:
     dependencies:
       react-is: 16.13.1
@@ -19032,6 +19126,8 @@ snapshots:
       '@types/estree': 1.0.9
 
   is-regexp@3.1.0: {}
+
+  is-stream-ended@0.1.4: {}
 
   is-stream@2.0.1: {}
 
@@ -19323,6 +19419,8 @@ snapshots:
       p-locate: 5.0.0
 
   lodash.camelcase@4.3.0: {}
+
+  lodash.snakecase@4.1.1: {}
 
   lodash@4.18.1: {}
 
@@ -20261,6 +20359,8 @@ snapshots:
       '@oxlint/binding-win32-ia32-msvc': 1.85.0
       '@oxlint/binding-win32-x64-msvc': 1.85.0
       oxlint-tsgolint: 7.0.2002
+
+  p-defer@3.0.0: {}
 
   p-finally@1.0.0: {}
 

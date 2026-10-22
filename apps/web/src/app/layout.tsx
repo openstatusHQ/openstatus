@@ -8,6 +8,7 @@ import LocalFont from "next/font/local";
 import Script from "next/script";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
+import { Attribution } from "../components/attribution";
 import { ThemeProvider } from "../components/theme-provider";
 import { WebMcpProvider } from "../components/webmcp-provider";
 import { env } from "../env";
@@ -78,6 +79,7 @@ export default function RootLayout({
             <NuqsAdapter>
               <TRPCReactQueryProvider>{children}</TRPCReactQueryProvider>
               <WebMcpProvider />
+              <Attribution />
             </NuqsAdapter>
           </ThemeProvider>
         </PlausibleProvider>

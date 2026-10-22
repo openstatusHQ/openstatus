@@ -8,6 +8,7 @@
     "build": "tsdown"
   },
   "dependencies": {
+    "@google-cloud/pubsub": "catalog:",
     "@google-cloud/tasks": "catalog:",
     "@hono/node-server": "catalog:",
     "@libsql/client": "catalog:",

@@ -5,6 +5,9 @@
 
 app = "openstatus-checker"
 primary_region = "ams"
+# The Pub/Sub consumer drains in-flight checks for 50s on SIGTERM (cmd/server/main.go).
+kill_timeout = "60s"
+kill_signal = "SIGTERM"
 
 [build]
   dockerfile = "./Dockerfile"

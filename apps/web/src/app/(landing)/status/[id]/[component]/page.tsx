@@ -18,7 +18,7 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../../content-box";
-import { getComponentFullName } from "../../utils";
+import { getCheckerHref, getComponentFullName, getHost } from "../../utils";
 import { ComponentDetail } from "./component-detail";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +41,7 @@ export async function generateMetadata(args: {
 
   const fullName = getComponentFullName(service.name, component.name);
   const title = `Is ${fullName} Down? ${fullName} Status & History`;
-  const description = `Is ${component.name} (${service.name}) down right now? Check the live status, uptime over the last ${HISTORY_DAYS} days, and recent incidents for ${component.name} tracked by OpenStatus.`;
+  const description = `Is ${component.name} (${service.name}) down right now? Check the live status, uptime over the last ${HISTORY_DAYS} days, and recent incidents for ${component.name}, part of the ${service.name} status tracked by openstatus.`;
   const canonicalUrl = `${BASE_URL}/status/${service.slug}/${component.slug}`;
   const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}&component=${encodeURIComponent(component.slug)}`;
   const indexable = service.deletedAt == null && !component.stale;
@@ -86,16 +86,28 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
     days: HISTORY_DAYS,
   });
 
+  const checkerHref = getCheckerHref(service.url);
+
   return (
     <section className="prose dark:prose-invert mb-12 max-w-none">
       <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
-        <CustomLink
-          href={`${APP_URL}?ref=status-component-top`}
-          className="font-medium underline-offset-4 hover:underline"
-        >
-          Catch downtime instantly and keep your users in the loop with
-          OpenStatus →
-        </CustomLink>
+        {checkerHref ? (
+          <CustomLink
+            href={checkerHref}
+            className="font-medium underline-offset-4 hover:underline"
+          >
+            Is {service.name} down for you? Test {getHost(service.url)} from 28
+            regions →
+          </CustomLink>
+        ) : (
+          <CustomLink
+            href={`${APP_URL}?ref=status-component-top`}
+            className="font-medium underline-offset-4 hover:underline"
+          >
+            Catch downtime before your users do: free uptime monitoring from 28
+            regions →
+          </CustomLink>
+        )}
       </ContentBoxContainer>
 
       <HydrateClient>
@@ -121,7 +133,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           Looking for a status page?
         </ContentBoxTitle>
         <ContentBoxDescription className="m-0! text-sm">
-          Every service needs a status page. Run yours with OpenStatus — see
+          Every service needs a status page. Run yours with openstatus — see
           what a{" "}
           <CustomLink href="/status-page" className="underline-offset-4">
             hosted status page

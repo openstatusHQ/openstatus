@@ -1,6 +1,7 @@
 "use client";
 
 import { headerAssertion } from "@openstatus/assertions";
+import { MONITOR_METHODS } from "@openstatus/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
@@ -34,6 +35,7 @@ function safeHostname(url: string) {
 function buildPrefill(params: {
   url: string | null;
   name: string | null;
+  method: string | null;
   assertionHeaderKey: string | null;
   assertionHeaderCompare: string | null;
   assertionHeaderValue: string | null;
@@ -48,11 +50,15 @@ function buildPrefill(params: {
     target: params.assertionHeaderValue,
   });
 
+  const method = MONITOR_METHODS.find(
+    (m) => m === params.method?.toUpperCase(),
+  );
+
   return {
     active: true,
     name: params.name ?? safeHostname(params.url),
     type: "http",
-    method: "GET",
+    method: method ?? "GET",
     url: params.url,
     headers: [],
     body: "",

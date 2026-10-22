@@ -6,7 +6,7 @@ this app has (Vitest strips types without checking them).
 
 Constraints that follow from the build:
 
-- `@libsql/client`, `libsql` and `@google-cloud/tasks` stay external in
+- `@libsql/client`, `libsql`, `@google-cloud/tasks` and `@google-cloud/pubsub` stay external in
   `tsdown.config.ts` (native addon, CJS `__dirname` reads) and ship as a
   side-car `node_modules` in the image. A new dependency with either trait
   joins that list and the `externals` in `apps/workflows/scripts/sidecar-package.mjs`, which
