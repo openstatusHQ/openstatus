@@ -51,7 +51,7 @@ export interface DataTableProps<TData, TValue> {
   toolbarComponent?: React.ComponentType<DataTableToolbarProps<TData>>;
   actionBar?: React.ComponentType<DataTableActionBarProps<TData>>;
   paginationComponent?: React.ComponentType<DataTablePaginationProps<TData>>;
-  /** First-run body when `data` is empty; a filter mismatch has its own row. */
+  /** First-run body when `data` is empty, a `DataTableEmpty` so it covers the ghost rows; a filter mismatch has its own row. */
   emptyState?: React.ReactNode;
   onRowClick?: (row: Row<TData>) => void;
   defaultSorting?: SortingState;
@@ -226,7 +226,7 @@ export function DataTable<TData, TValue>({
                 <TableRow className="hover:bg-transparent">
                   <TableCell
                     colSpan={table.getVisibleLeafColumns().length}
-                    className="p-0"
+                    className="p-0 whitespace-normal"
                   >
                     {/* the cell spans the scrollable table; pin to the visible width */}
                     <div className="sticky left-0 w-[100cqw]">

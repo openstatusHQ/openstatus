@@ -24,8 +24,9 @@ const GHOST_HEIGHT = `${GHOST_ROWS * 2.5}rem`;
 /** Real table rows, so the ghost cells share the header column widths. */
 export function DataTableGhostRows<TData>({ table }: { table: Table<TData> }) {
   const columns = table.getVisibleLeafColumns();
-  // TanStack fills in a header for every column; only labeled ones get a pill
-  const defaultHeader = table._getDefaultColumnDef().header;
+  // TanStack fills in a header for every column; only labeled ones get a pill.
+  // Internal API: if it ever goes away, unlabeled columns merely get a pill too.
+  const defaultHeader = table._getDefaultColumnDef?.().header;
   const labeled = (column: (typeof columns)[number]) =>
     column.columnDef.meta?.ghost !== false &&
     column.columnDef.header !== defaultHeader &&
