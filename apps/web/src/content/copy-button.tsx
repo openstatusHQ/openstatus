@@ -1,6 +1,5 @@
 "use client";
 
-import { useOpenPanel } from "@openpanel/nextjs";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { ButtonGroup } from "@openstatus/ui/components/ui/button-group";
 import {
@@ -12,8 +11,10 @@ import {
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+
+import { api } from "@/trpc/rq-client";
 
 export function CopyButton({
   className,
@@ -45,23 +46,22 @@ export function CopyDropdownButton({
   className,
   ...props
 }: React.ComponentProps<typeof ButtonGroup>) {
-  const { track } = useOpenPanel();
   const { copy, isCopied } = useCopyToClipboard();
   const [isMarkdownCopied, setIsMarkdownCopied] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const track = api.track.contentCopied.useMutation();
 
-  const handleCopyLink = () => {
-    track("content_copied", { kind: "link", path: window.location.pathname });
-    copy(window.location.href, {
+  useEffect(() => () => clearTimeout(resetTimer.current), []);
+
+  const handleCopyLink = async () => {
+    const ok = await copy(window.location.href, {
       successMessage: "Link copied to clipboard",
       withToast: true,
     });
+    if (ok) track.mutate({ kind: "link", path: window.location.pathname });
   };
 
   const handleCopyMarkdown = async () => {
-    track("content_copied", {
-      kind: "markdown",
-      path: window.location.pathname,
-    });
     try {
       // Safari only honors clipboard writes inside the click, so the fetch
       // goes in as a promise instead of awaiting it first.
@@ -78,8 +78,10 @@ export function CopyDropdownButton({
 
       await navigator.clipboard.write([item]);
       setIsMarkdownCopied(true);
-      setTimeout(() => setIsMarkdownCopied(false), 3000);
+      clearTimeout(resetTimer.current);
+      resetTimer.current = setTimeout(() => setIsMarkdownCopied(false), 3000);
       toast.success("Markdown copied to clipboard");
+      track.mutate({ kind: "markdown", path: window.location.pathname });
     } catch (_error) {
       toast.error("Failed to copy markdown");
     }

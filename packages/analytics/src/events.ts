@@ -340,4 +340,8 @@ export const Events = {
     name: "cli_command",
     channel: "cli",
   },
+  ContentCopied: {
+    name: "content_copied",
+    channel: "content",
+  },
 } as const satisfies Record<string, EventProps>;

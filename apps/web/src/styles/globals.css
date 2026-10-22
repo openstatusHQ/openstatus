@@ -307,7 +307,7 @@
   @apply leading-6;
 }
 
-[data-font="mono"] .prose > p:first-of-type {
+[data-font="mono"] .prose > p:first-of-type:not(:where(.not-prose, .not-prose *)) {
   @apply text-base text-foreground leading-6;
 }
 

@@ -53,8 +53,11 @@ export function resolveContent(pathname: string): ContentResult | null {
 function resolveMdxContent(pathname: string): MDXData | null {
   const segments = pathname.split("/").filter(Boolean);
 
-  // Root path → home.mdx (confirmed: file exists)
-  if (segments.length === 0) {
+  // `/` has no file name to suffix, so its alternate is advertised as /index.md
+  if (
+    segments.length === 0 ||
+    (segments.length === 1 && segments[0] === "index")
+  ) {
     try {
       return getHomePage();
     } catch {

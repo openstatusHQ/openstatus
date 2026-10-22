@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import { sections } from "../sections";
 import { generateListingForPath } from "./listing";
+import { resolveContent } from "./resolve";
 
 describe("generateListingForPath", () => {
   test("listings carry the same frontmatter shape as pages", () => {
@@ -37,5 +38,22 @@ describe("generateListingForPath", () => {
     const index = generateListingForPath("/blog/category") ?? "";
     expect(index).toContain('title: "Blog Categories"');
     expect(index).toMatch(/- \[\w+\]\(\/blog\/category\/\w+\)/);
+  });
+
+  test("category segments with spaces are percent-encoded", () => {
+    const index = generateListingForPath("/use-case/category") ?? "";
+    expect(index).toContain("- [AI Agents](/use-case/category/ai%20agents)");
+    const page = generateListingForPath("/use-case/category/ai agents") ?? "";
+    expect(page).toContain(
+      'url: "https://www.openstatus.dev/use-case/category/ai%20agents"',
+    );
+  });
+});
+
+describe("resolveContent", () => {
+  test("/index is the home page, so the advertised /index.md resolves", () => {
+    const home = resolveContent("/index");
+    expect(home?.type).toBe("mdx");
+    expect(home).toEqual(resolveContent("/"));
   });
 });

@@ -135,7 +135,10 @@ function generateCategoriesIndex(type: string): string | null {
     ...new Set(match.posts().map((p) => p.metadata.category)),
   ];
   const items = categories
-    .map((c) => `- [${c}](${match.section.path}/category/${c.toLowerCase()})`)
+    .map(
+      (c) =>
+        `- [${c}](${match.section.path}/category/${encodeURIComponent(c.toLowerCase())})`,
+    )
     .join("\n");
 
   return `${listingHeader(categoriesIndex(match.section))}${items}\n`;

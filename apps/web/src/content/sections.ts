@@ -89,7 +89,7 @@ export function capitalize(slug: string) {
 export function categorySection(section: ContentSection, slug: string) {
   return {
     label: capitalize(slug),
-    path: `${section.path}/category/${slug}`,
+    path: `${section.path}/category/${encodeURIComponent(slug)}`,
     title: `${section.label} - ${capitalize(slug)}`,
     description: section.categoryDescription ?? section.description,
   };
