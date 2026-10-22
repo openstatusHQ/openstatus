@@ -17,7 +17,7 @@ kill_signal = "SIGTERM"
 
 [[vm]]
   cpu_kind = "shared"
-  cpus = 4
+  cpus = 2
   memory_mb = 1024
 
 [http_service]
