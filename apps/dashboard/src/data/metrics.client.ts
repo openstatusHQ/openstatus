@@ -57,6 +57,12 @@ export function mapMetrics(metrics: RouterOutputs["tinybird"]["metrics"]) {
   });
 }
 
+/** The current row carries a lastTimestamp; the previous one never does. */
+/** Only the current-window row carries a lastTimestamp; the previous-window row never does. */
+export function hasMetricsData(metrics: RouterOutputs["tinybird"]["metrics"]) {
+  return (mapMetrics(metrics) ?? []).some((row) => !!row.lastTimestamp);
+}
+
 export const metricsCards = {
   uptime: {
     label: "UPTIME",
@@ -284,16 +290,17 @@ export function getMonitorListMetrics(
         value = monitors.filter((m) => m.active === false).length;
         break;
       case "p95":
-        const p95 = data.sort((a, b) => b.p95Latency - a.p95Latency)[0]
+        const p95 = [...data].sort((a, b) => b.p95Latency - a.p95Latency)[0]
           ?.p95Latency;
-        value = p95 ? formatMilliseconds(p95) : "N/A";
+        value = p95 != null ? formatMilliseconds(p95) : "—";
         break;
     }
 
     return {
       title: metricsGlobalCards[key].title,
       key,
-      value,
+      // a count of nothing is not a zero
+      value: monitors.length === 0 ? "—" : value,
       variant: variantMap[key],
     } as const;
   }) as readonly MonitorListMetric[];

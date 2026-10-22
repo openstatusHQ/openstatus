@@ -1,29 +1,19 @@
 "use client";
 
 import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
-import { FormSheetPrivateLocation } from "@/components/forms/private-location/sheet";
+import { FormSheetPrivateLocationCreate } from "@/components/forms/private-location/sheet-create";
 import { NavFeedback } from "@/components/nav/nav-feedback";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function NavActions() {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const [openDialog, setOpenDialog] = useState(false);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
-  const createPrivateLocationMutation = useMutation(
-    trpc.privateLocation.new.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.privateLocation.list.queryKey(),
-        });
-      },
-    }),
-  );
 
   if (!workspace || !monitors) return null;
 
@@ -44,21 +34,9 @@ export function NavActions() {
           Create Private Location
         </Button>
       ) : (
-        <FormSheetPrivateLocation
-          monitors={monitors}
-          onSubmit={async (values) => {
-            await createPrivateLocationMutation.mutateAsync({
-              name: values.name,
-              monitors: values.monitors,
-              token: values.token,
-              metadata: Object.fromEntries(
-                values.metadata.map((m) => [m.key, m.value]),
-              ),
-            });
-          }}
-        >
+        <FormSheetPrivateLocationCreate monitors={monitors}>
           <Button size="sm">Create Private Location</Button>
-        </FormSheetPrivateLocation>
+        </FormSheetPrivateLocationCreate>
       )}
       <UpgradeDialog
         open={openDialog}

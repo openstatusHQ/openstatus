@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, Lock } from "@openstatus/icons";
+import { Calendar, Info, Lock } from "@openstatus/icons";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -17,8 +17,8 @@ import {
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
 import {
-  EmptyStateContainer,
   EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
@@ -47,6 +47,7 @@ import {
   MetricCardValue,
 } from "@/components/metric/metric-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import {
   HISTORY_WINDOWS,
@@ -188,28 +189,28 @@ export function Client() {
               limit="uptime-history"
             />
           </BillingOverlayContainer>
-        ) : hasAnyData ? (
+        ) : (
           <div className="overflow-x-auto">
             <DataTable
               paginationComponent={DataTablePaginationSimple}
               columns={columns}
-              data={history.rows}
+              // rows without a single value are not history yet
+              data={hasAnyData ? history.rows : []}
               columnVisibility={columnVisibility}
+              emptyState={
+                <DataTableEmpty>
+                  <EmptyStateMedia>
+                    <Calendar />
+                  </EmptyStateMedia>
+                  <EmptyStateTitle>No history yet</EmptyStateTitle>
+                  <EmptyStateDescription>
+                    The first snapshot freezes on the 10th of next month. Until
+                    then, the current month is served live.
+                  </EmptyStateDescription>
+                </DataTableEmpty>
+              }
             />
           </div>
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No history yet</EmptyStateTitle>
-            <EmptyStateDescription>
-              The first{" "}
-              <span className="text-foreground font-medium">snapshot</span>{" "}
-              freezes on the{" "}
-              <span className="text-foreground font-medium">
-                10th of next month
-              </span>{" "}
-              — until then, the current month is served live.
-            </EmptyStateDescription>
-          </EmptyStateContainer>
         )}
         <HintCollapsible>
           <HintCollapsibleTrigger>
