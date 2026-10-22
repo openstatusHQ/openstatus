@@ -48,26 +48,28 @@ export function AuditLogsWrapper({
     );
   }
 
-  return (
-    <BlockWrapper>
-      <DataTable
-        columns={columns}
-        data={auditLogs?.data ?? []}
-        paginationComponent={DataTablePaginationSimple}
-        emptyState={
-          <DataTableEmpty>
-            <EmptyStateMedia>
-              <AuditLog />
-            </EmptyStateMedia>
-            <EmptyStateTitle>Nothing yet</EmptyStateTitle>
-            <EmptyStateDescription>
-              Status changes, downtime and sent alerts show up here.
-            </EmptyStateDescription>
-          </DataTableEmpty>
-        }
-      />
-    </BlockWrapper>
+  const rows = auditLogs?.data ?? [];
+  const table = (
+    <DataTable
+      columns={columns}
+      data={rows}
+      paginationComponent={DataTablePaginationSimple}
+      emptyState={
+        <DataTableEmpty>
+          <EmptyStateMedia>
+            <AuditLog />
+          </EmptyStateMedia>
+          <EmptyStateTitle>Nothing yet</EmptyStateTitle>
+          <EmptyStateDescription>
+            Status changes, downtime and sent alerts show up here.
+          </EmptyStateDescription>
+        </DataTableEmpty>
+      }
+    />
   );
+
+  // the collapse overlay would sit on top of the empty state
+  return rows.length ? <BlockWrapper>{table}</BlockWrapper> : table;
 }
 
 export default AuditLogsWrapper;

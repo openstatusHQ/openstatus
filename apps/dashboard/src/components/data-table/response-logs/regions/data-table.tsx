@@ -8,7 +8,6 @@ import { useMemo } from "react";
 
 import {
   EmptyStateActions,
-  EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
@@ -18,6 +17,7 @@ import {
   RangePlotLegendItem,
 } from "@/components/content/range-plot";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { getRegionAxisMax } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
@@ -73,8 +73,15 @@ export function RegionsDataTable({
     [data, loading],
   );
   const columns = useMemo(
-    () => getColumns({ privateLocations, max, loading, degradedAfter }),
-    [privateLocations, max, loading, degradedAfter],
+    () =>
+      getColumns({
+        privateLocations,
+        max,
+        loading,
+        degradedAfter,
+        empty: reported.length === 0,
+      }),
+    [privateLocations, max, loading, degradedAfter, reported.length],
   );
 
   return (
@@ -94,7 +101,7 @@ export function RegionsDataTable({
         columns={columns}
         defaultSorting={[{ id: "p50", desc: false }]}
         emptyState={
-          <EmptyStateContainer inline plain>
+          <DataTableEmpty>
             <EmptyStateMedia>
               <Globe />
             </EmptyStateMedia>
@@ -133,7 +140,7 @@ export function RegionsDataTable({
                 </EmptyStateDescription>
               </>
             )}
-          </EmptyStateContainer>
+          </DataTableEmpty>
         }
       />
     </div>

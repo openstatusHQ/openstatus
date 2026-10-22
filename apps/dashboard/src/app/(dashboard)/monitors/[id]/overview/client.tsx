@@ -44,7 +44,6 @@ import { PopoverQuantile } from "@/components/popovers/popover-quantile";
 import { PopoverResolution } from "@/components/popovers/popover-resolution";
 import {
   FREE_MAX_PERIOD,
-  PERIODS,
   hasMetricsData,
   isPaidPeriod,
   mapRegionMetrics,
@@ -140,9 +139,6 @@ export function Client() {
     workspace?.plan !== "free" && !!selectedRegions?.length;
   const filteredOut = noData && filtersRegions;
   const maxPeriod = workspace?.plan === "free" ? FREE_MAX_PERIOD : "90d";
-  const widerPeriod = PERIODS[PERIODS.indexOf(effectivePeriod) + 1];
-  const canWiden =
-    !!widerPeriod && PERIODS.indexOf(widerPeriod) <= PERIODS.indexOf(maxPeriod);
 
   const configuredRegions = React.useMemo(
     () => [
@@ -252,16 +248,6 @@ export function Client() {
                   onClick={() => setSearchParams({ regions: null })}
                 >
                   Show all regions
-                </Button>
-              </EmptyStateActions>
-            ) : canWiden ? (
-              <EmptyStateActions>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSearchParams({ period: widerPeriod })}
-                >
-                  Widen time range
                 </Button>
               </EmptyStateActions>
             ) : null}
