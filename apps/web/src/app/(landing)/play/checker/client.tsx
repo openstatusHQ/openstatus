@@ -527,12 +527,16 @@ export function MonitorCta() {
               )}, ${regionFormatter(fastest.region, "long")} in ${latencyFormatter(
                 fastest.latency,
               )}.`
-            : "Response times look even across regions."}
+            : sorted.length > 1
+              ? "Response times look even across regions."
+              : "Only one region responded."}
         </p>
         <p className="text-muted-foreground my-0! text-sm">
           {uneven
             ? "One sample is a snapshot. Monitor this URL from all regions and get alerted when a region degrades. Free."
-            : "Keep it that way: monitor this URL on a schedule and get alerted when it slows down or fails. Free."}
+            : sorted.length > 1
+              ? "Keep it that way: monitor this URL on a schedule and get alerted when it slows down or fails. Free."
+              : "Monitor this URL on a schedule to see whether the other regions reach it and get alerted when it fails. Free."}
         </p>
       </div>
       <div className="flex items-center sm:col-span-1 sm:justify-end">

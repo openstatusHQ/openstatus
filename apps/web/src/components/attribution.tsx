@@ -15,7 +15,8 @@ function referrerHost(): string | undefined {
   if (!document.referrer) return undefined;
   try {
     const host = new URL(document.referrer).hostname;
-    return host.endsWith("openstatus.dev") ? undefined : host;
+    const own = ATTRIBUTION_DOMAIN.slice(1);
+    return host === own || host.endsWith(ATTRIBUTION_DOMAIN) ? undefined : host;
   } catch {
     return undefined;
   }

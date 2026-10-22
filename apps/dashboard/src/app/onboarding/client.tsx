@@ -84,7 +84,7 @@ export function Client() {
     skipMutation.mutate({ step });
   };
 
-  // Once per visit of the launch step; the search params say how they got here.
+  // Once per mount; the search params say how they reached the launch step.
   const completedRef = useRef(false);
   useEffect(() => {
     if (step !== "3" || completedRef.current) return;

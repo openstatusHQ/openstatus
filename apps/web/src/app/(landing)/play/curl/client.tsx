@@ -257,17 +257,17 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
-// The command is a one-off from the reader's machine; both links keep the
-// same request and change where and how often it runs.
+// The command is a one-off from the reader's machine. Both links carry the
+// URL and method only; headers and body stay in the command.
 function NextSteps({ url, method }: { url: string; method: string }) {
   if (!isHttpUrl(url)) return null;
 
   const checker = new URLSearchParams({ url, method });
-  const monitor = new URLSearchParams({ url, ref: "curl" });
+  const monitor = new URLSearchParams({ url, method, ref: "curl" });
 
   return (
     <p className="text-muted-foreground col-span-5 my-0! text-sm">
-      Same request, different place:{" "}
+      Same URL, different place:{" "}
       <Link href={`/play/checker?${checker.toString()}`}>
         run it from 28 regions
       </Link>{" "}

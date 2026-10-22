@@ -180,7 +180,7 @@ export function ComponentDetail({
 
       <h1>Is {fullName} down?</h1>
       <p className="text-muted-foreground text-sm">
-        Part of <a href={serviceUrl}>{service.name} status</a>
+        Part of <a href={`/status/${service.slug}`}>{service.name} status</a>
       </p>
       <p>
         {answer} Below you'll find the live {component.name} status, uptime over
