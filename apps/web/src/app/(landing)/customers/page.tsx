@@ -31,7 +31,7 @@ export default function CustomersListPage() {
   return (
     <section className="prose dark:prose-invert max-w-none">
       <JsonLd graph={jsonLDGraph} />
-      <h1>{sections.customers.title}</h1>
+      <h1>{sections.customers.label}</h1>
       <p className="text-lg">{sections.customers.description}</p>
       <components.Grid cols={2}>
         {pages.map((page) => (

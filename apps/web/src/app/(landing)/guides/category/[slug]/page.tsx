@@ -44,19 +44,17 @@ export default async function GuideCategoryPage({
     (post) => post.metadata.category.toLowerCase() === slug.toLowerCase(),
   );
 
+  const category = categorySection(sections.guides, slug);
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
-    getJsonLDSectionBreadcrumb(
-      sections.guides,
-      categorySection(sections.guides, slug),
-    ),
+    getJsonLDSectionBreadcrumb(sections.guides, category),
     getJsonLDItemList(filteredGuides, "/guides"),
   ]);
 
   return (
     <div className="prose dark:prose-invert max-w-none">
       <JsonLd graph={jsonLDGraph} />
-      <h1 className="capitalize">Guides | {slug}</h1>
+      <h1 className="capitalize">{category.label}</h1>
       <ContentCategory data={allGuides} prefix="/guides" />
       <ContentList data={filteredGuides} prefix="/guides" />
     </div>

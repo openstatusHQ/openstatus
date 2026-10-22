@@ -6,6 +6,7 @@ import {
   BASE_URL,
   DESCRIPTION,
   HOMEPAGE_TITLE,
+  defaultMetadata,
   getHomeMetadata,
   getListingMetadata,
   getPageMetadata,
@@ -189,5 +190,9 @@ describe("home.mdx and the root-layout fallback", () => {
     const home = getHomePage();
     expect(home.metadata.title).toBe(HOMEPAGE_TITLE);
     expect(home.metadata.description).toBe(DESCRIPTION);
+    expect(defaultMetadata.title).toEqual(
+      expect.objectContaining({ default: HOMEPAGE_TITLE }),
+    );
+    expect(defaultMetadata.description).toBe(DESCRIPTION);
   });
 });

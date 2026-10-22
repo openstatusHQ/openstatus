@@ -30,7 +30,7 @@ export default function Page() {
   return (
     <section className="prose dark:prose-invert max-w-none">
       <JsonLd graph={jsonLDGraph} />
-      <h1>{sections.compare.title}</h1>
+      <h1>{sections.compare.label}</h1>
       <components.Grid cols={2}>
         {pages.map((page) => (
           <ContentBoxLink key={page.slug} href={`/compare/${page.slug}`}>

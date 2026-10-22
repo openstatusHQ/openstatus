@@ -45,19 +45,17 @@ export default async function ChangelogCategoryPage({
       changelog.metadata.category.toLowerCase() === slug.toLowerCase(),
   );
 
+  const category = categorySection(sections.changelog, slug);
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
-    getJsonLDSectionBreadcrumb(
-      sections.changelog,
-      categorySection(sections.changelog, slug),
-    ),
+    getJsonLDSectionBreadcrumb(sections.changelog, category),
     getJsonLDItemList(filteredChangelogs, "/changelog"),
   ]);
 
   return (
     <div className="prose dark:prose-invert max-w-none">
       <JsonLd graph={jsonLDGraph} />
-      <h1 className="capitalize">Changelog | {slug}</h1>
+      <h1 className="capitalize">{category.label}</h1>
       <ContentCategory data={allChangelogs} prefix="/changelog" />
       <ContentList data={filteredChangelogs} prefix="/changelog" />
     </div>

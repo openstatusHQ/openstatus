@@ -18,6 +18,23 @@ describe("generateListingForPath", () => {
     );
   });
 
+  test("docs hubs carry the HTML <title> and a description at every depth", () => {
+    expect(generateListingForPath("/docs")).toContain(
+      'title: "openstatus documentation"',
+    );
+    const sdk = generateListingForPath("/docs/sdk") ?? "";
+    expect(sdk).toContain('title: "SDK — openstatus docs"');
+    expect(sdk).toMatch(
+      /^---\ntitle: [^\n]+\nurl: [^\n]+\ndescription: ".+"\n---/,
+    );
+    // a nested chapter's slug is a directory, not a page
+    const nodejs = generateListingForPath("/docs/sdk/nodejs") ?? "";
+    expect(nodejs).toMatch(
+      /^---\ntitle: "[^"]+ — openstatus docs"\nurl: [^\n]+\ndescription: ".+"\n---/,
+    );
+    expect(sdk).toMatch(/- \[[^\]]+\]\(\/docs\/sdk\/nodejs\): .+/);
+  });
+
   test("the markdown twin says what the HTML page says", () => {
     const blog = generateListingForPath("/blog") ?? "";
     expect(blog).toContain(`title: ${JSON.stringify(sections.blog.title)}`);

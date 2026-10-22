@@ -18,10 +18,13 @@ export async function getOssFriends(): Promise<OSSFriend[]> {
   return z.array(OSSFriendSchema).parse(data.data);
 }
 
-// Remote strings land in a markdown list: brackets would close the link and
-// line breaks would start a new item.
+// Remote strings land in a markdown list: brackets would close the link, line
+// breaks would start a new item and a stray backslash would undo the escape.
 function mdText(value: string): string {
-  return value.replace(/\s+/g, " ").replace(/[[\]]/g, "\\$&").trim();
+  return value
+    .replace(/\s+/g, " ")
+    .replace(/[\\[\]]/g, "\\$&")
+    .trim();
 }
 
 function mdHref(href: string): string {

@@ -34,6 +34,21 @@ describe("convertMdxToMarkdown", () => {
     expect(markdown).toContain('updated: "2026-03-04"');
   });
 
+  test("frontmatter prefers the seo overrides, like <title> and <meta>", () => {
+    const markdown = convertMdxToMarkdown({
+      metadata: {
+        title: "Page title",
+        description: "Page description",
+        seo: { title: "SEO title", description: "SEO description" },
+      },
+      content: "Body",
+      slug: "t",
+      href: "/t",
+    } as Parameters<typeof convertMdxToMarkdown>[0]);
+    expect(markdown).toContain('title: "SEO title"');
+    expect(markdown).toContain('description: "SEO description"');
+  });
+
   test("the home page resolves to the site root, not /home", () => {
     const markdown = convertMdxToMarkdown(getHomePage());
     expect(markdown).toContain('url: "https://www.openstatus.dev/"');

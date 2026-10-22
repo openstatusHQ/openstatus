@@ -1,4 +1,6 @@
 import { Events, setupAnalytics } from "@openstatus/analytics";
+import { incrWithTtl, redis } from "@openstatus/upstash";
+import { TRPCError } from "@trpc/server";
 import { after } from "next/server.js";
 import { z } from "zod";
 
@@ -31,7 +33,19 @@ export const trackRouter = createTRPCRouter({
         path: z.string().max(512),
       }),
     )
-    .mutation(({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Unauthenticated, so the IP is the only handle on a flood of events.
+      const ip =
+        ctx.req?.headers.get("x-real-ip") ??
+        ctx.req?.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+      if (ip) {
+        const [count] = await incrWithTtl(
+          redis,
+          [`ratelimit:track:content-copied:${ip}`],
+          60,
+        );
+        if (count > 20) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+      }
       after(async () => {
         const analytics = await setupAnalytics({ source: "web" });
         await analytics.track({ ...Events.ContentCopied, ...input });

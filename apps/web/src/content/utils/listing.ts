@@ -1,5 +1,5 @@
-import { getDocsPage } from "../docs";
-import { docsNavTree, findDocsNode } from "../docs.config";
+import { getDocsNodeDescription } from "../docs";
+import { docsHubTitle, docsNavTree, findDocsNode } from "../docs.config";
 import { canonicalUrl, frontmatter } from "../frontmatter";
 import { playTools } from "../play-tools";
 import {
@@ -193,20 +193,14 @@ function generateDocsListing(href: string): string | null {
   const node = findDocsNode(docsNavTree(), href);
   if (!node?.children?.length) return null;
 
-  // Sections have no copy of their own; the hub lists them by their first
-  // page's description, so a section describes itself the same way.
-  const description =
-    node.description ??
-    (node.slug ? getDocsPage(node.slug)?.metadata.description : undefined);
+  const description = getDocsNodeDescription(node);
   const intro = description ? `${description}\n\n` : "";
   const items = node.children
     .map((child) => {
-      const description = child.slug
-        ? getDocsPage(child.slug)?.metadata.description
-        : undefined;
+      const description = getDocsNodeDescription(child);
       return `- [${child.label}](${child.href})${description ? `: ${description}` : ""}`;
     })
     .join("\n");
 
-  return `${frontmatter({ title: node.label, url: canonicalUrl(href), description })}# ${node.label}\n\n${intro}${items}\n`;
+  return `${frontmatter({ title: docsHubTitle(node), url: canonicalUrl(href), description })}# ${node.label}\n\n${intro}${items}\n`;
 }

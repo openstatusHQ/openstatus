@@ -15,13 +15,15 @@ export function convertMdxToMarkdown(data: MDXData): string {
   // Step 0: Generate YAML frontmatter from metadata
   const { metadata, content, href } = data;
 
+  // Same fallbacks as `getPageMetadata`, so the twin carries the <title>
+  // and meta description the HTML page advertises.
   output += frontmatter({
-    title: metadata.title,
+    title: metadata.seo?.title ?? metadata.title,
     url: canonicalUrl(metadata.seo?.canonical ?? href),
     date: metadata.publishedAt ? isoDate(metadata.publishedAt) : undefined,
     updated: metadata.updatedAt ? isoDate(metadata.updatedAt) : undefined,
     author: metadata.author,
-    description: metadata.description,
+    description: metadata.seo?.description ?? metadata.description,
     category: metadata.category,
     image: metadata.image ? canonicalUrl(metadata.image) : undefined,
   });
