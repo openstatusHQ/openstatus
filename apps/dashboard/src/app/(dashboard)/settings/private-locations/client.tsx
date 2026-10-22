@@ -1,7 +1,9 @@
 "use client";
 import type { RouterOutputs } from "@openstatus/api";
-import { Lock } from "@openstatus/icons";
+import { ExternalLink, Globe, Lock } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import NextLink from "next/link";
 import { useState } from "react";
 
 import { Link } from "@/components/common/link";
@@ -12,6 +14,12 @@ import {
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
 import {
+  EmptyStateActions,
+  EmptyStateDescription,
+  EmptyStateMedia,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
   Section,
   SectionDescription,
   SectionGroup,
@@ -20,7 +28,9 @@ import {
 } from "@/components/content/section";
 import { columns } from "@/components/data-table/private-locations/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import { FormSheetPrivateLocationCreate } from "@/components/forms/private-location/sheet-create";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -60,6 +70,7 @@ export function Client() {
   const { data: privateLocations } = useQuery(
     trpc.privateLocation.list.queryOptions(),
   );
+  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
 
   if (!privateLocations || !workspace) return null;
 
@@ -111,6 +122,34 @@ export function Client() {
             paginationComponent={DataTablePaginationSimple}
             columns={columns}
             data={privateLocations}
+            emptyState={
+              <DataTableEmpty>
+                <EmptyStateMedia>
+                  <Globe />
+                </EmptyStateMedia>
+                <EmptyStateTitle>No private locations</EmptyStateTitle>
+                <EmptyStateDescription>
+                  Run the checker inside your own network to monitor services
+                  the public internet cannot reach. Create one, then start the
+                  checker with its token.
+                </EmptyStateDescription>
+                <EmptyStateActions>
+                  <FormSheetPrivateLocationCreate monitors={monitors ?? []}>
+                    <Button size="sm">Create private location</Button>
+                  </FormSheetPrivateLocationCreate>
+                  <Button size="sm" variant="outline" asChild>
+                    <NextLink
+                      href="https://www.openstatus.dev/docs/guides/how-to-create-private-location/"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <ExternalLink />
+                      Read the setup guide
+                    </NextLink>
+                  </Button>
+                </EmptyStateActions>
+              </DataTableEmpty>
+            }
           />
         )}
       </Section>

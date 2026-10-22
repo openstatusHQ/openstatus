@@ -1,6 +1,9 @@
 "use client";
 
+import { ExternalLink, Notification } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import NextLink from "next/link";
 import { useQueryStates } from "nuqs";
 
 import { Link } from "@/components/common/link";
@@ -12,7 +15,9 @@ import {
 } from "@/components/content/action-card";
 import { ActionCardGroup } from "@/components/content/action-card";
 import {
-  EmptyStateContainer,
+  EmptyStateActions,
+  EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
@@ -25,6 +30,7 @@ import {
 import { columns } from "@/components/data-table/notifications/columns";
 import { FormSheetNotifier } from "@/components/forms/notifications/sheet";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { config, hiddenProviders } from "@/data/notifications.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -65,25 +71,46 @@ export function Client() {
         </SectionDescription>
       </SectionHeader>
       <Section>
-        {notifications.length === 0 ? (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No notifier found</EmptyStateTitle>
-          </EmptyStateContainer>
-        ) : (
-          <DataTable
-            paginationComponent={DataTablePaginationSimple}
-            columns={columns}
-            data={notifications}
-          />
-        )}
+        <DataTable
+          paginationComponent={DataTablePaginationSimple}
+          columns={columns}
+          data={notifications}
+          emptyState={
+            <DataTableEmpty>
+              <EmptyStateMedia>
+                <Notification />
+              </EmptyStateMedia>
+              <EmptyStateTitle>No notification channels yet</EmptyStateTitle>
+              <EmptyStateDescription>
+                A channel receives an alert when a monitor fails or recovers.
+                Connect one below and attach it to your monitors.
+              </EmptyStateDescription>
+              <EmptyStateActions>
+                <Button size="sm" asChild>
+                  <a href="#notifier-channels">Choose a channel</a>
+                </Button>
+                <Button size="sm" variant="outline" asChild>
+                  <NextLink
+                    href="https://www.openstatus.dev/docs/reference/notification"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <ExternalLink />
+                    Read the docs
+                  </NextLink>
+                </Button>
+              </EmptyStateActions>
+            </DataTableEmpty>
+          }
+        />
       </Section>
-      <Section>
+      <Section id="notifier-channels" className="scroll-mt-20">
         <SectionHeader>
           <SectionTitle>Create a new notifier</SectionTitle>
           <SectionDescription>
             Define your notifications to receive alerts when downtime occurs.{" "}
             <Link
-              href="https://www.openstatus.dev/docs/reference/notification/"
+              href="https://www.openstatus.dev/docs/reference/notification"
               rel="noreferrer"
               target="_blank"
             >

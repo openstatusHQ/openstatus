@@ -26,6 +26,7 @@ type Monitor = RouterOutputs["monitor"]["list"][number] & {
 export const columns: ColumnDef<Monitor>[] = [
   {
     id: "select",
+    meta: { ghost: false },
     header: ({ table }) => (
       <Checkbox
         checked={
@@ -65,16 +66,16 @@ export const columns: ColumnDef<Monitor>[] = [
       }
     },
     filterFn: (row, _, value) => {
-      if (Array.isArray(value)) {
-        if (value.includes("inactive")) {
-          return !row.original.active;
-        }
-        if (value.includes("active")) {
+      const statuses: string[] = Array.isArray(value) ? value : [value];
+      // "inactive" is a paused monitor, "active" a running healthy one;
+      // every other status matches the monitor's status as-is
+      return statuses.some((status) => {
+        if (status === "inactive") return !row.original.active;
+        if (status === "active") {
           return !!row.original.active && row.original.status === "active";
         }
-        return value.includes(row.original.status);
-      }
-      return row.original.status === value;
+        return row.original.status === status;
+      });
     },
     enableSorting: false,
     enableHiding: false,
@@ -82,6 +83,7 @@ export const columns: ColumnDef<Monitor>[] = [
     meta: {
       headerClassName: "pr-0",
       cellClassName: "w-8 pr-0",
+      ghost: false,
     },
   },
   {
@@ -234,7 +236,7 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p50");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellEmpty>No data</TableCellEmpty>;
+      if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,
@@ -251,7 +253,7 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p90");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellEmpty>No data</TableCellEmpty>;
+      if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,
@@ -269,7 +271,7 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p95");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellEmpty>No data</TableCellEmpty>;
+      if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,

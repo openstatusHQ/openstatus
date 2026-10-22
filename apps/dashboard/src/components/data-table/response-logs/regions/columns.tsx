@@ -233,11 +233,14 @@ export function getColumns({
   max,
   loading,
   degradedAfter,
+  empty,
 }: {
   privateLocations: PrivateLocation[];
   max: number;
   loading: boolean;
   degradedAfter: number | null;
+  /** No rows: the axis would squeeze into a collapsed column. */
+  empty?: boolean;
 }): ColumnDef<RegionMetric>[] {
   return [
     {
@@ -266,7 +269,8 @@ export function getColumns({
     },
     {
       id: "spread",
-      header: () => (loading ? null : <RangePlotAxis max={max} unit="ms" />),
+      header: () =>
+        loading || empty ? null : <RangePlotAxis max={max} unit="ms" />,
       cell: ({ row }) => (
         <SpreadCell
           metric={row.original}

@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Lock } from "@openstatus/icons";
+import { AuditLog, Lock } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -13,8 +13,8 @@ import {
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
 import {
-  EmptyStateContainer,
   EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
@@ -29,6 +29,7 @@ import { DataTableRowDetails } from "@/components/data-table/audit-logs-workspac
 import { AuditLogsDataTableToolbar } from "@/components/data-table/audit-logs-workspace/data-table-toolbar";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -99,11 +100,18 @@ export function Client() {
   const trpc = useTRPC();
   const [openDialog, setOpenDialog] = useState(false);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const { data: auditLogs } = useQuery(trpc.auditLog.list.queryOptions({}));
+  const {
+    data: auditLogs,
+    isPending: auditLogsPending,
+    isError: auditLogsError,
+  } = useQuery(trpc.auditLog.list.queryOptions({}));
 
   if (!workspace) return null;
 
   const isLimited = workspace.limits["audit-log"] === false;
+
+  // a failed list still renders the page with an empty table (see below)
+  if (!isLimited && auditLogsPending) return null;
 
   return (
     <SectionGroup>
@@ -157,10 +165,10 @@ export function Client() {
               limit="audit-log"
             />
           </BillingOverlayContainer>
-        ) : auditLogs?.items.length ? (
+        ) : (
           <DataTable
             columns={columns}
-            data={auditLogs.items}
+            data={auditLogs?.items ?? []}
             defaultColumnVisibility={{
               actorType: false,
               entityType: false,
@@ -173,14 +181,32 @@ export function Client() {
               <DataTableRowDetails row={row.original} />
             )}
             paginationComponent={DataTablePaginationSimple}
+            emptyState={
+              <DataTableEmpty>
+                <EmptyStateMedia>
+                  <AuditLog />
+                </EmptyStateMedia>
+                {auditLogsError ? (
+                  <>
+                    <EmptyStateTitle>
+                      Audit logs could not be loaded
+                    </EmptyStateTitle>
+                    <EmptyStateDescription>
+                      Try again in a moment.
+                    </EmptyStateDescription>
+                  </>
+                ) : (
+                  <>
+                    <EmptyStateTitle>No audit logs yet</EmptyStateTitle>
+                    <EmptyStateDescription>
+                      Every create, update and delete in this workspace is
+                      recorded here with who did it and when.
+                    </EmptyStateDescription>
+                  </>
+                )}
+              </DataTableEmpty>
+            }
           />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No audit logs</EmptyStateTitle>
-            <EmptyStateDescription>
-              Actions taken in this workspace will appear here.
-            </EmptyStateDescription>
-          </EmptyStateContainer>
         )}
       </Section>
     </SectionGroup>

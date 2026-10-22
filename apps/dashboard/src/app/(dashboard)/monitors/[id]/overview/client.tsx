@@ -1,7 +1,10 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { Pause, Play, Trend } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
+import NextLink from "next/link";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import React, { useEffect } from "react";
@@ -10,9 +13,12 @@ import { toast } from "sonner";
 import { ChartAreaLatency } from "@/components/chart/chart-area-latency";
 import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phases";
 import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
+import { ChartEmpty } from "@/components/chart/chart-empty";
 import {
+  EmptyStateActions,
   EmptyStateContainer,
   EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
@@ -38,6 +44,7 @@ import { PopoverQuantile } from "@/components/popovers/popover-quantile";
 import { PopoverResolution } from "@/components/popovers/popover-resolution";
 import {
   FREE_MAX_PERIOD,
+  hasMetricsData,
   isPaidPeriod,
   mapRegionMetrics,
 } from "@/data/metrics.client";
@@ -58,6 +65,15 @@ export function Client() {
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const queryClient = useQueryClient();
+  const resumeMonitor = useMutation(
+    trpc.monitor.updateMonitors.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.monitor.pathKey() });
+      },
+      onError: () => toast.error("Failed to resume the monitor"),
+    }),
+  );
 
   const isBlockedPeriod = workspace?.plan === "free" && isPaidPeriod(period);
   // snap free workspaces back synchronously so charts never fire (and the server
@@ -101,24 +117,55 @@ export function Client() {
   const { data: regionTimeline, isError: isRegionTimelineError } =
     useQuery(regionTimelineQuery);
 
+  const { data: metrics, isLoading: isMetricsLoading } = useQuery({
+    ...trpc.tinybird.metrics.queryOptions({
+      monitorId: id,
+      period: effectivePeriod,
+      type: (monitor?.jobType ?? "http") as
+        | "http"
+        | "tcp"
+        | "dns"
+        | "icmp"
+        | "grpc",
+      regions: selectedRegions,
+    }),
+    enabled: !!monitor,
+  });
+  const noData = !!metrics && !hasMetricsData(metrics);
+  // a paused monitor keeps its history; the paused card only fills an empty slot
+  const paused = monitor?.active === false && noData;
   // free plans ignore the region filter server-side, so they keep every row
   const filtersRegions =
     workspace?.plan !== "free" && !!selectedRegions?.length;
+  const filteredOut = noData && filtersRegions;
+  const maxPeriod = workspace?.plan === "free" ? FREE_MAX_PERIOD : "90d";
 
-  const regionMetrics: RegionMetric[] = React.useMemo(() => {
-    const configured = [
+  const configuredRegions = React.useMemo(
+    () => [
       ...(monitor?.regions ?? []),
       ...(monitor?.privateLocations?.map((location) =>
         location.id.toString(),
       ) ?? []),
-    ];
-    return mapRegionMetrics(
-      regionTimeline,
-      filtersRegions
-        ? configured.filter((region) => selectedRegions?.includes(region))
-        : configured,
-    );
-  }, [regionTimeline, monitor, filtersRegions, selectedRegions]);
+    ],
+    [monitor],
+  );
+  const regionMetrics: RegionMetric[] = React.useMemo(
+    () =>
+      mapRegionMetrics(
+        regionTimeline,
+        filtersRegions
+          ? configuredRegions.filter((region) =>
+              selectedRegions?.includes(region),
+            )
+          : configuredRegions,
+      ),
+    [regionTimeline, configuredRegions, filtersRegions, selectedRegions],
+  );
+  // e.g. a stale region in the URL after the monitor's regions were edited
+  const regionsFilteredOut =
+    filtersRegions &&
+    configuredRegions.length > 0 &&
+    regionMetrics.length === 0;
 
   if (!monitor) return null;
 
@@ -151,12 +198,7 @@ export function Client() {
             privateLocations={monitor.privateLocations}
           />
         </div>
-        <GlobalUptimeSection
-          monitorId={id}
-          jobType={monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc"}
-          period={effectivePeriod}
-          regions={selectedRegions}
-        />
+        <GlobalUptimeSection metrics={metrics} isLoading={isMetricsLoading} />
       </Section>
       <Section>
         <SectionHeader>
@@ -165,12 +207,59 @@ export function Client() {
             Uptime across all the selected regions
           </SectionDescription>
         </SectionHeader>
-        <ChartBarUptime
-          monitorId={id}
-          type={monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc"}
-          period={effectivePeriod}
-          regions={selectedRegions}
-        />
+        {/* the slot keeps the chart's height so the tinybird fetch never shifts the page */}
+        {paused ? (
+          <ChartEmpty className="h-[130px]">
+            <EmptyStateMedia>
+              <Pause />
+            </EmptyStateMedia>
+            <EmptyStateTitle>This monitor is paused</EmptyStateTitle>
+            <EmptyStateActions>
+              <Button
+                size="sm"
+                disabled={resumeMonitor.isPending}
+                onClick={() =>
+                  resumeMonitor.mutate({ ids: [monitor.id], active: true })
+                }
+              >
+                <Play />
+                Resume monitor
+              </Button>
+              <Button size="sm" variant="outline" asChild>
+                <NextLink href={`/monitors/${id}/edit`}>Edit monitor</NextLink>
+              </Button>
+            </EmptyStateActions>
+          </ChartEmpty>
+        ) : noData ? (
+          <ChartEmpty className="h-[130px]">
+            <EmptyStateMedia>
+              <Trend />
+            </EmptyStateMedia>
+            <EmptyStateTitle>
+              {filteredOut
+                ? "No checks from the selected regions"
+                : "No checks in this period"}
+            </EmptyStateTitle>
+            {filteredOut ? (
+              <EmptyStateActions>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSearchParams({ regions: null })}
+                >
+                  Show all regions
+                </Button>
+              </EmptyStateActions>
+            ) : null}
+          </ChartEmpty>
+        ) : (
+          <ChartBarUptime
+            monitorId={id}
+            type={monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc"}
+            period={effectivePeriod}
+            regions={selectedRegions}
+          />
+        )}
       </Section>
       <Section>
         {/* TODO: based on http, we have Timing Phases instead of Latency */}
@@ -185,7 +274,25 @@ export function Client() {
           within a <DropdownInterval />{" "}
           <PopoverResolution>resolution</PopoverResolution>
         </div>
-        {monitor.jobType === "http" ? (
+        {noData ? (
+          <ChartEmpty>
+            <EmptyStateMedia>{paused ? <Pause /> : <Trend />}</EmptyStateMedia>
+            <EmptyStateTitle>
+              {paused
+                ? "No latency while paused"
+                : filteredOut
+                  ? "No latency from the selected regions"
+                  : "No latency in this period"}
+            </EmptyStateTitle>
+            <EmptyStateDescription>
+              {paused
+                ? "Resume the monitor and response times fill in from the first check."
+                : filteredOut
+                  ? "Pick a region that has reported in this period."
+                  : "The first check lands within a minute of activation."}
+            </EmptyStateDescription>
+          </ChartEmpty>
+        ) : monitor.jobType === "http" ? (
           <ChartAreaTimingPhases
             monitorId={id}
             degradedAfter={monitor.degradedAfter}
@@ -232,6 +339,8 @@ export function Client() {
             privateLocations={monitor.privateLocations ?? []}
             loading={!regionTimeline}
             degradedAfter={monitor.degradedAfter}
+            filteredOut={regionsFilteredOut}
+            onShowAll={() => setSearchParams({ regions: null })}
           />
         )}
       </Section>

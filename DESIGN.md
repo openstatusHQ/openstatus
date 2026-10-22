@@ -108,8 +108,19 @@ primitive (`docs/adr/0003`).
 - **Spacing.** Lists `gap-4`, cards `px-4`, inside a row `gap-2.5`, stacked
   compact rows pull up with a short rail. Pages cap at `max-w-6xl`. Padding
   is symmetric unless the asymmetry is explained in a comment.
-- **Empty states** use the dashed `EmptyStateContainer` with a title and one
-  sentence that says what to do next. Never a bare "No data".
+- **Empty states** share one anatomy from the `EmptyState*` parts: icon
+  (`EmptyStateMedia`), what belongs here (title), why it is empty (one
+  sentence), then optionally one primary action and one escape hatch
+  (`EmptyStateActions`). The wrapper picks the slot: `EmptyStateContainer`
+  for a section, its `inline` prop for a single row inside a table or card,
+  `DataTableEmpty` ghost rows for a table body on first run (via `DataTable
+  emptyState`), `ChartEmpty` at the chart's own height so a resolving fetch
+  never shifts the page. A filter that matches nothing is the table's own
+  "No matches" row with a clear action. A short slot drops the sentence,
+  never the icon. A table without its own `emptyState` falls back to a
+  generic icon and sentence; a primary list always passes its own. Never a
+  bare "No data", and never `100%`, `0 ms` or `N/A` for data that does not
+  exist: use an em dash.
 - **Inline editing.** Title and summary are borderless inputs that show their
   edge on hover and focus. Save on blur or explicit action; never on every
   keystroke.

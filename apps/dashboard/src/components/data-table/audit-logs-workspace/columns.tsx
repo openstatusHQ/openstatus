@@ -178,7 +178,7 @@ export const columns: ColumnDef<AuditLog>[] = [
   },
   {
     accessorKey: "actorType",
-    header: () => null,
+    header: "",
     cell: () => null,
     enableHiding: true,
     filterFn: (row, id, filterValue: string[]) => {
@@ -188,7 +188,7 @@ export const columns: ColumnDef<AuditLog>[] = [
   },
   {
     accessorKey: "entityType",
-    header: () => null,
+    header: "",
     cell: () => null,
     enableHiding: true,
     filterFn: (row, id, filterValue: string[]) => {

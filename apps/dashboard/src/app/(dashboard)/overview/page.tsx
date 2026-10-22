@@ -1,13 +1,14 @@
 "use client";
 
-import { Agent } from "@openstatus/icons";
+import { Agent, Clock, Success } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
 import { NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
-  EmptyStateContainer,
+  EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
@@ -28,6 +29,7 @@ import {
   MetricCardValue,
 } from "@/components/metric/metric-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { buildOverviewData } from "@/data/overview-events.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -133,21 +135,26 @@ export default function Page() {
             Everything currently unresolved, newest first.
           </SectionDescription>
         </SectionHeader>
-        {needsAttention.length > 0 ? (
-          <DataTable
-            paginationComponent={DataTablePaginationSimple}
-            columns={columns}
-            data={needsAttention}
-            defaultSorting={[{ id: "startedAt", desc: true }]}
-            defaultColumnVisibility={{ duration: false, endsAt: false }}
-          />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>
-              All clear - nothing needs your attention
-            </EmptyStateTitle>
-          </EmptyStateContainer>
-        )}
+        <DataTable
+          paginationComponent={DataTablePaginationSimple}
+          columns={columns}
+          data={needsAttention}
+          defaultSorting={[{ id: "startedAt", desc: true }]}
+          defaultColumnVisibility={{ duration: false, endsAt: false }}
+          emptyState={
+            <DataTableEmpty>
+              <EmptyStateMedia variant="success">
+                <Success />
+              </EmptyStateMedia>
+              <EmptyStateTitle>All clear</EmptyStateTitle>
+              <EmptyStateDescription>
+                {openIncidents
+                  ? "Nothing is unresolved. Failing monitors, open incidents and status reports show up here."
+                  : "Incidents could not be loaded. Failing monitors and open status reports still show up here."}
+              </EmptyStateDescription>
+            </DataTableEmpty>
+          }
+        />
       </Section>
       {upcomingMaintenances.length > 0 ? (
         <Section>
@@ -174,19 +181,26 @@ export default function Page() {
             last 7 days.
           </SectionDescription>
         </SectionHeader>
-        {recentlyResolved.length > 0 ? (
-          <DataTable
-            paginationComponent={DataTablePaginationSimple}
-            columns={columns}
-            data={recentlyResolved}
-            defaultSorting={[{ id: "startedAt", desc: true }]}
-            defaultColumnVisibility={{ action: false, endsAt: false }}
-          />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No recent activity</EmptyStateTitle>
-          </EmptyStateContainer>
-        )}
+        <DataTable
+          paginationComponent={DataTablePaginationSimple}
+          columns={columns}
+          data={recentlyResolved}
+          defaultSorting={[{ id: "startedAt", desc: true }]}
+          defaultColumnVisibility={{ action: false, endsAt: false }}
+          emptyState={
+            <DataTableEmpty>
+              <EmptyStateMedia>
+                <Clock />
+              </EmptyStateMedia>
+              <EmptyStateTitle>No recent activity</EmptyStateTitle>
+              <EmptyStateDescription>
+                {endedIncidents
+                  ? "Resolved incidents and reports and completed maintenances from the last 7 days land here."
+                  : "Incidents could not be loaded. Resolved reports and completed maintenances from the last 7 days still show up here."}
+              </EmptyStateDescription>
+            </DataTableEmpty>
+          }
+        />
       </Section>
     </SectionGroup>
   );

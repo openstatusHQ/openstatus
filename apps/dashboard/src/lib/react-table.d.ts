@@ -11,6 +11,8 @@ declare module "@tanstack/react-table" {
     cellClassName?: string;
     label?: string;
     kind?: string;
+    /** `false` leaves the cell blank in the first-run ghost rows */
+    ghost?: boolean;
   }
 
   interface FilterFns {

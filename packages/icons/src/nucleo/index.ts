@@ -82,6 +82,7 @@ export { Next } from "./next";
 export { Notification } from "./notification";
 export { NotificationOff } from "./notification-off";
 export { Overview } from "./overview";
+export { Pause } from "./pause";
 export { Pending } from "./pending";
 export { Play } from "./play";
 export { Plug } from "./plug";

@@ -1,9 +1,10 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Lock, Add } from "@openstatus/icons";
+import { Lock, Add, Email, ExternalLink } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import NextLink from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useState } from "react";
 
@@ -15,8 +16,9 @@ import {
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
 import {
-  EmptyStateContainer,
+  EmptyStateActions,
   EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
@@ -33,7 +35,9 @@ import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { FormSheetSubscriber } from "@/components/forms/subscriber/sheet";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { getPageUrl } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
@@ -190,21 +194,43 @@ export default function Page() {
               limit="status-subscribers"
             />
           </BillingOverlayContainer>
-        ) : subscribers?.length ? (
+        ) : subscribers ? (
           <DataTable
             columns={columns}
             data={subscribers}
             toolbarComponent={SubscribersDataTableToolbar}
             paginationComponent={DataTablePaginationSimple}
+            emptyState={
+              <DataTableEmpty>
+                <EmptyStateMedia>
+                  <Email />
+                </EmptyStateMedia>
+                <EmptyStateTitle>No subscribers yet</EmptyStateTitle>
+                <EmptyStateDescription>
+                  Visitors subscribe from the public page and get an email on
+                  every update. You can also add people by hand.
+                </EmptyStateDescription>
+                <EmptyStateActions>
+                  <Button size="sm" onClick={() => setOpenAdd(true)}>
+                    Add subscriber
+                  </Button>
+                  {page ? (
+                    <Button size="sm" variant="outline" asChild>
+                      <NextLink
+                        href={getPageUrl(page)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <ExternalLink />
+                        Open public page
+                      </NextLink>
+                    </Button>
+                  ) : null}
+                </EmptyStateActions>
+              </DataTableEmpty>
+            }
           />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No subscribers</EmptyStateTitle>
-            <EmptyStateDescription>
-              Nobody has been subscribed to this status page.
-            </EmptyStateDescription>
-          </EmptyStateContainer>
-        )}
+        ) : null}
       </Section>
     </SectionGroup>
   );

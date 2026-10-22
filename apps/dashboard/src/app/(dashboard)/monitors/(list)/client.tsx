@@ -1,12 +1,20 @@
 "use client";
 
 import type { RouterInputs } from "@openstatus/api";
-import { ArrowDown, Success, ListFilter } from "@openstatus/icons";
+import { ArrowDown, Success, ListFilter, Monitor } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
+import NextLink from "next/link";
 import { useQueryStates } from "nuqs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import {
+  EmptyStateActions,
+  EmptyStateDescription,
+  EmptyStateMedia,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
 import {
   Section,
   SectionDescription,
@@ -26,11 +34,12 @@ import {
   MetricCardValue,
 } from "@/components/metric/metric-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { getMonitorListMetrics } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 
-import { searchParamsParsers } from "./search-params";
+import { type MonitorStatus, searchParamsParsers } from "./search-params";
 
 type MetricType = NonNullable<
   RouterInputs["tinybird"]["globalMetrics"]["type"]
@@ -64,6 +73,9 @@ export function Client() {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParsers);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  // latest values for updater chains within one tick (the render closure lags)
+  const sortingRef = useRef(sorting);
+  const columnFiltersRef = useRef(columnFilters);
 
   const metricQueries = useQueries({
     queries: METRIC_TYPES.map((type) => {
@@ -82,11 +94,13 @@ export function Client() {
 
   // TODO: ideally we read from the searchParamsCache and there is no layout shift
   useEffect(() => {
-    if (searchParams.status) {
-      setColumnFilters([{ id: "status", value: [searchParams.status] }]);
+    if (searchParams.status?.length) {
+      columnFiltersRef.current = [{ id: "status", value: searchParams.status }];
+      setColumnFilters(columnFiltersRef.current);
     }
     if (searchParams.sort) {
-      setSorting([searchParams.sort]);
+      sortingRef.current = [searchParams.sort];
+      setSorting(sortingRef.current);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -94,6 +108,32 @@ export function Client() {
   if (!monitors) return null;
 
   const metrics = getMonitorListMetrics(monitors, globalMetrics);
+
+  // every filter or sort change goes through here, from the table or the cards,
+  // so the URL mirrors the state
+  const onColumnFiltersChange: React.Dispatch<
+    React.SetStateAction<ColumnFiltersState>
+  > = (updater) => {
+    const next =
+      typeof updater === "function"
+        ? updater(columnFiltersRef.current)
+        : updater;
+    columnFiltersRef.current = next;
+    setColumnFilters(next);
+    const status = next.find((f) => f.id === "status")?.value as
+      | MonitorStatus[]
+      | undefined;
+    setSearchParams({ status: status?.length ? status : null });
+  };
+  const onSortingChange: React.Dispatch<React.SetStateAction<SortingState>> = (
+    updater,
+  ) => {
+    const next =
+      typeof updater === "function" ? updater(sortingRef.current) : updater;
+    sortingRef.current = next;
+    setSorting(next);
+    setSearchParams({ sort: next[0] ?? null });
+  };
 
   return (
     <SectionGroup>
@@ -126,21 +166,17 @@ export function Client() {
                 variant={metric.variant}
                 onClick={() => {
                   if (metric.key === "p95") {
-                    if (sorting.length === 0 || !isActive) {
-                      setSearchParams({ sort: { id: "p95", desc: true } });
-                      setSorting([{ id: "p95", desc: true }]);
-                    } else {
-                      setSearchParams({ sort: null });
-                      setSorting([]);
-                    }
+                    onSortingChange(
+                      sorting.length === 0 || !isActive
+                        ? [{ id: "p95", desc: true }]
+                        : [],
+                    );
                   } else {
-                    if (columnFilters.length === 0 || !isActive) {
-                      setSearchParams({ status: metric.key });
-                      setColumnFilters([{ id: "status", value: [metric.key] }]);
-                    } else {
-                      setSearchParams({ status: null });
-                      setColumnFilters([]);
-                    }
+                    onColumnFiltersChange(
+                      columnFilters.length === 0 || !isActive
+                        ? [{ id: "status", value: [metric.key] }]
+                        : [],
+                    );
                   }
                 }}
               >
@@ -176,10 +212,30 @@ export function Client() {
             <MonitorDataTableToolbar {...props} tags={tags ?? []} />
           )}
           paginationComponent={DataTablePaginationSimple}
+          emptyState={
+            <DataTableEmpty>
+              <EmptyStateMedia>
+                <Monitor />
+              </EmptyStateMedia>
+              <EmptyStateTitle>No monitors yet</EmptyStateTitle>
+              <EmptyStateDescription>
+                A monitor checks an endpoint on a schedule from the regions you
+                pick and alerts you when it degrades or fails.
+              </EmptyStateDescription>
+              <EmptyStateActions>
+                <Button size="sm" asChild>
+                  <NextLink href="/monitors/create">Create monitor</NextLink>
+                </Button>
+                <Button size="sm" variant="outline" asChild>
+                  <NextLink href="/agents/cli">Import via CLI</NextLink>
+                </Button>
+              </EmptyStateActions>
+            </DataTableEmpty>
+          }
           columnFilters={columnFilters}
-          setColumnFilters={setColumnFilters}
+          setColumnFilters={onColumnFiltersChange}
           sorting={sorting}
-          setSorting={setSorting}
+          setSorting={onSortingChange}
           defaultColumnVisibility={{
             active: false,
             url: false,
