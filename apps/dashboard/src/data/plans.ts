@@ -60,6 +60,10 @@ export const config: Record<
         value: "custom-theme",
         label: "Custom Theme",
       },
+      {
+        value: "i18n",
+        label: "Translations",
+      },
     ],
   },
   "status-page-audience": {
