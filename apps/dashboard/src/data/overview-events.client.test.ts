@@ -79,8 +79,8 @@ describe("buildOverviewData", () => {
       {
         ...input({ monitorIncidents: [{ resolvedAt: null }] }),
         managedIncidents: [
-          { status: "open" },
-          { status: "mitigated" },
+          { status: "open", severity: "major", startedAt: daysAgo(1) },
+          { status: "mitigated", severity: "minor", startedAt: daysAgo(2) },
         ] as unknown as Input["managedIncidents"],
         endedIncidents: [
           {
@@ -138,6 +138,55 @@ describe("buildOverviewData", () => {
       value: 1,
       variant: "warning",
     });
+  });
+
+  it("hides reports linked to an open incident and ranks by severity", () => {
+    const data = buildOverviewData(
+      {
+        ...input({
+          monitorIncidents: [{ startedAt: daysAgo(1), resolvedAt: null }],
+          statusReports: [
+            {
+              id: 1,
+              status: "investigating",
+              createdAt: daysAgo(2),
+              updates: [],
+            },
+            {
+              id: 2,
+              status: "investigating",
+              createdAt: daysAgo(1),
+              updates: [],
+            },
+          ],
+        }),
+        managedIncidents: [
+          {
+            status: "open",
+            severity: "minor",
+            startedAt: daysAgo(1),
+            statusReport: null,
+          },
+          {
+            status: "mitigated",
+            severity: "critical",
+            startedAt: daysAgo(5),
+            statusReport: { id: 1 },
+          },
+        ] as unknown as Input["managedIncidents"],
+      },
+      now,
+    );
+    expect(
+      data.needsAttention.map((e) =>
+        e.type === "managedIncident" ? e.incident.severity : e.type,
+      ),
+    ).toEqual(["critical", "minor", "incident", "report"]);
+    expect(
+      data.needsAttention.flatMap((e) =>
+        e.type === "report" ? [e.report.id] : [],
+      ),
+    ).toEqual([2]);
   });
 
   it("uses default variants when nothing is open", () => {

@@ -2,7 +2,6 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
@@ -15,10 +14,6 @@ import {
 } from "./dialog-confirm";
 
 type Incident = RouterOutputs["monitorIncident"]["list"][number];
-
-export function DataTableRowActions({ row }: { row: Row<Incident> }) {
-  return <IncidentRowActions incident={row.original} />;
-}
 
 export function IncidentRowActions({ incident }: { incident: Incident }) {
   const trpc = useTRPC();

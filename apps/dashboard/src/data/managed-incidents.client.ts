@@ -47,3 +47,7 @@ export function incidentEndedAt(incident: {
   }
   return incident.closedAt;
 }
+
+export function isIncidentActive(incident: { status: IncidentStatus }) {
+  return incident.status === "open" || incident.status === "mitigated";
+}

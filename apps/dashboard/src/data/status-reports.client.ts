@@ -1,3 +1,7 @@
+import {
+  type PageComponentImpact,
+  worstImpact,
+} from "@openstatus/db/src/schema/page_components/constants";
 import { Show, Delete } from "@openstatus/icons";
 
 type StatusReportWithUpdates = {
@@ -50,3 +54,18 @@ export const getActions = (
     onClick: props[action.id as keyof typeof props],
   }));
 };
+
+// worst impact any update set, not the current one (a resolved report would
+// always read "Operational"); `null` = components but no impact rows
+// (legacy, untriaged), `undefined` = nothing affected, nothing to triage
+export function worstReportImpact(report: {
+  pageComponents: unknown[];
+  updates: { componentImpacts: { impact: PageComponentImpact }[] }[];
+}): PageComponentImpact | null | undefined {
+  if (report.pageComponents.length === 0) return undefined;
+  const impacts = report.updates.flatMap((u) =>
+    u.componentImpacts.map((ci) => ci.impact),
+  );
+  if (impacts.length === 0) return null;
+  return worstImpact(impacts);
+}

@@ -11,7 +11,7 @@ import {
 
 type Incident = RouterOutputs["monitorIncident"]["list"][number];
 
-export function IncidentActionCell({ incident }: { incident: Incident }) {
+export function DowntimeNextAction({ incident }: { incident: Incident }) {
   // capture the action at click time so a background refetch can't flip it mid-dialog
   const [type, setType] = useState<IncidentConfirmType | null>(null);
 

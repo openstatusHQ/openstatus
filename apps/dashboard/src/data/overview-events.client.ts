@@ -122,6 +122,22 @@ function isOpen(event: OverviewEvent, now: Date): boolean {
   }
 }
 
+const severityRank = { critical: 0, major: 1, minor: 2 } as const;
+
+// declared incidents by severity, then raw downtime, then public reports
+function attentionRank(event: OverviewEvent): number {
+  switch (event.type) {
+    case "managedIncident":
+      return severityRank[event.incident.severity];
+    case "incident":
+      return 3;
+    case "report":
+      return 4;
+    case "maintenance":
+      return 5;
+  }
+}
+
 export type OverviewMetric = {
   title: string;
   value: number;
@@ -169,18 +185,38 @@ export function buildOverviewData(
     })),
   ];
 
-  const needsAttention = events.filter(
-    (event) => event.type !== "maintenance" && isOpen(event, now),
+  // a report linked to an open incident is that incident; list it once
+  const linkedReportIds = new Set(
+    (managedIncidents ?? []).flatMap((i) =>
+      i.statusReport ? [i.statusReport.id] : [],
+    ),
   );
+  const needsAttention = events
+    .filter(
+      (event) =>
+        event.type !== "maintenance" &&
+        isOpen(event, now) &&
+        !(event.type === "report" && linkedReportIds.has(event.report.id)),
+    )
+    .sort(
+      (a, b) =>
+        attentionRank(a) - attentionRank(b) ||
+        getStartedAt(b).getTime() - getStartedAt(a).getTime(),
+    );
   // calendar, not triage — scheduled/in-progress maintenance gets its own section
-  const upcomingMaintenances = events.filter(
-    (event) => event.type === "maintenance" && isOpen(event, now),
-  );
-  const recentlyResolved = events.filter((event) => {
-    if (isOpen(event, now)) return false;
-    const resolvedAt = getResolvedAt(event);
-    return resolvedAt !== null && resolvedAt >= sevenDaysAgo;
-  });
+  const upcomingMaintenances = events
+    .filter((event) => event.type === "maintenance" && isOpen(event, now))
+    .sort((a, b) => getStartedAt(a).getTime() - getStartedAt(b).getTime());
+  const recentlyResolved = events
+    .filter((event) => {
+      if (isOpen(event, now)) return false;
+      const resolvedAt = getResolvedAt(event);
+      return resolvedAt !== null && resolvedAt >= sevenDaysAgo;
+    })
+    .sort(
+      (a, b) =>
+        (getResolvedAt(b)?.getTime() ?? 0) - (getResolvedAt(a)?.getTime() ?? 0),
+    );
 
   const openIncidentsCount = managedIncidents
     ? managedIncidents.length

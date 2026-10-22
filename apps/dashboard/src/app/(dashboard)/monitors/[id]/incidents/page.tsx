@@ -12,15 +12,22 @@ import {
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
+  EventList,
+  EventListGroup,
+  EventListGroupTitle,
+  EventListGroups,
+  EventListMore,
+} from "@/components/content/event-list";
+import {
   Section,
   SectionDescription,
   SectionGroup,
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/incidents/columns";
-import { DataTable } from "@/components/ui/data-table/data-table";
-import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { DowntimeEventRow } from "@/components/downtime/downtime-event-row";
+import { groupByMonth } from "@/data/event-list.client";
+import { useShowMore } from "@/hooks/use-show-more";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
@@ -34,6 +41,12 @@ export default function Page() {
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
+
+  const ongoing = monitorIncidents?.filter((i) => i.resolvedAt === null) ?? [];
+  const resolved = useShowMore(
+    monitorIncidents?.filter((i) => i.resolvedAt !== null) ?? [],
+  );
+  const months = groupByMonth(resolved.visible, (i) => i.startedAt);
 
   if (!monitorIncidents || !monitor) return null;
 
@@ -68,11 +81,38 @@ export default function Page() {
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (
-          <DataTable
-            columns={columns}
-            data={monitorIncidents}
-            paginationComponent={DataTablePaginationSimple}
-          />
+          <EventListGroups>
+            {ongoing.length > 0 ? (
+              <EventListGroup aria-labelledby="downtime-ongoing">
+                <EventListGroupTitle id="downtime-ongoing">
+                  Ongoing
+                </EventListGroupTitle>
+                <EventList>
+                  {ongoing.map((downtime) => (
+                    <DowntimeEventRow key={downtime.id} downtime={downtime} />
+                  ))}
+                </EventList>
+              </EventListGroup>
+            ) : null}
+            {months.map((month) => (
+              <EventListGroup
+                key={month.key}
+                aria-labelledby={`downtime-${month.key}`}
+              >
+                <EventListGroupTitle id={`downtime-${month.key}`}>
+                  {month.label}
+                </EventListGroupTitle>
+                <EventList>
+                  {month.items.map((downtime) => (
+                    <DowntimeEventRow key={downtime.id} downtime={downtime} />
+                  ))}
+                </EventList>
+              </EventListGroup>
+            ))}
+            {resolved.hasMore ? (
+              <EventListMore onClick={resolved.showMore} />
+            ) : null}
+          </EventListGroups>
         )}
       </Section>
     </SectionGroup>

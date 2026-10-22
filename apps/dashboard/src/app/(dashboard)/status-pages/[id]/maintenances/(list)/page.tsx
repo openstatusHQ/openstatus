@@ -7,6 +7,18 @@ import { toast } from "sonner";
 
 import { Link } from "@/components/common/link";
 import {
+  EmptyStateContainer,
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
+  EventList,
+  EventListGroup,
+  EventListGroupTitle,
+  EventListGroups,
+  EventListMore,
+} from "@/components/content/event-list";
+import {
   Section,
   SectionDescription,
   SectionGroup,
@@ -14,11 +26,11 @@ import {
   SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/maintenances/columns";
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
+import { MaintenanceEventRow } from "@/components/maintenances/maintenance-event-row";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
-import { DataTable } from "@/components/ui/data-table/data-table";
-import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { groupByMonth } from "@/data/event-list.client";
+import { useShowMore } from "@/hooks/use-show-more";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
@@ -56,6 +68,18 @@ export default function Page() {
       },
     }),
   );
+
+  const now = new Date();
+  // soonest first; a window counts as upcoming until it ends
+  const upcoming = (maintenances ?? [])
+    .filter((m) => m.to >= now)
+    .sort((a, b) => a.from.getTime() - b.from.getTime());
+  const completed = useShowMore(
+    (maintenances ?? [])
+      .filter((m) => m.to < now)
+      .sort((a, b) => b.from.getTime() - a.from.getTime()),
+  );
+  const months = groupByMonth(completed.visible, (m) => m.from);
 
   if (!statusPage || !maintenances) return null;
 
@@ -97,11 +121,54 @@ export default function Page() {
             </FormSheetMaintenance>
           </div>
         </SectionHeaderRow>
-        <DataTable
-          paginationComponent={DataTablePaginationSimple}
-          columns={columns}
-          data={maintenances}
-        />
+        {maintenances.length === 0 ? (
+          <EmptyStateContainer>
+            <EmptyStateTitle>No maintenances</EmptyStateTitle>
+            <EmptyStateDescription>
+              Schedule a maintenance to let your users know about planned
+              downtime ahead of time.
+            </EmptyStateDescription>
+          </EmptyStateContainer>
+        ) : (
+          <EventListGroups>
+            {upcoming.length > 0 ? (
+              <EventListGroup aria-labelledby="maintenances-upcoming">
+                <EventListGroupTitle id="maintenances-upcoming">
+                  Upcoming
+                </EventListGroupTitle>
+                <EventList>
+                  {upcoming.map((maintenance) => (
+                    <MaintenanceEventRow
+                      key={maintenance.id}
+                      maintenance={maintenance}
+                    />
+                  ))}
+                </EventList>
+              </EventListGroup>
+            ) : null}
+            {months.map((month) => (
+              <EventListGroup
+                key={month.key}
+                aria-labelledby={`maintenances-${month.key}`}
+              >
+                <EventListGroupTitle id={`maintenances-${month.key}`}>
+                  {month.label}
+                </EventListGroupTitle>
+                <EventList>
+                  {month.items.map((maintenance) => (
+                    <MaintenanceEventRow
+                      key={maintenance.id}
+                      maintenance={maintenance}
+                    />
+                  ))}
+                </EventList>
+              </EventListGroup>
+            ))}
+            {completed.hasMore ? (
+              <EventListMore onClick={completed.showMore} />
+            ) : null}
+          </EventListGroups>
+        )}
       </Section>
     </SectionGroup>
   );

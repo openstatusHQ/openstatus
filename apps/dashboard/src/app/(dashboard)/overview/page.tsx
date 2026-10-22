@@ -11,6 +11,11 @@ import {
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
+  EventList,
+  EventListGroup,
+  EventListGroupTitle,
+} from "@/components/content/event-list";
+import {
   SectionDescription,
   SectionGroup,
   SectionHeader,
@@ -18,7 +23,6 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { Section } from "@/components/content/section";
-import { columns } from "@/components/data-table/overview-events/columns";
 import {
   MetricCard,
   MetricCardGroup,
@@ -27,12 +31,12 @@ import {
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
-import { DataTable } from "@/components/ui/data-table/data-table";
-import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { pluralize } from "@/data/event-list.client";
 import { buildOverviewData } from "@/data/overview-events.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { CreateEventButtonGroup } from "./create-event-button-group";
+import { OverviewEventRow, overviewEventKey } from "./overview-event-row";
 
 export default function Page() {
   const trpc = useTRPC();
@@ -92,7 +96,9 @@ export default function Page() {
           <SectionHeader>
             <SectionTitle>Overview</SectionTitle>
             <SectionDescription>
-              Welcome to your OpenStatus dashboard.
+              {needsAttention.length > 0
+                ? `${pluralize(needsAttention.length, "event")} ${needsAttention.length === 1 ? "needs" : "need"} your attention.`
+                : "All clear. Nothing needs your attention."}
             </SectionDescription>
           </SectionHeader>
           {pages.length > 0 ? <CreateEventButtonGroup /> : null}
@@ -126,21 +132,16 @@ export default function Page() {
           })}
         </MetricCardGroup>
       </Section>
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Needs Attention</SectionTitle>
-          <SectionDescription>
-            Everything currently unresolved, newest first.
-          </SectionDescription>
-        </SectionHeader>
+      <EventListGroup aria-labelledby="overview-attention">
+        <EventListGroupTitle id="overview-attention">
+          Needs attention
+        </EventListGroupTitle>
         {needsAttention.length > 0 ? (
-          <DataTable
-            paginationComponent={DataTablePaginationSimple}
-            columns={columns}
-            data={needsAttention}
-            defaultSorting={[{ id: "startedAt", desc: true }]}
-            defaultColumnVisibility={{ duration: false, endsAt: false }}
-          />
+          <EventList>
+            {needsAttention.map((event) => (
+              <OverviewEventRow key={overviewEventKey(event)} event={event} />
+            ))}
+          </EventList>
         ) : (
           <EmptyStateContainer>
             <EmptyStateTitle>
@@ -148,46 +149,35 @@ export default function Page() {
             </EmptyStateTitle>
           </EmptyStateContainer>
         )}
-      </Section>
+      </EventListGroup>
       {upcomingMaintenances.length > 0 ? (
-        <Section>
-          <SectionHeader>
-            <SectionTitle>Scheduled Maintenance</SectionTitle>
-            <SectionDescription>
-              Upcoming and in-progress maintenance windows.
-            </SectionDescription>
-          </SectionHeader>
-          <DataTable
-            paginationComponent={DataTablePaginationSimple}
-            columns={columns}
-            data={upcomingMaintenances}
-            defaultSorting={[{ id: "startedAt", desc: false }]}
-            defaultColumnVisibility={{ action: false, duration: false }}
-          />
-        </Section>
+        <EventListGroup aria-labelledby="overview-maintenance">
+          <EventListGroupTitle id="overview-maintenance">
+            Coming up
+          </EventListGroupTitle>
+          <EventList>
+            {upcomingMaintenances.map((event) => (
+              <OverviewEventRow key={overviewEventKey(event)} event={event} />
+            ))}
+          </EventList>
+        </EventListGroup>
       ) : null}
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Recent Activity</SectionTitle>
-          <SectionDescription>
-            Resolved incidents and reports, and completed maintenances from the
-            last 7 days.
-          </SectionDescription>
-        </SectionHeader>
+      <EventListGroup aria-labelledby="overview-recent">
+        <EventListGroupTitle id="overview-recent">
+          Last 7 days
+        </EventListGroupTitle>
         {recentlyResolved.length > 0 ? (
-          <DataTable
-            paginationComponent={DataTablePaginationSimple}
-            columns={columns}
-            data={recentlyResolved}
-            defaultSorting={[{ id: "startedAt", desc: true }]}
-            defaultColumnVisibility={{ action: false, endsAt: false }}
-          />
+          <EventList>
+            {recentlyResolved.map((event) => (
+              <OverviewEventRow key={overviewEventKey(event)} event={event} />
+            ))}
+          </EventList>
         ) : (
           <EmptyStateContainer>
             <EmptyStateTitle>No recent activity</EmptyStateTitle>
           </EmptyStateContainer>
         )}
-      </Section>
+      </EventListGroup>
     </SectionGroup>
   );
 }
