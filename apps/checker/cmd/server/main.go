@@ -9,14 +9,20 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
+
+	"cloud.google.com/go/pubsub/v2"
+	"google.golang.org/api/option"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openstatushq/openstatus/apps/checker/handlers"
 
+	"github.com/openstatushq/openstatus/apps/checker/pkg/gcp"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/logger"
+	"github.com/openstatushq/openstatus/apps/checker/pkg/queue"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/tinybird"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
@@ -26,7 +32,7 @@ import (
 	"go.opentelemetry.io/otel/log/global"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.39.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.41.0"
 )
 
 func shouldSample(event map[string]any) bool {
@@ -272,12 +278,101 @@ func main() {
 		}
 	}()
 
-	<-ctx.Done()
-	if err := httpServer.Shutdown(ctx); err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("failed to shutdown http server")
-
-		return
+	consumerDone := make(chan struct{})
+	if env("PUBSUB_ENABLED", "false") == "true" {
+		go func() {
+			defer close(consumerDone)
+			if err := runConsumer(ctx, h, region); err != nil {
+				log.Error().Err(err).Msg("pubsub consumer stopped")
+			}
+			// A consumer that stopped while the process keeps serving /health
+			// would never be restarted, so take the whole process down.
+			cancel()
+		}()
+	} else {
+		close(consumerDone)
 	}
+
+	<-ctx.Done()
+	// The consumer drains on its own from ctx; stop the listener alongside it.
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), consumerDrain)
+	defer shutdownCancel()
+	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to shutdown http server")
+	}
+	<-consumerDone
+}
+
+// consumerDrain stays under the 60s fly kill_timeout, so unfinished checks are
+// nacked for redelivery before the machine is killed.
+const consumerDrain = 50 * time.Second
+
+func runConsumer(ctx context.Context, h *handlers.Handler, region string) error {
+	creds, err := gcp.Credentials()
+	if err != nil {
+		return err
+	}
+
+	client, err := pubsub.NewClient(context.Background(), env("GCP_PROJECT_ID", ""), option.WithAuthCredentials(creds))
+	if err != nil {
+		return fmt.Errorf("creating pubsub client: %w", err)
+	}
+	defer client.Close()
+
+	consumer := &queue.Consumer{
+		Client: client,
+		Runner: h,
+		Loops: []queue.Loop{
+			{
+				Subscription:   queue.Subscription(region, false),
+				MaxOutstanding: envInt("PUBSUB_MAX_OUTSTANDING", 500),
+			},
+			{
+				Subscription:   queue.Subscription(region, true),
+				MaxOutstanding: envInt("PUBSUB_30S_MAX_OUTSTANDING", 2000),
+				MaxConcurrent:  envInt("PUBSUB_30S_MAX_CONCURRENT", 200),
+			},
+		},
+		Drain:   consumerDrain,
+		OnEvent: logConsumerEvent,
+	}
+
+	log.Info().Str("region", region).Msg("pubsub consumer started")
+
+	return consumer.Run(ctx)
+}
+
+func logConsumerEvent(ctx context.Context, e queue.Event) {
+	event := map[string]any{
+		"timestamp":        time.Now().Format(time.RFC3339),
+		"subscription":     e.Subscription,
+		"monitor_id":       e.MonitorID,
+		"periodicity":      e.Periodicity,
+		"job_type":         e.JobType,
+		"delivery_attempt": e.DeliveryAttempt,
+		"wait_ms":          int(e.Wait.Milliseconds()),
+		"duration_ms":      int(e.Duration.Milliseconds()),
+		"outcome":          string(e.Outcome),
+	}
+	if e.Err != nil {
+		event["error"] = map[string]any{
+			"type":    "ConsumerError",
+			"message": e.Err.Error(),
+		}
+	}
+
+	if shouldSample(event) {
+		slog.LogAttrs(ctx, slog.LevelInfo, "message done", MapToAttrs(event)...)
+	}
+}
+
+func envInt(key string, fallback int) int {
+	value, err := strconv.Atoi(env(key, ""))
+	if err != nil || value <= 0 {
+		return fallback
+	}
+
+	return value
 }
 
 func env(key, fallback string) string {

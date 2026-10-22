@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/rs/zerolog/log"
 	"google.golang.org/api/option"
 
-	"cloud.google.com/go/auth"
+	"github.com/openstatushq/openstatus/apps/checker/pkg/gcp"
+
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	taskspb "cloud.google.com/go/cloudtasks/apiv2/cloudtaskspb"
 )
@@ -43,26 +43,10 @@ func cloudTasksClient() (*cloudtasks.Client, error) {
 		return tasksClient, nil
 	}
 
-	c := os.Getenv("GCP_PRIVATE_KEY")
-	c = strings.ReplaceAll(c, "\\n", "\n")
-	opts := &auth.Options2LO{
-		Email:        os.Getenv("GCP_CLIENT_EMAIL"),
-		PrivateKey:   []byte(c),
-		PrivateKeyID: os.Getenv("GCP_PRIVATE_KEY_ID"),
-		Scopes: []string{
-			"https://www.googleapis.com/auth/cloud-platform",
-		},
-		TokenURL: "https://oauth2.googleapis.com/token",
-	}
-
-	tp, err := auth.New2LOTokenProvider(opts)
+	creds, err := gcp.Credentials()
 	if err != nil {
-		return nil, fmt.Errorf("creating token provider: %w", err)
+		return nil, err
 	}
-
-	creds := auth.NewCredentials(&auth.CredentialsOptions{
-		TokenProvider: tp,
-	})
 
 	// The client lives as long as the process, so it takes neither the
 	// cancellation nor the values (logger, monitor) of the request that built it.
