@@ -1,6 +1,6 @@
 "use client";
 
-import { Agent } from "@openstatus/icons";
+import { Agent, Clock, Success } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
@@ -8,6 +8,8 @@ import { NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   EmptyStateContainer,
+  EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
@@ -143,9 +145,14 @@ export default function Page() {
           />
         ) : (
           <EmptyStateContainer>
-            <EmptyStateTitle>
-              All clear - nothing needs your attention
-            </EmptyStateTitle>
+            <EmptyStateMedia variant="success">
+              <Success />
+            </EmptyStateMedia>
+            <EmptyStateTitle>All clear</EmptyStateTitle>
+            <EmptyStateDescription>
+              Nothing is unresolved. Open incidents, status reports and
+              maintenances show up here the moment they start.
+            </EmptyStateDescription>
           </EmptyStateContainer>
         )}
       </Section>
@@ -184,7 +191,14 @@ export default function Page() {
           />
         ) : (
           <EmptyStateContainer>
+            <EmptyStateMedia>
+              <Clock />
+            </EmptyStateMedia>
             <EmptyStateTitle>No recent activity</EmptyStateTitle>
+            <EmptyStateDescription>
+              Resolved incidents and reports and completed maintenances from the
+              last 7 days land here.
+            </EmptyStateDescription>
           </EmptyStateContainer>
         )}
       </Section>

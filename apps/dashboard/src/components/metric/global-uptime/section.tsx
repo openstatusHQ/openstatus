@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import type { RouterOutputs } from "@openstatus/api";
 import { formatDistanceToNow } from "date-fns";
 
 import {
@@ -12,13 +12,16 @@ import {
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
-import { type PERIODS, mapMetrics, metricsCards } from "@/data/metrics.client";
+import {
+  hasMetricsData,
+  mapMetrics,
+  metricsCards,
+} from "@/data/metrics.client";
 import {
   formatMilliseconds,
   formatNumber,
   formatPercentage,
 } from "@/lib/formatter";
-import { useTRPC } from "@/lib/trpc/client";
 
 type Metric = {
   label: string;
@@ -27,31 +30,15 @@ type Metric = {
   variant: React.ComponentProps<typeof MetricCard>["variant"];
 };
 
-// TODO: move the fetch to the parent component
 // TODO: missing dynamic degraded
 
 export function GlobalUptimeSection({
-  monitorId,
-  jobType,
-  period = "7d",
-  regions,
+  metrics,
+  isLoading,
 }: {
-  monitorId: string;
-  jobType: "http" | "tcp" | "dns" | "icmp" | "grpc";
-  period: (typeof PERIODS)[number];
-  regions: string[] | undefined;
+  metrics: RouterOutputs["tinybird"]["metrics"] | undefined;
+  isLoading: boolean;
 }) {
-  const trpc = useTRPC();
-
-  const { data: metrics, isLoading } = useQuery(
-    trpc.tinybird.metrics.queryOptions({
-      monitorId,
-      period,
-      type: jobType,
-      regions,
-    }),
-  );
-
   // Helper to transform the data the same way it used to be in the page
   function defineMetrics() {
     if (!metrics) return null;
@@ -70,7 +57,7 @@ export function GlobalUptimeSection({
             const k = key as keyof typeof acc;
             const v = (() => {
               if (k === "lastTimestamp") {
-                if (!value) return "N/A";
+                if (!value) return "—";
                 return formatDistanceToNow(new Date(value ?? 0), {
                   addSuffix: true,
                 });
@@ -123,6 +110,10 @@ export function GlobalUptimeSection({
       );
   }
 
+  const definedMetrics = defineMetrics();
+  // a window with no checks has no uptime or latency, only a count of zero
+  const noData = !!metrics && !hasMetricsData(metrics);
+
   const refinedMetrics: (Metric | null)[] = (
     [
       "uptime",
@@ -139,7 +130,15 @@ export function GlobalUptimeSection({
   ).map((key) => {
     if (!key) return null;
     const metric =
-      defineMetrics()?.[key as keyof ReturnType<typeof mapMetrics>[number]];
+      definedMetrics?.[key as keyof ReturnType<typeof mapMetrics>[number]];
+    if (noData) {
+      return {
+        label: metricsCards[key].label,
+        value: key === "total" ? "0" : "—",
+        trend: null,
+        variant: metricsCards[key].variant,
+      } as Metric;
+    }
     return {
       label: metricsCards[key].label,
       value: metric?.value ?? "0",

@@ -1,12 +1,21 @@
 "use client";
 
 import type { RouterInputs } from "@openstatus/api";
-import { ArrowDown, Success, ListFilter } from "@openstatus/icons";
+import { ArrowDown, Success, ListFilter, Monitor } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
+import NextLink from "next/link";
 import { useQueryStates } from "nuqs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { Link } from "@/components/common/link";
+import {
+  EmptyStateActions,
+  EmptyStateDescription,
+  EmptyStateMedia,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
 import {
   Section,
   SectionDescription,
@@ -26,11 +35,19 @@ import {
   MetricCardValue,
 } from "@/components/metric/metric-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { getMonitorListMetrics } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
+
+type MonitorStatus =
+  NonNullable<
+    (typeof searchParamsParsers)["status"]["parseServerSide"]
+  > extends (v: unknown) => infer R
+    ? NonNullable<R>
+    : never;
 
 type MetricType = NonNullable<
   RouterInputs["tinybird"]["globalMetrics"]["type"]
@@ -64,6 +81,10 @@ export function Client() {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParsers);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const sortingRef = useRef(sorting);
+  const filtersRef = useRef(columnFilters);
+  sortingRef.current = sorting;
+  filtersRef.current = columnFilters;
 
   const metricQueries = useQueries({
     queries: METRIC_TYPES.map((type) => {
@@ -94,6 +115,30 @@ export function Client() {
   if (!monitors) return null;
 
   const metrics = getMonitorListMetrics(monitors, globalMetrics);
+
+  // every filter or sort change goes through here, from the table or the cards,
+  // so the URL mirrors the state; refs keep two updates in one tick in order
+  const onColumnFiltersChange: React.Dispatch<
+    React.SetStateAction<ColumnFiltersState>
+  > = (updater) => {
+    const next =
+      typeof updater === "function" ? updater(filtersRef.current) : updater;
+    filtersRef.current = next;
+    setColumnFilters(next);
+    const status = next.find((f) => f.id === "status")?.value as
+      | MonitorStatus[]
+      | undefined;
+    setSearchParams({ status: status?.[0] ?? null });
+  };
+  const onSortingChange: React.Dispatch<React.SetStateAction<SortingState>> = (
+    updater,
+  ) => {
+    const next =
+      typeof updater === "function" ? updater(sortingRef.current) : updater;
+    sortingRef.current = next;
+    setSorting(next);
+    setSearchParams({ sort: next[0] ?? null });
+  };
 
   return (
     <SectionGroup>
@@ -126,21 +171,17 @@ export function Client() {
                 variant={metric.variant}
                 onClick={() => {
                   if (metric.key === "p95") {
-                    if (sorting.length === 0 || !isActive) {
-                      setSearchParams({ sort: { id: "p95", desc: true } });
-                      setSorting([{ id: "p95", desc: true }]);
-                    } else {
-                      setSearchParams({ sort: null });
-                      setSorting([]);
-                    }
+                    onSortingChange(
+                      sorting.length === 0 || !isActive
+                        ? [{ id: "p95", desc: true }]
+                        : [],
+                    );
                   } else {
-                    if (columnFilters.length === 0 || !isActive) {
-                      setSearchParams({ status: metric.key });
-                      setColumnFilters([{ id: "status", value: [metric.key] }]);
-                    } else {
-                      setSearchParams({ status: null });
-                      setColumnFilters([]);
-                    }
+                    onColumnFiltersChange(
+                      columnFilters.length === 0 || !isActive
+                        ? [{ id: "status", value: [metric.key] }]
+                        : [],
+                    );
                   }
                 }}
               >
@@ -176,10 +217,34 @@ export function Client() {
             <MonitorDataTableToolbar {...props} tags={tags ?? []} />
           )}
           paginationComponent={DataTablePaginationSimple}
+          emptyState={
+            <DataTableEmpty>
+              <EmptyStateMedia>
+                <Monitor />
+              </EmptyStateMedia>
+              <EmptyStateTitle>No monitors yet</EmptyStateTitle>
+              <EmptyStateDescription>
+                A monitor checks an endpoint on a schedule from the regions you
+                pick and alerts you when it degrades or fails.
+              </EmptyStateDescription>
+              <EmptyStateActions>
+                <Button size="sm" asChild>
+                  <NextLink href="/monitors/create">Create monitor</NextLink>
+                </Button>
+                <Button size="sm" variant="outline" asChild>
+                  <NextLink href="/agents/cli">Import via CLI</NextLink>
+                </Button>
+              </EmptyStateActions>
+              <EmptyStateDescription className="text-xs">
+                Or let an agent create it through the{" "}
+                <Link href="/agents/mcp">MCP server</Link>.
+              </EmptyStateDescription>
+            </DataTableEmpty>
+          }
           columnFilters={columnFilters}
-          setColumnFilters={setColumnFilters}
+          setColumnFilters={onColumnFiltersChange}
           sorting={sorting}
-          setSorting={setSorting}
+          setSorting={onSortingChange}
           defaultColumnVisibility={{
             active: false,
             url: false,

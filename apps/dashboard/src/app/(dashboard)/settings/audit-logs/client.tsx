@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Lock } from "@openstatus/icons";
+import { AuditLog, Lock } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -15,6 +15,7 @@ import {
 import {
   EmptyStateContainer,
   EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
@@ -176,9 +177,13 @@ export function Client() {
           />
         ) : (
           <EmptyStateContainer>
-            <EmptyStateTitle>No audit logs</EmptyStateTitle>
+            <EmptyStateMedia>
+              <AuditLog />
+            </EmptyStateMedia>
+            <EmptyStateTitle>No audit logs yet</EmptyStateTitle>
             <EmptyStateDescription>
-              Actions taken in this workspace will appear here.
+              Every create, update and delete in this workspace is recorded here
+              with who did it and when.
             </EmptyStateDescription>
           </EmptyStateContainer>
         )}

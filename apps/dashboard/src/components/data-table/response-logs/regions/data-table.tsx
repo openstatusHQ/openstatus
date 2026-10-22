@@ -1,9 +1,16 @@
 "use client";
 
 import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { Globe } from "@openstatus/icons";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMemo } from "react";
 
+import {
+  EmptyStateContainer,
+  EmptyStateDescription,
+  EmptyStateMedia,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
 import {
   RangePlotLegend,
   RangePlotLegendItem,
@@ -53,6 +60,11 @@ export function RegionsDataTable({
   degradedAfter: number | null;
 }) {
   const max = useMemo(() => getRegionAxisMax(data), [data]);
+  // only when no region reported at all; a single dead region keeps its row
+  const reported = useMemo(
+    () => (!loading && data.every((row) => row.buckets === 0) ? [] : data),
+    [data, loading],
+  );
   const columns = useMemo(
     () => getColumns({ privateLocations, max, loading, degradedAfter }),
     [privateLocations, max, loading, degradedAfter],
@@ -71,9 +83,22 @@ export function RegionsDataTable({
       <DataTable
         paginationComponent={DataTablePaginationSimple}
         defaultPagination={{ pageIndex: 0, pageSize: 50 }}
-        data={data}
+        data={reported}
         columns={columns}
         defaultSorting={[{ id: "p50", desc: false }]}
+        emptyState={
+          <EmptyStateContainer inline plain>
+            <EmptyStateMedia>
+              <Globe />
+            </EmptyStateMedia>
+            <EmptyStateTitle>No checks in this period</EmptyStateTitle>
+            <EmptyStateDescription>
+              None of the {data.length}{" "}
+              {data.length === 1 ? "region" : "regions"} reported. Pick a longer
+              period or wait for the next check.
+            </EmptyStateDescription>
+          </EmptyStateContainer>
+        }
       />
     </div>
   );

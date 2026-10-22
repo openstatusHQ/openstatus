@@ -1,5 +1,6 @@
 "use client";
 
+import { AuditLog } from "@openstatus/icons";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -8,6 +9,7 @@ import { BlockWrapper } from "@/components/content/block-wrapper";
 import {
   EmptyStateContainer,
   EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import { DataTable } from "@/components/ui/data-table/data-table";
@@ -48,10 +50,13 @@ export function AuditLogsWrapper({
 
   if (!auditLogs?.data || auditLogs.data.length === 0) {
     return (
-      <EmptyStateContainer>
-        <EmptyStateTitle>No audit logs</EmptyStateTitle>
+      <EmptyStateContainer inline>
+        <EmptyStateMedia>
+          <AuditLog />
+        </EmptyStateMedia>
+        <EmptyStateTitle>Nothing yet</EmptyStateTitle>
         <EmptyStateDescription>
-          No audit logs found for this monitor.
+          Status changes, incidents and configuration edits show up here.
         </EmptyStateDescription>
       </EmptyStateContainer>
     );

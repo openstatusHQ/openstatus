@@ -1,5 +1,6 @@
 "use client";
 
+import { Inbox } from "@openstatus/icons";
 import {
   Table,
   TableBody,
@@ -28,7 +29,14 @@ import {
 import * as React from "react";
 import { Fragment } from "react";
 
+import {
+  EmptyStateDescription,
+  EmptyStateMedia,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+
 import type { DataTableActionBarProps } from "./data-table-action-bar";
+import { DataTableEmpty, DataTableEmptyFiltered } from "./data-table-empty";
 import type { DataTablePaginationProps } from "./data-table-pagination";
 import type { DataTableToolbarProps } from "./data-table-toobar";
 
@@ -39,6 +47,8 @@ export interface DataTableProps<TData, TValue> {
   toolbarComponent?: React.ComponentType<DataTableToolbarProps<TData>>;
   actionBar?: React.ComponentType<DataTableActionBarProps<TData>>;
   paginationComponent?: React.ComponentType<DataTablePaginationProps<TData>>;
+  /** First-run body when `data` is empty; a filter mismatch has its own row. */
+  emptyState?: React.ReactNode;
   onRowClick?: (row: Row<TData>) => void;
   defaultSorting?: SortingState;
   defaultColumnVisibility?: VisibilityState;
@@ -64,6 +74,7 @@ export function DataTable<TData, TValue>({
   toolbarComponent,
   actionBar,
   paginationComponent,
+  emptyState,
   onRowClick,
   defaultSorting = [],
   defaultColumnVisibility = {},
@@ -138,7 +149,7 @@ export function DataTable<TData, TValue>({
       {toolbarComponent
         ? React.createElement(toolbarComponent, { table })
         : null}
-      <div className="bg-background overflow-hidden rounded-md border">
+      <div className="bg-background @container overflow-hidden rounded-md border">
         <Table>
           <TableHeader className="bg-muted/40">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -204,12 +215,29 @@ export function DataTable<TData, TValue>({
                 </Fragment>
               ))
             ) : (
-              <TableRow>
+              <TableRow className="hover:bg-transparent">
                 <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
+                  colSpan={table.getVisibleLeafColumns().length}
+                  className="p-0"
                 >
-                  No results.
+                  {/* the cell spans the scrollable table; pin to the visible width */}
+                  <div className="sticky left-0 w-[100cqw]">
+                    {data.length > 0 ? (
+                      <DataTableEmptyFiltered table={table} />
+                    ) : (
+                      (emptyState ?? (
+                        <DataTableEmpty>
+                          <EmptyStateMedia>
+                            <Inbox />
+                          </EmptyStateMedia>
+                          <EmptyStateTitle>Nothing here yet</EmptyStateTitle>
+                          <EmptyStateDescription>
+                            Entries show up here as soon as there are some.
+                          </EmptyStateDescription>
+                        </DataTableEmpty>
+                      ))
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             )}
