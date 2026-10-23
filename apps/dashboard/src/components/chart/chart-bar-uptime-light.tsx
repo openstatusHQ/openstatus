@@ -13,6 +13,7 @@ import { Bar, BarChart, XAxis } from "recharts";
 
 import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { mapUptime } from "@/data/metrics.client";
+import { formatDateTime } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 // import { startOfDay, subDays } from "date-fns";
 
@@ -70,7 +71,14 @@ export function ChartBarUptimeLight({
           cursor={false}
           allowEscapeViewBox={{ x: false, y: true }}
           wrapperStyle={{ zIndex: 1 }}
-          content={<ChartTooltipContent indicator="dot" />}
+          content={
+            <ChartTooltipContent
+              indicator="dot"
+              labelFormatter={(_, payload) =>
+                formatDateTime(new Date(payload[0]?.payload.interval))
+              }
+            />
+          }
         />
         <Bar dataKey="ok" stackId="a" fill="var(--color-ok)" />
         <Bar dataKey="error" stackId="a" fill="var(--color-error)" />

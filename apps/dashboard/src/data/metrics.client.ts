@@ -5,17 +5,17 @@ import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { startOfDay, subDays } from "date-fns";
 
 import type { MetricCard } from "@/components/metric/metric-card";
-import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
+import { formatMilliseconds } from "@/lib/formatter";
 
 import type { RegionMetric } from "./region-metrics";
 
 export const STATUS = ["success", "error", "degraded"] as const;
 export const PERIODS = ["1d", "7d", "14d", "30d", "90d"] as const;
-// 30d/90d require a paid plan; the dropdown gates them for free workspaces.
-export const PAID_PERIODS = ["30d", "90d"] as const;
+// 14d+ require a paid plan; the dropdown gates them for free workspaces.
+export const PAID_PERIODS = ["14d", "30d", "90d"] as const;
 
 // longest window a free workspace may view; paid periods snap back to this.
-export const FREE_MAX_PERIOD = "14d" as const;
+export const FREE_MAX_PERIOD = "7d" as const;
 
 export type Period = (typeof PERIODS)[number];
 export type PaidPeriod = (typeof PAID_PERIODS)[number];
@@ -118,7 +118,7 @@ export function mapUptime(status: RouterOutputs["tinybird"]["uptime"]) {
       return {
         ...status,
         ok: status.success,
-        interval: formatDateTime(status.interval),
+        interval: status.interval.getTime(),
         total: status.success + status.error + status.degraded,
       };
     })
@@ -317,7 +317,7 @@ export function mapLatency(
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     )
     .map((metric) => ({
-      timestamp: formatDateTime(new Date(metric.timestamp)),
+      timestamp: metric.timestamp,
       latency: metric[PERCENTILE_MAP[percentile]],
     }));
 }
@@ -328,7 +328,7 @@ export function mapTimingPhases(
 ) {
   return timingPhases.data?.map((metric) => {
     return {
-      timestamp: formatDateTime(new Date(metric.timestamp)),
+      timestamp: metric.timestamp,
       dns: metric[`${percentile}Dns`],
       ttfb: metric[`${percentile}Ttfb`],
       transfer: metric[`${percentile}Transfer`],
@@ -362,5 +362,14 @@ export const periodToMinInterval = {
   "7d": 5,
   "14d": 5,
   "30d": 240,
+  "90d": 1440,
+} satisfies Record<(typeof PERIODS)[number], (typeof INTERVALS)[number]>;
+
+// Coarsest useful resolution per period: a 1d window at 8h/1d buckets is 1–3 points.
+export const periodToMaxInterval = {
+  "1d": 240,
+  "7d": 1440,
+  "14d": 1440,
+  "30d": 1440,
   "90d": 1440,
 } satisfies Record<(typeof PERIODS)[number], (typeof INTERVALS)[number]>;

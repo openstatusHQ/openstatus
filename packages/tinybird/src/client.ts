@@ -1781,6 +1781,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -1794,6 +1795,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -1807,6 +1809,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -1820,6 +1823,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2265,6 +2269,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2278,6 +2283,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2291,6 +2297,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2304,6 +2311,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2781,6 +2789,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2801,6 +2810,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2842,6 +2852,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2862,6 +2873,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -3069,6 +3081,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -3444,6 +3457,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -3464,6 +3478,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -3484,6 +3499,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -3504,6 +3520,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -3524,6 +3541,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -3544,6 +3562,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),

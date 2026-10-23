@@ -83,8 +83,8 @@ export function Client() {
   useEffect(() => {
     if (!isBlockedPeriod) return;
     const timeout = setTimeout(() => {
-      toast.error("30 and 90 day windows require a paid plan", {
-        description: "Showing the last 14 days instead.",
+      toast.error("Windows beyond 7 days require a paid plan", {
+        description: "Showing the last 7 days instead.",
       });
       setSearchParams({ period: FREE_MAX_PERIOD });
     }, 0);
@@ -138,7 +138,6 @@ export function Client() {
   const filtersRegions =
     workspace?.plan !== "free" && !!selectedRegions?.length;
   const filteredOut = noData && filtersRegions;
-  const maxPeriod = workspace?.plan === "free" ? FREE_MAX_PERIOD : "90d";
 
   const configuredRegions = React.useMemo(
     () => [
@@ -309,6 +308,7 @@ export function Client() {
             degradedAfter={monitor.degradedAfter}
             type={monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc"}
             period={effectivePeriod}
+            interval={interval}
             regions={selectedRegions}
           />
         )}

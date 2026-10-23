@@ -9,6 +9,7 @@ import {
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
 import { useQuery } from "@tanstack/react-query";
+import { endOfDay } from "date-fns";
 import {
   Area,
   AreaChart,
@@ -24,7 +25,9 @@ import {
   type PERCENTILES,
   type PERIODS,
   mapTimingPhases,
+  periodToFromDate,
 } from "@/data/metrics.client";
+import { formatAxisTick, formatDateTime } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import {
@@ -75,6 +78,8 @@ export function ChartAreaTimingPhases({
   type: "http";
 }) {
   const trpc = useTRPC();
+  const fromDate = periodToFromDate[period];
+  const toDate = endOfDay(new Date());
 
   const { data: timingPhases } = useQuery(
     trpc.tinybird.metricsTimingPhases.queryOptions({
@@ -83,6 +88,8 @@ export function ChartAreaTimingPhases({
       type,
       interval,
       regions,
+      fromDate: fromDate.toISOString(),
+      toDate: toDate.toISOString(),
     }),
   );
 
@@ -99,13 +106,18 @@ export function ChartAreaTimingPhases({
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          //   tickFormatter={(value) => value.slice(0, 3)}
+          tickFormatter={(value) =>
+            formatAxisTick(new Date(value), period, interval)
+          }
         />
         <ChartTooltip
           cursor={false}
           content={
             <ChartTooltipContent
               indicator="dot"
+              labelFormatter={(_, payload) =>
+                formatDateTime(new Date(payload[0]?.payload.timestamp))
+              }
               formatter={(value, name, item, index) => {
                 if (index !== 4) {
                   return (
