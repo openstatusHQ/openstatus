@@ -310,12 +310,16 @@ export function mapLatency(
   latency: RouterOutputs["tinybird"]["metricsLatency"],
   percentile: (typeof PERCENTILES)[number],
 ) {
-  return latency.data?.map((metric) => {
-    return {
+  // pipes disagree on ORDER BY; the chart needs oldest → newest
+  return [...(latency.data ?? [])]
+    .sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    )
+    .map((metric) => ({
       timestamp: formatDateTime(new Date(metric.timestamp)),
       latency: metric[PERCENTILE_MAP[percentile]],
-    };
-  });
+    }));
 }
 
 export function mapTimingPhases(

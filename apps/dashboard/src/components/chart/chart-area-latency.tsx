@@ -119,7 +119,14 @@ export function ChartAreaLatency({
           </ReferenceLine>
         ) : null}
         <YAxis
-          domain={["dataMin", "dataMax"]}
+          domain={[
+            "dataMin",
+            // show the degraded line unless it would squash the series below half height
+            (dataMax: number) =>
+              degradedAfter && degradedAfter <= dataMax * 2
+                ? degradedAfter
+                : dataMax,
+          ]}
           tickLine={false}
           axisLine={false}
           tickMargin={8}
