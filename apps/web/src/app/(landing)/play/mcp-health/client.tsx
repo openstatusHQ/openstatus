@@ -689,7 +689,7 @@ function StatusDot({ input }: { input: boolean | null | StepResult }) {
       role="img"
       aria-label={label}
       title={label}
-      className={cn("size-4", statusDotClass(input))}
+      className={cn("mx-auto size-4", statusDotClass(input))}
     />
   );
 }
