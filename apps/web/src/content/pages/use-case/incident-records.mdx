@@ -20,7 +20,7 @@ faq:
   - question: "Is a postmortem drafted by an AI agent acceptable audit evidence?"
     answer: "The draft is a starting point built from the timeline, the public updates and the Slack channel history, and it says where it has no facts rather than inventing them. What the auditor evaluates is the approved document: its content, who approved it, and whether the action items were followed up. The approver is recorded. Read the draft, correct it, then approve it."
   - question: "Does openstatus file NIS2 or DORA reports for us?"
-    answer: "No. The 24h/72h/one-month NIS2 cascade and the 4h/24h/72h DORA clock go through your national CSIRT or competent authority on prescribed templates. Openstatus holds the source material those reports draw on: when you became aware, when you classified, how long the service was down and from where, what you did, and the root cause. Classification itself is your judgement."
+    answer: "No. The 24h/72h/one-month NIS2 cascade and the 4h/24h/72h DORA clock go through your national CSIRT or competent authority on prescribed templates. Openstatus holds the source material those reports draw on: when impact started, when the incident was declared, how long the service was down and from where, what you did, and the root cause. The awareness and classification decisions, and their timestamps, are yours to record."
   - question: "Which plan do I need?"
     answer: "Incident records, the timeline and the postmortem are part of every workspace. The Slack channel per incident needs the Slack agent, which is on paid plans. The workspace audit log, which records every change with its actor, is on Pro and Scale. Check that your retention covers your audit period before you choose."
   - question: "Can I reference the record in Vanta, Drata or a GRC tool?"
@@ -81,7 +81,7 @@ A.5.25, assessment and decision, is the severity and the declared time. A.5.26, 
 
 **NIS2**
 
-The Article 23(4) cascade runs from when you became aware: an early warning within 24 hours, a notification within 72 hours, and a final report within one month of that notification. The record holds the awareness time, the severity and impact assessment, the mitigation steps as they happened and the root cause for the final report. The filing itself goes through your CSIRT.
+The Article 23(4) cascade runs from when you became aware: an early warning within 24 hours, a notification within 72 hours, and a final report within one month of that notification. The record holds the impact-start and declaration timestamps, the severity and impact assessment, the mitigation steps as they happened and the root cause for the final report. The moment you became aware is a decision your process records. The filing itself goes through your CSIRT.
 
 [NIS2 guide](/guides/nis2-incident-reporting-requirements)
 
@@ -90,7 +90,7 @@ The Article 23(4) cascade runs from when you became aware: an early warning with
 
 **DORA**
 
-The 4-hour clock starts at classification, and the 24-hour outer limit at awareness. The timeline shows both moments. Duration and service downtime, one of the classification criteria, comes from the monitor incident the record was declared from. The intermediate and final reports draw on the postmortem. Classification is your call.
+The 4-hour clock starts at classification, and the 24-hour outer limit at awareness. The record supplies duration and service downtime, one of the classification criteria, from the monitor incident it was declared from. Your process records the awareness and classification decisions and their timestamps. The intermediate and final reports draw on the postmortem. Classification is your call.
 
 [DORA guide](/guides/dora-incident-reporting-requirements)
 
@@ -108,12 +108,12 @@ Openstatus is the record, not the procedure. It does not write your incident res
 3. Work it where the team already is. If that is the incident's Slack channel, pin the decisions and the rollback messages so they land on the timeline with their author. Otherwise add them as notes.
 4. Link the status report your customers read, and keep its wording separate.
 5. Mark it mitigated, then resolved, with a note each time.
-6. Let the agent draft the postmortem. Correct it, assign the action items, approve it, and close the incident. The record freezes.
+6. Write the postmortem, or let the agent draft it on Starter and above. Correct it, assign the action items, approve it, and close the incident. The record freezes.
 
 The next time an auditor says "walk me through your last incident", open the record.
 
 <Aside type="caution" title="Retention has to cover the observation period">
-A SOC 2 Type II window runs 3 to 12 months, and an ISO 27001 cycle is three years. The incident record and its postmortem stay with the workspace. The monitoring data the record was declared from is kept 14 days on Hobby, 3 months on Starter, 12 months on Pro and 24 months on Scale, so pick a plan whose retention spans the period you will be asked about.
+A SOC 2 Type II window runs 3 to 12 months. ISO 27001 does not prescribe a fixed evidence-retention period; your retention policy does. The incident record and its postmortem stay with the workspace. The monitoring data the record was declared from is kept 14 days on Hobby, 3 months on Starter, 12 months on Pro and 24 months on Scale, so pick a plan whose retention spans that policy and the window you will be asked about.
 </Aside>
 
 ## Frequently asked questions
@@ -150,7 +150,7 @@ The draft is a starting point built from the timeline, the public updates and th
 
 <Details summary="Does openstatus file NIS2 or DORA reports for us?">
 
-No. The 24h/72h/one-month NIS2 cascade and the 4h/24h/72h DORA clock go through your national CSIRT or competent authority on prescribed templates. Openstatus holds the source material those reports draw on: when you became aware, when you classified, how long the service was down and from where, what you did, and the root cause. Classification itself is your judgement.
+No. The 24h/72h/one-month NIS2 cascade and the 4h/24h/72h DORA clock go through your national CSIRT or competent authority on prescribed templates. Openstatus holds the source material those reports draw on: when impact started, when the incident was declared, how long the service was down and from where, what you did, and the root cause. The awareness and classification decisions, and their timestamps, are yours to record.
 
 </Details>
 
