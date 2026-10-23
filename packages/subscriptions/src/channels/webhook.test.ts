@@ -817,7 +817,7 @@ describe("delivery deadline", () => {
     expect(Date.now() - start).toBeLessThan(10_000);
   });
 
-  test("sendWebhookNotifications fails a stalled subscriber as a timeout, not a hang", async () => {
+  test("sendWebhookNotifications retries a stalled subscriber and gives up as a timeout", async () => {
     setFetch(
       (_input, init) =>
         new Promise((_resolve, reject) => {
@@ -826,14 +826,17 @@ describe("delivery deadline", () => {
           );
         }),
     );
-    const start = Date.now();
-    // The call swallows per-subscriber failures (allSettled), so this must
-    // not hang: retries + timeout combined still finish within the budget.
+    // allSettled hides the per-subscriber WebhookSendError, so elapsed time
+    // alone cannot prove anything. Instead assert the retry policy was
+    // actually exercised: a stalled destination must be re-attempted the
+    // configured number of times before giving up.
     await sendWebhookNotifications(
       [makeSub({ webhookUrl: "https://example.com/hook" })],
-      makeUpdate(),
+      // A valid status_report update, otherwise buildGenericPayload throws
+      // before any fetch happens and the test would pass vacuously.
+      makeUpdate({ updateId: 42 }),
     );
-    // With retries we may wait longer than one TIMEOUT_MS; keep a generous cap.
-    expect(Date.now() - start).toBeLessThan(30_000);
+    // retryPolicy.times = 3 → initial attempt + 3 retries = 4 fetch attempts.
+    expect(fetchMock.mock.calls.length).toBe(4);
   });
 });

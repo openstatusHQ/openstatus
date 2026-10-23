@@ -362,22 +362,30 @@ describe("safeFetch", () => {
   });
 
   it("timeoutMs is one shared budget across redirect hops", async () => {
+    // Both hops individually fit under the 100ms budget (60ms each), but the
+    // second hop only starts around t≈60ms, so its 60ms stall carries past the
+    // budget and must abort. A regression that reset the deadline per hop
+    // would let both hops finish and would not fail this test.
     const original = globalThis.fetch;
     const seen: string[] = [];
     globalThis.fetch = (input, init) => {
       const url = String(input);
       seen.push(url);
-      // Hop 0 stalls for ~80ms then redirects; hop 1 would be instant.
-      // With timeoutMs: 50 the first hop must abort before it even redirects.
       return new Promise((resolve, reject) => {
-        const t = setTimeout(() => {
-          resolve(
-            new Response(null, {
-              status: 307,
-              headers: { location: "/v2" },
-            }),
-          );
-        }, 80);
+        const isFirst = seen.length === 1;
+        const t = setTimeout(
+          () => {
+            resolve(
+              isFirst
+                ? new Response(null, {
+                    status: 307,
+                    headers: { location: "/v2" },
+                  })
+                : new Response("ok"),
+            );
+          },
+          60,
+        );
         init?.signal?.addEventListener("abort", () => {
           clearTimeout(t);
           reject(init.signal?.reason);
@@ -389,10 +397,14 @@ describe("safeFetch", () => {
         safeFetch(
           "https://example.com/hook",
           { method: "POST" },
-          { timeoutMs: 50 },
+          { timeoutMs: 100 },
         ),
       ).rejects.toMatchObject({ name: "TimeoutError" });
-      expect(seen).toEqual(["https://example.com/hook"]);
+      // Both hops were attempted — the deadline only fires during the second.
+      expect(seen).toEqual([
+        "https://example.com/hook",
+        "https://example.com/v2",
+      ]);
     } finally {
       globalThis.fetch = original;
     }

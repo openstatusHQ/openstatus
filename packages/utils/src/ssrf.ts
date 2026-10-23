@@ -151,10 +151,10 @@ function combineSignals(
 }
 
 function throwIfAborted(signal: AbortSignal | undefined): void {
-  if (!signal?.aborted) return;
-  const reason = signal.reason;
-  if (reason instanceof Error) throw reason;
-  throw new DOMException("The operation was aborted", "AbortError");
+  // Use the native method so any abort reason the caller set — Error, string,
+  // object, or null — is rethrown unchanged, matching standard AbortSignal
+  // semantics.
+  signal?.throwIfAborted();
 }
 
 /**
