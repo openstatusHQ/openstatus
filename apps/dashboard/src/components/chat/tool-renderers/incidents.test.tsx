@@ -100,7 +100,7 @@ describe("listIncidentsTable", () => {
     expect(table.empty).toBe("No incidents.");
   });
 
-  it("marks closed incidents and falls back for a missing commander", () => {
+  it("marks closed incidents", () => {
     const table = listIncidentsTable(
       asFixture<Output>({
         items: [
@@ -127,7 +127,6 @@ describe("listIncidentsTable", () => {
       "title",
       "severity",
       "status",
-      "commander",
       "id",
     ]);
     const [closed, open] = table.rows;
@@ -136,9 +135,7 @@ describe("listIncidentsTable", () => {
     );
     expect(text(closed.cells.severity)).toBe("Major");
     expect(text(closed.cells.status)).toBe("Resolved · closed");
-    expect(text(closed.cells.commander)).toBe("Unassigned");
     expect(text(open.cells.status)).toBe("Open");
-    expect(text(open.cells.commander)).toBe("Ada");
     expect(text(open.cells.id)).toBe("2");
   });
 });
@@ -150,7 +147,8 @@ describe("getIncidentDetails", () => {
     id: 5,
     title: "Checkout down",
     severity: "critical",
-    status: "open",
+    status: "resolved",
+    closed: true,
     commander: null,
     summary: null,
     startedAt: "2024-01-01T00:00:00Z",
@@ -176,6 +174,7 @@ describe("getIncidentDetails", () => {
     ]);
     const value = (label: string) =>
       text(overview.rows.find((r) => r.label === label)?.value);
+    expect(value("Status")).toBe("Resolved · closed");
     expect(value("Commander")).toBe("Unassigned");
     expect(value("Status report")).toBe("Payments degraded");
   });

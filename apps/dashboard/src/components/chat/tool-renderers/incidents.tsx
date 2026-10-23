@@ -20,7 +20,7 @@ import type { ResultTableData } from "./result-table";
 
 export function listIncidentsTable(
   output: AgentToolOutput<"list_incidents">,
-): ResultTableData<"title" | "severity" | "status" | "commander" | "id"> {
+): ResultTableData<"title" | "severity" | "status" | "id"> {
   const items = output?.items ?? [];
   return {
     empty: "No incidents.",
@@ -28,7 +28,6 @@ export function listIncidentsTable(
       { key: "title", header: "Title" },
       { key: "severity", header: "Severity" },
       { key: "status", header: "Status" },
-      { key: "commander", header: "Commander" },
       { key: "id", header: "ID" },
     ],
     rows: items.map((i) => ({
@@ -42,9 +41,6 @@ export function listIncidentsTable(
         ),
         severity: <IncidentSeverityBadge severity={i.severity} />,
         status: <IncidentStatusBadge status={i.status} closed={i.closed} />,
-        commander: (
-          <TableCellText value={i.commander?.name ?? null} empty="Unassigned" />
-        ),
         id: <TableCellNumber value={i.id} />,
       },
     })),
@@ -74,7 +70,12 @@ export function getIncidentDetails(
           },
           {
             label: "Status",
-            value: <IncidentStatusBadge status={output.status} />,
+            value: (
+              <IncidentStatusBadge
+                status={output.status}
+                closed={output.closed}
+              />
+            ),
           },
           {
             label: "Commander",
