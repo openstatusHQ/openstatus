@@ -26,6 +26,7 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/pkg/tinybird"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
+
 	// otelz "go.opentelemetry.io/contrib/bridges/otelzerolog"
 	"go.opentelemetry.io/otel/attribute"
 	otlploghttp "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
@@ -348,6 +349,9 @@ func runConsumer(ctx context.Context, h *handlers.Handler, region string) error 
 			{
 				Subscription:   queue.Subscription(region, false),
 				MaxOutstanding: envInt("PUBSUB_MAX_OUTSTANDING", 500),
+				// Every held message wakes at the same cronTimestamp: without a cap
+				// they all dial and handshake at once and inflate each other's timings.
+				MaxConcurrent: envInt("PUBSUB_MAX_CONCURRENT", 300),
 			},
 			{
 				Subscription:   queue.Subscription(region, true),
