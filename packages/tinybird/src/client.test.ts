@@ -266,3 +266,33 @@ describe("15m status pipes", () => {
     });
   }
 });
+
+const attemptsGetters = [
+  "httpAttempts",
+  "tcpAttempts",
+  "dnsAttempts",
+  "grpcAttempts",
+  "icmpAttempts",
+] as const;
+
+describe("attempt pipes", () => {
+  const tb = new OSTinybird({ token: "a-token" });
+
+  for (const name of attemptsGetters) {
+    test(`${name} accepts a check lookup`, async () => {
+      expect(
+        await tb[name]({
+          monitorId: "1",
+          region: "ams",
+          cronTimestamp: 1_700_000_000_000,
+        }),
+      ).toEqual({ meta: [], data: [] });
+    });
+
+    test(`${name} rejects a non-integer cronTimestamp`, async () => {
+      await expect(
+        tb[name]({ monitorId: "1", region: "ams", cronTimestamp: 1.5 }),
+      ).rejects.toThrow();
+    });
+  }
+});

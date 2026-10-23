@@ -1,0 +1,22 @@
+DESCRIPTION >
+    Failed attempts of a retried TCP check. The final attempt is in tcp_response__v0; join on monitorId, region, cronTimestamp.
+
+SCHEMA >
+    `monitorId` Int32 `json:$.monitorId`,
+    `region` String `json:$.region`,
+    `timestamp` Int64 `json:$.timestamp`,
+    `cronTimestamp` Int64 `json:$.cronTimestamp`,
+    `timing` String `json:$.timing`,
+    `workspaceId` Int32 `json:$.workspaceId`,
+    `latency` Int64 `json:$.latency`,
+    `errorMessage` Nullable(String) `json:$.errorMessage`,
+    `error` Int16 `json:$.error`,
+    `trigger` Nullable(String) `json:$.trigger`,
+    `uri` Nullable(String) `json:$.uri`,
+    `id` Nullable(String) `json:$.id`,
+    `requestStatus` Nullable(String) `json:$.requestStatus`,
+    `attempt` UInt8 `json:$.attempt`
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(fromUnixTimestamp64Milli(cronTimestamp))"
+ENGINE_SORTING_KEY "monitorId, cronTimestamp, region, attempt"

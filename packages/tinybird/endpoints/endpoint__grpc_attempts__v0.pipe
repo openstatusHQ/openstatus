@@ -1,0 +1,13 @@
+NODE endpoint
+SQL >
+
+    %
+        SELECT *
+        FROM grpc_attempt__v0
+        WHERE
+            monitorId = {{ Int32(monitorId, required=True) }}
+            AND region = {{ String(region, required=True) }}
+            AND cronTimestamp = {{ Int64(cronTimestamp, required=True) }}
+        ORDER BY attempt ASC
+
+TYPE ENDPOINT
