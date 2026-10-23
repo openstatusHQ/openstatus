@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { db, eq } from "@openstatus/db";
 import {
+  monitor,
   page,
   pageComponent,
   pageSubscriber,
@@ -895,19 +896,54 @@ describe("list_private_locations", () => {
 describe("get_workspace", () => {
   test("returns plan and usage without billing identifiers", async () => {
     await withTestTransaction(async (tx) => {
+      // fixture workspace already holds one page + one component; a
+      // soft-deleted monitor must not count
+      await tx.insert(monitor).values([
+        {
+          workspaceId: teamWorkspace.id,
+          url: "https://example.openstatus.dev",
+          name: `${TEST_PREFIX}-monitor`,
+        },
+        {
+          workspaceId: teamWorkspace.id,
+          url: "https://example.openstatus.dev",
+          name: `${TEST_PREFIX}-monitor-deleted`,
+          deletedAt: new Date(),
+        },
+      ]);
       const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("workspace", ctx);
       const result = await callTool(tools, "get_workspace", {});
 
       expect(result.isError).toBeFalsy();
       const structured = result.structuredContent as {
+        id: number;
         slug: string;
+        name: string | null;
         plan: string;
-        usage: { monitors: number };
+        trialEndsAt: string | null;
+        usage: {
+          monitors: number;
+          statusPages: number;
+          pageComponents: number;
+          notificationChannels: number;
+          statusReports: number;
+        };
       };
+      expect(structured.id).toBe(teamWorkspace.id);
       expect(structured.slug).toBe(teamWorkspace.slug);
+      expect(structured.name).toBe(teamWorkspace.name ?? null);
       expect(structured.plan).toBe(teamWorkspace.plan);
-      expect(structured.usage.monitors).toBeGreaterThanOrEqual(0);
+      expect(structured.trialEndsAt).toBe(
+        teamWorkspace.trialEndsAt?.toISOString() ?? null,
+      );
+      expect(structured.usage).toEqual({
+        monitors: 1,
+        statusPages: 1,
+        pageComponents: 1,
+        notificationChannels: 0,
+        statusReports: 0,
+      });
 
       const serialized = JSON.stringify(result);
       expect(serialized).not.toContain("stripe");
