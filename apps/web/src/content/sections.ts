@@ -42,7 +42,7 @@ export const sections = {
     path: "/use-case",
     title: "Use Cases",
     description:
-      "Discover how teams use openstatus for compliance, reducing support tickets, closing enterprise deals, open-source projects, crypto exchanges, and API infrastructure.",
+      "Discover how teams use openstatus for compliance, incident records for audits, reducing support tickets, closing enterprise deals, open-source projects, crypto exchanges, and API infrastructure.",
   },
   customers: {
     label: "Customers",
