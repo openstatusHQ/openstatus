@@ -373,19 +373,16 @@ describe("safeFetch", () => {
       seen.push(url);
       return new Promise((resolve, reject) => {
         const isFirst = seen.length === 1;
-        const t = setTimeout(
-          () => {
-            resolve(
-              isFirst
-                ? new Response(null, {
-                    status: 307,
-                    headers: { location: "/v2" },
-                  })
-                : new Response("ok"),
-            );
-          },
-          60,
-        );
+        const t = setTimeout(() => {
+          resolve(
+            isFirst
+              ? new Response(null, {
+                  status: 307,
+                  headers: { location: "/v2" },
+                })
+              : new Response("ok"),
+          );
+        }, 60);
         init?.signal?.addEventListener("abort", () => {
           clearTimeout(t);
           reject(init.signal?.reason);
