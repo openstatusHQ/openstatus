@@ -59,7 +59,7 @@ export function ChartAreaLatency({
   regions: string[] | undefined;
 }) {
   const trpc = useTRPC();
-  const fromDate = periodToFromDate[period];
+  const fromDate = periodToFromDate(period);
   const toDate = endOfDay(new Date());
 
   const { data: latency } = useQuery(

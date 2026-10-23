@@ -78,7 +78,7 @@ export function ChartAreaTimingPhases({
   type: "http";
 }) {
   const trpc = useTRPC();
-  const fromDate = periodToFromDate[period];
+  const fromDate = periodToFromDate(period);
   const toDate = endOfDay(new Date());
 
   const { data: timingPhases } = useQuery(

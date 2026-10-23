@@ -85,7 +85,9 @@ export function DropdownPeriod() {
                 >
                   {label}
                   {/* children sit inside ItemText, so take the indicator's slot instead of ml-auto */}
-                  {locked ? <Lock className="absolute right-2" /> : null}
+                  {locked && period !== value ? (
+                    <Lock className="absolute right-2" />
+                  ) : null}
                 </SelectItem>
               );
             })}

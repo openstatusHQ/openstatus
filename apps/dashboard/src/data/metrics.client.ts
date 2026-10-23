@@ -346,13 +346,18 @@ export const periodToInterval = {
   "90d": 1440,
 } satisfies Record<(typeof PERIODS)[number], number>;
 
-export const periodToFromDate = {
-  "1d": startOfDay(subDays(new Date(), 1)),
-  "7d": startOfDay(subDays(new Date(), 7)),
-  "14d": startOfDay(subDays(new Date(), 14)),
-  "30d": startOfDay(subDays(new Date(), 30)),
-  "90d": startOfDay(subDays(new Date(), 90)),
-} satisfies Record<(typeof PERIODS)[number], Date>;
+const periodToDays = {
+  "1d": 1,
+  "7d": 7,
+  "14d": 14,
+  "30d": 30,
+  "90d": 90,
+} satisfies Record<(typeof PERIODS)[number], number>;
+
+// computed per call so a tab left open past midnight keeps sliding its window
+export function periodToFromDate(period: (typeof PERIODS)[number]) {
+  return startOfDay(subDays(new Date(), periodToDays[period]));
+}
 
 // Minimum selectable resolution (minutes) per period. Long windows floor the
 // interval so charts stay readable and queries bounded. Mirrors the server-side

@@ -50,7 +50,7 @@ export function ChartBarUptime({
 }) {
   const isMobile = useIsMobile();
   const trpc = useTRPC();
-  const fromDate = periodToFromDate[period];
+  const fromDate = periodToFromDate(period);
   const toDate = endOfDay(new Date());
   const interval = periodToInterval[period];
 

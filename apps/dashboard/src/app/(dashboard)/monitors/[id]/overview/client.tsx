@@ -92,7 +92,7 @@ export function Client() {
   }, [isBlockedPeriod, setSearchParams]);
 
   const selectedRegions = regions ?? undefined;
-  const fromDate = periodToFromDate[effectivePeriod];
+  const fromDate = periodToFromDate(effectivePeriod);
   const toDate = endOfDay(new Date());
 
   const regionTimelineQuery = {
