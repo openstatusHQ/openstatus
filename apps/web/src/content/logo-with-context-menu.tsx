@@ -21,7 +21,7 @@ export function LogoWithContextMenu() {
             height={20}
             className="border-border dark:border-foreground rounded-[50%] border"
           />
-          <span className="hidden sm:block">openstatus</span>
+          <span className="hidden font-semibold sm:block">openstatus</span>
         </Link>
       </ContextMenuTrigger>
       <ContextMenuContent className="min-w-[var(--radix-dropdown-menu-trigger-width)] rounded-none">
