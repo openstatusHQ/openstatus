@@ -52,7 +52,7 @@ export function Chart({ checks, desc, onToggleSort }: ChartProps) {
   return (
     <div className="border-border border">
       <div className="border-border flex flex-wrap items-center justify-between gap-x-2 border-b">
-        <div className="p-4">
+        <div className="px-3 py-2">
           latency by region{" "}
           <span className="text-muted-foreground">
             — {checks.length} regions
@@ -60,14 +60,14 @@ export function Chart({ checks, desc, onToggleSort }: ChartProps) {
         </div>
         <Button
           variant="ghost"
-          className="h-auto! rounded-none p-4 text-base md:text-base"
+          className="h-auto! rounded-none px-3 py-2 text-base md:text-base"
           onClick={onToggleSort}
         >
           <span className="text-muted-foreground">sorted by</span> latency{" "}
           <span aria-hidden="true">{desc ? "↓" : "↑"}</span>
         </Button>
       </div>
-      <div className="overflow-x-auto p-4">
+      <div className="overflow-x-auto p-3">
         <div className="min-w-2xl">
           <ChartContainer
             config={chartConfig}
@@ -100,7 +100,7 @@ export function Chart({ checks, desc, onToggleSort }: ChartProps) {
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    className="min-w-56 gap-3 rounded-none p-4 text-sm"
+                    className="min-w-56 gap-3 rounded-none p-3 text-sm"
                     labelFormatter={(label) => {
                       const region = getRegionInfo(String(label));
                       return (
@@ -151,7 +151,7 @@ export function Chart({ checks, desc, onToggleSort }: ChartProps) {
           </ChartContainer>
         </div>
       </div>
-      <div className="border-border flex flex-wrap items-center gap-4 border-t p-4">
+      <div className="border-border flex flex-wrap items-center gap-4 border-t px-3 py-2">
         {PHASES.map((phase) => (
           <div key={phase} className="flex items-center gap-2">
             <div

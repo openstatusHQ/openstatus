@@ -170,7 +170,7 @@ export function Form({ defaultUrl = "" }: { defaultUrl?: string }) {
           <Input
             name="url"
             placeholder="https://example.com/mcp"
-            className="h-auto! rounded-none p-4 text-base md:text-base"
+            className="h-auto! rounded-none px-3 py-2 text-base md:text-base"
             defaultValue={defaultUrl}
             autoComplete="off"
             spellCheck={false}
@@ -182,7 +182,7 @@ export function Form({ defaultUrl = "" }: { defaultUrl?: string }) {
           <Button
             type="submit"
             variant="default"
-            className="h-full w-full rounded-none p-4 text-base"
+            className="h-full w-full rounded-none px-3 py-2 text-base"
             disabled={isPending}
           >
             {isPending ? "Submitting..." : "Submit"}
@@ -219,7 +219,7 @@ function HeadersEditor({
         <Button
           type="button"
           variant="outline"
-          className="col-span-2 h-auto! rounded-none p-3 text-base"
+          className="col-span-2 h-auto! rounded-none px-3 py-2 text-base"
           onClick={() => setHeaders((h) => [...h, { key: "", value: "" }])}
           disabled={disabled}
         >
@@ -230,7 +230,7 @@ function HeadersEditor({
           <Fragment key={index}>
             <Input
               placeholder="Key (e.g. Authorization)"
-              className="col-span-2 h-auto! rounded-none p-3 text-base md:text-base"
+              className="col-span-2 h-auto! rounded-none px-3 py-2 text-base md:text-base"
               value={header.key}
               onChange={(e) =>
                 setHeaders((rows) =>
@@ -243,7 +243,7 @@ function HeadersEditor({
             />
             <Input
               placeholder="Value"
-              className="col-span-2 h-auto! rounded-none p-3 text-base md:text-base"
+              className="col-span-2 h-auto! rounded-none px-3 py-2 text-base md:text-base"
               value={header.value}
               onChange={(e) =>
                 setHeaders((rows) =>
@@ -257,7 +257,7 @@ function HeadersEditor({
             <Button
               type="button"
               variant="ghost"
-              className="h-full w-full rounded-none p-3 text-base"
+              className="h-full w-full rounded-none px-3 py-2 text-base"
               onClick={() =>
                 setHeaders((rows) => rows.filter((_, i) => i !== index))
               }
@@ -423,13 +423,13 @@ function StepDialog({
             <TabsList className="h-auto w-full rounded-none">
               <TabsTrigger
                 value="response"
-                className="h-auto w-full truncate rounded-none p-4"
+                className="h-auto w-full truncate rounded-none px-3 py-2"
               >
                 Response
               </TabsTrigger>
               <TabsTrigger
                 value="request"
-                className="h-auto w-full truncate rounded-none p-4"
+                className="h-auto w-full truncate rounded-none px-3 py-2"
               >
                 Request
               </TabsTrigger>
@@ -495,7 +495,7 @@ export function DetailsButtonLink() {
   return (
     <Button
       variant="default"
-      className="h-auto! flex-1 rounded-none p-4 text-base"
+      className="h-auto! flex-1 rounded-none px-3 py-2 text-base"
       asChild
     >
       <Link

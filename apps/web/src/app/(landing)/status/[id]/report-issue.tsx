@@ -19,7 +19,7 @@ const WHOLE_SERVICE = "all";
 
 function Box({ children }: { children: React.ReactNode }) {
   return (
-    <div className="not-prose bg-muted/20 flex flex-col gap-3 border px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="not-prose bg-muted/20 flex flex-col gap-3 border p-3 lg:flex-row lg:items-center lg:justify-between">
       {children}
     </div>
   );

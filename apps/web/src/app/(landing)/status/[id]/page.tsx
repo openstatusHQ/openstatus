@@ -111,7 +111,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
 
   return (
     <section className="prose dark:prose-invert mb-12 max-w-none">
-      <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
+      <ContentBoxContainer className="not-prose my-6 px-3 py-2 text-sm">
         {checkerHref ? (
           <CustomLink
             href={checkerHref}

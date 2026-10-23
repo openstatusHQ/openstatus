@@ -42,7 +42,7 @@ export default async function Page() {
 
   return (
     <section className="prose dark:prose-invert mb-12 flex max-w-none flex-col gap-4">
-      <ContentBoxContainer className="not-prose mb-2 px-4 py-2 text-sm">
+      <ContentBoxContainer className="not-prose mb-2 px-3 py-2 text-sm">
         <CustomLink
           href={`${APP_URL}?ref=status-index-top`}
           className="font-medium underline-offset-4 hover:underline"

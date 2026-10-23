@@ -214,16 +214,16 @@ export function DocsMobileNav({ className }: { className?: string }) {
           className="fixed right-4 bottom-4 z-40"
           asChild
         >
-          <Button className="h-auto rounded-none py-3 font-mono has-[>svg]:px-4">
+          <Button className="h-auto rounded-none px-3 py-2 font-mono">
             <Menu className="size-4" />
             Menu
           </Button>
         </DrawerTrigger>
         <DrawerContent className="rounded-none! font-sans">
-          <DrawerTitle className="border-border border-b p-4 font-medium">
+          <DrawerTitle className="border-border border-b p-3 font-medium">
             Documentation
           </DrawerTitle>
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          <div className="min-h-0 overflow-y-auto p-3">
             <NavTree pathname={pathname} onNavigate={() => setOpen(false)} />
           </div>
         </DrawerContent>

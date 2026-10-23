@@ -10,7 +10,7 @@ export function ContentLayout({ children }: { children: React.ReactNode }) {
     >
       <Header />
       <SubNav />
-      <main className="flex-1 px-4 py-4">{children}</main>
+      <main className="flex-1 px-3 py-3">{children}</main>
       <Footer />
     </div>
   );

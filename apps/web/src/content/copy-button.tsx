@@ -33,7 +33,7 @@ export function CopyButton({
     <Button
       variant="ghost"
       size="lg"
-      className={cn("rounded-none p-4", className)}
+      className={cn("h-auto rounded-none px-3 py-2", className)}
       onClick={() => copy(copyText, { withToast: true })}
       {...props}
     >
@@ -89,12 +89,12 @@ export function CopyDropdownButton({
 
   return (
     <ButtonGroup
-      className={cn("rounded-none border-none p-4", className)}
+      className={cn("rounded-none border-none p-1", className)}
       {...props}
     >
       <Button
         variant="ghost"
-        className="rounded-none p-4"
+        className="h-auto rounded-none px-3 py-2"
         onClick={handleCopyMarkdown}
       >
         {isMarkdownCopied ? "[markdown copied]" : "[copy markdown]"}
@@ -103,7 +103,7 @@ export function CopyDropdownButton({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="group rounded-none"
+            className="group h-auto rounded-none px-3 py-2"
             aria-label="Copy dropdown"
           >
             <span

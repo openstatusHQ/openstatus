@@ -11,7 +11,7 @@ export function ContentPagination({
 }) {
   if (!prev && !next) return null;
   return (
-    <div className="[&>a]:ease border-border bg-border [&>*]:bg-background [&>a]:hover:bg-muted grid grid-cols-2 gap-px border [&>a]:p-4 [&>a]:transition-colors [&>a]:duration-150 [&>a]:motion-reduce:transition-none">
+    <div className="[&>a]:ease border-border bg-border [&>*]:bg-background [&>a]:hover:bg-muted grid grid-cols-2 gap-px border bg-clip-padding [&>a]:p-3 [&>a]:transition-colors [&>a]:duration-150 [&>a]:motion-reduce:transition-none">
       {prev ? (
         <Link href={prev.href} className="no-underline!">
           <span className="text-muted-foreground block">Previous</span>

@@ -9,7 +9,7 @@ export function ContentBoxImage({
   ...props
 }: React.ComponentProps<typeof CustomImage>) {
   return (
-    <div className="border-border -mx-4 mb-3 border-b px-4 pb-3">
+    <div className="border-border -mx-3 mb-3 border-b px-3 pb-3">
       <CustomImage
         disableZoom={disableZoom}
         className={cn("h-8 w-auto", className)}

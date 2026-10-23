@@ -305,7 +305,7 @@ export function Form({
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
         <div className="col-span-1">
           <Select name="method" defaultValue={defaultMethod}>
-            <SelectTrigger className="h-auto! w-full rounded-none p-4 text-base">
+            <SelectTrigger className="h-auto! w-full rounded-none px-3 py-2 text-base">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-none">
@@ -313,7 +313,7 @@ export function Form({
                 <SelectItem
                   key={method}
                   value={method}
-                  className="rounded-none px-2 py-3"
+                  className="rounded-none px-3 py-2"
                 >
                   {method}
                 </SelectItem>
@@ -325,7 +325,7 @@ export function Form({
           <Input
             name="url"
             placeholder="https://openstatus.dev"
-            className="h-auto! rounded-none p-4 text-base md:text-base"
+            className="h-auto! rounded-none px-3 py-2 text-base md:text-base"
             defaultValue={defaultUrl}
             required
           />
@@ -334,7 +334,7 @@ export function Form({
           <Button
             type="submit"
             variant="default"
-            className="h-full w-full rounded-none p-4 text-base"
+            className="h-full w-full rounded-none px-3 py-2 text-base"
             disabled={isPending}
           >
             {isPending ? "Submitting..." : "Submit"}
@@ -486,7 +486,7 @@ export function DetailsButtonLink() {
   return (
     <Button
       variant="default"
-      className="h-auto! flex-1 rounded-none p-4 text-base"
+      className="h-auto! flex-1 rounded-none px-3 py-2 text-base"
       asChild
     >
       <Link
@@ -518,7 +518,7 @@ export function MonitorCta() {
   const params = new URLSearchParams({ url, ref: "checker" });
 
   return (
-    <div className="border-border bg-muted/30 mt-4 grid gap-4 border p-4 sm:grid-cols-3">
+    <div className="border-border bg-muted/30 mt-4 grid gap-4 border p-3 sm:grid-cols-3">
       <div className="sm:col-span-2">
         <p className="my-0! font-semibold">
           {uneven
@@ -540,7 +540,10 @@ export function MonitorCta() {
         </p>
       </div>
       <div className="flex items-center sm:col-span-1 sm:justify-end">
-        <Button asChild className="h-auto! w-full rounded-none p-4 text-base">
+        <Button
+          asChild
+          className="h-auto! w-full rounded-none px-3 py-2 text-base"
+        >
           <a
             href={`${APP_URL}/monitors/create?${params.toString()}`}
             target="_blank"
@@ -565,7 +568,7 @@ export function ExportToCSVButton() {
   return (
     <Button
       variant="outline"
-      className="h-auto! flex-1 cursor-pointer rounded-none p-4 text-base"
+      className="h-auto! flex-1 cursor-pointer rounded-none px-3 py-2 text-base"
       onClick={() => handleExportCSV(values)}
     >
       Export to CSV

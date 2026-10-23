@@ -12,7 +12,7 @@ import { LogoWithContextMenu } from "./logo-with-context-menu";
 
 export function Header() {
   return (
-    <header className="border-border bg-border [&>*]:bg-background [&>*]:hover:bg-muted grid grid-cols-3 gap-px border lg:grid-cols-6 [&>*]:px-4 [&>*]:py-4">
+    <header className="border-border bg-border [&>*]:bg-background [&>*]:hover:bg-muted grid grid-cols-3 gap-px border bg-clip-padding lg:grid-cols-7 [&>*]:px-3 [&>*]:py-2">
       <LogoWithContextMenu />
       {headerLinks.map((section, _) => (
         <DropdownMenu key={section.label}>
@@ -34,7 +34,7 @@ export function Header() {
             {section.items.map((item) => (
               <DropdownMenuItem
                 key={item.href}
-                className="rounded-none px-2 py-3 font-mono"
+                className="rounded-none px-3 py-2 font-mono"
                 asChild
               >
                 <Link href={item.href}>{item.label}</Link>
@@ -43,10 +43,13 @@ export function Header() {
           </DropdownMenuContent>
         </DropdownMenu>
       ))}
+      <Link href="/docs" className="truncate">
+        Docs
+      </Link>
       <Link href="/pricing" className="truncate">
         Pricing
       </Link>
-      <CmdK />
+      <CmdK className="hidden lg:flex" />
       <Link
         href="https://app.openstatus.dev/login"
         className="truncate text-blue-700 dark:text-blue-400"

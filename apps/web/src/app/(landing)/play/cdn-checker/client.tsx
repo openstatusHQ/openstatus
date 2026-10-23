@@ -218,7 +218,7 @@ export function CdnForm() {
           <Input
             name="url"
             placeholder="https://example.com/asset.js"
-            className="h-auto! rounded-none p-4 text-base md:text-base"
+            className="h-auto! rounded-none px-3 py-2 text-base md:text-base"
             defaultValue={urlParam ?? ""}
             required
           />
@@ -227,7 +227,7 @@ export function CdnForm() {
           <Button
             type="submit"
             variant="default"
-            className="h-full w-full rounded-none p-4 text-base"
+            className="h-full w-full rounded-none px-3 py-2 text-base"
             disabled={isPending}
           >
             {isPending ? "Checking..." : "Check"}
