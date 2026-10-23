@@ -62,7 +62,11 @@ export type NumberOfDays = (typeof NUMBER_OF_DAYS)[number];
 // mirrors `configurationLabels` in the dashboard's form-configuration.tsx
 const LABELS = {
   type: { absolute: "Monitor checks", manual: "Reports only" },
-  value: { duration: "Time per status", requests: "Number of checks" },
+  value: {
+    duration: "Time per status",
+    requests: "Number of checks",
+    manual: "Worst status of the day",
+  },
 } as const;
 
 interface StatusPageContextType {
@@ -289,6 +293,12 @@ export function FloatingButton({
                         {LABELS.value[v]}
                       </SelectItem>
                     ))}
+                    {/* stored configs may pair an absolute source with a manual value */}
+                    {cardType === "manual" ? (
+                      <SelectItem value="manual" disabled>
+                        {LABELS.value.manual}
+                      </SelectItem>
+                    ) : null}
                   </SelectContent>
                 </Select>
               </div>
