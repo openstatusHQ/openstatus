@@ -15,7 +15,6 @@
   "dependencies": {
     "@auth/core": "catalog:",
     "@auth/drizzle-adapter": "catalog:",
-    "@google-cloud/tasks": "catalog:",
     "@hookform/resolvers": "catalog:",
     "@libsql/client": "catalog:",
     "@openpanel/nextjs": "catalog:",

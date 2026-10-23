@@ -1544,9 +1544,6 @@ importers:
       '@auth/drizzle-adapter':
         specifier: 'catalog:'
         version: 1.11.3
-      '@google-cloud/tasks':
-        specifier: 'catalog:'
-        version: 7.1.1(supports-color@8.1.1)
       '@hookform/resolvers':
         specifier: 'catalog:'
         version: 5.9.1(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.88.0(react@19.3.0))(zod@4.6.5)
