@@ -169,7 +169,7 @@ export function Results({ data }: ResultsProps) {
                         <td>
                           <IconCloudProvider
                             provider={regionInfo.provider}
-                            className="size-4"
+                            className="mx-auto size-4"
                           />
                         </td>
                         <td>

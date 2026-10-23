@@ -231,11 +231,11 @@
 }
 
 .prose h3 {
-  @apply text-base text-foreground font-medium tracking-tight mt-8 mb-3 relative scroll-mt-8;
+  @apply text-base text-foreground font-semibold tracking-tight mt-8 mb-3 relative scroll-mt-8;
 }
 
 .prose h4 {
-  @apply text-base text-foreground font-medium tracking-tight mt-6 mb-2 relative scroll-mt-6;
+  @apply text-base text-foreground font-semibold tracking-tight mt-6 mb-2 relative scroll-mt-6;
 }
 
 .prose hr:not(:where(.not-prose, .not-prose *)) {
