@@ -66,6 +66,13 @@ export function NavMonitors() {
       },
     }),
   );
+  const updateMonitorsMutation = useMutation(
+    trpc.monitor.updateMonitors.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.monitor.pathKey() });
+      },
+    }),
+  );
   const cloneMonitorMutation = useMutation(
     trpc.monitor.clone.mutationOptions({
       onSuccess: (newMonitor) => {
@@ -135,8 +142,29 @@ export function NavMonitors() {
             const isActive = pathname.startsWith(`/monitors/${item.id}/`);
             // curl only speaks HTTP — the action is hidden for tcp/dns monitors
             const isHttp = item.jobType === "http";
+            const hiddenAction = item.active ? "resume" : "pause";
+            const setActive = (active: boolean) => {
+              const promise = updateMonitorsMutation.mutateAsync({
+                ids: [item.id],
+                active,
+              });
+              toast.promise(promise, {
+                loading: active ? "Resuming monitor..." : "Pausing monitor...",
+                success: active ? "Monitor resumed" : "Monitor paused",
+                error: (error) => {
+                  if (isTRPCClientError(error)) {
+                    return error.message;
+                  }
+                  return active
+                    ? "Failed to resume monitor"
+                    : "Failed to pause monitor";
+                },
+              });
+            };
             const actions = getActions({
               edit: () => router.push(`/monitors/${item.id}/edit`),
+              pause: () => setActive(false),
+              resume: () => setActive(true),
               "copy-id": () => {
                 navigator.clipboard.writeText(item.id.toString());
                 toast.success("Monitor ID copied to clipboard");
@@ -165,7 +193,11 @@ export function NavMonitors() {
                 });
               },
               // export: () => setOpenDialog(true),
-            }).filter((action) => action.id !== "copy-curl" || isHttp);
+            }).filter(
+              (action) =>
+                action.id !== hiddenAction &&
+                (action.id !== "copy-curl" || isHttp),
+            );
             return (
               <SidebarMenuItem key={item.id}>
                 <SidebarMenuButton
