@@ -34,7 +34,7 @@ export function SummaryCard() {
   } = summary;
 
   return (
-    <div className="border-border grid gap-4 border p-4 sm:grid-cols-3">
+    <div className="border-border grid gap-4 border p-3 sm:grid-cols-3">
       <div className="sm:col-span-1">
         <p className="text-muted-foreground my-0! text-sm">Cache hit ratio</p>
         <p

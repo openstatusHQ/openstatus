@@ -57,7 +57,7 @@ export function Form() {
           >
             <SelectTrigger
               id="method"
-              className="h-auto! w-full rounded-none p-4 text-base"
+              className="h-auto! w-full rounded-none px-3 py-2 text-base"
             >
               <SelectValue />
             </SelectTrigger>
@@ -66,7 +66,7 @@ export function Form() {
                 <SelectItem
                   key={method}
                   value={method}
-                  className="rounded-none px-2 py-3"
+                  className="rounded-none px-3 py-2"
                 >
                   {method}
                 </SelectItem>
@@ -82,7 +82,7 @@ export function Form() {
             name="url"
             id="url"
             placeholder="https://openstatus.dev"
-            className="h-auto! rounded-none p-4 text-base md:text-base"
+            className="h-auto! rounded-none px-3 py-2 text-base md:text-base"
             value={value.url}
             onChange={(e) => setValue((v) => ({ ...v, url: e.target.value }))}
           />
@@ -93,7 +93,7 @@ export function Form() {
             <Button
               type="button"
               variant="outline"
-              className="col-span-2 h-auto! rounded-none p-4 text-base"
+              className="col-span-2 h-auto! rounded-none px-3 py-2 text-base"
               onClick={() =>
                 setValue((v) => ({
                   ...v,
@@ -108,7 +108,7 @@ export function Form() {
               <Fragment key={index}>
                 <Input
                   placeholder="Key"
-                  className="col-span-2 h-auto! rounded-none p-4 text-base md:text-base"
+                  className="col-span-2 h-auto! rounded-none px-3 py-2 text-base md:text-base"
                   value={header.key}
                   onChange={(e) =>
                     setValue((v) => ({
@@ -121,7 +121,7 @@ export function Form() {
                 />
                 <Input
                   placeholder="Value"
-                  className="col-span-2 h-auto! rounded-none p-4 text-base md:text-base"
+                  className="col-span-2 h-auto! rounded-none px-3 py-2 text-base md:text-base"
                   value={header.value}
                   onChange={(e) =>
                     setValue((v) => ({
@@ -135,7 +135,7 @@ export function Form() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-full w-full rounded-none p-4 text-base"
+                  className="h-full w-full rounded-none px-3 py-2 text-base"
                   onClick={() =>
                     setValue((v) => ({
                       ...v,
@@ -158,7 +158,7 @@ export function Form() {
             name="body"
             placeholder=""
             rows={6}
-            className="resize-none rounded-none p-4 text-base md:text-base"
+            className="resize-none rounded-none px-3 py-2 text-base md:text-base"
             value={value.body}
             onChange={(e) => setValue((v) => ({ ...v, body: e.target.value }))}
           />
@@ -228,7 +228,7 @@ export function Form() {
             name="headers"
             placeholder=""
             rows={3}
-            className="resize-none rounded-none p-4 text-base md:text-base"
+            className="resize-none rounded-none px-3 py-2 text-base md:text-base"
             value={generateCurlCommand(value)}
             readOnly
           />
@@ -237,7 +237,7 @@ export function Form() {
           <Button
             type="button"
             onClick={() => copy(generateCurlCommand(value), {})}
-            className="h-full w-full rounded-none p-4 text-base"
+            className="h-full w-full rounded-none px-3 py-2 text-base"
           >
             {isCopied ? "Copied" : "Copy to Clipboard"}
           </Button>

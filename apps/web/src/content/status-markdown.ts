@@ -15,6 +15,8 @@ import {
   cachedListExternalServices,
 } from "../lib/external-service-cache";
 import { tb } from "../lib/tb";
+import { canonicalUrl, frontmatter } from "./frontmatter";
+import { sections } from "./sections";
 
 type LatestRow = {
   id: string;
@@ -148,12 +150,13 @@ export async function generateStatusIndexMarkdown(): Promise<string> {
   const latestById = new Map<string, LatestRow>();
   for (const row of latestRows) latestById.set(row.id, row);
 
-  let md = "---\n";
-  md += `title: "External Status"\n`;
-  md += `description: "Current status of external services tracked by openstatus."\n`;
-  md += "---\n\n";
-  md += "# External Status\n\n";
-  md += "Current status of external services tracked by openstatus.\n\n";
+  let md = frontmatter({
+    title: sections.status.title,
+    url: canonicalUrl(sections.status.path),
+    description: sections.status.description,
+  });
+  md += `# ${sections.status.label}\n\n`;
+  md += `${sections.status.description}\n\n`;
   md += "| Service | Status | Provider | URL |\n";
   md += "| --- | --- | --- | --- |\n";
   for (const s of services) {
@@ -172,7 +175,12 @@ export async function generateStatusDetailMarkdown(
   const service = await cachedGetExternalServiceBySlug(slug);
   if (!service) return null;
   if (service.slug !== slug) {
-    return `# Redirect\n\nThis service moved. Canonical: [/status/${service.slug}](/status/${service.slug})\n`;
+    const canonical = `/status/${service.slug}`;
+    return `${frontmatter({
+      title: `${service.name} Status`,
+      url: canonicalUrl(canonical),
+      description: `This service moved to ${canonical}.`,
+    })}# Redirect\n\nThis service moved. Canonical: [${canonical}](${canonical})\n`;
   }
 
   const aliasSlugs = Array.isArray(service.aliases) ? service.aliases : [];
@@ -199,10 +207,11 @@ export async function generateStatusDetailMarkdown(
     ? historyRes.data
     : [];
 
-  let md = "---\n";
-  md += `title: "${service.name} Status"\n`;
-  md += `description: "Current status of ${service.name}. Uptime history and recent incidents tracked by openstatus."\n`;
-  md += "---\n\n";
+  let md = frontmatter({
+    title: `${service.name} Status`,
+    url: canonicalUrl(`/status/${slug}`),
+    description: `Current status of ${service.name}. Uptime history and recent incidents tracked by openstatus.`,
+  });
   md += `# ${service.name} Status\n\n`;
 
   if (latest) {

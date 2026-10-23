@@ -458,6 +458,12 @@ export function findDocsNode(
   return findDocsTrail(node, href)?.at(-1);
 }
 
+// <title> of a container page; the root hub is the docs entry and keeps its
+// plain label. HTML and markdown both read this.
+export function docsHubTitle(node: Pick<DocsNavNode, "label" | "href">) {
+  return node.href === "/docs" ? node.label : `${node.label} — openstatus docs`;
+}
+
 // Map a slug back to its section label (the value a doc's `category` must hold).
 export function sectionForSlug(slug: string): DocsSection | undefined {
   const has = (items: DocsNavItem[]): boolean =>

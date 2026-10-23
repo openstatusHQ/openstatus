@@ -1,18 +1,14 @@
 import type { Metadata } from "next";
 
+import { categorySection, sections } from "../../../../../content/sections";
 import { getChangelogPosts } from "../../../../../content/utils";
 import { JsonLd } from "../../../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "../../../../../lib/metadata/shared-metadata";
+import { getListingMetadata } from "../../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
-  getJsonLDBreadcrumbList,
   getJsonLDItemList,
   getJsonLDOrganization,
+  getJsonLDSectionBreadcrumb,
 } from "../../../../../lib/metadata/structured-data";
 import { ContentCategory } from "../../../content-category";
 import { ContentList } from "../../../content-list";
@@ -23,28 +19,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const TITLE = `Changelog - ${slug.charAt(0).toUpperCase()}${slug.slice(1)}`;
-  const DESCRIPTION = "All the latest changes and updates to openstatus.";
-
-  return {
-    ...defaultMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    alternates: {
-      canonical: `/changelog/category/${slug}`,
-    },
-    openGraph: {
-      ...ogMetadata,
-      title: TITLE,
-      description: DESCRIPTION,
-    },
-    twitter: {
-      ...twitterMetadata,
-      title: TITLE,
-      description: DESCRIPTION,
-      images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
-    },
-  };
+  return getListingMetadata(categorySection(sections.changelog, slug));
 }
 
 export const dynamicParams = false;
@@ -70,23 +45,17 @@ export default async function ChangelogCategoryPage({
       changelog.metadata.category.toLowerCase() === slug.toLowerCase(),
   );
 
+  const category = categorySection(sections.changelog, slug);
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
-    getJsonLDBreadcrumbList([
-      { name: "Home", url: BASE_URL },
-      { name: "Changelog", url: `${BASE_URL}/changelog` },
-      {
-        name: `${slug.charAt(0).toUpperCase()}${slug.slice(1)}`,
-        url: `${BASE_URL}/changelog/category/${slug}`,
-      },
-    ]),
+    getJsonLDSectionBreadcrumb(sections.changelog, category),
     getJsonLDItemList(filteredChangelogs, "/changelog"),
   ]);
 
   return (
     <div className="prose dark:prose-invert max-w-none">
       <JsonLd graph={jsonLDGraph} />
-      <h1 className="capitalize">Changelog | {slug}</h1>
+      <h1 className="capitalize">{category.label}</h1>
       <ContentCategory data={allChangelogs} prefix="/changelog" />
       <ContentList data={filteredChangelogs} prefix="/changelog" />
     </div>

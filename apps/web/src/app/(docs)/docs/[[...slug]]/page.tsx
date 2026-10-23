@@ -9,6 +9,7 @@ import {
 import { ContentPagination } from "../../../(landing)/content-pagination";
 import {
   getDocs,
+  getDocsNodeDescription,
   getDocsPage,
   getDocsPagination,
   gitLastModified,
@@ -20,6 +21,7 @@ import { TableOfContents } from "../../../../content/docs-toc";
 import {
   DOCS_DESCRIPTION,
   type DocsNavNode,
+  docsHubTitle,
   docsNavTree,
   findDocsNode,
   findDocsTrail,
@@ -33,6 +35,7 @@ import {
   BASE_URL,
   getPageMetadata,
   getSocialMetadata,
+  markdownAlternate,
 } from "../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
@@ -51,19 +54,17 @@ const EDIT_BASE =
 
 type Params = { slug?: string[] };
 
-// Hub pages (the /docs root and section landings) have no backing MDX file.
-function getHubMetadata(title: string, href: string): Metadata {
-  const url = `${BASE_URL}${href}`;
+// Hub pages (the /docs root and section landings) have no backing MDX file;
+// title and description come from the nav tree, same as the markdown twin.
+function getHubMetadata(node: DocsNavNode): Metadata {
+  const title = docsHubTitle(node);
+  const description = getDocsNodeDescription(node) ?? DOCS_DESCRIPTION;
+  const url = `${BASE_URL}${node.href}`;
   return {
     title,
-    description: DOCS_DESCRIPTION,
-    alternates: { canonical: url },
-    ...getSocialMetadata({
-      title,
-      description: DOCS_DESCRIPTION,
-      url,
-      category: "docs",
-    }),
+    description,
+    alternates: { canonical: url, ...markdownAlternate(node.href) },
+    ...getSocialMetadata({ title, description, url, category: "docs" }),
   };
 }
 
@@ -88,36 +89,28 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata | undefined> {
   const { slug } = await params;
-  if (!slug || slug.length === 0) {
-    return getHubMetadata("openstatus documentation", "/docs");
-  }
-  const joined = slug.join("/");
-  const doc = getDocsPage(joined);
-  if (!doc) {
-    const node = findDocsNode(docsNavTree(), `/docs/${joined}`);
-    if (node?.children?.length) {
-      return getHubMetadata(
-        `${node.label} — openstatus docs`,
-        `/docs/${joined}`,
-      );
-    }
-    return;
-  }
-  return getPageMetadata(doc, "docs");
+  const joined = slug?.join("/") ?? "";
+  const doc = joined ? getDocsPage(joined) : undefined;
+  if (doc) return getPageMetadata(doc, "docs");
+  const node = findDocsNode(
+    docsNavTree(),
+    joined ? `/docs/${joined}` : "/docs",
+  );
+  if (node?.children?.length) return getHubMetadata(node);
+  return;
 }
 
 // A container node (the /docs hub or a section) → one card per child. Same nav
 // tree the markdown listing walks, so HTML and markdown can't drift.
 function DocsContainerLanding({ node }: { node: DocsNavNode }) {
   const trail = findDocsTrail(docsNavTree(), node.href);
+  const description = getDocsNodeDescription(node);
   // ItemList mirrors the rendered cards: use each child's href (section hubs
   // point at the hub, not the leaf doc whose slug they happen to carry).
   const cardEntries = (node.children ?? []).map((card) => ({
     name: card.label,
     url: `${BASE_URL}${card.href}`,
-    description: card.slug
-      ? getDocsPage(card.slug)?.metadata.description
-      : undefined,
+    description: getDocsNodeDescription(card),
   }));
 
   const jsonLDGraph = createJsonLDGraph([
@@ -139,12 +132,10 @@ function DocsContainerLanding({ node }: { node: DocsNavNode }) {
       <DocsSubNav />
       <section className="prose dark:prose-invert max-w-none">
         <h1>{node.label}</h1>
-        {node.description ? <p>{node.description}</p> : null}
+        {description ? <p>{description}</p> : null}
         <Grid cols={2}>
           {node.children?.map((card) => {
-            const description = card.slug
-              ? getDocsPage(card.slug)?.metadata.description
-              : undefined;
+            const description = getDocsNodeDescription(card);
             return (
               <ContentBoxLink key={card.href} href={card.href}>
                 <ContentBoxTitle>{card.label}</ContentBoxTitle>

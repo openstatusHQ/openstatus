@@ -5,10 +5,10 @@ import { ThemeToggle } from "./theme-toggle";
 export function DocsFooter() {
   return (
     <footer className="font-mono">
-      <div className="border-border bg-border [&>*]:bg-background grid gap-px border sm:grid-cols-2 md:grid-cols-3">
+      <div className="border-border bg-border [&>*]:bg-background grid gap-px border bg-clip-padding sm:grid-cols-2 md:grid-cols-3">
         <Link
           href="/cal"
-          className="hover:bg-muted flex w-full items-center gap-2 p-4"
+          className="hover:bg-muted flex w-full items-center gap-2 px-3 py-2"
         >
           Talk to the founders
         </Link>

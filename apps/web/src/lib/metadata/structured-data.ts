@@ -19,6 +19,7 @@ import type {
   WithContext,
 } from "schema-dts";
 
+import type { ContentSection } from "../../content/sections";
 import type { MDXData } from "../../content/utils";
 import { BASE_URL } from "./shared-metadata";
 
@@ -292,6 +293,17 @@ export function getJsonLDItemList(
     },
   };
 }
+
+// Home → section → optional leaf (a post, a category); paths are site-relative.
+export const getJsonLDSectionBreadcrumb = (
+  section: Pick<ContentSection, "label" | "path">,
+  leaf?: { label: string; path: string },
+): WithContext<BreadcrumbList> =>
+  getJsonLDBreadcrumbList([
+    { name: "Home", url: BASE_URL },
+    { name: section.label, url: `${BASE_URL}${section.path}` },
+    ...(leaf ? [{ name: leaf.label, url: `${BASE_URL}${leaf.path}` }] : []),
+  ]);
 
 export const getJsonLDBreadcrumbList = (
   items: { name: string; url: string }[],

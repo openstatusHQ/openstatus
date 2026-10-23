@@ -169,7 +169,7 @@
 }
 
 .prose pre:not(:where(.not-prose, .not-prose *)) {
-  @apply relative bg-muted overflow-x-auto border border-border py-2.5 px-3.5 text-sm rounded-none;
+  @apply relative bg-muted overflow-x-auto border border-border px-3 py-2 text-sm rounded-none;
 }
 
 .prose code:not(:where(.not-prose, .not-prose *)) {
@@ -192,19 +192,19 @@
 }
 
 .prose p:not(:where(.not-prose, .not-prose *)) {
-  @apply my-4 leading-7;
+  @apply my-4 leading-6;
 }
 
-.prose > p:first-of-type {
-  @apply text-lg text-foreground/90 leading-8;
+.prose > p:first-of-type:not(:where(.not-prose, .not-prose *)) {
+  @apply text-base text-foreground/90 leading-6;
 }
 
 .prose h1 {
-  @apply text-balance text-3xl text-foreground font-semibold tracking-tight mb-6 relative;
+  @apply text-balance text-xl text-foreground font-semibold tracking-tight mb-6 relative;
 }
 
 .prose h2 {
-  @apply text-2xl text-foreground font-semibold tracking-tight mt-12 mb-4 pt-8 border-t border-border/60 relative scroll-mt-12;
+  @apply text-base text-foreground font-semibold tracking-tight mt-12 mb-4 pt-8 border-t border-border/60 relative scroll-mt-12;
 }
 
 /* An `Eyebrow` takes over the rule and spacing above the heading it precedes. */
@@ -231,11 +231,11 @@
 }
 
 .prose h3 {
-  @apply text-xl text-foreground font-medium tracking-tight mt-8 mb-3 relative scroll-mt-8;
+  @apply text-base text-foreground font-medium tracking-tight mt-8 mb-3 relative scroll-mt-8;
 }
 
 .prose h4 {
-  @apply text-lg text-foreground font-medium tracking-tight mt-6 mb-2 relative scroll-mt-6;
+  @apply text-base text-foreground font-medium tracking-tight mt-6 mb-2 relative scroll-mt-6;
 }
 
 .prose hr:not(:where(.not-prose, .not-prose *)) {
@@ -292,11 +292,11 @@
 }
 
 .prose li:not(:where(.not-prose, .not-prose *)) {
-  @apply leading-7 pl-1;
+  @apply leading-6 pl-1;
 }
 
 .prose details {
-  @apply border border-border p-4 my-4;
+  @apply border border-border p-3 my-4;
 }
 
 .prose details p:last-child {
@@ -348,11 +348,11 @@
 }
 
 .prose table th:not(:where(.not-prose, .not-prose *)) {
-  @apply font-medium bg-muted/50 p-4 text-left border border-border;
+  @apply font-medium bg-muted/50 px-3 py-2 text-left border border-border;
 }
 
 .prose table td:not(:where(.not-prose, .not-prose *)) {
-  @apply font-normal p-4 border border-border;
+  @apply font-normal px-3 py-2 border border-border;
 }
 
 .prose table caption:not(:where(.not-prose, .not-prose *)) {

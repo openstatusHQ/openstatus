@@ -44,7 +44,6 @@ const vocabCache = new Map<Corpus, string[]>();
 
 function homeDoc(): MDXData {
   const home = getHomePage();
-  home.href = "/";
   home.metadata.title = "Homepage";
   return home;
 }

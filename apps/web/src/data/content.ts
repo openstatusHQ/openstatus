@@ -73,10 +73,6 @@ const resourcesHeaderSection = {
   label: "Resources",
   items: [
     {
-      label: "Docs",
-      href: "/docs",
-    },
-    {
       label: "Customers",
       href: "/customers",
     },

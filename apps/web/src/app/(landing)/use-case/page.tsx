@@ -1,53 +1,24 @@
 import type { Metadata } from "next";
 
+import { sections } from "../../../content/sections";
 import { getUseCasePages } from "../../../content/utils";
 import { JsonLd } from "../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  defaultMetadata,
-  ogMetadata,
-} from "../../../lib/metadata/shared-metadata";
-import { twitterMetadata } from "../../../lib/metadata/shared-metadata";
+import { getListingMetadata } from "../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
-  getJsonLDBreadcrumbList,
   getJsonLDItemList,
   getJsonLDOrganization,
+  getJsonLDSectionBreadcrumb,
 } from "../../../lib/metadata/structured-data";
 import { ContentList } from "../content-list";
 
-const TITLE = "Use Cases";
-const DESCRIPTION =
-  "Discover how teams use openstatus for compliance, incident records for audits, reducing support tickets, closing enterprise deals, open-source projects, crypto exchanges, and API infrastructure.";
-
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: {
-    canonical: "/use-case",
-  },
-  openGraph: {
-    ...ogMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-  twitter: {
-    ...twitterMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
-  },
-};
+export const metadata: Metadata = getListingMetadata(sections["use-case"]);
 
 export default function UseCaseListPage() {
   const allUseCases = getUseCasePages();
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
-    getJsonLDBreadcrumbList([
-      { name: "Home", url: BASE_URL },
-      { name: "Use Cases", url: `${BASE_URL}/use-case` },
-    ]),
+    getJsonLDSectionBreadcrumb(sections["use-case"]),
     getJsonLDItemList(allUseCases, "/use-case"),
   ]);
   return (

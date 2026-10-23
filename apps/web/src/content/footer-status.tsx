@@ -26,7 +26,7 @@ export function FooterStatus() {
     <Link
       href="https://status.openstatus.dev"
       className={cn(
-        "hover:bg-muted flex w-full items-center gap-2 p-4",
+        "hover:bg-muted flex w-full items-center gap-2 px-3 py-2",
         STATUS[status].color,
       )}
     >
