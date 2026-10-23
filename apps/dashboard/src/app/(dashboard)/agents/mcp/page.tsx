@@ -220,6 +220,7 @@ const tools = [
   {
     group: "Workspace",
     items: [
+      "get_workspace",
       "list_notifications",
       "list_private_locations",
       "list_audit_logs",

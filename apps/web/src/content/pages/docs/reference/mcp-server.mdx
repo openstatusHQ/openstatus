@@ -134,6 +134,12 @@ These tools act on declared incidents, not on monitor downtime, and are internal
 |--------------------------|------|---------|
 | `list_private_locations` | read | List the workspace's private locations with their name, status (`active` / `error`), metadata, and `lastSeenAt`. Agent tokens are never exposed. |
 
+### Workspace
+
+| Tool            | Type | Purpose |
+|-----------------|------|---------|
+| `get_workspace` | read | The workspace's name, slug, plan, trial end, and usage counts (monitors, status pages, components, notification channels, status reports). Plan limits and billing identifiers are never exposed. |
+
 ### Audit
 
 Registered only when the workspace plan includes the `audit-log` feature — otherwise these tools are absent from `tools/list`.

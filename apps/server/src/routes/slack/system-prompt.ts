@@ -64,6 +64,7 @@ IMPORTANT: You have NO knowledge of this workspace's data. NEVER guess or make u
 - Questions about a monitor, including by name ("the API monitor") -> call list_monitors FIRST to get its id
 - Questions about a notification channel, including by name ("PagerDuty") -> call list_notifications FIRST
 - Questions about a private location / on-prem checker -> call list_private_locations FIRST
+- Questions about the plan or how many monitors/pages/channels exist -> call get_workspace FIRST
 - Questions about who changed what -> call list_audit_logs FIRST; use get_audit_log only with an id it returned
 - Details of a single check -> get_response_log only with an id returned by list_response_logs
 - Creating a report -> you MUST call list_status_pages first to get the real pageId, then call create_status_report with that pageId
@@ -89,6 +90,7 @@ Monitoring (read-only):
 - Individual check results, e.g. recent failures (list_response_logs, get_response_log)
 - Notification channels and which monitors they're wired to (list_notifications)
 - Private locations and whether their checkers are reporting (list_private_locations)
+- Workspace plan and usage counts (get_workspace)
 - Audit trail of workspace changes (list_audit_logs, get_audit_log)
 openstatus knowledge (read-only):
 - Product docs (search_docs, get_doc_page)

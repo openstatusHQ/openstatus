@@ -24,6 +24,7 @@ import { registerMaintenanceTools } from "./maintenance";
 import { registerPageTools } from "./page";
 import { registerPrivateLocationTools } from "./private-location";
 import { registerStatusReportTools } from "./status-report";
+import { registerWorkspaceTools } from "./workspace";
 
 /**
  * Build an MCP-flavoured `ServiceContext` for a workspace, optionally
@@ -105,7 +106,12 @@ afterAll(async () => {
 
 /** Build a fresh McpServer + register a tool group, return the tool map. */
 function registered(
-  group: "page" | "status-report" | "maintenance" | "private-location",
+  group:
+    | "page"
+    | "status-report"
+    | "maintenance"
+    | "private-location"
+    | "workspace",
   ctx: ServiceContext,
 ) {
   const server = new McpServer(
@@ -119,6 +125,8 @@ function registered(
       return registerStatusReportTools(server, ctx);
     case "maintenance":
       return registerMaintenanceTools(server, ctx);
+    case "workspace":
+      return registerWorkspaceTools(server, ctx);
     case "private-location":
       return registerPrivateLocationTools(server, ctx);
   }
@@ -880,6 +888,31 @@ describe("list_private_locations", () => {
       expect(structured.items.some((i) => i.name.includes("mcp-listed"))).toBe(
         true,
       );
+    });
+  });
+});
+
+describe("get_workspace", () => {
+  test("returns plan and usage without billing identifiers", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("workspace", ctx);
+      const result = await callTool(tools, "get_workspace", {});
+
+      expect(result.isError).toBeFalsy();
+      const structured = result.structuredContent as {
+        slug: string;
+        plan: string;
+        usage: { monitors: number };
+      };
+      expect(structured.slug).toBe(teamWorkspace.slug);
+      expect(structured.plan).toBe(teamWorkspace.plan);
+      expect(structured.usage.monitors).toBeGreaterThanOrEqual(0);
+
+      const serialized = JSON.stringify(result);
+      expect(serialized).not.toContain("stripe");
+      expect(serialized).not.toContain("subscription");
+      expect(serialized).not.toContain('"limits"');
     });
   });
 });
