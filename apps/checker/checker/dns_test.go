@@ -74,3 +74,18 @@ func useBlackholeResolver(t *testing.T) {
 		},
 	})
 }
+
+// A TXT-only host has no address or CNAME; the check must still read its TXT
+// record rather than fail on the empty IP lookup.
+func TestDns_TXTOnlyHost(t *testing.T) {
+	data, err := checker.Dns(t.Context(), "health.onporter.run")
+	if err != nil {
+		t.Fatalf("Dns() error = %v", err)
+	}
+	if len(data.A) != 0 || len(data.AAAA) != 0 {
+		t.Errorf("Dns() expected no address records, got A=%v AAAA=%v", data.A, data.AAAA)
+	}
+	if len(data.TXT) == 0 {
+		t.Errorf("Dns() TXT records = %v", data.TXT)
+	}
+}
