@@ -131,9 +131,13 @@ describe("listIncidentsTable", () => {
       "id",
     ]);
     const [closed, open] = table.rows;
-    expect(text(closed.cells.status)).toBe("resolved · closed");
+    expect(renderToStaticMarkup(<>{closed.cells.title}</>)).toContain(
+      'href="/incidents/1"',
+    );
+    expect(text(closed.cells.severity)).toBe("Major");
+    expect(text(closed.cells.status)).toBe("Resolved · closed");
     expect(text(closed.cells.commander)).toBe("Unassigned");
-    expect(text(open.cells.status)).toBe("open");
+    expect(text(open.cells.status)).toBe("Open");
     expect(text(open.cells.commander)).toBe("Ada");
     expect(text(open.cells.id)).toBe("2");
   });
