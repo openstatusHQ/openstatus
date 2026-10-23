@@ -13,15 +13,15 @@ export function LogoWithContextMenu() {
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-1">
           <Image
             src="/assets/landing/openstatus-logo.svg"
             alt="openstatus logo"
             width={20}
             height={20}
-            className="border-border dark:border-foreground rounded-[50%] border"
+            className="border-background dark:border-foreground rounded-[50%] border"
           />
-          <span className="hidden sm:block">openstatus</span>
+          <span className="hidden font-semibold sm:block">openstatus</span>
         </Link>
       </ContextMenuTrigger>
       <ContextMenuContent className="min-w-[var(--radix-dropdown-menu-trigger-width)] rounded-none">

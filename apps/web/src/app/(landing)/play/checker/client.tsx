@@ -365,11 +365,11 @@ export function ResultTable() {
               <td>
                 <IconCloudProvider
                   provider="globe"
-                  className="text-muted-foreground size-4"
+                  className="text-muted-foreground mx-auto size-4"
                 />
               </td>
               <td>
-                <div className="bg-muted-foreground size-4" />
+                <div className="bg-muted-foreground mx-auto size-4" />
               </td>
               <td>
                 <br />
@@ -386,13 +386,13 @@ export function ResultTable() {
                   <td>
                     <IconCloudProvider
                       provider={regionConfig.provider}
-                      className="size-4"
+                      className="mx-auto size-4"
                     />
                   </td>
                   <td>
                     <div
                       className={cn(
-                        "size-4",
+                        "mx-auto size-4",
                         STATUS_CODES[
                           value.status.toString()[0] as keyof typeof STATUS_CODES
                         ],
@@ -436,11 +436,11 @@ function FailedRow({ failure }: { failure: CheckerFailure }) {
       <td>
         <IconCloudProvider
           provider={regionConfig.provider}
-          className="size-4"
+          className="mx-auto size-4"
         />
       </td>
       <td>
-        <div className="bg-muted-foreground size-4" />
+        <div className="bg-muted-foreground mx-auto size-4" />
       </td>
       <td>
         {regionConfig.flag} {regionConfig.code}{" "}
