@@ -341,7 +341,9 @@ describe("safeFetch", () => {
     const original = globalThis.fetch;
     globalThis.fetch = (_input, init) =>
       new Promise((_resolve, reject) => {
-        init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+        init?.signal?.addEventListener("abort", () =>
+          reject(init.signal?.reason),
+        );
       });
     try {
       const start = Date.now();
@@ -400,7 +402,9 @@ describe("safeFetch", () => {
     const original = globalThis.fetch;
     globalThis.fetch = (_input, init) =>
       new Promise((_resolve, reject) => {
-        init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+        init?.signal?.addEventListener("abort", () =>
+          reject(init.signal?.reason),
+        );
       });
     try {
       // Caller signal fires first (10ms) — it should win over the deadline (10s).
@@ -430,5 +434,4 @@ describe("safeFetch", () => {
       globalThis.fetch = original;
     }
   });
-
 });
