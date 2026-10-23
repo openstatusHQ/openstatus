@@ -15,7 +15,7 @@ faq:
   - question: "What is the difference between an incident and a status report?"
     answer: "An incident is internal: severity, commander, timeline notes and the postmortem are for your team. A status report is public: it is what customers read on your status page and receive as a subscriber. You link the two, and each keeps its own status, so the team can mark an incident mitigated while the status report still says monitoring."
   - question: "Do I need Slack to manage incidents?"
-    answer: "No. You can declare, update, resolve and write the postmortem from the dashboard. Connecting Slack adds the channel per incident, slash commands, pinning messages to the timeline, stale-incident reminders and agent drafting."
+    answer: "No. You can declare, update, resolve and write the postmortem from the dashboard. On Starter and above the agent drafts the postmortem for you. Connecting Slack adds the channel per incident, slash commands, pinning messages to the timeline and stale-incident reminders, and the channel history becomes part of the postmortem draft."
   - question: "How does the postmortem draft work?"
     answer: "Once an incident is resolved, the agent drafts a blameless postmortem from the incident's fields, its timeline, the public status report updates and the history of the incident's Slack channel. The draft has seven sections: summary, impact, timeline, root cause, what went well, what went wrong and action items. Where it has no facts it says what is unknown. You edit the draft, approve it and close the incident."
   - question: "Which severities and statuses are there?"
@@ -66,7 +66,7 @@ The team works with severities, notes and a commander. Customers read a [status 
 
 **The record writes itself**
 
-Every status change, note and public update is timestamped as it happens. The postmortem and the [audit trail](/use-case/compliance) are built from it, not from memory.
+Every status change, note and public update is timestamped as it happens. The postmortem and the [audit trail](/use-case/incident-records) are built from it, not from memory.
 
 </div>
 </Grid>
@@ -182,7 +182,7 @@ Once the incident is resolved, the agent drafts a blameless postmortem from the 
 Edit it in markdown, approve it, and close the incident.
 
 - [Slack agent](/docs/guides/how-to-setup-slack-agent)
-- [Status pages for compliance](/use-case/compliance)
+- [Incident records for audits](/use-case/incident-records)
 
 </div>
 <div>
@@ -248,7 +248,7 @@ An incident is internal: severity, commander, timeline notes and the postmortem 
 
 <Details summary="Do I need Slack to manage incidents?" headingLevel={3}>
 
-No. You can declare, update, resolve and write the postmortem from the dashboard. Connecting Slack adds the channel per incident, slash commands, pinning messages to the timeline, stale-incident reminders and agent drafting.
+No. You can declare, update, resolve and write the postmortem from the dashboard. On Starter and above the agent drafts the postmortem for you. Connecting Slack adds the channel per incident, slash commands, pinning messages to the timeline and stale-incident reminders, and the channel history becomes part of the postmortem draft.
 
 </Details>
 

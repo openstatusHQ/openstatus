@@ -18,7 +18,7 @@ import { ContentList } from "../content-list";
 
 const TITLE = "Use Cases";
 const DESCRIPTION =
-  "Discover how teams use OpenStatus for compliance, reducing support tickets, closing enterprise deals, open-source projects, crypto exchanges, and API infrastructure.";
+  "Discover how teams use openstatus for compliance, incident records for audits, reducing support tickets, closing enterprise deals, open-source projects, crypto exchanges, and API infrastructure.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
