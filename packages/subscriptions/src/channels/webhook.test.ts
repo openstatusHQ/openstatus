@@ -776,3 +776,64 @@ describe("sendTestWebhookRequest", () => {
     expect(headers["X-Custom"]).toBe("abc");
   });
 });
+
+// ─── Delivery deadline (issue #2936) ─────────────────────────────────────────
+
+describe("delivery deadline", () => {
+  test("sendTestWebhookRequest aborts when the server stalls returning headers", async () => {
+    setFetch(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason),
+          );
+        }),
+    );
+    const start = Date.now();
+    await expect(
+      sendTestWebhookRequest({
+        url: "https://example.com/hook",
+        flavor: "generic",
+      }),
+    ).rejects.toThrow();
+    // 5 s cap; should not hang the test runner even on slow CI.
+    expect(Date.now() - start).toBeLessThan(10_000);
+  });
+
+  test("sendWebhookVerification aborts a stalled destination", async () => {
+    setFetch(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason),
+          );
+        }),
+    );
+    const sub = makeSub({ webhookUrl: "https://example.com/sub" });
+    const start = Date.now();
+    await expect(
+      sendWebhookVerification(sub, "https://example.com/verify/token"),
+    ).rejects.toThrow();
+    expect(Date.now() - start).toBeLessThan(10_000);
+  });
+
+  test("sendWebhookNotifications fails a stalled subscriber as a timeout, not a hang", async () => {
+    setFetch(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason),
+          );
+        }),
+    );
+    const start = Date.now();
+    // The call swallows per-subscriber failures (allSettled), so this must
+    // not hang: retries + timeout combined still finish within the budget.
+    await sendWebhookNotifications(
+      [makeSub({ webhookUrl: "https://example.com/hook" })],
+      makeUpdate(),
+    );
+    // With retries we may wait longer than one TIMEOUT_MS; keep a generous cap.
+    expect(Date.now() - start).toBeLessThan(30_000);
+  });
+});

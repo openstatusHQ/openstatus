@@ -334,4 +334,101 @@ describe("safeFetch", () => {
       restore();
     }
   });
+
+  // --- timeoutMs: one deadline covers the whole attempt ---
+
+  it("timeoutMs aborts when the server stalls returning headers", async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+      });
+    try {
+      const start = Date.now();
+      await expect(
+        safeFetch(
+          "https://example.com/hook",
+          { method: "POST" },
+          { timeoutMs: 50 },
+        ),
+      ).rejects.toMatchObject({ name: "TimeoutError" });
+      // Should fire close to the deadline, not hang.
+      expect(Date.now() - start).toBeLessThan(500);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it("timeoutMs is one shared budget across redirect hops", async () => {
+    const original = globalThis.fetch;
+    const seen: string[] = [];
+    globalThis.fetch = (input, init) => {
+      const url = String(input);
+      seen.push(url);
+      // Hop 0 stalls for ~80ms then redirects; hop 1 would be instant.
+      // With timeoutMs: 50 the first hop must abort before it even redirects.
+      return new Promise((resolve, reject) => {
+        const t = setTimeout(() => {
+          resolve(
+            new Response(null, {
+              status: 307,
+              headers: { location: "/v2" },
+            }),
+          );
+        }, 80);
+        init?.signal?.addEventListener("abort", () => {
+          clearTimeout(t);
+          reject(init.signal?.reason);
+        });
+      });
+    };
+    try {
+      await expect(
+        safeFetch(
+          "https://example.com/hook",
+          { method: "POST" },
+          { timeoutMs: 50 },
+        ),
+      ).rejects.toMatchObject({ name: "TimeoutError" });
+      expect(seen).toEqual(["https://example.com/hook"]);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it("timeoutMs combines with a caller-supplied signal", async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+      });
+    try {
+      // Caller signal fires first (10ms) — it should win over the deadline (10s).
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(new Error("caller cancel")), 10);
+      await expect(
+        safeFetch(
+          "https://example.com/hook",
+          { method: "POST", signal: controller.signal },
+          { timeoutMs: 10_000 },
+        ),
+      ).rejects.toThrow("caller cancel");
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it("without timeoutMs, there is no internal deadline (existing behavior)", async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = () => Promise.resolve(new Response("ok"));
+    try {
+      const res = await safeFetch("https://example.com/hook", {
+        method: "POST",
+      });
+      expect(res.ok).toBe(true);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
 });
