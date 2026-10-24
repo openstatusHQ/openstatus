@@ -75,10 +75,6 @@ const nextConfig: NextConfig = {
     OPENSTATUS_MCP_SERVER_VERSION: readMcpServerVersion(),
   },
   outputFileTracingIncludes: {
-    "/": [
-      "./node_modules/.pnpm/@google-cloud/tasks/build/esm/src/**/*.json",
-      "./node_modules/@google-cloud/tasks/build/esm/src/**/*.js",
-    ],
     "/.well-known/agent-skills/index.json": [
       "./public/.well-known/agent-skills/**/*.md",
     ],
@@ -89,7 +85,6 @@ const nextConfig: NextConfig = {
     // barrel-optimize only when unaliased — the rewrite would bypass the nucleo alias
     optimizePackageImports: useNucleoIcons ? [] : ["@openstatus/icons"],
   },
-  serverExternalPackages: ["@google-cloud/tasks"],
   expireTime: 180, // 3 minutes
   logging: {
     fetches: {
