@@ -39,7 +39,7 @@ node scripts/screenshot.mjs --app dashboard /incidents/1 --user max@openstatus.d
 node scripts/dev-stack.mjs down      # when finished; stops only what `up` started
 ```
 
-`up` fetches pinned deno, sqld and agent-browser from npm when they are not
+`up` fetches pinned sqld and agent-browser from npm when they are not
 on PATH (the official download hosts are blocked in the sandbox; npm is
 not), creates the two `.env` files from their examples, starts sqld on
 :8080, migrates, seeds once (`--reseed` wipes and reseeds), starts the
@@ -73,7 +73,7 @@ it and the script sets it itself when unset. No `agent-browser install`.
    throwaway seeded one; pass `--db http://127.0.0.1:8099` and point the
    dashboard at it with `DATABASE_URL`.
 3. Auth, dashboard only. The seed (`pnpm --filter @openstatus/db seed`,
-   through `devbox run --` because of the deno pin) creates two maintainers
+   through `devbox run --`) creates two maintainers
    with sessions that expire in 2099: `max@openstatus.dev` (token
    `seed-session-max`, owner of workspace 1 `love-openstatus`) and
    `thibault@openstatus.dev` (token `seed-session-thibault`, admin of 1).

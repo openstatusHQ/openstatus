@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// Bring up (or tear down) what a dashboard screenshot needs: deno and sqld,
+// Bring up (or tear down) what a dashboard screenshot needs: sqld,
 // the env files, a seeded libSQL on :8080 and the dashboard on :3001.
 //
 //   node scripts/dev-stack.mjs up [--reseed] [--warm /incidents/1 ...]
 //   node scripts/dev-stack.mjs down
 //   node scripts/dev-stack.mjs status
-//   node scripts/dev-stack.mjs tools      # only fetch deno, sqld, agent-browser
+//   node scripts/dev-stack.mjs tools      # only fetch sqld, agent-browser
 //
 // Servers already answering on their port are reused and left alone by `down`;
 // only processes this script started are stopped. Flags, ports and fixtures:
@@ -104,7 +104,6 @@ function ensureNpmTool(name, version) {
   return bin;
 }
 
-const ensureDeno = () => ensureNpmTool("deno", pinnedVersion("deno"));
 const ensureAgentBrowser = () =>
   ensureNpmTool("agent-browser", AGENT_BROWSER_VERSION);
 
@@ -263,13 +262,10 @@ function stop(name, pid, expected) {
 async function up() {
   const started = Date.now();
   mkdirSync(stackDir, { recursive: true });
-  const deno = ensureDeno();
   const sqld = ensureSqld();
   ensureAgentBrowser();
   ensureEnvFiles();
-  const toolPath = [dirname(deno), dirname(sqld), process.env.PATH].join(
-    delimiter,
-  );
+  const toolPath = [dirname(sqld), process.env.PATH].join(delimiter);
   const state = readState();
 
   // The seed wipes every table, so only a database this run created is seeded
@@ -375,7 +371,6 @@ async function status() {
 }
 
 function tools() {
-  console.log(`deno: ${ensureDeno()}`);
   console.log(`sqld: ${ensureSqld()}`);
   console.log(`agent-browser: ${ensureAgentBrowser()}`);
 }
