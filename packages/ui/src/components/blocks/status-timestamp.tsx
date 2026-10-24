@@ -161,12 +161,12 @@ StatusTimestamp.displayName = "StatusTimestamp";
  * the full formatted date in a tooltip on hover. The timestamp is shown in monospace
  * font with muted foreground color.
  *
- * If no children are provided, displays the date in UTC format. If children are
- * provided, they are used as the trigger text while the tooltip still shows the
- * formatted date in the user's local timezone.
+ * If no children are provided, displays the date with the labels' `formatTimestamp`
+ * (UTC by default). If children are provided, they are used as the trigger text
+ * while the tooltip still shows the formatted date in the user's local timezone.
  *
  * @param date - The date to display
- * @param children - Optional custom text to display (falls back to formatted UTC date)
+ * @param children - Optional custom text to display (falls back to `formatTimestamp`)
  *
  * @example
  * ```tsx
