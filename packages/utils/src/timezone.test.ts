@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { timeZoneShortName } from "./timezone";
+import { timeZoneShortName, timeZoneShortNames } from "./timezone";
 
 describe("timeZoneShortName", () => {
   it("keeps UTC as is", () => {
@@ -19,5 +19,23 @@ describe("timeZoneShortName", () => {
     expect(timeZoneShortName("America/New_York", "en-US", summer)).toBe("EDT");
     expect(timeZoneShortName("Europe/Berlin", "en-US", winter)).toBe("GMT+1");
     expect(timeZoneShortName("Europe/Berlin", "en-US", summer)).toBe("GMT+2");
+  });
+});
+
+describe("timeZoneShortNames", () => {
+  it("names a span once when it stays in one offset", () => {
+    const from = new Date("2026-01-15T12:00:00Z");
+    const to = new Date("2026-01-15T14:00:00Z");
+    expect(timeZoneShortNames("America/New_York", "en-US", [from, to])).toBe(
+      "EST",
+    );
+  });
+
+  it("names both ends of a span that crosses a DST change", () => {
+    const from = new Date("2026-03-08T06:00:00Z");
+    const to = new Date("2026-03-08T08:00:00Z");
+    expect(timeZoneShortNames("America/New_York", "en-US", [from, to])).toBe(
+      "EST/EDT",
+    );
   });
 });

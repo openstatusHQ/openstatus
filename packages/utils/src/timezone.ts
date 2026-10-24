@@ -14,3 +14,14 @@ export function timeZoneShortName(
       .find((part) => part.type === "timeZoneName")?.value ?? timeZone
   );
 }
+
+/** "EST" for a span in one offset, "EST/EDT" for one that crosses a DST change. */
+export function timeZoneShortNames(
+  timeZone: string,
+  locale: string,
+  instants: Date[],
+) {
+  return [
+    ...new Set(instants.map((at) => timeZoneShortName(timeZone, locale, at))),
+  ].join("/");
+}

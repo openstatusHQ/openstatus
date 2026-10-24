@@ -4,7 +4,7 @@ import {
   StatusBlocksI18nProvider,
   type StatusBlocksLabels,
 } from "@openstatus/ui/components/blocks/status-i18n";
-import { timeZoneShortName } from "@openstatus/utils";
+import { timeZoneShortNames } from "@openstatus/utils";
 import { useExtracted, useLocale } from "next-intl";
 import { useMemo } from "react";
 
@@ -39,9 +39,9 @@ export function StatusBlocksProvider({
 
   const value = useMemo<StatusBlocksLabels>(() => {
     // timestamps render in the page zone; the suffix names the zone as of
-    // that instant, since DST zones change their short name through the year
-    const withZone = (value: string, at: Date) =>
-      `${value} (${timeZoneShortName(timezone, locale, at)})`;
+    // each instant, since DST zones change their short name through the year
+    const withZone = (value: string, ...instants: Date[]) =>
+      `${value} (${timeZoneShortNames(timezone, locale, instants)})`;
     return {
       systemStatus: {
         success: {
@@ -130,8 +130,8 @@ export function StatusBlocksProvider({
       formatTimestamp: (d: Date) => withZone(formatTimestamp(d, timezone), d),
       formatDateRange: (from?: Date, to?: Date) => {
         const range = formatDateRange(from, to, locale, timezone);
-        const at = from ?? to;
-        return at ? withZone(range, at) : range;
+        const instants = [from, to].filter((d): d is Date => d !== undefined);
+        return instants.length > 0 ? withZone(range, ...instants) : range;
       },
       formatDateRangeParts: (from: Date, to: Date) => {
         const { from: start, to: end } = formatDateRangeParts(
@@ -140,7 +140,7 @@ export function StatusBlocksProvider({
           locale,
           timezone,
         );
-        return { from: start, to: withZone(end, to) };
+        return { from: start, to: withZone(end, from, to) };
       },
     };
   }, [t, locale, timezone]);
