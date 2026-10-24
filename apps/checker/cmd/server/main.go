@@ -351,7 +351,7 @@ func runConsumer(ctx context.Context, h *handlers.Handler, region string) error 
 				MaxOutstanding: envInt("PUBSUB_MAX_OUTSTANDING", 500),
 				// Every held message wakes at the same cronTimestamp: without a cap
 				// they all dial and handshake at once and inflate each other's timings.
-				MaxConcurrent: envInt("PUBSUB_MAX_CONCURRENT", 300),
+				MaxConcurrent: envInt("PUBSUB_MAX_CONCURRENT", 200),
 			},
 			{
 				Subscription:   queue.Subscription(region, true),
