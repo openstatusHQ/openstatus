@@ -10,6 +10,7 @@ export default async function ({
   warm,
   goto,
   start,
+  step,
   click,
   type,
   wait,
@@ -21,6 +22,7 @@ export default async function ({
 
   await goto("/monitors");
   await start();
+  step("Open Monitors");
   await wait(1200);
 
   await click(page.getByRole("button", { name: "Create Monitor" }).first());
@@ -28,22 +30,26 @@ export default async function ({
   await settle();
   await wait(800);
 
+  step("Name it and pick HTTP");
   await type(page.getByRole("textbox", { name: "Name" }), NAME);
   await wait(400);
   await click(page.getByRole("radio", { name: "HTTP" }));
   await wait(600);
+  step("Paste the URL to check");
   await type(
     page.getByRole("textbox", { name: "URL" }),
     "https://registry.npmjs.org",
   );
   await wait(600);
 
+  step("Save: the endpoint is tested first");
   await click(page.getByRole("button", { name: "Submit" }));
   await page.waitForURL(/\/monitors\/\d+\/edit/);
   await page.waitForLoadState("networkidle");
   await settle();
   await wait(1200);
 
+  step("Choose where to check from");
   // Defaults are random per monitor; "Select all" on one continent is stable.
   const regions = page
     .locator("form")

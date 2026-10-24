@@ -179,6 +179,13 @@ when an on-screen image does not load, and leaves
   CRON_SECRET=x`.
 - Tutorials delete their own previous output first, so they re-run cleanly;
   run them on a fresh `--reseed` and in series order for consistent videos.
+- `--remotion` captures at 2x without the in-page cursor and writes
+  `.recordings/<tutorial>/{video.mp4,timeline.json}` instead. `scripts/videos`
+  turns that into the edited cut (camera zoom, eased cursor, click ripples):
+  `pnpm --filter @openstatus/videos studio` to preview, `pnpm --filter
+  @openstatus/videos render <tutorial>` to export. In a cloud session pass
+  `--browser-executable` pointing at the Playwright headless shell under
+  `/opt/pw-browsers`; Remotion cannot download its own there.
 
 ## Rules
 
