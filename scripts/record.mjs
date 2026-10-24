@@ -194,9 +194,16 @@ async function settle() {
     null,
     { timeout: 15000 },
   );
+  // Off-canvas panels (collapsed right sidebar) keep their images in the DOM,
+  // shifted sideways; below-the-fold images still count, a scroll shows them.
   const broken = await page.evaluate(() =>
     [...document.images]
-      .filter((img) => img.naturalWidth === 0 && img.getClientRects().length)
+      .filter((img) => {
+        if (img.naturalWidth !== 0) return false;
+        if (!img.checkVisibility({ visibilityProperty: true })) return false;
+        const r = img.getBoundingClientRect();
+        return r.width > 0 && r.right > 0 && r.left < innerWidth;
+      })
       .map((img) => img.currentSrc || img.src),
   );
   if (broken.length)
@@ -245,6 +252,9 @@ try {
   await tutorial.default(rec);
 } catch (e) {
   failed = e;
+  await page
+    .screenshot({ path: join(out, `${name}.failure.png`) })
+    .catch(() => {});
 }
 const video = page.video();
 await context.close();
@@ -254,6 +264,7 @@ const webm = await video.path();
 if (failed) {
   rmSync(tmp, { recursive: true, force: true });
   console.error(`tutorial ${name} failed, no video written: ${failed.message}`);
+  console.error(`last frame: ${join(out, `${name}.failure.png`)}`);
   process.exit(1);
 }
 

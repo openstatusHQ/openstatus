@@ -165,6 +165,21 @@ re-seed to reset.
 - Not handled: avatar images from blocked hosts render as initials or alt
   text in the sandbox. Say so when it shows; do not chase it.
 
+## Walkthrough videos
+
+`node scripts/record.mjs <tutorial> [--theme dark]` drives the same seeded
+stack through a step file in `scripts/tutorials/` and writes
+`.recordings/<tutorial>.mp4` (gitignored). It fails without writing a video
+when an on-screen image does not load, and leaves
+`.recordings/<tutorial>.failure.png` with the last frame.
+
+- `create-monitor` saves only after the checker tests the URL: build and
+  run `apps/checker` (`FLY_REGION=ams CLOUD_PROVIDER=fly CRON_SECRET=x
+  PORT=8090`) and start the stack with `CHECKER_URL=http://localhost:8090
+  CRON_SECRET=x`.
+- Tutorials delete their own previous output first, so they re-run cleanly;
+  run them on a fresh `--reseed` and in series order for consistent videos.
+
 ## Rules
 
 - Shoot the element, not the viewport, unless layout is the question.
