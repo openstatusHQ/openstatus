@@ -123,12 +123,22 @@ describe("statusPage.get report order", () => {
       })
       .returning()
       .get();
-    const anotherNoUpdates = await db
+    const firstNoUpdates = await db
       .insert(statusReport)
       .values({
         workspaceId,
         pageId,
-        title: "Another without updates",
+        title: "First without updates",
+        status: "investigating",
+      })
+      .returning()
+      .get();
+    const secondNoUpdates = await db
+      .insert(statusReport)
+      .values({
+        workspaceId,
+        pageId,
+        title: "Second without updates",
         status: "investigating",
       })
       .returning()
@@ -154,8 +164,10 @@ describe("statusPage.get report order", () => {
     const ids = result?.statusReports.map((report) => report.id);
     expect(
       ids?.filter((id) =>
-        [first.id, second.id, anotherNoUpdates.id].includes(id),
+        [first.id, second.id, firstNoUpdates.id, secondNoUpdates.id].includes(
+          id,
+        ),
       ),
-    ).toEqual([anotherNoUpdates.id, second.id, first.id]);
+    ).toEqual([secondNoUpdates.id, firstNoUpdates.id, second.id, first.id]);
   });
 });
