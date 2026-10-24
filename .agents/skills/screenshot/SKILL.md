@@ -39,7 +39,7 @@ node scripts/screenshot.mjs --app dashboard /incidents/1 --user max@openstatus.d
 node scripts/dev-stack.mjs down      # when finished; stops only what `up` started
 ```
 
-`up` fetches pinned deno, sqld and agent-browser from npm when they are not
+`up` fetches pinned sqld and agent-browser from npm when they are not
 on PATH (the official download hosts are blocked in the sandbox; npm is
 not), creates the two `.env` files from their examples, starts sqld on
 :8080, migrates, seeds once (`--reseed` wipes and reseeds), starts the
@@ -73,7 +73,7 @@ it and the script sets it itself when unset. No `agent-browser install`.
    throwaway seeded one; pass `--db http://127.0.0.1:8099` and point the
    dashboard at it with `DATABASE_URL`.
 3. Auth, dashboard only. The seed (`pnpm --filter @openstatus/db seed`,
-   through `devbox run --` because of the deno pin) creates two maintainers
+   through `devbox run --`) creates two maintainers
    with sessions that expire in 2099: `max@openstatus.dev` (token
    `seed-session-max`, owner of workspace 1 `love-openstatus`) and
    `thibault@openstatus.dev` (token `seed-session-thibault`, admin of 1).
@@ -164,6 +164,28 @@ re-seed to reset.
   logo, `.tsqd-open-btn-container`) are hidden before the capture.
 - Not handled: avatar images from blocked hosts render as initials or alt
   text in the sandbox. Say so when it shows; do not chase it.
+
+## Walkthrough videos
+
+`node scripts/record.mjs <tutorial> [--theme dark]` drives the same seeded
+stack through a step file in `scripts/tutorials/` and writes
+`.recordings/<tutorial>.mp4` (gitignored). It fails without writing a video
+when an on-screen image does not load, and leaves
+`.recordings/<tutorial>.failure.png` with the last frame.
+
+- `create-monitor` saves only after the checker tests the URL: build and
+  run `apps/checker` (`FLY_REGION=ams CLOUD_PROVIDER=fly CRON_SECRET=x
+  PORT=8090`) and start the stack with `CHECKER_URL=http://localhost:8090
+  CRON_SECRET=x`.
+- Tutorials delete their own previous output first, so they re-run cleanly;
+  run them on a fresh `--reseed` and in series order for consistent videos.
+- `--remotion` captures at 2x without the in-page cursor and writes
+  `.recordings/<tutorial>/{video.mp4,timeline.json}` instead. `scripts/videos`
+  turns that into the edited cut (camera zoom, eased cursor, click ripples):
+  `pnpm --filter @openstatus/videos studio` to preview, `pnpm --filter
+  @openstatus/videos render <tutorial>` to export. In a cloud session pass
+  `--browser-executable` pointing at the Playwright headless shell under
+  `/opt/pw-browsers`; Remotion cannot download its own there.
 
 ## Rules
 

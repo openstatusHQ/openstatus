@@ -1,0 +1,8 @@
+{
+  "extends": "@openstatus/tsconfig/react-library.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM"],
+    "target": "ES2022"
+  },
+  "include": ["src", "remotion.config.ts"]
+}
