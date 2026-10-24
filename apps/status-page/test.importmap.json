@@ -5,6 +5,7 @@
     "./src/hooks/use-pathname-prefix.ts": "./src/test/use-pathname-prefix.mock.ts",
     "next/link": "./src/test/next-link.mock.tsx",
     "next/navigation": "./src/test/next-navigation.mock.ts",
-    "next-intl": "./src/test/next-intl.mock.tsx"
+    "next-intl": "./src/test/next-intl.mock.tsx",
+    "next-auth": "./src/test/next-auth.mock.ts"
   }
 }
