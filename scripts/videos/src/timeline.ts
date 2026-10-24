@@ -8,6 +8,7 @@ export type TimelineEvent =
   | { type: "click"; t: number; at: Point; box: Rect }
   | { type: "type"; t: number; t1: number; box: Rect; text: string }
   | { type: "step"; t: number; label: string }
+  | { type: "scroll"; t: number; t1: number; dy: number }
   | { type: "nav"; t: number; url: string };
 
 export type Timeline = {

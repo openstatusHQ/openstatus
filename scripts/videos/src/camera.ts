@@ -48,8 +48,10 @@ export function buildShots(
   for (const e of timeline.events) {
     if (e.type === "click") shots.push(focus(e.t, e.box, CLICK_ZOOM));
     if (e.type === "type") shots.push(focus(e.t, e.box, TYPE_ZOOM));
-    // A new page reads best in full before the next zoom.
+    // A new page reads best in full before the next zoom, and a scroll
+    // reads best from far enough out to see the page move.
     if (e.type === "nav") shots.push(overview(e.t + 0.3));
+    if (e.type === "scroll") shots.push(overview(e.t + 0.1));
   }
   shots.push(overview(Math.max(0, timeline.duration - 1.2)));
 

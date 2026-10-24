@@ -21,7 +21,7 @@ export const OUTRO = 3.4;
 export const FADE = 0.6;
 
 export type VideoProps = {
-  // Folder under .recordings, e.g. "create-monitor" or "create-monitor.dark".
+  // Folder under .recordings, e.g. "create-monitor".
   recording: string;
   tutorial: Tutorial;
   timeline: Timeline | null;

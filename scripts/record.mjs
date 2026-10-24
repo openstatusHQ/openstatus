@@ -215,10 +215,45 @@ page.on("framenavigated", (frame) => {
 
 const wait = (ms) => page.waitForTimeout(ms / speed);
 
+const easeInOut = (p) => (p < 0.5 ? 4 * p ** 3 : 1 - (-2 * p + 2) ** 3 / 2);
+
+// Real wheel steps on an ease-in-out curve: the page glides instead of
+// jumping, and the screencast catches every step.
+async function wheel(dy) {
+  const duration = Math.min(1.2, Math.max(0.4, 0.35 + Math.abs(dy) / 2000));
+  const steps = Math.max(8, Math.round(duration / 0.05));
+  let done = 0;
+  for (let i = 1; i <= steps; i++) {
+    const next = dy * easeInOut(i / steps);
+    await page.mouse.wheel(0, next - done);
+    done = next;
+    await page.waitForTimeout(16);
+  }
+}
+
+// Bring an element to the reading line by scrolling, never by a jump cut.
+async function scrollTo(locator) {
+  const margin = 96;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const box = await locator.boundingBox();
+    if (!box) break;
+    if (box.y >= margin && box.y + box.height <= height - margin) return;
+    const dy = box.y + box.height / 2 - height * 0.45;
+    const t = now();
+    await wheel(dy);
+    await page.waitForTimeout(150);
+    log({ type: "scroll", t, t1: now(), dy });
+    const after = await locator.boundingBox();
+    if (!after || Math.abs(after.y - box.y) < 1) break;
+  }
+  // Nested scroll areas the wheel cannot reach still get there, abruptly.
+  await locator.scrollIntoViewIfNeeded();
+}
+
 // Glide to the element's centre, so the viewer can follow the hand.
 async function moveTo(locator) {
   await locator.waitFor({ state: "visible" });
-  await locator.scrollIntoViewIfNeeded();
+  await scrollTo(locator);
   const box = await locator.boundingBox();
   const target = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   const distance = Math.hypot(target.x - mouse.x, target.y - mouse.y);

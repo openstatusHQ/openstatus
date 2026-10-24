@@ -19,6 +19,7 @@ function activity(timeline: Timeline): [number, number][] {
     switch (e.type) {
       case "move":
       case "type":
+      case "scroll":
         return [e.t, e.t1];
       case "click":
         return [e.t, e.t + 0.5];
