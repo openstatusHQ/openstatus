@@ -485,14 +485,12 @@ export const statusPageRouter = createTRPCRouter({
           a.statusReportUpdates.length === 0 &&
           b.statusReportUpdates.length === 0
         )
-          return 0;
+          return b.id - a.id;
         if (a.statusReportUpdates.length === 0) return -1;
-        if (b.statusReportUpdates.length === 0) return -1;
+        if (b.statusReportUpdates.length === 0) return 1;
         return (
-          b.statusReportUpdates[
-            b.statusReportUpdates.length - 1
-          ].date.getTime() -
-          a.statusReportUpdates[a.statusReportUpdates.length - 1].date.getTime()
+          b.statusReportUpdates[0].date.getTime() -
+            a.statusReportUpdates[0].date.getTime() || b.id - a.id
         );
       });
 
