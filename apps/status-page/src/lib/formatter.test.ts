@@ -11,8 +11,8 @@ import {
   formatTimestamp,
 } from "./formatter";
 
-// Timestamps must render in UTC so every viewer sees the authored time,
-// independent of their local timezone (see #2302).
+// Timestamps render in UTC unless a zone is given, never in the viewer's
+// local timezone, so every viewer sees the same time (see #2302).
 describe("formatter UTC rendering", () => {
   describe("formatDate", () => {
     test("renders the UTC day with a long month", () => {
