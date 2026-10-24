@@ -10,6 +10,7 @@ export default async function ({
   warm,
   goto,
   start,
+  step,
   click,
   wait,
   settle,
@@ -22,6 +23,7 @@ export default async function ({
 
   await goto(`/status-pages/${PAGE_ID}/edit`);
   await start();
+  step("Open the status page");
   await wait(1000);
 
   await click(
@@ -34,6 +36,7 @@ export default async function ({
   await settle();
   await wait(800);
 
+  step("Add your monitors as components");
   await click(page.getByRole("button", { name: "Add Component", exact: true }));
   await click(page.getByRole("menuitem", { name: "Add Monitor Component" }));
   for (const monitor of ["API", "Website", "Search"]) {
@@ -44,6 +47,7 @@ export default async function ({
   await page.keyboard.press("Escape");
   await wait(800);
 
+  step("Save to show them on the page");
   await click(page.getByRole("button", { name: "Submit" }).first());
   await wait(2500);
 }

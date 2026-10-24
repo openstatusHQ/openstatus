@@ -8,6 +8,7 @@ export default async function ({
   warm,
   goto,
   start,
+  step,
   click,
   type,
   wait,
@@ -22,6 +23,7 @@ export default async function ({
 
   await goto("/notifications");
   await start();
+  step("Pick a channel in Notifications");
   await wait(1200);
 
   await click(page.getByText("Send notifications to Email"));
@@ -29,16 +31,19 @@ export default async function ({
   await sheet.waitFor();
   await wait(500);
 
+  step("Where should alerts go?");
   await type(sheet.getByRole("textbox", { name: "Name" }), NAME);
   await type(
     sheet.getByRole("textbox", { name: "Email" }),
     "platform@acme.com",
   );
   await wait(400);
+  step("Choose the monitors to watch");
   for (const monitor of ["API", "Website", "Search"])
     await click(sheet.getByRole("checkbox", { name: monitor, exact: true }));
   await wait(500);
 
+  step("Save");
   await click(sheet.getByRole("button", { name: "Submit" }));
   await sheet.waitFor({ state: "hidden" });
   await wait(2500);

@@ -19,6 +19,7 @@ export default async function ({
   warm,
   goto,
   start,
+  step,
   click,
   type,
   wait,
@@ -34,6 +35,7 @@ export default async function ({
 
   await goto(`/status-pages/${PAGE_ID}/maintenances`);
   await start();
+  step("Plan ahead in Maintenances");
   await wait(1000);
 
   await click(page.getByRole("button", { name: "Create Maintenance" }));
@@ -42,6 +44,7 @@ export default async function ({
   await wait(500);
   await type(sheet.getByRole("textbox", { name: "Title" }), TITLE);
 
+  step("Pick the window");
   const day = targetDay();
   const monthsAhead = day.getMonth() - new Date().getMonth();
   for (const [field, time] of [
@@ -71,12 +74,14 @@ export default async function ({
     await wait(500);
   }
 
+  step("Explain the impact");
   await type(
     sheet.getByRole("textbox", { name: "Message" }),
     "We are upgrading our database. The API may be read-only for a few minutes.",
   );
   await click(sheet.getByRole("checkbox", { name: "API" }));
   await wait(400);
+  step("Schedule it");
   await click(sheet.getByRole("button", { name: "Submit" }));
   await sheet.waitFor({ state: "hidden" });
   await wait(2500);

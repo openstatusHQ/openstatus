@@ -8,6 +8,7 @@ export default async function ({
   warm,
   goto,
   start,
+  step,
   click,
   type,
   wait,
@@ -20,6 +21,7 @@ export default async function ({
 
   await goto("/status-pages");
   await start();
+  step("Open Status Pages");
   await wait(1200);
 
   await click(page.getByRole("link", { name: "Create Status Page" }).first());
@@ -27,14 +29,17 @@ export default async function ({
   await settle();
   await wait(800);
 
+  step("Give it a name, the slug follows");
   await type(page.getByPlaceholder("My Status Page"), "Acme Payments");
   await wait(600);
+  step("Tell visitors what it covers");
   await type(
     page.getByLabel("Description"),
     "Live status of Acme checkout and payouts.",
   );
   await wait(600);
 
+  step("Create it");
   await click(page.getByRole("button", { name: "Submit" }));
   await page.waitForURL(/\/status-pages\/\d+\/edit/);
   await page.waitForLoadState("networkidle");
