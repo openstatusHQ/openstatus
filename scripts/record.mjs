@@ -138,7 +138,13 @@ const cursorScript = () => {
 };
 
 const { chromium } = await loadPlaywright();
-const browser = await chromium.launch();
+// Chromium ignores HTTPS_PROXY; external images (avatars, favicons) need it.
+const proxy = process.env.HTTPS_PROXY ?? process.env.https_proxy;
+const browser = await chromium.launch(
+  proxy
+    ? { proxy: { server: proxy, bypass: "localhost,127.0.0.1" } }
+    : undefined,
+);
 const tmp = join(out, `.tmp-${process.pid}`);
 mkdirSync(tmp, { recursive: true });
 const context = await browser.newContext({
@@ -181,13 +187,33 @@ async function moveTo(locator) {
   mouse = target;
 }
 
+// A broken image in a tutorial is worse than no tutorial: fail the run.
+async function settle() {
+  await page.waitForFunction(
+    () => [...document.images].every((img) => img.complete),
+    null,
+    { timeout: 15000 },
+  );
+  const broken = await page.evaluate(() =>
+    [...document.images]
+      .filter((img) => img.naturalWidth === 0 && img.getClientRects().length)
+      .map((img) => img.currentSrc || img.src),
+  );
+  if (broken.length)
+    throw new Error(
+      `images failed to load:\n  ${[...new Set(broken)].join("\n  ")}`,
+    );
+}
+
 const rec = {
   page,
   sql,
   wait,
   moveTo,
+  settle,
   async goto(path) {
     await page.goto(path, { waitUntil: "networkidle" });
+    await settle();
   },
   async click(locator) {
     await moveTo(locator);
@@ -207,7 +233,8 @@ const rec = {
     for (const path of paths) await context.request.get(path);
   },
   // Mark where the video starts; everything before (login, first load) is cut.
-  start() {
+  async start() {
+    await settle();
     rec.startAt = (Date.now() - recordingStarted) / 1000;
   },
 };
@@ -223,6 +250,12 @@ const video = page.video();
 await context.close();
 await browser.close();
 const webm = await video.path();
+
+if (failed) {
+  rmSync(tmp, { recursive: true, force: true });
+  console.error(`tutorial ${name} failed, no video written: ${failed.message}`);
+  process.exit(1);
+}
 
 const file = join(out, `${name}${theme === "dark" ? ".dark" : ""}`);
 const ffmpeg = spawnSync("ffmpeg", [
@@ -249,8 +282,3 @@ if (ffmpeg.error || ffmpeg.status !== 0) {
   console.log(`${file}.webm`);
 } else console.log(`${file}.mp4`);
 rmSync(tmp, { recursive: true, force: true });
-
-if (failed) {
-  console.error(`tutorial ${name} failed: ${failed.message}`);
-  process.exit(1);
-}
