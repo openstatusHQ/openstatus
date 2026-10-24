@@ -19,12 +19,14 @@ import {
   ChartAreaPercentiles,
   ChartAreaPercentilesSkeleton,
 } from "../../../../../../components/chart/chart-area-percentiles";
+import { useStatusPage } from "../../../../../../components/status-page/floating-button";
 import { StatusBlankMonitors } from "../../../../../../components/status-page/status-blank";
 import { useTRPC } from "../../../../../../lib/trpc/client";
 
 export default function Page() {
   const { domain } = useParams<{ domain: string }>();
   const trpc = useTRPC();
+  const { timezone } = useStatusPage();
   const { data: page } = useQuery(
     trpc.statusPage.get.queryOptions({ slug: domain }),
   );
@@ -60,6 +62,7 @@ export default function Page() {
                       hour: "numeric",
                       minute: "numeric",
                       timeZoneName: "short",
+                      timeZone: timezone,
                     },
                   ),
                 })) ?? [];

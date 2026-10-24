@@ -4,6 +4,7 @@ import {
   StatusBlocksI18nProvider,
   type StatusBlocksLabels,
 } from "@openstatus/ui/components/blocks/status-i18n";
+import { timeZoneShortNames } from "@openstatus/utils";
 import { useExtracted, useLocale } from "next-intl";
 import { useMemo } from "react";
 
@@ -12,10 +13,9 @@ import {
   formatDateRange,
   formatDateRangeParts,
   formatDateTime,
+  formatTimestamp,
 } from "../../lib/formatter";
-
-// Status-page timestamps render in UTC; the suffix tells viewers which zone.
-const withUTC = (value: string) => `${value} (UTC)`;
+import { useStatusPage } from "../status-page/floating-button";
 
 /**
  * StatusBlocksProvider
@@ -35,9 +35,14 @@ export function StatusBlocksProvider({
 }) {
   const t = useExtracted();
   const locale = useLocale();
+  const { timezone } = useStatusPage();
 
-  const value = useMemo<StatusBlocksLabels>(
-    () => ({
+  const value = useMemo<StatusBlocksLabels>(() => {
+    // timestamps render in the page zone; the suffix names the zone as of
+    // each instant, since DST zones change their short name through the year
+    const withZone = (value: string, ...instants: Date[]) =>
+      `${value} (${timeZoneShortNames(timezone, locale, instants)})`;
+    return {
       systemStatus: {
         success: {
           long: t("All Systems Operational"),
@@ -113,20 +118,32 @@ export function StatusBlocksProvider({
       durationAcross: (duration: string) =>
         t("across {duration}", { duration }),
 
-      formatDate: (d: Date) => withUTC(formatDate(d, { locale })),
-      formatDateShort: (d: Date) => formatDate(d, { month: "short", locale }),
-      formatDateTime: (d: Date) => withUTC(formatDateTime(d, locale)),
+      formatDate: (d: Date) =>
+        withZone(formatDate(d, { locale, timeZone: timezone }), d),
+      formatDateShort: (d: Date) =>
+        formatDate(d, { month: "short", locale, timeZone: timezone }),
+      formatDateTime: (d: Date) =>
+        withZone(formatDateTime(d, locale, timezone), d),
+      // bar keys are calendar dates stored as UTC midnight, so no zone here
+      formatDay: (day: string) =>
+        formatDate(new Date(day), { month: "short", locale }),
+      formatTimestamp: (d: Date) => withZone(formatTimestamp(d, timezone), d),
       formatDateRange: (from?: Date, to?: Date) => {
-        const range = formatDateRange(from, to, locale);
-        return from || to ? withUTC(range) : range;
+        const range = formatDateRange(from, to, locale, timezone);
+        const instants = [from, to].filter((d): d is Date => d !== undefined);
+        return instants.length > 0 ? withZone(range, ...instants) : range;
       },
       formatDateRangeParts: (from: Date, to: Date) => {
-        const { from: start, to: end } = formatDateRangeParts(from, to, locale);
-        return { from: start, to: withUTC(end) };
+        const { from: start, to: end } = formatDateRangeParts(
+          from,
+          to,
+          locale,
+          timezone,
+        );
+        return { from: start, to: withZone(end, from, to) };
       },
-    }),
-    [t, locale],
-  );
+    };
+  }, [t, locale, timezone]);
 
   return (
     <StatusBlocksI18nProvider value={value}>
