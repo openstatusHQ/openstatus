@@ -84,7 +84,10 @@ export function DropdownPeriod() {
                   className="data-[locked=true]:opacity-70"
                 >
                   {label}
-                  {locked ? <Lock className="ml-auto shrink-0" /> : null}
+                  {/* children sit inside ItemText, so take the indicator's slot instead of ml-auto */}
+                  {locked && period !== value ? (
+                    <Lock className="absolute right-2" />
+                  ) : null}
                 </SelectItem>
               );
             })}

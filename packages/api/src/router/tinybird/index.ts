@@ -18,12 +18,12 @@ const types = ["http", "tcp", "dns", "icmp", "grpc"] as const;
 type Period = (typeof periods)[number];
 type Type = (typeof types)[number];
 
-// 30d/90d windows are paid-only; free workspaces are blocked server-side.
+// Free workspaces only get up to 7d; longer windows are blocked server-side.
 function assertPaidPeriod(plan: string, period: Period) {
-  if (plan === "free" && (period === "30d" || period === "90d")) {
+  if (plan === "free" && period !== "1d" && period !== "7d") {
     throw new TRPCError({
       code: "FORBIDDEN",
-      message: "Upgrade to a paid plan to access 30d and 90d data",
+      message: "Upgrade to a paid plan to access more than 7 days of data",
     });
   }
 }
@@ -40,9 +40,37 @@ const periodToMinInterval: Record<Period, number> = {
   "90d": 1440,
 };
 
+// Coarsest useful resolution per period — mirrors the dashboard's periodToMaxInterval.
+const periodToMaxInterval: Record<Period, number> = {
+  "1d": 240,
+  "7d": 1440,
+  "14d": 1440,
+  "30d": 1440,
+  "90d": 1440,
+};
+
 function clampInterval(period: Period, interval?: number) {
   if (interval == null) return interval;
-  return Math.max(interval, periodToMinInterval[period]);
+  return Math.min(
+    Math.max(interval, periodToMinInterval[period]),
+    periodToMaxInterval[period],
+  );
+}
+
+// latency pipes read fixed-window MVs (14d → 30d, 1d/7d → 14d, dns 1d → 7d)
+// and ignore the dates, so trim to the requested window here
+function trimToWindow<T extends { timestamp: number }>(
+  rows: T[],
+  fromDate?: string,
+  toDate?: string,
+) {
+  const from = fromDate ? new Date(fromDate).getTime() : undefined;
+  const to = toDate ? new Date(toDate).getTime() : undefined;
+  return rows.filter(
+    (row) =>
+      (from === undefined || row.timestamp >= from) &&
+      (to === undefined || row.timestamp <= to),
+  );
 }
 
 // NEW: workspace-level counters helper
@@ -563,8 +591,9 @@ export const tinybirdRouter = createTRPCRouter({
         period: z.enum(periods),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         type: z.enum(types).prefault("http"),
-        fromDate: z.string().optional(),
-        toDate: z.string().optional(),
+        interval: z.int().optional(),
+        fromDate: z.iso.datetime().optional(),
+        toDate: z.iso.datetime().optional(),
       }),
     )
     .query(async (opts) => {
@@ -590,11 +619,20 @@ export const tinybirdRouter = createTRPCRouter({
 
       assertPaidPeriod(opts.ctx.workspace.plan, opts.input.period);
 
+      opts.input.interval = clampInterval(
+        opts.input.period,
+        opts.input.interval,
+      );
+
       const procedure = getMetricsLatencyProcedure(
         opts.input.period,
         opts.input.type,
       );
-      return await procedure(opts.input);
+      const result = await procedure(opts.input);
+      return {
+        ...result,
+        data: trimToWindow(result.data, opts.input.fromDate, opts.input.toDate),
+      };
     }),
 
   metricsTimingPhases: protectedProcedure
@@ -605,6 +643,8 @@ export const tinybirdRouter = createTRPCRouter({
         interval: z.int().optional(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         type: z.literal("http"),
+        fromDate: z.iso.datetime().optional(),
+        toDate: z.iso.datetime().optional(),
       }),
     )
     .query(async (opts) => {
@@ -647,7 +687,11 @@ export const tinybirdRouter = createTRPCRouter({
         });
       }
 
-      return await procedure(opts.input);
+      const result = await procedure(opts.input);
+      return {
+        ...result,
+        data: trimToWindow(result.data, opts.input.fromDate, opts.input.toDate),
+      };
     }),
 
   workspace30d: protectedProcedure

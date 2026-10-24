@@ -16,6 +16,7 @@
  *   - apps/server/src/routes/mcp/tools/status-report.ts
  *   - apps/server/src/routes/mcp/tools/maintenance.ts
  *   - apps/server/src/routes/mcp/tools/incident.ts
+ *   - packages/services/src/agent-tools/workspace.ts (get_workspace)
  *
  * When you edit a description, input shape, or required field in any
  * of those files, edit it here too — drift is silent because evals
@@ -53,6 +54,25 @@ const statusEnum = z.enum([
 ]);
 
 const tools = {
+  get_workspace: tool({
+    description:
+      "The current workspace: name, slug, plan, trial end and usage counts for monitors, status pages, components, notification channels and status reports. Use to answer which-plan or how-many questions. Plan limits and billing identifiers are NOT exposed.",
+    inputSchema: z.object({}),
+    execute: async () => ({
+      id: 1,
+      slug: "acme",
+      name: "Acme",
+      plan: "team",
+      trialEndsAt: null,
+      usage: {
+        monitors: 0,
+        statusPages: 0,
+        pageComponents: 0,
+        notificationChannels: 0,
+        statusReports: 0,
+      },
+    }),
+  }),
   list_status_pages: tool({
     description:
       "List status pages in this workspace with their slug and ids. Use to discover the pageId required by create_status_report and create_maintenance.",

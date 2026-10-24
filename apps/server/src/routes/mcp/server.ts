@@ -12,6 +12,7 @@ import { registerNotificationTools } from "./tools/notification";
 import { registerPageTools } from "./tools/page";
 import { registerPrivateLocationTools } from "./tools/private-location";
 import { registerStatusReportTools } from "./tools/status-report";
+import { registerWorkspaceTools } from "./tools/workspace";
 
 /**
  * Build a fresh `McpServer` for this request. Each tool registration
@@ -37,6 +38,7 @@ export function createMcpServer(ctx: ServiceContext): McpServer {
   registerMonitorTools(server, ctx);
   registerNotificationTools(server, ctx);
   registerPrivateLocationTools(server, ctx);
+  registerWorkspaceTools(server, ctx);
   registerAuditTools(server, ctx);
   registerContentTools(server, ctx);
   return server;

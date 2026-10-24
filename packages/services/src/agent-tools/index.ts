@@ -47,6 +47,7 @@ import {
   updateStatusReportUpdateTool,
 } from "./status-report";
 import type { AnyAgentTool } from "./types";
+import { getWorkspaceTool } from "./workspace";
 
 export { getAuditLogTool, listAuditLogsTool } from "./audit";
 export { getContentPageTool, searchContentTool } from "./content";
@@ -82,6 +83,7 @@ export { listNotificationsTool } from "./notification";
 export { listStatusPagesTool } from "./page";
 export { listPageComponentsTool } from "./page-component";
 export { listPrivateLocationsTool } from "./private-location";
+export { getWorkspaceTool } from "./workspace";
 export {
   addStatusReportUpdateTool,
   createStatusReportTool,
@@ -152,6 +154,7 @@ export const agentTools = {
   get_response_log: getResponseLogTool,
   list_notifications: listNotificationsTool,
   list_private_locations: listPrivateLocationsTool,
+  get_workspace: getWorkspaceTool,
   list_audit_logs: listAuditLogsTool,
   get_audit_log: getAuditLogTool,
   search_docs: searchDocsTool,

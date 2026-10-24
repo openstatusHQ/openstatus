@@ -47,7 +47,7 @@ export function IncidentRowActions({ incident }: { incident: Incident }) {
       <QuickActions
         actions={actions}
         deleteAction={{
-          confirmationValue: incident.title || "incident",
+          confirmationValue: incident.title || "downtime",
           submitAction: async () => {
             await deleteIncidentMutation.mutateAsync({
               id: incident.id,

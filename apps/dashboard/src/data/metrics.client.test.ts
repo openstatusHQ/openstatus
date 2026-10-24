@@ -17,7 +17,8 @@ describe("isPaidPeriod", () => {
   it("gates only the long periods", () => {
     expect(isPaidPeriod("30d")).toBe(true);
     expect(isPaidPeriod("90d")).toBe(true);
-    expect(isPaidPeriod("14d")).toBe(false);
+    expect(isPaidPeriod("14d")).toBe(true);
+    expect(isPaidPeriod("7d")).toBe(false);
     expect(isPaidPeriod("1d")).toBe(false);
   });
 });

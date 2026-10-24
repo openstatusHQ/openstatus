@@ -20,6 +20,7 @@ import { getMonitorStatusTable } from "./get-monitor-status";
 import { getMonitorSummaryDetails } from "./get-monitor-summary";
 import { getResponseLogDetails } from "./get-response-log";
 import { getStatusReportDetails } from "./get-status-report";
+import { getWorkspaceDetails } from "./get-workspace";
 import {
   declareIncidentChanges,
   getIncidentDetails,
@@ -317,6 +318,12 @@ export const toolRenderers: ToolRendererRegistry = {
       <DetailsTable {...getResponseLogDetails(input, output)} />
     ),
     summary: (o) => (o.id ? `log ${o.id}` : undefined),
+  },
+  get_workspace: {
+    renderResult: ({ output }) => (
+      <DetailsTable {...getWorkspaceDetails(output)} />
+    ),
+    summary: (o) => `${o.slug} · ${o.plan}`,
   },
   list_audit_logs: {
     renderResult: ({ output }) => (
