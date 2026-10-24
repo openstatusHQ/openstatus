@@ -1,35 +1,31 @@
 import { Composition, staticFile } from "remotion";
 
 import type { Timeline } from "./timeline";
-import { Walkthrough, type WalkthroughProps } from "./walkthrough";
+import { tutorials } from "./tutorials";
+import { Video, totalSeconds, type VideoProps } from "./video";
 
-// Record first: node scripts/record.mjs <name> --remotion [--theme dark]
-const TUTORIALS = [
-  "create-status-page",
-  "create-monitor",
-  "connect-monitors",
-  "post-status-report",
-  "schedule-maintenance",
-  "set-up-alerts",
-];
-
+// Record first: node scripts/record.mjs <id> --remotion [--theme dark]
 export function RemotionRoot() {
   return (
     <>
-      {TUTORIALS.flatMap((name) =>
+      {tutorials.flatMap((tutorial) =>
         (["light", "dark"] as const).map((theme) => (
           <Composition
-            key={`${name}-${theme}`}
-            id={theme === "dark" ? `${name}-dark` : name}
-            component={Walkthrough}
+            key={`${tutorial.id}-${theme}`}
+            id={theme === "dark" ? `${tutorial.id}-dark` : tutorial.id}
+            component={Video}
             width={1920}
-            height={1200}
+            height={1080}
             fps={30}
             durationInFrames={1}
-            defaultProps={{
-              recording: theme === "dark" ? `${name}.dark` : name,
-              timeline: null,
-            }}
+            defaultProps={
+              {
+                recording:
+                  theme === "dark" ? `${tutorial.id}.dark` : tutorial.id,
+                tutorial,
+                timeline: null,
+              } satisfies VideoProps
+            }
             calculateMetadata={async ({ props }) => {
               const res = await fetch(
                 staticFile(`${props.recording}/timeline.json`),
@@ -37,8 +33,10 @@ export function RemotionRoot() {
               const timeline = (await res.json()) as Timeline;
               return {
                 fps: timeline.fps,
-                durationInFrames: Math.ceil(timeline.duration * timeline.fps),
-                props: { ...props, timeline } satisfies WalkthroughProps,
+                durationInFrames: Math.ceil(
+                  totalSeconds(timeline) * timeline.fps,
+                ),
+                props: { ...props, timeline },
               };
             }}
           />

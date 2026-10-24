@@ -2,10 +2,14 @@ import { Easing } from "remotion";
 
 import { eventsOf, type Rect, type Timeline } from "./timeline";
 
+// Camera position in scene pixels; zoom 1 shows the whole scene.
 export type Shot = { t: number; x: number; y: number; zoom: number };
+export type Bounds = { width: number; height: number };
+// Maps a point of the recorded viewport into the scene.
+export type Project = (x: number, y: number) => [number, number];
 
-const CLICK_ZOOM = 1.6;
-const TYPE_ZOOM = 2;
+const CLICK_ZOOM = 1.8;
+const TYPE_ZOOM = 2.2;
 // Longest glide between two shots; shorter when the shots are closer.
 const TRAVEL = 0.9;
 // Shots closer than this collapse into the later one, so the camera does not
@@ -14,24 +18,36 @@ const MIN_GAP = 0.35;
 
 const ease = Easing.bezier(0.65, 0, 0.35, 1);
 
-// Zoom in, but never so far that the target no longer fits the frame.
-function focus(t: number, [x, y, w, h]: Rect, max: number, timeline: Timeline) {
-  const { width, height } = timeline.viewport;
-  const zoom = Math.max(
-    1,
-    Math.min(max, (0.7 * width) / w, (0.7 * height) / h),
-  );
-  return { t, x: x + w / 2, y: y + h / 2, zoom };
-}
-
-export function buildShots(timeline: Timeline): Shot[] {
-  const { width, height } = timeline.viewport;
-  const overview = (t: number) => ({ t, x: width / 2, y: height / 2, zoom: 1 });
+export function buildShots(
+  timeline: Timeline,
+  scene: Bounds,
+  project: Project,
+  scale: number,
+): Shot[] {
+  const overview = (t: number) => ({
+    t,
+    x: scene.width / 2,
+    y: scene.height / 2,
+    zoom: 1,
+  });
+  // Zoom in, but never so far that the target no longer fits the frame.
+  const focus = (t: number, [x, y, w, h]: Rect, max: number): Shot => {
+    const [cx, cy] = project(x + w / 2, y + h / 2);
+    const zoom = Math.max(
+      1,
+      Math.min(
+        max,
+        (0.7 * scene.width) / (w * scale),
+        (0.7 * scene.height) / (h * scale),
+      ),
+    );
+    return { t, x: cx, y: cy, zoom };
+  };
 
   const shots: Shot[] = [overview(0)];
   for (const e of timeline.events) {
-    if (e.type === "click") shots.push(focus(e.t, e.box, CLICK_ZOOM, timeline));
-    if (e.type === "type") shots.push(focus(e.t, e.box, TYPE_ZOOM, timeline));
+    if (e.type === "click") shots.push(focus(e.t, e.box, CLICK_ZOOM));
+    if (e.type === "type") shots.push(focus(e.t, e.box, TYPE_ZOOM));
     // A new page reads best in full before the next zoom.
     if (e.type === "nav") shots.push(overview(e.t + 0.3));
   }
@@ -49,9 +65,8 @@ function clamp(v: number, lo: number, hi: number) {
 }
 
 // The camera holds each shot, then glides into the next one so it arrives
-// exactly when that event happens.
-export function cameraAt(shots: Shot[], t: number, timeline: Timeline): Shot {
-  const { width, height } = timeline.viewport;
+// exactly when that event happens. Times are recording (source) seconds.
+export function cameraAt(shots: Shot[], t: number, scene: Bounds): Shot {
   let i = 0;
   while (i + 1 < shots.length && shots[i + 1].t <= t) i++;
   const from = shots[i];
@@ -73,12 +88,12 @@ export function cameraAt(shots: Shot[], t: number, timeline: Timeline): Shot {
     }
   }
 
-  const halfW = width / (2 * shot.zoom);
-  const halfH = height / (2 * shot.zoom);
+  const halfW = scene.width / (2 * shot.zoom);
+  const halfH = scene.height / (2 * shot.zoom);
   return {
     ...shot,
-    x: clamp(shot.x, halfW, width - halfW),
-    y: clamp(shot.y, halfH, height - halfH),
+    x: clamp(shot.x, halfW, scene.width - halfW),
+    y: clamp(shot.y, halfH, scene.height - halfH),
   };
 }
 
@@ -98,4 +113,10 @@ export function cursorAt(timeline: Timeline, t: number): [number, number] {
     }
   }
   return moves.filter((m) => m.t1 <= t).at(-1)?.to ?? moves[0].from;
+}
+
+export function stepAt(timeline: Timeline, t: number) {
+  return eventsOf(timeline, "step")
+    .filter((s) => s.t <= t)
+    .at(-1);
 }

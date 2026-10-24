@@ -2,7 +2,11 @@
   "extends": "@openstatus/tsconfig/react-library.json",
   "compilerOptions": {
     "lib": ["ES2023", "DOM"],
-    "target": "ES2022"
+    "target": "ES2022",
+    "paths": {
+      "@fonts/geist/*": ["./node_modules/geist/dist/fonts/*"],
+      "@fonts/dashboard/*": ["../../apps/dashboard/public/fonts/*"]
+    }
   },
   "include": ["src", "remotion.config.ts"]
 }

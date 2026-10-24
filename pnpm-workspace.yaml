@@ -164,6 +164,7 @@ catalog:
   drizzle-zod: 0.8.3
   effect: 4.0.0-rc.117
   feed: 4.2.2
+  geist: 1.7.2
   gray-matter: 4.0.3
   hono: 4.13.8
   hono-rate-limiter: 0.4.2

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@remotion/cli": "catalog:",
+    "geist": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "remotion": "catalog:"

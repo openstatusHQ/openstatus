@@ -181,8 +181,11 @@ when an on-screen image does not load, and leaves
   run them on a fresh `--reseed` and in series order for consistent videos.
 - `--remotion` captures at 2x without the in-page cursor and writes
   `.recordings/<tutorial>/{video.mp4,timeline.json}` instead. `scripts/videos`
-  turns that into the edited cut (camera zoom, eased cursor, click ripples):
-  `pnpm --filter @openstatus/videos studio` to preview, `pnpm --filter
+  turns that into the edited cut: shared intro and outro, the recording in a
+  window under a camera that follows the clicks, `step()` captions, and idle
+  stretches sped up. Per-tutorial copy lives in
+  `scripts/videos/src/tutorials.ts`. `pnpm --filter @openstatus/videos
+  studio` to preview, `pnpm --filter
   @openstatus/videos render <tutorial>` to export. In a cloud session pass
   `--browser-executable` pointing at the Playwright headless shell under
   `/opt/pw-browsers`; Remotion cannot download its own there.
