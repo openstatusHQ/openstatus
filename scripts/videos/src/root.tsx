@@ -2,7 +2,7 @@ import { Composition, staticFile } from "remotion";
 
 import type { Timeline } from "./timeline";
 import { tutorials } from "./tutorials";
-import { Video, totalSeconds, type VideoProps } from "./video";
+import { Video, totalFrames, type VideoProps } from "./video";
 
 // Record first: node scripts/record.mjs <id> --remotion
 export function RemotionRoot() {
@@ -31,9 +31,7 @@ export function RemotionRoot() {
             const timeline = (await res.json()) as Timeline;
             return {
               fps: timeline.fps,
-              durationInFrames: Math.ceil(
-                totalSeconds(timeline) * timeline.fps,
-              ),
+              durationInFrames: totalFrames(timeline, timeline.fps),
               props: { ...props, timeline },
             };
           }}

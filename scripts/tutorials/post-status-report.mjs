@@ -15,8 +15,9 @@ export default async function ({
   type,
   wait,
   settle,
+  expect,
 }) {
-  const ids = `select id from status_report where title = '${TITLE}'`;
+  const ids = `select id from status_report where title = '${TITLE}' and page_id = ${PAGE_ID}`;
   await sql([
     `delete from status_report_update_to_page_component where status_report_update_id in (select id from status_report_update where status_report_id in (${ids}))`,
     `delete from status_report_update where status_report_id in (${ids})`,
@@ -72,5 +73,6 @@ export default async function ({
   await click(page.getByRole("option", { name: /resolved/i }));
   await type(composer, "Certificate renewed, payments work again.");
   await click(publish);
-  await wait(2500);
+  await expect("Update published");
+  await wait(2000);
 }

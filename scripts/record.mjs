@@ -10,28 +10,36 @@
 // Tutorials live in scripts/tutorials/<name>.mjs. Needs the seeded stack from
 // `node scripts/dev-stack.mjs up`; writes .recordings/<name>[.dark].mp4.
 // --remotion captures at 2x without the in-page cursor and writes
-// .recordings/<name>[.dark]/{video.mp4,timeline.json} for scripts/videos.
+// .recordings/remotion/<name>/{video.mp4,timeline.json} for scripts/videos.
+// Tutorials reset their own rows, so only a local database is accepted.
 
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const tutorialsDir = join(repo, "scripts", "tutorials");
 
+const BOOLEAN_FLAGS = new Set(["remotion", "no-cursor", "list"]);
 const args = process.argv.slice(2);
 const flags = {};
 const names = [];
 for (let i = 0; i < args.length; i++) {
   const a = args[i];
   if (a.startsWith("--")) {
+    const key = a.slice(2);
     const next = args[i + 1];
-    if (next === undefined || next.startsWith("--")) flags[a.slice(2)] = true;
-    else flags[a.slice(2)] = args[++i];
+    if (BOOLEAN_FLAGS.has(key) || next === undefined || next.startsWith("--"))
+      flags[key] = true;
+    else flags[key] = args[++i];
   } else names.push(a);
 }
+const fail = (message) => {
+  console.error(message);
+  process.exit(2);
+};
 
 const available = readdirSync(tutorialsDir)
   .filter((f) => f.endsWith(".mjs"))
@@ -45,12 +53,24 @@ if (flags.list || names.length !== 1 || !available.includes(names[0])) {
 const name = names[0];
 const base = (flags.base ?? "http://localhost:3001").replace(/\/$/, "");
 const db = flags.db ?? "http://127.0.0.1:8080";
-const theme = flags.theme === "dark" ? "dark" : "light";
-const width = Number(flags.width ?? 1440);
-const height = Number(flags.height ?? 900);
-const speed = Number(flags.speed ?? 1);
+if (!["localhost", "127.0.0.1"].includes(new URL(db).hostname))
+  fail(`refusing non-local database ${db}: tutorials delete their own rows`);
+const theme = flags.theme ?? "light";
+if (theme !== "light" && theme !== "dark")
+  fail(`--theme must be light or dark, got ${theme}`);
+const positive = (key, fallback) => {
+  const value = Number(flags[key] ?? fallback);
+  if (!Number.isFinite(value) || value <= 0)
+    fail(`--${key} must be a positive number, got ${flags[key]}`);
+  return value;
+};
+const width = positive("width", 1440);
+const height = positive("height", 900);
+const speed = positive("speed", 1);
 const remotion = Boolean(flags.remotion);
-const scale = Number(flags.scale ?? (remotion ? 2 : 1));
+// scripts/videos only has light compositions.
+if (remotion && theme === "dark") fail("--remotion records light mode only");
+const scale = positive("scale", remotion ? 2 : 1);
 const showCursor = !remotion && !flags["no-cursor"];
 const fps = 30;
 const out = resolve(flags.out ?? ".recordings");
@@ -219,16 +239,30 @@ const easeInOut = (p) => (p < 0.5 ? 4 * p ** 3 : 1 - (-2 * p + 2) ** 3 / 2);
 
 // Real wheel steps on an ease-in-out curve: the page glides instead of
 // jumping, and the screencast catches every step.
+// Paced by the clock, not a step count: each wheel call costs tens of ms.
 async function wheel(dy) {
-  const duration = Math.min(1.2, Math.max(0.4, 0.35 + Math.abs(dy) / 2000));
-  const steps = Math.max(8, Math.round(duration / 0.05));
+  const duration =
+    (Math.min(1.2, Math.max(0.4, 0.35 + Math.abs(dy) / 2000)) * 1000) / speed;
+  const started = Date.now();
   let done = 0;
-  for (let i = 1; i <= steps; i++) {
-    const next = dy * easeInOut(i / steps);
+  while (done !== dy) {
+    const p = Math.min(1, (Date.now() - started) / duration);
+    const next = p === 1 ? dy : dy * easeInOut(p);
     await page.mouse.wheel(0, next - done);
     done = next;
     await page.waitForTimeout(16);
   }
+}
+
+// Glide in a straight line and log it, so the Remotion cursor follows.
+async function glide(x, y) {
+  const distance = Math.hypot(x - mouse.x, y - mouse.y);
+  const t = now();
+  await page.mouse.move(x, y, {
+    steps: Math.max(10, Math.round(distance / 12)),
+  });
+  log({ type: "move", t, t1: now(), from: [mouse.x, mouse.y], to: [x, y] });
+  mouse = { x, y };
 }
 
 // Bring an element to the reading line by scrolling, never by a jump cut.
@@ -239,6 +273,11 @@ async function scrollTo(locator) {
     if (!box) break;
     if (box.y >= margin && box.y + box.height <= height - margin) return;
     const dy = box.y + box.height / 2 - height * 0.45;
+    // The wheel scrolls whatever is under the pointer: bring it over the
+    // target's column first, so a sidebar or popover does not take the scroll.
+    const x = Math.min(width - 24, Math.max(24, box.x + box.width / 2));
+    if (Math.abs(x - mouse.x) > 48)
+      await glide(x, Math.min(height - 120, Math.max(120, mouse.y)));
     const t = now();
     await wheel(dy);
     await page.waitForTimeout(150);
@@ -255,20 +294,7 @@ async function moveTo(locator) {
   await locator.waitFor({ state: "visible" });
   await scrollTo(locator);
   const box = await locator.boundingBox();
-  const target = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-  const distance = Math.hypot(target.x - mouse.x, target.y - mouse.y);
-  const t = now();
-  await page.mouse.move(target.x, target.y, {
-    steps: Math.max(10, Math.round(distance / 12)),
-  });
-  log({
-    type: "move",
-    t,
-    t1: now(),
-    from: [mouse.x, mouse.y],
-    to: [target.x, target.y],
-  });
-  mouse = target;
+  await glide(box.x + box.width / 2, box.y + box.height / 2);
   return box;
 }
 
@@ -326,6 +352,10 @@ const rec = {
     log({ type: "type", t, t1: now(), box: rect(box), text });
     await wait(300);
   },
+  // Fail the run unless the app confirms the action, e.g. a "Saved" toast.
+  async expect(text) {
+    await page.getByText(text, { exact: true }).first().waitFor();
+  },
   // Caption for what follows; ignored by the plain MP4.
   step(label) {
     log({ type: "step", t: now(), label });
@@ -341,15 +371,22 @@ const rec = {
   },
 };
 
-const tutorial = await import(join(tutorialsDir, `${name}.mjs`));
+const stem = `${name}${theme === "dark" ? ".dark" : ""}`;
+const failureShot = join(out, `${stem}.failure.png`);
+rmSync(failureShot, { force: true });
 let failed = null;
+let shot = false;
 try {
+  const tutorial = await import(
+    pathToFileURL(join(tutorialsDir, `${name}.mjs`)).href
+  );
   await tutorial.default(rec);
 } catch (e) {
   failed = e;
-  await page
-    .screenshot({ path: join(out, `${name}.failure.png`) })
-    .catch(() => {});
+  shot = await page
+    .screenshot({ path: failureShot })
+    .then(() => true)
+    .catch(() => false);
 }
 await cdp.send("Page.stopScreencast").catch(() => {});
 const endAt = now();
@@ -359,7 +396,7 @@ await browser.close();
 if (failed) {
   rmSync(tmp, { recursive: true, force: true });
   console.error(`tutorial ${name} failed, no video written: ${failed.message}`);
-  console.error(`last frame: ${join(out, `${name}.failure.png`)}`);
+  if (shot) console.error(`last frame: ${failureShot}`);
   process.exit(1);
 }
 
@@ -379,8 +416,7 @@ lines.push(`file '${shown.at(-1).file}'`);
 const list = join(tmp, "frames.txt");
 writeFileSync(list, lines.join("\n"));
 
-const stem = `${name}${theme === "dark" ? ".dark" : ""}`;
-const dir = remotion ? join(out, stem) : out;
+const dir = remotion ? join(out, "remotion", stem) : out;
 mkdirSync(dir, { recursive: true });
 const file = remotion ? join(dir, "video.mp4") : join(dir, `${stem}.mp4`);
 const ffmpeg = spawnSync("ffmpeg", [
@@ -405,6 +441,7 @@ const ffmpeg = spawnSync("ffmpeg", [
 ]);
 rmSync(tmp, { recursive: true, force: true });
 if (ffmpeg.error || ffmpeg.status !== 0) {
+  rmSync(file, { force: true });
   console.error(
     `ffmpeg failed: ${ffmpeg.error?.message ?? ffmpeg.stderr?.toString()}`,
   );

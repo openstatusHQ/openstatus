@@ -15,8 +15,14 @@ export default async function ({
   type,
   wait,
   settle,
+  expect,
 }) {
-  await sql([{ q: "delete from monitor where name = ?", params: [NAME] }]);
+  await sql([
+    {
+      q: "delete from monitor where name = ? and workspace_id = 1",
+      params: [NAME],
+    },
+  ]);
 
   await warm(["/monitors/create", "/monitors/1/edit"]);
 
@@ -60,5 +66,6 @@ export default async function ({
   await click(europe);
   await wait(500);
   await click(regions.getByRole("button", { name: "Submit" }));
-  await wait(2500);
+  await expect("Saved");
+  await wait(2000);
 }

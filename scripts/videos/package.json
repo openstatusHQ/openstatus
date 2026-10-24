@@ -4,9 +4,10 @@
   "private": true,
   "description": "Remotion compositions over the walkthroughs recorded by scripts/record.mjs --remotion",
   "scripts": {
-    "studio": "remotion studio",
+    "check": "tsc --noEmit",
     "render": "remotion render",
-    "check": "tsc --noEmit"
+    "studio": "remotion studio",
+    "test": "vitest run"
   },
   "dependencies": {
     "@remotion/cli": "catalog:",
@@ -16,8 +17,10 @@
     "remotion": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@types/react": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

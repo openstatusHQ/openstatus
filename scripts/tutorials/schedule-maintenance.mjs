@@ -23,8 +23,9 @@ export default async function ({
   click,
   type,
   wait,
+  expect,
 }) {
-  const ids = `select id from maintenance where title = '${TITLE}'`;
+  const ids = `select id from maintenance where title = '${TITLE}' and page_id = ${PAGE_ID}`;
   await sql([
     `delete from maintenance_update where maintenance_id in (${ids})`,
     `delete from maintenance_to_page_component where maintenance_id in (${ids})`,
@@ -84,5 +85,6 @@ export default async function ({
   step("Schedule it");
   await click(sheet.getByRole("button", { name: "Submit" }));
   await sheet.waitFor({ state: "hidden" });
-  await wait(2500);
+  await expect("Saved");
+  await wait(2000);
 }

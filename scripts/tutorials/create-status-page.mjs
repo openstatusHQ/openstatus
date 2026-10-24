@@ -13,9 +13,15 @@ export default async function ({
   type,
   wait,
   settle,
+  expect,
 }) {
   // Re-runs would otherwise hit the slug-uniqueness check.
-  await sql([{ q: "delete from page where slug = ?", params: [SLUG] }]);
+  await sql([
+    {
+      q: "delete from page where slug = ? and workspace_id = 1",
+      params: [SLUG],
+    },
+  ]);
 
   await warm(["/status-pages/create", "/status-pages/1/edit"]);
 
@@ -44,5 +50,6 @@ export default async function ({
   await page.waitForURL(/\/status-pages\/\d+\/edit/);
   await page.waitForLoadState("networkidle");
   await settle();
-  await wait(2500);
+  await expect("Saved");
+  await wait(2000);
 }

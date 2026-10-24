@@ -12,8 +12,9 @@ export default async function ({
   click,
   type,
   wait,
+  expect,
 }) {
-  const ids = `select id from notification where name = '${NAME}'`;
+  const ids = `select id from notification where name = '${NAME}' and workspace_id = 1`;
   await sql([
     `delete from notifications_to_monitors where notification_id in (${ids})`,
     `delete from notification where id in (${ids})`,
@@ -46,5 +47,6 @@ export default async function ({
   step("Save");
   await click(sheet.getByRole("button", { name: "Submit" }));
   await sheet.waitFor({ state: "hidden" });
-  await wait(2500);
+  await expect("Saved");
+  await wait(2000);
 }

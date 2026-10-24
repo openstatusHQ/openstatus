@@ -9,7 +9,7 @@ import {
 
 import { palette } from "./brand";
 import "./fonts";
-import { buildSegments, pacedDuration } from "./pacing";
+import { buildSegments, pacedDuration, type Segment } from "./pacing";
 import { Scene } from "./scene";
 import type { Timeline } from "./timeline";
 import { Intro, Outro } from "./titles";
@@ -27,9 +27,28 @@ export type VideoProps = {
   timeline: Timeline | null;
 };
 
-export function totalSeconds(timeline: Timeline) {
-  return INTRO + pacedDuration(buildSegments(timeline)) + OUTRO - 2 * FADE;
+// Section lengths in whole frames: the composition length and the sequences
+// inside it come from this one place, so they cannot drift apart.
+export function sections(segments: Segment[], fps: number) {
+  const intro = Math.round(INTRO * fps);
+  const fade = Math.round(FADE * fps);
+  const body = Math.ceil(pacedDuration(segments) * fps);
+  const outro = Math.round(OUTRO * fps);
+  const bodyStart = intro - fade;
+  const outroStart = bodyStart + body - fade;
+  return {
+    intro,
+    fade,
+    body,
+    outro,
+    bodyStart,
+    outroStart,
+    total: outroStart + outro,
+  };
 }
+
+export const totalFrames = (timeline: Timeline, fps: number) =>
+  sections(buildSegments(timeline), fps).total;
 
 function Fade({
   frames,
@@ -67,12 +86,7 @@ export function Video({ recording, tutorial, timeline }: VideoProps) {
   if (!timeline) return null;
 
   const theme = timeline.theme;
-  const intro = Math.round(INTRO * fps);
-  const fade = Math.round(FADE * fps);
-  const body = Math.ceil(pacedDuration(segments) * fps);
-  const outro = Math.round(OUTRO * fps);
-  const bodyStart = intro - fade;
-  const outroStart = bodyStart + body - fade;
+  const { intro, body, outro, bodyStart, outroStart } = sections(segments, fps);
 
   return (
     <AbsoluteFill style={{ backgroundColor: palette[theme].background }}>

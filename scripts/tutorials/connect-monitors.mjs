@@ -14,6 +14,7 @@ export default async function ({
   click,
   wait,
   settle,
+  expect,
 }) {
   await sql([
     { q: "delete from page_component where page_id = ?", params: [PAGE_ID] },
@@ -49,5 +50,6 @@ export default async function ({
 
   step("Save to show them on the page");
   await click(page.getByRole("button", { name: "Submit" }).first());
-  await wait(2500);
+  await expect("Saved");
+  await wait(2000);
 }

@@ -2,8 +2,9 @@ import path from "node:path";
 
 import { Config } from "@remotion/cli/config";
 
-// scripts/record.mjs --remotion writes .recordings/<name>/{video.mp4,timeline.json}.
-Config.setPublicDir("../../.recordings");
+// scripts/record.mjs --remotion writes .recordings/remotion/<name>/; only that
+// folder is bundled, not the plain MP4s and renders next to it.
+Config.setPublicDir("../../.recordings/remotion");
 Config.setVideoImageFormat("jpeg");
 Config.setJpegQuality(95);
 
