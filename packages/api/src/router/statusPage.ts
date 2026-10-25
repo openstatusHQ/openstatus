@@ -87,6 +87,41 @@ const queryPasswordSchema = z.string().nullish();
 const bySlugOrDomain = (slug: string) =>
   sql`lower(${page.slug}) = ${slug} OR lower(${page.customDomain}) = ${slug}`;
 
+// Status rows grouped into `timeZone` days, with the zone they ended up in.
+async function fetchStatusDays(
+  monitors: Parameters<typeof fetchByJobType>[0],
+  timeZone: string,
+) {
+  const readUtc = async () => ({
+    timeZone: "UTC",
+    rows: await fetchByJobType(monitors, (type) =>
+      getStatusProcedure("45d", type),
+    ),
+  });
+  // UTC pages keep the 45d pipes; other zones regroup 15m buckets into their days
+  if (timeZone === "UTC") return readUtc();
+  try {
+    const rows = await fetchByJobType(
+      monitors,
+      (type) =>
+        ({ monitorIds }) =>
+          getStatusInTimeZoneProcedure(type)({
+            monitorIds,
+            timezone: timeZone,
+          }),
+    );
+    return { timeZone, rows };
+  } catch (err) {
+    // ClickHouse's tz database can reject a zone Node accepts: keep real bars
+    // in UTC days rather than dropping the page to manual mode
+    console.error(
+      `[status-page] zone ${timeZone} failed, using UTC days:`,
+      err,
+    );
+    return readUtc();
+  }
+}
+
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
     .input(
@@ -797,7 +832,9 @@ export const statusPageRouter = createTRPCRouter({
       const monitors = pageComponents.filter(isMonitorComponent);
 
       // a zone this runtime cannot resolve renders the page in UTC instead of failing it
-      const timeZone = timeZoneSchema.catch("UTC").parse(_page.defaultTimezone);
+      const pageTimeZone = timeZoneSchema
+        .catch("UTC")
+        .parse(_page.defaultTimezone);
 
       // Manual mode never touches Tinybird. Otherwise race the reads against
       // the fallback budget: a slow (>5s) or erroring Tinybird degrades the
@@ -805,20 +842,13 @@ export const statusPageRouter = createTRPCRouter({
       const tinybird = await withTinybirdFallback(() =>
         input.barType === "manual"
           ? Promise.resolve(null)
-          : // UTC pages keep the 45d pipes; other zones regroup 15m buckets into their days
-            fetchByJobType(monitors, (type) =>
-              timeZone === "UTC"
-                ? getStatusProcedure("45d", type)
-                : ({ monitorIds }) =>
-                    getStatusInTimeZoneProcedure(type)({
-                      monitorIds,
-                      timezone: timeZone,
-                    }),
-            ),
+          : fetchStatusDays(monitors, pageTimeZone),
       );
 
       const tinybirdUnhealthy = !tinybird.ok;
-      const statusDataByMonitorId = tinybird.data ?? new Map<string, never[]>();
+      const timeZone = tinybird.data?.timeZone ?? pageTimeZone;
+      const statusDataByMonitorId =
+        tinybird.data?.rows ?? new Map<string, never[]>();
 
       const parsedConfiguration = pageConfigurationSchema.safeParse(
         _page.configuration ?? {},
@@ -920,6 +950,8 @@ export const statusPageRouter = createTRPCRouter({
           ...(c.monitor ? { monitor: c.monitor } : {}),
           data: processedData,
           uptime,
+          // the zone the days were grouped in, UTC if the page's was rejected
+          timeZone,
         };
       });
     }),
