@@ -102,6 +102,8 @@ describe("slack threads", () => {
     for (const file of threads) {
       const thread = await import(join(threadsDir, file));
       expect(validateMeta(thread.meta, file)).toEqual([]);
+      expect(thread.default).toBeTypeOf("function");
+      expect(thread.model).toBeDefined();
       expect(thread.people.length).toBeGreaterThan(0);
       expect(thread.channels.length).toBeGreaterThan(0);
     }

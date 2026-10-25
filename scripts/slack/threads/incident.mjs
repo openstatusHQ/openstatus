@@ -53,10 +53,10 @@ export const model = {
     startedAtSource: null,
   },
   text: `## Summary
-The checkout API in **eu-central** timed out for 58 minutes. A batch export job held every connection in the primary database pool, so checkout requests in fra and ams waited until they timed out.
+The checkout API in **eu-central** timed out for 35 minutes, until the export job was paused. A batch export job held every connection in the primary database pool, so checkout requests in fra and ams waited until they timed out.
 
 ## Impact
-- 23% of checkout requests in eu-central failed between 10:02 and 10:33 UTC
+- 23% of checkout requests in eu-central failed between 10:02 and 10:37 UTC
 - p99 latency rose from 180ms to over 30s
 - Other regions were not affected
 

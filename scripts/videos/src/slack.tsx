@@ -472,7 +472,10 @@ function Modal({
     return (
       <div style={{ ...box, display: "flex", justifyContent: "space-between" }}>
         <span>
-          {value ?? text(el.initial_option?.text) ?? text(el.placeholder)}
+          {value ??
+            (el.initial_option
+              ? text(el.initial_option.text)
+              : text(el.placeholder))}
         </span>
         <span style={{ color: MUTED }}>▾</span>
       </div>

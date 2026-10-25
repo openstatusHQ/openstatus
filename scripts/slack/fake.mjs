@@ -139,6 +139,19 @@ const slack = {
     ),
     has_more: false,
   }),
+  "conversations.invite": (a) => {
+    const c = state.channels.get(a.channel);
+    if (c)
+      c.members = [
+        ...new Set([...(c.members ?? []), ...String(a.users).split(",")]),
+      ];
+    return { channel: { id: a.channel, name: c?.name ?? a.channel } };
+  },
+  "conversations.archive": (a) => {
+    const c = state.channels.get(a.channel);
+    if (c) c.archived = true;
+    return {};
+  },
   "conversations.members": (a) => ({
     members: state.channels.get(a.channel)?.members ?? [...state.users.keys()],
   }),
@@ -254,7 +267,14 @@ globalThis.fetch = async (input, init = {}) => {
       typeof init.body === "string" ? init.body : undefined,
     );
     const call = record(method, args);
-    const answer = slack[method]?.(args) ?? {};
+    // Answered as Slack answers an unknown method, so the app's WebClient
+    // throws and a flow that needs a new method fails instead of passing.
+    if (!slack[method]) {
+      console.error(`fake slack: ${method} is not implemented`);
+      call.result = { error: "unknown_method" };
+      return json({ ok: false, error: "unknown_method" });
+    }
+    const answer = slack[method](args) ?? {};
     call.result = answer;
     return json({ ok: true, ...answer });
   }
@@ -322,10 +342,16 @@ globalThis.AI_SDK_DEFAULT_PROVIDER = {
 };
 
 const readBody = (req) =>
-  new Promise((done) => {
+  new Promise((done, fail) => {
     let body = "";
     req.on("data", (c) => (body += c));
-    req.on("end", () => done(body ? JSON.parse(body) : {}));
+    req.on("end", () => {
+      try {
+        done(body ? JSON.parse(body) : {});
+      } catch (e) {
+        fail(e);
+      }
+    });
   });
 
 createServer(async (req, res) => {
@@ -334,12 +360,21 @@ createServer(async (req, res) => {
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify(body));
   };
+  // A bad body must not take the API server down with it.
+  let body;
+  if (req.method === "POST")
+    try {
+      body = await readBody(req);
+    } catch (e) {
+      res.writeHead(400, { "content-type": "application/json" });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
   if (req.method === "POST" && url.pathname === "/reset") {
-    reset(await readBody(req));
+    reset(body);
     return send({ ok: true });
   }
   if (req.method === "POST" && url.pathname === "/message") {
-    const m = await readBody(req);
+    const m = body;
     const ts = nextTs();
     messagesOf(m.channel).push({
       ts,

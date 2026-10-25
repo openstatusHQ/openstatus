@@ -212,7 +212,7 @@ their own rows.
 ### Terminal videos (CLI, API)
 
 `node scripts/record-terminal.mjs <cast>` records `scripts/casts/<cast>.mjs`
-against the stack from `dev-stack up --api`. Each `run()` is typed (or
+against the stack from `node scripts/dev-stack.mjs up --api`. Each `run()` is typed (or
 `paste`d) at a prompt, runs for real in a pseudo-terminal (`script`) with
 `OPENSTATUS_API_URL`, `OPENSTATUS_API_TOKEN` and `OPENSTATUS_API_KEY` pointing
 at the local API, and its output goes through a headless xterm: colors,
@@ -232,7 +232,7 @@ https://github.com/openstatusHQ/cli && cd cli && go build -o openstatus
 
 `node scripts/record-slack.mjs <thread>` plays `scripts/slack/threads/<thread>.mjs`
 against the real Slack app in `apps/server`, started with
-`dev-stack up --fake-slack`. That loads `scripts/slack/fake.mjs` into the
+`node scripts/dev-stack.mjs up --fake-slack`. That loads `scripts/slack/fake.mjs` into the
 server: Slack's Web API, response URLs, Upstash Redis and the AI model are
 answered in-process (the server builds them on `globalThis.fetch` and the AI
 SDK's default provider), with nothing changed in the product. A thread
@@ -257,7 +257,7 @@ member mapping in the local database.
   that state; say so when you do.
 - A redirect to `/login` means auth failed. Fix auth; do not screenshot the
   login page and call it done.
-- Stop any dev server you started (`dev-stack down`, or by port, never by
+- Stop any dev server you started (`node scripts/dev-stack.mjs down`, or by port, never by
   process name) and close any agent-browser session you opened.
 
 ## Sharing

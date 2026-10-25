@@ -415,8 +415,11 @@ const rec = {
   // The viewer fills the open modal and submits it: `values` maps a block id
   // to an option value (selects) or text (inputs, typed out on screen).
   async submit(values) {
-    const modal = [...view].reverse().find((e) => e.op === "modal");
-    if (!modal) throw new Error("no modal is open");
+    // The last modal event decides: one closed since is not open any more.
+    const modal = [...view]
+      .reverse()
+      .find((e) => e.op === "modal" || e.op === "modal_close");
+    if (modal?.op !== "modal") throw new Error("no modal is open");
     const state = {};
     for (const block of modal.view.blocks ?? []) {
       const element = block.element;

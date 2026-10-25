@@ -31,7 +31,8 @@ const EMOJI: Record<string, string> = {
   face_holding_back_tears: "🥹",
   thread: "🧵",
 };
-export const emoji = (name: string) => EMOJI[name] ?? `:${name}:`;
+export const emoji = (name: string) =>
+  Object.hasOwn(EMOJI, name) ? EMOJI[name] : `:${name}:`;
 
 export type Names = {
   user: (id: string) => string;
@@ -43,8 +44,10 @@ export const LINK = "#1264a3";
 const decode = (s: string) =>
   s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 
+// Bold, italic and strike only open and close at a word edge, as in Slack,
+// so `api_key_id` and `~5 min and ~10 min` stay plain.
 const INLINE =
-  /(<[^>\n]+>)|(`[^`\n]+`)|(\*[^*\n]+\*)|(_[^_\n]+_)|(~[^~\n]+~)|(:[a-z][a-z0-9_+-]*:)/g;
+  /(<[^>\n]+>)|(`[^`\n]+`)|((?<!\w)\*[^*\n]+\*(?!\w))|((?<!\w)_[^_\n]+_(?!\w))|((?<!\w)~[^~\n]+~(?!\w))|(:[a-z][a-z0-9_+-]*:)/g;
 
 // Slack's mrkdwn on one line: links, mentions, code, bold, italic, emoji.
 function inline(text: string, names: Names, key = ""): ReactNode[] {
@@ -80,7 +83,7 @@ function inline(text: string, names: Names, key = ""): ReactNode[] {
       else if (target.startsWith("!"))
         out.push(
           <span key={k} style={{ color: LINK }}>
-            @{target.slice(1)}
+            {label ?? `@${target.slice(1)}`}
           </span>,
         );
       else
