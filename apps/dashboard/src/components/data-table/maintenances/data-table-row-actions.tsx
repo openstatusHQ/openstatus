@@ -2,7 +2,6 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
@@ -11,10 +10,6 @@ import { getActions } from "@/data/maintenances.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
-
-export function DataTableRowActions({ row }: { row: Row<Maintenance> }) {
-  return <MaintenanceRowActions maintenance={row.original} />;
-}
 
 /** Row menu; owns the edit sheet unless the row passes `onEdit` to open its own. */
 export function MaintenanceRowActions({

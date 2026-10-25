@@ -91,6 +91,7 @@ export function ActivityCalendarCell({
 
 const WEEKDAYS = ["Mon", "", "Wed", "", "Fri", "", ""];
 const DAYS_PER_WEEK = 7;
+const WEEK_MS = DAYS_PER_WEEK * 24 * 60 * 60 * 1000;
 // a month label needs this many columns so it never runs into the next one
 const MIN_MONTH_COLUMNS = 3;
 const STICKY =
@@ -104,10 +105,8 @@ const ARROW_STEPS: Record<string, number> = {
 };
 
 /**
- * Weeks as columns, Monday on top. `days` is consecutive; the first week is
- * padded back to Monday. The grid ends today: later days stay blank unless
- * something is scheduled. Dates and tooltips render after hydration so the
- * server's timezone never leaks into the first paint.
+ * Weeks as columns, Monday on top; days after today are outlines unless scheduled.
+ * Dates render after hydration so the server's timezone never reaches the first paint.
  */
 export function ActivityCalendarGrid({
   days,
@@ -139,12 +138,16 @@ export function ActivityCalendarGrid({
     const from = (e.target as HTMLElement).closest<HTMLElement>("[data-index]");
     if (!step || !from) return;
     e.preventDefault();
+    const start = Number(from.dataset.index);
+    // up/down stay in the week's column
+    const row = (i: number) => (days[i].date.getDay() + 6) % DAYS_PER_WEEK;
     // blank future days aren't buttons: hop over them
     for (
-      let i = Number(from.dataset.index) + step;
+      let i = start + step;
       i >= 0 && i < days.length;
       i += step
     ) {
+      if (Math.abs(step) === 1 && row(i) !== row(i - step) + step) return;
       const next = scroller.current?.querySelector<HTMLElement>(
         `button[data-index="${i}"]`,
       );
@@ -206,7 +209,7 @@ export function ActivityCalendarGrid({
                   hydrated={hydrated}
                   tabbable={slot.index === current}
                   // which of these is past today isn't known before hydration
-                  thisWeek={slot.index >= days.length - DAYS_PER_WEEK}
+                  recent={slot.day.date.getTime() > today.getTime() - WEEK_MS}
                 />
               ) : (
                 <div key={d} />
@@ -225,21 +228,32 @@ function ActivityCalendarDay({
   today,
   hydrated,
   tabbable,
-  thisWeek,
+  recent,
 }: {
   day: ActivityDay;
   index: number;
   today: Date;
   hydrated: boolean;
   tabbable: boolean;
-  thisWeek: boolean;
+  recent: boolean;
 }) {
   if (!hydrated) {
-    return <ActivityCalendarCell className={cn(thisWeek && "invisible")} />;
+    return <ActivityCalendarCell className={cn(recent && "invisible")} />;
   }
-  // after today only something scheduled shows, and always as dashed
+  // after today: empty days are a faint outline, scheduled ones dashed blue
   const future = day.date > today;
-  if (future && !day.upcoming && day.scale === undefined) return <div />;
+  // not a button, so arrow keys hop over it
+  if (future && !day.upcoming && day.scale === undefined) {
+    return (
+      <div
+        aria-hidden
+        className={cn(
+          cellVariants(),
+          "border-border border border-dashed bg-transparent",
+        )}
+      />
+    );
+  }
   const upcoming = day.upcoming || future;
   const date = format(day.date, "EEE, MMM d");
   const lines = day.lines ?? [];

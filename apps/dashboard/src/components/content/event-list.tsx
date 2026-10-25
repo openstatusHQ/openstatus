@@ -14,11 +14,8 @@ import { formatEventDate } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 
 /**
- * Rows of events in a bordered list. A row is one line when the list is wide
- * enough (date, status, title + meta, quick actions, actor, duration, menu)
- * and folds to two below that: title above; status, date, meta and duration
- * below. Quick actions hide when folded, the menu carries them. The switch is
- * a container query on the list, so a sidebar narrowing the page folds it too.
+ * Event rows: one line when wide, two when narrow (quick actions move into the menu).
+ * A container query on the list, so a sidebar narrowing the page folds it too.
  */
 export function EventList({ className, ...props }: React.ComponentProps<"ol">) {
   return (

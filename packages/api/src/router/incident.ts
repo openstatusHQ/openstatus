@@ -33,6 +33,7 @@ import {
   getIncidentOrThrow,
   linkIncidentStatusReport,
   listIncidentEvents,
+  listAllIncidents,
   listIncidents,
   listLinkedStatusReportIds,
   type IncidentEffects,
@@ -89,16 +90,7 @@ export const incidentRouter = createTRPCRouter({
         if (input?.limit !== undefined)
           return (await listIncidents({ ctx: serviceCtx, input })).items;
         // no limit = every incident; dashboard calendars and counts need the full history
-        const items = [];
-        for (let offset = input?.offset ?? 0; ; offset += 100) {
-          const page = await listIncidents({
-            ctx: serviceCtx,
-            input: { ...input, limit: 100, offset },
-          });
-          items.push(...page.items);
-          if (page.items.length < 100 || offset + 100 >= page.totalSize)
-            return items;
-        }
+        return await listAllIncidents({ ctx: serviceCtx, input });
       } catch (err) {
         toTRPCError(err);
       }

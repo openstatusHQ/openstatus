@@ -2,7 +2,6 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { getPageUrl } from "@/data/status-pages.client";
@@ -11,13 +10,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 
-// NOTE: avoid using useParams to get status page :id
-// because we are using the table in the /overview page
-
-export function DataTableRowActions({ row }: { row: Row<StatusReport> }) {
-  return <StatusReportRowActions report={row.original} />;
-}
-
+// no useParams for the page :id: these rows also render on /overview
 export function StatusReportRowActions({
   report,
   onAddUpdate,

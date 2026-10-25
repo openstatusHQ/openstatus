@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Acknowledge, Check, Close } from "@openstatus/icons";
+import { Acknowledge, Check, Close, Reset } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { personName } from "@openstatus/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -40,6 +40,14 @@ import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { ResolveReportDialog } from "./resolve-report-dialog";
 
 type Incident = NonNullable<RouterOutputs["incident"]["list"]>[number];
+type IncidentStatus = Incident["status"];
+
+const transitionActions = {
+  mitigated: { label: "Mitigate", icon: Acknowledge },
+  resolved: { label: "Resolve", icon: Check },
+  open: { label: "Reopen", icon: Reset },
+  canceled: { label: "Cancel", icon: Close },
+} satisfies Record<IncidentStatus, { label: string; icon: unknown }>;
 
 /** `kind` labels the row by type for a mixed list; the bars still carry the severity. */
 export function IncidentRow({
@@ -110,8 +118,12 @@ export function IncidentRow({
       : formatDurationShort(
           (endedAt ?? new Date()).getTime() - incident.startedAt.getTime(),
         );
-  const transition = (next: "mitigated" | "resolved") =>
-    setStatus.mutate({ id: incident.id, status: next });
+  const allowed = new Set(incident.allowedTransitions);
+  // canceling closes the incident for good; ask first
+  const transition = (next: IncidentStatus) =>
+    next === "canceled"
+      ? setConfirmCancel(true)
+      : setStatus.mutate({ id: incident.id, status: next });
 
   return (
     <EventRow>
@@ -136,64 +148,35 @@ export function IncidentRow({
         </EventRowMeta>
       </EventRowContent>
       <EventRowActions>
-        {incident.status === "open" ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7"
-            disabled={setStatus.isPending}
-            onClick={() => transition("mitigated")}
-          >
-            Mitigate
-          </Button>
-        ) : null}
-        {open ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7"
-            disabled={setStatus.isPending}
-            onClick={() => transition("resolved")}
-          >
-            Resolve
-          </Button>
-        ) : null}
+        {(["mitigated", "resolved"] as const)
+          .filter((next) => allowed.has(next))
+          .map((next) => (
+            <Button
+              key={next}
+              variant="outline"
+              size="sm"
+              className="h-7"
+              disabled={setStatus.isPending}
+              onClick={() => transition(next)}
+            >
+              {transitionActions[next].label}
+            </Button>
+          ))}
       </EventRowActions>
       <EventRowActor actor={commander} label="Commander" />
       <EventRowDuration>{duration}</EventRowDuration>
       <EventRowMenu>
         <QuickActions
-          actions={[
-            ...(incident.status === "open"
-              ? [
-                  {
-                    id: "mitigate",
-                    label: "Mitigate",
-                    icon: Acknowledge,
-                    variant: "default" as const,
-                    onClick: () => transition("mitigated"),
-                  },
-                ]
-              : []),
-            ...(open
-              ? [
-                  {
-                    id: "resolve",
-                    label: "Resolve",
-                    icon: Check,
-                    variant: "default" as const,
-                    onClick: () => transition("resolved"),
-                  },
-                  {
-                    id: "cancel",
-                    label: "Cancel",
-                    icon: Close,
-                    variant: "default" as const,
-                    onClick: () => setConfirmCancel(true),
-                  },
-                ]
-              : []),
-          ]}
+          actions={(
+            Object.keys(transitionActions) as (keyof typeof transitionActions)[]
+          )
+            .filter((next) => allowed.has(next))
+            .map((next) => ({
+              id: next,
+              ...transitionActions[next],
+              variant: "default" as const,
+              onClick: () => transition(next),
+            }))}
           deleteAction={
             incident.deletable
               ? {

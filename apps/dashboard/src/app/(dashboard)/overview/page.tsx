@@ -45,9 +45,11 @@ import {
   SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
+import { useMaintenanceTick } from "@/components/maintenances/use-maintenance-status";
 import {
   type ActivitySpan,
   activityDayLines,
+  activityPeriod,
   activityRange,
   groupByDay,
   spansOnDay,
@@ -173,7 +175,6 @@ export default function Page() {
   const hydrated = useHydrated();
   const [showOlder, setShowOlder] = useState(false);
 
-  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
   // no period — an incident open for weeks must still surface here
   const { data: monitorIncidents } = useQuery({
@@ -193,10 +194,10 @@ export default function Page() {
     trpc.incident.list.queryOptions({ status: ["resolved", "canceled"] }),
   );
 
+  // a window starting or ending moves it between Scheduled, Open and Resolved
+  useMaintenanceTick(maintenances ?? []);
   const now = new Date();
   const data =
-    monitors &&
-    pages &&
     monitorIncidents &&
     statusReports &&
     maintenances &&
@@ -205,12 +206,10 @@ export default function Page() {
     !endedIncidentsPending
       ? buildOverviewData(
           {
-            monitors,
-            pages,
             monitorIncidents,
             statusReports,
             maintenances,
-            // undefined on a failed query — falls back to the downtime count
+            // undefined on a failed query; the rest still renders
             managedIncidents: openIncidents,
             endedIncidents,
           },
@@ -225,36 +224,18 @@ export default function Page() {
     return null;
 
   const {
+    events,
     needsAttention,
     upcomingMaintenances,
     recentlyResolved,
     allResolved,
   } = data;
 
-  const range = activityRange(now);
-  const events: OverviewEvent[] = [
-    ...(openIncidents ?? []).map((incident) => ({
-      type: "managedIncident" as const,
-      incident,
-    })),
-    ...(endedIncidents ?? []).map((incident) => ({
-      type: "managedIncident" as const,
-      incident,
-    })),
-    ...statusReports.map((report) => ({ type: "report" as const, report })),
-    ...maintenances.map((maintenance) => ({
-      type: "maintenance" as const,
-      maintenance,
-    })),
-    ...monitorIncidents.map((incident) => ({
-      type: "incident" as const,
-      incident,
-    })),
-  ].filter((event) => {
-    // still running counts too
-    const { start, end } = spanOf(event);
-    return (end ?? now) >= range.from && start <= range.to;
-  });
+  // looks ahead as far as the last scheduled window ends, capped
+  const until = maintenances
+    .map((m) => m.to)
+    .reduce<Date | undefined>((max, to) => (!max || to > max ? to : max), undefined);
+  const range = activityRange(now, until);
   const days = groupByDay(range, events, spanOf, now).map(({ date, items }) => {
     if (items.length === 0) return { date };
     const [lead, ...others] = dayEntries(items, date, now);
@@ -279,6 +260,7 @@ export default function Page() {
       links: [...links.values()],
     };
   });
+  const anyUpcoming = days.some((day) => day.upcoming);
   const attention = needsAttention.length;
 
   return (
@@ -307,7 +289,7 @@ export default function Page() {
       <Activity>
         <ActivityHeader>
           <ActivityTitle>Activity</ActivityTitle>
-          <ActivityPeriod>Last 12 months</ActivityPeriod>
+          <ActivityPeriod>{activityPeriod(range, now)}</ActivityPeriod>
         </ActivityHeader>
         <ActivityCalendar>
           <ActivityCalendarGrid days={days} today={now} />
@@ -337,10 +319,12 @@ export default function Page() {
               <ActivityCalendarCell scale="planned" level={2} />
               Maintenance
             </ActivityCalendarLegendItem>
-            <ActivityCalendarLegendItem>
-              <ActivityCalendarCell upcoming />
-              Upcoming
-            </ActivityCalendarLegendItem>
+            {anyUpcoming ? (
+              <ActivityCalendarLegendItem>
+                <ActivityCalendarCell upcoming />
+                Upcoming
+              </ActivityCalendarLegendItem>
+            ) : null}
           </ActivityCalendarLegend>
         </ActivityCalendar>
       </Activity>

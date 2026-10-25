@@ -2,14 +2,10 @@ import { differenceInCalendarDays } from "date-fns";
 import { describe, expect, it } from "vitest";
 
 import {
+  activityPeriod,
   activityRange,
   groupByDay,
   levelFor,
-  median,
-  monthsInRange,
-  mostCommon,
-  percentInRange,
-  spanInRange,
   spansOnDay,
 } from "./activity.client";
 
@@ -22,6 +18,28 @@ describe("activityRange", () => {
     expect(to.getDay()).toBe(0);
     expect(to >= now).toBe(true);
     expect(differenceInCalendarDays(to, from) + 1).toBe(53 * 7);
+  });
+
+  it("extends to the week of `until`, at most 4 weeks ahead", () => {
+    const base = activityRange(now);
+    const inTwoWeeks = activityRange(now, new Date(2026, 10, 4));
+    expect(inTwoWeeks.from).toEqual(base.from);
+    expect(differenceInCalendarDays(inTwoWeeks.to, base.to)).toBe(14);
+    const farOut = activityRange(now, new Date(2027, 5, 1));
+    expect(differenceInCalendarDays(farOut.to, base.to)).toBe(28);
+    expect(activityRange(now, new Date(2026, 9, 21)).to).toEqual(base.to);
+  });
+});
+
+describe("activityPeriod", () => {
+  it("names the lookahead only when there is one", () => {
+    expect(activityPeriod(activityRange(now), now)).toBe("Last 12 months");
+    expect(activityPeriod(activityRange(now, new Date(2026, 9, 28)), now)).toBe(
+      "Last 12 months · next 1 week",
+    );
+    expect(activityPeriod(activityRange(now, new Date(2026, 10, 4)), now)).toBe(
+      "Last 12 months · next 2 weeks",
+    );
   });
 });
 
@@ -52,51 +70,11 @@ describe("groupByDay", () => {
   });
 });
 
-describe("spanInRange", () => {
-  const range = { from: new Date(2026, 9, 1), to: new Date(2026, 9, 10) };
-
-  it("counts only the overlap", () => {
-    const ms = spanInRange(range, {
-      start: new Date(2026, 8, 30),
-      end: new Date(2026, 9, 2),
-    });
-    expect(ms).toBe(86_400_000);
-  });
-});
-
-describe("percentInRange / monthsInRange", () => {
-  const range = { from: new Date(2026, 0, 1), to: new Date(2026, 2, 1) };
-
-  it("clamps to the axis", () => {
-    expect(percentInRange(range, new Date(2025, 0, 1))).toBe(0);
-    expect(percentInRange(range, new Date(2027, 0, 1))).toBe(100);
-    expect(percentInRange(range, new Date(2026, 0, 1))).toBe(0);
-  });
-
-  it("lists month starts inside the range", () => {
-    expect(monthsInRange(range).map((m) => m.date.getMonth())).toEqual([
-      0, 1, 2,
-    ]);
-  });
-});
-
 describe("small stats", () => {
   it("levelFor", () => {
     expect(levelFor(1, [2, 4])).toBe(1);
     expect(levelFor(3, [2, 4])).toBe(2);
     expect(levelFor(4, [2, 4])).toBe(3);
-  });
-
-  it("median", () => {
-    expect(median([])).toBeNull();
-    expect(median([3, 1, 2])).toBe(2);
-    expect(median([4, 1, 2, 3])).toBe(2.5);
-  });
-
-  it("mostCommon", () => {
-    expect(mostCommon([])).toBeNull();
-    expect(mostCommon(["a", "b", "b"])).toBe("b");
-    expect(mostCommon([2, 1, 1])).toBe(1);
   });
 });
 

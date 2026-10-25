@@ -1,7 +1,8 @@
 import {
   addDays,
+  addWeeks,
+  differenceInCalendarWeeks,
   eachDayOfInterval,
-  eachMonthOfInterval,
   endOfWeek,
   format,
   startOfDay,
@@ -13,13 +14,31 @@ export const ACTIVITY_WEEKS = 53;
 
 export type ActivityRange = { from: Date; to: Date };
 
-/** Monday-start weeks ending with the current one, so today sits in the last column. */
-export function activityRange(now = new Date()): ActivityRange {
-  const to = endOfWeek(now, { weekStartsOn: 1 });
-  const from = startOfWeek(subWeeks(to, ACTIVITY_WEEKS - 1), {
+/** Weeks the grid looks ahead for scheduled work, at most. */
+const ACTIVITY_WEEKS_AHEAD = 4;
+
+/**
+ * Monday-start weeks ending with the current one, so today sits in the last
+ * column; `until` extends it to that day's week, capped at ACTIVITY_WEEKS_AHEAD.
+ */
+export function activityRange(now = new Date(), until?: Date): ActivityRange {
+  const current = endOfWeek(now, { weekStartsOn: 1 });
+  const from = startOfWeek(subWeeks(current, ACTIVITY_WEEKS - 1), {
     weekStartsOn: 1,
   });
+  const cap = addWeeks(current, ACTIVITY_WEEKS_AHEAD);
+  const to =
+    until && until > current
+      ? endOfWeek(until < cap ? until : cap, { weekStartsOn: 1 })
+      : current;
   return { from, to };
+}
+
+/** "Last 12 months", plus "· next 2 weeks" when the range looks ahead. */
+export function activityPeriod(range: ActivityRange, now = new Date()): string {
+  const ahead = differenceInCalendarWeeks(range.to, now, { weekStartsOn: 1 });
+  if (ahead <= 0) return "Last 12 months";
+  return `Last 12 months · next ${ahead} ${ahead === 1 ? "week" : "weeks"}`;
 }
 
 export type ActivitySpan = { start: Date; end: Date | null };
@@ -69,25 +88,6 @@ export function dayKey(date: Date): string {
   return format(date, "yyyy-MM-dd");
 }
 
-/** How long of a span falls inside the range (ms); an open span ends at `now`. */
-export function spanInRange(
-  range: ActivityRange,
-  { start, end }: ActivitySpan,
-  now = new Date(),
-): number {
-  const first = Math.max(start.getTime(), range.from.getTime());
-  const last = Math.min((end ?? now).getTime(), range.to.getTime());
-  return Math.max(0, last - first);
-}
-
-export function overlapsRange(
-  range: ActivityRange,
-  { start, end }: ActivitySpan,
-  now = new Date(),
-): boolean {
-  return start <= range.to && (end ?? now) >= range.from;
-}
-
 /**
  * How much of `date`'s calendar day the spans cover (ms), overlaps counted
  * once; an open span ends at `now`.
@@ -116,22 +116,6 @@ export function spansOnDay(
   return total;
 }
 
-/** 0–100, clamped; where a date sits on an axis spanning the range. */
-export function percentInRange(range: ActivityRange, date: Date): number {
-  const total = range.to.getTime() - range.from.getTime();
-  const at = ((date.getTime() - range.from.getTime()) / total) * 100;
-  return Math.min(100, Math.max(0, at));
-}
-
-/** First day of every month inside the range, with its axis position. */
-export function monthsInRange(
-  range: ActivityRange,
-): { date: Date; at: number }[] {
-  return eachMonthOfInterval({ start: range.from, end: range.to })
-    .filter((date) => date >= range.from)
-    .map((date) => ({ date, at: percentInRange(range, date) }));
-}
-
 /** 1–3 by thresholds: below the first, below the second, else the top. */
 export function levelFor(
   value: number,
@@ -140,28 +124,6 @@ export function levelFor(
   if (value < low) return 1;
   if (value < high) return 2;
   return 3;
-}
-
-export function median(values: number[]): number | null {
-  if (values.length === 0) return null;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-}
-
-export function mostCommon<T>(values: T[]): T | null {
-  const counts = new Map<T, number>();
-  let best: T | null = null;
-  let bestCount = 0;
-  for (const value of values) {
-    const count = (counts.get(value) ?? 0) + 1;
-    counts.set(value, count);
-    if (count > bestCount) {
-      best = value;
-      bestCount = count;
-    }
-  }
-  return best;
 }
 
 /** Tooltip lines under the date: the lead, then "+2 canceled" or "+3 more". */

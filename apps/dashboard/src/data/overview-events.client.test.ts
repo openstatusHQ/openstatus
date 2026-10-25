@@ -14,17 +14,11 @@ const daysAgo = (n: number) => new Date(now.getTime() - n * 86_400_000);
 // safe because buildOverviewData only reads the fields set below
 function input(partial: Partial<Record<keyof Input, unknown[]>>): Input {
   return {
-    monitors: [],
-    pages: [],
     monitorIncidents: [],
     statusReports: [],
     maintenances: [],
     ...partial,
   } as unknown as Input;
-}
-
-function metric(data: ReturnType<typeof buildOverviewData>, title: string) {
-  return data.metrics.find((m) => m.title === title);
 }
 
 describe("getIncidentStatus", () => {
@@ -67,14 +61,9 @@ describe("buildOverviewData", () => {
     );
     expect(data.needsAttention.map((e) => e.type)).toEqual(["incident"]);
     expect(data.recentlyResolved).toHaveLength(1);
-    expect(metric(data, "Open incidents")).toMatchObject({
-      value: 1,
-      variant: "destructive",
-      href: undefined,
-    });
   });
 
-  it("counts managed incidents instead of monitor incidents when provided", () => {
+  it("lists managed incidents next to monitor incidents", () => {
     const data = buildOverviewData(
       {
         ...input({
@@ -95,10 +84,9 @@ describe("buildOverviewData", () => {
       },
       now,
     );
-    expect(metric(data, "Open incidents")).toMatchObject({
-      value: 2,
-      href: "/incidents",
-    });
+    expect(
+      data.needsAttention.filter((e) => e.type === "managedIncident"),
+    ).toHaveLength(2);
     expect(
       data.recentlyResolved.filter((e) => e.type === "managedIncident"),
     ).toHaveLength(1);
@@ -114,10 +102,6 @@ describe("buildOverviewData", () => {
     expect(data.needsAttention).toEqual([]);
     expect(data.upcomingMaintenances).toHaveLength(1);
     expect(data.recentlyResolved).toHaveLength(1);
-    expect(metric(data, "Maintenances")).toMatchObject({
-      value: 1,
-      variant: "info",
-    });
   });
 
   it("flags open status reports", () => {
@@ -137,29 +121,19 @@ describe("buildOverviewData", () => {
     );
     expect(data.needsAttention.map((e) => e.type)).toEqual(["report"]);
     expect(data.recentlyResolved.map((e) => e.type)).toEqual(["report"]);
-    expect(metric(data, "Open reports")).toMatchObject({
-      value: 1,
-      variant: "warning",
-    });
   });
 
-  it("uses default variants when nothing is open", () => {
+  it("returns every event for the calendar", () => {
     const data = buildOverviewData(
-      input({ monitors: [{}, {}], pages: [{}] }),
+      input({
+        monitorIncidents: [{ startedAt: daysAgo(1), resolvedAt: null }],
+        maintenances: [{ from: daysAgo(-1), to: daysAgo(-2) }],
+      }),
       now,
     );
-    expect(
-      data.metrics.map(({ title, value, variant }) => ({
-        title,
-        value,
-        variant,
-      })),
-    ).toEqual([
-      { title: "Monitors", value: 2, variant: "default" },
-      { title: "Status pages", value: 1, variant: "default" },
-      { title: "Open incidents", value: 0, variant: "default" },
-      { title: "Open reports", value: 0, variant: "default" },
-      { title: "Maintenances", value: 0, variant: "default" },
+    expect(data.events.map((e) => e.type)).toEqual([
+      "maintenance",
+      "incident",
     ]);
   });
 });

@@ -47,8 +47,14 @@ import {
 } from "@/components/content/section";
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
 import { MaintenanceRow } from "@/components/maintenances/maintenance-row";
+import { useMaintenanceTick } from "@/components/maintenances/use-maintenance-status";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
-import { activityRange, groupByDay, spansOnDay } from "@/data/activity.client";
+import {
+  activityPeriod,
+  activityRange,
+  groupByDay,
+  spansOnDay,
+} from "@/data/activity.client";
 import {
   maintenanceActivity,
   maintenanceSpan,
@@ -95,6 +101,8 @@ export default function Page() {
     }),
   );
 
+  // regroups when a window starts or ends, in step with each row's status
+  useMaintenanceTick(maintenances ?? []);
   const now = new Date();
   const upcoming = (maintenances ?? [])
     .filter((m) => getMaintenanceStatus(m, now) !== "completed")
@@ -126,7 +134,11 @@ export default function Page() {
     });
   };
 
-  const range = activityRange(now);
+  // looks ahead as far as the last scheduled window ends, capped
+  const until = upcoming
+    .map((m) => m.to)
+    .reduce<Date | undefined>((max, to) => (!max || to > max ? to : max), undefined);
+  const range = activityRange(now, until);
   const days = groupByDay(range, maintenances, maintenanceSpan, now).map(
     ({ date, items }) => {
       if (items.length === 0) return { date };
@@ -206,7 +218,7 @@ export default function Page() {
             <Activity>
               <ActivityHeader>
                 <ActivityTitle>Activity</ActivityTitle>
-                <ActivityPeriod>Last 12 months</ActivityPeriod>
+                <ActivityPeriod>{activityPeriod(range, now)}</ActivityPeriod>
               </ActivityHeader>
               <ActivityCalendar>
                 <ActivityCalendarGrid days={days} today={now} />
@@ -226,11 +238,15 @@ export default function Page() {
                     <ActivityCalendarCell scale="planned" level={3} />
                     Over 4h
                   </ActivityCalendarLegendItem>
-                  <ActivityCalendarLegendSeparator />
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell upcoming />
-                    Upcoming
-                  </ActivityCalendarLegendItem>
+                  {days.some((day) => "upcoming" in day && day.upcoming) ? (
+                    <>
+                      <ActivityCalendarLegendSeparator />
+                      <ActivityCalendarLegendItem>
+                        <ActivityCalendarCell upcoming />
+                        Upcoming
+                      </ActivityCalendarLegendItem>
+                    </>
+                  ) : null}
                 </ActivityCalendarLegend>
               </ActivityCalendar>
             </Activity>
