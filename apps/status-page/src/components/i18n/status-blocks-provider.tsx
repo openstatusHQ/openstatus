@@ -4,7 +4,11 @@ import {
   StatusBlocksI18nProvider,
   type StatusBlocksLabels,
 } from "@openstatus/ui/components/blocks/status-i18n";
-import { timeZoneShortName, timeZoneShortNames } from "@openstatus/utils";
+import {
+  resolveTimeZone,
+  timeZoneShortName,
+  timeZoneShortNames,
+} from "@openstatus/utils";
 import { useExtracted, useLocale } from "next-intl";
 import { useMemo } from "react";
 
@@ -39,7 +43,9 @@ export function StatusBlocksProvider({
   const t = useExtracted();
   const locale = useLocale();
   const { timezone: pageTimezone } = useStatusPage();
-  const timezone = timezoneOverride ?? pageTimezone;
+  const timezone = timezoneOverride
+    ? resolveTimeZone(timezoneOverride)
+    : pageTimezone;
 
   const value = useMemo<StatusBlocksLabels>(() => {
     // timestamps render in the page zone; the suffix names the zone as of
