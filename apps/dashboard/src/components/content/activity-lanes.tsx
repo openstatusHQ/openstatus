@@ -25,7 +25,7 @@ export function ActivityLanes({
     <div
       data-slot="activity-lanes"
       className={cn(
-        "bg-card text-card-foreground @container grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-lg border p-3",
+        "@container grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2",
         className,
       )}
       {...props}

@@ -41,7 +41,7 @@ export function ActivityCalendar({
     <div
       data-slot="activity-calendar"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-3 rounded-lg border p-3 [--activity-cell:10px] [--activity-gap:3px]",
+        "flex flex-col gap-3 [--activity-cell:10px] [--activity-gap:3px]",
         className,
       )}
       {...props}
@@ -89,6 +89,8 @@ const WEEKDAYS = ["Mon", "", "Wed", "", "Fri", "", ""];
 const DAYS_PER_WEEK = 7;
 // a month label needs this many columns so it never runs into the next one
 const MIN_MONTH_COLUMNS = 3;
+const STICKY =
+  "bg-background sticky left-0 z-10 shadow-[0_0_0_var(--activity-gap)_var(--background)]";
 
 /**
  * Weeks as columns, Monday on top. `days` is consecutive; the first week is
@@ -117,7 +119,11 @@ export function ActivityCalendarGrid({
     <div ref={scroller} className="relative overflow-x-auto">
       <div
         data-slot="activity-calendar-grid"
-        className={cn("grid grid-flow-col gap-(--activity-gap)", className)}
+        // as wide as its weeks, or the sticky weekdays scroll away with the box
+        className={cn(
+          "grid w-max min-w-full grid-flow-col gap-(--activity-gap)",
+          className,
+        )}
         style={{
           gridTemplateRows: `auto repeat(${DAYS_PER_WEEK}, auto)`,
           gridTemplateColumns: `auto repeat(${weeks.length}, minmax(var(--activity-cell), 1fr))`,
@@ -125,18 +131,22 @@ export function ActivityCalendarGrid({
         }}
         {...props}
       >
-        <div />
+        {/* the spread shadow covers cells peeking through the gaps */}
+        <div className={STICKY} />
         {WEEKDAYS.map((label, i) => (
           <div
             key={i}
-            className="text-muted-foreground flex items-center pr-1 font-mono text-xs leading-none"
+            className={cn(
+              STICKY,
+              "text-muted-foreground flex items-center pr-1 font-mono text-xs leading-none",
+            )}
           >
             {label}
           </div>
         ))}
         {weeks.map((week, w) => (
           <Fragment key={w}>
-            <div className="text-muted-foreground h-3.5 font-mono text-xs leading-none whitespace-nowrap">
+            <div className="text-muted-foreground h-3.5 w-0 font-mono text-xs leading-none whitespace-nowrap">
               {hydrated ? months[w] : null}
             </div>
             {week.map((day, d) =>
