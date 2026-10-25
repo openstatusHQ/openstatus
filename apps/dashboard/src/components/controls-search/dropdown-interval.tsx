@@ -17,7 +17,12 @@ import {
 } from "nuqs";
 import { useEffect } from "react";
 
-import { INTERVALS, PERIODS, periodToMinInterval } from "@/data/metrics.client";
+import {
+  INTERVALS,
+  PERIODS,
+  periodToMaxInterval,
+  periodToMinInterval,
+} from "@/data/metrics.client";
 
 const MAPPING = {
   5: "5 minutes",
@@ -38,15 +43,18 @@ export function DropdownInterval() {
   const [period] = useQueryState("period", parsePeriod);
 
   const min = periodToMinInterval[period];
-  const options = INTERVALS.filter((item) => item >= min);
+  const max = periodToMaxInterval[period];
+  const options = INTERVALS.filter((item) => item >= min && item <= max);
+  const selected = Math.min(
+    Math.max(interval, min),
+    max,
+  ) as (typeof INTERVALS)[number];
 
-  // snap a now-too-fine selection up to the period's floor so the dropdown,
-  // URL, and charts agree (e.g. 5min carried over into the 90d view)
+  // snap an out-of-range selection into the period's bounds so the dropdown,
+  // URL, and charts agree (e.g. 5min carried into 90d, or 1d carried into 1d)
   useEffect(() => {
-    if (interval < min) setInterval(min);
-  }, [interval, min, setInterval]);
-
-  const selected = Math.max(interval, min) as (typeof INTERVALS)[number];
+    if (interval !== selected) setInterval(selected);
+  }, [interval, selected, setInterval]);
 
   return (
     <Select

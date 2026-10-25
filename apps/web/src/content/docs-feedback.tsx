@@ -105,7 +105,7 @@ function DocsFeedbackBar({ path }: { path: string }) {
         Was this helpful?
       </p>
       <Popover open={open} onOpenChange={setOpen}>
-        <div className="bg-border text-muted-foreground [&>*]:bg-background [&>*]:hover:bg-muted flex items-stretch gap-px border font-mono [&>*]:flex [&>*]:items-center [&>*]:justify-center [&>*]:py-2 [&>*]:transition-colors [&>*]:disabled:pointer-events-none">
+        <div className="bg-border text-muted-foreground [&>*]:bg-background [&>*]:hover:bg-muted flex items-stretch gap-px border bg-clip-padding font-mono [&>*]:flex [&>*]:items-center [&>*]:justify-center [&>*]:py-2 [&>*]:transition-colors [&>*]:disabled:pointer-events-none">
           <button
             type="button"
             aria-label="Yes, this page was helpful"
@@ -165,7 +165,7 @@ function DocsFeedbackBar({ path }: { path: string }) {
                       <FormControl>
                         <Textarea
                           placeholder="Ideas, corrections, or anything missing..."
-                          className="field-sizing-fixed h-[110px] resize-none rounded-none p-3"
+                          className="field-sizing-fixed h-[110px] resize-none rounded-none px-3 py-2"
                           rows={4}
                           onKeyDown={(e) => {
                             if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {

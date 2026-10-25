@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  formatAxisTick,
   formatDateForInput,
   formatDateRange,
   formatDistanceToNowShort,
@@ -120,5 +121,27 @@ describe("formatDateForInput", () => {
     expect(formatDateForInput(new Date(2024, 2, 5, 7, 4))).toBe(
       "2024-03-05T07:04",
     );
+  });
+});
+
+describe("formatAxisTick", () => {
+  // local-time constructors so the midnight branch is independent of TZ
+  const midnight = new Date(2026, 9, 23, 0, 0);
+  const afternoon = new Date(2026, 9, 22, 14, 30);
+  const evenHour = new Date(2026, 9, 22, 16, 0);
+
+  it("shows only the time on 1d, with the date at midnight", () => {
+    expect(formatAxisTick(afternoon, "1d", 30)).toBe("2:30 PM");
+    expect(formatAxisTick(midnight, "1d", 30)).toBe("Oct 23");
+  });
+
+  it("shows short date and hour for multi-day sub-daily buckets", () => {
+    expect(formatAxisTick(evenHour, "7d", 240)).toBe("Oct 22, 4 PM");
+    expect(formatAxisTick(afternoon, "7d", 30)).toBe("Oct 22, 2:30 PM");
+  });
+
+  it("shows only the date for daily buckets", () => {
+    expect(formatAxisTick(midnight, "30d", 1440)).toBe("Oct 23");
+    expect(formatAxisTick(afternoon, "90d", 1440)).toBe("Oct 22");
   });
 });

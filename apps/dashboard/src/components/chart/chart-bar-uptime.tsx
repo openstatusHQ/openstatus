@@ -19,6 +19,7 @@ import {
   periodToFromDate,
   periodToInterval,
 } from "@/data/metrics.client";
+import { formatAxisTick, formatDateTime } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 const chartConfig = {
@@ -49,7 +50,7 @@ export function ChartBarUptime({
 }) {
   const isMobile = useIsMobile();
   const trpc = useTRPC();
-  const fromDate = periodToFromDate[period];
+  const fromDate = periodToFromDate(period);
   const toDate = endOfDay(new Date());
   const interval = periodToInterval[period];
 
@@ -78,7 +79,14 @@ export function ChartBarUptime({
         <CartesianGrid vertical={false} />
         <ChartTooltip
           cursor={false}
-          content={<ChartTooltipContent indicator="dot" />}
+          content={
+            <ChartTooltipContent
+              indicator="dot"
+              labelFormatter={(_, payload) =>
+                formatDateTime(new Date(payload[0]?.payload.interval))
+              }
+            />
+          }
         />
         <Bar dataKey="ok" stackId="a" fill="var(--color-ok)" />
         <Bar dataKey="error" stackId="a" fill="var(--color-error)" />
@@ -96,6 +104,9 @@ export function ChartBarUptime({
           tickMargin={8}
           minTickGap={10}
           axisLine={false}
+          tickFormatter={(value) =>
+            formatAxisTick(new Date(value), period, interval)
+          }
         />
         <ChartLegend content={<ChartLegendContent />} />
       </BarChart>

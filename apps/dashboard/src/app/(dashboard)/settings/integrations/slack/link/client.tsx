@@ -32,7 +32,7 @@ function Message({
   children?: React.ReactNode;
 }) {
   return (
-    <EmptyStateContainer className="py-8">
+    <EmptyStateContainer>
       <EmptyStateTitle>{title}</EmptyStateTitle>
       <EmptyStateDescription>{description}</EmptyStateDescription>
       <div className="mt-2 flex gap-2">

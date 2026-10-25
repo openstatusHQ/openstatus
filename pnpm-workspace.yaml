@@ -30,6 +30,11 @@ allowBuilds:
   msw: true
   protobufjs: true
   sharp: true
+# @google-cloud/pubsub pins semantic-conventions ~1.39 while the @opentelemetry/core
+# it shares with us resolves to the catalog's 1.43; the workflows side-car can only
+# ship one copy. The package is constants only, and newer releases only add more.
+overrides:
+  "@google-cloud/pubsub>@opentelemetry/semantic-conventions": 1.43.0
 autoInstallPeers: true
 # `turbo` is deliberately pinned literally in package.json rather than listed
 # here: Vercel can't read a version through `catalog:`, and on failing to infer
@@ -56,6 +61,7 @@ catalog:
   "@dnd-kit/modifiers": 9.0.0
   "@dnd-kit/sortable": 10.0.0
   "@dnd-kit/utilities": 3.2.2
+  "@google-cloud/pubsub": 6.2.0
   "@google-cloud/tasks": 7.1.1
   "@hono/mcp": 0.2.5
   "@hono/node-server": 2.1.4

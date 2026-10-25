@@ -1,18 +1,14 @@
 import type { Metadata } from "next";
 
+import { categorySection, sections } from "../../../../../content/sections";
 import { getGuides } from "../../../../../content/utils";
 import { JsonLd } from "../../../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "../../../../../lib/metadata/shared-metadata";
+import { getListingMetadata } from "../../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
-  getJsonLDBreadcrumbList,
   getJsonLDItemList,
   getJsonLDOrganization,
+  getJsonLDSectionBreadcrumb,
 } from "../../../../../lib/metadata/structured-data";
 import { ContentCategory } from "../../../content-category";
 import { ContentList } from "../../../content-list";
@@ -23,28 +19,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const TITLE = `Guides - ${slug.charAt(0).toUpperCase()}${slug.slice(1)}`;
-  const DESCRIPTION = "All the latest guides from openstatus.";
-
-  return {
-    ...defaultMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    alternates: {
-      canonical: `/guides/category/${slug}`,
-    },
-    openGraph: {
-      ...ogMetadata,
-      title: TITLE,
-      description: DESCRIPTION,
-    },
-    twitter: {
-      ...twitterMetadata,
-      title: TITLE,
-      description: DESCRIPTION,
-      images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
-    },
-  };
+  return getListingMetadata(categorySection(sections.guides, slug));
 }
 
 export const dynamicParams = false;
@@ -69,23 +44,17 @@ export default async function GuideCategoryPage({
     (post) => post.metadata.category.toLowerCase() === slug.toLowerCase(),
   );
 
+  const category = categorySection(sections.guides, slug);
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
-    getJsonLDBreadcrumbList([
-      { name: "Home", url: BASE_URL },
-      { name: "Guides", url: `${BASE_URL}/guides` },
-      {
-        name: `${slug.charAt(0).toUpperCase()}${slug.slice(1)}`,
-        url: `${BASE_URL}/guides/category/${slug}`,
-      },
-    ]),
+    getJsonLDSectionBreadcrumb(sections.guides, category),
     getJsonLDItemList(filteredGuides, "/guides"),
   ]);
 
   return (
     <div className="prose dark:prose-invert max-w-none">
       <JsonLd graph={jsonLDGraph} />
-      <h1 className="capitalize">Guides | {slug}</h1>
+      <h1 className="capitalize">{category.label}</h1>
       <ContentCategory data={allGuides} prefix="/guides" />
       <ContentList data={filteredGuides} prefix="/guides" />
     </div>

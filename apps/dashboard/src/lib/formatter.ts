@@ -1,5 +1,7 @@
 import { endOfDay, isSameDay, startOfDay } from "date-fns";
 
+import type { PERIODS } from "@/data/metrics.client";
+
 export function formatMilliseconds(ms: number) {
   if (ms > 1000) {
     return `${Intl.NumberFormat("en-US", {
@@ -51,6 +53,26 @@ export function formatTime(date: Date) {
   return date.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "numeric",
+  });
+}
+
+// Axis ticks only carry what the range can't imply (tooltip has the full date):
+// time of day on 1d, the date at midnight and for daily buckets, both otherwise.
+export function formatAxisTick(
+  date: Date,
+  period: (typeof PERIODS)[number],
+  interval: number,
+) {
+  const midnight = date.getHours() === 0 && date.getMinutes() === 0;
+  if (interval >= 1440 || (period === "1d" && midnight)) {
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  if (period === "1d") return formatTime(date);
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    ...(date.getMinutes() ? { minute: "numeric" } : {}),
   });
 }
 

@@ -26,6 +26,7 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/pkg/tinybird"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
+
 	// otelz "go.opentelemetry.io/contrib/bridges/otelzerolog"
 	"go.opentelemetry.io/otel/attribute"
 	otlploghttp "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
@@ -238,7 +239,16 @@ func main() {
 
 	defer httpClient.CloseIdleConnections()
 
-	tinybirdClient := tinybird.NewClient(httpClient, tinyBirdToken)
+	tinybirdOptions := tinybird.DefaultBatcherOptions()
+	tinybirdOptions.FlushInterval = envDuration("TINYBIRD_FLUSH_INTERVAL", tinybirdOptions.FlushInterval)
+	tinybirdOptions.FlushJitter = envDuration("TINYBIRD_FLUSH_JITTER", tinybirdOptions.FlushJitter)
+	tinybirdOptions.MaxBytes = envInt("TINYBIRD_MAX_BATCH_BYTES", tinybirdOptions.MaxBytes)
+	// A zero budget would expire before the first request.
+	if retryBudget := envDuration("TINYBIRD_RETRY_BUDGET", 0); retryBudget > 0 {
+		tinybirdOptions.RetryBudget = retryBudget
+	}
+	tinybirdOptions.OnFlush = logTinybirdFlush
+	tinybirdClient := tinybird.NewBatcher(httpClient, tinyBirdToken, tinybirdOptions)
 
 	h := &handlers.Handler{
 		Secret:        cronSecret,
@@ -294,6 +304,7 @@ func main() {
 	}
 
 	<-ctx.Done()
+	shutdownStart := time.Now()
 	// The consumer drains on its own from ctx; stop the listener alongside it.
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), consumerDrain)
 	defer shutdownCancel()
@@ -301,7 +312,19 @@ func main() {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to shutdown http server")
 	}
 	<-consumerDone
+
+	// Checks that finished during the drain may still sit in a batch. The flush
+	// gets whatever the drain left of the shutdown budget.
+	flushCtx, flushCancel := context.WithDeadline(context.Background(), shutdownStart.Add(shutdownBudget))
+	defer flushCancel()
+	if err := tinybirdClient.Close(flushCtx); err != nil {
+		log.Error().Err(err).Msg("failed to flush tinybird batches")
+	}
 }
+
+// shutdownBudget keeps the whole shutdown, final Tinybird flush included, under
+// the 60s fly kill_timeout.
+const shutdownBudget = 58 * time.Second
 
 // consumerDrain stays under the 60s fly kill_timeout, so unfinished checks are
 // nacked for redelivery before the machine is killed.
@@ -326,6 +349,9 @@ func runConsumer(ctx context.Context, h *handlers.Handler, region string) error 
 			{
 				Subscription:   queue.Subscription(region, false),
 				MaxOutstanding: envInt("PUBSUB_MAX_OUTSTANDING", 500),
+				// Every held message wakes at the same cronTimestamp: without a cap
+				// they all dial and handshake at once and inflate each other's timings.
+				MaxConcurrent: envInt("PUBSUB_MAX_CONCURRENT", 200),
 			},
 			{
 				Subscription:   queue.Subscription(region, true),
@@ -364,6 +390,41 @@ func logConsumerEvent(ctx context.Context, e queue.Event) {
 	if shouldSample(event) {
 		slog.LogAttrs(ctx, slog.LevelInfo, "message done", MapToAttrs(event)...)
 	}
+}
+
+func logTinybirdFlush(ctx context.Context, e tinybird.FlushEvent) {
+	event := map[string]any{
+		"timestamp":           time.Now().Format(time.RFC3339),
+		"datasource":          e.DataSource,
+		"rows":                e.Rows,
+		"bytes":               e.Bytes,
+		"attempts":            e.Attempts,
+		"ambiguous_attempts":  e.AmbiguousAttempts,
+		"status_code":         e.StatusCode,
+		"duration_ms":         int(e.Duration.Milliseconds()),
+		"oldest_wait_ms":      int(e.OldestWait.Milliseconds()),
+		"ratelimit_limit":     e.RateLimitLimit,
+		"ratelimit_remaining": e.RateLimitRemaining,
+	}
+	if e.Err != nil {
+		event["error"] = map[string]any{
+			"type":    "TinybirdFlushError",
+			"message": e.Err.Error(),
+		}
+	}
+
+	if e.Attempts > 1 || shouldSample(event) {
+		slog.LogAttrs(ctx, slog.LevelInfo, "tinybird flush", MapToAttrs(event)...)
+	}
+}
+
+func envDuration(key string, fallback time.Duration) time.Duration {
+	value, err := time.ParseDuration(env(key, ""))
+	if err != nil || value < 0 {
+		return fallback
+	}
+
+	return value
 }
 
 func envInt(key string, fallback int) int {

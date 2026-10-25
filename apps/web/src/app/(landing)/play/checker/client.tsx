@@ -30,6 +30,7 @@ import {
   latencyFormatter,
   regionFormatter,
 } from "../../../../lib/checker/utils";
+import { APP_URL } from "../../../../lib/metadata/shared-metadata";
 import { toast } from "../../../../lib/toast";
 import { cn } from "../../../../lib/utils";
 import {
@@ -50,6 +51,9 @@ type CheckerContextType = {
   setFailures: React.Dispatch<React.SetStateAction<CheckerFailure[]>>;
   id: string | null;
   setId: React.Dispatch<React.SetStateAction<string | null>>;
+  // URL the current `values` belong to, for the monitor CTA.
+  url: string | null;
+  setUrl: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 const CheckerContext = createContext<CheckerContextType>({
@@ -59,17 +63,22 @@ const CheckerContext = createContext<CheckerContextType>({
   setFailures: () => {},
   id: null,
   setId: () => {},
+  url: null,
+  setUrl: () => {},
 });
 
 export function CheckerProvider({
   children,
   defaultValues = [],
+  defaultUrl = null,
 }: {
   children: React.ReactNode;
   defaultValues?: Values[];
+  defaultUrl?: string | null;
 }) {
   const [values, setValues] = useState<Values[]>(defaultValues);
   const [failures, setFailures] = useState<CheckerFailure[]>([]);
+  const [url, setUrl] = useState<string | null>(defaultUrl);
   const [{ id: urlId }, setSearchParams] = useQueryStates(searchParamsParsers);
   const [id, setId] = useState<string | null>(urlId);
 
@@ -96,6 +105,8 @@ export function CheckerProvider({
         setFailures,
         id,
         setId: updateId,
+        url,
+        setUrl,
       }}
     >
       {children}
@@ -118,7 +129,7 @@ export function Form({
   defaultMethod?: string;
   defaultUrl?: string;
 }) {
-  const { setValues, setFailures, setId } = useCheckerContext();
+  const { setValues, setFailures, setId, setUrl } = useCheckerContext();
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -141,6 +152,7 @@ export function Form({
     setValues([]);
     setFailures([]);
     setId(null); // This will also clear the URL param
+    setUrl(url);
 
     startTransition(async () => {
       async function fetchAndReadStream() {
@@ -293,7 +305,7 @@ export function Form({
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
         <div className="col-span-1">
           <Select name="method" defaultValue={defaultMethod}>
-            <SelectTrigger className="h-auto! w-full rounded-none p-4 text-base">
+            <SelectTrigger className="h-auto! w-full rounded-none px-3 py-2 text-base">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-none">
@@ -301,7 +313,7 @@ export function Form({
                 <SelectItem
                   key={method}
                   value={method}
-                  className="rounded-none px-2 py-3"
+                  className="rounded-none px-3 py-2"
                 >
                   {method}
                 </SelectItem>
@@ -313,7 +325,7 @@ export function Form({
           <Input
             name="url"
             placeholder="https://openstatus.dev"
-            className="h-auto! rounded-none p-4 text-base md:text-base"
+            className="h-auto! rounded-none px-3 py-2 text-base md:text-base"
             defaultValue={defaultUrl}
             required
           />
@@ -322,7 +334,7 @@ export function Form({
           <Button
             type="submit"
             variant="default"
-            className="h-full w-full rounded-none p-4 text-base"
+            className="h-full w-full rounded-none px-3 py-2 text-base"
             disabled={isPending}
           >
             {isPending ? "Submitting..." : "Submit"}
@@ -353,11 +365,11 @@ export function ResultTable() {
               <td>
                 <IconCloudProvider
                   provider="globe"
-                  className="text-muted-foreground size-4"
+                  className="text-muted-foreground mx-auto size-4"
                 />
               </td>
               <td>
-                <div className="bg-muted-foreground size-4" />
+                <div className="bg-muted-foreground mx-auto size-4" />
               </td>
               <td>
                 <br />
@@ -374,13 +386,13 @@ export function ResultTable() {
                   <td>
                     <IconCloudProvider
                       provider={regionConfig.provider}
-                      className="size-4"
+                      className="mx-auto size-4"
                     />
                   </td>
                   <td>
                     <div
                       className={cn(
-                        "size-4",
+                        "mx-auto size-4",
                         STATUS_CODES[
                           value.status.toString()[0] as keyof typeof STATUS_CODES
                         ],
@@ -424,11 +436,11 @@ function FailedRow({ failure }: { failure: CheckerFailure }) {
       <td>
         <IconCloudProvider
           provider={regionConfig.provider}
-          className="size-4"
+          className="mx-auto size-4"
         />
       </td>
       <td>
-        <div className="bg-muted-foreground size-4" />
+        <div className="bg-muted-foreground mx-auto size-4" />
       </td>
       <td>
         {regionConfig.flag} {regionConfig.code}{" "}
@@ -474,7 +486,7 @@ export function DetailsButtonLink() {
   return (
     <Button
       variant="default"
-      className="h-auto! flex-1 rounded-none p-4 text-base"
+      className="h-auto! flex-1 rounded-none px-3 py-2 text-base"
       asChild
     >
       <Link
@@ -484,6 +496,65 @@ export function DetailsButtonLink() {
         Response details
       </Link>
     </Button>
+  );
+}
+
+// Below 3× the regions are "even"; above it one region is the story.
+const SPREAD_RATIO = 3;
+
+export function MonitorCta() {
+  const { values, url } = useCheckerContext();
+
+  if (!url || values.length === 0) return null;
+
+  const sorted = [...values].sort((a, b) => a.latency - b.latency);
+  const fastest = sorted[0];
+  const slowest = sorted[sorted.length - 1];
+  const uneven =
+    sorted.length > 1 &&
+    fastest.latency > 0 &&
+    slowest.latency / fastest.latency >= SPREAD_RATIO;
+
+  const params = new URLSearchParams({ url, ref: "checker" });
+
+  return (
+    <div className="border-border bg-muted/30 mt-4 grid gap-4 border p-3 sm:grid-cols-3">
+      <div className="sm:col-span-2">
+        <p className="my-0! font-semibold">
+          {uneven
+            ? `${regionFormatter(slowest.region, "long")} answers in ${latencyFormatter(
+                slowest.latency,
+              )}, ${regionFormatter(fastest.region, "long")} in ${latencyFormatter(
+                fastest.latency,
+              )}.`
+            : sorted.length > 1
+              ? "Response times look even across regions."
+              : "Only one region responded."}
+        </p>
+        <p className="text-muted-foreground my-0! text-sm">
+          {uneven
+            ? "One sample is a snapshot. Monitor this URL from all regions and get alerted when a region degrades. Free."
+            : sorted.length > 1
+              ? "Keep it that way: monitor this URL on a schedule and get alerted when it slows down or fails. Free."
+              : "Monitor this URL on a schedule to see whether the other regions reach it and get alerted when it fails. Free."}
+        </p>
+      </div>
+      <div className="flex items-center sm:col-span-1 sm:justify-end">
+        <Button
+          asChild
+          className="h-auto! w-full rounded-none px-3 py-2 text-base"
+        >
+          <a
+            href={`${APP_URL}/monitors/create?${params.toString()}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-background! no-underline!"
+          >
+            Monitor this URL
+          </a>
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -497,7 +568,7 @@ export function ExportToCSVButton() {
   return (
     <Button
       variant="outline"
-      className="h-auto! flex-1 cursor-pointer rounded-none p-4 text-base"
+      className="h-auto! flex-1 cursor-pointer rounded-none px-3 py-2 text-base"
       onClick={() => handleExportCSV(values)}
     >
       Export to CSV

@@ -60,6 +60,28 @@ component once so drift is visible.
 - No new colours beyond tokens, no font sizes beyond the prose scale, no radius.
   Dark mode comes from tokens only; images get a `.dark` sibling.
 
+## Spacing and type
+
+Prose runs at `text-base` with headings near body size (`h1` `text-xl`, the
+rest `text-base`) in both the mono content layout and the sans docs layout,
+so the chrome is scaled down to match. One 12px rhythm, nothing else:
+
+- Controls and cells (buttons, inputs, selects, textareas, tab triggers,
+  table `th`/`td`, header and footer nav tiles, menu items) are
+  `px-3 py-2` at `text-base`. The usual string is
+  `h-auto! rounded-none px-3 py-2 text-base`.
+- Containers (Grid cells, Card, Aside, ContentBox, footer columns,
+  pagination tiles, `details`) are `p-3`; the page gutters and sub-nav are
+  `px-3`, so text edges line up with the header tiles.
+- Never `p-4` on anything in `apps/web` outside the demos, which mirror
+  the status page and keep its spacing.
+- Tile grids drawn with `bg-border` + `gap-px` also carry `bg-clip-padding`,
+  or in dark mode (translucent `--border`) the outer border stacks on the
+  fill and reads heavier than the dividers.
+- Headings and `strong` are full `text-foreground`; body stays at the base
+  `.prose` color (`foreground/80`) so hierarchy comes from weight and
+  contrast, not size.
+
 ## Screenshots
 
 For any visible change, shoot it before reporting it done:
@@ -68,7 +90,7 @@ flags). Judge against the root `DESIGN.md`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 

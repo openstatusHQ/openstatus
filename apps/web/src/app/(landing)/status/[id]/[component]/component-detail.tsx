@@ -179,6 +179,9 @@ export function ComponentDetail({
       <JsonLd graph={ld} />
 
       <h1>Is {fullName} down?</h1>
+      <p className="text-muted-foreground text-sm">
+        Part of <a href={`/status/${service.slug}`}>{service.name} status</a>
+      </p>
       <p>
         {answer} Below you'll find the live {component.name} status, uptime over
         the last {days} days, and recent incidents affecting {component.name}.

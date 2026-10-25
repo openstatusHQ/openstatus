@@ -39,7 +39,7 @@ export function MonitorCta() {
   }
 
   return (
-    <div className="border-border bg-muted/30 grid gap-4 border p-4 sm:grid-cols-3">
+    <div className="border-border bg-muted/30 grid gap-4 border p-3 sm:grid-cols-3">
       <div className="sm:col-span-2">
         <p className="my-0! font-semibold">
           {uncached > 0
@@ -60,7 +60,7 @@ export function MonitorCta() {
         </p>
       </div>
       <div className="flex items-center sm:col-span-1 sm:justify-end">
-        <Button asChild className="h-auto! rounded-none p-4 text-base">
+        <Button asChild className="h-auto! rounded-none px-3 py-2 text-base">
           <a
             href={`${APP_URL}/monitors/create?${params.toString()}`}
             target="_blank"

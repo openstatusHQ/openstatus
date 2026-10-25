@@ -62,7 +62,7 @@ For AI agents that should only observe state — health summaries, paging on-cal
 
 ## Tools
 
-The server exposes 39 tools (37 on plans without the `audit-log` feature), grouped by resource: 35 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
+The server exposes 40 tools (38 on plans without the `audit-log` feature), grouped by resource: 36 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
 
 ### Pages
 
@@ -133,6 +133,12 @@ These tools act on declared incidents, not on monitor downtime, and are internal
 | Tool                     | Type | Purpose |
 |--------------------------|------|---------|
 | `list_private_locations` | read | List the workspace's private locations with their name, status (`active` / `error`), metadata, and `lastSeenAt`. Agent tokens are never exposed. |
+
+### Workspace
+
+| Tool            | Type | Purpose |
+|-----------------|------|---------|
+| `get_workspace` | read | The workspace's name, slug, plan, trial end, and usage counts (monitors, status pages, components, notification channels, status reports). Plan limits and billing identifiers are never exposed. |
 
 ### Audit
 

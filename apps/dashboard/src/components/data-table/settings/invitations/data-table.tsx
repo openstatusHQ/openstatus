@@ -1,11 +1,13 @@
+import { Invite } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 
 import {
-  EmptyStateContainer,
   EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import { DataTable as DataTableBase } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -17,22 +19,23 @@ export function DataTable() {
 
   if (!invitations) return null;
 
-  if (invitations.length === 0) {
-    return (
-      <EmptyStateContainer>
-        <EmptyStateTitle>No pending invitations</EmptyStateTitle>
-        <EmptyStateDescription>
-          Only active invitations are shown here.
-        </EmptyStateDescription>
-      </EmptyStateContainer>
-    );
-  }
-
   return (
     <DataTableBase
       columns={columns}
       data={invitations}
       paginationComponent={DataTablePaginationSimple}
+      emptyState={
+        <DataTableEmpty>
+          <EmptyStateMedia>
+            <Invite />
+          </EmptyStateMedia>
+          <EmptyStateTitle>No pending invitations</EmptyStateTitle>
+          <EmptyStateDescription>
+            Invite a member below. Accepted and expired invitations drop off
+            this list.
+          </EmptyStateDescription>
+        </DataTableEmpty>
+      }
     />
   );
 }

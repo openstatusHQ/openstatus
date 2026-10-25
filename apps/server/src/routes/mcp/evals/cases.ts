@@ -170,4 +170,9 @@ export const cases: EvalCase[] = [
     prompt: "Is our on-prem checker agent still reporting in?",
     expectedTool: "list_private_locations",
   },
+  {
+    id: "select.get_workspace",
+    prompt: "What plan are we on, and how many monitors do we have?",
+    expectedTool: "get_workspace",
+  },
 ];

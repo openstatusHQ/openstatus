@@ -73,10 +73,6 @@ const resourcesHeaderSection = {
   label: "Resources",
   items: [
     {
-      label: "Docs",
-      href: "/docs",
-    },
-    {
       label: "Customers",
       href: "/customers",
     },
@@ -133,6 +129,10 @@ const companySection = {
     {
       label: "Subprocessors",
       href: "/subprocessors",
+    },
+    {
+      label: "Contact",
+      href: "/contact",
     },
   ],
 };

@@ -4,11 +4,6 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 
 import { Link } from "@/components/common/link";
-import {
-  EmptyStateDescription,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import { EmptyStateContainer } from "@/components/content/empty-state";
 import { DataTable } from "@/components/data-table/settings/api-key/data-table";
 import { CreateApiKeyDialog } from "@/components/forms/api-key/dialog";
 import {
@@ -37,16 +32,7 @@ export function FormApiKey() {
         </FormCardDescription>
       </FormCardHeader>
       <FormCardContent>
-        {apiKeys.length === 0 ? (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No API keys</EmptyStateTitle>
-            <EmptyStateDescription>
-              Access your data via API.
-            </EmptyStateDescription>
-          </EmptyStateContainer>
-        ) : (
-          <DataTable apiKeys={apiKeys} />
-        )}
+        <DataTable apiKeys={apiKeys} />
       </FormCardContent>
       <FormCardFooter>
         <FormCardFooterInfo>

@@ -12,7 +12,7 @@ const ASIDE_LABEL: Record<AsideType, string> = {
   danger: "Danger",
 };
 
-const asideVariants = cva("border-border my-4 border p-4", {
+const asideVariants = cva("border-border my-4 border p-3", {
   variants: {
     type: {
       note: "border-border",

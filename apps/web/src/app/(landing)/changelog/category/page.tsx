@@ -1,36 +1,14 @@
 import type { Metadata } from "next";
 
 import { components } from "../../../../content/mdx";
+import { categoriesIndex, sections } from "../../../../content/sections";
 import { getChangelogPosts } from "../../../../content/utils";
-import {
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "../../../../lib/metadata/shared-metadata";
+import { getListingMetadata } from "../../../../lib/metadata/shared-metadata";
 import { ContentBoxLink, ContentBoxTitle } from "../../content-box";
 
-const TITLE = "Changelog Categories";
-const DESCRIPTION = "Browse all changelog categories from openstatus.";
-
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: {
-    canonical: "/changelog/category",
-  },
-  openGraph: {
-    ...ogMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-  twitter: {
-    ...twitterMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
-  },
-};
+export const metadata: Metadata = getListingMetadata(
+  categoriesIndex(sections.changelog),
+);
 
 export default function ChangelogCategoryIndex() {
   const posts = getChangelogPosts();

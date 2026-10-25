@@ -18,3 +18,9 @@ export const headerPairSchema = z.object({
 });
 
 export type HeaderPair = z.infer<typeof headerPairSchema>;
+
+export function transformHeaders(
+  headers: { key: string; value: string }[],
+): Record<string, string> {
+  return Object.fromEntries(headers.map(({ key, value }) => [key, value]));
+}

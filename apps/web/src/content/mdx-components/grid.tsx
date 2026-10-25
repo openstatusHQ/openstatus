@@ -77,7 +77,7 @@ export function Grid({
     <div
       className={cn(
         "my-4 grid grid-cols-1",
-        "[&>*]:border-border [&>*]:min-w-0 [&>*]:border [&>*]:p-4",
+        "[&>*]:border-border [&>*]:min-w-0 [&>*]:border [&>*]:p-3",
         // NOTE: remove extra margin from prose grid cells of first and last element
         "[&>*>*:first-child]:!mt-0 [&>*>*:last-child]:!mb-0",
         sm && smColsClass[sm],

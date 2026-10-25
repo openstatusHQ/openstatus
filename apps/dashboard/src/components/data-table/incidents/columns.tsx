@@ -81,7 +81,7 @@ const baseColumns: ColumnDef<Incident>[] = [
 
 const declareColumn: ColumnDef<Incident> = {
   id: "declare",
-  header: () => null,
+  header: "",
   cell: ({ row }) =>
     row.original.resolvedAt ? null : (
       <DeclareFromRow

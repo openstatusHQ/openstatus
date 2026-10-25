@@ -22,7 +22,7 @@ export function TableCellNumber({
   value,
   className,
   unit,
-  empty = "No data",
+  empty = "—",
   variant,
   ...props
 }: React.ComponentProps<"div"> &

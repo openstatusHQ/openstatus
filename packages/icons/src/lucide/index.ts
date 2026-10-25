@@ -83,6 +83,7 @@ export {
   Bell as Notification,
   BellOff as NotificationOff,
   LayoutGrid as Overview,
+  Pause,
   CircleDashed as Pending,
   Play,
   Plug,

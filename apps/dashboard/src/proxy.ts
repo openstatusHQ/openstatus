@@ -1,15 +1,46 @@
+import {
+  ATTRIBUTION_COOKIE,
+  ATTRIBUTION_DOMAIN,
+  ATTRIBUTION_MAX_AGE,
+  parseAttribution,
+  serializeAttribution,
+} from "@openstatus/analytics/src/attribution";
 import { asc, db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 import { getCurrency } from "@openstatus/db/src/schema/plan/utils";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { SSO_ORG_COOKIE } from "@/lib/sso-cookie";
 import { WORKSPACE_SLUG_COOKIE } from "@/lib/workspace-cookie";
 
+// Marketing CTAs land here as `?ref=home-hero`. Fold the ref into the
+// first-touch cookie the web app set (or start one) so `user_created` can
+// carry it; the ref is dropped by the login redirect otherwise.
+function withAttributionRef(req: NextRequest, response: NextResponse) {
+  const ref = req.nextUrl.searchParams.get("ref");
+  if (!ref) return response;
+  const current = parseAttribution(req.cookies.get(ATTRIBUTION_COOKIE)?.value);
+  if (current.ref) return response;
+  const onProd = req.nextUrl.hostname.endsWith(ATTRIBUTION_DOMAIN.slice(1));
+  response.cookies.set(
+    ATTRIBUTION_COOKIE,
+    serializeAttribution({ ...current, ref }),
+    {
+      path: "/",
+      maxAge: ATTRIBUTION_MAX_AGE,
+      sameSite: "lax",
+      secure: onProd,
+      ...(onProd ? { domain: ATTRIBUTION_DOMAIN } : {}),
+    },
+  );
+  return response;
+}
+
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
-  const response = NextResponse.next();
+  const response = withAttributionRef(req, NextResponse.next());
 
   const continent = req.headers.get("x-vercel-ip-continent") || "NA";
   const country = req.headers.get("x-vercel-ip-country") || "US";
@@ -36,7 +67,7 @@ export default auth(async (req) => {
       newURL.searchParams.append("redirectTo", encodedSearchParams);
     }
 
-    const response = NextResponse.redirect(newURL);
+    const response = withAttributionRef(req, NextResponse.redirect(newURL));
     // Store the redirect URL in a cookie for new users who go through onboarding.
     // Auth.js may not reliably pass callbackUrl to pages.newUser, so we use a
     // cookie as a fallback to ensure invite links work correctly.

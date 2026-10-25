@@ -1,3 +1,4 @@
+import { PubSub, type Topic } from "@google-cloud/pubsub";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos";
 import { getLogger } from "@logtape/logtape";
@@ -11,7 +12,6 @@ import {
   notInArray,
 } from "@openstatus/db";
 import {
-  type MonitorStatus,
   maintenance,
   monitor,
   monitorStatusTable,
@@ -19,32 +19,23 @@ import {
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
   maintenancesToPageComponents,
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
 import { regionDict } from "@openstatus/regions";
-import {
-  type DNSPayloadSchema,
-  type httpPayloadSchema,
-  type grpcPayloadSchema,
-  type icmpPayloadSchema,
-  type tpcPayloadSchema,
-  transformHeaders,
-} from "@openstatus/utils";
 import { Effect, Result, Schedule } from "effect";
 import { z } from "zod";
 
 import { env } from "../env";
 import { db } from "../lib/db";
-
-type TaskInput = {
-  row: z.infer<typeof selectMonitorSchema>;
-  timestamp: number;
-  status: MonitorStatus;
-  region: Region;
-};
+import {
+  type CheckerPublisher,
+  type Periodicity,
+  type TaskInput,
+  buildCronCheckerPayload,
+  publishCheckerTasks,
+} from "./checker-payload";
 
 export const isAuthorizedDomain = (url: string) => {
   return url.includes(env().SITE_URL);
@@ -77,34 +68,46 @@ function isGcpConfigured(): boolean {
 // Only initialize CloudTasksClient if GCP credentials are properly configured
 // This allows self-hosted deployments to run without GCP Cloud Tasks
 let client: CloudTasksClient | null = null;
+let publisher: CheckerPublisher | null = null;
 
 if (isGcpConfigured()) {
-  client = new CloudTasksClient({
-    // fallback: true,
+  const options = {
     projectId: env().GCP_PROJECT_ID,
     credentials: {
       client_email: env().GCP_CLIENT_EMAIL,
       private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
     },
-  });
+  };
+  client = new CloudTasksClient(options);
+  publisher = createPublisher(new PubSub(options));
+}
+
+function createPublisher(pubsub: PubSub): CheckerPublisher {
+  const topics = new Map<string, Topic>();
+  return {
+    publish: (name, data, attributes) => {
+      let topic = topics.get(name);
+      if (!topic) {
+        topic = pubsub.topic(name, {
+          batching: { maxMessages: 1000, maxMilliseconds: 10 },
+        });
+        topics.set(name, topic);
+      }
+      return topic.publishMessage({ data, attributes });
+    },
+  };
 }
 
 export async function sendCheckerTasks(
-  periodicity: z.infer<typeof monitorPeriodicitySchema>,
+  periodicity: Periodicity,
 ): Promise<{ success: number; failed: number }> {
-  // If GCP Cloud Tasks is not configured, skip task creation
-  if (!client) {
+  // If GCP is not configured, skip task creation
+  if (!client || !publisher) {
     logger.warn("GCP Cloud Tasks not configured - skipping checker tasks", {
       periodicity,
     });
     return { success: 0, failed: 0 };
   }
-
-  const parent = client.queuePath(
-    env().GCP_PROJECT_ID,
-    env().GCP_LOCATION,
-    periodicity,
-  );
 
   const timestamp = Date.now();
 
@@ -216,12 +219,65 @@ export async function sendCheckerTasks(
     }
   }
 
+  const transport = env().CHECKER_TRANSPORT;
+  const { success, failed } =
+    transport === "pubsub"
+      ? await publishToPubSub(taskInputs, periodicity, publisher)
+      : await createCloudTasks(taskInputs, periodicity, client);
+
+  logger.info("Completed cron job", {
+    periodicity,
+    transport,
+    total_tasks: taskInputs.length,
+    success_count: success,
+    failed_count: failed,
+    duration_ms: Date.now() - timestamp,
+  });
+  if (failed > 0) {
+    logger.error("Cron job had failures", {
+      periodicity,
+      transport,
+      failed_count: failed,
+      success_count: success,
+    });
+  }
+
+  return { success, failed };
+}
+
+async function publishToPubSub(
+  taskInputs: TaskInput[],
+  periodicity: Periodicity,
+  publisher: CheckerPublisher,
+) {
+  const result = await publishCheckerTasks(taskInputs, periodicity, publisher);
+  if (result.failed > 0) {
+    logger.error("Pub/Sub publish failed", {
+      periodicity,
+      failed_by_region: result.failedByRegion,
+      error_message: result.errors[0],
+    });
+  }
+  return result;
+}
+
+async function createCloudTasks(
+  taskInputs: TaskInput[],
+  periodicity: Periodicity,
+  client: CloudTasksClient,
+) {
+  const parent = client.queuePath(
+    env().GCP_PROJECT_ID,
+    env().GCP_LOCATION,
+    periodicity,
+  );
+
   const results = await Effect.runPromise(
     Effect.forEach(
       taskInputs,
       (input) =>
         Effect.tryPromise({
-          try: () => createCronTask(input, parent),
+          try: () => createCronTask(input, parent, client),
           catch: (err) => {
             if (err instanceof Error && "code" in err && err.code === 6) {
               return "ALREADY_EXISTS" as const;
@@ -253,157 +309,18 @@ export async function sendCheckerTasks(
     }
   }
 
-  const success = results.filter(Result.isSuccess).length;
-  const failed = results.filter(Result.isFailure).length;
-
-  logger.info("Completed cron job", {
-    periodicity,
-    total_tasks: taskInputs.length,
-    success_count: success,
-    failed_count: failed,
-    duration_ms: Date.now() - timestamp,
-  });
-  if (failed > 0) {
-    logger.error("Cron job had failures", {
-      periodicity,
-      failed_count: failed,
-      success_count: success,
-    });
-  }
-
-  return { success, failed };
+  return {
+    success: results.filter(Result.isSuccess).length,
+    failed: results.filter(Result.isFailure).length,
+  };
 }
-// timestamp needs to be in ms
+
 const createCronTask = async (
   { row, timestamp, status, region }: TaskInput,
   parent: string,
+  client: CloudTasksClient,
 ) => {
-  // This should never happen due to the guard in sendCheckerTasks, but TypeScript needs this
-  if (!client) {
-    throw new Error("GCP Cloud Tasks client is not initialized");
-  }
-
-  let payload:
-    | z.infer<typeof httpPayloadSchema>
-    | z.infer<typeof tpcPayloadSchema>
-    | z.infer<typeof DNSPayloadSchema>
-    | z.infer<typeof icmpPayloadSchema>
-    | z.infer<typeof grpcPayloadSchema>
-    | null = null;
-
-  //
-  if (row.jobType === "http") {
-    payload = {
-      workspaceId: String(row.workspaceId),
-      monitorId: String(row.id),
-      url: row.url,
-      method: row.method || "GET",
-      cronTimestamp: timestamp,
-      body: row.body,
-      headers: row.headers,
-      status: status,
-      assertions: row.assertions ? JSON.parse(row.assertions) : null,
-      degradedAfter: row.degradedAfter,
-      timeout: row.timeout,
-      trigger: "cron",
-      otelConfig: row.otelEndpoint
-        ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
-        : undefined,
-      retry: row.retry || 3,
-      followRedirects:
-        row.followRedirects === null ? true : row.followRedirects,
-    };
-  }
-  if (row.jobType === "tcp") {
-    payload = {
-      workspaceId: String(row.workspaceId),
-      monitorId: String(row.id),
-      uri: row.url,
-      status: status,
-      assertions: row.assertions ? JSON.parse(row.assertions) : null,
-      cronTimestamp: timestamp,
-      degradedAfter: row.degradedAfter,
-      timeout: row.timeout,
-      trigger: "cron",
-      retry: row.retry || 3,
-      otelConfig: row.otelEndpoint
-        ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
-        : undefined,
-    };
-  }
-  if (row.jobType === "dns") {
-    payload = {
-      workspaceId: String(row.workspaceId),
-      monitorId: String(row.id),
-      uri: row.url,
-      cronTimestamp: timestamp,
-      status: status,
-      assertions: row.assertions ? JSON.parse(row.assertions) : null,
-      degradedAfter: row.degradedAfter,
-      timeout: row.timeout,
-      trigger: "cron",
-      otelConfig: row.otelEndpoint
-        ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
-        : undefined,
-      retry: row.retry || 3,
-    };
-  }
-
-  if (row.jobType === "icmp") {
-    payload = {
-      workspaceId: String(row.workspaceId),
-      monitorId: String(row.id),
-      uri: row.url,
-      cronTimestamp: timestamp,
-      status: status,
-      degradedAfter: row.degradedAfter,
-      timeout: row.timeout,
-      trigger: "cron",
-      otelConfig: row.otelEndpoint
-        ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
-        : undefined,
-      retry: row.retry || 3,
-    };
-  }
-
-  if (row.jobType === "grpc") {
-    payload = {
-      workspaceId: String(row.workspaceId),
-      monitorId: String(row.id),
-      uri: row.url,
-      service: row.grpcService ?? undefined,
-      tls: row.grpcTls ?? "tls",
-      headers: transformHeaders(row.headers),
-      cronTimestamp: timestamp,
-      status: status,
-      degradedAfter: row.degradedAfter,
-      timeout: row.timeout,
-      trigger: "cron",
-      otelConfig: row.otelEndpoint
-        ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
-        : undefined,
-      retry: row.retry || 3,
-    };
-  }
-
-  if (!payload) {
-    throw new Error("Invalid jobType");
-  }
+  const payload = buildCronCheckerPayload({ row, timestamp, status });
   const regionInfo = regionDict[region];
   let regionHeader = {};
   if (regionInfo.provider === "fly") {

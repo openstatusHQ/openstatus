@@ -30,7 +30,7 @@ function CacheStatusIndicator({
 }) {
   return (
     <div
-      className={cn("size-4", CACHE_STATUS_COLOR[status])}
+      className={cn("mx-auto size-4", CACHE_STATUS_COLOR[status])}
       title={CACHE_STATUS_DESCRIPTION[status]}
     />
   );
@@ -38,7 +38,7 @@ function CacheStatusIndicator({
 
 export function CacheStatusLegend() {
   return (
-    <div className="not-prose my-4 flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2">
       {Object.entries(CACHE_STATUS_COLOR).map(([status, className]) => (
         <div
           key={status}
@@ -120,9 +120,9 @@ export function ResultsTable() {
   const errorRows = rows.filter((row) => row.state === "error");
 
   return (
-    <div className="not-prose grid gap-2">
+    <div className="grid gap-2">
       {errorRows.length > 0 ? (
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted-foreground my-0! text-sm">
           Unreachable:{" "}
           {errorRows
             .map((row) => regionFormatter(row.region, "short"))
@@ -146,11 +146,11 @@ export function ResultsTable() {
                 <td>
                   <IconCloudProvider
                     provider="globe"
-                    className="text-muted-foreground size-4"
+                    className="text-muted-foreground mx-auto size-4"
                   />
                 </td>
                 <td>
-                  <div className="bg-muted-foreground size-4" />
+                  <div className="bg-muted-foreground mx-auto size-4" />
                 </td>
                 <td>
                   <br />
@@ -170,7 +170,7 @@ export function ResultsTable() {
                     <td>
                       <IconCloudProvider
                         provider={config.provider}
-                        className="size-4"
+                        className="mx-auto size-4"
                       />
                     </td>
                     <td>

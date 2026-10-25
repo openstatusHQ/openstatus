@@ -22,7 +22,7 @@ export function ThemeToggle({
     return (
       <div
         className={cn(
-          "bg-border [&>*]:bg-background flex items-center gap-px [&>*]:flex [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:p-4",
+          "bg-border [&>*]:bg-background flex items-center gap-px [&>*]:flex [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:px-3 [&>*]:py-2",
           className,
         )}
         {...props}
@@ -43,7 +43,7 @@ export function ThemeToggle({
   return (
     <div
       className={cn(
-        "bg-border [&>*]:bg-background [&>*]:hover:bg-muted [&>*]:data-[active=true]:bg-muted flex items-center gap-px [&>*]:flex [&>*]:min-w-0 [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:p-4",
+        "bg-border [&>*]:bg-background [&>*]:hover:bg-muted [&>*]:data-[active=true]:bg-muted flex items-center gap-px [&>*]:flex [&>*]:min-w-0 [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:px-3 [&>*]:py-2",
         className,
       )}
       {...props}

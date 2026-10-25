@@ -11,6 +11,7 @@ import {
   APP_URL,
   BASE_URL,
   defaultMetadata,
+  markdownAlternate,
   ogMetadata,
   twitterMetadata,
 } from "../../../../lib/metadata/shared-metadata";
@@ -20,6 +21,7 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../content-box";
+import { getCheckerHref, getHost } from "../utils";
 import { ServiceDetail } from "./service-detail";
 
 export const dynamic = "force-dynamic";
@@ -42,8 +44,8 @@ export async function generateMetadata(args: {
       ? `Users reporting issues with ${service.name}. ${service.name} Status & Incidents`
       : `Is ${service.name} Down? ${service.name} Status & Incidents`;
     const description = escalated
-      ? `Users are reporting problems with ${service.name} in the last ${REPORT_WINDOW_MINUTES} minutes. Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`
-      : `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`;
+      ? `Users are reporting problems with ${service.name} in the last ${REPORT_WINDOW_MINUTES} minutes. Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by openstatus.`
+      : `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by openstatus.`;
     const canonicalUrl = `${BASE_URL}/status/${service.slug}`;
     const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}`;
     const indexable = service.deletedAt == null;
@@ -54,6 +56,7 @@ export async function generateMetadata(args: {
       description,
       alternates: {
         canonical: canonicalUrl,
+        ...markdownAlternate(`/status/${service.slug}`),
       },
       robots: {
         index: indexable,
@@ -104,16 +107,28 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
     }),
   ]);
 
+  const checkerHref = getCheckerHref(service.url);
+
   return (
     <section className="prose dark:prose-invert mb-12 max-w-none">
-      <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
-        <CustomLink
-          href={`${APP_URL}?ref=status-service-top`}
-          className="font-medium underline-offset-4 hover:underline"
-        >
-          Catch downtime instantly and keep your users in the loop with
-          OpenStatus →
-        </CustomLink>
+      <ContentBoxContainer className="not-prose my-6 px-3 py-2 text-sm">
+        {checkerHref ? (
+          <CustomLink
+            href={checkerHref}
+            className="font-medium underline-offset-4 hover:underline"
+          >
+            Is {service.name} down for you? Test {getHost(service.url)} from 28
+            regions →
+          </CustomLink>
+        ) : (
+          <CustomLink
+            href={`${APP_URL}?ref=status-service-top`}
+            className="font-medium underline-offset-4 hover:underline"
+          >
+            Catch downtime before your users do: free uptime monitoring from 28
+            regions →
+          </CustomLink>
+        )}
       </ContentBoxContainer>
 
       <HydrateClient>
@@ -135,7 +150,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           Looking for a status page?
         </ContentBoxTitle>
         <ContentBoxDescription className="m-0! text-sm">
-          Every service needs a status page. Run yours with OpenStatus — see
+          Every service needs a status page. Run yours with openstatus — see
           what a{" "}
           <CustomLink href="/status-page" className="underline-offset-4">
             hosted status page

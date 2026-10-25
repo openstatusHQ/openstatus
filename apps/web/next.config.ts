@@ -52,6 +52,12 @@ const agentDiscoveryHeaders = [
 // ICON_SET=nucleo swaps the icon set at resolution time (see packages/icons)
 const useNucleoIcons = process.env.ICON_SET === "nucleo";
 
+// `text/markdown` anywhere in Accept, unless its q-value is 0 (an explicit
+// refusal; `q=0.5` and friends still count). Next anchors `has` values as
+// `^...$`, so the `(.*)` on both sides stay.
+const ACCEPTS_MARKDOWN =
+  "(.*)text/markdown(?!\\s*;\\s*q=0(?:\\.0*)?\\s*(?:,|$))(.*)";
+
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -406,7 +412,20 @@ const nextConfig: NextConfig = {
             {
               type: "header",
               key: "accept",
-              value: "(.*)text/markdown(.*)",
+              value: ACCEPTS_MARKDOWN,
+            },
+          ],
+        },
+        // `.+` above needs at least one path character, so the home page
+        // gets its own rule.
+        {
+          source: "/",
+          destination: "/api/markdown",
+          has: [
+            {
+              type: "header",
+              key: "accept",
+              value: ACCEPTS_MARKDOWN,
             },
           ],
         },

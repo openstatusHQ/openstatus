@@ -1,53 +1,25 @@
 import type { Metadata } from "next";
 
+import { sections } from "../../../content/sections";
 import { getGuides } from "../../../content/utils";
 import { JsonLd } from "../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  defaultMetadata,
-  ogMetadata,
-} from "../../../lib/metadata/shared-metadata";
-import { twitterMetadata } from "../../../lib/metadata/shared-metadata";
+import { getListingMetadata } from "../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
-  getJsonLDBreadcrumbList,
   getJsonLDItemList,
   getJsonLDOrganization,
+  getJsonLDSectionBreadcrumb,
 } from "../../../lib/metadata/structured-data";
 import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";
 
-const TITLE = "Guides";
-const DESCRIPTION = "All the latest guides from openstatus.";
-
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: {
-    canonical: "/guides",
-  },
-  openGraph: {
-    ...ogMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-  twitter: {
-    ...twitterMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
-  },
-};
+export const metadata: Metadata = getListingMetadata(sections.guides);
 
 export default function GuidesListPage() {
   const allGuides = getGuides();
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
-    getJsonLDBreadcrumbList([
-      { name: "Home", url: BASE_URL },
-      { name: "Guides", url: `${BASE_URL}/guides` },
-    ]),
+    getJsonLDSectionBreadcrumb(sections.guides),
     getJsonLDItemList(allGuides, "/guides"),
   ]);
   return (

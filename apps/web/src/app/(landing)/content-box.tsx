@@ -35,7 +35,7 @@ export function ContentBoxContainer({
   return (
     <div
       className={cn(
-        "border-border border p-4",
+        "border-border border p-3",
         "[&>*:first-child]:!mt-0 [&>*:last-child]:!mb-0",
         className,
       )}

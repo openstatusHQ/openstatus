@@ -95,7 +95,7 @@ export function Results({ data }: ResultsProps) {
           <TabsTrigger
             key={value}
             value={value}
-            className="h-auto w-full truncate rounded-none p-4 text-base capitalize"
+            className="h-auto w-full truncate rounded-none px-3 py-2 text-base capitalize"
           >
             {value}
           </TabsTrigger>
@@ -107,11 +107,11 @@ export function Results({ data }: ResultsProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Search by region, flag, location code, cloud provider or continent"
-            className="h-auto! flex-1 rounded-none p-4 text-base md:text-base"
+            className="h-auto! flex-1 rounded-none px-3 py-2 text-base md:text-base"
           />
           <Button
             variant="outline"
-            className="h-auto! rounded-none p-4 text-base"
+            className="h-auto! rounded-none px-3 py-2 text-base"
             onClick={() => handleExportCSV(checks, data.url)}
           >
             Export to CSV
@@ -169,7 +169,7 @@ export function Results({ data }: ResultsProps) {
                         <td>
                           <IconCloudProvider
                             provider={regionInfo.provider}
-                            className="size-4"
+                            className="mx-auto size-4"
                           />
                         </td>
                         <td>
@@ -251,7 +251,7 @@ function TableSort({
     <Button
       variant="ghost"
       className={cn(
-        "h-auto! w-full rounded-none p-4 text-base md:text-base",
+        "h-auto! w-full rounded-none px-3 py-2 text-base md:text-base",
         className,
       )}
       {...props}
@@ -348,13 +348,13 @@ function InfoDialog({
             <TabsList className="h-auto w-full rounded-none">
               <TabsTrigger
                 value="raw"
-                className="h-auto w-full truncate rounded-none p-4"
+                className="h-auto w-full truncate rounded-none px-3 py-2"
               >
                 Raw
               </TabsTrigger>
               <TabsTrigger
                 value="table"
-                className="h-auto w-full truncate rounded-none p-4"
+                className="h-auto w-full truncate rounded-none px-3 py-2"
               >
                 Table
               </TabsTrigger>
