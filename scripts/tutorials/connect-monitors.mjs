@@ -1,55 +1,45 @@
 // How to show monitors on a status page: Components tab → add monitors → save.
 // Starts on Settings: the Status Reports tab shows the page badge, which
 // cannot load for the seeded page's made-up custom domain.
+import { cleanup, monitors, pages } from "./lib/fixtures.mjs";
 
-const PAGE_ID = 2;
+export const meta = {
+  order: 3,
+  title: "Show your monitors",
+  subtitle: "Turn uptime checks into a page your users can read.",
+  outroTitle: "Your page shows live status.",
+  outroSubtitle: "Next: post a status report when something breaks.",
+};
 
 export default async function ({
   page,
   sql,
   warm,
-  goto,
   start,
   step,
   click,
-  wait,
   settle,
   expect,
+  tab,
+  multiSelect,
 }) {
-  await sql([
-    { q: "delete from page_component where page_id = ?", params: [PAGE_ID] },
-  ]);
+  const id = pages.enterprise;
+  await sql(cleanup.pageComponents({ pageId: id }));
+  await warm([`/status-pages/${id}/components`]);
 
-  await warm([`/status-pages/${PAGE_ID}/components`]);
-
-  await goto(`/status-pages/${PAGE_ID}/edit`);
-  await start();
-  step("Open the status page");
-  await wait(1000);
-
-  await click(
-    page
-      .getByRole("link", { name: "Components", exact: true })
-      .filter({ visible: true })
-      .first(),
-  );
-  await page.waitForURL(`**/status-pages/${PAGE_ID}/components`);
+  await start(`/status-pages/${id}/edit`, "Open the status page");
+  await tab("Components");
+  await page.waitForURL(`**/status-pages/${id}/components`);
   await settle();
-  await wait(800);
 
   step("Add your monitors as components");
-  await click(page.getByRole("button", { name: "Add Component", exact: true }));
-  await click(page.getByRole("menuitem", { name: "Add Monitor Component" }));
-  for (const monitor of ["API", "Website", "Search"]) {
-    await click(page.getByRole("option", { name: monitor, exact: true }));
-    await wait(300);
-  }
-  await page.keyboard.press("Escape");
-  await page.keyboard.press("Escape");
-  await wait(800);
+  await multiSelect("Add Component", "Add Monitor Component", [
+    monitors.api,
+    monitors.website,
+    monitors.search,
+  ]);
 
   step("Save to show them on the page");
   await click(page.getByRole("button", { name: "Submit" }).first());
   await expect("Saved");
-  await wait(2000);
 }

@@ -10,10 +10,10 @@ import {
 import { palette } from "./brand";
 import "./fonts";
 import { buildSegments, pacedDuration, type Segment } from "./pacing";
+import { copyOf } from "./recordings";
 import { Scene } from "./scene";
 import type { Timeline } from "./timeline";
 import { Intro, Outro } from "./titles";
-import type { Tutorial } from "./tutorials";
 
 export const INTRO = 2.6;
 export const OUTRO = 3.4;
@@ -23,7 +23,6 @@ export const FADE = 0.6;
 export type VideoProps = {
   // Folder under .recordings, e.g. "create-monitor".
   recording: string;
-  tutorial: Tutorial;
   timeline: Timeline | null;
 };
 
@@ -77,7 +76,7 @@ function Fade({
   return <AbsoluteFill style={{ opacity }}>{children}</AbsoluteFill>;
 }
 
-export function Video({ recording, tutorial, timeline }: VideoProps) {
+export function Video({ recording, timeline }: VideoProps) {
   const { fps } = useVideoConfig();
   const segments = useMemo(
     () => (timeline ? buildSegments(timeline) : []),
@@ -86,6 +85,7 @@ export function Video({ recording, tutorial, timeline }: VideoProps) {
   if (!timeline) return null;
 
   const theme = timeline.theme;
+  const tutorial = copyOf(timeline);
   const { intro, body, outro, bodyStart, outroStart } = sections(segments, fps);
 
   return (

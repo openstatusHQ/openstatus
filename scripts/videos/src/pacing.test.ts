@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { buildSegments, pacedDuration, sourceTime } from "./pacing";
+import { TYPE_RATE, buildSegments, pacedDuration, sourceTime } from "./pacing";
 import type { Timeline, TimelineEvent } from "./timeline";
 
 const timeline = (duration: number, events: TimelineEvent[]): Timeline => ({
@@ -41,7 +41,7 @@ describe("buildSegments", () => {
 
   test("leaves a recording with no idle time untouched", () => {
     const dense = timeline(3, [
-      { type: "type", t: 0, t1: 3, box: [0, 0, 10, 10], text: "abc" },
+      { type: "move", t: 0, t1: 3, from: [0, 0], to: [1, 1] },
     ]);
     expect(pacedDuration(buildSegments(dense))).toBeCloseTo(3);
   });
@@ -72,5 +72,35 @@ describe("sourceTime", () => {
       expect(sourceTime(segments, out)).toBeCloseTo(s.from);
       out += (s.to - s.from) / s.rate;
     }
+  });
+});
+
+describe("typing", () => {
+  const typed = timeline(10, [
+    { type: "click", t: 1, at: [0, 0], box: [0, 0, 10, 10] },
+    { type: "type", t: 1.5, t1: 4.5, box: [0, 0, 10, 10], text: "hello" },
+  ]);
+
+  test("plays exactly the typed span faster", () => {
+    const fast = buildSegments(typed).filter((s) => s.rate === TYPE_RATE);
+    expect(fast).toHaveLength(1);
+    expect(fast[0].from).toBeCloseTo(1.5);
+    expect(fast[0].to).toBeCloseTo(4.5);
+  });
+
+  test("shortens the video by the time saved while typing", () => {
+    const withoutTyping = timeline(10, [
+      { type: "click", t: 1, at: [0, 0], box: [0, 0, 10, 10] },
+      { type: "move", t: 1.5, t1: 4.5, from: [0, 0], to: [1, 1] },
+    ]);
+    const saved =
+      pacedDuration(buildSegments(withoutTyping)) -
+      pacedDuration(buildSegments(typed));
+    expect(saved).toBeCloseTo(3 - 3 / TYPE_RATE);
+  });
+
+  test("leaves sped-up idle stretches alone", () => {
+    const rates = buildSegments(idle).map((s) => s.rate);
+    expect(rates).not.toContain(TYPE_RATE);
   });
 });

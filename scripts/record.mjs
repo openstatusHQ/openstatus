@@ -7,7 +7,8 @@
 //   node scripts/record.mjs create-status-page --remotion
 //   node scripts/record.mjs --list
 //
-// Tutorials live in scripts/tutorials/<name>.mjs. Needs the seeded stack from
+// Tutorials live in scripts/tutorials/<name>.mjs: a `meta` export and a
+// default function of steps. Needs the seeded stack from
 // `node scripts/dev-stack.mjs up`; writes .recordings/<name>[.dark].mp4.
 // --remotion captures at 2x without the in-page cursor and writes
 // .recordings/remotion/<name>/{video.mp4,timeline.json} for scripts/videos.
@@ -41,7 +42,9 @@ const fail = (message) => {
   process.exit(2);
 };
 
-const available = readdirSync(tutorialsDir)
+const available = readdirSync(tutorialsDir, { withFileTypes: true })
+  .filter((f) => f.isFile())
+  .map((f) => f.name)
   .filter((f) => f.endsWith(".mjs"))
   .map((f) => f.slice(0, -4));
 if (flags.list || names.length !== 1 || !available.includes(names[0])) {
@@ -98,6 +101,29 @@ async function sql(statements) {
     if (r.error) throw new Error(r.error.message);
     return r.results;
   });
+}
+
+// Loaded before the browser starts, so a broken tutorial or a missing service
+// fails in a second instead of half-way through a recording.
+let tutorial;
+try {
+  tutorial = await import(
+    pathToFileURL(join(tutorialsDir, `${name}.mjs`)).href
+  );
+} catch (e) {
+  fail(`tutorial ${name} does not load: ${e.message}`);
+}
+const { validateMeta } = await import(
+  pathToFileURL(join(tutorialsDir, "lib", "meta.mjs")).href
+);
+const problems = validateMeta(tutorial.meta, name);
+if (problems.length) fail(problems.join("\n"));
+if (tutorial.meta.requires?.includes("checker")) {
+  const checker = process.env.CHECKER_URL ?? "http://localhost:8090";
+  if (!(await fetch(checker).catch(() => null)))
+    fail(
+      `${name} needs the checker, nothing answers at ${checker}: run apps/checker and start the dashboard with CHECKER_URL and CRON_SECRET (see the screenshot skill)`,
+    );
 }
 
 const probe = await fetch(`${base}/login`).catch(() => null);
@@ -364,12 +390,22 @@ const rec = {
   async warm(paths) {
     for (const path of paths) await context.request.get(path);
   },
-  // Mark where the video starts; everything before (login, first load) is cut.
-  async start() {
+  // Open the first page and mark where the video starts; everything before
+  // (login, first load, cleanup) is cut. The label is the opening caption.
+  async start(path, label) {
+    if (path) await rec.goto(path);
     await settle();
     rec.startAt = now();
+    if (label) rec.step(label);
+    await wait(1000);
   },
 };
+Object.assign(
+  rec,
+  (
+    await import(pathToFileURL(join(tutorialsDir, "lib", "ui.mjs")).href)
+  ).createUi(rec),
+);
 
 const stem = `${name}${theme === "dark" ? ".dark" : ""}`;
 const failureShot = join(out, `${stem}.failure.png`);
@@ -377,9 +413,6 @@ rmSync(failureShot, { force: true });
 let failed = null;
 let shot = false;
 try {
-  const tutorial = await import(
-    pathToFileURL(join(tutorialsDir, `${name}.mjs`)).href
-  );
   await tutorial.default(rec);
 } catch (e) {
   failed = e;
@@ -451,6 +484,7 @@ if (ffmpeg.error || ffmpeg.status !== 0) {
 if (remotion) {
   const timeline = {
     name,
+    meta: tutorial.meta,
     theme,
     fps,
     viewport: { width, height },

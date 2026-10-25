@@ -1,0 +1,14 @@
+{
+  "name": "@openstatus/tutorials",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Walkthrough scripts that scripts/record.mjs drives against the seeded dashboard",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
+    "vitest": "catalog:"
+  }
+}

@@ -1,29 +1,23 @@
-import { Composition, staticFile } from "remotion";
+import { Composition, getStaticFiles, staticFile } from "remotion";
 
+import { recordingsFrom } from "./recordings";
 import type { Timeline } from "./timeline";
-import { tutorials } from "./tutorials";
 import { Video, totalFrames, type VideoProps } from "./video";
 
-// Record first: node scripts/record.mjs <id> --remotion
+// One composition per recording: node scripts/record.mjs <id> --remotion.
 export function RemotionRoot() {
   return (
     <>
-      {tutorials.map((tutorial) => (
+      {recordingsFrom(getStaticFiles()).map((recording) => (
         <Composition
-          key={tutorial.id}
-          id={tutorial.id}
+          key={recording}
+          id={recording}
           component={Video}
           width={1920}
           height={1080}
           fps={30}
           durationInFrames={1}
-          defaultProps={
-            {
-              recording: tutorial.id,
-              tutorial,
-              timeline: null,
-            } satisfies VideoProps
-          }
+          defaultProps={{ recording, timeline: null } satisfies VideoProps}
           calculateMetadata={async ({ props }) => {
             const res = await fetch(
               staticFile(`${props.recording}/timeline.json`),

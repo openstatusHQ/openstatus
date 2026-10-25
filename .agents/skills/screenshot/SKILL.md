@@ -175,22 +175,29 @@ never appears, and leaves `.recordings/<tutorial>[.dark].failure.png` with the
 last frame. It refuses a `--db` that is not local, since tutorials delete
 their own rows.
 
-- `create-monitor` saves only after the checker tests the URL: build and
-  run `apps/checker` (`FLY_REGION=ams CLOUD_PROVIDER=fly CRON_SECRET=x
-  PORT=8090`) and start the stack with `CHECKER_URL=http://localhost:8090
-  CRON_SECRET=x`.
+- A tutorial exports `meta` (series `order`, intro and outro copy,
+  `requires`) next to its steps; `scripts/tutorials/lib/meta.mjs` checks it
+  before the browser starts. Seed ids, names and cleanup statements live in
+  `lib/fixtures.mjs`; sheets, date pickers, multi-select menus, comboboxes
+  and tabs have helpers in `lib/ui.mjs`. `pnpm --filter @openstatus/tutorials
+  test` covers them and validates every tutorial's `meta`.
+- `requires: ["checker"]` (`create-monitor`: saving tests the URL) fails fast
+  unless a checker answers at `CHECKER_URL` (default `http://localhost:8090`):
+  build and run `apps/checker` (`FLY_REGION=ams CLOUD_PROVIDER=fly
+  CRON_SECRET=x PORT=8090`) and start the stack with
+  `CHECKER_URL=http://localhost:8090 CRON_SECRET=x`.
 - Tutorials delete their own previous output first, so they re-run cleanly;
-  run them on a fresh `--reseed` and in series order for consistent videos.
+  run them on a fresh `--reseed` and in `meta.order` for consistent videos.
 - `--remotion` (light only) captures at 2x without the in-page cursor and
-  writes `.recordings/remotion/<tutorial>/{video.mp4,timeline.json}` instead. `scripts/videos`
-  turns that into the edited cut: shared intro and outro, the recording in a
-  window under a camera that follows the clicks, `step()` captions, and idle
-  stretches sped up. Per-tutorial copy lives in
-  `scripts/videos/src/tutorials.ts`. `pnpm --filter @openstatus/videos
-  studio` to preview, `pnpm --filter
-  @openstatus/videos render <tutorial>` to export. In a cloud session pass
-  `--browser-executable` pointing at the Playwright headless shell under
-  `/opt/pw-browsers`; Remotion cannot download its own there.
+  writes `.recordings/remotion/<tutorial>/{video.mp4,timeline.json}`.
+  `scripts/videos` has one composition per recording there and turns it into
+  the edited cut: shared intro and outro from `meta`, the recording in a
+  window under a camera that follows the clicks, `step()` captions, typing
+  played faster and idle stretches sped up. `pnpm --filter @openstatus/videos
+  studio` to preview, `pnpm --filter @openstatus/videos render <tutorial>` to
+  export. In a cloud session pass `--browser-executable` pointing at the
+  Playwright headless shell under `/opt/pw-browsers`; Remotion cannot
+  download its own there.
 
 ## Rules
 

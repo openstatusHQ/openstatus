@@ -1,78 +1,70 @@
 // How to post a status report: create it as investigating, then publish an
 // identified and a resolved update from the report page.
+import { cleanup, monitors, pages } from "./lib/fixtures.mjs";
 
-const PAGE_ID = 1;
+export const meta = {
+  order: 4,
+  title: "Post a status report",
+  subtitle: "Keep customers in the loop, from first alert to fix.",
+  outroTitle: "Everyone knows what happened.",
+  outroSubtitle: "Next: schedule maintenance before your next big change.",
+};
+
 const TITLE = "Checkout errors for EU customers";
 
 export default async function ({
   page,
   sql,
   warm,
-  goto,
   start,
   step,
   click,
   type,
-  wait,
   settle,
   expect,
+  sheet,
+  select,
 }) {
-  const ids = `select id from status_report where title = '${TITLE}' and page_id = ${PAGE_ID}`;
-  await sql([
-    `delete from status_report_update_to_page_component where status_report_update_id in (select id from status_report_update where status_report_id in (${ids}))`,
-    `delete from status_report_update where status_report_id in (${ids})`,
-    `delete from status_report_to_page_component where status_report_id in (${ids})`,
-    `delete from status_report where id in (${ids})`,
-  ]);
+  const id = pages.main;
+  await sql(cleanup.statusReport({ title: TITLE, pageId: id }));
+  await warm([`/status-pages/${id}/status-reports/1`]);
 
-  await warm([
-    `/status-pages/${PAGE_ID}/status-reports`,
-    `/status-pages/${PAGE_ID}/status-reports/1`,
-  ]);
-
-  await goto(`/status-pages/${PAGE_ID}/status-reports`);
-  await start();
-  step("Something is wrong: open a report");
-  await wait(1000);
-
-  await click(page.getByRole("button", { name: "Create Status Report" }));
-  const sheet = page.getByRole("dialog");
-  await sheet.waitFor();
-  await wait(500);
+  await start(
+    `/status-pages/${id}/status-reports`,
+    "Something is wrong: open a report",
+  );
+  const report = await sheet("Create Status Report", "Status Report");
   step("Say what customers see");
-  await type(sheet.getByRole("textbox", { name: "Title" }), TITLE);
-  await type(
-    sheet.getByRole("textbox", { name: "Message" }),
+  await report.fill("Title", TITLE);
+  await report.fill(
+    "Message",
     "EU payments are failing at checkout. Investigating.",
   );
   step("Mark the affected component");
-  await click(sheet.getByRole("checkbox", { name: "API" }));
-  await wait(400);
-  await click(sheet.getByRole("button", { name: "Submit" }));
-  await sheet.waitFor({ state: "hidden" });
-  await wait(1200);
+  await report.check([monitors.api]);
+  await report.submit(null);
 
   await click(page.getByRole("link", { name: TITLE }));
   await page.waitForURL(/\/status-reports\/\d+$/);
   await settle();
-  await wait(1000);
 
   step("Post updates as you learn more");
   const composer = page.getByRole("textbox", { name: /What changed/ });
   const publish = page.getByRole("button", { name: "Publish update" });
-
   await type(
     composer,
     "Cause found: an expired certificate on the EU gateway.",
   );
   await click(publish);
-  await wait(2000);
+  await expect("Update published");
+  // Let this toast go, so the next check cannot pass on it.
+  await page
+    .getByText("Update published", { exact: true })
+    .waitFor({ state: "detached" });
 
   step("Resolve it when it is fixed");
-  await click(page.getByRole("combobox", { name: "Status" }));
-  await click(page.getByRole("option", { name: /resolved/i }));
+  await select("Status", /resolved/i);
   await type(composer, "Certificate renewed, payments work again.");
   await click(publish);
   await expect("Update published");
-  await wait(2000);
 }

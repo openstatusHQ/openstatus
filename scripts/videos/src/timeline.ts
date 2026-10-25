@@ -11,8 +11,19 @@ export type TimelineEvent =
   | { type: "scroll"; t: number; t1: number; dy: number }
   | { type: "nav"; t: number; url: string };
 
+// The `meta` a tutorial exports (scripts/tutorials/lib/meta.mjs).
+export type TutorialMeta = {
+  order: number;
+  title: string;
+  subtitle: string;
+  outroTitle: string;
+  outroSubtitle: string;
+  requires?: string[];
+};
+
 export type Timeline = {
   name: string;
+  meta?: TutorialMeta;
   theme: "light" | "dark";
   fps: number;
   viewport: { width: number; height: number };

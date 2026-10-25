@@ -2,6 +2,7 @@ packages:
   - apps/*
   - packages/**/*
   - packages/config/*
+  - scripts/tutorials
   - scripts/videos
 # pnpm 12 routes `@jsr` to npm.jsr.io by default when *resolving*, but the
 # supply-chain policy pass (`trustPolicy` / `minimumReleaseAge` below) verifies

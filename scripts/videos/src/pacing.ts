@@ -13,6 +13,9 @@ const MIN_IDLE = 1;
 const MAX_RATE = 4;
 // The last moments (a "Saved" toast) stay at real speed for the outro.
 const HOLD_END = 1.5;
+// Keystrokes are recorded at a readable 70ms each; played back faster they
+// still read, and long messages stop dominating the video.
+export const TYPE_RATE = 1.6;
 
 function activity(timeline: Timeline): [number, number][] {
   const spans = timeline.events.map((e): [number, number] => {
@@ -63,7 +66,27 @@ export function buildSegments(timeline: Timeline): Segment[] {
   }
   if (cursor < timeline.duration)
     segments.push({ from: cursor, to: timeline.duration, rate: 1 });
-  return segments;
+  return speedUpTyping(segments, timeline);
+}
+
+// Cut real-speed segments at typing boundaries and play the typing faster.
+function speedUpTyping(segments: Segment[], timeline: Timeline): Segment[] {
+  const typing = timeline.events.flatMap((e) =>
+    e.type === "type" ? [[e.t, e.t1] as const] : [],
+  );
+  return segments.flatMap((s) => {
+    if (s.rate !== 1) return [s];
+    const cuts = typing
+      .flatMap(([a, b]) => [a, b])
+      .filter((t) => t > s.from && t < s.to);
+    const edges = [s.from, ...cuts, s.to];
+    return edges.slice(1).map((to, i) => {
+      const from = edges[i];
+      const mid = (from + to) / 2;
+      const typed = typing.some(([a, b]) => mid > a && mid < b);
+      return { from, to, rate: typed ? TYPE_RATE : 1 };
+    });
+  });
 }
 
 export const pacedDuration = (segments: Segment[]) =>

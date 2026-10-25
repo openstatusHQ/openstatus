@@ -1,52 +1,32 @@
 // How to get alerted: add an email notifier and attach it to monitors.
+import { cleanup, monitors } from "./lib/fixtures.mjs";
+
+export const meta = {
+  order: 6,
+  title: "Get alerted",
+  subtitle: "Hear about downtime before your customers do.",
+  outroTitle: "You'll be the first to know.",
+  outroSubtitle: "Next: add Slack, PagerDuty or a webhook as well.",
+};
 
 const NAME = "Platform team";
 
-export default async function ({
-  page,
-  sql,
-  warm,
-  goto,
-  start,
-  step,
-  click,
-  type,
-  wait,
-  expect,
-}) {
-  const ids = `select id from notification where name = '${NAME}' and workspace_id = 1`;
-  await sql([
-    `delete from notifications_to_monitors where notification_id in (${ids})`,
-    `delete from notification where id in (${ids})`,
-  ]);
-
+export default async function ({ page, sql, warm, start, step, sheet }) {
+  await sql(cleanup.notification({ name: NAME }));
   await warm(["/notifications"]);
 
-  await goto("/notifications");
-  await start();
-  step("Pick a channel in Notifications");
-  await wait(1200);
-
-  await click(page.getByText("Send notifications to Email"));
-  const sheet = page.getByRole("dialog", { name: "Notifier" });
-  await sheet.waitFor();
-  await wait(500);
+  await start("/notifications", "Pick a channel in Notifications");
+  const notifier = await sheet(
+    page.getByText("Send notifications to Email"),
+    "Notifier",
+  );
 
   step("Where should alerts go?");
-  await type(sheet.getByRole("textbox", { name: "Name" }), NAME);
-  await type(
-    sheet.getByRole("textbox", { name: "Email" }),
-    "platform@acme.com",
-  );
-  await wait(400);
+  await notifier.fill("Name", NAME);
+  await notifier.fill("Email", "platform@acme.com");
   step("Choose the monitors to watch");
-  for (const monitor of ["API", "Website", "Search"])
-    await click(sheet.getByRole("checkbox", { name: monitor, exact: true }));
-  await wait(500);
+  await notifier.check([monitors.api, monitors.website, monitors.search]);
 
   step("Save");
-  await click(sheet.getByRole("button", { name: "Submit" }));
-  await sheet.waitFor({ state: "hidden" });
-  await expect("Saved");
-  await wait(2000);
+  await notifier.submit();
 }
