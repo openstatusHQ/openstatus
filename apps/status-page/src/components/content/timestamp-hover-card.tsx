@@ -42,8 +42,9 @@ export function TimestampHoverCard({
 
   const { timezone: pageTimezone } = useStatusPage();
   const viewerTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  // the page's zone first, as the visible text is in it; each zone once
-  const timezones = [...new Set([pageTimezone, viewerTimezone, "UTC"])];
+  // a non-UTC page zone leads, as the visible text is in it; each zone once
+  const lead = pageTimezone === "UTC" ? viewerTimezone : pageTimezone;
+  const timezones = [...new Set([lead, viewerTimezone, "UTC"])];
   const relative = formatDistanceToNowStrict(date, { addSuffix: true });
 
   useEffect(() => {

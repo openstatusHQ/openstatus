@@ -206,7 +206,7 @@ SimpleTimestamp.displayName = "SimpleTimestamp";
  * RichTimestamp - Internal hover card timestamp display with timezone details
  *
  * Displays a hover card with comprehensive timestamp information:
- * - The labels' `timeZone`, when set, as the visible text is rendered in it
+ * - The labels' `timeZone`, when set and not UTC, as the visible text is in it
  * - The viewer's local timezone
  * - UTC (each zone listed once)
  * - Relative time ("2 hours ago") that updates every second while open
@@ -255,8 +255,9 @@ function RichTimestamp({
 
   const { timeZone: pageTimeZone } = useStatusBlocksLabels();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  // the zone the visible text is in first, then the viewer's and UTC; each once
-  const timezones = [...new Set([pageTimeZone ?? timezone, timezone, "UTC"])];
+  // a non-UTC page zone leads, as the visible text is in it; each zone once
+  const lead = pageTimeZone && pageTimeZone !== "UTC" ? pageTimeZone : timezone;
+  const timezones = [...new Set([lead, timezone, "UTC"])];
   const relative = formatDistanceToNowStrict(date, { addSuffix: true });
 
   useEffect(() => {
