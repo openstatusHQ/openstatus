@@ -35,6 +35,15 @@ describe("validateMeta", () => {
     ]);
   });
 
+  test("wants the label as one word", () => {
+    expect(validateMeta({ ...valid, label: "" }, "t")).toEqual([
+      "t: meta.label must be a non-empty string",
+    ]);
+    expect(validateMeta({ ...valid, label: "Set up" }, "t")).toEqual([
+      "t: meta.label must be one word",
+    ]);
+  });
+
   test("checks thumbnail copy only when set", () => {
     expect(validateMeta({ ...valid, thumbTitle: "Short." }, "t")).toEqual([]);
     expect(validateMeta({ ...valid, thumbSubtitle: "" }, "t")).toEqual([

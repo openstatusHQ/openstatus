@@ -5,9 +5,12 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 const recordings = join(import.meta.dirname, "../../.recordings");
-const names = readdirSync(join(recordings, "remotion")).filter((name) =>
-  existsSync(join(recordings, "remotion", name, "thumbnail.png")),
-);
+const remotionDir = join(recordings, "remotion");
+const names = existsSync(remotionDir)
+  ? readdirSync(remotionDir).filter((name) =>
+      existsSync(join(remotionDir, name, "thumbnail.png")),
+    )
+  : [];
 if (!names.length) {
   console.error(
     "no thumbnails: record a tutorial with node scripts/record.mjs <name> --remotion",
@@ -21,6 +24,7 @@ for (const name of names) {
     ["still", `${name}-thumbnail`, out, ...process.argv.slice(2)],
     { stdio: "inherit", cwd: import.meta.dirname },
   );
+  if (run.error) throw run.error;
   if (run.status !== 0) process.exit(run.status ?? 1);
   console.log(out);
 }

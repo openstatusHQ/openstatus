@@ -17,6 +17,8 @@ export function validateMeta(meta, name) {
   ])
     if (typeof meta[key] !== "string" || meta[key].trim() === "")
       problems.push(`${name}: meta.${key} must be a non-empty string`);
+  if (typeof meta.label === "string" && /\s/.test(meta.label.trim()))
+    problems.push(`${name}: meta.label must be one word`);
   // The thumbnail shows "01 · Label", title and subtitle unless these replace
   // them.
   for (const key of ["thumbEyebrow", "thumbTitle", "thumbSubtitle"])

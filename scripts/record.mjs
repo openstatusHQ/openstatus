@@ -398,6 +398,8 @@ const rec = {
   // The still behind the video's thumbnail: this moment, without cursor or
   // toasts, keeping `focus` in frame. Without a call, the final state is used.
   async thumbnail(focus) {
+    if (!remotion) return;
+    if (focus) await scrollTo(focus);
     const box = focus ? await focus.boundingBox() : null;
     rec.thumb = {
       png: await page.screenshot({

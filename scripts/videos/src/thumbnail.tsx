@@ -1,4 +1,4 @@
-import { AbsoluteFill, Img, staticFile } from "remotion";
+import { AbsoluteFill, Img, staticFile, useVideoConfig } from "remotion";
 
 import { Mark, palette } from "./brand";
 import { fonts } from "./fonts";
@@ -22,12 +22,13 @@ export type ThumbnailProps = {
 };
 
 export function Thumbnail({ recording, timeline }: ThumbnailProps) {
+  const { width, height } = useVideoConfig();
   if (!timeline) return null;
   const colors = palette.light;
   const copy = copyOf(timeline);
   const { width: vw, height: vh } = timeline.viewport;
-  const visibleW = (1920 - WINDOW_X) / ZOOM;
-  const visibleH = (1080 - WINDOW_Y) / ZOOM;
+  const visibleW = (width - WINDOW_X) / ZOOM;
+  const visibleH = (height - WINDOW_Y) / ZOOM;
   const focus = timeline.thumbnail?.focus;
   const dx = focus ? panFor(focus[0], focus[2], vw, visibleW) : 0;
   const dy = focus ? panFor(focus[1], focus[3], vh, visibleH) : 0;
