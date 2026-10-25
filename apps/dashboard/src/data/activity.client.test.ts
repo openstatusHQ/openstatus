@@ -10,6 +10,7 @@ import {
   mostCommon,
   percentInRange,
   spanInRange,
+  spansOnDay,
 } from "./activity.client";
 
 const now = new Date(2026, 9, 19, 12, 0); // Monday
@@ -28,7 +29,9 @@ describe("groupByDay", () => {
   const range = { from: new Date(2026, 9, 1), to: new Date(2026, 9, 10) };
 
   it("places a span on every day it touches, clipped to the range", () => {
-    const items = [{ start: new Date(2026, 8, 30), end: new Date(2026, 9, 2) }];
+    const items = [
+      { start: new Date(2026, 8, 30), end: new Date(2026, 9, 2, 12) },
+    ];
     const days = groupByDay(range, items, (i) => i, now);
     expect(days).toHaveLength(10);
     expect(days.slice(0, 3).map((d) => d.items.length)).toEqual([1, 1, 0]);
@@ -94,5 +97,27 @@ describe("small stats", () => {
     expect(mostCommon([])).toBeNull();
     expect(mostCommon(["a", "b", "b"])).toBe("b");
     expect(mostCommon([2, 1, 1])).toBe(1);
+  });
+});
+
+describe("day boundaries", () => {
+  const range = { from: new Date(2026, 9, 1), to: new Date(2026, 9, 10) };
+
+  it("leaves a span ending exactly at midnight off the next day", () => {
+    const items = [
+      { start: new Date(2026, 9, 2, 22), end: new Date(2026, 9, 3) },
+    ];
+    const days = groupByDay(range, items, (i) => i, now);
+    expect(days.slice(1, 3).map((d) => d.items.length)).toEqual([1, 0]);
+  });
+
+  it("counts overlapping spans on a day once", () => {
+    const day = new Date(2026, 9, 2);
+    const spans = [
+      { start: new Date(2026, 9, 2, 10, 0), end: new Date(2026, 9, 2, 10, 3) },
+      { start: new Date(2026, 9, 2, 10, 1), end: new Date(2026, 9, 2, 10, 4) },
+      { start: new Date(2026, 9, 2, 23, 0), end: new Date(2026, 9, 3, 1, 0) },
+    ];
+    expect(spansOnDay(day, spans, now)).toBe((4 + 60) * 60 * 1000);
   });
 });

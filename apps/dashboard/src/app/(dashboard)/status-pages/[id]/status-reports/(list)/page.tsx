@@ -22,6 +22,7 @@ import {
   ActivityCalendarGrid,
   ActivityCalendarLegend,
   ActivityCalendarLegendItem,
+  ActivityCalendarLegendSeparator,
 } from "@/components/content/activity-calendar";
 import {
   EmptyStateActions,
@@ -49,7 +50,7 @@ import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
 import { StatusReportRow } from "@/components/status-reports/status-report-row";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import {
-  activityDayLabel,
+  activityDayLines,
   activityRange,
   groupByDay,
   strongestMark,
@@ -145,19 +146,27 @@ export default function Page() {
   const now = new Date();
   const range = activityRange(now);
   const days = groupByDay(range, statusReports, reportSpan, now).map(
-    ({ date, items }) => ({
-      date,
-      ...strongestMark(items.map(reportActivity)),
-      label: activityDayLabel(
-        date,
-        items.map((report) => report.title),
-        "reports",
-      ),
-      links: items.map((report) => ({
-        href: `/status-pages/${report.pageId}/status-reports/${report.id}`,
+    ({ date, items }) => {
+      const marks = items.map((report) => ({
+        ...reportActivity(report),
         title: report.title,
-      })),
-    }),
+      }));
+      const lead = strongestMark(marks);
+      return {
+        date,
+        ...lead,
+        lines: lead
+          ? activityDayLines(
+              `${lead.label} · ${lead.title}`,
+              marks.filter((m) => m !== lead).map((m) => m.label),
+            )
+          : undefined,
+        links: items.map((report) => ({
+          href: `/status-pages/${report.pageId}/status-reports/${report.id}`,
+          title: report.title,
+        })),
+      };
+    },
   );
 
   return (
@@ -246,20 +255,25 @@ export default function Page() {
                 <ActivityCalendarGrid days={days} today={now} />
                 <ActivityCalendarLegend>
                   <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell level={1} />
-                    Untriaged
+                    <ActivityCalendarCell />
+                    None
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell variant="warning" level={1} />
+                    <ActivityCalendarCell level={1} />
                     Degraded
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell variant="warning" level={2} />
+                    <ActivityCalendarCell level={2} />
                     Partial outage
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell variant="destructive" level={3} />
+                    <ActivityCalendarCell level={3} />
                     Major outage
+                  </ActivityCalendarLegendItem>
+                  <ActivityCalendarLegendSeparator />
+                  <ActivityCalendarLegendItem>
+                    <ActivityCalendarCell hatched />
+                    Untriaged
                   </ActivityCalendarLegendItem>
                 </ActivityCalendarLegend>
               </ActivityCalendar>

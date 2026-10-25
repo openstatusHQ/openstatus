@@ -21,6 +21,7 @@ import {
   ActivityCalendarGrid,
   ActivityCalendarLegend,
   ActivityCalendarLegendItem,
+  ActivityCalendarLegendSeparator,
 } from "@/components/content/activity-calendar";
 import {
   EmptyStateActions,
@@ -47,18 +48,14 @@ import {
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
 import { MaintenanceRow } from "@/components/maintenances/maintenance-row";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
-import {
-  activityDayLabel,
-  activityRange,
-  groupByDay,
-  strongestMark,
-} from "@/data/activity.client";
+import { activityRange, groupByDay, spansOnDay } from "@/data/activity.client";
 import {
   maintenanceActivity,
   maintenanceSpan,
 } from "@/data/maintenances.client";
 import { getMaintenanceStatus } from "@/data/overview-events.client";
 import { usePaged } from "@/hooks/use-paged";
+import { formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
@@ -132,17 +129,20 @@ export default function Page() {
   const range = activityRange(now);
   const days = groupByDay(range, maintenances, maintenanceSpan, now).map(
     ({ date, items }) => {
-      const mark = strongestMark(items.map((m) => maintenanceActivity(m, now)));
+      if (items.length === 0) return { date };
+      const planned = spansOnDay(date, items.map(maintenanceSpan), now);
+      // dashed only when every window that day is still ahead
+      const scheduled = items.every((m) => m.from > now);
       return {
         date,
-        ...mark,
-        // a ring only when every window that day is still ahead
-        outline: items.length > 0 && items.every((m) => m.from > now),
-        label: activityDayLabel(
-          date,
-          items.map((m) => m.title),
-          "maintenances",
-        ),
+        ...maintenanceActivity(planned),
+        upcoming: scheduled,
+        lines: [
+          `${formatDurationShort(planned)} · ${
+            items.length === 1 ? items[0].title : `${items.length} maintenances`
+          }`,
+          ...(scheduled ? ["Upcoming"] : []),
+        ],
         links: items.map((m) => ({
           href: `/status-pages/${m.pageId}/maintenances/${m.id}`,
           title: m.title,
@@ -212,14 +212,23 @@ export default function Page() {
                 <ActivityCalendarGrid days={days} today={now} />
                 <ActivityCalendarLegend>
                   <ActivityCalendarLegendItem>
-                    Short
-                    <ActivityCalendarCell variant="info" level={1} />
-                    <ActivityCalendarCell variant="info" level={2} />
-                    <ActivityCalendarCell variant="info" level={3} />
-                    Long
+                    <ActivityCalendarCell />
+                    None
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell variant="info" outline />
+                    <ActivityCalendarCell scale="planned" level={1} />
+                    Under 1h
+                  </ActivityCalendarLegendItem>
+                  <ActivityCalendarLegendItem>
+                    <ActivityCalendarCell scale="planned" level={2} />1 to 4h
+                  </ActivityCalendarLegendItem>
+                  <ActivityCalendarLegendItem>
+                    <ActivityCalendarCell scale="planned" level={3} />
+                    Over 4h
+                  </ActivityCalendarLegendItem>
+                  <ActivityCalendarLegendSeparator />
+                  <ActivityCalendarLegendItem>
+                    <ActivityCalendarCell upcoming />
                     Upcoming
                   </ActivityCalendarLegendItem>
                 </ActivityCalendarLegend>

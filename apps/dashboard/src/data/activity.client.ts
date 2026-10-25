@@ -1,8 +1,10 @@
 import {
+  addDays,
   eachDayOfInterval,
   eachMonthOfInterval,
   endOfWeek,
   format,
+  startOfDay,
   startOfWeek,
   subWeeks,
 } from "date-fns";
@@ -44,8 +46,16 @@ export function groupByDay<T>(
   const index = new Map(days.map((day, i) => [dayKey(day.date), i]));
   for (const item of items) {
     const { start, end } = span(item);
+    const stop = (end ?? now).getTime();
+    // a span ending exactly at midnight doesn't touch the next day
+    const exclusive =
+      end !== null &&
+      stop > start.getTime() &&
+      stop === startOfDay(stop).getTime();
     const first = new Date(Math.max(start.getTime(), range.from.getTime()));
-    const last = new Date(Math.min((end ?? now).getTime(), range.to.getTime()));
+    const last = new Date(
+      Math.min(exclusive ? stop - 1 : stop, range.to.getTime()),
+    );
     if (last < first) continue;
     for (const date of eachDayOfInterval({ start: first, end: last })) {
       const i = index.get(dayKey(date));
@@ -76,6 +86,34 @@ export function overlapsRange(
   now = new Date(),
 ): boolean {
   return start <= range.to && (end ?? now) >= range.from;
+}
+
+/**
+ * How much of `date`'s calendar day the spans cover (ms), overlaps counted
+ * once; an open span ends at `now`.
+ */
+export function spansOnDay(
+  date: Date,
+  spans: ActivitySpan[],
+  now = new Date(),
+): number {
+  const from = startOfDay(date).getTime();
+  const to = addDays(from, 1).getTime();
+  const clipped = spans
+    .map(({ start, end }) => [
+      Math.max(start.getTime(), from),
+      Math.min((end ?? now).getTime(), to),
+    ])
+    .filter(([a, b]) => b > a)
+    .sort((x, y) => x[0] - y[0]);
+  let total = 0;
+  let reach = from;
+  for (const [a, b] of clipped) {
+    if (b <= reach) continue;
+    total += b - Math.max(a, reach);
+    reach = b;
+  }
+  return total;
 }
 
 /** 0–100, clamped; where a date sits on an axis spanning the range. */
@@ -126,32 +164,20 @@ export function mostCommon<T>(values: T[]): T | null {
   return best;
 }
 
-/** Tooltip text for a day cell: the one title, or a count of `noun`. */
-export function activityDayLabel(
-  date: Date,
-  titles: string[],
-  noun: string,
-): string {
-  const day = format(date, "EEE, MMM d");
-  if (titles.length === 0) return day;
-  if (titles.length === 1) return `${day} · ${titles[0]}`;
-  return `${day} · ${titles.length} ${noun}`;
+/** Tooltip lines under the date: the lead, then "+2 canceled" or "+3 more". */
+export function activityDayLines(lead: string, others: string[]): string[] {
+  if (others.length === 0) return [lead];
+  const same = others.every((o) => o === others[0]);
+  return [lead, `+${others.length} ${same ? others[0].toLowerCase() : "more"}`];
 }
 
-/** The mark with the highest level, for a day that holds several; on a tie a colored mark beats a neutral one. */
-export function strongestMark<T extends { level: number; variant?: string }>(
+/** The mark with the highest level; hatched ones are level 0, so any real event outranks them. */
+export function strongestMark<T extends { level: number }>(
   marks: T[],
 ): T | null {
   let best: T | null = null;
   for (const mark of marks) {
-    if (
-      !best ||
-      mark.level > best.level ||
-      (mark.level === best.level &&
-        best.variant === "default" &&
-        mark.variant !== "default")
-    )
-      best = mark;
+    if (!best || mark.level > best.level) best = mark;
   }
   return best;
 }

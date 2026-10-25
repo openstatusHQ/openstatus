@@ -8,24 +8,21 @@ import { useState } from "react";
 
 import { NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
-import { StatusDot, type StatusVariant } from "@/components/common/status-dot";
 import {
   Activity,
   ActivityHeader,
-  type ActivityLevel,
+  type ActivityMark,
   ActivityPeriod,
   ActivityTitle,
 } from "@/components/content/activity";
 import {
-  ActivityLane,
-  ActivityLaneCount,
-  ActivityLaneLabel,
-  ActivityLaneMark,
-  ActivityLaneTick,
-  ActivityLaneTrack,
-  ActivityLanes,
-  ActivityLanesAxis,
-} from "@/components/content/activity-lanes";
+  ActivityCalendar,
+  ActivityCalendarCell,
+  ActivityCalendarGrid,
+  ActivityCalendarLegend,
+  ActivityCalendarLegendItem,
+  ActivityCalendarLegendSeparator,
+} from "@/components/content/activity-calendar";
 import {
   EmptyStateContainer,
   EmptyStateDescription,
@@ -50,9 +47,10 @@ import {
 } from "@/components/content/section";
 import {
   type ActivitySpan,
+  activityDayLines,
   activityRange,
-  monthsInRange,
-  percentInRange,
+  groupByDay,
+  spansOnDay,
 } from "@/data/activity.client";
 import { downtimeActivity } from "@/data/incidents.client";
 import { maintenanceActivity } from "@/data/maintenances.client";
@@ -70,39 +68,97 @@ import {
 import { reportActivity, reportSpan } from "@/data/status-reports.client";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { usePaged } from "@/hooks/use-paged";
-import { formatEventDate } from "@/lib/formatter";
+import { formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { CreateEventButtonGroup } from "./create-event-button-group";
 import { OverviewEventRow } from "./overview-event-row";
 
-const lanes = [
-  { type: "managedIncident", label: "Incidents", variant: "destructive" },
-  { type: "report", label: "Reports", variant: "warning" },
-  { type: "maintenance", label: "Maintenance", variant: "info" },
-  { type: "incident", label: "Downtime", variant: "default" },
-] as const satisfies {
-  type: OverviewEvent["type"];
-  label: string;
-  variant: StatusVariant;
-}[];
+type Downtime = Extract<OverviewEvent, { type: "incident" }>;
+type Maintenance = Extract<OverviewEvent, { type: "maintenance" }>;
+type DayEntry = ActivityMark & { lead: string; name: string };
 
-function activityOf(
-  event: OverviewEvent,
-  now: Date,
-): { variant: StatusVariant; level: ActivityLevel } {
+// failures outrank planned work, anything real outranks a hatched mark
+function rank(mark: ActivityMark) {
+  if (mark.hatched) return 0;
+  return mark.scale === "failure" ? 4 + mark.level : mark.level;
+}
+
+/**
+ * One entry per incident or report, one for the day's downtime and one for
+ * its maintenance (both by total time that day), strongest first.
+ */
+function dayEntries(items: OverviewEvent[], date: Date, now: Date): DayEntry[] {
+  const entries: DayEntry[] = [];
+  const downtime = items.filter((e): e is Downtime => e.type === "incident");
+  const maintenance = items.filter(
+    (e): e is Maintenance => e.type === "maintenance",
+  );
+  for (const event of items) {
+    if (event.type === "managedIncident") {
+      const { label, ...mark } = incidentActivity(event.incident);
+      entries.push({
+        ...mark,
+        lead: `${label} · ${event.incident.title}`,
+        name: label,
+      });
+    } else if (event.type === "report") {
+      const { label, ...mark } = reportActivity(event.report);
+      entries.push({
+        ...mark,
+        lead: `${label} · ${event.report.title}`,
+        name: label,
+      });
+    }
+  }
+  if (downtime.length > 0) {
+    const down = spansOnDay(date, downtime.map(spanOf), now);
+    const monitors = new Set(downtime.map((e) => e.incident.monitor.name));
+    entries.push({
+      ...downtimeActivity(down),
+      lead: `${formatDurationShort(down)} down · ${
+        monitors.size === 1 ? [...monitors][0] : `${monitors.size} monitors`
+      }`,
+      name: "Downtime",
+    });
+  }
+  if (maintenance.length > 0) {
+    const planned = spansOnDay(date, maintenance.map(spanOf), now);
+    entries.push({
+      ...maintenanceActivity(planned),
+      lead: `${formatDurationShort(planned)} · ${
+        maintenance.length === 1
+          ? maintenance[0].maintenance.title
+          : `${maintenance.length} maintenances`
+      }`,
+      name: "Maintenance",
+    });
+  }
+  return entries.sort((a, b) => rank(b) - rank(a));
+}
+
+function linkOf(event: OverviewEvent): { href: string; title: string } {
   switch (event.type) {
     case "incident":
-      return downtimeActivity(event.incident, now);
+      return {
+        href: `/monitors/${event.incident.monitor.id}/incidents`,
+        title: event.incident.monitor.name,
+      };
     case "managedIncident":
-      return incidentActivity(event.incident);
+      return {
+        href: `/incidents/${event.incident.id}`,
+        title: event.incident.title,
+      };
     case "report":
-      return reportActivity(event.report);
-    case "maintenance": {
-      // the lane tick has no outline; spreading it would reach the DOM
-      const { variant, level } = maintenanceActivity(event.maintenance, now);
-      return { variant, level };
-    }
+      return {
+        href: `/status-pages/${event.report.pageId}/status-reports/${event.report.id}`,
+        title: event.report.title,
+      };
+    case "maintenance":
+      return {
+        href: `/status-pages/${event.maintenance.pageId}/maintenances/${event.maintenance.id}`,
+        title: event.maintenance.title,
+      };
   }
 }
 
@@ -110,19 +166,6 @@ function spanOf(event: OverviewEvent): ActivitySpan {
   if (event.type === "report") return reportSpan(event.report);
   if (event.type === "managedIncident") return incidentSpan(event.incident);
   return { start: getStartedAt(event), end: getResolvedAt(event) };
-}
-
-function titleOf(event: OverviewEvent): string {
-  switch (event.type) {
-    case "incident":
-      return event.incident.monitor.name;
-    case "managedIncident":
-      return event.incident.title;
-    case "report":
-      return event.report.title;
-    case "maintenance":
-      return event.maintenance.title;
-  }
 }
 
 export default function Page() {
@@ -189,7 +232,6 @@ export default function Page() {
   } = data;
 
   const range = activityRange(now);
-  const months = monthsInRange(range);
   const events: OverviewEvent[] = [
     ...(openIncidents ?? []).map((incident) => ({
       type: "managedIncident" as const,
@@ -208,13 +250,35 @@ export default function Page() {
       type: "incident" as const,
       incident,
     })),
-  ]
-    // still running or ahead counts too; the tick clamps to the axis edge
-    .filter((event) => (spanOf(event).end ?? now) >= range.from);
-  const laneEvents = lanes.map((lane) => ({
-    ...lane,
-    events: events.filter((event) => event.type === lane.type),
-  }));
+  ].filter((event) => {
+    // still running counts too
+    const { start, end } = spanOf(event);
+    return (end ?? now) >= range.from && start <= range.to;
+  });
+  const days = groupByDay(range, events, spanOf, now).map(({ date, items }) => {
+    if (items.length === 0) return { date };
+    const [lead, ...others] = dayEntries(items, date, now);
+    const links = new Map(items.map(linkOf).map((l) => [l.href, l]));
+    // dashed only when the day holds nothing but maintenance still ahead
+    const upcoming = items.every(
+      (e) => e.type === "maintenance" && e.maintenance.from > now,
+    );
+    return {
+      date,
+      scale: lead.scale,
+      level: lead.level,
+      hatched: lead.hatched,
+      upcoming,
+      lines: [
+        ...activityDayLines(
+          lead.lead,
+          others.map((e) => e.name),
+        ),
+        ...(upcoming ? ["Upcoming"] : []),
+      ],
+      links: [...links.values()],
+    };
+  });
   const attention = needsAttention.length;
 
   return (
@@ -245,36 +309,40 @@ export default function Page() {
           <ActivityTitle>Activity</ActivityTitle>
           <ActivityPeriod>Last 12 months</ActivityPeriod>
         </ActivityHeader>
-        <ActivityLanes>
-          <ActivityLanesAxis months={months} />
-          {laneEvents.map((lane) => (
-            <ActivityLane key={lane.type}>
-              <ActivityLaneLabel>
-                <StatusDot variant={lane.variant} />
-                {lane.label}
-              </ActivityLaneLabel>
-              <ActivityLaneTrack>
-                {months.map((month) => (
-                  <ActivityLaneMark key={month.date.getTime()} at={month.at} />
-                ))}
-                {lane.events.map((event) => (
-                  <ActivityLaneTick
-                    key={eventKey(event)}
-                    at={percentInRange(range, getStartedAt(event))}
-                    {...activityOf(event, now)}
-                    label={
-                      hydrated
-                        ? `${formatEventDate(getStartedAt(event), now)} · ${titleOf(event)}`
-                        : undefined
-                    }
-                  />
-                ))}
-                <ActivityLaneMark at={percentInRange(range, now)} today />
-              </ActivityLaneTrack>
-              <ActivityLaneCount>{lane.events.length}</ActivityLaneCount>
-            </ActivityLane>
-          ))}
-        </ActivityLanes>
+        <ActivityCalendar>
+          <ActivityCalendarGrid days={days} today={now} />
+          <ActivityCalendarLegend>
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell />
+              None
+            </ActivityCalendarLegendItem>
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell level={1} />
+              Low
+            </ActivityCalendarLegendItem>
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell level={2} />
+              Mid
+            </ActivityCalendarLegendItem>
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell level={3} />
+              High
+            </ActivityCalendarLegendItem>
+            <ActivityCalendarLegendSeparator />
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell hatched />
+              Unrated
+            </ActivityCalendarLegendItem>
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell scale="planned" level={2} />
+              Maintenance
+            </ActivityCalendarLegendItem>
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell upcoming />
+              Upcoming
+            </ActivityCalendarLegendItem>
+          </ActivityCalendarLegend>
+        </ActivityCalendar>
       </Activity>
       <EventGroup>
         <EventGroupHeader>

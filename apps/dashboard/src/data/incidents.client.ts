@@ -1,5 +1,6 @@
 import { Acknowledge, Check, Delete } from "@openstatus/icons";
 
+import type { ActivityMark } from "@/components/content/activity";
 import { levelFor } from "@/data/activity.client";
 
 export const actions = [
@@ -45,15 +46,7 @@ export function downtimeSpan(incident: {
   return { start: incident.startedAt, end: incident.resolvedAt };
 }
 
-/** Calendar mark: red by how long the monitor was down. */
-export function downtimeActivity(
-  incident: { startedAt: Date; resolvedAt: Date | null },
-  now = new Date(),
-) {
-  const length =
-    (incident.resolvedAt ?? now).getTime() - incident.startedAt.getTime();
-  return {
-    variant: "destructive",
-    level: levelFor(length, [15 * MINUTE, 2 * 60 * MINUTE]),
-  } as const;
+/** Calendar mark by time down: under 2m, 2 to 10m, over 10m. */
+export function downtimeActivity(down: number): ActivityMark {
+  return { scale: "failure", level: levelFor(down, [2 * MINUTE, 10 * MINUTE]) };
 }

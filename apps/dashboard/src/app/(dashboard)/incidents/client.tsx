@@ -17,6 +17,7 @@ import {
   ActivityCalendarGrid,
   ActivityCalendarLegend,
   ActivityCalendarLegendItem,
+  ActivityCalendarLegendSeparator,
 } from "@/components/content/activity-calendar";
 import {
   EmptyStateActions,
@@ -43,7 +44,7 @@ import {
 import { DeclareIncidentButton } from "@/components/incidents/declare-incident-button";
 import { IncidentRow } from "@/components/incidents/incident-row";
 import {
-  activityDayLabel,
+  activityDayLines,
   activityRange,
   groupByDay,
   strongestMark,
@@ -52,6 +53,7 @@ import {
   incidentActivity,
   incidentSpan,
   severityConfig,
+  severityLevels,
 } from "@/data/managed-incidents.client";
 import { usePaged } from "@/hooks/use-paged";
 import { useTRPC } from "@/lib/trpc/client";
@@ -75,16 +77,24 @@ export function Client() {
   const now = new Date();
   const range = activityRange(now);
   const grouped = groupByDay(range, incidents, incidentSpan, now);
-  const days = grouped.map(({ date, items }) => ({
-    date,
-    ...strongestMark(items.map(incidentActivity)),
-    label: activityDayLabel(
+  const days = grouped.map(({ date, items }) => {
+    const marks = items.map((i) => ({
+      ...incidentActivity(i),
+      title: i.title,
+    }));
+    const lead = strongestMark(marks);
+    return {
       date,
-      items.map((i) => i.title),
-      "incidents",
-    ),
-    links: items.map((i) => ({ href: `/incidents/${i.id}`, title: i.title })),
-  }));
+      ...lead,
+      lines: lead
+        ? activityDayLines(
+            `${lead.label} · ${lead.title}`,
+            marks.filter((m) => m !== lead).map((m) => m.label),
+          )
+        : undefined,
+      links: items.map((i) => ({ href: `/incidents/${i.id}`, title: i.title })),
+    };
+  });
 
   return (
     <SectionGroup>
@@ -134,19 +144,19 @@ export function Client() {
               <ActivityCalendar>
                 <ActivityCalendarGrid days={days} today={now} />
                 <ActivityCalendarLegend>
-                  {(["minor", "major", "critical"] as const).map(
-                    (severity, i) => (
-                      <ActivityCalendarLegendItem key={severity}>
-                        <ActivityCalendarCell
-                          variant={severityConfig[severity].variant}
-                          level={(i + 1) as 1 | 2 | 3}
-                        />
-                        {severityConfig[severity].label}
-                      </ActivityCalendarLegendItem>
-                    ),
-                  )}
                   <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell level={1} />
+                    <ActivityCalendarCell />
+                    None
+                  </ActivityCalendarLegendItem>
+                  {(["minor", "major", "critical"] as const).map((severity) => (
+                    <ActivityCalendarLegendItem key={severity}>
+                      <ActivityCalendarCell level={severityLevels[severity]} />
+                      {severityConfig[severity].label}
+                    </ActivityCalendarLegendItem>
+                  ))}
+                  <ActivityCalendarLegendSeparator />
+                  <ActivityCalendarLegendItem>
+                    <ActivityCalendarCell hatched />
                     Canceled
                   </ActivityCalendarLegendItem>
                 </ActivityCalendarLegend>

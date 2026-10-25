@@ -40,12 +40,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { MonitorIncidentRow } from "@/components/monitor-incidents/monitor-incident-row";
-import {
-  activityDayLabel,
-  activityRange,
-  groupByDay,
-  strongestMark,
-} from "@/data/activity.client";
+import { activityRange, groupByDay, spansOnDay } from "@/data/activity.client";
 import { downtimeActivity, downtimeSpan } from "@/data/incidents.client";
 import { usePaged } from "@/hooks/use-paged";
 import { formatDurationShort } from "@/lib/formatter";
@@ -78,21 +73,18 @@ export default function Page() {
   const now = new Date();
   const range = activityRange(now);
   const days = groupByDay(range, monitorIncidents, downtimeSpan, now).map(
-    ({ date, items }) => ({
-      date,
-      ...strongestMark(items.map((i) => downtimeActivity(i, now))),
-      label: activityDayLabel(
+    ({ date, items }) => {
+      if (items.length === 0) return { date };
+      const down = spansOnDay(date, items.map(downtimeSpan), now);
+      return {
         date,
-        items.map(
-          (i) =>
-            i.title ||
-            `${formatDurationShort(
-              (i.resolvedAt ?? now).getTime() - i.startedAt.getTime(),
-            )} down`,
-        ),
-        "outages",
-      ),
-    }),
+        ...downtimeActivity(down),
+        lines: [
+          `${formatDurationShort(down)} down`,
+          ...(items.length > 1 ? [`${items.length} outages`] : []),
+        ],
+      };
+    },
   );
 
   return (
@@ -141,14 +133,18 @@ export default function Page() {
                 <ActivityCalendarLegend>
                   <ActivityCalendarLegendItem>
                     <ActivityCalendarCell />
-                    Up all day
+                    None
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
-                    Brief
-                    <ActivityCalendarCell variant="destructive" level={1} />
-                    <ActivityCalendarCell variant="destructive" level={2} />
-                    <ActivityCalendarCell variant="destructive" level={3} />
-                    Long
+                    <ActivityCalendarCell level={1} />
+                    Under 2m
+                  </ActivityCalendarLegendItem>
+                  <ActivityCalendarLegendItem>
+                    <ActivityCalendarCell level={2} />2 to 10m
+                  </ActivityCalendarLegendItem>
+                  <ActivityCalendarLegendItem>
+                    <ActivityCalendarCell level={3} />
+                    Over 10m
                   </ActivityCalendarLegendItem>
                 </ActivityCalendarLegend>
               </ActivityCalendar>

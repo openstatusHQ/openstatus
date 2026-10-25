@@ -4,6 +4,7 @@ import {
 } from "@openstatus/db/src/schema/page_components/constants";
 import { Add, Check, Show, Delete } from "@openstatus/icons";
 
+import type { ActivityMark } from "@/components/content/activity";
 import { impactConfig } from "@/data/status-report-updates.client";
 
 type StatusReportWithUpdates = {
@@ -100,14 +101,17 @@ export function reportSpan(report: StatusReportWithUpdates) {
   return { start, end: reportResolvedAt(report) };
 }
 
-/** Calendar mark by worst impact; no components (or all operational) stays a neutral grey. */
-export function reportActivity(report: ReportWithImpacts) {
+/** Calendar mark by worst impact; no components (or all operational) is untriaged and hatched. */
+export function reportActivity(
+  report: ReportWithImpacts,
+): ActivityMark & { label: string } {
   const impact = worstReportImpact(report);
-  // green has no place in an incident calendar
-  if (!impact || impact === "operational")
-    return { variant: "default", level: 1 } as const;
+  if (!impact || impact === "operational") {
+    return { scale: "failure", level: 0, hatched: true, label: "Untriaged" };
+  }
   return {
-    variant: impactConfig[impact].variant,
-    level: Math.max(1, impactLevels[impact]) as 1 | 2 | 3,
+    scale: "failure",
+    level: impactLevels[impact],
+    label: impactConfig[impact].label,
   };
 }

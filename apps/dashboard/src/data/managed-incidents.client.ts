@@ -4,6 +4,7 @@ import type {
 } from "@openstatus/db/src/schema/incidents/constants";
 
 import type { StatusVariant } from "@/components/common/status-dot";
+import type { ActivityMark } from "@/components/content/activity";
 
 export const severityConfig = {
   critical: { label: "Critical", variant: "destructive" },
@@ -67,16 +68,17 @@ export function incidentSpan(incident: {
   return { start: incident.startedAt, end: incidentEndedAt(incident) };
 }
 
-/** Calendar mark by severity; a canceled incident fades to grey. */
+/** Calendar mark by severity; a canceled incident is hatched. */
 export function incidentActivity(incident: {
   status: IncidentStatus;
   severity: IncidentSeverity;
-}) {
+}): ActivityMark & { label: string } {
   if (incident.status === "canceled") {
-    return { variant: "default", level: 1 } as const;
+    return { scale: "failure", level: 0, hatched: true, label: "Canceled" };
   }
   return {
-    variant: severityConfig[incident.severity].variant,
+    scale: "failure",
     level: severityLevels[incident.severity],
+    label: severityConfig[incident.severity].label,
   };
 }
