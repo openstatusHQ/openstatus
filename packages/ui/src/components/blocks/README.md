@@ -562,7 +562,7 @@ const labels: StatusBlocksLabels = {
 
 ### Rendering in a time zone
 
-Pass `timeZone` to every instant formatter and set `timeZone` on the labels so the rich timestamp hover card lists it first, ahead of the viewer's zone and UTC. `formatDay` receives a bar's `YYYY-MM-DD` key, a calendar date already in that zone, so it must format without shifting it:
+Pass `timeZone` to every instant formatter and set `timeZone` on the labels so the rich timestamp hover card lists it first, ahead of the viewer's zone and UTC. `formatDay` receives a bar's `YYYY-MM-DD` key, a calendar date already in that zone, so it must format without shifting it. The example shows two formatters; give every other instant formatter (`formatDate`, `formatTimestamp`, the ranges) the same `timeZone`:
 
 ```tsx
 const labels: StatusBlocksLabelsInput = {

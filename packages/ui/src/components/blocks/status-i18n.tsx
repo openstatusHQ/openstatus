@@ -108,9 +108,10 @@ export function StatusBlocksI18nProvider({
 }) {
   const labels = useMemo<StatusBlocksLabels>(
     () => ({
-      formatDay: defaultStatusBlocksLabels.formatDay,
-      formatTimestamp: defaultStatusBlocksLabels.formatTimestamp,
       ...value,
+      formatDay: value.formatDay ?? defaultStatusBlocksLabels.formatDay,
+      formatTimestamp:
+        value.formatTimestamp ?? defaultStatusBlocksLabels.formatTimestamp,
     }),
     [value],
   );
